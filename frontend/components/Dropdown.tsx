@@ -54,11 +54,10 @@ export function Dropdown({
   const selectedOption = options.find((opt) => opt.value === value);
   const displayText = selectedOption ? selectedOption.label : placeholder;
 
-  const filteredOptions = searchable && searchQuery
-    ? options.filter((option) =>
-        option.label.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : options;
+  const filteredOptions =
+    searchable && searchQuery
+      ? options.filter((option) => option.label.toLowerCase().includes(searchQuery.toLowerCase()))
+      : options;
 
   const handleSelect = (optionValue: string) => {
     onChange(optionValue);
@@ -117,7 +116,9 @@ export function Dropdown({
           } ${isOpen ? 'border-primary-500 ring-2 ring-primary-500' : ''}`}
           style={{ paddingRight: '2.75rem' }}
         >
-          <span className={`flex-1 truncate ${value ? 'text-white' : 'text-gray-400'}`}>{displayText}</span>
+          <span className={`flex-1 truncate ${value ? 'text-white' : 'text-gray-400'}`}>
+            {displayText}
+          </span>
           <svg
             className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-400 transition-transform duration-200 flex-shrink-0 ${
               isOpen ? 'rotate-180' : ''
@@ -163,4 +164,3 @@ export function Dropdown({
     </div>
   );
 }
-

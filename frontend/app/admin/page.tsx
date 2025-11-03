@@ -6,7 +6,13 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { adminApi, Listing, User } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
-import { formatPrice, formatEngineVolume, formatMileage, formatTransmission, formatBodyType } from '@/lib/utils';
+import {
+  formatPrice,
+  formatEngineVolume,
+  formatMileage,
+  formatTransmission,
+  formatBodyType,
+} from '@/lib/utils';
 import { Dropdown } from '@/components/Dropdown';
 import { UserListingsModal } from '@/components/UserListingsModal';
 import toast from 'react-hot-toast';
@@ -20,7 +26,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!isInitialized) return;
-    
+
     if (!user) {
       router.push('/login');
       return;
@@ -127,7 +133,7 @@ function ListingsTab() {
 
   const filteredListings = listings.filter((listing) => {
     const statusMatch = statusFilter === 'All' || listing.status === statusFilter;
-    
+
     if (searchQuery.trim()) {
       if (searchType === 'id') {
         const idMatch = listing.id.toLowerCase().includes(searchQuery.toLowerCase());
@@ -135,12 +141,13 @@ function ListingsTab() {
       } else {
         const user = listing.user;
         if (!user) return false;
-        const creatorName = `${user.firstName || ''} ${user.lastName || ''} ${user.email || ''} ${user.companyName || ''}`.toLowerCase();
+        const creatorName =
+          `${user.firstName || ''} ${user.lastName || ''} ${user.email || ''} ${user.companyName || ''}`.toLowerCase();
         const nameMatch = creatorName.includes(searchQuery.toLowerCase());
         return statusMatch && nameMatch;
       }
     }
-    
+
     return statusMatch;
   });
 
@@ -160,7 +167,9 @@ function ListingsTab() {
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder={searchType === 'id' ? 'Внесете ID на објава' : 'Внесете име, email или компанија'}
+          placeholder={
+            searchType === 'id' ? 'Внесете ID на објава' : 'Внесете име, email или компанија'
+          }
           className="flex-1 px-4 py-3 rounded-lg bg-bg-light border-2 border-primary-500/30 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 h-[48px]"
         />
         <Dropdown
@@ -186,10 +195,16 @@ function ListingsTab() {
                   : 'bg-bg-light text-gray-300 hover:bg-bg-dark border border-primary-500/20'
               }`}
             >
-              {status === 'All' ? 'Сите' : status === 'Active' ? 'Активни' : status === 'Paused' ? 'Привремено застарени' : 'Затворени'}
+              {status === 'All'
+                ? 'Сите'
+                : status === 'Active'
+                  ? 'Активни'
+                  : status === 'Paused'
+                    ? 'Привремено застарени'
+                    : 'Затворени'}
               {status !== 'All' && (
                 <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-xs">
-                  {listings.filter(l => l.status === status).length}
+                  {listings.filter((l) => l.status === status).length}
                 </span>
               )}
             </button>
@@ -208,14 +223,18 @@ function ListingsTab() {
       ) : (
         <div className="space-y-4" style={{ overflow: 'visible' }}>
           {filteredListings.map((listing) => {
-            const imageUrl = listing.images && listing.images.length > 0 && listing.images[0] 
-              ? listing.images[0] 
-              : '/placeholder-car.jpg';
+            const imageUrl =
+              listing.images && listing.images.length > 0 && listing.images[0]
+                ? listing.images[0]
+                : '/placeholder-car.jpg';
             const hasImage = imageUrl && imageUrl !== '/placeholder-car.jpg';
-            
+
             return (
               <div key={listing.id} className="card" style={{ overflow: 'visible' }}>
-                <div className="grid grid-cols-1 md:grid-cols-[350px_1fr] gap-0 md:gap-6 md:items-stretch" style={{ overflow: 'visible' }}>
+                <div
+                  className="grid grid-cols-1 md:grid-cols-[350px_1fr] gap-0 md:gap-6 md:items-stretch"
+                  style={{ overflow: 'visible' }}
+                >
                   <Link href={`/listings/${listing.id}`} className="flex-shrink-0">
                     <div className="relative w-full h-[300px] md:h-full md:min-h-[320px] bg-bg-darker">
                       {hasImage ? (
@@ -251,7 +270,9 @@ function ListingsTab() {
                       <div className="flex items-start justify-between gap-4 mb-2">
                         <div className="flex-1">
                           <div className="mb-1 flex items-center gap-2">
-                            <span className="text-xs text-gray-400 font-mono">ID: {listing.id}</span>
+                            <span className="text-xs text-gray-400 font-mono">
+                              ID: {listing.id}
+                            </span>
                             <button
                               onClick={(e) => {
                                 e.preventDefault();
@@ -260,8 +281,18 @@ function ListingsTab() {
                               className="p-1 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors"
                               title="Копирај ID"
                             >
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                              <svg
+                                className="w-3.5 h-3.5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                />
                               </svg>
                             </button>
                           </div>
@@ -273,18 +304,20 @@ function ListingsTab() {
                         </div>
                         <div className="bg-bg-dark/95 backdrop-blur-sm px-2 py-2 rounded-lg border border-primary-500/30 inline-flex items-center gap-1.5 flex-shrink-0">
                           <div className="text-xs font-semibold text-gray-200">Статус:</div>
-                          <div className={
-                            listing.status === 'Active'
-                              ? 'text-green-400 font-bold text-sm'
-                              : listing.status === 'Paused'
-                              ? 'text-yellow-400 font-bold text-sm'
-                              : 'text-gray-200 font-bold text-sm'
-                          }>
+                          <div
+                            className={
+                              listing.status === 'Active'
+                                ? 'text-green-400 font-bold text-sm'
+                                : listing.status === 'Paused'
+                                  ? 'text-yellow-400 font-bold text-sm'
+                                  : 'text-gray-200 font-bold text-sm'
+                            }
+                          >
                             {listing.status === 'Active'
                               ? 'Активна'
                               : listing.status === 'Paused'
-                              ? 'Привремено застарена'
-                              : 'Затворена'}
+                                ? 'Привремено застарена'
+                                : 'Затворена'}
                           </div>
                         </div>
                       </div>
@@ -294,11 +327,12 @@ function ListingsTab() {
                           <span className="font-medium">
                             {listing.user.email}
                             {listing.user.firstName && listing.user.lastName && (
-                              <> ({listing.user.firstName} {listing.user.lastName})</>
+                              <>
+                                {' '}
+                                ({listing.user.firstName} {listing.user.lastName})
+                              </>
                             )}
-                            {listing.user.companyName && (
-                              <> ({listing.user.companyName})</>
-                            )}
+                            {listing.user.companyName && <> ({listing.user.companyName})</>}
                           </span>
                         </div>
                       )}
@@ -307,7 +341,9 @@ function ListingsTab() {
                           <span className="text-2xl md:text-3xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
                             {formatPrice(listing.price, listing.currency)}
                           </span>
-                          <span className="text-sm text-gray-200 font-medium">{listing.currency}</span>
+                          <span className="text-sm text-gray-200 font-medium">
+                            {listing.currency}
+                          </span>
                         </div>
                         {listing.urgent && (
                           <div className="mt-1.5">
@@ -333,43 +369,57 @@ function ListingsTab() {
                           {listing.vehicle.year && (
                             <div>
                               <span className="text-primary-400">Година:</span>
-                              <span className="ml-2 font-medium text-gray-200">{listing.vehicle.year}</span>
+                              <span className="ml-2 font-medium text-gray-200">
+                                {listing.vehicle.year}
+                              </span>
                             </div>
                           )}
                           {listing.vehicle.engine_displ_l && (
                             <div>
                               <span className="text-primary-400">Мотор (л):</span>
-                              <span className="ml-2 font-medium text-gray-200">{formatEngineVolume(listing.vehicle.engine_displ_l)}</span>
+                              <span className="ml-2 font-medium text-gray-200">
+                                {formatEngineVolume(listing.vehicle.engine_displ_l)}
+                              </span>
                             </div>
                           )}
                           {listing.vehicle.mileage_km && (
                             <div>
                               <span className="text-primary-400">Поминување:</span>
-                              <span className="ml-2 font-medium text-gray-200">{formatMileage(listing.vehicle.mileage_km)} км</span>
+                              <span className="ml-2 font-medium text-gray-200">
+                                {formatMileage(listing.vehicle.mileage_km)} км
+                              </span>
                             </div>
                           )}
                           {listing.vehicle.fuel && (
                             <div>
                               <span className="text-primary-400">Гориво:</span>
-                              <span className="ml-2 font-medium text-gray-200">{listing.vehicle.fuel}</span>
+                              <span className="ml-2 font-medium text-gray-200">
+                                {listing.vehicle.fuel}
+                              </span>
                             </div>
                           )}
                           {listing.vehicle.transmission && (
                             <div>
                               <span className="text-primary-400">Пренос:</span>
-                              <span className="ml-2 font-medium text-gray-200">{formatTransmission(listing.vehicle.transmission)}</span>
+                              <span className="ml-2 font-medium text-gray-200">
+                                {formatTransmission(listing.vehicle.transmission)}
+                              </span>
                             </div>
                           )}
                           {listing.vehicle.body_type && (
                             <div>
                               <span className="text-primary-400">Тип:</span>
-                              <span className="ml-2 font-medium text-gray-200">{formatBodyType(listing.vehicle.body_type)}</span>
+                              <span className="ml-2 font-medium text-gray-200">
+                                {formatBodyType(listing.vehicle.body_type)}
+                              </span>
                             </div>
                           )}
                           {listing.vehicle.color && (
                             <div>
                               <span className="text-primary-400">Боја:</span>
-                              <span className="ml-2 font-medium text-gray-200">{listing.vehicle.color}</span>
+                              <span className="ml-2 font-medium text-gray-200">
+                                {listing.vehicle.color}
+                              </span>
                             </div>
                           )}
                         </div>
@@ -381,7 +431,12 @@ function ListingsTab() {
                         <div className="flex gap-2 flex-wrap relative">
                           <Dropdown
                             value={listing.status}
-                            onChange={(value) => handleStatusChange(listing.id, value as 'Active' | 'Paused' | 'Closed')}
+                            onChange={(value) =>
+                              handleStatusChange(
+                                listing.id,
+                                value as 'Active' | 'Paused' | 'Closed'
+                              )
+                            }
                             options={[
                               { value: 'Active', label: 'Активна' },
                               { value: 'Paused', label: 'Привремено застарена' },
@@ -462,7 +517,7 @@ function UsersTab() {
 
   const filteredUsers = users.filter((user) => {
     const roleMatch = roleFilter === 'All' || user.type === roleFilter;
-    
+
     if (searchQuery.trim()) {
       const searchLower = searchQuery.toLowerCase();
       const emailMatch = user.email?.toLowerCase().includes(searchLower);
@@ -470,9 +525,11 @@ function UsersTab() {
       const firstNameMatch = user.firstName?.toLowerCase().includes(searchLower);
       const lastNameMatch = user.lastName?.toLowerCase().includes(searchLower);
       const companyMatch = user.companyName?.toLowerCase().includes(searchLower);
-      return roleMatch && (emailMatch || phoneMatch || firstNameMatch || lastNameMatch || companyMatch);
+      return (
+        roleMatch && (emailMatch || phoneMatch || firstNameMatch || lastNameMatch || companyMatch)
+      );
     }
-    
+
     return roleMatch;
   });
 
@@ -533,8 +590,18 @@ function UsersTab() {
                         className="p-1 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors"
                         title="Копирај ID"
                       >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        <svg
+                          className="w-3.5 h-3.5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                          />
                         </svg>
                       </button>
                     </div>
@@ -558,23 +625,31 @@ function UsersTab() {
                     )}
                     <div className="flex items-center gap-2">
                       <span className="text-primary-400">Тип:</span>
-                      <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                        user.type === 'Admin'
-                          ? 'bg-purple-500/20 text-purple-300'
+                      <span
+                        className={`px-2 py-1 rounded text-xs font-semibold ${
+                          user.type === 'Admin'
+                            ? 'bg-purple-500/20 text-purple-300'
+                            : user.type === 'Business'
+                              ? 'bg-blue-500/20 text-blue-300'
+                              : 'bg-green-500/20 text-green-300'
+                        }`}
+                      >
+                        {user.type === 'Admin'
+                          ? 'Админ'
                           : user.type === 'Business'
-                          ? 'bg-blue-500/20 text-blue-300'
-                          : 'bg-green-500/20 text-green-300'
-                      }`}>
-                        {user.type === 'Admin' ? 'Админ' : user.type === 'Business' ? 'Правно лице' : 'Физичко лице'}
+                            ? 'Правно лице'
+                            : 'Физичко лице'}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-primary-400">Статус:</span>
-                      <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                        user.active !== false
-                          ? 'bg-green-500/20 text-green-300'
-                          : 'bg-red-500/20 text-red-300'
-                      }`}>
+                      <span
+                        className={`px-2 py-1 rounded text-xs font-semibold ${
+                          user.active !== false
+                            ? 'bg-green-500/20 text-green-300'
+                            : 'bg-red-500/20 text-red-300'
+                        }`}
+                      >
                         {user.active !== false ? 'Активен' : 'Деактивиран'}
                       </span>
                     </div>

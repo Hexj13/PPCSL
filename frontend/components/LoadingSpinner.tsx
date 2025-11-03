@@ -19,7 +19,9 @@ export function LoadingSpinner({ size = 'medium', text, className = '' }: Loadin
 
   return (
     <div className={`text-center py-12 ${className}`}>
-      <div className={`inline-block animate-spin rounded-full border-b-2 border-primary-600 ${sizeClasses[size]}`}></div>
+      <div
+        className={`inline-block animate-spin rounded-full border-b-2 border-primary-600 ${sizeClasses[size]}`}
+      ></div>
       {text && <p className={`mt-4 text-gray-300 ${textSizeClasses[size]}`}>{text}</p>}
     </div>
   );

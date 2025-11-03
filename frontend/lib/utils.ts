@@ -69,4 +69,3 @@ export function formatBodyType(bodyType: string | undefined): string {
       return bodyType;
   }
 }
-

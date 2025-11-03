@@ -14,46 +14,64 @@ export function ListingGrid() {
   const [currentPage, setCurrentPage] = useState(1);
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  const fetchListings = useCallback(async (page: number, append: boolean = false) => {
-    const params: Record<string, string | number> = {
-      page,
-      limit: 20,
-    };
-    
-    searchParams.forEach((value, key) => {
-      if (key === 'engine_displ_l_gte' || key === 'engine_displ_l_lte') {
-        params[key] = parseFloat(value);
-      } else if (key === 'year_gte' || key === 'year_lte' || key === 'price_gte' || key === 'price_lte' || key === 'mileage_gte' || key === 'mileage_lte' || key === 'doors') {
-        params[key] = parseInt(value);
-      } else if (key === 'brand_id' || key === 'model_id' || key === 'currency' || key === 'title' || key === 'body_type' || key === 'color') {
-        params[key] = value;
-      } else if (key !== 'page') {
-        params[key] = value;
-      }
-    });
+  const fetchListings = useCallback(
+    async (page: number, append: boolean = false) => {
+      const params: Record<string, string | number> = {
+        page,
+        limit: 20,
+      };
 
-    if (append) {
-      setLoadingMore(true);
-    } else {
-      setLoading(true);
-    }
+      searchParams.forEach((value, key) => {
+        if (key === 'engine_displ_l_gte' || key === 'engine_displ_l_lte') {
+          params[key] = parseFloat(value);
+        } else if (
+          key === 'year_gte' ||
+          key === 'year_lte' ||
+          key === 'price_gte' ||
+          key === 'price_lte' ||
+          key === 'mileage_gte' ||
+          key === 'mileage_lte' ||
+          key === 'doors'
+        ) {
+          params[key] = parseInt(value);
+        } else if (
+          key === 'brand_id' ||
+          key === 'model_id' ||
+          key === 'currency' ||
+          key === 'title' ||
+          key === 'body_type' ||
+          key === 'color'
+        ) {
+          params[key] = value;
+        } else if (key !== 'page') {
+          params[key] = value;
+        }
+      });
 
-    try {
-      const res = await listingsApi.getAll(params);
       if (append) {
-        setListings(prev => [...prev, ...res.data.data]);
+        setLoadingMore(true);
       } else {
-        setListings(res.data.data);
-        setCurrentPage(1);
+        setLoading(true);
       }
-      setMeta(res.data.meta);
-    } catch (err) {
-      console.error('Error fetching listings:', err);
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  }, [searchParams]);
+
+      try {
+        const res = await listingsApi.getAll(params);
+        if (append) {
+          setListings((prev) => [...prev, ...res.data.data]);
+        } else {
+          setListings(res.data.data);
+          setCurrentPage(1);
+        }
+        setMeta(res.data.meta);
+      } catch (err) {
+        console.error('Error fetching listings:', err);
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
+      }
+    },
+    [searchParams]
+  );
 
   useEffect(() => {
     fetchListings(1, false);
@@ -61,7 +79,7 @@ export function ListingGrid() {
 
   useEffect(() => {
     const observer = new IntersectionObserver(
-      entries => {
+      (entries) => {
         if (entries[0].isIntersecting && !loadingMore && meta && currentPage < meta.totalPages) {
           const nextPage = currentPage + 1;
           setCurrentPage(nextPage);
@@ -127,4 +145,3 @@ export function ListingGrid() {
     </div>
   );
 }
-

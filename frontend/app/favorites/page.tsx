@@ -14,7 +14,7 @@ export default function FavoritesPage() {
 
   useEffect(() => {
     if (!isInitialized) return;
-    
+
     if (!user) {
       router.push('/login');
       return;
@@ -26,8 +26,7 @@ export default function FavoritesPage() {
         const favorites = res.data.map((f: { listing: Listing }) => f.listing);
         setListings(favorites);
       })
-      .catch(() => {
-      })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [user, isInitialized, router]);
 
@@ -55,7 +54,9 @@ export default function FavoritesPage() {
 
   return (
     <div>
-      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 md:mb-8 bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">Омилени</h1>
+      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 md:mb-8 bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+        Омилени
+      </h1>
 
       {listings.length === 0 ? (
         <div className="text-center py-12">
@@ -71,4 +72,3 @@ export default function FavoritesPage() {
     </div>
   );
 }
-

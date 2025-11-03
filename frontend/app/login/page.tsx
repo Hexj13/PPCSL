@@ -54,7 +54,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -64,7 +64,7 @@ export default function LoginPage() {
     try {
       const res = await authApi.login(formData);
       setAuth(res.data.user, res.data.access_token);
-      
+
       if (typeof window !== 'undefined') {
         const pendingFavorites = JSON.parse(localStorage.getItem('pendingFavorites') || '[]');
         if (pendingFavorites.length > 0) {
@@ -74,7 +74,7 @@ export default function LoginPage() {
           await Promise.all(addPromises);
           localStorage.removeItem('pendingFavorites');
         }
-        
+
         const returnUrl = localStorage.getItem('returnUrl');
         if (returnUrl) {
           localStorage.removeItem('returnUrl');
@@ -85,7 +85,7 @@ export default function LoginPage() {
       } else {
         router.push('/');
       }
-      
+
       toast.success('Успешна најава');
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { message?: string } } };
@@ -97,10 +97,14 @@ export default function LoginPage() {
 
   return (
     <div className="max-w-md mx-auto mt-6 md:mt-12">
-      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">Најава</h1>
+      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+        Најава
+      </h1>
       <form onSubmit={handleSubmit} className="card p-6 md:p-8">
         <div className="mb-5">
-          <label className="block text-sm font-semibold mb-2 text-primary-400">Email или телефон</label>
+          <label className="block text-sm font-semibold mb-2 text-primary-400">
+            Email или телефон
+          </label>
           <input
             type="text"
             value={formData.login}
@@ -114,9 +118,7 @@ export default function LoginPage() {
             placeholder="example@email.com или +38970123456"
             autoComplete="username"
           />
-          {errors.login && (
-            <p className="mt-1 text-sm text-red-400">{errors.login}</p>
-          )}
+          {errors.login && <p className="mt-1 text-sm text-red-400">{errors.login}</p>}
         </div>
 
         <div className="mb-6">
@@ -134,9 +136,7 @@ export default function LoginPage() {
             placeholder="Внесете ја вашата лозинка"
             autoComplete="current-password"
           />
-          {errors.password && (
-            <p className="mt-1 text-sm text-red-400">{errors.password}</p>
-          )}
+          {errors.password && <p className="mt-1 text-sm text-red-400">{errors.password}</p>}
         </div>
 
         <button
@@ -149,7 +149,10 @@ export default function LoginPage() {
 
         <p className="mt-6 text-center text-sm text-gray-300">
           Немате сметка?{' '}
-          <a href="/register" className="text-primary-500 font-semibold hover:text-primary-400 hover:underline transition-colors">
+          <a
+            href="/register"
+            className="text-primary-500 font-semibold hover:text-primary-400 hover:underline transition-colors"
+          >
             Регистрирај се
           </a>
         </p>
@@ -157,4 +160,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

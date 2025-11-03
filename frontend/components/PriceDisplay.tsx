@@ -9,13 +9,13 @@ interface PriceDisplayProps {
   className?: string;
 }
 
-export function PriceDisplay({ 
-  price, 
-  currency, 
-  size = 'medium', 
-  showCurrency = true, 
+export function PriceDisplay({
+  price,
+  currency,
+  size = 'medium',
+  showCurrency = true,
   urgent = false,
-  className = '' 
+  className = '',
 }: PriceDisplayProps) {
   const sizeClasses = {
     small: 'text-xl md:text-2xl',
@@ -32,11 +32,15 @@ export function PriceDisplay({
   return (
     <div className={className}>
       <div className="flex items-baseline gap-2 md:gap-3">
-        <span className={`${sizeClasses[size]} font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent`}>
+        <span
+          className={`${sizeClasses[size]} font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent`}
+        >
           {formatPrice(price, currency)}
         </span>
         {showCurrency && (
-          <span className={`${currencySizeClasses[size]} text-gray-400 font-medium`}>{currency}</span>
+          <span className={`${currencySizeClasses[size]} text-gray-400 font-medium`}>
+            {currency}
+          </span>
         )}
       </div>
       {urgent && (

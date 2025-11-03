@@ -10,11 +10,21 @@
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(135deg, rgb(var(--background-start-rgb)) 0%, rgb(var(--background-end-rgb)) 100%);
+  background: linear-gradient(
+    135deg,
+    rgb(var(--background-start-rgb)) 0%,
+    rgb(var(--background-end-rgb)) 100%
+  );
   min-height: 100vh;
 }
 
-h1, h2, h3, h4, h5, h6, label {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+label {
   user-select: none;
 }
 
@@ -55,29 +65,14 @@ h1, h2, h3, h4, h5, h6, label {
     opacity: 1;
   }
 
-  .input-field[type="password"] {
+  .input-field[type='password'] {
     @apply bg-bg-light text-white;
     -webkit-text-fill-color: white;
   }
 
-  .input-field[type="password"]:-webkit-autofill,
-  .input-field[type="password"]:-webkit-autofill:hover,
-  .input-field[type="password"]:-webkit-autofill:focus {
-    @apply bg-bg-light text-white;
-    -webkit-text-fill-color: white;
-    -webkit-box-shadow: 0 0 0px 1000px #233d37 inset;
-    box-shadow: 0 0 0px 1000px #233d37 inset;
-    transition: background-color 5000s ease-in-out 0s;
-  }
-
-  .input-field[type="email"] {
-    @apply bg-bg-light text-white;
-    -webkit-text-fill-color: white;
-  }
-
-  .input-field[type="email"]:-webkit-autofill,
-  .input-field[type="email"]:-webkit-autofill:hover,
-  .input-field[type="email"]:-webkit-autofill:focus {
+  .input-field[type='password']:-webkit-autofill,
+  .input-field[type='password']:-webkit-autofill:hover,
+  .input-field[type='password']:-webkit-autofill:focus {
     @apply bg-bg-light text-white;
     -webkit-text-fill-color: white;
     -webkit-box-shadow: 0 0 0px 1000px #233d37 inset;
@@ -85,9 +80,24 @@ h1, h2, h3, h4, h5, h6, label {
     transition: background-color 5000s ease-in-out 0s;
   }
 
-  .input-field[type="text"]:-webkit-autofill,
-  .input-field[type="text"]:-webkit-autofill:hover,
-  .input-field[type="text"]:-webkit-autofill:focus,
+  .input-field[type='email'] {
+    @apply bg-bg-light text-white;
+    -webkit-text-fill-color: white;
+  }
+
+  .input-field[type='email']:-webkit-autofill,
+  .input-field[type='email']:-webkit-autofill:hover,
+  .input-field[type='email']:-webkit-autofill:focus {
+    @apply bg-bg-light text-white;
+    -webkit-text-fill-color: white;
+    -webkit-box-shadow: 0 0 0px 1000px #233d37 inset;
+    box-shadow: 0 0 0px 1000px #233d37 inset;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  .input-field[type='text']:-webkit-autofill,
+  .input-field[type='text']:-webkit-autofill:hover,
+  .input-field[type='text']:-webkit-autofill:focus,
   .input-field:-webkit-autofill,
   .input-field:-webkit-autofill:hover,
   .input-field:-webkit-autofill:focus {
@@ -98,19 +108,19 @@ h1, h2, h3, h4, h5, h6, label {
     transition: background-color 5000s ease-in-out 0s;
   }
 
-  .input-field[type="text"]:autofill,
+  .input-field[type='text']:autofill,
   .input-field:autofill {
     @apply bg-bg-light text-white;
     -webkit-text-fill-color: white;
     box-shadow: 0 0 0px 1000px #233d37 inset;
   }
 
-  .input-field[type="number"] {
+  .input-field[type='number'] {
     -moz-appearance: textfield;
   }
 
-  .input-field[type="number"]::-webkit-outer-spin-button,
-  .input-field[type="number"]::-webkit-inner-spin-button {
+  .input-field[type='number']::-webkit-outer-spin-button,
+  .input-field[type='number']::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
   }
@@ -153,4 +163,3 @@ h1, h2, h3, h4, h5, h6, label {
     @apply bg-bg-light rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-primary-500/20;
   }
 }
-

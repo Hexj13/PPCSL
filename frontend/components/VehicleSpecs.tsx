@@ -20,7 +20,12 @@ interface VehicleSpecsProps {
   className?: string;
 }
 
-export function VehicleSpecs({ vehicle, columns = 3, showBrandModel = false, className = '' }: VehicleSpecsProps) {
+export function VehicleSpecs({
+  vehicle,
+  columns = 3,
+  showBrandModel = false,
+  className = '',
+}: VehicleSpecsProps) {
   const gridCols = columns === 2 ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-3';
 
   return (
@@ -43,13 +48,17 @@ export function VehicleSpecs({ vehicle, columns = 3, showBrandModel = false, cla
         {vehicle.engine_displ_l && (
           <div>
             <span className="text-primary-400">Мотор (л):</span>
-            <span className="ml-2 font-medium text-gray-200">{formatEngineVolume(vehicle.engine_displ_l)}</span>
+            <span className="ml-2 font-medium text-gray-200">
+              {formatEngineVolume(vehicle.engine_displ_l)}
+            </span>
           </div>
         )}
         {vehicle.mileage_km && (
           <div>
             <span className="text-primary-400">Поминување:</span>
-            <span className="ml-2 font-medium text-gray-200">{formatMileage(vehicle.mileage_km)} км</span>
+            <span className="ml-2 font-medium text-gray-200">
+              {formatMileage(vehicle.mileage_km)} км
+            </span>
           </div>
         )}
         {vehicle.fuel && (
@@ -61,13 +70,17 @@ export function VehicleSpecs({ vehicle, columns = 3, showBrandModel = false, cla
         {vehicle.transmission && (
           <div>
             <span className="text-primary-400">Пренос:</span>
-            <span className="ml-2 font-medium text-gray-200">{formatTransmission(vehicle.transmission)}</span>
+            <span className="ml-2 font-medium text-gray-200">
+              {formatTransmission(vehicle.transmission)}
+            </span>
           </div>
         )}
         {vehicle.body_type && (
           <div>
             <span className="text-primary-400">Тип{showBrandModel ? ' на каросерија' : ''}:</span>
-            <span className="ml-2 font-medium text-gray-200">{formatBodyType(vehicle.body_type)}</span>
+            <span className="ml-2 font-medium text-gray-200">
+              {formatBodyType(vehicle.body_type)}
+            </span>
           </div>
         )}
         {vehicle.color && (

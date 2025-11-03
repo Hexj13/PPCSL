@@ -6,7 +6,13 @@ interface EmptyStateProps {
   className?: string;
 }
 
-export function EmptyState({ message, actionLabel, actionHref, actionOnClick, className = '' }: EmptyStateProps) {
+export function EmptyState({
+  message,
+  actionLabel,
+  actionHref,
+  actionOnClick,
+  className = '',
+}: EmptyStateProps) {
   return (
     <div className={`text-center py-12 ${className}`}>
       <p className="text-gray-300 text-lg mb-4">{message}</p>

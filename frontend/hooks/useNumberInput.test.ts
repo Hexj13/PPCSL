@@ -165,5 +165,3 @@ describe('useNumberInput', () => {
     });
   });
 });
-
-

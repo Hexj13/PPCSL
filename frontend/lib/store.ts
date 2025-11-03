@@ -34,7 +34,7 @@ export const useAuthStore = create<AuthState>()(
       },
       initAuth: async () => {
         const { token } = get();
-        
+
         if (token && typeof window !== 'undefined') {
           try {
             const response = await authApi.me();
@@ -70,8 +70,7 @@ export const useFavoritesStore = create<FavoritesState>()(
     (set, get) => ({
       favorites: [],
       add: (id) => set((state) => ({ favorites: [...state.favorites, id] })),
-      remove: (id) =>
-        set((state) => ({ favorites: state.favorites.filter((f) => f !== id) })),
+      remove: (id) => set((state) => ({ favorites: state.favorites.filter((f) => f !== id) })),
       check: (id) => get().favorites.includes(id),
       setFavorites: (ids) => set({ favorites: ids }),
       clear: () => set({ favorites: [] }),
@@ -82,4 +81,3 @@ export const useFavoritesStore = create<FavoritesState>()(
     }
   )
 );
-

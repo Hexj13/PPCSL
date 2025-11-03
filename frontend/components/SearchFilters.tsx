@@ -15,14 +15,15 @@ export function SearchFilters() {
 
   const currentYear = new Date().getFullYear().toString();
 
-  const hasAdvancedFilters = searchParams.get('mileage_gte') || 
-    searchParams.get('mileage_lte') || 
-    searchParams.get('fuel') || 
-    searchParams.get('transmission') || 
-    searchParams.get('body_type') || 
-    searchParams.get('engine_displ_l_gte') || 
-    searchParams.get('engine_displ_l_lte') || 
-    searchParams.get('color') || 
+  const hasAdvancedFilters =
+    searchParams.get('mileage_gte') ||
+    searchParams.get('mileage_lte') ||
+    searchParams.get('fuel') ||
+    searchParams.get('transmission') ||
+    searchParams.get('body_type') ||
+    searchParams.get('engine_displ_l_gte') ||
+    searchParams.get('engine_displ_l_lte') ||
+    searchParams.get('color') ||
     searchParams.get('doors');
 
   const [showAdvanced, setShowAdvanced] = useState(!!hasAdvancedFilters);
@@ -79,7 +80,6 @@ export function SearchFilters() {
       setFilters((prev) => ({ ...prev, model_id: '' }));
     }
   }, [filters.brand_id]);
-
 
   const handleChange = (key: string, value: string) => {
     setFilters({ ...filters, [key]: value });
@@ -141,8 +141,10 @@ export function SearchFilters() {
 
   return (
     <form onSubmit={handleSubmit} className="card p-4 md:p-5 mb-6">
-      <h2 className="text-base md:text-lg font-bold mb-4 text-primary-400 underline">Основни критерии</h2>
-      
+      <h2 className="text-base md:text-lg font-bold mb-4 text-primary-400 underline">
+        Основни критерии
+      </h2>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4 pb-4 border-b border-primary-500/20">
         <div>
           <label className="block text-sm font-semibold mb-2 text-primary-400">Марка</label>
@@ -179,7 +181,10 @@ export function SearchFilters() {
             searchable={true}
             options={[
               { value: '', label: 'Сите градови' },
-              ...cities.map((city) => ({ value: city.nameEn, label: `${city.name} (${city.nameEn})` })),
+              ...cities.map((city) => ({
+                value: city.nameEn,
+                label: `${city.name} (${city.nameEn})`,
+              })),
             ]}
           />
         </div>
@@ -262,7 +267,9 @@ export function SearchFilters() {
 
       <div className="mb-4 pb-4 border-b border-primary-500/20">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <h2 className="text-base md:text-lg font-bold text-primary-400 underline">Дополнителни критерии</h2>
+          <h2 className="text-base md:text-lg font-bold text-primary-400 underline">
+            Дополнителни критерии
+          </h2>
           <button
             type="button"
             onClick={() => setShowAdvanced(!showAdvanced)}
@@ -275,7 +282,12 @@ export function SearchFilters() {
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
             </svg>
           </button>
         </div>
@@ -284,7 +296,9 @@ export function SearchFilters() {
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold mb-2 text-primary-400">Поминување од (км)</label>
+                <label className="block text-sm font-semibold mb-2 text-primary-400">
+                  Поминување од (км)
+                </label>
                 <input
                   type="number"
                   value={filters.mileage_gte}
@@ -296,7 +310,9 @@ export function SearchFilters() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2 text-primary-400">Поминување до (км)</label>
+                <label className="block text-sm font-semibold mb-2 text-primary-400">
+                  Поминување до (км)
+                </label>
                 <input
                   type="number"
                   value={filters.mileage_lte}
@@ -310,7 +326,9 @@ export function SearchFilters() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold mb-2 text-primary-400">Запремина на моторот од (л)</label>
+                <label className="block text-sm font-semibold mb-2 text-primary-400">
+                  Запремина на моторот од (л)
+                </label>
                 <input
                   type="text"
                   value={filters.engine_displ_l_gte}
@@ -351,7 +369,9 @@ export function SearchFilters() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2 text-primary-400">Запремина на моторот до (л)</label>
+                <label className="block text-sm font-semibold mb-2 text-primary-400">
+                  Запремина на моторот до (л)
+                </label>
                 <input
                   type="text"
                   value={filters.engine_displ_l_lte}
@@ -424,7 +444,9 @@ export function SearchFilters() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2 text-primary-400">Тип на каросерија</label>
+                <label className="block text-sm font-semibold mb-2 text-primary-400">
+                  Тип на каросерија
+                </label>
                 <Dropdown
                   value={filters.body_type}
                   onChange={(value) => handleChange('body_type', value)}
@@ -508,10 +530,7 @@ export function SearchFilters() {
       </div>
 
       <div className="mt-5 flex flex-col sm:flex-row gap-3">
-        <button
-          type="submit"
-          className="w-full sm:w-auto btn-primary px-6 py-2.5"
-        >
+        <button type="submit" className="w-full sm:w-auto btn-primary px-6 py-2.5">
           Пребарај
         </button>
         <button

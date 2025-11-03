@@ -130,7 +130,16 @@ export interface Vehicle {
   mileage_km?: number;
   fuel?: 'Petrol' | 'Diesel' | 'Electric' | 'Hybrid' | 'LPG';
   transmission?: 'Manual' | 'Automatic' | 'CVT';
-  body_type: 'Sedan' | 'Hatchback' | 'Wagon' | 'SUV' | 'Coupe' | 'Convertible' | 'Van' | 'Pickup' | 'Minivan';
+  body_type:
+    | 'Sedan'
+    | 'Hatchback'
+    | 'Wagon'
+    | 'SUV'
+    | 'Coupe'
+    | 'Convertible'
+    | 'Van'
+    | 'Pickup'
+    | 'Minivan';
   color?: string;
   doors?: number;
 }
@@ -187,7 +196,16 @@ export interface CreateListingDto {
     mileage_km?: number;
     fuel?: 'Petrol' | 'Diesel' | 'Electric' | 'Hybrid' | 'LPG';
     transmission?: 'Manual' | 'Automatic' | 'CVT';
-    body_type: 'Sedan' | 'Hatchback' | 'Wagon' | 'SUV' | 'Coupe' | 'Convertible' | 'Van' | 'Pickup' | 'Minivan';
+    body_type:
+      | 'Sedan'
+      | 'Hatchback'
+      | 'Wagon'
+      | 'SUV'
+      | 'Coupe'
+      | 'Convertible'
+      | 'Van'
+      | 'Pickup'
+      | 'Minivan';
     color?: string;
     doors?: number;
   };
@@ -240,7 +258,8 @@ export const listingsApi = {
   getAll: (params?: SearchParams) =>
     api.get<{ data: Listing[]; meta: PaginationMeta }>('/api/listings', { params }),
   getOne: (id: string) => api.get<Listing>(`/api/listings/${id}`),
-  getUserActiveListings: (userId: string) => api.get<Listing[]>(`/api/listings/user/${userId}/active`),
+  getUserActiveListings: (userId: string) =>
+    api.get<Listing[]>(`/api/listings/user/${userId}/active`),
   getByVin: (vin: string, excludeId?: string) =>
     api.get<Listing[]>(`/api/listings/vin/${vin}`, { params: excludeId ? { excludeId } : {} }),
   create: (data: CreateListingDto) => api.post<Listing>('/api/listings', data),
@@ -266,7 +285,8 @@ export const uploadApi = {
 
 export const authApi = {
   register: (data: RegisterDto) => api.post('/api/auth/register', data),
-  login: (data: LoginDto) => api.post<{ access_token: string; user: User }>('/api/auth/login', data),
+  login: (data: LoginDto) =>
+    api.post<{ access_token: string; user: User }>('/api/auth/login', data),
   me: () => api.get<User>('/api/auth/me'),
 };
 
@@ -274,13 +294,15 @@ export const favoritesApi = {
   getAll: () => api.get('/api/favorites'),
   add: (listingId: string) => api.post(`/api/favorites/${listingId}`),
   remove: (listingId: string) => api.delete(`/api/favorites/${listingId}`),
-  check: (listingId: string) => api.get<{ isFavorite: boolean }>(`/api/favorites/check/${listingId}`),
+  check: (listingId: string) =>
+    api.get<{ isFavorite: boolean }>(`/api/favorites/check/${listingId}`),
 };
 
 export const brandsApi = {
   getAll: () => api.get<Brand[]>('/api/brands'),
   getModels: (brandId: string) => api.get<VehicleModel[]>(`/api/brands/${brandId}/models`),
-  getModelsByName: (brandName: string) => api.get<VehicleModel[]>(`/api/brands/name/${brandName}/models`),
+  getModelsByName: (brandName: string) =>
+    api.get<VehicleModel[]>(`/api/brands/name/${brandName}/models`),
   seed: () => api.post('/api/brands/seed'),
 };
 
@@ -302,4 +324,3 @@ export const adminApi = {
   getUserListings: (userId: string) => api.get<Listing[]>(`/api/admin/users/${userId}/listings`),
   toggleUserStatus: (userId: string) => api.patch(`/api/admin/users/${userId}/toggle-status`),
 };
-

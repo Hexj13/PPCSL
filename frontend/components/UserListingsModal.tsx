@@ -4,7 +4,13 @@ import { useEffect, useState, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { Modal } from './Modal';
 import { Listing, User } from '@/lib/api';
-import { formatPrice, formatEngineVolume, formatMileage, formatTransmission, formatBodyType } from '@/lib/utils';
+import {
+  formatPrice,
+  formatEngineVolume,
+  formatMileage,
+  formatTransmission,
+  formatBodyType,
+} from '@/lib/utils';
 import toast from 'react-hot-toast';
 
 interface UserListingsModalProps {
@@ -16,7 +22,14 @@ interface UserListingsModalProps {
   showOnlyActive?: boolean;
 }
 
-export function UserListingsModal({ isOpen, onClose, user, userId, fetchListings, showOnlyActive = true }: UserListingsModalProps) {
+export function UserListingsModal({
+  isOpen,
+  onClose,
+  user,
+  userId,
+  fetchListings,
+  showOnlyActive = true,
+}: UserListingsModalProps) {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(false);
   const targetUserId = useMemo(() => userId || user?.id, [userId, user?.id]);
@@ -62,7 +75,7 @@ export function UserListingsModal({ isOpen, onClose, user, userId, fetchListings
     const loadListings = async () => {
       try {
         const result = await fetchListingsRef.current(targetUserId);
-        
+
         if (abortController.signal.aborted) {
           return;
         }
@@ -102,7 +115,7 @@ export function UserListingsModal({ isOpen, onClose, user, userId, fetchListings
     return user.email;
   };
 
-  const displayListings = showOnlyActive 
+  const displayListings = showOnlyActive
     ? listings.filter((listing) => listing.status === 'Active')
     : listings;
 
@@ -120,7 +133,9 @@ export function UserListingsModal({ isOpen, onClose, user, userId, fetchListings
         </div>
       ) : displayListings.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-300 text-lg">{showOnlyActive ? 'Нема активни објави' : 'Нема објави'}</p>
+          <p className="text-gray-300 text-lg">
+            {showOnlyActive ? 'Нема активни објави' : 'Нема објави'}
+          </p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -140,18 +155,20 @@ export function UserListingsModal({ isOpen, onClose, user, userId, fetchListings
                         {formatPrice(listing.price, listing.currency)} {listing.currency}
                       </span>
                       {!showOnlyActive && (
-                        <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                          listing.status === 'Active'
-                            ? 'bg-green-500/20 text-green-300'
-                            : listing.status === 'Paused'
-                            ? 'bg-yellow-500/20 text-yellow-300'
-                            : 'bg-gray-500/20 text-gray-300'
-                        }`}>
+                        <span
+                          className={`px-2 py-1 rounded text-xs font-semibold ${
+                            listing.status === 'Active'
+                              ? 'bg-green-500/20 text-green-300'
+                              : listing.status === 'Paused'
+                                ? 'bg-yellow-500/20 text-yellow-300'
+                                : 'bg-gray-500/20 text-gray-300'
+                          }`}
+                        >
                           {listing.status === 'Active'
                             ? 'Активна'
                             : listing.status === 'Paused'
-                            ? 'Привремено застарена'
-                            : 'Затворена'}
+                              ? 'Привремено застарена'
+                              : 'Затворена'}
                         </span>
                       )}
                     </div>
@@ -162,7 +179,9 @@ export function UserListingsModal({ isOpen, onClose, user, userId, fetchListings
                       {vehicle.brand && vehicle.model && (
                         <div>
                           <span className="text-primary-400 font-semibold">Марка/Модел:</span>
-                          <span className="ml-2 text-gray-300">{vehicle.brand.name} {vehicle.model.name}</span>
+                          <span className="ml-2 text-gray-300">
+                            {vehicle.brand.name} {vehicle.model.name}
+                          </span>
                         </div>
                       )}
                       {vehicle.year && (
@@ -174,13 +193,17 @@ export function UserListingsModal({ isOpen, onClose, user, userId, fetchListings
                       {vehicle.engine_displ_l && (
                         <div>
                           <span className="text-primary-400 font-semibold">Мотор (л):</span>
-                          <span className="ml-2 text-gray-300">{formatEngineVolume(vehicle.engine_displ_l)}</span>
+                          <span className="ml-2 text-gray-300">
+                            {formatEngineVolume(vehicle.engine_displ_l)}
+                          </span>
                         </div>
                       )}
                       {vehicle.mileage_km && (
                         <div>
                           <span className="text-primary-400 font-semibold">Поминување:</span>
-                          <span className="ml-2 text-gray-300">{formatMileage(vehicle.mileage_km)} км</span>
+                          <span className="ml-2 text-gray-300">
+                            {formatMileage(vehicle.mileage_km)} км
+                          </span>
                         </div>
                       )}
                       {vehicle.fuel && (
@@ -192,13 +215,17 @@ export function UserListingsModal({ isOpen, onClose, user, userId, fetchListings
                       {vehicle.transmission && (
                         <div>
                           <span className="text-primary-400 font-semibold">Пренос:</span>
-                          <span className="ml-2 text-gray-300">{formatTransmission(vehicle.transmission)}</span>
+                          <span className="ml-2 text-gray-300">
+                            {formatTransmission(vehicle.transmission)}
+                          </span>
                         </div>
                       )}
                       {vehicle.body_type && (
                         <div>
                           <span className="text-primary-400 font-semibold">Тип на каросерија:</span>
-                          <span className="ml-2 text-gray-300">{formatBodyType(vehicle.body_type)}</span>
+                          <span className="ml-2 text-gray-300">
+                            {formatBodyType(vehicle.body_type)}
+                          </span>
                         </div>
                       )}
                       {vehicle.color && (
@@ -237,4 +264,3 @@ export function UserListingsModal({ isOpen, onClose, user, userId, fetchListings
     </Modal>
   );
 }
-

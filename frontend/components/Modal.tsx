@@ -9,7 +9,14 @@ interface ModalProps {
   className?: string;
 }
 
-export function Modal({ isOpen, onClose, title, children, size = 'medium', className = '' }: ModalProps) {
+export function Modal({
+  isOpen,
+  onClose,
+  title,
+  children,
+  size = 'medium',
+  className = '',
+}: ModalProps) {
   useEffect(() => {
     if (!isOpen) return;
 
@@ -57,9 +64,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'medium', class
             </button>
           </div>
         )}
-        <div className="p-4">
-          {children}
-        </div>
+        <div className="p-4">{children}</div>
       </div>
     </div>
   );

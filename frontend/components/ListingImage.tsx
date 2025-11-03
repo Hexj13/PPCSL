@@ -11,27 +11,22 @@ interface ListingImageProps {
   placeholder?: boolean;
 }
 
-export function ListingImage({ 
-  imageUrl, 
-  alt, 
-  className = '', 
+export function ListingImage({
+  imageUrl,
+  alt,
+  className = '',
   fill = false,
   sizes,
   unoptimized = false,
   onClick,
-  placeholder = false 
+  placeholder = false,
 }: ListingImageProps) {
   const isPlaceholder = imageUrl === '/placeholder-car.jpg' || placeholder;
-  
+
   if (isPlaceholder) {
     return (
       <div className={`w-full h-full flex items-center justify-center text-gray-200 ${className}`}>
-        <svg
-          className="w-16 h-16"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
+        <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"

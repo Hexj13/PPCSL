@@ -5,7 +5,13 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { Listing, favoritesApi } from '@/lib/api';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
-import { formatPrice, formatEngineVolume, formatMileage, formatBodyType, formatDateShort } from '@/lib/utils';
+import {
+  formatPrice,
+  formatEngineVolume,
+  formatMileage,
+  formatBodyType,
+  formatDateShort,
+} from '@/lib/utils';
 import toast from 'react-hot-toast';
 
 interface ListingCardProps {
@@ -60,14 +66,16 @@ export function ListingCard({ listing }: ListingCardProps) {
         setIsFavorite(true);
         toast.success('Додадено во омилени');
       }
-    } catch {
-    }
+    } catch {}
   };
 
   return (
     <Link href={`/listings/${listing.id}`}>
       <div className="card overflow-hidden cursor-pointer h-full flex flex-col group">
-        <div className="relative w-full bg-bg-darker flex-shrink-0 overflow-hidden" style={{ aspectRatio: '16/9', minHeight: '240px' }}>
+        <div
+          className="relative w-full bg-bg-darker flex-shrink-0 overflow-hidden"
+          style={{ aspectRatio: '16/9', minHeight: '240px' }}
+        >
           {imageUrl && imageUrl !== '/placeholder-car.jpg' ? (
             <Image
               src={imageUrl}
@@ -77,12 +85,7 @@ export function ListingCard({ listing }: ListingCardProps) {
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-300">
-              <svg
-                className="w-16 h-16"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -105,10 +108,16 @@ export function ListingCard({ listing }: ListingCardProps) {
               isOwnListing
                 ? 'opacity-30 cursor-not-allowed'
                 : isFavorite
-                ? 'opacity-100 hover:bg-green-700'
-                : 'opacity-60 hover:opacity-100 hover:bg-green-700'
+                  ? 'opacity-100 hover:bg-green-700'
+                  : 'opacity-60 hover:opacity-100 hover:bg-green-700'
             }`}
-            aria-label={isOwnListing ? 'Не можете да додадете ваше објавување во омилени' : isFavorite ? 'Отстрани од омилени' : 'Додади во омилени'}
+            aria-label={
+              isOwnListing
+                ? 'Не можете да додадете ваше објавување во омилени'
+                : isFavorite
+                  ? 'Отстрани од омилени'
+                  : 'Додади во омилени'
+            }
           >
             <svg
               className={`w-6 h-6 ${isFavorite ? 'text-red-400' : 'text-white'}`}
@@ -126,7 +135,9 @@ export function ListingCard({ listing }: ListingCardProps) {
           </button>
         </div>
         <div className="p-4 md:p-5 flex-grow flex flex-col">
-          <h3 className="font-bold text-base md:text-lg mb-3 line-clamp-2 text-white group-hover:text-primary-600 transition-colors">{listing.title}</h3>
+          <h3 className="font-bold text-base md:text-lg mb-3 line-clamp-2 text-white group-hover:text-primary-600 transition-colors">
+            {listing.title}
+          </h3>
           <div className="flex items-baseline gap-2 mb-3">
             <span className="text-xl md:text-2xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
               {formatPrice(listing.price, listing.currency)}
@@ -158,4 +169,3 @@ export function ListingCard({ listing }: ListingCardProps) {
     </Link>
   );
 }
-

@@ -79,28 +79,28 @@ export default function RegisterPage() {
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value;
-    
+
     if (value === '') {
       setFormData({ ...formData, phone: '' });
       setPhoneError('');
       return;
     }
-    
+
     value = value.replace(/[^\d+]/g, '');
-    
+
     const plusCount = (value.match(/\+/g) || []).length;
     if (plusCount > 1) {
       value = '+' + value.replace(/\+/g, '');
     }
-    
+
     if (value.length > 0 && value[0] !== '+') {
       value = '+' + value.replace(/\+/g, '');
     }
-    
+
     if (value.length > 20) {
       value = value.slice(0, 20);
     }
-    
+
     setFormData({ ...formData, phone: value });
     if (value) {
       setPhoneError(validatePhone(value));
@@ -121,7 +121,11 @@ export default function RegisterPage() {
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const email = e.target.value;
-    setFormData({ ...formData, email, emailNotifications: email ? formData.emailNotifications : false });
+    setFormData({
+      ...formData,
+      email,
+      emailNotifications: email ? formData.emailNotifications : false,
+    });
     if (email) {
       setEmailError(validateEmail(email));
     } else {
@@ -203,7 +207,7 @@ export default function RegisterPage() {
 
     try {
       const submitData: RegisterDto = { ...formData };
-      
+
       if (formData.type === 'Individual') {
         submitData.companyName = '';
         if (!submitData.email || !submitData.email.trim()) {
@@ -216,18 +220,21 @@ export default function RegisterPage() {
       }
 
       await authApi.register(submitData);
-      
-      const loginValue = formData.type === 'Individual' 
-        ? (formData.email && formData.email.trim() ? formData.email : formData.phone)
-        : formData.email;
-      
+
+      const loginValue =
+        formData.type === 'Individual'
+          ? formData.email && formData.email.trim()
+            ? formData.email
+            : formData.phone
+          : formData.email;
+
       try {
         const loginRes = await authApi.login({
           login: loginValue,
           password: formData.password,
         });
         setAuth(loginRes.data.user, loginRes.data.access_token);
-        
+
         if (typeof window !== 'undefined') {
           const pendingFavorites = JSON.parse(localStorage.getItem('pendingFavorites') || '[]');
           if (pendingFavorites.length > 0) {
@@ -237,7 +244,7 @@ export default function RegisterPage() {
             await Promise.all(addPromises);
             localStorage.removeItem('pendingFavorites');
           }
-          
+
           const returnUrl = localStorage.getItem('returnUrl');
           if (returnUrl) {
             localStorage.removeItem('returnUrl');
@@ -248,7 +255,7 @@ export default function RegisterPage() {
         } else {
           router.push('/');
         }
-        
+
         toast.success('Регистрацијата е успешна');
       } catch {
         toast.error('Регистрацијата е успешна, но најавата не успеа. Најавете се рачно.');
@@ -264,10 +271,14 @@ export default function RegisterPage() {
 
   return (
     <div className="max-w-md mx-auto mt-6 md:mt-12">
-      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">Регистрација</h1>
+      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+        Регистрација
+      </h1>
       <form onSubmit={handleSubmit} className="card p-6 md:p-8" autoComplete="off">
         <div className="mb-5">
-          <label className="block text-sm font-semibold mb-3 text-primary-400">Тип на корисник</label>
+          <label className="block text-sm font-semibold mb-3 text-primary-400">
+            Тип на корисник
+          </label>
           <div className="flex bg-bg-dark rounded-lg p-1 border-2 border-primary-500/30">
             <button
               type="button"
@@ -291,7 +302,7 @@ export default function RegisterPage() {
             >
               Правно лице
             </button>
-        </div>
+          </div>
         </div>
 
         {formData.type === 'Individual' ? (
@@ -309,14 +320,13 @@ export default function RegisterPage() {
                 placeholder="+38970123456"
                 autoComplete="off"
               />
-              {phoneError && (
-                <p className="mt-1 text-sm text-red-400">{phoneError}</p>
-              )}
+              {phoneError && <p className="mt-1 text-sm text-red-400">{phoneError}</p>}
             </div>
 
             <div className="mb-5">
               <label className="block text-sm font-semibold mb-3 text-primary-400">
-                Достапни месенџери <span className="text-gray-300 text-xs font-normal">(опционално)</span>
+                Достапни месенџери{' '}
+                <span className="text-gray-300 text-xs font-normal">(опционално)</span>
               </label>
               <div className="flex gap-3">
                 <div className="flex items-center gap-2 group">
@@ -327,7 +337,7 @@ export default function RegisterPage() {
                       onChange={(e) => setFormData({ ...formData, viber: e.target.checked })}
                       className="sr-only"
                     />
-                    <div 
+                    <div
                       onClick={(e) => {
                         e.preventDefault();
                         setFormData({ ...formData, viber: !formData.viber });
@@ -350,7 +360,7 @@ export default function RegisterPage() {
                       onChange={(e) => setFormData({ ...formData, whatsapp: e.target.checked })}
                       className="sr-only"
                     />
-                    <div 
+                    <div
                       onClick={(e) => {
                         e.preventDefault();
                         setFormData({ ...formData, whatsapp: !formData.whatsapp });
@@ -373,7 +383,7 @@ export default function RegisterPage() {
                       onChange={(e) => setFormData({ ...formData, telegram: e.target.checked })}
                       className="sr-only"
                     />
-                    <div 
+                    <div
                       onClick={(e) => {
                         e.preventDefault();
                         setFormData({ ...formData, telegram: !formData.telegram });
@@ -404,9 +414,7 @@ export default function RegisterPage() {
                 placeholder="Внесете лозинка"
                 autoComplete="new-password"
               />
-              {passwordError && (
-                <p className="mt-1 text-sm text-red-400">{passwordError}</p>
-              )}
+              {passwordError && <p className="mt-1 text-sm text-red-400">{passwordError}</p>}
             </div>
             <div className="mb-5">
               <label className="block text-sm font-semibold mb-2 text-primary-400">
@@ -457,7 +465,8 @@ export default function RegisterPage() {
                     />
                   </svg>
                   <span className="absolute bottom-full right-0 mb-2 w-64 px-3 py-2 text-xs text-gray-300 bg-bg-darker border border-primary-500/30 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10 shadow-lg">
-                    Ако е наведена и пошта, најавата може да се изврши и по број на телефон и по пошта
+                    Ако е наведена и пошта, најавата може да се изврши и по број на телефон и по
+                    пошта
                   </span>
                 </span>
               </label>
@@ -469,9 +478,7 @@ export default function RegisterPage() {
                 placeholder="example@email.com"
                 autoComplete="off"
               />
-              {emailError && (
-                <p className="mt-1 text-sm text-red-400">{emailError}</p>
-              )}
+              {emailError && <p className="mt-1 text-sm text-red-400">{emailError}</p>}
             </div>
 
             {formData.email && (
@@ -481,13 +488,18 @@ export default function RegisterPage() {
                     <input
                       type="checkbox"
                       checked={formData.emailNotifications}
-                      onChange={(e) => setFormData({ ...formData, emailNotifications: e.target.checked })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, emailNotifications: e.target.checked })
+                      }
                       className="sr-only"
                     />
-                    <div 
+                    <div
                       onClick={(e) => {
                         e.preventDefault();
-                        setFormData({ ...formData, emailNotifications: !formData.emailNotifications });
+                        setFormData({
+                          ...formData,
+                          emailNotifications: !formData.emailNotifications,
+                        });
                       }}
                       className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
                         formData.emailNotifications
@@ -496,14 +508,26 @@ export default function RegisterPage() {
                       }`}
                     >
                       {formData.emailNotifications && (
-                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        <svg
+                          className="w-3 h-3 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={3}
+                            d="M5 13l4 4L19 7"
+                          />
                         </svg>
                       )}
                     </div>
                   </div>
-                  <span 
-                    onClick={() => setFormData({ ...formData, emailNotifications: !formData.emailNotifications })}
+                  <span
+                    onClick={() =>
+                      setFormData({ ...formData, emailNotifications: !formData.emailNotifications })
+                    }
                     className="text-sm text-white cursor-pointer"
                   >
                     Примам рассулка на вести и известувања на пошта
@@ -514,20 +538,20 @@ export default function RegisterPage() {
           </>
         ) : (
           <>
-          <div className="mb-5">
+            <div className="mb-5">
               <label className="block text-sm font-semibold mb-2 text-primary-400">
                 Име на компанија <span className="text-red-400">*</span>
               </label>
-            <input
-              type="text"
+              <input
+                type="text"
                 required
-              value={formData.companyName}
-              onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-              className="input-field"
-              placeholder="Име на компанијата"
+                value={formData.companyName}
+                onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                className="input-field"
+                placeholder="Име на компанијата"
                 autoComplete="off"
-            />
-          </div>
+              />
+            </div>
 
             <div className="mb-5">
               <label className="block text-sm font-semibold mb-2 text-primary-400">
@@ -542,38 +566,33 @@ export default function RegisterPage() {
                 placeholder="example@company.com"
                 autoComplete="off"
               />
-              {emailError && (
-                <p className="mt-1 text-sm text-red-400">{emailError}</p>
-              )}
+              {emailError && <p className="mt-1 text-sm text-red-400">{emailError}</p>}
               <p className="mt-1 text-xs text-gray-300">
                 Корпоративна пошта на која примате работни писма
               </p>
-        </div>
+            </div>
 
             <div className="mb-5">
               <label className="block text-sm font-semibold mb-2 text-primary-400">
                 Телефон <span className="text-red-400">*</span>
               </label>
-          <input
-            type="tel"
+              <input
+                type="tel"
                 required
-            value={formData.phone}
+                value={formData.phone}
                 onChange={handlePhoneChange}
                 className={`input-field ${phoneError ? 'border-red-500' : ''}`}
                 placeholder="+38970123456"
                 autoComplete="off"
               />
-              {phoneError && (
-                <p className="mt-1 text-sm text-red-400">{phoneError}</p>
-              )}
-              <p className="mt-1 text-xs text-gray-300">
-                Работен телефон на кој работите
-              </p>
+              {phoneError && <p className="mt-1 text-sm text-red-400">{phoneError}</p>}
+              <p className="mt-1 text-xs text-gray-300">Работен телефон на кој работите</p>
             </div>
 
             <div className="mb-5">
               <label className="block text-sm font-semibold mb-3 text-primary-400">
-                Достапни месенџери <span className="text-gray-300 text-xs font-normal">(опционално)</span>
+                Достапни месенџери{' '}
+                <span className="text-gray-300 text-xs font-normal">(опционално)</span>
               </label>
               <div className="flex gap-3">
                 <div className="flex items-center gap-2 group">
@@ -584,7 +603,7 @@ export default function RegisterPage() {
                       onChange={(e) => setFormData({ ...formData, viber: e.target.checked })}
                       className="sr-only"
                     />
-                    <div 
+                    <div
                       onClick={(e) => {
                         e.preventDefault();
                         setFormData({ ...formData, viber: !formData.viber });
@@ -607,7 +626,7 @@ export default function RegisterPage() {
                       onChange={(e) => setFormData({ ...formData, whatsapp: e.target.checked })}
                       className="sr-only"
                     />
-                    <div 
+                    <div
                       onClick={(e) => {
                         e.preventDefault();
                         setFormData({ ...formData, whatsapp: !formData.whatsapp });
@@ -630,7 +649,7 @@ export default function RegisterPage() {
                       onChange={(e) => setFormData({ ...formData, telegram: e.target.checked })}
                       className="sr-only"
                     />
-                    <div 
+                    <div
                       onClick={(e) => {
                         e.preventDefault();
                         setFormData({ ...formData, telegram: !formData.telegram });
@@ -661,9 +680,7 @@ export default function RegisterPage() {
                 placeholder="Внесете лозинка"
                 autoComplete="new-password"
               />
-              {passwordError && (
-                <p className="mt-1 text-sm text-red-400">{passwordError}</p>
-              )}
+              {passwordError && <p className="mt-1 text-sm text-red-400">{passwordError}</p>}
             </div>
 
             <div className="mb-5">
@@ -672,13 +689,18 @@ export default function RegisterPage() {
                   <input
                     type="checkbox"
                     checked={formData.emailNotifications}
-                    onChange={(e) => setFormData({ ...formData, emailNotifications: e.target.checked })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, emailNotifications: e.target.checked })
+                    }
                     className="sr-only"
                   />
-                  <div 
+                  <div
                     onClick={(e) => {
                       e.preventDefault();
-                      setFormData({ ...formData, emailNotifications: !formData.emailNotifications });
+                      setFormData({
+                        ...formData,
+                        emailNotifications: !formData.emailNotifications,
+                      });
                     }}
                     className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
                       formData.emailNotifications
@@ -687,14 +709,26 @@ export default function RegisterPage() {
                     }`}
                   >
                     {formData.emailNotifications && (
-                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      <svg
+                        className="w-3 h-3 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={3}
+                          d="M5 13l4 4L19 7"
+                        />
                       </svg>
                     )}
                   </div>
                 </div>
-                <span 
-                  onClick={() => setFormData({ ...formData, emailNotifications: !formData.emailNotifications })}
+                <span
+                  onClick={() =>
+                    setFormData({ ...formData, emailNotifications: !formData.emailNotifications })
+                  }
                   className="text-sm text-white cursor-pointer"
                 >
                   Примам рассулка на вести и известувања на пошта
@@ -714,7 +748,7 @@ export default function RegisterPage() {
                 className="sr-only"
                 required
               />
-              <div 
+              <div
                 onClick={(e) => {
                   e.preventDefault();
                   setFormData({ ...formData, termsAccepted: !formData.termsAccepted });
@@ -726,19 +760,29 @@ export default function RegisterPage() {
                 }`}
               >
                 {formData.termsAccepted && (
-                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  <svg
+                    className="w-3 h-3 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={3}
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                 )}
               </div>
             </div>
-            <span 
+            <span
               onClick={() => setFormData({ ...formData, termsAccepted: !formData.termsAccepted })}
               className="text-sm text-white cursor-pointer leading-relaxed"
             >
               Се согласувам со{' '}
-              <Link 
-                href="/terms" 
+              <Link
+                href="/terms"
                 target="_blank"
                 onClick={(e) => e.stopPropagation()}
                 className="text-primary-400 hover:text-primary-300 underline font-semibold"
@@ -760,7 +804,10 @@ export default function RegisterPage() {
 
         <p className="mt-6 text-center text-sm text-gray-300">
           Веќе имате сметка?{' '}
-          <a href="/login" className="text-primary-500 font-semibold hover:text-primary-400 hover:underline transition-colors">
+          <a
+            href="/login"
+            className="text-primary-500 font-semibold hover:text-primary-400 hover:underline transition-colors"
+          >
             Најави се
           </a>
         </p>
@@ -768,4 +815,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-

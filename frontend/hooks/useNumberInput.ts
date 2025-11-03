@@ -42,10 +42,7 @@ export function useNumberInput() {
     }
   };
 
-  const handleYearBlur = (
-    value: string,
-    onChange: (value: string) => void
-  ) => {
+  const handleYearBlur = (value: string, onChange: (value: string) => void) => {
     if (value === '') {
       return;
     }

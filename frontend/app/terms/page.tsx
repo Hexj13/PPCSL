@@ -12,16 +12,50 @@ const terms = {
     dictionary: {
       title: 'Речник на поими',
       terms: [
-        { term: 'Платформа', definition: 'Веб-сајтот и апликацијата Kupito која овозможува објавување и прегледување на огласи за продажба на автомобили.' },
-        { term: 'Корисник', definition: 'Лице кое користи Платформата, вклучувајќи ги регистрираните корисници и посетителите.' },
-        { term: 'Регистриран корисник', definition: 'Корисник кој создал профил на Платформата со валидна е-пошта и лозинка.' },
-        { term: 'Оглас', definition: 'Публикација на Платформата која содржи информации за автомобил на продажба.' },
-        { term: 'Автомобил', definition: 'Моторно возило кое е предмет на продажба и кое е објавено на Платформата.' },
-        { term: 'Продавач', definition: 'Лице или правно лице кое објавува оглас за продажба на автомобил на Платформата.' },
-        { term: 'Купач', definition: 'Лице кое е заинтересирано за купување на автомобил објавен на Платформата.' },
-        { term: 'Трансакција', definition: 'Процес на купување/продавање на автомобил меѓу Продавачот и Купачот.' },
-        { term: 'Лични податоци', definition: 'Сите информации кои се однесуваат на идентификувано или идентификувано природно лице.' },
-        { term: 'Правила за користење', definition: 'Оваа документ и сите поврзани политики и правила на Платформата.' },
+        {
+          term: 'Платформа',
+          definition:
+            'Веб-сајтот и апликацијата Kupito која овозможува објавување и прегледување на огласи за продажба на автомобили.',
+        },
+        {
+          term: 'Корисник',
+          definition:
+            'Лице кое користи Платформата, вклучувајќи ги регистрираните корисници и посетителите.',
+        },
+        {
+          term: 'Регистриран корисник',
+          definition: 'Корисник кој создал профил на Платформата со валидна е-пошта и лозинка.',
+        },
+        {
+          term: 'Оглас',
+          definition: 'Публикација на Платформата која содржи информации за автомобил на продажба.',
+        },
+        {
+          term: 'Автомобил',
+          definition: 'Моторно возило кое е предмет на продажба и кое е објавено на Платформата.',
+        },
+        {
+          term: 'Продавач',
+          definition:
+            'Лице или правно лице кое објавува оглас за продажба на автомобил на Платформата.',
+        },
+        {
+          term: 'Купач',
+          definition: 'Лице кое е заинтересирано за купување на автомобил објавен на Платформата.',
+        },
+        {
+          term: 'Трансакција',
+          definition: 'Процес на купување/продавање на автомобил меѓу Продавачот и Купачот.',
+        },
+        {
+          term: 'Лични податоци',
+          definition:
+            'Сите информации кои се однесуваат на идентификувано или идентификувано природно лице.',
+        },
+        {
+          term: 'Правила за користење',
+          definition: 'Оваа документ и сите поврзани политики и правила на Платформата.',
+        },
       ],
     },
     toc: {
@@ -203,16 +237,51 @@ const terms = {
     dictionary: {
       title: 'Glossary of Terms',
       terms: [
-        { term: 'Platform', definition: 'The Kupito website and application that enables posting and viewing of listings for the sale of vehicles.' },
-        { term: 'User', definition: 'Any person using the Platform, including registered users and visitors.' },
-        { term: 'Registered User', definition: 'A user who has created a profile on the Platform with a valid email address and password.' },
-        { term: 'Listing', definition: 'A publication on the Platform containing information about a vehicle for sale.' },
-        { term: 'Vehicle', definition: 'A motor vehicle that is the subject of sale and is published on the Platform.' },
-        { term: 'Seller', definition: 'A natural or legal person who posts a listing for the sale of a vehicle on the Platform.' },
-        { term: 'Buyer', definition: 'A person interested in purchasing a vehicle listed on the Platform.' },
-        { term: 'Transaction', definition: 'The process of buying/selling a vehicle between the Seller and the Buyer.' },
-        { term: 'Personal Data', definition: 'All information relating to an identified or identifiable natural person.' },
-        { term: 'Terms of Use', definition: 'This document and all related policies and rules of the Platform.' },
+        {
+          term: 'Platform',
+          definition:
+            'The Kupito website and application that enables posting and viewing of listings for the sale of vehicles.',
+        },
+        {
+          term: 'User',
+          definition: 'Any person using the Platform, including registered users and visitors.',
+        },
+        {
+          term: 'Registered User',
+          definition:
+            'A user who has created a profile on the Platform with a valid email address and password.',
+        },
+        {
+          term: 'Listing',
+          definition:
+            'A publication on the Platform containing information about a vehicle for sale.',
+        },
+        {
+          term: 'Vehicle',
+          definition:
+            'A motor vehicle that is the subject of sale and is published on the Platform.',
+        },
+        {
+          term: 'Seller',
+          definition:
+            'A natural or legal person who posts a listing for the sale of a vehicle on the Platform.',
+        },
+        {
+          term: 'Buyer',
+          definition: 'A person interested in purchasing a vehicle listed on the Platform.',
+        },
+        {
+          term: 'Transaction',
+          definition: 'The process of buying/selling a vehicle between the Seller and the Buyer.',
+        },
+        {
+          term: 'Personal Data',
+          definition: 'All information relating to an identified or identifiable natural person.',
+        },
+        {
+          term: 'Terms of Use',
+          definition: 'This document and all related policies and rules of the Platform.',
+        },
       ],
     },
     toc: {
@@ -265,7 +334,7 @@ const terms = {
           '• Maintain the security of your password',
           '• Take responsibility for managing your account and all activities on your account',
           '• Immediately notify Kupito of any unauthorized use of your account',
-          'Each user may have only one active account. It is prohibited to use another user\'s account or to allow another user to use your account.',
+          "Each user may have only one active account. It is prohibited to use another user's account or to allow another user to use your account.",
           'Kupito reserves the right to suspend or close an account that violates these Terms or is used in an inappropriate manner.',
         ],
       },
@@ -295,7 +364,7 @@ const terms = {
           '• Verifying the identity and credibility of other users',
           'Kupito is not responsible for:',
           '• The quality, safety, or legality of vehicles listed on the Platform',
-          '• Users\' ability to complete a transaction',
+          "• Users' ability to complete a transaction",
           '• The accuracy of information provided by users',
           '• Any complaints, damages, or losses resulting from the use of the Platform or a transaction',
         ],
@@ -315,7 +384,7 @@ const terms = {
         content: [
           'Kupito collects and processes personal data in accordance with its Privacy Policy, which is an integral part of these Terms.',
           'By using the Platform, you agree to the collection, processing, and use of your personal data as described in the Privacy Policy.',
-          'Kupito protects users\' personal data in accordance with the Personal Data Protection Law of the Republic of North Macedonia and the General Data Protection Regulation (GDPR).',
+          "Kupito protects users' personal data in accordance with the Personal Data Protection Law of the Republic of North Macedonia and the General Data Protection Regulation (GDPR).",
         ],
       },
       {
@@ -372,7 +441,7 @@ const terms = {
         title: '13. Miscellaneous Provisions',
         content: [
           'If any part of these Terms is found to be invalid or unenforceable, the remainder of the Terms will remain in effect.',
-          'Kupito\'s failure to enforce any right or provision of these Terms does not constitute a waiver of that right.',
+          "Kupito's failure to enforce any right or provision of these Terms does not constitute a waiver of that right.",
           'These Terms constitute the entire agreement between you and Kupito regarding the use of the Platform.',
         ],
       },
@@ -425,7 +494,9 @@ export default function TermsPage() {
       </p>
 
       <div className="bg-bg-light rounded-xl p-6 md:p-8 mb-8 border border-primary-500/20">
-        <h2 className="text-2xl font-bold mb-4 text-primary-400">{currentTerms.dictionary.title}</h2>
+        <h2 className="text-2xl font-bold mb-4 text-primary-400">
+          {currentTerms.dictionary.title}
+        </h2>
         <div className="space-y-4">
           {currentTerms.dictionary.terms.map((item, index) => (
             <div key={index} className="border-b border-primary-500/10 pb-4 last:border-b-0">
@@ -458,7 +529,9 @@ export default function TermsPage() {
             id={section.id}
             className="bg-bg-light rounded-xl p-6 md:p-8 border border-primary-500/20 scroll-mt-20"
           >
-            <h2 className="text-2xl md:text-3xl font-bold mb-4 text-primary-400">{section.title}</h2>
+            <h2 className="text-2xl md:text-3xl font-bold mb-4 text-primary-400">
+              {section.title}
+            </h2>
             <div className="space-y-4">
               {section.content.map((paragraph, index) => (
                 <p key={index} className="text-gray-300 leading-relaxed text-base md:text-lg">
@@ -480,4 +553,3 @@ export default function TermsPage() {
     </div>
   );
 }
-

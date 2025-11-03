@@ -24,7 +24,7 @@ export default function NewListingPage() {
       router.push('/login');
       return;
     }
-    
+
     if (isInitialized && user) {
       brandsApi.getAll().then((res) => {
         const sorted = [...res.data].sort((a, b) => a.name.localeCompare(b.name, 'mk'));
@@ -208,11 +208,24 @@ export default function NewListingPage() {
           brand_id: formData.vehicle.brand_id,
           model_id: formData.vehicle.model_id,
           year: parseInt(formData.vehicle.year),
-          engine_displ_l: formData.vehicle.engine_displ_l ? parseFloat(formData.vehicle.engine_displ_l) : undefined,
-          mileage_km: formData.vehicle.mileage_km ? parseInt(formData.vehicle.mileage_km) : undefined,
+          engine_displ_l: formData.vehicle.engine_displ_l
+            ? parseFloat(formData.vehicle.engine_displ_l)
+            : undefined,
+          mileage_km: formData.vehicle.mileage_km
+            ? parseInt(formData.vehicle.mileage_km)
+            : undefined,
           fuel: formData.vehicle.fuel || undefined,
           transmission: formData.vehicle.transmission || undefined,
-          body_type: formData.vehicle.body_type as 'Sedan' | 'Hatchback' | 'Wagon' | 'SUV' | 'Coupe' | 'Convertible' | 'Van' | 'Pickup' | 'Minivan',
+          body_type: formData.vehicle.body_type as
+            | 'Sedan'
+            | 'Hatchback'
+            | 'Wagon'
+            | 'SUV'
+            | 'Coupe'
+            | 'Convertible'
+            | 'Van'
+            | 'Pickup'
+            | 'Minivan',
           color: formData.vehicle.color || undefined,
           doors: formData.vehicle.doors ? parseInt(formData.vehicle.doors) : undefined,
         },
@@ -242,9 +255,10 @@ export default function NewListingPage() {
 
   return (
     <div className="max-w-4xl mx-auto mt-6 md:mt-12">
-      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">Додади објава</h1>
+      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+        Додади објава
+      </h1>
       <form onSubmit={handleSubmit} className="card p-4 md:p-6 lg:p-8">
-        
         <div className="mb-6">
           <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">Основна информација</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
@@ -333,10 +347,14 @@ export default function NewListingPage() {
                       />
                     </svg>
                   </button>
-                  <div className={`absolute right-0 bottom-full mb-2 ${showVinHint ? 'block' : 'hidden group-hover:block'} z-10 w-64`}>
+                  <div
+                    className={`absolute right-0 bottom-full mb-2 ${showVinHint ? 'block' : 'hidden group-hover:block'} z-10 w-64`}
+                  >
                     <div className="bg-bg-darker border-2 border-primary-500/50 rounded-lg p-3 shadow-lg">
                       <p className="text-xs text-gray-300 leading-relaxed">
-                        VIN кодот се користи за креирање на историја на возилото на веб-страницата. Во историјата не се чуваат персональни податоци, туку само историјата на возилото
+                        VIN кодот се користи за креирање на историја на возилото на веб-страницата.
+                        Во историјата не се чуваат персональни податоци, туку само историјата на
+                        возилото
                       </p>
                       <div className="absolute right-4 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-primary-500/50"></div>
                     </div>
@@ -368,10 +386,14 @@ export default function NewListingPage() {
         </div>
 
         <div className="border-t border-primary-500/20 pt-6 mb-6">
-          <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">Технички карактеристики</h2>
+          <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">
+            Технички карактеристики
+          </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
             <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400">Запремина на моторот (л) *</label>
+              <label className="block text-sm font-semibold mb-2 text-primary-400">
+                Запремина на моторот (л) *
+              </label>
               <input
                 type="text"
                 required
@@ -423,7 +445,9 @@ export default function NewListingPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400">Поминување (км) *</label>
+              <label className="block text-sm font-semibold mb-2 text-primary-400">
+                Поминување (км) *
+              </label>
               <input
                 type="number"
                 required
@@ -490,7 +514,9 @@ export default function NewListingPage() {
           <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">Надворешен изглед</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400">Тип на каросерија *</label>
+              <label className="block text-sm font-semibold mb-2 text-primary-400">
+                Тип на каросерија *
+              </label>
               <Dropdown
                 value={formData.vehicle.body_type}
                 onChange={(value) =>
@@ -563,7 +589,9 @@ export default function NewListingPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-5">
             <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400">Број на врати</label>
+              <label className="block text-sm font-semibold mb-2 text-primary-400">
+                Број на врати
+              </label>
               <Dropdown
                 value={formData.vehicle.doors}
                 onChange={(value) =>
@@ -605,7 +633,9 @@ export default function NewListingPage() {
                 />
                 <Dropdown
                   value={formData.currency}
-                  onChange={(value) => setFormData({ ...formData, currency: value as 'MKD' | 'EUR' })}
+                  onChange={(value) =>
+                    setFormData({ ...formData, currency: value as 'MKD' | 'EUR' })
+                  }
                   className="w-32 flex-shrink-0"
                   options={[
                     { value: 'MKD', label: 'MKD' },
@@ -624,7 +654,10 @@ export default function NewListingPage() {
                 placeholder="Изберете град"
                 options={[
                   { value: '', label: 'Изберете град' },
-                  ...cities.map((city) => ({ value: city.nameEn, label: `${city.name} (${city.nameEn})` })),
+                  ...cities.map((city) => ({
+                    value: city.nameEn,
+                    label: `${city.name} (${city.nameEn})`,
+                  })),
                 ]}
               />
             </div>
@@ -632,7 +665,9 @@ export default function NewListingPage() {
         </div>
 
         <div className="border-t border-primary-500/20 pt-6 mb-6">
-          <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">Дополнителна информација</h2>
+          <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">
+            Дополнителна информација
+          </h2>
           <div className="mb-5">
             <label className="block text-sm font-semibold mb-2 text-primary-400">Опис</label>
             <RichTextEditor
@@ -653,7 +688,7 @@ export default function NewListingPage() {
                   onChange={(e) => setFormData({ ...formData, urgent: e.target.checked })}
                   className="sr-only"
                 />
-                <div 
+                <div
                   onClick={(e) => {
                     e.preventDefault();
                     setFormData({ ...formData, urgent: !formData.urgent });
@@ -665,15 +700,29 @@ export default function NewListingPage() {
                   }`}
                 >
                   {formData.urgent && (
-                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    <svg
+                      className="w-3 h-3 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={3}
+                        d="M5 13l4 4L19 7"
+                      />
                     </svg>
                   )}
                 </div>
               </div>
-              <span className={`text-sm font-semibold transition-colors duration-200 flex items-center gap-2 ${
-                formData.urgent ? 'text-primary-400' : 'text-primary-400/70 group-hover:text-primary-400'
-              }`}>
+              <span
+                className={`text-sm font-semibold transition-colors duration-200 flex items-center gap-2 ${
+                  formData.urgent
+                    ? 'text-primary-400'
+                    : 'text-primary-400/70 group-hover:text-primary-400'
+                }`}
+              >
                 <span>🔥</span>
                 <span>Итно</span>
               </span>
@@ -683,8 +732,12 @@ export default function NewListingPage() {
 
         <div className="border-t border-primary-500/20 pt-6 mb-6">
           <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">Фотографии</h2>
-          <label className="block text-sm font-semibold mb-2 text-primary-400">Фотографии на автомобилот *</label>
-          <p className="text-sm text-gray-400 mb-3">Потребно е да вчитате минимум 2 фотографии (максимум 20)</p>
+          <label className="block text-sm font-semibold mb-2 text-primary-400">
+            Фотографии на автомобилот *
+          </label>
+          <p className="text-sm text-gray-400 mb-3">
+            Потребно е да вчитате минимум 2 фотографии (максимум 20)
+          </p>
           <input
             type="file"
             accept="image/*"
@@ -731,14 +784,21 @@ export default function NewListingPage() {
             </div>
           )}
           <p className="mt-2 text-sm text-gray-400">
-            Вчитано: {formData.images.length}/20 {formData.images.length < 2 && <span className="text-red-400">(потребно минимум 2)</span>}
+            Вчитано: {formData.images.length}/20{' '}
+            {formData.images.length < 2 && (
+              <span className="text-red-400">(потребно минимум 2)</span>
+            )}
           </p>
         </div>
 
         <div className="border-t border-primary-500/20 pt-6 mb-6">
-          <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">Нагодувања на објавата</h2>
+          <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">
+            Нагодувања на објавата
+          </h2>
           <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400">Статус на објавата *</label>
+            <label className="block text-sm font-semibold mb-2 text-primary-400">
+              Статус на објавата *
+            </label>
             <Dropdown
               value={formData.status}
               onChange={(value) =>
@@ -751,7 +811,8 @@ export default function NewListingPage() {
             />
             <p className="mt-2 text-sm text-gray-400">
               {formData.status === 'Active' && 'Објавата веднаш ќе биде видлива за сите корисници'}
-              {formData.status === 'Paused' && 'Објавата ќе биде скриена, но можете да ја објавите подоцна'}
+              {formData.status === 'Paused' &&
+                'Објавата ќе биде скриена, но можете да ја објавите подоцна'}
             </p>
           </div>
         </div>

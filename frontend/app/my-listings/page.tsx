@@ -6,7 +6,13 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { listingsApi, Listing } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
-import { formatPrice, formatEngineVolume, formatMileage, formatTransmission, formatBodyType } from '@/lib/utils';
+import {
+  formatPrice,
+  formatEngineVolume,
+  formatMileage,
+  formatTransmission,
+  formatBodyType,
+} from '@/lib/utils';
 import toast from 'react-hot-toast';
 
 export default function MyListingsPage() {
@@ -19,7 +25,7 @@ export default function MyListingsPage() {
 
   useEffect(() => {
     if (!isInitialized) return;
-    
+
     if (!user) {
       router.push('/login');
       return;
@@ -30,8 +36,7 @@ export default function MyListingsPage() {
       .then((res) => {
         setListings(res.data);
       })
-      .catch(() => {
-      })
+      .catch(() => {})
       .finally(() => setLoading(false));
 
     const lastRefreshKey = `lastRefreshDate_${user.id}`;
@@ -41,7 +46,7 @@ export default function MyListingsPage() {
       const now = Date.now();
       const twoDays = 48 * 60 * 60 * 1000;
       const timePassed = now - lastRefresh;
-      
+
       if (timePassed < twoDays) {
         const remaining = twoDays - timePassed;
         setTimeUntilRefresh(remaining);
@@ -82,8 +87,7 @@ export default function MyListingsPage() {
       }
       const res = await listingsApi.getMy();
       setListings(res.data);
-    } catch {
-    }
+    } catch {}
   };
 
   const handleRefreshDates = async () => {
@@ -96,7 +100,7 @@ export default function MyListingsPage() {
     try {
       const res = await listingsApi.refreshDates();
       toast.success(`Датите се ажурирани за ${res.data.updated} објави`);
-      
+
       const lastRefreshKey = `lastRefreshDate_${user?.id}`;
       localStorage.setItem(lastRefreshKey, Date.now().toString());
       setTimeUntilRefresh(48 * 60 * 60 * 1000);
@@ -141,7 +145,9 @@ export default function MyListingsPage() {
   return (
     <div>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
-        <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">Мои објави</h1>
+        <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+          Мои објави
+        </h1>
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <button
             onClick={handleRefreshDates}
@@ -165,21 +171,19 @@ export default function MyListingsPage() {
       {listings.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-300 text-lg mb-4">Сè уште немате објави</p>
-          <a
-            href="/listings/new"
-            className="btn-primary inline-block"
-          >
+          <a href="/listings/new" className="btn-primary inline-block">
             Креирај објава
           </a>
         </div>
       ) : (
         <div className="space-y-4">
           {listings.map((listing) => {
-            const imageUrl = listing.images && listing.images.length > 0 && listing.images[0] 
-              ? listing.images[0] 
-              : '/placeholder-car.jpg';
+            const imageUrl =
+              listing.images && listing.images.length > 0 && listing.images[0]
+                ? listing.images[0]
+                : '/placeholder-car.jpg';
             const hasImage = imageUrl && imageUrl !== '/placeholder-car.jpg';
-            
+
             return (
               <div key={listing.id} className="card overflow-hidden">
                 <div className="grid grid-cols-1 md:grid-cols-[350px_1fr] gap-0 md:gap-6 md:items-stretch">
@@ -217,22 +221,26 @@ export default function MyListingsPage() {
                     <div className="mb-3">
                       <div className="flex items-start justify-between gap-4">
                         <Link href={`/listings/${listing.id}`} className="flex-1">
-                          <h3 className="font-bold text-lg md:text-xl mb-1.5 hover:text-primary-600 transition-colors line-clamp-2">{listing.title}</h3>
+                          <h3 className="font-bold text-lg md:text-xl mb-1.5 hover:text-primary-600 transition-colors line-clamp-2">
+                            {listing.title}
+                          </h3>
                         </Link>
                         <div className="bg-bg-dark/95 backdrop-blur-sm px-2 py-2 rounded-lg border border-primary-500/30 inline-flex items-center gap-1.5 flex-shrink-0">
                           <div className="text-xs font-semibold text-gray-200">Статус:</div>
-                          <div className={
-                            listing.status === 'Active'
-                              ? 'text-green-400 font-bold text-sm'
-                              : listing.status === 'Paused'
-                              ? 'text-yellow-400 font-bold text-sm'
-                              : 'text-gray-200 font-bold text-sm'
-                          }>
+                          <div
+                            className={
+                              listing.status === 'Active'
+                                ? 'text-green-400 font-bold text-sm'
+                                : listing.status === 'Paused'
+                                  ? 'text-yellow-400 font-bold text-sm'
+                                  : 'text-gray-200 font-bold text-sm'
+                            }
+                          >
                             {listing.status === 'Active'
                               ? 'Активна'
                               : listing.status === 'Paused'
-                              ? 'Привремено застарена'
-                              : 'Затворена'}
+                                ? 'Привремено застарена'
+                                : 'Затворена'}
                           </div>
                         </div>
                       </div>
@@ -241,7 +249,9 @@ export default function MyListingsPage() {
                           <span className="text-2xl md:text-3xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
                             {formatPrice(listing.price, listing.currency)}
                           </span>
-                          <span className="text-sm text-gray-200 font-medium">{listing.currency}</span>
+                          <span className="text-sm text-gray-200 font-medium">
+                            {listing.currency}
+                          </span>
                         </div>
                         {listing.urgent && (
                           <div className="mt-1.5">
@@ -259,43 +269,57 @@ export default function MyListingsPage() {
                           {listing.vehicle.engine_displ_l && (
                             <div>
                               <span className="text-primary-400">Мотор (л):</span>
-                              <span className="ml-2 font-medium text-gray-200">{formatEngineVolume(listing.vehicle.engine_displ_l)}</span>
+                              <span className="ml-2 font-medium text-gray-200">
+                                {formatEngineVolume(listing.vehicle.engine_displ_l)}
+                              </span>
                             </div>
                           )}
                           {listing.vehicle.mileage_km && (
                             <div>
                               <span className="text-primary-400">Поминување:</span>
-                              <span className="ml-2 font-medium text-gray-200">{formatMileage(listing.vehicle.mileage_km)} км</span>
+                              <span className="ml-2 font-medium text-gray-200">
+                                {formatMileage(listing.vehicle.mileage_km)} км
+                              </span>
                             </div>
                           )}
                           {listing.vehicle.fuel && (
                             <div>
                               <span className="text-primary-400">Гориво:</span>
-                              <span className="ml-2 font-medium text-gray-200">{listing.vehicle.fuel}</span>
+                              <span className="ml-2 font-medium text-gray-200">
+                                {listing.vehicle.fuel}
+                              </span>
                             </div>
                           )}
                           {listing.vehicle.transmission && (
                             <div>
                               <span className="text-primary-400">Пренос:</span>
-                              <span className="ml-2 font-medium text-gray-200">{formatTransmission(listing.vehicle.transmission)}</span>
+                              <span className="ml-2 font-medium text-gray-200">
+                                {formatTransmission(listing.vehicle.transmission)}
+                              </span>
                             </div>
                           )}
                           {listing.vehicle.body_type && (
                             <div>
                               <span className="text-primary-400">Тип:</span>
-                              <span className="ml-2 font-medium text-gray-200">{formatBodyType(listing.vehicle.body_type)}</span>
+                              <span className="ml-2 font-medium text-gray-200">
+                                {formatBodyType(listing.vehicle.body_type)}
+                              </span>
                             </div>
                           )}
                           {listing.vehicle.color && (
                             <div>
                               <span className="text-primary-400">Боја:</span>
-                              <span className="ml-2 font-medium text-gray-200">{listing.vehicle.color}</span>
+                              <span className="ml-2 font-medium text-gray-200">
+                                {listing.vehicle.color}
+                              </span>
                             </div>
                           )}
                           {listing.vehicle.doors && (
                             <div>
                               <span className="text-primary-400">Врати:</span>
-                              <span className="ml-2 font-medium text-gray-200">{listing.vehicle.doors}</span>
+                              <span className="ml-2 font-medium text-gray-200">
+                                {listing.vehicle.doors}
+                              </span>
                             </div>
                           )}
                         </div>
@@ -342,4 +366,3 @@ export default function MyListingsPage() {
     </div>
   );
 }
-

@@ -1,13 +1,13 @@
-import { Suspense } from 'react'
-import { ListingGrid } from '@/components/ListingGrid'
-import { SearchFilters } from '@/components/SearchFilters'
+import { Suspense } from 'react';
+import { ListingGrid } from '@/components/ListingGrid';
+import { SearchFilters } from '@/components/SearchFilters';
 
 function ListingGridWrapper() {
   return (
     <Suspense fallback={<div className="text-center py-12 text-gray-300">Вчитување...</div>}>
       <ListingGrid />
     </Suspense>
-  )
+  );
 }
 
 export default function Home() {
@@ -34,6 +34,5 @@ export default function Home() {
 
       <ListingGridWrapper />
     </div>
-  )
+  );
 }
-
