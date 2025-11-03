@@ -152,7 +152,7 @@ describe('AuthService', () => {
       };
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...userWithoutPassword } = createdUser;
-      usersService.create.mockResolvedValue(createdUser as User);
+      usersService.create.mockResolvedValue(createdUser as unknown as User);
 
       const result = await service.register(registerDto);
 
