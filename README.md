@@ -2,31 +2,36 @@
 
 Platform for selling new and used cars in North Macedonia.
 
-## Technologies
+## Quick Start
 
-- **Frontend:** Next.js 14, React, TailwindCSS, Zustand
-- **Backend:** NestJS, PostgreSQL, TypeORM, Redis
-- **Storage:** S3-compatible storage (for future implementation)
+```bash
+npm run install:all          # Install dependencies
+docker-compose up -d         # Start database
+cd backend && npm run start:dev  # Start backend (in one terminal)
+cd frontend && npm run dev   # Start frontend (in another terminal)
+```
 
-## Installation
+**Frontend:** http://localhost:3000 | **Backend:** http://localhost:4000
+
+<details>
+<summary><b>📋 Installation Guide</b></summary>
 
 ### Requirements
-
 - Node.js 18+
 - Docker and Docker Compose
 - npm or yarn
 
-### Installation Steps
+### Steps
 
-1. Clone the repository and install dependencies:
+1. **Clone and install dependencies:**
 ```bash
 npm run install:all
 ```
 
-2. Configure environment variables:
+2. **Configure environment variables:**
 
-Create `backend/.env` file (see `ENV_EXAMPLE.md`):
-```
+Create `backend/.env` (see `ENV_EXAMPLE.md`):
+```env
 PORT=4000
 DB_HOST=localhost
 DB_PORT=5432
@@ -38,49 +43,62 @@ FRONTEND_URL=http://localhost:3000
 NODE_ENV=development
 ```
 
-Create `frontend/.env.local` file:
-```
+Create `frontend/.env.local`:
+```env
 NEXT_PUBLIC_API_URL=http://localhost:4000
 ```
 
-3. Start database and Redis:
+3. **Start database:**
 ```bash
 docker-compose up -d
 ```
 
-4. Wait for database startup (about 10 seconds), then create tables:
+4. **Setup database tables:**
 ```bash
 cd backend
 npm run build
 npm run migration:run
 ```
 
-Or if using TypeORM synchronization (in development mode):
+Or use TypeORM sync (development only):
 ```bash
-cd backend
-npm run start:dev
+cd backend && npm run start:dev
 ```
 
-5. Start the project in development mode:
+5. **Start development servers:**
 ```bash
-npm run dev
+npm run dev  # Runs both frontend and backend
 ```
 
-Frontend will be available at http://localhost:3000  
-Backend API will be available at http://localhost:4000
+</details>
 
-## Core Features
+<details>
+<summary><b>🛠 Technologies</b></summary>
+
+- **Frontend:** Next.js 14, React, TailwindCSS, Zustand
+- **Backend:** NestJS, PostgreSQL, TypeORM, Redis
+- **Storage:** S3-compatible storage (planned)
+
+</details>
+
+<details>
+<summary><b>✨ Core Features</b></summary>
 
 - ✅ User registration and authentication (Individual and Business)
 - ✅ Create, edit, and publish listings
-- ✅ Search and filter listings
+- ✅ Extended search and filtering
 - ✅ Listing limits (5 for Individuals, 50 for Business)
 - ✅ Listing statuses (Active, Paused, Closed)
 - ✅ Automatic listing closure after 5 months
 - ✅ Favorites (for authenticated users and guests)
+- ✅ VIN search functionality
+- ✅ Image upload with automatic optimization
 - ✅ Admin panel for management
 
-## Project Structure
+</details>
+
+<details>
+<summary><b>📁 Project Structure</b></summary>
 
 ```
 Kupito/
@@ -99,7 +117,10 @@ Kupito/
 └── docker-compose.yml # Database configuration
 ```
 
-## API Endpoints
+</details>
+
+<details>
+<summary><b>🔌 API Endpoints</b></summary>
 
 ### Authentication
 - `POST /api/auth/register` - Register
@@ -125,6 +146,14 @@ Kupito/
 - `DELETE /api/favorites/:id` - Remove from favorites
 - `GET /api/favorites/check/:id` - Check if listing is in favorites
 
+### Upload
+- `POST /api/upload/image` - Upload image (JWT required)
+
+### Brands & Cities
+- `GET /api/brands` - Get all brands
+- `GET /api/brands/:id/models` - Get models by brand
+- `GET /api/cities` - Get all cities
+
 ### Admin Panel
 - `GET /api/admin/users` - All users list
 - `GET /api/admin/listings` - All listings list
@@ -133,14 +162,25 @@ Kupito/
 - `GET /api/admin/users/:id/listings` - User's listings
 - `PATCH /api/admin/users/:id/toggle-status` - Enable/disable user
 
-## Implementation Features
+</details>
+
+<details>
+<summary><b>⚙️ Implementation Features</b></summary>
 
 - Automatic listing closure after 5 months (cron job runs daily at midnight)
 - Active listing limit validation on publish
 - Favorites stored in localStorage for guests and on server for authenticated users
 - PostgreSQL Full-Text Search for search functionality
+- Image optimization (resize, compress, convert to JPEG)
 - Responsive design with TailwindCSS
+- VIN search with privacy protection
+- Date refresh feature with 48-hour cooldown
 
-## License
+</details>
 
-MIT
+## Documentation
+
+- **[Technical Specification](documentation.md)** - Complete project documentation
+- **[Setup Guide](SETUP.md)** - Detailed setup instructions
+- **[Restart Guide](RESTART.md)** - How to restart the project
+- **[Environment Variables](ENV_EXAMPLE.md)** - Environment configuration
