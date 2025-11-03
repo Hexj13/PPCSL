@@ -1,5 +1,5 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
-import { UserType, UserType as UserTypeEnum } from '../../common/types';
+import { UserType as UserTypeEnum } from '../../common/types';
 
 @Injectable()
 export class AdminGuard implements CanActivate {

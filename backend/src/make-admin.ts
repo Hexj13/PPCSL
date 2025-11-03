@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { AppDataSource } from './data-source';
 import { User } from './users/entities/user.entity';
-import { UserType, UserType as UserTypeEnum } from './common/types';
+import { UserType as UserTypeEnum } from './common/types';
 import * as bcrypt from 'bcrypt';
 
 async function makeAdmin() {

@@ -9,7 +9,7 @@ import {
   MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { FuelType, TransmissionType, BodyType, Currency, SortOrder } from '../../common/types';
+import { FuelType, TransmissionType, BodyType, Currency } from '../../common/types';
 
 export class SearchListingsDto {
   @IsOptional()

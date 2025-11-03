@@ -7,7 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual } from 'typeorm';
 import { Listing } from './entities/listing.entity';
-import { ListingStatus, Currency, ListingStatus as ListingStatusEnum, Currency as CurrencyEnum } from '../common/types';
+import { ListingStatus as ListingStatusEnum, Currency as CurrencyEnum } from '../common/types';
 import { Vehicle } from './entities/vehicle.entity';
 import { UsersService } from '../users/users.service';
 import { BrandsService } from '../brands/brands.service';

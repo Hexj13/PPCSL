@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { AppDataSource } from './data-source';
 import { User } from './users/entities/user.entity';
 import { Listing } from './listings/entities/listing.entity';
-import { ListingStatus, Currency, ListingStatus as ListingStatusEnum } from './common/types';
+import { Currency, ListingStatus as ListingStatusEnum } from './common/types';
 import { Vehicle } from './listings/entities/vehicle.entity';
 import { FuelType, TransmissionType, BodyType } from './common/types';
 import { Brand } from './brands/entities/brand.entity';

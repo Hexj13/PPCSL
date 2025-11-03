@@ -211,7 +211,8 @@ export default function RegisterPage() {
           ...formData,
           companyName: '',
           email: formData.email && formData.email.trim() ? formData.email : '',
-          emailNotifications: formData.email && formData.email.trim() ? formData.emailNotifications : false,
+          emailNotifications:
+            formData.email && formData.email.trim() ? formData.emailNotifications : false,
         };
         await authApi.register(submitData);
       } else {

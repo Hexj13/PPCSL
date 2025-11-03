@@ -16,7 +16,9 @@ import { UserType, UserType as UserTypeEnum } from '../../common/types';
 export class RegisterDto {
   @ValidateIf((o) => o.type === UserTypeEnum.Business)
   @IsNotEmpty({ message: 'Email е задолжителен за правно лице' })
-  @ValidateIf((o) => o.type === UserTypeEnum.Business || (o.type === UserTypeEnum.Individual && o.email))
+  @ValidateIf(
+    (o) => o.type === UserTypeEnum.Business || (o.type === UserTypeEnum.Individual && o.email),
+  )
   @IsEmail({}, { message: 'Невалидна email адреса' })
   email?: string;
 

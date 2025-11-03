@@ -87,7 +87,13 @@ export function ListingGrid() {
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && !loadingMore && meta && meta.totalPages && currentPage < meta.totalPages) {
+        if (
+          entries[0].isIntersecting &&
+          !loadingMore &&
+          meta &&
+          meta.totalPages &&
+          currentPage < meta.totalPages
+        ) {
           const nextPage = currentPage + 1;
           setCurrentPage(nextPage);
           fetchListings(nextPage, true);

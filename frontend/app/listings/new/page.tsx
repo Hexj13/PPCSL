@@ -665,9 +665,7 @@ export default function NewListingPage() {
                 />
                 <Dropdown
                   value={formData.currency}
-                  onChange={(value) =>
-                    setFormData({ ...formData, currency: value as Currency })
-                  }
+                  onChange={(value) => setFormData({ ...formData, currency: value as Currency })}
                   className="w-32 flex-shrink-0"
                   options={[
                     { value: CurrencyEnum.MKD, label: 'MKD' },
