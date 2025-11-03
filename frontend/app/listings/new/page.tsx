@@ -770,12 +770,17 @@ export default function NewListingPage() {
           </p>
           <input
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
             multiple
             onChange={(e) => {
               const files = Array.from(e.target.files || []);
               files.forEach((file) => {
                 if (formData.images.length < 20) {
+                  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                  if (!allowedTypes.includes(file.type)) {
+                    toast.error('Поддржани се само слики (JPEG, PNG, GIF, WebP)');
+                    return;
+                  }
                   handleFileUpload(file);
                 } else {
                   toast.error('Максимум 20 фотографии');

@@ -11,6 +11,7 @@ import {
   formatMileage,
   formatBodyType,
   formatDateShort,
+  getOptimizedImageUrl,
 } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
@@ -19,7 +20,8 @@ interface ListingCardProps {
 }
 
 export function ListingCard({ listing }: ListingCardProps) {
-  const imageUrl = listing.images?.[0] || '/placeholder-car.jpg';
+  const originalImageUrl = listing.images?.[0] || '/placeholder-car.jpg';
+  const imageUrl = getOptimizedImageUrl(originalImageUrl, 60, 800);
   const vehicle = listing.vehicle;
   const { user } = useAuthStore();
   const { check: checkFavorite, add: addFavorite, remove: removeFavorite } = useFavoritesStore();
@@ -162,7 +164,33 @@ export function ListingCard({ listing }: ListingCardProps) {
           </div>
           <div className="flex justify-between items-center text-sm text-gray-300 font-medium mt-auto pt-3 border-t border-primary-500/20">
             <span>{listing.city}</span>
-            <span>{formatDateShort(listing.created_at)}</span>
+            <div className="flex items-center gap-3">
+              {listing.views !== undefined && listing.views > 0 && (
+                <span className="flex items-center gap-1 text-xs">
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                    />
+                  </svg>
+                  {listing.views}
+                </span>
+              )}
+              <span>{formatDateShort(listing.created_at)}</span>
+            </div>
           </div>
         </div>
       </div>

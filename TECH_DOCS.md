@@ -45,8 +45,13 @@ Create a simple, free website for posting listings for new and used cars in Nort
 
 ### Listing Card
 
-* Car photos (up to 50 images)
-* **Image optimization:** Automatic compression, resizing (max 1920px width), quality optimization (85%)
+* Car photos (up to 20 images)
+* **Image optimization:** Automatic compression, resizing (max 1920px width), conversion to WebP format (85% quality)
+* **Adaptive quality:** Different quality levels for different contexts:
+  * Listing cards (homepage): 60% quality, max 800px width
+  * Listing detail page: 75% quality, max 1200px width
+  * Thumbnails: 70% quality, max 400px width
+  * Full-size modal view: Original quality (85%)
 * Basic specifications: year, engine displacement, mileage, fuel type, transmission, body type, color, doors, city
 * **Urgent flag:** Mark listings as urgent (displayed prominently)
 * **VIN number:** Optional 17-character VIN code
@@ -58,10 +63,11 @@ Create a simple, free website for posting listings for new and used cars in Nort
 
 * **Multi-step form:** Basic data → Photos → Publication
 * **Image upload:**
-  * Supported formats: JPG, JPEG, PNG, GIF, WebP
+  * Supported formats: JPG, JPEG, PNG, GIF, WebP (all converted to WebP on upload)
   * Max file size: 10MB per image
-  * Automatic optimization and compression
-  * Upload via `/api/upload/image` endpoint
+  * Max images per listing: 20 (minimum: 2)
+  * Automatic optimization and compression (converted to WebP, 85% quality)
+  * Upload via `/api/upload/image` endpoint (JWT required)
 * **Active listing limits validation** on publish
 * Ability to pause or close a listing
 * Automatic closing after 5 months of inactivity (based on `last_updated_at` field)
@@ -141,7 +147,7 @@ Create a simple, free website for posting listings for new and used cars in Nort
 * **Backend:** Node.js (NestJS), REST API, PostgreSQL, Redis, S3-compatible storage (planned)
 * **Database:** PostgreSQL 15 with TypeORM
 * **Search:** PostgreSQL Full-Text Search and custom query builder
-* **Image processing:** Sharp library for optimization
+* **Image processing:** Sharp library for optimization and WebP conversion
 * **File storage:** Local file system (`/uploads`) with plans for S3 migration
 * **Authentication:** JWT tokens, Passport.js
 * **Task scheduling:** NestJS Schedule module (cron jobs)
@@ -181,7 +187,10 @@ GET    /api/favorites/check/:id          # Check if listing is in favorites
 
 ### Upload
 ```http
-POST /api/upload/image     # Upload and optimize image (JWT required)
+POST /api/upload/image                    # Upload and optimize image (JWT required)
+GET  /api/upload/image/:filename          # Get optimized image version
+                                         # Query params: ?quality=X&width=Y
+                                         # Example: /api/upload/image/abc.webp?quality=60&width=800
 ```
 
 ### Brands
@@ -289,14 +298,29 @@ PATCH /api/admin/users/:id/toggle-status  # Enable/disable user
 
 * **Upload:** Via `/api/upload/image` endpoint (JWT required)
 * **File restrictions:**
-  * Formats: JPG, JPEG, PNG, GIF, WebP
+  * Formats: JPG, JPEG, PNG, GIF, WebP (all converted to WebP on upload)
   * Max size: 10MB per file
-* **Automatic processing:**
+* **Automatic processing on upload:**
   * Resize if width > 1920px (maintains aspect ratio)
-  * Convert to JPEG format
-  * Compress to 85% quality with mozjpeg
-  * Store in `/uploads` directory with UUID filename
-* **Storage:** Local file system with static file serving (`/uploads/*`)
+  * Convert to WebP format (all formats are converted)
+  * Compress to 85% quality with WebP encoder (effort: 4)
+  * Store in `/uploads` directory with UUID filename and `.webp` extension
+* **Optimized image endpoint:** `GET /api/upload/image/:filename`
+  * Query parameters:
+    * `quality` (1-100, default: 85): Image quality percentage
+    * `width` (optional): Maximum width in pixels (maintains aspect ratio)
+  * Returns WebP image with specified quality and width
+  * Cached for 1 year (immutable)
+  * Used for adaptive quality delivery:
+    * Homepage listing cards: quality=60, width=800
+    * Listing detail page: quality=75, width=1200
+    * Thumbnails: quality=70, width=400
+    * Full-size modal: Original quality (direct `/uploads/` URL)
+* **Storage:** Local file system with static file serving (`/uploads/*`) and dynamic optimization endpoint
+* **Benefits:**
+  * WebP format provides 25-35% better compression than JPEG
+  * Adaptive quality reduces bandwidth and improves page load times
+  * Better SEO performance with faster image loading
 
 ## 10. Search and Filtering
 
@@ -394,4 +418,4 @@ GET /api/listings?brand_id=xxx&year_gte=2018&price_lte=12000&city=Skopje&fuel=Pe
 
 ---
 
-**Version 1.2 reflects:** Extended search filters, VIN functionality, image optimization, rich text descriptions, date refresh feature, social media integration, enhanced user registration, comprehensive admin panel, brands/models/cities APIs.
+**Version 1.2 reflects:** Extended search filters, VIN functionality, image optimization (WebP conversion with adaptive quality), rich text descriptions, date refresh feature, social media integration, enhanced user registration, comprehensive admin panel, brands/models/cities APIs, optimized image delivery endpoint.

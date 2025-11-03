@@ -521,6 +521,7 @@ export function SearchFilters() {
           options={[
             { value: 'created_at_DESC', label: 'Најнови прво' },
             { value: 'created_at_ASC', label: 'Најстари прво' },
+            { value: 'views_DESC', label: 'Популарно' },
             { value: 'price_ASC', label: 'Цена растечки' },
             { value: 'price_DESC', label: 'Цена опаѓачки' },
             { value: 'year_DESC', label: 'Година опаѓачки' },

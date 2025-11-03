@@ -98,6 +98,7 @@ export interface Listing {
   images?: string[];
   urgent?: boolean;
   vin?: string;
+  views?: number;
   vehicle?: Vehicle;
   user?: User;
   last_updated_at: string;

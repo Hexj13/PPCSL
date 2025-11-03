@@ -12,6 +12,7 @@ import {
   formatMileage,
   formatTransmission,
   formatBodyType,
+  getOptimizedImageUrl,
 } from '@/lib/utils';
 import { Dropdown } from '@/components/Dropdown';
 import { UserListingsModal } from '@/components/UserListingsModal';
@@ -239,11 +240,10 @@ function ListingsTab() {
                     <div className="relative w-full h-[300px] md:h-full md:min-h-[320px] bg-bg-darker">
                       {hasImage ? (
                         <Image
-                          src={imageUrl}
+                          src={getOptimizedImageUrl(imageUrl, 65, 600)}
                           alt={listing.title}
                           fill
                           className="object-cover"
-                          unoptimized={imageUrl.startsWith('http://localhost:4000')}
                           sizes="(max-width: 768px) 100vw, 300px"
                         />
                       ) : (

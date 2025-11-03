@@ -19,7 +19,7 @@ export class UploadService {
   }
 
   async saveFile(file: Express.Multer.File): Promise<string> {
-    const fileName = `${uuidv4()}.jpg`;
+    const fileName = `${uuidv4()}.webp`;
     const filePath = path.join(this.uploadDir, fileName);
 
     const image = sharp(file.buffer);
@@ -35,7 +35,7 @@ export class UploadService {
     }
 
     const compressedBuffer = await processedImage
-      .jpeg({ quality: this.quality, mozjpeg: true })
+      .webp({ quality: this.quality, effort: 4 })
       .toBuffer();
 
     fs.writeFileSync(filePath, compressedBuffer);
@@ -48,5 +48,33 @@ export class UploadService {
     if (fs.existsSync(fullPath)) {
       fs.unlinkSync(fullPath);
     }
+  }
+
+  async getOptimizedImage(
+    filePath: string,
+    quality: number = 85,
+    maxWidth?: number,
+  ): Promise<Buffer> {
+    const fullPath = path.join(process.cwd(), filePath.replace(/^\//, ''));
+
+    if (!fs.existsSync(fullPath)) {
+      throw new Error('File not found');
+    }
+
+    const image = sharp(fullPath);
+    const metadata = await image.metadata();
+
+    let processedImage = image;
+
+    if (maxWidth && metadata.width && metadata.width > maxWidth) {
+      processedImage = processedImage.resize(maxWidth, null, {
+        withoutEnlargement: true,
+        fit: 'inside',
+      });
+    }
+
+    const buffer = await processedImage.webp({ quality, effort: 4 }).toBuffer();
+
+    return buffer;
   }
 }

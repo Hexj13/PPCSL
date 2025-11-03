@@ -70,6 +70,9 @@ export class Listing {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   last_updated_at: Date;
 
+  @Column({ type: 'integer', default: 0 })
+  views: number;
+
   @CreateDateColumn()
   created_at: Date;
 

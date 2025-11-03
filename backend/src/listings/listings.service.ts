@@ -7,10 +7,12 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual } from 'typeorm';
 import { Listing } from './entities/listing.entity';
+import { ListingView } from './entities/listing-view.entity';
 import { ListingStatus as ListingStatusEnum, Currency as CurrencyEnum } from '../common/types';
 import { Vehicle } from './entities/vehicle.entity';
 import { UsersService } from '../users/users.service';
 import { BrandsService } from '../brands/brands.service';
+import * as crypto from 'crypto';
 import { CreateListingDto } from './dto/create-listing.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
 import { SearchListingsDto } from './dto/search-listings.dto';
@@ -24,6 +26,8 @@ export class ListingsService {
     private listingsRepository: Repository<Listing>,
     @InjectRepository(Vehicle)
     private vehiclesRepository: Repository<Vehicle>,
+    @InjectRepository(ListingView)
+    private listingViewsRepository: Repository<ListingView>,
     private usersService: UsersService,
     private brandsService: BrandsService,
   ) {}
@@ -184,12 +188,14 @@ export class ListingsService {
       });
     }
 
-    const validSortFields = ['created_at', 'price', 'year'];
+    const validSortFields = ['created_at', 'price', 'year', 'views'];
     const sortField = validSortFields.includes(sortBy) ? sortBy : 'created_at';
     const order = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
     if (sortField === 'year') {
       queryBuilder.orderBy('vehicle.year', order);
+    } else if (sortField === 'views') {
+      queryBuilder.orderBy('listing.views', 'DESC');
     } else {
       queryBuilder.orderBy(`listing.${sortField}`, order);
     }
@@ -229,6 +235,51 @@ export class ListingsService {
     }
 
     return listing;
+  }
+
+  async recordView(
+    listingId: string,
+    userId: string | null,
+    visitorId: string | null,
+  ): Promise<void> {
+    const listing = await this.listingsRepository.findOne({ where: { id: listingId } });
+    if (!listing) {
+      return;
+    }
+
+    if (userId) {
+      const existingView = await this.listingViewsRepository.findOne({
+        where: { listing_id: listingId, user_id: userId },
+      });
+      if (existingView) {
+        return;
+      }
+
+      const view = this.listingViewsRepository.create({
+        listing_id: listingId,
+        user_id: userId,
+      });
+      await this.listingViewsRepository.save(view);
+      await this.listingsRepository.increment({ id: listingId }, 'views', 1);
+    } else if (visitorId) {
+      const existingView = await this.listingViewsRepository.findOne({
+        where: { listing_id: listingId, visitor_id: visitorId },
+      });
+      if (existingView) {
+        return;
+      }
+
+      const view = this.listingViewsRepository.create({
+        listing_id: listingId,
+        visitor_id: visitorId,
+      });
+      await this.listingViewsRepository.save(view);
+      await this.listingsRepository.increment({ id: listingId }, 'views', 1);
+    }
+  }
+
+  generateVisitorId(ip: string, userAgent: string): string {
+    return crypto.createHash('sha256').update(`${ip}:${userAgent}`).digest('hex');
   }
 
   async update(id: string, updateListingDto: UpdateListingDto, userId: string): Promise<Listing> {

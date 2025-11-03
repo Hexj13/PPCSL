@@ -1,22 +1,28 @@
 import {
   Controller,
   Post,
+  Get,
   UseInterceptors,
   UploadedFile,
   UseGuards,
   BadRequestException,
+  Param,
+  Query,
+  Res,
+  NotFoundException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UploadService } from './upload.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { memoryStorage } from 'multer';
+import { Response } from 'express';
 
 @Controller('api/upload')
-@UseGuards(JwtAuthGuard)
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
 
   @Post('image')
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(
     FileInterceptor('file', {
       storage: memoryStorage(),
@@ -43,5 +49,37 @@ export class UploadController {
       url: `${baseUrl}${filePath}`,
       path: filePath,
     };
+  }
+
+  @Get('image/:filename')
+  async getOptimizedImage(
+    @Param('filename') filename: string,
+    @Res() res: Response,
+    @Query('quality') quality?: string,
+    @Query('width') width?: string,
+  ) {
+    try {
+      const filePath = `/uploads/${filename}`;
+      const qualityValue = quality ? parseInt(quality, 10) : 85;
+      const widthValue = width ? parseInt(width, 10) : undefined;
+
+      if (qualityValue < 1 || qualityValue > 100) {
+        throw new BadRequestException('Quality must be between 1 and 100');
+      }
+
+      const buffer = await this.uploadService.getOptimizedImage(filePath, qualityValue, widthValue);
+
+      res.set({
+        'Content-Type': 'image/webp',
+        'Cache-Control': 'public, max-age=31536000, immutable',
+      });
+
+      res.send(buffer);
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new NotFoundException('Image not found');
+    }
   }
 }

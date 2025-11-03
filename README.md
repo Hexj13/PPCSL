@@ -92,7 +92,7 @@ npm run dev  # Runs both frontend and backend
 - Automatic listing closure after 5 months
 - Favorites (for authenticated users and guests)
 - VIN search functionality
-- Image upload with automatic optimization
+- Image upload with automatic WebP conversion and adaptive quality optimization
 - Admin panel for management
 
 </details>
@@ -148,6 +148,7 @@ Kupito/
 
 ### Upload
 - `POST /api/upload/image` - Upload image (JWT required)
+- `GET /api/upload/image/:filename` - Get optimized image version (query params: `quality`, `width`)
 
 ### Brands & Cities
 - `GET /api/brands` - Get all brands
@@ -171,7 +172,7 @@ Kupito/
 - Active listing limit validation on publish
 - Favorites stored in localStorage for guests and on server for authenticated users
 - PostgreSQL Full-Text Search for search functionality
-- Image optimization (resize, compress, convert to JPEG)
+- Image optimization (resize, compress, convert to WebP with adaptive quality)
 - Responsive design with TailwindCSS
 - VIN search with privacy protection
 - Date refresh feature with 48-hour cooldown
