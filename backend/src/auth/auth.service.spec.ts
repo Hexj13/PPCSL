@@ -1,0 +1,199 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { JwtService } from '@nestjs/jwt';
+import { UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { AuthService } from './auth.service';
+import { UsersService } from '../users/users.service';
+import { UserType } from '../users/entities/user.entity';
+import * as bcrypt from 'bcrypt';
+
+describe('AuthService', () => {
+  let service: AuthService;
+  let usersService: jest.Mocked<UsersService>;
+  let jwtService: jest.Mocked<JwtService>;
+
+  const mockUser = {
+    id: '1',
+    email: 'test@test.com',
+    phone: '+38970123456',
+    password: 'hashedPassword',
+    type: UserType.Individual,
+    firstName: 'Test',
+    lastName: 'User',
+  };
+
+  beforeEach(async () => {
+    const mockUsersService = {
+      findByEmail: jest.fn(),
+      findByPhone: jest.fn(),
+      create: jest.fn(),
+      findOne: jest.fn(),
+    };
+
+    const mockJwtService = {
+      sign: jest.fn(),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        AuthService,
+        {
+          provide: UsersService,
+          useValue: mockUsersService,
+        },
+        {
+          provide: JwtService,
+          useValue: mockJwtService,
+        },
+      ],
+    }).compile();
+
+    service = module.get<AuthService>(AuthService);
+    usersService = module.get(UsersService);
+    jwtService = module.get(JwtService);
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  describe('validateUser', () => {
+    it('should return user without password when credentials are valid (email)', async () => {
+      const { password, ...expectedResult } = mockUser;
+      usersService.findByEmail.mockResolvedValue(mockUser as any);
+      jest.spyOn(bcrypt, 'compare').mockResolvedValue(true as never);
+
+      const result = await service.validateUser('test@test.com', 'password123');
+
+      expect(result).toEqual(expectedResult);
+      expect(usersService.findByEmail).toHaveBeenCalledWith('test@test.com');
+    });
+
+    it('should return user without password when credentials are valid (phone)', async () => {
+      const { password, ...expectedResult } = mockUser;
+      usersService.findByPhone.mockResolvedValue(mockUser as any);
+      jest.spyOn(bcrypt, 'compare').mockResolvedValue(true as never);
+
+      const result = await service.validateUser('+38970123456', 'password123');
+
+      expect(result).toEqual(expectedResult);
+      expect(usersService.findByPhone).toHaveBeenCalledWith('+38970123456');
+    });
+
+    it('should return null when user is not found', async () => {
+      usersService.findByEmail.mockResolvedValue(null);
+
+      const result = await service.validateUser('test@test.com', 'password123');
+
+      expect(result).toBeNull();
+    });
+
+    it('should return null when password is invalid', async () => {
+      usersService.findByEmail.mockResolvedValue(mockUser as any);
+      jest.spyOn(bcrypt, 'compare').mockResolvedValue(false as never);
+
+      const result = await service.validateUser('test@test.com', 'wrongpassword');
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('login', () => {
+    it('should return access token and user when credentials are valid', async () => {
+      const { password, ...userWithoutPassword } = mockUser;
+      usersService.findByEmail.mockResolvedValue(mockUser as any);
+      jest.spyOn(bcrypt, 'compare').mockResolvedValue(true as never);
+      jwtService.sign.mockReturnValue('mock-jwt-token');
+
+      const result = await service.login({
+        login: 'test@test.com',
+        password: 'password123',
+      });
+
+      expect(result).toHaveProperty('access_token', 'mock-jwt-token');
+      expect(result).toHaveProperty('user');
+      expect(result.user).not.toHaveProperty('password');
+      expect(jwtService.sign).toHaveBeenCalled();
+    });
+
+    it('should throw UnauthorizedException when credentials are invalid', async () => {
+      usersService.findByEmail.mockResolvedValue(null);
+
+      await expect(
+        service.login({
+          login: 'test@test.com',
+          password: 'wrongpassword',
+        }),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+  });
+
+  describe('register', () => {
+    it('should create user when terms are accepted', async () => {
+      const registerDto = {
+        email: 'new@test.com',
+        password: 'Password123!',
+        type: UserType.Individual,
+        phone: '+38970123456',
+        firstName: 'New',
+        lastName: 'User',
+        termsAccepted: true,
+      };
+
+      const hashedPassword = 'hashedPassword123';
+      jest.spyOn(bcrypt, 'hash').mockResolvedValue(hashedPassword as never);
+
+      const createdUser = {
+        ...mockUser,
+        ...registerDto,
+        password: hashedPassword,
+      };
+      const { password, ...userWithoutPassword } = createdUser;
+      usersService.create.mockResolvedValue(createdUser as any);
+
+      const result = await service.register(registerDto);
+
+      expect(result).not.toHaveProperty('password');
+      expect(result).not.toHaveProperty('termsAccepted');
+      expect(usersService.create).toHaveBeenCalled();
+      expect(bcrypt.hash).toHaveBeenCalledWith(registerDto.password, 10);
+    });
+
+    it('should throw BadRequestException when terms are not accepted', async () => {
+      const registerDto = {
+        email: 'new@test.com',
+        password: 'Password123!',
+        type: UserType.Individual,
+        phone: '+38970123456',
+        firstName: 'New',
+        termsAccepted: false,
+      };
+
+      await expect(service.register(registerDto)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+
+  describe('getUserProfile', () => {
+    it('should return user profile without password', async () => {
+      const fullUser = {
+        ...mockUser,
+        emailNotifications: true,
+        viber: false,
+        whatsapp: true,
+        telegram: false,
+      };
+      usersService.findOne.mockResolvedValue(fullUser as any);
+
+      const result = await service.getUserProfile('1');
+
+      expect(result).not.toHaveProperty('password');
+      expect(result).toHaveProperty('id');
+      expect(result).toHaveProperty('email');
+      expect(result).toHaveProperty('type');
+      expect(usersService.findOne).toHaveBeenCalledWith('1');
+    });
+  });
+});
+
+

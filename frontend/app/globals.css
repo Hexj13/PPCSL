@@ -1,0 +1,156 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 26, 46, 42;
+  --background-end-rgb: 21, 37, 32;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(135deg, rgb(var(--background-start-rgb)) 0%, rgb(var(--background-end-rgb)) 100%);
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6, label {
+  user-select: none;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:from-primary-700 hover:to-primary-800 transform hover:-translate-y-0.5 transition-all duration-200 select-none text-center;
+  }
+
+  .btn-secondary {
+    @apply px-4 md:px-6 py-2.5 md:py-3 bg-bg-light border-2 border-primary-500/30 text-white font-semibold rounded-lg hover:bg-bg-light/80 hover:border-primary-500 transition-all duration-200 select-none text-center;
+  }
+
+  .btn-outline {
+    @apply px-4 md:px-6 py-2.5 md:py-3 bg-transparent border-2 border-primary-500 text-primary-500 font-semibold rounded-lg hover:bg-primary-500/10 hover:border-primary-400 transition-all duration-200 select-none text-center;
+  }
+
+  .btn-yellow {
+    @apply px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:from-yellow-600 hover:to-yellow-700 transform hover:-translate-y-0.5 transition-all duration-200 select-none text-center;
+  }
+
+  .btn-green-dark {
+    @apply px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-primary-700 to-primary-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:from-primary-800 hover:to-primary-900 transform hover:-translate-y-0.5 transition-all duration-200 select-none text-center;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 border-2 border-primary-500/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-bg-light text-white;
+  }
+
+  .input-field::placeholder {
+    color: #6b7280;
+    -webkit-text-fill-color: #6b7280;
+    opacity: 1;
+  }
+
+  .input-field[type="password"] {
+    @apply bg-bg-light text-white;
+    -webkit-text-fill-color: white;
+  }
+
+  .input-field[type="password"]:-webkit-autofill,
+  .input-field[type="password"]:-webkit-autofill:hover,
+  .input-field[type="password"]:-webkit-autofill:focus {
+    @apply bg-bg-light text-white;
+    -webkit-text-fill-color: white;
+    -webkit-box-shadow: 0 0 0px 1000px #233d37 inset;
+    box-shadow: 0 0 0px 1000px #233d37 inset;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  .input-field[type="email"] {
+    @apply bg-bg-light text-white;
+    -webkit-text-fill-color: white;
+  }
+
+  .input-field[type="email"]:-webkit-autofill,
+  .input-field[type="email"]:-webkit-autofill:hover,
+  .input-field[type="email"]:-webkit-autofill:focus {
+    @apply bg-bg-light text-white;
+    -webkit-text-fill-color: white;
+    -webkit-box-shadow: 0 0 0px 1000px #233d37 inset;
+    box-shadow: 0 0 0px 1000px #233d37 inset;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  .input-field[type="text"]:-webkit-autofill,
+  .input-field[type="text"]:-webkit-autofill:hover,
+  .input-field[type="text"]:-webkit-autofill:focus,
+  .input-field:-webkit-autofill,
+  .input-field:-webkit-autofill:hover,
+  .input-field:-webkit-autofill:focus {
+    @apply bg-bg-light text-white;
+    -webkit-text-fill-color: white;
+    -webkit-box-shadow: 0 0 0px 1000px #233d37 inset;
+    box-shadow: 0 0 0px 1000px #233d37 inset;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  .input-field[type="text"]:autofill,
+  .input-field:autofill {
+    @apply bg-bg-light text-white;
+    -webkit-text-fill-color: white;
+    box-shadow: 0 0 0px 1000px #233d37 inset;
+  }
+
+  .input-field[type="number"] {
+    -moz-appearance: textfield;
+  }
+
+  .input-field[type="number"]::-webkit-outer-spin-button,
+  .input-field[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .input-field:disabled {
+    @apply bg-bg-darker cursor-not-allowed opacity-60;
+  }
+
+  textarea.input-field {
+    @apply resize-y;
+  }
+
+  .select-field {
+    @apply w-full px-4 py-3 border-2 border-primary-500/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-bg-light text-white appearance-none cursor-pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2300ff88'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.25em 1.25em;
+    padding-right: 2.75rem;
+  }
+
+  .select-field:disabled {
+    @apply bg-bg-darker cursor-not-allowed opacity-60;
+  }
+
+  .select-field option {
+    @apply bg-bg-light text-white;
+    padding: 0.75rem;
+  }
+
+  .select-field option:checked {
+    @apply bg-primary-600 text-white;
+  }
+
+  .select-field option:hover {
+    @apply bg-primary-500/30;
+  }
+
+  .card {
+    @apply bg-bg-light rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-primary-500/20;
+  }
+}
+

@@ -1,0 +1,770 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { authApi, favoritesApi } from '@/lib/api';
+import { useAuthStore } from '@/lib/store';
+import toast from 'react-hot-toast';
+
+export default function RegisterPage() {
+  const router = useRouter();
+  const { user, isInitialized, setAuth } = useAuthStore();
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    type: 'Individual' as 'Individual' | 'Business',
+    phone: '',
+    firstName: '',
+    lastName: '',
+    companyName: '',
+    emailNotifications: false,
+    viber: false,
+    whatsapp: false,
+    telegram: false,
+    termsAccepted: false,
+  });
+  const [loading, setLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+  const [emailError, setEmailError] = useState('');
+
+  useEffect(() => {
+    if (isInitialized && user) {
+      router.push('/');
+    }
+  }, [user, isInitialized, router]);
+
+  if (isInitialized && user) {
+    return null;
+  }
+
+  const validatePassword = (password: string): string => {
+    if (password.length < 8) {
+      return 'Лозинката мора да содржи минимум 8 карактери';
+    }
+    if (!/[A-Z]/.test(password)) {
+      return 'Лозинката мора да содржи барем една голема буква';
+    }
+    if (!/[a-z]/.test(password)) {
+      return 'Лозинката мора да содржи барем една мала буква';
+    }
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+      return 'Лозинката мора да содржи барем еден специјален карактер';
+    }
+    return '';
+  };
+
+  const validatePhone = (phone: string): string => {
+    if (!phone) {
+      return '';
+    }
+    const phoneRegex = /^\+\d{1,4}\d{6,15}$/;
+    if (!phoneRegex.test(phone)) {
+      return 'Телефонот мора да биде во формат +код држава (1-4 цифри) + број (6-15 цифри)';
+    }
+    return '';
+  };
+
+  const validateEmail = (email: string): string => {
+    if (!email) {
+      return '';
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return 'Невалидна email адреса';
+    }
+    return '';
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+    
+    if (value === '') {
+      setFormData({ ...formData, phone: '' });
+      setPhoneError('');
+      return;
+    }
+    
+    value = value.replace(/[^\d+]/g, '');
+    
+    const plusCount = (value.match(/\+/g) || []).length;
+    if (plusCount > 1) {
+      value = '+' + value.replace(/\+/g, '');
+    }
+    
+    if (value.length > 0 && value[0] !== '+') {
+      value = '+' + value.replace(/\+/g, '');
+    }
+    
+    if (value.length > 20) {
+      value = value.slice(0, 20);
+    }
+    
+    setFormData({ ...formData, phone: value });
+    if (value) {
+      setPhoneError(validatePhone(value));
+    } else {
+      setPhoneError('');
+    }
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const password = e.target.value;
+    setFormData({ ...formData, password });
+    if (password) {
+      setPasswordError(validatePassword(password));
+    } else {
+      setPasswordError('');
+    }
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const email = e.target.value;
+    setFormData({ ...formData, email, emailNotifications: email ? formData.emailNotifications : false });
+    if (email) {
+      setEmailError(validateEmail(email));
+    } else {
+      setEmailError('');
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.termsAccepted) {
+      toast.error('Мора да ги прифатите условите за користење');
+      return;
+    }
+
+    if (!formData.password.trim()) {
+      toast.error('Лозинката е задолжителна');
+      return;
+    }
+
+    const passwordValidationError = validatePassword(formData.password);
+    if (passwordValidationError) {
+      toast.error(passwordValidationError);
+      setPasswordError(passwordValidationError);
+      return;
+    }
+
+    if (formData.type === 'Individual') {
+      if (!formData.phone.trim()) {
+        toast.error('Телефонот е задолжителен');
+        return;
+      }
+      const phoneValidationError = validatePhone(formData.phone);
+      if (phoneValidationError) {
+        toast.error(phoneValidationError);
+        setPhoneError(phoneValidationError);
+        return;
+      }
+      if (!formData.firstName.trim()) {
+        toast.error('Името е задолжително');
+        return;
+      }
+      if (formData.email) {
+        const emailValidationError = validateEmail(formData.email);
+        if (emailValidationError) {
+          toast.error(emailValidationError);
+          setEmailError(emailValidationError);
+          return;
+        }
+      }
+    } else {
+      if (!formData.companyName.trim()) {
+        toast.error('Името на компанијата е задолжително');
+        return;
+      }
+      if (!formData.phone.trim()) {
+        toast.error('Телефонот е задолжителен');
+        return;
+      }
+      const phoneValidationError = validatePhone(formData.phone);
+      if (phoneValidationError) {
+        toast.error(phoneValidationError);
+        setPhoneError(phoneValidationError);
+        return;
+      }
+      if (!formData.email || !formData.email.trim()) {
+        toast.error('Email е задолжителен');
+        return;
+      }
+      const emailValidationError = validateEmail(formData.email);
+      if (emailValidationError) {
+        toast.error(emailValidationError);
+        setEmailError(emailValidationError);
+        return;
+      }
+    }
+
+    setLoading(true);
+
+    try {
+      const submitData: any = { ...formData };
+      
+      if (formData.type === 'Individual') {
+        submitData.companyName = '';
+        if (!submitData.email || !submitData.email.trim()) {
+          delete submitData.email;
+          submitData.emailNotifications = false;
+        }
+      } else {
+        submitData.firstName = '';
+        submitData.lastName = '';
+      }
+
+      await authApi.register(submitData);
+      
+      const loginValue = formData.type === 'Individual' 
+        ? (formData.email && formData.email.trim() ? formData.email : formData.phone)
+        : formData.email;
+      
+      try {
+        const loginRes = await authApi.login({
+          login: loginValue,
+          password: formData.password,
+        });
+        setAuth(loginRes.data.user, loginRes.data.access_token);
+        
+        if (typeof window !== 'undefined') {
+          const pendingFavorites = JSON.parse(localStorage.getItem('pendingFavorites') || '[]');
+          if (pendingFavorites.length > 0) {
+            const addPromises = pendingFavorites.map((listingId: string) =>
+              favoritesApi.add(listingId).catch(() => {})
+            );
+            await Promise.all(addPromises);
+            localStorage.removeItem('pendingFavorites');
+          }
+          
+          const returnUrl = localStorage.getItem('returnUrl');
+          if (returnUrl) {
+            localStorage.removeItem('returnUrl');
+            router.push(returnUrl);
+          } else {
+            router.push('/');
+          }
+        } else {
+          router.push('/');
+        }
+        
+        toast.success('Регистрацијата е успешна');
+      } catch (loginErr: any) {
+        toast.error('Регистрацијата е успешна, но најавата не успеа. Најавете се рачно.');
+        router.push('/login');
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Грешка при регистрација');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="max-w-md mx-auto mt-6 md:mt-12">
+      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">Регистрација</h1>
+      <form onSubmit={handleSubmit} className="card p-6 md:p-8" autoComplete="off">
+        <div className="mb-5">
+          <label className="block text-sm font-semibold mb-3 text-primary-400">Тип на корисник</label>
+          <div className="flex bg-bg-dark rounded-lg p-1 border-2 border-primary-500/30">
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, type: 'Individual' })}
+              className={`flex-1 py-2 px-4 rounded-md font-semibold text-sm transition-all duration-200 ${
+                formData.type === 'Individual'
+                  ? 'bg-gradient-to-r from-primary-700 to-primary-800 text-white shadow-lg'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Физичко лице
+            </button>
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, type: 'Business' })}
+              className={`flex-1 py-2 px-4 rounded-md font-semibold text-sm transition-all duration-200 ${
+                formData.type === 'Business'
+                  ? 'bg-gradient-to-r from-primary-700 to-primary-800 text-white shadow-lg'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Правно лице
+            </button>
+        </div>
+        </div>
+
+        {formData.type === 'Individual' ? (
+          <>
+            <div className="mb-5">
+              <label className="block text-sm font-semibold mb-2 text-primary-400">
+                Телефон <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="tel"
+                required
+                value={formData.phone}
+                onChange={handlePhoneChange}
+                className={`input-field ${phoneError ? 'border-red-500' : ''}`}
+                placeholder="+38970123456"
+                autoComplete="off"
+              />
+              {phoneError && (
+                <p className="mt-1 text-sm text-red-400">{phoneError}</p>
+              )}
+            </div>
+
+            <div className="mb-5">
+              <label className="block text-sm font-semibold mb-3 text-primary-400">
+                Достапни месенџери <span className="text-gray-300 text-xs font-normal">(опционално)</span>
+              </label>
+              <div className="flex gap-3">
+                <div className="flex items-center gap-2 group">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={formData.viber}
+                      onChange={(e) => setFormData({ ...formData, viber: e.target.checked })}
+                      className="sr-only"
+                    />
+                    <div 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setFormData({ ...formData, viber: !formData.viber });
+                      }}
+                      className={`px-4 py-3 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
+                        formData.viber
+                          ? 'bg-gradient-to-r from-primary-700 to-primary-800 border-primary-500 text-white'
+                          : 'border-primary-500/50 bg-bg-light group-hover:border-primary-500 text-gray-400'
+                      }`}
+                    >
+                      <span className="text-sm font-semibold">Viber</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 group">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={formData.whatsapp}
+                      onChange={(e) => setFormData({ ...formData, whatsapp: e.target.checked })}
+                      className="sr-only"
+                    />
+                    <div 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setFormData({ ...formData, whatsapp: !formData.whatsapp });
+                      }}
+                      className={`px-4 py-3 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
+                        formData.whatsapp
+                          ? 'bg-gradient-to-r from-primary-700 to-primary-800 border-primary-500 text-white'
+                          : 'border-primary-500/50 bg-bg-light group-hover:border-primary-500 text-gray-400'
+                      }`}
+                    >
+                      <span className="text-sm font-semibold">WhatsApp</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 group">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={formData.telegram}
+                      onChange={(e) => setFormData({ ...formData, telegram: e.target.checked })}
+                      className="sr-only"
+                    />
+                    <div 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setFormData({ ...formData, telegram: !formData.telegram });
+                      }}
+                      className={`px-4 py-3 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
+                        formData.telegram
+                          ? 'bg-gradient-to-r from-primary-700 to-primary-800 border-primary-500 text-white'
+                          : 'border-primary-500/50 bg-bg-light group-hover:border-primary-500 text-gray-400'
+                      }`}
+                    >
+                      <span className="text-sm font-semibold">Telegram</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-5">
+              <label className="block text-sm font-semibold mb-2 text-primary-400">
+                Лозинка <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="password"
+                required
+                value={formData.password}
+                onChange={handlePasswordChange}
+                className={`input-field ${passwordError ? 'border-red-500' : ''}`}
+                placeholder="Внесете лозинка"
+                autoComplete="new-password"
+              />
+              {passwordError && (
+                <p className="mt-1 text-sm text-red-400">{passwordError}</p>
+              )}
+            </div>
+            <div className="mb-5">
+              <label className="block text-sm font-semibold mb-2 text-primary-400">
+                Име <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.firstName}
+                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                className="input-field"
+                placeholder="Вашето име"
+                autoComplete="off"
+              />
+            </div>
+
+            <div className="mb-5">
+              <label className="block text-sm font-semibold mb-2 text-primary-400">
+                Презиме <span className="text-gray-300 text-xs">(опционално)</span>
+              </label>
+              <input
+                type="text"
+                value={formData.lastName}
+                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                className="input-field"
+                placeholder="Вашето презиме"
+                autoComplete="off"
+              />
+            </div>
+
+            <div className="mb-5">
+              <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center justify-between">
+                <span>
+                  Email <span className="text-gray-300 text-xs">(опционално)</span>
+                </span>
+                <span className="group relative inline-block">
+                  <svg
+                    className="w-4 h-4 text-primary-400 hover:text-primary-300 cursor-help transition-colors"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span className="absolute bottom-full right-0 mb-2 w-64 px-3 py-2 text-xs text-gray-300 bg-bg-darker border border-primary-500/30 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10 shadow-lg">
+                    Ако е наведена и пошта, најавата може да се изврши и по број на телефон и по пошта
+                  </span>
+                </span>
+              </label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={handleEmailChange}
+                className={`input-field ${emailError ? 'border-red-500' : ''}`}
+                placeholder="example@email.com"
+                autoComplete="off"
+              />
+              {emailError && (
+                <p className="mt-1 text-sm text-red-400">{emailError}</p>
+              )}
+            </div>
+
+            {formData.email && (
+              <div className="mb-5">
+                <div className="flex items-center gap-3 group">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={formData.emailNotifications}
+                      onChange={(e) => setFormData({ ...formData, emailNotifications: e.target.checked })}
+                      className="sr-only"
+                    />
+                    <div 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setFormData({ ...formData, emailNotifications: !formData.emailNotifications });
+                      }}
+                      className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
+                        formData.emailNotifications
+                          ? 'bg-gradient-to-r from-primary-700 to-primary-800 border-primary-500'
+                          : 'border-primary-500/50 bg-bg-light group-hover:border-primary-500'
+                      }`}
+                    >
+                      {formData.emailNotifications && (
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                  <span 
+                    onClick={() => setFormData({ ...formData, emailNotifications: !formData.emailNotifications })}
+                    className="text-sm text-white cursor-pointer"
+                  >
+                    Примам рассулка на вести и известувања на пошта
+                  </span>
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+          <div className="mb-5">
+              <label className="block text-sm font-semibold mb-2 text-primary-400">
+                Име на компанија <span className="text-red-400">*</span>
+              </label>
+            <input
+              type="text"
+                required
+              value={formData.companyName}
+              onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+              className="input-field"
+              placeholder="Име на компанијата"
+                autoComplete="off"
+            />
+          </div>
+
+            <div className="mb-5">
+              <label className="block text-sm font-semibold mb-2 text-primary-400">
+                Email <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="email"
+                required
+                value={formData.email}
+                onChange={handleEmailChange}
+                className={`input-field ${emailError ? 'border-red-500' : ''}`}
+                placeholder="example@company.com"
+                autoComplete="off"
+              />
+              {emailError && (
+                <p className="mt-1 text-sm text-red-400">{emailError}</p>
+              )}
+              <p className="mt-1 text-xs text-gray-300">
+                Корпоративна пошта на која примате работни писма
+              </p>
+        </div>
+
+            <div className="mb-5">
+              <label className="block text-sm font-semibold mb-2 text-primary-400">
+                Телефон <span className="text-red-400">*</span>
+              </label>
+          <input
+            type="tel"
+                required
+            value={formData.phone}
+                onChange={handlePhoneChange}
+                className={`input-field ${phoneError ? 'border-red-500' : ''}`}
+                placeholder="+38970123456"
+                autoComplete="off"
+              />
+              {phoneError && (
+                <p className="mt-1 text-sm text-red-400">{phoneError}</p>
+              )}
+              <p className="mt-1 text-xs text-gray-300">
+                Работен телефон на кој работите
+              </p>
+            </div>
+
+            <div className="mb-5">
+              <label className="block text-sm font-semibold mb-3 text-primary-400">
+                Достапни месенџери <span className="text-gray-300 text-xs font-normal">(опционално)</span>
+              </label>
+              <div className="flex gap-3">
+                <div className="flex items-center gap-2 group">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={formData.viber}
+                      onChange={(e) => setFormData({ ...formData, viber: e.target.checked })}
+                      className="sr-only"
+                    />
+                    <div 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setFormData({ ...formData, viber: !formData.viber });
+                      }}
+                      className={`px-4 py-3 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
+                        formData.viber
+                          ? 'bg-gradient-to-r from-primary-700 to-primary-800 border-primary-500 text-white'
+                          : 'border-primary-500/50 bg-bg-light group-hover:border-primary-500 text-gray-400'
+                      }`}
+                    >
+                      <span className="text-sm font-semibold">Viber</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 group">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={formData.whatsapp}
+                      onChange={(e) => setFormData({ ...formData, whatsapp: e.target.checked })}
+                      className="sr-only"
+                    />
+                    <div 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setFormData({ ...formData, whatsapp: !formData.whatsapp });
+                      }}
+                      className={`px-4 py-3 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
+                        formData.whatsapp
+                          ? 'bg-gradient-to-r from-primary-700 to-primary-800 border-primary-500 text-white'
+                          : 'border-primary-500/50 bg-bg-light group-hover:border-primary-500 text-gray-400'
+                      }`}
+                    >
+                      <span className="text-sm font-semibold">WhatsApp</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 group">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={formData.telegram}
+                      onChange={(e) => setFormData({ ...formData, telegram: e.target.checked })}
+                      className="sr-only"
+                    />
+                    <div 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setFormData({ ...formData, telegram: !formData.telegram });
+                      }}
+                      className={`px-4 py-3 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
+                        formData.telegram
+                          ? 'bg-gradient-to-r from-primary-700 to-primary-800 border-primary-500 text-white'
+                          : 'border-primary-500/50 bg-bg-light group-hover:border-primary-500 text-gray-400'
+                      }`}
+                    >
+                      <span className="text-sm font-semibold">Telegram</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-5">
+              <label className="block text-sm font-semibold mb-2 text-primary-400">
+                Лозинка <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="password"
+                required
+                value={formData.password}
+                onChange={handlePasswordChange}
+                className={`input-field ${passwordError ? 'border-red-500' : ''}`}
+                placeholder="Внесете лозинка"
+                autoComplete="new-password"
+              />
+              {passwordError && (
+                <p className="mt-1 text-sm text-red-400">{passwordError}</p>
+              )}
+            </div>
+
+            <div className="mb-5">
+              <div className="flex items-center gap-3 group">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={formData.emailNotifications}
+                    onChange={(e) => setFormData({ ...formData, emailNotifications: e.target.checked })}
+                    className="sr-only"
+                  />
+                  <div 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setFormData({ ...formData, emailNotifications: !formData.emailNotifications });
+                    }}
+                    className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
+                      formData.emailNotifications
+                        ? 'bg-gradient-to-r from-primary-700 to-primary-800 border-primary-500'
+                        : 'border-primary-500/50 bg-bg-light group-hover:border-primary-500'
+                    }`}
+                  >
+                    {formData.emailNotifications && (
+                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+                <span 
+                  onClick={() => setFormData({ ...formData, emailNotifications: !formData.emailNotifications })}
+                  className="text-sm text-white cursor-pointer"
+                >
+                  Примам рассулка на вести и известувања на пошта
+                </span>
+              </div>
+            </div>
+          </>
+        )}
+
+        <div className="mb-6">
+          <div className="flex items-start gap-3 group">
+            <div className="relative mt-0.5">
+              <input
+                type="checkbox"
+                checked={formData.termsAccepted}
+                onChange={(e) => setFormData({ ...formData, termsAccepted: e.target.checked })}
+                className="sr-only"
+                required
+              />
+              <div 
+                onClick={(e) => {
+                  e.preventDefault();
+                  setFormData({ ...formData, termsAccepted: !formData.termsAccepted });
+                }}
+                className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer flex-shrink-0 ${
+                  formData.termsAccepted
+                    ? 'bg-gradient-to-r from-primary-700 to-primary-800 border-primary-500'
+                    : 'border-primary-500/50 bg-bg-light group-hover:border-primary-500'
+                }`}
+              >
+                {formData.termsAccepted && (
+                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </div>
+            </div>
+            <span 
+              onClick={() => setFormData({ ...formData, termsAccepted: !formData.termsAccepted })}
+              className="text-sm text-white cursor-pointer leading-relaxed"
+            >
+              Се согласувам со{' '}
+              <Link 
+                href="/terms" 
+                target="_blank"
+                onClick={(e) => e.stopPropagation()}
+                className="text-primary-400 hover:text-primary-300 underline font-semibold"
+              >
+                условите за користење
+              </Link>
+              <span className="text-red-400"> *</span>
+            </span>
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+        >
+          {loading ? 'Регистрација...' : 'Регистрирај се'}
+        </button>
+
+        <p className="mt-6 text-center text-sm text-gray-300">
+          Веќе имате сметка?{' '}
+          <a href="/login" className="text-primary-500 font-semibold hover:text-primary-400 hover:underline transition-colors">
+            Најави се
+          </a>
+        </p>
+      </form>
+    </div>
+  );
+}
+
