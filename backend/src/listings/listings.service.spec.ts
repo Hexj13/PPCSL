@@ -6,6 +6,7 @@ import { ListingsService } from './listings.service';
 import { UsersService } from '../users/users.service';
 import { BrandsService } from '../brands/brands.service';
 import { Listing } from './entities/listing.entity';
+import { ListingView } from './entities/listing-view.entity';
 import { ListingStatus, Currency } from '../common/types';
 import { Vehicle } from './entities/vehicle.entity';
 
@@ -14,6 +15,8 @@ describe('ListingsService', () => {
   let listingsRepository: jest.Mocked<Repository<Listing>>;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let vehiclesRepository: jest.Mocked<Repository<Vehicle>>;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  let listingViewsRepository: jest.Mocked<Repository<ListingView>>;
   let usersService: jest.Mocked<UsersService>;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let brandsService: jest.Mocked<BrandsService>;
@@ -61,6 +64,14 @@ describe('ListingsService', () => {
       update: jest.fn(),
     };
 
+    const mockListingViewsRepository = {
+      create: jest.fn(),
+      save: jest.fn(),
+      find: jest.fn(),
+      findOne: jest.fn(),
+      count: jest.fn(),
+    };
+
     const mockUsersService = {
       getListingLimit: jest.fn(),
       findOne: jest.fn(),
@@ -83,6 +94,10 @@ describe('ListingsService', () => {
           useValue: mockVehiclesRepository,
         },
         {
+          provide: getRepositoryToken(ListingView),
+          useValue: mockListingViewsRepository,
+        },
+        {
           provide: UsersService,
           useValue: mockUsersService,
         },
@@ -96,6 +111,7 @@ describe('ListingsService', () => {
     service = module.get<ListingsService>(ListingsService);
     listingsRepository = module.get(getRepositoryToken(Listing));
     vehiclesRepository = module.get(getRepositoryToken(Vehicle));
+    listingViewsRepository = module.get(getRepositoryToken(ListingView));
     usersService = module.get(UsersService);
     brandsService = module.get(BrandsService);
   });

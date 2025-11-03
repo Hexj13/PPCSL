@@ -776,7 +776,13 @@ export default function NewListingPage() {
               const files = Array.from(e.target.files || []);
               files.forEach((file) => {
                 if (formData.images.length < 20) {
-                  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                  const allowedTypes = [
+                    'image/jpeg',
+                    'image/jpg',
+                    'image/png',
+                    'image/gif',
+                    'image/webp',
+                  ];
                   if (!allowedTypes.includes(file.type)) {
                     toast.error('Поддржани се само слики (JPEG, PNG, GIF, WebP)');
                     return;

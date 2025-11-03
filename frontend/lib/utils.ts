@@ -75,7 +75,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 export function getOptimizedImageUrl(
   imageUrl: string,
   quality: number = 85,
-  width?: number,
+  width?: number
 ): string {
   if (!imageUrl || imageUrl === '/placeholder-car.jpg') {
     return imageUrl;
