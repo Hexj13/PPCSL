@@ -2,7 +2,11 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
-import { UserType as UserTypeEnum, ListingStatus as ListingStatusEnum } from '../common/types';
+import {
+  UserType as UserTypeEnum,
+  ListingStatus,
+  ListingStatus as ListingStatusEnum,
+} from '../common/types';
 import { Listing } from '../listings/entities/listing.entity';
 
 @Injectable()

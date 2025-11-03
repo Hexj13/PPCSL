@@ -338,7 +338,7 @@ export class ListingsService {
   async refreshAllDates(userId: string): Promise<{ updated: number }> {
     const now = new Date();
     const result = await this.listingsRepository.update(
-      { user_id: userId, status: ListingStatus.Active },
+      { user_id: userId, status: ListingStatusEnum.Active },
       { last_updated_at: now },
     );
     return { updated: result.affected || 0 };
