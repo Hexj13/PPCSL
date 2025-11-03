@@ -1,31 +1,31 @@
-# Kupito - Автомобильная площадка для Северной Македонии
+# Kupito - Car Marketplace for North Macedonia
 
-Площадка для продажи новых и подержанных автомобилей в Северной Македонии.
+Platform for selling new and used cars in North Macedonia.
 
-## Технологии
+## Technologies
 
 - **Frontend:** Next.js 14, React, TailwindCSS, Zustand
 - **Backend:** NestJS, PostgreSQL, TypeORM, Redis
-- **Хранилище:** S3-совместимое хранилище (для будущей реализации)
+- **Storage:** S3-compatible storage (for future implementation)
 
-## Установка
+## Installation
 
-### Требования
+### Requirements
 
 - Node.js 18+
-- Docker и Docker Compose
-- npm или yarn
+- Docker and Docker Compose
+- npm or yarn
 
-### Шаги установки
+### Installation Steps
 
-1. Клонируйте репозиторий и установите зависимости:
+1. Clone the repository and install dependencies:
 ```bash
 npm run install:all
 ```
 
-2. Настройте переменные окружения:
+2. Configure environment variables:
 
-Создайте файл `backend/.env` (см. `ENV_EXAMPLE.md`):
+Create `backend/.env` file (see `ENV_EXAMPLE.md`):
 ```
 PORT=4000
 DB_HOST=localhost
@@ -38,98 +38,109 @@ FRONTEND_URL=http://localhost:3000
 NODE_ENV=development
 ```
 
-Создайте файл `frontend/.env.local`:
+Create `frontend/.env.local` file:
 ```
 NEXT_PUBLIC_API_URL=http://localhost:4000
 ```
 
-3. Запустите базу данных и Redis:
+3. Start database and Redis:
 ```bash
 docker-compose up -d
 ```
 
-4. Дождитесь запуска базы данных (около 10 секунд), затем создайте таблицы:
+4. Wait for database startup (about 10 seconds), then create tables:
 ```bash
 cd backend
 npm run build
 npm run migration:run
 ```
 
-Или если используете синхронизацию TypeORM (в режиме разработки):
+Or if using TypeORM synchronization (in development mode):
 ```bash
 cd backend
 npm run start:dev
 ```
 
-5. Запустите проект в режиме разработки:
+5. Start the project in development mode:
 ```bash
 npm run dev
 ```
 
-Frontend будет доступен на http://localhost:3000  
-Backend API будет доступен на http://localhost:4000
+Frontend will be available at http://localhost:3000  
+Backend API will be available at http://localhost:4000
 
-## Основные функции
+## Core Features
 
-- ✅ Регистрация и аутентификация пользователей (ФЛ и ЮЛ)
-- ✅ Создание, редактирование, публикация объявлений
-- ✅ Поиск и фильтрация объявлений
-- ✅ Лимиты объявлений (5 для ФЛ, 50 для ЮЛ)
-- ✅ Статусы объявлений (Active, Paused, Closed)
-- ✅ Автоматическое закрытие объявлений через 90 дней
-- ✅ Избранное (для авторизованных и гостей)
-- ✅ Админ-панель для управления
+- ✅ User registration and authentication (Individual and Business)
+- ✅ Create, edit, and publish listings
+- ✅ Search and filter listings
+- ✅ Listing limits (5 for Individuals, 50 for Business)
+- ✅ Listing statuses (Active, Paused, Closed)
+- ✅ Automatic listing closure after 5 months
+- ✅ Favorites (for authenticated users and guests)
+- ✅ Admin panel for management
 
-## Структура проекта
+## Project Structure
 
 ```
 Kupito/
-├── frontend/          # Next.js приложение
-│   ├── app/          # Страницы и маршруты
-│   ├── components/   # React компоненты
-│   └── lib/          # Утилиты и API клиенты
+├── frontend/          # Next.js application
+│   ├── app/          # Pages and routes
+│   ├── components/   # React components
+│   └── lib/          # Utilities and API clients
 ├── backend/          # NestJS API
 │   ├── src/
-│   │   ├── auth/     # Аутентификация
-│   │   ├── users/    # Пользователи
-│   │   ├── listings/ # Объявления
-│   │   ├── favorites/# Избранное
-│   │   └── admin/    # Админ-панель
-├── documentation.md  # Техническое задание
-└── docker-compose.yml # Конфигурация БД
+│   │   ├── auth/     # Authentication
+│   │   ├── users/    # Users
+│   │   ├── listings/ # Listings
+│   │   ├── favorites/# Favorites
+│   │   └── admin/    # Admin panel
+├── documentation.md  # Technical specification
+└── docker-compose.yml # Database configuration
 ```
 
 ## API Endpoints
 
-### Аутентификация
-- `POST /api/auth/register` - Регистрация
-- `POST /api/auth/login` - Вход
-- `GET /api/auth/me` - Текущий пользователь
+### Authentication
+- `POST /api/auth/register` - Register
+- `POST /api/auth/login` - Login
+- `GET /api/auth/me` - Current user
 
-### Объявления
-- `GET /api/listings` - Список объявлений (с фильтрами)
-- `GET /api/listings/:id` - Детали объявления
-- `POST /api/listings` - Создать объявление
-- `PATCH /api/listings/:id` - Обновить объявление
-- `POST /api/listings/:id/publish` - Опубликовать
-- `POST /api/listings/:id/pause` - Приостановить
-- `POST /api/listings/:id/close` - Закрыть
-- `GET /api/listings/my` - Мои объявления
+### Listings
+- `GET /api/listings` - List listings (with filters)
+- `GET /api/listings/:id` - Listing details
+- `POST /api/listings` - Create listing
+- `PATCH /api/listings/:id` - Update listing
+- `POST /api/listings/:id/publish` - Publish
+- `POST /api/listings/:id/pause` - Pause
+- `POST /api/listings/:id/close` - Close
+- `GET /api/listings/my` - My listings
+- `GET /api/listings/user/:userId/active` - User's active listings
+- `GET /api/listings/vin/:vin` - Find listings by VIN
+- `POST /api/listings/refresh-dates` - Refresh all user's listing dates
 
-### Избранное
-- `GET /api/favorites` - Список избранного
-- `POST /api/favorites/:id` - Добавить в избранное
-- `DELETE /api/favorites/:id` - Удалить из избранного
+### Favorites
+- `GET /api/favorites` - Favorites list
+- `POST /api/favorites/:id` - Add to favorites
+- `DELETE /api/favorites/:id` - Remove from favorites
+- `GET /api/favorites/check/:id` - Check if listing is in favorites
 
-## Особенности реализации
+### Admin Panel
+- `GET /api/admin/users` - All users list
+- `GET /api/admin/listings` - All listings list
+- `GET /api/admin/stats` - Statistics
+- `PATCH /api/admin/listings/:id/status` - Change listing status
+- `GET /api/admin/users/:id/listings` - User's listings
+- `PATCH /api/admin/users/:id/toggle-status` - Enable/disable user
 
-- Автоматическое закрытие объявлений через 90 дней (cron задача запускается ежедневно в полночь)
-- Проверка лимитов активных объявлений при публикации
-- Избранное хранится в localStorage для гостей и на сервере для авторизованных пользователей
-- PostgreSQL Full-Text Search для поиска
-- Адаптивный дизайн с TailwindCSS
+## Implementation Features
 
-## Лицензия
+- Automatic listing closure after 5 months (cron job runs daily at midnight)
+- Active listing limit validation on publish
+- Favorites stored in localStorage for guests and on server for authenticated users
+- PostgreSQL Full-Text Search for search functionality
+- Responsive design with TailwindCSS
+
+## License
 
 MIT
-

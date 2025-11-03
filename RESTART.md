@@ -1,77 +1,76 @@
-# Инструкция по перезапуску проекта
+# Project Restart Instructions
 
-## Полный перезапуск
+## Full Restart
 
-### 1. Остановить все процессы (если запущены)
+### 1. Stop all processes (if running)
 
-Если процессы запущены в терминале, нажмите `Ctrl+C` в каждом окне.
+If processes are running in terminal, press `Ctrl+C` in each window.
 
-Или найдите и остановите процессы:
+Or find and stop processes:
 ```bash
-# Найти процессы на портах
+# Find processes on ports
 lsof -ti:3000 | xargs kill -9 2>/dev/null  # Frontend
 lsof -ti:4000 | xargs kill -9 2>/dev/null  # Backend
 ```
 
-### 2. Установить/обновить зависимости (если нужно)
+### 2. Install/update dependencies (if needed)
 
 ```bash
-# В корне проекта
+# In project root
 npm run install:all
 ```
 
-Или отдельно:
+Or separately:
 ```bash
 cd backend && npm install
 cd ../frontend && npm install
 ```
 
-### 3. Убедиться, что база данных запущена
+### 3. Ensure database is running
 
 ```bash
 docker-compose up -d
 ```
 
-### 4. Создать папку для загрузок (если не создана)
+### 4. Create uploads folder (if not created)
 
 ```bash
 mkdir -p backend/uploads
 ```
 
-### 5. Запустить проект
+### 5. Start the project
 
-**Вариант 1: Запустить оба сервера одновременно**
+**Option 1: Start both servers simultaneously**
 ```bash
-# В корне проекта
+# In project root
 npm run dev
 ```
 
-**Вариант 2: Запустить отдельно**
+**Option 2: Start separately**
 
-Терминал 1 (Backend):
+Terminal 1 (Backend):
 ```bash
 cd backend
 npm run start:dev
 ```
 
-Терминал 2 (Frontend):
+Terminal 2 (Frontend):
 ```bash
 cd frontend
 npm run dev
 ```
 
-### 6. Проверить работу
+### 6. Verify operation
 
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:4000
-- Проверка API: http://localhost:4000 (должен показать "Kupito API v1.0")
+- API check: http://localhost:4000 (should show "Kupito API v1.0")
 
-## Быстрый перезапуск (если уже запущено)
+## Quick Restart (if already running)
 
-Если нужно просто перезапустить после изменений:
+If you just need to restart after changes:
 
-1. В терминале где запущен backend: `Ctrl+C`, затем `npm run start:dev`
-2. В терминале где запущен frontend: `Ctrl+C`, затем `npm run dev`
+1. In terminal where backend is running: `Ctrl+C`, then `npm run start:dev`
+2. In terminal where frontend is running: `Ctrl+C`, then `npm run dev`
 
-Или просто используйте `npm run dev` в корне - он запустит оба сервера.
-
+Or simply use `npm run dev` in root - it will start both servers.
