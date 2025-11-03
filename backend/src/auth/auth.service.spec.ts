@@ -60,7 +60,6 @@ describe('AuthService', () => {
     jwtService = module.get(JwtService);
   });
 
-
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
