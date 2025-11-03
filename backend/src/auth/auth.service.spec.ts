@@ -7,6 +7,11 @@ import { User } from '../users/entities/user.entity';
 import { UserType } from '../common/types';
 import * as bcrypt from 'bcrypt';
 
+jest.mock('bcrypt', () => ({
+  compare: jest.fn(),
+  hash: jest.fn(),
+}));
+
 describe('AuthService', () => {
   let service: AuthService;
   let usersService: jest.Mocked<UsersService>;
@@ -23,6 +28,8 @@ describe('AuthService', () => {
   };
 
   beforeEach(async () => {
+    jest.clearAllMocks();
+
     const mockUsersService = {
       findByEmail: jest.fn(),
       findByPhone: jest.fn(),
@@ -53,6 +60,7 @@ describe('AuthService', () => {
     jwtService = module.get(JwtService);
   });
 
+
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
@@ -62,7 +70,7 @@ describe('AuthService', () => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...expectedResult } = mockUser;
       usersService.findByEmail.mockResolvedValue(mockUser as User);
-      jest.spyOn(bcrypt, 'compare').mockResolvedValue(true as never);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
       const result = await service.validateUser('test@test.com', 'password123');
 
@@ -74,7 +82,7 @@ describe('AuthService', () => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...expectedResult } = mockUser;
       usersService.findByPhone.mockResolvedValue(mockUser as User);
-      jest.spyOn(bcrypt, 'compare').mockResolvedValue(true as never);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
       const result = await service.validateUser('+38970123456', 'password123');
 
@@ -92,7 +100,7 @@ describe('AuthService', () => {
 
     it('should return null when password is invalid', async () => {
       usersService.findByEmail.mockResolvedValue(mockUser as User);
-      jest.spyOn(bcrypt, 'compare').mockResolvedValue(false as never);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       const result = await service.validateUser('test@test.com', 'wrongpassword');
 
@@ -105,7 +113,7 @@ describe('AuthService', () => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...userWithoutPassword } = mockUser;
       usersService.findByEmail.mockResolvedValue(mockUser as User);
-      jest.spyOn(bcrypt, 'compare').mockResolvedValue(true as never);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
       jwtService.sign.mockReturnValue('mock-jwt-token');
 
       const result = await service.login({
@@ -144,7 +152,7 @@ describe('AuthService', () => {
       };
 
       const hashedPassword = 'hashedPassword123';
-      jest.spyOn(bcrypt, 'hash').mockResolvedValue(hashedPassword as never);
+      (bcrypt.hash as jest.Mock).mockResolvedValue(hashedPassword);
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { termsAccepted, ...userData } = registerDto;
