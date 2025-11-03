@@ -145,9 +145,11 @@ describe('AuthService', () => {
       const hashedPassword = 'hashedPassword123';
       jest.spyOn(bcrypt, 'hash').mockResolvedValue(hashedPassword as never);
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { termsAccepted, ...userData } = registerDto;
       const createdUser = {
         ...mockUser,
-        ...registerDto,
+        ...userData,
         password: hashedPassword,
       };
       // eslint-disable-next-line @typescript-eslint/no-unused-vars

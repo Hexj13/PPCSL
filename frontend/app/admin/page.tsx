@@ -99,7 +99,7 @@ function ListingsTab() {
     try {
       const res = await adminApi.getAllListings();
       setListings(res.data);
-    } catch (err: any) {
+    } catch {
       toast.error('Грешка при вчитување на објави');
     } finally {
       setLoading(false);
@@ -111,7 +111,7 @@ function ListingsTab() {
       await adminApi.updateListingStatus(id, status);
       toast.success('Статусот е успешно ажуриран');
       loadListings();
-    } catch (err: any) {
+    } catch {
       toast.error('Грешка при ажурирање на статус');
     }
   };
@@ -419,7 +419,7 @@ function UsersTab() {
     try {
       const res = await adminApi.getAllUsers();
       setUsers(res.data);
-    } catch (err: any) {
+    } catch {
       toast.error('Грешка при вчитување на корисници');
     } finally {
       setLoading(false);
@@ -431,7 +431,7 @@ function UsersTab() {
       await adminApi.toggleUserStatus(userId);
       toast.success('Статусот на корисникот е ажуриран');
       loadUsers();
-    } catch (err: any) {
+    } catch {
       toast.error('Грешка при ажурирање на статус');
     }
   };
@@ -454,7 +454,7 @@ function UsersTab() {
     try {
       const res = await adminApi.getUserListings(userId);
       return res.data;
-    } catch (err: any) {
+    } catch {
       toast.error('Грешка при вчитување на објави');
       return [];
     }

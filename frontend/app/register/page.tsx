@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { authApi, favoritesApi } from '@/lib/api';
+import { authApi, favoritesApi, RegisterDto } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import toast from 'react-hot-toast';
 
@@ -202,7 +202,7 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const submitData: any = { ...formData };
+      const submitData: RegisterDto = { ...formData };
       
       if (formData.type === 'Individual') {
         submitData.companyName = '';
@@ -250,12 +250,13 @@ export default function RegisterPage() {
         }
         
         toast.success('Регистрацијата е успешна');
-      } catch (loginErr: any) {
+      } catch {
         toast.error('Регистрацијата е успешна, но најавата не успеа. Најавете се рачно.');
         router.push('/login');
       }
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Грешка при регистрација');
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { message?: string } } };
+      toast.error(axiosError.response?.data?.message || 'Грешка при регистрација');
     } finally {
       setLoading(false);
     }

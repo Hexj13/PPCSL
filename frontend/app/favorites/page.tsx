@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { favoritesApi, Listing } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import { ListingCard } from '@/components/ListingCard';
-import toast from 'react-hot-toast';
 
 export default function FavoritesPage() {
   const router = useRouter();
@@ -24,10 +23,10 @@ export default function FavoritesPage() {
     favoritesApi
       .getAll()
       .then((res) => {
-        const favorites = res.data.map((f: any) => f.listing);
+        const favorites = res.data.map((f: { listing: Listing }) => f.listing);
         setListings(favorites);
       })
-      .catch((err) => {
+      .catch(() => {
       })
       .finally(() => setLoading(false));
   }, [user, isInitialized, router]);

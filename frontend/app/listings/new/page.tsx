@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { listingsApi, brandsApi, citiesApi, Brand, VehicleModel, City } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import toast from 'react-hot-toast';
@@ -67,19 +68,22 @@ export default function NewListingPage() {
         const sorted = [...res.data].sort((a, b) => a.name.localeCompare(b.name, 'mk'));
         setModels(sorted);
         setLoadingModels(false);
-        if (!res.data.find((m) => m.id === formData.vehicle.model_id)) {
-          setFormData({
-            ...formData,
-            vehicle: { ...formData.vehicle, model_id: '' },
-          });
-        }
+        setFormData((prev) => {
+          if (!res.data.find((m) => m.id === prev.vehicle.model_id)) {
+            return {
+              ...prev,
+              vehicle: { ...prev.vehicle, model_id: '' },
+            };
+          }
+          return prev;
+        });
       });
     } else {
       setModels([]);
-      setFormData({
-        ...formData,
-        vehicle: { ...formData.vehicle, model_id: '' },
-      });
+      setFormData((prev) => ({
+        ...prev,
+        vehicle: { ...prev.vehicle, model_id: '' },
+      }));
     }
   }, [formData.vehicle.brand_id]);
 
@@ -107,7 +111,7 @@ export default function NewListingPage() {
         images: [...prev.images, data.url],
       }));
       toast.success('Фото е вчитано');
-    } catch (err: any) {
+    } catch {
       toast.error('Грешка при вчитување на фото');
     } finally {
       setUploading(false);
@@ -217,7 +221,7 @@ export default function NewListingPage() {
       const res = await listingsApi.create(payload);
       toast.success('Објавата е креирана');
       router.push(`/listings/${res.data.id}`);
-    } catch (err: any) {
+    } catch {
     } finally {
       setLoading(false);
     }
@@ -702,7 +706,14 @@ export default function NewListingPage() {
             <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
               {formData.images.map((url, index) => (
                 <div key={index} className="relative">
-                  <img src={url} alt={`Photo ${index + 1}`} className="w-full h-24 object-cover rounded" />
+                  <Image
+                    src={url}
+                    alt={`Photo ${index + 1}`}
+                    width={200}
+                    height={96}
+                    className="w-full h-24 object-cover rounded"
+                    unoptimized
+                  />
                   <button
                     type="button"
                     onClick={() => {

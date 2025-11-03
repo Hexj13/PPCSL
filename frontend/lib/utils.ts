@@ -1,4 +1,4 @@
-export function formatPrice(price: number, currency: 'MKD' | 'EUR' = 'MKD'): string {
+export function formatPrice(price: number, _currency: 'MKD' | 'EUR' = 'MKD'): string {
   const formattedPrice = new Intl.NumberFormat('ru-RU', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,

@@ -87,8 +87,9 @@ export default function LoginPage() {
       }
       
       toast.success('Успешна најава');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Погрешни најавни податоци');
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { message?: string } } };
+      toast.error(axiosError.response?.data?.message || 'Погрешни најавни податоци');
     } finally {
       setLoading(false);
     }

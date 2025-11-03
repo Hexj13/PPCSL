@@ -43,19 +43,15 @@ export function ListingImage({
     );
   }
 
-  const imageProps = {
-    src: imageUrl,
-    alt,
-    className: fill ? `object-cover ${className}` : className,
-    onClick,
-  };
-
   if (fill) {
     return (
       <Image
-        {...imageProps}
+        src={imageUrl}
+        alt={alt}
         fill
         sizes={sizes}
+        className={fill ? `object-cover ${className}` : className}
+        onClick={onClick}
         unoptimized={unoptimized || imageUrl.startsWith('http://localhost:4000')}
       />
     );
@@ -63,9 +59,12 @@ export function ListingImage({
 
   return (
     <Image
-      {...imageProps}
+      src={imageUrl}
+      alt={alt}
       width={800}
       height={600}
+      className={className}
+      onClick={onClick}
       unoptimized={unoptimized || imageUrl.startsWith('http://localhost:4000')}
     />
   );

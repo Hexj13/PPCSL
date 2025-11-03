@@ -70,7 +70,7 @@ export function UserListingsModal({ isOpen, onClose, user, userId, fetchListings
         clearTimeout(timeoutId);
         setListings(Array.isArray(result) ? result : []);
         setLoading(false);
-      } catch (err: any) {
+      } catch {
         if (abortController.signal.aborted) {
           return;
         }

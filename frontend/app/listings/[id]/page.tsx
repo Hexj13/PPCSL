@@ -664,10 +664,13 @@ export default function ListingPage() {
             onClick={(e) => e.stopPropagation()}
           >
             {images[modalImageIndex] && images[modalImageIndex] !== '/placeholder-car.jpg' ? (
-              <img
+              <Image
                 src={images[modalImageIndex]}
                 alt={`${listing.title} - ${modalImageIndex + 1}`}
+                width={1200}
+                height={900}
                 className="max-w-full max-h-[90vh] w-auto h-auto object-contain"
+                unoptimized
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-300">

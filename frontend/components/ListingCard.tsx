@@ -60,7 +60,7 @@ export function ListingCard({ listing }: ListingCardProps) {
         setIsFavorite(true);
         toast.success('Додадено во омилени');
       }
-    } catch (err: any) {
+    } catch {
     }
   };
 

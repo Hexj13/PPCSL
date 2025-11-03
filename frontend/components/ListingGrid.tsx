@@ -10,12 +10,12 @@ export function ListingGrid() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [meta, setMeta] = useState<any>(null);
+  const [meta, setMeta] = useState<PaginationMeta | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const observerTarget = useRef<HTMLDivElement>(null);
 
   const fetchListings = useCallback(async (page: number, append: boolean = false) => {
-    const params: any = {
+    const params: Record<string, string | number> = {
       page,
       limit: 20,
     };

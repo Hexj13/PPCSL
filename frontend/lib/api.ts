@@ -29,7 +29,7 @@ const getErrorMessage = (error: AxiosError): string => {
   }
 
   const status = error.response.status;
-  const data = error.response.data as any;
+  const data = error.response.data as ErrorResponseData;
   let message = '';
 
   if (data?.message) {
@@ -169,15 +169,82 @@ export interface SearchParams {
   sortOrder?: 'ASC' | 'DESC';
 }
 
+export interface CreateListingDto {
+  title?: string;
+  price: number;
+  currency?: 'MKD' | 'EUR';
+  city: string;
+  description?: string;
+  images?: string[];
+  status?: 'Active' | 'Paused' | 'Closed';
+  urgent?: boolean;
+  vin?: string;
+  vehicle: {
+    brand_id: string;
+    model_id: string;
+    year: number;
+    engine_displ_l?: number;
+    mileage_km?: number;
+    fuel?: 'Petrol' | 'Diesel' | 'Electric' | 'Hybrid' | 'LPG';
+    transmission?: 'Manual' | 'Automatic' | 'CVT';
+    body_type: 'Sedan' | 'Hatchback' | 'Wagon' | 'SUV' | 'Coupe' | 'Convertible' | 'Van' | 'Pickup' | 'Minivan';
+    color?: string;
+    doors?: number;
+  };
+}
+
+export interface UpdateListingDto extends Partial<CreateListingDto> {}
+
+export interface RegisterDto {
+  email: string;
+  password: string;
+  type: 'Individual' | 'Business';
+  phone: string;
+  firstName?: string;
+  lastName?: string;
+  companyName?: string;
+  termsAccepted: boolean;
+}
+
+export interface LoginDto {
+  login: string;
+  password: string;
+}
+
+export interface PaginationMeta {
+  page?: number;
+  limit?: number;
+  total?: number;
+  totalPages?: number;
+}
+
+export interface AdminStats {
+  users: {
+    total: number;
+    active: number;
+    inactive: number;
+  };
+  listings: {
+    total: number;
+    active: number;
+    paused: number;
+    closed: number;
+  };
+}
+
+interface ErrorResponseData {
+  message?: string | string[];
+}
+
 export const listingsApi = {
   getAll: (params?: SearchParams) =>
-    api.get<{ data: Listing[]; meta: any }>('/api/listings', { params }),
+    api.get<{ data: Listing[]; meta: PaginationMeta }>('/api/listings', { params }),
   getOne: (id: string) => api.get<Listing>(`/api/listings/${id}`),
   getUserActiveListings: (userId: string) => api.get<Listing[]>(`/api/listings/user/${userId}/active`),
   getByVin: (vin: string, excludeId?: string) =>
     api.get<Listing[]>(`/api/listings/vin/${vin}`, { params: excludeId ? { excludeId } : {} }),
-  create: (data: any) => api.post<Listing>('/api/listings', data),
-  update: (id: string, data: any) => api.patch<Listing>(`/api/listings/${id}`, data),
+  create: (data: CreateListingDto) => api.post<Listing>('/api/listings', data),
+  update: (id: string, data: UpdateListingDto) => api.patch<Listing>(`/api/listings/${id}`, data),
   publish: (id: string) => api.post(`/api/listings/${id}/publish`),
   pause: (id: string) => api.post(`/api/listings/${id}/pause`),
   close: (id: string) => api.post(`/api/listings/${id}/close`),
@@ -198,8 +265,8 @@ export const uploadApi = {
 };
 
 export const authApi = {
-  register: (data: any) => api.post('/api/auth/register', data),
-  login: (data: any) => api.post<{ access_token: string; user: User }>('/api/auth/login', data),
+  register: (data: RegisterDto) => api.post('/api/auth/register', data),
+  login: (data: LoginDto) => api.post<{ access_token: string; user: User }>('/api/auth/login', data),
   me: () => api.get<User>('/api/auth/me'),
 };
 
@@ -230,7 +297,7 @@ export const adminApi = {
   getAllListings: () => api.get<Listing[]>('/api/admin/listings'),
   updateListingStatus: (id: string, status: 'Active' | 'Paused' | 'Closed') =>
     api.patch(`/api/admin/listings/${id}/status`, { status }),
-  getStats: () => api.get<{ users: any; listings: any }>('/api/admin/stats'),
+  getStats: () => api.get<AdminStats>('/api/admin/stats'),
   getAllUsers: () => api.get<User[]>('/api/admin/users'),
   getUserListings: (userId: string) => api.get<Listing[]>(`/api/admin/users/${userId}/listings`),
   toggleUserStatus: (userId: string) => api.patch(`/api/admin/users/${userId}/toggle-status`),

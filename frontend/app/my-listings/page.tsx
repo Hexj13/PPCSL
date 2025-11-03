@@ -30,7 +30,7 @@ export default function MyListingsPage() {
       .then((res) => {
         setListings(res.data);
       })
-      .catch((err) => {
+      .catch(() => {
       })
       .finally(() => setLoading(false));
 
@@ -82,7 +82,7 @@ export default function MyListingsPage() {
       }
       const res = await listingsApi.getMy();
       setListings(res.data);
-    } catch (err: any) {
+    } catch {
     }
   };
 
@@ -103,7 +103,7 @@ export default function MyListingsPage() {
 
       const listingsRes = await listingsApi.getMy();
       setListings(listingsRes.data);
-    } catch (err: any) {
+    } catch {
     } finally {
       setIsRefreshing(false);
     }
