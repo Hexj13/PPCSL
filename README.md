@@ -14,7 +14,7 @@ cd frontend && npm run dev   # Start frontend (in another terminal)
 **Frontend:** http://localhost:3000 | **Backend:** http://localhost:4000
 
 <details>
-<summary><b>📋 Installation Guide</b></summary>
+<summary><b>Installation Guide</b></summary>
 
 ### Requirements
 - Node.js 18+
@@ -73,7 +73,7 @@ npm run dev  # Runs both frontend and backend
 </details>
 
 <details>
-<summary><b>🛠 Technologies</b></summary>
+<summary><b>Technologies</b></summary>
 
 - **Frontend:** Next.js 14, React, TailwindCSS, Zustand
 - **Backend:** NestJS, PostgreSQL, TypeORM, Redis
@@ -82,23 +82,23 @@ npm run dev  # Runs both frontend and backend
 </details>
 
 <details>
-<summary><b>✨ Core Features</b></summary>
+<summary><b>Core Features</b></summary>
 
-- ✅ User registration and authentication (Individual and Business)
-- ✅ Create, edit, and publish listings
-- ✅ Extended search and filtering
-- ✅ Listing limits (5 for Individuals, 50 for Business)
-- ✅ Listing statuses (Active, Paused, Closed)
-- ✅ Automatic listing closure after 5 months
-- ✅ Favorites (for authenticated users and guests)
-- ✅ VIN search functionality
-- ✅ Image upload with automatic optimization
-- ✅ Admin panel for management
+- User registration and authentication (Individual and Business)
+- Create, edit, and publish listings
+- Extended search and filtering
+- Listing limits (5 for Individuals, 50 for Business)
+- Listing statuses (Active, Paused, Closed)
+- Automatic listing closure after 5 months
+- Favorites (for authenticated users and guests)
+- VIN search functionality
+- Image upload with automatic optimization
+- Admin panel for management
 
 </details>
 
 <details>
-<summary><b>📁 Project Structure</b></summary>
+<summary><b>Project Structure</b></summary>
 
 ```
 Kupito/
@@ -120,7 +120,7 @@ Kupito/
 </details>
 
 <details>
-<summary><b>🔌 API Endpoints</b></summary>
+<summary><b>API Endpoints</b></summary>
 
 ### Authentication
 - `POST /api/auth/register` - Register
@@ -165,7 +165,7 @@ Kupito/
 </details>
 
 <details>
-<summary><b>⚙️ Implementation Features</b></summary>
+<summary><b>Implementation Features</b></summary>
 
 - Automatic listing closure after 5 months (cron job runs daily at midnight)
 - Active listing limit validation on publish
