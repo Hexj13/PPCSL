@@ -18,31 +18,31 @@ async function resetUsers() {
     const vehicleRepo = AppDataSource.getRepository(Vehicle);
 
     console.log('🗑️  Бришење на сите корисници...');
-    
+
     console.log('   Бришење на сите омилени...');
     const favorites = await favoriteRepo.find();
     if (favorites.length > 0) {
       await favoriteRepo.remove(favorites);
     }
-    
+
     console.log('   Бришење на сите објави...');
     const listings = await listingRepo.find();
     if (listings.length > 0) {
       await listingRepo.remove(listings);
     }
-    
+
     console.log('   Бришење на сите возила...');
     const vehicles = await vehicleRepo.find();
     if (vehicles.length > 0) {
       await vehicleRepo.remove(vehicles);
     }
-    
+
     console.log('   Бришење на сите корисници...');
     const users = await userRepo.find();
     if (users.length > 0) {
       await userRepo.remove(users);
     }
-    
+
     console.log('✅ Сите корисници се избришани');
 
     console.log('👑 Креирање нов админ корисник...');
@@ -74,4 +74,3 @@ async function resetUsers() {
 }
 
 resetUsers();
-

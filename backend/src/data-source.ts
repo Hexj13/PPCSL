@@ -11,7 +11,8 @@ export const dataSourceOptions: DataSourceOptions = {
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5432'),
   username: process.env.DB_USERNAME || 'kupito',
-  password: process.env.DB_PASSWORD || (process.env.NODE_ENV === 'production' ? undefined : 'kupito123'),
+  password:
+    process.env.DB_PASSWORD || (process.env.NODE_ENV === 'production' ? undefined : 'kupito123'),
   database: process.env.DB_NAME || 'kupito',
   entities: [User, Listing, Vehicle, Favorite, Brand, VehicleModel],
   synchronize: process.env.NODE_ENV !== 'production',

@@ -33,10 +33,10 @@ async function makeAdmin() {
     } else {
       console.log(`👤 Пронајден корисник ${email}`);
       const wasAdmin = admin.type === UserType.Admin;
-      
+
       admin.type = UserType.Admin;
       admin = await userRepo.save(admin);
-      
+
       if (wasAdmin) {
         console.log('✅ Корисникот веќе е админ');
       } else {
@@ -59,4 +59,3 @@ async function makeAdmin() {
 }
 
 makeAdmin();
-

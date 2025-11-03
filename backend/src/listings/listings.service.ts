@@ -13,6 +13,7 @@ import { BrandsService } from '../brands/brands.service';
 import { CreateListingDto } from './dto/create-listing.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
 import { SearchListingsDto } from './dto/search-listings.dto';
+import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
@@ -215,8 +216,8 @@ export class ListingsService {
     }
 
     if (listing.status === ListingStatus.Closed) {
-      listing.price = undefined as any;
-      listing.currency = undefined as any;
+      (listing as Partial<Listing>).price = undefined;
+      (listing as Partial<Listing>).currency = undefined;
       if (listing.user) {
         listing.user.phone = null;
         listing.user.email = null;
@@ -236,10 +237,11 @@ export class ListingsService {
     }
 
     if (updateListingDto.vehicle) {
-      const vehicleUpdate: any = { ...updateListingDto.vehicle };
+      const vehicleUpdate: Partial<CreateVehicleDto> = { ...updateListingDto.vehicle };
       await this.vehiclesRepository.update(listing.vehicle_id, vehicleUpdate);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { vehicle, ...listingUpdate } = updateListingDto;
     Object.assign(listing, {
       ...listingUpdate,
@@ -358,8 +360,8 @@ export class ListingsService {
     const listings = await queryBuilder.getMany();
 
     return listings.map((listing) => {
-      listing.price = undefined as any;
-      listing.currency = undefined as any;
+      (listing as Partial<Listing>).price = undefined;
+      (listing as Partial<Listing>).currency = undefined;
       if (listing.user) {
         listing.user.phone = null;
         listing.user.email = null;

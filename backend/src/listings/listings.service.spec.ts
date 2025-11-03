@@ -11,8 +11,10 @@ import { Vehicle } from './entities/vehicle.entity';
 describe('ListingsService', () => {
   let service: ListingsService;
   let listingsRepository: jest.Mocked<Repository<Listing>>;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let vehiclesRepository: jest.Mocked<Repository<Vehicle>>;
   let usersService: jest.Mocked<UsersService>;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let brandsService: jest.Mocked<BrandsService>;
 
   const mockVehicle: Vehicle = {
@@ -117,9 +119,7 @@ describe('ListingsService', () => {
     it('should throw NotFoundException when listing is not found', async () => {
       listingsRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findOne('non-existent')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -159,17 +159,13 @@ describe('ListingsService', () => {
       usersService.getListingLimit.mockResolvedValue(5);
       listingsRepository.count.mockResolvedValue(5);
 
-      await expect(service.publish('listing-1', 'user-1')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.publish('listing-1', 'user-1')).rejects.toThrow(BadRequestException);
     });
 
     it('should throw ForbiddenException when user is not owner', async () => {
       listingsRepository.findOne.mockResolvedValue(mockListing);
 
-      await expect(service.publish('listing-1', 'other-user')).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(service.publish('listing-1', 'other-user')).rejects.toThrow(ForbiddenException);
     });
   });
 
@@ -187,9 +183,7 @@ describe('ListingsService', () => {
     it('should throw ForbiddenException when user is not owner', async () => {
       listingsRepository.findOne.mockResolvedValue(mockListing);
 
-      await expect(service.pause('listing-1', 'other-user')).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(service.pause('listing-1', 'other-user')).rejects.toThrow(ForbiddenException);
     });
   });
 
@@ -207,11 +201,7 @@ describe('ListingsService', () => {
     it('should throw ForbiddenException when user is not owner', async () => {
       listingsRepository.findOne.mockResolvedValue(mockListing);
 
-      await expect(service.close('listing-1', 'other-user')).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(service.close('listing-1', 'other-user')).rejects.toThrow(ForbiddenException);
     });
   });
 });
-
-

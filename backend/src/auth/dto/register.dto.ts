@@ -36,7 +36,9 @@ export class RegisterDto {
 
   @ValidateIf((o) => o.type === UserType.Individual)
   @IsString({ message: 'Телефонот е задолжителен' })
-  @Matches(/^\+\d{1,4}\d{6,15}$/, { message: 'Телефонот мора да биде во формат +код држава (1-4 цифри) + број (6-15 цифри)' })
+  @Matches(/^\+\d{1,4}\d{6,15}$/, {
+    message: 'Телефонот мора да биде во формат +код држава (1-4 цифри) + број (6-15 цифри)',
+  })
   phone?: string;
 
   @ValidateIf((o) => o.type === UserType.Individual)

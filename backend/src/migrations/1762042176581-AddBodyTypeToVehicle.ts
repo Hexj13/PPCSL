@@ -1,18 +1,23 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class AddBodyTypeToVehicle1762042176581 implements MigrationInterface {
-    name = 'AddBodyTypeToVehicle1762042176581'
+  name = 'AddBodyTypeToVehicle1762042176581';
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`CREATE TYPE "public"."vehicles_body_type_enum" AS ENUM('Sedan', 'Hatchback', 'Wagon', 'SUV', 'Coupe', 'Convertible', 'Van', 'Pickup', 'Minivan')`);
-        await queryRunner.query(`ALTER TABLE "vehicles" ADD "body_type" "public"."vehicles_body_type_enum"`);
-        await queryRunner.query(`UPDATE "vehicles" SET "body_type" = 'Sedan' WHERE "body_type" IS NULL`);
-        await queryRunner.query(`ALTER TABLE "vehicles" ALTER COLUMN "body_type" SET NOT NULL`);
-    }
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(
+      `CREATE TYPE "public"."vehicles_body_type_enum" AS ENUM('Sedan', 'Hatchback', 'Wagon', 'SUV', 'Coupe', 'Convertible', 'Van', 'Pickup', 'Minivan')`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "vehicles" ADD "body_type" "public"."vehicles_body_type_enum"`,
+    );
+    await queryRunner.query(
+      `UPDATE "vehicles" SET "body_type" = 'Sedan' WHERE "body_type" IS NULL`,
+    );
+    await queryRunner.query(`ALTER TABLE "vehicles" ALTER COLUMN "body_type" SET NOT NULL`);
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`ALTER TABLE "vehicles" DROP COLUMN "body_type"`);
-        await queryRunner.query(`DROP TYPE "public"."vehicles_body_type_enum"`);
-    }
-
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`ALTER TABLE "vehicles" DROP COLUMN "body_type"`);
+    await queryRunner.query(`DROP TYPE "public"."vehicles_body_type_enum"`);
+  }
 }

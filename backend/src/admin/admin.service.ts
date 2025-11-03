@@ -23,7 +23,12 @@ export class AdminService {
   async getUserListings(userId: string) {
     const user = await this.usersRepository.findOne({
       where: { id: userId },
-      relations: ['listings', 'listings.vehicle', 'listings.vehicle.brand', 'listings.vehicle.model'],
+      relations: [
+        'listings',
+        'listings.vehicle',
+        'listings.vehicle.brand',
+        'listings.vehicle.model',
+      ],
     });
     if (!user) {
       throw new NotFoundException('Корисникот не е пронајден');

@@ -161,7 +161,7 @@ describe('UsersService', () => {
         ],
       };
 
-      repository.findOne.mockResolvedValue(userWithListings as any);
+      repository.findOne.mockResolvedValue(userWithListings as User);
 
       const result = await service.getActiveListingsCount('1');
 
@@ -180,7 +180,7 @@ describe('UsersService', () => {
   describe('getListingLimit', () => {
     it('should return 50 for Business users', async () => {
       const businessUser = { ...mockUser, type: UserType.Business };
-      repository.findOne.mockResolvedValue(businessUser as any);
+      repository.findOne.mockResolvedValue(businessUser as User);
 
       const result = await service.getListingLimit('1');
 
@@ -196,5 +196,3 @@ describe('UsersService', () => {
     });
   });
 });
-
-

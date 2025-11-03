@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
-import { UserType } from '../users/entities/user.entity';
+import { User, UserType } from '../users/entities/user.entity';
 import * as bcrypt from 'bcrypt';
 
 describe('AuthService', () => {
@@ -58,8 +58,9 @@ describe('AuthService', () => {
 
   describe('validateUser', () => {
     it('should return user without password when credentials are valid (email)', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...expectedResult } = mockUser;
-      usersService.findByEmail.mockResolvedValue(mockUser as any);
+      usersService.findByEmail.mockResolvedValue(mockUser as User);
       jest.spyOn(bcrypt, 'compare').mockResolvedValue(true as never);
 
       const result = await service.validateUser('test@test.com', 'password123');
@@ -69,8 +70,9 @@ describe('AuthService', () => {
     });
 
     it('should return user without password when credentials are valid (phone)', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...expectedResult } = mockUser;
-      usersService.findByPhone.mockResolvedValue(mockUser as any);
+      usersService.findByPhone.mockResolvedValue(mockUser as User);
       jest.spyOn(bcrypt, 'compare').mockResolvedValue(true as never);
 
       const result = await service.validateUser('+38970123456', 'password123');
@@ -88,7 +90,7 @@ describe('AuthService', () => {
     });
 
     it('should return null when password is invalid', async () => {
-      usersService.findByEmail.mockResolvedValue(mockUser as any);
+      usersService.findByEmail.mockResolvedValue(mockUser as User);
       jest.spyOn(bcrypt, 'compare').mockResolvedValue(false as never);
 
       const result = await service.validateUser('test@test.com', 'wrongpassword');
@@ -99,8 +101,9 @@ describe('AuthService', () => {
 
   describe('login', () => {
     it('should return access token and user when credentials are valid', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...userWithoutPassword } = mockUser;
-      usersService.findByEmail.mockResolvedValue(mockUser as any);
+      usersService.findByEmail.mockResolvedValue(mockUser as User);
       jest.spyOn(bcrypt, 'compare').mockResolvedValue(true as never);
       jwtService.sign.mockReturnValue('mock-jwt-token');
 
@@ -147,8 +150,9 @@ describe('AuthService', () => {
         ...registerDto,
         password: hashedPassword,
       };
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...userWithoutPassword } = createdUser;
-      usersService.create.mockResolvedValue(createdUser as any);
+      usersService.create.mockResolvedValue(createdUser as User);
 
       const result = await service.register(registerDto);
 
@@ -168,9 +172,7 @@ describe('AuthService', () => {
         termsAccepted: false,
       };
 
-      await expect(service.register(registerDto)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.register(registerDto)).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -183,7 +185,7 @@ describe('AuthService', () => {
         whatsapp: true,
         telegram: false,
       };
-      usersService.findOne.mockResolvedValue(fullUser as any);
+      usersService.findOne.mockResolvedValue(fullUser as User);
 
       const result = await service.getUserProfile('1');
 
@@ -195,5 +197,3 @@ describe('AuthService', () => {
     });
   });
 });
-
-

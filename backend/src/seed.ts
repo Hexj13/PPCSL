@@ -6,8 +6,6 @@ import { Vehicle, FuelType, TransmissionType, BodyType } from './listings/entiti
 import { Brand } from './brands/entities/brand.entity';
 import { VehicleModel } from './brands/entities/vehicle-model.entity';
 import * as bcrypt from 'bcrypt';
-import * as fs from 'fs';
-import * as path from 'path';
 
 const cities = [
   'Скопје',
@@ -412,6 +410,7 @@ async function seedListings(user: User, brands: Brand[], count: number = 60) {
   const listingRepo = AppDataSource.getRepository(Listing);
   const vehicleRepo = AppDataSource.getRepository(Vehicle);
   const brandRepo = AppDataSource.getRepository(Brand);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const modelRepo = AppDataSource.getRepository(VehicleModel);
 
   const baseUrl = process.env.API_URL || 'http://localhost:4000';
@@ -434,7 +433,7 @@ async function seedListings(user: User, brands: Brand[], count: number = 60) {
   const currentYear = new Date().getFullYear();
 
   const bodyTypes = Object.values(BodyType);
-  
+
   for (let i = 0; i < count; i++) {
     const brand = getRandomElement(validBrands);
     const model = getRandomElement(brand.models);
@@ -473,11 +472,14 @@ async function seedListings(user: User, brands: Brand[], count: number = 60) {
 
     const savedVehicle = await vehicleRepo.save(vehicle);
 
-    const transmissionStr = 
-      transmission === 'Automatic' ? 'Автоматска' 
-      : transmission === 'Manual' ? 'Мануелна'
-      : transmission === 'CVT' ? 'Варијатор'
-      : '';
+    const transmissionStr =
+      transmission === 'Automatic'
+        ? 'Автоматска'
+        : transmission === 'Manual'
+          ? 'Мануелна'
+          : transmission === 'CVT'
+            ? 'Варијатор'
+            : '';
     const title = `${brand.name} ${model.name} ${year} ${transmissionStr}`;
 
     const listing = listingRepo.create({

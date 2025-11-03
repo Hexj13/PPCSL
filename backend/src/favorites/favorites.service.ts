@@ -41,7 +41,13 @@ export class FavoritesService {
   async findAll(userId: string): Promise<Favorite[]> {
     return this.favoritesRepository.find({
       where: { user_id: userId },
-      relations: ['listing', 'listing.vehicle', 'listing.vehicle.brand', 'listing.vehicle.model', 'listing.user'],
+      relations: [
+        'listing',
+        'listing.vehicle',
+        'listing.vehicle.brand',
+        'listing.vehicle.model',
+        'listing.user',
+      ],
       order: { created_at: 'DESC' },
     });
   }

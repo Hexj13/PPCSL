@@ -51,7 +51,7 @@ async function seedVinTestData() {
   const vehicleRepo = AppDataSource.getRepository(Vehicle);
   const brandRepo = AppDataSource.getRepository(Brand);
 
-  let user = await userRepo.findOne({ where: { email: 'user@test.com' } });
+  const user = await userRepo.findOne({ where: { email: 'user@test.com' } });
   if (!user) {
     console.log('❌ Тест корисникот не постои. Ве молиме прво извршете го основниот seed скрипт.');
     return;
@@ -110,7 +110,7 @@ async function seedVinTestData() {
         brand_id: brand.id,
         model_id: model.id,
         year,
-        mileage_km: mileage + (i * 5000),
+        mileage_km: mileage + i * 5000,
         engine_displ_l: engineDispl,
         fuel,
         transmission,
@@ -122,7 +122,11 @@ async function seedVinTestData() {
       const savedVehicle = await vehicleRepo.save(vehicle);
 
       const transmissionStr =
-        transmission === 'Automatic' ? 'Автоматска' : transmission === 'Manual' ? 'Мануелна' : 'Варијатор';
+        transmission === 'Automatic'
+          ? 'Автоматска'
+          : transmission === 'Manual'
+            ? 'Мануелна'
+            : 'Варијатор';
       const title = `${brand.name} ${model.name} ${year} ${transmissionStr}`;
 
       const now = new Date();
@@ -132,10 +136,8 @@ async function seedVinTestData() {
 
       const status = i === 0 ? ListingStatus.Active : ListingStatus.Closed;
 
-      const updatedDate = status === ListingStatus.Closed
-        ? new Date(createdDate)
-        : new Date();
-      
+      const updatedDate = status === ListingStatus.Closed ? new Date(createdDate) : new Date();
+
       if (status === ListingStatus.Closed) {
         updatedDate.setDate(updatedDate.getDate() + getRandomInt(15, 90));
       }
@@ -169,7 +171,9 @@ async function seedVinTestData() {
   console.log('   - 1HGBH41JXMN109186: 4 објави (1 активна, 3 затворени)');
   console.log('   - WBAWL73529P123456: 3 објави (1 активна, 2 затворени)');
   console.log('   - JM7TB1824J0123456: 3 објави (1 активна, 2 затворени)');
-  console.log('\n💡 За да тестирате, отворете некоја активна објава и проверете дали се прикажуваат претходните затворени објави.');
+  console.log(
+    '\n💡 За да тестирате, отворете некоја активна објава и проверете дали се прикажуваат претходните затворени објави.',
+  );
 }
 
 seedVinTestData()
@@ -186,4 +190,3 @@ seedVinTestData()
       await AppDataSource.destroy();
     }
   });
-

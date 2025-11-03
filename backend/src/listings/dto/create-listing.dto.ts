@@ -10,7 +10,6 @@ import {
   MaxLength,
   MinLength,
   ValidateNested,
-  IsUrl,
   ArrayMaxSize,
   ArrayMinSize,
   Matches,

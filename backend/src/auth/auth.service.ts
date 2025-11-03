@@ -4,6 +4,9 @@ import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { User } from '../users/entities/user.entity';
+
+export type UserWithoutPassword = Omit<User, 'password'>;
 
 @Injectable()
 export class AuthService {
@@ -12,13 +15,14 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async validateUser(login: string, password: string): Promise<any> {
+  async validateUser(login: string, password: string): Promise<UserWithoutPassword | null> {
     const isEmail = login.includes('@');
     const user = isEmail
       ? await this.usersService.findByEmail(login)
       : await this.usersService.findByPhone(login);
-    
+
     if (user && (await bcrypt.compare(password, user.password))) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password: _, ...result } = user;
       return result;
     }
@@ -49,19 +53,22 @@ export class AuthService {
     if (!registerDto.termsAccepted) {
       throw new BadRequestException('Мора да ги прифатите условите за користење');
     }
-    
+
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { termsAccepted, ...userData } = registerDto;
     const user = await this.usersService.create({
       ...userData,
       password: hashedPassword,
     });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...result } = user;
     return result;
   }
 
   async getUserProfile(userId: string) {
     const user = await this.usersService.findOne(userId);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...result } = user;
     return {
       id: result.id,

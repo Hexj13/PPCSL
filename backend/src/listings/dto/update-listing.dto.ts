@@ -1,4 +1,3 @@
-import { CreateListingDto } from './create-listing.dto';
 import { IsOptional, IsBoolean, ValidateNested, IsString, Length, Matches } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreateVehicleDto } from './create-vehicle.dto';
