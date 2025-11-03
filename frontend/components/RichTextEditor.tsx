@@ -150,7 +150,7 @@ export function RichTextEditor({
                   document.execCommand('insertUnorderedList', false);
                 } else {
                   if (range) {
-                    let node = range.commonAncestorContainer;
+                    let node: Node | null = range.commonAncestorContainer;
                     if (node.nodeType === Node.TEXT_NODE) {
                       node = node.parentNode;
                     }
@@ -165,8 +165,10 @@ export function RichTextEditor({
                       range.insertNode(ul);
                       range.setStart(li, 0);
                       range.collapse(true);
-                      selection.removeAllRanges();
-                      selection.addRange(range);
+                      if (selection) {
+                        selection.removeAllRanges();
+                        selection.addRange(range);
+                      }
                     }
                   } else {
                     document.execCommand('insertUnorderedList', false);

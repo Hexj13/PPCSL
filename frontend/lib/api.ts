@@ -1,4 +1,12 @@
 import axios, { AxiosError } from 'axios';
+import {
+  Currency,
+  ListingStatus,
+  UserType,
+  FuelType,
+  TransmissionType,
+  BodyType,
+} from './types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -90,9 +98,9 @@ export interface Listing {
   id: string;
   title: string;
   price: number;
-  currency?: 'MKD' | 'EUR';
+  currency?: Currency;
   city: string;
-  status: 'Active' | 'Paused' | 'Closed';
+  status: ListingStatus;
   description?: string;
   images?: string[];
   urgent?: boolean;
@@ -128,18 +136,9 @@ export interface Vehicle {
   year: number;
   engine_displ_l?: number;
   mileage_km?: number;
-  fuel?: 'Petrol' | 'Diesel' | 'Electric' | 'Hybrid' | 'LPG';
-  transmission?: 'Manual' | 'Automatic' | 'CVT';
-  body_type:
-    | 'Sedan'
-    | 'Hatchback'
-    | 'Wagon'
-    | 'SUV'
-    | 'Coupe'
-    | 'Convertible'
-    | 'Van'
-    | 'Pickup'
-    | 'Minivan';
+  fuel?: FuelType;
+  transmission?: TransmissionType;
+  body_type: BodyType;
   color?: string;
   doors?: number;
 }
@@ -147,7 +146,7 @@ export interface Vehicle {
 export interface User {
   id: string;
   email: string;
-  type: 'Individual' | 'Business' | 'Admin';
+  type: UserType;
   phone?: string;
   firstName?: string;
   lastName?: string;
@@ -181,11 +180,11 @@ export interface SearchParams {
 export interface CreateListingDto {
   title?: string;
   price: number;
-  currency?: 'MKD' | 'EUR';
+  currency?: Currency;
   city: string;
   description?: string;
   images?: string[];
-  status?: 'Active' | 'Paused' | 'Closed';
+  status?: ListingStatus;
   urgent?: boolean;
   vin?: string;
   vehicle: {
@@ -194,18 +193,9 @@ export interface CreateListingDto {
     year: number;
     engine_displ_l?: number;
     mileage_km?: number;
-    fuel?: 'Petrol' | 'Diesel' | 'Electric' | 'Hybrid' | 'LPG';
-    transmission?: 'Manual' | 'Automatic' | 'CVT';
-    body_type:
-      | 'Sedan'
-      | 'Hatchback'
-      | 'Wagon'
-      | 'SUV'
-      | 'Coupe'
-      | 'Convertible'
-      | 'Van'
-      | 'Pickup'
-      | 'Minivan';
+    fuel?: FuelType;
+    transmission?: TransmissionType;
+    body_type: BodyType;
     color?: string;
     doors?: number;
   };
@@ -214,14 +204,15 @@ export interface CreateListingDto {
 export interface UpdateListingDto extends Partial<CreateListingDto> {}
 
 export interface RegisterDto {
-  email: string;
+  email?: string;
   password: string;
-  type: 'Individual' | 'Business';
+  type: Extract<UserType, 'Individual' | 'Business'>;
   phone: string;
   firstName?: string;
   lastName?: string;
   companyName?: string;
   termsAccepted: boolean;
+  emailNotifications?: boolean;
 }
 
 export interface LoginDto {
@@ -317,7 +308,7 @@ export const citiesApi = {
 
 export const adminApi = {
   getAllListings: () => api.get<Listing[]>('/api/admin/listings'),
-  updateListingStatus: (id: string, status: 'Active' | 'Paused' | 'Closed') =>
+  updateListingStatus: (id: string, status: ListingStatus) =>
     api.patch(`/api/admin/listings/${id}/status`, { status }),
   getStats: () => api.get<AdminStats>('/api/admin/stats'),
   getAllUsers: () => api.get<User[]>('/api/admin/users'),

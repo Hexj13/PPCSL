@@ -11,12 +11,12 @@ import {
   IsBoolean,
   IsNotEmpty,
 } from 'class-validator';
-import { UserType } from '../../users/entities/user.entity';
+import { UserType, UserType as UserTypeEnum } from '../../common/types';
 
 export class RegisterDto {
-  @ValidateIf((o) => o.type === UserType.Business)
+  @ValidateIf((o) => o.type === UserTypeEnum.Business)
   @IsNotEmpty({ message: 'Email е задолжителен за правно лице' })
-  @ValidateIf((o) => o.type === UserType.Business || (o.type === UserType.Individual && o.email))
+  @ValidateIf((o) => o.type === UserTypeEnum.Business || (o.type === UserTypeEnum.Individual && o.email))
   @IsEmail({}, { message: 'Невалидна email адреса' })
   email?: string;
 
@@ -31,30 +31,30 @@ export class RegisterDto {
   password: string;
 
   @IsEnum(UserType, { message: 'Типот на корисникот мора да биде Individual или Business' })
-  @NotEquals(UserType.Admin, { message: 'Не можете да се регистрирате како администратор' })
+  @NotEquals(UserTypeEnum.Admin, { message: 'Не можете да се регистрирате како администратор' })
   type: UserType;
 
-  @ValidateIf((o) => o.type === UserType.Individual)
+  @ValidateIf((o) => o.type === UserTypeEnum.Individual)
   @IsString({ message: 'Телефонот е задолжителен' })
   @Matches(/^\+\d{1,4}\d{6,15}$/, {
     message: 'Телефонот мора да биде во формат +код држава (1-4 цифри) + број (6-15 цифри)',
   })
   phone?: string;
 
-  @ValidateIf((o) => o.type === UserType.Individual)
+  @ValidateIf((o) => o.type === UserTypeEnum.Individual)
   @IsString({ message: 'Името е задолжително' })
   @MinLength(2, { message: 'Името мора да содржи минимум 2 карактери' })
   @MaxLength(50, { message: 'Името не може да биде подолго од 50 карактери' })
   firstName?: string;
 
-  @ValidateIf((o) => o.type === UserType.Individual)
+  @ValidateIf((o) => o.type === UserTypeEnum.Individual)
   @IsOptional()
   @IsString()
   @MinLength(2, { message: 'Презимето мора да содржи минимум 2 карактери' })
   @MaxLength(50, { message: 'Презимето не може да биде подолго од 50 карактери' })
   lastName?: string;
 
-  @ValidateIf((o) => o.type === UserType.Business)
+  @ValidateIf((o) => o.type === UserTypeEnum.Business)
   @IsOptional()
   @IsString()
   @MinLength(2, { message: 'Името на компанијата мора да содржи минимум 2 карактери' })

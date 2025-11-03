@@ -4,18 +4,19 @@ import Link from 'next/link';
 import { useAuthStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { User } from '@/lib/api';
 
 export function Header() {
   const { user, logout } = useAuthStore();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const getUserDisplayName = (user: typeof user): string => {
-    if (!user) return '';
-    if (user.firstName && user.lastName) {
-      return `${user.firstName} ${user.lastName}`;
+  const getUserDisplayName = (userParam: User | null): string => {
+    if (!userParam) return '';
+    if (userParam.firstName && userParam.lastName) {
+      return `${userParam.firstName} ${userParam.lastName}`;
     }
-    return user.email || '';
+    return userParam.email || '';
   };
 
   const handleLogout = () => {

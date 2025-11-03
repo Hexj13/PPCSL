@@ -2,7 +2,7 @@ import { Controller, Get, Patch, Param, Body, UseGuards } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
-import { ListingStatus } from '../listings/entities/listing.entity';
+import { ListingStatus } from '../common/types';
 
 @Controller('api/admin')
 @UseGuards(JwtAuthGuard, AdminGuard)

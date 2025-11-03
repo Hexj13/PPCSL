@@ -5,7 +5,8 @@ import { Repository } from 'typeorm';
 import { ListingsService } from './listings.service';
 import { UsersService } from '../users/users.service';
 import { BrandsService } from '../brands/brands.service';
-import { Listing, ListingStatus, Currency } from './entities/listing.entity';
+import { Listing } from './entities/listing.entity';
+import { ListingStatus, Currency } from '../common/types';
 import { Vehicle } from './entities/vehicle.entity';
 
 describe('ListingsService', () => {

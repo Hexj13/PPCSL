@@ -6,7 +6,8 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual } from 'typeorm';
-import { Listing, ListingStatus, Currency } from './entities/listing.entity';
+import { Listing } from './entities/listing.entity';
+import { ListingStatus, Currency, ListingStatus as ListingStatusEnum, Currency as CurrencyEnum } from '../common/types';
 import { Vehicle } from './entities/vehicle.entity';
 import { UsersService } from '../users/users.service';
 import { BrandsService } from '../brands/brands.service';
@@ -52,9 +53,9 @@ export class ListingsService {
 
     const title = titleParts.join(' ');
 
-    const status = createListingDto.status || ListingStatus.Active;
+    const status = createListingDto.status || ListingStatusEnum.Active;
 
-    if (status === ListingStatus.Active) {
+    if (status === ListingStatusEnum.Active) {
       const activeCount = await this.getActiveListingsCount(userId);
       const limit = await this.usersService.getListingLimit(userId);
 
@@ -69,7 +70,7 @@ export class ListingsService {
       ...createListingDto,
       title,
       status,
-      currency: createListingDto.currency || Currency.MKD,
+      currency: createListingDto.currency || CurrencyEnum.MKD,
       vehicle_id: savedVehicle.id,
       user_id: userId,
       last_updated_at: new Date(),
@@ -89,7 +90,7 @@ export class ListingsService {
       .leftJoinAndSelect('vehicle.brand', 'brand')
       .leftJoinAndSelect('vehicle.model', 'model')
       .leftJoinAndSelect('listing.user', 'user')
-      .where('listing.status = :status', { status: ListingStatus.Active });
+      .where('listing.status = :status', { status: ListingStatusEnum.Active });
 
     if (searchDto.brand_id) {
       queryBuilder.andWhere('vehicle.brand_id = :brand_id', { brand_id: searchDto.brand_id });
@@ -215,7 +216,7 @@ export class ListingsService {
       throw new NotFoundException('Објавата не е пронајдена');
     }
 
-    if (listing.status === ListingStatus.Closed) {
+    if (listing.status === ListingStatusEnum.Closed) {
       (listing as Partial<Listing>).price = undefined;
       (listing as Partial<Listing>).currency = undefined;
       if (listing.user) {
@@ -260,7 +261,7 @@ export class ListingsService {
     const activeCount = await this.getActiveListingsCount(userId);
     const limit = await this.usersService.getListingLimit(userId);
 
-    if (listing.status === ListingStatus.Active) {
+    if (listing.status === ListingStatusEnum.Active) {
       throw new BadRequestException('Објавата е веќе активна');
     }
 
@@ -268,7 +269,7 @@ export class ListingsService {
       throw new BadRequestException(`Надминат е лимитот на активни објави. Максимум: ${limit}`);
     }
 
-    listing.status = ListingStatus.Active;
+    listing.status = ListingStatusEnum.Active;
     listing.last_updated_at = new Date();
     return this.listingsRepository.save(listing);
   }
@@ -279,7 +280,7 @@ export class ListingsService {
       throw new ForbiddenException('Немате пристап до оваа објава');
     }
 
-    listing.status = ListingStatus.Paused;
+    listing.status = ListingStatusEnum.Paused;
     return this.listingsRepository.save(listing);
   }
 
@@ -289,7 +290,7 @@ export class ListingsService {
       throw new ForbiddenException('Немате пристап до оваа објава');
     }
 
-    listing.status = ListingStatus.Closed;
+    listing.status = ListingStatusEnum.Closed;
     return this.listingsRepository.save(listing);
   }
 
@@ -297,7 +298,7 @@ export class ListingsService {
     return this.listingsRepository.count({
       where: {
         user_id: userId,
-        status: ListingStatus.Active,
+        status: ListingStatusEnum.Active,
       },
     });
   }
@@ -309,11 +310,11 @@ export class ListingsService {
 
     await this.listingsRepository.update(
       {
-        status: ListingStatus.Active,
+        status: ListingStatusEnum.Active,
         last_updated_at: LessThanOrEqual(fiveMonthsAgo),
       },
       {
-        status: ListingStatus.Closed,
+        status: ListingStatusEnum.Closed,
       },
     );
   }
@@ -328,7 +329,7 @@ export class ListingsService {
 
   async getActiveUserListings(userId: string): Promise<Listing[]> {
     return this.listingsRepository.find({
-      where: { user_id: userId, status: ListingStatus.Active },
+      where: { user_id: userId, status: ListingStatusEnum.Active },
       relations: ['vehicle', 'vehicle.brand', 'vehicle.model'],
       order: { created_at: 'DESC' },
     });
@@ -350,7 +351,7 @@ export class ListingsService {
       .leftJoinAndSelect('vehicle.brand', 'brand')
       .leftJoinAndSelect('vehicle.model', 'model')
       .where('listing.vin = :vin', { vin })
-      .andWhere('listing.status = :status', { status: ListingStatus.Closed })
+      .andWhere('listing.status = :status', { status: ListingStatusEnum.Closed })
       .orderBy('listing.updated_at', 'DESC');
 
     if (excludeId) {

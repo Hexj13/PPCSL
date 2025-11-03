@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User, UserType } from './entities/user.entity';
+import { User } from './entities/user.entity';
+import { UserType, UserType as UserTypeEnum } from '../common/types';
 
 @Injectable()
 export class UsersService {
@@ -50,6 +51,6 @@ export class UsersService {
 
   async getListingLimit(userId: string): Promise<number> {
     const user = await this.findOne(userId);
-    return user.type === UserType.Business ? 50 : 5;
+    return user.type === UserTypeEnum.Business ? 50 : 5;
   }
 }

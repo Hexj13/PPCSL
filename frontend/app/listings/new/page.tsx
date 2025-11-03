@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { listingsApi, brandsApi, citiesApi, Brand, VehicleModel, City } from '@/lib/api';
+import { Currency, CurrencyEnum, ListingStatus, ListingStatusEnum } from '@/lib/types';
 import { useAuthStore } from '@/lib/store';
 import toast from 'react-hot-toast';
 import { Dropdown } from '@/components/Dropdown';
@@ -37,12 +38,33 @@ export default function NewListingPage() {
     }
   }, [user, isInitialized, router]);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    price: string;
+    currency: Currency;
+    city: string;
+    description: string;
+    status: ListingStatus;
+    images: string[];
+    urgent: boolean;
+    vin: string;
+    vehicle: {
+      brand_id: string;
+      model_id: string;
+      year: string;
+      engine_displ_l: string;
+      mileage_km: string;
+      fuel: string;
+      transmission: string;
+      body_type: string;
+      color: string;
+      doors: string;
+    };
+  }>({
     price: '',
-    currency: 'EUR' as 'MKD' | 'EUR',
+    currency: CurrencyEnum.EUR,
     city: '',
     description: '',
-    status: 'Active' as 'Active' | 'Paused' | 'Closed',
+    status: ListingStatusEnum.Active,
     images: [] as string[],
     urgent: false,
     vin: '',
@@ -214,8 +236,18 @@ export default function NewListingPage() {
           mileage_km: formData.vehicle.mileage_km
             ? parseInt(formData.vehicle.mileage_km)
             : undefined,
-          fuel: formData.vehicle.fuel || undefined,
-          transmission: formData.vehicle.transmission || undefined,
+          fuel: (formData.vehicle.fuel || undefined) as
+            | 'Petrol'
+            | 'Diesel'
+            | 'Electric'
+            | 'Hybrid'
+            | 'LPG'
+            | undefined,
+          transmission: (formData.vehicle.transmission || undefined) as
+            | 'Manual'
+            | 'Automatic'
+            | 'CVT'
+            | undefined,
           body_type: formData.vehicle.body_type as
             | 'Sedan'
             | 'Hatchback'
@@ -634,12 +666,12 @@ export default function NewListingPage() {
                 <Dropdown
                   value={formData.currency}
                   onChange={(value) =>
-                    setFormData({ ...formData, currency: value as 'MKD' | 'EUR' })
+                    setFormData({ ...formData, currency: value as Currency })
                   }
                   className="w-32 flex-shrink-0"
                   options={[
-                    { value: 'MKD', label: 'MKD' },
-                    { value: 'EUR', label: 'EUR' },
+                    { value: CurrencyEnum.MKD, label: 'MKD' },
+                    { value: CurrencyEnum.EUR, label: 'EUR' },
                   ]}
                 />
               </div>

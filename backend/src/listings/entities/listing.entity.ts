@@ -10,17 +10,8 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Vehicle } from './vehicle.entity';
-
-export enum ListingStatus {
-  Active = 'Active',
-  Paused = 'Paused',
-  Closed = 'Closed',
-}
-
-export enum Currency {
-  MKD = 'MKD',
-  EUR = 'EUR',
-}
+import { ListingStatus, Currency } from '../../common/types';
+import * as constants from '../../common/constants';
 
 @Entity('listings')
 export class Listing {
@@ -35,8 +26,8 @@ export class Listing {
 
   @Column({
     type: 'enum',
-    enum: Currency,
-    default: Currency.MKD,
+    enum: constants.currencies,
+    default: constants.currencies[0],
   })
   currency: Currency;
 
@@ -45,8 +36,8 @@ export class Listing {
 
   @Column({
     type: 'enum',
-    enum: ListingStatus,
-    default: ListingStatus.Paused,
+    enum: constants.listingStatuses,
+    default: constants.listingStatuses[1],
   })
   status: ListingStatus;
 

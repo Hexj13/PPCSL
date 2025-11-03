@@ -17,7 +17,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreateVehicleDto } from './create-vehicle.dto';
-import { ListingStatus, Currency } from '../entities/listing.entity';
+import { ListingStatus, Currency } from '../../common/types';
 
 export class CreateListingDto {
   @IsOptional()

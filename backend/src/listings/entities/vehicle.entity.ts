@@ -1,32 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { Brand } from '../../brands/entities/brand.entity';
 import { VehicleModel } from '../../brands/entities/vehicle-model.entity';
-
-export enum FuelType {
-  Petrol = 'Petrol',
-  Diesel = 'Diesel',
-  Electric = 'Electric',
-  Hybrid = 'Hybrid',
-  LPG = 'LPG',
-}
-
-export enum TransmissionType {
-  Manual = 'Manual',
-  Automatic = 'Automatic',
-  CVT = 'CVT',
-}
-
-export enum BodyType {
-  Sedan = 'Sedan',
-  Hatchback = 'Hatchback',
-  Wagon = 'Wagon',
-  SUV = 'SUV',
-  Coupe = 'Coupe',
-  Convertible = 'Convertible',
-  Van = 'Van',
-  Pickup = 'Pickup',
-  Minivan = 'Minivan',
-}
+import { FuelType, TransmissionType, BodyType } from '../../common/types';
+import * as constants from '../../common/constants';
 
 @Entity('vehicles')
 export class Vehicle {
@@ -58,21 +34,21 @@ export class Vehicle {
 
   @Column({
     type: 'enum',
-    enum: FuelType,
+    enum: constants.fuelTypes,
     nullable: true,
   })
   fuel: FuelType;
 
   @Column({
     type: 'enum',
-    enum: TransmissionType,
+    enum: constants.transmissionTypes,
     nullable: true,
   })
   transmission: TransmissionType;
 
   @Column({
     type: 'enum',
-    enum: BodyType,
+    enum: constants.bodyTypes,
   })
   body_type: BodyType;
 

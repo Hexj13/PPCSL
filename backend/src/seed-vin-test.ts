@@ -1,8 +1,10 @@
 import 'reflect-metadata';
 import { AppDataSource } from './data-source';
 import { User } from './users/entities/user.entity';
-import { Listing, ListingStatus, Currency } from './listings/entities/listing.entity';
-import { Vehicle, FuelType, TransmissionType, BodyType } from './listings/entities/vehicle.entity';
+import { Listing } from './listings/entities/listing.entity';
+import { ListingStatus, Currency, ListingStatus as ListingStatusEnum } from './common/types';
+import { Vehicle } from './listings/entities/vehicle.entity';
+import { FuelType, TransmissionType, BodyType } from './common/types';
 import { Brand } from './brands/entities/brand.entity';
 
 function getRandomElement<T>(array: T[]): T {
@@ -134,11 +136,11 @@ async function seedVinTestData() {
       const createdDate = new Date(now);
       createdDate.setDate(createdDate.getDate() - daysAgo * 30);
 
-      const status = i === 0 ? ListingStatus.Active : ListingStatus.Closed;
+      const status = i === 0 ? ListingStatusEnum.Active : ListingStatusEnum.Closed;
 
-      const updatedDate = status === ListingStatus.Closed ? new Date(createdDate) : new Date();
+      const updatedDate = status === ListingStatusEnum.Closed ? new Date(createdDate) : new Date();
 
-      if (status === ListingStatus.Closed) {
+      if (status === ListingStatusEnum.Closed) {
         updatedDate.setDate(updatedDate.getDate() + getRandomInt(15, 90));
       }
 
@@ -161,7 +163,7 @@ async function seedVinTestData() {
       await listingRepo.save(listing);
 
       console.log(
-        `   ${listingNumber}. ${title} - ${status === ListingStatus.Closed ? 'Затворено' : 'Активно'} - ${formatDate(updatedDate)}`,
+        `   ${listingNumber}. ${title} - ${status === ListingStatusEnum.Closed ? 'Затворено' : 'Активно'} - ${formatDate(updatedDate)}`,
       );
     }
   }

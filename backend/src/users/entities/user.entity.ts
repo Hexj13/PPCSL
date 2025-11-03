@@ -1,12 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
 import { Listing } from '../../listings/entities/listing.entity';
 import { Favorite } from '../../favorites/entities/favorite.entity';
-
-export enum UserType {
-  Individual = 'Individual',
-  Business = 'Business',
-  Admin = 'Admin',
-}
+import { UserType } from '../../common/types';
+import * as constants from '../../common/constants';
 
 @Entity('users')
 export class User {
@@ -15,8 +11,8 @@ export class User {
 
   @Column({
     type: 'enum',
-    enum: UserType,
-    default: UserType.Individual,
+    enum: constants.userTypes,
+    default: constants.userTypes[0],
   })
   type: UserType;
 

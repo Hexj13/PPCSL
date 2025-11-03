@@ -1,8 +1,11 @@
 import 'reflect-metadata';
 import { AppDataSource } from './data-source';
-import { User, UserType } from './users/entities/user.entity';
-import { Listing, ListingStatus, Currency } from './listings/entities/listing.entity';
-import { Vehicle, FuelType, TransmissionType, BodyType } from './listings/entities/vehicle.entity';
+import { User } from './users/entities/user.entity';
+import { UserType, UserType as UserTypeEnum } from './common/types';
+import { Listing } from './listings/entities/listing.entity';
+import { ListingStatus, Currency } from './common/types';
+import { Vehicle } from './listings/entities/vehicle.entity';
+import { FuelType, TransmissionType, BodyType } from './common/types';
 import { Brand } from './brands/entities/brand.entity';
 import { VehicleModel } from './brands/entities/vehicle-model.entity';
 import * as bcrypt from 'bcrypt';
@@ -363,7 +366,7 @@ async function getOrCreateTestUser() {
       firstName: 'Тест',
       lastName: 'Корисник',
       phone: '+38970123456',
-      type: UserType.Individual,
+      type: UserTypeEnum.Individual,
     });
     user = await userRepo.save(user);
     console.log('✅ Креиран тест корисник');
@@ -391,12 +394,12 @@ async function getOrCreateAdminUser() {
       firstName: 'Admin',
       lastName: 'User',
       phone: '+38970111111',
-      type: UserType.Admin,
+      type: UserTypeEnum.Admin,
     });
     admin = await userRepo.save(admin);
     console.log('✅ Креиран админ корисник');
   } else {
-    admin.type = UserType.Admin;
+    admin.type = UserTypeEnum.Admin;
     admin = await userRepo.save(admin);
     console.log('✅ Ажуриран админ корисник');
   }

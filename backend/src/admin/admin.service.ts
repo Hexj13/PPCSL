@@ -1,8 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User, UserType } from '../users/entities/user.entity';
-import { Listing, ListingStatus } from '../listings/entities/listing.entity';
+import { User } from '../users/entities/user.entity';
+import { UserType, UserType as UserTypeEnum, ListingStatus, ListingStatus as ListingStatusEnum } from '../common/types';
+import { Listing } from '../listings/entities/listing.entity';
 
 @Injectable()
 export class AdminService {
@@ -68,13 +69,13 @@ export class AdminService {
   async getUserStats() {
     const totalUsers = await this.usersRepository.count();
     const individualUsers = await this.usersRepository.count({
-      where: { type: UserType.Individual },
+      where: { type: UserTypeEnum.Individual },
     });
     const businessUsers = await this.usersRepository.count({
-      where: { type: UserType.Business },
+      where: { type: UserTypeEnum.Business },
     });
     const adminUsers = await this.usersRepository.count({
-      where: { type: UserType.Admin },
+      where: { type: UserTypeEnum.Admin },
     });
 
     return {
@@ -88,13 +89,13 @@ export class AdminService {
   async getListingStats() {
     const total = await this.listingsRepository.count();
     const active = await this.listingsRepository.count({
-      where: { status: ListingStatus.Active },
+      where: { status: ListingStatusEnum.Active },
     });
     const paused = await this.listingsRepository.count({
-      where: { status: ListingStatus.Paused },
+      where: { status: ListingStatusEnum.Paused },
     });
     const closed = await this.listingsRepository.count({
-      where: { status: ListingStatus.Closed },
+      where: { status: ListingStatusEnum.Closed },
     });
 
     return {

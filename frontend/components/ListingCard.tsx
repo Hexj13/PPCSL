@@ -24,7 +24,7 @@ export function ListingCard({ listing }: ListingCardProps) {
   const { user } = useAuthStore();
   const { check: checkFavorite, add: addFavorite, remove: removeFavorite } = useFavoritesStore();
   const [isFavorite, setIsFavorite] = useState(false);
-  const isOwnListing = user && listing.user && user.id === listing.user.id;
+  const isOwnListing = !!(user && listing.user && user.id === listing.user.id);
 
   useEffect(() => {
     if (user) {

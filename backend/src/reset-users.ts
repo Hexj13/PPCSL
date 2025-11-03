@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { AppDataSource } from './data-source';
-import { User, UserType } from './users/entities/user.entity';
+import { User } from './users/entities/user.entity';
+import { UserType, UserType as UserTypeEnum } from './common/types';
 import { Listing } from './listings/entities/listing.entity';
 import { Favorite } from './favorites/entities/favorite.entity';
 import { Vehicle } from './listings/entities/vehicle.entity';
@@ -53,7 +54,7 @@ async function resetUsers() {
       firstName: 'Admin',
       lastName: 'User',
       phone: '+38970111111',
-      type: UserType.Admin,
+      type: UserTypeEnum.Admin,
     });
     await userRepo.save(admin);
     console.log('✅ Креиран нов админ корисник');

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { listingsApi, Listing } from '@/lib/api';
+import { listingsApi, Listing, PaginationMeta } from '@/lib/api';
 import { ListingCard } from './ListingCard';
 import { useSearchParams } from 'next/navigation';
 
@@ -12,6 +12,7 @@ export function ListingGrid() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [error, setError] = useState<string | null>(null);
   const observerTarget = useRef<HTMLDivElement>(null);
 
   const fetchListings = useCallback(
@@ -52,6 +53,7 @@ export function ListingGrid() {
         setLoadingMore(true);
       } else {
         setLoading(true);
+        setError(null);
       }
 
       try {
@@ -63,8 +65,13 @@ export function ListingGrid() {
           setCurrentPage(1);
         }
         setMeta(res.data.meta);
+        setError(null);
       } catch (err) {
         console.error('Error fetching listings:', err);
+        if (!append) {
+          setListings([]);
+          setError('Грешка при вчитување на објави. Проверете дали бекенд серверот е стартуван.');
+        }
       } finally {
         setLoading(false);
         setLoadingMore(false);
@@ -80,7 +87,7 @@ export function ListingGrid() {
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && !loadingMore && meta && currentPage < meta.totalPages) {
+        if (entries[0].isIntersecting && !loadingMore && meta && meta.totalPages && currentPage < meta.totalPages) {
           const nextPage = currentPage + 1;
           setCurrentPage(nextPage);
           fetchListings(nextPage, true);
@@ -110,6 +117,17 @@ export function ListingGrid() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6 max-w-md mx-auto">
+          <p className="text-red-400 text-lg font-semibold mb-2">Грешка</p>
+          <p className="text-gray-300">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
   if (listings.length === 0) {
     return (
       <div className="text-center py-12">
@@ -118,7 +136,7 @@ export function ListingGrid() {
     );
   }
 
-  const hasMore = meta && currentPage < meta.totalPages;
+  const hasMore = meta && meta.totalPages && currentPage < meta.totalPages;
 
   return (
     <div>

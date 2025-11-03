@@ -206,20 +206,22 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const submitData: RegisterDto = { ...formData };
-
       if (formData.type === 'Individual') {
-        submitData.companyName = '';
-        if (!submitData.email || !submitData.email.trim()) {
-          delete submitData.email;
-          submitData.emailNotifications = false;
-        }
+        const submitData: RegisterDto = {
+          ...formData,
+          companyName: '',
+          email: formData.email && formData.email.trim() ? formData.email : '',
+          emailNotifications: formData.email && formData.email.trim() ? formData.emailNotifications : false,
+        };
+        await authApi.register(submitData);
       } else {
-        submitData.firstName = '';
-        submitData.lastName = '';
+        const submitData: RegisterDto = {
+          ...formData,
+          firstName: '',
+          lastName: '',
+        };
+        await authApi.register(submitData);
       }
-
-      await authApi.register(submitData);
 
       const loginValue =
         formData.type === 'Individual'

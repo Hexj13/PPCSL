@@ -1,5 +1,5 @@
 import { IsUUID, IsNumber, IsEnum, IsOptional, Min, Max, IsInt } from 'class-validator';
-import { FuelType, TransmissionType, BodyType } from '../entities/vehicle.entity';
+import { FuelType, TransmissionType, BodyType } from '../../common/types';
 
 export class CreateVehicleDto {
   @IsUUID()

@@ -89,7 +89,6 @@ export function UserListingsModal({
         }
 
         clearTimeout(timeoutId);
-        console.error('Error fetching listings:', err);
         setListings([]);
         setLoading(false);
       }

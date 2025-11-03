@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { AppDataSource } from './data-source';
-import { User, UserType } from './users/entities/user.entity';
+import { User } from './users/entities/user.entity';
+import { UserType, UserType as UserTypeEnum } from './common/types';
 import * as bcrypt from 'bcrypt';
 
 async function makeAdmin() {
@@ -23,7 +24,7 @@ async function makeAdmin() {
         firstName: 'Admin',
         lastName: 'User',
         phone: '+38970111111',
-        type: UserType.Admin,
+        type: UserTypeEnum.Admin,
       });
       admin = await userRepo.save(admin);
       console.log('✅ Креиран нов админ корисник');
@@ -32,9 +33,9 @@ async function makeAdmin() {
       console.log(`   Тип: Admin`);
     } else {
       console.log(`👤 Пронајден корисник ${email}`);
-      const wasAdmin = admin.type === UserType.Admin;
+      const wasAdmin = admin.type === UserTypeEnum.Admin;
 
-      admin.type = UserType.Admin;
+      admin.type = UserTypeEnum.Admin;
       admin = await userRepo.save(admin);
 
       if (wasAdmin) {

@@ -3,8 +3,10 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { UsersService } from './users.service';
-import { User, UserType } from './entities/user.entity';
-import { Listing, ListingStatus } from '../listings/entities/listing.entity';
+import { User } from './entities/user.entity';
+import { UserType } from '../common/types';
+import { Listing } from '../listings/entities/listing.entity';
+import { ListingStatus } from '../common/types';
 
 describe('UsersService', () => {
   let service: UsersService;
