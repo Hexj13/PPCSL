@@ -32,6 +32,7 @@ export default function ListingPage() {
   const [isUserListingsModalOpen, setIsUserListingsModalOpen] = useState(false);
   const [previousListings, setPreviousListings] = useState<Listing[]>([]);
   const [loadingPrevious, setLoadingPrevious] = useState(false);
+  const [showHistoryHint, setShowHistoryHint] = useState(false);
 
   useEffect(() => {
     listingsApi
@@ -346,74 +347,68 @@ export default function ListingPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <span className="text-primary-400 font-semibold">Марка:</span>
-                    <span className="ml-2 font-semibold text-gray-300">
+                    <span className="ml-2 text-gray-300">
                       {vehicle.brand?.name || ''}
                     </span>
                   </div>
+                  {vehicle.engine_displ_l && (
+                    <div>
+                      <span className="text-primary-400 font-semibold">Мотор:</span>
+                      <span className="ml-2 text-gray-300">
+                        {formatEngineVolume(vehicle.engine_displ_l)} л
+                      </span>
+                    </div>
+                  )}
                   <div>
                     <span className="text-primary-400 font-semibold">Модел:</span>
-                    <span className="ml-2 font-semibold text-gray-300">
+                    <span className="ml-2 text-gray-300">
                       {vehicle.model?.name || ''}
                     </span>
                   </div>
-                  <div>
-                    <span className="text-primary-400 font-semibold">Година:</span>
-                    <span className="ml-2 font-semibold text-gray-300">{vehicle.year}</span>
-                  </div>
-                  {vehicle.engine_displ_l && (
-                    <div>
-                      <span className="text-primary-400 font-semibold">Мотор (л):</span>
-                      <span className="ml-2 font-semibold text-gray-300">
-                        {formatEngineVolume(vehicle.engine_displ_l)}
-                      </span>
-                    </div>
-                  )}
-                  {vehicle.mileage_km && (
-                    <div>
-                      <span className="text-primary-400 font-semibold">Поминување:</span>
-                      <span className="ml-2 font-semibold text-gray-300">
-                        {formatMileage(vehicle.mileage_km)} км
-                      </span>
-                    </div>
-                  )}
                   {vehicle.fuel && (
                     <div>
                       <span className="text-primary-400 font-semibold">Гориво:</span>
-                      <span className="ml-2 font-semibold text-gray-300">{vehicle.fuel}</span>
+                      <span className="ml-2 text-gray-300">{vehicle.fuel}</span>
                     </div>
                   )}
-                  {vehicle.transmission && (
+                  <div>
+                    <span className="text-primary-400 font-semibold">Година:</span>
+                    <span className="ml-2 text-gray-300">{vehicle.year}</span>
+                  </div>
+                  {vehicle.mileage_km && (
                     <div>
-                      <span className="text-primary-400 font-semibold">Пренос:</span>
-                      <span className="ml-2 font-semibold text-gray-300">
-                        {formatTransmission(vehicle.transmission)}
+                      <span className="text-primary-400 font-semibold">Поминување:</span>
+                      <span className="ml-2 text-gray-300">
+                        {formatMileage(vehicle.mileage_km)} км
                       </span>
                     </div>
                   )}
                   {vehicle.body_type && (
                     <div>
                       <span className="text-primary-400 font-semibold">Тип на каросерија:</span>
-                      <span className="ml-2 font-semibold text-gray-300">
+                      <span className="ml-2 text-gray-300">
                         {formatBodyType(vehicle.body_type)}
+                      </span>
+                    </div>
+                  )}
+                  {vehicle.transmission && (
+                    <div>
+                      <span className="text-primary-400 font-semibold">Пренос:</span>
+                      <span className="ml-2 text-gray-300">
+                        {formatTransmission(vehicle.transmission)}
                       </span>
                     </div>
                   )}
                   {vehicle.color && (
                     <div>
                       <span className="text-primary-400 font-semibold">Боја:</span>
-                      <span className="ml-2 font-semibold text-gray-300">{vehicle.color}</span>
-                    </div>
-                  )}
-                  {vehicle.doors && (
-                    <div>
-                      <span className="text-primary-400 font-semibold">Врати:</span>
-                      <span className="ml-2 font-semibold text-gray-300">{vehicle.doors}</span>
+                      <span className="ml-2 text-gray-300">{vehicle.color}</span>
                     </div>
                   )}
                   {listing.vin && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center">
                       <span className="text-primary-400 font-semibold">VIN:</span>
-                      <span className="ml-2 font-semibold text-gray-300">{listing.vin}</span>
+                      <span className="ml-2 text-gray-300">{listing.vin}</span>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -438,6 +433,12 @@ export default function ListingPage() {
                       </button>
                     </div>
                   )}
+                  {vehicle.doors && (
+                    <div>
+                      <span className="text-primary-400 font-semibold">Врати:</span>
+                      <span className="ml-2 text-gray-300">{vehicle.doors}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -455,14 +456,41 @@ export default function ListingPage() {
             {listing.vin && (
               <div className="bg-bg-light p-4 md:p-6 rounded-xl border border-primary-500/20">
                 <div className="mb-4">
-                  <h3 className="text-lg font-bold mb-2 text-white">
+                  <h3 className="text-lg font-bold mb-2 text-white flex items-center gap-2">
                     Претходни објави за ова возило
+                    <div className="relative group">
+                      <button
+                        type="button"
+                        onClick={() => setShowHistoryHint(!showHistoryHint)}
+                        className="focus:outline-none"
+                      >
+                        <svg
+                          className="w-4 h-4 text-green-400 hover:text-green-300 cursor-help transition-colors"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                      </button>
+                      <div
+                        className={`absolute right-0 bottom-full mb-2 ${showHistoryHint ? 'block' : 'hidden group-hover:block'} z-10 w-64`}
+                      >
+                        <div className="bg-bg-darker border-2 border-primary-500/50 rounded-lg p-3 shadow-lg">
+                          <p className="text-xs font-semibold text-gray-300 leading-relaxed">
+                            Прикажуваме претходни објави за ова возило со ист VIN. За заштита на
+                            приватност, цената и личните податоци на авторите се скриени за затворени
+                            објави.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </h3>
-                  <p className="text-xs text-gray-400 leading-relaxed">
-                    💡 Прикажуваме претходни објави за ова возило со ист VIN. За заштита на
-                    приватност, цената и личните податоци на авторите се скриени за затворени
-                    објави.
-                  </p>
                 </div>
                 {loadingPrevious ? (
                   <div className="text-center py-4">
@@ -495,12 +523,12 @@ export default function ListingPage() {
                             <td className="py-3 px-2 sm:px-3 text-white text-xs sm:text-sm">
                               {prevListing.title}
                             </td>
-                            <td className="py-3 px-2 sm:px-3 text-gray-400 text-xs sm:text-sm hidden sm:table-cell">
+                            <td className="py-3 px-2 sm:px-3 font-semibold text-gray-300 text-xs sm:text-sm hidden sm:table-cell">
                               {prevListing.vehicle?.mileage_km
                                 ? formatMileage(prevListing.vehicle.mileage_km) + ' км'
                                 : '-'}
                             </td>
-                            <td className="py-3 px-2 sm:px-3 text-gray-400 text-xs sm:text-sm hidden md:table-cell">
+                            <td className="py-3 px-2 sm:px-3 font-semibold text-gray-300 text-xs sm:text-sm hidden md:table-cell">
                               {formatDate(prevListing.updated_at)}
                             </td>
                             <td className="py-3 px-2 sm:px-3 text-left sm:text-right">
@@ -514,7 +542,7 @@ export default function ListingPage() {
                     </table>
                   </div>
                 ) : (
-                  <p className="text-gray-400 text-sm">Нема претходни објави за ова возило</p>
+                  <p className="font-semibold text-gray-300 text-sm">Нема претходни објави за ова возило</p>
                 )}
               </div>
             )}
@@ -528,7 +556,7 @@ export default function ListingPage() {
               {listing.user && (
                 <div className="space-y-4">
                   <div>
-                    <span className="font-semibold text-primary-400">Тип на продавач:</span>{' '}
+                    <span className="font-semibold text-primary-400">Тип на продавач:</span>
                     <span
                       className={`inline-flex items-center px-3 py-1 rounded-lg text-sm font-semibold ml-2 ${
                         listing.user.type === 'Business'
@@ -544,8 +572,8 @@ export default function ListingPage() {
                     listing.user.type === 'Business' &&
                     listing.user.companyName && (
                       <div>
-                        <span className="font-semibold text-primary-400">Компанија:</span>{' '}
-                        <span className="text-gray-300">{listing.user.companyName}</span>
+                        <span className="font-semibold text-primary-400">Компанија:</span>
+                        <span className="ml-2 text-gray-300">{listing.user.companyName}</span>
                       </div>
                     )}
 
@@ -553,8 +581,8 @@ export default function ListingPage() {
                     <>
                       {listing.user.firstName && listing.user.lastName && (
                         <div>
-                          <span className="font-semibold text-primary-400">Име:</span>{' '}
-                          <span className="text-gray-300">
+                          <span className="font-semibold text-primary-400">Име:</span>
+                          <span className="ml-2 text-gray-300">
                             {listing.user.firstName} {listing.user.lastName}
                           </span>
                         </div>
@@ -563,33 +591,33 @@ export default function ListingPage() {
                   )}
 
                   <div>
-                    <span className="font-semibold text-primary-400">Град:</span>{' '}
-                    <span className="text-gray-300">{listing.city}</span>
+                    <span className="font-semibold text-primary-400">Град:</span>
+                    <span className="ml-2 text-gray-300">{listing.city}</span>
                   </div>
 
                   {listing.status === 'Closed' ? (
                     <div>
-                      <span className="font-semibold text-primary-400">Телефон:</span>{' '}
-                      <span className="text-primary-400">••••••••</span>
+                      <span className="font-semibold text-primary-400">Email:</span>
+                      <span className="ml-2 text-primary-400">••••••••</span>
                     </div>
                   ) : (
-                    listing.user.phone && (
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-primary-400">Телефон:</span>{' '}
+                    listing.user.email && (
+                      <div className="flex items-center">
+                        <span className="font-semibold text-primary-400">Email:</span>
                         <a
-                          href={`tel:${listing.user.phone}`}
-                          className="text-gray-300 hover:text-primary-300 transition-colors underline"
+                          href={`mailto:${listing.user.email}`}
+                          className="ml-2 text-gray-300 hover:text-primary-300 transition-colors underline"
                         >
-                          {listing.user.phone}
+                          {listing.user.email}
                         </a>
                         <button
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            handleCopy(listing.user!.phone!, 'Телефон');
+                            handleCopy(listing.user!.email!, 'Email');
                           }}
-                          className="ml-1 p-1.5 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors"
-                          title="Копирај телефон"
+                          className="ml-2 p-1.5 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors"
+                          title="Копирај email"
                         >
                           <svg
                             className="w-4 h-4"
@@ -611,27 +639,27 @@ export default function ListingPage() {
 
                   {listing.status === 'Closed' ? (
                     <div>
-                      <span className="font-semibold text-primary-400">Email:</span>{' '}
-                      <span className="text-primary-400">••••••••</span>
+                      <span className="font-semibold text-primary-400">Телефон:</span>
+                      <span className="ml-2 text-primary-400">••••••••</span>
                     </div>
                   ) : (
-                    listing.user.email && (
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-primary-400">Email:</span>{' '}
+                    listing.user.phone && (
+                      <div className="flex items-center">
+                        <span className="font-semibold text-primary-400">Телефон:</span>
                         <a
-                          href={`mailto:${listing.user.email}`}
-                          className="text-gray-300 hover:text-primary-300 transition-colors underline"
+                          href={`tel:${listing.user.phone}`}
+                          className="ml-2 text-gray-300 hover:text-primary-300 transition-colors underline"
                         >
-                          {listing.user.email}
+                          {listing.user.phone}
                         </a>
                         <button
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            handleCopy(listing.user!.email!, 'Email');
+                            handleCopy(listing.user!.phone!, 'Телефон');
                           }}
-                          className="ml-1 p-1.5 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors"
-                          title="Копирај email"
+                          className="ml-2 p-1.5 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors"
+                          title="Копирај телефон"
                         >
                           <svg
                             className="w-4 h-4"
@@ -714,7 +742,7 @@ export default function ListingPage() {
             <div className="bg-bg-light p-4 md:p-6 rounded-xl border border-primary-500/20">
               <div className="space-y-3">
                 {listing.views !== undefined && listing.views > 0 && (
-                  <div className="flex items-center gap-2 text-sm text-gray-300">
+                  <div className="flex items-center gap-2 text-sm">
                     <svg
                       className="w-4 h-4 text-primary-400"
                       fill="none"
@@ -735,10 +763,10 @@ export default function ListingPage() {
                       />
                     </svg>
                     <span className="font-semibold text-primary-400">Прегледи:</span>
-                    <span>{listing.views}</span>
+                    <span className="text-gray-300">{listing.views}</span>
                   </div>
                 )}
-                <div className="flex items-center gap-2 text-sm text-gray-300">
+                <div className="flex items-center gap-2 text-sm">
                   <svg
                     className="w-4 h-4 text-primary-400"
                     fill="none"
@@ -753,9 +781,9 @@ export default function ListingPage() {
                     />
                   </svg>
                   <span className="font-semibold text-primary-400">Ажурирано:</span>
-                  <span>{formatDate(listing.last_updated_at)}</span>
+                  <span className="text-gray-300">{formatDate(listing.last_updated_at)}</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-gray-300">
+                <div className="flex items-center gap-2 text-sm">
                   <svg
                     className="w-4 h-4 text-primary-400"
                     fill="none"
@@ -770,7 +798,7 @@ export default function ListingPage() {
                     />
                   </svg>
                   <span className="font-semibold text-primary-400">Ќе се затвори:</span>
-                  <span>{formatDate(closingDate)}</span>
+                  <span className="text-gray-300">{formatDate(closingDate)}</span>
                 </div>
               </div>
             </div>

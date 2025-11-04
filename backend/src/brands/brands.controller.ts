@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Param, Body } from '@nestjs/common';
 import { BrandsService } from './brands.service';
 
 @Controller('api/brands')
@@ -20,8 +20,13 @@ export class BrandsController {
     return this.brandsService.getModelsByBrandName(name);
   }
 
-  @Post('seed')
-  async seed() {
-    return this.brandsService.seedBrandsAndModels();
+  @Post('name/:name/models')
+  async addModels(@Param('name') name: string, @Body() body: { models: string[] }) {
+    return this.brandsService.addModelsToBrand(name, body.models);
+  }
+
+  @Delete('all')
+  async deleteAll() {
+    return this.brandsService.deleteAll();
   }
 }

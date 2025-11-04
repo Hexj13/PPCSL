@@ -150,12 +150,12 @@ export function ListingCard({ listing }: ListingCardProps) {
             {vehicle && (
               <div className="text-sm text-gray-300 space-y-1.5">
                 {vehicle.engine_displ_l && (
-                  <div>Мотор (л): {formatEngineVolume(vehicle.engine_displ_l)}</div>
+                  <div>Мотор: {formatEngineVolume(vehicle.engine_displ_l)} л</div>
                 )}
+                {vehicle.fuel && <div>Гориво: {vehicle.fuel}</div>}
                 {vehicle.mileage_km && (
                   <div>Поминување: {formatMileage(vehicle.mileage_km)} км</div>
                 )}
-                {vehicle.fuel && <div>Гориво: {vehicle.fuel}</div>}
                 {vehicle.body_type && (
                   <div>Тип на каросерија: {formatBodyType(vehicle.body_type)}</div>
                 )}

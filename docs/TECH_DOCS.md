@@ -139,8 +139,12 @@ Create a simple, free website for posting listings for new and used cars in Nort
 
 * **Brands API:** Get all available car brands
 * **Models API:** Get models by brand ID or brand name
+* **Add Models API:** Add new models to existing brands
+* **Management Scripts:** Utility scripts for managing brands and models
 * Dynamic model loading based on selected brand
 * Searchable brand and model dropdowns
+* Support for historical models, rare models, and Grand versions
+* 79+ brands with 774+ models in database
 
 ### Cities
 
@@ -204,9 +208,11 @@ GET  /api/upload/image/:filename          # Get optimized image version
 
 ### Brands
 ```http
-GET /api/brands                      # Get all brands
-GET /api/brands/:id/models           # Get models by brand ID
-GET /api/brands/name/:name/models    # Get models by brand name
+GET   /api/brands                      # Get all brands
+GET   /api/brands/:id/models           # Get models by brand ID
+GET   /api/brands/name/:name/models    # Get models by brand name
+POST  /api/brands/name/:name/models    # Add models to existing brand
+DELETE /api/brands/all                # Delete all brands (admin only)
 ```
 
 ### Cities

@@ -1,13 +1,13 @@
 import 'reflect-metadata';
-import { AppDataSource } from './data-source';
-import { User } from './users/entities/user.entity';
-import { UserType as UserTypeEnum } from './common/types';
-import { Listing } from './listings/entities/listing.entity';
-import { ListingStatus, Currency } from './common/types';
-import { Vehicle } from './listings/entities/vehicle.entity';
-import { FuelType, TransmissionType, BodyType } from './common/types';
-import { Brand } from './brands/entities/brand.entity';
-import { VehicleModel } from './brands/entities/vehicle-model.entity';
+import { AppDataSource } from '../data-source';
+import { User } from '../users/entities/user.entity';
+import { UserType as UserTypeEnum } from '../common/types';
+import { Listing } from '../listings/entities/listing.entity';
+import { ListingStatus, Currency } from '../common/types';
+import { Vehicle } from '../listings/entities/vehicle.entity';
+import { FuelType, TransmissionType, BodyType } from '../common/types';
+import { Brand } from '../brands/entities/brand.entity';
+import { VehicleModel } from '../brands/entities/vehicle-model.entity';
 import * as bcrypt from 'bcrypt';
 
 const cities = [
@@ -483,7 +483,8 @@ async function seedListings(user: User, brands: Brand[], count: number = 60) {
           : transmission === 'CVT'
             ? 'Варијатор'
             : '';
-    const title = `${brand.name} ${model.name} ${year} ${transmissionStr}`;
+    const baseTitle = `${brand.name} ${model.name} ${year}`;
+    const title = transmissionStr ? `${baseTitle} (${transmissionStr})` : baseTitle;
 
     const listing = listingRepo.create({
       title,

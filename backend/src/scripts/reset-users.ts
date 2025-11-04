@@ -1,10 +1,10 @@
 import 'reflect-metadata';
-import { AppDataSource } from './data-source';
-import { User } from './users/entities/user.entity';
-import { UserType as UserTypeEnum } from './common/types';
-import { Listing } from './listings/entities/listing.entity';
-import { Favorite } from './favorites/entities/favorite.entity';
-import { Vehicle } from './listings/entities/vehicle.entity';
+import { AppDataSource } from '../data-source';
+import { User } from '../users/entities/user.entity';
+import { UserType as UserTypeEnum } from '../common/types';
+import { Listing } from '../listings/entities/listing.entity';
+import { Favorite } from '../favorites/entities/favorite.entity';
+import { Vehicle } from '../listings/entities/vehicle.entity';
 import * as bcrypt from 'bcrypt';
 
 async function resetUsers() {

@@ -1,16 +1,30 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Brand } from './entities/brand.entity';
 import { VehicleModel } from './entities/vehicle-model.entity';
+import { Vehicle } from '../listings/entities/vehicle.entity';
+import { Listing } from '../listings/entities/listing.entity';
+import { ListingView } from '../listings/entities/listing-view.entity';
+import { Favorite } from '../favorites/entities/favorite.entity';
 
 @Injectable()
 export class BrandsService {
+  private readonly logger = new Logger(BrandsService.name);
+
   constructor(
     @InjectRepository(Brand)
     private brandsRepository: Repository<Brand>,
     @InjectRepository(VehicleModel)
     private modelsRepository: Repository<VehicleModel>,
+    @InjectRepository(Vehicle)
+    private vehiclesRepository: Repository<Vehicle>,
+    @InjectRepository(Listing)
+    private listingsRepository: Repository<Listing>,
+    @InjectRepository(ListingView)
+    private listingViewsRepository: Repository<ListingView>,
+    @InjectRepository(Favorite)
+    private favoritesRepository: Repository<Favorite>,
   ) {}
 
   async findAll(): Promise<Brand[]> {
@@ -48,171 +62,130 @@ export class BrandsService {
     return this.getModelsByBrand(brand.id);
   }
 
-  async seedBrandsAndModels() {
-    const brandsData = [
-      { name: 'Toyota', order: 1 },
-      { name: 'Volkswagen', order: 2 },
-      { name: 'BMW', order: 3 },
-      { name: 'Mercedes-Benz', order: 4 },
-      { name: 'Audi', order: 5 },
-      { name: 'Ford', order: 6 },
-      { name: 'Renault', order: 7 },
-      { name: 'Peugeot', order: 8 },
-      { name: 'Opel', order: 9 },
-      { name: 'Škoda', order: 10 },
-    ];
+  async addModelsToBrand(
+    brandName: string,
+    modelNames: string[],
+  ): Promise<{ brand: Brand; added: number; updated: number; total: number }> {
+    const brand = await this.findByName(brandName);
 
-    const modelsData = {
-      Toyota: [
-        'Corolla',
-        'Camry',
-        'RAV4',
-        'Yaris',
-        'Prius',
-        'Land Cruiser',
-        'Highlander',
-        'C-HR',
-        'Auris',
-        'Avensis',
-      ],
-      Volkswagen: [
-        'Golf',
-        'Passat',
-        'Polo',
-        'Tiguan',
-        'Jetta',
-        'Touran',
-        'Touareg',
-        'T-Cross',
-        'Arteon',
-        'T-Roc',
-      ],
-      BMW: [
-        '3 Series',
-        '5 Series',
-        'X3',
-        'X5',
-        '1 Series',
-        '7 Series',
-        'X1',
-        '4 Series',
-        'X6',
-        '2 Series',
-      ],
-      'Mercedes-Benz': [
-        'C-Class',
-        'E-Class',
-        'S-Class',
-        'GLE',
-        'GLC',
-        'A-Class',
-        'B-Class',
-        'GLA',
-        'CLA',
-        'G-Class',
-      ],
-      Audi: ['A4', 'A6', 'Q5', 'Q7', 'A3', 'A5', 'Q3', 'TT', 'A8', 'Q8'],
-      Ford: [
-        'Focus',
-        'Fiesta',
-        'Mondeo',
-        'Kuga',
-        'Explorer',
-        'Mustang',
-        'Edge',
-        'Transit',
-        'Ranger',
-        'EcoSport',
-      ],
-      Renault: [
-        'Clio',
-        'Megane',
-        'Captur',
-        'Kadjar',
-        'Scenic',
-        'Laguna',
-        'Talisman',
-        'Koleos',
-        'Zoe',
-        'Twingo',
-      ],
-      Peugeot: [
-        '308',
-        '208',
-        '3008',
-        '5008',
-        '2008',
-        '508',
-        'Partner',
-        'Expert',
-        'Rifter',
-        'Traveller',
-      ],
-      Opel: [
-        'Corsa',
-        'Astra',
-        'Insignia',
-        'Crossland X',
-        'Grandland X',
-        'Mokka',
-        'Vivaro',
-        'Combo',
-        'Zafira',
-        'Adam',
-      ],
-      Škoda: [
-        'Octavia',
-        'Superb',
-        'Kodiaq',
-        'Kamiq',
-        'Karoq',
-        'Fabia',
-        'Scala',
-        'Rapid',
-        'Citigo',
-        'Enyaq',
-      ],
-    };
+    if (!brand) {
+      throw new Error(`Бренд "${brandName}" не е пронајден`);
+    }
 
-    const brands: Brand[] = [];
-    for (const brandData of brandsData) {
-      let brand = await this.brandsRepository.findOne({
-        where: { name: brandData.name },
-      });
-      if (!brand) {
-        brand = this.brandsRepository.create({
-          name: brandData.name,
-          order: brandData.order,
+    const existingModels = await this.modelsRepository.find({
+      where: { brand_id: brand.id },
+    });
+
+    let added = 0;
+    let updated = 0;
+    const maxOrder =
+      existingModels.length > 0 ? Math.max(...existingModels.map((m) => m.order || 0)) : 0;
+
+    for (let i = 0; i < modelNames.length; i++) {
+      const modelName = modelNames[i];
+      const modelNameLower = modelName.toLowerCase();
+
+      const existingModel = existingModels.find((m) => m.name.toLowerCase() === modelNameLower);
+
+      if (!existingModel) {
+        const model = this.modelsRepository.create({
+          name: modelName,
+          brand_id: brand.id,
+          order: maxOrder + i + 1,
         });
-        brand = await this.brandsRepository.save(brand);
+        await this.modelsRepository.save(model);
+        added++;
+        this.logger.log(`Added model: ${modelName} to brand: ${brandName}`);
       } else {
-        brand.order = brandData.order;
-        brand = await this.brandsRepository.save(brand);
+        existingModel.order = maxOrder + i + 1;
+        await this.modelsRepository.save(existingModel);
+        updated++;
       }
-      brands.push(brand);
     }
 
-    for (const brand of brands) {
-      const models = modelsData[brand.name] || [];
-      for (let i = 0; i < models.length; i++) {
-        const modelName = models[i];
-        let model = await this.modelsRepository.findOne({
-          where: { name: modelName, brand_id: brand.id },
+    const totalModels = await this.modelsRepository.count({
+      where: { brand_id: brand.id },
+    });
+
+    return {
+      brand,
+      added,
+      updated,
+      total: totalModels,
+    };
+  }
+
+  async deleteAll(): Promise<{
+    deletedBrands: number;
+    deletedModels: number;
+    deletedVehicles: number;
+    deletedListings: number;
+  }> {
+    this.logger.log('Starting deletion of all brands...');
+
+    const allBrands = await this.brandsRepository.find();
+    this.logger.log(`Found ${allBrands.length} brands to delete`);
+
+    let deletedListings = 0;
+    let deletedVehicles = 0;
+    let deletedModels = 0;
+    let deletedBrands = 0;
+
+    for (const brand of allBrands) {
+      const vehicles = await this.vehiclesRepository.find({
+        where: { brand_id: brand.id },
+      });
+
+      for (const vehicle of vehicles) {
+        const listings = await this.listingsRepository.find({
+          where: { vehicle_id: vehicle.id },
         });
-        if (!model) {
-          model = this.modelsRepository.create({
-            name: modelName,
-            brand_id: brand.id,
-            order: i + 1,
+
+        for (const listing of listings) {
+          const views = await this.listingViewsRepository.find({
+            where: { listing_id: listing.id },
           });
-          await this.modelsRepository.save(model);
-        } else {
-          model.order = i + 1;
-          await this.modelsRepository.save(model);
+          for (const view of views) {
+            await this.listingViewsRepository.remove(view);
+          }
+
+          const favorites = await this.favoritesRepository.find({
+            where: { listing_id: listing.id },
+          });
+          for (const favorite of favorites) {
+            await this.favoritesRepository.remove(favorite);
+          }
+
+          await this.listingsRepository.remove(listing);
+          deletedListings++;
         }
+
+        await this.vehiclesRepository.remove(vehicle);
+        deletedVehicles++;
       }
+
+      const models = await this.modelsRepository.find({
+        where: { brand_id: brand.id },
+      });
+      for (const model of models) {
+        await this.modelsRepository.remove(model);
+        deletedModels++;
+      }
+
+      await this.brandsRepository.remove(brand);
+      deletedBrands++;
+      this.logger.log(`Deleted brand: ${brand.name}`);
     }
 
-    return { brands: brands.length, models: Object.values(modelsData).flat().length };
+    this.logger.log(
+      `Deletion completed: ${deletedBrands} brands, ${deletedModels} models, ${deletedVehicles} vehicles, ${deletedListings} listings`,
+    );
+
+    return {
+      deletedBrands,
+      deletedModels,
+      deletedVehicles,
+      deletedListings,
+    };
   }
 }

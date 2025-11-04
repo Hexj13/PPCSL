@@ -36,26 +36,7 @@ export class ListingsService {
     const vehicle = this.vehiclesRepository.create(createListingDto.vehicle);
     const savedVehicle = await this.vehiclesRepository.save(vehicle);
 
-    const brand = await this.brandsService.findOne(createListingDto.vehicle.brand_id);
-    const models = await this.brandsService.getModelsByBrand(createListingDto.vehicle.brand_id);
-    const model = models.find((m) => m.id === createListingDto.vehicle.model_id);
-
-    const titleParts = [];
-    if (brand) titleParts.push(brand.name);
-    if (model) titleParts.push(model.name);
-    if (savedVehicle.year) titleParts.push(savedVehicle.year.toString());
-
-    const transmissionStr =
-      savedVehicle.transmission === 'Automatic'
-        ? 'Автоматска'
-        : savedVehicle.transmission === 'Manual'
-          ? 'Мануелна'
-          : savedVehicle.transmission === 'CVT'
-            ? 'Варијатор'
-            : '';
-    if (transmissionStr) titleParts.push(transmissionStr);
-
-    const title = titleParts.join(' ');
+    const title = await this.generateTitle(savedVehicle);
 
     const status = createListingDto.status || ListingStatusEnum.Active;
 
@@ -286,6 +267,29 @@ export class ListingsService {
     return crypto.createHash('sha256').update(`${ip}:${userAgent}`).digest('hex');
   }
 
+  private async generateTitle(vehicle: Vehicle): Promise<string> {
+    const brand = vehicle.brand_id ? await this.brandsService.findOne(vehicle.brand_id) : null;
+    const models = brand ? await this.brandsService.getModelsByBrand(vehicle.brand_id) : [];
+    const model = models.find((m) => m.id === vehicle.model_id);
+
+    const titleParts = [];
+    if (brand) titleParts.push(brand.name);
+    if (model) titleParts.push(model.name);
+    if (vehicle.year) titleParts.push(vehicle.year.toString());
+
+    const transmissionStr =
+      vehicle.transmission === 'Automatic'
+        ? 'Автоматска'
+        : vehicle.transmission === 'Manual'
+          ? 'Мануелна'
+          : vehicle.transmission === 'CVT'
+            ? 'Варијатор'
+            : '';
+
+    const baseTitle = titleParts.join(' ');
+    return transmissionStr ? `${baseTitle} (${transmissionStr})` : baseTitle;
+  }
+
   async update(id: string, updateListingDto: UpdateListingDto, userId: string): Promise<Listing> {
     const listing = await this.findOne(id);
     if (listing.user_id !== userId) {
@@ -295,6 +299,13 @@ export class ListingsService {
     if (updateListingDto.vehicle) {
       const vehicleUpdate: Partial<CreateVehicleDto> = { ...updateListingDto.vehicle };
       await this.vehiclesRepository.update(listing.vehicle_id, vehicleUpdate);
+
+      const updatedVehicle = await this.vehiclesRepository.findOne({
+        where: { id: listing.vehicle_id },
+      });
+      if (updatedVehicle) {
+        listing.title = await this.generateTitle(updatedVehicle);
+      }
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
