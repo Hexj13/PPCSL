@@ -13,10 +13,27 @@ export function Header() {
 
   const getUserDisplayName = (userParam: User | null): string => {
     if (!userParam) return '';
-    if (userParam.firstName && userParam.lastName) {
-      return `${userParam.firstName} ${userParam.lastName}`;
+
+    if (userParam.type === 'Business' && userParam.companyName) {
+      return userParam.companyName;
     }
-    return userParam.email || '';
+
+    if (userParam.firstName) {
+      if (userParam.lastName) {
+        return `${userParam.firstName} ${userParam.lastName}`;
+      }
+      return userParam.firstName;
+    }
+
+    if (userParam.email) {
+      return userParam.email;
+    }
+
+    if (userParam.phone) {
+      return userParam.phone;
+    }
+
+    return '';
   };
 
   const handleLogout = () => {

@@ -247,6 +247,10 @@ export class ListingsService {
       return;
     }
 
+    if (userId && userId === listing.user_id) {
+      return;
+    }
+
     if (userId) {
       const existingView = await this.listingViewsRepository.findOne({
         where: { listing_id: listingId, user_id: userId },

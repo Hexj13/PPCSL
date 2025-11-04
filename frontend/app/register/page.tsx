@@ -210,10 +210,15 @@ export default function RegisterPage() {
         const submitData: RegisterDto = {
           ...formData,
           companyName: '',
-          email: formData.email && formData.email.trim() ? formData.email : '',
           emailNotifications:
             formData.email && formData.email.trim() ? formData.emailNotifications : false,
         };
+        if (!formData.email || !formData.email.trim()) {
+          delete submitData.email;
+        }
+        if (!formData.lastName || !formData.lastName.trim()) {
+          delete submitData.lastName;
+        }
         await authApi.register(submitData);
       } else {
         const submitData: RegisterDto = {

@@ -49,8 +49,8 @@ export class RegisterDto {
   @MaxLength(50, { message: 'Името не може да биде подолго од 50 карактери' })
   firstName?: string;
 
-  @ValidateIf((o) => o.type === UserTypeEnum.Individual)
   @IsOptional()
+  @ValidateIf((o) => o.lastName != null && o.lastName !== '')
   @IsString()
   @MinLength(2, { message: 'Презимето мора да содржи минимум 2 карактери' })
   @MaxLength(50, { message: 'Презимето не може да биде подолго од 50 карактери' })
