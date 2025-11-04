@@ -151,6 +151,7 @@ export interface User {
   viber?: boolean;
   whatsapp?: boolean;
   telegram?: boolean;
+  phoneVerified?: boolean;
 }
 
 export interface SearchParams {
@@ -268,11 +269,17 @@ export const uploadApi = {
   },
 };
 
+export interface VerifySmsDto {
+  code: string;
+}
+
 export const authApi = {
   register: (data: RegisterDto) => api.post('/api/auth/register', data),
   login: (data: LoginDto) =>
     api.post<{ access_token: string; user: User }>('/api/auth/login', data),
   me: () => api.get<User>('/api/auth/me'),
+  verifyPhone: () => api.post<User>('/api/auth/verify-phone'),
+  verifySms: (data: VerifySmsDto) => api.post<{ success: boolean; message: string }>('/api/auth/verify-sms', data),
 };
 
 export const favoritesApi = {

@@ -53,4 +53,9 @@ export class UsersService {
     const user = await this.findOne(userId);
     return user.type === UserTypeEnum.Business ? 50 : 5;
   }
+
+  async update(id: string, updateData: Partial<User>): Promise<User> {
+    await this.usersRepository.update(id, updateData);
+    return this.findOne(id);
+  }
 }

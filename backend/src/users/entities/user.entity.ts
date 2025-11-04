@@ -49,6 +49,9 @@ export class User {
   @Column({ type: 'boolean', default: false })
   telegram: boolean;
 
+  @Column({ type: 'boolean', default: false })
+  phoneVerified: boolean;
+
   @CreateDateColumn()
   created_at: Date;
 

@@ -124,6 +124,16 @@ export class AuthService {
       companyName: result.companyName,
       phone: result.phone,
       emailNotifications: result.emailNotifications,
+      phoneVerified: result.phoneVerified,
     };
+  }
+
+  async verifyPhone(userId: string): Promise<UserWithoutPassword> {
+    const updatedUser = await this.usersService.update(userId, {
+      phoneVerified: true,
+    });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _, ...result } = updatedUser;
+    return result;
   }
 }

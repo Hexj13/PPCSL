@@ -88,6 +88,13 @@ Create a simple, free website for posting listings for new and used cars in Nort
   * Email notifications preference
   * Social media contact options: Viber, WhatsApp, Telegram
   * Terms and conditions acceptance (required)
+* **SMS Verification:**
+  * Required for both Individual and Business users during registration
+  * 6-digit code verification on separate page (`/verify-phone`)
+  * Phone verification status stored in database (`phoneVerified` field)
+  * Mock verification code: `000000` (for development)
+  * Frontend validation: 10 attempts per code resend, 3 code resends maximum
+  * Backend IP-based brute force protection: 40 attempts per IP, 1-hour block
 * **Authentication:**
   * Login with email or phone number
   * JWT-based authentication
@@ -160,6 +167,8 @@ Create a simple, free website for posting listings for new and used cars in Nort
 POST /api/auth/register     # Register new user
 POST /api/auth/login        # Login (email or phone)
 GET  /api/auth/me           # Get current user profile
+POST /api/auth/verify-phone  # Verify phone number (JWT required)
+POST /api/auth/verify-sms    # Verify SMS code (IP-based brute force protection)
 ```
 
 ### Listings
@@ -231,6 +240,7 @@ PATCH /api/admin/users/:id/toggle-status  # Enable/disable user
 * `viber` (boolean, default: false)
 * `whatsapp` (boolean, default: false)
 * `telegram` (boolean, default: false)
+* `phoneVerified` (boolean, default: false)
 * `created_at` (timestamp)
 
 ### Listings
@@ -383,11 +393,23 @@ GET /api/listings?brand_id=xxx&year_gte=2018&price_lte=12000&city=Skopje&fuel=Pe
   * JWT tokens with expiration
   * Password hashing with bcrypt (10 rounds)
   * Protected routes with guards (JwtAuthGuard, AdminGuard)
+* **SMS Verification:**
+  * Required during registration for both user types
+  * Frontend: 10 attempts per code, 3 code resends maximum (40 total attempts)
+  * Backend: IP-based brute force protection (40 attempts per IP, 1-hour block)
+  * Automatic cleanup of expired IP blocks (hourly cron job)
+* **IP-based Brute Force Protection:**
+  * Maximum 40 failed verification attempts per IP address
+  * 1-hour block after exceeding limit
+  * Automatic unblocking after block period expires
+  * IP detection from `x-forwarded-for`, `x-real-ip`, or direct connection
+  * `trust proxy` enabled for proper IP detection behind proxies
 * **Input validation:**
   * Class-validator for DTOs
   * Phone number format validation
   * Email validation
   * VIN length validation (17 characters)
+  * SMS code validation (6 digits, numeric only)
 * **File upload security:**
   * MIME type validation
   * File size limits

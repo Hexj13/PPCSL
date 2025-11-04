@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { authApi, favoritesApi, RegisterDto } from '@/lib/api';
+import { RegisterDto } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import toast from 'react-hot-toast';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { user, isInitialized, setAuth } = useAuthStore();
+  const { user, isInitialized } = useAuthStore();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -206,8 +206,10 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
+      let submitData: RegisterDto;
+
       if (formData.type === 'Individual') {
-        const submitData: RegisterDto = {
+        submitData = {
           ...formData,
           companyName: '',
           emailNotifications:
@@ -219,59 +221,20 @@ export default function RegisterPage() {
         if (!formData.lastName || !formData.lastName.trim()) {
           delete submitData.lastName;
         }
-        await authApi.register(submitData);
       } else {
-        const submitData: RegisterDto = {
+        submitData = {
           ...formData,
           firstName: '',
           lastName: '',
         };
-        await authApi.register(submitData);
       }
 
-      const loginValue =
-        formData.type === 'Individual'
-          ? formData.email && formData.email.trim()
-            ? formData.email
-            : formData.phone
-          : formData.email;
-
-      try {
-        const loginRes = await authApi.login({
-          login: loginValue,
-          password: formData.password,
-        });
-        setAuth(loginRes.data.user, loginRes.data.access_token);
-
-        if (typeof window !== 'undefined') {
-          const pendingFavorites = JSON.parse(localStorage.getItem('pendingFavorites') || '[]');
-          if (pendingFavorites.length > 0) {
-            const addPromises = pendingFavorites.map((listingId: string) =>
-              favoritesApi.add(listingId).catch(() => {})
-            );
-            await Promise.all(addPromises);
-            localStorage.removeItem('pendingFavorites');
-          }
-
-          const returnUrl = localStorage.getItem('returnUrl');
-          if (returnUrl) {
-            localStorage.removeItem('returnUrl');
-            router.push(returnUrl);
-          } else {
-            router.push('/');
-          }
-        } else {
-          router.push('/');
-        }
-
-        toast.success('Регистрацијата е успешна');
-      } catch {
-        toast.error('Регистрацијата е успешна, но најавата не успеа. Најавете се рачно.');
-        router.push('/login');
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('pendingRegistration', JSON.stringify(submitData));
+        router.push(`/verify-phone?phone=${encodeURIComponent(formData.phone)}`);
       }
     } catch (err: unknown) {
-      const axiosError = err as { response?: { data?: { message?: string } } };
-      toast.error(axiosError.response?.data?.message || 'Грешка при регистрација');
+      toast.error('Грешка при подготовка на податоците');
     } finally {
       setLoading(false);
     }

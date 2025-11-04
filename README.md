@@ -85,6 +85,8 @@ npm run dev  # Runs both frontend and backend
 <summary><b>Core Features</b></summary>
 
 - User registration and authentication (Individual and Business)
+- SMS verification during registration (with IP-based brute force protection)
+- Phone number verification stored in database
 - Create, edit, and publish listings
 - Extended search and filtering
 - Listing limits (5 for Individuals, 50 for Business)
@@ -126,6 +128,8 @@ Kupito/
 - `POST /api/auth/register` - Register
 - `POST /api/auth/login` - Login
 - `GET /api/auth/me` - Current user
+- `POST /api/auth/verify-phone` - Verify phone number (JWT required)
+- `POST /api/auth/verify-sms` - Verify SMS code (with IP-based brute force protection)
 
 ### Listings
 - `GET /api/listings` - List listings (with filters)
