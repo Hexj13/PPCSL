@@ -347,9 +347,7 @@ export default function ListingPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <span className="text-primary-400 font-semibold">Марка:</span>
-                    <span className="ml-2 text-gray-300">
-                      {vehicle.brand?.name || ''}
-                    </span>
+                    <span className="ml-2 text-gray-300">{vehicle.brand?.name || ''}</span>
                   </div>
                   {vehicle.engine_displ_l && (
                     <div>
@@ -361,9 +359,7 @@ export default function ListingPage() {
                   )}
                   <div>
                     <span className="text-primary-400 font-semibold">Модел:</span>
-                    <span className="ml-2 text-gray-300">
-                      {vehicle.model?.name || ''}
-                    </span>
+                    <span className="ml-2 text-gray-300">{vehicle.model?.name || ''}</span>
                   </div>
                   {vehicle.fuel && (
                     <div>
@@ -484,8 +480,8 @@ export default function ListingPage() {
                         <div className="bg-bg-darker border-2 border-primary-500/50 rounded-lg p-3 shadow-lg">
                           <p className="text-xs font-semibold text-gray-300 leading-relaxed">
                             Прикажуваме претходни објави за ова возило со ист VIN. За заштита на
-                            приватност, цената и личните податоци на авторите се скриени за затворени
-                            објави.
+                            приватност, цената и личните податоци на авторите се скриени за
+                            затворени објави.
                           </p>
                         </div>
                       </div>
@@ -542,7 +538,9 @@ export default function ListingPage() {
                     </table>
                   </div>
                 ) : (
-                  <p className="font-semibold text-gray-300 text-sm">Нема претходни објави за ова возило</p>
+                  <p className="font-semibold text-gray-300 text-sm">
+                    Нема претходни објави за ова возило
+                  </p>
                 )}
               </div>
             )}
