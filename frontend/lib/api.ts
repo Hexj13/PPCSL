@@ -279,7 +279,8 @@ export const authApi = {
     api.post<{ access_token: string; user: User }>('/api/auth/login', data),
   me: () => api.get<User>('/api/auth/me'),
   verifyPhone: () => api.post<User>('/api/auth/verify-phone'),
-  verifySms: (data: VerifySmsDto) => api.post<{ success: boolean; message: string }>('/api/auth/verify-sms', data),
+  verifySms: (data: VerifySmsDto) =>
+    api.post<{ success: boolean; message: string }>('/api/auth/verify-sms', data),
 };
 
 export const favoritesApi = {

@@ -24,12 +24,13 @@ export default function VerifyPhonePage() {
 
   useEffect(() => {
     const phone = searchParams.get('phone');
-    const storedData = typeof window !== 'undefined' ? localStorage.getItem('pendingRegistration') : null;
-    
+    const storedData =
+      typeof window !== 'undefined' ? localStorage.getItem('pendingRegistration') : null;
+
     if (phone) {
       setPhoneNumber(phone);
     }
-    
+
     if (storedData) {
       try {
         setFormData(JSON.parse(storedData));
@@ -175,7 +176,7 @@ export default function VerifyPhonePage() {
           const now = new Date();
           const remainingMinutes = Math.ceil((blockedDate.getTime() - now.getTime()) / (1000 * 60));
           setError(
-            `Достигнато е максималниот број на обиди (40). Обидете се повторно за ${remainingMinutes} минути.`,
+            `Достигнато е максималниот број на обиди (40). Обидете се повторно за ${remainingMinutes} минути.`
           );
           setIsVerificationBlocked(true);
           setCode(['', '', '', '', '', '']);
@@ -190,10 +191,13 @@ export default function VerifyPhonePage() {
 
       if (newAttempts >= 10) {
         setIsVerificationBlocked(true);
-        setError('Достигнато е максималниот број на обиди (10). Испратете го кодот повторно за да продолжите.');
+        setError(
+          'Достигнато е максималниот број на обиди (10). Испратете го кодот повторно за да продолжите.'
+        );
       } else {
         setError(
-          axiosError.response?.data?.message || `Невалиден код. Обидете се повторно. (${newAttempts}/10)`,
+          axiosError.response?.data?.message ||
+            `Невалиден код. Обидете се повторно. (${newAttempts}/10)`
         );
       }
 
@@ -243,7 +247,7 @@ export default function VerifyPhonePage() {
 
         if (typeof window !== 'undefined') {
           localStorage.removeItem('pendingRegistration');
-          
+
           const pendingFavorites = JSON.parse(localStorage.getItem('pendingFavorites') || '[]');
           if (pendingFavorites.length > 0) {
             const addPromises = pendingFavorites.map((listingId: string) =>
@@ -303,13 +307,9 @@ export default function VerifyPhonePage() {
           <div className="text-center">
             <p className="text-gray-300 mb-2">
               Испратениот код на телефон{' '}
-              {phoneNumber && (
-                <span className="font-semibold text-white">{phoneNumber}</span>
-              )}
+              {phoneNumber && <span className="font-semibold text-white">{phoneNumber}</span>}
             </p>
-            <p className="text-sm text-gray-400">
-              Внесете го 6-цифрениот код од СМС пораката
-            </p>
+            <p className="text-sm text-gray-400">Внесете го 6-цифрениот код од СМС пораката</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -332,9 +332,7 @@ export default function VerifyPhonePage() {
                       error
                         ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
                         : 'border-primary-500/30 focus:border-primary-500'
-                    } ${
-                      isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-text'
-                    } text-white`}
+                    } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-text'} text-white`}
                     style={{
                       caretColor: 'transparent',
                       fontFamily: "'Digital-7', monospace",
@@ -374,7 +372,9 @@ export default function VerifyPhonePage() {
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting || code.join('').trim().length !== 6 || isVerificationBlocked}
+                disabled={
+                  isSubmitting || code.join('').trim().length !== 6 || isVerificationBlocked
+                }
                 className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
                 {isSubmitting ? 'Проверување...' : isVerificationBlocked ? 'Блокирано' : 'Потврди'}
@@ -414,4 +414,3 @@ export default function VerifyPhonePage() {
     </div>
   );
 }
-

@@ -131,13 +131,9 @@ export function SmsVerificationModal({
         <div className="text-center">
           <p className="text-gray-300 mb-2">
             Испратениот код на телефон{' '}
-            {phoneNumber && (
-              <span className="font-semibold text-white">{phoneNumber}</span>
-            )}
+            {phoneNumber && <span className="font-semibold text-white">{phoneNumber}</span>}
           </p>
-          <p className="text-sm text-gray-400">
-            Внесете го 6-цифрениот код од СМС пораката
-          </p>
+          <p className="text-sm text-gray-400">Внесете го 6-цифрениот код од СМС пораката</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -160,9 +156,7 @@ export function SmsVerificationModal({
                   error
                     ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
                     : 'border-primary-500/30 focus:border-primary-500'
-                } ${
-                  isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-text'
-                } text-white`}
+                } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-text'} text-white`}
                 autoComplete="off"
               />
             ))}
@@ -211,4 +205,3 @@ export function SmsVerificationModal({
     </Modal>
   );
 }
-
