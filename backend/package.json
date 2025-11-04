@@ -27,6 +27,7 @@
     "make-admin": "ts-node -r tsconfig-paths/register src/scripts/make-admin.ts",
     "reset-users": "ts-node -r tsconfig-paths/register src/scripts/reset-users.ts",
     "update-titles": "ts-node -r tsconfig-paths/register src/scripts/update-listing-titles.ts",
+    "update-engine-volumes": "ts-node -r tsconfig-paths/register src/scripts/update-engine-volumes.ts",
     "sync-carquery": "ts-node -r tsconfig-paths/register src/scripts/sync-carquery.ts",
     "cleanup-brands": "ts-node -r tsconfig-paths/register src/scripts/cleanup-brands.ts",
     "clear-database": "ts-node -r tsconfig-paths/register src/scripts/clear-database.ts",

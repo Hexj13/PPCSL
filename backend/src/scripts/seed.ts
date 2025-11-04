@@ -3,7 +3,7 @@ import { AppDataSource } from '../data-source';
 import { User } from '../users/entities/user.entity';
 import { UserType as UserTypeEnum } from '../common/types';
 import { Listing } from '../listings/entities/listing.entity';
-import { ListingStatus, Currency } from '../common/types';
+import { ListingStatus as ListingStatusEnum, Currency } from '../common/types';
 import { Vehicle } from '../listings/entities/vehicle.entity';
 import { FuelType, TransmissionType, BodyType } from '../common/types';
 import { Brand } from '../brands/entities/brand.entity';
@@ -86,7 +86,7 @@ function getRandomFloat(min: number, max: number, decimals: number = 2): number 
 }
 
 async function seedBrandsAndModels() {
-  console.log('🌱 Сеење брендови и модели...');
+  console.log('🌱 Seeding brands and models...');
 
   const brandsData = [
     { name: 'Toyota', order: 1 },
@@ -348,40 +348,57 @@ async function seedBrandsAndModels() {
     }
   }
 
-  console.log(`✅ Создани ${brands.length} брендови и модели`);
+  console.log(`✅ Created ${brands.length} brands and models`);
   return brands;
 }
 
-async function getOrCreateTestUser() {
-  console.log('👤 Креирање тест корисник...');
+function generateVin(): string {
+  const chars = 'ABCDEFGHJKLMNPRSTUVWXYZ0123456789';
+  let vin = '';
+  for (let i = 0; i < 17; i++) {
+    vin += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return vin;
+}
+
+async function createUsers(count: number = 3): Promise<User[]> {
+  console.log(`👥 Creating ${count} users...`);
 
   const userRepo = AppDataSource.getRepository(User);
-  let user = await userRepo.findOne({ where: { email: 'user@test.com' } });
+  const users: User[] = [];
 
-  if (!user) {
-    const hashedPassword = await bcrypt.hash('test123', 10);
-    user = userRepo.create({
-      email: 'user@test.com',
-      password: hashedPassword,
-      firstName: 'Тест',
-      lastName: 'Корисник',
-      phone: '+38970123456',
-      type: UserTypeEnum.Individual,
-    });
-    user = await userRepo.save(user);
-    console.log('✅ Креиран тест корисник');
-    console.log(`   Email: user@test.com`);
-    console.log(`   Парола: test123`);
-    console.log(`   Тип: Individual`);
-  } else {
-    console.log('✅ Тест корисникот веќе постои');
+  for (let i = 1; i <= count; i++) {
+    const email = `user${i}@test.com`;
+    let user = await userRepo.findOne({ where: { email } });
+
+    if (!user) {
+      const hashedPassword = await bcrypt.hash('test123', 10);
+      const isBusiness = i === 2;
+      user = userRepo.create({
+        email,
+        password: hashedPassword,
+        firstName: `Тест${i}`,
+        lastName: 'Корисник',
+        phone: `+3897012345${i}`,
+        type: isBusiness ? UserTypeEnum.Business : UserTypeEnum.Individual,
+        companyName: isBusiness ? `Тест Компанија ${i}` : null,
+        viber: i % 2 === 0,
+        whatsapp: i % 2 === 1,
+        telegram: i % 3 === 0,
+      });
+      user = await userRepo.save(user);
+      console.log(`   ✅ Created user ${i}: ${email} (${user.type})`);
+    } else {
+      console.log(`   ✅ User ${i} already exists: ${email}`);
+    }
+    users.push(user);
   }
 
-  return user;
+  return users;
 }
 
 async function getOrCreateAdminUser() {
-  console.log('👑 Креирање/ажурирање на админ корисник...');
+  console.log('👑 Creating/updating admin user...');
 
   const userRepo = AppDataSource.getRepository(User);
   let admin = await userRepo.findOne({ where: { email: 'admin@admin.com' } });
@@ -397,24 +414,27 @@ async function getOrCreateAdminUser() {
       type: UserTypeEnum.Admin,
     });
     admin = await userRepo.save(admin);
-    console.log('✅ Креиран админ корисник');
+    console.log('✅ Created admin user');
   } else {
     admin.type = UserTypeEnum.Admin;
     admin = await userRepo.save(admin);
-    console.log('✅ Ажуриран админ корисник');
+    console.log('✅ Updated admin user');
   }
 
   return admin;
 }
 
-async function seedListings(user: User, brands: Brand[], count: number = 60) {
-  console.log(`🚗 Креирање ${count} објави...`);
+async function seedListings(
+  users: User[],
+  brands: Brand[],
+  activeCount: number = 100,
+  withHistoryCount: number = 10,
+) {
+  console.log(`🚗 Creating ${activeCount} active listings...`);
 
   const listingRepo = AppDataSource.getRepository(Listing);
   const vehicleRepo = AppDataSource.getRepository(Vehicle);
   const brandRepo = AppDataSource.getRepository(Brand);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const modelRepo = AppDataSource.getRepository(VehicleModel);
 
   const baseUrl = process.env.API_URL || 'http://localhost:4000';
 
@@ -425,25 +445,25 @@ async function seedListings(user: User, brands: Brand[], count: number = 60) {
   const validBrands = brandsWithModels.filter((b) => b.models && b.models.length > 0);
 
   if (validBrands.length === 0) {
-    throw new Error('Нема достапни брендови со модели!');
+    throw new Error('No brands with models available!');
   }
 
   const fuelTypes = Object.values(FuelType);
   const transmissionTypes = Object.values(TransmissionType);
-  const statuses = Object.values(ListingStatus);
   const currencies = Object.values(Currency);
-
   const currentYear = new Date().getFullYear();
-
   const bodyTypes = Object.values(BodyType);
 
-  for (let i = 0; i < count; i++) {
+  const activeListings: Listing[] = [];
+
+  for (let i = 0; i < activeCount; i++) {
+    const user = getRandomElement(users);
     const brand = getRandomElement(validBrands);
     const model = getRandomElement(brand.models);
 
     const year = getRandomInt(2010, currentYear);
-    const mileage = getRandomInt(0, 300000);
-    const engineDispl = getRandomFloat(1.0, 5.0);
+    const mileage = getRandomInt(5000, 200000);
+    const engineDispl = getRandomFloat(1.0, 5.0, 1);
     const fuel = getRandomElement(fuelTypes);
     const transmission = getRandomElement(transmissionTypes);
     const bodyType = getRandomElement(bodyTypes);
@@ -453,12 +473,13 @@ async function seedListings(user: User, brands: Brand[], count: number = 60) {
     const city = getRandomElement(cities);
     const price = getRandomInt(5000, 50000);
     const currency = getRandomElement(currencies);
-    const status = getRandomElement(statuses);
     const description = getRandomElement(descriptions);
 
     const imageCount = getRandomInt(2, 5);
     const selectedImages = getRandomElements(existingImages, imageCount);
     const images = selectedImages.map((img) => `${baseUrl}/uploads/${img}`);
+
+    const vin = i < withHistoryCount ? generateVin() : undefined;
 
     const vehicle = vehicleRepo.create({
       brand_id: brand.id,
@@ -491,53 +512,171 @@ async function seedListings(user: User, brands: Brand[], count: number = 60) {
       price,
       currency,
       city,
-      status,
+      status: ListingStatusEnum.Active,
       description,
       user_id: user.id,
       vehicle_id: savedVehicle.id,
       images,
+      vin,
+      urgent: i % 5 === 0,
       last_updated_at: new Date(),
     });
 
-    await listingRepo.save(listing);
+    const savedListing = await listingRepo.save(listing);
+    activeListings.push(savedListing);
 
     if ((i + 1) % 10 === 0) {
-      console.log(`   Создадени ${i + 1}/${count} објави...`);
+      console.log(`   Created ${i + 1}/${activeCount} active listings...`);
+    }
+
+    if (i < withHistoryCount && vin) {
+      await createVinHistory(vin, savedVehicle, brand, model, users, year, i);
     }
   }
 
-  console.log(`✅ Создадени сите ${count} објави!`);
+  console.log(`✅ Created all ${activeCount} active listings!`);
+}
+
+async function createVinHistory(
+  vin: string,
+  baseVehicle: Vehicle,
+  brand: Brand,
+  model: VehicleModel,
+  users: User[],
+  baseYear: number,
+  _listingIndex: number,
+) {
+  const listingRepo = AppDataSource.getRepository(Listing);
+  const vehicleRepo = AppDataSource.getRepository(Vehicle);
+
+  const historyCount = getRandomInt(2, 5);
+  const baseUrl = process.env.API_URL || 'http://localhost:4000';
+  const fuelTypes = Object.values(FuelType);
+  const transmissionTypes = Object.values(TransmissionType);
+  const currencies = Object.values(Currency);
+  const bodyTypes = Object.values(BodyType);
+
+  console.log(
+    `   📜 Creating ${historyCount} historical listings for VIN ${vin.substring(0, 8)}...`,
+  );
+
+  let previousMileage = baseVehicle.mileage_km || 0;
+  const startYear = baseYear - historyCount;
+
+  for (let i = 0; i < historyCount; i++) {
+    const historyUser = getRandomElement(users.filter((u) => u.type !== UserTypeEnum.Admin));
+    const historyYear = startYear + i;
+    const mileageIncrease = getRandomInt(10000, 30000);
+    const historyMileage = previousMileage - mileageIncrease;
+    previousMileage = historyMileage;
+
+    const fuel = getRandomElement(fuelTypes);
+    const transmission = getRandomElement(transmissionTypes);
+    const bodyType = getRandomElement(bodyTypes);
+    const color = getRandomElement(colors);
+    const doors = getRandomElement([3, 4, 5]);
+    const city = getRandomElement(cities);
+    const price = getRandomInt(3000, 40000);
+    const currency = getRandomElement(currencies);
+    const description = getRandomElement(descriptions);
+
+    const imageCount = getRandomInt(2, 4);
+    const selectedImages = getRandomElements(existingImages, imageCount);
+    const images = selectedImages.map((img) => `${baseUrl}/uploads/${img}`);
+
+    const historyVehicle = vehicleRepo.create({
+      brand_id: brand.id,
+      model_id: model.id,
+      year: historyYear,
+      mileage_km: Math.max(0, historyMileage),
+      engine_displ_l: baseVehicle.engine_displ_l,
+      fuel,
+      transmission,
+      body_type: bodyType,
+      color,
+      doors,
+    });
+
+    const savedHistoryVehicle = await vehicleRepo.save(historyVehicle);
+
+    const transmissionStr =
+      transmission === 'Automatic'
+        ? 'Автоматска'
+        : transmission === 'Manual'
+          ? 'Мануелна'
+          : transmission === 'CVT'
+            ? 'Варијатор'
+            : '';
+    const baseTitle = `${brand.name} ${model.name} ${historyYear}`;
+    const title = transmissionStr ? `${baseTitle} (${transmissionStr})` : baseTitle;
+
+    const historyDate = new Date();
+    historyDate.setDate(historyDate.getDate() - (historyCount - i) * 90 - getRandomInt(0, 30));
+
+    const historyListing = listingRepo.create({
+      title,
+      price,
+      currency,
+      city,
+      status: ListingStatusEnum.Closed,
+      description,
+      user_id: historyUser.id,
+      vehicle_id: savedHistoryVehicle.id,
+      images,
+      vin,
+      last_updated_at: historyDate,
+      created_at: historyDate,
+      updated_at: historyDate,
+    });
+
+    await listingRepo.save(historyListing);
+  }
 }
 
 async function seed() {
   try {
-    console.log('🔌 Поврзување со базата на податоци...');
+    console.log('🔌 Connecting to database...');
     await AppDataSource.initialize();
-    console.log('✅ Поврзано со базата на податоци');
+    console.log('✅ Connected to database');
 
     const brands = await seedBrandsAndModels();
-    await getOrCreateAdminUser();
-    const user = await getOrCreateTestUser();
-    await seedListings(user, brands, 60);
+    const admin = await getOrCreateAdminUser();
+    const regularUsers = await createUsers(3);
+    const allUsers = [admin, ...regularUsers];
 
-    console.log('🎉 Сите податоци се успешно внесени!');
+    console.log(`\n📊 Total ${allUsers.length} users:`);
+    console.log(`   - 1 admin`);
+    console.log(`   - ${regularUsers.length} regular users\n`);
+
+    await seedListings(allUsers, brands, 100, 10);
+
+    console.log('\n🎉 All data successfully seeded!');
+    console.log('\n📝 Test credentials:');
+    console.log('   Admin:');
+    console.log('     Email: admin@admin.com');
+    console.log('     Password: admin123');
+    console.log('   Users:');
+    for (let i = 1; i <= regularUsers.length; i++) {
+      console.log(`     Email: user${i}@test.com`);
+      console.log(`     Password: test123`);
+    }
   } catch (error) {
-    console.error('❌ Грешка при внесување на податоци:', error);
+    console.error('❌ Error during seeding:', error);
     throw error;
   } finally {
     if (AppDataSource.isInitialized) {
       await AppDataSource.destroy();
-      console.log('🔌 Врската со базата на податоци е затворена');
+      console.log('🔌 Database connection closed');
     }
   }
 }
 
 seed()
   .then(() => {
-    console.log('✅ Скриптот заврши успешно');
+    console.log('✅ Script completed successfully');
     process.exit(0);
   })
   .catch((error) => {
-    console.error('❌ Грешка:', error);
+    console.error('❌ Error:', error);
     process.exit(1);
   });

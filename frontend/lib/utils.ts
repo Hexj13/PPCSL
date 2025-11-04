@@ -23,7 +23,7 @@ export function formatDateShort(date: string | Date): string {
 }
 
 export function formatEngineVolume(volume: number): string {
-  return parseFloat(volume.toString()).toString();
+  return parseFloat(volume.toString()).toFixed(1);
 }
 
 export function formatMileage(mileage: number): string {
