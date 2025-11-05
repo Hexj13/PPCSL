@@ -15,7 +15,6 @@ export class EmailService {
     const smtpPort = this.configService.get('SMTP_PORT');
     const smtpUser = this.configService.get('SMTP_USER');
     const smtpPassword = this.configService.get('SMTP_PASSWORD');
-    const smtpFrom = this.configService.get('SMTP_FROM') || 'noreply@kupito.mk';
 
     if (smtpHost && smtpPort && smtpUser && smtpPassword) {
       this.transporter = nodemailer.createTransport({
@@ -67,8 +66,9 @@ export class EmailService {
     }
 
     try {
+      const smtpFrom = this.configService.get('SMTP_FROM') || 'noreply@kupito.mk';
       await this.transporter.sendMail({
-        from: this.configService.get('SMTP_FROM') || 'noreply@kupito.mk',
+        from: smtpFrom,
         to: email,
         subject: emailSubject,
         text: emailText,
@@ -109,4 +109,3 @@ export class EmailService {
     }
   }
 }
-

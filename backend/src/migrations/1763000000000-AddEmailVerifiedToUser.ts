@@ -7,9 +7,7 @@ export class AddEmailVerifiedToUser1763000000000 implements MigrationInterface {
     const table = await queryRunner.getTable('users');
     const emailVerifiedColumn = table?.findColumnByName('emailVerified');
     if (!emailVerifiedColumn) {
-      await queryRunner.query(
-        `ALTER TABLE "users" ADD "emailVerified" boolean`,
-      );
+      await queryRunner.query(`ALTER TABLE "users" ADD "emailVerified" boolean`);
     }
   }
 
@@ -21,4 +19,3 @@ export class AddEmailVerifiedToUser1763000000000 implements MigrationInterface {
     }
   }
 }
-

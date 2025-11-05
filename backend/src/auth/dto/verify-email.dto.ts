@@ -5,4 +5,3 @@ export class VerifyEmailDto {
   @IsString({ message: 'Токенот мора да биде стринг' })
   token: string;
 }
-

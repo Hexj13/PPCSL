@@ -103,7 +103,7 @@ export class AuthService {
 
     try {
       const user = await this.usersService.create(cleanedUserData);
-      
+
       if (user.email) {
         try {
           await this.emailService.sendVerificationEmail(user.id, user.email);
@@ -111,7 +111,7 @@ export class AuthService {
           console.error('Failed to send verification email:', emailError);
         }
       }
-      
+
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password: _, ...result } = user;
       return result;
