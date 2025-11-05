@@ -11,6 +11,7 @@ import {
   formatMileage,
   formatPrice,
   formatTransmission,
+  getCityNameMk,
 } from '@/lib/utils';
 
 import { Modal } from './Modal';
@@ -244,7 +245,7 @@ export function UserListingsModal({
                       {listing.city && (
                         <div>
                           <span className="text-primary-400 font-semibold">Град:</span>
-                          <span className="ml-2 text-gray-300">{listing.city}</span>
+                          <span className="ml-2 text-gray-300">{getCityNameMk(listing.city)}</span>
                         </div>
                       )}
                     </div>
@@ -253,7 +254,7 @@ export function UserListingsModal({
                   {!vehicle && listing.city && (
                     <div className="text-sm border-t border-primary-500/20 pt-3">
                       <span className="text-primary-400 font-semibold">Град:</span>
-                      <span className="ml-2 text-gray-300">{listing.city}</span>
+                      <span className="ml-2 text-gray-300">{getCityNameMk(listing.city)}</span>
                     </div>
                   )}
                 </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import DOMPurify from 'dompurify'; // eslint-disable-line import/no-named-as-default
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -16,6 +17,7 @@ import {
   formatTransmission,
   formatBodyType,
   getOptimizedImageUrl,
+  getCityNameMk,
 } from '@/lib/utils';
 
 export default function ListingPage() {
@@ -445,7 +447,12 @@ export default function ListingPage() {
                 <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-400">Опис</h2>
                 <div
                   className="text-gray-300 leading-relaxed prose prose-invert prose-headings:text-white prose-p:text-gray-300 prose-strong:text-white prose-em:text-gray-200 max-w-none"
-                  dangerouslySetInnerHTML={{ __html: listing.description }}
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(listing.description, {
+                      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'ul', 'ol', 'li'],
+                      ALLOWED_ATTR: [],
+                    }),
+                  }}
                 />
               </div>
             )}
@@ -617,7 +624,7 @@ export default function ListingPage() {
 
                   <div>
                     <span className="font-semibold text-primary-400">Град:</span>
-                    <span className="ml-2 text-gray-300">{listing.city}</span>
+                    <span className="ml-2 text-gray-300">{getCityNameMk(listing.city)}</span>
                   </div>
 
                   {listing.status === 'Closed' ? (

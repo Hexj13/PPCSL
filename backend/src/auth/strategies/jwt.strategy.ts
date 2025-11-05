@@ -15,13 +15,21 @@ interface JwtPayload {
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(configService: ConfigService) {
     const secret = configService.get('JWT_SECRET');
-    if (!secret && configService.get('NODE_ENV') === 'production') {
-      throw new Error('JWT_SECRET must be set in production environment');
+    const nodeEnv = configService.get('NODE_ENV');
+
+    if (!secret) {
+      if (nodeEnv === 'production') {
+        throw new Error('JWT_SECRET must be set in production environment');
+      }
+      console.warn(
+        '⚠️  WARNING: JWT_SECRET is not set. Using default secret for development only!',
+      );
     }
+
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: secret || 'your-secret-key-change-in-production',
+      secretOrKey: secret || 'your-secret-key-change-in-production-DEV-ONLY',
     });
   }
 

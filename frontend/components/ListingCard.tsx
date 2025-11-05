@@ -14,6 +14,7 @@ import {
   formatBodyType,
   formatDateShort,
   getOptimizedImageUrl,
+  getCityNameMk,
 } from '@/lib/utils';
 
 interface ListingCardProps {
@@ -164,7 +165,7 @@ export function ListingCard({ listing }: ListingCardProps) {
             )}
           </div>
           <div className="flex justify-between items-center text-sm text-gray-300 font-medium mt-auto pt-3 border-t border-primary-500/20">
-            <span>{listing.city}</span>
+            <span>{getCityNameMk(listing.city)}</span>
             <div className="flex items-center gap-3">
               {listing.views !== undefined && listing.views > 0 && (
                 <span className="flex items-center gap-1 text-xs">

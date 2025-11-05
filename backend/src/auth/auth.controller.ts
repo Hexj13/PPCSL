@@ -7,6 +7,7 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 
 import { UsersService } from '../users/users.service';
 
@@ -29,11 +30,13 @@ export class AuthController {
     private usersService: UsersService,
   ) {}
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
   }
 
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
@@ -53,6 +56,7 @@ export class AuthController {
     return user;
   }
 
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('check-phone')
   async checkPhone(@Body() sendSmsDto: SendSmsDto) {
     const normalizedPhone = this.smsService.normalizePhoneNumber(sendSmsDto.phone);
@@ -65,6 +69,7 @@ export class AuthController {
     return { available: true };
   }
 
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Post('send-sms')
   async sendSms(@Body() sendSmsDto: SendSmsDto) {
     const normalizedPhone = this.smsService.normalizePhoneNumber(sendSmsDto.phone);

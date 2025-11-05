@@ -17,6 +17,7 @@ import {
   formatPrice,
   formatTransmission,
   getOptimizedImageUrl,
+  getCityNameMk,
 } from '@/lib/utils';
 
 type AdminTab = 'listings' | 'users';
@@ -428,7 +429,7 @@ function ListingsTab() {
                     )}
                     <div className="mt-auto pt-3 border-t border-primary-500/20">
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                        <div className="text-sm text-gray-200 font-medium">{listing.city}</div>
+                        <div className="text-sm text-gray-200 font-medium">{getCityNameMk(listing.city)}</div>
                         <div className="flex gap-2 flex-wrap relative">
                           <Dropdown
                             value={listing.status}

@@ -20,11 +20,19 @@ import { LocalStrategy } from './strategies/local.strategy';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
         const secret = config.get('JWT_SECRET');
-        if (!secret && config.get('NODE_ENV') === 'production') {
-          throw new Error('JWT_SECRET must be set in production environment');
+        const nodeEnv = config.get('NODE_ENV');
+
+        if (!secret) {
+          if (nodeEnv === 'production') {
+            throw new Error('JWT_SECRET must be set in production environment');
+          }
+          console.warn(
+            '⚠️  WARNING: JWT_SECRET is not set. Using default secret for development only!',
+          );
         }
+
         return {
-          secret: secret || 'your-secret-key-change-in-production',
+          secret: secret || 'your-secret-key-change-in-production-DEV-ONLY',
           signOptions: { expiresIn: '7d' },
         };
       },

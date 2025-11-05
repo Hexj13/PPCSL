@@ -20,9 +20,14 @@ export class AdminService {
   ) {}
 
   async getAllUsers() {
-    return this.usersRepository.find({
+    const users = await this.usersRepository.find({
       relations: ['listings'],
       order: { created_at: 'DESC' },
+    });
+    return users.map((user) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password, ...userWithoutPassword } = user;
+      return userWithoutPassword;
     });
   }
 
@@ -50,13 +55,24 @@ export class AdminService {
       throw new NotFoundException('Корисникот не е пронајден');
     }
     user.active = !user.active;
-    return this.usersRepository.save(user);
+    const savedUser = await this.usersRepository.save(user);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, ...userWithoutPassword } = savedUser;
+    return userWithoutPassword;
   }
 
   async getAllListings() {
-    return this.listingsRepository.find({
+    const listings = await this.listingsRepository.find({
       relations: ['vehicle', 'vehicle.brand', 'vehicle.model', 'user'],
       order: { created_at: 'DESC' },
+    });
+    return listings.map((listing) => {
+      if (listing.user) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { password, ...userWithoutPassword } = listing.user;
+        listing.user = userWithoutPassword as typeof listing.user;
+      }
+      return listing;
     });
   }
 

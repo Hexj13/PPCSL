@@ -12,6 +12,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Throttle } from '@nestjs/throttler';
 import { Response } from 'express';
 import { memoryStorage } from 'multer';
 
@@ -23,6 +24,7 @@ import { UploadService } from './upload.service';
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
 
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @Post('image')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(
@@ -61,13 +63,26 @@ export class UploadController {
     @Query('width') width?: string,
   ) {
     try {
+      if (
+        !filename ||
+        filename.includes('..') ||
+        filename.includes('/') ||
+        filename.includes('\\')
+      ) {
+        throw new BadRequestException('Invalid filename');
+      }
+
+      if (quality && (isNaN(Number(quality)) || Number(quality) < 1 || Number(quality) > 100)) {
+        throw new BadRequestException('Quality must be a number between 1 and 100');
+      }
+
+      if (width && (isNaN(Number(width)) || Number(width) < 1 || Number(width) > 5000)) {
+        throw new BadRequestException('Width must be a number between 1 and 5000');
+      }
+
       const filePath = `/uploads/${filename}`;
       const qualityValue = quality ? parseInt(quality, 10) : 85;
       const widthValue = width ? parseInt(width, 10) : undefined;
-
-      if (qualityValue < 1 || qualityValue > 100) {
-        throw new BadRequestException('Quality must be between 1 and 100');
-      }
 
       const buffer = await this.uploadService.getOptimizedImage(filePath, qualityValue, widthValue);
 

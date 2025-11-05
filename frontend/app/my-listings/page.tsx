@@ -15,6 +15,7 @@ import {
   formatTransmission,
   formatBodyType,
   getOptimizedImageUrl,
+  getCityNameMk,
 } from '@/lib/utils';
 
 export default function MyListingsPage() {
@@ -328,7 +329,7 @@ export default function MyListingsPage() {
                     )}
                     <div className="mt-auto pt-3 border-t border-primary-500/20">
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                        <div className="text-sm text-gray-200 font-medium">{listing.city}</div>
+                        <div className="text-sm text-gray-200 font-medium">{getCityNameMk(listing.city)}</div>
                         <div className="flex gap-2 flex-wrap w-full sm:w-auto">
                           {listing.status === 'Paused' && (
                             <button

@@ -186,8 +186,17 @@ export class ListingsService {
 
     const [listings, total] = await queryBuilder.skip(skip).take(limit).getManyAndCount();
 
+    const listingsWithoutPasswords = listings.map((listing) => {
+      if (listing.user) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { password, ...userWithoutPassword } = listing.user;
+        listing.user = userWithoutPassword as typeof listing.user;
+      }
+      return listing;
+    });
+
     return {
-      data: listings,
+      data: listingsWithoutPasswords,
       meta: {
         total,
         page,
@@ -204,6 +213,12 @@ export class ListingsService {
     });
     if (!listing) {
       throw new NotFoundException('Објавата не е пронајдена');
+    }
+
+    if (listing.user) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password, ...userWithoutPassword } = listing.user;
+      listing.user = userWithoutPassword as typeof listing.user;
     }
 
     if (listing.status === ListingStatusEnum.Closed) {
@@ -433,6 +448,9 @@ export class ListingsService {
       (listing as Partial<Listing>).price = undefined;
       (listing as Partial<Listing>).currency = undefined;
       if (listing.user) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { password, ...userWithoutPassword } = listing.user;
+        listing.user = userWithoutPassword as typeof listing.user;
         listing.user.phone = null;
         listing.user.email = null;
         listing.user.firstName = null;
