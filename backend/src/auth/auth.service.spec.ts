@@ -8,6 +8,7 @@ import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 
 import { AuthService } from './auth.service';
+import { SmsService } from './services/sms.service';
 
 jest.mock('bcrypt', () => ({
   compare: jest.fn(),
@@ -18,6 +19,7 @@ describe('AuthService', () => {
   let service: AuthService;
   let usersService: jest.Mocked<UsersService>;
   let jwtService: jest.Mocked<JwtService>;
+  let smsService: jest.Mocked<SmsService>;
 
   const mockUser = {
     id: '1',
@@ -43,6 +45,10 @@ describe('AuthService', () => {
       sign: jest.fn(),
     };
 
+    const mockSmsService = {
+      normalizePhoneNumber: jest.fn((phone: string) => phone),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -54,12 +60,17 @@ describe('AuthService', () => {
           provide: JwtService,
           useValue: mockJwtService,
         },
+        {
+          provide: SmsService,
+          useValue: mockSmsService,
+        },
       ],
     }).compile();
 
     service = module.get<AuthService>(AuthService);
     usersService = module.get(UsersService);
     jwtService = module.get(JwtService);
+    smsService = module.get(SmsService);
   });
 
   it('should be defined', () => {

@@ -302,7 +302,7 @@ export default function RegisterPage() {
               } else {
                 errorMessage = 'Невалиден формат на телефон';
               }
-            } else if (status >= 500) {
+            } else if (status && status >= 500) {
               errorMessage = 'Грешка на серверот. Обидете се повторно подоцна.';
             } else {
               errorMessage =
