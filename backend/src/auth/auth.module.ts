@@ -7,6 +7,7 @@ import { UsersModule } from '../users/users.module';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { EmailService } from './services/email.service';
 import { IpBlockService } from './services/ip-block.service';
 import { SmsService } from './services/sms.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
@@ -39,7 +40,7 @@ import { LocalStrategy } from './strategies/local.strategy';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, LocalStrategy, IpBlockService, SmsService],
+  providers: [AuthService, JwtStrategy, LocalStrategy, IpBlockService, SmsService, EmailService],
   exports: [AuthService, IpBlockService],
 })
 export class AuthModule {}

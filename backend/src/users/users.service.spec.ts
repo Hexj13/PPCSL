@@ -28,6 +28,7 @@ describe('UsersService', () => {
     whatsapp: false,
     telegram: false,
     phoneVerified: false,
+    emailVerified: null,
     created_at: new Date(),
     listings: [],
     favorites: [],

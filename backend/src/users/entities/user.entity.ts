@@ -53,6 +53,9 @@ export class User {
   @Column({ type: 'boolean', default: false })
   phoneVerified: boolean;
 
+  @Column({ type: 'boolean', nullable: true })
+  emailVerified: boolean;
+
   @CreateDateColumn()
   created_at: Date;
 

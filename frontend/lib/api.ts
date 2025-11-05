@@ -153,6 +153,7 @@ export interface User {
   whatsapp?: boolean;
   telegram?: boolean;
   phoneVerified?: boolean;
+  emailVerified?: boolean;
 }
 
 export interface SearchParams {
@@ -275,6 +276,10 @@ export interface VerifySmsDto {
   phone: string;
 }
 
+export interface VerifyEmailDto {
+  token: string;
+}
+
 export interface SendSmsDto {
   phone: string;
 }
@@ -291,6 +296,8 @@ export const authApi = {
     }),
   verifySms: (data: VerifySmsDto) =>
     api.post<{ success: boolean; message: string }>('/api/auth/verify-sms', data),
+  verifyEmail: (data: VerifyEmailDto) =>
+    api.post<{ success: boolean; message: string; user: User }>('/api/auth/verify-email', data),
 };
 
 export const favoritesApi = {

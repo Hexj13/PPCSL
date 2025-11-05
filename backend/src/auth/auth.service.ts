@@ -9,6 +9,7 @@ import { UsersService } from '../users/users.service';
 
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { EmailService } from './services/email.service';
 import { SmsService } from './services/sms.service';
 
 export type UserWithoutPassword = Omit<User, 'password'>;
@@ -19,6 +20,7 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private smsService: SmsService,
+    private emailService: EmailService,
   ) {}
 
   async validateUser(login: string, password: string): Promise<UserWithoutPassword | null> {
@@ -101,6 +103,15 @@ export class AuthService {
 
     try {
       const user = await this.usersService.create(cleanedUserData);
+      
+      if (user.email) {
+        try {
+          await this.emailService.sendVerificationEmail(user.id, user.email);
+        } catch (emailError) {
+          console.error('Failed to send verification email:', emailError);
+        }
+      }
+      
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password: _, ...result } = user;
       return result;
@@ -135,12 +146,40 @@ export class AuthService {
       phone: result.phone,
       emailNotifications: result.emailNotifications,
       phoneVerified: result.phoneVerified,
+      emailVerified: result.emailVerified,
     };
   }
 
   async verifyPhone(userId: string): Promise<UserWithoutPassword> {
     const updatedUser = await this.usersService.update(userId, {
       phoneVerified: true,
+    });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _, ...result } = updatedUser;
+    return result;
+  }
+
+  async verifyEmail(token: string): Promise<UserWithoutPassword> {
+    const verificationData = await this.emailService.verifyToken(token);
+    if (!verificationData) {
+      throw new BadRequestException('Невалиден или истекнат токен за потврда');
+    }
+
+    const user = await this.usersService.findOne(verificationData.userId);
+    if (!user) {
+      throw new BadRequestException('Корисникот не е пронајден');
+    }
+
+    if (user.email !== verificationData.email) {
+      throw new BadRequestException('Email адресата не се совпаѓа');
+    }
+
+    if (user.emailVerified) {
+      throw new BadRequestException('Email адресата е веќе потврдена');
+    }
+
+    const updatedUser = await this.usersService.update(verificationData.userId, {
+      emailVerified: true,
     });
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...result } = updatedUser;

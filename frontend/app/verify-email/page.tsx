@@ -1,0 +1,84 @@
+'use client';
+
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
+
+import { authApi } from '@/lib/api';
+
+export default function VerifyEmailPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const token = searchParams.get('token');
+    if (!token) {
+      setError('Невалиден линк за потврда');
+      return;
+    }
+
+    const verifyEmail = async () => {
+      setIsVerifying(true);
+      try {
+        await authApi.verifyEmail({ token });
+        router.push('/verify-email/success');
+      } catch (err: unknown) {
+        const axiosError = err as {
+          response?: { data?: { message?: string } };
+          message?: string;
+        };
+        const errorMessage =
+          axiosError.response?.data?.message ||
+          axiosError.message ||
+          'Грешка при потврда на email адресата';
+        setError(errorMessage);
+        toast.error(errorMessage);
+      } finally {
+        setIsVerifying(false);
+      }
+    };
+
+    verifyEmail();
+  }, [searchParams, router]);
+
+  return (
+    <div className="max-w-md mx-auto mt-6 md:mt-12">
+      <div className="card p-6 md:p-8 text-center">
+        {isVerifying ? (
+          <>
+            <div className="mb-4">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent"></div>
+            </div>
+            <h1 className="text-2xl font-bold mb-4 text-primary-400">Потврда на email адреса</h1>
+            <p className="text-gray-300">Ве молиме почекајте...</p>
+          </>
+        ) : error ? (
+          <>
+            <div className="mb-4">
+              <svg
+                className="w-16 h-16 mx-auto text-red-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-bold mb-4 text-red-400">Грешка</h1>
+            <p className="text-gray-300 mb-6">{error}</p>
+            <button onClick={() => router.push('/')} className="btn-primary w-full">
+              На главна
+            </button>
+          </>
+        ) : null}
+      </div>
+    </div>
+  );
+}

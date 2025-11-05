@@ -15,6 +15,7 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { SendSmsDto } from './dto/send-sms.dto';
+import { VerifyEmailDto } from './dto/verify-email.dto';
 import { VerifySmsDto } from './dto/verify-sms.dto';
 import { IpBlockGuard } from './guards/ip-block.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -101,5 +102,25 @@ export class AuthController {
 
     this.ipBlockService.recordFailedAttempt(ip);
     throw new BadRequestException('Невалиден код. Обидете се повторно.');
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Post('verify-email')
+  async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
+    const user = await this.authService.verifyEmail(verifyEmailDto.token);
+    return {
+      success: true,
+      message: 'Email адресата е успешно потврдена',
+      user: {
+        id: user.id,
+        email: user.email,
+        type: user.type,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        companyName: user.companyName,
+        phone: user.phone,
+        emailVerified: user.emailVerified,
+      },
+    };
   }
 }

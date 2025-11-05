@@ -32,6 +32,13 @@ REDIS_PORT=6379
 TWILIO_ACCOUNT_SID=your-twilio-account-sid
 TWILIO_AUTH_TOKEN=your-twilio-auth-token
 TWILIO_MESSAGING_SERVICE_SID=your-twilio-messaging-service-sid
+
+# SMTP Email Configuration
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASSWORD=your-app-password
+SMTP_FROM=noreply@kupito.mk
 ```
 
 ### Variable Descriptions
@@ -50,6 +57,11 @@ TWILIO_MESSAGING_SERVICE_SID=your-twilio-messaging-service-sid
 - **TWILIO_ACCOUNT_SID**: Twilio Account SID for SMS service
 - **TWILIO_AUTH_TOKEN**: Twilio Auth Token for SMS service
 - **TWILIO_MESSAGING_SERVICE_SID**: Twilio Messaging Service SID
+- **SMTP_HOST**: SMTP server host (e.g., smtp.gmail.com, smtp.mailgun.org)
+- **SMTP_PORT**: SMTP server port (587 for TLS, 465 for SSL, 25 for unencrypted)
+- **SMTP_USER**: SMTP authentication username (usually your email address)
+- **SMTP_PASSWORD**: SMTP authentication password (use app password for Gmail)
+- **SMTP_FROM**: Email address to use as sender (default: noreply@kupito.mk)
 
 ### Production Notes
 
