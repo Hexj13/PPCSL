@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  NotFoundException,
+  Param,
+  ParseUUIDPipe,
+  Post,
+} from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { BrandsService } from './brands.service';
@@ -9,7 +18,20 @@ export class BrandsController {
   constructor(private readonly brandsService: BrandsService) {}
 
   @ApiOperation({ summary: 'Get all brands' })
-  @ApiResponse({ status: 200, description: 'List of brands' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of brands',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'array',
+          items: {
+            type: 'object',
+          },
+        },
+      },
+    },
+  })
   @Get()
   findAll() {
     return this.brandsService.findAll();
@@ -21,9 +43,43 @@ export class BrandsController {
     example: '550e8400-e29b-41d4-a716-446655440000',
     description: 'Brand UUID',
   })
-  @ApiResponse({ status: 200, description: 'List of models' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of models',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'array',
+          items: {
+            type: 'object',
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Brand not found',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            statusCode: { type: 'number', example: 404 },
+            message: { type: 'string' },
+            timestamp: { type: 'string' },
+            path: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
   @Get(':id/models')
-  getModels(@Param('id') id: string) {
+  async getModels(@Param('id', ParseUUIDPipe) id: string) {
+    const brand = await this.brandsService.findOne(id);
+    if (!brand) {
+      throw new NotFoundException('Brand not found');
+    }
     return this.brandsService.getModelsByBrand(id);
   }
 

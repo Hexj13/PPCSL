@@ -9,7 +9,18 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @ApiOperation({ summary: 'Check API status' })
-  @ApiResponse({ status: 200, description: 'API is active' })
+  @ApiResponse({
+    status: 200,
+    description: 'API is active',
+    content: {
+      'text/plain': {
+        schema: {
+          type: 'string',
+          example: 'Kupito API v1.0',
+        },
+      },
+    },
+  })
   @Get()
   getHello(): string {
     return this.appService.getHello();

@@ -33,7 +33,8 @@ describe('Brands API Integration Tests', () => {
     });
 
     it('should return 404 for non-existent brand', async () => {
-      const response = await request.get('/api/brands/non-existent-id/models').expect(404);
+      const nonExistentUuid = '00000000-0000-0000-0000-000000000000';
+      const response = await request.get(`/api/brands/${nonExistentUuid}/models`).expect(404);
 
       expect(response).toSatisfyApiSpec();
     });

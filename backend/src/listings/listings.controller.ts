@@ -31,7 +31,32 @@ export class ListingsController {
   constructor(private readonly listingsService: ListingsService) {}
 
   @ApiOperation({ summary: 'Search listings' })
-  @ApiResponse({ status: 200, description: 'List of listings' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of listings',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            data: {
+              type: 'array',
+              items: { type: 'object' },
+            },
+            meta: {
+              type: 'object',
+              properties: {
+                total: { type: 'number' },
+                page: { type: 'number' },
+                limit: { type: 'number' },
+                totalPages: { type: 'number' },
+              },
+            },
+          },
+        },
+      },
+    },
+  })
   @Get()
   findAll(@Query() searchDto: SearchListingsDto) {
     return this.listingsService.findAll(searchDto);
@@ -39,8 +64,35 @@ export class ListingsController {
 
   @ApiOperation({ summary: 'Get current user listings' })
   @ApiBearerAuth('JWT-auth')
-  @ApiResponse({ status: 200, description: 'List of user listings' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of user listings',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'array',
+          items: { type: 'object' },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            statusCode: { type: 'number', example: 401 },
+            message: { type: 'string' },
+            timestamp: { type: 'string' },
+            path: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
   @Get('my')
   @UseGuards(JwtAuthGuard)
   getMyListings(@Request() req) {
@@ -109,9 +161,55 @@ export class ListingsController {
 
   @ApiOperation({ summary: 'Create a new listing' })
   @ApiBearerAuth('JWT-auth')
-  @ApiResponse({ status: 201, description: 'Listing created successfully' })
-  @ApiResponse({ status: 400, description: 'Invalid data' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 201,
+    description: 'Listing created successfully',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            price: { type: 'number' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid data',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            statusCode: { type: 'number', example: 400 },
+            message: { type: 'string' },
+            timestamp: { type: 'string' },
+            path: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            statusCode: { type: 'number', example: 401 },
+            message: { type: 'string' },
+            timestamp: { type: 'string' },
+            path: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
   @Post()
   @UseGuards(JwtAuthGuard)
   create(@Body() createListingDto: CreateListingDto, @Request() req) {

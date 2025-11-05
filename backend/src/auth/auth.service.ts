@@ -107,7 +107,7 @@ export class AuthService {
       if (user.email) {
         try {
           await this.emailService.sendVerificationEmail(user.id, user.email);
-        } catch (emailError) {
+        } catch (emailError: unknown) {
           console.error('Failed to send verification email:', emailError);
         }
       }

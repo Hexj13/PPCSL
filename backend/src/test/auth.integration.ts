@@ -15,7 +15,7 @@ describe('Auth API Integration Tests', () => {
         email: `test${Date.now()}@example.com`,
         password: 'Test123!@#',
         type: 'Individual',
-        phone: '+38970123456',
+        phone: `+389701234${Math.floor(Math.random() * 10000)}`,
         firstName: 'Test',
         lastName: 'User',
         termsAccepted: true,
@@ -31,7 +31,7 @@ describe('Auth API Integration Tests', () => {
         email: `test${Date.now()}@example.com`,
         password: 'Test123!@#',
         type: 'Individual',
-        phone: '+38970123457',
+        phone: `+389701234${Math.floor(Math.random() * 10000)}`,
         termsAccepted: false,
       };
 
@@ -45,7 +45,7 @@ describe('Auth API Integration Tests', () => {
         email: 'invalid-email',
         password: '123',
         type: 'Individual',
-        phone: '123',
+        phone: `+389701234${Math.floor(Math.random() * 10000)}`,
         termsAccepted: true,
       };
 
@@ -67,7 +67,9 @@ describe('Auth API Integration Tests', () => {
         email: testEmail,
         password: testPassword,
         type: 'Individual',
-        phone: `+3897012345${Math.floor(Math.random() * 10)}`,
+        phone: `+389701234${Math.floor(Math.random() * 10000)}`,
+        firstName: 'Test',
+        lastName: 'User',
         termsAccepted: true,
       });
     });

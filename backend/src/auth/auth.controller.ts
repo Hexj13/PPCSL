@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
   Post,
   Request,
   UseGuards,
@@ -34,8 +35,46 @@ export class AuthController {
   ) {}
 
   @ApiOperation({ summary: 'Register a new user' })
-  @ApiResponse({ status: 201, description: 'User successfully registered' })
-  @ApiResponse({ status: 400, description: 'Invalid data' })
+  @ApiResponse({
+    status: 201,
+    description: 'User successfully registered',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            email: { type: 'string', nullable: true },
+            phone: { type: 'string', nullable: true },
+            firstName: { type: 'string', nullable: true },
+            lastName: { type: 'string', nullable: true },
+            type: { type: 'string', enum: ['Individual', 'Business'] },
+            active: { type: 'boolean' },
+            emailVerified: { type: 'boolean', nullable: true },
+            phoneVerified: { type: 'boolean' },
+            created_at: { type: 'string', format: 'date-time' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid data',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            statusCode: { type: 'number', example: 400 },
+            message: { type: 'string' },
+            timestamp: { type: 'string' },
+            path: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {
@@ -43,9 +82,51 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Login user' })
-  @ApiResponse({ status: 200, description: 'Successful login' })
-  @ApiResponse({ status: 401, description: 'Invalid credentials' })
+  @ApiResponse({
+    status: 200,
+    description: 'Successful login',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            access_token: { type: 'string' },
+            user: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', format: 'uuid' },
+                email: { type: 'string', nullable: true },
+                type: { type: 'string' },
+                firstName: { type: 'string', nullable: true },
+                lastName: { type: 'string', nullable: true },
+                companyName: { type: 'string', nullable: true },
+                phone: { type: 'string', nullable: true },
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid credentials',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            statusCode: { type: 'number', example: 401 },
+            message: { type: 'string' },
+            timestamp: { type: 'string' },
+            path: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
   @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @HttpCode(200)
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);

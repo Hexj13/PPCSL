@@ -16,6 +16,8 @@ describe('Listings API Integration Tests', () => {
       password: testPassword,
       type: 'Individual',
       phone: `+3897012345${Math.floor(Math.random() * 1000)}`,
+      firstName: 'Test',
+      lastName: 'User',
       termsAccepted: true,
     });
 
@@ -23,6 +25,10 @@ describe('Listings API Integration Tests', () => {
       login: testEmail,
       password: testPassword,
     });
+
+    if (!loginResponse.body.access_token) {
+      throw new Error('Failed to get auth token');
+    }
 
     authToken = loginResponse.body.access_token;
   });
@@ -75,6 +81,10 @@ describe('Listings API Integration Tests', () => {
         currency: 'MKD',
         city: 'Skopje',
         description: 'Test description',
+        images: [
+          'http://localhost:4000/uploads/test-image-1.webp',
+          'http://localhost:4000/uploads/test-image-2.webp',
+        ],
         vehicle: {
           brand_id: brandId,
           model_id: modelId,
