@@ -6,6 +6,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { StructuredData } from '@/components/StructuredData';
 import { UserListingsModal } from '@/components/UserListingsModal';
 import { listingsApi, Listing, favoritesApi } from '@/lib/api';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
@@ -191,7 +193,12 @@ export default function ListingPage() {
 
   return (
     <>
+      <StructuredData listing={listing} />
       <div className="max-w-6xl mx-auto">
+        <Breadcrumbs
+          items={[{ label: 'Почетна', href: '/' }, { label: listing.title }]}
+          className="mb-6"
+        />
         <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-6 md:gap-8">
           <div className="space-y-6">
             <div>
@@ -255,7 +262,7 @@ export default function ListingPage() {
                           return (
                             <Image
                               src={optimizedUrl}
-                              alt={`${index + 1}`}
+                              alt={`${listing.title} - Слика ${index + 1}`}
                               fill
                               className="object-cover"
                               unoptimized={
@@ -937,7 +944,7 @@ export default function ListingPage() {
             {images[modalImageIndex] && images[modalImageIndex] !== '/placeholder-car.jpg' ? (
               <Image
                 src={images[modalImageIndex]}
-                alt={`${listing.title} - ${modalImageIndex + 1}`}
+                alt={`${listing.title} - Слика ${modalImageIndex + 1} од ${images.length}`}
                 width={1200}
                 height={900}
                 className="max-w-full max-h-[90vh] w-auto h-auto object-contain"

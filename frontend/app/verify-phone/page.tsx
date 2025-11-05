@@ -1,13 +1,13 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect, useRef } from 'react';
+import { Suspense, useState, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { authApi, favoritesApi, RegisterDto } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 
-export default function VerifyPhonePage() {
+function VerifyPhoneContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setAuth } = useAuthStore();
@@ -440,5 +440,24 @@ export default function VerifyPhonePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function VerifyPhonePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-md mx-auto mt-6 md:mt-12">
+          <div className="card p-6 md:p-8 text-center">
+            <div className="mb-4">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent"></div>
+            </div>
+            <h1 className="text-2xl font-bold mb-4 text-primary-400">Вчитување...</h1>
+          </div>
+        </div>
+      }
+    >
+      <VerifyPhoneContent />
+    </Suspense>
   );
 }

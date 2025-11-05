@@ -8,7 +8,7 @@ Date: 2025-11-01
 
 ## 1. Purpose
 
-Create a simple, free website for posting listings for new and used cars in North Macedonia. Users can independently add, edit, pause, and close their listings.
+Create a simple, free website for posting listings for new and used cars in Macedonia. Users can independently add, edit, pause, and close their listings.
 
 ## 2. Core Principles
 
@@ -155,7 +155,7 @@ Create a simple, free website for posting listings for new and used cars in Nort
 
 ### Cities
 
-* **Cities API:** Get all available cities in North Macedonia
+* **Cities API:** Get all available cities in Macedonia
 * Bilingual support: Macedonian and English names
 * Searchable city dropdown in filters and forms
 
@@ -373,7 +373,7 @@ GET /api/listings?brand_id=xxx&year_gte=2018&price_lte=12000&city=Skopje&fuel=Pe
 
 ## 11. Region and Localization
 
-* **Country:** North Macedonia
+* **Country:** Macedonia
 * **Currency:** Primary MKD, with EUR support
 * **Interface language:** Macedonian (user-facing text), English (technical/developer)
 * **Cities:** Bilingual support (Macedonian and English names)

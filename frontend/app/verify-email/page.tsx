@@ -1,12 +1,12 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { authApi } from '@/lib/api';
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isVerifying, setIsVerifying] = useState(false);
@@ -80,5 +80,24 @@ export default function VerifyEmailPage() {
         ) : null}
       </div>
     </div>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-md mx-auto mt-6 md:mt-12">
+          <div className="card p-6 md:p-8 text-center">
+            <div className="mb-4">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent"></div>
+            </div>
+            <h1 className="text-2xl font-bold mb-4 text-primary-400">Вчитување...</h1>
+          </div>
+        </div>
+      }
+    >
+      <VerifyEmailContent />
+    </Suspense>
   );
 }

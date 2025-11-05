@@ -5,13 +5,86 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/components/AuthProvider';
 import { Footer } from '@/components/Footer';
 import { Header } from '@/components/Header';
+import { OrganizationSchema } from '@/components/OrganizationSchema';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.mk';
+const siteName = 'Kupito';
+const defaultTitle = 'Kupito - Автомобили во Македонија';
+const defaultDescription = 'Купете или продадете авто на Kupito!';
+
 export const metadata: Metadata = {
-  title: 'Kupito - Автомобильная площадка Северной Македонии',
-  description: 'Продажа новых и подержанных автомобилей в Северной Македонии',
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: defaultTitle,
+    template: `%s | ${siteName}`,
+  },
+  description: defaultDescription,
+  keywords: [
+    'автомобили',
+    'купи автомобил',
+    'продади автомобил',
+    'користени автомобили',
+    'нови автомобили',
+    'Северна Македонија',
+    'Скопје',
+    'автомобили Македонија',
+    'авто плаза',
+    'автомобили за продажба',
+  ],
+  authors: [{ name: siteName }],
+  creator: siteName,
+  publisher: siteName,
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'mk_MK',
+    url: siteUrl,
+    siteName,
+    title: defaultTitle,
+    description: defaultDescription,
+    images: [
+      {
+        url: '/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: siteName,
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: defaultTitle,
+    description: defaultDescription,
+    images: ['/og-image.jpg'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  alternates: {
+    canonical: siteUrl,
+  },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION,
+  },
+  icons: {
+    icon: [{ url: '/favicon.ico' }],
+  },
+  manifest: '/manifest.json',
 };
 
 export const viewport: Viewport = {
@@ -24,6 +97,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="mk">
       <body className={inter.className}>
+        <OrganizationSchema />
         <AuthProvider>
           <div className="min-h-screen flex flex-col">
             <Header />

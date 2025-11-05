@@ -91,7 +91,7 @@ const terms = {
         id: '2',
         title: '2. Опис на услугата',
         content: [
-          'Kupito е платформа за објавување и прегледување на огласи за продажба на автомобили во Северна Македонија. Платформата овозможува на корисниците да:',
+          'Kupito е платформа за објавување и прегледување на огласи за продажба на автомобили во Македонија. Платформата овозможува на корисниците да:',
           '• Објавуваат огласи за продажба на автомобили',
           '• Прегледуваат и пребаруваат огласи за автомобили',
           '• Контактираат со продавачи преку информациите обезбедени на огласот',
@@ -319,7 +319,7 @@ const terms = {
         id: '2',
         title: '2. Service Description',
         content: [
-          'Kupito is a platform for posting and viewing listings for the sale of vehicles in North Macedonia. The Platform enables users to:',
+          'Kupito is a platform for posting and viewing listings for the sale of vehicles in Macedonia. The Platform enables users to:',
           '• Post listings for the sale of vehicles',
           '• Browse and search for vehicle listings',
           '• Contact sellers through the information provided in the listing',

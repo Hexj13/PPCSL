@@ -1,6 +1,6 @@
-# Kupito - Car Marketplace for North Macedonia
+# Kupito - Car Marketplace for Macedonia
 
-Platform for selling new and used cars in North Macedonia.
+Platform for selling new and used cars in Macedonia.
 
 ## Quick Start
 
