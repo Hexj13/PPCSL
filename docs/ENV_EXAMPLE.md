@@ -23,6 +23,15 @@ JWT_SECRET=your-secret-key-change-in-production
 
 # CORS Configuration
 FRONTEND_URL=http://localhost:3000
+
+# Redis Configuration (optional, defaults to localhost:6379)
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# Twilio SMS Configuration
+TWILIO_ACCOUNT_SID=your-twilio-account-sid
+TWILIO_AUTH_TOKEN=your-twilio-auth-token
+TWILIO_MESSAGING_SERVICE_SID=your-twilio-messaging-service-sid
 ```
 
 ### Variable Descriptions
@@ -36,6 +45,11 @@ FRONTEND_URL=http://localhost:3000
 - **DB_NAME**: PostgreSQL database name
 - **JWT_SECRET**: Secret key for JWT token signing (⚠️ **REQUIRED in production**)
 - **FRONTEND_URL**: Frontend application URL for CORS configuration
+- **REDIS_HOST**: Redis server host address (default: localhost)
+- **REDIS_PORT**: Redis server port number (default: 6379)
+- **TWILIO_ACCOUNT_SID**: Twilio Account SID for SMS service
+- **TWILIO_AUTH_TOKEN**: Twilio Auth Token for SMS service
+- **TWILIO_MESSAGING_SERVICE_SID**: Twilio Messaging Service SID
 
 ### Production Notes
 

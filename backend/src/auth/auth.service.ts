@@ -9,6 +9,7 @@ import { UsersService } from '../users/users.service';
 
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { SmsService } from './services/sms.service';
 
 export type UserWithoutPassword = Omit<User, 'password'>;
 
@@ -17,13 +18,15 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private smsService: SmsService,
   ) {}
 
   async validateUser(login: string, password: string): Promise<UserWithoutPassword | null> {
     const isEmail = login.includes('@');
+    const normalizedPhone = isEmail ? null : this.smsService.normalizePhoneNumber(login);
     const user = isEmail
       ? await this.usersService.findByEmail(login)
-      : await this.usersService.findByPhone(login);
+      : await this.usersService.findByPhone(normalizedPhone);
 
     if (user && (await bcrypt.compare(password, user.password))) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -59,7 +62,8 @@ export class AuthService {
     }
 
     if (registerDto.type === constants.UserType.Individual && registerDto.phone) {
-      const existingUserByPhone = await this.usersService.findByPhone(registerDto.phone);
+      const normalizedPhone = this.smsService.normalizePhoneNumber(registerDto.phone);
+      const existingUserByPhone = await this.usersService.findByPhone(normalizedPhone);
       if (existingUserByPhone) {
         throw new BadRequestException('Корисник со овој телефон веќе постои');
       }
@@ -80,6 +84,10 @@ export class AuthService {
       ...userData,
       password: hashedPassword,
     };
+
+    if (cleanedUserData.phone) {
+      cleanedUserData.phone = this.smsService.normalizePhoneNumber(cleanedUserData.phone);
+    }
 
     if (cleanedUserData.lastName === '' || cleanedUserData.lastName === null) {
       cleanedUserData.lastName = null;

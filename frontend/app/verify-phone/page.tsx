@@ -23,23 +23,38 @@ export default function VerifyPhonePage() {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const cooldownTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  const sendSmsCode = async (phone: string) => {
+    try {
+      await authApi.sendSms({ phone });
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { message?: string } } };
+      toast.error(
+        axiosError.response?.data?.message || 'Грешка при испраќање на SMS',
+      );
+    }
+  };
+
   useEffect(() => {
     const phone = searchParams.get('phone');
     const storedData =
       typeof window !== 'undefined' ? localStorage.getItem('pendingRegistration') : null;
 
-    if (phone) {
-      setPhoneNumber(phone);
-    }
-
+    let parsedData: RegisterDto | null = null;
     if (storedData) {
       try {
-        setFormData(JSON.parse(storedData));
+        parsedData = JSON.parse(storedData);
+        setFormData(parsedData);
       } catch {
         toast.error('Грешка при вчитување на податоците');
         router.push('/register');
+        return;
       }
-    } else if (!phone) {
+    }
+
+    const phoneToUse = phone || parsedData?.phone;
+    if (phoneToUse) {
+      setPhoneNumber(phoneToUse);
+    } else {
       router.push('/register');
       return;
     }
@@ -151,11 +166,19 @@ export default function VerifyPhonePage() {
       return;
     }
 
+    if (!phoneNumber) {
+      setError('Телефонскиот број не е достапен');
+      return;
+    }
+
     setIsSubmitting(true);
     setError('');
 
     try {
-      const response = await authApi.verifySms({ code: codeToValidate });
+      const response = await authApi.verifySms({
+        code: codeToValidate,
+        phone: phoneNumber,
+      });
 
       if (response.data.success) {
         setTimeout(async () => {
@@ -386,8 +409,13 @@ export default function VerifyPhonePage() {
           <div className="text-center">
             <button
               type="button"
-              onClick={() => {
+              onClick={async () => {
                 if (resendAttempts >= 3) {
+                  return;
+                }
+
+                if (!phoneNumber) {
+                  toast.error('Телефонскиот број не е достапен');
                   return;
                 }
 
@@ -398,6 +426,7 @@ export default function VerifyPhonePage() {
                 setVerificationAttempts(0);
                 setIsVerificationBlocked(false);
                 inputRefs.current[0]?.focus();
+                await sendSmsCode(phoneNumber);
                 toast.success('Кодот е испратен повторно');
               }}
               disabled={isSubmitting || resendCooldown > 0 || resendAttempts >= 3}

@@ -41,6 +41,15 @@ DB_NAME=kupito
 JWT_SECRET=your-secret-key-change-in-production
 FRONTEND_URL=http://localhost:3000
 NODE_ENV=development
+
+# Twilio SMS Configuration (required for SMS verification)
+TWILIO_ACCOUNT_SID=your-twilio-account-sid
+TWILIO_AUTH_TOKEN=your-twilio-auth-token
+TWILIO_MESSAGING_SERVICE_SID=your-twilio-messaging-service-sid
+
+# Redis Configuration (optional, defaults to localhost:6379)
+REDIS_HOST=localhost
+REDIS_PORT=6379
 ```
 
 Create `frontend/.env.local`:
@@ -85,7 +94,7 @@ npm run dev  # Runs both frontend and backend
 <summary><b>Core Features</b></summary>
 
 - User registration and authentication (Individual and Business)
-- SMS verification during registration (with IP-based brute force protection)
+- SMS verification during registration via Twilio (with IP-based brute force protection)
 - Phone number verification stored in database
 - Create, edit, and publish listings
 - Extended search and filtering
@@ -130,6 +139,7 @@ Kupito/
 - `POST /api/auth/register` - Register
 - `POST /api/auth/login` - Login
 - `GET /api/auth/me` - Current user
+- `POST /api/auth/send-sms` - Send SMS verification code
 - `POST /api/auth/verify-phone` - Verify phone number (JWT required)
 - `POST /api/auth/verify-sms` - Verify SMS code (with IP-based brute force protection)
 

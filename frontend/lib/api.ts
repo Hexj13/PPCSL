@@ -272,6 +272,11 @@ export const uploadApi = {
 
 export interface VerifySmsDto {
   code: string;
+  phone: string;
+}
+
+export interface SendSmsDto {
+  phone: string;
 }
 
 export const authApi = {
@@ -280,6 +285,10 @@ export const authApi = {
     api.post<{ access_token: string; user: User }>('/api/auth/login', data),
   me: () => api.get<User>('/api/auth/me'),
   verifyPhone: () => api.post<User>('/api/auth/verify-phone'),
+  sendSms: (data: SendSmsDto) =>
+    api.post<{ success: boolean; message: string }>('/api/auth/send-sms', data, {
+      headers: { 'X-Skip-Error-Handling': 'true' },
+    }),
   verifySms: (data: VerifySmsDto) =>
     api.post<{ success: boolean; message: string }>('/api/auth/verify-sms', data),
 };

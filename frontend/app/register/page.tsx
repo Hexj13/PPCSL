@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 
-import { RegisterDto } from '@/lib/api';
+import { authApi, RegisterDto } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 
 export default function RegisterPage() {
@@ -60,9 +60,26 @@ export default function RegisterPage() {
     if (!phone) {
       return '';
     }
-    const phoneRegex = /^\+\d{1,4}\d{6,15}$/;
-    if (!phoneRegex.test(phone)) {
+    if (!phone.startsWith('+')) {
+      return 'Телефонот мора да започнува со +';
+    }
+    const phoneWithoutPlus = phone.substring(1);
+    if (phoneWithoutPlus.length < 7 || phoneWithoutPlus.length > 19) {
+      return 'Телефонот мора да содржи 7-19 цифри (вклучувајќи го кодот на државата)';
+    }
+    if (!/^\d+$/.test(phoneWithoutPlus)) {
+      return 'Телефонот мора да содржи само цифри после +';
+    }
+    const countryCodeMatch = phoneWithoutPlus.match(/^(\d{1,4})(\d{6,15})$/);
+    if (!countryCodeMatch) {
       return 'Телефонот мора да биде во формат +код држава (1-4 цифри) + број (6-15 цифри)';
+    }
+    const [, countryCode, number] = countryCodeMatch;
+    if (countryCode.length < 1 || countryCode.length > 4) {
+      return 'Кодот на државата мора да биде 1-4 цифри';
+    }
+    if (number.length < 6 || number.length > 15) {
+      return 'Бројот мора да биде 6-15 цифри';
     }
     return '';
   };
@@ -95,7 +112,13 @@ export default function RegisterPage() {
     }
 
     if (value.length > 0 && value[0] !== '+') {
-      value = '+' + value.replace(/\+/g, '');
+      if (value.startsWith('0')) {
+        value = '+389' + value.substring(1);
+      } else {
+        value = '+' + value.replace(/\+/g, '');
+      }
+    } else if (value.startsWith('+0')) {
+      value = '+389' + value.substring(2);
     }
 
     if (value.length > 20) {
@@ -231,8 +254,76 @@ export default function RegisterPage() {
       }
 
       if (typeof window !== 'undefined') {
-        localStorage.setItem('pendingRegistration', JSON.stringify(submitData));
-        router.push(`/verify-phone?phone=${encodeURIComponent(formData.phone)}`);
+        try {
+          await authApi.sendSms({ phone: formData.phone });
+          localStorage.setItem('pendingRegistration', JSON.stringify(submitData));
+          router.push(`/verify-phone?phone=${encodeURIComponent(formData.phone)}`);
+        } catch (checkError: unknown) {
+          const axiosError = checkError as {
+            response?: {
+              status?: number;
+              data?: { message?: string | string[] };
+              statusText?: string;
+            };
+            message?: string;
+            code?: string;
+          };
+
+          let errorMessage = 'Корисник со овој телефон веќе постои';
+
+          if (axiosError.response) {
+            const status = axiosError.response.status;
+            const data = axiosError.response.data;
+
+            if (status === 400) {
+              if (data?.message) {
+                if (Array.isArray(data.message)) {
+                  errorMessage = data.message[0] || 'Корисник со овој телефон веќе постои';
+                } else {
+                  errorMessage = data.message;
+                }
+              } else {
+                errorMessage = 'Корисник со овој телефон веќе постои';
+              }
+            } else if (status === 404) {
+              console.error('404 Error - Endpoint not found:', {
+                url: '/api/auth/send-sms',
+                response: axiosError.response,
+              });
+              errorMessage =
+                'Сервисот не е достапен. Проверете дали backend серверот работи и е презапуштен.';
+            } else if (status === 422) {
+              if (data?.message) {
+                if (Array.isArray(data.message)) {
+                  errorMessage = data.message[0] || 'Невалиден формат на телефон';
+                } else {
+                  errorMessage = data.message;
+                }
+              } else {
+                errorMessage = 'Невалиден формат на телефон';
+              }
+            } else if (status >= 500) {
+              errorMessage = 'Грешка на серверот. Обидете се повторно подоцна.';
+            } else {
+              errorMessage =
+                (data?.message && (Array.isArray(data.message) ? data.message[0] : data.message)) ||
+                'Грешка при проверка на телефон. Обидете се повторно.';
+            }
+          } else if (
+            axiosError.message?.includes('Network') ||
+            axiosError.message?.includes('timeout') ||
+            axiosError.code === 'ERR_NETWORK'
+          ) {
+            errorMessage = 'Грешка во мрежата. Проверете ја вашата интернет врска.';
+          } else if (axiosError.message?.includes('Cannot POST') || axiosError.message?.includes('404')) {
+            errorMessage = 'Сервисот за проверка на телефон не е достапен. Проверете дали серверот работи.';
+          }
+
+          toast.error(errorMessage);
+          setPhoneError(errorMessage);
+          setLoading(false);
+          return;
+        }
       }
     } catch (err: unknown) {
       toast.error('Грешка при подготовка на податоците');

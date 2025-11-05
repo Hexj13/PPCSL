@@ -9,6 +9,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { BrandsModule } from './brands/brands.module';
 import { CitiesModule } from './cities/cities.module';
+import { CommonModule } from './common/common.module';
 import { dataSourceOptions } from './data-source';
 import { FavoritesModule } from './favorites/favorites.module';
 import { ListingsModule } from './listings/listings.module';
@@ -22,6 +23,7 @@ import { UsersModule } from './users/users.module';
     }),
     TypeOrmModule.forRoot(dataSourceOptions),
     ScheduleModule.forRoot(),
+    CommonModule,
     AuthModule,
     UsersModule,
     ListingsModule,

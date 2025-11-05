@@ -92,7 +92,10 @@ Create a simple, free website for posting listings for new and used cars in Nort
   * Required for both Individual and Business users during registration
   * 6-digit code verification on separate page (`/verify-phone`)
   * Phone verification status stored in database (`phoneVerified` field)
-  * Mock verification code: `000000` (for development)
+  * Real SMS delivery via Twilio API
+  * Codes stored in Redis with 10-minute TTL
+  * Automatic phone number normalization (adds +389 for Macedonian numbers)
+  * Test mode: if Twilio not configured, code is logged to console
   * Frontend validation: 10 attempts per code resend, 3 code resends maximum
   * Backend IP-based brute force protection: 40 attempts per IP, 1-hour block
 * **Authentication:**
@@ -171,6 +174,7 @@ Create a simple, free website for posting listings for new and used cars in Nort
 POST /api/auth/register     # Register new user
 POST /api/auth/login        # Login (email or phone)
 GET  /api/auth/me           # Get current user profile
+POST /api/auth/send-sms      # Send SMS verification code
 POST /api/auth/verify-phone  # Verify phone number (JWT required)
 POST /api/auth/verify-sms    # Verify SMS code (IP-based brute force protection)
 ```
