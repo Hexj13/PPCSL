@@ -3,6 +3,14 @@ import { Suspense } from 'react';
 import { ListingGrid } from '@/components/ListingGrid';
 import { SearchFilters } from '@/components/SearchFilters';
 
+function SearchFiltersWrapper() {
+  return (
+    <Suspense fallback={<div className="card p-4 md:p-5 mb-6">Вчитување...</div>}>
+      <SearchFilters />
+    </Suspense>
+  );
+}
+
 function ListingGridWrapper() {
   return (
     <Suspense fallback={<div className="text-center py-12 text-gray-300">Вчитување...</div>}>
@@ -31,7 +39,7 @@ export default function Home() {
         </p>
       </div>
 
-      <SearchFilters />
+      <SearchFiltersWrapper />
 
       <ListingGridWrapper />
     </div>

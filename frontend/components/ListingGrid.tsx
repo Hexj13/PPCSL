@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 
 import { listingsApi, Listing, PaginationMeta } from '@/lib/api';
 
@@ -16,6 +16,8 @@ export function ListingGrid() {
   const [currentPage, setCurrentPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const observerTarget = useRef<HTMLDivElement>(null);
+
+  const searchParamsString = useMemo(() => searchParams.toString(), [searchParams]);
 
   const fetchListings = useCallback(
     async (page: number, append: boolean = false) => {
@@ -79,7 +81,7 @@ export function ListingGrid() {
         setLoadingMore(false);
       }
     },
-    [searchParams]
+    [searchParamsString]
   );
 
   useEffect(() => {
