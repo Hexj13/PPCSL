@@ -2,7 +2,9 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
+
 import { brandsApi, citiesApi, Brand, VehicleModel, City } from '@/lib/api';
+
 import { Dropdown } from './Dropdown';
 
 export function SearchFilters() {

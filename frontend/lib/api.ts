@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios';
-import { Currency, ListingStatus, UserType, FuelType, TransmissionType, BodyType } from './types';
+
+import { BodyType, Currency, FuelType, ListingStatus, TransmissionType, UserType } from './types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 

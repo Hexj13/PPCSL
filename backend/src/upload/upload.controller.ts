@@ -1,21 +1,23 @@
 import {
-  Controller,
-  Post,
-  Get,
-  UseInterceptors,
-  UploadedFile,
-  UseGuards,
   BadRequestException,
+  Controller,
+  Get,
+  NotFoundException,
   Param,
+  Post,
   Query,
   Res,
-  NotFoundException,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { UploadService } from './upload.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { memoryStorage } from 'multer';
 import { Response } from 'express';
+import { memoryStorage } from 'multer';
+
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+
+import { UploadService } from './upload.service';
 
 @Controller('api/upload')
 export class UploadController {

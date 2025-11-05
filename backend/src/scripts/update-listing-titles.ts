@@ -1,8 +1,8 @@
 import 'reflect-metadata';
-import { AppDataSource } from '../data-source';
-import { Listing } from '../listings/entities/listing.entity';
 import { Brand } from '../brands/entities/brand.entity';
 import { VehicleModel } from '../brands/entities/vehicle-model.entity';
+import { AppDataSource } from '../data-source';
+import { Listing } from '../listings/entities/listing.entity';
 
 async function updateListingTitles() {
   try {

@@ -1,13 +1,15 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { BrandsService } from './brands.service';
+
+import { Favorite } from '../favorites/entities/favorite.entity';
+import { ListingView } from '../listings/entities/listing-view.entity';
+import { Listing } from '../listings/entities/listing.entity';
+import { Vehicle } from '../listings/entities/vehicle.entity';
+
 import { BrandsController } from './brands.controller';
+import { BrandsService } from './brands.service';
 import { Brand } from './entities/brand.entity';
 import { VehicleModel } from './entities/vehicle-model.entity';
-import { Vehicle } from '../listings/entities/vehicle.entity';
-import { Listing } from '../listings/entities/listing.entity';
-import { ListingView } from '../listings/entities/listing-view.entity';
-import { Favorite } from '../favorites/entities/favorite.entity';
 
 @Module({
   imports: [

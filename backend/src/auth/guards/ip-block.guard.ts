@@ -1,10 +1,11 @@
 import {
-  Injectable,
   CanActivate,
   ExecutionContext,
   HttpException,
   HttpStatus,
+  Injectable,
 } from '@nestjs/common';
+
 import { IpBlockService } from '../services/ip-block.service';
 
 @Injectable()

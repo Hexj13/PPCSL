@@ -1,17 +1,19 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
+  Entity,
+  JoinColumn,
   ManyToOne,
   OneToOne,
-  JoinColumn,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
-import { User } from '../../users/entities/user.entity';
-import { Vehicle } from './vehicle.entity';
-import { ListingStatus, Currency } from '../../common/types';
+
 import * as constants from '../../common/constants';
+import { Currency, ListingStatus } from '../../common/types';
+import { User } from '../../users/entities/user.entity';
+
+import { Vehicle } from './vehicle.entity';
 
 @Entity('listings')
 export class Listing {

@@ -1,16 +1,17 @@
 import {
-  IsEmail,
-  IsString,
-  MinLength,
-  MaxLength,
-  IsEnum,
-  IsOptional,
-  Matches,
-  ValidateIf,
-  NotEquals,
   IsBoolean,
+  IsEmail,
+  IsEnum,
   IsNotEmpty,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+  NotEquals,
+  ValidateIf,
 } from 'class-validator';
+
 import { UserType, UserType as UserTypeEnum } from '../../common/types';
 
 export class RegisterDto {

@@ -1,7 +1,7 @@
-import { IsOptional, IsBoolean, ValidateNested, IsString, Length, Matches } from 'class-validator';
 import { Type } from 'class-transformer';
-import { CreateVehicleDto } from './create-vehicle.dto';
+import { IsBoolean, IsOptional, IsString, Length, Matches, ValidateNested } from 'class-validator';
 
+import { CreateVehicleDto } from './create-vehicle.dto';
 export class UpdateListingDto {
   @IsOptional()
   title?: string;

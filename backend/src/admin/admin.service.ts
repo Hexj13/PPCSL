@@ -1,13 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from '../users/entities/user.entity';
+
 import {
-  UserType as UserTypeEnum,
   ListingStatus,
   ListingStatus as ListingStatusEnum,
+  UserType as UserTypeEnum,
 } from '../common/types';
 import { Listing } from '../listings/entities/listing.entity';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class AdminService {

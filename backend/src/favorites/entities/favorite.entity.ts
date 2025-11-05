@@ -1,14 +1,15 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  ManyToOne,
+  Entity,
   JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
-import { User } from '../../users/entities/user.entity';
+
 import { Listing } from '../../listings/entities/listing.entity';
+import { User } from '../../users/entities/user.entity';
 
 @Entity('favorites')
 @Unique(['user_id', 'listing_id'])

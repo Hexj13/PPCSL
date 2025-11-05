@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+
 import { ListingGrid } from '@/components/ListingGrid';
 import { SearchFilters } from '@/components/SearchFilters';
 

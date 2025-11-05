@@ -1,6 +1,6 @@
-import { IsUUID, IsNumber, IsEnum, IsOptional, Min, Max, IsInt } from 'class-validator';
-import { FuelType, TransmissionType, BodyType } from '../../common/types';
+import { IsEnum, IsInt, IsNumber, IsOptional, IsUUID, Max, Min } from 'class-validator';
 
+import { BodyType, FuelType, TransmissionType } from '../../common/types';
 export class CreateVehicleDto {
   @IsUUID()
   brand_id: string;

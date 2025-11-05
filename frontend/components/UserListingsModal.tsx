@@ -1,17 +1,19 @@
 'use client';
 
-import { useEffect, useState, useRef, useMemo } from 'react';
 import Link from 'next/link';
-import { Modal } from './Modal';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
+
 import { Listing, User } from '@/lib/api';
 import {
-  formatPrice,
+  formatBodyType,
   formatEngineVolume,
   formatMileage,
+  formatPrice,
   formatTransmission,
-  formatBodyType,
 } from '@/lib/utils';
-import toast from 'react-hot-toast';
+
+import { Modal } from './Modal';
 
 interface UserListingsModalProps {
   isOpen: boolean;

@@ -1,4 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
+
 import { CitiesService } from './cities.service';
 
 @Controller('api/cities')

@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
-import { listingsApi, Listing, PaginationMeta } from '@/lib/api';
-import { ListingCard } from './ListingCard';
 import { useSearchParams } from 'next/navigation';
+import { useEffect, useState, useCallback, useRef } from 'react';
+
+import { listingsApi, Listing, PaginationMeta } from '@/lib/api';
+
+import { ListingCard } from './ListingCard';
 
 export function ListingGrid() {
   const searchParams = useSearchParams();

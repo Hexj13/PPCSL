@@ -1,14 +1,16 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  ManyToOne,
-  JoinColumn,
+  Entity,
   Index,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Listing } from './listing.entity';
+
 import { User } from '../../users/entities/user.entity';
+
+import { Listing } from './listing.entity';
 
 @Entity('listing_views')
 @Index(['listing_id', 'user_id'], { unique: true, where: '"user_id" IS NOT NULL' })

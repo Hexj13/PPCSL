@@ -1,8 +1,10 @@
 'use client';
 
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+
 import { Listing, favoritesApi } from '@/lib/api';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
 import {
@@ -13,7 +15,6 @@ import {
   formatDateShort,
   getOptimizedImageUrl,
 } from '@/lib/utils';
-import toast from 'react-hot-toast';
 
 interface ListingCardProps {
   listing: Listing;

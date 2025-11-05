@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { listingsApi, brandsApi, citiesApi, Brand, VehicleModel, City } from '@/lib/api';
-import { Currency, CurrencyEnum, ListingStatus, ListingStatusEnum } from '@/lib/types';
-import { useAuthStore } from '@/lib/store';
+import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+
 import { Dropdown } from '@/components/Dropdown';
 import { RichTextEditor } from '@/components/RichTextEditor';
+import { listingsApi, brandsApi, citiesApi, Brand, VehicleModel, City } from '@/lib/api';
+import { useAuthStore } from '@/lib/store';
+import { Currency, CurrencyEnum, ListingStatus, ListingStatusEnum } from '@/lib/types';
 
 export default function NewListingPage() {
   const router = useRouter();

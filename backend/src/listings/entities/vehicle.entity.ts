@@ -1,8 +1,9 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+
 import { Brand } from '../../brands/entities/brand.entity';
 import { VehicleModel } from '../../brands/entities/vehicle-model.entity';
-import { FuelType, TransmissionType, BodyType } from '../../common/types';
 import * as constants from '../../common/constants';
+import { BodyType, FuelType, TransmissionType } from '../../common/types';
 
 @Entity('vehicles')
 export class Vehicle {

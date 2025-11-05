@@ -1,12 +1,13 @@
+import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
-import { UsersService } from './users.service';
-import { User } from './entities/user.entity';
-import { UserType } from '../common/types';
+
+import { ListingStatus, UserType } from '../common/types';
 import { Listing } from '../listings/entities/listing.entity';
-import { ListingStatus } from '../common/types';
+
+import { User } from './entities/user.entity';
+import { UsersService } from './users.service';
 
 describe('UsersService', () => {
   let service: UsersService;

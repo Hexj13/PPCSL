@@ -1,14 +1,16 @@
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { Repository } from 'typeorm';
-import { ListingsService } from './listings.service';
-import { UsersService } from '../users/users.service';
+
 import { BrandsService } from '../brands/brands.service';
-import { Listing } from './entities/listing.entity';
+import { Currency, ListingStatus } from '../common/types';
+import { UsersService } from '../users/users.service';
+
 import { ListingView } from './entities/listing-view.entity';
-import { ListingStatus, Currency } from '../common/types';
+import { Listing } from './entities/listing.entity';
 import { Vehicle } from './entities/vehicle.entity';
+import { ListingsService } from './listings.service';
 
 describe('ListingsService', () => {
   let service: ListingsService;
@@ -219,6 +221,123 @@ describe('ListingsService', () => {
       listingsRepository.findOne.mockResolvedValue(mockListing);
 
       await expect(service.close('listing-1', 'other-user')).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  describe('findByVin', () => {
+    it('should return closed listings with matching VIN', async () => {
+      const vin = 'TESTVIN123456789';
+      const closedListing1 = {
+        ...mockListing,
+        id: 'listing-2',
+        vin,
+        status: ListingStatus.Closed,
+        updated_at: new Date('2024-01-15'),
+      };
+      const closedListing2 = {
+        ...mockListing,
+        id: 'listing-3',
+        vin,
+        status: ListingStatus.Closed,
+        updated_at: new Date('2024-01-10'),
+      };
+
+      const mockQueryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([closedListing1, closedListing2]),
+      };
+
+      listingsRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+
+      const result = await service.findByVin(vin);
+
+      expect(result).toEqual([closedListing1, closedListing2]);
+      expect(listingsRepository.createQueryBuilder).toHaveBeenCalledWith('listing');
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('listing.vehicle', 'vehicle');
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('vehicle.brand', 'brand');
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('vehicle.model', 'model');
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith('listing.vin = :vin', {
+        vin,
+      });
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('listing.status = :status', {
+        status: ListingStatus.Closed,
+      });
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('listing.updated_at', 'DESC');
+    });
+
+    it('should exclude listing by excludeId when provided', async () => {
+      const vin = 'TESTVIN123456789';
+      const excludeId = 'listing-1';
+      const closedListing = {
+        ...mockListing,
+        id: 'listing-2',
+        vin,
+        status: ListingStatus.Closed,
+      };
+
+      const mockQueryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([closedListing]),
+      };
+
+      listingsRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+
+      const result = await service.findByVin(vin, excludeId);
+
+      expect(result).toEqual([closedListing]);
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('listing.id != :excludeId', {
+        excludeId,
+      });
+    });
+
+    it('should return empty array when no listings found', async () => {
+      const vin = 'NONEXISTENTVIN';
+
+      const mockQueryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([]),
+      };
+
+      listingsRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+
+      const result = await service.findByVin(vin);
+
+      expect(result).toEqual([]);
+    });
+
+    it('should only return closed listings, not active ones', async () => {
+      const vin = 'TESTVIN123456789';
+      const closedListing = {
+        ...mockListing,
+        id: 'listing-2',
+        vin,
+        status: ListingStatus.Closed,
+      };
+
+      const mockQueryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([closedListing]),
+      };
+
+      listingsRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+
+      await service.findByVin(vin);
+
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('listing.status = :status', {
+        status: ListingStatus.Closed,
+      });
     });
   });
 });

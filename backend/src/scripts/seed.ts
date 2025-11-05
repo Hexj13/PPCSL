@@ -1,14 +1,20 @@
 import 'reflect-metadata';
-import { AppDataSource } from '../data-source';
-import { User } from '../users/entities/user.entity';
-import { UserType as UserTypeEnum } from '../common/types';
-import { Listing } from '../listings/entities/listing.entity';
-import { ListingStatus as ListingStatusEnum, Currency } from '../common/types';
-import { Vehicle } from '../listings/entities/vehicle.entity';
-import { FuelType, TransmissionType, BodyType } from '../common/types';
+import * as bcrypt from 'bcrypt';
+
 import { Brand } from '../brands/entities/brand.entity';
 import { VehicleModel } from '../brands/entities/vehicle-model.entity';
-import * as bcrypt from 'bcrypt';
+import {
+  BodyType,
+  Currency,
+  FuelType,
+  ListingStatus as ListingStatusEnum,
+  TransmissionType,
+  UserType as UserTypeEnum,
+} from '../common/types';
+import { AppDataSource } from '../data-source';
+import { Listing } from '../listings/entities/listing.entity';
+import { Vehicle } from '../listings/entities/vehicle.entity';
+import { User } from '../users/entities/user.entity';
 
 const cities = [
   'Скопје',

@@ -1,23 +1,25 @@
+import { Type } from 'class-transformer';
 import {
-  IsString,
-  IsNumber,
-  IsOptional,
-  IsArray,
-  IsEnum,
-  IsBoolean,
-  Min,
-  Max,
-  MaxLength,
-  MinLength,
-  ValidateNested,
   ArrayMaxSize,
   ArrayMinSize,
-  Matches,
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
   Length,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+  MinLength,
+  ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+
+import { Currency, ListingStatus } from '../../common/types';
+
 import { CreateVehicleDto } from './create-vehicle.dto';
-import { ListingStatus, Currency } from '../../common/types';
 
 export class CreateListingDto {
   @IsOptional()

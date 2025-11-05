@@ -1,7 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+
+import { UserListingsModal } from '@/components/UserListingsModal';
 import { listingsApi, Listing, favoritesApi } from '@/lib/api';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
 import {
@@ -13,9 +17,6 @@ import {
   formatBodyType,
   getOptimizedImageUrl,
 } from '@/lib/utils';
-import Image from 'next/image';
-import toast from 'react-hot-toast';
-import { UserListingsModal } from '@/components/UserListingsModal';
 
 export default function ListingPage() {
   const params = useParams();

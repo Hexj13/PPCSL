@@ -1,23 +1,26 @@
+import * as crypto from 'crypto';
+
 import {
-  Injectable,
-  NotFoundException,
   BadRequestException,
   ForbiddenException,
+  Injectable,
+  NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThanOrEqual } from 'typeorm';
-import { Listing } from './entities/listing.entity';
-import { ListingView } from './entities/listing-view.entity';
-import { ListingStatus as ListingStatusEnum, Currency as CurrencyEnum } from '../common/types';
-import { Vehicle } from './entities/vehicle.entity';
-import { UsersService } from '../users/users.service';
-import { BrandsService } from '../brands/brands.service';
-import * as crypto from 'crypto';
-import { CreateListingDto } from './dto/create-listing.dto';
-import { UpdateListingDto } from './dto/update-listing.dto';
-import { SearchListingsDto } from './dto/search-listings.dto';
-import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { InjectRepository } from '@nestjs/typeorm';
+import { LessThanOrEqual, Repository } from 'typeorm';
+
+import { BrandsService } from '../brands/brands.service';
+import { Currency as CurrencyEnum, ListingStatus as ListingStatusEnum } from '../common/types';
+import { UsersService } from '../users/users.service';
+
+import { CreateListingDto } from './dto/create-listing.dto';
+import { CreateVehicleDto } from './dto/create-vehicle.dto';
+import { SearchListingsDto } from './dto/search-listings.dto';
+import { UpdateListingDto } from './dto/update-listing.dto';
+import { ListingView } from './entities/listing-view.entity';
+import { Listing } from './entities/listing.entity';
+import { Vehicle } from './entities/vehicle.entity';
 
 @Injectable()
 export class ListingsService {

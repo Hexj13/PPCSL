@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+
 import { listingsApi, Listing } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import {
@@ -14,7 +16,6 @@ import {
   formatBodyType,
   getOptimizedImageUrl,
 } from '@/lib/utils';
-import toast from 'react-hot-toast';
 
 export default function MyListingsPage() {
   const router = useRouter();

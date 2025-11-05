@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect, useRef } from 'react';
+import toast from 'react-hot-toast';
+
 import { authApi, favoritesApi, RegisterDto } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
-import toast from 'react-hot-toast';
 
 export default function VerifyPhonePage() {
   const router = useRouter();

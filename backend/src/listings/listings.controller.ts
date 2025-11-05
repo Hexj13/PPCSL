@@ -1,19 +1,21 @@
 import {
+  Body,
   Controller,
   Get,
-  Post,
-  Body,
-  Patch,
   Param,
+  Patch,
+  Post,
   Query,
-  UseGuards,
   Request,
+  UseGuards,
 } from '@nestjs/common';
-import { ListingsService } from './listings.service';
-import { CreateListingDto } from './dto/create-listing.dto';
-import { UpdateListingDto } from './dto/update-listing.dto';
-import { SearchListingsDto } from './dto/search-listings.dto';
+
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+
+import { CreateListingDto } from './dto/create-listing.dto';
+import { SearchListingsDto } from './dto/search-listings.dto';
+import { UpdateListingDto } from './dto/update-listing.dto';
+import { ListingsService } from './listings.service';
 
 @Controller('api/listings')
 export class ListingsController {

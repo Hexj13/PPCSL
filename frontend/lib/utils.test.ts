@@ -1,11 +1,11 @@
 import {
-  formatPrice,
+  formatBodyType,
   formatDate,
   formatDateShort,
   formatEngineVolume,
   formatMileage,
+  formatPrice,
   formatTransmission,
-  formatBodyType,
 } from './utils';
 
 describe('utils', () => {
@@ -50,8 +50,9 @@ describe('utils', () => {
   describe('formatEngineVolume', () => {
     it('should format engine volume correctly', () => {
       expect(formatEngineVolume(1.6)).toBe('1.6');
-      expect(formatEngineVolume(2.0)).toBe('2');
+      expect(formatEngineVolume(2.0)).toBe('2.0');
       expect(formatEngineVolume(3.5)).toBe('3.5');
+      expect(formatEngineVolume(2)).toBe('2.0');
     });
   });
 

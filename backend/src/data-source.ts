@@ -1,11 +1,12 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
-import { User } from './users/entities/user.entity';
-import { Listing } from './listings/entities/listing.entity';
-import { ListingView } from './listings/entities/listing-view.entity';
-import { Vehicle } from './listings/entities/vehicle.entity';
-import { Favorite } from './favorites/entities/favorite.entity';
+
 import { Brand } from './brands/entities/brand.entity';
 import { VehicleModel } from './brands/entities/vehicle-model.entity';
+import { Favorite } from './favorites/entities/favorite.entity';
+import { ListingView } from './listings/entities/listing-view.entity';
+import { Listing } from './listings/entities/listing.entity';
+import { Vehicle } from './listings/entities/vehicle.entity';
+import { User } from './users/entities/user.entity';
 
 export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',

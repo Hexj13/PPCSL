@@ -1,18 +1,19 @@
 import {
-  Controller,
-  Post,
-  Body,
-  UseGuards,
-  Get,
-  Request,
   BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Post,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
+
 import { AuthService } from './auth.service';
-import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 import { VerifySmsDto } from './dto/verify-sms.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { IpBlockGuard } from './guards/ip-block.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { IpBlockService } from './services/ip-block.service';
 
 @Controller('api/auth')

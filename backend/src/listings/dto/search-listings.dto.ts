@@ -1,15 +1,16 @@
+import { Type } from 'class-transformer';
 import {
+  IsEnum,
+  IsNumber,
   IsOptional,
   IsString,
-  IsNumber,
-  IsEnum,
-  Min,
-  Max,
   IsUUID,
+  Max,
   MaxLength,
+  Min,
 } from 'class-validator';
-import { Type } from 'class-transformer';
-import { FuelType, TransmissionType, BodyType, Currency } from '../../common/types';
+
+import { BodyType, Currency, FuelType, TransmissionType } from '../../common/types';
 
 export class SearchListingsDto {
   @IsOptional()

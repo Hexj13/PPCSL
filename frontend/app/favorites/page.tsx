@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+
+import { ListingCard } from '@/components/ListingCard';
 import { favoritesApi, Listing } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
-import { ListingCard } from '@/components/ListingCard';
 
 export default function FavoritesPage() {
   const router = useRouter();

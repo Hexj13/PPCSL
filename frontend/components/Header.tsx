@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useAuthStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+
 import { User } from '@/lib/api';
+import { useAuthStore } from '@/lib/store';
 
 export function Header() {
   const { user, logout } = useAuthStore();

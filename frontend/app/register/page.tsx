@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
+
 import { RegisterDto } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
-import toast from 'react-hot-toast';
 
 export default function RegisterPage() {
   const router = useRouter();

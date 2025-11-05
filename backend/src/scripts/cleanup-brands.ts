@@ -1,11 +1,11 @@
 import 'reflect-metadata';
-import { AppDataSource } from '../data-source';
 import { Brand } from '../brands/entities/brand.entity';
 import { VehicleModel } from '../brands/entities/vehicle-model.entity';
+import { AppDataSource } from '../data-source';
+import { Favorite } from '../favorites/entities/favorite.entity';
+import { ListingView } from '../listings/entities/listing-view.entity';
 import { Listing } from '../listings/entities/listing.entity';
 import { Vehicle } from '../listings/entities/vehicle.entity';
-import { ListingView } from '../listings/entities/listing-view.entity';
-import { Favorite } from '../favorites/entities/favorite.entity';
 
 const TARGET_BRANDS = {
   Volkswagen: [

@@ -1,7 +1,7 @@
 import 'reflect-metadata';
-import { AppDataSource } from '../data-source';
 import { Brand } from '../brands/entities/brand.entity';
 import { VehicleModel } from '../brands/entities/vehicle-model.entity';
+import { AppDataSource } from '../data-source';
 
 const BRANDS_AND_MODELS = {
   Volkswagen: [

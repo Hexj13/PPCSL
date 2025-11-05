@@ -1,6 +1,6 @@
 import 'reflect-metadata';
-import { AppDataSource } from '../data-source';
 import { Brand } from '../brands/entities/brand.entity';
+import { AppDataSource } from '../data-source';
 
 async function checkBrandsDates() {
   await AppDataSource.initialize();

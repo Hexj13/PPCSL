@@ -1,4 +1,4 @@
-import { formatEngineVolume, formatMileage, formatTransmission, formatBodyType } from '@/lib/utils';
+import { formatBodyType, formatEngineVolume, formatMileage, formatTransmission } from '@/lib/utils';
 
 interface Vehicle {
   brand?: { name: string } | null;
