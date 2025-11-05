@@ -1,10 +1,12 @@
 import { getTestRequest } from './setup-integration';
+import * as supertest from 'supertest';
 
 describe('Listings API Integration Tests', () => {
-  const request = getTestRequest();
+  let request: supertest.SuperTest<supertest.Test>;
   let authToken: string;
 
   beforeAll(async () => {
+    request = getTestRequest();
     const testEmail = `test${Date.now()}@example.com`;
     const testPassword = 'Test123!@#';
 

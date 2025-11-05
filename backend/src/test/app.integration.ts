@@ -1,7 +1,12 @@
 import { getTestRequest } from './setup-integration';
+import * as supertest from 'supertest';
 
 describe('App API Integration Tests', () => {
-  const request = getTestRequest();
+  let request: supertest.SuperTest<supertest.Test>;
+
+  beforeAll(() => {
+    request = getTestRequest();
+  });
 
   describe('GET /', () => {
     it('should return API status', async () => {

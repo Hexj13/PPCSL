@@ -1,5 +1,7 @@
 import { MetadataRoute } from 'next';
 
+import { Listing } from '@/lib/api';
+
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.mk';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -37,7 +39,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const data = await response.json();
     const listings = data.data || [];
 
-    const listingUrls: MetadataRoute.Sitemap = listings.map((listing: any) => ({
+    const listingUrls: MetadataRoute.Sitemap = listings.map((listing: Listing) => ({
       url: `${siteUrl}/listings/${listing.id}`,
       lastModified: new Date(listing.updated_at || listing.created_at),
       changeFrequency: 'weekly',

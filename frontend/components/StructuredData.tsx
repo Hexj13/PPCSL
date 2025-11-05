@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 
 import { Listing } from '@/lib/api';
-import { formatPrice, getOptimizedImageUrl } from '@/lib/utils';
+import { getOptimizedImageUrl } from '@/lib/utils';
 
 interface StructuredDataProps {
   listing: Listing;

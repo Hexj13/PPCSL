@@ -1,7 +1,12 @@
 import { getTestRequest } from './setup-integration';
+import * as supertest from 'supertest';
 
 describe('Brands API Integration Tests', () => {
-  const request = getTestRequest();
+  let request: supertest.SuperTest<supertest.Test>;
+
+  beforeAll(() => {
+    request = getTestRequest();
+  });
 
   describe('GET /api/brands', () => {
     it('should return list of brands and match OpenAPI schema', async () => {

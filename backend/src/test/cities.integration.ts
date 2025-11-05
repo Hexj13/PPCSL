@@ -1,7 +1,12 @@
 import { getTestRequest } from './setup-integration';
+import * as supertest from 'supertest';
 
 describe('Cities API Integration Tests', () => {
-  const request = getTestRequest();
+  let request: supertest.SuperTest<supertest.Test>;
+
+  beforeAll(() => {
+    request = getTestRequest();
+  });
 
   describe('GET /api/cities', () => {
     it('should return list of cities and match OpenAPI schema', async () => {
