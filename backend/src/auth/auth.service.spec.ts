@@ -8,6 +8,7 @@ import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 
 import { AuthService } from './auth.service';
+import { EmailService } from './services/email.service';
 import { SmsService } from './services/sms.service';
 
 jest.mock('bcrypt', () => ({
@@ -48,6 +49,11 @@ describe('AuthService', () => {
       normalizePhoneNumber: jest.fn((phone: string) => phone),
     };
 
+    const mockEmailService = {
+      sendVerificationEmail: jest.fn(),
+      verifyToken: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -62,6 +68,10 @@ describe('AuthService', () => {
         {
           provide: SmsService,
           useValue: mockSmsService,
+        },
+        {
+          provide: EmailService,
+          useValue: mockEmailService,
         },
       ],
     }).compile();
