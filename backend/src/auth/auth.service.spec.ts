@@ -19,7 +19,6 @@ describe('AuthService', () => {
   let service: AuthService;
   let usersService: jest.Mocked<UsersService>;
   let jwtService: jest.Mocked<JwtService>;
-  let smsService: jest.Mocked<SmsService>;
 
   const mockUser = {
     id: '1',
@@ -70,7 +69,6 @@ describe('AuthService', () => {
     service = module.get<AuthService>(AuthService);
     usersService = module.get(UsersService);
     jwtService = module.get(JwtService);
-    smsService = module.get(SmsService);
   });
 
   it('should be defined', () => {
