@@ -201,12 +201,20 @@ export default function ListingPage() {
               >
                 {images[currentImageIndex] &&
                 images[currentImageIndex] !== '/placeholder-car.jpg' ? (
-                  <Image
-                    src={getOptimizedImageUrl(images[currentImageIndex], 75, 1200)}
-                    alt={listing.title}
-                    fill
-                    className="object-cover"
-                  />
+                  (() => {
+                    const optimizedUrl = getOptimizedImageUrl(images[currentImageIndex], 75, 1200);
+                    return (
+                      <Image
+                        src={optimizedUrl}
+                        alt={listing.title}
+                        fill
+                        className="object-cover"
+                        unoptimized={
+                          optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://')
+                        }
+                      />
+                    );
+                  })()
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-300">
                     <svg
@@ -242,12 +250,21 @@ export default function ListingPage() {
                       }`}
                     >
                       {img !== '/placeholder-car.jpg' ? (
-                        <Image
-                          src={getOptimizedImageUrl(img, 70, 400)}
-                          alt={`${index + 1}`}
-                          fill
-                          className="object-cover"
-                        />
+                        (() => {
+                          const optimizedUrl = getOptimizedImageUrl(img, 70, 400);
+                          return (
+                            <Image
+                              src={optimizedUrl}
+                              alt={`${index + 1}`}
+                              fill
+                              className="object-cover"
+                              unoptimized={
+                                optimizedUrl.startsWith('http://') ||
+                                optimizedUrl.startsWith('https://')
+                              }
+                            />
+                          );
+                        })()
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-300">
                           <span className="text-xs">{index + 1}</span>

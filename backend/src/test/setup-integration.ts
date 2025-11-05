@@ -1,0 +1,84 @@
+import * as fs from 'fs';
+import * as path from 'path';
+
+import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
+import { Test, TestingModule } from '@nestjs/testing';
+import * as request from 'supertest';
+
+import { AppModule } from '../app.module';
+import { HttpExceptionFilter } from '../common/filters/http-exception.filter';
+
+let app: INestApplication;
+let swaggerDocument: OpenAPIObject;
+
+export async function createTestApp(): Promise<INestApplication> {
+  const moduleFixture: TestingModule = await Test.createTestingModule({
+    imports: [AppModule],
+  }).compile();
+
+  app = moduleFixture.createNestApplication();
+
+  app.useGlobalFilters(new HttpExceptionFilter());
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: false,
+      transform: true,
+    }),
+  );
+
+  const config = new DocumentBuilder()
+    .setTitle('Kupito API')
+    .setDescription('API documentation for Kupito platform')
+    .setVersion('1.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'Enter JWT token',
+        in: 'header',
+      },
+      'JWT-auth',
+    )
+    .addTag('auth', 'Authentication and authorization')
+    .addTag('listings', 'Listings')
+    .addTag('favorites', 'Favorites')
+    .addTag('users', 'Users')
+    .addTag('brands', 'Brands and models')
+    .addTag('cities', 'Cities')
+    .addTag('upload', 'File upload')
+    .addTag('admin', 'Admin panel')
+    .build();
+
+  swaggerDocument = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, swaggerDocument, {
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
+  });
+
+  await app.init();
+
+  const swaggerPath = path.join(__dirname, '../../swagger.json');
+  fs.writeFileSync(swaggerPath, JSON.stringify(swaggerDocument, null, 2));
+
+  return app;
+}
+
+export async function closeTestApp(): Promise<void> {
+  if (app) {
+    await app.close();
+  }
+}
+
+export function getSwaggerDocument(): OpenAPIObject {
+  return swaggerDocument;
+}
+
+export function getTestRequest(): request.SuperTest<request.Test> {
+  return request(app.getHttpServer());
+}

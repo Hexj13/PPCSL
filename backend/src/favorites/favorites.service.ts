@@ -67,4 +67,31 @@ export class FavoritesService {
     });
     return favorites.map((f) => f.listing_id);
   }
+
+  async checkBatch(userId: string, listingIds: string[]): Promise<Record<string, boolean>> {
+    if (!listingIds || listingIds.length === 0) {
+      return {};
+    }
+
+    try {
+      const favorites = await this.favoritesRepository
+        .createQueryBuilder('favorite')
+        .where('favorite.user_id = :userId', { userId })
+        .andWhere('favorite.listing_id IN (:...listingIds)', { listingIds })
+        .select(['favorite.listing_id'])
+        .getMany();
+
+      const favoriteIds = new Set(favorites.map((f) => f.listing_id));
+      const result: Record<string, boolean> = {};
+
+      for (const listingId of listingIds) {
+        result[listingId] = favoriteIds.has(listingId);
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Error in checkBatch:', error);
+      throw error;
+    }
+  }
 }

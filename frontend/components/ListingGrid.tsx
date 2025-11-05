@@ -3,7 +3,8 @@
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 
-import { listingsApi, Listing, PaginationMeta } from '@/lib/api';
+import { favoritesApi, listingsApi, Listing, PaginationMeta } from '@/lib/api';
+import { useAuthStore, useFavoritesStore } from '@/lib/store';
 
 import { ListingCard } from './ListingCard';
 
@@ -16,6 +17,8 @@ export function ListingGrid() {
   const [currentPage, setCurrentPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const observerTarget = useRef<HTMLDivElement>(null);
+  const { user } = useAuthStore();
+  const { setFavorites } = useFavoritesStore();
 
   const searchParamsString = useMemo(() => searchParams.toString(), [searchParams]);
 
@@ -63,14 +66,30 @@ export function ListingGrid() {
 
       try {
         const res = await listingsApi.getAll(params);
+        const newListings = res.data.data;
         if (append) {
-          setListings((prev) => [...prev, ...res.data.data]);
+          setListings((prev) => [...prev, ...newListings]);
         } else {
-          setListings(res.data.data);
+          setListings(newListings);
           setCurrentPage(1);
         }
         setMeta(res.data.meta);
         setError(null);
+
+        if (user && newListings.length > 0) {
+          const listingIds = newListings.map((l) => l.id);
+          try {
+            const favoritesRes = await favoritesApi.checkBatch(listingIds);
+            const favoriteIds = Object.entries(favoritesRes)
+              .filter(([, isFavorite]) => isFavorite)
+              .map(([listingId]) => listingId);
+            const currentFavorites = useFavoritesStore.getState().favorites;
+            const updatedFavorites = new Set([...currentFavorites, ...favoriteIds]);
+            setFavorites(Array.from(updatedFavorites));
+          } catch (favoritesErr) {
+            console.error('Error fetching favorites:', favoritesErr);
+          }
+        }
       } catch (err) {
         console.error('Error fetching listings:', err);
         if (!append) {

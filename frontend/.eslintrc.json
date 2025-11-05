@@ -4,7 +4,8 @@
     "plugin:@typescript-eslint/recommended",
     "prettier",
     "plugin:import/recommended",
-    "plugin:import/typescript"
+    "plugin:import/typescript",
+    "plugin:storybook/recommended"
   ],
   "plugins": ["import"],
   "parserOptions": {
@@ -23,9 +24,19 @@
   },
   "rules": {
     "@typescript-eslint/no-explicit-any": "warn",
-    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_"
+      }
+    ],
     "react-hooks/exhaustive-deps": "warn",
-    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "no-console": [
+      "warn",
+      {
+        "allow": ["warn", "error"]
+      }
+    ],
     "sort-imports": "off",
     "import/order": [
       "error",
@@ -39,5 +50,15 @@
       }
     ]
   },
-  "ignorePatterns": ["node_modules", ".next", "out", "dist"]
+  "ignorePatterns": [
+    "node_modules",
+    ".next",
+    "out",
+    "dist",
+    "stories.backup/**",
+    "**/*.stories.tsx",
+    "**/*.stories.ts",
+    "vitest.config.ts",
+    "scripts/**"
+  ]
 }

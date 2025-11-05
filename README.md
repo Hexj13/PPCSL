@@ -63,4 +63,23 @@ npm run cleanup-brands # Cleanup and synchronization
 
 For more information about scripts, see [SCRIPTS.md](./docs/SCRIPTS.md).
 
+## 🧪 Testing
+
+The project includes comprehensive testing:
+
+- **Unit Tests:** Jest-based tests for services and components
+- **Integration Tests:** API contract tests against Swagger specification
+- **CI/CD:** Automated testing in GitHub Actions
+
+```bash
+# Backend unit tests
+cd backend && npm test
+
+# Backend integration tests (requires database)
+cd backend && npm run test:integration
+
+# Frontend tests
+cd frontend && npm test
+```
+
 For detailed documentation, see [documentation](./docs/).

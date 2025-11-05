@@ -12,6 +12,15 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Response } from 'express';
 import { memoryStorage } from 'multer';
@@ -20,10 +29,17 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 import { UploadService } from './upload.service';
 
+@ApiTags('upload')
 @Controller('api/upload')
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
 
+  @ApiOperation({ summary: 'Upload image' })
+  @ApiBearerAuth('JWT-auth')
+  @ApiConsumes('multipart/form-data')
+  @ApiResponse({ status: 201, description: 'Image uploaded successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid file' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   @Throttle({ default: { limit: 20, ttl: 60000 } })
   @Post('image')
   @UseGuards(JwtAuthGuard)
@@ -31,7 +47,7 @@ export class UploadController {
     FileInterceptor('file', {
       storage: memoryStorage(),
       limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB
+        fileSize: 10 * 1024 * 1024,
       },
       fileFilter: (req, file, cb) => {
         if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
@@ -55,6 +71,13 @@ export class UploadController {
     };
   }
 
+  @ApiOperation({ summary: 'Get optimized image' })
+  @ApiParam({ name: 'filename', description: 'File name' })
+  @ApiQuery({ name: 'quality', required: false, description: 'Quality (1-100)', type: Number })
+  @ApiQuery({ name: 'width', required: false, description: 'Width (1-5000)', type: Number })
+  @ApiResponse({ status: 200, description: 'Optimized image' })
+  @ApiResponse({ status: 400, description: 'Invalid parameters' })
+  @ApiResponse({ status: 404, description: 'Image not found' })
   @Get('image/:filename')
   async getOptimizedImage(
     @Param('filename') filename: string,

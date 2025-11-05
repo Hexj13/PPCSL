@@ -129,12 +129,16 @@ Create a simple, free website for posting listings for new and used cars in Nort
   * View user statistics
   * View user's listings
   * Enable/disable users (toggle active status)
+  * Search users by ID, email, phone, first name, last name, or company name
+  * Filter users by role (Individual, Business, Admin)
 * **Listing management:**
   * View all listings
   * View listing statistics
   * Filter by status (Active, Paused, Closed)
-  * Search by listing ID or creator name/email
-  * Change listing status manually
+  * Search by listing ID or creator name/email/company
+  * Change listing status manually (publish/pause/close buttons)
+  * Unified listing card component with detailed vehicle information
+  * Display user information (name, company, email, phone) on listing cards
 * **Statistics:** User and listing statistics dashboard
 * **Tabs interface:** Separate views for listings and users
 
@@ -427,13 +431,50 @@ GET /api/listings?brand_id=xxx&year_gte=2018&price_lte=12000&city=Skopje&fuel=Pe
 * **Data privacy:**
   * VIN search results exclude sensitive information (price, contact details)
 
-## 14. Release Plan
+## 14. Testing
+
+### Unit Tests
+* **Backend:** Jest-based unit tests for services and controllers
+* **Frontend:** Jest + React Testing Library for components and utilities
+* **Coverage:** Services, utilities, and core business logic
+
+### Integration Tests
+* **Contract Testing:** Integration tests validate API endpoints against Swagger/OpenAPI specification
+* **Framework:** Jest + Supertest + jest-openapi
+* **Location:** `backend/src/test/*.integration.ts`
+* **Purpose:**
+  * Verify API responses match documented Swagger schema
+  * Ensure request/response formats are correct
+  * Validate authentication and authorization
+  * Check error handling follows documented contract
+* **Running Tests:**
+  ```bash
+  # Backend unit tests
+  cd backend && npm test
+  
+  # Backend integration tests
+  cd backend && npm run test:integration
+  
+  # Frontend tests
+  cd frontend && npm test
+  ```
+* **CI/CD:** All tests run automatically in GitHub Actions on push and pull requests
+* **Requirements:**
+  * PostgreSQL database (for integration tests)
+  * Redis (optional, for SMS verification features)
+
+### Test Structure
+* **Backend Unit Tests:** `*.spec.ts` files alongside source files
+* **Backend Integration Tests:** `backend/src/test/*.integration.ts`
+* **Frontend Tests:** `*.test.ts` files in component and utility directories
+
+## 15. Release Plan
 
 * **M1:** Catalog, listing card, publication, limits, statuses, favorites, basic search
 * **M2:** Extended filters, VIN functionality, image optimization, admin panel, auto-closing, SEO
 * **M3:** Rich text editor, date refresh, social media integration, enhanced admin features
 
-## 15. Acceptance Criteria
+## 16. Acceptance Criteria
 
 * [ ] Individual users cannot have >5 active listings
 * [ ] Business users cannot have >50 active listings

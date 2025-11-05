@@ -306,6 +306,8 @@ export const favoritesApi = {
   remove: (listingId: string) => api.delete(`/api/favorites/${listingId}`),
   check: (listingId: string) =>
     api.get<{ isFavorite: boolean }>(`/api/favorites/check/${listingId}`),
+  checkBatch: (listingIds: string[]) =>
+    api.post<Record<string, boolean>>('/api/favorites/check-batch', { listingIds }),
 };
 
 export const brandsApi = {

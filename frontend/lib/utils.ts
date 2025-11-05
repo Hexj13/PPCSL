@@ -74,32 +74,22 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 export function getOptimizedImageUrl(
   imageUrl: string,
-  quality: number = 85,
-  width?: number
+  _quality: number = 85,
+  _width?: number
 ): string {
   if (!imageUrl || imageUrl === '/placeholder-car.jpg') {
     return imageUrl;
   }
 
-  try {
-    const url = new URL(imageUrl);
-    const pathname = url.pathname;
-    const filename = pathname.split('/').pop();
-
-    if (!filename) {
-      return imageUrl;
-    }
-
-    const params = new URLSearchParams();
-    params.set('quality', quality.toString());
-    if (width) {
-      params.set('width', width.toString());
-    }
-
-    return `${API_URL}/api/upload/image/${filename}?${params.toString()}`;
-  } catch {
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
     return imageUrl;
   }
+
+  if (imageUrl.startsWith('/')) {
+    return `${API_URL}${imageUrl}`;
+  }
+
+  return `${API_URL}/${imageUrl}`;
 }
 
 const cityNamesMap: Record<string, string> = {

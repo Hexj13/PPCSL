@@ -39,8 +39,13 @@ yarn-error.log*
 
 # Test coverage
 coverage/
+coverage-integration/
 *.lcov
 .nyc_output/
+
+# Generated files
+swagger.json
+backend/swagger.json
 
 # Database
 *.sqlite
@@ -50,3 +55,6 @@ coverage/
 uploads/
 public/uploads/
 
+
+*storybook.log
+storybook-static

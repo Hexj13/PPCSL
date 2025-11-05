@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Listing, favoritesApi } from '@/lib/api';
@@ -27,23 +26,8 @@ export function ListingCard({ listing }: ListingCardProps) {
   const vehicle = listing.vehicle;
   const { user } = useAuthStore();
   const { check: checkFavorite, add: addFavorite, remove: removeFavorite } = useFavoritesStore();
-  const [isFavorite, setIsFavorite] = useState(false);
+  const isFavorite = checkFavorite(listing.id);
   const isOwnListing = !!(user && listing.user && user.id === listing.user.id);
-
-  useEffect(() => {
-    if (user) {
-      favoritesApi
-        .check(listing.id)
-        .then((res) => {
-          setIsFavorite(res.data.isFavorite);
-        })
-        .catch(() => {
-          setIsFavorite(checkFavorite(listing.id));
-        });
-    } else {
-      setIsFavorite(checkFavorite(listing.id));
-    }
-  }, [listing.id, user, checkFavorite]);
 
   const handleToggleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -62,12 +46,10 @@ export function ListingCard({ listing }: ListingCardProps) {
       if (isFavorite) {
         await favoritesApi.remove(listing.id);
         removeFavorite(listing.id);
-        setIsFavorite(false);
         toast.success('Отстрането од омилени');
       } else {
         await favoritesApi.add(listing.id);
         addFavorite(listing.id);
-        setIsFavorite(true);
         toast.success('Додадено во омилени');
       }
     } catch {}
@@ -86,6 +68,11 @@ export function ListingCard({ listing }: ListingCardProps) {
               alt={listing.title}
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-300"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+              }}
+              unoptimized={imageUrl.startsWith('http')}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-300">

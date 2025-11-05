@@ -1,0 +1,12 @@
+<style>
+@import url('https://fonts.cdnfonts.com/css/digital-7');
+</style>
+<script>
+  // Suppress font loading errors in Storybook
+  window.addEventListener('error', function(e) {
+    if (e.message && e.message.includes('digital-7')) {
+      e.preventDefault();
+      return false;
+    }
+  }, true);
+</script>

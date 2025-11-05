@@ -1,3 +1,5 @@
+import { ChangeEvent, FocusEvent, WheelEvent } from 'react';
+
 import { useNumberInput } from './useNumberInput';
 
 describe('useNumberInput', () => {
@@ -15,8 +17,8 @@ describe('useNumberInput', () => {
         preventDefault: jest.fn(),
         currentTarget: {
           blur: jest.fn(),
-        },
-      } as any;
+        } as unknown as HTMLInputElement,
+      } as unknown as WheelEvent<HTMLInputElement>;
 
       handlers.handleWheel(mockEvent);
 
@@ -29,7 +31,7 @@ describe('useNumberInput', () => {
     it('should replace comma with dot', () => {
       const event = {
         target: { value: '1,5' },
-      } as any;
+      } as unknown as ChangeEvent<HTMLInputElement>;
 
       handlers.handleEngineVolumeChange(event, onChange);
 
@@ -39,7 +41,7 @@ describe('useNumberInput', () => {
     it('should remove non-numeric characters except dot', () => {
       const event = {
         target: { value: '1.5abc' },
-      } as any;
+      } as unknown as ChangeEvent<HTMLInputElement>;
 
       handlers.handleEngineVolumeChange(event, onChange);
 
@@ -49,7 +51,7 @@ describe('useNumberInput', () => {
     it('should handle multiple dots by keeping only one', () => {
       const event = {
         target: { value: '1.5.3' },
-      } as any;
+      } as unknown as ChangeEvent<HTMLInputElement>;
 
       handlers.handleEngineVolumeChange(event, onChange);
 
@@ -59,7 +61,7 @@ describe('useNumberInput', () => {
     it('should limit decimal places to one', () => {
       const event = {
         target: { value: '1.55' },
-      } as any;
+      } as unknown as ChangeEvent<HTMLInputElement>;
 
       handlers.handleEngineVolumeChange(event, onChange);
 
@@ -69,7 +71,7 @@ describe('useNumberInput', () => {
     it('should handle integer values', () => {
       const event = {
         target: { value: '15' },
-      } as any;
+      } as unknown as ChangeEvent<HTMLInputElement>;
 
       handlers.handleEngineVolumeChange(event, onChange);
 
@@ -81,7 +83,7 @@ describe('useNumberInput', () => {
     it('should set minimum value to 0.1', () => {
       const event = {
         target: { value: '0.05' },
-      } as any;
+      } as unknown as FocusEvent<HTMLInputElement>;
 
       handlers.handleEngineVolumeBlur(event, onChange);
 
@@ -91,7 +93,7 @@ describe('useNumberInput', () => {
     it('should set maximum value to 100', () => {
       const event = {
         target: { value: '150' },
-      } as any;
+      } as unknown as FocusEvent<HTMLInputElement>;
 
       handlers.handleEngineVolumeBlur(event, onChange);
 
@@ -101,7 +103,7 @@ describe('useNumberInput', () => {
     it('should format valid value to one decimal place', () => {
       const event = {
         target: { value: '1.6' },
-      } as any;
+      } as unknown as FocusEvent<HTMLInputElement>;
 
       handlers.handleEngineVolumeBlur(event, onChange);
 
@@ -111,7 +113,7 @@ describe('useNumberInput', () => {
     it('should format integer value to one decimal place', () => {
       const event = {
         target: { value: '2' },
-      } as any;
+      } as unknown as FocusEvent<HTMLInputElement>;
 
       handlers.handleEngineVolumeBlur(event, onChange);
 

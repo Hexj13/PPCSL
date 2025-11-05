@@ -27,9 +27,11 @@ import { LocalStrategy } from './strategies/local.strategy';
           if (nodeEnv === 'production') {
             throw new Error('JWT_SECRET must be set in production environment');
           }
-          console.warn(
-            '⚠️  WARNING: JWT_SECRET is not set. Using default secret for development only!',
-          );
+          if (nodeEnv !== 'test' && nodeEnv !== undefined) {
+            console.warn(
+              '⚠️  WARNING: JWT_SECRET is not set. Using default secret for development only!',
+            );
+          }
         }
 
         return {

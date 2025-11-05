@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.cdnfonts.com/css/digital-7');
-
 @font-face {
   font-family: 'Digital-7';
   src: url('https://www.1001fonts.com/download/font/digital-7.regular.ttf') format('truetype');

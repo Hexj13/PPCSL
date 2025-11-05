@@ -7,6 +7,7 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 
 import { UsersService } from '../users/users.service';
@@ -22,6 +23,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { IpBlockService } from './services/ip-block.service';
 import { SmsService } from './services/sms.service';
 
+@ApiTags('auth')
 @Controller('api/auth')
 export class AuthController {
   constructor(
@@ -31,18 +33,28 @@ export class AuthController {
     private usersService: UsersService,
   ) {}
 
+  @ApiOperation({ summary: 'Register a new user' })
+  @ApiResponse({ status: 201, description: 'User successfully registered' })
+  @ApiResponse({ status: 400, description: 'Invalid data' })
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
   }
 
+  @ApiOperation({ summary: 'Login user' })
+  @ApiResponse({ status: 200, description: 'Successful login' })
+  @ApiResponse({ status: 401, description: 'Invalid credentials' })
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
   }
 
+  @ApiOperation({ summary: 'Get current user profile' })
+  @ApiBearerAuth('JWT-auth')
+  @ApiResponse({ status: 200, description: 'User profile' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async getProfile(@Request() req) {
@@ -50,6 +62,10 @@ export class AuthController {
     return user;
   }
 
+  @ApiOperation({ summary: 'Verify phone number' })
+  @ApiBearerAuth('JWT-auth')
+  @ApiResponse({ status: 200, description: 'Phone number verified' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   @UseGuards(JwtAuthGuard)
   @Post('verify-phone')
   async verifyPhone(@Request() req) {
@@ -57,6 +73,9 @@ export class AuthController {
     return user;
   }
 
+  @ApiOperation({ summary: 'Check if phone number is available' })
+  @ApiResponse({ status: 200, description: 'Phone number availability status' })
+  @ApiResponse({ status: 400, description: 'Phone number already exists' })
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('check-phone')
   async checkPhone(@Body() sendSmsDto: SendSmsDto) {
@@ -70,6 +89,9 @@ export class AuthController {
     return { available: true };
   }
 
+  @ApiOperation({ summary: 'Send SMS verification code' })
+  @ApiResponse({ status: 200, description: 'SMS code sent successfully' })
+  @ApiResponse({ status: 400, description: 'Phone number already exists' })
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Post('send-sms')
   async sendSms(@Body() sendSmsDto: SendSmsDto) {
@@ -84,6 +106,9 @@ export class AuthController {
     return { success: true, message: 'SMS кодот е испратен' };
   }
 
+  @ApiOperation({ summary: 'Verify SMS code' })
+  @ApiResponse({ status: 200, description: 'Code verified successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid code' })
   @UseGuards(IpBlockGuard)
   @Post('verify-sms')
   async verifySms(@Request() req, @Body() verifySmsDto: VerifySmsDto) {
@@ -104,6 +129,9 @@ export class AuthController {
     throw new BadRequestException('Невалиден код. Обидете се повторно.');
   }
 
+  @ApiOperation({ summary: 'Verify email address' })
+  @ApiResponse({ status: 200, description: 'Email address verified successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid token' })
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('verify-email')
   async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
