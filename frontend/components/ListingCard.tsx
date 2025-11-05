@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import React from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Listing, favoritesApi } from '@/lib/api';
@@ -28,6 +29,7 @@ export function ListingCard({ listing }: ListingCardProps) {
   const { check: checkFavorite, add: addFavorite, remove: removeFavorite } = useFavoritesStore();
   const isFavorite = checkFavorite(listing.id);
   const isOwnListing = !!(user && listing.user && user.id === listing.user.id);
+  const [imageError, setImageError] = React.useState(false);
 
   const handleToggleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -62,15 +64,14 @@ export function ListingCard({ listing }: ListingCardProps) {
           className="relative w-full bg-bg-darker flex-shrink-0 overflow-hidden"
           style={{ aspectRatio: '16/9', minHeight: '240px' }}
         >
-          {imageUrl && imageUrl !== '/placeholder-car.jpg' ? (
+          {imageUrl && imageUrl !== '/placeholder-car.jpg' && !imageError ? (
             <Image
               src={imageUrl}
               alt={listing.title}
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-300"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
+              onError={() => {
+                setImageError(true);
               }}
               unoptimized={imageUrl.startsWith('http')}
             />

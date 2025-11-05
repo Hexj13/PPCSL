@@ -18,7 +18,8 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "sort-imports": "ts-node scripts/sort-imports.ts",
-    "storybook": "storybook dev -p 6006",
+    "storybook": "node scripts/storybook-with-info.js",
+    "storybook:dev": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
   "dependencies": {

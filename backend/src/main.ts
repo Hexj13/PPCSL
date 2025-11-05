@@ -54,8 +54,9 @@ async function bootstrap() {
       process.env.FRONTEND_URL || 'http://localhost:3000',
     );
     res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Range');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     if (req.method === 'OPTIONS') {
       return res.sendStatus(200);
     }
@@ -64,6 +65,43 @@ async function bootstrap() {
 
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads/',
+    setHeaders: (res, path) => {
+      res.setHeader(
+        'Access-Control-Allow-Origin',
+        process.env.FRONTEND_URL || 'http://localhost:3000',
+      );
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Range');
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      if (
+        path.endsWith('.webp') ||
+        path.endsWith('.jpg') ||
+        path.endsWith('.jpeg') ||
+        path.endsWith('.png')
+      ) {
+        res.setHeader(
+          'Content-Type',
+          path.endsWith('.webp')
+            ? 'image/webp'
+            : path.endsWith('.png')
+              ? 'image/png'
+              : 'image/jpeg',
+        );
+      }
+    },
+  });
+
+  app.use('/uploads', (req, res, next) => {
+    if (res.statusCode === 404) {
+      res.setHeader(
+        'Access-Control-Allow-Origin',
+        process.env.FRONTEND_URL || 'http://localhost:3000',
+      );
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    }
+    next();
   });
 
   const config = new DocumentBuilder()

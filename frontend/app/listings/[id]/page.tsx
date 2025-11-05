@@ -38,8 +38,11 @@ export default function ListingPage() {
   const [previousListings, setPreviousListings] = useState<Listing[]>([]);
   const [loadingPrevious, setLoadingPrevious] = useState(false);
   const [showHistoryHint, setShowHistoryHint] = useState(false);
+  const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
 
   useEffect(() => {
+    setImageErrors(new Set());
+    setCurrentImageIndex(0);
     listingsApi
       .getOne(id)
       .then((res) => {
@@ -207,7 +210,8 @@ export default function ListingPage() {
                 className="relative h-64 sm:h-80 md:h-96 bg-bg-darker rounded-xl overflow-hidden mb-4 cursor-pointer hover:opacity-90 transition-opacity w-full"
               >
                 {images[currentImageIndex] &&
-                images[currentImageIndex] !== '/placeholder-car.jpg' ? (
+                images[currentImageIndex] !== '/placeholder-car.jpg' &&
+                !imageErrors.has(currentImageIndex) ? (
                   (() => {
                     const optimizedUrl = getOptimizedImageUrl(images[currentImageIndex], 75, 1200);
                     return (
@@ -219,6 +223,9 @@ export default function ListingPage() {
                         unoptimized={
                           optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://')
                         }
+                        onError={() => {
+                          setImageErrors((prev) => new Set(prev).add(currentImageIndex));
+                        }}
                       />
                     );
                   })()
@@ -256,7 +263,7 @@ export default function ListingPage() {
                           : 'hover:ring-2 hover:ring-primary-300'
                       }`}
                     >
-                      {img !== '/placeholder-car.jpg' ? (
+                      {img !== '/placeholder-car.jpg' && !imageErrors.has(index) ? (
                         (() => {
                           const optimizedUrl = getOptimizedImageUrl(img, 70, 400);
                           return (
@@ -269,12 +276,27 @@ export default function ListingPage() {
                                 optimizedUrl.startsWith('http://') ||
                                 optimizedUrl.startsWith('https://')
                               }
+                              onError={() => {
+                                setImageErrors((prev) => new Set(prev).add(index));
+                              }}
                             />
                           );
                         })()
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-300">
-                          <span className="text-xs">{index + 1}</span>
+                          <svg
+                            className="w-8 h-8"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={1.5}
+                              d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"
+                            />
+                          </svg>
                         </div>
                       )}
                     </button>
@@ -941,15 +963,27 @@ export default function ListingPage() {
             className="relative max-w-7xl w-full h-full flex items-center justify-center p-4"
             onClick={(e) => e.stopPropagation()}
           >
-            {images[modalImageIndex] && images[modalImageIndex] !== '/placeholder-car.jpg' ? (
-              <Image
-                src={images[modalImageIndex]}
-                alt={`${listing.title} - Слика ${modalImageIndex + 1} од ${images.length}`}
-                width={1200}
-                height={900}
-                className="max-w-full max-h-[90vh] w-auto h-auto object-contain"
-                unoptimized
-              />
+            {images[modalImageIndex] &&
+            images[modalImageIndex] !== '/placeholder-car.jpg' &&
+            !imageErrors.has(modalImageIndex) ? (
+              (() => {
+                const optimizedUrl = getOptimizedImageUrl(images[modalImageIndex], 85, 1920);
+                return (
+                  <Image
+                    src={optimizedUrl}
+                    alt={`${listing.title} - Слика ${modalImageIndex + 1} од ${images.length}`}
+                    width={1200}
+                    height={900}
+                    className="max-w-full max-h-[90vh] w-auto h-auto object-contain"
+                    unoptimized={
+                      optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://')
+                    }
+                    onError={() => {
+                      setImageErrors((prev) => new Set(prev).add(modalImageIndex));
+                    }}
+                  />
+                );
+              })()
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-300">
                 <svg className="w-48 h-48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
