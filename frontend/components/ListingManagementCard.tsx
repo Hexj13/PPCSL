@@ -17,8 +17,8 @@ import {
 interface ListingManagementCardProps {
   listing: Listing;
   mode: 'admin' | 'my-listings';
-  onAction?: (id: string, action: 'publish' | 'pause' | 'close') => void;
-  onCopyId?: (id: string) => void;
+  onAction?: (_id: string, _action: 'publish' | 'pause' | 'close') => void;
+  onCopyId?: (_id: string) => void;
 }
 
 export function ListingManagementCard({

@@ -1,4 +1,4 @@
-import { ChangeEvent, WheelEvent } from 'react';
+import React, { ChangeEvent, WheelEvent } from 'react';
 
 export function useNumberInput() {
   const handleWheel = (e: WheelEvent<HTMLInputElement>) => {
@@ -8,7 +8,7 @@ export function useNumberInput() {
 
   const handleEngineVolumeChange = (
     e: ChangeEvent<HTMLInputElement>,
-    onChange: (value: string) => void
+    onChange: (_value: string) => void
   ) => {
     let value = e.target.value.replace(',', '.');
     value = value.replace(/[^0-9.]/g, '');
@@ -24,7 +24,7 @@ export function useNumberInput() {
 
   const handleEngineVolumeBlur = (
     e: React.FocusEvent<HTMLInputElement>,
-    onChange: (value: string) => void
+    onChange: (_value: string) => void
   ) => {
     let value = parseFloat(e.target.value);
     if (!isNaN(value)) {
@@ -42,12 +42,12 @@ export function useNumberInput() {
     }
   };
 
-  const handleYearBlur = (value: string, onChange: (value: string) => void) => {
-    if (value === '') {
+  const handleYearBlur = (_value: string, onChange: (_value: string) => void) => {
+    if (_value === '') {
       return;
     }
 
-    const year = parseInt(value);
+    const year = parseInt(_value);
     const currentYear = new Date().getFullYear();
 
     if (isNaN(year) || year < 1900 || year > currentYear) {

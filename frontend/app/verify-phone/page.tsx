@@ -21,7 +21,7 @@ function VerifyPhoneContent() {
   const [verificationAttempts, setVerificationAttempts] = useState(0);
   const [isVerificationBlocked, setIsVerificationBlocked] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const cooldownTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const cooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const sendSmsCode = async (phone: string) => {
     try {

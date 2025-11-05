@@ -7,7 +7,7 @@ interface AuthState {
   user: User | null;
   token: string | null;
   isInitialized: boolean;
-  setAuth: (user: User | null, token: string | null) => void;
+  setAuth: (_user: User | null, _token: string | null) => void;
   logout: () => void;
   initAuth: () => Promise<void>;
 }
@@ -18,10 +18,10 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       isInitialized: false,
-      setAuth: (user, token) => {
-        set({ user, token, isInitialized: true });
-        if (token && typeof window !== 'undefined') {
-          localStorage.setItem('token', token);
+      setAuth: (_user, _token) => {
+        set({ user: _user, token: _token, isInitialized: true });
+        if (_token && typeof window !== 'undefined') {
+          localStorage.setItem('token', _token);
         }
       },
       logout: () => {
@@ -40,7 +40,7 @@ export const useAuthStore = create<AuthState>()(
           try {
             const response = await authApi.me();
             set({ user: response.data, token, isInitialized: true });
-          } catch (error) {
+          } catch {
             get().logout();
             set({ isInitialized: true });
           }
@@ -59,10 +59,10 @@ export const useAuthStore = create<AuthState>()(
 
 interface FavoritesState {
   favorites: string[];
-  add: (id: string) => void;
-  remove: (id: string) => void;
-  check: (id: string) => boolean;
-  setFavorites: (ids: string[]) => void;
+  add: (_id: string) => void;
+  remove: (_id: string) => void;
+  check: (_id: string) => boolean;
+  setFavorites: (_ids: string[]) => void;
   clear: () => void;
 }
 
@@ -70,10 +70,10 @@ export const useFavoritesStore = create<FavoritesState>()(
   persist(
     (set, get) => ({
       favorites: [],
-      add: (id) => set((state) => ({ favorites: [...state.favorites, id] })),
-      remove: (id) => set((state) => ({ favorites: state.favorites.filter((f) => f !== id) })),
-      check: (id) => get().favorites.includes(id),
-      setFavorites: (ids) => set({ favorites: ids }),
+      add: (_id) => set((state) => ({ favorites: [...state.favorites, _id] })),
+      remove: (_id) => set((state) => ({ favorites: state.favorites.filter((f) => f !== _id) })),
+      check: (_id) => get().favorites.includes(_id),
+      setFavorites: (_ids) => set({ favorites: _ids }),
       clear: () => set({ favorites: [] }),
     }),
     {

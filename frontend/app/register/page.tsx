@@ -50,7 +50,7 @@ export default function RegisterPage() {
     if (!/[a-z]/.test(password)) {
       return 'Лозинката мора да содржи барем една мала буква';
     }
-    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
       return 'Лозинката мора да содржи барем еден специјален карактер';
     }
     return '';
@@ -329,7 +329,7 @@ export default function RegisterPage() {
           return;
         }
       }
-    } catch (err: unknown) {
+    } catch {
       toast.error('Грешка при подготовка на податоците');
     } finally {
       setLoading(false);

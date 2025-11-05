@@ -21,7 +21,7 @@ interface UserListingsModalProps {
   onClose: () => void;
   user: User | null;
   userId?: string;
-  fetchListings: (userId: string) => Promise<Listing[]>;
+  fetchListings: (_userId: string) => Promise<Listing[]>;
   showOnlyActive?: boolean;
 }
 

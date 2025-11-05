@@ -9,7 +9,7 @@ interface DropdownOption {
 
 interface DropdownProps {
   value: string;
-  onChange: (value: string) => void;
+  onChange: (_value: string) => void;
   options: DropdownOption[];
   disabled?: boolean;
   placeholder?: string;

@@ -1,6 +1,6 @@
 'use client';
 
-import DOMPurify from 'dompurify'; // eslint-disable-line import/no-named-as-default
+import DOMPurify from 'dompurify';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -105,7 +105,7 @@ export default function ListingPage() {
         setIsFavorite(true);
         toast.success('Додадено во омилени');
       }
-    } catch (err) {
+    } catch {
       if (!isFavorite) {
         addFavorite(id);
         setIsFavorite(true);
@@ -186,7 +186,7 @@ export default function ListingPage() {
     try {
       await navigator.clipboard.writeText(text);
       toast.success(`${label} е копирано`);
-    } catch (err) {
+    } catch {
       toast.error('Грешка при копирање');
     }
   };

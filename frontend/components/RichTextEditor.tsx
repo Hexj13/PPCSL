@@ -4,7 +4,7 @@ import { useRef, useEffect, useState } from 'react';
 
 interface RichTextEditorProps {
   value: string;
-  onChange: (value: string) => void;
+  onChange: (_value: string) => void;
   placeholder?: string;
   maxLength?: number;
   rows?: number;

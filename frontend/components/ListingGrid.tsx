@@ -29,7 +29,6 @@ export function ListingGrid() {
         limit: 20,
       };
 
-      // eslint-disable-next-line react-hooks/exhaustive-deps
       searchParams.forEach((value, key) => {
         if (key === 'engine_displ_l_gte' || key === 'engine_displ_l_lte') {
           params[key] = parseFloat(value);

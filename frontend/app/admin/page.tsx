@@ -124,7 +124,7 @@ function ListingsTab() {
     try {
       await navigator.clipboard.writeText(text);
       toast.success(`${label} е копирано`);
-    } catch (err) {
+    } catch {
       toast.error('Грешка при копирање');
     }
   };
@@ -272,7 +272,7 @@ function UsersTab() {
     try {
       await navigator.clipboard.writeText(text);
       toast.success(`${label} е копирано`);
-    } catch (err) {
+    } catch {
       toast.error('Грешка при копирање');
     }
   };

@@ -7,7 +7,7 @@ import { Modal } from './Modal';
 interface SmsVerificationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onVerify: (code: string) => void;
+  onVerify: (_code: string) => void;
   phoneNumber?: string;
 }
 

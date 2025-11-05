@@ -18,7 +18,6 @@ jest.mock('axios', () => {
   };
 });
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { listingsApi } = require('./api');
 
 describe('listingsApi', () => {
