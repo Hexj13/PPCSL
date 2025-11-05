@@ -315,8 +315,12 @@ export default function RegisterPage() {
             axiosError.code === 'ERR_NETWORK'
           ) {
             errorMessage = 'Грешка во мрежата. Проверете ја вашата интернет врска.';
-          } else if (axiosError.message?.includes('Cannot POST') || axiosError.message?.includes('404')) {
-            errorMessage = 'Сервисот за проверка на телефон не е достапен. Проверете дали серверот работи.';
+          } else if (
+            axiosError.message?.includes('Cannot POST') ||
+            axiosError.message?.includes('404')
+          ) {
+            errorMessage =
+              'Сервисот за проверка на телефон не е достапен. Проверете дали серверот работи.';
           }
 
           toast.error(errorMessage);

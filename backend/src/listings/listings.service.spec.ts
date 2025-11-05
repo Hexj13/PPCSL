@@ -1,7 +1,7 @@
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 
 import { BrandsService } from '../brands/brands.service';
 import { Currency, ListingStatus } from '../common/types';
@@ -250,7 +250,9 @@ describe('ListingsService', () => {
         getMany: jest.fn().mockResolvedValue([closedListing1, closedListing2]),
       };
 
-      listingsRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+      listingsRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder as unknown as SelectQueryBuilder<Listing>,
+      );
 
       const result = await service.findByVin(vin);
 
@@ -286,7 +288,9 @@ describe('ListingsService', () => {
         getMany: jest.fn().mockResolvedValue([closedListing]),
       };
 
-      listingsRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+      listingsRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder as unknown as SelectQueryBuilder<Listing>,
+      );
 
       const result = await service.findByVin(vin, excludeId);
 
@@ -307,7 +311,9 @@ describe('ListingsService', () => {
         getMany: jest.fn().mockResolvedValue([]),
       };
 
-      listingsRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+      listingsRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder as unknown as SelectQueryBuilder<Listing>,
+      );
 
       const result = await service.findByVin(vin);
 
@@ -331,7 +337,9 @@ describe('ListingsService', () => {
         getMany: jest.fn().mockResolvedValue([closedListing]),
       };
 
-      listingsRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+      listingsRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder as unknown as SelectQueryBuilder<Listing>,
+      );
 
       await service.findByVin(vin);
 

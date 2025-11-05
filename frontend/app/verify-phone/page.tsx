@@ -28,9 +28,7 @@ export default function VerifyPhonePage() {
       await authApi.sendSms({ phone });
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { message?: string } } };
-      toast.error(
-        axiosError.response?.data?.message || 'Грешка при испраќање на SMS',
-      );
+      toast.error(axiosError.response?.data?.message || 'Грешка при испраќање на SMS');
     }
   };
 

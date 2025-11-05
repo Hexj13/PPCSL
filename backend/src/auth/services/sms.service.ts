@@ -49,7 +49,9 @@ export class SmsService {
         await this.redisService.del(redisKey);
       } catch {}
       const errorMessage =
-        error instanceof Error ? error.message : 'Грешка при испраќање на SMS. Обидете се повторно.';
+        error instanceof Error
+          ? error.message
+          : 'Грешка при испраќање на SMS. Обидете се повторно.';
       throw new BadRequestException(errorMessage);
     }
   }
