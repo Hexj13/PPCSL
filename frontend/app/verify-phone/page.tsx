@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
-import toast from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 
 import { authApi, favoritesApi, RegisterDto } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';

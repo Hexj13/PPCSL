@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import toast from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 
 import { UserListingsModal } from '@/components/UserListingsModal';
 import { listingsApi, Listing, favoritesApi } from '@/lib/api';
@@ -450,11 +450,11 @@ export default function ListingPage() {
               </div>
             )}
 
-            {listing.vin && (
-              <div className="bg-bg-light p-4 md:p-6 rounded-xl border border-primary-500/20">
-                <div className="mb-4">
-                  <h3 className="text-lg font-bold mb-2 text-white flex items-center gap-2">
-                    Претходни објави за ова возило
+            <div className="bg-bg-light p-4 md:p-6 rounded-xl border border-primary-500/20">
+              <div className="mb-4">
+                <h3 className="text-lg font-bold mb-2 text-white flex items-center gap-2">
+                  {listing.vin ? 'Претходни објави за ова возило' : 'Историја на возило'}
+                  {listing.vin && (
                     <div className="relative group">
                       <button
                         type="button"
@@ -487,64 +487,90 @@ export default function ListingPage() {
                         </div>
                       </div>
                     </div>
-                  </h3>
-                </div>
-                {loadingPrevious ? (
-                  <div className="text-center py-4">
-                    <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
-                  </div>
-                ) : previousListings.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-primary-500/20">
-                          <th className="text-left py-2 px-2 sm:px-3 text-gray-300 font-semibold text-xs sm:text-sm">
-                            Наслов
-                          </th>
-                          <th className="text-left py-2 px-2 sm:px-3 text-gray-300 font-semibold text-xs sm:text-sm hidden sm:table-cell">
-                            Поминување
-                          </th>
-                          <th className="text-left py-2 px-2 sm:px-3 text-gray-300 font-semibold text-xs sm:text-sm hidden md:table-cell">
-                            Затворено
-                          </th>
-                          <th className="text-left sm:text-right py-2 px-2 sm:px-3 text-gray-300 font-semibold text-xs sm:text-sm"></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {previousListings.map((prevListing) => (
-                          <tr
-                            key={prevListing.id}
-                            className="border-b border-primary-500/10 hover:bg-bg-darker/50 transition-colors cursor-pointer"
-                            onClick={() => router.push(`/listings/${prevListing.id}`)}
-                          >
-                            <td className="py-3 px-2 sm:px-3 text-white text-xs sm:text-sm">
-                              {prevListing.title}
-                            </td>
-                            <td className="py-3 px-2 sm:px-3 font-semibold text-gray-300 text-xs sm:text-sm hidden sm:table-cell">
-                              {prevListing.vehicle?.mileage_km
-                                ? formatMileage(prevListing.vehicle.mileage_km) + ' км'
-                                : '-'}
-                            </td>
-                            <td className="py-3 px-2 sm:px-3 font-semibold text-gray-300 text-xs sm:text-sm hidden md:table-cell">
-                              {formatDate(prevListing.updated_at)}
-                            </td>
-                            <td className="py-3 px-2 sm:px-3 text-left sm:text-right">
-                              <span className="text-primary-400 hover:text-primary-300 transition-colors text-xs font-medium">
-                                Отвори →
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <p className="font-semibold text-gray-300 text-sm">
-                    Нема претходни објави за ова возило
-                  </p>
-                )}
+                  )}
+                </h3>
               </div>
-            )}
+              {!listing.vin ? (
+                <div className="flex items-start gap-3 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+                  <svg
+                    className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
+                  </svg>
+                  <div>
+                    <p className="font-semibold text-green-300 text-sm mb-1">
+                      VIN кодот не е наведен
+                    </p>
+                    <p className="text-gray-300 text-sm">
+                      За да можеме да провериме историјата на ова возило, потребно е да биде наведен
+                      VIN код во објавата. Без VIN код, не можеме да идентификуваме претходни објави
+                      за истото возило.
+                    </p>
+                  </div>
+                </div>
+              ) : loadingPrevious ? (
+                <div className="text-center py-4">
+                  <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+                </div>
+              ) : previousListings.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-primary-500/20">
+                        <th className="text-left py-2 px-2 sm:px-3 text-gray-300 font-semibold text-xs sm:text-sm">
+                          Наслов
+                        </th>
+                        <th className="text-left py-2 px-2 sm:px-3 text-gray-300 font-semibold text-xs sm:text-sm hidden sm:table-cell">
+                          Поминување
+                        </th>
+                        <th className="text-left py-2 px-2 sm:px-3 text-gray-300 font-semibold text-xs sm:text-sm hidden md:table-cell">
+                          Затворено
+                        </th>
+                        <th className="text-left sm:text-right py-2 px-2 sm:px-3 text-gray-300 font-semibold text-xs sm:text-sm"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {previousListings.map((prevListing) => (
+                        <tr
+                          key={prevListing.id}
+                          className="border-b border-primary-500/10 hover:bg-bg-darker/50 transition-colors cursor-pointer"
+                          onClick={() => router.push(`/listings/${prevListing.id}`)}
+                        >
+                          <td className="py-3 px-2 sm:px-3 text-white text-xs sm:text-sm">
+                            {prevListing.title}
+                          </td>
+                          <td className="py-3 px-2 sm:px-3 font-semibold text-gray-300 text-xs sm:text-sm hidden sm:table-cell">
+                            {prevListing.vehicle?.mileage_km
+                              ? formatMileage(prevListing.vehicle.mileage_km) + ' км'
+                              : '-'}
+                          </td>
+                          <td className="py-3 px-2 sm:px-3 font-semibold text-gray-300 text-xs sm:text-sm hidden md:table-cell">
+                            {formatDate(prevListing.updated_at)}
+                          </td>
+                          <td className="py-3 px-2 sm:px-3 text-left sm:text-right">
+                            <span className="text-primary-400 hover:text-primary-300 transition-colors text-xs font-medium">
+                              Отвори →
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="font-semibold text-gray-300 text-sm">
+                  Нема претходни објави за ова возило
+                </p>
+              )}
+            </div>
           </div>
 
           <div className="space-y-6">
