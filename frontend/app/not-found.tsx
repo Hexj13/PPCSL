@@ -27,10 +27,7 @@ export default function NotFound() {
         </div>
 
         <div className="flex justify-center">
-          <Link
-            href="/"
-            className="btn-primary px-6 py-2.5 text-base font-semibold"
-          >
+          <Link href="/" className="btn-primary px-6 py-2.5 text-base font-semibold">
             Кон почетна
           </Link>
         </div>

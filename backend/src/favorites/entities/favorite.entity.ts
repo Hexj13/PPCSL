@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -13,6 +14,9 @@ import { User } from '../../users/entities/user.entity';
 
 @Entity('favorites')
 @Unique(['user_id', 'listing_id'])
+@Index(['user_id'])
+@Index(['listing_id'])
+@Index(['created_at'])
 export class Favorite {
   @PrimaryGeneratedColumn('uuid')
   id: string;

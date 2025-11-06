@@ -12,6 +12,7 @@ All documentation is located in the [`docs/`](./docs/) folder:
 - **[SCRIPTS.md](./docs/SCRIPTS.md)** - Utility scripts documentation
 - **[ENV_EXAMPLE.md](./docs/ENV_EXAMPLE.md)** - Environment variables example
 - **[OPTIMIZATION_ANALYSIS.md](./docs/OPTIMIZATION_ANALYSIS.md)** - Optimization analysis
+- **[DATABASE_OPTIMIZATIONS.md](./docs/DATABASE_OPTIMIZATIONS.md)** - Database optimizations (indexes, triggers, connection pooling)
 - **[RESTART.md](./docs/RESTART.md)** - Restart instructions
 
 ## 🚀 Quick Start

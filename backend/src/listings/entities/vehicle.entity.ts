@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 import { Brand } from '../../brands/entities/brand.entity';
 import { VehicleModel } from '../../brands/entities/vehicle-model.entity';
@@ -6,6 +6,15 @@ import * as constants from '../../common/constants';
 import { BodyType, FuelType, TransmissionType } from '../../common/types';
 
 @Entity('vehicles')
+@Index(['brand_id'])
+@Index(['model_id'])
+@Index(['brand_id', 'model_id'])
+@Index(['year'])
+@Index(['fuel'], { where: '"fuel" IS NOT NULL' })
+@Index(['transmission'], { where: '"transmission" IS NOT NULL' })
+@Index(['body_type'])
+@Index(['mileage_km'], { where: '"mileage_km" IS NOT NULL' })
+@Index(['engine_displ_l'], { where: '"engine_displ_l" IS NOT NULL' })
 export class Vehicle {
   @PrimaryGeneratedColumn('uuid')
   id: string;

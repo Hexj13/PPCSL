@@ -16,6 +16,7 @@ export function ListingGrid() {
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
+  const [autoLoadCount, setAutoLoadCount] = useState(0);
   const observerTarget = useRef<HTMLDivElement>(null);
   const { user } = useAuthStore();
   const { setFavorites } = useFavoritesStore();
@@ -23,10 +24,10 @@ export function ListingGrid() {
   const searchParamsString = useMemo(() => searchParams.toString(), [searchParams]);
 
   const fetchListings = useCallback(
-    async (page: number, append: boolean = false) => {
+    async (page: number, append: boolean = false, limit: number = 20) => {
       const params: Record<string, string | number> = {
         page,
-        limit: 20,
+        limit,
       };
 
       searchParams.forEach((value, key) => {
@@ -71,6 +72,7 @@ export function ListingGrid() {
         } else {
           setListings(newListings);
           setCurrentPage(1);
+          setAutoLoadCount(0);
         }
         setMeta(res.data.meta);
         setError(null);
@@ -109,6 +111,10 @@ export function ListingGrid() {
   }, [fetchListings]);
 
   useEffect(() => {
+    if (autoLoadCount >= 3) {
+      return;
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         if (
@@ -116,10 +122,12 @@ export function ListingGrid() {
           !loadingMore &&
           meta &&
           meta.totalPages &&
-          currentPage < meta.totalPages
+          currentPage < meta.totalPages &&
+          autoLoadCount < 3
         ) {
           const nextPage = currentPage + 1;
           setCurrentPage(nextPage);
+          setAutoLoadCount((prev) => prev + 1);
           fetchListings(nextPage, true);
         }
       },
@@ -136,7 +144,108 @@ export function ListingGrid() {
         observer.unobserve(currentTarget);
       }
     };
-  }, [loadingMore, meta, currentPage, fetchListings]);
+  }, [loadingMore, meta, currentPage, fetchListings, autoLoadCount]);
+
+  const handleLoadMore = async () => {
+    if (loadingMore || !meta || !meta.totalPages || currentPage >= meta.totalPages) {
+      return;
+    }
+
+    setLoadingMore(true);
+    try {
+      const nextPage = currentPage + 1;
+      const pageAfterNext = nextPage + 1;
+
+      const params: Record<string, string | number> = {
+        page: nextPage,
+        limit: 20,
+      };
+
+      searchParams.forEach((value, key) => {
+        if (key === 'engine_displ_l_gte' || key === 'engine_displ_l_lte') {
+          params[key] = parseFloat(value);
+        } else if (
+          key === 'year_gte' ||
+          key === 'year_lte' ||
+          key === 'price_gte' ||
+          key === 'price_lte' ||
+          key === 'mileage_gte' ||
+          key === 'mileage_lte' ||
+          key === 'doors'
+        ) {
+          params[key] = parseInt(value);
+        } else if (
+          key === 'brand_id' ||
+          key === 'model_id' ||
+          key === 'currency' ||
+          key === 'title' ||
+          key === 'body_type' ||
+          key === 'color'
+        ) {
+          params[key] = value;
+        } else if (key !== 'page') {
+          params[key] = value;
+        }
+      });
+
+      const secondParams: Record<string, string | number> = {
+        ...params,
+        page: pageAfterNext,
+      };
+
+      const [firstRes, secondRes] = await Promise.all([
+        listingsApi.getAll(params),
+        pageAfterNext <= meta.totalPages ? listingsApi.getAll(secondParams) : null,
+      ]);
+
+      const firstListings = firstRes.data.data;
+      setListings((prev) => [...prev, ...firstListings]);
+
+      if (user && firstListings.length > 0) {
+        const listingIds = firstListings.map((l) => l.id);
+        try {
+          const favoritesRes = await favoritesApi.checkBatch(listingIds);
+          const favoriteIds = Object.entries(favoritesRes)
+            .filter(([, isFavorite]) => isFavorite)
+            .map(([listingId]) => listingId);
+          const currentFavorites = useFavoritesStore.getState().favorites;
+          const updatedFavorites = new Set([...currentFavorites, ...favoriteIds]);
+          setFavorites(Array.from(updatedFavorites));
+        } catch (favoritesErr) {
+          console.error('Error fetching favorites:', favoritesErr);
+        }
+      }
+
+      if (secondRes) {
+        const secondListings = secondRes.data.data;
+        setListings((prev) => [...prev, ...secondListings]);
+        setCurrentPage(pageAfterNext);
+
+        if (user && secondListings.length > 0) {
+          const listingIds = secondListings.map((l) => l.id);
+          try {
+            const favoritesRes = await favoritesApi.checkBatch(listingIds);
+            const favoriteIds = Object.entries(favoritesRes)
+              .filter(([, isFavorite]) => isFavorite)
+              .map(([listingId]) => listingId);
+            const currentFavorites = useFavoritesStore.getState().favorites;
+            const updatedFavorites = new Set([...currentFavorites, ...favoriteIds]);
+            setFavorites(Array.from(updatedFavorites));
+          } catch (favoritesErr) {
+            console.error('Error fetching favorites:', favoritesErr);
+          }
+        }
+      } else {
+        setCurrentPage(nextPage);
+      }
+
+      setMeta(firstRes.data.meta);
+    } catch (err) {
+      console.error('Error loading more listings:', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -167,6 +276,7 @@ export function ListingGrid() {
   }
 
   const hasMore = meta && meta.totalPages && currentPage < meta.totalPages;
+  const showLoadMoreButton = autoLoadCount >= 3 && hasMore;
 
   return (
     <div>
@@ -183,13 +293,21 @@ export function ListingGrid() {
         </div>
       )}
 
+      {showLoadMoreButton && !loadingMore && (
+        <div className="text-center py-8">
+          <button onClick={handleLoadMore} className="btn-primary px-8 py-3 text-lg font-semibold">
+            Вчитај уште
+          </button>
+        </div>
+      )}
+
       {!hasMore && listings.length > 0 && (
         <div className="text-center py-8">
           <p className="text-gray-300">Нема повеќе објави</p>
         </div>
       )}
 
-      <div ref={observerTarget} style={{ height: '1px' }} />
+      {autoLoadCount < 3 && <div ref={observerTarget} style={{ height: '1px' }} />}
     </div>
   );
 }

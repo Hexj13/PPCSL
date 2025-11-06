@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -10,6 +11,8 @@ import {
 import { Brand } from './brand.entity';
 
 @Entity('vehicle_models')
+@Index(['brand_id'])
+@Index(['order'])
 export class VehicleModel {
   @PrimaryGeneratedColumn('uuid')
   id: string;

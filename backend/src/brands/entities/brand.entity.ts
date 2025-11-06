@@ -1,8 +1,16 @@
-import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 import { VehicleModel } from './vehicle-model.entity';
 
 @Entity('brands')
+@Index(['order'])
 export class Brand {
   @PrimaryGeneratedColumn('uuid')
   id: string;

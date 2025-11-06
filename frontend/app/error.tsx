@@ -34,7 +34,9 @@ export default function Error({
               />
             </svg>
           </div>
-          <h1 className="text-3xl md:text-4xl font-extrabold text-gray-300 mb-4">Нешто не е во ред</h1>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-gray-300 mb-4">
+            Нешто не е во ред
+          </h1>
           <p className="text-gray-400 text-base mb-2">
             Настана грешка при вчитување на страницата.
           </p>
@@ -47,10 +49,7 @@ export default function Error({
           <button onClick={reset} className="btn-primary px-6 py-2.5 text-base font-semibold">
             Обиди се повторно
           </button>
-          <Link
-            href="/"
-            className="btn-outline px-6 py-2.5 text-base font-semibold"
-          >
+          <Link href="/" className="btn-outline px-6 py-2.5 text-base font-semibold">
             Кон почетна
           </Link>
         </div>

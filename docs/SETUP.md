@@ -70,12 +70,18 @@ cd backend
 npm install
 ```
 
-3. Start backend:
+3. Build backend and run migrations (for production or to apply database optimizations):
+```bash
+npm run build
+npm run migration:run
+```
+
+Or start in development mode (TypeORM will automatically create tables with `synchronize: true`):
 ```bash
 npm run start:dev
 ```
 
-TypeORM will automatically create tables on first run (in development mode with `synchronize: true`).
+**Note:** For production, always use migrations. The latest migration includes database optimizations (indexes, triggers, connection pooling).
 
 4. In a new terminal, start frontend:
 ```bash

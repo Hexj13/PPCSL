@@ -15,6 +15,8 @@ import { Listing } from './listing.entity';
 @Entity('listing_views')
 @Index(['listing_id', 'user_id'], { unique: true, where: '"user_id" IS NOT NULL' })
 @Index(['listing_id', 'visitor_id'], { unique: true, where: '"visitor_id" IS NOT NULL' })
+@Index(['listing_id'])
+@Index(['created_at'])
 export class ListingView {
   @PrimaryGeneratedColumn('uuid')
   id: string;

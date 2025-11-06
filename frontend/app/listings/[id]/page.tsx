@@ -220,7 +220,9 @@ export default function ListingPage() {
                         src={optimizedUrl}
                         alt={listing.title}
                         fill
+                        sizes="(max-width: 768px) 100vw, 65vw"
                         className="object-cover"
+                        priority
                         unoptimized={
                           optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://')
                         }
@@ -258,7 +260,7 @@ export default function ListingPage() {
                         setCurrentImageIndex(index);
                         openImageModal(index);
                       }}
-                      className={`relative h-20 bg-bg-darker rounded-lg overflow-hidden transition-all ${
+                      className={`relative h-28 sm:h-32 bg-bg-darker rounded-lg overflow-hidden transition-all ${
                         currentImageIndex === index
                           ? 'ring-2 ring-primary-500 shadow-md'
                           : 'hover:ring-2 hover:ring-primary-300'
@@ -272,7 +274,9 @@ export default function ListingPage() {
                               src={optimizedUrl}
                               alt={`${listing.title} - Слика ${index + 1}`}
                               fill
+                              sizes="(max-width: 640px) 33vw, 25vw"
                               className="object-cover"
+                              loading="lazy"
                               unoptimized={
                                 optimizedUrl.startsWith('http://') ||
                                 optimizedUrl.startsWith('https://')
@@ -975,7 +979,9 @@ export default function ListingPage() {
                     alt={`${listing.title} - Слика ${modalImageIndex + 1} од ${images.length}`}
                     width={1200}
                     height={900}
+                    sizes="(max-width: 768px) 100vw, 90vw"
                     className="max-w-full max-h-[90vh] w-auto h-auto object-contain"
+                    priority={modalImageIndex === 0}
                     unoptimized={
                       optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://')
                     }

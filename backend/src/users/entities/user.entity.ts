@@ -1,4 +1,11 @@
-import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 import * as constants from '../../common/constants';
 import { UserType } from '../../common/types';
@@ -6,6 +13,9 @@ import { Favorite } from '../../favorites/entities/favorite.entity';
 import { Listing } from '../../listings/entities/listing.entity';
 
 @Entity('users')
+@Index(['phone'], { where: '"phone" IS NOT NULL' })
+@Index(['type'])
+@Index(['active'])
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;

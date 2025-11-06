@@ -48,6 +48,7 @@ export function ListingManagementCard({
                 fill
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 300px"
+                loading="lazy"
                 unoptimized={
                   optimizedImageUrl.startsWith('http://') ||
                   optimizedImageUrl.startsWith('https://')

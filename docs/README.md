@@ -69,6 +69,8 @@ npm run build
 npm run migration:run
 ```
 
+**Important:** The latest migration includes database optimizations (indexes, triggers). Always run migrations in production.
+
 Or use TypeORM sync (development only):
 ```bash
 cd backend && npm run start:dev
@@ -192,10 +194,12 @@ Kupito/
 - Active listing limit validation on publish
 - Favorites stored in localStorage for guests and on server for authenticated users
 - PostgreSQL Full-Text Search for search functionality
-- Image optimization (resize, compress, convert to WebP with adaptive quality)
+- **Database optimizations:** Comprehensive indexing, triggers for data integrity, connection pooling
+- Image optimization (resize, compress, convert to WebP with adaptive quality, lazy loading, SEO-friendly)
 - Responsive design with TailwindCSS
 - VIN search with privacy protection
 - Date refresh feature with 48-hour cooldown
+- Smart listing loading: Auto-load 80 listings, then "Load More" button (40 per click)
 
 </details>
 
@@ -229,3 +233,4 @@ For more details, see [Technical Documentation](TECH_DOCS.md#14-testing).
 - **[Restart Guide](RESTART.md)** - How to restart the project
 - **[Environment Variables](ENV_EXAMPLE.md)** - Environment configuration
 - **[Optimization Analysis](OPTIMIZATION_ANALYSIS.md)** - Performance optimization analysis
+- **[Database Optimizations](DATABASE_OPTIMIZATIONS.md)** - Database indexes, triggers, and connection pooling

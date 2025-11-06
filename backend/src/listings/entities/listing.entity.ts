@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   OneToOne,
@@ -16,6 +17,16 @@ import { User } from '../../users/entities/user.entity';
 import { Vehicle } from './vehicle.entity';
 
 @Entity('listings')
+@Index(['status'])
+@Index(['user_id'])
+@Index(['status', 'user_id'])
+@Index(['status', 'last_updated_at'])
+@Index(['price'])
+@Index(['created_at'])
+@Index(['views'])
+@Index(['vin'], { where: '"vin" IS NOT NULL' })
+@Index(['urgent'], { where: '"urgent" = true' })
+@Index(['currency'])
 export class Listing {
   @PrimaryGeneratedColumn('uuid')
   id: string;

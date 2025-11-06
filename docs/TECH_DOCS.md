@@ -1,8 +1,8 @@
 # Technical Specification (TS)
 
 Project: Platform for selling new and used cars
-Version: 1.2
-Date: 2025-11-01
+Version: 1.3
+Date: 2025-11-06
 
 ---
 
@@ -41,17 +41,22 @@ Create a simple, free website for posting listings for new and used cars in Mace
   * By date (newest/oldest)
   * By price (low/high)
   * By year (newest/oldest)
-* **Pagination:** Numbered pagination with configurable page size (default: 20, max: 100)
+* **Pagination:** Smart loading with infinite scroll and load more button:
+  * Initial load: 20 listings
+  * Auto-load on scroll: 3 additional pages (20 listings each, total 80 listings)
+  * After 80 listings: "Load More" button appears, loads 40 listings per click
+  * This ensures footer is always accessible
 
 ### Listing Card
 
 * Car photos (up to 20 images)
 * **Image optimization:** Automatic compression, resizing (max 1920px width), conversion to WebP format (85% quality)
 * **Adaptive quality:** Different quality levels for different contexts:
-  * Listing cards (homepage): 60% quality, max 800px width
-  * Listing detail page: 75% quality, max 1200px width
-  * Thumbnails: 70% quality, max 400px width
+  * Listing cards (homepage): 60% quality, max 800px width, lazy loading, responsive sizes
+  * Listing detail page: 75% quality, max 1200px width, priority loading
+  * Thumbnails: 70% quality, max 400px width, increased size (h-28 sm:h-32), lazy loading
   * Full-size modal view: Original quality (85%)
+* **SEO optimization:** All images include proper `alt` attributes, `sizes` for responsive loading, and lazy loading for off-screen images
 * Basic specifications: year, engine displacement, mileage, fuel type, transmission, body type, color, doors, city
 * **Urgent flag:** Mark listings as urgent (displayed prominently)
 * **VIN number:** Optional 17-character VIN code
@@ -173,6 +178,10 @@ Create a simple, free website for posting listings for new and used cars in Mace
 * **Frontend:** Next.js 14 (SSR for SEO), React 18, TailwindCSS, Zustand (state management)
 * **Backend:** Node.js (NestJS), REST API, PostgreSQL, Redis, S3-compatible storage (planned)
 * **Database:** PostgreSQL 15 with TypeORM
+  * **Optimizations:** Comprehensive indexing strategy with partial and composite indexes
+  * **Triggers:** Auto-update timestamps, auto-increment views counter, automatic cleanup on delete
+  * **Connection pooling:** Configured with min 5, max 20 connections
+  * See [DATABASE_OPTIMIZATIONS.md](./DATABASE_OPTIMIZATIONS.md) for details
 * **Search:** PostgreSQL Full-Text Search and custom query builder
 * **Image processing:** Sharp library for optimization and WebP conversion
 * **File storage:** Local file system (`/uploads`) with plans for S3 migration
@@ -471,6 +480,7 @@ GET /api/listings?brand_id=xxx&year_gte=2018&price_lte=12000&city=Skopje&fuel=Pe
   cd frontend && npm test
   ```
 * **CI/CD:** All tests run automatically in GitHub Actions on push and pull requests
+* **Email Service Mocking:** Email service is automatically mocked in integration tests to prevent failures due to missing email credentials
 * **Requirements:**
   * PostgreSQL database (for integration tests)
   * Redis (optional, for SMS verification features)
@@ -485,6 +495,7 @@ GET /api/listings?brand_id=xxx&year_gte=2018&price_lte=12000&city=Skopje&fuel=Pe
 * **M1:** Catalog, listing card, publication, limits, statuses, favorites, basic search
 * **M2:** Extended filters, VIN functionality, image optimization, admin panel, auto-closing, SEO
 * **M3:** Rich text editor, date refresh, social media integration, enhanced admin features
+* **M4:** Database optimizations (indexes, triggers, connection pooling), smart listing loading, enhanced image optimization (lazy loading, SEO)
 
 ## 16. Acceptance Criteria
 
@@ -504,3 +515,5 @@ GET /api/listings?brand_id=xxx&year_gte=2018&price_lte=12000&city=Skopje&fuel=Pe
 ---
 
 **Version 1.2 reflects:** Extended search filters, VIN functionality, image optimization (WebP conversion with adaptive quality), rich text descriptions, date refresh feature, social media integration, enhanced user registration, comprehensive admin panel, brands/models/cities APIs, optimized image delivery endpoint.
+
+**Version 1.3 updates:** Database optimizations (indexes, triggers, connection pooling), smart listing loading (auto-load 80, then button for 40), enhanced image optimization (lazy loading, sizes, SEO), increased thumbnail sizes, email service mocking in integration tests.

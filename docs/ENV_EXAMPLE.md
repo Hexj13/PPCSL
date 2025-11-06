@@ -18,6 +18,12 @@ DB_USERNAME=kupito
 DB_PASSWORD=kupito123
 DB_NAME=kupito
 
+# Database Connection Pooling (optional, defaults shown)
+DB_POOL_MAX=20
+DB_POOL_MIN=5
+DB_POOL_IDLE_TIMEOUT=30000
+DB_POOL_CONNECTION_TIMEOUT=2000
+
 # Authentication
 JWT_SECRET=your-secret-key-change-in-production
 
@@ -50,6 +56,10 @@ SMTP_FROM=noreply@kupito.mk
 - **DB_USERNAME**: PostgreSQL database username
 - **DB_PASSWORD**: PostgreSQL database password
 - **DB_NAME**: PostgreSQL database name
+- **DB_POOL_MAX**: Maximum number of database connections in pool (default: 20)
+- **DB_POOL_MIN**: Minimum number of database connections in pool (default: 5)
+- **DB_POOL_IDLE_TIMEOUT**: Idle connection timeout in milliseconds (default: 30000)
+- **DB_POOL_CONNECTION_TIMEOUT**: Connection timeout in milliseconds (default: 2000)
 - **JWT_SECRET**: Secret key for JWT token signing (⚠️ **REQUIRED in production**)
 - **FRONTEND_URL**: Frontend application URL for CORS configuration
 - **REDIS_HOST**: Redis server host address (default: localhost)

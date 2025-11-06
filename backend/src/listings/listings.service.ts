@@ -263,7 +263,6 @@ export class ListingsService {
         user_id: userId,
       });
       await this.listingViewsRepository.save(view);
-      await this.listingsRepository.increment({ id: listingId }, 'views', 1);
     } else if (visitorId) {
       const existingView = await this.listingViewsRepository.findOne({
         where: { listing_id: listingId, visitor_id: visitorId },
@@ -277,7 +276,6 @@ export class ListingsService {
         visitor_id: visitorId,
       });
       await this.listingViewsRepository.save(view);
-      await this.listingsRepository.increment({ id: listingId }, 'views', 1);
     }
   }
 

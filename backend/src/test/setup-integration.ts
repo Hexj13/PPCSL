@@ -8,6 +8,7 @@ import request from 'supertest';
 
 import { AppModule } from '../app.module';
 import { HttpExceptionFilter } from '../common/filters/http-exception.filter';
+import { EmailService } from '../auth/services/email.service';
 
 let app: INestApplication;
 let swaggerDocument: OpenAPIObject;
@@ -15,7 +16,14 @@ let swaggerDocument: OpenAPIObject;
 export async function createTestApp(): Promise<INestApplication> {
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [AppModule],
-  }).compile();
+  })
+    .overrideProvider(EmailService)
+    .useValue({
+      sendVerificationEmail: jest.fn().mockResolvedValue(undefined),
+      verifyToken: jest.fn().mockResolvedValue(null),
+      sendPasswordResetEmail: jest.fn().mockResolvedValue(undefined),
+    })
+    .compile();
 
   app = moduleFixture.createNestApplication();
 
