@@ -434,16 +434,16 @@ export default function ListingPage() {
             {vehicle && (
               <div className="bg-bg-light p-4 md:p-6 rounded-xl border border-primary-500/20">
                 <h2 className="text-xl md:text-2xl font-bold mb-6 text-white">Карактеристики</h2>
-                
+
                 <div className="space-y-6">
                   {(vehicle.brand?.name || vehicle.model?.name || vehicle.year || listing.vin) && (
                     <div className="pb-5 border-b border-primary-500/30 last:border-b-0">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {vehicle.brand?.name && (
-                  <div>
-                    <span className="text-primary-400 font-semibold">Марка:</span>
+                          <div>
+                            <span className="text-primary-400 font-semibold">Марка:</span>
                             <span className="ml-2 text-gray-300">{vehicle.brand.name}</span>
-                  </div>
+                          </div>
                         )}
                         {vehicle.model?.name && (
                           <div>
@@ -489,36 +489,41 @@ export default function ListingPage() {
                     </div>
                   )}
 
-                  {(vehicle.engine_displ_l || listing.horsepower !== undefined || vehicle.fuel || vehicle.transmission || vehicle.drive_type || vehicle.mileage_km) && (
+                  {(vehicle.engine_displ_l ||
+                    listing.horsepower !== undefined ||
+                    vehicle.fuel ||
+                    vehicle.transmission ||
+                    vehicle.drive_type ||
+                    vehicle.mileage_km) && (
                     <div className="pb-5 border-b border-primary-500/30 last:border-b-0">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {vehicle.engine_displ_l && (
-                    <div>
-                      <span className="text-primary-400 font-semibold">Мотор:</span>
-                      <span className="ml-2 text-gray-300">
-                        {formatEngineVolume(vehicle.engine_displ_l)} л
-                      </span>
-                    </div>
-                  )}
+                        {vehicle.engine_displ_l && (
+                          <div>
+                            <span className="text-primary-400 font-semibold">Мотор:</span>
+                            <span className="ml-2 text-gray-300">
+                              {formatEngineVolume(vehicle.engine_displ_l)} л
+                            </span>
+                          </div>
+                        )}
                         {listing.horsepower !== undefined && listing.horsepower !== null && (
-                  <div>
+                          <div>
                             <span className="text-primary-400 font-semibold">Коњски сили:</span>
                             <span className="ml-2 text-gray-300">{listing.horsepower}</span>
-                  </div>
+                          </div>
                         )}
-                  {vehicle.fuel && (
-                    <div>
-                      <span className="text-primary-400 font-semibold">Гориво:</span>
-                      <span className="ml-2 text-gray-300">{vehicle.fuel}</span>
-                    </div>
-                  )}
+                        {vehicle.fuel && (
+                          <div>
+                            <span className="text-primary-400 font-semibold">Гориво:</span>
+                            <span className="ml-2 text-gray-300">{vehicle.fuel}</span>
+                          </div>
+                        )}
                         {vehicle.transmission && (
-                  <div>
+                          <div>
                             <span className="text-primary-400 font-semibold">Пренос:</span>
                             <span className="ml-2 text-gray-300">
                               {formatTransmission(vehicle.transmission)}
                             </span>
-                  </div>
+                          </div>
                         )}
                         {vehicle.drive_type && (
                           <div>
@@ -528,14 +533,14 @@ export default function ListingPage() {
                             </span>
                           </div>
                         )}
-                  {vehicle.mileage_km && (
-                    <div>
-                      <span className="text-primary-400 font-semibold">Поминување:</span>
-                      <span className="ml-2 text-gray-300">
-                        {formatMileage(vehicle.mileage_km)} км
-                      </span>
-                    </div>
-                  )}
+                        {vehicle.mileage_km && (
+                          <div>
+                            <span className="text-primary-400 font-semibold">Поминување:</span>
+                            <span className="ml-2 text-gray-300">
+                              {formatMileage(vehicle.mileage_km)} км
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -543,16 +548,18 @@ export default function ListingPage() {
                   {(vehicle.body_type || vehicle.color || vehicle.doors) && (
                     <div className="pb-5 border-b border-primary-500/30 last:border-b-0">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {vehicle.body_type && (
-                    <div>
-                      <span className="text-primary-400 font-semibold">Тип на каросерија:</span>
-                      <span className="ml-2 text-gray-300">
-                        {formatBodyType(vehicle.body_type)}
-                      </span>
-                    </div>
-                  )}
+                        {vehicle.body_type && (
+                          <div>
+                            <span className="text-primary-400 font-semibold">
+                              Тип на каросерија:
+                            </span>
+                            <span className="ml-2 text-gray-300">
+                              {formatBodyType(vehicle.body_type)}
+                            </span>
+                          </div>
+                        )}
                         {vehicle.color && (
-                    <div>
+                          <div>
                             <span className="text-primary-400 font-semibold">Боја:</span>
                             <span className="ml-2 text-gray-300">{vehicle.color}</span>
                           </div>
@@ -567,35 +574,39 @@ export default function ListingPage() {
                     </div>
                   )}
 
-                  {(listing.condition || listing.registration_type || listing.is_registered !== undefined) && (
+                  {(listing.condition ||
+                    listing.registration_type ||
+                    listing.is_registered !== undefined) && (
                     <div className="pb-0">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {listing.condition && (
                           <div>
                             <span className="text-primary-400 font-semibold">Состојба:</span>
-                      <span className="ml-2 text-gray-300">
+                            <span className="ml-2 text-gray-300">
                               {formatCondition(listing.condition)}
-                      </span>
-                    </div>
-                  )}
+                            </span>
+                          </div>
+                        )}
                         {listing.registration_type && (
-                    <div>
-                            <span className="text-primary-400 font-semibold">Тип на регистрација:</span>
+                          <div>
+                            <span className="text-primary-400 font-semibold">
+                              Тип на регистрација:
+                            </span>
                             <span className="ml-2 text-gray-300">
                               {formatRegistrationType(listing.registration_type)}
                             </span>
-                    </div>
-                  )}
+                          </div>
+                        )}
                         {listing.is_registered !== undefined && (
                           <div>
                             <span className="text-primary-400 font-semibold">Регистрација:</span>
                             <span className="ml-2 text-gray-300">
                               {listing.is_registered ? 'Зарегистрирано' : 'Не е зарегистрирано'}
                             </span>
-                    </div>
-                  )}
+                          </div>
+                        )}
                         {listing.is_registered && listing.registration_expires_at && (
-                    <div>
+                          <div>
                             <span className="text-primary-400 font-semibold">Регистрирано до:</span>
                             <span className="ml-2 text-gray-300">
                               {(() => {

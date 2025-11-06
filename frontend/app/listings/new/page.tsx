@@ -281,10 +281,7 @@ export default function NewListingPage() {
       const inputMonth = parseInt(month, 10);
       const inputYear = parseInt(year, 10);
 
-      if (
-        inputYear < currentYear ||
-        (inputYear === currentYear && inputMonth < currentMonth)
-      ) {
+      if (inputYear < currentYear || (inputYear === currentYear && inputMonth < currentMonth)) {
         toast.error('Датата на регистрација не може да биде помала од тековниот месец и година');
         return;
       }
@@ -293,12 +290,13 @@ export default function NewListingPage() {
     setLoading(true);
 
     try {
-      const registrationExpiresAt = formData.is_registered && formData.registration_expires_at
-        ? (() => {
-            const [month, year] = formData.registration_expires_at.split('.');
-            return `${year}-${month.padStart(2, '0')}-01`;
-          })()
-        : undefined;
+      const registrationExpiresAt =
+        formData.is_registered && formData.registration_expires_at
+          ? (() => {
+              const [month, year] = formData.registration_expires_at.split('.');
+              return `${year}-${month.padStart(2, '0')}-01`;
+            })()
+          : undefined;
 
       const payload = {
         price: parseFloat(formData.price),
@@ -513,7 +511,9 @@ export default function NewListingPage() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400">Запремина на моторот (л) *</label>
+              <label className="block text-sm font-semibold mb-2 text-primary-400">
+                Запремина на моторот (л) *
+              </label>
               <input
                 type="text"
                 required
@@ -533,10 +533,10 @@ export default function NewListingPage() {
                   }
                   const numValue = value === '' ? 0 : parseFloat(value);
                   if (value === '' || (!isNaN(numValue) && numValue >= 0 && numValue <= 99)) {
-                  setFormData({
-                    ...formData,
-                    vehicle: { ...formData.vehicle, engine_displ_l: value },
-                  });
+                    setFormData({
+                      ...formData,
+                      vehicle: { ...formData.vehicle, engine_displ_l: value },
+                    });
                   }
                 }}
                 onBlur={(e) => {
@@ -569,7 +569,9 @@ export default function NewListingPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400">Коњски сили *</label>
+              <label className="block text-sm font-semibold mb-2 text-primary-400">
+                Коњски сили *
+              </label>
               <input
                 type="text"
                 required
@@ -579,18 +581,18 @@ export default function NewListingPage() {
                 onChange={(e) => {
                   const value = e.target.value.replace(/[^0-9]/g, '');
                   if (value === '' || (parseInt(value) >= 1 && parseInt(value) <= 9999)) {
-                  setFormData({
-                    ...formData,
+                    setFormData({
+                      ...formData,
                       horsepower: value,
                     });
-                }
+                  }
                 }}
                 onWheel={handleWheel}
                 className="input-field h-[48px]"
                 placeholder="150"
                 title="Внесете коњски сили на автомобилот (1-9999)"
               />
-          </div>
+            </div>
 
             <div>
               <label className="block text-sm font-semibold mb-2 text-primary-400">Топливо *</label>
@@ -633,7 +635,9 @@ export default function NewListingPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400">Тип на погон *</label>
+              <label className="block text-sm font-semibold mb-2 text-primary-400">
+                Тип на погон *
+              </label>
               <Dropdown
                 value={formData.vehicle.drive_type}
                 onChange={(value) =>
@@ -652,7 +656,9 @@ export default function NewListingPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400">Поминување (км) *</label>
+              <label className="block text-sm font-semibold mb-2 text-primary-400">
+                Поминување (км) *
+              </label>
               <input
                 type="text"
                 required
@@ -678,10 +684,14 @@ export default function NewListingPage() {
         </div>
 
         <div className="border-t border-primary-500/20 pt-6 mb-6">
-          <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">Состојба и регистрација</h2>
+          <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">
+            Состојба и регистрација
+          </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
             <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400">Состојба *</label>
+              <label className="block text-sm font-semibold mb-2 text-primary-400">
+                Состојба *
+              </label>
               <Dropdown
                 value={formData.condition}
                 onChange={(value) =>
@@ -699,7 +709,9 @@ export default function NewListingPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400">Тип на регистрација *</label>
+              <label className="block text-sm font-semibold mb-2 text-primary-400">
+                Тип на регистрација *
+              </label>
               <Dropdown
                 value={formData.registration_type}
                 onChange={(value) =>
@@ -727,7 +739,9 @@ export default function NewListingPage() {
                     setFormData({
                       ...formData,
                       is_registered: e.target.checked,
-                      registration_expires_at: e.target.checked ? formData.registration_expires_at : '',
+                      registration_expires_at: e.target.checked
+                        ? formData.registration_expires_at
+                        : '',
                     })
                   }
                   className="sr-only"
@@ -832,7 +846,9 @@ export default function NewListingPage() {
           <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">Надворешен изглед</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400">Тип на каросерија *</label>
+              <label className="block text-sm font-semibold mb-2 text-primary-400">
+                Тип на каросерија *
+              </label>
               <Dropdown
                 value={formData.vehicle.body_type}
                 onChange={(value) =>
@@ -901,10 +917,12 @@ export default function NewListingPage() {
                   { value: 'Матирана сина', label: 'Матирана сина' },
                 ]}
               />
-          </div>
+            </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400">Број на врати</label>
+              <label className="block text-sm font-semibold mb-2 text-primary-400">
+                Број на врати
+              </label>
               <Dropdown
                 value={formData.vehicle.doors}
                 onChange={(value) =>
@@ -1091,7 +1109,9 @@ export default function NewListingPage() {
 
         <div className="border-t border-primary-500/20 pt-6 mb-6">
           <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">Фотографии</h2>
-          <label className="block text-sm font-semibold mb-2 text-primary-400">Фотографии на автомобилот *</label>
+          <label className="block text-sm font-semibold mb-2 text-primary-400">
+            Фотографии на автомобилот *
+          </label>
           <input
             type="file"
             accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
@@ -1161,7 +1181,9 @@ export default function NewListingPage() {
             Нагодувања на објавата
           </h2>
           <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400">Статус на објавата *</label>
+            <label className="block text-sm font-semibold mb-2 text-primary-400">
+              Статус на објавата *
+            </label>
             <Dropdown
               value={formData.status}
               onChange={(value) =>

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsUUID } from 'class-validator';
+import { ArrayMinSize, IsArray, IsUUID } from 'class-validator';
 
 export class CheckBatchDto {
   @ApiProperty({
@@ -8,6 +8,7 @@ export class CheckBatchDto {
     type: [String],
   })
   @IsArray()
+  @ArrayMinSize(1, { message: 'Array must contain at least one listing ID' })
   @IsUUID('4', { each: true })
   listingIds: string[];
 }

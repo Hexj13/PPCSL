@@ -34,7 +34,6 @@ export function ListingCard({ listing, forceFavorite = false, onRemove }: Listin
   const isOwnListing = !!(user && listing.user && user.id === listing.user.id);
   const [imageError, setImageError] = React.useState(false);
 
-
   const handleToggleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();

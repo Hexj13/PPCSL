@@ -37,9 +37,55 @@ export class UploadController {
   @ApiOperation({ summary: 'Upload image' })
   @ApiBearerAuth('JWT-auth')
   @ApiConsumes('multipart/form-data')
-  @ApiResponse({ status: 201, description: 'Image uploaded successfully' })
-  @ApiResponse({ status: 400, description: 'Invalid file' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 201,
+    description: 'Image uploaded successfully',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            url: { type: 'string' },
+            path: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid file',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            statusCode: { type: 'number', example: 400 },
+            message: { type: 'string' },
+            timestamp: { type: 'string' },
+            path: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            statusCode: { type: 'number', example: 401 },
+            message: { type: 'string' },
+            timestamp: { type: 'string' },
+            path: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
   @Throttle({ default: { limit: 20, ttl: 60000 } })
   @Post('image')
   @UseGuards(JwtAuthGuard)
@@ -75,9 +121,52 @@ export class UploadController {
   @ApiParam({ name: 'filename', description: 'File name' })
   @ApiQuery({ name: 'quality', required: false, description: 'Quality (1-100)', type: Number })
   @ApiQuery({ name: 'width', required: false, description: 'Width (1-5000)', type: Number })
-  @ApiResponse({ status: 200, description: 'Optimized image' })
-  @ApiResponse({ status: 400, description: 'Invalid parameters' })
-  @ApiResponse({ status: 404, description: 'Image not found' })
+  @ApiResponse({
+    status: 200,
+    description: 'Optimized image',
+    content: {
+      'image/webp': {
+        schema: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid parameters',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            statusCode: { type: 'number', example: 400 },
+            message: { type: 'string' },
+            timestamp: { type: 'string' },
+            path: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Image not found',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            statusCode: { type: 'number', example: 404 },
+            message: { type: 'string' },
+            timestamp: { type: 'string' },
+            path: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
   @Get('image/:filename')
   async getOptimizedImage(
     @Param('filename') filename: string,
@@ -86,11 +175,12 @@ export class UploadController {
     @Query('width') width?: string,
   ) {
     try {
+      const decodedFilename = decodeURIComponent(filename);
       if (
-        !filename ||
-        filename.includes('..') ||
-        filename.includes('/') ||
-        filename.includes('\\')
+        !decodedFilename ||
+        decodedFilename.includes('..') ||
+        decodedFilename.includes('/') ||
+        decodedFilename.includes('\\')
       ) {
         throw new BadRequestException('Invalid filename');
       }
@@ -103,7 +193,7 @@ export class UploadController {
         throw new BadRequestException('Width must be a number between 1 and 5000');
       }
 
-      const filePath = `/uploads/${filename}`;
+      const filePath = `/uploads/${decodedFilename}`;
       const qualityValue = quality ? parseInt(quality, 10) : 85;
       const widthValue = width ? parseInt(width, 10) : undefined;
 

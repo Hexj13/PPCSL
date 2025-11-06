@@ -217,7 +217,7 @@ export interface CreateListingDto {
     mileage_km?: number;
     fuel?: FuelType;
     transmission?: TransmissionType;
-          drive_type: DriveType;
+    drive_type: DriveType;
     body_type: BodyType;
     color?: string;
     doors?: number;

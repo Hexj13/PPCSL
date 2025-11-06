@@ -26,7 +26,7 @@ describe('AuthProvider', () => {
     render(
       <AuthProvider>
         <div>Test</div>
-      </AuthProvider>,
+      </AuthProvider>
     );
 
     expect(mockInitAuth).toHaveBeenCalledTimes(1);
@@ -36,7 +36,7 @@ describe('AuthProvider', () => {
     const { getByText } = render(
       <AuthProvider>
         <div>Test Content</div>
-      </AuthProvider>,
+      </AuthProvider>
     );
 
     expect(getByText('Test Content')).toBeInTheDocument();
@@ -49,10 +49,9 @@ describe('AuthProvider', () => {
     render(
       <AuthProvider>
         <div>Test</div>
-      </AuthProvider>,
+      </AuthProvider>
     );
 
     expect(selector).toHaveBeenCalled();
   });
 });
-

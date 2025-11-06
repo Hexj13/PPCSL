@@ -199,4 +199,3 @@ describe('useFavoritesStore', () => {
     expect(result.current.favorites).toEqual([]);
   });
 });
-

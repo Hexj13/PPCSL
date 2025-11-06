@@ -137,8 +137,34 @@ export class AuthController {
 
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiBearerAuth('JWT-auth')
-  @ApiResponse({ status: 200, description: 'User profile' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 200,
+    description: 'User profile',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            statusCode: { type: 'number', example: 401 },
+            message: { type: 'string' },
+            timestamp: { type: 'string' },
+            path: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async getProfile(@Request() req) {
@@ -148,8 +174,34 @@ export class AuthController {
 
   @ApiOperation({ summary: 'Verify phone number' })
   @ApiBearerAuth('JWT-auth')
-  @ApiResponse({ status: 200, description: 'Phone number verified' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 200,
+    description: 'Phone number verified',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            statusCode: { type: 'number', example: 401 },
+            message: { type: 'string' },
+            timestamp: { type: 'string' },
+            path: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
   @UseGuards(JwtAuthGuard)
   @Post('verify-phone')
   async verifyPhone(@Request() req) {
@@ -158,8 +210,37 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Check if phone number is available' })
-  @ApiResponse({ status: 200, description: 'Phone number availability status' })
-  @ApiResponse({ status: 400, description: 'Phone number already exists' })
+  @ApiResponse({
+    status: 200,
+    description: 'Phone number availability status',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            available: { type: 'boolean' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Phone number already exists',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            statusCode: { type: 'number', example: 400 },
+            message: { type: 'string' },
+            timestamp: { type: 'string' },
+            path: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('check-phone')
   async checkPhone(@Body() sendSmsDto: SendSmsDto) {
@@ -174,8 +255,38 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Send SMS verification code' })
-  @ApiResponse({ status: 200, description: 'SMS code sent successfully' })
-  @ApiResponse({ status: 400, description: 'Phone number already exists' })
+  @ApiResponse({
+    status: 200,
+    description: 'SMS code sent successfully',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean', example: true },
+            message: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Phone number already exists',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            statusCode: { type: 'number', example: 400 },
+            message: { type: 'string' },
+            timestamp: { type: 'string' },
+            path: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Post('send-sms')
   async sendSms(@Body() sendSmsDto: SendSmsDto) {
@@ -191,8 +302,38 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Verify SMS code' })
-  @ApiResponse({ status: 200, description: 'Code verified successfully' })
-  @ApiResponse({ status: 400, description: 'Invalid code' })
+  @ApiResponse({
+    status: 200,
+    description: 'Code verified successfully',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean', example: true },
+            message: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid code',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            statusCode: { type: 'number', example: 400 },
+            message: { type: 'string' },
+            timestamp: { type: 'string' },
+            path: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
   @UseGuards(IpBlockGuard)
   @Post('verify-sms')
   async verifySms(@Request() req, @Body() verifySmsDto: VerifySmsDto) {
@@ -214,8 +355,39 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Verify email address' })
-  @ApiResponse({ status: 200, description: 'Email address verified successfully' })
-  @ApiResponse({ status: 400, description: 'Invalid token' })
+  @ApiResponse({
+    status: 200,
+    description: 'Email address verified successfully',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean', example: true },
+            message: { type: 'string' },
+            user: { type: 'object' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid token',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            statusCode: { type: 'number', example: 400 },
+            message: { type: 'string' },
+            timestamp: { type: 'string' },
+            path: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('verify-email')
   async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
@@ -237,9 +409,40 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Request password reset' })
-  @ApiResponse({ status: 200, description: 'Password reset code sent successfully' })
-  @ApiResponse({ status: 400, description: 'User not found' })
+  @ApiResponse({
+    status: 200,
+    description: 'Password reset code sent successfully',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean', example: true },
+            message: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'User not found',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            statusCode: { type: 'number', example: 400 },
+            message: { type: 'string' },
+            timestamp: { type: 'string' },
+            path: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
   @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @HttpCode(200)
   @Post('request-password-reset')
   async requestPasswordReset(@Body() requestPasswordResetDto: RequestPasswordResetDto) {
     await this.authService.requestPasswordReset(requestPasswordResetDto);
@@ -247,8 +450,38 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Verify password reset code' })
-  @ApiResponse({ status: 200, description: 'Code verified successfully' })
-  @ApiResponse({ status: 400, description: 'Invalid code' })
+  @ApiResponse({
+    status: 200,
+    description: 'Code verified successfully',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean', example: true },
+            message: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid code',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            statusCode: { type: 'number', example: 400 },
+            message: { type: 'string' },
+            timestamp: { type: 'string' },
+            path: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
   @UseGuards(IpBlockGuard)
   @Post('verify-reset-code')
   async verifyResetCode(@Request() req, @Body() verifyResetCodeDto: VerifyResetCodeDto) {
@@ -270,8 +503,39 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Reset password' })
-  @ApiResponse({ status: 200, description: 'Password reset successfully' })
-  @ApiResponse({ status: 400, description: 'Invalid code or user not found' })
+  @ApiResponse({
+    status: 200,
+    description: 'Password reset successfully',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean', example: true },
+            message: { type: 'string' },
+            user: { type: 'object' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid code or user not found',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            statusCode: { type: 'number', example: 400 },
+            message: { type: 'string' },
+            timestamp: { type: 'string' },
+            path: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
   @UseGuards(IpBlockGuard)
   @Post('reset-password')
   async resetPassword(@Request() req, @Body() resetPasswordDto: ResetPasswordDto) {

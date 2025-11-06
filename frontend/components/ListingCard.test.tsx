@@ -112,7 +112,7 @@ describe('ListingCard', () => {
     render(<ListingCard listing={ownListing} />);
 
     const favoriteButton = screen.getByLabelText(
-      'Не можете да додадете ваше објавување во омилени',
+      'Не можете да додадете ваше објавување во омилени'
     );
     expect(favoriteButton).toBeDisabled();
   });
@@ -173,4 +173,3 @@ describe('ListingCard', () => {
     expect(screen.queryByText('0')).not.toBeInTheDocument();
   });
 });
-

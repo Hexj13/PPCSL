@@ -4,11 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
 import { brandsApi, citiesApi, Brand, VehicleModel, City } from '@/lib/api';
-import {
-  ConditionType,
-  DriveType,
-  RegistrationType,
-} from '@/lib/constants';
+import { ConditionType, DriveType, RegistrationType } from '@/lib/constants';
 
 import { Dropdown } from './Dropdown';
 import { MultiSelectDropdown } from './MultiSelectDropdown';
@@ -55,10 +51,10 @@ export function SearchFilters() {
 
   const [filters, setFilters] = useState({
     brand_ids: parseArrayParam(
-      searchParams.get('brand_ids') || searchParams.get('brand_id') || null,
+      searchParams.get('brand_ids') || searchParams.get('brand_id') || null
     ),
     model_ids: parseArrayParam(
-      searchParams.get('model_ids') || searchParams.get('model_id') || null,
+      searchParams.get('model_ids') || searchParams.get('model_id') || null
     ),
     cities: parseArrayParam(searchParams.get('cities') || searchParams.get('city') || null),
     year_gte: searchParams.get('year_gte') || '',
@@ -67,14 +63,12 @@ export function SearchFilters() {
     price_lte: searchParams.get('price_lte') || '',
     mileage_gte: searchParams.get('mileage_gte') || '',
     mileage_lte: searchParams.get('mileage_lte') || '',
-    fuels: parseArrayParam(
-      searchParams.get('fuels') || searchParams.get('fuel') || null,
-    ),
+    fuels: parseArrayParam(searchParams.get('fuels') || searchParams.get('fuel') || null),
     transmissions: parseArrayParam(
-      searchParams.get('transmissions') || searchParams.get('transmission') || null,
+      searchParams.get('transmissions') || searchParams.get('transmission') || null
     ),
     body_types: parseArrayParam(
-      searchParams.get('body_types') || searchParams.get('body_type') || null,
+      searchParams.get('body_types') || searchParams.get('body_type') || null
     ),
     engine_displ_l_gte: searchParams.get('engine_displ_l_gte') || '',
     engine_displ_l_lte: searchParams.get('engine_displ_l_lte') || '',
@@ -88,7 +82,12 @@ export function SearchFilters() {
     horsepower_gte: searchParams.get('horsepower_gte') || '',
     horsepower_lte: searchParams.get('horsepower_lte') || '',
     drive_types: parseArrayParam(searchParams.get('drive_types') || null),
-    is_registered: searchParams.get('is_registered') === 'true' ? true : searchParams.get('is_registered') === 'false' ? false : undefined,
+    is_registered:
+      searchParams.get('is_registered') === 'true'
+        ? true
+        : searchParams.get('is_registered') === 'false'
+          ? false
+          : undefined,
     sortBy: searchParams.get('sortBy') || 'created_at',
     sortOrder: searchParams.get('sortOrder') || 'DESC',
   });
@@ -111,14 +110,14 @@ export function SearchFilters() {
         .then((responses) => {
           const allModels = responses.flatMap((res) => res.data);
           const uniqueModels = Array.from(
-            new Map(allModels.map((model) => [model.id, model])).values(),
+            new Map(allModels.map((model) => [model.id, model])).values()
           );
           const sorted = [...uniqueModels].sort((a, b) => a.name.localeCompare(b.name, 'mk'));
           setModels(sorted);
           setLoadingModels(false);
           setFilters((prev) => {
             const validModelIds = prev.model_ids.filter((modelId) =>
-              sorted.find((m) => m.id === modelId),
+              sorted.find((m) => m.id === modelId)
             );
             return { ...prev, model_ids: validModelIds };
           });
@@ -505,7 +504,10 @@ export function SearchFilters() {
                   value={filters.mileage_gte}
                   onChange={(e) => {
                     const value = e.target.value.replace(/[^0-9]/g, '');
-                    if (value === '' || (parseInt(value, 10) >= 0 && parseInt(value, 10) <= 9999999)) {
+                    if (
+                      value === '' ||
+                      (parseInt(value, 10) >= 0 && parseInt(value, 10) <= 9999999)
+                    ) {
                       handleChange('mileage_gte', value);
                     }
                   }}
@@ -524,7 +526,10 @@ export function SearchFilters() {
                   value={filters.mileage_lte}
                   onChange={(e) => {
                     const value = e.target.value.replace(/[^0-9]/g, '');
-                    if (value === '' || (parseInt(value, 10) >= 0 && parseInt(value, 10) <= 9999999)) {
+                    if (
+                      value === '' ||
+                      (parseInt(value, 10) >= 0 && parseInt(value, 10) <= 9999999)
+                    ) {
                       handleChange('mileage_lte', value);
                     }
                   }}
@@ -536,7 +541,6 @@ export function SearchFilters() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-
               <div>
                 <label className="block text-sm font-semibold mb-2 text-primary-400">Топливо</label>
                 <MultiSelectDropdown
@@ -568,7 +572,9 @@ export function SearchFilters() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2 text-primary-400">Тип на погон</label>
+                <label className="block text-sm font-semibold mb-2 text-primary-400">
+                  Тип на погон
+                </label>
                 <MultiSelectDropdown
                   values={filters.drive_types}
                   onChange={(values) => handleMultiSelectChange('drive_types', values)}
@@ -644,7 +650,9 @@ export function SearchFilters() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2 text-primary-400">Состојба</label>
+                <label className="block text-sm font-semibold mb-2 text-primary-400">
+                  Состојба
+                </label>
                 <MultiSelectDropdown
                   values={filters.conditions}
                   onChange={(values) => handleMultiSelectChange('conditions', values)}
@@ -674,7 +682,9 @@ export function SearchFilters() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2 text-primary-400">Регистрација</label>
+                <label className="block text-sm font-semibold mb-2 text-primary-400">
+                  Регистрација
+                </label>
                 <Dropdown
                   value={
                     filters.is_registered === true
@@ -686,7 +696,7 @@ export function SearchFilters() {
                   onChange={(value) =>
                     handleChange(
                       'is_registered',
-                      value === 'true' ? 'true' : value === 'false' ? 'false' : '',
+                      value === 'true' ? 'true' : value === 'false' ? 'false' : ''
                     )
                   }
                   options={[
