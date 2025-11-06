@@ -26,7 +26,7 @@ interface ListingCardProps {
 
 export function ListingCard({ listing, forceFavorite = false, onRemove }: ListingCardProps) {
   const originalImageUrl = listing.images?.[0] || '/placeholder-car.jpg';
-  const imageUrl = getOptimizedImageUrl(originalImageUrl, 60, 800);
+  const imageUrl = getOptimizedImageUrl(originalImageUrl, 80, 1200);
   const vehicle = listing.vehicle;
   const { user } = useAuthStore();
   const { check: checkFavorite, add: addFavorite, remove: removeFavorite } = useFavoritesStore();

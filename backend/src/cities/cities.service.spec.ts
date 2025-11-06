@@ -1,13 +1,26 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { RedisService } from '../common/redis.service';
+
 import { CitiesService } from './cities.service';
 
 describe('CitiesService', () => {
   let service: CitiesService;
 
   beforeEach(async () => {
+    const mockRedisService = {
+      getJson: jest.fn().mockResolvedValue(null),
+      setJson: jest.fn().mockResolvedValue(undefined),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [CitiesService],
+      providers: [
+        CitiesService,
+        {
+          provide: RedisService,
+          useValue: mockRedisService,
+        },
+      ],
     }).compile();
 
     service = module.get<CitiesService>(CitiesService);
@@ -18,8 +31,8 @@ describe('CitiesService', () => {
   });
 
   describe('getAll', () => {
-    it('should return all cities sorted by name', () => {
-      const result = service.getAll();
+    it('should return all cities sorted by name', async () => {
+      const result = await service.getAll();
 
       expect(Array.isArray(result)).toBe(true);
       expect(result.length).toBeGreaterThan(0);
@@ -30,8 +43,8 @@ describe('CitiesService', () => {
       expect(result).toEqual(sorted);
     });
 
-    it('should return cities with Macedonian and English names', () => {
-      const result = service.getAll();
+    it('should return cities with Macedonian and English names', async () => {
+      const result = await service.getAll();
 
       const skopje = result.find((city) => city.nameEn === 'Skopje');
       expect(skopje).toBeDefined();

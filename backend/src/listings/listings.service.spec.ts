@@ -4,6 +4,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 
 import { BrandsService } from '../brands/brands.service';
+import { RedisService } from '../common/redis.service';
 import { Currency, ListingStatus } from '../common/types';
 import { UsersService } from '../users/users.service';
 
@@ -84,6 +85,13 @@ describe('ListingsService', () => {
       getModelsByBrand: jest.fn(),
     };
 
+    const mockRedisService = {
+      delPattern: jest.fn().mockResolvedValue(undefined),
+      del: jest.fn().mockResolvedValue(undefined),
+      getJson: jest.fn().mockResolvedValue(null),
+      setJson: jest.fn().mockResolvedValue(undefined),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ListingsService,
@@ -106,6 +114,10 @@ describe('ListingsService', () => {
         {
           provide: BrandsService,
           useValue: mockBrandsService,
+        },
+        {
+          provide: RedisService,
+          useValue: mockRedisService,
         },
       ],
     }).compile();

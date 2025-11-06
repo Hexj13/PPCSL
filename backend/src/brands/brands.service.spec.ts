@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+import { RedisService } from '../common/redis.service';
 import { Favorite } from '../favorites/entities/favorite.entity';
 import { ListingView } from '../listings/entities/listing-view.entity';
 import { Listing } from '../listings/entities/listing.entity';
@@ -67,6 +68,13 @@ describe('BrandsService', () => {
       remove: jest.fn(),
     };
 
+    const mockRedisService = {
+      delPattern: jest.fn().mockResolvedValue(undefined),
+      del: jest.fn().mockResolvedValue(undefined),
+      getJson: jest.fn().mockResolvedValue(null),
+      setJson: jest.fn().mockResolvedValue(undefined),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BrandsService,
@@ -93,6 +101,10 @@ describe('BrandsService', () => {
         {
           provide: getRepositoryToken(Favorite),
           useValue: mockFavoritesRepository,
+        },
+        {
+          provide: RedisService,
+          useValue: mockRedisService,
         },
       ],
     }).compile();

@@ -118,22 +118,52 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 export function getOptimizedImageUrl(
   imageUrl: string,
-  _quality: number = 85,
-  _width?: number
+  quality: number = 85,
+  width?: number
 ): string {
   if (!imageUrl || imageUrl === '/placeholder-car.jpg') {
     return imageUrl;
   }
 
+  let relativePath = '';
+
   if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    try {
+      const url = new URL(imageUrl);
+      const pathname = url.pathname;
+      
+      if (pathname.startsWith('/uploads/')) {
+        relativePath = pathname.substring('/uploads/'.length);
+      } else if (pathname.startsWith('/api/upload/image/')) {
+        return imageUrl;
+      } else {
+        return imageUrl;
+      }
+    } catch {
+      return imageUrl;
+    }
+  } else if (imageUrl.startsWith('/uploads/')) {
+    relativePath = imageUrl.substring('/uploads/'.length);
+  } else if (imageUrl.startsWith('/')) {
+    relativePath = imageUrl.substring(1);
+  } else {
+    relativePath = imageUrl;
+  }
+
+  if (!relativePath) {
     return imageUrl;
   }
 
-  if (imageUrl.startsWith('/')) {
-    return `${API_URL}${imageUrl}`;
+  const params = new URLSearchParams();
+  if (quality) {
+    params.set('quality', quality.toString());
+  }
+  if (width) {
+    params.set('width', width.toString());
   }
 
-  return `${API_URL}/${imageUrl}`;
+  const queryString = params.toString();
+  return `${API_URL}/api/upload/image/${encodeURIComponent(relativePath)}${queryString ? `?${queryString}` : ''}`;
 }
 
 const cityNamesMap: Record<string, string> = {

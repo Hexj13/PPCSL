@@ -179,8 +179,8 @@ export class UploadController {
       if (
         !decodedFilename ||
         decodedFilename.includes('..') ||
-        decodedFilename.includes('/') ||
-        decodedFilename.includes('\\')
+        decodedFilename.startsWith('/') ||
+        decodedFilename.startsWith('\\')
       ) {
         throw new BadRequestException('Invalid filename');
       }
