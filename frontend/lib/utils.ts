@@ -131,7 +131,7 @@ export function getOptimizedImageUrl(
     try {
       const url = new URL(imageUrl);
       const pathname = url.pathname;
-      
+
       if (pathname.startsWith('/uploads/')) {
         relativePath = pathname.substring('/uploads/'.length);
       } else if (pathname.startsWith('/api/upload/image/')) {
