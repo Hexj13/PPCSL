@@ -123,6 +123,10 @@ describe('utils', () => {
       expect(formatBodyType('Minivan')).toBe('Миниван');
     });
 
+    it('should format Truck', () => {
+      expect(formatBodyType('Truck')).toBe('Грузовик');
+    });
+
     it('should return empty string for undefined', () => {
       expect(formatBodyType(undefined)).toBe('');
     });

@@ -65,6 +65,8 @@ export function formatBodyType(bodyType: string | undefined): string {
       return 'Пикап';
     case 'Minivan':
       return 'Миниван';
+    case 'Truck':
+      return 'Грузовик';
     default:
       return bodyType;
   }

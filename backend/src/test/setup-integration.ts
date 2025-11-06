@@ -7,8 +7,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 
 import { AppModule } from '../app.module';
-import { HttpExceptionFilter } from '../common/filters/http-exception.filter';
 import { EmailService } from '../auth/services/email.service';
+import { HttpExceptionFilter } from '../common/filters/http-exception.filter';
 
 let app: INestApplication;
 let swaggerDocument: OpenAPIObject;

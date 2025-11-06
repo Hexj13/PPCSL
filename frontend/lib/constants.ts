@@ -18,6 +18,7 @@ export const bodyTypes = [
   'Van',
   'Pickup',
   'Minivan',
+  'Truck',
 ] as const;
 
 export const UserType = {
@@ -61,4 +62,5 @@ export const BodyType = {
   Van: bodyTypes[6],
   Pickup: bodyTypes[7],
   Minivan: bodyTypes[8],
+  Truck: bodyTypes[9],
 } as const;

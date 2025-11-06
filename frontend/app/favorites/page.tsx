@@ -22,7 +22,7 @@ export default function FavoritesPage() {
         const favoritesList = res.data.map((f: { listing: Listing }) => f.listing);
         setListings(favoritesList);
         const { setFavorites } = useFavoritesStore.getState();
-        const favoriteIds = favoritesList.map((listing) => listing.id);
+        const favoriteIds = favoritesList.map((listing: Listing) => listing.id);
         setFavorites(favoriteIds);
       })
       .catch(() => {})
