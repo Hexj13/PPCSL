@@ -162,7 +162,7 @@ describe('ListingsService', () => {
     it('should publish listing when under limit', async () => {
       const pausedListing = { ...mockListing, status: ListingStatus.Paused };
       listingsRepository.findOne.mockResolvedValue(pausedListing);
-      usersService.getListingLimit.mockResolvedValue(5);
+      usersService.getListingLimit.mockResolvedValue(3);
       listingsRepository.count.mockResolvedValue(2);
       listingsRepository.save.mockResolvedValue({ ...pausedListing, status: ListingStatus.Active });
 
@@ -175,8 +175,8 @@ describe('ListingsService', () => {
     it('should throw BadRequestException when limit is exceeded', async () => {
       const pausedListing = { ...mockListing, status: ListingStatus.Paused };
       listingsRepository.findOne.mockResolvedValue(pausedListing);
-      usersService.getListingLimit.mockResolvedValue(5);
-      listingsRepository.count.mockResolvedValue(5);
+      usersService.getListingLimit.mockResolvedValue(3);
+      listingsRepository.count.mockResolvedValue(3);
 
       await expect(service.publish('listing-1', 'user-1')).rejects.toThrow(BadRequestException);
     });

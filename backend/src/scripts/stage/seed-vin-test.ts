@@ -1,16 +1,16 @@
 import 'reflect-metadata';
-import { Brand } from '../brands/entities/brand.entity';
+import { Brand } from '../../brands/entities/brand.entity';
 import {
   BodyType,
   Currency,
   FuelType,
   ListingStatus as ListingStatusEnum,
   TransmissionType,
-} from '../common/types';
-import { AppDataSource } from '../data-source';
-import { Listing } from '../listings/entities/listing.entity';
-import { Vehicle } from '../listings/entities/vehicle.entity';
-import { User } from '../users/entities/user.entity';
+} from '../../common/types';
+import { AppDataSource } from '../../data-source';
+import { Listing } from '../../listings/entities/listing.entity';
+import { Vehicle } from '../../listings/entities/vehicle.entity';
+import { User } from '../../users/entities/user.entity';
 
 function getRandomElement<T>(array: T[]): T {
   return array[Math.floor(Math.random() * array.length)];

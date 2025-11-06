@@ -16,8 +16,11 @@ import { UsersService } from '../users/users.service';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SendSmsDto } from './dto/send-sms.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
+import { VerifyResetCodeDto } from './dto/verify-reset-code.dto';
 import { VerifySmsDto } from './dto/verify-sms.dto';
 import { IpBlockGuard } from './guards/ip-block.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -231,5 +234,80 @@ export class AuthController {
         emailVerified: user.emailVerified,
       },
     };
+  }
+
+  @ApiOperation({ summary: 'Request password reset' })
+  @ApiResponse({ status: 200, description: 'Password reset code sent successfully' })
+  @ApiResponse({ status: 400, description: 'User not found' })
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @Post('request-password-reset')
+  async requestPasswordReset(@Body() requestPasswordResetDto: RequestPasswordResetDto) {
+    await this.authService.requestPasswordReset(requestPasswordResetDto);
+    return { success: true, message: 'SMS кодот за ресетирање на лозинка е испратен' };
+  }
+
+  @ApiOperation({ summary: 'Verify password reset code' })
+  @ApiResponse({ status: 200, description: 'Code verified successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid code' })
+  @UseGuards(IpBlockGuard)
+  @Post('verify-reset-code')
+  async verifyResetCode(@Request() req, @Body() verifyResetCodeDto: VerifyResetCodeDto) {
+    const ip = this.ipBlockService.getClientIp(req);
+
+    if (!verifyResetCodeDto.phone) {
+      throw new BadRequestException('Телефонскиот број е задолжителен');
+    }
+
+    const result = await this.authService.verifyResetCode(verifyResetCodeDto);
+
+    if (result.success) {
+      this.ipBlockService.resetAttempts(ip);
+      return { success: true, message: 'Кодот е успешно верифициран' };
+    }
+
+    this.ipBlockService.recordFailedAttempt(ip);
+    throw new BadRequestException('Невалиден код. Обидете се повторно.');
+  }
+
+  @ApiOperation({ summary: 'Reset password' })
+  @ApiResponse({ status: 200, description: 'Password reset successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid code or user not found' })
+  @UseGuards(IpBlockGuard)
+  @Post('reset-password')
+  async resetPassword(@Request() req, @Body() resetPasswordDto: ResetPasswordDto) {
+    const ip = this.ipBlockService.getClientIp(req);
+
+    if (!resetPasswordDto.phone) {
+      throw new BadRequestException('Телефонскиот број е задолжителен');
+    }
+
+    if (!resetPasswordDto.code) {
+      throw new BadRequestException('Кодот е задолжителен');
+    }
+
+    if (!resetPasswordDto.newPassword) {
+      throw new BadRequestException('Новата лозинка е задолжителна');
+    }
+
+    try {
+      const user = await this.authService.resetPassword(resetPasswordDto);
+      this.ipBlockService.resetAttempts(ip);
+      return {
+        success: true,
+        message: 'Лозинката е успешно ресетирана',
+        user: {
+          id: user.id,
+          email: user.email,
+          type: user.type,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          companyName: user.companyName,
+          phone: user.phone,
+        },
+      };
+    } catch (error) {
+      this.ipBlockService.recordFailedAttempt(ip);
+      throw error;
+    }
   }
 }

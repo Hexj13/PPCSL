@@ -1,0 +1,716 @@
+'use client';
+
+import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { toast } from 'react-hot-toast';
+
+import { authApi } from '@/lib/api';
+
+type Step = 'phone' | 'code' | 'password';
+
+const isValidPhone = (value: string): boolean => {
+  return /^\+\d{1,4}\d{6,15}$/.test(value);
+};
+
+export default function ResetPasswordPage() {
+  const router = useRouter();
+  const [step, setStep] = useState<Step>('phone');
+  const [phone, setPhone] = useState('');
+  const [code, setCode] = useState(['', '', '', '', '', '']);
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [errors, setErrors] = useState<{
+    phone?: string;
+    code?: string;
+    password?: string;
+    confirmPassword?: string;
+  }>({});
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [verificationAttempts, setVerificationAttempts] = useState(0);
+  const [isVerificationBlocked, setIsVerificationBlocked] = useState(false);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const cooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      cooldownTimerRef.current = setInterval(() => {
+        setResendCooldown((prev) => {
+          if (prev <= 1) {
+            if (cooldownTimerRef.current) {
+              clearInterval(cooldownTimerRef.current);
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      if (cooldownTimerRef.current) {
+        clearInterval(cooldownTimerRef.current);
+      }
+    }
+
+    return () => {
+      if (cooldownTimerRef.current) {
+        clearInterval(cooldownTimerRef.current);
+      }
+    };
+  }, [resendCooldown]);
+
+  useEffect(() => {
+    setLoading(false);
+    if (step === 'code') {
+      setTimeout(() => {
+        inputRefs.current[0]?.focus();
+      }, 100);
+    }
+  }, [step]);
+
+  const handleRequestReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!phone.trim()) {
+      setErrors({ phone: 'Телефонскиот број е задолжителен' });
+      return;
+    }
+
+    if (!isValidPhone(phone)) {
+      setErrors({ phone: 'Внесете валиден телефон (формат: +код држава број)' });
+      return;
+    }
+
+    setLoading(true);
+    setErrors({});
+
+    try {
+      await authApi.requestPasswordReset({ phone });
+      toast.success('SMS кодот е испратен');
+      setStep('code');
+      setResendCooldown(60);
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { message?: string } } };
+      setErrors({ phone: axiosError.response?.data?.message || 'Грешка при испраќање на SMS' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCodeChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) {
+      return;
+    }
+
+    const newCode = [...code];
+    if (value.length === 1) {
+      newCode[index] = value;
+      setCode(newCode);
+      setErrors({ ...errors, code: undefined });
+
+      if (index < 5 && value) {
+        inputRefs.current[index + 1]?.focus();
+      }
+    } else if (value.length === 0) {
+      newCode[index] = '';
+      setCode(newCode);
+      if (index > 0) {
+        inputRefs.current[index - 1]?.focus();
+      }
+    }
+  };
+
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !code[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+    if (e.key === 'ArrowLeft' && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+    if (e.key === 'ArrowRight' && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').trim();
+    const digitsOnly = pastedData.replace(/\D/g, '').slice(0, 6);
+
+    if (digitsOnly.length > 0) {
+      const newCode = digitsOnly.split('').concat(Array(6 - digitsOnly.length).fill(''));
+      setCode(newCode);
+      setErrors({ ...errors, code: undefined });
+
+      const filledIndex = Math.min(digitsOnly.length - 1, 5);
+      inputRefs.current[filledIndex]?.focus();
+    }
+  };
+
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (isVerificationBlocked) {
+      setErrors({ code: 'Достигнато е максималниот број на обиди. Испратете го кодот повторно.' });
+      return;
+    }
+
+    const fullCode = code.join('').trim();
+    if (fullCode.length !== 6) {
+      setErrors({ code: 'Кодот мора да содржи точно 6 цифри' });
+      return;
+    }
+
+    if (!/^\d{6}$/.test(fullCode)) {
+      setErrors({ code: 'Кодот мора да содржи само цифри' });
+      return;
+    }
+
+    setLoading(true);
+    setErrors({});
+
+    try {
+      await authApi.verifyResetCode({ phone, code: fullCode });
+      toast.success('Кодот е успешно верифициран');
+      setStep('password');
+      setLoading(false);
+    } catch (err: unknown) {
+      const axiosError = err as {
+        response?: {
+          status?: number;
+          data?: { message?: string; blockedUntil?: string };
+        };
+      };
+
+      if (axiosError.response?.status === 429) {
+        const blockedUntil = axiosError.response.data?.blockedUntil;
+        if (blockedUntil) {
+          const blockedDate = new Date(blockedUntil);
+          const now = new Date();
+          const remainingMinutes = Math.ceil((blockedDate.getTime() - now.getTime()) / (1000 * 60));
+          setErrors({
+            code: `Достигнато е максималниот број на обиди. Обидете се повторно за ${remainingMinutes} минути`,
+          });
+          setIsVerificationBlocked(true);
+          setCode(['', '', '', '', '', '']);
+          setLoading(false);
+          toast.error(`IP адресата е блокирана за ${remainingMinutes} минути`);
+          return;
+        }
+      }
+
+      const newAttempts = verificationAttempts + 1;
+      setVerificationAttempts(newAttempts);
+
+      if (newAttempts >= 10) {
+        setIsVerificationBlocked(true);
+        setErrors({
+          code: 'Достигнато е максималниот број на обиди (10). Испратете го кодот повторно за да продолжите.',
+        });
+      } else {
+        setErrors({
+          code:
+            axiosError.response?.data?.message ||
+            `Невалиден код. Обидете се повторно. (${newAttempts}/10)`,
+        });
+      }
+
+      setCode(['', '', '', '', '', '']);
+      setLoading(false);
+      setTimeout(() => {
+        inputRefs.current[0]?.focus();
+      }, 100);
+    }
+  };
+
+  const validatePassword = (passwordValue: string): string => {
+    if (passwordValue.length < 8) {
+      return 'Лозинката мора да содржи минимум 8 карактери';
+    }
+    if (!/[A-Z]/.test(passwordValue)) {
+      return 'Лозинката мора да содржи барем една голема буква';
+    }
+    if (!/[a-z]/.test(passwordValue)) {
+      return 'Лозинката мора да содржи барем една мала буква';
+    }
+    if (!/[!@#$%^&*()_+=[\]{};':"\\|,.<>/?-]/.test(passwordValue)) {
+      return 'Лозинката мора да содржи барем еден специјален карактер';
+    }
+    return '';
+  };
+
+  const isPasswordValid = useCallback((passwordValue: string): boolean => {
+    if (!passwordValue) {
+      return false;
+    }
+    const trimmed = passwordValue.trim();
+    if (trimmed.length === 0) {
+      return false;
+    }
+    return (
+      trimmed.length >= 8 &&
+      /[A-Z]/.test(trimmed) &&
+      /[a-z]/.test(trimmed) &&
+      /[!@#$%^&*()_+=[\]{};':"\\|,.<>/?-]/.test(trimmed)
+    );
+  }, []);
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const newErrors: { password?: string; confirmPassword?: string } = {};
+
+    if (!password.trim()) {
+      newErrors.password = 'Лозинката е задолжителна';
+    } else {
+      const passwordValidationError = validatePassword(password);
+      if (passwordValidationError) {
+        newErrors.password = passwordValidationError;
+      }
+    }
+
+    if (!confirmPassword.trim()) {
+      newErrors.confirmPassword = 'Потврдата на лозинката е задолжителна';
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = 'Лозинките не се совпаѓаат';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setLoading(true);
+    setErrors({});
+
+    const fullCode = code.join('').trim();
+
+    try {
+      await authApi.resetPassword({
+        phone,
+        code: fullCode,
+        newPassword: password,
+      });
+      toast.success('Лозинката е успешно ресетирана');
+      setLoading(false);
+      router.push('/login');
+    } catch {
+      // Error is already handled by API interceptor
+      setLoading(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    if (resendCooldown > 0) {
+      return;
+    }
+
+    setResendCooldown(60);
+    setCode(['', '', '', '', '', '']);
+    setErrors({});
+    setVerificationAttempts(0);
+    setIsVerificationBlocked(false);
+    inputRefs.current[0]?.focus();
+
+    try {
+      await authApi.requestPasswordReset({ phone });
+      toast.success('Кодот е испратен повторно');
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { message?: string } } };
+      toast.error(axiosError.response?.data?.message || 'Грешка при испраќање на SMS');
+    }
+  };
+
+  const handleBack = () => {
+    setLoading(false);
+    if (step === 'code') {
+      setStep('phone');
+      setCode(['', '', '', '', '', '']);
+      setErrors({});
+      setVerificationAttempts(0);
+      setIsVerificationBlocked(false);
+    } else if (step === 'password') {
+      setStep('code');
+      setPassword('');
+      setConfirmPassword('');
+      setErrors({});
+    }
+  };
+
+  const getPasswordValidationRules = (passwordValue: string) => {
+    return [
+      {
+        text: 'Минимум 8 карактери',
+        isValid: passwordValue.length >= 8,
+      },
+      {
+        text: 'Барем една голема буква',
+        isValid: /[A-Z]/.test(passwordValue),
+      },
+      {
+        text: 'Барем една мала буква',
+        isValid: /[a-z]/.test(passwordValue),
+      },
+      {
+        text: 'Барем еден специјален карактер',
+        isValid: /[!@#$%^&*()_+=[\]{};':"\\|,.<>/?-]/.test(passwordValue),
+      },
+    ];
+  };
+
+  const isFormValid = useMemo(() => {
+    const trimmedPassword = password.trim();
+    const trimmedConfirmPassword = confirmPassword.trim();
+
+    if (trimmedPassword.length === 0 || trimmedConfirmPassword.length === 0) {
+      return false;
+    }
+    if (trimmedPassword !== trimmedConfirmPassword) {
+      return false;
+    }
+
+    return isPasswordValid(trimmedPassword);
+  }, [password, confirmPassword, isPasswordValid]);
+
+  return (
+    <div className="max-w-md mx-auto mt-6 md:mt-12">
+      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+        Ресетирање на лозинка
+      </h1>
+
+      {step === 'phone' && (
+        <form onSubmit={handleRequestReset} className="card p-6 md:p-8">
+          <div className="mb-5">
+            <label className="block text-sm font-semibold mb-2 text-primary-400">
+              Телефонски број
+            </label>
+            <input
+              type="text"
+              value={phone}
+              onChange={(e) => {
+                setPhone(e.target.value);
+                if (errors.phone) {
+                  setErrors({ ...errors, phone: undefined });
+                }
+              }}
+              className={`input-field ${errors.phone ? 'border-red-500' : ''}`}
+              placeholder="+38970123456"
+              autoComplete="tel"
+            />
+            {errors.phone && <p className="mt-1 text-sm text-red-400">{errors.phone}</p>}
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+          >
+            {loading ? 'Испраќање...' : 'Испрати код'}
+          </button>
+
+          <p className="mt-6 text-center text-sm text-gray-300">
+            <a
+              href="/login"
+              className="text-primary-500 font-semibold hover:text-primary-400 hover:underline transition-colors"
+            >
+              Назад кон најава
+            </a>
+          </p>
+        </form>
+      )}
+
+      {step === 'code' && (
+        <div className="card p-6 md:p-8">
+          <div className="space-y-6">
+            <div className="text-center">
+              <p className="text-gray-300 mb-2">
+                Испратениот код на телефон{' '}
+                {phone && <span className="font-semibold text-white">{phone}</span>}
+              </p>
+              <p className="text-sm text-gray-400">Внесете го 6-цифрениот код од СМС пораката</p>
+            </div>
+
+            <form onSubmit={handleVerifyCode} className="space-y-4">
+              <div className="flex justify-center gap-2 md:gap-3">
+                {[0, 1, 2, 3, 4, 5].map((index) => (
+                  <div key={index} className="relative">
+                    <input
+                      ref={(el) => {
+                        inputRefs.current[index] = el;
+                      }}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={code[index] || ''}
+                      onChange={(e) => handleCodeChange(index, e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(index, e)}
+                      onPaste={index === 0 ? handlePaste : undefined}
+                      disabled={loading}
+                      className={`w-12 h-14 md:w-14 md:h-16 text-center text-2xl md:text-3xl font-bold bg-bg-light border-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+                        errors.code
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                          : 'border-primary-500/30 focus:border-primary-500'
+                      } ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-text'} text-white`}
+                      style={{
+                        caretColor: 'transparent',
+                        fontFamily: "'Digital-7', monospace",
+                        letterSpacing: '0.05em',
+                      }}
+                      autoComplete="off"
+                    />
+                    {!code[index] && (
+                      <span
+                        className="absolute inset-0 flex items-center justify-center pointer-events-none text-gray-500 opacity-60 select-none text-2xl md:text-3xl font-bold"
+                        style={{
+                          fontFamily: "'Digital-7', monospace",
+                          letterSpacing: '0.05em',
+                        }}
+                      >
+                        0
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {errors.code && (
+                <div className="text-center">
+                  <p className="text-sm text-red-400">{errors.code}</p>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  disabled={loading}
+                  className="flex-1 btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Назад
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading || code.join('').trim().length !== 6 || isVerificationBlocked}
+                  className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                >
+                  {loading ? 'Проверување...' : isVerificationBlocked ? 'Блокирано' : 'Потврди'}
+                </button>
+              </div>
+            </form>
+
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={handleResendCode}
+                disabled={loading || resendCooldown > 0}
+                className="text-sm text-primary-400 hover:text-primary-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {resendCooldown > 0 ? `Испрати нов код (${resendCooldown}с)` : 'Испрати нов код'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {step === 'password' && (
+        <form onSubmit={handleResetPassword} className="card p-6 md:p-8">
+          <div className="mb-5">
+            <label className="block text-sm font-semibold mb-2 text-primary-400">
+              Нова лозинка
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errors.password) {
+                    setErrors({ ...errors, password: undefined });
+                  }
+                }}
+                className={`input-field pr-10 ${errors.password ? 'border-red-500' : ''}`}
+                placeholder="Внесете нова лозинка"
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary-400 transition-colors"
+                tabIndex={-1}
+              >
+                {showPassword ? (
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                    />
+                  </svg>
+                )}
+              </button>
+            </div>
+            <div className="mt-2 space-y-1">
+              {getPasswordValidationRules(password).map((rule, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  {rule.isValid ? (
+                    <svg
+                      className="w-3 h-3 text-green-400 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={3}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  ) : (
+                    <svg
+                      className="w-3 h-3 text-gray-400 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  )}
+                  <p
+                    className={`text-[10px] leading-tight ${
+                      rule.isValid ? 'text-green-400' : 'text-gray-400'
+                    } transition-colors`}
+                  >
+                    {rule.text}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm font-semibold mb-2 text-primary-400">
+              Потврди лозинка
+            </label>
+            <div className="relative">
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  if (errors.confirmPassword) {
+                    setErrors({ ...errors, confirmPassword: undefined });
+                  }
+                }}
+                className={`input-field pr-10 ${errors.confirmPassword ? 'border-red-500' : ''}`}
+                placeholder="Потврдете ја лозинката"
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary-400 transition-colors"
+                tabIndex={-1}
+              >
+                {showConfirmPassword ? (
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                    />
+                  </svg>
+                )}
+              </button>
+            </div>
+            {errors.confirmPassword && (
+              <p className="mt-1 text-sm text-red-400">{errors.confirmPassword}</p>
+            )}
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={handleBack}
+              disabled={loading}
+              className="flex-1 btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Назад
+            </button>
+            <button
+              type="submit"
+              disabled={loading || !isFormValid}
+              className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            >
+              {loading ? 'Ресетирање...' : 'Ресетирај'}
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+}

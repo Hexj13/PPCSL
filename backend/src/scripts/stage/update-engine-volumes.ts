@@ -1,6 +1,6 @@
 import 'reflect-metadata';
-import { AppDataSource } from '../data-source';
-import { Vehicle } from '../listings/entities/vehicle.entity';
+import { AppDataSource } from '../../data-source';
+import { Vehicle } from '../../listings/entities/vehicle.entity';
 
 async function updateEngineVolumes() {
   try {

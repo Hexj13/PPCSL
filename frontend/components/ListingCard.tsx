@@ -19,15 +19,17 @@ import {
 
 interface ListingCardProps {
   listing: Listing;
+  forceFavorite?: boolean;
+  onRemove?: () => void;
 }
 
-export function ListingCard({ listing }: ListingCardProps) {
+export function ListingCard({ listing, forceFavorite = false, onRemove }: ListingCardProps) {
   const originalImageUrl = listing.images?.[0] || '/placeholder-car.jpg';
   const imageUrl = getOptimizedImageUrl(originalImageUrl, 60, 800);
   const vehicle = listing.vehicle;
   const { user } = useAuthStore();
   const { check: checkFavorite, add: addFavorite, remove: removeFavorite } = useFavoritesStore();
-  const isFavorite = checkFavorite(listing.id);
+  const isFavorite = forceFavorite || checkFavorite(listing.id);
   const isOwnListing = !!(user && listing.user && user.id === listing.user.id);
   const [imageError, setImageError] = React.useState(false);
 
@@ -35,25 +37,31 @@ export function ListingCard({ listing }: ListingCardProps) {
     e.preventDefault();
     e.stopPropagation();
 
-    if (isOwnListing) {
-      return;
-    }
-
     if (!user) {
       toast.error('Потребно е да се најавите');
       return;
     }
 
-    try {
-      if (isFavorite) {
+    if (isFavorite) {
+      try {
         await favoritesApi.remove(listing.id);
         removeFavorite(listing.id);
+        if (onRemove) {
+          onRemove();
+        }
         toast.success('Отстрането од омилени');
-      } else {
-        await favoritesApi.add(listing.id);
-        addFavorite(listing.id);
-        toast.success('Додадено во омилени');
-      }
+      } catch {}
+      return;
+    }
+
+    if (isOwnListing) {
+      return;
+    }
+
+    try {
+      await favoritesApi.add(listing.id);
+      addFavorite(listing.id);
+      toast.success('Додадено во омилени');
     } catch {}
   };
 
@@ -95,16 +103,16 @@ export function ListingCard({ listing }: ListingCardProps) {
           )}
           <button
             onClick={handleToggleFavorite}
-            disabled={isOwnListing}
+            disabled={!isFavorite && isOwnListing}
             className={`absolute top-3 right-3 w-10 h-10 rounded-full bg-green-600 flex items-center justify-center transition-all shadow-lg z-10 ${
-              isOwnListing
+              !isFavorite && isOwnListing
                 ? 'opacity-30 cursor-not-allowed'
                 : isFavorite
                   ? 'opacity-100 hover:bg-green-700'
                   : 'opacity-60 hover:opacity-100 hover:bg-green-700'
             }`}
             aria-label={
-              isOwnListing
+              !isFavorite && isOwnListing
                 ? 'Не можете да додадете ваше објавување во омилени'
                 : isFavorite
                   ? 'Отстрани од омилени'

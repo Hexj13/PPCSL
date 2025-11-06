@@ -9,6 +9,9 @@ import { UsersService } from '../users/users.service';
 
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { VerifyResetCodeDto } from './dto/verify-reset-code.dto';
 import { EmailService } from './services/email.service';
 import { SmsService } from './services/sms.service';
 
@@ -181,6 +184,66 @@ export class AuthService {
     const updatedUser = await this.usersService.update(verificationData.userId, {
       emailVerified: true,
     });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _, ...result } = updatedUser;
+    return result;
+  }
+
+  async requestPasswordReset(requestPasswordResetDto: RequestPasswordResetDto): Promise<void> {
+    const normalizedPhone = this.smsService.normalizePhoneNumber(requestPasswordResetDto.phone);
+    const user = await this.usersService.findByPhone(normalizedPhone);
+
+    if (!user) {
+      throw new BadRequestException('Корисник со овој телефон не е пронајден');
+    }
+
+    await this.smsService.sendPasswordResetCode(requestPasswordResetDto.phone);
+  }
+
+  async verifyResetCode(verifyResetCodeDto: VerifyResetCodeDto): Promise<{ success: boolean }> {
+    const normalizedPhone = this.smsService.normalizePhoneNumber(verifyResetCodeDto.phone);
+    const user = await this.usersService.findByPhone(normalizedPhone);
+
+    if (!user) {
+      throw new BadRequestException('Корисник со овој телефон не е пронајден');
+    }
+
+    const isValid = await this.smsService.verifyPasswordResetCode(
+      verifyResetCodeDto.phone,
+      verifyResetCodeDto.code,
+    );
+
+    if (!isValid) {
+      throw new BadRequestException('Невалиден код. Обидете се повторно.');
+    }
+
+    return { success: true };
+  }
+
+  async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<UserWithoutPassword> {
+    const normalizedPhone = this.smsService.normalizePhoneNumber(resetPasswordDto.phone);
+    const user = await this.usersService.findByPhone(normalizedPhone);
+
+    if (!user) {
+      throw new BadRequestException('Корисник со овој телефон не е пронајден');
+    }
+
+    const isValid = await this.smsService.verifyPasswordResetCode(
+      resetPasswordDto.phone,
+      resetPasswordDto.code,
+    );
+
+    if (!isValid) {
+      throw new BadRequestException('Невалиден код. Обидете се повторно.');
+    }
+
+    const hashedPassword = await bcrypt.hash(resetPasswordDto.newPassword, 10);
+    const updatedUser = await this.usersService.update(user.id, {
+      password: hashedPassword,
+    });
+
+    await this.smsService.clearPasswordResetCode(resetPasswordDto.phone);
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...result } = updatedUser;
     return result;

@@ -9,7 +9,7 @@ Create a `.env` file in the `backend/` directory with the following variables:
 ```env
 # Server Configuration
 PORT=4000
-NODE_ENV=development
+NODE_ENV=development  # Options: development, stage, production, test
 
 # Database Configuration
 DB_HOST=localhost
@@ -44,7 +44,7 @@ SMTP_FROM=noreply@kupito.mk
 ### Variable Descriptions
 
 - **PORT**: Port number for the backend server (default: 4000)
-- **NODE_ENV**: Environment mode (`development`, `production`, or `test`)
+- **NODE_ENV**: Environment mode (`development`, `stage`, `production`, or `test`)
 - **DB_HOST**: PostgreSQL database host address
 - **DB_PORT**: PostgreSQL database port number (default: 5432)
 - **DB_USERNAME**: PostgreSQL database username

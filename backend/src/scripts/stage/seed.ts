@@ -1,8 +1,8 @@
 import 'reflect-metadata';
 import * as bcrypt from 'bcrypt';
 
-import { Brand } from '../brands/entities/brand.entity';
-import { VehicleModel } from '../brands/entities/vehicle-model.entity';
+import { Brand } from '../../brands/entities/brand.entity';
+import { VehicleModel } from '../../brands/entities/vehicle-model.entity';
 import {
   BodyType,
   Currency,
@@ -10,11 +10,14 @@ import {
   ListingStatus as ListingStatusEnum,
   TransmissionType,
   UserType as UserTypeEnum,
-} from '../common/types';
-import { AppDataSource } from '../data-source';
-import { Listing } from '../listings/entities/listing.entity';
-import { Vehicle } from '../listings/entities/vehicle.entity';
-import { User } from '../users/entities/user.entity';
+} from '../../common/types';
+import { AppDataSource } from '../../data-source';
+import { Listing } from '../../listings/entities/listing.entity';
+import { Vehicle } from '../../listings/entities/vehicle.entity';
+import { User } from '../../users/entities/user.entity';
+import { checkEnvironment } from '../script-guard';
+
+checkEnvironment(['stage', 'development', 'test']);
 
 const cities = [
   'Скопје',
@@ -641,6 +644,7 @@ async function createVinHistory(
 
 async function seed() {
   try {
+    checkEnvironment(['stage', 'development', 'test']);
     console.log('🔌 Connecting to database...');
     await AppDataSource.initialize();
     console.log('✅ Connected to database');

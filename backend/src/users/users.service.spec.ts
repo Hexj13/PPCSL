@@ -183,21 +183,21 @@ describe('UsersService', () => {
   });
 
   describe('getListingLimit', () => {
-    it('should return 50 for Business users', async () => {
+    it('should return 20 for Business users', async () => {
       const businessUser = { ...mockUser, type: UserType.Business };
       repository.findOne.mockResolvedValue(businessUser as User);
 
       const result = await service.getListingLimit('1');
 
-      expect(result).toBe(50);
+      expect(result).toBe(20);
     });
 
-    it('should return 5 for Individual users', async () => {
+    it('should return 3 for Individual users', async () => {
       repository.findOne.mockResolvedValue(mockUser);
 
       const result = await service.getListingLimit('1');
 
-      expect(result).toBe(5);
+      expect(result).toBe(3);
     });
   });
 });

@@ -1,9 +1,12 @@
 import 'reflect-metadata';
 import * as bcrypt from 'bcrypt';
 
-import { UserType as UserTypeEnum } from '../common/types';
-import { AppDataSource } from '../data-source';
-import { User } from '../users/entities/user.entity';
+import { UserType as UserTypeEnum } from '../../common/types';
+import { AppDataSource } from '../../data-source';
+import { User } from '../../users/entities/user.entity';
+import { checkEnvironment } from '../script-guard';
+
+checkEnvironment(['stage', 'development', 'test']);
 
 async function makeAdmin() {
   try {

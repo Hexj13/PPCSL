@@ -1,17 +1,33 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { ListingCard } from '@/components/ListingCard';
 import { favoritesApi, Listing } from '@/lib/api';
-import { useAuthStore } from '@/lib/store';
+import { useAuthStore, useFavoritesStore } from '@/lib/store';
 
 export default function FavoritesPage() {
   const router = useRouter();
   const { user, isInitialized } = useAuthStore();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const loadFavorites = useCallback(() => {
+    if (!user) return;
+
+    favoritesApi
+      .getAll()
+      .then((res) => {
+        const favoritesList = res.data.map((f: { listing: Listing }) => f.listing);
+        setListings(favoritesList);
+        const { setFavorites } = useFavoritesStore.getState();
+        const favoriteIds = favoritesList.map((listing) => listing.id);
+        setFavorites(favoriteIds);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [user]);
 
   useEffect(() => {
     if (!isInitialized) return;
@@ -21,15 +37,8 @@ export default function FavoritesPage() {
       return;
     }
 
-    favoritesApi
-      .getAll()
-      .then((res) => {
-        const favorites = res.data.map((f: { listing: Listing }) => f.listing);
-        setListings(favorites);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [user, isInitialized, router]);
+    loadFavorites();
+  }, [user, isInitialized, router, loadFavorites]);
 
   if (!isInitialized) {
     return (
@@ -66,7 +75,14 @@ export default function FavoritesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
           {listings.map((listing) => (
-            <ListingCard key={listing.id} listing={listing} />
+            <ListingCard
+              key={listing.id}
+              listing={listing}
+              forceFavorite={true}
+              onRemove={() => {
+                setListings((prev) => prev.filter((l) => l.id !== listing.id));
+              }}
+            />
           ))}
         </div>
       )}

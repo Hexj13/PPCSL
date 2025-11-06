@@ -2,7 +2,6 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState, useEffect } from 'react';
-import { toast } from 'react-hot-toast';
 
 import { authApi } from '@/lib/api';
 
@@ -34,7 +33,7 @@ function VerifyEmailContent() {
           axiosError.message ||
           'Грешка при потврда на email адресата';
         setError(errorMessage);
-        toast.error(errorMessage);
+        // toast.error is already handled by API interceptor
       } finally {
         setIsVerifying(false);
       }

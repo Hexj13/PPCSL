@@ -14,8 +14,8 @@ Create a simple, free website for posting listings for new and used cars in Mace
 
 * Fully free service, no payments, subscriptions, or paid options.
 * Two user types: **Individual** and **Business**.
-* Individual users can have a maximum of **5 active listings** simultaneously.
-* Business users can have a maximum of **50 active listings** simultaneously.
+* Individual users can have a maximum of **3 active listings** simultaneously.
+* Business users can have a maximum of **20 active listings** simultaneously.
 * Listings have three statuses: **Active**, **Paused**, **Closed**.
 * Users can manually close listings.
 * Listings are automatically closed after **5 months** (approximately 150 days) since the last update.
@@ -102,6 +102,15 @@ Create a simple, free website for posting listings for new and used cars in Mace
   * Login with email or phone number
   * JWT-based authentication
   * Password hashing with bcrypt (10 rounds)
+* **Password Reset:**
+  * Password reset via phone number only
+  * 3-step flow: request reset → verify SMS code → set new password
+  * SMS code sent via Twilio API (6-digit code)
+  * Codes stored in Redis with 10-minute TTL (separate from verification codes)
+  * Frontend validation: 10 verification attempts per code, cooldown period for resend
+  * Backend IP-based brute force protection: 40 attempts per IP, 1-hour block
+  * Code is cleared from Redis after successful password reset
+  * Password reset page at `/reset-password` with three states: phone input, code verification, new password
 * **User profile:** Get current user info via `/api/auth/me`
 
 ### Favorites
@@ -175,12 +184,15 @@ Create a simple, free website for posting listings for new and used cars in Mace
 
 ### Authentication
 ```http
-POST /api/auth/register     # Register new user
-POST /api/auth/login        # Login (email or phone)
-GET  /api/auth/me           # Get current user profile
-POST /api/auth/send-sms      # Send SMS verification code
-POST /api/auth/verify-phone  # Verify phone number (JWT required)
-POST /api/auth/verify-sms    # Verify SMS code (IP-based brute force protection)
+POST /api/auth/register              # Register new user
+POST /api/auth/login                 # Login (email or phone)
+GET  /api/auth/me                    # Get current user profile
+POST /api/auth/send-sms              # Send SMS verification code
+POST /api/auth/verify-phone          # Verify phone number (JWT required)
+POST /api/auth/verify-sms            # Verify SMS code (IP-based brute force protection)
+POST /api/auth/request-password-reset # Request password reset (send SMS code)
+POST /api/auth/verify-reset-code     # Verify password reset code (IP-based brute force protection)
+POST /api/auth/reset-password         # Reset password with verified code
 ```
 
 ### Listings
@@ -476,8 +488,8 @@ GET /api/listings?brand_id=xxx&year_gte=2018&price_lte=12000&city=Skopje&fuel=Pe
 
 ## 16. Acceptance Criteria
 
-* [ ] Individual users cannot have >5 active listings
-* [ ] Business users cannot have >50 active listings
+* [ ] Individual users cannot have >3 active listings
+* [ ] Business users cannot have >20 active listings
 * [ ] Listings transition to `Closed` after 5 months without update
 * [ ] Manual closing works correctly
 * [ ] Search and sorting return correct data with all filters

@@ -72,4 +72,5 @@ export const SortOrder = {
 
 export const SMS_MESSAGES = {
   VERIFICATION_CODE: (code: string) => `Kupito verification code: ${code}`,
+  PASSWORD_RESET_CODE: (code: string) => `Kupito password reset code: ${code}`,
 } as const;

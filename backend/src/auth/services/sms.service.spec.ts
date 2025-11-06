@@ -156,6 +156,120 @@ describe('SmsService', () => {
     });
   });
 
+  describe('sendPasswordResetCode', () => {
+    it('should send password reset SMS code when Twilio is configured', async () => {
+      configService.get.mockImplementation((key: string) => {
+        if (key === 'TWILIO_ACCOUNT_SID') return 'test-sid';
+        if (key === 'TWILIO_AUTH_TOKEN') return 'test-token';
+        return undefined;
+      });
+
+      const serviceWithTwilio = new SmsService(configService, redisService);
+      redisService.set.mockResolvedValue(undefined);
+      mockTwilioClient.messages.create.mockResolvedValue({});
+
+      await serviceWithTwilio.sendPasswordResetCode('+38970123456');
+
+      expect(redisService.set).toHaveBeenCalledWith(
+        'sms:reset:+38970123456',
+        expect.any(String),
+        600,
+      );
+      expect(mockTwilioClient.messages.create).toHaveBeenCalled();
+    });
+
+    it('should log code in test mode when Twilio is not configured', async () => {
+      configService.get.mockReturnValue(undefined);
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      redisService.set.mockResolvedValue(undefined);
+
+      await service.sendPasswordResetCode('+38970123456');
+
+      expect(redisService.set).toHaveBeenCalled();
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[TEST MODE] SMS код за ресетирање на лозинка'),
+      );
+      consoleSpy.mockRestore();
+    });
+
+    it('should throw BadRequestException when Redis set fails', async () => {
+      redisService.set.mockRejectedValue(new Error('Redis error'));
+
+      await expect(service.sendPasswordResetCode('+38970123456')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should delete code from Redis and throw error when Twilio send fails', async () => {
+      configService.get.mockImplementation((key: string) => {
+        if (key === 'TWILIO_ACCOUNT_SID') return 'test-sid';
+        if (key === 'TWILIO_AUTH_TOKEN') return 'test-token';
+        return undefined;
+      });
+
+      const serviceWithTwilio = new SmsService(configService, redisService);
+      redisService.set.mockResolvedValue(undefined);
+      redisService.del.mockResolvedValue(undefined);
+      mockTwilioClient.messages.create.mockRejectedValue(new Error('Twilio error'));
+
+      await expect(serviceWithTwilio.sendPasswordResetCode('+38970123456')).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(redisService.del).toHaveBeenCalled();
+    });
+  });
+
+  describe('verifyPasswordResetCode', () => {
+    it('should return true when code matches', async () => {
+      redisService.get.mockResolvedValue('123456');
+
+      const result = await service.verifyPasswordResetCode('+38970123456', '123456');
+
+      expect(result).toBe(true);
+      expect(redisService.get).toHaveBeenCalledWith('sms:reset:+38970123456');
+    });
+
+    it('should return false when code does not match', async () => {
+      redisService.get.mockResolvedValue('123456');
+
+      const result = await service.verifyPasswordResetCode('+38970123456', '000000');
+
+      expect(result).toBe(false);
+    });
+
+    it('should return false when code does not exist', async () => {
+      redisService.get.mockResolvedValue(null);
+
+      const result = await service.verifyPasswordResetCode('+38970123456', '123456');
+
+      expect(result).toBe(false);
+    });
+
+    it('should return false when Redis error occurs', async () => {
+      redisService.get.mockRejectedValue(new Error('Redis error'));
+
+      const result = await service.verifyPasswordResetCode('+38970123456', '123456');
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('clearPasswordResetCode', () => {
+    it('should delete password reset code from Redis', async () => {
+      redisService.del.mockResolvedValue(undefined);
+
+      await service.clearPasswordResetCode('+38970123456');
+
+      expect(redisService.del).toHaveBeenCalledWith('sms:reset:+38970123456');
+    });
+
+    it('should not throw error when Redis delete fails', async () => {
+      redisService.del.mockRejectedValue(new Error('Redis error'));
+
+      await expect(service.clearPasswordResetCode('+38970123456')).resolves.not.toThrow();
+    });
+  });
+
   describe('normalizePhoneNumber', () => {
     it('should normalize phone number starting with 0', () => {
       const result = service.normalizePhoneNumber('070123456');

@@ -20,6 +20,7 @@ describe('AuthService', () => {
   let service: AuthService;
   let usersService: jest.Mocked<UsersService>;
   let jwtService: jest.Mocked<JwtService>;
+  let smsService: jest.Mocked<SmsService>;
 
   const mockUser = {
     id: '1',
@@ -39,6 +40,7 @@ describe('AuthService', () => {
       findByPhone: jest.fn(),
       create: jest.fn(),
       findOne: jest.fn(),
+      update: jest.fn(),
     };
 
     const mockJwtService = {
@@ -47,6 +49,9 @@ describe('AuthService', () => {
 
     const mockSmsService = {
       normalizePhoneNumber: jest.fn((phone: string) => phone),
+      sendPasswordResetCode: jest.fn(),
+      verifyPasswordResetCode: jest.fn(),
+      clearPasswordResetCode: jest.fn(),
     };
 
     const mockEmailService = {
@@ -79,6 +84,7 @@ describe('AuthService', () => {
     service = module.get<AuthService>(AuthService);
     usersService = module.get(UsersService);
     jwtService = module.get(JwtService);
+    smsService = module.get(SmsService);
   });
 
   it('should be defined', () => {
@@ -225,6 +231,124 @@ describe('AuthService', () => {
       expect(result).toHaveProperty('email');
       expect(result).toHaveProperty('type');
       expect(usersService.findOne).toHaveBeenCalledWith('1');
+    });
+  });
+
+  describe('requestPasswordReset', () => {
+    it('should send password reset code when user exists', async () => {
+      usersService.findByPhone.mockResolvedValue(mockUser as User);
+      smsService.normalizePhoneNumber.mockReturnValue('+38970123456');
+      smsService.sendPasswordResetCode.mockResolvedValue(undefined);
+
+      await service.requestPasswordReset({ phone: '+38970123456' });
+
+      expect(usersService.findByPhone).toHaveBeenCalledWith('+38970123456');
+      expect(smsService.sendPasswordResetCode).toHaveBeenCalledWith('+38970123456');
+    });
+
+    it('should throw BadRequestException when user does not exist', async () => {
+      usersService.findByPhone.mockResolvedValue(null);
+      smsService.normalizePhoneNumber.mockReturnValue('+38970123456');
+
+      await expect(service.requestPasswordReset({ phone: '+38970123456' })).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(smsService.sendPasswordResetCode).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('verifyResetCode', () => {
+    it('should return success when code is valid', async () => {
+      usersService.findByPhone.mockResolvedValue(mockUser as User);
+      smsService.normalizePhoneNumber.mockReturnValue('+38970123456');
+      smsService.verifyPasswordResetCode.mockResolvedValue(true);
+
+      const result = await service.verifyResetCode({
+        phone: '+38970123456',
+        code: '123456',
+      });
+
+      expect(result).toEqual({ success: true });
+      expect(smsService.verifyPasswordResetCode).toHaveBeenCalledWith('+38970123456', '123456');
+    });
+
+    it('should throw BadRequestException when user does not exist', async () => {
+      usersService.findByPhone.mockResolvedValue(null);
+      smsService.normalizePhoneNumber.mockReturnValue('+38970123456');
+
+      await expect(
+        service.verifyResetCode({ phone: '+38970123456', code: '123456' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException when code is invalid', async () => {
+      usersService.findByPhone.mockResolvedValue(mockUser as User);
+      smsService.normalizePhoneNumber.mockReturnValue('+38970123456');
+      smsService.verifyPasswordResetCode.mockResolvedValue(false);
+
+      await expect(
+        service.verifyResetCode({ phone: '+38970123456', code: '000000' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('should reset password when code is valid', async () => {
+      const updatedUser = {
+        ...mockUser,
+        password: 'newHashedPassword',
+      };
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password, ...userWithoutPassword } = updatedUser;
+
+      usersService.findByPhone.mockResolvedValue(mockUser as User);
+      usersService.update.mockResolvedValue(updatedUser as User);
+      smsService.normalizePhoneNumber.mockReturnValue('+38970123456');
+      smsService.verifyPasswordResetCode.mockResolvedValue(true);
+      smsService.clearPasswordResetCode.mockResolvedValue(undefined);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('newHashedPassword');
+
+      const result = await service.resetPassword({
+        phone: '+38970123456',
+        code: '123456',
+        newPassword: 'NewPassword123!',
+      });
+
+      expect(result).not.toHaveProperty('password');
+      expect(result).toEqual(userWithoutPassword);
+      expect(bcrypt.hash).toHaveBeenCalledWith('NewPassword123!', 10);
+      expect(usersService.update).toHaveBeenCalledWith('1', {
+        password: 'newHashedPassword',
+      });
+      expect(smsService.clearPasswordResetCode).toHaveBeenCalledWith('+38970123456');
+    });
+
+    it('should throw BadRequestException when user does not exist', async () => {
+      usersService.findByPhone.mockResolvedValue(null);
+      smsService.normalizePhoneNumber.mockReturnValue('+38970123456');
+
+      await expect(
+        service.resetPassword({
+          phone: '+38970123456',
+          code: '123456',
+          newPassword: 'NewPassword123!',
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException when code is invalid', async () => {
+      usersService.findByPhone.mockResolvedValue(mockUser as User);
+      smsService.normalizePhoneNumber.mockReturnValue('+38970123456');
+      smsService.verifyPasswordResetCode.mockResolvedValue(false);
+
+      await expect(
+        service.resetPassword({
+          phone: '+38970123456',
+          code: '000000',
+          newPassword: 'NewPassword123!',
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(usersService.update).not.toHaveBeenCalled();
     });
   });
 });

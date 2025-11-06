@@ -98,9 +98,10 @@ npm run dev  # Runs both frontend and backend
 - Phone number verification stored in database
 - Create, edit, and publish listings
 - Extended search and filtering
-- Listing limits (5 for Individuals, 50 for Business)
+- Listing limits (3 for Individuals, 20 for Business)
 - Listing statuses (Active, Paused, Closed)
 - Automatic listing closure after 5 months
+- Custom 404 and error pages
 - Favorites (for authenticated users and guests)
 - VIN search functionality
 - Image upload with automatic WebP conversion and adaptive quality optimization

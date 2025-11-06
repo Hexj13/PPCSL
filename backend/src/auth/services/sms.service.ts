@@ -56,7 +56,77 @@ export class SmsService {
     }
   }
 
+  async sendPasswordResetCode(phoneNumber: string): Promise<void> {
+    const code = this.generateCode();
+    const normalizedPhone = this.normalizePhoneNumber(phoneNumber);
+
+    const redisKey = `sms:reset:${normalizedPhone}`;
+    try {
+      await this.redisService.set(redisKey, code, 600);
+    } catch (error) {
+      throw new BadRequestException('Грешка при зачувување на кодот. Обидете се повторно.');
+    }
+
+    if (!this.twilioClient) {
+      console.log(`[TEST MODE] SMS код за ресетирање на лозинка за ${normalizedPhone}: ${code}`);
+      return;
+    }
+
+    try {
+      await this.twilioClient.messages.create({
+        from: this.senderId,
+        to: normalizedPhone,
+        body: SMS_MESSAGES.PASSWORD_RESET_CODE(code),
+      });
+    } catch (error: unknown) {
+      try {
+        await this.redisService.del(redisKey);
+      } catch {}
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Грешка при испраќање на SMS. Обидете се повторно.';
+      throw new BadRequestException(errorMessage);
+    }
+  }
+
+  async verifyPasswordResetCode(phoneNumber: string, code: string): Promise<boolean> {
+    const nodeEnv = this.configService.get('NODE_ENV');
+    const isStageOrDev = nodeEnv === 'stage' || nodeEnv === 'development';
+
+    if (isStageOrDev && code === '000000') {
+      return true;
+    }
+
+    const normalizedPhone = this.normalizePhoneNumber(phoneNumber);
+    const redisKey = `sms:reset:${normalizedPhone}`;
+
+    let storedCode: string | null;
+    try {
+      storedCode = await this.redisService.get(redisKey);
+    } catch (error) {
+      return false;
+    }
+
+    if (!storedCode) {
+      return false;
+    }
+
+    if (storedCode === code) {
+      return true;
+    }
+
+    return false;
+  }
+
   async verifyCode(phoneNumber: string, code: string): Promise<boolean> {
+    const nodeEnv = this.configService.get('NODE_ENV');
+    const isStageOrDev = nodeEnv === 'stage' || nodeEnv === 'development';
+
+    if (isStageOrDev && code === '000000') {
+      return true;
+    }
+
     const normalizedPhone = this.normalizePhoneNumber(phoneNumber);
     const redisKey = `sms:code:${normalizedPhone}`;
 
@@ -79,6 +149,14 @@ export class SmsService {
     }
 
     return false;
+  }
+
+  async clearPasswordResetCode(phoneNumber: string): Promise<void> {
+    const normalizedPhone = this.normalizePhoneNumber(phoneNumber);
+    const redisKey = `sms:reset:${normalizedPhone}`;
+    try {
+      await this.redisService.del(redisKey);
+    } catch {}
   }
 
   private generateCode(): string {

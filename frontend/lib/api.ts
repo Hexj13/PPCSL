@@ -284,6 +284,21 @@ export interface SendSmsDto {
   phone: string;
 }
 
+export interface RequestPasswordResetDto {
+  phone: string;
+}
+
+export interface VerifyResetCodeDto {
+  phone: string;
+  code: string;
+}
+
+export interface ResetPasswordDto {
+  phone: string;
+  code: string;
+  newPassword: string;
+}
+
 export const authApi = {
   register: (data: RegisterDto) => api.post('/api/auth/register', data),
   login: (data: LoginDto) =>
@@ -295,9 +310,21 @@ export const authApi = {
       headers: { 'X-Skip-Error-Handling': 'true' },
     }),
   verifySms: (data: VerifySmsDto) =>
-    api.post<{ success: boolean; message: string }>('/api/auth/verify-sms', data),
+    api.post<{ success: boolean; message: string }>('/api/auth/verify-sms', data, {
+      headers: { 'X-Skip-Error-Handling': 'true' },
+    }),
   verifyEmail: (data: VerifyEmailDto) =>
     api.post<{ success: boolean; message: string; user: User }>('/api/auth/verify-email', data),
+  requestPasswordReset: (data: RequestPasswordResetDto) =>
+    api.post<{ success: boolean; message: string }>('/api/auth/request-password-reset', data, {
+      headers: { 'X-Skip-Error-Handling': 'true' },
+    }),
+  verifyResetCode: (data: VerifyResetCodeDto) =>
+    api.post<{ success: boolean; message: string }>('/api/auth/verify-reset-code', data, {
+      headers: { 'X-Skip-Error-Handling': 'true' },
+    }),
+  resetPassword: (data: ResetPasswordDto) =>
+    api.post<{ success: boolean; message: string; user: User }>('/api/auth/reset-password', data),
 };
 
 export const favoritesApi = {

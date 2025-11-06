@@ -129,17 +129,24 @@ async function bootstrap() {
     .addTag('admin', 'Admin panel')
     .build();
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document, {
-    swaggerOptions: {
-      persistAuthorization: true,
-    },
-  });
+  const nodeEnv = process.env.NODE_ENV || 'development';
+  const isProduction = nodeEnv === 'production';
+
+  if (!isProduction) {
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document, {
+      swaggerOptions: {
+        persistAuthorization: true,
+      },
+    });
+  }
 
   const port = process.env.PORT || 4000;
   await app.listen(port);
-  console.log(`Application is running on: http://localhost:${port}`);
-  console.log(`Swagger documentation is available at: http://localhost:${port}/api/docs`);
+  if (!isProduction) {
+    console.log(`Application is running on: http://localhost:${port}`);
+    console.log(`Swagger documentation is available at: http://localhost:${port}/api/docs`);
+  }
 }
 
 bootstrap();

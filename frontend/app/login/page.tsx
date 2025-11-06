@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 
-import { authApi, favoritesApi } from '@/lib/api';
+import { authApi, favoritesApi, listingsApi } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 
 const isValidEmail = (value: string): boolean => {
@@ -31,6 +31,7 @@ export default function LoginPage() {
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ login?: string; password?: string }>({});
+  const [showPassword, setShowPassword] = useState(false);
 
   if (isInitialized && user) {
     return null;
@@ -69,10 +70,24 @@ export default function LoginPage() {
       if (typeof window !== 'undefined') {
         const pendingFavorites = JSON.parse(localStorage.getItem('pendingFavorites') || '[]');
         if (pendingFavorites.length > 0) {
-          const addPromises = pendingFavorites.map((listingId: string) =>
-            favoritesApi.add(listingId).catch(() => {})
-          );
-          await Promise.all(addPromises);
+          const validFavorites: string[] = [];
+          for (const listingId of pendingFavorites) {
+            try {
+              const listingRes = await listingsApi.getOne(listingId);
+              const listing = listingRes.data;
+              if (listing.user && listing.user.id !== res.data.user.id) {
+                validFavorites.push(listingId);
+              }
+            } catch {
+              // Skip if listing not found or error occurred
+            }
+          }
+          if (validFavorites.length > 0) {
+            const addPromises = validFavorites.map((listingId: string) =>
+              favoritesApi.add(listingId).catch(() => {})
+            );
+            await Promise.all(addPromises);
+          }
           localStorage.removeItem('pendingFavorites');
         }
 
@@ -88,9 +103,8 @@ export default function LoginPage() {
       }
 
       toast.success('Успешна најава');
-    } catch (err: unknown) {
-      const axiosError = err as { response?: { data?: { message?: string } } };
-      toast.error(axiosError.response?.data?.message || 'Погрешни најавни податоци');
+    } catch {
+      // Error is already handled by API interceptor
     } finally {
       setLoading(false);
     }
@@ -123,20 +137,74 @@ export default function LoginPage() {
         </div>
 
         <div className="mb-6">
-          <label className="block text-sm font-semibold mb-2 text-primary-400">Лозинка</label>
-          <input
-            type="password"
-            value={formData.password}
-            onChange={(e) => {
-              setFormData({ ...formData, password: e.target.value });
-              if (errors.password) {
-                setErrors({ ...errors, password: undefined });
-              }
-            }}
-            className={`input-field ${errors.password ? 'border-red-500' : ''}`}
-            placeholder="Внесете ја вашата лозинка"
-            autoComplete="current-password"
-          />
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-semibold text-primary-400">Лозинка</label>
+            <a
+              href="/reset-password"
+              className="text-sm text-primary-500 font-semibold hover:text-primary-400 hover:underline transition-colors"
+            >
+              Заборавена лозинка?
+            </a>
+          </div>
+          <div className="relative">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              value={formData.password}
+              onChange={(e) => {
+                setFormData({ ...formData, password: e.target.value });
+                if (errors.password) {
+                  setErrors({ ...errors, password: undefined });
+                }
+              }}
+              className={`input-field pr-10 ${errors.password ? 'border-red-500' : ''}`}
+              placeholder="Внесете ја вашата лозинка"
+              autoComplete="current-password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary-400 transition-colors"
+              tabIndex={-1}
+            >
+              {showPassword ? (
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
+                </svg>
+              )}
+            </button>
+          </div>
           {errors.password && <p className="mt-1 text-sm text-red-400">{errors.password}</p>}
         </div>
 

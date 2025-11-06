@@ -3,12 +3,16 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository, DeleteResult } from 'typeorm';
 
+import { Listing } from '../listings/entities/listing.entity';
+
 import { Favorite } from './entities/favorite.entity';
 import { FavoritesService } from './favorites.service';
 
 describe('FavoritesService', () => {
   let service: FavoritesService;
   let repository: jest.Mocked<Repository<Favorite>>;
+  let listingsRepository: jest.Mocked<Repository<Listing>>;
+  let module: TestingModule;
 
   const mockFavorite: Favorite = {
     id: 'favorite-1',
@@ -26,18 +30,27 @@ describe('FavoritesService', () => {
       delete: jest.fn(),
     };
 
-    const module: TestingModule = await Test.createTestingModule({
+    const mockListingsRepository = {
+      findOne: jest.fn(),
+    };
+
+    module = await Test.createTestingModule({
       providers: [
         FavoritesService,
         {
           provide: getRepositoryToken(Favorite),
           useValue: mockRepository,
         },
+        {
+          provide: getRepositoryToken(Listing),
+          useValue: mockListingsRepository,
+        },
       ],
     }).compile();
 
     service = module.get<FavoritesService>(FavoritesService);
     repository = module.get(getRepositoryToken(Favorite));
+    listingsRepository = module.get(getRepositoryToken(Listing));
   });
 
   it('should be defined', () => {
@@ -46,6 +59,8 @@ describe('FavoritesService', () => {
 
   describe('add', () => {
     it('should create new favorite when not exists', async () => {
+      const mockListing = { id: 'listing-1', user_id: 'user-2' };
+      listingsRepository.findOne.mockResolvedValue(mockListing as Listing);
       repository.findOne.mockResolvedValue(null);
       repository.create.mockReturnValue(mockFavorite);
       repository.save.mockResolvedValue(mockFavorite);
@@ -64,6 +79,8 @@ describe('FavoritesService', () => {
     });
 
     it('should return existing favorite when already exists', async () => {
+      const mockListing = { id: 'listing-1', user_id: 'user-2' };
+      listingsRepository.findOne.mockResolvedValue(mockListing as Listing);
       repository.findOne.mockResolvedValue(mockFavorite);
 
       const result = await service.add('user-1', 'listing-1');

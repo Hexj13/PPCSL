@@ -1,12 +1,12 @@
 import 'reflect-metadata';
-import { Brand } from '../brands/entities/brand.entity';
-import { VehicleModel } from '../brands/entities/vehicle-model.entity';
-import { AppDataSource } from '../data-source';
-import { Favorite } from '../favorites/entities/favorite.entity';
-import { ListingView } from '../listings/entities/listing-view.entity';
-import { Listing } from '../listings/entities/listing.entity';
-import { Vehicle } from '../listings/entities/vehicle.entity';
-import { User } from '../users/entities/user.entity';
+import { Brand } from '../../brands/entities/brand.entity';
+import { VehicleModel } from '../../brands/entities/vehicle-model.entity';
+import { AppDataSource } from '../../data-source';
+import { Favorite } from '../../favorites/entities/favorite.entity';
+import { ListingView } from '../../listings/entities/listing-view.entity';
+import { Listing } from '../../listings/entities/listing.entity';
+import { Vehicle } from '../../listings/entities/vehicle.entity';
+import { User } from '../../users/entities/user.entity';
 
 async function clearDatabase() {
   console.log('🚀 Започнување на чистење на базата на податоци...\n');

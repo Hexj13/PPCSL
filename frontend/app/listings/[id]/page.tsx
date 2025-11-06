@@ -92,30 +92,31 @@ export default function ListingPage() {
       return;
     }
 
+    if (isFavorite) {
+      try {
+        await favoritesApi.remove(id);
+        removeFavorite(id);
+        setIsFavorite(false);
+        toast.success('Отстрането од омилени');
+      } catch {
+        removeFavorite(id);
+        setIsFavorite(false);
+      }
+      return;
+    }
+
     if (listing && user && listing.user && user.id === listing.user.id) {
       return;
     }
 
     try {
-      if (isFavorite) {
-        await favoritesApi.remove(id);
-        removeFavorite(id);
-        setIsFavorite(false);
-        toast.success('Отстрането од омилени');
-      } else {
-        await favoritesApi.add(id);
-        addFavorite(id);
-        setIsFavorite(true);
-        toast.success('Додадено во омилени');
-      }
+      await favoritesApi.add(id);
+      addFavorite(id);
+      setIsFavorite(true);
+      toast.success('Додадено во омилени');
     } catch {
-      if (!isFavorite) {
-        addFavorite(id);
-        setIsFavorite(true);
-      } else {
-        removeFavorite(id);
-        setIsFavorite(false);
-      }
+      addFavorite(id);
+      setIsFavorite(true);
     }
   };
 

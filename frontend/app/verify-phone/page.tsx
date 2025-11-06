@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 
-import { authApi, favoritesApi, RegisterDto } from '@/lib/api';
+import { authApi, favoritesApi, listingsApi, RegisterDto } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 
 function VerifyPhoneContent() {
@@ -272,10 +272,24 @@ function VerifyPhoneContent() {
 
           const pendingFavorites = JSON.parse(localStorage.getItem('pendingFavorites') || '[]');
           if (pendingFavorites.length > 0) {
-            const addPromises = pendingFavorites.map((listingId: string) =>
-              favoritesApi.add(listingId).catch(() => {})
-            );
-            await Promise.all(addPromises);
+            const validFavorites: string[] = [];
+            for (const listingId of pendingFavorites) {
+              try {
+                const listingRes = await listingsApi.getOne(listingId);
+                const listing = listingRes.data;
+                if (listing.user && listing.user.id !== loginRes.data.user.id) {
+                  validFavorites.push(listingId);
+                }
+              } catch {
+                // Skip if listing not found or error occurred
+              }
+            }
+            if (validFavorites.length > 0) {
+              const addPromises = validFavorites.map((listingId: string) =>
+                favoritesApi.add(listingId).catch(() => {})
+              );
+              await Promise.all(addPromises);
+            }
             localStorage.removeItem('pendingFavorites');
           }
 
@@ -295,9 +309,8 @@ function VerifyPhoneContent() {
         toast.error('Регистрацијата е успешна, но најавата не успеа. Најавете се рачно.');
         router.push('/login');
       }
-    } catch (err: unknown) {
-      const axiosError = err as { response?: { data?: { message?: string } } };
-      toast.error(axiosError.response?.data?.message || 'Грешка при регистрација');
+    } catch {
+      // Error is already handled by API interceptor
       setIsSubmitting(false);
     }
   };
