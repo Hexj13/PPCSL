@@ -11,6 +11,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { LessThanOrEqual, Repository } from 'typeorm';
 
 import { BrandsService } from '../brands/brands.service';
+import { RedisService } from '../common/redis.service';
 import { Currency as CurrencyEnum, ListingStatus as ListingStatusEnum } from '../common/types';
 import { UsersService } from '../users/users.service';
 
@@ -24,6 +25,8 @@ import { Vehicle } from './entities/vehicle.entity';
 
 @Injectable()
 export class ListingsService {
+  private readonly CACHE_TTL = 300;
+
   constructor(
     @InjectRepository(Listing)
     private listingsRepository: Repository<Listing>,
@@ -33,6 +36,7 @@ export class ListingsService {
     private listingViewsRepository: Repository<ListingView>,
     private usersService: UsersService,
     private brandsService: BrandsService,
+    private redisService: RedisService,
   ) {}
 
   async create(createListingDto: CreateListingDto, userId: string): Promise<Listing> {
@@ -86,12 +90,34 @@ export class ListingsService {
     });
 
     listing.vehicle = savedVehicle;
-    return this.listingsRepository.save(listing);
+    const savedListing = await this.listingsRepository.save(listing);
+
+    try {
+      await this.redisService.delPattern('cache:listings:search:*');
+      await this.redisService.del(`cache:listings:${savedListing.id}`);
+    } catch (error) {
+      console.warn('Failed to invalidate cache after creating listing', error);
+    }
+
+    return savedListing;
   }
 
   async findAll(searchDto: SearchListingsDto) {
     const { page = 1, limit = 20, sortBy = 'created_at', sortOrder = 'DESC' } = searchDto;
     const skip = (page - 1) * limit;
+
+    const cacheKey = `cache:listings:search:${JSON.stringify(searchDto)}`;
+    try {
+      const cached = await this.redisService.getJson<{
+        data: Listing[];
+        meta: { total: number; page: number; limit: number; totalPages: number };
+      }>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+    } catch (error) {
+      console.warn('Failed to get listings from cache', error);
+    }
 
     const queryBuilder = this.listingsRepository
       .createQueryBuilder('listing')
@@ -309,7 +335,7 @@ export class ListingsService {
       return listing;
     });
 
-    return {
+    const result = {
       data: listingsWithoutPasswords,
       meta: {
         total,
@@ -318,6 +344,14 @@ export class ListingsService {
         totalPages: Math.ceil(total / limit),
       },
     };
+
+    try {
+      await this.redisService.setJson(cacheKey, result, this.CACHE_TTL);
+    } catch (error) {
+      console.warn('Failed to set listings cache', error);
+    }
+
+    return result;
   }
 
   async findOne(id: string): Promise<Listing> {
@@ -468,7 +502,16 @@ export class ListingsService {
           : listing.registration_expires_at,
     });
 
-    return this.listingsRepository.save(listing);
+    const updatedListing = await this.listingsRepository.save(listing);
+
+    try {
+      await this.redisService.delPattern('cache:listings:search:*');
+      await this.redisService.del(`cache:listings:${id}`);
+    } catch (error) {
+      console.warn('Failed to invalidate cache after updating listing', error);
+    }
+
+    return updatedListing;
   }
 
   async publish(id: string, userId: string): Promise<Listing> {
@@ -490,7 +533,16 @@ export class ListingsService {
 
     listing.status = ListingStatusEnum.Active;
     listing.last_updated_at = new Date();
-    return this.listingsRepository.save(listing);
+    const publishedListing = await this.listingsRepository.save(listing);
+
+    try {
+      await this.redisService.delPattern('cache:listings:search:*');
+      await this.redisService.del(`cache:listings:${id}`);
+    } catch (error) {
+      console.warn('Failed to invalidate cache after publishing listing', error);
+    }
+
+    return publishedListing;
   }
 
   async pause(id: string, userId: string): Promise<Listing> {
@@ -500,7 +552,16 @@ export class ListingsService {
     }
 
     listing.status = ListingStatusEnum.Paused;
-    return this.listingsRepository.save(listing);
+    const pausedListing = await this.listingsRepository.save(listing);
+
+    try {
+      await this.redisService.delPattern('cache:listings:search:*');
+      await this.redisService.del(`cache:listings:${id}`);
+    } catch (error) {
+      console.warn('Failed to invalidate cache after pausing listing', error);
+    }
+
+    return pausedListing;
   }
 
   async close(id: string, userId: string): Promise<Listing> {
@@ -510,7 +571,16 @@ export class ListingsService {
     }
 
     listing.status = ListingStatusEnum.Closed;
-    return this.listingsRepository.save(listing);
+    const closedListing = await this.listingsRepository.save(listing);
+
+    try {
+      await this.redisService.delPattern('cache:listings:search:*');
+      await this.redisService.del(`cache:listings:${id}`);
+    } catch (error) {
+      console.warn('Failed to invalidate cache after closing listing', error);
+    }
+
+    return closedListing;
   }
 
   async getActiveListingsCount(userId: string): Promise<number> {

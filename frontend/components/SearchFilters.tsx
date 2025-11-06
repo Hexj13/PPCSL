@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { brandsApi, citiesApi, Brand, VehicleModel, City } from '@/lib/api';
 import { ConditionType, DriveType, RegistrationType } from '@/lib/constants';

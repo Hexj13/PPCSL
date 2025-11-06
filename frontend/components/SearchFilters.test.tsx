@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import React from 'react';
 
 import { brandsApi, citiesApi } from '@/lib/api';
 
@@ -41,6 +42,40 @@ jest.mock('./Dropdown', () => ({
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         data-testid="dropdown"
+      >
+        {options.map((opt: DropdownOption) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    );
+  },
+}));
+
+interface MultiSelectDropdownProps {
+  values: string[];
+  onChange: (_values: string[]) => void;
+  options: DropdownOption[];
+  disabled?: boolean;
+  placeholder?: string;
+  searchable?: boolean;
+}
+
+jest.mock('./MultiSelectDropdown', () => ({
+  MultiSelectDropdown: (props: MultiSelectDropdownProps) => {
+    const { values, onChange, options, disabled, placeholder } = props;
+    return (
+      <select
+        multiple
+        value={values}
+        onChange={(e) => {
+          const selectedValues = Array.from(e.target.selectedOptions, (opt) => opt.value);
+          onChange(selectedValues);
+        }}
+        disabled={disabled}
+        data-testid="multiselect-dropdown"
+        placeholder={placeholder}
       >
         {options.map((opt: DropdownOption) => (
           <option key={opt.value} value={opt.value}>
@@ -115,8 +150,7 @@ describe('SearchFilters', () => {
       expect(brandsApi.getAll).toHaveBeenCalled();
     });
 
-    const brandDropdowns = screen.getAllByTestId('dropdown');
-    const brandDropdown = brandDropdowns[0];
+    const brandDropdown = screen.getAllByTestId('multiselect-dropdown')[0];
 
     fireEvent.change(brandDropdown, { target: { value: 'brand-1' } });
 
@@ -156,7 +190,9 @@ describe('SearchFilters', () => {
       expect(brandsApi.getAll).toHaveBeenCalled();
     });
 
-    const form = screen.getByRole('form') || screen.getByText('Основни критерии').closest('form');
+    const form = screen.getByText('Основни критерии').closest('form');
+    expect(form).toBeInTheDocument();
+    
     if (form) {
       fireEvent.submit(form);
 

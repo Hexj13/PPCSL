@@ -82,7 +82,7 @@ describe('ListingCard', () => {
     render(<ListingCard listing={mockListing} />);
 
     expect(screen.getByText('Test Car')).toBeInTheDocument();
-    expect(screen.getByText('10,000')).toBeInTheDocument();
+    expect(screen.getByText(/10\s*000/)).toBeInTheDocument();
   });
 
   it('should show favorite button', () => {

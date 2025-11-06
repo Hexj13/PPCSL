@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+import { RedisService } from '../common/redis.service';
 import { Favorite } from '../favorites/entities/favorite.entity';
 import { ListingView } from '../listings/entities/listing-view.entity';
 import { Listing } from '../listings/entities/listing.entity';
@@ -13,6 +14,7 @@ import { VehicleModel } from './entities/vehicle-model.entity';
 @Injectable()
 export class BrandsService {
   private readonly logger = new Logger(BrandsService.name);
+  private readonly CACHE_TTL = 86400;
 
   constructor(
     @InjectRepository(Brand)
@@ -27,12 +29,31 @@ export class BrandsService {
     private listingViewsRepository: Repository<ListingView>,
     @InjectRepository(Favorite)
     private favoritesRepository: Repository<Favorite>,
+    private redisService: RedisService,
   ) {}
 
   async findAll(): Promise<Brand[]> {
-    return this.brandsRepository.find({
+    const cacheKey = 'cache:brands:all';
+    try {
+      const cached = await this.redisService.getJson<Brand[]>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+    } catch (error) {
+      this.logger.warn('Failed to get brands from cache', error);
+    }
+
+    const brands = await this.brandsRepository.find({
       order: { name: 'ASC' },
     });
+
+    try {
+      await this.redisService.setJson(cacheKey, brands, this.CACHE_TTL);
+    } catch (error) {
+      this.logger.warn('Failed to set brands cache', error);
+    }
+
+    return brands;
   }
 
   async findOne(id: string): Promise<Brand> {
@@ -49,11 +70,29 @@ export class BrandsService {
   }
 
   async getModelsByBrand(brandId: string): Promise<VehicleModel[]> {
-    return this.modelsRepository.find({
+    const cacheKey = `cache:brands:${brandId}:models`;
+    try {
+      const cached = await this.redisService.getJson<VehicleModel[]>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+    } catch (error) {
+      this.logger.warn(`Failed to get models from cache for brand ${brandId}`, error);
+    }
+
+    const models = await this.modelsRepository.find({
       where: { brand_id: brandId },
       order: { name: 'ASC' },
       relations: ['brand'],
     });
+
+    try {
+      await this.redisService.setJson(cacheKey, models, this.CACHE_TTL);
+    } catch (error) {
+      this.logger.warn(`Failed to set models cache for brand ${brandId}`, error);
+    }
+
+    return models;
   }
 
   async getModelsByBrandName(brandName: string): Promise<VehicleModel[]> {
@@ -108,6 +147,13 @@ export class BrandsService {
     const totalModels = await this.modelsRepository.count({
       where: { brand_id: brand.id },
     });
+
+    try {
+      await this.redisService.del(`cache:brands:${brand.id}:models`);
+      await this.redisService.del('cache:brands:all');
+    } catch (error) {
+      this.logger.warn('Failed to invalidate cache after adding models', error);
+    }
 
     return {
       brand,
@@ -177,6 +223,12 @@ export class BrandsService {
       await this.brandsRepository.remove(brand);
       deletedBrands++;
       this.logger.log(`Deleted brand: ${brand.name}`);
+    }
+
+    try {
+      await this.redisService.delPattern('cache:brands:*');
+    } catch (error) {
+      this.logger.warn('Failed to invalidate cache after deleting brands', error);
     }
 
     this.logger.log(

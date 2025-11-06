@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
+import { RedisService } from '../common/redis.service';
+
 export interface City {
   name: string;
   nameEn: string;
@@ -7,6 +9,9 @@ export interface City {
 
 @Injectable()
 export class CitiesService {
+  private readonly CACHE_TTL = 86400 * 7;
+
+  constructor(private redisService: RedisService) {}
   private readonly cities: City[] = [
     { name: 'Арачиново', nameEn: 'Aračinovo' },
     { name: 'Берово', nameEn: 'Berovo' },
@@ -85,8 +90,26 @@ export class CitiesService {
     { name: 'Центар Жупа', nameEn: 'Centar Župa' },
   ];
 
-  getAll(): City[] {
-    return [...this.cities].sort((a, b) => a.name.localeCompare(b.name, 'mk'));
+  async getAll(): Promise<City[]> {
+    const cacheKey = 'cache:cities:all';
+    try {
+      const cached = await this.redisService.getJson<City[]>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+    } catch (error) {
+      console.warn('Failed to get cities from cache', error);
+    }
+
+    const sortedCities = [...this.cities].sort((a, b) => a.name.localeCompare(b.name, 'mk'));
+
+    try {
+      await this.redisService.setJson(cacheKey, sortedCities, this.CACHE_TTL);
+    } catch (error) {
+      console.warn('Failed to set cities cache', error);
+    }
+
+    return sortedCities;
   }
 
   findByName(name: string): City | undefined {

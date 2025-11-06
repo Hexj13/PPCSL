@@ -43,8 +43,13 @@ describe('AuthProvider', () => {
   });
 
   it('should use initAuth from store', () => {
-    const selector = jest.fn((state) => state.initAuth);
-    (useAuthStore as unknown as jest.Mock).mockImplementation(selector);
+    const mockInitAuthFromStore = jest.fn();
+    (useAuthStore as unknown as jest.Mock).mockImplementation((sel) => {
+      if (typeof sel === 'function') {
+        return sel({ initAuth: mockInitAuthFromStore });
+      }
+      return mockInitAuthFromStore;
+    });
 
     render(
       <AuthProvider>
@@ -52,6 +57,6 @@ describe('AuthProvider', () => {
       </AuthProvider>
     );
 
-    expect(selector).toHaveBeenCalled();
+    expect(mockInitAuthFromStore).toHaveBeenCalledTimes(1);
   });
 });

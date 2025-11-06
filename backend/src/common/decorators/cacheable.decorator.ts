@@ -1,0 +1,15 @@
+export interface CacheableOptions {
+  ttl?: number;
+  keyPrefix?: string;
+  keyGenerator?: (...args: any[]) => string;
+}
+
+export const CACHEABLE_METADATA = 'cacheable';
+
+export function Cacheable(options: CacheableOptions = {}) {
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+    Reflect.defineMetadata(CACHEABLE_METADATA, options, target, propertyKey);
+    return descriptor;
+  };
+}
+

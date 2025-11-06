@@ -8,6 +8,7 @@ All documentation is located in the [`docs/`](./docs/) folder:
 
 - **[README.md](./docs/README.md)** - Detailed project documentation
 - **[SETUP.md](./docs/SETUP.md)** - Installation and configuration instructions
+- **[DEPLOYMENT.md](./docs/DEPLOYMENT.md)** - Production deployment guide (step-by-step instructions)
 - **[TECH_DOCS.md](./docs/TECH_DOCS.md)** - Technical documentation
 - **[SCRIPTS.md](./docs/SCRIPTS.md)** - Utility scripts documentation
 - **[ENV_EXAMPLE.md](./docs/ENV_EXAMPLE.md)** - Environment variables example

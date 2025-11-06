@@ -75,4 +75,50 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     const result = await this.client.exists(key);
     return result === 1;
   }
+
+  async setJson<T>(key: string, value: T, ttlSeconds?: number): Promise<void> {
+    if (!this.client?.isOpen) {
+      return;
+    }
+    try {
+      const jsonValue = JSON.stringify(value);
+      if (ttlSeconds) {
+        await this.client.setEx(key, ttlSeconds, jsonValue);
+      } else {
+        await this.client.set(key, jsonValue);
+      }
+    } catch (error) {
+      console.error(`Failed to set JSON cache for key ${key}:`, error);
+    }
+  }
+
+  async getJson<T>(key: string): Promise<T | null> {
+    if (!this.client?.isOpen) {
+      return null;
+    }
+    try {
+      const value = await this.client.get(key);
+      if (!value) {
+        return null;
+      }
+      return JSON.parse(value) as T;
+    } catch (error) {
+      console.error(`Failed to get JSON cache for key ${key}:`, error);
+      return null;
+    }
+  }
+
+  async delPattern(pattern: string): Promise<void> {
+    if (!this.client?.isOpen) {
+      return;
+    }
+    try {
+      const keys = await this.client.keys(pattern);
+      if (keys.length > 0) {
+        await this.client.del(keys);
+      }
+    } catch (error) {
+      console.error(`Failed to delete cache pattern ${pattern}:`, error);
+    }
+  }
 }
