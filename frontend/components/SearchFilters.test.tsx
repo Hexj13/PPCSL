@@ -192,7 +192,7 @@ describe('SearchFilters', () => {
 
     const form = screen.getByText('Основни критерии').closest('form');
     expect(form).toBeInTheDocument();
-    
+
     if (form) {
       fireEvent.submit(form);
 
