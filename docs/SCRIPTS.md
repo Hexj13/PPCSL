@@ -61,6 +61,9 @@ npm run sync-carquery
 # Basic seeding
 npm run seed
 
+# Clear database and seed fresh data (with VIN, active users/listings, seed images)
+npm run reset-and-seed
+
 # Seeding with VIN tests
 npm run seed:vin
 
@@ -69,9 +72,16 @@ npm run seed:vehicles
 ```
 
 **Files:**
-- `seed.ts` - Basic seeding of brands, models, and cities
+- `seed.ts` - Basic seeding of brands, models, and cities (all listings have VIN, all users/listings are active)
+- `reset-and-seed.ts` - Clear database and generate fresh data with VIN history
 - `seed-vin-test.ts` - Seeding with VIN data for testing
 - `seed-vehicles-full.ts` - Full vehicle seeding with brands and models
+
+**Seed Images:**
+- Place images in `backend/uploads/seed-images/` directory
+- Supported formats: `.jpg`, `.jpeg`, `.png`, `.webp`
+- Images will be automatically used for listings generation
+- See `backend/uploads/seed-images/README.md` for details
 
 ### Database Management
 

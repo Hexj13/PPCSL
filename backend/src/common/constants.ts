@@ -8,6 +8,8 @@ export const fuelTypes = ['Petrol', 'Diesel', 'Electric', 'Hybrid', 'LPG'] as co
 
 export const transmissionTypes = ['Manual', 'Automatic', 'CVT'] as const;
 
+export const driveTypes = ['FWD', 'RWD', 'AWD'] as const;
+
 export const bodyTypes = [
   'Sedan',
   'Hatchback',
@@ -20,6 +22,10 @@ export const bodyTypes = [
   'Minivan',
   'Truck',
 ] as const;
+
+export const conditionTypes = ['Undamaged', 'Damaged', 'ForParts'] as const;
+
+export const registrationTypes = ['Local', 'Foreign', 'Cleared'] as const;
 
 export const sortOrders = ['ASC', 'DESC'] as const;
 
@@ -54,6 +60,12 @@ export const TransmissionType = {
   CVT: transmissionTypes[2],
 } as const;
 
+export const DriveType = {
+  FWD: driveTypes[0],
+  RWD: driveTypes[1],
+  AWD: driveTypes[2],
+} as const;
+
 export const BodyType = {
   Sedan: bodyTypes[0],
   Hatchback: bodyTypes[1],
@@ -65,6 +77,18 @@ export const BodyType = {
   Pickup: bodyTypes[7],
   Minivan: bodyTypes[8],
   Truck: bodyTypes[9],
+} as const;
+
+export const ConditionType = {
+  Undamaged: conditionTypes[0],
+  Damaged: conditionTypes[1],
+  ForParts: conditionTypes[2],
+} as const;
+
+export const RegistrationType = {
+  Local: registrationTypes[0],
+  Foreign: registrationTypes[1],
+  Cleared: registrationTypes[2],
 } as const;
 
 export const SortOrder = {

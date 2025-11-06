@@ -7,6 +7,7 @@ import { toast } from 'react-hot-toast';
 import { Listing, User } from '@/lib/api';
 import {
   formatBodyType,
+  formatDriveType,
   formatEngineVolume,
   formatMileage,
   formatPrice,
@@ -140,19 +141,19 @@ export function UserListingsModal({
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {displayListings.map((listing) => {
             const vehicle = listing.vehicle;
             return (
               <Link
                 key={listing.id}
                 href={`/listings/${listing.id}`}
-                className="block card p-4 hover:bg-bg-light transition-colors"
+                className="block card p-6 hover:bg-bg-light transition-colors"
               >
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div>
-                    <h3 className="font-bold text-lg text-white mb-2">{listing.title}</h3>
-                    <div className="flex items-center gap-3 mb-2">
+                    <h3 className="font-bold text-lg text-white mb-3">{listing.title}</h3>
+                    <div className="flex items-center gap-3 mb-3">
                       <span className="text-xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
                         {formatPrice(listing.price, listing.currency)} {listing.currency}
                       </span>
@@ -177,27 +178,19 @@ export function UserListingsModal({
                   </div>
 
                   {vehicle && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm border-t border-primary-500/20 pt-3">
-                      {vehicle.brand && vehicle.model && (
-                        <div>
-                          <span className="text-primary-400 font-semibold">Марка/Модел:</span>
-                          <span className="ml-2 text-gray-300">
-                            {vehicle.brand.name} {vehicle.model.name}
-                          </span>
-                        </div>
-                      )}
-                      {vehicle.year && (
-                        <div>
-                          <span className="text-primary-400 font-semibold">Година:</span>
-                          <span className="ml-2 text-gray-300">{vehicle.year}</span>
-                        </div>
-                      )}
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3 text-sm border-t border-primary-500/20 pt-4">
                       {vehicle.engine_displ_l && (
                         <div>
-                          <span className="text-primary-400 font-semibold">Мотор (л):</span>
+                          <span className="text-primary-400 font-semibold">Мотор:</span>
                           <span className="ml-2 text-gray-300">
-                            {formatEngineVolume(vehicle.engine_displ_l)}
+                            {formatEngineVolume(vehicle.engine_displ_l)} л
                           </span>
+                        </div>
+                      )}
+                      {vehicle.fuel && (
+                        <div>
+                          <span className="text-primary-400 font-semibold">Гориво:</span>
+                          <span className="ml-2 text-gray-300">{vehicle.fuel}</span>
                         </div>
                       )}
                       {vehicle.mileage_km && (
@@ -208,17 +201,19 @@ export function UserListingsModal({
                           </span>
                         </div>
                       )}
-                      {vehicle.fuel && (
-                        <div>
-                          <span className="text-primary-400 font-semibold">Гориво:</span>
-                          <span className="ml-2 text-gray-300">{vehicle.fuel}</span>
-                        </div>
-                      )}
                       {vehicle.transmission && (
                         <div>
                           <span className="text-primary-400 font-semibold">Пренос:</span>
                           <span className="ml-2 text-gray-300">
                             {formatTransmission(vehicle.transmission)}
+                          </span>
+                        </div>
+                      )}
+                      {vehicle.drive_type && (
+                        <div>
+                          <span className="text-primary-400 font-semibold">Тип на погон:</span>
+                          <span className="ml-2 text-gray-300">
+                            {formatDriveType(vehicle.drive_type)}
                           </span>
                         </div>
                       )}
@@ -230,29 +225,11 @@ export function UserListingsModal({
                           </span>
                         </div>
                       )}
-                      {vehicle.color && (
-                        <div>
-                          <span className="text-primary-400 font-semibold">Боја:</span>
-                          <span className="ml-2 text-gray-300">{vehicle.color}</span>
-                        </div>
-                      )}
-                      {vehicle.doors && (
-                        <div>
-                          <span className="text-primary-400 font-semibold">Врати:</span>
-                          <span className="ml-2 text-gray-300">{vehicle.doors}</span>
-                        </div>
-                      )}
-                      {listing.city && (
-                        <div>
-                          <span className="text-primary-400 font-semibold">Град:</span>
-                          <span className="ml-2 text-gray-300">{getCityNameMk(listing.city)}</span>
-                        </div>
-                      )}
                     </div>
                   )}
 
-                  {!vehicle && listing.city && (
-                    <div className="text-sm border-t border-primary-500/20 pt-3">
+                  {listing.city && (
+                    <div className="text-sm border-t border-primary-500/20 pt-4">
                       <span className="text-primary-400 font-semibold">Град:</span>
                       <span className="ml-2 text-gray-300">{getCityNameMk(listing.city)}</span>
                     </div>

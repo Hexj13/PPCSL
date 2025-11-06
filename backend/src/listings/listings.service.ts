@@ -36,6 +36,24 @@ export class ListingsService {
   ) {}
 
   async create(createListingDto: CreateListingDto, userId: string): Promise<Listing> {
+    if (createListingDto.registration_expires_at) {
+      const registrationDate = new Date(createListingDto.registration_expires_at);
+      const currentDate = new Date();
+      const currentMonth = currentDate.getMonth();
+      const currentYear = currentDate.getFullYear();
+      const registrationMonth = registrationDate.getMonth();
+      const registrationYear = registrationDate.getFullYear();
+
+      if (
+        registrationYear < currentYear ||
+        (registrationYear === currentYear && registrationMonth < currentMonth)
+      ) {
+        throw new BadRequestException(
+          'Датата на регистрација не може да биде помала од тековниот месец и година',
+        );
+      }
+    }
+
     const vehicle = this.vehiclesRepository.create(createListingDto.vehicle);
     const savedVehicle = await this.vehiclesRepository.save(vehicle);
 
@@ -62,6 +80,9 @@ export class ListingsService {
       vehicle_id: savedVehicle.id,
       user_id: userId,
       last_updated_at: new Date(),
+      registration_expires_at: createListingDto.registration_expires_at
+        ? new Date(createListingDto.registration_expires_at)
+        : null,
     });
 
     listing.vehicle = savedVehicle;
@@ -80,11 +101,19 @@ export class ListingsService {
       .leftJoinAndSelect('listing.user', 'user')
       .where('listing.status = :status', { status: ListingStatusEnum.Active });
 
-    if (searchDto.brand_id) {
+    if (searchDto.brand_ids && searchDto.brand_ids.length > 0) {
+      queryBuilder.andWhere('vehicle.brand_id IN (:...brand_ids)', {
+        brand_ids: searchDto.brand_ids,
+      });
+    } else if (searchDto.brand_id) {
       queryBuilder.andWhere('vehicle.brand_id = :brand_id', { brand_id: searchDto.brand_id });
     }
 
-    if (searchDto.model_id) {
+    if (searchDto.model_ids && searchDto.model_ids.length > 0) {
+      queryBuilder.andWhere('vehicle.model_id IN (:...model_ids)', {
+        model_ids: searchDto.model_ids,
+      });
+    } else if (searchDto.model_id) {
       queryBuilder.andWhere('vehicle.model_id = :model_id', { model_id: searchDto.model_id });
     }
 
@@ -116,21 +145,42 @@ export class ListingsService {
       });
     }
 
-    if (searchDto.city) {
+    if (searchDto.cities && searchDto.cities.length > 0) {
+      queryBuilder.andWhere(
+        searchDto.cities.map((_, index) => `listing.city ILIKE :city_${index}`).join(' OR '),
+        searchDto.cities.reduce(
+          (acc, city, index) => {
+            acc[`city_${index}`] = `%${city}%`;
+            return acc;
+          },
+          {} as Record<string, string>,
+        ),
+      );
+    } else if (searchDto.city) {
       queryBuilder.andWhere('listing.city ILIKE :city', { city: `%${searchDto.city}%` });
     }
 
-    if (searchDto.fuel) {
+    if (searchDto.fuels && searchDto.fuels.length > 0) {
+      queryBuilder.andWhere('vehicle.fuel IN (:...fuels)', { fuels: searchDto.fuels });
+    } else if (searchDto.fuel) {
       queryBuilder.andWhere('vehicle.fuel = :fuel', { fuel: searchDto.fuel });
     }
 
-    if (searchDto.transmission) {
+    if (searchDto.transmissions && searchDto.transmissions.length > 0) {
+      queryBuilder.andWhere('vehicle.transmission IN (:...transmissions)', {
+        transmissions: searchDto.transmissions,
+      });
+    } else if (searchDto.transmission) {
       queryBuilder.andWhere('vehicle.transmission = :transmission', {
         transmission: searchDto.transmission,
       });
     }
 
-    if (searchDto.body_type) {
+    if (searchDto.body_types && searchDto.body_types.length > 0) {
+      queryBuilder.andWhere('vehicle.body_type IN (:...body_types)', {
+        body_types: searchDto.body_types,
+      });
+    } else if (searchDto.body_type) {
       queryBuilder.andWhere('vehicle.body_type = :body_type', {
         body_type: searchDto.body_type,
       });
@@ -148,15 +198,31 @@ export class ListingsService {
       });
     }
 
-    if (searchDto.color) {
+    if (searchDto.colors && searchDto.colors.length > 0) {
+      queryBuilder.andWhere(
+        searchDto.colors.map((_, index) => `vehicle.color ILIKE :color_${index}`).join(' OR '),
+        searchDto.colors.reduce(
+          (acc, color, index) => {
+            acc[`color_${index}`] = `%${color}%`;
+            return acc;
+          },
+          {} as Record<string, string>,
+        ),
+      );
+    } else if (searchDto.color) {
       queryBuilder.andWhere('vehicle.color ILIKE :color', {
         color: `%${searchDto.color}%`,
       });
     }
 
-    if (searchDto.doors) {
+    if (searchDto.doors && searchDto.doors.length > 0) {
+      const doorNumbers = searchDto.doors.map((d) => parseInt(d, 10)).filter((d) => !isNaN(d));
+      if (doorNumbers.length > 0) {
+        queryBuilder.andWhere('vehicle.doors IN (:...doors)', { doors: doorNumbers });
+      }
+    } else if (searchDto.doors_single) {
       queryBuilder.andWhere('vehicle.doors = :doors', {
-        doors: searchDto.doors,
+        doors: searchDto.doors_single,
       });
     }
 
@@ -169,6 +235,54 @@ export class ListingsService {
     if (searchDto.title) {
       queryBuilder.andWhere('listing.title ILIKE :title', {
         title: `%${searchDto.title}%`,
+      });
+    }
+
+    if (searchDto.urgent !== undefined) {
+      queryBuilder.andWhere('listing.urgent = :urgent', {
+        urgent: searchDto.urgent,
+      });
+    }
+
+    if (searchDto.is_new !== undefined) {
+      queryBuilder.andWhere('listing.is_new = :is_new', {
+        is_new: searchDto.is_new,
+      });
+    }
+
+    if (searchDto.conditions && searchDto.conditions.length > 0) {
+      queryBuilder.andWhere('listing.condition IN (:...conditions)', {
+        conditions: searchDto.conditions,
+      });
+    }
+
+    if (searchDto.registration_types && searchDto.registration_types.length > 0) {
+      queryBuilder.andWhere('listing.registration_type IN (:...registration_types)', {
+        registration_types: searchDto.registration_types,
+      });
+    }
+
+    if (searchDto.horsepower_gte) {
+      queryBuilder.andWhere('listing.horsepower >= :horsepower_gte', {
+        horsepower_gte: searchDto.horsepower_gte,
+      });
+    }
+
+    if (searchDto.horsepower_lte) {
+      queryBuilder.andWhere('listing.horsepower <= :horsepower_lte', {
+        horsepower_lte: searchDto.horsepower_lte,
+      });
+    }
+
+    if (searchDto.drive_types && searchDto.drive_types.length > 0) {
+      queryBuilder.andWhere('vehicle.drive_type IN (:...drive_types)', {
+        drive_types: searchDto.drive_types,
+      });
+    }
+
+    if (searchDto.is_registered !== undefined) {
+      queryBuilder.andWhere('listing.is_registered = :is_registered', {
+        is_registered: searchDto.is_registered,
       });
     }
 
@@ -324,11 +438,34 @@ export class ListingsService {
       }
     }
 
+    if (updateListingDto.registration_expires_at) {
+      const registrationDate = new Date(updateListingDto.registration_expires_at);
+      const currentDate = new Date();
+      const currentMonth = currentDate.getMonth();
+      const currentYear = currentDate.getFullYear();
+      const registrationMonth = registrationDate.getMonth();
+      const registrationYear = registrationDate.getFullYear();
+
+      if (
+        registrationYear < currentYear ||
+        (registrationYear === currentYear && registrationMonth < currentMonth)
+      ) {
+        throw new BadRequestException(
+          'Датата на регистрација не може да биде помала од тековниот месец и година',
+        );
+      }
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { vehicle, ...listingUpdate } = updateListingDto;
+    const { vehicle, registration_expires_at, ...listingUpdate } = updateListingDto;
     Object.assign(listing, {
       ...listingUpdate,
       last_updated_at: new Date(),
+      registration_expires_at: registration_expires_at
+        ? new Date(registration_expires_at)
+        : updateListingDto.registration_expires_at === null
+          ? null
+          : listing.registration_expires_at,
     });
 
     return this.listingsRepository.save(listing);

@@ -1,6 +1,16 @@
 import axios, { AxiosError } from 'axios';
 
-import { BodyType, Currency, FuelType, ListingStatus, TransmissionType, UserType } from './types';
+import {
+  BodyType,
+  ConditionType,
+  Currency,
+  DriveType,
+  FuelType,
+  ListingStatus,
+  RegistrationType,
+  TransmissionType,
+  UserType,
+} from './types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -98,7 +108,13 @@ export interface Listing {
   description?: string;
   images?: string[];
   urgent?: boolean;
+  is_new?: boolean;
   vin?: string;
+  condition: ConditionType;
+  registration_type: RegistrationType;
+  horsepower: number;
+  is_registered?: boolean;
+  registration_expires_at?: string;
   views?: number;
   vehicle?: Vehicle;
   user?: User;
@@ -133,6 +149,7 @@ export interface Vehicle {
   mileage_km?: number;
   fuel?: FuelType;
   transmission?: TransmissionType;
+  drive_type: DriveType;
   body_type: BodyType;
   color?: string;
   doors?: number;
@@ -168,6 +185,8 @@ export interface SearchParams {
   city?: string;
   fuel?: string;
   transmission?: string;
+  urgent?: boolean;
+  is_new?: boolean;
   page?: number;
   limit?: number;
   sortBy?: string;
@@ -183,7 +202,13 @@ export interface CreateListingDto {
   images?: string[];
   status?: ListingStatus;
   urgent?: boolean;
+  is_new?: boolean;
   vin?: string;
+  condition: ConditionType;
+  registration_type: RegistrationType;
+  horsepower: number;
+  is_registered?: boolean;
+  registration_expires_at?: string;
   vehicle: {
     brand_id: string;
     model_id: string;
@@ -192,6 +217,7 @@ export interface CreateListingDto {
     mileage_km?: number;
     fuel?: FuelType;
     transmission?: TransmissionType;
+          drive_type: DriveType;
     body_type: BodyType;
     color?: string;
     doors?: number;

@@ -3,7 +3,7 @@ import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } 
 import { Brand } from '../../brands/entities/brand.entity';
 import { VehicleModel } from '../../brands/entities/vehicle-model.entity';
 import * as constants from '../../common/constants';
-import { BodyType, FuelType, TransmissionType } from '../../common/types';
+import { BodyType, DriveType, FuelType, TransmissionType } from '../../common/types';
 
 @Entity('vehicles')
 @Index(['brand_id'])
@@ -55,6 +55,12 @@ export class Vehicle {
     nullable: true,
   })
   transmission: TransmissionType;
+
+  @Column({
+    type: 'enum',
+    enum: constants.driveTypes,
+  })
+  drive_type: DriveType;
 
   @Column({
     type: 'enum',

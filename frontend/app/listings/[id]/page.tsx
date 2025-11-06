@@ -17,7 +17,10 @@ import {
   formatMileage,
   formatEngineVolume,
   formatTransmission,
+  formatDriveType,
   formatBodyType,
+  formatCondition,
+  formatRegistrationType,
   getOptimizedImageUrl,
   getCityNameMk,
 } from '@/lib/utils';
@@ -253,59 +256,86 @@ export default function ListingPage() {
 
               {images.length > 1 && (
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                  {images.map((img, index) => (
-                    <button
-                      key={index}
-                      onClick={() => {
-                        setCurrentImageIndex(index);
-                        openImageModal(index);
-                      }}
-                      className={`relative h-28 sm:h-32 bg-bg-darker rounded-lg overflow-hidden transition-all ${
-                        currentImageIndex === index
-                          ? 'ring-2 ring-primary-500 shadow-md'
-                          : 'hover:ring-2 hover:ring-primary-300'
-                      }`}
-                    >
-                      {img !== '/placeholder-car.jpg' && !imageErrors.has(index) ? (
-                        (() => {
-                          const optimizedUrl = getOptimizedImageUrl(img, 70, 400);
-                          return (
-                            <Image
-                              src={optimizedUrl}
-                              alt={`${listing.title} - Слика ${index + 1}`}
-                              fill
-                              sizes="(max-width: 640px) 33vw, 25vw"
-                              className="object-cover"
-                              loading="lazy"
-                              unoptimized={
-                                optimizedUrl.startsWith('http://') ||
-                                optimizedUrl.startsWith('https://')
-                              }
-                              onError={() => {
-                                setImageErrors((prev) => new Set(prev).add(index));
-                              }}
-                            />
-                          );
-                        })()
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-300">
-                          <svg
-                            className="w-8 h-8"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={1.5}
-                              d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"
-                            />
-                          </svg>
-                        </div>
-                      )}
-                    </button>
-                  ))}
+                  {images.slice(0, 4).map((img, index) => {
+                    const isLastThumbnailMobile = index === 2;
+                    const isLastThumbnailDesktop = index === 3;
+                    const hasMoreImagesMobile = images.length > 4;
+                    const hasMoreImagesDesktop = images.length > 5;
+                    const remainingCountMobile = images.length - 3;
+                    const remainingCountDesktop = images.length - 4;
+
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          setCurrentImageIndex(index);
+                          openImageModal(index);
+                        }}
+                        className={`relative h-28 sm:h-32 bg-bg-darker rounded-lg overflow-hidden transition-all ${
+                          index === 3 ? 'hidden sm:block' : ''
+                        } ${
+                          currentImageIndex === index
+                            ? 'ring-2 ring-primary-500 shadow-md'
+                            : 'hover:ring-2 hover:ring-primary-300'
+                        }`}
+                      >
+                        {img !== '/placeholder-car.jpg' && !imageErrors.has(index) ? (
+                          (() => {
+                            const optimizedUrl = getOptimizedImageUrl(img, 70, 400);
+                            return (
+                              <>
+                                <Image
+                                  src={optimizedUrl}
+                                  alt={`${listing.title} - Слика ${index + 1}`}
+                                  fill
+                                  sizes="(max-width: 640px) 33vw, 25vw"
+                                  className="object-cover"
+                                  loading="lazy"
+                                  unoptimized={
+                                    optimizedUrl.startsWith('http://') ||
+                                    optimizedUrl.startsWith('https://')
+                                  }
+                                  onError={() => {
+                                    setImageErrors((prev) => new Set(prev).add(index));
+                                  }}
+                                />
+                                {isLastThumbnailMobile && hasMoreImagesMobile && (
+                                  <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center sm:hidden">
+                                    <span className="text-white text-lg font-bold">
+                                      +{remainingCountMobile}
+                                    </span>
+                                  </div>
+                                )}
+                                {isLastThumbnailDesktop && hasMoreImagesDesktop && (
+                                  <div className="absolute inset-0 bg-black bg-opacity-60 hidden sm:flex items-center justify-center">
+                                    <span className="text-white text-lg sm:text-xl font-bold">
+                                      +{remainingCountDesktop}
+                                    </span>
+                                  </div>
+                                )}
+                              </>
+                            );
+                          })()
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-300">
+                            <svg
+                              className="w-8 h-8"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={1.5}
+                                d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"
+                              />
+                            </svg>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -341,6 +371,12 @@ export default function ListingPage() {
                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold bg-red-500/20 border border-red-500/40 text-red-300 shadow-sm">
                       <span>🔒</span>
                       <span>Затворено</span>
+                    </span>
+                  )}
+                  {listing.is_new && (
+                    <span className="inline-flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-semibold bg-green-500/20 border border-green-500/40 text-green-300 shadow-sm">
+                      <span>✨</span>
+                      <span>Ново</span>
                     </span>
                   )}
                   {listing.urgent && (
@@ -397,12 +433,65 @@ export default function ListingPage() {
           <div className="space-y-6">
             {vehicle && (
               <div className="bg-bg-light p-4 md:p-6 rounded-xl border border-primary-500/20">
-                <h2 className="text-xl md:text-2xl font-bold mb-4 text-white">Карактеристики</h2>
+                <h2 className="text-xl md:text-2xl font-bold mb-6 text-white">Карактеристики</h2>
+                
+                <div className="space-y-6">
+                  {(vehicle.brand?.name || vehicle.model?.name || vehicle.year || listing.vin) && (
+                    <div className="pb-5 border-b border-primary-500/30 last:border-b-0">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {vehicle.brand?.name && (
                   <div>
                     <span className="text-primary-400 font-semibold">Марка:</span>
-                    <span className="ml-2 text-gray-300">{vehicle.brand?.name || ''}</span>
+                            <span className="ml-2 text-gray-300">{vehicle.brand.name}</span>
                   </div>
+                        )}
+                        {vehicle.model?.name && (
+                          <div>
+                            <span className="text-primary-400 font-semibold">Модел:</span>
+                            <span className="ml-2 text-gray-300">{vehicle.model.name}</span>
+                          </div>
+                        )}
+                        {vehicle.year && (
+                          <div>
+                            <span className="text-primary-400 font-semibold">Година:</span>
+                            <span className="ml-2 text-gray-300">{vehicle.year}</span>
+                          </div>
+                        )}
+                        {listing.vin && (
+                          <div className="flex items-center">
+                            <span className="text-primary-400 font-semibold">VIN:</span>
+                            <span className="ml-2 text-gray-300">{listing.vin}</span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCopy(listing.vin!, 'VIN');
+                              }}
+                              className="ml-2 p-1.5 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors"
+                              title="Копирај VIN"
+                            >
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {(vehicle.engine_displ_l || listing.horsepower !== undefined || vehicle.fuel || vehicle.transmission || vehicle.drive_type || vehicle.mileage_km) && (
+                    <div className="pb-5 border-b border-primary-500/30 last:border-b-0">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {vehicle.engine_displ_l && (
                     <div>
                       <span className="text-primary-400 font-semibold">Мотор:</span>
@@ -411,20 +500,34 @@ export default function ListingPage() {
                       </span>
                     </div>
                   )}
+                        {listing.horsepower !== undefined && listing.horsepower !== null && (
                   <div>
-                    <span className="text-primary-400 font-semibold">Модел:</span>
-                    <span className="ml-2 text-gray-300">{vehicle.model?.name || ''}</span>
+                            <span className="text-primary-400 font-semibold">Коњски сили:</span>
+                            <span className="ml-2 text-gray-300">{listing.horsepower}</span>
                   </div>
+                        )}
                   {vehicle.fuel && (
                     <div>
                       <span className="text-primary-400 font-semibold">Гориво:</span>
                       <span className="ml-2 text-gray-300">{vehicle.fuel}</span>
                     </div>
                   )}
+                        {vehicle.transmission && (
                   <div>
-                    <span className="text-primary-400 font-semibold">Година:</span>
-                    <span className="ml-2 text-gray-300">{vehicle.year}</span>
+                            <span className="text-primary-400 font-semibold">Пренос:</span>
+                            <span className="ml-2 text-gray-300">
+                              {formatTransmission(vehicle.transmission)}
+                            </span>
                   </div>
+                        )}
+                        {vehicle.drive_type && (
+                          <div>
+                            <span className="text-primary-400 font-semibold">Тип на погон:</span>
+                            <span className="ml-2 text-gray-300">
+                              {formatDriveType(vehicle.drive_type)}
+                            </span>
+                          </div>
+                        )}
                   {vehicle.mileage_km && (
                     <div>
                       <span className="text-primary-400 font-semibold">Поминување:</span>
@@ -433,6 +536,13 @@ export default function ListingPage() {
                       </span>
                     </div>
                   )}
+                      </div>
+                    </div>
+                  )}
+
+                  {(vehicle.body_type || vehicle.color || vehicle.doors) && (
+                    <div className="pb-5 border-b border-primary-500/30 last:border-b-0">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {vehicle.body_type && (
                     <div>
                       <span className="text-primary-400 font-semibold">Тип на каросерија:</span>
@@ -441,52 +551,63 @@ export default function ListingPage() {
                       </span>
                     </div>
                   )}
-                  {vehicle.transmission && (
+                        {vehicle.color && (
                     <div>
-                      <span className="text-primary-400 font-semibold">Пренос:</span>
+                            <span className="text-primary-400 font-semibold">Боја:</span>
+                            <span className="ml-2 text-gray-300">{vehicle.color}</span>
+                          </div>
+                        )}
+                        {vehicle.doors && (
+                          <div>
+                            <span className="text-primary-400 font-semibold">Врати:</span>
+                            <span className="ml-2 text-gray-300">{vehicle.doors}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {(listing.condition || listing.registration_type || listing.is_registered !== undefined) && (
+                    <div className="pb-0">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {listing.condition && (
+                          <div>
+                            <span className="text-primary-400 font-semibold">Состојба:</span>
                       <span className="ml-2 text-gray-300">
-                        {formatTransmission(vehicle.transmission)}
+                              {formatCondition(listing.condition)}
                       </span>
                     </div>
                   )}
-                  {vehicle.color && (
+                        {listing.registration_type && (
                     <div>
-                      <span className="text-primary-400 font-semibold">Боја:</span>
-                      <span className="ml-2 text-gray-300">{vehicle.color}</span>
+                            <span className="text-primary-400 font-semibold">Тип на регистрација:</span>
+                            <span className="ml-2 text-gray-300">
+                              {formatRegistrationType(listing.registration_type)}
+                            </span>
                     </div>
                   )}
-                  {listing.vin && (
-                    <div className="flex items-center">
-                      <span className="text-primary-400 font-semibold">VIN:</span>
-                      <span className="ml-2 text-gray-300">{listing.vin}</span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCopy(listing.vin!, 'VIN');
-                        }}
-                        className="ml-2 p-1.5 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors"
-                        title="Копирај VIN"
-                      >
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                          />
-                        </svg>
-                      </button>
+                        {listing.is_registered !== undefined && (
+                          <div>
+                            <span className="text-primary-400 font-semibold">Регистрација:</span>
+                            <span className="ml-2 text-gray-300">
+                              {listing.is_registered ? 'Зарегистрирано' : 'Не е зарегистрирано'}
+                            </span>
                     </div>
                   )}
-                  {vehicle.doors && (
+                        {listing.is_registered && listing.registration_expires_at && (
                     <div>
-                      <span className="text-primary-400 font-semibold">Врати:</span>
-                      <span className="ml-2 text-gray-300">{vehicle.doors}</span>
+                            <span className="text-primary-400 font-semibold">Регистрирано до:</span>
+                            <span className="ml-2 text-gray-300">
+                              {(() => {
+                                const date = new Date(listing.registration_expires_at);
+                                const month = String(date.getMonth() + 1).padStart(2, '0');
+                                const year = date.getFullYear();
+                                return `${month}.${year}`;
+                              })()}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -899,7 +1020,7 @@ export default function ListingPage() {
               e.stopPropagation();
               closeImageModal();
             }}
-            className="absolute top-2 right-2 sm:top-4 sm:right-4 text-white hover:text-gray-300 transition-colors z-10 p-2"
+            className="absolute top-2 right-2 sm:top-4 sm:right-4 text-primary-400 hover:text-primary-300 transition-colors z-10 p-2"
           >
             <svg
               className="w-6 h-6 sm:w-8 sm:h-8"
@@ -923,10 +1044,10 @@ export default function ListingPage() {
                   e.stopPropagation();
                   prevImage();
                 }}
-                className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 transition-colors z-10 bg-black bg-opacity-50 rounded-full p-2 sm:p-3"
+                className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 text-primary-400 hover:text-primary-300 transition-all z-10 bg-black/70 hover:bg-black/90 rounded-full p-3 sm:p-4 border-2 border-primary-500/50 hover:border-primary-400 shadow-lg"
               >
                 <svg
-                  className="w-5 h-5 sm:w-6 sm:h-6"
+                  className="w-8 h-8 sm:w-10 sm:h-10"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -934,7 +1055,7 @@ export default function ListingPage() {
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
+                    strokeWidth={2.5}
                     d="M15 19l-7-7 7-7"
                   />
                 </svg>
@@ -945,10 +1066,10 @@ export default function ListingPage() {
                   e.stopPropagation();
                   nextImage();
                 }}
-                className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 transition-colors z-10 bg-black bg-opacity-50 rounded-full p-2 sm:p-3"
+                className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 text-primary-400 hover:text-primary-300 transition-all z-10 bg-black/70 hover:bg-black/90 rounded-full p-3 sm:p-4 border-2 border-primary-500/50 hover:border-primary-400 shadow-lg"
               >
                 <svg
-                  className="w-5 h-5 sm:w-6 sm:h-6"
+                  className="w-8 h-8 sm:w-10 sm:h-10"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -956,7 +1077,7 @@ export default function ListingPage() {
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
+                    strokeWidth={2.5}
                     d="M9 5l7 7-7 7"
                   />
                 </svg>
@@ -1005,7 +1126,7 @@ export default function ListingPage() {
             )}
 
             {images.length > 1 && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-sm bg-black bg-opacity-50 px-4 py-2 rounded-full">
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-primary-400 text-lg sm:text-xl font-semibold bg-black bg-opacity-50 px-4 py-2 rounded-full">
                 {modalImageIndex + 1} / {images.length}
               </div>
             )}

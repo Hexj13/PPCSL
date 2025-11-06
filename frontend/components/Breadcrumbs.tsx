@@ -16,16 +16,22 @@ export function Breadcrumbs({ items, className = '' }: BreadcrumbsProps) {
   return (
     <nav className={`flex items-center space-x-2 text-sm ${className}`} aria-label="Breadcrumb">
       <ol className="flex items-center space-x-2">
-        {items.map((item, index) => {
+        {items.flatMap((item, index) => {
           const isLast = index === items.length - 1;
+          const elements = [];
 
-          return (
-            <li key={index} className="flex items-center">
-              {index > 0 && (
-                <span className="mx-2 text-gray-500" aria-hidden="true">
+          if (index > 0) {
+            elements.push(
+              <li key={`separator-${index}`} className="flex items-center">
+                <span className="text-gray-500" aria-hidden="true">
                   /
                 </span>
-              )}
+              </li>
+            );
+          }
+
+          elements.push(
+            <li key={index} className="flex items-center">
               {isLast ? (
                 <span className="text-gray-300 font-medium" aria-current="page">
                   {item.label}
@@ -42,6 +48,8 @@ export function Breadcrumbs({ items, className = '' }: BreadcrumbsProps) {
               )}
             </li>
           );
+
+          return elements;
         })}
       </ol>
     </nav>

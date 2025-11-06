@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Listing } from '@/lib/api';
 import {
   formatBodyType,
+  formatDriveType,
   formatEngineVolume,
   formatMileage,
   formatPrice,
@@ -164,25 +165,11 @@ export function ListingManagementCard({
           {listing.vehicle && (
             <div className="mb-3 flex-1">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2.5 text-sm">
-                {isAdminMode && listing.vehicle.brand && listing.vehicle.model && (
-                  <div>
-                    <span className="text-primary-400">Бренд/Модел:</span>
-                    <span className="ml-2 font-medium text-gray-200">
-                      {listing.vehicle.brand.name} {listing.vehicle.model.name}
-                    </span>
-                  </div>
-                )}
-                {isAdminMode && listing.vehicle.year && (
-                  <div>
-                    <span className="text-primary-400">Година:</span>
-                    <span className="ml-2 font-medium text-gray-200">{listing.vehicle.year}</span>
-                  </div>
-                )}
                 {listing.vehicle.engine_displ_l && (
                   <div>
-                    <span className="text-primary-400">Мотор (л):</span>
+                    <span className="text-primary-400">Мотор:</span>
                     <span className="ml-2 font-medium text-gray-200">
-                      {formatEngineVolume(listing.vehicle.engine_displ_l)}
+                      {formatEngineVolume(listing.vehicle.engine_displ_l)} л
                     </span>
                   </div>
                 )}
@@ -190,14 +177,6 @@ export function ListingManagementCard({
                   <div>
                     <span className="text-primary-400">Гориво:</span>
                     <span className="ml-2 font-medium text-gray-200">{listing.vehicle.fuel}</span>
-                  </div>
-                )}
-                {listing.vehicle.transmission && (
-                  <div>
-                    <span className="text-primary-400">Пренос:</span>
-                    <span className="ml-2 font-medium text-gray-200">
-                      {formatTransmission(listing.vehicle.transmission)}
-                    </span>
                   </div>
                 )}
                 {listing.vehicle.mileage_km && (
@@ -208,24 +187,28 @@ export function ListingManagementCard({
                     </span>
                   </div>
                 )}
-                {listing.vehicle.body_type && (
+                {listing.vehicle.transmission && (
                   <div>
-                    <span className="text-primary-400">Тип:</span>
+                    <span className="text-primary-400">Пренос:</span>
                     <span className="ml-2 font-medium text-gray-200">
-                      {formatBodyType(listing.vehicle.body_type)}
+                      {formatTransmission(listing.vehicle.transmission)}
                     </span>
                   </div>
                 )}
-                {listing.vehicle.color && (
+                {listing.vehicle.drive_type && (
                   <div>
-                    <span className="text-primary-400">Боја:</span>
-                    <span className="ml-2 font-medium text-gray-200">{listing.vehicle.color}</span>
+                    <span className="text-primary-400">Тип на погон:</span>
+                    <span className="ml-2 font-medium text-gray-200">
+                      {formatDriveType(listing.vehicle.drive_type)}
+                    </span>
                   </div>
                 )}
-                {!isAdminMode && listing.vehicle.doors && (
+                {listing.vehicle.body_type && (
                   <div>
-                    <span className="text-primary-400">Врати:</span>
-                    <span className="ml-2 font-medium text-gray-200">{listing.vehicle.doors}</span>
+                    <span className="text-primary-400">Тип на каросерија:</span>
+                    <span className="ml-2 font-medium text-gray-200">
+                      {formatBodyType(listing.vehicle.body_type)}
+                    </span>
                   </div>
                 )}
               </div>

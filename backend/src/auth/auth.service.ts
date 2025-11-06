@@ -34,6 +34,9 @@ export class AuthService {
       : await this.usersService.findByPhone(normalizedPhone);
 
     if (user && (await bcrypt.compare(password, user.password))) {
+      if (!user.active) {
+        throw new UnauthorizedException('Корисникот е деактивиран');
+      }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password: _, ...result } = user;
       return result;

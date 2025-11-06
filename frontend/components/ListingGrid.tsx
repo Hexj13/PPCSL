@@ -25,7 +25,7 @@ export function ListingGrid() {
 
   const fetchListings = useCallback(
     async (page: number, append: boolean = false, limit: number = 20) => {
-      const params: Record<string, string | number> = {
+      const params: Record<string, string | number | boolean> = {
         page,
         limit,
       };
@@ -39,17 +39,32 @@ export function ListingGrid() {
           key === 'price_gte' ||
           key === 'price_lte' ||
           key === 'mileage_gte' ||
-          key === 'mileage_lte' ||
-          key === 'doors'
+          key === 'mileage_lte'
         ) {
           params[key] = parseInt(value);
+        } else if (key === 'urgent' || key === 'is_new') {
+          params[key] = value === 'true';
+        } else if (
+          key === 'brand_ids' ||
+          key === 'model_ids' ||
+          key === 'cities' ||
+          key === 'fuels' ||
+          key === 'transmissions' ||
+          key === 'body_types' ||
+          key === 'colors' ||
+          key === 'doors'
+        ) {
+          params[key] = value;
         } else if (
           key === 'brand_id' ||
           key === 'model_id' ||
-          key === 'currency' ||
-          key === 'title' ||
+          key === 'city' ||
+          key === 'fuel' ||
+          key === 'transmission' ||
           key === 'body_type' ||
-          key === 'color'
+          key === 'color' ||
+          key === 'currency' ||
+          key === 'title'
         ) {
           params[key] = value;
         } else if (key !== 'page') {
@@ -156,7 +171,7 @@ export function ListingGrid() {
       const nextPage = currentPage + 1;
       const pageAfterNext = nextPage + 1;
 
-      const params: Record<string, string | number> = {
+      const params: Record<string, string | number | boolean> = {
         page: nextPage,
         limit: 20,
       };
@@ -170,17 +185,32 @@ export function ListingGrid() {
           key === 'price_gte' ||
           key === 'price_lte' ||
           key === 'mileage_gte' ||
-          key === 'mileage_lte' ||
-          key === 'doors'
+          key === 'mileage_lte'
         ) {
           params[key] = parseInt(value);
+        } else if (key === 'urgent' || key === 'is_new') {
+          params[key] = value === 'true';
+        } else if (
+          key === 'brand_ids' ||
+          key === 'model_ids' ||
+          key === 'cities' ||
+          key === 'fuels' ||
+          key === 'transmissions' ||
+          key === 'body_types' ||
+          key === 'colors' ||
+          key === 'doors'
+        ) {
+          params[key] = value;
         } else if (
           key === 'brand_id' ||
           key === 'model_id' ||
-          key === 'currency' ||
-          key === 'title' ||
+          key === 'city' ||
+          key === 'fuel' ||
+          key === 'transmission' ||
           key === 'body_type' ||
-          key === 'color'
+          key === 'color' ||
+          key === 'currency' ||
+          key === 'title'
         ) {
           params[key] = value;
         } else if (key !== 'page') {
@@ -188,7 +218,7 @@ export function ListingGrid() {
         }
       });
 
-      const secondParams: Record<string, string | number> = {
+      const secondParams: Record<string, string | number | boolean> = {
         ...params,
         page: pageAfterNext,
       };

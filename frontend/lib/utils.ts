@@ -44,6 +44,48 @@ export function formatTransmission(transmission: string | undefined): string {
   }
 }
 
+export function formatDriveType(driveType: string | undefined): string {
+  if (!driveType) return '';
+  switch (driveType) {
+    case 'FWD':
+      return 'Преден';
+    case 'RWD':
+      return 'Заден';
+    case 'AWD':
+      return 'Полн';
+    default:
+      return driveType;
+  }
+}
+
+export function formatCondition(condition: string | undefined): string {
+  if (!condition) return '';
+  switch (condition) {
+    case 'Undamaged':
+      return 'Без оштетувања';
+    case 'Damaged':
+      return 'Со оштетувања';
+    case 'ForParts':
+      return 'За делови';
+    default:
+      return condition;
+  }
+}
+
+export function formatRegistrationType(registrationType: string | undefined): string {
+  if (!registrationType) return '';
+  switch (registrationType) {
+    case 'Local':
+      return 'Местна';
+    case 'Foreign':
+      return 'Странска';
+    case 'Cleared':
+      return 'Цариниран';
+    default:
+      return registrationType;
+  }
+}
+
 export function formatBodyType(bodyType: string | undefined): string {
   if (!bodyType) return '';
   switch (bodyType) {

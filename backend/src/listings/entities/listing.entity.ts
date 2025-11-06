@@ -11,7 +11,7 @@ import {
 } from 'typeorm';
 
 import * as constants from '../../common/constants';
-import { Currency, ListingStatus } from '../../common/types';
+import { ConditionType, Currency, ListingStatus, RegistrationType } from '../../common/types';
 import { User } from '../../users/entities/user.entity';
 
 import { Vehicle } from './vehicle.entity';
@@ -77,8 +77,32 @@ export class Listing {
   @Column({ type: 'boolean', default: false })
   urgent: boolean;
 
+  @Column({ type: 'boolean', default: false })
+  is_new: boolean;
+
   @Column({ nullable: true, length: 17 })
   vin: string;
+
+  @Column({
+    type: 'enum',
+    enum: constants.conditionTypes,
+  })
+  condition: ConditionType;
+
+  @Column({
+    type: 'enum',
+    enum: constants.registrationTypes,
+  })
+  registration_type: RegistrationType;
+
+  @Column('int')
+  horsepower: number;
+
+  @Column({ type: 'boolean', nullable: true })
+  is_registered: boolean;
+
+  @Column({ type: 'date', nullable: true })
+  registration_expires_at: Date;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   last_updated_at: Date;

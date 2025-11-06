@@ -1,6 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
+  IsArray,
+  IsBoolean,
   IsEnum,
   IsNumber,
   IsOptional,
@@ -11,7 +13,15 @@ import {
   Min,
 } from 'class-validator';
 
-import { BodyType, Currency, FuelType, TransmissionType } from '../../common/types';
+import {
+  BodyType,
+  ConditionType,
+  Currency,
+  DriveType,
+  FuelType,
+  RegistrationType,
+  TransmissionType,
+} from '../../common/types';
 
 export class SearchListingsDto {
   @ApiPropertyOptional({
@@ -23,12 +33,50 @@ export class SearchListingsDto {
   brand_id?: string;
 
   @ApiPropertyOptional({
+    example: ['550e8400-e29b-41d4-a716-446655440000'],
+    description: 'Brand UUIDs (comma-separated or array)',
+    type: [String],
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return value.split(',').filter((v) => v.trim() !== '');
+    }
+    if (Array.isArray(value)) {
+      return value;
+    }
+    return [];
+  })
+  @IsArray()
+  @IsUUID(undefined, { each: true })
+  brand_ids?: string[];
+
+  @ApiPropertyOptional({
     example: '550e8400-e29b-41d4-a716-446655440001',
     description: 'Model UUID',
   })
   @IsOptional()
   @IsUUID()
   model_id?: string;
+
+  @ApiPropertyOptional({
+    example: ['550e8400-e29b-41d4-a716-446655440001'],
+    description: 'Model UUIDs (comma-separated or array)',
+    type: [String],
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return value.split(',').filter((v) => v.trim() !== '');
+    }
+    if (Array.isArray(value)) {
+      return value;
+    }
+    return [];
+  })
+  @IsArray()
+  @IsUUID(undefined, { each: true })
+  model_ids?: string[];
 
   @ApiPropertyOptional({
     example: 2018,
@@ -105,6 +153,26 @@ export class SearchListingsDto {
   city?: string;
 
   @ApiPropertyOptional({
+    example: ['Skopje', 'Bitola'],
+    description: 'City names (comma-separated or array)',
+    type: [String],
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return value.split(',').filter((v) => v.trim() !== '');
+    }
+    if (Array.isArray(value)) {
+      return value;
+    }
+    return [];
+  })
+  @IsArray()
+  @IsString({ each: true })
+  @MaxLength(100, { each: true })
+  cities?: string[];
+
+  @ApiPropertyOptional({
     example: 'Petrol',
     enum: ['Petrol', 'Diesel', 'Electric', 'Hybrid', 'LPG'],
     description: 'Fuel type',
@@ -114,6 +182,26 @@ export class SearchListingsDto {
   fuel?: FuelType;
 
   @ApiPropertyOptional({
+    example: ['Petrol', 'Diesel'],
+    enum: ['Petrol', 'Diesel', 'Electric', 'Hybrid', 'LPG'],
+    description: 'Fuel types (comma-separated or array)',
+    type: [String],
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return value.split(',').filter((v) => v.trim() !== '');
+    }
+    if (Array.isArray(value)) {
+      return value;
+    }
+    return [];
+  })
+  @IsArray()
+  @IsEnum(FuelType, { each: true })
+  fuels?: FuelType[];
+
+  @ApiPropertyOptional({
     example: 'Automatic',
     enum: ['Manual', 'Automatic', 'CVT'],
     description: 'Transmission type',
@@ -121,6 +209,26 @@ export class SearchListingsDto {
   @IsOptional()
   @IsEnum(TransmissionType)
   transmission?: TransmissionType;
+
+  @ApiPropertyOptional({
+    example: ['Manual', 'Automatic'],
+    enum: ['Manual', 'Automatic', 'CVT'],
+    description: 'Transmission types (comma-separated or array)',
+    type: [String],
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return value.split(',').filter((v) => v.trim() !== '');
+    }
+    if (Array.isArray(value)) {
+      return value;
+    }
+    return [];
+  })
+  @IsArray()
+  @IsEnum(TransmissionType, { each: true })
+  transmissions?: TransmissionType[];
 
   @ApiPropertyOptional({
     example: 'Sedan',
@@ -134,12 +242,44 @@ export class SearchListingsDto {
       'Van',
       'Pickup',
       'Minivan',
+      'Truck',
     ],
     description: 'Body type',
   })
   @IsOptional()
   @IsEnum(BodyType)
   body_type?: BodyType;
+
+  @ApiPropertyOptional({
+    example: ['Sedan', 'SUV'],
+    enum: [
+      'Sedan',
+      'Hatchback',
+      'Wagon',
+      'SUV',
+      'Coupe',
+      'Convertible',
+      'Van',
+      'Pickup',
+      'Minivan',
+      'Truck',
+    ],
+    description: 'Body types (comma-separated or array)',
+    type: [String],
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return value.split(',').filter((v) => v.trim() !== '');
+    }
+    if (Array.isArray(value)) {
+      return value;
+    }
+    return [];
+  })
+  @IsArray()
+  @IsEnum(BodyType, { each: true })
+  body_types?: BodyType[];
 
   @ApiPropertyOptional({
     example: 1.6,
@@ -174,6 +314,26 @@ export class SearchListingsDto {
   color?: string;
 
   @ApiPropertyOptional({
+    example: ['Black', 'White'],
+    description: 'Vehicle colors (comma-separated or array)',
+    type: [String],
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return value.split(',').filter((v) => v.trim() !== '');
+    }
+    if (Array.isArray(value)) {
+      return value;
+    }
+    return [];
+  })
+  @IsArray()
+  @IsString({ each: true })
+  @MaxLength(50, { each: true })
+  colors?: string[];
+
+  @ApiPropertyOptional({
     example: 4,
     description: 'Number of doors',
     minimum: 2,
@@ -184,7 +344,26 @@ export class SearchListingsDto {
   @IsNumber()
   @Min(2)
   @Max(5)
-  doors?: number;
+  doors_single?: number;
+
+  @ApiPropertyOptional({
+    example: ['2', '4', '5'],
+    description: 'Number of doors (comma-separated or array)',
+    type: [String],
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return value.split(',').filter((v) => v.trim() !== '');
+    }
+    if (Array.isArray(value)) {
+      return value;
+    }
+    return [];
+  })
+  @IsArray()
+  @IsString({ each: true })
+  doors?: string[];
 
   @ApiPropertyOptional({
     example: 'EUR',
@@ -245,4 +424,117 @@ export class SearchListingsDto {
   @IsOptional()
   @IsString()
   sortOrder?: 'ASC' | 'DESC';
+
+  @ApiPropertyOptional({
+    example: true,
+    description: 'Filter by urgent listings',
+  })
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  urgent?: boolean;
+
+  @ApiPropertyOptional({
+    example: true,
+    description: 'Filter by new listings',
+  })
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  is_new?: boolean;
+
+  @ApiPropertyOptional({
+    example: ['Undamaged', 'Damaged'],
+    enum: ['Undamaged', 'Damaged', 'ForParts'],
+    description: 'Condition types (comma-separated or array)',
+    type: [String],
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return value.split(',').filter((v) => v.trim() !== '');
+    }
+    if (Array.isArray(value)) {
+      return value;
+    }
+    return [];
+  })
+  @IsArray()
+  @IsEnum(ConditionType, { each: true })
+  conditions?: ConditionType[];
+
+  @ApiPropertyOptional({
+    example: ['Local', 'Foreign'],
+    enum: ['Local', 'Foreign', 'Cleared'],
+    description: 'Registration types (comma-separated or array)',
+    type: [String],
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return value.split(',').filter((v) => v.trim() !== '');
+    }
+    if (Array.isArray(value)) {
+      return value;
+    }
+    return [];
+  })
+  @IsArray()
+  @IsEnum(RegistrationType, { each: true })
+  registration_types?: RegistrationType[];
+
+  @ApiPropertyOptional({
+    example: 100,
+    description: 'Minimum horsepower',
+    minimum: 1,
+    maximum: 9999,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  @Max(9999)
+  horsepower_gte?: number;
+
+  @ApiPropertyOptional({
+    example: 500,
+    description: 'Maximum horsepower',
+    minimum: 1,
+    maximum: 9999,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  @Max(9999)
+  horsepower_lte?: number;
+
+  @ApiPropertyOptional({
+    example: ['FWD', 'AWD'],
+    enum: ['FWD', 'RWD', 'AWD'],
+    description: 'Drive types (comma-separated or array)',
+    type: [String],
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return value.split(',').filter((v) => v.trim() !== '');
+    }
+    if (Array.isArray(value)) {
+      return value;
+    }
+    return [];
+  })
+  @IsArray()
+  @IsEnum(DriveType, { each: true })
+  drive_types?: DriveType[];
+
+  @ApiPropertyOptional({
+    example: true,
+    description: 'Filter by registered vehicles',
+  })
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  is_registered?: boolean;
 }

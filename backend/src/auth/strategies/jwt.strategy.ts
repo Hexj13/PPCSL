@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
 import { UserType } from '../../common/types';
+import { UsersService } from '../../users/users.service';
 
 interface JwtPayload {
   sub: string;
@@ -13,7 +14,10 @@ interface JwtPayload {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(configService: ConfigService) {
+  constructor(
+    configService: ConfigService,
+    private usersService: UsersService,
+  ) {
     const secret = configService.get('JWT_SECRET');
     const nodeEnv = configService.get('NODE_ENV');
 
@@ -36,6 +40,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload) {
+    const user = await this.usersService.findOne(payload.sub);
+    if (!user.active) {
+      throw new UnauthorizedException('Корисникот е деактивиран');
+    }
     return { id: payload.sub, email: payload.email, type: payload.type };
   }
 }

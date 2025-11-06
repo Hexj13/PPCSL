@@ -18,7 +18,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-import { Currency, ListingStatus } from '../../common/types';
+import { ConditionType, Currency, ListingStatus, RegistrationType } from '../../common/types';
 
 import { CreateVehicleDto } from './create-vehicle.dto';
 
@@ -112,6 +112,14 @@ export class CreateListingDto {
   urgent?: boolean;
 
   @ApiPropertyOptional({
+    example: false,
+    description: 'Mark listing as new',
+  })
+  @IsOptional()
+  @IsBoolean()
+  is_new?: boolean;
+
+  @ApiPropertyOptional({
     example: 'WBA3A5G59CNP12345',
     description: 'Vehicle Identification Number (17 characters, no I, O, Q)',
     pattern: '^[A-HJ-NPR-Z0-9]{17}$',
@@ -123,6 +131,54 @@ export class CreateListingDto {
     message: 'VIN мора да содржи само букви и бројки (без I, O, Q)',
   })
   vin?: string;
+
+  @ApiProperty({
+    example: 'Undamaged',
+    enum: ['Undamaged', 'Damaged', 'ForParts'],
+    description: 'Vehicle condition',
+  })
+  @IsEnum(ConditionType, { message: 'Состојбата мора да биде Undamaged, Damaged или ForParts' })
+  condition: ConditionType;
+
+  @ApiProperty({
+    example: 'Local',
+    enum: ['Local', 'Foreign', 'Cleared'],
+    description: 'Registration type',
+  })
+  @IsEnum(RegistrationType, {
+    message: 'Типот на регистрација мора да биде Local, Foreign или Cleared',
+  })
+  registration_type: RegistrationType;
+
+  @ApiProperty({
+    example: 150,
+    description: 'Horsepower',
+    minimum: 1,
+    maximum: 9999,
+  })
+  @IsNumber({ maxDecimalPlaces: 0 })
+  @Min(1)
+  @Max(9999)
+  horsepower: number;
+
+  @ApiPropertyOptional({
+    example: true,
+    description: 'Is vehicle registered',
+  })
+  @IsOptional()
+  @IsBoolean()
+  is_registered?: boolean;
+
+  @ApiPropertyOptional({
+    example: '2025-12-31',
+    description: 'Registration expiration date (YYYY-MM-DD)',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, {
+    message: 'Датата мора да биде во формат YYYY-MM-DD',
+  })
+  registration_expires_at?: string;
 
   @ApiProperty({
     type: () => CreateVehicleDto,

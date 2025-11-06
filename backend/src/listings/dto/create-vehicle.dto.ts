@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsInt, IsNumber, IsOptional, IsUUID, Max, Min } from 'class-validator';
 
-import { BodyType, FuelType, TransmissionType } from '../../common/types';
+import { BodyType, DriveType, FuelType, TransmissionType } from '../../common/types';
 
 export class CreateVehicleDto {
   @ApiProperty({
@@ -33,20 +33,24 @@ export class CreateVehicleDto {
     example: 2.0,
     description: 'Engine displacement in liters',
     minimum: 0,
+    maximum: 99,
   })
   @IsOptional()
-  @IsNumber({ maxDecimalPlaces: 2 })
+  @IsNumber({ maxDecimalPlaces: 1 })
   @Min(0)
+  @Max(99)
   engine_displ_l?: number;
 
   @ApiPropertyOptional({
     example: 50000,
     description: 'Mileage in kilometers',
     minimum: 0,
+    maximum: 9999999,
   })
   @IsOptional()
   @IsInt()
   @Min(0)
+  @Max(9999999)
   mileage_km?: number;
 
   @ApiPropertyOptional({
@@ -68,6 +72,14 @@ export class CreateVehicleDto {
   transmission?: TransmissionType;
 
   @ApiProperty({
+    example: 'FWD',
+    enum: ['FWD', 'RWD', 'AWD'],
+    description: 'Drive type',
+  })
+  @IsEnum(DriveType, { message: 'Типот на погон мора да биде Преден, Заден или Полн' })
+  drive_type: DriveType;
+
+  @ApiProperty({
     example: 'Sedan',
     enum: [
       'Sedan',
@@ -79,6 +91,7 @@ export class CreateVehicleDto {
       'Van',
       'Pickup',
       'Minivan',
+      'Truck',
     ],
     description: 'Body type',
   })

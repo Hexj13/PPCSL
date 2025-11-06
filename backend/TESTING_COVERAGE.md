@@ -26,6 +26,26 @@
 1. **useNumberInput** (`hooks/useNumberInput.test.ts`)
 2. **utils** (`lib/utils.test.ts`)
 3. **api** (`lib/api.test.ts`)
+4. ✅ **store** (`lib/store.test.ts`)
+   - ✅ useAuthStore (setAuth, logout, initAuth)
+   - ✅ useFavoritesStore (add, remove, check, setFavorites, clear)
+5. ✅ **AuthProvider** (`components/AuthProvider.test.tsx`)
+   - ✅ Initialization on mount
+   - ✅ Children rendering
+6. ✅ **ListingCard** (`components/ListingCard.test.tsx`)
+   - ✅ Listing information display
+   - ✅ Favorite button functionality
+   - ✅ Own listing handling
+   - ✅ Badge display (Ново, Итно)
+   - ✅ Vehicle specifications
+   - ✅ Views and date display
+7. ✅ **SearchFilters** (`components/SearchFilters.test.tsx`)
+   - ✅ Basic filters rendering
+   - ✅ Brands and cities loading
+   - ✅ Models loading on brand selection
+   - ✅ Advanced filters toggle
+   - ✅ Form submission
+   - ✅ Reset functionality
 
 ## ✅ All Unit Tests Created
 
@@ -177,10 +197,76 @@ All unit tests should follow the pattern:
 - Test edge cases and boundary conditions
 - Use descriptive test names
 
+## ✅ Controllers (Unit Tests)
+
+All controllers now have comprehensive unit tests:
+
+1. ✅ **ListingsController** (`listings.controller.spec.ts`)
+   - ✅ Search listings
+   - ✅ Get user listings
+   - ✅ Get active user listings
+   - ✅ Find by VIN
+   - ✅ Get listing details with view tracking
+   - ✅ Create listing
+   - ✅ Update listing
+   - ✅ Publish/Pause/Close listing
+   - ✅ Refresh dates
+
+2. ✅ **AuthController** (`auth.controller.spec.ts`)
+   - ✅ Register user
+   - ✅ Login
+   - ✅ Get profile
+   - ✅ Verify phone
+   - ✅ Check phone availability
+   - ✅ Send SMS verification
+   - ✅ Verify SMS code
+   - ✅ Verify email
+   - ✅ Request password reset
+   - ✅ Verify reset code
+   - ✅ Reset password
+
+3. ✅ **FavoritesController** (`favorites.controller.spec.ts`)
+   - ✅ Get favorites list
+   - ✅ Check batch favorite status
+   - ✅ Check single favorite status
+   - ✅ Add to favorites
+   - ✅ Remove from favorites
+
+4. ✅ **UploadController** (`upload.controller.spec.ts`)
+   - ✅ Upload image
+   - ✅ Get optimized image
+   - ✅ Image optimization parameters validation
+
+5. ✅ **UsersController** (`users.controller.spec.ts`)
+   - ✅ Get all users (without passwords)
+   - ✅ Get user by ID (without password)
+
+6. ✅ **AdminController** (`admin.controller.spec.ts`)
+   - ✅ Get all users
+   - ✅ Get all listings
+   - ✅ Get statistics
+   - ✅ Update listing status
+   - ✅ Get user listings
+   - ✅ Toggle user status
+
+## ✅ Guards (Unit Tests)
+
+1. ✅ **JwtAuthGuard** (`auth/guards/jwt-auth.guard.spec.ts`)
+   - ✅ JWT token validation
+   - ✅ Unauthorized exception handling
+
 ## Integration Tests
 
-Integration tests are already set up and cover:
+Integration tests are set up and cover:
 - ✅ API contract validation against Swagger
 - ✅ End-to-end API flows
 - ✅ Authentication flows
+- ✅ **Listings API** (`listings.integration.ts`)
+- ✅ **Auth API** (`auth.integration.ts`)
+- ✅ **Brands API** (`brands.integration.ts`)
+- ✅ **Cities API** (`cities.integration.ts`)
+- ✅ **Favorites API** (`favorites.integration.ts`)
+- ✅ **Upload API** (`upload.integration.ts`)
+- ✅ **Users API** (`users.integration.ts`)
+- ✅ **Admin API** (`admin.integration.ts`)
 

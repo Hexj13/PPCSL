@@ -11,6 +11,7 @@ import {
   formatPrice,
   formatEngineVolume,
   formatMileage,
+  formatDriveType,
   formatBodyType,
   formatDateShort,
   getOptimizedImageUrl,
@@ -32,6 +33,7 @@ export function ListingCard({ listing, forceFavorite = false, onRemove }: Listin
   const isFavorite = forceFavorite || checkFavorite(listing.id);
   const isOwnListing = !!(user && listing.user && user.id === listing.user.id);
   const [imageError, setImageError] = React.useState(false);
+
 
   const handleToggleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -97,12 +99,20 @@ export function ListingCard({ listing, forceFavorite = false, onRemove }: Listin
               </svg>
             </div>
           )}
-          {listing.urgent && (
-            <span className="absolute top-3 left-3 inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs md:text-sm font-semibold bg-primary-700/80 border border-primary-500/70 text-primary-100 shadow-sm z-10">
-              <span>🔥</span>
-              <span>Итно</span>
-            </span>
-          )}
+          <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
+            {listing.is_new && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs md:text-sm font-semibold bg-green-700/95 border border-green-500/90 text-green-100 shadow-sm">
+                <span>✨</span>
+                <span>Ново</span>
+              </span>
+            )}
+            {listing.urgent && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs md:text-sm font-semibold bg-primary-700/95 border border-primary-500/90 text-primary-100 shadow-sm">
+                <span>🔥</span>
+                <span>Итно</span>
+              </span>
+            )}
+          </div>
           <button
             onClick={handleToggleFavorite}
             disabled={!isFavorite && isOwnListing}
@@ -155,6 +165,9 @@ export function ListingCard({ listing, forceFavorite = false, onRemove }: Listin
                 {vehicle.fuel && <div>Гориво: {vehicle.fuel}</div>}
                 {vehicle.mileage_km && (
                   <div>Поминување: {formatMileage(vehicle.mileage_km)} км</div>
+                )}
+                {vehicle.drive_type && (
+                  <div>Тип на погон: {formatDriveType(vehicle.drive_type)}</div>
                 )}
                 {vehicle.body_type && (
                   <div>Тип на каросерија: {formatBodyType(vehicle.body_type)}</div>

@@ -130,7 +130,7 @@ export default function LoginPage() {
               }
             }}
             className={`input-field ${errors.login ? 'border-red-500' : ''}`}
-            placeholder="example@email.com или +38970123456"
+            placeholder="Email или телефон"
             autoComplete="username"
           />
           {errors.login && <p className="mt-1 text-sm text-red-400">{errors.login}</p>}

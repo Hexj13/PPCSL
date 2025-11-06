@@ -30,6 +30,7 @@ describe('AuthService', () => {
     type: UserType.Individual,
     firstName: 'Test',
     lastName: 'User',
+    active: true,
   };
 
   beforeEach(async () => {
@@ -131,6 +132,19 @@ describe('AuthService', () => {
       const result = await service.validateUser('test@test.com', 'wrongpassword');
 
       expect(result).toBeNull();
+    });
+
+    it('should throw UnauthorizedException when user is inactive', async () => {
+      const inactiveUser = { ...mockUser, active: false };
+      usersService.findByEmail.mockResolvedValue(inactiveUser as User);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+
+      await expect(service.validateUser('test@test.com', 'password123')).rejects.toThrow(
+        UnauthorizedException,
+      );
+      await expect(service.validateUser('test@test.com', 'password123')).rejects.toThrow(
+        'Корисникот е деактивиран',
+      );
     });
   });
 
