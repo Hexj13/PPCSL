@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LessThanOrEqual, Repository } from 'typeorm';
+import { In, LessThanOrEqual, Repository } from 'typeorm';
 
 import { BrandsService } from '../brands/brands.service';
 import { RedisService } from '../common/redis.service';
@@ -331,6 +331,17 @@ export class ListingsService {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { password, ...userWithoutPassword } = listing.user;
         listing.user = userWithoutPassword as typeof listing.user;
+
+        if (
+          listing.status === ListingStatusEnum.Closed ||
+          (!listing.user.email && !listing.user.phone)
+        ) {
+          listing.user.phone = null;
+          listing.user.email = null;
+          listing.user.firstName = null;
+          listing.user.lastName = null;
+          listing.user.companyName = null;
+        }
       }
       return listing;
     });
@@ -379,6 +390,14 @@ export class ListingsService {
         listing.user.lastName = null;
         listing.user.companyName = null;
       }
+    }
+
+    if (listing.user && !listing.user.email && !listing.user.phone) {
+      listing.user.phone = null;
+      listing.user.email = null;
+      listing.user.firstName = null;
+      listing.user.lastName = null;
+      listing.user.companyName = null;
     }
 
     return listing;
@@ -686,5 +705,23 @@ export class ListingsService {
       }
       return listing;
     });
+  }
+
+  async closeAllUserListings(userId: string): Promise<number> {
+    const result = await this.listingsRepository.update(
+      {
+        user_id: userId,
+        status: In([ListingStatusEnum.Active, ListingStatusEnum.Paused]),
+      },
+      { status: ListingStatusEnum.Closed },
+    );
+
+    try {
+      await this.redisService.delPattern('cache:listings:search:*');
+    } catch (error) {
+      console.warn('Failed to invalidate cache after closing user listings', error);
+    }
+
+    return result.affected || 0;
   }
 }

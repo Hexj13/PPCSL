@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   Patch,
@@ -227,6 +228,56 @@ export class AuthController {
   async updateProfile(@Request() req, @Body() updateProfileDto: UpdateProfileDto) {
     const user = await this.authService.updateProfile(req.user.id, updateProfileDto);
     return user;
+  }
+
+  @ApiOperation({
+    summary: 'Delete user account',
+    description:
+      'Permanently deletes the authenticated user account. All personal data (email, phone, firstName, lastName, companyName) will be nullified, and all active/paused listings will be closed. The account will be marked as inactive. This action is irreversible.',
+  })
+  @ApiBearerAuth('JWT-auth')
+  @ApiResponse({
+    status: 200,
+    description: 'Account deleted successfully',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            message: {
+              type: 'string',
+              example: 'Аккаунтот е успешно избришан',
+            },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request - Account is already deleted or inactive',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            statusCode: { type: 'number', example: 400 },
+            message: { type: 'string', example: 'Аккаунтот е веќе избришан или деактивиран' },
+            timestamp: { type: 'string' },
+            path: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing JWT token',
+  })
+  @UseGuards(JwtAuthGuard)
+  @Delete('profile')
+  async deleteAccount(@Request() req) {
+    return this.authService.deleteAccount(req.user.id);
   }
 
   @ApiOperation({ summary: 'Request phone number change' })

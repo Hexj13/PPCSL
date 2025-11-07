@@ -115,7 +115,10 @@ export function UserListingsModal({
     if (user.companyName) {
       return user.companyName;
     }
-    return user.email;
+    if (user.email) {
+      return user.email;
+    }
+    return 'Корисник';
   };
 
   const displayListings = showOnlyActive

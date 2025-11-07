@@ -354,6 +354,7 @@ export interface ResetPasswordDto {
 }
 
 export interface UpdateProfileDto {
+  email?: string;
   firstName?: string;
   lastName?: string;
   companyName?: string;
@@ -378,6 +379,7 @@ export const authApi = {
     api.post<{ access_token: string; user: User }>('/api/auth/login', data),
   me: () => api.get<User>('/api/auth/me'),
   updateProfile: (data: UpdateProfileDto) => api.patch<User>('/api/auth/profile', data),
+  deleteAccount: () => api.delete<{ message: string }>('/api/auth/profile'),
   verifyPhone: () => api.post<User>('/api/auth/verify-phone'),
   sendSms: (data: SendSmsDto) =>
     api.post<{ success: boolean; message: string }>('/api/auth/send-sms', data, {

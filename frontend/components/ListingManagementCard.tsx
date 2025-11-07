@@ -114,8 +114,11 @@ export function ListingManagementCard({
                             listing.user.phone,
                           ]
                             .filter(Boolean)
-                            .join(' ')}
+                            .join(' ') || 'Избришан корисник'}
                         </span>
+                        {!listing.user.email && !listing.user.phone && !listing.user.firstName && !listing.user.lastName && !listing.user.companyName && (
+                          <span className="ml-2 text-xs text-red-400">(Аккаунтот е избришан)</span>
+                        )}
                       </div>
                     )}
                   </>

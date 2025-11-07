@@ -91,12 +91,14 @@ const terms = {
         id: '2',
         title: '2. Опис на услугата',
         content: [
-          'Kupito е платформа за објавување и прегледување на огласи за продажба на автомобили во Македонија. Платформата овозможува на корисниците да:',
-          '• Објавуваат огласи за продажба на автомобили',
+          'Kupito е некомерцијална платформа за објавување и прегледување на огласи за продажба на автомобили во Македонија. Платформата е бесплатна за сите корисници и не генерира приход од користењето на услугите.',
+          'Платформата овозможува на корисниците да:',
+          '• Објавуваат огласи за продажба на автомобили бесплатно',
           '• Прегледуваат и пребаруваат огласи за автомобили',
           '• Контактираат со продавачи преку информациите обезбедени на огласот',
           '• Креираат профили и управуваат со своите огласи',
-          'Kupito делува само како посредник помеѓу продавачите и купачите. Платформата не учествува во вистинските трансакции меѓу корисниците и не гарантира ниту еден аспект на продажбата или автомобилот кој се продава.',
+          'Kupito делува само како посредник помеѓу продавачите и купачите. Платформата не учествува во вистинските трансакции меѓу корисниците, не наплатува комисија или такси, и не гарантира ниту еден аспект на продажбата или автомобилот кој се продава.',
+          'Kupito е некомерцијална организација и не води бизнис активност. Сите услуги се обезбедени бесплатно како услуга за заедницата.',
         ],
       },
       {
@@ -161,7 +163,7 @@ const terms = {
         id: '7',
         title: '7. Заштита на лични податоци',
         content: [
-          'Kupito собира и обработува лични податоци во согласност со својата Политика за приватност, која е составен дел од овие Услови.',
+          'Kupito собира и обработува лични податоци во согласност со својата Политика за приватност, која е составен дел од овие Услови. За детални информации за обработката на лични податоци, ве молиме консултирајте ја нашата Политика за приватност на www.kupito.mk/privacy.',
           'Со користење на Платформата, се согласувате со собирањето, обработката и користењето на вашите лични податоци како што е опишано во Политиката за приватност.',
           'Лозинките на корисниците се заштитени со криптографско хеширање (bcrypt) и никогаш не се чуваат во видлив облик. Никој, вклучувајќи ги и администраторите на Платформата, нема директен пристап до вашите лозинки. Ова обезбедува максимална безбедност на вашите сметки.',
           'Kupito е посветена на безбедноста на корисниците и нивните податоци. Ние активно се спротивставуваме на неправомерни активности и ги заштитуваме податоците на корисниците од неовластен пристап од трети лица. Сите податоци се чуваат на безбедни сервери со примена на современи безбедносни протоколи.',
@@ -174,9 +176,11 @@ const terms = {
         id: '8',
         title: '8. Плаќања и комисија',
         content: [
-          'Во моментов, користењето на основните функции на Платформата е бесплатно.',
-          'Kupito резервира право да воведи платени услуги или комисија во иднина. Во тој случај, корисниците ќе бидат унапред известени за какви било промени во политиката за плаќања.',
+          'Kupito е некомерцијална платформа и сите услуги се обезбедени бесплатно за корисниците.',
+          'Платформата не наплатува комисија, такси или какви било плаќања за објавување на огласи, прегледување на огласи или користење на какви било функции.',
+          'Kupito не генерира приход од Платформата и не води комерцијална активност.',
           'Сите трансакции меѓу продавачите и купачите се одвиваат директно помеѓу нив. Kupito не учествува во плаќањата и не е одговорна за какви било финансиски трансакции.',
+          'Ако во иднина Kupito ќе се трансформира во комерцијална организација и ќе започне да наплатува услуги, корисниците ќе бидат унапред известени за какви било промени во политиката за плаќања.',
         ],
       },
       {
@@ -327,12 +331,14 @@ const terms = {
         id: '2',
         title: '2. Service Description',
         content: [
-          'Kupito is a platform for posting and viewing listings for the sale of vehicles in Macedonia. The Platform enables users to:',
-          '• Post listings for the sale of vehicles',
+          'Kupito is a non-commercial platform for posting and viewing listings for the sale of vehicles in Macedonia. The Platform is free for all users and does not generate revenue from the use of services.',
+          'The Platform enables users to:',
+          '• Post listings for the sale of vehicles free of charge',
           '• Browse and search for vehicle listings',
           '• Contact sellers through the information provided in the listing',
           '• Create profiles and manage their listings',
-          'Kupito acts solely as an intermediary between sellers and buyers. The Platform does not participate in actual transactions between users and does not guarantee any aspect of the sale or the vehicle being sold.',
+          'Kupito acts solely as an intermediary between sellers and buyers. The Platform does not participate in actual transactions between users, does not charge commissions or fees, and does not guarantee any aspect of the sale or the vehicle being sold.',
+          'Kupito is a non-commercial organization and does not conduct business activities. All services are provided free of charge as a service to the community.',
         ],
       },
       {
@@ -397,7 +403,7 @@ const terms = {
         id: '7',
         title: '7. Data Protection',
         content: [
-          'Kupito collects and processes personal data in accordance with its Privacy Policy, which is an integral part of these Terms.',
+          'Kupito collects and processes personal data in accordance with its Privacy Policy, which is an integral part of these Terms. For detailed information about personal data processing, please consult our Privacy Policy at www.kupito.mk/privacy.',
           'By using the Platform, you agree to the collection, processing, and use of your personal data as described in the Privacy Policy.',
           'User passwords are protected using cryptographic hashing (bcrypt) and are never stored in plain text. No one, including Platform administrators, has direct access to your passwords. This ensures maximum security for your accounts.',
           'Kupito is committed to the security of users and their data. We actively oppose unlawful activities and protect user data from unauthorized access by third parties. All data is stored on secure servers using modern security protocols.',
@@ -410,9 +416,11 @@ const terms = {
         id: '8',
         title: '8. Payments and Fees',
         content: [
-          'Currently, the use of basic Platform features is free.',
-          'Kupito reserves the right to introduce paid services or fees in the future. In such case, users will be notified in advance of any changes to the payment policy.',
+          'Kupito is a non-commercial platform and all services are provided free of charge to users.',
+          'The Platform does not charge commissions, fees, or any payments for posting listings, viewing listings, or using any features.',
+          'Kupito does not generate revenue from the Platform and does not conduct commercial activities.',
           'All transactions between sellers and buyers occur directly between them. Kupito does not participate in payments and is not responsible for any financial transactions.',
+          'If in the future Kupito transforms into a commercial organization and begins charging for services, users will be notified in advance of any changes to the payment policy.',
         ],
       },
       {

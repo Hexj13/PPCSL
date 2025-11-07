@@ -1,7 +1,7 @@
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import { FindOperator, In, Repository, SelectQueryBuilder } from 'typeorm';
 
 import { BrandsService } from '../brands/brands.service';
 import { RedisService } from '../common/redis.service';
@@ -23,6 +23,8 @@ describe('ListingsService', () => {
   let usersService: jest.Mocked<UsersService>;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let brandsService: jest.Mocked<BrandsService>;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  let redisService: jest.Mocked<RedisService>;
 
   const mockVehicle: Vehicle = {
     id: 'vehicle-1',
@@ -128,6 +130,7 @@ describe('ListingsService', () => {
     listingViewsRepository = module.get(getRepositoryToken(ListingView));
     usersService = module.get(UsersService);
     brandsService = module.get(BrandsService);
+    redisService = module.get(RedisService);
   });
 
   it('should be defined', () => {
@@ -358,6 +361,88 @@ describe('ListingsService', () => {
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('listing.status = :status', {
         status: ListingStatus.Closed,
       });
+    });
+  });
+
+  describe('closeAllUserListings', () => {
+    const userId = 'user-1';
+
+    it('should close all active and paused listings for user', async () => {
+      const mockUpdateResult: { affected: number; generatedMaps: unknown[]; raw: unknown[] } = {
+        affected: 5,
+        generatedMaps: [],
+        raw: [],
+      };
+      listingsRepository.update.mockResolvedValue(mockUpdateResult);
+      redisService.delPattern.mockResolvedValue(undefined);
+
+      const result = await service.closeAllUserListings(userId);
+
+      expect(listingsRepository.update).toHaveBeenCalledWith(
+        {
+          user_id: userId,
+          status: In([ListingStatus.Active, ListingStatus.Paused]),
+        },
+        { status: ListingStatus.Closed },
+      );
+      expect(redisService.delPattern).toHaveBeenCalledWith('cache:listings:search:*');
+      expect(result).toBe(5);
+    });
+
+    it('should return 0 when no listings to close', async () => {
+      const mockUpdateResult: { affected: number; generatedMaps: unknown[]; raw: unknown[] } = {
+        affected: 0,
+        generatedMaps: [],
+        raw: [],
+      };
+      listingsRepository.update.mockResolvedValue(mockUpdateResult);
+      redisService.delPattern.mockResolvedValue(undefined);
+
+      const result = await service.closeAllUserListings(userId);
+
+      expect(result).toBe(0);
+      expect(redisService.delPattern).toHaveBeenCalled();
+    });
+
+    it('should handle cache invalidation errors gracefully', async () => {
+      const mockUpdateResult: { affected: number; generatedMaps: unknown[]; raw: unknown[] } = {
+        affected: 3,
+        generatedMaps: [],
+        raw: [],
+      };
+      listingsRepository.update.mockResolvedValue(mockUpdateResult);
+      redisService.delPattern.mockRejectedValue(new Error('Cache error'));
+
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+
+      const result = await service.closeAllUserListings(userId);
+
+      expect(result).toBe(3);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Failed to invalidate cache after closing user listings',
+        expect.any(Error),
+      );
+
+      consoleSpy.mockRestore();
+    });
+
+    it('should only close Active and Paused listings, not Closed ones', async () => {
+      const mockUpdateResult: { affected: number; generatedMaps: unknown[]; raw: unknown[] } = {
+        affected: 2,
+        generatedMaps: [],
+        raw: [],
+      };
+      listingsRepository.update.mockResolvedValue(mockUpdateResult);
+      redisService.delPattern.mockResolvedValue(undefined);
+
+      await service.closeAllUserListings(userId);
+
+      const updateCall = listingsRepository.update.mock.calls[0];
+      const whereClause = updateCall[0] as { user_id: string; status: FindOperator<ListingStatus> };
+      expect(whereClause).toHaveProperty('user_id', userId);
+      expect(whereClause).toHaveProperty('status');
+      expect(whereClause.status).toBeInstanceOf(FindOperator);
+      expect(updateCall[1]).toEqual({ status: ListingStatus.Closed });
     });
   });
 });

@@ -4,6 +4,7 @@ import * as bcrypt from 'bcrypt';
 import { QueryFailedError } from 'typeorm';
 
 import * as constants from '../common/constants';
+import { ListingsService } from '../listings/listings.service';
 import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 
@@ -26,6 +27,7 @@ export class AuthService {
     private jwtService: JwtService,
     private smsService: SmsService,
     private emailService: EmailService,
+    private listingsService: ListingsService,
   ) {}
 
   async validateUser(login: string, password: string): Promise<UserWithoutPassword | null> {
@@ -36,9 +38,6 @@ export class AuthService {
       : await this.usersService.findByPhone(normalizedPhone);
 
     if (user && (await bcrypt.compare(password, user.password))) {
-      if (!user.active) {
-        throw new UnauthorizedException('Корисникот е деактивиран');
-      }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password: _, ...result } = user;
       return result;
@@ -165,7 +164,23 @@ export class AuthService {
     userId: string,
     updateProfileDto: UpdateProfileDto,
   ): Promise<UserWithoutPassword> {
+    const currentUser = await this.usersService.findOne(userId);
     const cleanedData: Partial<User> = { ...updateProfileDto };
+
+    if (cleanedData.email !== undefined) {
+      if (cleanedData.email === '' || cleanedData.email === null) {
+        cleanedData.email = null;
+      } else if (cleanedData.email !== currentUser.email) {
+        const existingUser = await this.usersService.findByEmail(cleanedData.email);
+        if (existingUser && existingUser.id !== userId) {
+          throw new BadRequestException('Корисник со овој email веќе постои');
+        }
+      } else {
+        delete cleanedData.email;
+      }
+    } else {
+      delete cleanedData.email;
+    }
 
     if (cleanedData.lastName === '' || cleanedData.lastName === null) {
       cleanedData.lastName = null;
@@ -328,5 +343,26 @@ export class AuthService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...result } = updatedUser;
     return result;
+  }
+
+  async deleteAccount(userId: string): Promise<{ message: string }> {
+    const user = await this.usersService.findOne(userId);
+
+    if (!user.active) {
+      throw new BadRequestException('Аккаунтот е веќе избришан или деактивиран');
+    }
+
+    await this.listingsService.closeAllUserListings(userId);
+
+    await this.usersService.update(userId, {
+      email: null,
+      phone: null,
+      firstName: null,
+      lastName: null,
+      companyName: null,
+      active: false,
+    });
+
+    return { message: 'Аккаунтот е успешно избришан' };
   }
 }

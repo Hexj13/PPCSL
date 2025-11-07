@@ -268,7 +268,7 @@ function ListingsTab() {
           const user = listing.user;
           if (!user) return false;
           const creatorName =
-            `${user.firstName || ''} ${user.lastName || ''} ${user.email || ''} ${user.companyName || ''}`.toLowerCase();
+            `${user.firstName || ''} ${user.lastName || ''} ${user.email || ''} ${user.companyName || ''} ${!user.email && !user.phone ? 'избришан' : ''}`.toLowerCase();
           const nameMatch = creatorName.includes(searchQuery.toLowerCase());
           return statusMatch && nameMatch;
         }
@@ -759,19 +759,34 @@ function UsersTab() {
                       <h3 className="text-xl font-bold text-white">
                         {user.firstName && user.lastName
                           ? `${user.firstName} ${user.lastName}`
-                          : user.companyName || user.email}
+                          : user.companyName || user.email || 'Избришан корисник'}
                       </h3>
                       {user.companyName && (
                         <p className="text-sm text-gray-300 mt-1">{user.companyName}</p>
                       )}
+                      {!user.email && !user.phone && !user.firstName && !user.lastName && !user.companyName && (
+                        <p className="text-sm text-red-400 mt-1">(Аккаунтот е избришан)</p>
+                      )}
                     </div>
                     <div className="space-y-1 text-sm text-gray-300">
-                      <div>
-                        <span className="text-primary-400">Email:</span> {user.email}
-                      </div>
-                      {user.phone && (
+                      {user.email ? (
+                        <div>
+                          <span className="text-primary-400">Email:</span> {user.email}
+                        </div>
+                      ) : (
+                        <div>
+                          <span className="text-primary-400">Email:</span>{' '}
+                          <span className="text-gray-500">Недостапно</span>
+                        </div>
+                      )}
+                      {user.phone ? (
                         <div>
                           <span className="text-primary-400">Телефон:</span> {user.phone}
+                        </div>
+                      ) : (
+                        <div>
+                          <span className="text-primary-400">Телефон:</span>{' '}
+                          <span className="text-gray-500">Недостапно</span>
                         </div>
                       )}
                       <div className="flex items-center gap-2">

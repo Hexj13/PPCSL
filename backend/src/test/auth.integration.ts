@@ -835,4 +835,178 @@ describe('Auth API Integration Tests', () => {
       expect(response).toSatisfyApiSpec();
     });
   });
+
+  describe('DELETE /api/auth/profile', () => {
+    let authToken: string;
+    let testEmail: string;
+    let testPhone: string;
+
+    beforeAll(async () => {
+      testEmail = `test${Date.now()}@example.com`;
+      testPhone = `+389701234${Math.floor(Math.random() * 10000)}`;
+      const testPassword = 'Test123!@#';
+
+      await request.post('/api/auth/register').send({
+        email: testEmail,
+        password: testPassword,
+        type: 'Individual',
+        phone: testPhone,
+        firstName: 'Test',
+        lastName: 'User',
+        termsAccepted: true,
+      });
+
+      const loginResponse = await request.post('/api/auth/login').send({
+        login: testEmail,
+        password: testPassword,
+      });
+
+      if (loginResponse.body.access_token) {
+        authToken = loginResponse.body.access_token;
+      }
+    });
+
+    it('should delete account successfully and match OpenAPI schema', async () => {
+      if (!authToken) {
+        return;
+      }
+
+      const response = await request
+        .delete('/api/auth/profile')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('message');
+      expect(response.body.message).toContain('избришан');
+      expect(response).toSatisfyApiSpec();
+    });
+
+    it('should return 401 without authentication', async () => {
+      const response = await request.delete('/api/auth/profile').expect(401);
+
+      expect(response).toSatisfyApiSpec();
+    });
+
+    it('should return 400 when trying to delete already deleted account', async () => {
+      if (!authToken) {
+        return;
+      }
+
+      const response = await request
+        .delete('/api/auth/profile')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(400);
+
+      expect(response.body).toHaveProperty('message');
+      expect(response).toSatisfyApiSpec();
+    });
+
+    it('should close all user listings when account is deleted', async () => {
+      const newTestEmail = `test${Date.now()}@example.com`;
+      const newTestPhone = `+389701234${Math.floor(Math.random() * 10000)}`;
+      const testPassword = 'Test123!@#';
+
+      await request.post('/api/auth/register').send({
+        email: newTestEmail,
+        password: testPassword,
+        type: 'Individual',
+        phone: newTestPhone,
+        firstName: 'Test',
+        lastName: 'User',
+        termsAccepted: true,
+      });
+
+      const loginResponse = await request.post('/api/auth/login').send({
+        login: newTestEmail,
+        password: testPassword,
+      });
+
+      if (!loginResponse.body.access_token) {
+        return;
+      }
+
+      const newAuthToken = loginResponse.body.access_token;
+      const newUserId = loginResponse.body.user.id;
+
+      await request
+        .post('/api/listings')
+        .set('Authorization', `Bearer ${newAuthToken}`)
+        .send({
+          price: 10000,
+          currency: 'MKD',
+          city: 'Skopje',
+          status: 'Active',
+          description: 'Test listing',
+          vehicle: {
+            brand_id: '1',
+            model_id: '1',
+            year: 2020,
+            fuel: 'Petrol',
+            transmission: 'Manual',
+            body_type: 'Sedan',
+            drive_type: 'FWD',
+            mileage_km: 50000,
+            engine_displ_l: 2.0,
+            color: 'Black',
+            doors: 4,
+          },
+          condition: 'Undamaged',
+          registration_type: 'Local',
+          horsepower: 150,
+        });
+
+      await request
+        .delete('/api/auth/profile')
+        .set('Authorization', `Bearer ${newAuthToken}`)
+        .expect(200);
+
+      const listingsResponse = await request.get(`/api/listings/user/${newUserId}/active`);
+
+      expect(listingsResponse.body).toEqual([]);
+    });
+
+    it('should nullify user personal data after deletion', async () => {
+      const newTestEmail = `test${Date.now()}@example.com`;
+      const newTestPhone = `+389701234${Math.floor(Math.random() * 10000)}`;
+      const testPassword = 'Test123!@#';
+
+      await request.post('/api/auth/register').send({
+        email: newTestEmail,
+        password: testPassword,
+        type: 'Individual',
+        phone: newTestPhone,
+        firstName: 'Test',
+        lastName: 'User',
+        termsAccepted: true,
+      });
+
+      const loginResponse = await request.post('/api/auth/login').send({
+        login: newTestEmail,
+        password: testPassword,
+      });
+
+      if (!loginResponse.body.access_token) {
+        return;
+      }
+
+      const newAuthToken = loginResponse.body.access_token;
+      const newUserId = loginResponse.body.user.id;
+
+      await request
+        .delete('/api/auth/profile')
+        .set('Authorization', `Bearer ${newAuthToken}`)
+        .expect(200);
+
+      const userResponse = await request
+        .get(`/api/users/${newUserId}`)
+        .set('Authorization', `Bearer ${newAuthToken}`)
+        .expect(200);
+
+      expect(userResponse.body.email).toBeNull();
+      expect(userResponse.body.phone).toBeNull();
+      expect(userResponse.body.firstName).toBeNull();
+      expect(userResponse.body.lastName).toBeNull();
+      expect(userResponse.body.active).toBe(false);
+    });
+  });
 });

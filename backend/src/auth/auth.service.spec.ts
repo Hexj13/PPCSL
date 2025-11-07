@@ -4,6 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import * as bcrypt from 'bcrypt';
 
 import { UserType } from '../common/types';
+import { ListingsService } from '../listings/listings.service';
 import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 
@@ -21,6 +22,7 @@ describe('AuthService', () => {
   let usersService: jest.Mocked<UsersService>;
   let jwtService: jest.Mocked<JwtService>;
   let smsService: jest.Mocked<SmsService>;
+  let listingsService: jest.Mocked<ListingsService>;
 
   const mockUser = {
     id: '1',
@@ -62,6 +64,10 @@ describe('AuthService', () => {
       verifyToken: jest.fn(),
     };
 
+    const mockListingsService = {
+      closeAllUserListings: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -81,6 +87,10 @@ describe('AuthService', () => {
           provide: EmailService,
           useValue: mockEmailService,
         },
+        {
+          provide: ListingsService,
+          useValue: mockListingsService,
+        },
       ],
     }).compile();
 
@@ -88,6 +98,7 @@ describe('AuthService', () => {
     usersService = module.get(UsersService);
     jwtService = module.get(JwtService);
     smsService = module.get(SmsService);
+    listingsService = module.get(ListingsService);
   });
 
   it('should be defined', () => {
@@ -136,17 +147,14 @@ describe('AuthService', () => {
       expect(result).toBeNull();
     });
 
-    it('should throw UnauthorizedException when user is inactive', async () => {
-      const inactiveUser = { ...mockUser, active: false };
-      usersService.findByEmail.mockResolvedValue(inactiveUser as User);
+    it('should return null when user is inactive', async () => {
+      usersService.findByEmail.mockResolvedValue(null);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
-      await expect(service.validateUser('test@test.com', 'password123')).rejects.toThrow(
-        UnauthorizedException,
-      );
-      await expect(service.validateUser('test@test.com', 'password123')).rejects.toThrow(
-        'Корисникот е деактивиран',
-      );
+      const result = await service.validateUser('test@test.com', 'password123');
+
+      expect(result).toBeNull();
+      expect(usersService.findByEmail).toHaveBeenCalledWith('test@test.com');
     });
   });
 
@@ -466,6 +474,96 @@ describe('AuthService', () => {
         service.verifyPhoneChange(userId, { phone: newPhone, code: '000000' }),
       ).rejects.toThrow(BadRequestException);
       expect(usersService.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('deleteAccount', () => {
+    const userId = 'user-1';
+
+    it('should delete account successfully', async () => {
+      usersService.findOne.mockResolvedValue(mockUser as User);
+      listingsService.closeAllUserListings.mockResolvedValue(5);
+      usersService.update.mockResolvedValue({
+        ...mockUser,
+        email: null,
+        phone: null,
+        firstName: null,
+        lastName: null,
+        companyName: null,
+        active: false,
+      } as User);
+
+      const result = await service.deleteAccount(userId);
+
+      expect(usersService.findOne).toHaveBeenCalledWith(userId);
+      expect(listingsService.closeAllUserListings).toHaveBeenCalledWith(userId);
+      expect(usersService.update).toHaveBeenCalledWith(userId, {
+        email: null,
+        phone: null,
+        firstName: null,
+        lastName: null,
+        companyName: null,
+        active: false,
+      });
+      expect(result).toEqual({ message: 'Аккаунтот е успешно избришан' });
+    });
+
+    it('should throw BadRequestException when account is already deleted', async () => {
+      const inactiveUser = { ...mockUser, active: false };
+      usersService.findOne.mockResolvedValue(inactiveUser as User);
+
+      await expect(service.deleteAccount(userId)).rejects.toThrow(BadRequestException);
+      expect(usersService.findOne).toHaveBeenCalledWith(userId);
+      expect(listingsService.closeAllUserListings).not.toHaveBeenCalled();
+      expect(usersService.update).not.toHaveBeenCalled();
+    });
+
+    it('should close all user listings before updating user', async () => {
+      usersService.findOne.mockResolvedValue(mockUser as User);
+      listingsService.closeAllUserListings.mockResolvedValue(3);
+      usersService.update.mockResolvedValue({
+        ...mockUser,
+        active: false,
+      } as User);
+
+      const callOrder: string[] = [];
+      (listingsService.closeAllUserListings as jest.Mock).mockImplementation(async () => {
+        callOrder.push('closeListings');
+        return 3;
+      });
+      (usersService.update as jest.Mock).mockImplementation(async () => {
+        callOrder.push('updateUser');
+        return { ...mockUser, active: false };
+      });
+
+      await service.deleteAccount(userId);
+
+      expect(callOrder).toEqual(['closeListings', 'updateUser']);
+    });
+
+    it('should nullify all personal data', async () => {
+      usersService.findOne.mockResolvedValue(mockUser as User);
+      listingsService.closeAllUserListings.mockResolvedValue(0);
+      usersService.update.mockResolvedValue({
+        ...mockUser,
+        email: null,
+        phone: null,
+        firstName: null,
+        lastName: null,
+        companyName: null,
+        active: false,
+      } as User);
+
+      await service.deleteAccount(userId);
+
+      expect(usersService.update).toHaveBeenCalledWith(userId, {
+        email: null,
+        phone: null,
+        firstName: null,
+        lastName: null,
+        companyName: null,
+        active: false,
+      });
     });
   });
 });

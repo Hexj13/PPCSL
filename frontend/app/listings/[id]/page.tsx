@@ -880,25 +880,24 @@ export default function ListingPage() {
                       </div>
                     )}
 
-                  {listing.status !== 'Closed' && listing.user.type === 'Individual' && (
-                    <>
-                      {listing.user.firstName && listing.user.lastName && (
-                        <div>
-                          <span className="font-semibold text-primary-400">Име:</span>
-                          <span className="ml-2 text-gray-300">
-                            {listing.user.firstName} {listing.user.lastName}
-                          </span>
-                        </div>
-                      )}
-                    </>
-                  )}
+                  {listing.status !== 'Closed' &&
+                    listing.user.type === 'Individual' &&
+                    listing.user.firstName &&
+                    listing.user.lastName && (
+                      <div>
+                        <span className="font-semibold text-primary-400">Име:</span>
+                        <span className="ml-2 text-gray-300">
+                          {listing.user.firstName} {listing.user.lastName}
+                        </span>
+                      </div>
+                    )}
 
                   <div>
                     <span className="font-semibold text-primary-400">Град:</span>
                     <span className="ml-2 text-gray-300">{getCityNameMk(listing.city)}</span>
                   </div>
 
-                  {listing.status === 'Closed' ? (
+                  {listing.status === 'Closed' || !listing.user.email ? (
                     <div>
                       <span className="font-semibold text-primary-400">Email:</span>
                       <span className="ml-2 text-primary-400">••••••••</span>
@@ -940,7 +939,7 @@ export default function ListingPage() {
                     )
                   )}
 
-                  {listing.status === 'Closed' ? (
+                  {listing.status === 'Closed' || !listing.user.phone ? (
                     <div>
                       <span className="font-semibold text-primary-400">Телефон:</span>
                       <span className="ml-2 text-primary-400">••••••••</span>

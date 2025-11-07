@@ -90,14 +90,42 @@ export function Header() {
                 )}
                 <Link
                   href="/profile"
-                  className="text-gray-300 font-medium px-3 py-1.5 bg-bg-light rounded-lg border border-primary-500/20 text-sm lg:text-base hover:text-primary-400 hover:border-primary-500/40 transition-colors duration-200 cursor-pointer"
+                  className="text-gray-300 font-medium px-3 py-1.5 bg-bg-light rounded-lg border border-primary-500/20 text-sm lg:text-base hover:text-primary-400 hover:border-primary-500/40 transition-colors duration-200 cursor-pointer flex items-center gap-2"
                 >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
                   {getUserDisplayName(user)}
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="btn-secondary px-4 py-1.5 text-sm lg:text-base"
+                  className="text-gray-300 font-medium px-3 py-1.5 bg-bg-light rounded-lg border border-primary-500/20 text-sm lg:text-base hover:text-primary-400 hover:border-primary-500/40 transition-colors duration-200 cursor-pointer flex items-center gap-2"
                 >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                    />
+                  </svg>
                   Одјави се
                 </button>
               </>
@@ -180,11 +208,42 @@ export function Header() {
                 <Link
                   href="/profile"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-gray-300 font-medium px-3 py-2 bg-bg-light rounded-lg border border-primary-500/20 text-sm break-all hover:text-primary-400 hover:border-primary-500/40 transition-colors duration-200 cursor-pointer"
+                  className="text-gray-300 font-medium px-3 py-2 bg-bg-light rounded-lg border border-primary-500/20 text-sm break-all hover:text-primary-400 hover:border-primary-500/40 transition-colors duration-200 cursor-pointer flex items-center gap-2"
                 >
+                  <svg
+                    className="w-4 h-4 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
                   {getUserDisplayName(user)}
                 </Link>
-                <button onClick={handleLogout} className="btn-secondary w-full">
+                <button
+                  onClick={handleLogout}
+                  className="text-gray-300 font-medium px-3 py-2 bg-bg-light rounded-lg border border-primary-500/20 text-sm hover:text-primary-400 hover:border-primary-500/40 transition-colors duration-200 cursor-pointer w-full flex items-center gap-2"
+                >
+                  <svg
+                    className="w-4 h-4 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                    />
+                  </svg>
                   Одјави се
                 </button>
               </div>

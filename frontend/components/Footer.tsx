@@ -11,12 +11,19 @@ export function Footer() {
           <p className="text-xs sm:text-sm text-gray-400 px-2 mb-3">
             Купете или продадете авто на Kupito!
           </p>
-          <div className="flex justify-center gap-4 text-xs sm:text-sm">
+          <div className="flex justify-center gap-4 text-xs sm:text-sm flex-wrap">
             <Link
               href="/terms"
               className="text-gray-400 hover:text-primary-400 transition-colors duration-200 underline"
             >
-              Услови за користење (Terms & Conditions)
+              Услови за користење
+            </Link>
+            <span className="text-gray-500">|</span>
+            <Link
+              href="/privacy"
+              className="text-gray-400 hover:text-primary-400 transition-colors duration-200 underline"
+            >
+              Политика за приватност
             </Link>
           </div>
         </div>

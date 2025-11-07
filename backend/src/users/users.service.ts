@@ -35,11 +35,15 @@ export class UsersService {
   }
 
   async findByEmail(email: string): Promise<User> {
-    return this.usersRepository.findOne({ where: { email } });
+    return this.usersRepository.findOne({
+      where: { email, active: true },
+    });
   }
 
   async findByPhone(phone: string): Promise<User> {
-    return this.usersRepository.findOne({ where: { phone } });
+    return this.usersRepository.findOne({
+      where: { phone, active: true },
+    });
   }
 
   async getActiveListingsCount(userId: string): Promise<number> {

@@ -9,6 +9,8 @@
    - ✅ Login functionality
    - ✅ Registration
    - ✅ User profile
+   - ✅ Update profile
+   - ✅ Delete account
 
 2. **UsersService** (`users.service.spec.ts`)
    - ✅ User creation
@@ -19,7 +21,8 @@
    - ✅ Listing creation
    - ✅ Listing updates
    - ✅ Search functionality
-   - ✅ Status management
+   - ✅ Status management (publish, pause, close)
+   - ✅ Close all user listings
 
 ### ✅ Covered Frontend (Unit Tests)
 
@@ -222,6 +225,7 @@ All controllers now have comprehensive unit tests:
    - ✅ Login
    - ✅ Get profile
    - ✅ Update profile
+   - ✅ Delete account
    - ✅ Verify phone
    - ✅ Check phone availability
    - ✅ Send SMS verification
@@ -271,6 +275,10 @@ Integration tests are set up and cover:
 - ✅ Authentication flows
 - ✅ **Listings API** (`listings.integration.ts`)
 - ✅ **Auth API** (`auth.integration.ts`)
+  - ✅ Register, login, profile management
+  - ✅ Account deletion (DELETE /api/auth/profile)
+  - ✅ Account deletion closes all user listings
+  - ✅ Account deletion nullifies personal data
 - ✅ **Brands API** (`brands.integration.ts`)
 - ✅ **Cities API** (`cities.integration.ts`)
 - ✅ **Favorites API** (`favorites.integration.ts`)

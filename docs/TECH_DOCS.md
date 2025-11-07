@@ -134,6 +134,14 @@ Create a simple, free website for posting listings for new and used cars in Mace
   * Verify change via `/api/auth/change-phone-verify` (POST)
   * New phone must be unique and verified via SMS
   * After successful change, phone is automatically marked as verified
+* **Account Deletion:**
+  * Users can delete their account via `/api/auth/profile` (DELETE)
+  * All personal data (email, phone, firstName, lastName, companyName) is nullified
+  * All active and paused listings are automatically closed (status set to 'Closed')
+  * Account is marked as inactive (`active = false`)
+  * Deleted accounts cannot be reused (prevents re-registration with same email/phone)
+  * Action is irreversible
+  * User is automatically logged out after deletion
 
 ### Favorites
 
@@ -212,8 +220,9 @@ Create a simple, free website for posting listings for new and used cars in Mace
 ```http
 POST /api/auth/register              # Register new user
 POST /api/auth/login                  # Login (email or phone)
-GET  /api/auth/me                     # Get current user profile
-PATCH /api/auth/profile              # Update user profile
+GET    /api/auth/me                     # Get current user profile
+PATCH  /api/auth/profile              # Update user profile
+DELETE /api/auth/profile              # Delete user account (irreversible)
 POST /api/auth/send-sms              # Send SMS verification code
 POST /api/auth/verify-phone          # Verify phone number (JWT required)
 POST /api/auth/verify-sms            # Verify SMS code (IP-based brute force protection)

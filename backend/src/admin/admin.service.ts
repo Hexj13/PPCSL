@@ -103,6 +103,17 @@ export class AdminService {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { password, ...userWithoutPassword } = listing.user;
         listing.user = userWithoutPassword as typeof listing.user;
+
+        if (
+          listing.status === ListingStatusEnum.Closed ||
+          (!listing.user.email && !listing.user.phone)
+        ) {
+          listing.user.phone = null;
+          listing.user.email = null;
+          listing.user.firstName = null;
+          listing.user.lastName = null;
+          listing.user.companyName = null;
+        }
       }
       return listing;
     });
