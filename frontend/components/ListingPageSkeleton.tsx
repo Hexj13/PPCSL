@@ -34,9 +34,7 @@ export function PriceSkeleton() {
 }
 
 export function FavoriteButtonSkeleton() {
-  return (
-    <div className="w-full sm:w-auto h-12 bg-bg-light/30 rounded-lg animate-pulse" />
-  );
+  return <div className="w-full sm:w-auto h-12 bg-bg-light/30 rounded-lg animate-pulse" />;
 }
 
 export function InfoBlockSkeleton() {
@@ -68,9 +66,7 @@ export function InfoBlockSkeleton() {
 }
 
 export function TitleSkeleton() {
-  return (
-    <div className="h-10 bg-bg-light/30 rounded w-3/4 mb-6 animate-pulse" />
-  );
+  return <div className="h-10 bg-bg-light/30 rounded w-3/4 mb-6 animate-pulse" />;
 }
 
 export function BadgesSkeleton() {
@@ -81,4 +77,3 @@ export function BadgesSkeleton() {
     </div>
   );
 }
-

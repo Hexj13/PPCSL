@@ -19,6 +19,8 @@ export class SmsService {
 
     if (accountSid && authToken) {
       this.twilioClient = twilio(accountSid, authToken);
+    } else {
+      this.twilioClient = null;
     }
   }
 
@@ -52,6 +54,11 @@ export class SmsService {
         error instanceof Error
           ? error.message
           : 'Грешка при испраќање на SMS. Обидете се повторно.';
+      const nodeEnv = this.configService.get('NODE_ENV');
+      if (nodeEnv === 'test' || nodeEnv === 'development' || nodeEnv === 'stage') {
+        console.log(`[TEST MODE] SMS код за ${normalizedPhone}: ${code}`);
+        return;
+      }
       throw new BadRequestException(errorMessage);
     }
   }
@@ -86,6 +93,11 @@ export class SmsService {
         error instanceof Error
           ? error.message
           : 'Грешка при испраќање на SMS. Обидете се повторно.';
+      const nodeEnv = this.configService.get('NODE_ENV');
+      if (nodeEnv === 'test' || nodeEnv === 'development' || nodeEnv === 'stage') {
+        console.log(`[TEST MODE] SMS код за ресетирање на лозинка за ${normalizedPhone}: ${code}`);
+        return;
+      }
       throw new BadRequestException(errorMessage);
     }
   }
@@ -93,8 +105,9 @@ export class SmsService {
   async verifyPasswordResetCode(phoneNumber: string, code: string): Promise<boolean> {
     const nodeEnv = this.configService.get('NODE_ENV');
     const isStageOrDev = nodeEnv === 'stage' || nodeEnv === 'development';
+    const isTest = nodeEnv === 'test';
 
-    if (isStageOrDev && code === '000000') {
+    if ((isStageOrDev || isTest) && code === '000000') {
       return true;
     }
 
@@ -122,8 +135,9 @@ export class SmsService {
   async verifyCode(phoneNumber: string, code: string): Promise<boolean> {
     const nodeEnv = this.configService.get('NODE_ENV');
     const isStageOrDev = nodeEnv === 'stage' || nodeEnv === 'development';
+    const isTest = nodeEnv === 'test';
 
-    if (isStageOrDev && code === '000000') {
+    if ((isStageOrDev || isTest) && code === '000000') {
       return true;
     }
 

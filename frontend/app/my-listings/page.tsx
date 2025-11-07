@@ -53,10 +53,10 @@ export default function MyListingsPage() {
       try {
         const res = await listingsApi.getMy(page, limit);
         const responseData = res.data;
-        
+
         let newListings: Listing[] = [];
         let responseMeta: PaginationMeta | null = null;
-        
+
         if (Array.isArray(responseData)) {
           newListings = responseData.slice((page - 1) * limit, page * limit);
           const total = responseData.length;
@@ -71,12 +71,14 @@ export default function MyListingsPage() {
           newListings = responseData.data || [];
           responseMeta = responseData.meta || null;
         }
-        
+
         if (newListings.length > limit) {
-          console.warn(`Received ${newListings.length} listings but limit is ${limit}. Taking first ${limit}.`);
+          console.warn(
+            `Received ${newListings.length} listings but limit is ${limit}. Taking first ${limit}.`
+          );
           newListings = newListings.slice(0, limit);
         }
-        
+
         if (append) {
           setListings((prev) => {
             const existingIds = new Set(prev.map((l) => l.id));
@@ -108,7 +110,7 @@ export default function MyListingsPage() {
         loadingRef.current = false;
       }
     },
-    [],
+    []
   );
 
   useEffect(() => {
@@ -185,11 +187,12 @@ export default function MyListingsPage() {
       setListings((prev) => {
         const updated = prev.map((listing) => {
           if (listing.id === id) {
-            const statusMap: Record<'publish' | 'pause' | 'close', 'Active' | 'Paused' | 'Closed'> = {
-              publish: 'Active',
-              pause: 'Paused',
-              close: 'Closed',
-            };
+            const statusMap: Record<'publish' | 'pause' | 'close', 'Active' | 'Paused' | 'Closed'> =
+              {
+                publish: 'Active',
+                pause: 'Paused',
+                close: 'Closed',
+              };
             return { ...listing, status: statusMap[action] };
           }
           return listing;
@@ -316,7 +319,10 @@ export default function MyListingsPage() {
 
           {meta && meta.totalPages && currentPage < meta.totalPages && !loadingMore && (
             <div className="text-center py-8">
-              <button onClick={handleLoadMore} className="btn-primary px-8 py-3 text-lg font-semibold">
+              <button
+                onClick={handleLoadMore}
+                className="btn-primary px-8 py-3 text-lg font-semibold"
+              >
                 Вчитај уште
               </button>
             </div>

@@ -111,7 +111,6 @@ export function ListingGrid() {
           setError(null);
         }
 
-
         if (user && newListings.length > 0) {
           const listingIds = newListings.map((l) => l.id);
           try {

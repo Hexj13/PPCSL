@@ -155,7 +155,9 @@ export function ListingCard({ listing, forceFavorite = false, onRemove }: Listin
                 <span className="text-xl md:text-2xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
                   {formatPrice(listing.price, listing.currency)}
                 </span>
-                <span className="text-xs md:text-sm text-gray-300 font-medium">{listing.currency}</span>
+                <span className="text-xs md:text-sm text-gray-300 font-medium">
+                  {listing.currency}
+                </span>
               </>
             ) : (
               <span className="text-xl md:text-2xl font-extrabold text-primary-400">••••</span>

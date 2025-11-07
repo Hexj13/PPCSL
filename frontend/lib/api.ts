@@ -308,9 +308,7 @@ export const listingsApi = {
     params.set('page', page.toString());
     params.set('limit', limit.toString());
     const query = params.toString();
-    return api.get<{ data: Listing[]; meta: PaginationMeta }>(
-      `/api/listings/my?${query}`,
-    );
+    return api.get<{ data: Listing[]; meta: PaginationMeta }>(`/api/listings/my?${query}`);
   },
   refreshDates: () => api.post<{ updated: number }>('/api/listings/refresh-dates'),
 };
@@ -444,9 +442,7 @@ export const adminApi = {
     params.set('page', page.toString());
     params.set('limit', limit.toString());
     const query = params.toString();
-    return api.get<{ data: Listing[]; meta: PaginationMeta }>(
-      `/api/admin/listings?${query}`,
-    );
+    return api.get<{ data: Listing[]; meta: PaginationMeta }>(`/api/admin/listings?${query}`);
   },
   updateListingStatus: (id: string, status: ListingStatus) =>
     api.patch(`/api/admin/listings/${id}/status`, { status }),
@@ -456,9 +452,7 @@ export const adminApi = {
     params.set('page', page.toString());
     params.set('limit', limit.toString());
     const query = params.toString();
-    return api.get<{ data: User[]; meta: PaginationMeta }>(
-      `/api/admin/users?${query}`,
-    );
+    return api.get<{ data: User[]; meta: PaginationMeta }>(`/api/admin/users?${query}`);
   },
   getUserListings: (userId: string) => api.get<Listing[]>(`/api/admin/users/${userId}/listings`),
   toggleUserStatus: (userId: string) => api.patch(`/api/admin/users/${userId}/toggle-status`),

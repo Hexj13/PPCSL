@@ -57,7 +57,7 @@ export default function ListingPage() {
 
   useEffect(() => {
     hasLoadedRef.current = false;
-    
+
     setImageErrors(new Set());
     setCurrentImageIndex(0);
     setListing(null);
@@ -74,10 +74,13 @@ export default function ListingPage() {
     }, 500);
 
     const currentId = id;
-    
+
     const listingPromise = listingsApi.getOne(currentId);
     const favoritePromise = user
-      ? favoritesApi.check(currentId).then((res) => res.data.isFavorite).catch(() => check(currentId))
+      ? favoritesApi
+          .check(currentId)
+          .then((res) => res.data.isFavorite)
+          .catch(() => check(currentId))
       : Promise.resolve(check(currentId));
 
     Promise.all([listingPromise, favoritePromise])
@@ -1244,4 +1247,3 @@ export default function ListingPage() {
     </>
   );
 }
-

@@ -183,7 +183,7 @@ export default function ProfilePage() {
         setLoading(false);
       }
     },
-    [formData, user, setAuth],
+    [formData, user, setAuth]
   );
 
   if (!isInitialized && !user) {
@@ -506,4 +506,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-

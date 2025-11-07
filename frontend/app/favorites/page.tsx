@@ -34,7 +34,7 @@ export default function FavoritesPage() {
           showLoadingTimeoutRef.current = null;
         }
 
-        const favoritesList = Array.isArray(res.data) 
+        const favoritesList = Array.isArray(res.data)
           ? res.data.map((f: { listing: Listing }) => f.listing).filter(Boolean)
           : [];
         setListings(favoritesList);

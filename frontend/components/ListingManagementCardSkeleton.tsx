@@ -40,4 +40,3 @@ export function ListingManagementCardSkeleton() {
     </div>
   );
 }
-

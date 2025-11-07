@@ -107,7 +107,12 @@ function ListingsTab() {
   const showLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchListings = useCallback(
-    async (page: number, append: boolean = false, limit: number = 20, forceReload: boolean = false) => {
+    async (
+      page: number,
+      append: boolean = false,
+      limit: number = 20,
+      forceReload: boolean = false
+    ) => {
       if (fetchInProgressRef.current) {
         return;
       }
@@ -117,7 +122,7 @@ function ListingsTab() {
       if (!append && loadingRef.current && !forceReload) {
         return;
       }
-      
+
       fetchInProgressRef.current = true;
 
       if (append) {
@@ -139,10 +144,10 @@ function ListingsTab() {
       try {
         const res = await adminApi.getAllListings(1, 10000);
         const responseData = res.data;
-        
+
         let allListings: Listing[] = [];
         let responseMeta: PaginationMeta | null = null;
-        
+
         if (Array.isArray(responseData)) {
           allListings = responseData;
           const total = allListings.length;
@@ -157,7 +162,7 @@ function ListingsTab() {
           allListings = responseData.data || [];
           responseMeta = responseData.meta || null;
         }
-        
+
         if (append) {
           setDisplayedCount((prev) => prev + limit);
           setCurrentPage(page);
@@ -185,7 +190,7 @@ function ListingsTab() {
         fetchInProgressRef.current = false;
       }
     },
-    [allListings.length],
+    [allListings.length]
   );
 
   useEffect(() => {
@@ -198,8 +203,9 @@ function ListingsTab() {
 
   useEffect(() => {
     if (!hasInitializedRef.current) return;
-    if (prevStatusFilterRef.current === statusFilter && prevSearchTypeRef.current === searchType) return;
-    
+    if (prevStatusFilterRef.current === statusFilter && prevSearchTypeRef.current === searchType)
+      return;
+
     prevStatusFilterRef.current = statusFilter;
     prevSearchTypeRef.current = searchType;
     setCurrentPage(1);
@@ -210,7 +216,7 @@ function ListingsTab() {
   useEffect(() => {
     if (!hasInitializedRef.current) return;
     if (prevSearchQueryRef.current === searchQuery) return;
-    
+
     const timer = setTimeout(() => {
       prevSearchQueryRef.current = searchQuery;
       setCurrentPage(1);
@@ -234,7 +240,7 @@ function ListingsTab() {
       toast.success('Статусот е успешно ажуриран');
 
       setAllListings((prev) =>
-        prev.map((listing) => (listing.id === id ? { ...listing, status: newStatus } : listing)),
+        prev.map((listing) => (listing.id === id ? { ...listing, status: newStatus } : listing))
       );
     } catch {
       toast.error('Грешка при ажурирање на статус');
@@ -288,9 +294,9 @@ function ListingsTab() {
     if (loadingMore) {
       return;
     }
-    
+
     const filteredCount = filteredListings.length;
-    
+
     if (displayedCount >= filteredCount) {
       return;
     }
@@ -412,7 +418,10 @@ function ListingsTab() {
             <>
               {displayedCount < filteredListings.length ? (
                 <div className="text-center py-8">
-                  <button onClick={handleLoadMore} className="btn-primary px-8 py-3 text-lg font-semibold">
+                  <button
+                    onClick={handleLoadMore}
+                    className="btn-primary px-8 py-3 text-lg font-semibold"
+                  >
                     Вчитај уште
                   </button>
                 </div>
@@ -458,7 +467,7 @@ function UsersTab() {
       if (!append && loadingRef.current) {
         return;
       }
-      
+
       fetchInProgressRef.current = true;
 
       if (append) {
@@ -480,10 +489,10 @@ function UsersTab() {
       try {
         const res = await adminApi.getAllUsers(page, limit);
         const responseData = res.data;
-        
+
         let newUsers: User[] = [];
         let responseMeta: PaginationMeta | null = null;
-        
+
         if (Array.isArray(responseData)) {
           newUsers = responseData.slice((page - 1) * limit, page * limit);
           const total = responseData.length;
@@ -498,7 +507,7 @@ function UsersTab() {
           newUsers = responseData.data || [];
           responseMeta = responseData.meta || null;
         }
-        
+
         if (append) {
           setUsers((prev) => {
             const existingIds = new Set(prev.map((u) => u.id));
@@ -528,7 +537,7 @@ function UsersTab() {
         fetchInProgressRef.current = false;
       }
     },
-    [users.length],
+    [users.length]
   );
 
   useEffect(() => {
@@ -542,7 +551,7 @@ function UsersTab() {
   useEffect(() => {
     if (!hasInitializedRef.current) return;
     if (prevRoleFilterRef.current === roleFilter) return;
-    
+
     prevRoleFilterRef.current = roleFilter;
     setCurrentPage(1);
     fetchUsers(1, false);
@@ -552,7 +561,7 @@ function UsersTab() {
   useEffect(() => {
     if (!hasInitializedRef.current) return;
     if (prevSearchQueryRef.current === searchQuery) return;
-    
+
     const timer = setTimeout(() => {
       prevSearchQueryRef.current = searchQuery;
       setCurrentPage(1);
@@ -567,7 +576,7 @@ function UsersTab() {
     if (loadingMore) {
       return;
     }
-    
+
     if (meta && meta.totalPages) {
       if (currentPage >= meta.totalPages) {
         return;
@@ -578,30 +587,31 @@ function UsersTab() {
     await fetchUsers(nextPage, true, 20);
   }, [loadingMore, meta, currentPage, fetchUsers]);
 
-  const handleToggleStatus = useCallback(async (userId: string) => {
-    const user = users.find((u) => u.id === userId);
-    const previousActive = user?.active;
+  const handleToggleStatus = useCallback(
+    async (userId: string) => {
+      const user = users.find((u) => u.id === userId);
+      const previousActive = user?.active;
 
-    setUsers((prev) =>
-      prev.map((user) =>
-        user.id === userId ? { ...user, active: user.active === false ? true : false } : user,
-      ),
-    );
+      setUsers((prev) =>
+        prev.map((user) =>
+          user.id === userId ? { ...user, active: user.active === false ? true : false } : user
+        )
+      );
 
-    try {
-      await adminApi.toggleUserStatus(userId);
-      toast.success('Статусот на корисникот е ажуриран');
-    } catch {
-      if (previousActive !== undefined) {
-        setUsers((prev) =>
-          prev.map((user) =>
-            user.id === userId ? { ...user, active: previousActive } : user,
-          ),
-        );
+      try {
+        await adminApi.toggleUserStatus(userId);
+        toast.success('Статусот на корисникот е ажуриран');
+      } catch {
+        if (previousActive !== undefined) {
+          setUsers((prev) =>
+            prev.map((user) => (user.id === userId ? { ...user, active: previousActive } : user))
+          );
+        }
+        toast.error('Грешка при ажурирање на статус');
       }
-      toast.error('Грешка при ажурирање на статус');
-    }
-  }, [users]);
+    },
+    [users]
+  );
 
   const handleCopy = useCallback(async (text: string, label: string) => {
     try {
@@ -717,111 +727,112 @@ function UsersTab() {
         <>
           <div className="space-y-4">
             {filteredUsers.map((user) => (
-            <div key={user.id} className="card p-5">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div className="flex-1">
-                  <div className="mb-2">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs text-gray-400 font-mono">ID: {user.id}</span>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleCopy(user.id, 'ID');
-                        }}
-                        className="p-1 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors"
-                        title="Копирај ID"
-                      >
-                        <svg
-                          className="w-3.5 h-3.5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+              <div key={user.id} className="card p-5">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="mb-2">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs text-gray-400 font-mono">ID: {user.id}</span>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleCopy(user.id, 'ID');
+                          }}
+                          className="p-1 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors"
+                          title="Копирај ID"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-                    <h3 className="text-xl font-bold text-white">
-                      {user.firstName && user.lastName
-                        ? `${user.firstName} ${user.lastName}`
-                        : user.companyName || user.email}
-                    </h3>
-                    {user.companyName && (
-                      <p className="text-sm text-gray-300 mt-1">{user.companyName}</p>
-                    )}
-                  </div>
-                  <div className="space-y-1 text-sm text-gray-300">
-                    <div>
-                      <span className="text-primary-400">Email:</span> {user.email}
-                    </div>
-                    {user.phone && (
-                      <div>
-                        <span className="text-primary-400">Телефон:</span> {user.phone}
+                          <svg
+                            className="w-3.5 h-3.5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                            />
+                          </svg>
+                        </button>
                       </div>
-                    )}
-                    <div className="flex items-center gap-2">
-                      <span className="text-primary-400">Тип:</span>
-                      <span
-                        className={`px-2 py-1 rounded text-xs font-semibold ${
-                          user.type === 'Admin'
-                            ? 'bg-purple-500/20 text-purple-300'
+                      <h3 className="text-xl font-bold text-white">
+                        {user.firstName && user.lastName
+                          ? `${user.firstName} ${user.lastName}`
+                          : user.companyName || user.email}
+                      </h3>
+                      {user.companyName && (
+                        <p className="text-sm text-gray-300 mt-1">{user.companyName}</p>
+                      )}
+                    </div>
+                    <div className="space-y-1 text-sm text-gray-300">
+                      <div>
+                        <span className="text-primary-400">Email:</span> {user.email}
+                      </div>
+                      {user.phone && (
+                        <div>
+                          <span className="text-primary-400">Телефон:</span> {user.phone}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <span className="text-primary-400">Тип:</span>
+                        <span
+                          className={`px-2 py-1 rounded text-xs font-semibold ${
+                            user.type === 'Admin'
+                              ? 'bg-purple-500/20 text-purple-300'
+                              : user.type === 'Business'
+                                ? 'bg-blue-500/20 text-blue-300'
+                                : 'bg-green-500/20 text-green-300'
+                          }`}
+                        >
+                          {user.type === 'Admin'
+                            ? 'Админ'
                             : user.type === 'Business'
-                              ? 'bg-blue-500/20 text-blue-300'
-                              : 'bg-green-500/20 text-green-300'
-                        }`}
-                      >
-                        {user.type === 'Admin'
-                          ? 'Админ'
-                          : user.type === 'Business'
-                            ? 'Правно лице'
-                            : 'Физичко лице'}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-primary-400">Статус:</span>
-                      <span
-                        className={`px-2 py-1 rounded text-xs font-semibold ${
-                          user.active !== false
-                            ? 'bg-green-500/20 text-green-300'
-                            : 'bg-red-500/20 text-red-300'
-                        }`}
-                      >
-                        {user.active !== false ? 'Активен' : 'Деактивиран'}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-primary-400">Објави:</span> {user.listings?.length || 0}
+                              ? 'Правно лице'
+                              : 'Физичко лице'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-primary-400">Статус:</span>
+                        <span
+                          className={`px-2 py-1 rounded text-xs font-semibold ${
+                            user.active !== false
+                              ? 'bg-green-500/20 text-green-300'
+                              : 'bg-red-500/20 text-red-300'
+                          }`}
+                        >
+                          {user.active !== false ? 'Активен' : 'Деактивиран'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-primary-400">Објави:</span>{' '}
+                        {user.listings?.length || 0}
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="flex flex-col gap-2">
-                  {(user.listings?.length || 0) > 0 && (
+                  <div className="flex flex-col gap-2">
+                    {(user.listings?.length || 0) > 0 && (
+                      <button
+                        onClick={() => handleViewListings(user)}
+                        className="px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg font-medium transition-colors bg-primary-700 hover:bg-primary-800 text-white text-center w-full sm:w-auto"
+                      >
+                        Види објави ({user.listings?.length || 0})
+                      </button>
+                    )}
                     <button
-                      onClick={() => handleViewListings(user)}
-                      className="px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg font-medium transition-colors bg-primary-700 hover:bg-primary-800 text-white text-center w-full sm:w-auto"
+                      onClick={() => handleToggleStatus(user.id)}
+                      className={`px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg font-medium transition-colors text-center w-full sm:w-auto ${
+                        user.active !== false
+                          ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/30'
+                          : 'bg-green-500/20 text-green-300 hover:bg-green-500/30 border border-green-500/30'
+                      }`}
                     >
-                      Види објави ({user.listings?.length || 0})
+                      {user.active !== false ? 'Деактивирај' : 'Активирај'}
                     </button>
-                  )}
-                  <button
-                    onClick={() => handleToggleStatus(user.id)}
-                    className={`px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg font-medium transition-colors text-center w-full sm:w-auto ${
-                      user.active !== false
-                        ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/30'
-                        : 'bg-green-500/20 text-green-300 hover:bg-green-500/30 border border-green-500/30'
-                    }`}
-                  >
-                    {user.active !== false ? 'Деактивирај' : 'Активирај'}
-                  </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
           </div>
 
           {loadingMore && (
@@ -835,7 +846,10 @@ function UsersTab() {
             <>
               {meta && meta.totalPages && currentPage < meta.totalPages ? (
                 <div className="text-center py-8">
-                  <button onClick={handleLoadMore} className="btn-primary px-8 py-3 text-lg font-semibold">
+                  <button
+                    onClick={handleLoadMore}
+                    className="btn-primary px-8 py-3 text-lg font-semibold"
+                  >
                     Вчитај уште
                   </button>
                 </div>
@@ -845,7 +859,10 @@ function UsersTab() {
                 </div>
               ) : !meta && users.length >= 20 ? (
                 <div className="text-center py-8">
-                  <button onClick={handleLoadMore} className="btn-primary px-8 py-3 text-lg font-semibold">
+                  <button
+                    onClick={handleLoadMore}
+                    className="btn-primary px-8 py-3 text-lg font-semibold"
+                  >
                     Вчитај уште
                   </button>
                 </div>

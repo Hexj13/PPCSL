@@ -162,7 +162,7 @@ function VerifyPhoneChangeContent() {
           const now = new Date();
           const remainingMinutes = Math.ceil((blockedDate.getTime() - now.getTime()) / (1000 * 60));
           setError(
-            `Достигнато е максималниот број на обиди. Обидете се повторно за ${remainingMinutes} минути`,
+            `Достигнато е максималниот број на обиди. Обидете се повторно за ${remainingMinutes} минути`
           );
           setIsVerificationBlocked(true);
           setCode(['', '', '', '', '', '']);
@@ -178,12 +178,12 @@ function VerifyPhoneChangeContent() {
       if (newAttempts >= 10) {
         setIsVerificationBlocked(true);
         setError(
-          'Достигнато е максималниот број на обиди (10). Испратете го кодот повторно за да продолжите.',
+          'Достигнато е максималниот број на обиди (10). Испратете го кодот повторно за да продолжите.'
         );
       } else {
         setError(
           axiosError.response?.data?.message ||
-            `Невалиден код. Обидете се повторно. (${newAttempts}/10)`,
+            `Невалиден код. Обидете се повторно. (${newAttempts}/10)`
         );
       }
 
@@ -337,4 +337,3 @@ export default function VerifyPhoneChangePage() {
     </Suspense>
   );
 }
-
