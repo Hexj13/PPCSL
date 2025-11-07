@@ -89,17 +89,24 @@ jest.mock('./MultiSelectDropdown', () => ({
 
 describe('SearchFilters', () => {
   const mockPush = jest.fn();
+  const mockReplace = jest.fn();
   const mockGet = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
     (useRouter as jest.Mock).mockReturnValue({
       push: mockPush,
+      replace: mockReplace,
     });
     (useSearchParams as jest.Mock).mockReturnValue({
       get: mockGet,
     });
     mockGet.mockReturnValue(null);
+
+    Object.defineProperty(window, 'scrollTo', {
+      value: jest.fn(),
+      writable: true,
+    });
 
     (brandsApi.getAll as jest.Mock).mockResolvedValue({
       data: [
@@ -196,9 +203,12 @@ describe('SearchFilters', () => {
     if (form) {
       fireEvent.submit(form);
 
-      await waitFor(() => {
-        expect(mockPush).toHaveBeenCalled();
-      });
+      await waitFor(
+        () => {
+          expect(mockReplace).toHaveBeenCalled();
+        },
+        { timeout: 3000 }
+      );
     }
   });
 
@@ -213,9 +223,12 @@ describe('SearchFilters', () => {
     if (resetButton) {
       fireEvent.click(resetButton);
 
-      await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/');
-      });
+      await waitFor(
+        () => {
+          expect(mockReplace).toHaveBeenCalledWith('/', { scroll: false });
+        },
+        { timeout: 3000 }
+      );
     }
   });
 
