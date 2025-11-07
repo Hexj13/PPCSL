@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 
 import { ListingGrid } from '@/components/ListingGrid';
 import { SearchFilters } from '@/components/SearchFilters';
@@ -26,11 +27,19 @@ export const metadata: Metadata = {
 };
 
 function SearchFiltersWrapper() {
-  return <SearchFilters />;
+  return (
+    <Suspense fallback={<div className="card p-4 md:p-5 mb-6 animate-pulse h-64" />}>
+      <SearchFilters />
+    </Suspense>
+  );
 }
 
 function ListingGridWrapper() {
-  return <ListingGrid />;
+  return (
+    <Suspense fallback={<div className="animate-pulse h-96" />}>
+      <ListingGrid />
+    </Suspense>
+  );
 }
 
 export default function Home() {
