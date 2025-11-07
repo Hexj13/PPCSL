@@ -232,5 +232,7 @@ For more details, see [Technical Documentation](TECH_DOCS.md#14-testing).
 - **[Setup Guide](SETUP.md)** - Detailed setup instructions
 - **[Restart Guide](RESTART.md)** - How to restart the project
 - **[Environment Variables](ENV_EXAMPLE.md)** - Environment configuration
+- **[SEO Optimization](SEO_OPTIMIZATION.md)** - SEO setup and optimizations ⭐ **NEW**
+- **[SEO TODO Checklist](SEO_TODO.md)** - Remaining SEO tasks ⚠️ **IMPORTANT**
 - **[Optimization Analysis](OPTIMIZATION_ANALYSIS.md)** - Performance optimization analysis
 - **[Database Optimizations](DATABASE_OPTIMIZATIONS.md)** - Database indexes, triggers, and connection pooling

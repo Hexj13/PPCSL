@@ -84,11 +84,32 @@ Create a `.env.local` file in the `frontend/` directory with the following varia
 ```env
 # API Configuration
 NEXT_PUBLIC_API_URL=http://localhost:4000
+
+# Site Configuration
+NEXT_PUBLIC_SITE_URL=https://kupito.mk
+
+# Google Search Console Verification (OPTIONAL - See SEO_OPTIMIZATION.md for setup)
+# Get this code from: https://search.google.com/search-console
+# Format: <meta name="google-site-verification" content="YOUR_CODE_HERE" />
+# Copy only the content value (the part between quotes)
+NEXT_PUBLIC_GOOGLE_VERIFICATION=your-verification-code
+
+# Google Analytics Measurement ID (OPTIONAL - See SEO_OPTIMIZATION.md for setup)
+# Get this ID from: https://analytics.google.com/
+# Format: G-XXXXXXXXXX
+# Note: You also need to create GoogleAnalytics component (see SEO_OPTIMIZATION.md)
+NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
 ```
 
 ### Variable Descriptions
 
 - **NEXT_PUBLIC_API_URL**: Backend API base URL (must be prefixed with `NEXT_PUBLIC_` to be accessible in the browser)
+- **NEXT_PUBLIC_SITE_URL**: Public URL of the website (used for SEO, sitemap, etc.)
+- **NEXT_PUBLIC_GOOGLE_VERIFICATION**: Google Search Console verification code (optional, for site verification)
+  - ⚠️ **TODO**: Setup required - see `docs/SEO_OPTIMIZATION.md` for instructions
+- **NEXT_PUBLIC_GA_ID**: Google Analytics Measurement ID (optional, for analytics tracking)
+  - ⚠️ **TODO**: Setup required - see `docs/SEO_OPTIMIZATION.md` for instructions
+  - ⚠️ **TODO**: Component creation required - see `docs/SEO_OPTIMIZATION.md` for code
 
 ### Production Configuration
 
