@@ -43,6 +43,7 @@ describe('AdminService', () => {
   beforeEach(async () => {
     const mockUsersRepository = {
       find: jest.fn(),
+      findAndCount: jest.fn(),
       findOne: jest.fn(),
       save: jest.fn(),
       count: jest.fn(),
@@ -50,6 +51,7 @@ describe('AdminService', () => {
 
     const mockListingsRepository = {
       find: jest.fn(),
+      findAndCount: jest.fn(),
       findOne: jest.fn(),
       save: jest.fn(),
       count: jest.fn(),
@@ -84,25 +86,29 @@ describe('AdminService', () => {
         { ...mockUser, password: 'hashedPassword' },
         { ...mockUser, id: 'user-2', email: 'user2@test.com', password: 'hashedPassword2' },
       ];
-      usersRepository.find.mockResolvedValue(usersWithPassword as User[]);
+      usersRepository.findAndCount.mockResolvedValue([usersWithPassword as User[], 2]);
 
       const result = await service.getAllUsers();
 
-      expect(result).toHaveLength(2);
-      expect(result[0]).not.toHaveProperty('password');
-      expect(result[1]).not.toHaveProperty('password');
-      expect(usersRepository.find).toHaveBeenCalledWith({
+      expect(result.data).toHaveLength(2);
+      expect(result.data[0]).not.toHaveProperty('password');
+      expect(result.data[1]).not.toHaveProperty('password');
+      expect(result.meta.total).toBe(2);
+      expect(usersRepository.findAndCount).toHaveBeenCalledWith({
         relations: ['listings'],
         order: { created_at: 'DESC' },
+        skip: 0,
+        take: 20,
       });
     });
 
     it('should return empty array when no users exist', async () => {
-      usersRepository.find.mockResolvedValue([]);
+      usersRepository.findAndCount.mockResolvedValue([[], 0]);
 
       const result = await service.getAllUsers();
 
-      expect(result).toEqual([]);
+      expect(result.data).toEqual([]);
+      expect(result.meta.total).toBe(0);
     });
   });
 
@@ -175,17 +181,20 @@ describe('AdminService', () => {
         ...mockListing,
         user: { ...mockUser, password: 'hashedPassword' },
       };
-      listingsRepository.find.mockResolvedValue([listingWithUser] as Listing[]);
+      listingsRepository.findAndCount.mockResolvedValue([[listingWithUser] as Listing[], 1]);
 
       const result = await service.getAllListings();
 
-      expect(result).toHaveLength(1);
-      if (result[0].user) {
-        expect(result[0].user).not.toHaveProperty('password');
+      expect(result.data).toHaveLength(1);
+      if (result.data[0].user) {
+        expect(result.data[0].user).not.toHaveProperty('password');
       }
-      expect(listingsRepository.find).toHaveBeenCalledWith({
+      expect(result.meta.total).toBe(1);
+      expect(listingsRepository.findAndCount).toHaveBeenCalledWith({
         relations: ['vehicle', 'vehicle.brand', 'vehicle.model', 'user'],
         order: { created_at: 'DESC' },
+        skip: 0,
+        take: 20,
       });
     });
 
@@ -194,12 +203,13 @@ describe('AdminService', () => {
         ...mockListing,
         user: null,
       };
-      listingsRepository.find.mockResolvedValue([listingWithoutUser] as Listing[]);
+      listingsRepository.findAndCount.mockResolvedValue([[listingWithoutUser] as Listing[], 1]);
 
       const result = await service.getAllListings();
 
-      expect(result).toHaveLength(1);
-      expect(result[0].user).toBeNull();
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].user).toBeNull();
+      expect(result.meta.total).toBe(1);
     });
   });
 

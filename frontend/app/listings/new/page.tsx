@@ -32,12 +32,16 @@ export default function NewListingPage() {
   const [showVinHint, setShowVinHint] = useState(false);
 
   useEffect(() => {
+    if (!isInitialized && !user) {
+      return;
+    }
+
     if (isInitialized && !user) {
       router.push('/login');
       return;
     }
 
-    if (isInitialized && user) {
+    if (user) {
       brandsApi.getAll().then((res) => {
         const sorted = [...res.data].sort((a, b) => a.name.localeCompare(b.name, 'mk'));
         setBrands(sorted);
@@ -360,13 +364,12 @@ export default function NewListingPage() {
     }
   };
 
-  if (!isInitialized) {
-    return (
-      <div className="text-center py-12">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-        <p className="mt-4 text-gray-300">Вчитување...</p>
-      </div>
-    );
+  if (!isInitialized && !user) {
+    return null;
+  }
+
+  if (isInitialized && !user) {
+    return null;
   }
 
   if (!user) {

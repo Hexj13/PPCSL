@@ -371,6 +371,12 @@ export class SearchListingsDto {
     description: 'Currency',
   })
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === '' || value === null || value === undefined) {
+      return undefined;
+    }
+    return value;
+  })
   @IsEnum(Currency)
   currency?: Currency;
 

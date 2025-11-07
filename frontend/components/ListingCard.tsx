@@ -100,13 +100,13 @@ export function ListingCard({ listing, forceFavorite = false, onRemove }: Listin
           )}
           <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
             {listing.is_new && (
-              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs md:text-sm font-semibold bg-green-700/95 border border-green-500/90 text-green-100 shadow-sm">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-bg-light border-2 border-green-500 text-green-400 shadow-lg">
                 <span>✨</span>
                 <span>Ново</span>
               </span>
             )}
             {listing.urgent && (
-              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs md:text-sm font-semibold bg-primary-700/95 border border-primary-500/90 text-primary-100 shadow-sm">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-bg-light border-2 border-primary-500 text-primary-400 shadow-lg">
                 <span>🔥</span>
                 <span>Итно</span>
               </span>
@@ -150,10 +150,16 @@ export function ListingCard({ listing, forceFavorite = false, onRemove }: Listin
             {listing.title}
           </h3>
           <div className="flex items-baseline gap-2 mb-3">
-            <span className="text-xl md:text-2xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-              {formatPrice(listing.price, listing.currency)}
-            </span>
-            <span className="text-xs md:text-sm text-gray-300 font-medium">{listing.currency}</span>
+            {listing.price !== undefined ? (
+              <>
+                <span className="text-xl md:text-2xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+                  {formatPrice(listing.price, listing.currency)}
+                </span>
+                <span className="text-xs md:text-sm text-gray-300 font-medium">{listing.currency}</span>
+              </>
+            ) : (
+              <span className="text-xl md:text-2xl font-extrabold text-primary-400">••••</span>
+            )}
           </div>
           <div className="flex-grow mb-3">
             {vehicle && (

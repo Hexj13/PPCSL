@@ -7,10 +7,12 @@ import * as constants from '../common/constants';
 import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 
+import { ChangePhoneRequestDto, ChangePhoneVerifyDto } from './dto/change-phone.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { VerifyResetCodeDto } from './dto/verify-reset-code.dto';
 import { EmailService } from './services/email.service';
 import { SmsService } from './services/sms.service';
@@ -150,10 +152,37 @@ export class AuthService {
       lastName: result.lastName,
       companyName: result.companyName,
       phone: result.phone,
-      emailNotifications: result.emailNotifications,
-      phoneVerified: result.phoneVerified,
-      emailVerified: result.emailVerified,
+      emailNotifications: result.emailNotifications ?? false,
+      phoneVerified: result.phoneVerified ?? false,
+      emailVerified: result.emailVerified ?? false,
+      viber: result.viber ?? false,
+      whatsapp: result.whatsapp ?? false,
+      telegram: result.telegram ?? false,
     };
+  }
+
+  async updateProfile(
+    userId: string,
+    updateProfileDto: UpdateProfileDto,
+  ): Promise<UserWithoutPassword> {
+    const cleanedData: Partial<User> = { ...updateProfileDto };
+
+    if (cleanedData.lastName === '' || cleanedData.lastName === null) {
+      cleanedData.lastName = null;
+    }
+
+    if (cleanedData.firstName === '' || cleanedData.firstName === null) {
+      cleanedData.firstName = null;
+    }
+
+    if (cleanedData.companyName === '' || cleanedData.companyName === null) {
+      cleanedData.companyName = null;
+    }
+
+    const updatedUser = await this.usersService.update(userId, cleanedData);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _, ...result } = updatedUser;
+    return result;
   }
 
   async verifyPhone(userId: string): Promise<UserWithoutPassword> {
@@ -246,6 +275,55 @@ export class AuthService {
     });
 
     await this.smsService.clearPasswordResetCode(resetPasswordDto.phone);
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _, ...result } = updatedUser;
+    return result;
+  }
+
+  async requestPhoneChange(
+    userId: string,
+    changePhoneRequestDto: ChangePhoneRequestDto,
+  ): Promise<void> {
+    const normalizedNewPhone = this.smsService.normalizePhoneNumber(changePhoneRequestDto.phone);
+
+    const existingUser = await this.usersService.findByPhone(normalizedNewPhone);
+    if (existingUser && existingUser.id !== userId) {
+      throw new BadRequestException('Корисник со овој телефон веќе постои');
+    }
+
+    const user = await this.usersService.findOne(userId);
+    if (user.phone === normalizedNewPhone) {
+      throw new BadRequestException('Новиот телефон е ист како тековниот');
+    }
+
+    await this.smsService.sendVerificationCode(changePhoneRequestDto.phone);
+  }
+
+  async verifyPhoneChange(
+    userId: string,
+    changePhoneVerifyDto: ChangePhoneVerifyDto,
+  ): Promise<UserWithoutPassword> {
+    const normalizedNewPhone = this.smsService.normalizePhoneNumber(changePhoneVerifyDto.phone);
+
+    const existingUser = await this.usersService.findByPhone(normalizedNewPhone);
+    if (existingUser && existingUser.id !== userId) {
+      throw new BadRequestException('Корисник со овој телефон веќе постои');
+    }
+
+    const isValid = await this.smsService.verifyCode(
+      changePhoneVerifyDto.phone,
+      changePhoneVerifyDto.code,
+    );
+
+    if (!isValid) {
+      throw new BadRequestException('Невалиден код. Обидете се повторно.');
+    }
+
+    const updatedUser = await this.usersService.update(userId, {
+      phone: normalizedNewPhone,
+      phoneVerified: true,
+    });
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...result } = updatedUser;

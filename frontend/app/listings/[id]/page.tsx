@@ -3,10 +3,20 @@
 import DOMPurify from 'dompurify';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { toast } from 'react-hot-toast';
 
 import { Breadcrumbs } from '@/components/Breadcrumbs';
+import {
+  BreadcrumbsSkeleton,
+  MainImageSkeleton,
+  ThumbnailsSkeleton,
+  PriceSkeleton,
+  FavoriteButtonSkeleton,
+  TitleSkeleton,
+  BadgesSkeleton,
+} from '@/components/ListingPageSkeleton';
 import { StructuredData } from '@/components/StructuredData';
 import { UserListingsModal } from '@/components/UserListingsModal';
 import { listingsApi, Listing, favoritesApi } from '@/lib/api';
@@ -32,8 +42,10 @@ export default function ListingPage() {
   const { user } = useAuthStore();
   const { add: addFavorite, remove: removeFavorite, check } = useFavoritesStore();
   const [listing, setListing] = useState<Listing | null>(null);
-  const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [showSkeleton, setShowSkeleton] = useState(false);
+  const showLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasLoadedRef = useRef(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [modalImageIndex, setModalImageIndex] = useState(0);
@@ -44,40 +56,90 @@ export default function ListingPage() {
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
 
   useEffect(() => {
+    hasLoadedRef.current = false;
+    
     setImageErrors(new Set());
     setCurrentImageIndex(0);
-    listingsApi
-      .getOne(id)
-      .then((res) => {
-        setListing(res.data);
-        if (res.data.vin) {
-          setLoadingPrevious(true);
+    setListing(null);
+    setPreviousListings([]);
+    setLoadingPrevious(false);
+    setShowSkeleton(false);
+
+    hasLoadedRef.current = true;
+
+    showLoadingTimeoutRef.current = setTimeout(() => {
+      if (hasLoadedRef.current) {
+        setShowSkeleton(true);
+      }
+    }, 500);
+
+    const currentId = id;
+    
+    const listingPromise = listingsApi.getOne(currentId);
+    const favoritePromise = user
+      ? favoritesApi.check(currentId).then((res) => res.data.isFavorite).catch(() => check(currentId))
+      : Promise.resolve(check(currentId));
+
+    Promise.all([listingPromise, favoritePromise])
+      .then(([listingRes, favoriteValue]) => {
+        if (!hasLoadedRef.current || currentId !== id) {
+          return;
+        }
+        if (showLoadingTimeoutRef.current) {
+          clearTimeout(showLoadingTimeoutRef.current);
+          showLoadingTimeoutRef.current = null;
+        }
+        const hasVin = listingRes.data.vin;
+        flushSync(() => {
+          setListing(listingRes.data);
+          setIsFavorite(favoriteValue);
+          setShowSkeleton(false);
+          if (hasVin) {
+            setLoadingPrevious(true);
+          }
+        });
+        if (hasVin && listingRes.data.vin) {
           listingsApi
-            .getByVin(res.data.vin, id)
+            .getByVin(listingRes.data.vin, currentId)
             .then((vinRes) => {
-              setPreviousListings(vinRes.data);
+              if (hasLoadedRef.current && currentId === id) {
+                setPreviousListings(vinRes.data);
+              }
             })
             .catch(() => {
-              setPreviousListings([]);
+              if (hasLoadedRef.current && currentId === id) {
+                setPreviousListings([]);
+              }
             })
-            .finally(() => setLoadingPrevious(false));
+            .finally(() => {
+              if (hasLoadedRef.current && currentId === id) {
+                setLoadingPrevious(false);
+              }
+            });
         }
       })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-
-    if (user) {
-      favoritesApi
-        .check(id)
-        .then((res) => {
-          setIsFavorite(res.data.isFavorite);
-        })
-        .catch(() => {
-          setIsFavorite(check(id));
+      .catch(() => {
+        if (!hasLoadedRef.current || currentId !== id) {
+          return;
+        }
+        if (showLoadingTimeoutRef.current) {
+          clearTimeout(showLoadingTimeoutRef.current);
+          showLoadingTimeoutRef.current = null;
+        }
+        const favoriteValue = check(currentId);
+        flushSync(() => {
+          setListing(null);
+          setIsFavorite(favoriteValue);
+          setShowSkeleton(false);
         });
-    } else {
-      setIsFavorite(check(id));
-    }
+      });
+
+    return () => {
+      if (showLoadingTimeoutRef.current) {
+        clearTimeout(showLoadingTimeoutRef.current);
+        showLoadingTimeoutRef.current = null;
+      }
+    };
   }, [id, user, check]);
 
   const handleToggleFavorite = async () => {
@@ -159,20 +221,43 @@ export default function ListingPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isImageModalOpen, imagesLength]);
 
-  if (loading) {
-    return (
-      <div className="text-center py-12">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-        <p className="mt-4 text-gray-300">Вчитување...</p>
-      </div>
-    );
+  if (!listing && !showSkeleton) {
+    return null;
   }
 
-  if (!listing) {
+  if (!listing || showSkeleton) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-300 text-lg">Објавата не е пронајдена</p>
-      </div>
+      <>
+        <div className="max-w-6xl mx-auto">
+          <BreadcrumbsSkeleton />
+          <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-6 md:gap-8">
+            <div className="space-y-6">
+              <div>
+                <MainImageSkeleton />
+                <ThumbnailsSkeleton />
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <TitleSkeleton />
+                <PriceSkeleton />
+                <BadgesSkeleton />
+                <div className="mt-8">
+                  <FavoriteButtonSkeleton />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-primary-500/20 my-8"></div>
+
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+            <p className="mt-4 text-gray-300">Вчитување...</p>
+          </div>
+        </div>
+      </>
     );
   }
 
@@ -259,8 +344,8 @@ export default function ListingPage() {
                   {images.slice(0, 4).map((img, index) => {
                     const isLastThumbnailMobile = index === 2;
                     const isLastThumbnailDesktop = index === 3;
-                    const hasMoreImagesMobile = images.length > 4;
-                    const hasMoreImagesDesktop = images.length > 5;
+                    const hasMoreImagesMobile = images.length > 3;
+                    const hasMoreImagesDesktop = images.length > 4;
                     const remainingCountMobile = images.length - 3;
                     const remainingCountDesktop = images.length - 4;
 
@@ -348,7 +433,7 @@ export default function ListingPage() {
               </h1>
               <div className="mb-8">
                 <div className="flex items-baseline gap-3 flex-wrap mb-5">
-                  {listing.status === 'Closed' ? (
+                  {listing.status === 'Closed' || listing.price === undefined ? (
                     <>
                       <span className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-primary-400">
                         ••••
@@ -374,7 +459,7 @@ export default function ListingPage() {
                     </span>
                   )}
                   {listing.is_new && (
-                    <span className="inline-flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-semibold bg-green-500/20 border border-green-500/40 text-green-300 shadow-sm">
+                    <span className="inline-flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-semibold bg-primary-500/20 border border-primary-500/40 text-primary-300 shadow-sm">
                       <span>✨</span>
                       <span>Ново</span>
                     </span>
@@ -427,7 +512,7 @@ export default function ListingPage() {
           </div>
         </div>
 
-        <div className="border-t border-primary-500/20 my-6"></div>
+        <div className="border-t border-primary-500/20 my-8"></div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-6 md:gap-8">
           <div className="space-y-6">
@@ -435,9 +520,9 @@ export default function ListingPage() {
               <div className="bg-bg-light p-4 md:p-6 rounded-xl border border-primary-500/20">
                 <h2 className="text-xl md:text-2xl font-bold mb-6 text-white">Карактеристики</h2>
 
-                <div className="space-y-6">
+                <div className="space-y-4">
                   {(vehicle.brand?.name || vehicle.model?.name || vehicle.year || listing.vin) && (
-                    <div className="pb-5 border-b border-primary-500/30 last:border-b-0">
+                    <div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {vehicle.brand?.name && (
                           <div>
@@ -495,7 +580,7 @@ export default function ListingPage() {
                     vehicle.transmission ||
                     vehicle.drive_type ||
                     vehicle.mileage_km) && (
-                    <div className="pb-5 border-b border-primary-500/30 last:border-b-0">
+                    <div className="pt-4 border-t border-primary-500/30">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {vehicle.engine_displ_l && (
                           <div>
@@ -546,7 +631,7 @@ export default function ListingPage() {
                   )}
 
                   {(vehicle.body_type || vehicle.color || vehicle.doors) && (
-                    <div className="pb-5 border-b border-primary-500/30 last:border-b-0">
+                    <div className="pt-4 border-t border-primary-500/30">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {vehicle.body_type && (
                           <div>
@@ -577,7 +662,7 @@ export default function ListingPage() {
                   {(listing.condition ||
                     listing.registration_type ||
                     listing.is_registered !== undefined) && (
-                    <div className="pb-0">
+                    <div className="pt-4 border-t border-primary-500/30">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {listing.condition && (
                           <div>
@@ -920,7 +1005,7 @@ export default function ListingPage() {
                   )}
 
                   {listing.user && (
-                    <div className="pt-2 border-t border-primary-500/20">
+                    <div className="pt-4 border-t border-primary-500/20">
                       <button
                         onClick={() => setIsUserListingsModalOpen(true)}
                         disabled={listing.status === 'Closed'}
@@ -1159,3 +1244,4 @@ export default function ListingPage() {
     </>
   );
 }
+

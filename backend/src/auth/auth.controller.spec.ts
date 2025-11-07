@@ -49,11 +49,14 @@ describe('AuthController', () => {
       register: jest.fn(),
       login: jest.fn(),
       getUserProfile: jest.fn(),
+      updateProfile: jest.fn(),
       verifyPhone: jest.fn(),
       verifyEmail: jest.fn(),
       requestPasswordReset: jest.fn(),
       verifyResetCode: jest.fn(),
       resetPassword: jest.fn(),
+      requestPhoneChange: jest.fn(),
+      verifyPhoneChange: jest.fn(),
     };
 
     const mockIpBlockService = {
@@ -158,6 +161,9 @@ describe('AuthController', () => {
         emailNotifications: mockUser.emailNotifications,
         phoneVerified: mockUser.phoneVerified,
         emailVerified: mockUser.emailVerified,
+        viber: mockUser.viber ?? false,
+        whatsapp: mockUser.whatsapp ?? false,
+        telegram: mockUser.telegram ?? false,
       });
 
       const result = await controller.getProfile(req);
@@ -174,6 +180,9 @@ describe('AuthController', () => {
         emailNotifications: mockUser.emailNotifications,
         phoneVerified: mockUser.phoneVerified,
         emailVerified: mockUser.emailVerified,
+        viber: mockUser.viber ?? false,
+        whatsapp: mockUser.whatsapp ?? false,
+        telegram: mockUser.telegram ?? false,
       });
     });
   });
@@ -511,6 +520,94 @@ describe('AuthController', () => {
         BadRequestException,
       );
       expect(ipBlockService.recordFailedAttempt).toHaveBeenCalledWith('127.0.0.1');
+    });
+  });
+
+  describe('updateProfile', () => {
+    it('should update profile successfully', async () => {
+      const req = { user: { id: mockUser.id } };
+      const updateProfileDto = {
+        firstName: 'Updated',
+        lastName: 'Name',
+      };
+
+      authService.updateProfile.mockResolvedValue({
+        id: mockUser.id,
+        email: mockUser.email,
+        phone: mockUser.phone,
+        firstName: 'Updated',
+        lastName: 'Name',
+        type: mockUser.type,
+        companyName: mockUser.companyName,
+        active: mockUser.active,
+        emailNotifications: mockUser.emailNotifications,
+        viber: mockUser.viber,
+        whatsapp: mockUser.whatsapp,
+        telegram: mockUser.telegram,
+        phoneVerified: mockUser.phoneVerified,
+        emailVerified: mockUser.emailVerified,
+        created_at: mockUser.created_at,
+        listings: [],
+        favorites: [],
+      });
+
+      const result = await controller.updateProfile(req, updateProfileDto);
+
+      expect(authService.updateProfile).toHaveBeenCalledWith(mockUser.id, updateProfileDto);
+      expect(result).toHaveProperty('firstName', 'Updated');
+    });
+  });
+
+  describe('requestPhoneChange', () => {
+    it('should request phone change successfully', async () => {
+      const req = { user: { id: mockUser.id } };
+      const changePhoneRequestDto = { phone: '+38970987654' };
+
+      authService.requestPhoneChange.mockResolvedValue(undefined);
+
+      const result = await controller.requestPhoneChange(req, changePhoneRequestDto);
+
+      expect(authService.requestPhoneChange).toHaveBeenCalledWith(
+        mockUser.id,
+        changePhoneRequestDto,
+      );
+      expect(result).toEqual({ success: true, message: 'SMS кодот е испратен' });
+    });
+  });
+
+  describe('verifyPhoneChange', () => {
+    it('should verify phone change successfully', async () => {
+      const req = { user: { id: mockUser.id } };
+      const changePhoneVerifyDto = {
+        phone: '+38970987654',
+        code: '123456',
+      };
+
+      authService.verifyPhoneChange.mockResolvedValue({
+        id: mockUser.id,
+        email: mockUser.email,
+        phone: '+38970987654',
+        firstName: mockUser.firstName,
+        lastName: mockUser.lastName,
+        type: mockUser.type,
+        companyName: mockUser.companyName,
+        active: mockUser.active,
+        emailNotifications: mockUser.emailNotifications,
+        viber: mockUser.viber,
+        whatsapp: mockUser.whatsapp,
+        telegram: mockUser.telegram,
+        phoneVerified: true,
+        emailVerified: mockUser.emailVerified,
+        created_at: mockUser.created_at,
+        listings: [],
+        favorites: [],
+      });
+
+      const result = await controller.verifyPhoneChange(req, changePhoneVerifyDto);
+
+      expect(authService.verifyPhoneChange).toHaveBeenCalledWith(mockUser.id, changePhoneVerifyDto);
+      expect(result).toHaveProperty('phone', '+38970987654');
+      expect(result).toHaveProperty('phoneVerified', true);
     });
   });
 });

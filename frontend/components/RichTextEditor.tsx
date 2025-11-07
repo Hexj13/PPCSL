@@ -240,7 +240,7 @@ export function RichTextEditor({
           document.execCommand('insertText', false, text);
           handleInput();
         }}
-        className="input-field min-h-[120px] overflow-y-auto"
+        className="input-field min-h-[120px] overflow-y-auto custom-scrollbar"
         style={{
           minHeight: `${rows * 1.5}rem`,
         }}

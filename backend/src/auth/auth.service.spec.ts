@@ -53,6 +53,8 @@ describe('AuthService', () => {
       sendPasswordResetCode: jest.fn(),
       verifyPasswordResetCode: jest.fn(),
       clearPasswordResetCode: jest.fn(),
+      sendVerificationCode: jest.fn(),
+      verifyCode: jest.fn(),
     };
 
     const mockEmailService = {
@@ -361,6 +363,107 @@ describe('AuthService', () => {
           code: '000000',
           newPassword: 'NewPassword123!',
         }),
+      ).rejects.toThrow(BadRequestException);
+      expect(usersService.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('requestPhoneChange', () => {
+    it('should send verification code when phone is valid and not exists', async () => {
+      const userId = '1';
+      const newPhone = '+38970987654';
+      usersService.findByPhone.mockResolvedValue(null);
+      usersService.findOne.mockResolvedValue(mockUser as User);
+      smsService.normalizePhoneNumber.mockReturnValue(newPhone);
+      smsService.sendVerificationCode.mockResolvedValue(undefined);
+
+      await service.requestPhoneChange(userId, { phone: newPhone });
+
+      expect(usersService.findByPhone).toHaveBeenCalledWith(newPhone);
+      expect(usersService.findOne).toHaveBeenCalledWith(userId);
+      expect(smsService.sendVerificationCode).toHaveBeenCalledWith(newPhone);
+    });
+
+    it('should throw BadRequestException when phone already exists for another user', async () => {
+      const userId = '1';
+      const newPhone = '+38970987654';
+      const existingUser = { ...mockUser, id: '2' };
+      usersService.findByPhone.mockResolvedValue(existingUser as User);
+      smsService.normalizePhoneNumber.mockReturnValue(newPhone);
+
+      await expect(service.requestPhoneChange(userId, { phone: newPhone })).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(smsService.sendVerificationCode).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException when new phone is same as current', async () => {
+      const userId = '1';
+      const currentPhone = '+38970123456';
+      usersService.findByPhone.mockResolvedValue(null);
+      usersService.findOne.mockResolvedValue({ ...mockUser, phone: currentPhone } as User);
+      smsService.normalizePhoneNumber.mockReturnValue(currentPhone);
+
+      await expect(service.requestPhoneChange(userId, { phone: currentPhone })).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(smsService.sendVerificationCode).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('verifyPhoneChange', () => {
+    it('should change phone when code is valid', async () => {
+      const userId = '1';
+      const newPhone = '+38970987654';
+      const updatedUser = {
+        ...mockUser,
+        phone: newPhone,
+        phoneVerified: true,
+      };
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password, ...userWithoutPassword } = updatedUser;
+
+      usersService.findByPhone.mockResolvedValue(null);
+      usersService.update.mockResolvedValue(updatedUser as User);
+      smsService.normalizePhoneNumber.mockReturnValue(newPhone);
+      smsService.verifyCode.mockResolvedValue(true);
+
+      const result = await service.verifyPhoneChange(userId, {
+        phone: newPhone,
+        code: '123456',
+      });
+
+      expect(result).not.toHaveProperty('password');
+      expect(result).toEqual(userWithoutPassword);
+      expect(smsService.verifyCode).toHaveBeenCalledWith(newPhone, '123456');
+      expect(usersService.update).toHaveBeenCalledWith(userId, {
+        phone: newPhone,
+        phoneVerified: true,
+      });
+    });
+
+    it('should throw BadRequestException when phone already exists for another user', async () => {
+      const userId = '1';
+      const newPhone = '+38970987654';
+      const existingUser = { ...mockUser, id: '2' };
+      usersService.findByPhone.mockResolvedValue(existingUser as User);
+      smsService.normalizePhoneNumber.mockReturnValue(newPhone);
+
+      await expect(
+        service.verifyPhoneChange(userId, { phone: newPhone, code: '123456' }),
+      ).rejects.toThrow(BadRequestException);
+      expect(usersService.update).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException when code is invalid', async () => {
+      const userId = '1';
+      const newPhone = '+38970987654';
+      usersService.findByPhone.mockResolvedValue(null);
+      smsService.normalizePhoneNumber.mockReturnValue(newPhone);
+      smsService.verifyCode.mockResolvedValue(false);
+
+      await expect(
+        service.verifyPhoneChange(userId, { phone: newPhone, code: '000000' }),
       ).rejects.toThrow(BadRequestException);
       expect(usersService.update).not.toHaveBeenCalled();
     });

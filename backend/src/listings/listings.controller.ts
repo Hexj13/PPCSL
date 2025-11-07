@@ -70,8 +70,22 @@ export class ListingsController {
     content: {
       'application/json': {
         schema: {
-          type: 'array',
-          items: { type: 'object' },
+          type: 'object',
+          properties: {
+            data: {
+              type: 'array',
+              items: { type: 'object' },
+            },
+            meta: {
+              type: 'object',
+              properties: {
+                total: { type: 'number' },
+                page: { type: 'number' },
+                limit: { type: 'number' },
+                totalPages: { type: 'number' },
+              },
+            },
+          },
         },
       },
     },
@@ -95,8 +109,10 @@ export class ListingsController {
   })
   @Get('my')
   @UseGuards(JwtAuthGuard)
-  getMyListings(@Request() req) {
-    return this.listingsService.getUserListings(req.user.id);
+  getMyListings(@Request() req, @Query('page') page?: string, @Query('limit') limit?: string) {
+    const pageNum = page ? parseInt(page, 10) : 1;
+    const limitNum = limit ? parseInt(limit, 10) : 20;
+    return this.listingsService.getUserListings(req.user.id, pageNum, limitNum);
   }
 
   @ApiOperation({ summary: 'Get active listings by user' })

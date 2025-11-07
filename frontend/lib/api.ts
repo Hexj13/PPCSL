@@ -101,7 +101,7 @@ api.interceptors.response.use(
 export interface Listing {
   id: string;
   title: string;
-  price: number;
+  price?: number;
   currency?: Currency;
   city: string;
   status: ListingStatus;
@@ -166,6 +166,7 @@ export interface User {
   active?: boolean;
   listings?: Listing[];
   created_at?: string;
+  emailNotifications?: boolean;
   viber?: boolean;
   whatsapp?: boolean;
   telegram?: boolean;
@@ -175,7 +176,9 @@ export interface User {
 
 export interface SearchParams {
   brand_id?: string;
+  brand_ids?: string[];
   model_id?: string;
+  model_ids?: string[];
   year_gte?: number;
   year_lte?: number;
   price_gte?: number;
@@ -183,10 +186,29 @@ export interface SearchParams {
   mileage_gte?: number;
   mileage_lte?: number;
   city?: string;
+  cities?: string[];
   fuel?: string;
+  fuels?: string[];
   transmission?: string;
+  transmissions?: string[];
+  body_type?: string;
+  body_types?: string[];
+  engine_displ_l_gte?: number;
+  engine_displ_l_lte?: number;
+  color?: string;
+  colors?: string[];
+  doors?: string[];
+  doors_single?: number;
+  currency?: Currency;
+  title?: string;
   urgent?: boolean;
   is_new?: boolean;
+  conditions?: string[];
+  registration_types?: string[];
+  horsepower_gte?: number;
+  horsepower_lte?: number;
+  drive_types?: string[];
+  is_registered?: boolean;
   page?: number;
   limit?: number;
   sortBy?: string;
@@ -281,7 +303,15 @@ export const listingsApi = {
   publish: (id: string) => api.post(`/api/listings/${id}/publish`),
   pause: (id: string) => api.post(`/api/listings/${id}/pause`),
   close: (id: string) => api.post(`/api/listings/${id}/close`),
-  getMy: () => api.get<Listing[]>('/api/listings/my'),
+  getMy: (page: number = 1, limit: number = 20) => {
+    const params = new URLSearchParams();
+    params.set('page', page.toString());
+    params.set('limit', limit.toString());
+    const query = params.toString();
+    return api.get<{ data: Listing[]; meta: PaginationMeta }>(
+      `/api/listings/my?${query}`,
+    );
+  },
   refreshDates: () => api.post<{ updated: number }>('/api/listings/refresh-dates'),
 };
 
@@ -325,11 +355,31 @@ export interface ResetPasswordDto {
   newPassword: string;
 }
 
+export interface UpdateProfileDto {
+  firstName?: string;
+  lastName?: string;
+  companyName?: string;
+  emailNotifications?: boolean;
+  viber?: boolean;
+  whatsapp?: boolean;
+  telegram?: boolean;
+}
+
+export interface ChangePhoneRequestDto {
+  phone: string;
+}
+
+export interface ChangePhoneVerifyDto {
+  phone: string;
+  code: string;
+}
+
 export const authApi = {
   register: (data: RegisterDto) => api.post('/api/auth/register', data),
   login: (data: LoginDto) =>
     api.post<{ access_token: string; user: User }>('/api/auth/login', data),
   me: () => api.get<User>('/api/auth/me'),
+  updateProfile: (data: UpdateProfileDto) => api.patch<User>('/api/auth/profile', data),
   verifyPhone: () => api.post<User>('/api/auth/verify-phone'),
   sendSms: (data: SendSmsDto) =>
     api.post<{ success: boolean; message: string }>('/api/auth/send-sms', data, {
@@ -351,6 +401,14 @@ export const authApi = {
     }),
   resetPassword: (data: ResetPasswordDto) =>
     api.post<{ success: boolean; message: string; user: User }>('/api/auth/reset-password', data),
+  changePhoneRequest: (data: ChangePhoneRequestDto) =>
+    api.post<{ success: boolean; message: string }>('/api/auth/change-phone-request', data, {
+      headers: { 'X-Skip-Error-Handling': 'true' },
+    }),
+  changePhoneVerify: (data: ChangePhoneVerifyDto) =>
+    api.post<User>('/api/auth/change-phone-verify', data, {
+      headers: { 'X-Skip-Error-Handling': 'true' },
+    }),
 };
 
 export const favoritesApi = {
@@ -381,11 +439,27 @@ export const citiesApi = {
 };
 
 export const adminApi = {
-  getAllListings: () => api.get<Listing[]>('/api/admin/listings'),
+  getAllListings: (page: number = 1, limit: number = 20) => {
+    const params = new URLSearchParams();
+    params.set('page', page.toString());
+    params.set('limit', limit.toString());
+    const query = params.toString();
+    return api.get<{ data: Listing[]; meta: PaginationMeta }>(
+      `/api/admin/listings?${query}`,
+    );
+  },
   updateListingStatus: (id: string, status: ListingStatus) =>
     api.patch(`/api/admin/listings/${id}/status`, { status }),
   getStats: () => api.get<AdminStats>('/api/admin/stats'),
-  getAllUsers: () => api.get<User[]>('/api/admin/users'),
+  getAllUsers: (page: number = 1, limit: number = 20) => {
+    const params = new URLSearchParams();
+    params.set('page', page.toString());
+    params.set('limit', limit.toString());
+    const query = params.toString();
+    return api.get<{ data: User[]; meta: PaginationMeta }>(
+      `/api/admin/users?${query}`,
+    );
+  },
   getUserListings: (userId: string) => api.get<Listing[]>(`/api/admin/users/${userId}/listings`),
   toggleUserStatus: (userId: string) => api.patch(`/api/admin/users/${userId}/toggle-status`),
 };

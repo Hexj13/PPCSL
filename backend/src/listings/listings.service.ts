@@ -608,12 +608,34 @@ export class ListingsService {
     );
   }
 
-  async getUserListings(userId: string): Promise<Listing[]> {
-    return this.listingsRepository.find({
+  async getUserListings(
+    userId: string,
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<{
+    data: Listing[];
+    meta: { total: number; page: number; limit: number; totalPages: number };
+  }> {
+    const skip = (page - 1) * limit;
+    const [listings, total] = await this.listingsRepository.findAndCount({
       where: { user_id: userId },
       relations: ['vehicle', 'vehicle.brand', 'vehicle.model'],
       order: { created_at: 'DESC' },
+      skip,
+      take: limit,
     });
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: listings,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+      },
+    };
   }
 
   async getActiveUserListings(userId: string): Promise<Listing[]> {

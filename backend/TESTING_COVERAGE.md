@@ -47,6 +47,11 @@
    - ✅ Form submission
    - ✅ Reset functionality
 
+8. ✅ **Skeleton Loaders** (Visual components, no unit tests needed)
+   - ✅ ListingCardSkeleton - Skeleton for listing cards on homepage
+   - ✅ ListingManagementCardSkeleton - Skeleton for listing management cards
+   - ✅ ListingPageSkeleton - Skeleton components for listing detail page (breadcrumbs, images, price, etc.)
+
 ## ✅ All Unit Tests Created
 
 All critical services now have unit tests:
@@ -216,6 +221,7 @@ All controllers now have comprehensive unit tests:
    - ✅ Register user
    - ✅ Login
    - ✅ Get profile
+   - ✅ Update profile
    - ✅ Verify phone
    - ✅ Check phone availability
    - ✅ Send SMS verification
@@ -224,6 +230,8 @@ All controllers now have comprehensive unit tests:
    - ✅ Request password reset
    - ✅ Verify reset code
    - ✅ Reset password
+   - ✅ Request phone change
+   - ✅ Verify phone change
 
 3. ✅ **FavoritesController** (`favorites.controller.spec.ts`)
    - ✅ Get favorites list

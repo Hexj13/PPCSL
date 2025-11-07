@@ -58,16 +58,18 @@ export function StructuredData({ listing }: StructuredDataProps) {
       category: 'Vehicle',
       offers: {
         '@type': 'Offer',
-        price: listing.price.toString(),
-        priceCurrency: listing.currency || 'MKD',
+        ...(listing.price !== undefined && {
+          price: listing.price.toString(),
+          priceCurrency: listing.currency || 'MKD',
+          priceValidUntil: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
+            .toISOString()
+            .split('T')[0],
+        }),
         availability:
           listing.status === 'Active'
             ? 'https://schema.org/InStock'
             : 'https://schema.org/OutOfStock',
         url: `${siteUrl}/listings/${listing.id}`,
-        priceValidUntil: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
-          .toISOString()
-          .split('T')[0],
       },
       ...(vehicle && {
         vehicleIdentificationNumber: listing.vin || undefined,

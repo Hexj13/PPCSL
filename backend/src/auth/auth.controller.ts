@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   HttpCode,
+  Patch,
   Post,
   Request,
   UseGuards,
@@ -14,11 +15,13 @@ import { Throttle } from '@nestjs/throttler';
 import { UsersService } from '../users/users.service';
 
 import { AuthService } from './auth.service';
+import { ChangePhoneRequestDto, ChangePhoneVerifyDto } from './dto/change-phone.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SendSmsDto } from './dto/send-sms.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { VerifyResetCodeDto } from './dto/verify-reset-code.dto';
 import { VerifySmsDto } from './dto/verify-sms.dto';
@@ -169,6 +172,120 @@ export class AuthController {
   @Get('me')
   async getProfile(@Request() req) {
     const user = await this.authService.getUserProfile(req.user.id);
+    return user;
+  }
+
+  @ApiOperation({ summary: 'Update user profile' })
+  @ApiBearerAuth('JWT-auth')
+  @ApiResponse({
+    status: 200,
+    description: 'Profile updated successfully',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid data',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            statusCode: { type: 'number', example: 400 },
+            message: { type: 'string' },
+            timestamp: { type: 'string' },
+            path: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            statusCode: { type: 'number', example: 401 },
+            message: { type: 'string' },
+            timestamp: { type: 'string' },
+            path: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
+  @UseGuards(JwtAuthGuard)
+  @Patch('profile')
+  async updateProfile(@Request() req, @Body() updateProfileDto: UpdateProfileDto) {
+    const user = await this.authService.updateProfile(req.user.id, updateProfileDto);
+    return user;
+  }
+
+  @ApiOperation({ summary: 'Request phone number change' })
+  @ApiBearerAuth('JWT-auth')
+  @ApiResponse({
+    status: 200,
+    description: 'SMS code sent successfully',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean', example: true },
+            message: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid phone number or phone already exists',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+  })
+  @UseGuards(JwtAuthGuard)
+  @Post('change-phone-request')
+  async requestPhoneChange(@Request() req, @Body() changePhoneRequestDto: ChangePhoneRequestDto) {
+    await this.authService.requestPhoneChange(req.user.id, changePhoneRequestDto);
+    return { success: true, message: 'SMS кодот е испратен' };
+  }
+
+  @ApiOperation({ summary: 'Verify phone number change' })
+  @ApiBearerAuth('JWT-auth')
+  @ApiResponse({
+    status: 200,
+    description: 'Phone number changed successfully',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid code or phone already exists',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+  })
+  @UseGuards(JwtAuthGuard)
+  @Post('change-phone-verify')
+  async verifyPhoneChange(@Request() req, @Body() changePhoneVerifyDto: ChangePhoneVerifyDto) {
+    const user = await this.authService.verifyPhoneChange(req.user.id, changePhoneVerifyDto);
     return user;
   }
 

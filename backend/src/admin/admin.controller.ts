@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -69,8 +69,10 @@ export class AdminController {
     },
   })
   @Get('users')
-  getAllUsers() {
-    return this.adminService.getAllUsers();
+  getAllUsers(@Query('page') page?: string, @Query('limit') limit?: string) {
+    const pageNum = page ? parseInt(page, 10) : 1;
+    const limitNum = limit ? parseInt(limit, 10) : 20;
+    return this.adminService.getAllUsers(pageNum, limitNum);
   }
 
   @ApiOperation({ summary: 'Get all listings' })
@@ -80,8 +82,22 @@ export class AdminController {
     content: {
       'application/json': {
         schema: {
-          type: 'array',
-          items: { type: 'object' },
+          type: 'object',
+          properties: {
+            data: {
+              type: 'array',
+              items: { type: 'object' },
+            },
+            meta: {
+              type: 'object',
+              properties: {
+                total: { type: 'number' },
+                page: { type: 'number' },
+                limit: { type: 'number' },
+                totalPages: { type: 'number' },
+              },
+            },
+          },
         },
       },
     },
@@ -121,8 +137,10 @@ export class AdminController {
     },
   })
   @Get('listings')
-  getAllListings() {
-    return this.adminService.getAllListings();
+  getAllListings(@Query('page') page?: string, @Query('limit') limit?: string) {
+    const pageNum = page ? parseInt(page, 10) : 1;
+    const limitNum = limit ? parseInt(limit, 10) : 20;
+    return this.adminService.getAllListings(pageNum, limitNum);
   }
 
   @ApiOperation({ summary: 'Get statistics' })

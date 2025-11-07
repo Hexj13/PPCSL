@@ -1,9 +1,10 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ListingCard } from '@/components/ListingCard';
+import { ListingCardSkeleton } from '@/components/ListingCardSkeleton';
 import { favoritesApi, Listing } from '@/lib/api';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
 
@@ -11,42 +12,68 @@ export default function FavoritesPage() {
   const router = useRouter();
   const { user, isInitialized } = useAuthStore();
   const [listings, setListings] = useState<Listing[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const showLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasLoadedRef = useRef(false);
 
   const loadFavorites = useCallback(() => {
     if (!user) return;
+    if (hasLoadedRef.current) return;
+
+    hasLoadedRef.current = true;
+
+    showLoadingTimeoutRef.current = setTimeout(() => {
+      setLoading(true);
+    }, 200);
 
     favoritesApi
       .getAll()
       .then((res) => {
-        const favoritesList = res.data.map((f: { listing: Listing }) => f.listing);
+        if (showLoadingTimeoutRef.current) {
+          clearTimeout(showLoadingTimeoutRef.current);
+          showLoadingTimeoutRef.current = null;
+        }
+
+        const favoritesList = Array.isArray(res.data) 
+          ? res.data.map((f: { listing: Listing }) => f.listing).filter(Boolean)
+          : [];
         setListings(favoritesList);
+        setLoading(false);
         const { setFavorites } = useFavoritesStore.getState();
         const favoriteIds = favoritesList.map((listing: Listing) => listing.id);
         setFavorites(favoriteIds);
       })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (showLoadingTimeoutRef.current) {
+          clearTimeout(showLoadingTimeoutRef.current);
+          showLoadingTimeoutRef.current = null;
+        }
+        setListings([]);
+        setLoading(false);
+      });
   }, [user]);
 
   useEffect(() => {
-    if (!isInitialized) return;
+    if (!isInitialized && !user) {
+      return;
+    }
 
-    if (!user) {
+    if (isInitialized && !user) {
       router.push('/login');
       return;
     }
 
-    loadFavorites();
+    if (user) {
+      loadFavorites();
+    }
   }, [user, isInitialized, router, loadFavorites]);
 
-  if (!isInitialized) {
-    return (
-      <div className="text-center py-12">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-        <p className="mt-4 text-gray-300">Вчитување...</p>
-      </div>
-    );
+  if (!isInitialized && !user) {
+    return null;
+  }
+
+  if (isInitialized && !user) {
+    return null;
   }
 
   if (!user) {
@@ -55,9 +82,15 @@ export default function FavoritesPage() {
 
   if (loading) {
     return (
-      <div className="text-center py-12">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-        <p className="mt-4 text-gray-300">Вчитување...</p>
+      <div>
+        <h1 className="text-3xl md:text-4xl font-extrabold mb-6 md:mb-8 bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+          Омилени
+        </h1>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
+          {[...Array(8)].map((_, i) => (
+            <ListingCardSkeleton key={i} />
+          ))}
+        </div>
       </div>
     );
   }

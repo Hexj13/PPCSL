@@ -1,0 +1,340 @@
+'use client';
+
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useRef, useState } from 'react';
+import { toast } from 'react-hot-toast';
+
+import { authApi } from '@/lib/api';
+import { useAuthStore } from '@/lib/store';
+
+function VerifyPhoneChangeContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { setAuth } = useAuthStore();
+  const [code, setCode] = useState(['', '', '', '', '', '']);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [verificationAttempts, setVerificationAttempts] = useState(0);
+  const [isVerificationBlocked, setIsVerificationBlocked] = useState(false);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const cooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const phone = searchParams.get('phone');
+    if (phone) {
+      setPhoneNumber(phone);
+    } else {
+      router.push('/profile/change-phone');
+      return;
+    }
+
+    setTimeout(() => {
+      inputRefs.current[0]?.focus();
+    }, 100);
+
+    return () => {
+      if (cooldownTimerRef.current) {
+        clearInterval(cooldownTimerRef.current);
+      }
+    };
+  }, [searchParams, router]);
+
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      cooldownTimerRef.current = setInterval(() => {
+        setResendCooldown((prev) => {
+          if (prev <= 1) {
+            if (cooldownTimerRef.current) {
+              clearInterval(cooldownTimerRef.current);
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      if (cooldownTimerRef.current) {
+        clearInterval(cooldownTimerRef.current);
+      }
+    }
+
+    return () => {
+      if (cooldownTimerRef.current) {
+        clearInterval(cooldownTimerRef.current);
+      }
+    };
+  }, [resendCooldown]);
+
+  const handleCodeChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) {
+      return;
+    }
+
+    const newCode = [...code];
+    if (value.length === 1) {
+      newCode[index] = value;
+      setCode(newCode);
+      setError('');
+
+      if (index < 5 && value) {
+        inputRefs.current[index + 1]?.focus();
+      }
+    } else if (value.length === 0) {
+      newCode[index] = '';
+      setCode(newCode);
+      if (index > 0) {
+        inputRefs.current[index - 1]?.focus();
+      }
+    }
+  };
+
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !code[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+    if (e.key === 'ArrowLeft' && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+    if (e.key === 'ArrowRight' && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').trim();
+    const digitsOnly = pastedData.replace(/\D/g, '').slice(0, 6);
+
+    if (digitsOnly.length > 0) {
+      const newCode = digitsOnly.split('').concat(Array(6 - digitsOnly.length).fill(''));
+      setCode(newCode);
+      setError('');
+
+      const filledIndex = Math.min(digitsOnly.length - 1, 5);
+      inputRefs.current[filledIndex]?.focus();
+    }
+  };
+
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (isVerificationBlocked) {
+      setError('Достигнато е максималниот број на обиди. Испратете го кодот повторно.');
+      return;
+    }
+
+    const fullCode = code.join('').trim();
+    if (fullCode.length !== 6) {
+      setError('Кодот мора да содржи точно 6 цифри');
+      return;
+    }
+
+    if (!/^\d{6}$/.test(fullCode)) {
+      setError('Кодот мора да содржи само цифри');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await authApi.changePhoneVerify({
+        phone: phoneNumber,
+        code: fullCode,
+      });
+      setAuth(response.data, useAuthStore.getState().token);
+      toast.success('Телефонот е успешно променет');
+      router.push('/profile');
+    } catch (err: unknown) {
+      const axiosError = err as {
+        response?: {
+          status?: number;
+          data?: { message?: string; blockedUntil?: string };
+        };
+      };
+
+      if (axiosError.response?.status === 429) {
+        const blockedUntil = axiosError.response.data?.blockedUntil;
+        if (blockedUntil) {
+          const blockedDate = new Date(blockedUntil);
+          const now = new Date();
+          const remainingMinutes = Math.ceil((blockedDate.getTime() - now.getTime()) / (1000 * 60));
+          setError(
+            `Достигнато е максималниот број на обиди. Обидете се повторно за ${remainingMinutes} минути`,
+          );
+          setIsVerificationBlocked(true);
+          setCode(['', '', '', '', '', '']);
+          setLoading(false);
+          toast.error(`IP адресата е блокирана за ${remainingMinutes} минути`);
+          return;
+        }
+      }
+
+      const newAttempts = verificationAttempts + 1;
+      setVerificationAttempts(newAttempts);
+
+      if (newAttempts >= 10) {
+        setIsVerificationBlocked(true);
+        setError(
+          'Достигнато е максималниот број на обиди (10). Испратете го кодот повторно за да продолжите.',
+        );
+      } else {
+        setError(
+          axiosError.response?.data?.message ||
+            `Невалиден код. Обидете се повторно. (${newAttempts}/10)`,
+        );
+      }
+
+      setCode(['', '', '', '', '', '']);
+      setLoading(false);
+      setTimeout(() => {
+        inputRefs.current[0]?.focus();
+      }, 100);
+    }
+  };
+
+  const handleResendCode = async () => {
+    if (resendCooldown > 0) {
+      return;
+    }
+
+    setResendCooldown(60);
+    setCode(['', '', '', '', '', '']);
+    setError('');
+    setVerificationAttempts(0);
+    setIsVerificationBlocked(false);
+    inputRefs.current[0]?.focus();
+
+    try {
+      await authApi.changePhoneRequest({ phone: phoneNumber });
+      toast.success('Кодот е испратен повторно');
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { message?: string } } };
+      toast.error(axiosError.response?.data?.message || 'Грешка при испраќање на SMS');
+    }
+  };
+
+  const handleBack = () => {
+    router.push('/profile/change-phone');
+  };
+
+  return (
+    <div className="max-w-md mx-auto mt-6 md:mt-12">
+      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+        Потврда на нов телефон
+      </h1>
+      <div className="card p-6 md:p-8">
+        <div className="space-y-6">
+          <div className="text-center">
+            <p className="text-gray-300 mb-2">
+              Испратениот код на телефон{' '}
+              {phoneNumber && <span className="font-semibold text-white">{phoneNumber}</span>}
+            </p>
+            <p className="text-sm text-gray-400">Внесете го 6-цифрениот код од СМС пораката</p>
+          </div>
+
+          <form onSubmit={handleVerifyCode} className="space-y-4">
+            <div className="flex justify-center gap-2 md:gap-3">
+              {[0, 1, 2, 3, 4, 5].map((index) => (
+                <div key={index} className="relative">
+                  <input
+                    ref={(el) => {
+                      inputRefs.current[index] = el;
+                    }}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={code[index] || ''}
+                    onChange={(e) => handleCodeChange(index, e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(index, e)}
+                    onPaste={index === 0 ? handlePaste : undefined}
+                    disabled={loading}
+                    className={`w-12 h-14 md:w-14 md:h-16 text-center text-2xl md:text-3xl font-bold bg-bg-light border-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+                      error
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                        : 'border-primary-500/30 focus:border-primary-500'
+                    } ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-text'} text-white`}
+                    style={{
+                      caretColor: 'transparent',
+                      fontFamily: "'Digital-7', monospace",
+                      letterSpacing: '0.05em',
+                    }}
+                    autoComplete="off"
+                  />
+                  {!code[index] && (
+                    <span
+                      className="absolute inset-0 flex items-center justify-center pointer-events-none text-gray-500 opacity-60 select-none text-2xl md:text-3xl font-bold"
+                      style={{
+                        fontFamily: "'Digital-7', monospace",
+                        letterSpacing: '0.05em',
+                      }}
+                    >
+                      0
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {error && (
+              <div className="text-center">
+                <p className="text-sm text-red-400">{error}</p>
+              </div>
+            )}
+
+            <div className="flex gap-3 pt-4">
+              <button
+                type="button"
+                onClick={handleBack}
+                disabled={loading}
+                className="flex-1 btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Назад
+              </button>
+              <button
+                type="submit"
+                disabled={loading || code.join('').trim().length !== 6 || isVerificationBlocked}
+                className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              >
+                {loading ? 'Проверување...' : isVerificationBlocked ? 'Блокирано' : 'Потврди'}
+              </button>
+            </div>
+          </form>
+
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={handleResendCode}
+              disabled={loading || resendCooldown > 0}
+              className="text-sm text-primary-400 hover:text-primary-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {resendCooldown > 0 ? `Испрати нов код (${resendCooldown}с)` : 'Испрати нов код'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function VerifyPhoneChangePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-md mx-auto mt-6 md:mt-12">
+          <div className="card p-6 md:p-8 text-center">
+            <div className="mb-4">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent"></div>
+            </div>
+            <h1 className="text-2xl font-bold mb-4 text-primary-400">Вчитување...</h1>
+          </div>
+        </div>
+      }
+    >
+      <VerifyPhoneChangeContent />
+    </Suspense>
+  );
+}
+

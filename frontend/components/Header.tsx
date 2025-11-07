@@ -8,7 +8,7 @@ import { User } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 
 export function Header() {
-  const { user, logout } = useAuthStore();
+  const { user, logout, isInitialized } = useAuthStore();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -55,7 +55,12 @@ export function Header() {
           </Link>
 
           <nav className="hidden md:flex gap-6 items-center">
-            {user ? (
+            {!isInitialized ? (
+              <div className="flex gap-4 items-center">
+                <div className="h-9 w-24 bg-bg-light/30 rounded animate-pulse" />
+                <div className="h-9 w-32 bg-bg-light/30 rounded animate-pulse" />
+              </div>
+            ) : user ? (
               <>
                 <Link
                   href="/listings/new"
@@ -83,9 +88,12 @@ export function Header() {
                     Админ
                   </Link>
                 )}
-                <span className="text-gray-300 font-medium px-3 py-1.5 bg-bg-light rounded-lg border border-primary-500/20 text-sm lg:text-base">
+                <Link
+                  href="/profile"
+                  className="text-gray-300 font-medium px-3 py-1.5 bg-bg-light rounded-lg border border-primary-500/20 text-sm lg:text-base hover:text-primary-400 hover:border-primary-500/40 transition-colors duration-200 cursor-pointer"
+                >
                   {getUserDisplayName(user)}
-                </span>
+                </Link>
                 <button
                   onClick={handleLogout}
                   className="btn-secondary px-4 py-1.5 text-sm lg:text-base"
@@ -132,7 +140,12 @@ export function Header() {
 
         {isMobileMenuOpen && (
           <nav className="md:hidden mt-4 pb-4 border-t border-primary-500/20 pt-4">
-            {user ? (
+            {!isInitialized ? (
+              <div className="flex flex-col gap-3">
+                <div className="h-10 bg-bg-light/30 rounded animate-pulse" />
+                <div className="h-10 bg-bg-light/30 rounded animate-pulse" />
+              </div>
+            ) : user ? (
               <div className="flex flex-col gap-4">
                 <Link
                   href="/listings/new"
@@ -164,9 +177,13 @@ export function Header() {
                     Админ
                   </Link>
                 )}
-                <div className="text-gray-300 font-medium px-3 py-2 bg-bg-light rounded-lg border border-primary-500/20 text-sm break-all">
+                <Link
+                  href="/profile"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-gray-300 font-medium px-3 py-2 bg-bg-light rounded-lg border border-primary-500/20 text-sm break-all hover:text-primary-400 hover:border-primary-500/40 transition-colors duration-200 cursor-pointer"
+                >
                   {getUserDisplayName(user)}
-                </div>
+                </Link>
                 <button onClick={handleLogout} className="btn-secondary w-full">
                   Одјави се
                 </button>

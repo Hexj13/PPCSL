@@ -154,9 +154,13 @@ export function UserListingsModal({
                   <div>
                     <h3 className="font-bold text-lg text-white mb-3">{listing.title}</h3>
                     <div className="flex items-center gap-3 mb-3">
-                      <span className="text-xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-                        {formatPrice(listing.price, listing.currency)} {listing.currency}
-                      </span>
+                      {listing.price !== undefined ? (
+                        <span className="text-xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+                          {formatPrice(listing.price, listing.currency)} {listing.currency}
+                        </span>
+                      ) : (
+                        <span className="text-xl font-extrabold text-primary-400">••••</span>
+                      )}
                       {!showOnlyActive && (
                         <span
                           className={`px-2 py-1 rounded text-xs font-semibold ${

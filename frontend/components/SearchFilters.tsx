@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, startTransition } from 'react';
 
 import { brandsApi, citiesApi, Brand, VehicleModel, City } from '@/lib/api';
 import { ConditionType, DriveType, RegistrationType } from '@/lib/constants';
@@ -171,19 +171,39 @@ export function SearchFilters() {
         }
         return;
       }
+      if (key === 'year_lte') {
+        const urlYearLte = searchParams.get('year_lte');
+        if (value !== '' && value !== undefined && value !== currentYear && value !== urlYearLte) {
+          params.set(key, value as string);
+        } else if (urlYearLte && urlYearLte !== currentYear) {
+          params.set(key, urlYearLte);
+        }
+        return;
+      }
       if (Array.isArray(value)) {
         if (value.length > 0) {
           params.set(key, value.join(','));
         }
       } else if (value !== '' && value !== undefined) {
         if (typeof value === 'boolean') {
-          params.set(key, value.toString());
+          if (value === true) {
+            params.set(key, 'true');
+          }
         } else {
           params.set(key, value as string);
         }
       }
     });
-    router.push(`/?${params.toString()}`);
+    const newUrl = `/?${params.toString()}`;
+    const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
+    startTransition(() => {
+      router.replace(newUrl, { scroll: false });
+      if (typeof window !== 'undefined') {
+        requestAnimationFrame(() => {
+          window.scrollTo({ top: scrollY, behavior: 'instant' });
+        });
+      }
+    });
   };
 
   const handleReset = () => {
@@ -216,7 +236,15 @@ export function SearchFilters() {
       sortBy: 'created_at',
       sortOrder: 'DESC',
     });
-    router.push('/');
+    const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
+    startTransition(() => {
+      router.replace('/', { scroll: false });
+      if (typeof window !== 'undefined') {
+        requestAnimationFrame(() => {
+          window.scrollTo({ top: scrollY, behavior: 'instant' });
+        });
+      }
+    });
   };
 
   return (

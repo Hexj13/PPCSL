@@ -133,7 +133,7 @@ export function Dropdown({
       )}
 
       {isOpen && !disabled && (
-        <div className="absolute z-[100] w-full mt-1 top-full bg-bg-light border-2 border-primary-500/30 rounded-lg shadow-xl max-h-60 overflow-auto">
+        <div className="absolute z-[100] w-full mt-1 top-full bg-bg-light border-2 border-primary-500/30 rounded-lg shadow-xl max-h-60 overflow-auto custom-scrollbar">
           {filteredOptions.length > 0 ? (
             filteredOptions.map((option) => (
               <button

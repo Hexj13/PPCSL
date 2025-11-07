@@ -93,13 +93,17 @@ describe('ListingsController', () => {
     it('should return user listings', async () => {
       const req = { user: mockUser };
       const mockListings = [mockListing];
+      const mockResult = {
+        data: mockListings,
+        meta: { total: 1, page: 1, limit: 20, totalPages: 1 },
+      };
 
-      service.getUserListings.mockResolvedValue(mockListings);
+      service.getUserListings.mockResolvedValue(mockResult);
 
       const result = await controller.getMyListings(req);
 
-      expect(service.getUserListings).toHaveBeenCalledWith('user-1');
-      expect(result).toEqual(mockListings);
+      expect(service.getUserListings).toHaveBeenCalledWith('user-1', 1, 20);
+      expect(result).toEqual(mockResult);
     });
   });
 

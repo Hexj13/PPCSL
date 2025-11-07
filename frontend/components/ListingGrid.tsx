@@ -7,6 +7,7 @@ import { favoritesApi, listingsApi, Listing, PaginationMeta } from '@/lib/api';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
 
 import { ListingCard } from './ListingCard';
+import { ListingCardSkeleton } from './ListingCardSkeleton';
 
 export function ListingGrid() {
   const searchParams = useSearchParams();
@@ -18,6 +19,7 @@ export function ListingGrid() {
   const [error, setError] = useState<string | null>(null);
   const [autoLoadCount, setAutoLoadCount] = useState(0);
   const observerTarget = useRef<HTMLDivElement>(null);
+  const listingsRef = useRef<Listing[]>([]);
   const { user } = useAuthStore();
   const { setFavorites } = useFavoritesStore();
 
@@ -39,10 +41,13 @@ export function ListingGrid() {
           key === 'price_gte' ||
           key === 'price_lte' ||
           key === 'mileage_gte' ||
-          key === 'mileage_lte'
+          key === 'mileage_lte' ||
+          key === 'horsepower_gte' ||
+          key === 'horsepower_lte' ||
+          key === 'doors_single'
         ) {
           params[key] = parseInt(value);
-        } else if (key === 'urgent' || key === 'is_new') {
+        } else if (key === 'urgent' || key === 'is_new' || key === 'is_registered') {
           params[key] = value === 'true';
         } else if (
           key === 'brand_ids' ||
@@ -52,7 +57,10 @@ export function ListingGrid() {
           key === 'transmissions' ||
           key === 'body_types' ||
           key === 'colors' ||
-          key === 'doors'
+          key === 'doors' ||
+          key === 'conditions' ||
+          key === 'registration_types' ||
+          key === 'drive_types'
         ) {
           params[key] = value;
         } else if (
@@ -63,10 +71,13 @@ export function ListingGrid() {
           key === 'transmission' ||
           key === 'body_type' ||
           key === 'color' ||
-          key === 'currency' ||
           key === 'title'
         ) {
           params[key] = value;
+        } else if (key === 'currency') {
+          if (value && value.trim() !== '') {
+            params[key] = value;
+          }
         } else if (key !== 'page') {
           params[key] = value;
         }
@@ -75,7 +86,9 @@ export function ListingGrid() {
       if (append) {
         setLoadingMore(true);
       } else {
-        setLoading(true);
+        if (listingsRef.current.length === 0) {
+          setLoading(true);
+        }
         setError(null);
       }
 
@@ -83,14 +96,21 @@ export function ListingGrid() {
         const res = await listingsApi.getAll(params);
         const newListings = res.data.data;
         if (append) {
-          setListings((prev) => [...prev, ...newListings]);
+          setListings((prev) => {
+            const updated = [...prev, ...newListings];
+            listingsRef.current = updated;
+            return updated;
+          });
         } else {
           setListings(newListings);
+          listingsRef.current = newListings;
           setCurrentPage(1);
           setAutoLoadCount(0);
+          setLoadingMore(false);
+          setMeta(res.data.meta);
+          setError(null);
         }
-        setMeta(res.data.meta);
-        setError(null);
+
 
         if (user && newListings.length > 0) {
           const listingIds = newListings.map((l) => l.id);
@@ -113,8 +133,8 @@ export function ListingGrid() {
           setError('Грешка при вчитување на објави. Проверете дали бекенд серверот е стартуван.');
         }
       } finally {
-        setLoading(false);
         setLoadingMore(false);
+        setLoading(false);
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -122,11 +142,13 @@ export function ListingGrid() {
   );
 
   useEffect(() => {
+    setCurrentPage(1);
+    setAutoLoadCount(0);
     fetchListings(1, false);
   }, [fetchListings]);
 
   useEffect(() => {
-    if (autoLoadCount >= 3) {
+    if (autoLoadCount >= 3 || loading || !meta || !observerTarget.current) {
       return;
     }
 
@@ -135,6 +157,7 @@ export function ListingGrid() {
         if (
           entries[0].isIntersecting &&
           !loadingMore &&
+          !loading &&
           meta &&
           meta.totalPages &&
           currentPage < meta.totalPages &&
@@ -151,15 +174,20 @@ export function ListingGrid() {
 
     const currentTarget = observerTarget.current;
     if (currentTarget) {
-      observer.observe(currentTarget);
-    }
+      const timeoutId = setTimeout(() => {
+        if (currentTarget) {
+          observer.observe(currentTarget);
+        }
+      }, 100);
 
-    return () => {
-      if (currentTarget) {
-        observer.unobserve(currentTarget);
-      }
-    };
-  }, [loadingMore, meta, currentPage, fetchListings, autoLoadCount]);
+      return () => {
+        clearTimeout(timeoutId);
+        if (currentTarget) {
+          observer.unobserve(currentTarget);
+        }
+      };
+    }
+  }, [loadingMore, loading, meta, currentPage, fetchListings, autoLoadCount]);
 
   const handleLoadMore = async () => {
     if (loadingMore || !meta || !meta.totalPages || currentPage >= meta.totalPages) {
@@ -185,10 +213,13 @@ export function ListingGrid() {
           key === 'price_gte' ||
           key === 'price_lte' ||
           key === 'mileage_gte' ||
-          key === 'mileage_lte'
+          key === 'mileage_lte' ||
+          key === 'horsepower_gte' ||
+          key === 'horsepower_lte' ||
+          key === 'doors_single'
         ) {
           params[key] = parseInt(value);
-        } else if (key === 'urgent' || key === 'is_new') {
+        } else if (key === 'urgent' || key === 'is_new' || key === 'is_registered') {
           params[key] = value === 'true';
         } else if (
           key === 'brand_ids' ||
@@ -198,7 +229,10 @@ export function ListingGrid() {
           key === 'transmissions' ||
           key === 'body_types' ||
           key === 'colors' ||
-          key === 'doors'
+          key === 'doors' ||
+          key === 'conditions' ||
+          key === 'registration_types' ||
+          key === 'drive_types'
         ) {
           params[key] = value;
         } else if (
@@ -209,10 +243,13 @@ export function ListingGrid() {
           key === 'transmission' ||
           key === 'body_type' ||
           key === 'color' ||
-          key === 'currency' ||
           key === 'title'
         ) {
           params[key] = value;
+        } else if (key === 'currency') {
+          if (value && value.trim() !== '') {
+            params[key] = value;
+          }
         } else if (key !== 'page') {
           params[key] = value;
         }
@@ -279,9 +316,10 @@ export function ListingGrid() {
 
   if (loading) {
     return (
-      <div className="text-center py-12">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-        <p className="mt-4 text-gray-300">Вчитување...</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
+        {Array.from({ length: 8 }).map((_, index) => (
+          <ListingCardSkeleton key={`skeleton-${index}`} />
+        ))}
       </div>
     );
   }

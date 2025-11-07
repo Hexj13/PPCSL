@@ -88,25 +88,35 @@ describe('AdminController', () => {
 
   describe('getAllUsers', () => {
     it('should return all users', async () => {
-      const mockUsers = [mockUser];
-      service.getAllUsers.mockResolvedValue(mockUsers);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password, ...userWithoutPassword } = mockUser;
+      const mockUsers = [userWithoutPassword];
+      const mockResult = {
+        data: mockUsers,
+        meta: { total: 1, page: 1, limit: 20, totalPages: 1 },
+      };
+      service.getAllUsers.mockResolvedValue(mockResult);
 
       const result = await controller.getAllUsers();
 
       expect(service.getAllUsers).toHaveBeenCalled();
-      expect(result).toEqual(mockUsers);
+      expect(result).toEqual(mockResult);
     });
   });
 
   describe('getAllListings', () => {
     it('should return all listings', async () => {
       const mockListings = [mockListing];
-      service.getAllListings.mockResolvedValue(mockListings);
+      const mockResult = {
+        data: mockListings,
+        meta: { total: 1, page: 1, limit: 20, totalPages: 1 },
+      };
+      service.getAllListings.mockResolvedValue(mockResult);
 
       const result = await controller.getAllListings();
 
       expect(service.getAllListings).toHaveBeenCalled();
-      expect(result).toEqual(mockListings);
+      expect(result).toEqual(mockResult);
     });
   });
 

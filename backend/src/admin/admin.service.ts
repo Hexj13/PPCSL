@@ -19,16 +19,38 @@ export class AdminService {
     private listingsRepository: Repository<Listing>,
   ) {}
 
-  async getAllUsers() {
-    const users = await this.usersRepository.find({
+  async getAllUsers(
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<{
+    data: Omit<User, 'password'>[];
+    meta: { total: number; page: number; limit: number; totalPages: number };
+  }> {
+    const skip = (page - 1) * limit;
+    const [users, total] = await this.usersRepository.findAndCount({
       relations: ['listings'],
       order: { created_at: 'DESC' },
+      skip,
+      take: limit,
     });
-    return users.map((user) => {
+
+    const processedUsers = users.map((user) => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...userWithoutPassword } = user;
       return userWithoutPassword;
     });
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: processedUsers,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+      },
+    };
   }
 
   async getUserListings(userId: string) {
@@ -61,12 +83,22 @@ export class AdminService {
     return userWithoutPassword;
   }
 
-  async getAllListings() {
-    const listings = await this.listingsRepository.find({
+  async getAllListings(
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<{
+    data: Listing[];
+    meta: { total: number; page: number; limit: number; totalPages: number };
+  }> {
+    const skip = (page - 1) * limit;
+    const [listings, total] = await this.listingsRepository.findAndCount({
       relations: ['vehicle', 'vehicle.brand', 'vehicle.model', 'user'],
       order: { created_at: 'DESC' },
+      skip,
+      take: limit,
     });
-    return listings.map((listing) => {
+
+    const processedListings = listings.map((listing) => {
       if (listing.user) {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { password, ...userWithoutPassword } = listing.user;
@@ -74,6 +106,18 @@ export class AdminService {
       }
       return listing;
     });
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: processedListings,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+      },
+    };
   }
 
   async updateListingStatus(listingId: string, status: ListingStatus) {

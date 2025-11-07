@@ -1,8 +1,8 @@
 # Technical Specification (TS)
 
 Project: Platform for selling new and used cars
-Version: 1.3
-Date: 2025-11-06
+Version: 1.4
+Date: 2025-01-XX
 
 ---
 
@@ -98,6 +98,11 @@ Create a simple, free website for posting listings for new and used cars in Mace
   * 6-digit code verification on separate page (`/verify-phone`)
   * Phone verification status stored in database (`phoneVerified` field)
   * Real SMS delivery via Twilio API
+* **Phone Number Change:**
+  * Users can change their phone number from profile page
+  * Two-step process: enter new phone → verify with SMS code
+  * New phone number must be unique and verified via SMS
+  * After successful change, phone is automatically marked as verified
   * Codes stored in Redis with 10-minute TTL
   * Automatic phone number normalization (adds +389 for Macedonian numbers)
   * Test mode: if Twilio not configured, code is logged to console
@@ -116,7 +121,19 @@ Create a simple, free website for posting listings for new and used cars in Mace
   * Backend IP-based brute force protection: 40 attempts per IP, 1-hour block
   * Code is cleared from Redis after successful password reset
   * Password reset page at `/reset-password` with three states: phone input, code verification, new password
-* **User profile:** Get current user info via `/api/auth/me`
+* **User profile:**
+  * Get current user info via `/api/auth/me`
+  * Update profile data via `/api/auth/profile` (PATCH)
+  * Editable fields: firstName, lastName, companyName (for Business), emailNotifications, viber, whatsapp, telegram
+  * Email and phone are displayed but not editable (phone can be changed via separate flow)
+  * Profile page at `/profile` with form for editing user data
+* **Phone Number Change:**
+  * Users can change phone number from profile page
+  * Two-step process: `/profile/change-phone` → `/profile/verify-phone-change`
+  * Request change via `/api/auth/change-phone-request` (POST)
+  * Verify change via `/api/auth/change-phone-verify` (POST)
+  * New phone must be unique and verified via SMS
+  * After successful change, phone is automatically marked as verified
 
 ### Favorites
 
@@ -194,11 +211,14 @@ Create a simple, free website for posting listings for new and used cars in Mace
 ### Authentication
 ```http
 POST /api/auth/register              # Register new user
-POST /api/auth/login                 # Login (email or phone)
-GET  /api/auth/me                    # Get current user profile
+POST /api/auth/login                  # Login (email or phone)
+GET  /api/auth/me                     # Get current user profile
+PATCH /api/auth/profile              # Update user profile
 POST /api/auth/send-sms              # Send SMS verification code
 POST /api/auth/verify-phone          # Verify phone number (JWT required)
 POST /api/auth/verify-sms            # Verify SMS code (IP-based brute force protection)
+POST /api/auth/change-phone-request   # Request phone number change (sends SMS, JWT required)
+POST /api/auth/change-phone-verify    # Verify phone number change (with SMS code, JWT required)
 POST /api/auth/request-password-reset # Request password reset (send SMS code)
 POST /api/auth/verify-reset-code     # Verify password reset code (IP-based brute force protection)
 POST /api/auth/reset-password         # Reset password with verified code
@@ -416,6 +436,12 @@ GET /api/listings?brand_id=xxx&year_gte=2018&price_lte=12000&city=Skopje&fuel=Pe
 * **User dashboard:** My listings page with status management and date refresh
 * **Admin panel:** Tab-based interface with search and filtering
 * **Minimum clicks to contact:** Direct access to seller information
+* **Loading states and skeleton loaders:**
+  * Skeleton loaders for listing cards, listing management cards, and listing detail pages
+  * Delayed skeleton display (200-500ms) to prevent flickering on fast loads
+  * Synchronous state updates using `flushSync` to prevent intermediate renders
+  * Optimized loading sequence: search filters load first, then listings with skeleton placeholders
+  * Header skeleton loaders to prevent unauthorized user buttons flicker on page refresh
 
 ## 13. Security Features
 
@@ -517,3 +543,5 @@ GET /api/listings?brand_id=xxx&year_gte=2018&price_lte=12000&city=Skopje&fuel=Pe
 **Version 1.2 reflects:** Extended search filters, VIN functionality, image optimization (WebP conversion with adaptive quality), rich text descriptions, date refresh feature, social media integration, enhanced user registration, comprehensive admin panel, brands/models/cities APIs, optimized image delivery endpoint.
 
 **Version 1.3 updates:** Database optimizations (indexes, triggers, connection pooling), smart listing loading (auto-load 80, then button for 40), enhanced image optimization (lazy loading, sizes, SEO), increased thumbnail sizes, email service mocking in integration tests.
+
+**Version 1.4 updates:** Skeleton loaders for improved loading UX, optimized state updates to prevent flickering, delayed skeleton display (200-500ms), synchronous state updates using `flushSync`, header skeleton loaders, profile page with phone number change flow, email notifications preference.

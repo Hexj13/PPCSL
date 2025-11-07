@@ -42,9 +42,12 @@ export async function generateMetadata({
   const vehicleInfo = listing.vehicle
     ? `${listing.vehicle.brand?.name || ''} ${listing.vehicle.model?.name || ''} ${listing.vehicle.year || ''}`.trim()
     : '';
+  const priceText = listing.price !== undefined
+    ? `${formatPrice(listing.price, listing.currency)} ${listing.currency}`
+    : '';
   const description =
     listing.description?.replace(/<[^>]*>/g, '').substring(0, 160) ||
-    `${vehicleInfo || title} - ${formatPrice(listing.price, listing.currency)} ${listing.currency}. Купете или продадете авто на Kupito!`;
+    `${vehicleInfo || title}${priceText ? ` - ${priceText}` : ''}. Купете или продадете авто на Kupito!`;
   const imageUrl =
     listing.images && listing.images.length > 0
       ? getOptimizedImageUrl(listing.images[0])
