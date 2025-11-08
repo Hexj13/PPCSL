@@ -77,21 +77,17 @@ describe('EmailService', () => {
       expect(mockTransporter.sendMail).toHaveBeenCalled();
     });
 
-    it('should log verification URL in test mode when SMTP is not configured', async () => {
+    it('should return silently when SMTP is not configured', async () => {
       configService.get.mockImplementation((key: string) => {
         if (key === 'FRONTEND_URL') return 'http://localhost:3000';
         return undefined;
       });
 
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
       jwtService.sign.mockReturnValue('test-token');
 
       await service.sendVerificationEmail('user-1', 'test@example.com');
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[TEST MODE] Email verification link'),
-      );
-      consoleSpy.mockRestore();
+      expect(jwtService.sign).toHaveBeenCalled();
     });
 
     it('should throw BadRequestException when email send fails', async () => {

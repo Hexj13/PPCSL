@@ -324,7 +324,9 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
       formData.registration_expires_at &&
       !/^\d{2}\.\d{4}$/.test(formData.registration_expires_at)
     ) {
-      toast.error('Датата мора да биде во формат месец.година (на пример: 05.2025). Месецот мора да биде двоцифрен.');
+      toast.error(
+        'Датата мора да биде во формат месец.година (на пример: 05.2025). Месецот мора да биде двоцифрен.'
+      );
       return false;
     }
 
@@ -361,9 +363,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
               const [month, year] = formData.registration_expires_at.split('.');
               return `${year}-${month.padStart(2, '0')}-01`;
             })()
-          : formData.is_registered === false && mode === 'edit'
-            ? null
-            : undefined;
+          : undefined;
 
       if (!formData.vehicle.brand_id || !formData.vehicle.model_id) {
         toast.error('Потребно е да изберете марка и модел');
@@ -454,7 +454,9 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
           error instanceof AxiosError && error.response?.data?.message
             ? error.response.data.message
             : 'Грешка при зачувување на промените';
-        toast.error(typeof errorMessage === 'string' ? errorMessage : 'Грешка при зачувување на промените');
+        toast.error(
+          typeof errorMessage === 'string' ? errorMessage : 'Грешка при зачувување на промените'
+        );
       }
     } finally {
       setLoading(false);
@@ -556,9 +558,8 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                 >
                   <div className="bg-bg-darker border-2 border-primary-500/50 rounded-lg p-3 shadow-lg">
                     <p className="text-xs text-gray-300 leading-relaxed">
-                      VIN кодот се користи за креирање на историја на возилото на веб-страницата.
-                      Во историјата не се чуваат персональни податоци, туку само историјата на
-                      возилото
+                      VIN кодот се користи за креирање на историја на возилото на веб-страницата. Во
+                      историјата не се чуваат персональни податоци, туку само историјата на возилото
                     </p>
                     <div className="absolute right-4 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-primary-500/50"></div>
                   </div>
@@ -773,9 +774,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
           <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400">
-              Состојба *
-            </label>
+            <label className="block text-sm font-semibold mb-2 text-primary-400">Состојба *</label>
             <Dropdown
               value={formData.condition}
               onChange={(value) =>
@@ -823,9 +822,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                   setFormData((prev) => ({
                     ...prev,
                     is_registered: e.target.checked,
-                    registration_expires_at: e.target.checked
-                      ? prev.registration_expires_at
-                      : '',
+                    registration_expires_at: e.target.checked ? prev.registration_expires_at : '',
                   }))
                 }
                 className="sr-only"
@@ -896,36 +893,54 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                     value = parts[0] + '.' + parts[1].substring(0, 4);
                   }
 
-                  if (parts[0] && parts[0].length === 1 && parts[0] !== '0' && !parts[1]) {
-                    value = '0' + parts[0];
-                  }
-
-                  if (value && /^\d{1,2}\.\d{4}$/.test(value)) {
-                    const [month, year] = value.split('.');
-                    const monthNum = parseInt(month, 10);
-                    if (monthNum >= 1 && monthNum <= 12) {
-                      const paddedMonth = monthNum.toString().padStart(2, '0');
-                      value = `${paddedMonth}.${year}`;
-                    }
-                    
-                    const currentDate = new Date();
-                    const currentMonth = currentDate.getMonth() + 1;
-                    const currentYear = currentDate.getFullYear();
-                    const inputMonth = parseInt(month, 10);
-                    const inputYear = parseInt(year, 10);
-
-                    if (
-                      inputYear < currentYear ||
-                      (inputYear === currentYear && inputMonth < currentMonth)
-                    ) {
-                      return;
-                    }
-                  }
-
                   setFormData((prev) => ({
                     ...prev,
                     registration_expires_at: value,
                   }));
+                }}
+                onBlur={(e) => {
+                  let value = e.target.value.trim();
+                  if (!value) {
+                    return;
+                  }
+
+                  const parts = value.split('.');
+                  if (parts.length === 2) {
+                    const month = parts[0];
+                    const year = parts[1];
+                    const monthNum = parseInt(month, 10);
+                    const yearNum = parseInt(year, 10);
+
+                    if (!isNaN(monthNum) && monthNum >= 1 && monthNum <= 12) {
+                      const paddedMonth = monthNum.toString().padStart(2, '0');
+                      value = `${paddedMonth}.${year}`;
+
+                      if (!isNaN(yearNum) && yearNum >= 1000 && yearNum <= 9999) {
+                        const currentDate = new Date();
+                        const currentMonth = currentDate.getMonth() + 1;
+                        const currentYear = currentDate.getFullYear();
+
+                        if (
+                          yearNum < currentYear ||
+                          (yearNum === currentYear && monthNum < currentMonth)
+                        ) {
+                          toast.error(
+                            'Датата на регистрација не може да биде помала од тековниот месец и година'
+                          );
+                          setFormData((prev) => ({
+                            ...prev,
+                            registration_expires_at: '',
+                          }));
+                          return;
+                        }
+                      }
+
+                      setFormData((prev) => ({
+                        ...prev,
+                        registration_expires_at: value,
+                      }));
+                    }
+                  }
                 }}
                 className="input-field h-[48px]"
                 placeholder="12.2025"
@@ -1060,7 +1075,9 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
               />
               <Dropdown
                 value={formData.currency}
-                onChange={(value) => setFormData((prev) => ({ ...prev, currency: value as Currency }))}
+                onChange={(value) =>
+                  setFormData((prev) => ({ ...prev, currency: value as Currency }))
+                }
                 className="w-32 flex-shrink-0"
                 options={[
                   { value: CurrencyEnum.MKD, label: 'MKD' },
@@ -1191,9 +1208,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
             </div>
             <span
               className={`text-sm font-semibold transition-colors duration-200 flex items-center gap-2 ${
-                formData.is_new
-                  ? 'text-green-400'
-                  : 'text-green-400/70 group-hover:text-green-400'
+                formData.is_new ? 'text-green-400' : 'text-green-400/70 group-hover:text-green-400'
               }`}
             >
               <span>✨</span>
@@ -1266,32 +1281,32 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
         )}
         <p className="mt-2 text-sm text-gray-400">
           Вчитано: {formData.images.length}/20{' '}
-          {formData.images.length < 2 && (
-            <span className="text-red-400">(потребно минимум 2)</span>
-          )}
+          {formData.images.length < 2 && <span className="text-red-400">(потребно минимум 2)</span>}
         </p>
       </div>
 
-      <div className="border-t border-primary-500/20 pt-6 mb-6">
-        <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">
-          Нагодувања на објавата
-        </h2>
-        <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-400">
-            Статус на објавата *
-          </label>
-          <Dropdown
-            value={formData.status}
-            onChange={(value) =>
-              setFormData((prev) => ({ ...prev, status: value as 'Active' | 'Paused' }))
-            }
-            options={[
-              { value: 'Active', label: 'Објавено (се прикажува во каталог)' },
-              { value: 'Paused', label: 'Привремено застарено (не се прикажува во каталог)' },
-            ]}
-          />
+      {mode === 'create' && (
+        <div className="border-t border-primary-500/20 pt-6 mb-6">
+          <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">
+            Нагодувања на објавата
+          </h2>
+          <div>
+            <label className="block text-sm font-semibold mb-2 text-primary-400">
+              Статус на објавата *
+            </label>
+            <Dropdown
+              value={formData.status}
+              onChange={(value) =>
+                setFormData((prev) => ({ ...prev, status: value as 'Active' | 'Paused' }))
+              }
+              options={[
+                { value: 'Active', label: 'Објавено (се прикажува во каталог)' },
+                { value: 'Paused', label: 'Привремено застарено (не се прикажува во каталог)' },
+              ]}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       <button
         type="submit"
@@ -1309,4 +1324,3 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
     </form>
   );
 }
-

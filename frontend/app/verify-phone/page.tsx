@@ -263,8 +263,7 @@ function VerifyPhoneContent() {
 
         try {
           await authApi.verifyPhone();
-        } catch {
-        }
+        } catch {}
 
         if (typeof window !== 'undefined') {
           localStorage.removeItem('pendingRegistration');

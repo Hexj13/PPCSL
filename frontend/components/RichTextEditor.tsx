@@ -22,7 +22,27 @@ export function RichTextEditor({
   const [isListButtonActive, setIsListButtonActive] = useState(false);
 
   const updateListButtonState = () => {
-    setIsListButtonActive(document.queryCommandState('insertUnorderedList'));
+    try {
+      if (typeof document.queryCommandState === 'function') {
+        setIsListButtonActive(document.queryCommandState('insertUnorderedList'));
+      } else {
+        const selection = window.getSelection();
+        if (selection && selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0);
+          let node: Node | null = range.commonAncestorContainer;
+          if (node.nodeType === Node.TEXT_NODE) {
+            node = node.parentNode;
+          }
+          setIsListButtonActive(
+            node !== null && (node.nodeName === 'UL' || node.nodeName === 'LI')
+          );
+        } else {
+          setIsListButtonActive(false);
+        }
+      }
+    } catch {
+      setIsListButtonActive(false);
+    }
   };
 
   useEffect(() => {
@@ -57,7 +77,7 @@ export function RichTextEditor({
       const textContent = editorRef.current.textContent || '';
       const content = editorRef.current.innerHTML;
 
-      setIsListButtonActive(document.queryCommandState('insertUnorderedList'));
+      updateListButtonState();
 
       if (textContent.length <= maxLength) {
         setTextLength(textContent.length);
@@ -75,7 +95,14 @@ export function RichTextEditor({
   };
 
   const isActive = (command: string) => {
-    return document.queryCommandState(command);
+    try {
+      if (typeof document.queryCommandState === 'function') {
+        return document.queryCommandState(command);
+      }
+      return false;
+    } catch {
+      return false;
+    }
   };
 
   return (
@@ -141,7 +168,24 @@ export function RichTextEditor({
               const selection = window.getSelection();
               const range = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
 
-              const isInList = document.queryCommandState('insertUnorderedList');
+              let isInList = false;
+              try {
+                if (typeof document.queryCommandState === 'function') {
+                  isInList = document.queryCommandState('insertUnorderedList');
+                } else {
+                  const selection = window.getSelection();
+                  if (selection && selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    let node: Node | null = range.commonAncestorContainer;
+                    if (node.nodeType === Node.TEXT_NODE) {
+                      node = node.parentNode;
+                    }
+                    isInList = node !== null && (node.nodeName === 'UL' || node.nodeName === 'LI');
+                  }
+                }
+              } catch {
+                isInList = false;
+              }
 
               if (isInList) {
                 document.execCommand('insertUnorderedList', false);
@@ -228,7 +272,15 @@ export function RichTextEditor({
         contentEditable
         onInput={handleInput}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' && document.queryCommandState('insertUnorderedList')) {
+          let isInList = false;
+          try {
+            if (typeof document.queryCommandState === 'function') {
+              isInList = document.queryCommandState('insertUnorderedList');
+            }
+          } catch {
+            isInList = false;
+          }
+          if (e.key === 'Enter' && isInList) {
             setTimeout(() => {
               handleInput();
             }, 0);

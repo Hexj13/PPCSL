@@ -46,6 +46,7 @@ describe('UsersService', () => {
     created_at: new Date(),
     updated_at: new Date(),
     last_updated_at: new Date(),
+    closed_at: null,
   } as Listing;
 
   beforeEach(async () => {
@@ -137,7 +138,7 @@ describe('UsersService', () => {
 
       expect(result).toEqual(mockUser);
       expect(repository.findOne).toHaveBeenCalledWith({
-        where: { email: 'test@test.com' },
+        where: { email: 'test@test.com', active: true },
       });
     });
   });
@@ -150,7 +151,7 @@ describe('UsersService', () => {
 
       expect(result).toEqual(mockUser);
       expect(repository.findOne).toHaveBeenCalledWith({
-        where: { phone: '+38970123456' },
+        where: { phone: '+38970123456', active: true },
       });
     });
   });

@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useState, useEffect, startTransition } from 'react';
+import { toast } from 'react-hot-toast';
 
 import { brandsApi, citiesApi, Brand, VehicleModel, City } from '@/lib/api';
 import { ConditionType, DriveType, RegistrationType } from '@/lib/constants';
@@ -152,8 +153,80 @@ export function SearchFilters() {
     const currentYear = new Date().getFullYear();
 
     if (isNaN(year) || year < 1900 || year > currentYear) {
+      toast.error('Годината мора да биде помеѓу 1900 и ' + currentYear);
       handleChange(key, '');
     }
+  };
+
+  const handlePriceChange = (key: string, value: string) => {
+    const numericValue = value.replace(/[^0-9]/g, '');
+    if (
+      numericValue === '' ||
+      (parseInt(numericValue, 10) >= 0 && parseInt(numericValue, 10) <= 999999999)
+    ) {
+      handleChange(key, numericValue);
+    }
+  };
+
+  const handlePriceBlur = (key: string, value: string) => {
+    if (value === '') {
+      return;
+    }
+
+    const price = parseInt(value, 10);
+    if (isNaN(price) || price < 0 || price > 999999999) {
+      toast.error('Цената мора да биде помеѓу 0 и 999999999');
+      handleChange(key, '');
+    }
+  };
+
+  const validateRanges = (): boolean => {
+    if (filters.year_gte && filters.year_lte) {
+      const yearGte = parseInt(filters.year_gte, 10);
+      const yearLte = parseInt(filters.year_lte, 10);
+      if (!isNaN(yearGte) && !isNaN(yearLte) && yearGte > yearLte) {
+        toast.error('Годината "од" не може да биде поголема од годината "до"');
+        return false;
+      }
+    }
+
+    if (filters.price_gte && filters.price_lte) {
+      const priceGte = parseInt(filters.price_gte, 10);
+      const priceLte = parseInt(filters.price_lte, 10);
+      if (!isNaN(priceGte) && !isNaN(priceLte) && priceGte > priceLte) {
+        toast.error('Цената "од" не може да биде поголема од цената "до"');
+        return false;
+      }
+    }
+
+    if (filters.mileage_gte && filters.mileage_lte) {
+      const mileageGte = parseInt(filters.mileage_gte, 10);
+      const mileageLte = parseInt(filters.mileage_lte, 10);
+      if (!isNaN(mileageGte) && !isNaN(mileageLte) && mileageGte > mileageLte) {
+        toast.error('Поминувањето "од" не може да биде поголемо од поминувањето "до"');
+        return false;
+      }
+    }
+
+    if (filters.engine_displ_l_gte && filters.engine_displ_l_lte) {
+      const engineGte = parseFloat(filters.engine_displ_l_gte);
+      const engineLte = parseFloat(filters.engine_displ_l_lte);
+      if (!isNaN(engineGte) && !isNaN(engineLte) && engineGte > engineLte) {
+        toast.error('Запремината на моторот "од" не може да биде поголема од "до"');
+        return false;
+      }
+    }
+
+    if (filters.horsepower_gte && filters.horsepower_lte) {
+      const hpGte = parseInt(filters.horsepower_gte, 10);
+      const hpLte = parseInt(filters.horsepower_lte, 10);
+      if (!isNaN(hpGte) && !isNaN(hpLte) && hpGte > hpLte) {
+        toast.error('Коњските сили "од" не може да бидат поголеми од "до"');
+        return false;
+      }
+    }
+
+    return true;
   };
 
   const handleWheel = (e: React.WheelEvent<HTMLInputElement>) => {
@@ -163,6 +236,11 @@ export function SearchFilters() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateRanges()) {
+      return;
+    }
+
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
       if (key === 'sortBy' || key === 'sortOrder') {
@@ -296,30 +374,38 @@ export function SearchFilters() {
         <div>
           <label className="block text-sm font-semibold mb-2 text-primary-400">Година од</label>
           <input
-            type="number"
+            type="text"
             value={filters.year_gte}
-            onChange={(e) => handleChange('year_gte', e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value.replace(/[^0-9]/g, '');
+              if (value.length <= 4) {
+                handleChange('year_gte', value);
+              }
+            }}
             onBlur={(e) => handleYearBlur('year_gte', e.target.value)}
             onWheel={handleWheel}
             className="input-field"
             placeholder="2018"
-            min="1900"
-            max={currentYear}
+            title={`Внесете година (1900-${currentYear})`}
           />
         </div>
 
         <div>
           <label className="block text-sm font-semibold mb-2 text-primary-400">Година до</label>
           <input
-            type="number"
+            type="text"
             value={filters.year_lte}
-            onChange={(e) => handleChange('year_lte', e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value.replace(/[^0-9]/g, '');
+              if (value.length <= 4) {
+                handleChange('year_lte', value);
+              }
+            }}
             onBlur={(e) => handleYearBlur('year_lte', e.target.value)}
             onWheel={handleWheel}
             className="input-field"
             placeholder="2023"
-            min="1900"
-            max={currentYear}
+            title={`Внесете година (1900-${currentYear})`}
           />
         </div>
       </div>
@@ -341,28 +427,28 @@ export function SearchFilters() {
         <div>
           <label className="block text-sm font-semibold mb-2 text-primary-400">Цена од</label>
           <input
-            type="number"
+            type="text"
             value={filters.price_gte}
-            onChange={(e) => handleChange('price_gte', e.target.value)}
+            onChange={(e) => handlePriceChange('price_gte', e.target.value)}
+            onBlur={(e) => handlePriceBlur('price_gte', e.target.value)}
             onWheel={handleWheel}
             className="input-field"
             placeholder="0"
-            min="0"
-            max="99999999"
+            title="Внесете цена (само цели броеви, 0-999999999)"
           />
         </div>
 
         <div>
           <label className="block text-sm font-semibold mb-2 text-primary-400">Цена до</label>
           <input
-            type="number"
+            type="text"
             value={filters.price_lte}
-            onChange={(e) => handleChange('price_lte', e.target.value)}
+            onChange={(e) => handlePriceChange('price_lte', e.target.value)}
+            onBlur={(e) => handlePriceBlur('price_lte', e.target.value)}
             onWheel={handleWheel}
             className="input-field"
             placeholder="500000"
-            min="0"
-            max="99999999"
+            title="Внесете цена (само цели броеви, 0-999999999)"
           />
         </div>
       </div>
@@ -414,28 +500,28 @@ export function SearchFilters() {
                     if (parts.length === 2 && parts[1].length > 1) {
                       value = parts[0] + '.' + parts[1].substring(0, 1);
                     }
-                    handleChange('engine_displ_l_gte', value);
+                    const numValue = value === '' ? 0 : parseFloat(value);
+                    if (value === '' || (!isNaN(numValue) && numValue >= 0 && numValue <= 99)) {
+                      handleChange('engine_displ_l_gte', value);
+                    }
                   }}
                   onBlur={(e) => {
-                    const value = parseFloat(e.target.value);
-                    if (!isNaN(value) && value >= 0) {
+                    if (e.target.value && e.target.value.trim() !== '') {
+                      const value = parseFloat(e.target.value.replace(',', '.'));
+                      if (isNaN(value) || value < 0 || value > 99) {
+                        toast.error('Запремината на моторот мора да биде помеѓу 0 и 99 литри');
+                        handleChange('engine_displ_l_gte', '');
+                        return;
+                      }
                       const clampedValue = value > 99 ? 99 : value < 0 ? 0 : value;
                       const formattedValue = clampedValue.toFixed(1).replace(/\.?0+$/, '');
                       handleChange('engine_displ_l_gte', formattedValue);
-                    } else if (e.target.value && e.target.value.trim() !== '') {
-                      const numValue = parseFloat(e.target.value.replace(',', '.'));
-                      if (!isNaN(numValue)) {
-                        const clampedValue = numValue > 99 ? 99 : numValue < 0 ? 0 : numValue;
-                        const formattedValue = clampedValue.toFixed(1).replace(/\.?0+$/, '');
-                        handleChange('engine_displ_l_gte', formattedValue);
-                      } else {
-                        handleChange('engine_displ_l_gte', '');
-                      }
                     }
                   }}
                   onWheel={handleWheel}
                   className="input-field"
                   placeholder="1.0"
+                  title="Внесете запремина на моторот во литри (0-99, на пример: 2.0)"
                 />
               </div>
 
@@ -456,28 +542,28 @@ export function SearchFilters() {
                     if (parts.length === 2 && parts[1].length > 1) {
                       value = parts[0] + '.' + parts[1].substring(0, 1);
                     }
-                    handleChange('engine_displ_l_lte', value);
+                    const numValue = value === '' ? 0 : parseFloat(value);
+                    if (value === '' || (!isNaN(numValue) && numValue >= 0 && numValue <= 99)) {
+                      handleChange('engine_displ_l_lte', value);
+                    }
                   }}
                   onBlur={(e) => {
-                    const value = parseFloat(e.target.value);
-                    if (!isNaN(value) && value >= 0) {
+                    if (e.target.value && e.target.value.trim() !== '') {
+                      const value = parseFloat(e.target.value.replace(',', '.'));
+                      if (isNaN(value) || value < 0 || value > 99) {
+                        toast.error('Запремината на моторот мора да биде помеѓу 0 и 99 литри');
+                        handleChange('engine_displ_l_lte', '');
+                        return;
+                      }
                       const clampedValue = value > 99 ? 99 : value < 0 ? 0 : value;
                       const formattedValue = clampedValue.toFixed(1).replace(/\.?0+$/, '');
                       handleChange('engine_displ_l_lte', formattedValue);
-                    } else if (e.target.value && e.target.value.trim() !== '') {
-                      const numValue = parseFloat(e.target.value.replace(',', '.'));
-                      if (!isNaN(numValue)) {
-                        const clampedValue = numValue > 99 ? 99 : numValue < 0 ? 0 : numValue;
-                        const formattedValue = clampedValue.toFixed(1).replace(/\.?0+$/, '');
-                        handleChange('engine_displ_l_lte', formattedValue);
-                      } else {
-                        handleChange('engine_displ_l_lte', '');
-                      }
                     }
                   }}
                   onWheel={handleWheel}
                   className="input-field"
                   placeholder="6.0"
+                  title="Внесете запремина на моторот во литри (0-99, на пример: 2.0)"
                 />
               </div>
 
@@ -494,11 +580,19 @@ export function SearchFilters() {
                       handleChange('horsepower_gte', value);
                     }
                   }}
+                  onBlur={(e) => {
+                    if (e.target.value && e.target.value.trim() !== '') {
+                      const hp = parseInt(e.target.value, 10);
+                      if (isNaN(hp) || hp < 1 || hp > 9999) {
+                        toast.error('Коњските сили мора да бидат помеѓу 1 и 9999');
+                        handleChange('horsepower_gte', '');
+                      }
+                    }
+                  }}
                   onWheel={handleWheel}
                   className="input-field"
                   placeholder="100"
-                  min="1"
-                  max="9999"
+                  title="Внесете коњски сили (1-9999)"
                 />
               </div>
 
@@ -515,11 +609,19 @@ export function SearchFilters() {
                       handleChange('horsepower_lte', value);
                     }
                   }}
+                  onBlur={(e) => {
+                    if (e.target.value && e.target.value.trim() !== '') {
+                      const hp = parseInt(e.target.value, 10);
+                      if (isNaN(hp) || hp < 1 || hp > 9999) {
+                        toast.error('Коњските сили мора да бидат помеѓу 1 и 9999');
+                        handleChange('horsepower_lte', '');
+                      }
+                    }
+                  }}
                   onWheel={handleWheel}
                   className="input-field"
                   placeholder="500"
-                  min="1"
-                  max="9999"
+                  title="Внесете коњски сили (1-9999)"
                 />
               </div>
 
@@ -539,9 +641,19 @@ export function SearchFilters() {
                       handleChange('mileage_gte', value);
                     }
                   }}
+                  onBlur={(e) => {
+                    if (e.target.value && e.target.value.trim() !== '') {
+                      const mileage = parseInt(e.target.value, 10);
+                      if (isNaN(mileage) || mileage < 0 || mileage > 9999999) {
+                        toast.error('Поминувањето мора да биде помеѓу 0 и 9999999 км');
+                        handleChange('mileage_gte', '');
+                      }
+                    }
+                  }}
                   onWheel={handleWheel}
                   className="input-field"
                   placeholder="0"
+                  title="Внесете поминување во километри (0-9999999)"
                 />
               </div>
 
@@ -561,9 +673,19 @@ export function SearchFilters() {
                       handleChange('mileage_lte', value);
                     }
                   }}
+                  onBlur={(e) => {
+                    if (e.target.value && e.target.value.trim() !== '') {
+                      const mileage = parseInt(e.target.value, 10);
+                      if (isNaN(mileage) || mileage < 0 || mileage > 9999999) {
+                        toast.error('Поминувањето мора да биде помеѓу 0 и 9999999 км');
+                        handleChange('mileage_lte', '');
+                      }
+                    }
+                  }}
                   onWheel={handleWheel}
                   className="input-field"
                   placeholder="200000"
+                  title="Внесете поминување во километри (0-9999999)"
                 />
               </div>
             </div>

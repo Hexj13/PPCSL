@@ -451,13 +451,18 @@ export default function ProfilePage() {
                 <div className="relative">
                   <input
                     type="checkbox"
-                    checked={formData.emailNotifications === true && (!!formData.email || !!user.email)}
+                    checked={
+                      formData.emailNotifications === true && (!!formData.email || !!user.email)
+                    }
                     onChange={(e) => {
                       if (!formData.email && !user.email) return;
                       if (formData.email && !validateEmail(formData.email)) return;
                       handleChange('emailNotifications', e.target.checked);
                     }}
-                    disabled={(!formData.email && !user.email) || (!!formData.email && !validateEmail(formData.email))}
+                    disabled={
+                      (!formData.email && !user.email) ||
+                      (!!formData.email && !validateEmail(formData.email))
+                    }
                     className="sr-only"
                   />
                   <div
@@ -468,7 +473,8 @@ export default function ProfilePage() {
                       handleChange('emailNotifications', !formData.emailNotifications);
                     }}
                     className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center ${
-                      (!formData.email && !user.email) || (formData.email && !validateEmail(formData.email))
+                      (!formData.email && !user.email) ||
+                      (formData.email && !validateEmail(formData.email))
                         ? 'border-primary-500/30 bg-bg-darker opacity-50 cursor-not-allowed'
                         : formData.emailNotifications === true
                           ? 'bg-gradient-to-r from-primary-700 to-primary-800 border-primary-500 cursor-pointer'
@@ -499,7 +505,8 @@ export default function ProfilePage() {
                     handleChange('emailNotifications', !formData.emailNotifications);
                   }}
                   className={`text-sm ${
-                    (!formData.email && !user.email) || (formData.email && !validateEmail(formData.email))
+                    (!formData.email && !user.email) ||
+                    (formData.email && !validateEmail(formData.email))
                       ? 'text-gray-500 cursor-not-allowed'
                       : 'text-white cursor-pointer'
                   }`}
@@ -507,7 +514,7 @@ export default function ProfilePage() {
                   Примај рассилка на е-пошта
                 </span>
               </div>
-              {(!formData.email && !user.email) && (
+              {!formData.email && !user.email && (
                 <p className="mt-2 text-xs text-gray-400">
                   За да примате известувања, внесете email адреса
                 </p>
@@ -518,7 +525,9 @@ export default function ProfilePage() {
 
         {user.type === 'Business' && (
           <div className="border-t border-primary-500/20 pt-6 mb-6">
-            <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">Информација за компанија</h2>
+            <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">
+              Информација за компанија
+            </h2>
             <div>
               <label className="block text-sm font-semibold mb-2 text-primary-400">
                 Име на компанија

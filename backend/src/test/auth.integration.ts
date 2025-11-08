@@ -975,6 +975,12 @@ describe('Auth API Integration Tests', () => {
 
       expect(closedListingResponse.body.status).toBe('Closed');
       expect(closedListingResponse.body.images).toEqual(originalImages);
+      expect(closedListingResponse.body).toHaveProperty('closed_at');
+      expect(closedListingResponse.body.closed_at).toBeTruthy();
+      expect(new Date(closedListingResponse.body.closed_at).getTime()).toBeCloseTo(
+        new Date().getTime(),
+        -3,
+      );
     });
 
     it('should nullify user personal data after deletion', async () => {

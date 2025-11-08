@@ -30,7 +30,7 @@ export function ListingManagementCard({
   onCopyId,
 }: ListingManagementCardProps) {
   const [imageError, setImageError] = useState(false);
-  
+
   const imageUrl =
     listing.images && listing.images.length > 0 && listing.images[0]
       ? listing.images[0]
@@ -216,7 +216,9 @@ export function ListingManagementCard({
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="bg-bg-dark/95 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-lg border-2 border-primary-500/30 inline-flex items-center gap-1.5">
-                  <div className="text-xs sm:text-sm font-semibold text-gray-200 leading-none">Статус:</div>
+                  <div className="text-xs sm:text-sm font-semibold text-gray-200 leading-none">
+                    Статус:
+                  </div>
                   <div
                     className={
                       listing.status === 'Active'

@@ -107,6 +107,9 @@ export class Listing {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   last_updated_at: Date;
 
+  @Column({ type: 'timestamp', nullable: true })
+  closed_at: Date;
+
   @Column({ type: 'integer', default: 0 })
   views: number;
 

@@ -75,7 +75,7 @@ jest.mock('./MultiSelectDropdown', () => ({
         }}
         disabled={disabled}
         data-testid="multiselect-dropdown"
-        placeholder={placeholder}
+        {...(placeholder ? ({ 'data-placeholder': placeholder } as Record<string, string>) : {})}
       >
         {options.map((opt: DropdownOption) => (
           <option key={opt.value} value={opt.value}>

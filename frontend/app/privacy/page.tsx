@@ -375,7 +375,7 @@ const privacy = {
         {
           term: 'Consent',
           definition:
-            'A freely given, specific, informed and unambiguous indication of the data subject\'s wishes by which he or she, by a statement or by a clear affirmative action, signifies agreement to the processing of personal data relating to him or her.',
+            "A freely given, specific, informed and unambiguous indication of the data subject's wishes by which he or she, by a statement or by a clear affirmative action, signifies agreement to the processing of personal data relating to him or her.",
         },
         {
           term: 'Cookies',
@@ -498,7 +498,7 @@ const privacy = {
           '5.4. Legitimate Interest:',
           '• Processing data for security and abuse prevention',
           '• Analysis and service improvement',
-          '• Protection of Kupito\'s and its users\' rights and interests',
+          "• Protection of Kupito's and its users' rights and interests",
         ],
       },
       {
@@ -534,10 +534,10 @@ const privacy = {
           '• For protecting user rights and security',
           '7.3. With Data Processors and Third Parties:',
           'Kupito uses the following third-party services that may access your data:',
-          '• Google Analytics: For analyzing Platform usage and improving services. Google Analytics collects anonymous statistical data about visits. For more information, see Google\'s Privacy Policy: https://policies.google.com/privacy',
-          '• Messagio: For sending SMS messages for phone number verification. Messagio only accesses the phone number needed to send SMS. For more information, see Messagio\'s Privacy Policy.',
-          '• Twilio: For sending SMS messages for phone number verification. Twilio only accesses the phone number needed to send SMS. For more information, see Twilio\'s Privacy Policy: https://www.twilio.com/legal/privacy',
-          '• Sentry: For monitoring errors and logs to improve Platform stability. Sentry may access technical data such as IP address, browser type, and error information. For more information, see Sentry\'s Privacy Policy: https://sentry.io/privacy/',
+          "• Google Analytics: For analyzing Platform usage and improving services. Google Analytics collects anonymous statistical data about visits. For more information, see Google's Privacy Policy: https://policies.google.com/privacy",
+          "• Messagio: For sending SMS messages for phone number verification. Messagio only accesses the phone number needed to send SMS. For more information, see Messagio's Privacy Policy.",
+          "• Twilio: For sending SMS messages for phone number verification. Twilio only accesses the phone number needed to send SMS. For more information, see Twilio's Privacy Policy: https://www.twilio.com/legal/privacy",
+          "• Sentry: For monitoring errors and logs to improve Platform stability. Sentry may access technical data such as IP address, browser type, and error information. For more information, see Sentry's Privacy Policy: https://sentry.io/privacy/",
           '• Hosting Providers: For storing and processing data on servers located in the Republic of North Macedonia',
           'All these partners are obligated to protect your data and use it only for stated purposes in accordance with their privacy policies and data processing agreements.',
           '7.4. Business Transfer:',
@@ -782,4 +782,3 @@ export default function PrivacyPage() {
     </div>
   );
 }
-

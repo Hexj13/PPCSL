@@ -462,6 +462,9 @@ describe('Listings API Integration Tests', () => {
 
       expect(response.body).toHaveProperty('id', listingId);
       expect(response.body).toHaveProperty('status', 'Closed');
+      expect(response.body).toHaveProperty('closed_at');
+      expect(response.body.closed_at).toBeTruthy();
+      expect(new Date(response.body.closed_at).getTime()).toBeCloseTo(new Date().getTime(), -3);
     });
 
     it('should return 401 without authentication', async () => {

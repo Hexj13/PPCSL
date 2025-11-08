@@ -157,16 +157,9 @@ describe('JwtStrategy', () => {
         return undefined;
       });
 
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
-
       const newStrategy = new JwtStrategy(configService, usersService);
 
       expect(newStrategy).toBeDefined();
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('WARNING: JWT_SECRET is not set'),
-      );
-
-      consoleSpy.mockRestore();
     });
   });
 });

@@ -23,7 +23,7 @@ export default function EditListingPage() {
     try {
       const shouldRefresh = sessionStorage.getItem(`refreshListing_${listingId}`) === 'true';
       const needsRefresh = forceRefresh || shouldRefresh;
-      
+
       const res = needsRefresh
         ? await api.get<Listing>(`/api/listings/${listingId}`, { params: { _t: Date.now() } })
         : await listingsApi.getOne(listingId);
@@ -42,7 +42,7 @@ export default function EditListingPage() {
       }
 
       setListing(listingData);
-      setFormKey(prev => prev + 1);
+      setFormKey((prev) => prev + 1);
       setLoadingListing(false);
       if (needsRefresh) {
         sessionStorage.removeItem(`refreshListing_${listingId}`);
@@ -78,7 +78,6 @@ export default function EditListingPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, isInitialized, router, listingId]);
-
 
   if (!isInitialized && !user) {
     return null;
@@ -122,7 +121,7 @@ export default function EditListingPage() {
         onSuccess={(updatedListing) => {
           if (updatedListing) {
             setListing(updatedListing);
-            setFormKey(prev => prev + 1);
+            setFormKey((prev) => prev + 1);
           }
           sessionStorage.setItem('refreshMyListings', 'true');
           sessionStorage.setItem(`refreshListing_${listingId}`, 'true');

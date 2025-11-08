@@ -67,9 +67,9 @@ export function UserListingsModal({
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
 
-      const timeoutId = setTimeout(() => {
-        if (!abortController.signal.aborted) {
-          abortController.abort();
+    const timeoutId = setTimeout(() => {
+      if (!abortController.signal.aborted) {
+        abortController.abort();
         setLoading(false);
         toast.error('Истече време за вчитување на објави');
       }

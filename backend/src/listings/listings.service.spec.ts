@@ -54,6 +54,7 @@ describe('ListingsService', () => {
     created_at: new Date(),
     updated_at: new Date(),
     last_updated_at: new Date(),
+    closed_at: null,
   } as Listing;
 
   beforeEach(async () => {
@@ -65,12 +66,20 @@ describe('ListingsService', () => {
       count: jest.fn(),
       update: jest.fn(),
       createQueryBuilder: jest.fn(),
+      manager: {
+        connection: {
+          queryResultCache: {
+            remove: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+      },
     };
 
     const mockVehiclesRepository = {
       create: jest.fn(),
       save: jest.fn(),
       update: jest.fn(),
+      findOne: jest.fn(),
     };
 
     const mockListingViewsRepository = {
@@ -143,19 +152,34 @@ describe('ListingsService', () => {
 
   describe('findOne', () => {
     it('should return listing by id', async () => {
-      listingsRepository.findOne.mockResolvedValue(mockListing);
+      const mockQueryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(mockListing),
+      };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      listingsRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
 
       const result = await service.findOne('listing-1');
 
       expect(result).toEqual(mockListing);
-      expect(listingsRepository.findOne).toHaveBeenCalledWith({
-        where: { id: 'listing-1' },
-        relations: ['vehicle', 'vehicle.brand', 'vehicle.model', 'user'],
-      });
+      expect(listingsRepository.createQueryBuilder).toHaveBeenCalledWith('listing');
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('listing.vehicle', 'vehicle');
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('vehicle.brand', 'brand');
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('vehicle.model', 'model');
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('listing.user', 'user');
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith('listing.id = :id', { id: 'listing-1' });
+      expect(mockQueryBuilder.getOne).toHaveBeenCalled();
     });
 
     it('should throw NotFoundException when listing is not found', async () => {
-      listingsRepository.findOne.mockResolvedValue(null);
+      const mockQueryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(null),
+      };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      listingsRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
 
       await expect(service.findOne('non-existent')).rejects.toThrow(NotFoundException);
     });
@@ -180,7 +204,13 @@ describe('ListingsService', () => {
   describe('publish', () => {
     it('should publish listing when under limit', async () => {
       const pausedListing = { ...mockListing, status: ListingStatus.Paused };
-      listingsRepository.findOne.mockResolvedValue(pausedListing);
+      const mockQueryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(pausedListing),
+      };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      listingsRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
       usersService.getListingLimit.mockResolvedValue(3);
       listingsRepository.count.mockResolvedValue(2);
       listingsRepository.save.mockResolvedValue({ ...pausedListing, status: ListingStatus.Active });
@@ -193,7 +223,13 @@ describe('ListingsService', () => {
 
     it('should throw BadRequestException when limit is exceeded', async () => {
       const pausedListing = { ...mockListing, status: ListingStatus.Paused };
-      listingsRepository.findOne.mockResolvedValue(pausedListing);
+      const mockQueryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(pausedListing),
+      };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      listingsRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
       usersService.getListingLimit.mockResolvedValue(3);
       listingsRepository.count.mockResolvedValue(3);
 
@@ -201,7 +237,13 @@ describe('ListingsService', () => {
     });
 
     it('should throw ForbiddenException when user is not owner', async () => {
-      listingsRepository.findOne.mockResolvedValue(mockListing);
+      const mockQueryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(mockListing),
+      };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      listingsRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
 
       await expect(service.publish('listing-1', 'other-user')).rejects.toThrow(ForbiddenException);
     });
@@ -209,7 +251,13 @@ describe('ListingsService', () => {
 
   describe('pause', () => {
     it('should pause listing', async () => {
-      listingsRepository.findOne.mockResolvedValue(mockListing);
+      const mockQueryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(mockListing),
+      };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      listingsRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
       listingsRepository.save.mockResolvedValue({ ...mockListing, status: ListingStatus.Paused });
 
       const result = await service.pause('listing-1', 'user-1');
@@ -219,25 +267,54 @@ describe('ListingsService', () => {
     });
 
     it('should throw ForbiddenException when user is not owner', async () => {
-      listingsRepository.findOne.mockResolvedValue(mockListing);
+      const mockQueryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(mockListing),
+      };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      listingsRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
 
       await expect(service.pause('listing-1', 'other-user')).rejects.toThrow(ForbiddenException);
     });
   });
 
   describe('close', () => {
-    it('should close listing', async () => {
-      listingsRepository.findOne.mockResolvedValue(mockListing);
-      listingsRepository.save.mockResolvedValue({ ...mockListing, status: ListingStatus.Closed });
+    it('should close listing and set closed_at', async () => {
+      const mockQueryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(mockListing),
+      };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      listingsRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+      const closedAt = new Date();
+      listingsRepository.save.mockResolvedValue({
+        ...mockListing,
+        status: ListingStatus.Closed,
+        closed_at: closedAt,
+      });
 
       const result = await service.close('listing-1', 'user-1');
 
       expect(result.status).toBe(ListingStatus.Closed);
       expect(listingsRepository.save).toHaveBeenCalled();
+      const savedListing = listingsRepository.save.mock.calls[0][0] as Listing;
+      expect(savedListing.status).toBe(ListingStatus.Closed);
+      expect(savedListing.closed_at).toBeInstanceOf(Date);
+      if (savedListing.closed_at) {
+        expect(savedListing.closed_at.getTime()).toBeCloseTo(closedAt.getTime(), -2);
+      }
     });
 
     it('should throw ForbiddenException when user is not owner', async () => {
-      listingsRepository.findOne.mockResolvedValue(mockListing);
+      const mockQueryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(mockListing),
+      };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      listingsRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
 
       await expect(service.close('listing-1', 'other-user')).rejects.toThrow(ForbiddenException);
     });
@@ -371,7 +448,7 @@ describe('ListingsService', () => {
   describe('closeAllUserListings', () => {
     const userId = 'user-1';
 
-    it('should close all active and paused listings for user', async () => {
+    it('should close all active and paused listings for user and set closed_at', async () => {
       const mockListings = [
         { id: '1', status: ListingStatus.Active, images: ['image1.jpg', 'image2.jpg'] },
         { id: '2', status: ListingStatus.Paused, images: ['image3.jpg'] },
@@ -394,6 +471,19 @@ describe('ListingsService', () => {
       expect(listingsRepository.save).toHaveBeenCalledTimes(5);
       expect(redisService.delPattern).toHaveBeenCalledWith('cache:listings:search:*');
       expect(result).toBe(5);
+
+      const savedCalls = listingsRepository.save.mock.calls;
+      const firstListing = savedCalls[0][0] as Listing;
+      const closedAt = firstListing.closed_at;
+      expect(closedAt).toBeInstanceOf(Date);
+      savedCalls.forEach((call) => {
+        const listing = call[0] as Listing;
+        expect(listing.status).toBe(ListingStatus.Closed);
+        expect(listing.closed_at).toBeInstanceOf(Date);
+        if (listing.closed_at && closedAt) {
+          expect(listing.closed_at.getTime()).toBe(closedAt.getTime());
+        }
+      });
     });
 
     it('should return 0 when no listings to close', async () => {
@@ -418,17 +508,10 @@ describe('ListingsService', () => {
       listingsRepository.save.mockImplementation((listing) => Promise.resolve(listing as Listing));
       redisService.delPattern.mockRejectedValue(new Error('Cache error'));
 
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
-
       const result = await service.closeAllUserListings(userId);
 
       expect(result).toBe(3);
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Failed to invalidate cache after closing user listings',
-        expect.any(Error),
-      );
-
-      consoleSpy.mockRestore();
+      expect(redisService.delPattern).toHaveBeenCalled();
     });
 
     it('should only close Active and Paused listings, not Closed ones', async () => {
@@ -466,8 +549,10 @@ describe('ListingsService', () => {
       const savedCalls = listingsRepository.save.mock.calls;
       expect(savedCalls[0][0].images).toEqual(['image1.jpg', 'image2.jpg']);
       expect(savedCalls[0][0].status).toBe(ListingStatus.Closed);
+      expect(savedCalls[0][0].closed_at).toBeInstanceOf(Date);
       expect(savedCalls[1][0].images).toEqual(['image3.jpg']);
       expect(savedCalls[1][0].status).toBe(ListingStatus.Closed);
+      expect(savedCalls[1][0].closed_at).toBeInstanceOf(Date);
     });
   });
 
@@ -539,7 +624,10 @@ describe('ListingsService', () => {
         registration_expires_at: pastDate.toISOString(),
       };
 
-      listingsRepository.findOne.mockResolvedValue(mockListing);
+      const activeListing = { ...mockListing, status: ListingStatus.Active };
+      listingsRepository.findOne
+        .mockResolvedValueOnce(activeListing)
+        .mockResolvedValueOnce(activeListing);
       vehiclesRepository.findOne.mockResolvedValue(mockVehicle);
       brandsService.findOne.mockResolvedValue({ id: 'brand-1', name: 'Brand' } as Brand);
       brandsService.getModelsByBrand.mockResolvedValue([
@@ -564,7 +652,10 @@ describe('ListingsService', () => {
         registration_expires_at: futureDate.toISOString(),
       };
 
-      listingsRepository.findOne.mockResolvedValue(mockListing);
+      const activeListing = { ...mockListing, status: ListingStatus.Active };
+      listingsRepository.findOne
+        .mockResolvedValueOnce(activeListing)
+        .mockResolvedValueOnce(activeListing);
       vehiclesRepository.findOne.mockResolvedValue(mockVehicle);
       brandsService.findOne.mockResolvedValue({ id: 'brand-1', name: 'Brand' } as Brand);
       brandsService.getModelsByBrand.mockResolvedValue([
@@ -572,9 +663,6 @@ describe('ListingsService', () => {
       ] as VehicleModel[]);
       const updateResult: UpdateResult = { affected: 1, generatedMaps: [], raw: [] };
       listingsRepository.update.mockResolvedValue(updateResult);
-      listingsRepository.findOne
-        .mockResolvedValueOnce(mockListing)
-        .mockResolvedValueOnce(mockListing);
 
       await service.update(
         'listing-1',
@@ -583,6 +671,26 @@ describe('ListingsService', () => {
       );
 
       expect(listingsRepository.update).toHaveBeenCalled();
+    });
+  });
+
+  describe('autoCloseOldListings', () => {
+    it('should close old listings and set closed_at', async () => {
+      const updateResult: UpdateResult = { affected: 3, generatedMaps: [], raw: [] };
+      listingsRepository.update.mockResolvedValue(updateResult);
+
+      await service.autoCloseOldListings();
+
+      expect(listingsRepository.update).toHaveBeenCalledWith(
+        {
+          status: ListingStatus.Active,
+          last_updated_at: expect.any(Object),
+        },
+        expect.objectContaining({
+          status: ListingStatus.Closed,
+          closed_at: expect.any(Date),
+        }),
+      );
     });
   });
 

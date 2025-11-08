@@ -43,6 +43,9 @@ const mockListing: Listing = {
   currency: 'MKD',
   city: 'Skopje',
   status: 'Active',
+  condition: 'Undamaged',
+  registration_type: 'Local',
+  horsepower: 150,
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
   last_updated_at: '2024-01-01T00:00:00Z',
@@ -56,6 +59,7 @@ const mockListing: Listing = {
     fuel: 'Petrol',
     mileage_km: 50000,
     body_type: 'Sedan',
+    drive_type: 'FWD',
   },
   views: 10,
 };
@@ -67,10 +71,10 @@ describe('ListingCard', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (useAuthStore as jest.Mock).mockReturnValue({
+    (useAuthStore as unknown as jest.Mock).mockReturnValue({
       user: { id: 'user-1' },
     });
-    (useFavoritesStore as jest.Mock).mockReturnValue({
+    (useFavoritesStore as unknown as jest.Mock).mockReturnValue({
       check: mockCheckFavorite,
       add: mockAddFavorite,
       remove: mockRemoveFavorite,
@@ -101,12 +105,12 @@ describe('ListingCard', () => {
   });
 
   it('should disable favorite button for own listing', () => {
-    (useAuthStore as jest.Mock).mockReturnValue({
-      user: { id: 'user-1' },
+    (useAuthStore as unknown as jest.Mock).mockReturnValue({
+      user: { id: 'user-1', email: 'test@test.com', type: 'Individual' },
     });
-    const ownListing = {
+    const ownListing: Listing = {
       ...mockListing,
-      user: { id: 'user-1' },
+      user: { id: 'user-1', email: 'test@test.com', type: 'Individual' },
     };
 
     render(<ListingCard listing={ownListing} />);
@@ -118,7 +122,7 @@ describe('ListingCard', () => {
   });
 
   it('should show error toast when user is not logged in', async () => {
-    (useAuthStore as jest.Mock).mockReturnValue({
+    (useAuthStore as unknown as jest.Mock).mockReturnValue({
       user: null,
     });
 

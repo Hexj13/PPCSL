@@ -55,129 +55,132 @@ export default function ListingPage() {
   const [showHistoryHint, setShowHistoryHint] = useState(false);
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
 
-  const fetchListingData = useCallback((forceRefresh = false) => {
-    const currentId = id;
-    
-    // Check if we should refresh before clearing state
-    const shouldRefresh = sessionStorage.getItem(`refreshListing_${currentId}`) === 'true';
-    const needsRefresh = forceRefresh || shouldRefresh;
+  const fetchListingData = useCallback(
+    (forceRefresh = false) => {
+      const currentId = id;
 
-    setImageErrors(new Set());
-    setCurrentImageIndex(0);
-    setListing(null);
-    setPreviousListings([]);
-    setLoadingPrevious(false);
-    setShowSkeleton(false);
+      // Check if we should refresh before clearing state
+      const shouldRefresh = sessionStorage.getItem(`refreshListing_${currentId}`) === 'true';
+      const needsRefresh = forceRefresh || shouldRefresh;
 
-    showLoadingTimeoutRef.current = setTimeout(() => {
-      if (hasLoadedRef.current && currentId === id) {
-        setShowSkeleton(true);
-      }
-    }, 500);
+      setImageErrors(new Set());
+      setCurrentImageIndex(0);
+      setListing(null);
+      setPreviousListings([]);
+      setLoadingPrevious(false);
+      setShowSkeleton(false);
 
-    const listingPromise = needsRefresh
-      ? api.get<Listing>(`/api/listings/${currentId}`, { 
-          params: { _t: Date.now() },
-          headers: { 'X-Skip-Error-Handling': 'true' }
+      showLoadingTimeoutRef.current = setTimeout(() => {
+        if (hasLoadedRef.current && currentId === id) {
+          setShowSkeleton(true);
+        }
+      }, 500);
+
+      const listingPromise = needsRefresh
+        ? api.get<Listing>(`/api/listings/${currentId}`, {
+            params: { _t: Date.now() },
+            headers: { 'X-Skip-Error-Handling': 'true' },
+          })
+        : listingsApi.getOne(currentId);
+
+      const favoritePromise = user
+        ? favoritesApi
+            .check(currentId)
+            .then((res) => res.data.isFavorite)
+            .catch(() => check(currentId))
+        : Promise.resolve(check(currentId));
+
+      Promise.all([listingPromise, favoritePromise])
+        .then(([listingRes, favoriteValue]) => {
+          // Check if component is still mounted and id hasn't changed
+          if (currentId !== id) {
+            return;
+          }
+
+          if (showLoadingTimeoutRef.current) {
+            clearTimeout(showLoadingTimeoutRef.current);
+            showLoadingTimeoutRef.current = null;
+          }
+
+          if (!listingRes?.data) {
+            console.error('No listing data received');
+            throw new Error('No listing data received');
+          }
+
+          const hasVin = listingRes.data.vin;
+          flushSync(() => {
+            setListing(listingRes.data);
+            setIsFavorite(favoriteValue);
+            setShowSkeleton(false);
+            if (hasVin) {
+              setLoadingPrevious(true);
+            }
+          });
+
+          if (hasVin && listingRes.data.vin) {
+            listingsApi
+              .getByVin(listingRes.data.vin, currentId)
+              .then((vinRes) => {
+                if (hasLoadedRef.current && currentId === id) {
+                  setPreviousListings(vinRes.data);
+                }
+              })
+              .catch(() => {
+                if (hasLoadedRef.current && currentId === id) {
+                  setPreviousListings([]);
+                }
+              })
+              .finally(() => {
+                if (hasLoadedRef.current && currentId === id) {
+                  setLoadingPrevious(false);
+                }
+              });
+          }
+
+          if (needsRefresh) {
+            sessionStorage.removeItem(`refreshListing_${currentId}`);
+          }
         })
-      : listingsApi.getOne(currentId);
-    
-    const favoritePromise = user
-      ? favoritesApi
-          .check(currentId)
-          .then((res) => res.data.isFavorite)
-          .catch(() => check(currentId))
-      : Promise.resolve(check(currentId));
+        .catch((error) => {
+          console.error('Error loading listing:', error);
 
-    Promise.all([listingPromise, favoritePromise])
-      .then(([listingRes, favoriteValue]) => {
-        // Check if component is still mounted and id hasn't changed
-        if (currentId !== id) {
-          return;
-        }
-        
-        if (showLoadingTimeoutRef.current) {
-          clearTimeout(showLoadingTimeoutRef.current);
-          showLoadingTimeoutRef.current = null;
-        }
-        
-        if (!listingRes?.data) {
-          console.error('No listing data received');
-          throw new Error('No listing data received');
-        }
-        
-        const hasVin = listingRes.data.vin;
-        flushSync(() => {
-          setListing(listingRes.data);
-          setIsFavorite(favoriteValue);
-          setShowSkeleton(false);
-          if (hasVin) {
-            setLoadingPrevious(true);
+          // Check if component is still mounted and id hasn't changed
+          if (currentId !== id) {
+            return;
+          }
+
+          if (showLoadingTimeoutRef.current) {
+            clearTimeout(showLoadingTimeoutRef.current);
+            showLoadingTimeoutRef.current = null;
+          }
+
+          // If refresh failed, try without refresh flag
+          if (needsRefresh && !forceRefresh && error?.code !== 'ECONNABORTED') {
+            // Refresh failed, trying without refresh flag
+            sessionStorage.removeItem(`refreshListing_${currentId}`);
+            // Use setTimeout to avoid infinite loop
+            setTimeout(() => {
+              if (currentId === id) {
+                fetchListingData(false);
+              }
+            }, 500);
+            return;
+          }
+
+          const favoriteValue = check(currentId);
+          flushSync(() => {
+            setListing(null);
+            setIsFavorite(favoriteValue);
+            setShowSkeleton(false);
+          });
+
+          if (needsRefresh) {
+            sessionStorage.removeItem(`refreshListing_${currentId}`);
           }
         });
-        
-        if (hasVin && listingRes.data.vin) {
-          listingsApi
-            .getByVin(listingRes.data.vin, currentId)
-            .then((vinRes) => {
-              if (hasLoadedRef.current && currentId === id) {
-                setPreviousListings(vinRes.data);
-              }
-            })
-            .catch(() => {
-              if (hasLoadedRef.current && currentId === id) {
-                setPreviousListings([]);
-              }
-            })
-            .finally(() => {
-              if (hasLoadedRef.current && currentId === id) {
-                setLoadingPrevious(false);
-              }
-            });
-        }
-        
-        if (needsRefresh) {
-          sessionStorage.removeItem(`refreshListing_${currentId}`);
-        }
-      })
-      .catch((error) => {
-        console.error('Error loading listing:', error);
-        
-        // Check if component is still mounted and id hasn't changed
-        if (currentId !== id) {
-          return;
-        }
-        
-        if (showLoadingTimeoutRef.current) {
-          clearTimeout(showLoadingTimeoutRef.current);
-          showLoadingTimeoutRef.current = null;
-        }
-        
-        // If refresh failed, try without refresh flag
-        if (needsRefresh && !forceRefresh && error?.code !== 'ECONNABORTED') {
-          // Refresh failed, trying without refresh flag
-          sessionStorage.removeItem(`refreshListing_${currentId}`);
-          // Use setTimeout to avoid infinite loop
-          setTimeout(() => {
-            if (currentId === id) {
-              fetchListingData(false);
-            }
-          }, 500);
-          return;
-        }
-        
-        const favoriteValue = check(currentId);
-        flushSync(() => {
-          setListing(null);
-          setIsFavorite(favoriteValue);
-          setShowSkeleton(false);
-        });
-        
-        if (needsRefresh) {
-          sessionStorage.removeItem(`refreshListing_${currentId}`);
-        }
-      });
-  }, [id, user, check]);
+    },
+    [id, user, check]
+  );
 
   useEffect(() => {
     const shouldRefresh = sessionStorage.getItem(`refreshListing_${id}`) === 'true';
@@ -1058,30 +1061,31 @@ export default function ListingPage() {
                     )
                   )}
 
-                  {(listing.user.viber || listing.user.whatsapp || listing.user.telegram) && (
-                    <div>
-                      <span className="font-semibold text-primary-400 mb-2 block">
-                        Достапни месенџери:
-                      </span>
-                      <div className="flex flex-wrap gap-2">
-                        {listing.user.viber && (
-                          <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                            Viber
-                          </span>
-                        )}
-                        {listing.user.whatsapp && (
-                          <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-green-500/20 text-green-300 border border-green-500/30">
-                            WhatsApp
-                          </span>
-                        )}
-                        {listing.user.telegram && (
-                          <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                            Telegram
-                          </span>
-                        )}
+                  {listing.status !== 'Closed' &&
+                    (listing.user.viber || listing.user.whatsapp || listing.user.telegram) && (
+                      <div>
+                        <span className="font-semibold text-primary-400 mb-2 block">
+                          Достапни месенџери:
+                        </span>
+                        <div className="flex flex-wrap gap-2">
+                          {listing.user.viber && (
+                            <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                              Viber
+                            </span>
+                          )}
+                          {listing.user.whatsapp && (
+                            <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-green-500/20 text-green-300 border border-green-500/30">
+                              WhatsApp
+                            </span>
+                          )}
+                          {listing.user.telegram && (
+                            <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                              Telegram
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
                   {listing.user && (
                     <div className="pt-4 border-t border-primary-500/20">

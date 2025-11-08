@@ -121,8 +121,7 @@ export function ListingGrid() {
             const currentFavorites = useFavoritesStore.getState().favorites;
             const updatedFavorites = new Set([...currentFavorites, ...favoriteIds]);
             setFavorites(Array.from(updatedFavorites));
-          } catch {
-          }
+          } catch {}
         }
       } catch {
         if (!append) {
@@ -275,8 +274,7 @@ export function ListingGrid() {
           const currentFavorites = useFavoritesStore.getState().favorites;
           const updatedFavorites = new Set([...currentFavorites, ...favoriteIds]);
           setFavorites(Array.from(updatedFavorites));
-        } catch {
-        }
+        } catch {}
       }
 
       if (secondRes) {
@@ -294,8 +292,7 @@ export function ListingGrid() {
             const currentFavorites = useFavoritesStore.getState().favorites;
             const updatedFavorites = new Set([...currentFavorites, ...favoriteIds]);
             setFavorites(Array.from(updatedFavorites));
-          } catch {
-          }
+          } catch {}
         }
       } else {
         setCurrentPage(nextPage);

@@ -681,6 +681,7 @@ export class ListingsService {
     }
 
     listing.status = ListingStatusEnum.Closed;
+    listing.closed_at = new Date();
     const closedListing = await this.listingsRepository.save(listing);
 
     try {
@@ -706,6 +707,7 @@ export class ListingsService {
   async autoCloseOldListings() {
     const fiveMonthsAgo = new Date();
     fiveMonthsAgo.setMonth(fiveMonthsAgo.getMonth() - 5);
+    const closedAt = new Date();
 
     await this.listingsRepository.update(
       {
@@ -714,6 +716,7 @@ export class ListingsService {
       },
       {
         status: ListingStatusEnum.Closed,
+        closed_at: closedAt,
       },
     );
   }
@@ -806,8 +809,10 @@ export class ListingsService {
       },
     });
 
+    const closedAt = new Date();
     for (const listing of listings) {
       listing.status = ListingStatusEnum.Closed;
+      listing.closed_at = closedAt;
       await this.listingsRepository.save(listing);
     }
 

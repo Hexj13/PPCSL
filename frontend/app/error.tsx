@@ -9,7 +9,6 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-bg-dark to-bg-darker flex items-center justify-center px-4">
       <div className="text-center max-w-2xl w-full">

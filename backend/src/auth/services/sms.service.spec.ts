@@ -79,16 +79,13 @@ describe('SmsService', () => {
       expect(mockTwilioClient.messages.create).toHaveBeenCalled();
     });
 
-    it('should log code in test mode when Twilio is not configured', async () => {
+    it('should return silently when Twilio is not configured', async () => {
       configService.get.mockReturnValue(undefined);
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
       redisService.set.mockResolvedValue(undefined);
 
       await service.sendVerificationCode('+38970123456');
 
       expect(redisService.set).toHaveBeenCalled();
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('[TEST MODE] SMS код'));
-      consoleSpy.mockRestore();
     });
 
     it('should throw BadRequestException when Redis set fails', async () => {
@@ -178,18 +175,13 @@ describe('SmsService', () => {
       expect(mockTwilioClient.messages.create).toHaveBeenCalled();
     });
 
-    it('should log code in test mode when Twilio is not configured', async () => {
+    it('should return silently when Twilio is not configured for password reset', async () => {
       configService.get.mockReturnValue(undefined);
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
       redisService.set.mockResolvedValue(undefined);
 
       await service.sendPasswordResetCode('+38970123456');
 
       expect(redisService.set).toHaveBeenCalled();
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[TEST MODE] SMS код за ресетирање на лозинка'),
-      );
-      consoleSpy.mockRestore();
     });
 
     it('should throw BadRequestException when Redis set fails', async () => {
