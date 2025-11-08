@@ -155,24 +155,29 @@ export class ListingsController {
   @ApiResponse({ status: 404, description: 'Listing not found' })
   @Get(':id')
   async findOne(@Param('id') id: string, @Request() req) {
-    const listing = await this.listingsService.findOne(id);
+    try {
+      const listing = await this.listingsService.findOne(id);
 
-    const userId = req.user?.id || null;
-    let visitorId: string | null = null;
+      const userId = req.user?.id || null;
+      let visitorId: string | null = null;
 
-    if (!userId) {
-      const ip =
-        req.ip ||
-        (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
-        req.socket?.remoteAddress ||
-        'unknown';
-      const userAgent = (req.headers['user-agent'] as string) || 'unknown';
-      visitorId = this.listingsService.generateVisitorId(ip, userAgent);
+      if (!userId) {
+        const ip =
+          req.ip ||
+          (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+          req.socket?.remoteAddress ||
+          'unknown';
+        const userAgent = (req.headers['user-agent'] as string) || 'unknown';
+        visitorId = this.listingsService.generateVisitorId(ip, userAgent);
+      }
+
+      this.listingsService.recordView(id, userId, visitorId).catch(() => {});
+
+      return listing;
+    } catch (error) {
+      console.error('Error in findOne controller:', error);
+      throw error;
     }
-
-    this.listingsService.recordView(id, userId, visitorId).catch(() => {});
-
-    return listing;
   }
 
   @ApiOperation({ summary: 'Create a new listing' })

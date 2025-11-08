@@ -96,8 +96,7 @@ export default function ProfilePage() {
 
         setFormData(formDataToSet);
         hasLoadedRef.current = true;
-      } catch (error) {
-        console.error('Error loading profile:', error);
+      } catch {
         router.push('/login');
       } finally {
         setLoadingProfile(false);
@@ -134,8 +133,7 @@ export default function ProfilePage() {
 
         setFormData(formDataToSet);
         hasLoadedRef.current = true;
-      } catch (error) {
-        console.error('Error loading profile:', error);
+      } catch {
         router.push('/login');
       } finally {
         setLoadingProfile(false);
@@ -259,12 +257,13 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+    <div className="max-w-4xl mx-auto mt-6 md:mt-12">
+      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 pl-4 md:pl-6 lg:pl-8 bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
         Профил
       </h1>
-      <form onSubmit={handleSubmit} className="card p-6 md:p-8">
-        <div className="space-y-8">
+      <form onSubmit={handleSubmit} className="card p-4 md:p-6 lg:p-8">
+        <div className="mb-6">
+          <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">Контакт информација</h2>
           <div>
             <label className="block text-sm font-semibold mb-2 text-primary-400">Телефон</label>
             <div className="relative">
@@ -334,7 +333,7 @@ export default function ProfilePage() {
                 </div>
                 <span
                   onClick={() => handleChange('viber', !formData.viber)}
-                  className="text-white cursor-pointer"
+                  className="text-sm text-white cursor-pointer"
                 >
                   Viber
                 </span>
@@ -377,7 +376,7 @@ export default function ProfilePage() {
                 </div>
                 <span
                   onClick={() => handleChange('whatsapp', !formData.whatsapp)}
-                  className="text-white cursor-pointer"
+                  className="text-sm text-white cursor-pointer"
                 >
                   WhatsApp
                 </span>
@@ -420,15 +419,18 @@ export default function ProfilePage() {
                 </div>
                 <span
                   onClick={() => handleChange('telegram', !formData.telegram)}
-                  className="text-white cursor-pointer"
+                  className="text-sm text-white cursor-pointer"
                 >
                   Telegram
                 </span>
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="border-t border-primary-500/20 pt-8">
+        <div className="border-t border-primary-500/20 pt-6 mb-6">
+          <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">Email и известувања</h2>
+          <div>
             <label className="block text-sm font-semibold mb-2 text-primary-400">Email</label>
             <input
               type="email"
@@ -512,9 +514,12 @@ export default function ProfilePage() {
               )}
             </div>
           </div>
+        </div>
 
-          {user.type === 'Business' && (
-            <div className="border-t border-primary-500/20 pt-8">
+        {user.type === 'Business' && (
+          <div className="border-t border-primary-500/20 pt-6 mb-6">
+            <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">Информација за компанија</h2>
+            <div>
               <label className="block text-sm font-semibold mb-2 text-primary-400">
                 Име на компанија
               </label>
@@ -526,11 +531,14 @@ export default function ProfilePage() {
                 placeholder="Внесете го името на компанијата"
               />
             </div>
-          )}
+          </div>
+        )}
 
-          {user.type === 'Individual' && (
-            <>
-              <div className="border-t border-primary-500/20 pt-8">
+        {user.type === 'Individual' && (
+          <div className="border-t border-primary-500/20 pt-6 mb-6">
+            <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">Лични податоци</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
                 <label className="block text-sm font-semibold mb-2 text-primary-400">Име</label>
                 <input
                   type="text"
@@ -551,34 +559,32 @@ export default function ProfilePage() {
                   placeholder="Внесете го вашето презиме"
                 />
               </div>
-            </>
-          )}
-
-          <div className="border-t border-primary-500/20 pt-8">
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-            >
-              {loading ? 'Зачувување...' : 'Зачувај промени'}
-            </button>
-          </div>
-
-          <div className="border-t border-red-500/30 pt-8">
-            <div className="mb-4">
-              <h3 className="text-sm font-semibold text-red-400 mb-1">Опасна зона</h3>
-              <p className="text-xs text-gray-400">
-                Неповратни акции кои влијаат на вашиот аккаунт
-              </p>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowDeleteModal(true)}
-              className="w-full btn-secondary text-red-400 hover:text-red-300 border-red-500/30 hover:border-red-500/50"
-            >
-              Избриши аккаунт
-            </button>
           </div>
+        )}
+
+        <div className="border-t border-primary-500/20 pt-6 mb-6">
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+          >
+            {loading ? 'Зачувување...' : 'Зачувај промени'}
+          </button>
+        </div>
+
+        <div className="border-t border-red-500/30 pt-6">
+          <h2 className="text-xl md:text-2xl font-bold mb-5 text-red-400">Опасна зона</h2>
+          <p className="text-sm text-gray-400 mb-4">
+            Неповратни акции кои влијаат на вашиот аккаунт
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowDeleteModal(true)}
+            className="w-full btn-secondary text-red-400 hover:text-red-300 border-red-500/30 hover:border-red-500/50"
+          >
+            Избриши аккаунт
+          </button>
         </div>
       </form>
 
@@ -590,7 +596,7 @@ export default function ProfilePage() {
       >
         <div className="space-y-4">
           <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
-            <p className="text-red-400 font-semibold mb-2">⚠️ Внимание!</p>
+            <p className="text-lg text-red-400 font-semibold mb-2">⚠️ Внимание!</p>
             <p className="text-gray-300 text-sm leading-relaxed">
               Оваа акција е неповратна. Со бришење на вашиот аккаунт:
             </p>

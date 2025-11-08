@@ -45,7 +45,8 @@
     "check-brands": "ts-node -r tsconfig-paths/register src/scripts/stage/check-brands-count.ts",
     "check-models": "ts-node -r tsconfig-paths/register src/scripts/stage/check-models-stats.ts",
     "check-user": "ts-node -r tsconfig-paths/register src/scripts/stage/check-user.ts",
-    "generate-listings-for-models": "ts-node -r tsconfig-paths/register src/scripts/stage/generate-listings-for-all-models.ts"
+    "generate-listings-for-models": "ts-node -r tsconfig-paths/register src/scripts/stage/generate-listings-for-all-models.ts",
+    "backup": "ts-node -r tsconfig-paths/register src/scripts/production/backup-database.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.0",
@@ -79,6 +80,7 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@jest/test-sequencer": "^30.2.0",
     "@nestjs/cli": "^10.2.1",
     "@nestjs/schematics": "^10.0.3",
     "@nestjs/testing": "^10.3.0",

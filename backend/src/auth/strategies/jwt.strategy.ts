@@ -26,9 +26,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         throw new Error('JWT_SECRET must be set in production environment');
       }
       if (nodeEnv !== 'test' && nodeEnv !== undefined) {
-        console.warn(
-          '⚠️  WARNING: JWT_SECRET is not set. Using default secret for development only!',
-        );
       }
     }
 

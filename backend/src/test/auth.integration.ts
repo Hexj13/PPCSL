@@ -928,7 +928,7 @@ describe('Auth API Integration Tests', () => {
       const newAuthToken = loginResponse.body.access_token;
       const newUserId = loginResponse.body.user.id;
 
-      await request
+      const createListingResponse = await request
         .post('/api/listings')
         .set('Authorization', `Bearer ${newAuthToken}`)
         .send({
@@ -937,6 +937,10 @@ describe('Auth API Integration Tests', () => {
           city: 'Skopje',
           status: 'Active',
           description: 'Test listing',
+          images: [
+            'http://localhost:4000/uploads/test1.webp',
+            'http://localhost:4000/uploads/test2.webp',
+          ],
           vehicle: {
             brand_id: '1',
             model_id: '1',
@@ -955,6 +959,9 @@ describe('Auth API Integration Tests', () => {
           horsepower: 150,
         });
 
+      const listingId = createListingResponse.body.id;
+      const originalImages = createListingResponse.body.images;
+
       await request
         .delete('/api/auth/profile')
         .set('Authorization', `Bearer ${newAuthToken}`)
@@ -963,6 +970,11 @@ describe('Auth API Integration Tests', () => {
       const listingsResponse = await request.get(`/api/listings/user/${newUserId}/active`);
 
       expect(listingsResponse.body).toEqual([]);
+
+      const closedListingResponse = await request.get(`/api/listings/${listingId}`).expect(200);
+
+      expect(closedListingResponse.body.status).toBe('Closed');
+      expect(closedListingResponse.body.images).toEqual(originalImages);
     });
 
     it('should nullify user personal data after deletion', async () => {

@@ -47,8 +47,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }));
 
     return [...baseUrls, ...listingUrls];
-  } catch (error) {
-    console.error('Error generating sitemap:', error);
+  } catch {
     return baseUrls;
   }
 }

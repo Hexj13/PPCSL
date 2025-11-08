@@ -138,6 +138,7 @@ Create a simple, free website for posting listings for new and used cars in Mace
   * Users can delete their account via `/api/auth/profile` (DELETE)
   * All personal data (email, phone, firstName, lastName, companyName) is nullified
   * All active and paused listings are automatically closed (status set to 'Closed')
+  * Listing images are preserved when closing listings during account deletion
   * Account is marked as inactive (`active = false`)
   * Deleted accounts cannot be reused (prevents re-registration with same email/phone)
   * Action is irreversible
@@ -212,7 +213,12 @@ Create a simple, free website for posting listings for new and used cars in Mace
 * **File storage:** Local file system (`/uploads`) with plans for S3 migration
 * **Authentication:** JWT tokens, Passport.js
 * **Task scheduling:** NestJS Schedule module (cron jobs)
-* **Monitoring:** Sentry (planned), basic metrics
+* **Monitoring:** 
+  * Health check endpoint (`/health`) with database and Redis connectivity checks
+  * Basic logging via NestJS Logger
+  * Sentry (planned) for error tracking
+* **Backups:** Automated database backup scripts (TypeScript and Bash) with cron support
+  * See [DATABASE_BACKUPS.md](./DATABASE_BACKUPS.md) for details
 
 ## 5. API Endpoints
 
@@ -238,7 +244,7 @@ POST /api/auth/reset-password         # Reset password with verified code
 GET    /api/listings                              # List listings (with extensive filters)
 GET    /api/listings/:id                          # Get listing details
 POST   /api/listings                              # Create listing
-PATCH  /api/listings/:id                          # Update listing
+PATCH  /api/listings/:id                          # Update listing (only non-closed listings)
 POST   /api/listings/:id/publish                  # Activate (with limit check)
 POST   /api/listings/:id/pause                    # Pause listing
 POST   /api/listings/:id/close                    # Close listing
@@ -247,6 +253,14 @@ GET    /api/listings/user/:userId/active          # Get user's active listings
 GET    /api/listings/vin/:vin                     # Find listings by VIN
 POST   /api/listings/refresh-dates                # Refresh all user's listing dates
 ```
+
+**Listing Editing:**
+- Users can edit their non-closed listings (Active or Paused status)
+- Editing is available through the "My Listings" page with an edit button
+- All listing fields can be updated including vehicle specifications
+- Price must be an integer (no decimals)
+- Registration date format: MM.YYYY (month must be 2 digits, e.g., 05.2025)
+- Closed listings cannot be edited
 
 ### Favorites
 ```http
@@ -286,6 +300,14 @@ GET   /api/admin/stats                    # Get statistics
 PATCH /api/admin/listings/:id/status      # Change listing status
 GET   /api/admin/users/:id/listings       # Get user's listings
 PATCH /api/admin/users/:id/toggle-status  # Enable/disable user
+```
+
+### Health & Monitoring
+```http
+GET /                                 # API status check (returns "Kupito API v1.0")
+GET /health                          # Health check endpoint
+                                     # Returns: { status, timestamp, uptime, services: { database, redis } }
+                                     # Status codes: 200 (ok), 503 (degraded/down)
 ```
 
 ## 6. Data Schema (detailed)

@@ -1,13 +1,17 @@
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { FindOperator, In, Repository, SelectQueryBuilder } from 'typeorm';
+import { In, Repository, SelectQueryBuilder, UpdateResult } from 'typeorm';
 
 import { BrandsService } from '../brands/brands.service';
+import { Brand } from '../brands/entities/brand.entity';
+import { VehicleModel } from '../brands/entities/vehicle-model.entity';
 import { RedisService } from '../common/redis.service';
 import { Currency, ListingStatus } from '../common/types';
 import { UsersService } from '../users/users.service';
 
+import { CreateListingDto } from './dto/create-listing.dto';
+import { UpdateListingDto } from './dto/update-listing.dto';
 import { ListingView } from './entities/listing-view.entity';
 import { Listing } from './entities/listing.entity';
 import { Vehicle } from './entities/vehicle.entity';
@@ -368,49 +372,50 @@ describe('ListingsService', () => {
     const userId = 'user-1';
 
     it('should close all active and paused listings for user', async () => {
-      const mockUpdateResult: { affected: number; generatedMaps: unknown[]; raw: unknown[] } = {
-        affected: 5,
-        generatedMaps: [],
-        raw: [],
-      };
-      listingsRepository.update.mockResolvedValue(mockUpdateResult);
+      const mockListings = [
+        { id: '1', status: ListingStatus.Active, images: ['image1.jpg', 'image2.jpg'] },
+        { id: '2', status: ListingStatus.Paused, images: ['image3.jpg'] },
+        { id: '3', status: ListingStatus.Active, images: ['image4.jpg', 'image5.jpg'] },
+        { id: '4', status: ListingStatus.Paused, images: ['image6.jpg'] },
+        { id: '5', status: ListingStatus.Active, images: ['image7.jpg'] },
+      ] as Listing[];
+      listingsRepository.find.mockResolvedValue(mockListings);
+      listingsRepository.save.mockImplementation((listing) => Promise.resolve(listing as Listing));
       redisService.delPattern.mockResolvedValue(undefined);
 
       const result = await service.closeAllUserListings(userId);
 
-      expect(listingsRepository.update).toHaveBeenCalledWith(
-        {
+      expect(listingsRepository.find).toHaveBeenCalledWith({
+        where: {
           user_id: userId,
           status: In([ListingStatus.Active, ListingStatus.Paused]),
         },
-        { status: ListingStatus.Closed },
-      );
+      });
+      expect(listingsRepository.save).toHaveBeenCalledTimes(5);
       expect(redisService.delPattern).toHaveBeenCalledWith('cache:listings:search:*');
       expect(result).toBe(5);
     });
 
     it('should return 0 when no listings to close', async () => {
-      const mockUpdateResult: { affected: number; generatedMaps: unknown[]; raw: unknown[] } = {
-        affected: 0,
-        generatedMaps: [],
-        raw: [],
-      };
-      listingsRepository.update.mockResolvedValue(mockUpdateResult);
+      listingsRepository.find.mockResolvedValue([]);
       redisService.delPattern.mockResolvedValue(undefined);
 
       const result = await service.closeAllUserListings(userId);
 
+      expect(listingsRepository.find).toHaveBeenCalled();
+      expect(listingsRepository.save).not.toHaveBeenCalled();
       expect(result).toBe(0);
       expect(redisService.delPattern).toHaveBeenCalled();
     });
 
     it('should handle cache invalidation errors gracefully', async () => {
-      const mockUpdateResult: { affected: number; generatedMaps: unknown[]; raw: unknown[] } = {
-        affected: 3,
-        generatedMaps: [],
-        raw: [],
-      };
-      listingsRepository.update.mockResolvedValue(mockUpdateResult);
+      const mockListings = [
+        { id: '1', status: ListingStatus.Active, images: ['image1.jpg'] },
+        { id: '2', status: ListingStatus.Paused, images: ['image2.jpg'] },
+        { id: '3', status: ListingStatus.Active, images: ['image3.jpg'] },
+      ] as Listing[];
+      listingsRepository.find.mockResolvedValue(mockListings);
+      listingsRepository.save.mockImplementation((listing) => Promise.resolve(listing as Listing));
       redisService.delPattern.mockRejectedValue(new Error('Cache error'));
 
       const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
@@ -427,22 +432,185 @@ describe('ListingsService', () => {
     });
 
     it('should only close Active and Paused listings, not Closed ones', async () => {
-      const mockUpdateResult: { affected: number; generatedMaps: unknown[]; raw: unknown[] } = {
-        affected: 2,
-        generatedMaps: [],
-        raw: [],
-      };
-      listingsRepository.update.mockResolvedValue(mockUpdateResult);
+      const mockListings = [
+        { id: '1', status: ListingStatus.Active, images: ['image1.jpg'] },
+        { id: '2', status: ListingStatus.Paused, images: ['image2.jpg'] },
+      ] as Listing[];
+      listingsRepository.find.mockResolvedValue(mockListings);
+      listingsRepository.save.mockImplementation((listing) => Promise.resolve(listing as Listing));
       redisService.delPattern.mockResolvedValue(undefined);
 
       await service.closeAllUserListings(userId);
 
-      const updateCall = listingsRepository.update.mock.calls[0];
-      const whereClause = updateCall[0] as { user_id: string; status: FindOperator<ListingStatus> };
-      expect(whereClause).toHaveProperty('user_id', userId);
-      expect(whereClause).toHaveProperty('status');
-      expect(whereClause.status).toBeInstanceOf(FindOperator);
-      expect(updateCall[1]).toEqual({ status: ListingStatus.Closed });
+      expect(listingsRepository.find).toHaveBeenCalledWith({
+        where: {
+          user_id: userId,
+          status: In([ListingStatus.Active, ListingStatus.Paused]),
+        },
+      });
+      expect(listingsRepository.save).toHaveBeenCalledTimes(2);
+    });
+
+    it('should preserve images when closing listings', async () => {
+      const mockListings = [
+        { id: '1', status: ListingStatus.Active, images: ['image1.jpg', 'image2.jpg'] },
+        { id: '2', status: ListingStatus.Paused, images: ['image3.jpg'] },
+      ] as Listing[];
+      listingsRepository.find.mockResolvedValue(mockListings);
+      listingsRepository.save.mockImplementation((listing) => Promise.resolve(listing as Listing));
+      redisService.delPattern.mockResolvedValue(undefined);
+
+      await service.closeAllUserListings(userId);
+
+      expect(listingsRepository.save).toHaveBeenCalledTimes(2);
+      const savedCalls = listingsRepository.save.mock.calls;
+      expect(savedCalls[0][0].images).toEqual(['image1.jpg', 'image2.jpg']);
+      expect(savedCalls[0][0].status).toBe(ListingStatus.Closed);
+      expect(savedCalls[1][0].images).toEqual(['image3.jpg']);
+      expect(savedCalls[1][0].status).toBe(ListingStatus.Closed);
+    });
+  });
+
+  describe('create', () => {
+    it('should throw BadRequestException when registration_expires_at is in the past', async () => {
+      const currentDate = new Date();
+      const pastDate = new Date(currentDate);
+      pastDate.setMonth(pastDate.getMonth() - 1);
+
+      const createDto = {
+        price: 10000,
+        currency: Currency.MKD,
+        city: 'Skopje',
+        vehicle: {
+          brand_id: 'brand-1',
+          model_id: 'model-1',
+          year: 2020,
+        },
+        registration_expires_at: pastDate.toISOString(),
+      };
+
+      await expect(
+        service.create(createDto as Partial<CreateListingDto> as CreateListingDto, 'user-1'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should allow registration_expires_at in current or future month', async () => {
+      const currentDate = new Date();
+      const futureDate = new Date(currentDate);
+      futureDate.setMonth(futureDate.getMonth() + 1);
+
+      const createDto = {
+        price: 10000,
+        currency: Currency.MKD,
+        city: 'Skopje',
+        vehicle: {
+          brand_id: 'brand-1',
+          model_id: 'model-1',
+          year: 2020,
+        },
+        registration_expires_at: futureDate.toISOString(),
+      };
+
+      vehiclesRepository.create.mockReturnValue(mockVehicle as Vehicle);
+      vehiclesRepository.save.mockResolvedValue(mockVehicle);
+      brandsService.findOne.mockResolvedValue({ id: 'brand-1', name: 'Brand' } as Brand);
+      brandsService.getModelsByBrand.mockResolvedValue([
+        { id: 'model-1', name: 'Model' },
+      ] as VehicleModel[]);
+      usersService.getListingLimit.mockResolvedValue(3);
+      listingsRepository.count.mockResolvedValue(0);
+      listingsRepository.create.mockReturnValue(mockListing as Listing);
+      listingsRepository.save.mockResolvedValue(mockListing);
+
+      await service.create(createDto as Partial<CreateListingDto> as CreateListingDto, 'user-1');
+
+      expect(vehiclesRepository.save).toHaveBeenCalled();
+      expect(listingsRepository.save).toHaveBeenCalled();
+    });
+  });
+
+  describe('update', () => {
+    it('should throw BadRequestException when registration_expires_at is in the past', async () => {
+      const currentDate = new Date();
+      const pastDate = new Date(currentDate);
+      pastDate.setMonth(pastDate.getMonth() - 1);
+
+      const updateDto = {
+        registration_expires_at: pastDate.toISOString(),
+      };
+
+      listingsRepository.findOne.mockResolvedValue(mockListing);
+      vehiclesRepository.findOne.mockResolvedValue(mockVehicle);
+      brandsService.findOne.mockResolvedValue({ id: 'brand-1', name: 'Brand' } as Brand);
+      brandsService.getModelsByBrand.mockResolvedValue([
+        { id: 'model-1', name: 'Model' },
+      ] as VehicleModel[]);
+
+      await expect(
+        service.update(
+          'listing-1',
+          updateDto as Partial<UpdateListingDto> as UpdateListingDto,
+          'user-1',
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should allow registration_expires_at in current or future month', async () => {
+      const currentDate = new Date();
+      const futureDate = new Date(currentDate);
+      futureDate.setMonth(futureDate.getMonth() + 1);
+
+      const updateDto = {
+        registration_expires_at: futureDate.toISOString(),
+      };
+
+      listingsRepository.findOne.mockResolvedValue(mockListing);
+      vehiclesRepository.findOne.mockResolvedValue(mockVehicle);
+      brandsService.findOne.mockResolvedValue({ id: 'brand-1', name: 'Brand' } as Brand);
+      brandsService.getModelsByBrand.mockResolvedValue([
+        { id: 'model-1', name: 'Model' },
+      ] as VehicleModel[]);
+      const updateResult: UpdateResult = { affected: 1, generatedMaps: [], raw: [] };
+      listingsRepository.update.mockResolvedValue(updateResult);
+      listingsRepository.findOne
+        .mockResolvedValueOnce(mockListing)
+        .mockResolvedValueOnce(mockListing);
+
+      await service.update(
+        'listing-1',
+        updateDto as Partial<UpdateListingDto> as UpdateListingDto,
+        'user-1',
+      );
+
+      expect(listingsRepository.update).toHaveBeenCalled();
+    });
+  });
+
+  describe('refreshAllDates', () => {
+    it('should update last_updated_at for all active listings of user', async () => {
+      const userId = 'user-1';
+      const updateResult: UpdateResult = { affected: 5, generatedMaps: [], raw: [] };
+      listingsRepository.update.mockResolvedValue(updateResult);
+
+      const result = await service.refreshAllDates(userId);
+
+      expect(listingsRepository.update).toHaveBeenCalledWith(
+        { user_id: userId, status: ListingStatus.Active },
+        expect.objectContaining({
+          last_updated_at: expect.any(Date),
+        }),
+      );
+      expect(result).toEqual({ updated: 5 });
+    });
+
+    it('should return 0 when no active listings found', async () => {
+      const userId = 'user-1';
+      const updateResult: UpdateResult = { affected: 0, generatedMaps: [], raw: [] };
+      listingsRepository.update.mockResolvedValue(updateResult);
+
+      const result = await service.refreshAllDates(userId);
+
+      expect(result).toEqual({ updated: 0 });
     });
   });
 });

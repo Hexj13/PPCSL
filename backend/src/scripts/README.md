@@ -39,6 +39,7 @@ These scripts are **blocked from running in production** and can only be execute
 These scripts can be run in production, but should still be used with caution:
 
 - `update-listing-titles.ts` - Update listing titles based on vehicle data
+- `backup-database.ts` - Create database backup (uses pg_dump)
 
 ## Security
 
@@ -71,6 +72,7 @@ npm run clear-database
 ```bash
 # On any environment (including production)
 npm run update-titles
+npm run backup
 ```
 
 ## Migration Scripts
@@ -86,4 +88,20 @@ Database migrations are handled separately and are located in:
 - Stage scripts automatically check environment before execution
 - Production scripts should be reviewed before running on production
 - Always backup database before running any script on production
+
+## Database Backups
+
+For automated database backups, see:
+- **Documentation**: `docs/DATABASE_BACKUPS.md`
+- **TypeScript script**: `src/scripts/production/backup-database.ts`
+- **Bash script**: `scripts/backup-database.sh` (for cron)
+
+Quick usage:
+```bash
+# Manual backup
+npm run backup
+
+# With custom options
+npm run backup -- --output-dir /path/to/backups --keep-days 60
+```
 

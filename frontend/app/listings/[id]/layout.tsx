@@ -17,8 +17,7 @@ async function getListing(id: string) {
 
     const listing = await response.json();
     return listing;
-  } catch (error) {
-    console.error('Error fetching listing for metadata:', error);
+  } catch {
     return null;
   }
 }

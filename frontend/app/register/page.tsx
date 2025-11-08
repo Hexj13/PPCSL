@@ -381,10 +381,6 @@ export default function RegisterPage() {
                 errorMessage = 'Корисник со овој телефон веќе постои';
               }
             } else if (status === 404) {
-              console.error('404 Error - Endpoint not found:', {
-                url: '/api/auth/send-sms',
-                response: axiosError.response,
-              });
               errorMessage =
                 'Сервисот не е достапен. Проверете дали backend серверот работи и е презапуштен.';
             } else if (status === 422) {

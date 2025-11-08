@@ -18,7 +18,6 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         port: parseInt(redisPort, 10),
         reconnectStrategy: (retries) => {
           if (retries > 10) {
-            console.warn('Redis connection failed after 10 retries');
             return false;
           }
           return Math.min(retries * 50, 500);
@@ -26,15 +25,11 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       },
     });
 
-    this.client.on('error', (err) => {
-      console.error('Redis Client Error', err);
-    });
+    this.client.on('error', () => {});
 
     try {
       await this.client.connect();
-    } catch (error) {
-      console.warn('Failed to connect to Redis. SMS verification may not work properly.', error);
-    }
+    } catch {}
   }
 
   async onModuleDestroy() {
@@ -87,9 +82,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       } else {
         await this.client.set(key, jsonValue);
       }
-    } catch (error) {
-      console.error(`Failed to set JSON cache for key ${key}:`, error);
-    }
+    } catch {}
   }
 
   async getJson<T>(key: string): Promise<T | null> {
@@ -102,8 +95,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         return null;
       }
       return JSON.parse(value) as T;
-    } catch (error) {
-      console.error(`Failed to get JSON cache for key ${key}:`, error);
+    } catch {
       return null;
     }
   }
@@ -117,8 +109,18 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       if (keys.length > 0) {
         await this.client.del(keys);
       }
+    } catch {}
+  }
+
+  async ping(): Promise<boolean> {
+    if (!this.client?.isOpen) {
+      return false;
+    }
+    try {
+      const result = await this.client.ping();
+      return result === 'PONG';
     } catch (error) {
-      console.error(`Failed to delete cache pattern ${pattern}:`, error);
+      return false;
     }
   }
 }

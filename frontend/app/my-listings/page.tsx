@@ -73,9 +73,6 @@ export default function MyListingsPage() {
         }
 
         if (newListings.length > limit) {
-          console.warn(
-            `Received ${newListings.length} listings but limit is ${limit}. Taking first ${limit}.`
-          );
           newListings = newListings.slice(0, limit);
         }
 
@@ -123,25 +120,64 @@ export default function MyListingsPage() {
       return;
     }
 
-    if (user && !hasLoadedRef.current) {
-      hasLoadedRef.current = true;
-      fetchListings(1, false);
+    if (user) {
+      if (!hasLoadedRef.current) {
+        hasLoadedRef.current = true;
+        fetchListings(1, false);
 
-      const lastRefreshKey = `lastRefreshDate_${user.id}`;
-      const lastRefreshStr = localStorage.getItem(lastRefreshKey);
-      if (lastRefreshStr) {
-        const lastRefresh = parseInt(lastRefreshStr, 10);
-        const now = Date.now();
-        const twoDays = 48 * 60 * 60 * 1000;
-        const timePassed = now - lastRefresh;
+        const lastRefreshKey = `lastRefreshDate_${user.id}`;
+        const lastRefreshStr = localStorage.getItem(lastRefreshKey);
+        if (lastRefreshStr) {
+          const lastRefresh = parseInt(lastRefreshStr, 10);
+          const now = Date.now();
+          const twoDays = 48 * 60 * 60 * 1000;
+          const timePassed = now - lastRefresh;
 
-        if (timePassed < twoDays) {
-          const remaining = twoDays - timePassed;
-          setTimeUntilRefresh(remaining);
+          if (timePassed < twoDays) {
+            const remaining = twoDays - timePassed;
+            setTimeUntilRefresh(remaining);
+          }
+        }
+      } else {
+        const shouldRefresh = sessionStorage.getItem('refreshMyListings');
+        if (shouldRefresh === 'true') {
+          sessionStorage.removeItem('refreshMyListings');
+          hasLoadedRef.current = false;
+          fetchListings(1, false);
         }
       }
     }
   }, [user, isInitialized, router, fetchListings]);
+
+  useEffect(() => {
+    const checkAndRefresh = () => {
+      const shouldRefresh = sessionStorage.getItem('refreshMyListings');
+      if (shouldRefresh === 'true' && user) {
+        sessionStorage.removeItem('refreshMyListings');
+        hasLoadedRef.current = false;
+        fetchListings(1, false);
+      }
+    };
+
+    checkAndRefresh();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkAndRefresh();
+      }
+    };
+
+    const handleFocus = () => {
+      checkAndRefresh();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [user, fetchListings]);
 
   useEffect(() => {
     if (timeUntilRefresh === null || timeUntilRefresh <= 0) return;

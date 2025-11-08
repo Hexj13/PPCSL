@@ -121,12 +121,10 @@ export function ListingGrid() {
             const currentFavorites = useFavoritesStore.getState().favorites;
             const updatedFavorites = new Set([...currentFavorites, ...favoriteIds]);
             setFavorites(Array.from(updatedFavorites));
-          } catch (favoritesErr) {
-            console.error('Error fetching favorites:', favoritesErr);
+          } catch {
           }
         }
-      } catch (err) {
-        console.error('Error fetching listings:', err);
+      } catch {
         if (!append) {
           setListings([]);
           setError('Грешка при вчитување на објави. Проверете дали бекенд серверот е стартуван.');
@@ -277,8 +275,7 @@ export function ListingGrid() {
           const currentFavorites = useFavoritesStore.getState().favorites;
           const updatedFavorites = new Set([...currentFavorites, ...favoriteIds]);
           setFavorites(Array.from(updatedFavorites));
-        } catch (favoritesErr) {
-          console.error('Error fetching favorites:', favoritesErr);
+        } catch {
         }
       }
 
@@ -297,8 +294,7 @@ export function ListingGrid() {
             const currentFavorites = useFavoritesStore.getState().favorites;
             const updatedFavorites = new Set([...currentFavorites, ...favoriteIds]);
             setFavorites(Array.from(updatedFavorites));
-          } catch (favoritesErr) {
-            console.error('Error fetching favorites:', favoritesErr);
+          } catch {
           }
         }
       } else {
@@ -306,8 +302,7 @@ export function ListingGrid() {
       }
 
       setMeta(firstRes.data.meta);
-    } catch (err) {
-      console.error('Error loading more listings:', err);
+    } catch {
     } finally {
       setLoadingMore(false);
     }

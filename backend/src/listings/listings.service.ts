@@ -16,7 +16,6 @@ import { Currency as CurrencyEnum, ListingStatus as ListingStatusEnum } from '..
 import { UsersService } from '../users/users.service';
 
 import { CreateListingDto } from './dto/create-listing.dto';
-import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { SearchListingsDto } from './dto/search-listings.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
 import { ListingView } from './entities/listing-view.entity';
@@ -95,8 +94,8 @@ export class ListingsService {
     try {
       await this.redisService.delPattern('cache:listings:search:*');
       await this.redisService.del(`cache:listings:${savedListing.id}`);
-    } catch (error) {
-      console.warn('Failed to invalidate cache after creating listing', error);
+    } catch {
+      // Ignore cache errors
     }
 
     return savedListing;
@@ -115,8 +114,8 @@ export class ListingsService {
       if (cached) {
         return cached;
       }
-    } catch (error) {
-      console.warn('Failed to get listings from cache', error);
+    } catch {
+      // Ignore cache errors
     }
 
     const queryBuilder = this.listingsRepository
@@ -358,49 +357,67 @@ export class ListingsService {
 
     try {
       await this.redisService.setJson(cacheKey, result, this.CACHE_TTL);
-    } catch (error) {
-      console.warn('Failed to set listings cache', error);
+    } catch {
+      // Ignore cache errors
     }
 
     return result;
   }
 
   async findOne(id: string): Promise<Listing> {
-    const listing = await this.listingsRepository.findOne({
-      where: { id },
-      relations: ['vehicle', 'vehicle.brand', 'vehicle.model', 'user'],
-    });
-    if (!listing) {
-      throw new NotFoundException('Објавата не е пронајдена');
-    }
+    try {
+      // Clear cache before loading to ensure fresh data
+      await this.listingsRepository.manager.connection.queryResultCache?.remove([`listing_${id}`]);
 
-    if (listing.user) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password, ...userWithoutPassword } = listing.user;
-      listing.user = userWithoutPassword as typeof listing.user;
-    }
+      const listing = await this.listingsRepository
+        .createQueryBuilder('listing')
+        .leftJoinAndSelect('listing.vehicle', 'vehicle')
+        .leftJoinAndSelect('vehicle.brand', 'brand')
+        .leftJoinAndSelect('vehicle.model', 'model')
+        .leftJoinAndSelect('listing.user', 'user')
+        .where('listing.id = :id', { id })
+        .getOne();
 
-    if (listing.status === ListingStatusEnum.Closed) {
-      (listing as Partial<Listing>).price = undefined;
-      (listing as Partial<Listing>).currency = undefined;
+      if (!listing) {
+        throw new NotFoundException('Објавата не е пронајдена');
+      }
+
+      if (!listing.vehicle) {
+        console.error(`Listing ${id} has no vehicle`);
+        throw new NotFoundException('Vehicle not found for listing');
+      }
+
       if (listing.user) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { password, ...userWithoutPassword } = listing.user;
+        listing.user = userWithoutPassword as typeof listing.user;
+      }
+
+      if (listing.status === ListingStatusEnum.Closed) {
+        (listing as Partial<Listing>).price = undefined;
+        (listing as Partial<Listing>).currency = undefined;
+        if (listing.user) {
+          listing.user.phone = null;
+          listing.user.email = null;
+          listing.user.firstName = null;
+          listing.user.lastName = null;
+          listing.user.companyName = null;
+        }
+      }
+
+      if (listing.user && !listing.user.email && !listing.user.phone) {
         listing.user.phone = null;
         listing.user.email = null;
         listing.user.firstName = null;
         listing.user.lastName = null;
         listing.user.companyName = null;
       }
-    }
 
-    if (listing.user && !listing.user.email && !listing.user.phone) {
-      listing.user.phone = null;
-      listing.user.email = null;
-      listing.user.firstName = null;
-      listing.user.lastName = null;
-      listing.user.companyName = null;
+      return listing;
+    } catch (error) {
+      console.error(`Error in findOne for listing ${id}:`, error);
+      throw error;
     }
-
-    return listing;
   }
 
   async recordView(
@@ -474,23 +491,7 @@ export class ListingsService {
   }
 
   async update(id: string, updateListingDto: UpdateListingDto, userId: string): Promise<Listing> {
-    const listing = await this.findOne(id);
-    if (listing.user_id !== userId) {
-      throw new ForbiddenException('Немате пристап до оваа објава');
-    }
-
-    if (updateListingDto.vehicle) {
-      const vehicleUpdate: Partial<CreateVehicleDto> = { ...updateListingDto.vehicle };
-      await this.vehiclesRepository.update(listing.vehicle_id, vehicleUpdate);
-
-      const updatedVehicle = await this.vehiclesRepository.findOne({
-        where: { id: listing.vehicle_id },
-      });
-      if (updatedVehicle) {
-        listing.title = await this.generateTitle(updatedVehicle);
-      }
-    }
-
+    // Validate registration date
     if (updateListingDto.registration_expires_at) {
       const registrationDate = new Date(updateListingDto.registration_expires_at);
       const currentDate = new Date();
@@ -509,28 +510,118 @@ export class ListingsService {
       }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { vehicle, registration_expires_at, ...listingUpdate } = updateListingDto;
-    Object.assign(listing, {
-      ...listingUpdate,
-      last_updated_at: new Date(),
-      registration_expires_at: registration_expires_at
-        ? new Date(registration_expires_at)
-        : updateListingDto.registration_expires_at === null
-          ? null
-          : listing.registration_expires_at,
+    // Load current listing
+    const listing = await this.listingsRepository.findOne({
+      where: { id },
+      relations: ['vehicle'],
     });
 
-    const updatedListing = await this.listingsRepository.save(listing);
+    if (!listing) {
+      throw new NotFoundException('Објавата не е пронајдена');
+    }
 
+    if (listing.user_id !== userId) {
+      throw new ForbiddenException('Немате пристап до оваа објава');
+    }
+
+    if (listing.status === 'Closed') {
+      throw new BadRequestException('Не можете да уредувате затворена објава');
+    }
+
+    const previousBrandId = listing.vehicle?.brand_id;
+
+    // Update vehicle if needed
+    if (updateListingDto.vehicle && listing.vehicle_id) {
+      const vehicleUpdateData: Partial<Vehicle> = {};
+      const vehicleDto = updateListingDto.vehicle;
+
+      if (vehicleDto.brand_id !== undefined) vehicleUpdateData.brand_id = vehicleDto.brand_id;
+      if (vehicleDto.model_id !== undefined) vehicleUpdateData.model_id = vehicleDto.model_id;
+      if (vehicleDto.year !== undefined) vehicleUpdateData.year = vehicleDto.year;
+      if (vehicleDto.engine_displ_l !== undefined)
+        vehicleUpdateData.engine_displ_l = vehicleDto.engine_displ_l;
+      if (vehicleDto.mileage_km !== undefined) vehicleUpdateData.mileage_km = vehicleDto.mileage_km;
+      if (vehicleDto.fuel !== undefined) vehicleUpdateData.fuel = vehicleDto.fuel;
+      if (vehicleDto.transmission !== undefined)
+        vehicleUpdateData.transmission = vehicleDto.transmission;
+      if (vehicleDto.drive_type !== undefined) vehicleUpdateData.drive_type = vehicleDto.drive_type;
+      if (vehicleDto.body_type !== undefined) vehicleUpdateData.body_type = vehicleDto.body_type;
+      if (vehicleDto.color !== undefined) vehicleUpdateData.color = vehicleDto.color;
+      if (vehicleDto.doors !== undefined) vehicleUpdateData.doors = vehicleDto.doors;
+
+      if (Object.keys(vehicleUpdateData).length > 0) {
+        await this.vehiclesRepository.update(listing.vehicle_id, vehicleUpdateData);
+
+        // Clear TypeORM cache
+        await this.vehiclesRepository.manager.connection.queryResultCache?.remove([
+          `vehicle_${listing.vehicle_id}`,
+        ]);
+      }
+    }
+
+    // Load updated vehicle for title generation
+    const updatedVehicle = await this.vehiclesRepository.findOne({
+      where: { id: listing.vehicle_id },
+      relations: ['brand', 'model'],
+    });
+
+    if (!updatedVehicle) {
+      throw new NotFoundException('Vehicle not found');
+    }
+
+    // Prepare listing update data
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { vehicle, registration_expires_at, ...listingFields } = updateListingDto;
+    const listingUpdateData: Partial<Listing> = {
+      ...listingFields,
+      last_updated_at: new Date(),
+      title: await this.generateTitle(updatedVehicle),
+    };
+
+    if (registration_expires_at !== undefined) {
+      listingUpdateData.registration_expires_at =
+        registration_expires_at === null ? null : new Date(registration_expires_at);
+    }
+
+    // Update listing
+    await this.listingsRepository.update(id, listingUpdateData);
+
+    // Clear TypeORM cache for listing
+    await this.listingsRepository.manager.connection.queryResultCache?.remove([`listing_${id}`]);
+
+    // Load fresh listing with all relations
+    const freshListing = await this.listingsRepository.findOne({
+      where: { id },
+      relations: ['vehicle', 'vehicle.brand', 'vehicle.model', 'user'],
+    });
+
+    if (!freshListing) {
+      throw new NotFoundException('Објавата не е пронајдена');
+    }
+
+    // Clear Redis cache
     try {
       await this.redisService.delPattern('cache:listings:search:*');
       await this.redisService.del(`cache:listings:${id}`);
-    } catch (error) {
-      console.warn('Failed to invalidate cache after updating listing', error);
+
+      if (previousBrandId) {
+        await this.redisService.del(`cache:brands:${previousBrandId}:models`);
+      }
+      if (updatedVehicle.brand_id && updatedVehicle.brand_id !== previousBrandId) {
+        await this.redisService.del(`cache:brands:${updatedVehicle.brand_id}:models`);
+      }
+    } catch {
+      // Ignore cache errors
     }
 
-    return updatedListing;
+    // Remove sensitive user data
+    if (freshListing.user) {
+      const { password, ...userWithoutPassword } = freshListing.user;
+      void password;
+      freshListing.user = userWithoutPassword as typeof freshListing.user;
+    }
+
+    return freshListing;
   }
 
   async publish(id: string, userId: string): Promise<Listing> {
@@ -557,8 +648,8 @@ export class ListingsService {
     try {
       await this.redisService.delPattern('cache:listings:search:*');
       await this.redisService.del(`cache:listings:${id}`);
-    } catch (error) {
-      console.warn('Failed to invalidate cache after publishing listing', error);
+    } catch {
+      // Ignore cache errors
     }
 
     return publishedListing;
@@ -576,8 +667,8 @@ export class ListingsService {
     try {
       await this.redisService.delPattern('cache:listings:search:*');
       await this.redisService.del(`cache:listings:${id}`);
-    } catch (error) {
-      console.warn('Failed to invalidate cache after pausing listing', error);
+    } catch {
+      // Ignore cache errors
     }
 
     return pausedListing;
@@ -595,8 +686,8 @@ export class ListingsService {
     try {
       await this.redisService.delPattern('cache:listings:search:*');
       await this.redisService.del(`cache:listings:${id}`);
-    } catch (error) {
-      console.warn('Failed to invalidate cache after closing listing', error);
+    } catch {
+      // Ignore cache errors
     }
 
     return closedListing;
@@ -708,20 +799,24 @@ export class ListingsService {
   }
 
   async closeAllUserListings(userId: string): Promise<number> {
-    const result = await this.listingsRepository.update(
-      {
+    const listings = await this.listingsRepository.find({
+      where: {
         user_id: userId,
         status: In([ListingStatusEnum.Active, ListingStatusEnum.Paused]),
       },
-      { status: ListingStatusEnum.Closed },
-    );
+    });
+
+    for (const listing of listings) {
+      listing.status = ListingStatusEnum.Closed;
+      await this.listingsRepository.save(listing);
+    }
 
     try {
       await this.redisService.delPattern('cache:listings:search:*');
-    } catch (error) {
-      console.warn('Failed to invalidate cache after closing user listings', error);
+    } catch {
+      // Ignore cache errors
     }
 
-    return result.affected || 0;
+    return listings.length;
   }
 }

@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useState } from 'react';
 
 import { Listing } from '@/lib/api';
 import {
@@ -28,11 +29,13 @@ export function ListingManagementCard({
   onAction,
   onCopyId,
 }: ListingManagementCardProps) {
+  const [imageError, setImageError] = useState(false);
+  
   const imageUrl =
     listing.images && listing.images.length > 0 && listing.images[0]
       ? listing.images[0]
       : '/placeholder-car.jpg';
-  const hasImage = imageUrl && imageUrl !== '/placeholder-car.jpg';
+  const hasImage = imageUrl && imageUrl !== '/placeholder-car.jpg' && !imageError;
   const optimizedImageUrl = hasImage ? getOptimizedImageUrl(imageUrl, 75, 800) : '';
 
   const isAdminMode = mode === 'admin';
@@ -54,6 +57,9 @@ export function ListingManagementCard({
                   optimizedImageUrl.startsWith('http://') ||
                   optimizedImageUrl.startsWith('https://')
                 }
+                onError={() => {
+                  setImageError(true);
+                }}
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-200">
@@ -116,9 +122,6 @@ export function ListingManagementCard({
                             .filter(Boolean)
                             .join(' ') || 'Избришан корисник'}
                         </span>
-                        {!listing.user.email && !listing.user.phone && !listing.user.firstName && !listing.user.lastName && !listing.user.companyName && (
-                          <span className="ml-2 text-xs text-red-400">(Аккаунтот е избришан)</span>
-                        )}
                       </div>
                     )}
                   </>
@@ -129,23 +132,8 @@ export function ListingManagementCard({
                   </h3>
                 </Link>
               </div>
-              <div className="bg-bg-dark/95 backdrop-blur-sm px-2 py-2 rounded-lg border border-primary-500/30 inline-flex items-center gap-1.5 flex-shrink-0">
-                <div className="text-xs font-semibold text-gray-200">Статус:</div>
-                <div
-                  className={
-                    listing.status === 'Active'
-                      ? 'text-green-400 font-bold text-sm'
-                      : listing.status === 'Paused'
-                        ? 'text-yellow-400 font-bold text-sm'
-                        : 'text-gray-200 font-bold text-sm'
-                  }
-                >
-                  {listing.status === 'Active'
-                    ? 'Активна'
-                    : listing.status === 'Paused'
-                      ? 'Привремено застарена'
-                      : 'Затворена'}
-                </div>
+              <div className="text-sm text-gray-200 font-medium flex-shrink-0">
+                {getCityNameMk(listing.city)}
               </div>
             </div>
             <div className="mb-2">
@@ -173,6 +161,7 @@ export function ListingManagementCard({
           </div>
           {listing.vehicle && (
             <div className="mb-3 flex-1">
+              <h4 className="text-sm font-semibold text-primary-400 mb-3">Карактеристики</h4>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2.5 text-sm">
                 {listing.vehicle.engine_displ_l && (
                   <div>
@@ -225,14 +214,31 @@ export function ListingManagementCard({
           )}
           <div className="mt-auto pt-3 border-t border-primary-500/20">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-              <div className="text-sm text-gray-200 font-medium">{getCityNameMk(listing.city)}</div>
-              <div className="flex gap-2 flex-wrap w-full sm:w-auto">
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="bg-bg-dark/95 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-lg border-2 border-primary-500/30 inline-flex items-center gap-1.5">
+                  <div className="text-xs sm:text-sm font-semibold text-gray-200 leading-none">Статус:</div>
+                  <div
+                    className={
+                      listing.status === 'Active'
+                        ? 'text-green-400 font-bold text-xs sm:text-sm leading-none'
+                        : listing.status === 'Paused'
+                          ? 'text-yellow-400 font-bold text-xs sm:text-sm leading-none'
+                          : 'text-gray-200 font-bold text-xs sm:text-sm leading-none'
+                    }
+                  >
+                    {listing.status === 'Active'
+                      ? 'Активна'
+                      : listing.status === 'Paused'
+                        ? 'Привремено застарена'
+                        : 'Затворена'}
+                  </div>
+                </div>
                 {onAction && (
-                  <>
+                  <div className="flex gap-2 flex-wrap">
                     {listing.status === 'Paused' && (
                       <button
                         onClick={() => onAction(listing.id, 'publish')}
-                        className="btn-primary px-3 sm:px-4 py-2 text-xs sm:text-sm"
+                        className="px-3 sm:px-4 py-2 text-xs sm:text-sm bg-primary-500/20 border border-primary-500/40 text-primary-300 hover:bg-primary-500/30 hover:border-primary-500/60 rounded-lg font-semibold transition-colors"
                       >
                         Објави
                       </button>
@@ -240,7 +246,7 @@ export function ListingManagementCard({
                     {listing.status === 'Active' && (
                       <button
                         onClick={() => onAction(listing.id, 'pause')}
-                        className="btn-yellow px-3 sm:px-4 py-2 text-xs sm:text-sm"
+                        className="px-3 sm:px-4 py-2 text-xs sm:text-sm bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 hover:bg-yellow-500/30 hover:border-yellow-500/60 rounded-lg font-semibold transition-colors"
                       >
                         Привремено застани
                       </button>
@@ -253,9 +259,31 @@ export function ListingManagementCard({
                         Затвори
                       </button>
                     )}
-                  </>
+                  </div>
                 )}
               </div>
+              {mode === 'my-listings' && listing.status !== 'Closed' && (
+                <Link
+                  href={`/listings/${listing.id}/edit`}
+                  className="bg-bg-dark/95 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-lg border-2 border-primary-500/30 text-primary-400 hover:text-primary-300 hover:border-primary-500/50 transition-colors duration-200 inline-flex items-center justify-center flex-shrink-0"
+                  title="Уреди објава"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <svg
+                    className="w-4 h-4 sm:w-5 sm:h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                </Link>
+              )}
             </div>
           </div>
         </div>

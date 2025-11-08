@@ -15,6 +15,7 @@
 9. [Настройка автозапуска (PM2)](#9-настройка-автозапуска-pm2)
 10. [Проверка работы](#10-проверка-работы)
 11. [Полезные команды](#11-полезные-команды)
+12. [Настройка автоматических бэкапов базы данных](#12-настройка-автоматических-бэкапов-базы-данных)
 
 ---
 
@@ -615,12 +616,23 @@ pm2 logs kupito-frontend
 
 Откройте в браузере:
 - `https://api.ваш-домен.com` (должно показать "Kupito API v1.0")
+- `https://api.ваш-домен.com/health` (health check - проверка БД и Redis)
 
 Или проверьте через терминал:
 
 ```bash
+# Базовый статус
 curl https://api.ваш-домен.com
+
+# Health check (проверка всех сервисов)
+curl https://api.ваш-домен.com/health
 ```
+
+Health check возвращает JSON с информацией о статусе:
+- `status`: "ok" (все работает), "degraded" (частичные проблемы), "down" (критические проблемы)
+- `services.database`: "connected" или "disconnected"
+- `services.redis`: "connected" или "disconnected"
+- HTTP 200 - все работает, HTTP 503 - есть проблемы
 
 ### 10.2 Проверка frontend
 
@@ -809,6 +821,96 @@ sudo systemctl reload nginx
 
 ---
 
+## 12. Настройка автоматических бэкапов базы данных
+
+Автоматические бэкапы критически важны для production. Настройте их сразу после деплоя.
+
+### 12.1 Создание директории для бэкапов
+
+```bash
+sudo mkdir -p /var/backups/kupito
+sudo chown $USER:$USER /var/backups/kupito
+```
+
+### 12.2 Создание файла с переменными окружения
+
+```bash
+sudo mkdir -p /etc/kupito
+sudo nano /etc/kupito/backup.env
+```
+
+Добавьте:
+```env
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=kupito
+DB_PASSWORD=ваш_пароль_базы_данных
+DB_NAME=kupito
+BACKUP_DIR=/var/backups/kupito
+KEEP_DAYS=30
+```
+
+Установите права доступа:
+```bash
+sudo chmod 600 /etc/kupito/backup.env
+sudo chown $USER:$USER /etc/kupito/backup.env
+```
+
+### 12.3 Настройка cron для автоматических бэкапов
+
+Откройте crontab:
+```bash
+crontab -e
+```
+
+Добавьте строку для ежедневного бэкапа в 2:00 ночи:
+```cron
+0 2 * * * source /etc/kupito/backup.env && /var/www/kupito/backend/scripts/backup-database.sh >> /var/log/kupito-backup.log 2>&1
+```
+
+Или для бэкапа каждые 6 часов:
+```cron
+0 */6 * * * source /etc/kupito/backup.env && /var/www/kupito/backend/scripts/backup-database.sh >> /var/log/kupito-backup.log 2>&1
+```
+
+**Важно:** Замените `/var/www/kupito` на реальный путь к вашему проекту.
+
+### 12.4 Тестирование бэкапа
+
+Проверьте, что бэкап работает:
+```bash
+source /etc/kupito/backup.env
+/var/www/kupito/backend/scripts/backup-database.sh
+```
+
+Проверьте созданный файл:
+```bash
+ls -lh /var/backups/kupito/
+```
+
+### 12.5 Мониторинг бэкапов
+
+Проверяйте логи бэкапов:
+```bash
+tail -f /var/log/kupito-backup.log
+```
+
+Проверяйте последние бэкапы:
+```bash
+ls -lht /var/backups/kupito/ | head -10
+```
+
+### 12.6 Рекомендации
+
+- **Храните бэкапы на отдельном диске/разделе** - не на том же, где база данных
+- **Настройте синхронизацию в облако** (S3, Google Drive и т.д.) для дополнительной безопасности
+- **Тестируйте восстановление** из бэкапа периодически
+- **Мониторьте место на диске** - старые бэкапы автоматически удаляются (по умолчанию через 30 дней)
+
+Подробная документация: [DATABASE_BACKUPS.md](./DATABASE_BACKUPS.md)
+
+---
+
 ## 📝 Чеклист перед запуском
 
 - [ ] Node.js установлен (версия 20+)
@@ -833,6 +935,9 @@ sudo systemctl reload nginx
 - [ ] Приложения запущены через PM2
 - [ ] PM2 сохранен (`pm2 save`)
 - [ ] Сайт открывается в браузере
+- [ ] Health check endpoint работает (`/health`)
+- [ ] Автоматические бэкапы БД настроены (cron)
+- [ ] Бэкапы протестированы и работают
 
 ---
 

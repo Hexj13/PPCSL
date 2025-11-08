@@ -99,6 +99,11 @@ npm run dev  # Runs both frontend and backend
 - SMS verification during registration via Twilio (with IP-based brute force protection)
 - Phone number verification stored in database
 - Create, edit, and publish listings
+  - Edit non-closed listings (Active or Paused status)
+  - Edit button available on "My Listings" page
+  - All fields can be updated including vehicle specifications
+  - Price validation (integers only)
+  - Registration date format validation (MM.YYYY, month must be 2 digits)
 - Extended search and filtering
 - Listing limits (3 for Individuals, 20 for Business)
 - Listing statuses (Active, Paused, Closed)
@@ -150,7 +155,7 @@ Kupito/
 - `GET /api/listings` - List listings (with filters)
 - `GET /api/listings/:id` - Listing details
 - `POST /api/listings` - Create listing
-- `PATCH /api/listings/:id` - Update listing
+- `PATCH /api/listings/:id` - Update listing (only non-closed listings)
 - `POST /api/listings/:id/publish` - Publish
 - `POST /api/listings/:id/pause` - Pause
 - `POST /api/listings/:id/close` - Close
@@ -185,6 +190,10 @@ Kupito/
 - `GET /api/admin/users/:id/listings` - User's listings
 - `PATCH /api/admin/users/:id/toggle-status` - Enable/disable user
 
+### Health & Monitoring
+- `GET /` - API status check
+- `GET /health` - Health check endpoint (checks database and Redis connectivity)
+
 </details>
 
 <details>
@@ -195,6 +204,8 @@ Kupito/
 - Favorites stored in localStorage for guests and on server for authenticated users
 - PostgreSQL Full-Text Search for search functionality
 - **Database optimizations:** Comprehensive indexing, triggers for data integrity, connection pooling
+- **Health monitoring:** Health check endpoint with database and Redis connectivity checks
+- **Automated backups:** Database backup scripts with cron support for production
 - Image optimization (resize, compress, convert to WebP with adaptive quality, lazy loading, SEO-friendly)
 - Responsive design with TailwindCSS
 - VIN search with privacy protection
@@ -236,3 +247,4 @@ For more details, see [Technical Documentation](TECH_DOCS.md#14-testing).
 - **[SEO TODO Checklist](SEO_TODO.md)** - Remaining SEO tasks ⚠️ **IMPORTANT**
 - **[Optimization Analysis](OPTIMIZATION_ANALYSIS.md)** - Performance optimization analysis
 - **[Database Optimizations](DATABASE_OPTIMIZATIONS.md)** - Database indexes, triggers, and connection pooling
+- **[Database Backups](DATABASE_BACKUPS.md)** - Automated backup setup and configuration ⭐ **NEW**

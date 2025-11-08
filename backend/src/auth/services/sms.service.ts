@@ -36,7 +36,6 @@ export class SmsService {
     }
 
     if (!this.twilioClient) {
-      console.log(`[TEST MODE] SMS код за ${normalizedPhone}: ${code}`);
       return;
     }
 
@@ -56,7 +55,6 @@ export class SmsService {
           : 'Грешка при испраќање на SMS. Обидете се повторно.';
       const nodeEnv = this.configService.get('NODE_ENV');
       if (nodeEnv === 'test' || nodeEnv === 'development' || nodeEnv === 'stage') {
-        console.log(`[TEST MODE] SMS код за ${normalizedPhone}: ${code}`);
         return;
       }
       throw new BadRequestException(errorMessage);
@@ -75,7 +73,6 @@ export class SmsService {
     }
 
     if (!this.twilioClient) {
-      console.log(`[TEST MODE] SMS код за ресетирање на лозинка за ${normalizedPhone}: ${code}`);
       return;
     }
 
@@ -95,7 +92,6 @@ export class SmsService {
           : 'Грешка при испраќање на SMS. Обидете се повторно.';
       const nodeEnv = this.configService.get('NODE_ENV');
       if (nodeEnv === 'test' || nodeEnv === 'development' || nodeEnv === 'stage') {
-        console.log(`[TEST MODE] SMS код за ресетирање на лозинка за ${normalizedPhone}: ${code}`);
         return;
       }
       throw new BadRequestException(errorMessage);

@@ -33,18 +33,14 @@ export class CacheInterceptor implements NestInterceptor {
       if (cached !== null) {
         return of(cached);
       }
-    } catch (error) {
-      console.warn(`Cache read error for key ${cacheKey}:`, error);
-    }
+    } catch {}
 
     return next.handle().pipe(
       tap(async (data) => {
         try {
           const ttl = cacheOptions.ttl || 3600;
           await this.redisService.setJson(cacheKey, data, ttl);
-        } catch (error) {
-          console.warn(`Cache write error for key ${cacheKey}:`, error);
-        }
+        } catch {}
       }),
     );
   }

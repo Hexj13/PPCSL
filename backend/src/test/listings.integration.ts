@@ -9,6 +9,7 @@ describe('Listings API Integration Tests', () => {
   let userId: string;
   let brandId: string;
   let modelId: string;
+  let models: Array<{ id: string; name: string; brand_id: string }>;
 
   beforeAll(async () => {
     request = getTestRequest();
@@ -44,7 +45,7 @@ describe('Listings API Integration Tests', () => {
     if (brands.length > 0) {
       brandId = brands[0].id;
       const modelsResponse = await request.get(`/api/brands/${brandId}/models`).expect(200);
-      const models = modelsResponse.body;
+      models = modelsResponse.body;
 
       if (models.length > 0) {
         modelId = models[0].id;
@@ -190,6 +191,192 @@ describe('Listings API Integration Tests', () => {
 
       expect(response.body).toHaveProperty('id', listingId);
       expect(response.body).toHaveProperty('price', updateData.price);
+      expect(response.body).toHaveProperty('description', updateData.description);
+      expect(response).toSatisfyApiSpec();
+    });
+
+    it('should update vehicle brand_id and model_id correctly', async () => {
+      if (!listingId || !brandId || !modelId) {
+        return;
+      }
+
+      const brandsResponse = await request.get('/api/brands').expect(200);
+      const brands = brandsResponse.body;
+
+      if (brands.length < 2) {
+        return;
+      }
+
+      const newBrandId = brands[1].id;
+      const newModelsResponse = await request.get(`/api/brands/${newBrandId}/models`).expect(200);
+      const newModels = newModelsResponse.body;
+
+      if (newModels.length === 0) {
+        return;
+      }
+
+      const newModelId = newModels[0].id;
+
+      const getListingBefore = await request.get(`/api/listings/${listingId}`).expect(200);
+
+      const vehicleIdBefore = getListingBefore.body.vehicle_id;
+
+      const updateData = {
+        vehicle: {
+          brand_id: newBrandId,
+          model_id: newModelId,
+          year: 2021,
+          body_type: 'SUV',
+          drive_type: 'AWD',
+        },
+      };
+
+      const response = await request
+        .patch(`/api/listings/${listingId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(updateData)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('id', listingId);
+      expect(response.body).toHaveProperty('vehicle');
+      expect(response.body.vehicle).toHaveProperty('brand_id', newBrandId);
+      expect(response.body.vehicle).toHaveProperty('model_id', newModelId);
+      expect(response.body.vehicle).toHaveProperty('brand');
+      expect(response.body.vehicle).toHaveProperty('model');
+      expect(response.body.vehicle.brand).toHaveProperty('id', newBrandId);
+      expect(response.body.vehicle.model).toHaveProperty('id', newModelId);
+      expect(response.body.vehicle_id).toBe(vehicleIdBefore);
+
+      const getListingAfter = await request.get(`/api/listings/${listingId}`).expect(200);
+
+      expect(getListingAfter.body.vehicle.brand_id).toBe(newBrandId);
+      expect(getListingAfter.body.vehicle.model_id).toBe(newModelId);
+      expect(getListingAfter.body.vehicle.brand.id).toBe(newBrandId);
+      expect(getListingAfter.body.vehicle.model.id).toBe(newModelId);
+    });
+
+    it('should update all listing fields including vehicle data', async () => {
+      if (!listingId || !brandId || !modelId) {
+        return;
+      }
+
+      const updateData = {
+        price: 20000,
+        currency: 'EUR',
+        city: 'Bitola',
+        description: 'Fully updated description',
+        condition: 'Damaged',
+        registration_type: 'Foreign',
+        horsepower: 200,
+        is_registered: true,
+        registration_expires_at: '2025-12-31T00:00:00.000Z',
+        urgent: true,
+        is_new: false,
+        vehicle: {
+          brand_id: brandId,
+          model_id: modelId,
+          year: 2021,
+          engine_displ_l: 2.5,
+          mileage_km: 30000,
+          fuel: 'Diesel',
+          transmission: 'Automatic',
+          drive_type: 'AWD',
+          body_type: 'SUV',
+          color: 'Црна',
+          doors: '5',
+        },
+      };
+
+      const response = await request
+        .patch(`/api/listings/${listingId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(updateData)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('id', listingId);
+      expect(response.body).toHaveProperty('price', updateData.price);
+      expect(response.body).toHaveProperty('currency', updateData.currency);
+      expect(response.body).toHaveProperty('city', updateData.city);
+      expect(response.body).toHaveProperty('description', updateData.description);
+      expect(response.body).toHaveProperty('condition', updateData.condition);
+      expect(response.body).toHaveProperty('registration_type', updateData.registration_type);
+      expect(response.body).toHaveProperty('horsepower', updateData.horsepower);
+      expect(response.body).toHaveProperty('urgent', updateData.urgent);
+      expect(response.body).toHaveProperty('is_new', updateData.is_new);
+      expect(response.body.vehicle).toHaveProperty('year', updateData.vehicle.year);
+      expect(response.body.vehicle).toHaveProperty(
+        'engine_displ_l',
+        updateData.vehicle.engine_displ_l,
+      );
+      expect(response.body.vehicle).toHaveProperty('mileage_km', updateData.vehicle.mileage_km);
+      expect(response.body.vehicle).toHaveProperty('fuel', updateData.vehicle.fuel);
+      expect(response.body.vehicle).toHaveProperty('transmission', updateData.vehicle.transmission);
+      expect(response.body.vehicle).toHaveProperty('drive_type', updateData.vehicle.drive_type);
+      expect(response.body.vehicle).toHaveProperty('body_type', updateData.vehicle.body_type);
+      expect(response.body.vehicle).toHaveProperty('color', updateData.vehicle.color);
+      expect(response.body.vehicle).toHaveProperty('doors', updateData.vehicle.doors);
+      expect(response).toSatisfyApiSpec();
+    });
+
+    it('should not allow updating closed listings', async () => {
+      if (!listingId) {
+        return;
+      }
+
+      await request
+        .post(`/api/listings/${listingId}/close`)
+        .set('Authorization', `Bearer ${authToken}`);
+
+      const updateData = {
+        price: 25000,
+      };
+
+      const response = await request
+        .patch(`/api/listings/${listingId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(updateData)
+        .expect(400);
+
+      expect(response.body).toHaveProperty('message');
+      expect(response.body.message).toContain('closed');
+    });
+
+    it('should not allow updating other users listings', async () => {
+      if (!listingId) {
+        return;
+      }
+
+      const secondUserEmail = `test2${Date.now()}@example.com`;
+      const secondUserPassword = 'Test123!@#';
+
+      await request.post('/api/auth/register').send({
+        email: secondUserEmail,
+        password: secondUserPassword,
+        type: 'Individual',
+        phone: `+3897012345${Math.floor(Math.random() * 1000)}`,
+        firstName: 'Test2',
+        lastName: 'User2',
+        termsAccepted: true,
+      });
+
+      const loginResponse = await request.post('/api/auth/login').send({
+        login: secondUserEmail,
+        password: secondUserPassword,
+      });
+
+      const secondUserToken = loginResponse.body.access_token;
+
+      const updateData = {
+        price: 30000,
+      };
+
+      const response = await request
+        .patch(`/api/listings/${listingId}`)
+        .set('Authorization', `Bearer ${secondUserToken}`)
+        .send(updateData)
+        .expect(403);
+
+      expect(response.body).toHaveProperty('message');
     });
 
     it('should return 401 without authentication', async () => {

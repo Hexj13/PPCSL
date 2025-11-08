@@ -264,7 +264,6 @@ function VerifyPhoneContent() {
         try {
           await authApi.verifyPhone();
         } catch {
-          console.error('Грешка при верификација на телефон');
         }
 
         if (typeof window !== 'undefined') {

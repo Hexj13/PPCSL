@@ -764,9 +764,6 @@ function UsersTab() {
                       {user.companyName && (
                         <p className="text-sm text-gray-300 mt-1">{user.companyName}</p>
                       )}
-                      {!user.email && !user.phone && !user.firstName && !user.lastName && !user.companyName && (
-                        <p className="text-sm text-red-400 mt-1">(Аккаунтот е избришан)</p>
-                      )}
                     </div>
                     <div className="space-y-1 text-sm text-gray-300">
                       {user.email ? (

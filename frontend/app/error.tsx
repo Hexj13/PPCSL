@@ -1,18 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect } from 'react';
 
 export default function Error({
-  error,
+  error: _error,
   reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  useEffect(() => {
-    console.error('Application error:', error);
-  }, [error]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-bg-dark to-bg-darker flex items-center justify-center px-4">

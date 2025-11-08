@@ -50,7 +50,16 @@
    - ✅ Form submission
    - ✅ Reset functionality
 
-8. ✅ **Skeleton Loaders** (Visual components, no unit tests needed)
+8. ✅ **ListingForm** (`components/ListingForm.test.tsx`)
+   - ✅ Create mode rendering
+   - ✅ Edit mode with initial data
+   - ✅ Form field pre-filling
+   - ✅ Listing update functionality
+   - ✅ Price validation (integers only)
+   - ✅ Registration date format validation (MM.YYYY)
+   - ✅ Vehicle field updates
+
+9. ✅ **Skeleton Loaders** (Visual components, no unit tests needed)
    - ✅ ListingCardSkeleton - Skeleton for listing cards on homepage
    - ✅ ListingManagementCardSkeleton - Skeleton for listing management cards
    - ✅ ListingPageSkeleton - Skeleton components for listing detail page (breadcrumbs, images, price, etc.)
@@ -274,6 +283,12 @@ Integration tests are set up and cover:
 - ✅ End-to-end API flows
 - ✅ Authentication flows
 - ✅ **Listings API** (`listings.integration.ts`)
+  - ✅ Create listing
+  - ✅ Update listing (all fields, vehicle data)
+  - ✅ Update listing restrictions (closed listings, other users' listings)
+  - ✅ Get listings
+  - ✅ Get user listings
+  - ✅ Publish/Pause/Close listing
 - ✅ **Auth API** (`auth.integration.ts`)
   - ✅ Register, login, profile management
   - ✅ Account deletion (DELETE /api/auth/profile)

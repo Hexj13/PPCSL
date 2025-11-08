@@ -61,7 +61,6 @@ export class EmailService {
     const emailText = `Потврда на email адреса\n\nВи благодариме за регистрацијата на Kupito. За да го потврдите вашиот email, отворете ја следната врска:\n\n${verificationUrl}\n\nАко не сте вие што ја направивте оваа регистрација, можете да го игнорирате овој email.`;
 
     if (!this.transporter) {
-      console.log(`[TEST MODE] Email verification link for ${email}: ${verificationUrl}`);
       return;
     }
 

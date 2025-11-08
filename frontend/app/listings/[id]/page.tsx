@@ -3,7 +3,7 @@
 import DOMPurify from 'dompurify';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { toast } from 'react-hot-toast';
 
@@ -19,7 +19,7 @@ import {
 } from '@/components/ListingPageSkeleton';
 import { StructuredData } from '@/components/StructuredData';
 import { UserListingsModal } from '@/components/UserListingsModal';
-import { listingsApi, Listing, favoritesApi } from '@/lib/api';
+import { api, listingsApi, Listing, favoritesApi } from '@/lib/api';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
 import {
   formatPrice,
@@ -55,8 +55,12 @@ export default function ListingPage() {
   const [showHistoryHint, setShowHistoryHint] = useState(false);
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
 
-  useEffect(() => {
-    hasLoadedRef.current = false;
+  const fetchListingData = useCallback((forceRefresh = false) => {
+    const currentId = id;
+    
+    // Check if we should refresh before clearing state
+    const shouldRefresh = sessionStorage.getItem(`refreshListing_${currentId}`) === 'true';
+    const needsRefresh = forceRefresh || shouldRefresh;
 
     setImageErrors(new Set());
     setCurrentImageIndex(0);
@@ -65,17 +69,19 @@ export default function ListingPage() {
     setLoadingPrevious(false);
     setShowSkeleton(false);
 
-    hasLoadedRef.current = true;
-
     showLoadingTimeoutRef.current = setTimeout(() => {
-      if (hasLoadedRef.current) {
+      if (hasLoadedRef.current && currentId === id) {
         setShowSkeleton(true);
       }
     }, 500);
 
-    const currentId = id;
-
-    const listingPromise = listingsApi.getOne(currentId);
+    const listingPromise = needsRefresh
+      ? api.get<Listing>(`/api/listings/${currentId}`, { 
+          params: { _t: Date.now() },
+          headers: { 'X-Skip-Error-Handling': 'true' }
+        })
+      : listingsApi.getOne(currentId);
+    
     const favoritePromise = user
       ? favoritesApi
           .check(currentId)
@@ -85,13 +91,21 @@ export default function ListingPage() {
 
     Promise.all([listingPromise, favoritePromise])
       .then(([listingRes, favoriteValue]) => {
-        if (!hasLoadedRef.current || currentId !== id) {
+        // Check if component is still mounted and id hasn't changed
+        if (currentId !== id) {
           return;
         }
+        
         if (showLoadingTimeoutRef.current) {
           clearTimeout(showLoadingTimeoutRef.current);
           showLoadingTimeoutRef.current = null;
         }
+        
+        if (!listingRes?.data) {
+          console.error('No listing data received');
+          throw new Error('No listing data received');
+        }
+        
         const hasVin = listingRes.data.vin;
         flushSync(() => {
           setListing(listingRes.data);
@@ -101,6 +115,7 @@ export default function ListingPage() {
             setLoadingPrevious(true);
           }
         });
+        
         if (hasVin && listingRes.data.vin) {
           listingsApi
             .getByVin(listingRes.data.vin, currentId)
@@ -120,30 +135,92 @@ export default function ListingPage() {
               }
             });
         }
+        
+        if (needsRefresh) {
+          sessionStorage.removeItem(`refreshListing_${currentId}`);
+        }
       })
-      .catch(() => {
-        if (!hasLoadedRef.current || currentId !== id) {
+      .catch((error) => {
+        console.error('Error loading listing:', error);
+        
+        // Check if component is still mounted and id hasn't changed
+        if (currentId !== id) {
           return;
         }
+        
         if (showLoadingTimeoutRef.current) {
           clearTimeout(showLoadingTimeoutRef.current);
           showLoadingTimeoutRef.current = null;
         }
+        
+        // If refresh failed, try without refresh flag
+        if (needsRefresh && !forceRefresh && error?.code !== 'ECONNABORTED') {
+          // Refresh failed, trying without refresh flag
+          sessionStorage.removeItem(`refreshListing_${currentId}`);
+          // Use setTimeout to avoid infinite loop
+          setTimeout(() => {
+            if (currentId === id) {
+              fetchListingData(false);
+            }
+          }, 500);
+          return;
+        }
+        
         const favoriteValue = check(currentId);
         flushSync(() => {
           setListing(null);
           setIsFavorite(favoriteValue);
           setShowSkeleton(false);
         });
+        
+        if (needsRefresh) {
+          sessionStorage.removeItem(`refreshListing_${currentId}`);
+        }
       });
+  }, [id, user, check]);
+
+  useEffect(() => {
+    const shouldRefresh = sessionStorage.getItem(`refreshListing_${id}`) === 'true';
+    hasLoadedRef.current = true;
+    fetchListingData(shouldRefresh);
 
     return () => {
+      hasLoadedRef.current = false;
       if (showLoadingTimeoutRef.current) {
         clearTimeout(showLoadingTimeoutRef.current);
         showLoadingTimeoutRef.current = null;
       }
     };
-  }, [id, user, check]);
+  }, [fetchListingData, id]);
+
+  useEffect(() => {
+    const checkAndRefresh = () => {
+      const shouldRefresh = sessionStorage.getItem(`refreshListing_${id}`) === 'true';
+      if (shouldRefresh && hasLoadedRef.current) {
+        fetchListingData(true);
+      }
+    };
+
+    // Don't call immediately on mount - let the first useEffect handle initial load
+    // Only set up listeners for visibility/focus changes
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkAndRefresh();
+      }
+    };
+
+    const handleFocus = () => {
+      checkAndRefresh();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [id, fetchListingData]);
 
   const handleToggleFavorite = async () => {
     if (!user) {

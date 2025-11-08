@@ -107,7 +107,6 @@ export class FavoritesService {
 
       return result;
     } catch (error) {
-      console.error('Error in checkBatch:', error);
       throw error;
     }
   }
