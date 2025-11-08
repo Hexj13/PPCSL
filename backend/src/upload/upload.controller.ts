@@ -108,6 +108,10 @@ export class UploadController {
       throw new BadRequestException('Фајлот не е приложен');
     }
 
+    if (!file.buffer || file.buffer.length === 0) {
+      throw new BadRequestException('Фајлот е празен');
+    }
+
     const filePath = await this.uploadService.saveFile(file);
     const baseUrl = process.env.API_URL || 'http://localhost:4000';
 

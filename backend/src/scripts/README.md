@@ -28,7 +28,7 @@ These scripts are **blocked from running in production** and can only be execute
 - `add-models-to-brand.ts` - Add models to existing brand
 - `delete-all-brands.ts` - Delete all brands
 - `check-brands-count.ts` - Check brand count
-- `check-brands-dates.ts` - Check brand creation dates
+- `check-brands-dates.ts` - Check brand creation dates (not available via npm script, internal utility)
 - `check-models-stats.ts` - Models statistics
 - `cleanup-brands.ts` - Cleanup and synchronize brands
 - `sync-carquery.ts` - Synchronize from CarQuery API

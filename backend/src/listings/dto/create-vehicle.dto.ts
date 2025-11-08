@@ -22,7 +22,7 @@ export class CreateVehicleDto {
     example: 2020,
     description: 'Manufacturing year',
     minimum: 1900,
-    maximum: 2025,
+    maximum: new Date().getFullYear() + 1,
   })
   @IsInt()
   @Min(1900)

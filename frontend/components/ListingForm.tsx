@@ -244,6 +244,19 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
       return false;
     }
 
+    const year = parseInt(formData.vehicle.year, 10);
+    if (isNaN(year) || !Number.isInteger(year) || year <= 0) {
+      toast.error('Годината мора да биде позитивен цел број');
+      return false;
+    }
+
+    const currentYear = new Date().getFullYear();
+    const maxYear = currentYear + 1;
+    if (year > maxYear) {
+      toast.error(`Годината не може да биде поголема од ${maxYear}`);
+      return false;
+    }
+
     if (!formData.vehicle.engine_displ_l) {
       toast.error('Потребно е да внесете запремина на моторот');
       return false;
@@ -516,13 +529,21 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
               required
               min="1900"
               max={new Date().getFullYear() + 1}
+              step="1"
               value={formData.vehicle.year}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  vehicle: { ...prev.vehicle, year: e.target.value },
-                }))
-              }
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^0-9]/g, '');
+                if (
+                  value === '' ||
+                  (parseInt(value, 10) >= 1900 &&
+                    parseInt(value, 10) <= new Date().getFullYear() + 1)
+                ) {
+                  setFormData((prev) => ({
+                    ...prev,
+                    vehicle: { ...prev.vehicle, year: value },
+                  }));
+                }
+              }}
               onWheel={handleWheel}
               className="input-field h-[48px]"
               placeholder="2020"
@@ -756,6 +777,15 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                   setFormData((prev) => ({
                     ...prev,
                     vehicle: { ...prev.vehicle, mileage_km: value },
+                  }));
+                }
+              }}
+              onBlur={(e) => {
+                const value = e.target.value.trim();
+                if (value && /^0+$/.test(value)) {
+                  setFormData((prev) => ({
+                    ...prev,
+                    vehicle: { ...prev.vehicle, mileage_km: '0' },
                   }));
                 }
               }}
@@ -1068,6 +1098,15 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                   const value = e.target.value.replace(/[^0-9]/g, '');
                   setFormData((prev) => ({ ...prev, price: value }));
                 }}
+                onBlur={(e) => {
+                  const value = e.target.value.trim();
+                  if (value && /^0+$/.test(value)) {
+                    setFormData((prev) => ({
+                      ...prev,
+                      price: '0',
+                    }));
+                  }
+                }}
                 onWheel={handleWheel}
                 className="input-field flex-1 h-[48px]"
                 placeholder="0"
@@ -1242,6 +1281,18 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                   toast.error('Поддржани се само слики (JPEG, PNG, GIF, WebP)');
                   return;
                 }
+
+                const maxSize = 10 * 1024 * 1024;
+                if (file.size > maxSize) {
+                  toast.error('Максимална големина на фајлот е 10MB');
+                  return;
+                }
+
+                if (file.size === 0) {
+                  toast.error('Фајлот е празен');
+                  return;
+                }
+
                 handleFileUpload(file);
               } else {
                 toast.error('Максимум 20 фотографии');

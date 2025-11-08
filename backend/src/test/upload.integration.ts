@@ -65,6 +65,43 @@ describe('Upload API Integration Tests', () => {
 
       expect(response).toSatisfyApiSpec();
     });
+
+    it('should reject file with invalid magic bytes', async () => {
+      const invalidBuffer = Buffer.from([0x4d, 0x5a, 0x90, 0x00]);
+
+      const response = await request
+        .post('/api/upload/image')
+        .set('Authorization', `Bearer ${authToken}`)
+        .attach('file', invalidBuffer, 'fake.jpg')
+        .expect(400);
+
+      expect(response.body.message).toContain('Невалиден тип на датотека');
+    });
+
+    it('should reject file with mismatched MIME type', async () => {
+      const pngBuffer = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+      const response = await request
+        .post('/api/upload/image')
+        .set('Authorization', `Bearer ${authToken}`)
+        .attach('file', pngBuffer, 'test.jpg')
+        .field('Content-Type', 'image/jpeg')
+        .expect(400);
+
+      expect(response.body.message).toContain('Невалиден тип на датотека');
+    });
+
+    it('should reject empty file', async () => {
+      const emptyBuffer = Buffer.from([]);
+
+      const response = await request
+        .post('/api/upload/image')
+        .set('Authorization', `Bearer ${authToken}`)
+        .attach('file', emptyBuffer, 'empty.jpg')
+        .expect(400);
+
+      expect(response.body.message).toContain('Фајлот е празен');
+    });
   });
 
   describe('GET /api/upload/image/:filename', () => {

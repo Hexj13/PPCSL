@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 
+import { BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import sharp from 'sharp';
@@ -47,6 +48,15 @@ describe('UploadService', () => {
 
   describe('saveFile', () => {
     it('should save and optimize image file', async () => {
+      const validJpegBuffer = Buffer.from([
+        0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01,
+      ]);
+      const validFile: Express.Multer.File = {
+        ...mockFile,
+        buffer: validJpegBuffer,
+        mimetype: 'image/jpeg',
+      };
+
       const mockMetadata = { width: 2000, height: 1500 };
       const mockBuffer = Buffer.from('compressed-image');
       const mockImage = {
@@ -60,10 +70,10 @@ describe('UploadService', () => {
       (fs.existsSync as jest.Mock).mockReturnValue(true);
       (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
 
-      const result = await service.saveFile(mockFile);
+      const result = await service.saveFile(validFile);
 
       expect(result).toMatch(/^\/uploads\/.*\.webp$/);
-      expect(sharp).toHaveBeenCalledWith(mockFile.buffer);
+      expect(sharp).toHaveBeenCalledWith(validFile.buffer);
       expect(mockImage.resize).toHaveBeenCalledWith(1920, null, {
         withoutEnlargement: true,
         fit: 'inside',
@@ -72,7 +82,180 @@ describe('UploadService', () => {
       expect(fs.writeFileSync).toHaveBeenCalled();
     });
 
+    it('should reject file with invalid magic bytes', async () => {
+      const invalidBuffer = Buffer.from([0x4d, 0x5a, 0x90, 0x00]);
+      const invalidFile: Express.Multer.File = {
+        ...mockFile,
+        buffer: invalidBuffer,
+        mimetype: 'image/jpeg',
+      };
+
+      await expect(service.saveFile(invalidFile)).rejects.toThrow(BadRequestException);
+      await expect(service.saveFile(invalidFile)).rejects.toThrow('Невалиден тип на датотека');
+    });
+
+    it('should reject file with mismatched MIME type and magic bytes', async () => {
+      const pngBuffer = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+      const mismatchedFile: Express.Multer.File = {
+        ...mockFile,
+        buffer: pngBuffer,
+        mimetype: 'image/jpeg',
+      };
+
+      await expect(service.saveFile(mismatchedFile)).rejects.toThrow(BadRequestException);
+    });
+
+    it('should accept valid PNG file', async () => {
+      const pngBuffer = Buffer.from([
+        0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x00,
+      ]);
+      const pngFile: Express.Multer.File = {
+        ...mockFile,
+        buffer: pngBuffer,
+        mimetype: 'image/png',
+      };
+
+      const mockMetadata = { width: 1000, height: 750 };
+      const mockBuffer = Buffer.from('compressed-image');
+      const mockImage = {
+        metadata: jest.fn().mockResolvedValue(mockMetadata),
+        webp: jest.fn().mockReturnThis(),
+        toBuffer: jest.fn().mockResolvedValue(mockBuffer),
+      };
+
+      (sharp as unknown as jest.Mock).mockReturnValue(mockImage);
+      (fs.existsSync as jest.Mock).mockReturnValue(true);
+      (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+
+      const result = await service.saveFile(pngFile);
+      expect(result).toMatch(/^\/uploads\/.*\.webp$/);
+    });
+
+    it('should accept valid GIF file', async () => {
+      const gifBuffer = Buffer.from([
+        0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      ]);
+      const gifFile: Express.Multer.File = {
+        ...mockFile,
+        buffer: gifBuffer,
+        mimetype: 'image/gif',
+      };
+
+      const mockMetadata = { width: 1000, height: 750 };
+      const mockBuffer = Buffer.from('compressed-image');
+      const mockImage = {
+        metadata: jest.fn().mockResolvedValue(mockMetadata),
+        webp: jest.fn().mockReturnThis(),
+        toBuffer: jest.fn().mockResolvedValue(mockBuffer),
+      };
+
+      (sharp as unknown as jest.Mock).mockReturnValue(mockImage);
+      (fs.existsSync as jest.Mock).mockReturnValue(true);
+      (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+
+      const result = await service.saveFile(gifFile);
+      expect(result).toMatch(/^\/uploads\/.*\.webp$/);
+    });
+
+    it('should accept valid WebP file', async () => {
+      const webpBuffer = Buffer.from([
+        0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50,
+      ]);
+      const webpFile: Express.Multer.File = {
+        ...mockFile,
+        buffer: webpBuffer,
+        mimetype: 'image/webp',
+      };
+
+      const mockMetadata = { width: 1000, height: 750 };
+      const mockBuffer = Buffer.from('compressed-image');
+      const mockImage = {
+        metadata: jest.fn().mockResolvedValue(mockMetadata),
+        webp: jest.fn().mockReturnThis(),
+        toBuffer: jest.fn().mockResolvedValue(mockBuffer),
+      };
+
+      (sharp as unknown as jest.Mock).mockReturnValue(mockImage);
+      (fs.existsSync as jest.Mock).mockReturnValue(true);
+      (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+
+      const result = await service.saveFile(webpFile);
+      expect(result).toMatch(/^\/uploads\/.*\.webp$/);
+    });
+
+    it('should reject file without valid metadata', async () => {
+      const validJpegBuffer = Buffer.from([
+        0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01,
+      ]);
+      const validFile: Express.Multer.File = {
+        ...mockFile,
+        buffer: validJpegBuffer,
+        mimetype: 'image/jpeg',
+      };
+
+      const mockImage = {
+        metadata: jest.fn().mockResolvedValue({}),
+      };
+
+      (sharp as unknown as jest.Mock).mockReturnValue(mockImage);
+
+      await expect(service.saveFile(validFile)).rejects.toThrow(BadRequestException);
+      await expect(service.saveFile(validFile)).rejects.toThrow(
+        'Невалидна слика. Не може да се прочита метадатата',
+      );
+    });
+
+    it('should reject image that is too large', async () => {
+      const validJpegBuffer = Buffer.from([
+        0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01,
+      ]);
+      const validFile: Express.Multer.File = {
+        ...mockFile,
+        buffer: validJpegBuffer,
+        mimetype: 'image/jpeg',
+      };
+
+      const mockMetadata = { width: 15000, height: 15000 };
+      const mockImage = {
+        metadata: jest.fn().mockResolvedValue(mockMetadata),
+      };
+
+      (sharp as unknown as jest.Mock).mockReturnValue(mockImage);
+
+      await expect(service.saveFile(validFile)).rejects.toThrow(BadRequestException);
+      await expect(service.saveFile(validFile)).rejects.toThrow('Сликата е премногу голема');
+    });
+
+    it('should handle Sharp processing errors', async () => {
+      const validJpegBuffer = Buffer.from([
+        0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01,
+      ]);
+      const validFile: Express.Multer.File = {
+        ...mockFile,
+        buffer: validJpegBuffer,
+        mimetype: 'image/jpeg',
+      };
+
+      const mockImage = {
+        metadata: jest.fn().mockRejectedValue(new Error('Sharp error')),
+      };
+
+      (sharp as unknown as jest.Mock).mockReturnValue(mockImage);
+
+      await expect(service.saveFile(validFile)).rejects.toThrow(BadRequestException);
+      await expect(service.saveFile(validFile)).rejects.toThrow('Грешка при обработка на сликата');
+    });
+
     it('should not resize if image width is less than maxWidth', async () => {
+      const validJpegBuffer = Buffer.from([
+        0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01,
+      ]);
+      const validFile: Express.Multer.File = {
+        ...mockFile,
+        buffer: validJpegBuffer,
+        mimetype: 'image/jpeg',
+      };
+
       const mockMetadata = { width: 1000, height: 750 };
       const mockBuffer = Buffer.from('compressed-image');
       const mockImage = {
@@ -86,13 +269,22 @@ describe('UploadService', () => {
       (fs.existsSync as jest.Mock).mockReturnValue(true);
       (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
 
-      await service.saveFile(mockFile);
+      await service.saveFile(validFile);
 
       expect(mockImage.resize).not.toHaveBeenCalled();
     });
 
     it('should save file successfully', async () => {
-      const mockMetadata = { width: 1000 };
+      const validJpegBuffer = Buffer.from([
+        0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01,
+      ]);
+      const validFile: Express.Multer.File = {
+        ...mockFile,
+        buffer: validJpegBuffer,
+        mimetype: 'image/jpeg',
+      };
+
+      const mockMetadata = { width: 1000, height: 750 };
       const mockBuffer = Buffer.from('compressed-image');
       const mockImage = {
         metadata: jest.fn().mockResolvedValue(mockMetadata),
@@ -104,7 +296,7 @@ describe('UploadService', () => {
       (fs.existsSync as jest.Mock).mockReturnValue(true);
       (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
 
-      const result = await service.saveFile(mockFile);
+      const result = await service.saveFile(validFile);
 
       expect(result).toMatch(/^\/uploads\/[a-f0-9-]+\.webp$/);
       expect(fs.writeFileSync).toHaveBeenCalled();

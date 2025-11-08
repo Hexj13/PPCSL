@@ -534,8 +534,14 @@ export default function ProfilePage() {
               </label>
               <input
                 type="text"
+                maxLength={100}
                 value={formData.companyName || ''}
-                onChange={(e) => handleChange('companyName', e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value.length <= 100) {
+                    handleChange('companyName', value);
+                  }
+                }}
                 className="input-field"
                 placeholder="Внесете го името на компанијата"
               />
@@ -551,8 +557,14 @@ export default function ProfilePage() {
                 <label className="block text-sm font-semibold mb-2 text-primary-400">Име</label>
                 <input
                   type="text"
+                  maxLength={50}
                   value={formData.firstName || ''}
-                  onChange={(e) => handleChange('firstName', e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^a-zA-Zа-яА-ЯёЁјЈљЉњЊќЌџЅ\s-]/g, '');
+                    if (value.length <= 50) {
+                      handleChange('firstName', value);
+                    }
+                  }}
                   className="input-field"
                   placeholder="Внесете го вашето име"
                 />
@@ -562,8 +574,14 @@ export default function ProfilePage() {
                 <label className="block text-sm font-semibold mb-2 text-primary-400">Презиме</label>
                 <input
                   type="text"
+                  maxLength={50}
                   value={formData.lastName || ''}
-                  onChange={(e) => handleChange('lastName', e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^a-zA-Zа-яА-ЯёЁјЈљЉњЊќЌџЅ\s-]/g, '');
+                    if (value.length <= 50) {
+                      handleChange('lastName', value);
+                    }
+                  }}
                   className="input-field"
                   placeholder="Внесете го вашето презиме"
                 />

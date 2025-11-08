@@ -131,6 +131,89 @@ describe('Listings API Integration Tests', () => {
 
       expect(response).toSatisfyApiSpec();
     });
+
+    it('should reject year greater than current year + 1', async () => {
+      if (!brandId || !modelId) {
+        return;
+      }
+
+      const currentYear = new Date().getFullYear();
+      const invalidYear = currentYear + 2;
+
+      const listingData = {
+        price: 10000,
+        currency: 'MKD',
+        city: 'Skopje',
+        images: [
+          'http://localhost:4000/uploads/test-image-1.webp',
+          'http://localhost:4000/uploads/test-image-2.webp',
+        ],
+        condition: 'Undamaged',
+        registration_type: 'Local',
+        horsepower: 150,
+        vehicle: {
+          brand_id: brandId,
+          model_id: modelId,
+          year: invalidYear,
+          body_type: 'Sedan',
+          engine_displ_l: 2.0,
+          mileage_km: 50000,
+          fuel: 'Petrol',
+          transmission: 'Manual',
+          drive_type: 'FWD',
+        },
+      };
+
+      const response = await request
+        .post('/api/listings')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(listingData)
+        .expect(400);
+
+      expect(response.body.message).toContain('year');
+    });
+
+    it('should sanitize HTML in description', async () => {
+      if (!brandId || !modelId) {
+        return;
+      }
+
+      const listingData = {
+        price: 10000,
+        currency: 'MKD',
+        city: 'Skopje',
+        description: '<p>Safe</p><script>alert("xss")</script><strong>Bold</strong>',
+        images: [
+          'http://localhost:4000/uploads/test-image-1.webp',
+          'http://localhost:4000/uploads/test-image-2.webp',
+        ],
+        condition: 'Undamaged',
+        registration_type: 'Local',
+        horsepower: 150,
+        vehicle: {
+          brand_id: brandId,
+          model_id: modelId,
+          year: 2020,
+          body_type: 'Sedan',
+          engine_displ_l: 2.0,
+          mileage_km: 50000,
+          fuel: 'Petrol',
+          transmission: 'Manual',
+          drive_type: 'FWD',
+        },
+      };
+
+      const response = await request
+        .post('/api/listings')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(listingData)
+        .expect(201);
+
+      expect(response.body.description).toContain('<p>');
+      expect(response.body.description).toContain('<strong>');
+      expect(response.body.description).not.toContain('<script>');
+      expect(response.body.description).not.toContain('alert');
+    });
   });
 
   describe('GET /api/listings/my', () => {

@@ -13,6 +13,7 @@ import { In, LessThanOrEqual, Repository } from 'typeorm';
 import { BrandsService } from '../brands/brands.service';
 import { RedisService } from '../common/redis.service';
 import { Currency as CurrencyEnum, ListingStatus as ListingStatusEnum } from '../common/types';
+import { sanitizeHtml } from '../common/utils/html-sanitizer';
 import { UsersService } from '../users/users.service';
 
 import { CreateListingDto } from './dto/create-listing.dto';
@@ -77,6 +78,9 @@ export class ListingsService {
 
     const listing = this.listingsRepository.create({
       ...createListingDto,
+      description: createListingDto.description
+        ? sanitizeHtml(createListingDto.description)
+        : undefined,
       title,
       status,
       currency: createListingDto.currency || CurrencyEnum.MKD,
@@ -574,6 +578,9 @@ export class ListingsService {
     const { vehicle, registration_expires_at, ...listingFields } = updateListingDto;
     const listingUpdateData: Partial<Listing> = {
       ...listingFields,
+      description: listingFields.description
+        ? sanitizeHtml(listingFields.description)
+        : listingFields.description,
       last_updated_at: new Date(),
       title: await this.generateTitle(updatedVehicle),
     };

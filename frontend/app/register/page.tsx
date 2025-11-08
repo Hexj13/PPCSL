@@ -794,8 +794,14 @@ export default function RegisterPage() {
               <input
                 type="text"
                 required
+                maxLength={100}
                 value={formData.companyName}
-                onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value.length <= 100) {
+                    setFormData({ ...formData, companyName: value });
+                  }
+                }}
                 className="input-field"
                 placeholder="Име на компанијата"
                 autoComplete="off"

@@ -6,6 +6,13 @@ import { brandsApi, citiesApi } from '@/lib/api';
 
 import { SearchFilters } from './SearchFilters';
 
+jest.mock('react-hot-toast', () => ({
+  toast: {
+    success: jest.fn(),
+    error: jest.fn(),
+  },
+}));
+
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
   useSearchParams: jest.fn(),
@@ -243,6 +250,245 @@ describe('SearchFilters', () => {
 
     await waitFor(() => {
       expect(mockGet).toHaveBeenCalled();
+    });
+  });
+
+  describe('Validation', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      mockGet.mockReturnValue(null);
+    });
+
+    it('should validate year range (from <= to)', async () => {
+      const { toast } = require('react-hot-toast');
+      render(<SearchFilters />);
+
+      await waitFor(() => {
+        expect(brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const yearFromInput = screen.getByPlaceholderText(/2018/i);
+      const yearToInput = screen.getByPlaceholderText(/2023/i);
+
+      fireEvent.change(yearFromInput, { target: { value: '2023' } });
+      fireEvent.change(yearToInput, { target: { value: '2020' } });
+
+      const form = screen.getByText('Основни критерии').closest('form');
+      if (form) {
+        fireEvent.submit(form);
+      }
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(
+          expect.stringContaining('Годината "од" не може да биде поголема од годината "до"')
+        );
+      });
+    });
+
+    it('should validate year is within valid range (1900 - current year + 1)', async () => {
+      const { toast } = require('react-hot-toast');
+      render(<SearchFilters />);
+
+      await waitFor(() => {
+        expect(brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const currentYear = new Date().getFullYear();
+      const maxYear = currentYear + 1;
+      const invalidYear = maxYear + 1;
+
+      const yearInput = screen.getByPlaceholderText(/2018/i);
+      fireEvent.change(yearInput, { target: { value: invalidYear.toString() } });
+      fireEvent.blur(yearInput);
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(
+          expect.stringContaining(`Годината мора да биде помеѓу 1900 и ${maxYear}`)
+        );
+      });
+    });
+
+    it('should validate price range (from <= to)', async () => {
+      const { toast } = require('react-hot-toast');
+      render(<SearchFilters />);
+
+      await waitFor(() => {
+        expect(brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const priceFromInput = screen.getByPlaceholderText(/0/i);
+      const priceToInput = screen.getByPlaceholderText(/500000/i);
+
+      fireEvent.change(priceFromInput, { target: { value: '500000' } });
+      fireEvent.change(priceToInput, { target: { value: '100000' } });
+
+      const form = screen.getByText('Основни критерии').closest('form');
+      if (form) {
+        fireEvent.submit(form);
+      }
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(
+          expect.stringContaining('Цената "од" не може да биде поголема од цената "до"')
+        );
+      });
+    });
+
+    it('should validate price is within valid range (0-999999999)', async () => {
+      const { toast } = require('react-hot-toast');
+      render(<SearchFilters />);
+
+      await waitFor(() => {
+        expect(brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const priceInput = screen.getByPlaceholderText(/0/i);
+      fireEvent.change(priceInput, { target: { value: '1000000000' } });
+      fireEvent.blur(priceInput);
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(
+          expect.stringContaining('Цената мора да биде помеѓу 0 и 999999999')
+        );
+      });
+    });
+
+    it('should validate mileage range (from <= to)', async () => {
+      const { toast } = require('react-hot-toast');
+      render(<SearchFilters />);
+
+      await waitFor(() => {
+        expect(brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const toggleButton = screen.getByText('Прикажи');
+      fireEvent.click(toggleButton);
+
+      await waitFor(() => {
+        const mileageFromInput = screen.getByPlaceholderText(/0/i);
+        const mileageToInput = screen.getByPlaceholderText(/200000/i);
+
+        fireEvent.change(mileageFromInput, { target: { value: '200000' } });
+        fireEvent.change(mileageToInput, { target: { value: '100000' } });
+
+        const form = screen.getByText('Основни критерии').closest('form');
+        if (form) {
+          fireEvent.submit(form);
+        }
+      });
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(
+          expect.stringContaining('Поминувањето "од" не може да биде поголемо од поминувањето "до"')
+        );
+      });
+    });
+
+    it('should validate horsepower range (from <= to)', async () => {
+      const { toast } = require('react-hot-toast');
+      render(<SearchFilters />);
+
+      await waitFor(() => {
+        expect(brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const toggleButton = screen.getByText('Прикажи');
+      fireEvent.click(toggleButton);
+
+      await waitFor(() => {
+        const hpFromInput = screen.getByPlaceholderText(/100/i);
+        const hpToInput = screen.getByPlaceholderText(/500/i);
+
+        fireEvent.change(hpFromInput, { target: { value: '500' } });
+        fireEvent.change(hpToInput, { target: { value: '300' } });
+
+        const form = screen.getByText('Основни критерии').closest('form');
+        if (form) {
+          fireEvent.submit(form);
+        }
+      });
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(
+          expect.stringContaining('Коњските сили "од" не може да бидат поголеми од "до"')
+        );
+      });
+    });
+
+    it('should validate engine displacement range (from <= to)', async () => {
+      const { toast } = require('react-hot-toast');
+      render(<SearchFilters />);
+
+      await waitFor(() => {
+        expect(brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const toggleButton = screen.getByText('Прикажи');
+      fireEvent.click(toggleButton);
+
+      await waitFor(() => {
+        const engineFromInput = screen.getByPlaceholderText(/1\.0/i);
+        const engineToInput = screen.getByPlaceholderText(/6\.0/i);
+
+        fireEvent.change(engineFromInput, { target: { value: '6.0' } });
+        fireEvent.change(engineToInput, { target: { value: '3.0' } });
+
+        const form = screen.getByText('Основни критерии').closest('form');
+        if (form) {
+          fireEvent.submit(form);
+        }
+      });
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(
+          expect.stringContaining('Запремината на моторот "од" не може да биде поголема од "до"')
+        );
+      });
+    });
+
+    it('should only allow digits in year input', async () => {
+      render(<SearchFilters />);
+
+      await waitFor(() => {
+        expect(brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const yearInput = screen.getByPlaceholderText(/2018/i);
+      fireEvent.change(yearInput, { target: { value: '2020abc' } });
+
+      await waitFor(() => {
+        expect(yearInput).toHaveValue('2020');
+      });
+    });
+
+    it('should limit year input to 4 characters', async () => {
+      render(<SearchFilters />);
+
+      await waitFor(() => {
+        expect(brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const yearInput = screen.getByPlaceholderText(/2018/i);
+      fireEvent.change(yearInput, { target: { value: '20201' } });
+
+      await waitFor(() => {
+        expect(yearInput).toHaveValue('2020');
+      });
+    });
+
+    it('should only allow digits in price input', async () => {
+      render(<SearchFilters />);
+
+      await waitFor(() => {
+        expect(brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const priceInput = screen.getByPlaceholderText(/0/i);
+      fireEvent.change(priceInput, { target: { value: '10000abc' } });
+
+      await waitFor(() => {
+        expect(priceInput).toHaveValue('10000');
+      });
     });
   });
 });

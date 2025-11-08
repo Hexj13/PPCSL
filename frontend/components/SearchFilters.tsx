@@ -151,9 +151,10 @@ export function SearchFilters() {
 
     const year = parseInt(value);
     const currentYear = new Date().getFullYear();
+    const maxYear = currentYear + 1;
 
-    if (isNaN(year) || year < 1900 || year > currentYear) {
-      toast.error('Годината мора да биде помеѓу 1900 и ' + currentYear);
+    if (isNaN(year) || year < 1900 || year > maxYear) {
+      toast.error('Годината мора да биде помеѓу 1900 и ' + maxYear);
       handleChange(key, '');
     }
   };

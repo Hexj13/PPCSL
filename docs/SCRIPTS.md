@@ -48,10 +48,11 @@ npm run sync-carquery
 **Files:**
 - `check-brands-count.ts` - Check brand count
 - `check-models-stats.ts` - Models statistics by brand
-- `check-brands-dates.ts` - Check creation dates
 - `delete-all-brands.ts` - Delete all brands and related data
 - `cleanup-brands.ts` - Cleanup and synchronize brands
 - `sync-carquery.ts` - Synchronize from CarQuery API
+
+**Note:** `check-brands-dates.ts` exists but is not available via npm script (internal utility).
 
 ## 🗄️ Database Scripts
 

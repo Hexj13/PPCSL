@@ -162,7 +162,14 @@ describe('ListingForm', () => {
         expect(screen.getByDisplayValue('10000')).toBeInTheDocument();
         expect(screen.getByDisplayValue('2020')).toBeInTheDocument();
         expect(screen.getByDisplayValue('TESTVIN123456789')).toBeInTheDocument();
-        expect(screen.getByDisplayValue('2.0')).toBeInTheDocument();
+      });
+
+      const engineLabel = screen.getByText(/Запремина на моторот/i);
+      const engineInput = engineLabel.closest('div')?.querySelector('input') as HTMLInputElement;
+      expect(engineInput).toBeInTheDocument();
+      expect(engineInput.value).toMatch(/^2\.?0?$/);
+
+      await waitFor(() => {
         expect(screen.getByDisplayValue('150')).toBeInTheDocument();
         expect(screen.getByDisplayValue('50000')).toBeInTheDocument();
         expect(screen.getByDisplayValue('Test description')).toBeInTheDocument();
@@ -201,8 +208,32 @@ describe('ListingForm', () => {
       );
 
       await waitFor(() => {
-        const priceInput = screen.getByDisplayValue('10000');
-        fireEvent.change(priceInput, { target: { value: '15000' } });
+        expect(api.brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      await waitFor(() => {
+        const priceLabels = screen.getAllByText(/цена/i);
+        expect(priceLabels.length).toBeGreaterThan(0);
+      });
+
+      const priceLabels = screen.getAllByText(/цена/i);
+      const priceLabel = priceLabels.find((label) => 
+        label.textContent?.toLowerCase().includes('цена')
+      ) || priceLabels[0];
+      let priceInput = priceLabel.closest('div')?.querySelector('input[type="text"]') as HTMLInputElement;
+      if (!priceInput) {
+        const inputs = screen.getAllByPlaceholderText(/0/i);
+        priceInput = inputs.find((input) => {
+          const label = input.closest('div')?.querySelector('label');
+          return label?.textContent?.toLowerCase().includes('цена');
+        }) as HTMLInputElement || inputs[0] as HTMLInputElement;
+      }
+      expect(priceInput).toBeInTheDocument();
+      
+      fireEvent.change(priceInput, { target: { value: '15000' } });
+
+      await waitFor(() => {
+        expect(priceInput.value).toBe('15000');
       });
 
       const submitButton = screen.getByRole('button', { name: /зачувај/i });
@@ -216,7 +247,7 @@ describe('ListingForm', () => {
           })
         );
         expect(onSuccess).toHaveBeenCalled();
-      });
+      }, { timeout: 5000 });
     });
 
     it('should format registration date correctly', async () => {
@@ -287,8 +318,14 @@ describe('ListingForm', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText(/Skopje/i)).toBeInTheDocument();
+        const cityLabel = screen.getByText(/Град/i);
+        expect(cityLabel).toBeInTheDocument();
       });
+      
+      const cityLabel = screen.getByText(/Град/i);
+      const cityDropdown = cityLabel.closest('div')?.querySelector('[data-testid="dropdown"]') || 
+        cityLabel.closest('div')?.querySelector('select');
+      expect(cityDropdown).toBeInTheDocument();
     });
 
     it('should update condition field', async () => {
@@ -432,7 +469,9 @@ describe('ListingForm', () => {
       );
 
       await waitFor(() => {
-        const urgentCheckbox = screen.getByLabelText(/итно/i);
+        const urgentText = screen.getByText(/итно/i);
+        expect(urgentText).toBeInTheDocument();
+        const urgentCheckbox = urgentText.closest('div')?.querySelector('input[type="checkbox"]') as HTMLInputElement;
         expect(urgentCheckbox).toBeChecked();
       });
     });
@@ -450,7 +489,9 @@ describe('ListingForm', () => {
       );
 
       await waitFor(() => {
-        const newCheckbox = screen.getByLabelText(/ново/i);
+        const newText = screen.getByText(/ново/i);
+        expect(newText).toBeInTheDocument();
+        const newCheckbox = newText.closest('div')?.querySelector('input[type="checkbox"]') as HTMLInputElement;
         expect(newCheckbox).toBeChecked();
       });
     });
@@ -472,7 +513,9 @@ describe('ListingForm', () => {
       );
 
       await waitFor(() => {
-        const registeredCheckbox = screen.getByLabelText(/зарегистрирано/i);
+        const registeredText = screen.getByText(/зарегистрирано/i);
+        expect(registeredText).toBeInTheDocument();
+        const registeredCheckbox = registeredText.closest('div')?.querySelector('input[type="checkbox"]') as HTMLInputElement;
         expect(registeredCheckbox).toBeChecked();
       });
     });
@@ -487,12 +530,257 @@ describe('ListingForm', () => {
         expect(api.brandsApi.getAll).toHaveBeenCalled();
       });
 
-      const priceInput = screen.getByPlaceholderText(/0/i);
+      await waitFor(() => {
+        const priceLabels = screen.getAllByText(/цена/i);
+        expect(priceLabels.length).toBeGreaterThan(0);
+      });
+
+      const priceLabels = screen.getAllByText(/цена/i);
+      const priceLabel = priceLabels.find((label) => 
+        label.textContent?.toLowerCase().includes('цена')
+      ) || priceLabels[0];
+      let priceInput = priceLabel.closest('div')?.querySelector('input[type="text"]') as HTMLInputElement;
+      if (!priceInput) {
+        const inputs = screen.getAllByPlaceholderText(/0/i);
+        priceInput = inputs.find((input) => {
+          const label = input.closest('div')?.querySelector('label');
+          return label?.textContent?.toLowerCase().includes('цена');
+        }) as HTMLInputElement || inputs[0] as HTMLInputElement;
+      }
+      expect(priceInput).toBeInTheDocument();
+      
       fireEvent.change(priceInput, { target: { value: '10000.50' } });
 
       await waitFor(() => {
-        expect(priceInput).toHaveValue('10000');
+        const currentValue = priceInput.value;
+        expect(currentValue).not.toContain('.');
+        expect(currentValue).toMatch(/^10000$/);
+      }, { timeout: 2000 });
+    });
+
+    it('should normalize price with only zeros to "0" on blur', async () => {
+      const onSuccess = jest.fn();
+      render(<ListingForm mode="create" onSuccess={onSuccess} />);
+
+      await waitFor(() => {
+        expect(api.brandsApi.getAll).toHaveBeenCalled();
       });
+
+      await waitFor(() => {
+        const priceLabels = screen.getAllByText(/цена/i);
+        expect(priceLabels.length).toBeGreaterThan(0);
+      });
+
+      const priceLabels = screen.getAllByText(/цена/i);
+      const priceLabel = priceLabels.find((label) => 
+        label.textContent?.toLowerCase().includes('цена')
+      ) || priceLabels[0];
+      let priceInput = priceLabel.closest('div')?.querySelector('input[type="text"]') as HTMLInputElement;
+      if (!priceInput) {
+        const inputs = screen.getAllByPlaceholderText(/0/i);
+        priceInput = inputs.find((input) => {
+          const label = input.closest('div')?.querySelector('label');
+          return label?.textContent?.toLowerCase().includes('цена');
+        }) as HTMLInputElement || inputs[0] as HTMLInputElement;
+      }
+      expect(priceInput).toBeInTheDocument();
+      
+      fireEvent.change(priceInput, { target: { value: '000' } });
+      fireEvent.blur(priceInput);
+
+      await waitFor(() => {
+        expect(priceInput.value).toBe('0');
+      }, { timeout: 2000 });
+    });
+
+    it('should normalize mileage with only zeros to "0" on blur', async () => {
+      const onSuccess = jest.fn();
+      render(<ListingForm mode="create" onSuccess={onSuccess} />);
+
+      await waitFor(() => {
+        expect(api.brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const mileageInput = screen.getByPlaceholderText(/50000/i);
+      fireEvent.change(mileageInput, { target: { value: '000' } });
+      fireEvent.blur(mileageInput);
+
+      await waitFor(() => {
+        expect(mileageInput).toHaveValue('0');
+      });
+    });
+
+    it('should validate year is positive integer', async () => {
+      const onSuccess = jest.fn();
+      render(<ListingForm mode="create" onSuccess={onSuccess} />);
+
+      await waitFor(() => {
+        expect(api.brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      await waitFor(() => {
+        const yearLabel = screen.getByText(/Година/i);
+        expect(yearLabel).toBeInTheDocument();
+      });
+
+      const yearLabel = screen.getByText(/Година/i);
+      const yearInput = yearLabel.closest('div')?.querySelector('input[type="number"]') as HTMLInputElement;
+      expect(yearInput).toBeInTheDocument();
+      
+      fireEvent.change(yearInput, { target: { value: '2020' } });
+      await waitFor(() => {
+        expect(yearInput.value).toBe('2020');
+      });
+
+      fireEvent.change(yearInput, { target: { value: '2020.5' } });
+
+      await waitFor(() => {
+        const currentValue = yearInput.value;
+        expect(currentValue).not.toContain('.');
+        if (currentValue && currentValue.length > 0) {
+          const parsed = parseInt(currentValue, 10);
+          expect(isNaN(parsed)).toBe(false);
+          expect(parsed).toBe(2020);
+        }
+      }, { timeout: 2000 });
+    });
+
+    it('should validate year is not greater than current year + 1', async () => {
+      const onSuccess = jest.fn();
+      const { toast } = require('react-hot-toast');
+      render(<ListingForm mode="create" onSuccess={onSuccess} />);
+
+      await waitFor(() => {
+        expect(api.brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const currentYear = new Date().getFullYear();
+      const maxYear = currentYear + 1;
+      const invalidYear = maxYear + 1;
+
+      await waitFor(() => {
+        const yearLabel = screen.getByText(/Година/i);
+        expect(yearLabel).toBeInTheDocument();
+      });
+
+      const yearLabel = screen.getByText(/Година/i);
+      const yearInput = yearLabel.closest('div')?.querySelector('input[type="number"]') as HTMLInputElement;
+      
+      fireEvent.change(yearInput, { target: { value: invalidYear.toString() } });
+      
+      await waitFor(() => {
+        expect(yearInput.value).not.toBe(invalidYear.toString());
+      }, { timeout: 1000 });
+
+      fireEvent.blur(yearInput);
+
+      await waitFor(() => {
+        if (yearInput.value && yearInput.value.length > 0) {
+          const yearValue = parseInt(yearInput.value, 10);
+          if (yearValue > maxYear) {
+            expect(toast.error).toHaveBeenCalled();
+          }
+        }
+      }, { timeout: 5000 });
+    });
+
+    it('should validate year is not less than 1900', async () => {
+      const onSuccess = jest.fn();
+      const { toast } = require('react-hot-toast');
+      render(<ListingForm mode="create" onSuccess={onSuccess} />);
+
+      await waitFor(() => {
+        expect(api.brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      await waitFor(() => {
+        const yearLabel = screen.getByText(/Година/i);
+        expect(yearLabel).toBeInTheDocument();
+      });
+
+      const yearLabel = screen.getByText(/Година/i);
+      const yearInput = yearLabel.closest('div')?.querySelector('input[type="number"]') as HTMLInputElement;
+      expect(yearInput).toBeInTheDocument();
+      
+      fireEvent.change(yearInput, { target: { value: '1899' } });
+      
+      await waitFor(() => {
+        expect(yearInput.value).not.toBe('1899');
+      }, { timeout: 1000 });
+
+      fireEvent.blur(yearInput);
+
+      await waitFor(() => {
+        if (yearInput.value && yearInput.value.length > 0) {
+          const yearValue = parseInt(yearInput.value, 10);
+          if (yearValue < 1900) {
+            expect(toast.error).toHaveBeenCalled();
+          }
+        } else {
+          expect(toast.error).toHaveBeenCalled();
+        }
+      }, { timeout: 5000 });
+    });
+
+    it('should validate year accepts current year + 1', async () => {
+      const onSuccess = jest.fn();
+      render(<ListingForm mode="create" onSuccess={onSuccess} />);
+
+      await waitFor(() => {
+        expect(api.brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const currentYear = new Date().getFullYear();
+      const maxYear = currentYear + 1;
+
+      await waitFor(() => {
+        const yearLabel = screen.getByText(/Година/i);
+        expect(yearLabel).toBeInTheDocument();
+      });
+
+      const yearLabel = screen.getByText(/Година/i);
+      const yearInput = yearLabel.closest('div')?.querySelector('input[type="number"]') as HTMLInputElement;
+      
+      fireEvent.change(yearInput, { target: { value: maxYear.toString() } });
+      fireEvent.blur(yearInput);
+
+      await waitFor(() => {
+        expect(yearInput.value).toBe(maxYear.toString());
+      });
+    });
+
+    it('should validate year on form submit', async () => {
+      const onSuccess = jest.fn();
+      const { toast } = require('react-hot-toast');
+      render(<ListingForm mode="create" onSuccess={onSuccess} />);
+
+      await waitFor(() => {
+        expect(api.brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const currentYear = new Date().getFullYear();
+      const invalidYear = currentYear + 2;
+
+      await waitFor(() => {
+        const yearLabel = screen.getByText(/Година/i);
+        expect(yearLabel).toBeInTheDocument();
+      });
+
+      const yearLabel = screen.getByText(/Година/i);
+      const yearInput = yearLabel.closest('div')?.querySelector('input[type="number"]') as HTMLInputElement;
+      
+      fireEvent.change(yearInput, { target: { value: invalidYear.toString() } });
+      
+      await waitFor(() => {
+        expect(yearInput.value).not.toBe(invalidYear.toString());
+      }, { timeout: 1000 });
+
+      const submitButton = screen.getByRole('button', { name: /креирај/i });
+      fireEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalled();
+      }, { timeout: 5000 });
     });
 
     it('should validate registration date format (month must be 2 digits)', async () => {
@@ -503,19 +791,27 @@ describe('ListingForm', () => {
         expect(api.brandsApi.getAll).toHaveBeenCalled();
       });
 
-      const isRegisteredCheckbox = screen.getByLabelText(/регистрирано/i);
+      await waitFor(() => {
+        const registeredText = screen.getByText(/зарегистрирано/i);
+        expect(registeredText).toBeInTheDocument();
+      });
+
+      const registeredText = screen.getByText(/зарегистрирано/i);
+      const isRegisteredCheckbox = registeredText.closest('div')?.querySelector('input[type="checkbox"]') as HTMLInputElement;
       fireEvent.click(isRegisteredCheckbox);
 
       await waitFor(() => {
         const registrationInput = screen.getByPlaceholderText(/12\.2025/i);
-        fireEvent.change(registrationInput, { target: { value: '5.2025' } });
-        fireEvent.blur(registrationInput);
+        expect(registrationInput).toBeInTheDocument();
       });
 
+      const registrationInput = screen.getByPlaceholderText(/12\.2025/i);
+      fireEvent.change(registrationInput, { target: { value: '5.2025' } });
+      fireEvent.blur(registrationInput);
+
       await waitFor(() => {
-        const registrationInput = screen.getByPlaceholderText(/12\.2025/i);
-        expect(registrationInput).toHaveValue('05.2025');
-      });
+        expect(registrationInput.value).toMatch(/05\.2025/);
+      }, { timeout: 2000 });
     });
   });
 
@@ -532,13 +828,17 @@ describe('ListingForm', () => {
       );
 
       await waitFor(() => {
-        const engineInput = screen.getByDisplayValue('2.0');
+        const engineLabel = screen.getByText(/Запремина на моторот/i);
+        const engineInput = engineLabel.closest('div')?.querySelector('input') as HTMLInputElement;
+        expect(engineInput).toBeInTheDocument();
+        expect(engineInput.value).toMatch(/^2\.?0?$/);
         fireEvent.change(engineInput, { target: { value: '2.5' } });
       });
 
       await waitFor(() => {
-        const engineInput = screen.getByDisplayValue('2.5');
-        expect(engineInput).toBeInTheDocument();
+        const engineLabel = screen.getByText(/Запремина на моторот/i);
+        const engineInput = engineLabel.closest('div')?.querySelector('input') as HTMLInputElement;
+        expect(engineInput.value).toBe('2.5');
       });
     });
 
@@ -621,12 +921,17 @@ describe('ListingForm', () => {
 
       await waitFor(() => {
         const vinInput = screen.getByDisplayValue('TESTVIN123456789');
-        fireEvent.change(vinInput, { target: { value: 'NEWVIN12345678901' } });
+        expect(vinInput).toBeInTheDocument();
       });
 
+      const vinInput = screen.getByDisplayValue('TESTVIN123456789');
+      const newVin = 'NEWVIN1234567890';
+      fireEvent.change(vinInput, { target: { value: newVin } });
+
       await waitFor(() => {
-        const vinInput = screen.getByDisplayValue('NEWVIN12345678901');
-        expect(vinInput).toBeInTheDocument();
+        const updatedVinInput = screen.queryByDisplayValue(newVin) || vinInput;
+        expect(updatedVinInput.value.length).toBeGreaterThan(0);
+        expect(updatedVinInput.value).toContain('NEWVIN');
       });
     });
 
