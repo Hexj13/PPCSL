@@ -89,7 +89,7 @@ jobs:
           JWT_SECRET: test-secret-key
           REDIS_HOST: localhost
           REDIS_PORT: 6379
-        run: npm run test:integration
+        run: timeout 300 npm run test:integration
         continue-on-error: false
 
   frontend-test:

@@ -133,7 +133,7 @@ describe('Auth API Integration Tests', () => {
       const randomSuffix = String(Math.floor(Math.random() * 1000000)).padStart(6, '0');
       testPhone = `+38970${randomSuffix}`;
 
-      await request.post('/api/auth/register').send({
+      const registerResponse = await request.post('/api/auth/register').send({
         email: `test${Date.now()}@example.com`,
         password: 'Test123!@#',
         type: 'Individual',
@@ -142,11 +142,31 @@ describe('Auth API Integration Tests', () => {
         lastName: 'User',
         termsAccepted: true,
       });
+
+      if (registerResponse.status !== 201) {
+        if (registerResponse.status === 429) {
+          await new Promise((resolve) => setTimeout(resolve, 5000));
+          const retryResponse = await request.post('/api/auth/register').send({
+            email: `test${Date.now()}@example.com`,
+            password: 'Test123!@#',
+            type: 'Individual',
+            phone: testPhone,
+            firstName: 'Test',
+            lastName: 'User',
+            termsAccepted: true,
+          });
+          if (retryResponse.status !== 201) {
+            throw new Error(`Registration failed: ${JSON.stringify(retryResponse.body)}`);
+          }
+        } else {
+          throw new Error(`Registration failed: ${JSON.stringify(registerResponse.body)}`);
+        }
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 2000));
     });
 
     it('should request password reset and match OpenAPI schema', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
       const response = await request.post('/api/auth/request-password-reset').send({
         phone: testPhone,
       });

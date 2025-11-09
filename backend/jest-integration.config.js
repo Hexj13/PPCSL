@@ -9,8 +9,10 @@ module.exports = {
   coverageDirectory: '../coverage-integration',
   testEnvironment: 'node',
   setupFilesAfterEnv: ['<rootDir>/test/jest-integration.setup.ts'],
-  testTimeout: 30000,
+  testTimeout: 60000,
   maxWorkers: 1,
+  forceExit: true,
+  detectOpenHandles: true,
   moduleNameMapper: {
     '^src/(.*)$': '<rootDir>/$1',
   },

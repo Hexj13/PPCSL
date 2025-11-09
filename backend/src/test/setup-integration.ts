@@ -79,7 +79,11 @@ export async function createTestApp(): Promise<INestApplication> {
 
 export async function closeTestApp(): Promise<void> {
   if (app) {
-    await app.close();
+    try {
+      await app.close();
+    } catch (error) {
+      console.error('Error closing test app:', error);
+    }
   }
 }
 

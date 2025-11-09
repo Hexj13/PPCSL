@@ -1,24 +1,25 @@
-import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 
-import { createTestApp } from './setup-integration';
+import { getTestRequest } from './setup-integration';
 
 describe('Refresh Tokens Integration', () => {
-  let app: INestApplication;
+  let request: request.SuperTest<request.Test>;
   let accessToken: string;
   let refreshToken: string;
   let userId: string;
   let testEmail: string;
   let testPassword: string;
 
-  beforeAll(async () => {
-    app = await createTestApp();
+  beforeAll(() => {
+    request = getTestRequest();
     testEmail = `test${Date.now()}@example.com`;
     testPassword = 'Test123!@#';
+  });
 
+  beforeAll(async () => {
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    let registerResponse = await request(app.getHttpServer())
+    let registerResponse = await request
       .post('/api/auth/register')
       .send({
         email: testEmail,
@@ -33,7 +34,7 @@ describe('Refresh Tokens Integration', () => {
     let retries = 0;
     while (registerResponse.status === 429 && retries < 3) {
       await new Promise((resolve) => setTimeout(resolve, 2000 * (retries + 1)));
-      registerResponse = await request(app.getHttpServer())
+      registerResponse = await request
         .post('/api/auth/register')
         .send({
           email: `test${Date.now() + retries}@example.com`,
@@ -56,10 +57,6 @@ describe('Refresh Tokens Integration', () => {
     }
   });
 
-  afterAll(async () => {
-    await app.close();
-  });
-
   describe('POST /api/auth/refresh', () => {
     beforeAll(async () => {
       const loginDto = {
@@ -67,10 +64,7 @@ describe('Refresh Tokens Integration', () => {
         password: testPassword,
       };
 
-      const response = await request(app.getHttpServer())
-        .post('/api/auth/login')
-        .send(loginDto)
-        .expect(200);
+      const response = await request.post('/api/auth/login').send(loginDto).expect(200);
 
       expect(response.body).toHaveProperty('access_token');
       expect(response.body).toHaveProperty('refresh_token');
@@ -92,7 +86,7 @@ describe('Refresh Tokens Integration', () => {
 
       const originalRefreshToken = refreshToken;
 
-      const response = await request(app.getHttpServer())
+      const response = await request
         .post('/api/auth/refresh')
         .send({ refresh_token: originalRefreshToken })
         .expect(200);
@@ -116,36 +110,27 @@ describe('Refresh Tokens Integration', () => {
     });
 
     it('should reject old refresh token after rotation', async () => {
-      const loginResponse = await request(app.getHttpServer())
-        .post('/api/auth/login')
-        .send({
-          login: testEmail,
-          password: testPassword,
-        })
-        .expect(200);
+      const loginResponse = await request.post('/api/auth/login').send({
+        login: testEmail,
+        password: testPassword,
+      }).expect(200);
 
       const oldRefreshToken = loginResponse.body.refresh_token;
 
-      await request(app.getHttpServer())
-        .post('/api/auth/refresh')
-        .send({ refresh_token: oldRefreshToken })
-        .expect(200);
+      await request.post('/api/auth/refresh').send({ refresh_token: oldRefreshToken }).expect(200);
 
-      await request(app.getHttpServer())
-        .post('/api/auth/refresh')
-        .send({ refresh_token: oldRefreshToken })
-        .expect(401);
+      await request.post('/api/auth/refresh').send({ refresh_token: oldRefreshToken }).expect(401);
     });
 
     it('should reject invalid refresh token', async () => {
-      await request(app.getHttpServer())
+      await request
         .post('/api/auth/refresh')
         .send({ refresh_token: 'invalid-token-12345' })
         .expect(401);
     });
 
     it('should reject missing refresh token', async () => {
-      await request(app.getHttpServer()).post('/api/auth/refresh').send({}).expect(400);
+      await request.post('/api/auth/refresh').send({}).expect(400);
     });
   });
 
@@ -154,17 +139,14 @@ describe('Refresh Tokens Integration', () => {
     let secondRefreshToken: string;
 
     it('should rotate tokens on each refresh', async () => {
-      const loginResponse = await request(app.getHttpServer())
-        .post('/api/auth/login')
-        .send({
-          login: testEmail,
-          password: testPassword,
-        })
-        .expect(200);
+      const loginResponse = await request.post('/api/auth/login').send({
+        login: testEmail,
+        password: testPassword,
+      }).expect(200);
 
       firstRefreshToken = loginResponse.body.refresh_token;
 
-      const firstRefreshResponse = await request(app.getHttpServer())
+      const firstRefreshResponse = await request
         .post('/api/auth/refresh')
         .send({ refresh_token: firstRefreshToken })
         .expect(200);
@@ -173,12 +155,12 @@ describe('Refresh Tokens Integration', () => {
 
       expect(secondRefreshToken).not.toBe(firstRefreshToken);
 
-      await request(app.getHttpServer())
+      await request
         .post('/api/auth/refresh')
         .send({ refresh_token: firstRefreshToken })
         .expect(401);
 
-      await request(app.getHttpServer())
+      await request
         .post('/api/auth/refresh')
         .send({ refresh_token: secondRefreshToken })
         .expect(200);

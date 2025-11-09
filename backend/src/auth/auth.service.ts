@@ -282,7 +282,7 @@ export class AuthService {
       throw new BadRequestException('Корисник со овој телефон не е пронајден');
     }
 
-    await this.smsService.sendPasswordResetCode(requestPasswordResetDto.phone);
+    await this.smsService.sendPasswordResetCode(normalizedPhone);
   }
 
   async verifyResetCode(verifyResetCodeDto: VerifyResetCodeDto): Promise<{ success: boolean }> {
