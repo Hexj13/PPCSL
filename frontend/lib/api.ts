@@ -120,7 +120,7 @@ api.interceptors.response.use(
       const retryAfter = error.response.headers['retry-after']
         ? parseInt(error.response.headers['retry-after'], 10) * 1000
         : 2000;
-      
+
       await new Promise((resolve) => setTimeout(resolve, retryAfter));
       return api(originalRequest);
     }
@@ -128,7 +128,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       const isLoginEndpoint = originalRequest.url?.includes('/api/auth/login');
       const isRegisterEndpoint = originalRequest.url?.includes('/api/auth/register');
-      
+
       if (isLoginEndpoint || isRegisterEndpoint) {
         if (error.config && !error.config.headers['X-Skip-Error-Handling']) {
           const errorMessage = getErrorMessage(error);

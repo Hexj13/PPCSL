@@ -548,11 +548,9 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                   const year = parseInt(value, 10);
                   const currentYear = new Date().getFullYear();
                   const maxYear = currentYear + 1;
-                  
+
                   if (isNaN(year) || year < 1900 || year > maxYear) {
-                    toast.error(
-                      `Годината мора да биде помеѓу 1900 и ${maxYear}`
-                    );
+                    toast.error(`Годината мора да биде помеѓу 1900 и ${maxYear}`);
                     setFormData((prev) => ({
                       ...prev,
                       vehicle: { ...prev.vehicle, year: '' },

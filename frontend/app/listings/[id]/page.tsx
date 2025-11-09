@@ -817,7 +817,20 @@ export default function ListingPage() {
                   className="text-gray-300 leading-relaxed max-w-none listing-description"
                   dangerouslySetInnerHTML={{
                     __html: DOMPurify.sanitize(listing.description, {
-                      ALLOWED_TAGS: ['p', 'br', 'div', 'strong', 'em', 'i', 'b', 'u', 'ul', 'ol', 'li', 'font'],
+                      ALLOWED_TAGS: [
+                        'p',
+                        'br',
+                        'div',
+                        'strong',
+                        'em',
+                        'i',
+                        'b',
+                        'u',
+                        'ul',
+                        'ol',
+                        'li',
+                        'font',
+                      ],
                       ALLOWED_ATTR: ['size'],
                     }),
                   }}
@@ -1005,9 +1018,7 @@ export default function ListingPage() {
                   </table>
                 </div>
               ) : (
-                <p className="text-gray-300">
-                  Нема претходни објави за ова возило
-                </p>
+                <p className="text-gray-300">Нема претходни објави за ова возило</p>
               )}
             </div>
           </div>
