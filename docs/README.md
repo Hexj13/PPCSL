@@ -243,20 +243,12 @@ cd backend && npm run test:integration
 cd frontend && npm test
 ```
 
-For more details, see [Technical Documentation](TECH_DOCS.md#14-testing).
+For more details, see [Technical Documentation](TECHNICAL.md#8-testing).
 
 ## Documentation
 
-- **[Technical Specification](TECH_DOCS.md)** - Complete project documentation
-- **[Setup Guide](SETUP.md)** - Detailed setup instructions
-- **[Deployment Guide (VPS)](DEPLOYMENT.md)** - Production deployment for VPS servers
-- **[Deployment Guide (cPanel)](CPANEL_DEPLOYMENT.md)** - Production deployment for cPanel/shared hosting ⭐ **NEW**
-- **[Deployment Quick Start](DEPLOYMENT_QUICK_START.md)** - Quick deployment guide ⭐ **NEW**
-- **[Restart Guide](RESTART.md)** - How to restart the project
-- **[Environment Variables](ENV_EXAMPLE.md)** - Environment configuration
-- **[SEO Optimization](SEO_OPTIMIZATION.md)** - SEO setup and optimizations
-- **[TODO List](TODO.md)** - Все задачи проекта (включая SEO) ⚠️ **IMPORTANT**
-- **[Optimization Progress](OPTIMIZATION_PROGRESS.md)** - Отчет о прогрессе оптимизации
-- **[Optimization Analysis](OPTIMIZATION_ANALYSIS.md)** - Performance optimization analysis
-- **[Database Optimizations](DATABASE_OPTIMIZATIONS.md)** - Database indexes, triggers, and connection pooling
-- **[Database Backups](DATABASE_BACKUPS.md)** - Automated backup setup and configuration
+- **[Technical Documentation](TECHNICAL.md)** - Complete technical documentation (architecture, API, database, security, testing, scripts, SEO)
+- **[Deployment Guide](DEPLOYMENT.md)** - Complete deployment instructions (VPS, cPanel, SSH setup, staging)
+- **[TODO List](TODO.md)** - All project tasks and todos ⚠️ **IMPORTANT**
+- **[Placeholder 1](PLACEHOLDER_1.md)** - Reserved for future documentation
+- **[Placeholder 2](PLACEHOLDER_2.md)** - Reserved for future documentation
