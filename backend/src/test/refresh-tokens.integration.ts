@@ -19,10 +19,21 @@ describe('Refresh Tokens Integration', () => {
   beforeAll(async () => {
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    let registerResponse = await request
-      .post('/api/auth/register')
-      .send({
-        email: testEmail,
+    let registerResponse = await request.post('/api/auth/register').send({
+      email: testEmail,
+      password: testPassword,
+      type: 'Individual',
+      phone: `+389701234${Math.floor(Math.random() * 10000)}`,
+      firstName: 'Test',
+      lastName: 'User',
+      termsAccepted: true,
+    });
+
+    let retries = 0;
+    while (registerResponse.status === 429 && retries < 3) {
+      await new Promise((resolve) => setTimeout(resolve, 2000 * (retries + 1)));
+      registerResponse = await request.post('/api/auth/register').send({
+        email: `test${Date.now() + retries}@example.com`,
         password: testPassword,
         type: 'Individual',
         phone: `+389701234${Math.floor(Math.random() * 10000)}`,
@@ -30,21 +41,6 @@ describe('Refresh Tokens Integration', () => {
         lastName: 'User',
         termsAccepted: true,
       });
-
-    let retries = 0;
-    while (registerResponse.status === 429 && retries < 3) {
-      await new Promise((resolve) => setTimeout(resolve, 2000 * (retries + 1)));
-      registerResponse = await request
-        .post('/api/auth/register')
-        .send({
-          email: `test${Date.now() + retries}@example.com`,
-          password: testPassword,
-          type: 'Individual',
-          phone: `+389701234${Math.floor(Math.random() * 10000)}`,
-          firstName: 'Test',
-          lastName: 'User',
-          termsAccepted: true,
-        });
       retries++;
     }
 
@@ -110,10 +106,13 @@ describe('Refresh Tokens Integration', () => {
     });
 
     it('should reject old refresh token after rotation', async () => {
-      const loginResponse = await request.post('/api/auth/login').send({
-        login: testEmail,
-        password: testPassword,
-      }).expect(200);
+      const loginResponse = await request
+        .post('/api/auth/login')
+        .send({
+          login: testEmail,
+          password: testPassword,
+        })
+        .expect(200);
 
       const oldRefreshToken = loginResponse.body.refresh_token;
 
@@ -139,10 +138,13 @@ describe('Refresh Tokens Integration', () => {
     let secondRefreshToken: string;
 
     it('should rotate tokens on each refresh', async () => {
-      const loginResponse = await request.post('/api/auth/login').send({
-        login: testEmail,
-        password: testPassword,
-      }).expect(200);
+      const loginResponse = await request
+        .post('/api/auth/login')
+        .send({
+          login: testEmail,
+          password: testPassword,
+        })
+        .expect(200);
 
       firstRefreshToken = loginResponse.body.refresh_token;
 
