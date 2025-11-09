@@ -98,6 +98,27 @@ npm run update-titles
 - `clear-database.ts` - Clear all data from database
 - `update-listing-titles.ts` - Update listing titles
 
+### Cache Management
+
+```bash
+# Clear all Redis cache
+npm run clear-cache
+
+# Clear listings cache (search, single, user listings)
+npm run clear-cache:listings
+
+# Clear cache for specific listing
+npm run clear-cache:listing <listing-id>
+
+# Clear brands and models cache
+npm run clear-cache:brands
+```
+
+**Files:**
+- `clear-cache.ts` - Clear all Redis cache
+- `clear-listing-cache.ts` - Clear listings cache (with optional listing ID)
+- `clear-brands-cache.ts` - Clear brands and models cache
+
 ## 👥 User Scripts
 
 ```bash

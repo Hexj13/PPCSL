@@ -1,10 +1,16 @@
 # Technical Specification (TS)
 
 Project: Platform for selling new and used cars
-Version: 1.5
-Date: 2025-01-XX
+Version: 1.6
+Date: 2025-11-09
 
-**Recent Updates (v1.5):**
+**Recent Updates (v1.6):**
+- File upload security enhancements (P1) - magic byte validation, metadata checking, dimension limits
+- HTML sanitization (P1) - backend sanitization for listing descriptions to prevent XSS attacks
+- Enhanced input validation (P2) - year validation, input normalization, form field validation
+- Comprehensive security testing (P2) - unit and integration tests for security features
+
+**Previous Updates (v1.5):**
 - Refresh tokens implementation (P1) - automatic token renewal, 1 hour access tokens, 7 days refresh tokens
 - TypeScript strict mode (P2) - improved type safety in backend
 - CI/CD automation (P2) - automated deployment and bundle analysis
@@ -82,6 +88,7 @@ Create a simple, free website for posting listings for new and used cars in Mace
   * Max images per listing: 20 (minimum: 2)
   * Automatic optimization and compression (converted to WebP, 85% quality)
   * Upload via `/api/upload/image` endpoint (JWT required)
+  * **Security:** Magic byte validation, metadata checking, dimension limits (10000x10000 pixels max)
 * **Active listing limits validation** on publish
 * Ability to pause or close a listing
 * Automatic closing after 5 months of inactivity (based on `last_updated_at` field)
@@ -529,9 +536,19 @@ GET /api/listings?brand_id=xxx&year_gte=2018&price_lte=12000&city=Skopje&fuel=Pe
   * VIN length validation (17 characters)
   * SMS code validation (6 digits, numeric only)
 * **File upload security:**
+  * Magic byte validation (file signature checking for JPEG, PNG, GIF, WebP)
   * MIME type validation
-  * File size limits
-  * Authentication required
+  * File size limits (10MB per image)
+  * Image metadata validation (width, height)
+  * Maximum dimension limits (10000x10000 pixels)
+  * Empty file detection
+  * Authentication required (JWT)
+* **HTML sanitization:**
+  * Backend HTML sanitization for listing descriptions
+  * Removes dangerous HTML tags (script, iframe, object, embed, etc.)
+  * Strips event handlers (onclick, onerror, etc.)
+  * Removes javascript: protocol links
+  * Allows only safe formatting tags (p, br, strong, em, u, ul, ol, li, font)
 * **Data privacy:**
   * VIN search results exclude sensitive information (price, contact details)
 
@@ -607,3 +624,5 @@ GET /api/listings?brand_id=xxx&year_gte=2018&price_lte=12000&city=Skopje&fuel=Pe
 **Version 1.4 updates:** Skeleton loaders for improved loading UX, optimized state updates to prevent flickering, delayed skeleton display (200-500ms), synchronous state updates using `flushSync`, header skeleton loaders, profile page with phone number change flow, email notifications preference.
 
 **Version 1.5 updates:** Refresh tokens implementation (automatic token renewal, 1 hour access tokens, 7 days refresh tokens), TypeScript strict mode for improved type safety, CI/CD automation (automated deployment and bundle analysis), bundle optimization (webpack splitChunks, lazy loading), frontend memoization (React.memo, useMemo, useCallback), Redis cache optimization (SCAN instead of KEYS, batch operations), Google Analytics integration for user behavior tracking.
+
+**Version 1.6 updates:** File upload security enhancements (magic byte validation, metadata checking, dimension limits up to 10000x10000 pixels), HTML sanitization for listing descriptions to prevent XSS attacks (removes dangerous tags, event handlers, javascript: protocol links), enhanced input validation (year validation with current year + 1 maximum, input normalization for numeric fields, form field validation with maxLength restrictions), comprehensive security testing (20+ unit tests for HTML sanitization and file upload security, integration tests for API validations).

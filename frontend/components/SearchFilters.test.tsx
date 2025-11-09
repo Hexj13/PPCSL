@@ -319,7 +319,9 @@ describe('SearchFilters', () => {
       const priceLabels = screen.getAllByText(/Цена од|Цена до/i);
       const priceFromLabel = priceLabels.find((label) => label.textContent?.includes('Цена од'));
       const priceToLabel = priceLabels.find((label) => label.textContent?.includes('Цена до'));
-      const priceFromInput = priceFromLabel?.closest('div')?.querySelector('input') as HTMLInputElement;
+      const priceFromInput = priceFromLabel
+        ?.closest('div')
+        ?.querySelector('input') as HTMLInputElement;
       const priceToInput = priceToLabel?.closest('div')?.querySelector('input') as HTMLInputElement;
 
       fireEvent.change(priceFromInput, { target: { value: '500000' } });
@@ -347,9 +349,9 @@ describe('SearchFilters', () => {
 
       const priceInputs = screen.getAllByTitle(/Внесете цена.*0-999999999/i);
       const priceInput = priceInputs[0];
-      
+
       fireEvent.change(priceInput, { target: { value: '1000000000' } });
-      
+
       await waitFor(() => {
         expect(priceInput.value).not.toBe('1000000000');
         expect(parseInt(priceInput.value || '0', 10)).toBeLessThanOrEqual(999999999);

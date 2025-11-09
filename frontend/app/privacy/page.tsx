@@ -175,6 +175,9 @@ const privacy = {
           '• Редовни безбедносни проверки и ажурирања',
           '• Заштита од неовластен пристап, измами и злоупотреба',
           '• Ограничување на бројот на обиди за верификација (40 неуспешни обиди = блокирање на IP за 1 час)',
+          '• Валидација на прикачените датотеки со проверка на магични бајти (magic bytes) за спречување на злонамерни датотеки',
+          '• Санитизација на HTML содржина за заштита од XSS напади',
+          '• Валидација на метаподатоци на слики (ширина, висина) и ограничување на максимални димензии',
           '6.3. Организациски мерки:',
           '• Обучување на персоналот за заштита на податоци',
           '• Строги политики за пристап до податоци',
@@ -299,6 +302,9 @@ const privacy = {
           '• Редовни безбедносни ажурирања и патчи',
           '• Заштита од неовластен пристап и напади',
           '• Редовни резервни копии на базата на податоци за заштита од загуба на податоци',
+          '• Валидација на прикачените датотеки со проверка на магични бајти (magic bytes) за спречување на злонамерни датотеки',
+          '• Санитизација на HTML содржина во описите на огласите за заштита од XSS напади',
+          '• Валидација на метаподатоци на слики и ограничување на максимални димензии (10000x10000 пиксели)',
           '11.2. Организациски мерки:',
           '• Ограничен пристап до податоци само на овластени лица',
           '• Редовни обуки за безбедност на персоналот',
@@ -516,6 +522,9 @@ const privacy = {
           '• Regular security checks and updates',
           '• Protection against unauthorized access, fraud, and abuse',
           '• Limiting the number of verification attempts (40 failed attempts = IP block for 1 hour)',
+          '• File upload validation with magic byte checking to prevent malicious files',
+          '• HTML content sanitization to protect against XSS attacks',
+          '• Image metadata validation (width, height) and maximum dimension limits',
           '6.3. Organizational Measures:',
           '• Staff training on data protection',
           '• Strict data access policies',
@@ -640,6 +649,9 @@ const privacy = {
           '• Regular security updates and patches',
           '• Protection against unauthorized access and attacks',
           '• Regular database backups to protect against data loss',
+          '• File upload validation with magic byte checking to prevent malicious files',
+          '• HTML content sanitization in listing descriptions to protect against XSS attacks',
+          '• Image metadata validation and maximum dimension limits (10000x10000 pixels)',
           '11.2. Organizational Measures:',
           '• Limited data access to authorized personnel only',
           '• Regular security training for staff',
@@ -724,10 +736,8 @@ export default function PrivacyPage() {
         {currentDate}
       </p>
 
-      <div className="bg-bg-light rounded-xl p-6 md:p-8 mb-8 border border-primary-500/20">
-        <h2 className="text-2xl font-bold mb-4 text-primary-400">
-          {currentPrivacy.dictionary.title}
-        </h2>
+      <div className="surface mb-8">
+        <h2 className="text-2xl font-bold mb-4">{currentPrivacy.dictionary.title}</h2>
         <div className="space-y-4">
           {currentPrivacy.dictionary.terms.map((item, index) => (
             <div key={index} className="border-b border-primary-500/10 pb-4 last:border-b-0">
@@ -738,8 +748,8 @@ export default function PrivacyPage() {
         </div>
       </div>
 
-      <div className="bg-bg-light rounded-xl p-6 md:p-8 mb-8 border border-primary-500/20">
-        <h2 className="text-2xl font-bold mb-4 text-primary-400">{currentPrivacy.toc.title}</h2>
+      <div className="surface mb-8">
+        <h2 className="text-2xl font-bold mb-4">{currentPrivacy.toc.title}</h2>
         <nav className="space-y-2">
           {currentPrivacy.toc.items.map((item) => (
             <button
@@ -755,14 +765,8 @@ export default function PrivacyPage() {
 
       <div className="space-y-8">
         {currentPrivacy.sections.map((section) => (
-          <section
-            key={section.id}
-            id={section.id}
-            className="bg-bg-light rounded-xl p-6 md:p-8 border border-primary-500/20 scroll-mt-20"
-          >
-            <h2 className="text-2xl md:text-3xl font-bold mb-4 text-primary-400">
-              {section.title}
-            </h2>
+          <section key={section.id} id={section.id} className="surface scroll-mt-20">
+            <h2 className="text-2xl md:text-3xl font-bold mb-4">{section.title}</h2>
             <div className="space-y-4">
               {section.content.map((paragraph, index) => (
                 <p key={index} className="text-gray-300 leading-relaxed text-base md:text-lg">

@@ -7,7 +7,8 @@
     "npm": ">=10.0.0"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "rm -rf .next && next dev",
+    "dev:clean": "rm -rf .next node_modules/.cache && next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --ext .ts,.tsx",
@@ -51,6 +52,7 @@
     "@vitest/browser-playwright": "^4.0.7",
     "@vitest/coverage-v8": "^4.0.7",
     "autoprefixer": "^10.4.20",
+    "critters": "^0.0.23",
     "eslint": "^9.39.1",
     "eslint-config-next": "^16.0.1",
     "eslint-config-prettier": "^10.1.8",

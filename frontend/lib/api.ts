@@ -397,7 +397,21 @@ interface ErrorResponseData {
 export const listingsApi = {
   getAll: (params?: SearchParams) =>
     api.get<{ data: Listing[]; meta: PaginationMeta }>('/api/listings', { params }),
-  getOne: (id: string) => api.get<Listing>(`/api/listings/${id}`),
+  getOne: (id: string) => {
+    const config: { params?: Record<string, unknown>; headers?: Record<string, string> } = {};
+    if (process.env.NODE_ENV === 'development') {
+      config.params = { _t: Date.now() };
+      config.headers = {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        Pragma: 'no-cache',
+      };
+    } else {
+      config.headers = {
+        'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
+      };
+    }
+    return api.get<Listing>(`/api/listings/${id}`, config);
+  },
   getUserActiveListings: (userId: string) =>
     api.get<Listing[]>(`/api/listings/user/${userId}/active`),
   getByVin: (vin: string, excludeId?: string) =>

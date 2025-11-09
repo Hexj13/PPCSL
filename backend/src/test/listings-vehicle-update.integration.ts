@@ -17,7 +17,7 @@ describe('Listings Vehicle Update Integration Test', () => {
   let newBrandId: string;
   let newModelId: string;
   let dataSource: DataSource;
-  const shouldSkipTest = false;
+  let shouldSkipTest = false;
 
   beforeAll(async () => {
     request = getTestRequest();

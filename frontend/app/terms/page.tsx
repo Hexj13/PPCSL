@@ -525,10 +525,8 @@ export default function TermsPage() {
         {currentDate}
       </p>
 
-      <div className="bg-bg-light rounded-xl p-6 md:p-8 mb-8 border border-primary-500/20">
-        <h2 className="text-2xl font-bold mb-4 text-primary-400">
-          {currentTerms.dictionary.title}
-        </h2>
+      <div className="surface mb-8">
+        <h2 className="text-2xl font-bold mb-4">{currentTerms.dictionary.title}</h2>
         <div className="space-y-4">
           {currentTerms.dictionary.terms.map((item, index) => (
             <div key={index} className="border-b border-primary-500/10 pb-4 last:border-b-0">
@@ -539,8 +537,8 @@ export default function TermsPage() {
         </div>
       </div>
 
-      <div className="bg-bg-light rounded-xl p-6 md:p-8 mb-8 border border-primary-500/20">
-        <h2 className="text-2xl font-bold mb-4 text-primary-400">{currentTerms.toc.title}</h2>
+      <div className="surface mb-8">
+        <h2 className="text-2xl font-bold mb-4">{currentTerms.toc.title}</h2>
         <nav className="space-y-2">
           {currentTerms.toc.items.map((item) => (
             <button
@@ -556,14 +554,8 @@ export default function TermsPage() {
 
       <div className="space-y-8">
         {currentTerms.sections.map((section) => (
-          <section
-            key={section.id}
-            id={section.id}
-            className="bg-bg-light rounded-xl p-6 md:p-8 border border-primary-500/20 scroll-mt-20"
-          >
-            <h2 className="text-2xl md:text-3xl font-bold mb-4 text-primary-400">
-              {section.title}
-            </h2>
+          <section key={section.id} id={section.id} className="surface scroll-mt-20">
+            <h2 className="text-2xl md:text-3xl font-bold mb-4">{section.title}</h2>
             <div className="space-y-4">
               {section.content.map((paragraph, index) => (
                 <p key={index} className="text-gray-300 leading-relaxed text-base md:text-lg">

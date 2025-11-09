@@ -3,11 +3,26 @@ const nextConfig = {
   reactStrictMode: true,
   compress: true,
   poweredByHeader: false,
-  swcMinify: true,
   
   experimental: {
     optimizeCss: true,
   },
+
+  // Отключаем кеширование в development
+  ...(process.env.NODE_ENV === 'development' && {
+    cacheMaxMemorySize: 0,
+    onDemandEntries: {
+      maxInactiveAge: 0,
+      pagesBufferLength: 0,
+    },
+  }),
+  
+  // Отключаем кеширование страниц в dev режиме
+  ...(process.env.NODE_ENV === 'development' && {
+    generateBuildId: async () => {
+      return `dev-${Date.now()}`;
+    },
+  }),
   
   webpack: (config, { isServer, dev }) => {
     if (!isServer && !dev) {
@@ -81,7 +96,8 @@ const nextConfig = {
     API_URL: process.env.API_URL || 'http://localhost:4000',
   },
   async headers() {
-    return [
+    const isDev = process.env.NODE_ENV === 'development';
+    const headers = [
       {
         source: '/:path*',
         headers: [
@@ -101,6 +117,40 @@ const nextConfig = {
             key: 'Referrer-Policy',
             value: 'origin-when-cross-origin',
           },
+          ...(isDev
+            ? [
+                {
+                  key: 'Cache-Control',
+                  value: 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+                },
+                {
+                  key: 'Pragma',
+                  value: 'no-cache',
+                },
+                {
+                  key: 'Expires',
+                  value: '0',
+                },
+              ]
+            : [
+                {
+                  key: 'Cache-Control',
+                  value: 'public, s-maxage=60, stale-while-revalidate=300',
+                },
+              ]),
+        ],
+      },
+      {
+        source: '/listings/:path*',
+        headers: [
+          ...(isDev
+            ? []
+            : [
+                {
+                  key: 'Cache-Control',
+                  value: 'public, s-maxage=30, stale-while-revalidate=120',
+                },
+              ]),
         ],
       },
       {
@@ -108,11 +158,36 @@ const nextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
+            value: isDev
+              ? 'no-store, no-cache, must-revalidate'
+              : 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/_next/image',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: isDev
+              ? 'no-store, no-cache, must-revalidate'
+              : 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/images/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: isDev
+              ? 'no-store, no-cache, must-revalidate'
+              : 'public, max-age=2592000, stale-while-revalidate=86400',
           },
         ],
       },
     ];
+    return headers;
   },
   turbopack: {
     root: __dirname,

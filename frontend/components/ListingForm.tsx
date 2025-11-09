@@ -250,6 +250,11 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
       return false;
     }
 
+    if (year < 1900) {
+      toast.error('Годината не може да биде помала од 1900');
+      return false;
+    }
+
     const currentYear = new Date().getFullYear();
     const maxYear = currentYear + 1;
     if (year > maxYear) {

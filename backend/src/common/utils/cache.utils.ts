@@ -46,7 +46,7 @@ export interface CacheTTL {
 export const CACHE_TTL: CacheTTL = {
   listings: {
     search: 300,
-    single: 600,
+    single: 120,
     userListings: 180,
   },
   brands: {

@@ -213,6 +213,8 @@ Kupito/
 - **Performance:** Frontend memoization, Redis cache optimization, lazy loading
 - **Analytics:** Google Analytics integration
 - Image optimization (resize, compress, convert to WebP with adaptive quality, lazy loading, SEO-friendly)
+- **File upload security:** Magic byte validation, metadata checking, dimension limits
+- **HTML sanitization:** Backend sanitization for listing descriptions to prevent XSS attacks
 - Responsive design with TailwindCSS
 - VIN search with privacy protection
 - Date refresh feature with 48-hour cooldown
@@ -247,6 +249,9 @@ For more details, see [Technical Documentation](TECH_DOCS.md#14-testing).
 
 - **[Technical Specification](TECH_DOCS.md)** - Complete project documentation
 - **[Setup Guide](SETUP.md)** - Detailed setup instructions
+- **[Deployment Guide (VPS)](DEPLOYMENT.md)** - Production deployment for VPS servers
+- **[Deployment Guide (cPanel)](CPANEL_DEPLOYMENT.md)** - Production deployment for cPanel/shared hosting ⭐ **NEW**
+- **[Deployment Quick Start](DEPLOYMENT_QUICK_START.md)** - Quick deployment guide ⭐ **NEW**
 - **[Restart Guide](RESTART.md)** - How to restart the project
 - **[Environment Variables](ENV_EXAMPLE.md)** - Environment configuration
 - **[SEO Optimization](SEO_OPTIMIZATION.md)** - SEO setup and optimizations
@@ -254,4 +259,4 @@ For more details, see [Technical Documentation](TECH_DOCS.md#14-testing).
 - **[Optimization Progress](OPTIMIZATION_PROGRESS.md)** - Отчет о прогрессе оптимизации
 - **[Optimization Analysis](OPTIMIZATION_ANALYSIS.md)** - Performance optimization analysis
 - **[Database Optimizations](DATABASE_OPTIMIZATIONS.md)** - Database indexes, triggers, and connection pooling
-- **[Database Backups](DATABASE_BACKUPS.md)** - Automated backup setup and configuration ⭐ **NEW**
+- **[Database Backups](DATABASE_BACKUPS.md)** - Automated backup setup and configuration

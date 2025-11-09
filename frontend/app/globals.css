@@ -27,8 +27,6 @@ body {
 }
 
 h1,
-h2,
-h3,
 h4,
 h5,
 h6,
@@ -171,6 +169,10 @@ label {
     @apply bg-bg-light rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-primary-500/20;
   }
 
+  .surface {
+    @apply bg-bg-light rounded-xl border border-primary-500/20 p-4 md:p-6;
+  }
+
   .prose ul,
   .prose ol {
     @apply my-4;
@@ -193,24 +195,24 @@ label {
     @apply list-outside;
   }
 
-  .custom-scrollbar::-webkit-scrollbar {
+  .scrollbar-custom::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
 
-  .custom-scrollbar::-webkit-scrollbar-track {
+  .scrollbar-custom::-webkit-scrollbar-track {
     @apply bg-bg-light rounded;
   }
 
-  .custom-scrollbar::-webkit-scrollbar-thumb {
+  .scrollbar-custom::-webkit-scrollbar-thumb {
     @apply bg-gray-500 rounded;
   }
 
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  .scrollbar-custom::-webkit-scrollbar-thumb:hover {
     @apply bg-gray-400;
   }
 
-  .custom-scrollbar {
+  .scrollbar-custom {
     scrollbar-width: thin;
     scrollbar-color: #6b7280 #233d37;
   }

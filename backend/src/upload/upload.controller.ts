@@ -178,6 +178,18 @@ export class UploadController {
     @Query('quality') quality?: string,
     @Query('width') width?: string,
   ) {
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+
+    if (res.req?.method === 'OPTIONS') {
+      res.set({
+        'Access-Control-Allow-Origin': frontendUrl,
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS, HEAD',
+        'Access-Control-Allow-Headers': 'Content-Type, Range',
+        'Cross-Origin-Resource-Policy': 'cross-origin',
+      });
+      return res.sendStatus(200);
+    }
     try {
       const decodedFilename = decodeURIComponent(filename);
       if (
@@ -205,7 +217,12 @@ export class UploadController {
 
       res.set({
         'Content-Type': 'image/webp',
-        'Cache-Control': 'public, max-age=31536000, immutable',
+        'Cache-Control': 'public, max-age=2592000, stale-while-revalidate=86400',
+        'Access-Control-Allow-Origin': frontendUrl,
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS, HEAD',
+        'Access-Control-Allow-Headers': 'Content-Type, Range',
+        'Cross-Origin-Resource-Policy': 'cross-origin',
       });
 
       res.send(buffer);

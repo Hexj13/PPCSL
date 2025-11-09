@@ -4,7 +4,6 @@ import DOMPurify from 'dompurify';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { flushSync } from 'react-dom';
 import { toast } from 'react-hot-toast';
 
 import { Breadcrumbs } from '@/components/Breadcrumbs';
@@ -108,14 +107,12 @@ export default function ListingPage() {
           }
 
           const hasVin = listingRes.data.vin;
-          flushSync(() => {
-            setListing(listingRes.data);
-            setIsFavorite(favoriteValue);
-            setShowSkeleton(false);
-            if (hasVin) {
-              setLoadingPrevious(true);
-            }
-          });
+          setListing(listingRes.data);
+          setIsFavorite(favoriteValue);
+          setShowSkeleton(false);
+          if (hasVin) {
+            setLoadingPrevious(true);
+          }
 
           if (hasVin && listingRes.data.vin) {
             listingsApi
@@ -168,11 +165,9 @@ export default function ListingPage() {
           }
 
           const favoriteValue = check(currentId);
-          flushSync(() => {
-            setListing(null);
-            setIsFavorite(favoriteValue);
-            setShowSkeleton(false);
-          });
+          setListing(null);
+          setIsFavorite(favoriteValue);
+          setShowSkeleton(false);
 
           if (needsRefresh) {
             sessionStorage.removeItem(`refreshListing_${currentId}`);
@@ -386,7 +381,19 @@ export default function ListingPage() {
                 !imageErrors.has(currentImageIndex) ? (
                   (() => {
                     const optimizedUrl = getOptimizedImageUrl(images[currentImageIndex], 75, 1200);
-                    return (
+                    const isExternal =
+                      optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://');
+                    return isExternal ? (
+                      <img
+                        src={optimizedUrl}
+                        alt={listing.title}
+                        className="w-full h-full object-cover"
+                        crossOrigin="anonymous"
+                        onError={() => {
+                          setImageErrors((prev) => new Set(prev).add(currentImageIndex));
+                        }}
+                      />
+                    ) : (
                       <Image
                         src={optimizedUrl}
                         alt={listing.title}
@@ -394,9 +401,6 @@ export default function ListingPage() {
                         sizes="(max-width: 768px) 100vw, 65vw"
                         className="object-cover"
                         priority
-                        unoptimized={
-                          optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://')
-                        }
                         onError={() => {
                           setImageErrors((prev) => new Set(prev).add(currentImageIndex));
                         }}
@@ -450,23 +454,35 @@ export default function ListingPage() {
                         {img !== '/placeholder-car.jpg' && !imageErrors.has(index) ? (
                           (() => {
                             const optimizedUrl = getOptimizedImageUrl(img, 70, 400);
+                            const isExternal =
+                              optimizedUrl.startsWith('http://') ||
+                              optimizedUrl.startsWith('https://');
                             return (
                               <>
-                                <Image
-                                  src={optimizedUrl}
-                                  alt={`${listing.title} - Слика ${index + 1}`}
-                                  fill
-                                  sizes="(max-width: 640px) 33vw, 25vw"
-                                  className="object-cover"
-                                  loading="lazy"
-                                  unoptimized={
-                                    optimizedUrl.startsWith('http://') ||
-                                    optimizedUrl.startsWith('https://')
-                                  }
-                                  onError={() => {
-                                    setImageErrors((prev) => new Set(prev).add(index));
-                                  }}
-                                />
+                                {isExternal ? (
+                                  <img
+                                    src={optimizedUrl}
+                                    alt={`${listing.title} - Слика ${index + 1}`}
+                                    className="w-full h-full object-cover"
+                                    loading="lazy"
+                                    crossOrigin="anonymous"
+                                    onError={() => {
+                                      setImageErrors((prev) => new Set(prev).add(index));
+                                    }}
+                                  />
+                                ) : (
+                                  <Image
+                                    src={optimizedUrl}
+                                    alt={`${listing.title} - Слика ${index + 1}`}
+                                    fill
+                                    sizes="(max-width: 640px) 33vw, 25vw"
+                                    className="object-cover"
+                                    loading="lazy"
+                                    onError={() => {
+                                      setImageErrors((prev) => new Set(prev).add(index));
+                                    }}
+                                  />
+                                )}
                                 {isLastThumbnailMobile && hasMoreImagesMobile && (
                                   <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center sm:hidden">
                                     <span className="text-white text-lg font-bold">
@@ -600,9 +616,10 @@ export default function ListingPage() {
         <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-6 md:gap-8">
           <div className="space-y-6">
             {vehicle && (
-              <div className="bg-bg-light p-4 md:p-6 rounded-xl border border-primary-500/20">
-                <h2 className="text-xl md:text-2xl font-bold mb-6 text-primary-400">Карактеристики</h2>
-
+              <div className="surface">
+                <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-400">
+                  Карактеристики
+                </h2>
                 <div className="space-y-4">
                   {(vehicle.brand?.name || vehicle.model?.name || vehicle.year || listing.vin) && (
                     <div>
@@ -794,7 +811,7 @@ export default function ListingPage() {
             )}
 
             {listing.description && (
-              <div className="bg-bg-light p-4 md:p-6 rounded-xl border border-primary-500/20">
+              <div className="surface">
                 <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-400">Опис</h2>
                 <div
                   className="text-gray-300 leading-relaxed prose prose-invert prose-headings:text-white prose-p:text-gray-300 prose-strong:text-white prose-em:text-gray-200 max-w-none"
@@ -808,45 +825,45 @@ export default function ListingPage() {
               </div>
             )}
 
-            <div className="bg-bg-light p-4 md:p-6 rounded-xl border border-primary-500/20">
-              <div className="mb-4">
-                <h3 className="text-lg font-bold mb-2 text-primary-400 flex items-center gap-2">
+            <div className="surface">
+              <div className="flex items-center gap-2 mb-4">
+                <h2 className="text-xl md:text-2xl font-bold text-primary-400">
                   {listing.vin ? 'Претходни објави за ова возило' : 'Историја на возило'}
-                  {listing.vin && (
-                    <div className="relative group">
-                      <button
-                        type="button"
-                        onClick={() => setShowHistoryHint(!showHistoryHint)}
-                        className="focus:outline-none"
+                </h2>
+                {listing.vin && (
+                  <div className="relative group">
+                    <button
+                      type="button"
+                      onClick={() => setShowHistoryHint(!showHistoryHint)}
+                      className="focus:outline-none"
+                    >
+                      <svg
+                        className="w-4 h-4 text-green-400 hover:text-green-300 cursor-help transition-colors"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
                       >
-                        <svg
-                          className="w-4 h-4 text-green-400 hover:text-green-300 cursor-help transition-colors"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                      </button>
-                      <div
-                        className={`absolute right-0 bottom-full mb-2 ${showHistoryHint ? 'block' : 'hidden group-hover:block'} z-10 w-64`}
-                      >
-                        <div className="bg-bg-darker border-2 border-primary-500/50 rounded-lg p-3 shadow-lg">
-                          <p className="text-xs font-semibold text-gray-300 leading-relaxed">
-                            Прикажуваме претходни објави за ова возило со ист VIN. За заштита на
-                            приватност, цената и личните податоци на авторите се скриени за
-                            затворени објави.
-                          </p>
-                        </div>
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                    </button>
+                    <div
+                      className={`absolute right-0 bottom-full mb-2 ${showHistoryHint ? 'block' : 'hidden group-hover:block'} z-10 w-64`}
+                    >
+                      <div className="bg-bg-darker border-2 border-primary-500/50 rounded-lg p-3 shadow-lg">
+                        <p className="text-xs font-semibold text-gray-300 leading-relaxed">
+                          Прикажуваме претходни објави за ова возило со ист VIN. За заштита на
+                          приватност, цената и личните податоци на авторите се скриени за затворени
+                          објави.
+                        </p>
                       </div>
                     </div>
-                  )}
-                </h3>
+                  </div>
+                )}
               </div>
               {!listing.vin ? (
                 <div className="flex items-start gap-3 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
@@ -932,7 +949,7 @@ export default function ListingPage() {
           </div>
 
           <div className="space-y-6">
-            <div className="bg-bg-light p-4 md:p-6 rounded-xl border border-primary-500/20">
+            <div className="surface">
               <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-400">
                 Контактни информации
               </h2>
@@ -1122,7 +1139,7 @@ export default function ListingPage() {
               )}
             </div>
 
-            <div className="bg-bg-light p-4 md:p-6 rounded-xl border border-primary-500/20">
+            <div className="surface">
               <div className="space-y-3">
                 {listing.views !== undefined && listing.views > 0 && (
                   <div className="flex items-center gap-2 text-sm">
@@ -1273,7 +1290,19 @@ export default function ListingPage() {
             !imageErrors.has(modalImageIndex) ? (
               (() => {
                 const optimizedUrl = getOptimizedImageUrl(images[modalImageIndex], 85, 1920);
-                return (
+                const isExternal =
+                  optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://');
+                return isExternal ? (
+                  <img
+                    src={optimizedUrl}
+                    alt={`${listing.title} - Слика ${modalImageIndex + 1} од ${images.length}`}
+                    className="max-w-full max-h-[90vh] w-auto h-auto object-contain"
+                    crossOrigin="anonymous"
+                    onError={() => {
+                      setImageErrors((prev) => new Set(prev).add(modalImageIndex));
+                    }}
+                  />
+                ) : (
                   <Image
                     src={optimizedUrl}
                     alt={`${listing.title} - Слика ${modalImageIndex + 1} од ${images.length}`}
@@ -1282,9 +1311,6 @@ export default function ListingPage() {
                     sizes="(max-width: 768px) 100vw, 90vw"
                     className="max-w-full max-h-[90vh] w-auto h-auto object-contain"
                     priority={modalImageIndex === 0}
-                    unoptimized={
-                      optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://')
-                    }
                     onError={() => {
                       setImageErrors((prev) => new Set(prev).add(modalImageIndex));
                     }}

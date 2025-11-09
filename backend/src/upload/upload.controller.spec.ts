@@ -87,7 +87,12 @@ describe('UploadController', () => {
       expect(service.getOptimizedImage).toHaveBeenCalledWith('/uploads/test.webp', 85, undefined);
       expect(res.set).toHaveBeenCalledWith({
         'Content-Type': 'image/webp',
-        'Cache-Control': 'public, max-age=31536000, immutable',
+        'Cache-Control': 'public, max-age=2592000, stale-while-revalidate=86400',
+        'Access-Control-Allow-Origin': 'http://localhost:3000',
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS, HEAD',
+        'Access-Control-Allow-Headers': 'Content-Type, Range',
+        'Cross-Origin-Resource-Policy': 'cross-origin',
       });
       expect(res.send).toHaveBeenCalledWith(mockBuffer);
     });
@@ -109,7 +114,12 @@ describe('UploadController', () => {
       expect(service.getOptimizedImage).toHaveBeenCalledWith('/uploads/test.webp', 75, 800);
       expect(res.set).toHaveBeenCalledWith({
         'Content-Type': 'image/webp',
-        'Cache-Control': 'public, max-age=31536000, immutable',
+        'Cache-Control': 'public, max-age=2592000, stale-while-revalidate=86400',
+        'Access-Control-Allow-Origin': 'http://localhost:3000',
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS, HEAD',
+        'Access-Control-Allow-Headers': 'Content-Type, Range',
+        'Cross-Origin-Resource-Policy': 'cross-origin',
       });
       expect(res.send).toHaveBeenCalledWith(mockBuffer);
     });

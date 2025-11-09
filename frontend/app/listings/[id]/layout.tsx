@@ -8,7 +8,11 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 async function getListing(id: string) {
   try {
     const response = await fetch(`${apiUrl}/api/listings/${id}`, {
-      next: { revalidate: 3600 },
+      next:
+        process.env.NODE_ENV === 'development'
+          ? { revalidate: 0 }
+          : { revalidate: 30, tags: [`listing-${id}`] },
+      cache: process.env.NODE_ENV === 'development' ? 'no-store' : 'default',
     });
 
     if (!response.ok) {

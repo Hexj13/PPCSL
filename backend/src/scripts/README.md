@@ -33,6 +33,9 @@ These scripts are **blocked from running in production** and can only be execute
 - `cleanup-brands.ts` - Cleanup and synchronize brands
 - `sync-carquery.ts` - Synchronize from CarQuery API
 - `update-engine-volumes.ts` - Update engine volumes
+- `clear-cache.ts` - Clear all Redis cache
+- `clear-listing-cache.ts` - Clear listings cache (with optional listing ID)
+- `clear-brands-cache.ts` - Clear brands and models cache
 
 ## Production Scripts
 

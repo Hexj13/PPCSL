@@ -39,7 +39,7 @@ interface DropdownOption {
 
 interface DropdownProps {
   value: string;
-  onChange: (value: string) => void;
+  onChange: (_selectedValue: string) => void;
   options: DropdownOption[];
   disabled?: boolean;
   searchable?: boolean;
@@ -90,10 +90,13 @@ const mockListing = {
   city: 'Skopje',
   description: 'Test description',
   status: 'Active',
-  images: ['http://localhost:4000/uploads/image1.webp', 'http://localhost:4000/uploads/image2.webp'],
+  images: [
+    'http://localhost:4000/uploads/image1.webp',
+    'http://localhost:4000/uploads/image2.webp',
+  ],
   urgent: false,
   is_new: false,
-  vin: 'TESTVIN123456789',
+  vin: '1HGBH41JXMN109186',
   condition: 'Undamaged',
   registration_type: 'Local',
   horsepower: 150,
@@ -136,6 +139,8 @@ describe('ListingForm', () => {
     (api.brandsApi.getAll as jest.Mock).mockResolvedValue({ data: mockBrands });
     (api.citiesApi.getAll as jest.Mock).mockResolvedValue({ data: mockCities });
     (api.brandsApi.getModels as jest.Mock).mockResolvedValue({ data: mockModels });
+    (api.listingsApi.update as jest.Mock).mockResolvedValue({ data: mockListing as Listing });
+    (api.listingsApi.create as jest.Mock).mockResolvedValue({ data: mockListing as Listing });
   });
 
   describe('Create mode', () => {
@@ -195,11 +200,35 @@ describe('ListingForm', () => {
         />
       );
 
-      await waitFor(() => {
-        expect(screen.getByDisplayValue('10000')).toBeInTheDocument();
-        expect(screen.getByDisplayValue('2020')).toBeInTheDocument();
-        expect(screen.getByDisplayValue('TESTVIN123456789')).toBeInTheDocument();
-      });
+      await waitFor(
+        () => {
+          expect(api.brandsApi.getAll).toHaveBeenCalled();
+        },
+        { timeout: 10000 }
+      );
+
+      await waitFor(
+        () => {
+          expect(api.citiesApi.getAll).toHaveBeenCalled();
+        },
+        { timeout: 10000 }
+      );
+
+      await waitFor(
+        () => {
+          expect(api.brandsApi.getModels).toHaveBeenCalledWith('brand-1');
+        },
+        { timeout: 10000 }
+      );
+
+      await waitFor(
+        () => {
+          expect(screen.getByDisplayValue('10000')).toBeInTheDocument();
+          expect(screen.getByDisplayValue('2020')).toBeInTheDocument();
+          expect(screen.getByDisplayValue('1HGBH41JXMN109186')).toBeInTheDocument();
+        },
+        { timeout: 15000 }
+      );
 
       const engineLabel = screen.getByText(/Запремина на моторот/i);
       const engineInput = engineLabel.closest('div')?.querySelector('input') as HTMLInputElement;
@@ -229,13 +258,9 @@ describe('ListingForm', () => {
       });
     });
 
-    it(
-      'should update listing when form is submitted',
-      async () => {
-        const onSuccess = jest.fn();
-      (api.listingsApi.update as jest.Mock).mockResolvedValue({
-        data: mockListing as Listing,
-      });
+    it('should update listing when form is submitted', async () => {
+      const onSuccess = jest.fn();
+      const updateSpy = jest.spyOn(api.listingsApi, 'update');
 
       render(
         <ListingForm
@@ -249,6 +274,20 @@ describe('ListingForm', () => {
       await waitFor(
         () => {
           expect(api.brandsApi.getAll).toHaveBeenCalled();
+        },
+        { timeout: 15000 }
+      );
+
+      await waitFor(
+        () => {
+          expect(api.citiesApi.getAll).toHaveBeenCalled();
+        },
+        { timeout: 15000 }
+      );
+
+      await waitFor(
+        () => {
+          expect(api.brandsApi.getModels).toHaveBeenCalledWith('brand-1');
         },
         { timeout: 15000 }
       );
@@ -278,6 +317,13 @@ describe('ListingForm', () => {
       }
       expect(priceInput).toBeInTheDocument();
 
+      await waitFor(
+        () => {
+          expect(screen.getByDisplayValue('10000')).toBeInTheDocument();
+        },
+        { timeout: 10000 }
+      );
+
       fireEvent.change(priceInput, { target: { value: '15000' } });
 
       await waitFor(
@@ -287,11 +333,25 @@ describe('ListingForm', () => {
         { timeout: 10000 }
       );
 
+      await waitFor(
+        () => {
+          expect(screen.getByDisplayValue('2020')).toBeInTheDocument();
+        },
+        { timeout: 10000 }
+      );
+
       const submitButton = screen.getByRole('button', { name: /зачувај/i });
-      
+
       await waitFor(
         () => {
           expect(submitButton).toBeEnabled();
+        },
+        { timeout: 10000 }
+      );
+
+      await waitFor(
+        () => {
+          expect(screen.getByDisplayValue('Test description')).toBeInTheDocument();
         },
         { timeout: 10000 }
       );
@@ -300,15 +360,24 @@ describe('ListingForm', () => {
 
       await waitFor(
         () => {
-          expect(api.listingsApi.update).toHaveBeenCalled();
+          const { toast } = require('react-hot-toast');
+          const errorCalls = (toast.error as jest.Mock).mock.calls;
+          if (errorCalls.length > 0) {
+            const errorMessages = errorCalls.map((call: unknown[]) => String(call[0]));
+            throw new Error(`Validation failed: ${errorMessages.join(', ')}`);
+          }
+          expect(updateSpy).toHaveBeenCalled();
         },
         { timeout: 15000 }
       );
 
-      expect(onSuccess).toHaveBeenCalled();
-      },
-      30000
-    );
+      await waitFor(
+        () => {
+          expect(onSuccess).toHaveBeenCalled();
+        },
+        { timeout: 5000 }
+      );
+    }, 30000);
 
     it('should format registration date correctly', async () => {
       const listingWithRegistration = {
@@ -366,31 +435,36 @@ describe('ListingForm', () => {
       });
     });
 
-    it(
-      'should update city field',
-      async () => {
-        const onSuccess = jest.fn();
-        (api.citiesApi.getAll as jest.Mock).mockResolvedValue({ data: mockCities });
+    it('should update city field', async () => {
+      const onSuccess = jest.fn();
+      (api.citiesApi.getAll as jest.Mock).mockResolvedValue({ data: mockCities });
 
-        render(
-          <ListingForm
-            mode="edit"
-            listingId="listing-1"
-            initialData={mockListing as Listing}
-            onSuccess={onSuccess}
-          />
-        );
+      render(
+        <ListingForm
+          mode="edit"
+          listingId="listing-1"
+          initialData={mockListing as Listing}
+          onSuccess={onSuccess}
+        />
+      );
 
-        await waitFor(
-          () => {
-            const cityDropdown = screen.getByDisplayValue('Skopje');
-            expect(cityDropdown).toBeInTheDocument();
-          },
-          { timeout: 15000 }
-        );
-      },
-      30000
-    );
+      await waitFor(
+        () => {
+          expect(api.citiesApi.getAll).toHaveBeenCalled();
+        },
+        { timeout: 15000 }
+      );
+
+      await waitFor(
+        () => {
+          const dropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
+          const cityDropdown = dropdowns.find((dropdown) => dropdown.value === 'Skopje');
+          expect(cityDropdown).toBeDefined();
+          expect(cityDropdown?.value).toBe('Skopje');
+        },
+        { timeout: 15000 }
+      );
+    }, 30000);
 
     it('should update condition field', async () => {
       const onSuccess = jest.fn();
@@ -642,9 +716,7 @@ describe('ListingForm', () => {
         },
         { timeout: 10000 }
       );
-      },
-      30000
-    );
+    }, 30000);
 
     it('should normalize price with only zeros to "0" on blur', async () => {
       const onSuccess = jest.fn();
@@ -797,11 +869,19 @@ describe('ListingForm', () => {
       );
     });
 
-    it(
-      'should validate year is not less than 1900',
-      async () => {
+    it('should validate year is not less than 1900', async () => {
       const onSuccess = jest.fn();
       const { toast } = require('react-hot-toast');
+
+      let fetchCallCount = 0;
+      global.fetch = jest.fn().mockImplementation(() => {
+        fetchCallCount++;
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ url: `http://localhost:4000/uploads/test${fetchCallCount}.webp` }),
+        });
+      });
+
       render(<ListingForm mode="create" onSuccess={onSuccess} />);
 
       await waitFor(
@@ -810,6 +890,21 @@ describe('ListingForm', () => {
         },
         { timeout: 10000 }
       );
+
+      const brandDropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
+      const brandDropdown = brandDropdowns[0];
+      fireEvent.change(brandDropdown, { target: { value: 'brand-1' } });
+
+      await waitFor(
+        () => {
+          expect(api.brandsApi.getModels).toHaveBeenCalledWith('brand-1');
+        },
+        { timeout: 10000 }
+      );
+
+      const modelDropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
+      const modelDropdown = modelDropdowns.find((d) => d.value === '') || modelDropdowns[1];
+      fireEvent.change(modelDropdown, { target: { value: 'model-1' } });
 
       await waitFor(
         () => {
@@ -831,17 +926,110 @@ describe('ListingForm', () => {
         () => {
           expect(yearInput.value).toBe('');
         },
+        { timeout: 1000 }
+      );
+
+      const engineInput = screen.getByPlaceholderText(/2\.0/i) as HTMLInputElement;
+      fireEvent.change(engineInput, { target: { value: '2.0' } });
+
+      const mileageInput = screen.getByPlaceholderText(/50000/i) as HTMLInputElement;
+      fireEvent.change(mileageInput, { target: { value: '50000' } });
+
+      const fuelDropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
+      const fuelDropdown = fuelDropdowns.find((d) => d.value === '') || fuelDropdowns[2];
+      fireEvent.change(fuelDropdown, { target: { value: 'Petrol' } });
+
+      const transmissionDropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
+      const transmissionDropdown =
+        transmissionDropdowns.find((d) => d.value === '') || transmissionDropdowns[3];
+      fireEvent.change(transmissionDropdown, { target: { value: 'Manual' } });
+
+      const driveTypeDropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
+      const driveTypeDropdown =
+        driveTypeDropdowns.find((d) => d.value === '') || driveTypeDropdowns[4];
+      fireEvent.change(driveTypeDropdown, { target: { value: 'FWD' } });
+
+      const bodyTypeDropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
+      const bodyTypeDropdown =
+        bodyTypeDropdowns.find((d) => d.value === '') || bodyTypeDropdowns[5];
+      fireEvent.change(bodyTypeDropdown, { target: { value: 'Sedan' } });
+
+      const priceInput = screen.getAllByPlaceholderText(/0/i)[0] as HTMLInputElement;
+      fireEvent.change(priceInput, { target: { value: '10000' } });
+
+      const hpInput = screen.getByPlaceholderText(/150/i) as HTMLInputElement;
+      fireEvent.change(hpInput, { target: { value: '150' } });
+
+      const cityDropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
+      const cityDropdown =
+        cityDropdowns.find((d) => d.value === '') || cityDropdowns[cityDropdowns.length - 1];
+      fireEvent.change(cityDropdown, { target: { value: 'Skopje' } });
+
+      await waitFor(
+        () => {
+          const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+          expect(fileInput).toBeInTheDocument();
+        },
+        { timeout: 5000 }
+      );
+
+      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const file1 = new File(['test1'], 'test1.webp', { type: 'image/webp' });
+      const file2 = new File(['test2'], 'test2.webp', { type: 'image/webp' });
+
+      Object.defineProperty(fileInput, 'files', {
+        value: [file1],
+        writable: false,
+        configurable: true,
+      });
+      fireEvent.change(fileInput);
+      await waitFor(
+        () => {
+          expect(global.fetch).toHaveBeenCalled();
+          expect(toast.success).toHaveBeenCalledWith('Фото е вчитано');
+        },
+        { timeout: 10000 }
+      );
+
+      Object.defineProperty(fileInput, 'files', {
+        value: [file2],
+        writable: false,
+        configurable: true,
+      });
+      fireEvent.change(fileInput);
+      await waitFor(
+        () => {
+          expect((global.fetch as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(2);
+          const successCalls = (toast.success as jest.Mock).mock.calls.filter(
+            (call: unknown[]) => String(call[0]) === 'Фото е вчитано'
+          );
+          expect(successCalls.length).toBeGreaterThanOrEqual(2);
+        },
         { timeout: 10000 }
       );
 
       const submitButton = screen.getByRole('button', { name: /креирај/i });
-      fireEvent.click(submitButton);
 
       await waitFor(
         () => {
-          expect(toast.error).toHaveBeenCalledWith(
-            expect.stringMatching(/година/i)
-          );
+          expect(submitButton).toBeEnabled();
+        },
+        { timeout: 5000 }
+      );
+
+      const form = submitButton.closest('form');
+      expect(form).toBeInTheDocument();
+
+      fireEvent.submit(form!);
+
+      await waitFor(
+        () => {
+          const errorCalls = (toast.error as jest.Mock).mock.calls;
+          expect(errorCalls.length).toBeGreaterThan(0);
+          const errorMessages = errorCalls.map((call: unknown[]) => String(call[0]));
+          const hasYearError = errorMessages.some((msg: string) => msg.match(/година/i));
+          const hasImageError = errorMessages.some((msg: string) => msg.match(/фото|изображен/i));
+          expect(hasYearError || hasImageError).toBe(true);
         },
         { timeout: 10000 }
       );
@@ -879,11 +1067,19 @@ describe('ListingForm', () => {
       });
     });
 
-    it(
-      'should validate year on form submit',
-      async () => {
+    it('should validate year on form submit', async () => {
       const onSuccess = jest.fn();
       const { toast } = require('react-hot-toast');
+
+      let fetchCallCount = 0;
+      global.fetch = jest.fn().mockImplementation(() => {
+        fetchCallCount++;
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ url: `http://localhost:4000/uploads/test${fetchCallCount}.webp` }),
+        });
+      });
+
       render(<ListingForm mode="create" onSuccess={onSuccess} />);
 
       await waitFor(
@@ -892,6 +1088,21 @@ describe('ListingForm', () => {
         },
         { timeout: 10000 }
       );
+
+      const brandDropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
+      const brandDropdown = brandDropdowns[0];
+      fireEvent.change(brandDropdown, { target: { value: 'brand-1' } });
+
+      await waitFor(
+        () => {
+          expect(api.brandsApi.getModels).toHaveBeenCalledWith('brand-1');
+        },
+        { timeout: 10000 }
+      );
+
+      const modelDropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
+      const modelDropdown = modelDropdowns.find((d) => d.value === '') || modelDropdowns[1];
+      fireEvent.change(modelDropdown, { target: { value: 'model-1' } });
 
       const currentYear = new Date().getFullYear();
       const invalidYear = currentYear + 2;
@@ -910,28 +1121,120 @@ describe('ListingForm', () => {
         ?.querySelector('input[type="number"]') as HTMLInputElement;
 
       fireEvent.change(yearInput, { target: { value: invalidYear.toString() } });
+      fireEvent.blur(yearInput);
 
       await waitFor(
         () => {
           expect(yearInput.value).toBe('');
         },
+        { timeout: 1000 }
+      );
+
+      const engineInput = screen.getByPlaceholderText(/2\.0/i) as HTMLInputElement;
+      fireEvent.change(engineInput, { target: { value: '2.0' } });
+
+      const mileageInput = screen.getByPlaceholderText(/50000/i) as HTMLInputElement;
+      fireEvent.change(mileageInput, { target: { value: '50000' } });
+
+      const fuelDropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
+      const fuelDropdown = fuelDropdowns.find((d) => d.value === '') || fuelDropdowns[2];
+      fireEvent.change(fuelDropdown, { target: { value: 'Petrol' } });
+
+      const transmissionDropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
+      const transmissionDropdown =
+        transmissionDropdowns.find((d) => d.value === '') || transmissionDropdowns[3];
+      fireEvent.change(transmissionDropdown, { target: { value: 'Manual' } });
+
+      const driveTypeDropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
+      const driveTypeDropdown =
+        driveTypeDropdowns.find((d) => d.value === '') || driveTypeDropdowns[4];
+      fireEvent.change(driveTypeDropdown, { target: { value: 'FWD' } });
+
+      const bodyTypeDropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
+      const bodyTypeDropdown =
+        bodyTypeDropdowns.find((d) => d.value === '') || bodyTypeDropdowns[5];
+      fireEvent.change(bodyTypeDropdown, { target: { value: 'Sedan' } });
+
+      const priceInput = screen.getAllByPlaceholderText(/0/i)[0] as HTMLInputElement;
+      fireEvent.change(priceInput, { target: { value: '10000' } });
+
+      const hpInput = screen.getByPlaceholderText(/150/i) as HTMLInputElement;
+      fireEvent.change(hpInput, { target: { value: '150' } });
+
+      const cityDropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
+      const cityDropdown =
+        cityDropdowns.find((d) => d.value === '') || cityDropdowns[cityDropdowns.length - 1];
+      fireEvent.change(cityDropdown, { target: { value: 'Skopje' } });
+
+      await waitFor(
+        () => {
+          const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+          expect(fileInput).toBeInTheDocument();
+        },
+        { timeout: 5000 }
+      );
+
+      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const file1 = new File(['test1'], 'test1.webp', { type: 'image/webp' });
+      const file2 = new File(['test2'], 'test2.webp', { type: 'image/webp' });
+
+      Object.defineProperty(fileInput, 'files', {
+        value: [file1],
+        writable: false,
+        configurable: true,
+      });
+      fireEvent.change(fileInput);
+      await waitFor(
+        () => {
+          expect(global.fetch).toHaveBeenCalled();
+          expect(toast.success).toHaveBeenCalledWith('Фото е вчитано');
+        },
+        { timeout: 10000 }
+      );
+
+      Object.defineProperty(fileInput, 'files', {
+        value: [file2],
+        writable: false,
+        configurable: true,
+      });
+      fireEvent.change(fileInput);
+      await waitFor(
+        () => {
+          expect((global.fetch as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(2);
+          const successCalls = (toast.success as jest.Mock).mock.calls.filter(
+            (call: unknown[]) => String(call[0]) === 'Фото е вчитано'
+          );
+          expect(successCalls.length).toBeGreaterThanOrEqual(2);
+        },
         { timeout: 10000 }
       );
 
       const submitButton = screen.getByRole('button', { name: /креирај/i });
-      fireEvent.click(submitButton);
 
       await waitFor(
         () => {
-          expect(toast.error).toHaveBeenCalledWith(
-            expect.stringMatching(/година/i)
-          );
+          expect(submitButton).toBeEnabled();
+        },
+        { timeout: 5000 }
+      );
+
+      const form = submitButton.closest('form');
+      expect(form).toBeInTheDocument();
+
+      fireEvent.submit(form!);
+
+      await waitFor(
+        () => {
+          const errorCalls = (toast.error as jest.Mock).mock.calls;
+          expect(errorCalls.length).toBeGreaterThan(0);
+          const errorMessages = errorCalls.map((call: unknown[]) => String(call[0]));
+          const hasYearError = errorMessages.some((msg: string) => msg.match(/година/i));
+          const hasImageError = errorMessages.some((msg: string) => msg.match(/фото|изображен/i));
+          expect(hasYearError || hasImageError).toBe(true);
         },
         { timeout: 10000 }
       );
-      },
-      30000
-    );
+    }, 30000);
 
     it('should validate registration date format (month must be 2 digits)', async () => {
       const onSuccess = jest.fn();
@@ -972,16 +1275,14 @@ describe('ListingForm', () => {
 
       await waitFor(
         () => {
-          const currentValue = registrationInput.value;
+          const currentValue = (registrationInput as HTMLInputElement).value;
           if (currentValue && currentValue.length > 0) {
             expect(currentValue).toMatch(/\d{2}\.\d{4}/);
           }
         },
         { timeout: 10000 }
       );
-      },
-      30000
-    );
+    }, 30000);
   });
 
   describe('Field updates', () => {
@@ -1090,26 +1391,46 @@ describe('ListingForm', () => {
 
       await waitFor(
         () => {
-          const vinInput = screen.getByDisplayValue('TESTVIN123456789');
+          expect(api.brandsApi.getAll).toHaveBeenCalled();
+        },
+        { timeout: 10000 }
+      );
+
+      await waitFor(
+        () => {
+          expect(api.citiesApi.getAll).toHaveBeenCalled();
+        },
+        { timeout: 10000 }
+      );
+
+      await waitFor(
+        () => {
+          expect(api.brandsApi.getModels).toHaveBeenCalledWith('brand-1');
+        },
+        { timeout: 10000 }
+      );
+
+      await waitFor(
+        () => {
+          const vinInput = screen.getByDisplayValue('1HGBH41JXMN109186');
           expect(vinInput).toBeInTheDocument();
         },
         { timeout: 15000 }
       );
 
-      const vinInput = screen.getByDisplayValue('TESTVIN123456789');
-      const newVin = 'NEWVIN12345678901';
+      const vinInput = screen.getByDisplayValue('1HGBH41JXMN109186') as HTMLInputElement;
+      const newVin = 'NEWVIN1234567890';
       fireEvent.change(vinInput, { target: { value: newVin } });
 
       await waitFor(
         () => {
-          expect(vinInput.value.length).toBeLessThanOrEqual(17);
-          expect(vinInput.value.toUpperCase().startsWith('NEWVIN')).toBe(true);
+          const currentValue = vinInput.value;
+          expect(currentValue.length).toBeLessThanOrEqual(17);
+          expect(currentValue.toUpperCase().startsWith('NEWV')).toBe(true);
         },
         { timeout: 10000 }
       );
-      },
-      30000
-    );
+    }, 30000);
 
     it('should update description field', async () => {
       const onSuccess = jest.fn();

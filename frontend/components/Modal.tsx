@@ -50,7 +50,7 @@ export function Modal({
       onClick={onClose}
     >
       <div
-        className={`bg-bg-dark rounded-lg w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto custom-scrollbar ${className}`}
+        className={`bg-bg-dark rounded-lg w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto scrollbar-custom ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {title && (
