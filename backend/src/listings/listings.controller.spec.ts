@@ -67,6 +67,8 @@ describe('ListingsController', () => {
 
     controller = module.get<ListingsController>(ListingsController);
     service = module.get(ListingsService);
+
+    jest.spyOn(controller['logger'], 'error').mockImplementation(() => {});
   });
 
   it('should be defined', () => {
