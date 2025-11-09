@@ -259,7 +259,7 @@ function VerifyPhoneContent() {
           login: loginValue,
           password: formData.password,
         });
-        setAuth(loginRes.data.user, loginRes.data.access_token);
+        setAuth(loginRes.data.user, loginRes.data.access_token, loginRes.data.refresh_token);
 
         try {
           await authApi.verifyPhone();

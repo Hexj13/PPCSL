@@ -126,6 +126,7 @@ describe('AuthController', () => {
 
       const mockResponse = {
         access_token: 'jwt-token',
+        refresh_token: 'refresh-token',
         user: {
           id: mockUser.id,
           email: mockUser.email,
@@ -137,12 +138,31 @@ describe('AuthController', () => {
         },
       };
 
+      const req = { ip: '127.0.0.1' };
+
+      ipBlockService.getClientIp.mockReturnValue('127.0.0.1');
       authService.login.mockResolvedValue(mockResponse);
+      ipBlockService.resetAttempts.mockReturnValue(undefined);
 
-      const result = await controller.login(loginDto);
+      const result = await controller.login(req, loginDto);
 
+      expect(ipBlockService.getClientIp).toHaveBeenCalledWith(req);
       expect(authService.login).toHaveBeenCalledWith(loginDto);
+      expect(ipBlockService.resetAttempts).toHaveBeenCalledWith('127.0.0.1');
       expect(result).toEqual(mockResponse);
+    });
+
+    it('should record failed attempt when login fails', async () => {
+      const req = { ip: '127.0.0.1' };
+      const loginDto: LoginDto = { login: 'test@example.com', password: 'wrong-password' };
+
+      ipBlockService.getClientIp.mockReturnValue('127.0.0.1');
+      authService.login.mockRejectedValue(new BadRequestException('Invalid credentials'));
+      ipBlockService.recordFailedAttempt.mockReturnValue(undefined);
+
+      await expect(controller.login(req, loginDto)).rejects.toThrow(BadRequestException);
+      expect(ipBlockService.getClientIp).toHaveBeenCalledWith(req);
+      expect(ipBlockService.recordFailedAttempt).toHaveBeenCalledWith('127.0.0.1');
     });
   });
 
@@ -353,17 +373,35 @@ describe('AuthController', () => {
 
   describe('requestPasswordReset', () => {
     it('should request password reset', async () => {
+      const req = { ip: '127.0.0.1' };
       const requestPasswordResetDto: RequestPasswordResetDto = { phone: '+38970123456' };
 
+      ipBlockService.getClientIp.mockReturnValue('127.0.0.1');
       authService.requestPasswordReset.mockResolvedValue(undefined);
+      ipBlockService.resetAttempts.mockReturnValue(undefined);
 
-      const result = await controller.requestPasswordReset(requestPasswordResetDto);
+      const result = await controller.requestPasswordReset(req, requestPasswordResetDto);
 
+      expect(ipBlockService.getClientIp).toHaveBeenCalledWith(req);
       expect(authService.requestPasswordReset).toHaveBeenCalledWith(requestPasswordResetDto);
       expect(result).toEqual({
         success: true,
         message: 'SMS кодот за ресетирање на лозинка е испратен',
       });
+    });
+
+    it('should record failed attempt when request fails', async () => {
+      const req = { ip: '127.0.0.1' };
+      const requestPasswordResetDto: RequestPasswordResetDto = { phone: '+38970123456' };
+
+      ipBlockService.getClientIp.mockReturnValue('127.0.0.1');
+      authService.requestPasswordReset.mockRejectedValue(new BadRequestException('User not found'));
+      ipBlockService.recordFailedAttempt.mockReturnValue(undefined);
+
+      await expect(controller.requestPasswordReset(req, requestPasswordResetDto)).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(ipBlockService.recordFailedAttempt).toHaveBeenCalledWith('127.0.0.1');
     });
   });
 

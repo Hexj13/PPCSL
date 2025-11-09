@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Listing, User } from '@/lib/api';
@@ -26,7 +26,7 @@ interface UserListingsModalProps {
   showOnlyActive?: boolean;
 }
 
-export function UserListingsModal({
+function UserListingsModalComponent({
   isOpen,
   onClose,
   user,
@@ -106,7 +106,7 @@ export function UserListingsModal({
     };
   }, [isOpen, targetUserId]);
 
-  const getUserDisplayName = () => {
+  const getUserDisplayName = useMemo(() => {
     if (!user) return 'Корисник';
     if (user.firstName && user.lastName) {
       return `${user.firstName} ${user.lastName}`;
@@ -118,19 +118,15 @@ export function UserListingsModal({
       return user.email;
     }
     return 'Корисник';
-  };
+  }, [user]);
 
-  const displayListings = showOnlyActive
-    ? listings.filter((listing) => listing.status === 'Active')
-    : listings;
+  const displayListings = useMemo(
+    () => (showOnlyActive ? listings.filter((listing) => listing.status === 'Active') : listings),
+    [listings, showOnlyActive]
+  );
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={`Објави од ${getUserDisplayName()}`}
-      size="large"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} title={`Објави од ${getUserDisplayName}`} size="large">
       {loading ? (
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
@@ -249,3 +245,5 @@ export function UserListingsModal({
     </Modal>
   );
 }
+
+export const UserListingsModal = React.memo(UserListingsModalComponent);

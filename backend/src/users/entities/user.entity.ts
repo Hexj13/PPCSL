@@ -27,23 +27,23 @@ export class User {
   })
   type: UserType;
 
-  @Column({ unique: true, nullable: true })
-  email: string;
+  @Column({ type: 'varchar', unique: true, nullable: true })
+  email: string | null;
 
-  @Column()
+  @Column({ type: 'varchar' })
   password: string;
 
-  @Column({ nullable: true })
-  phone: string;
+  @Column({ type: 'varchar', nullable: true })
+  phone: string | null;
 
-  @Column({ nullable: true })
-  firstName: string;
+  @Column({ type: 'varchar', nullable: true })
+  firstName: string | null;
 
-  @Column({ nullable: true })
-  lastName: string;
+  @Column({ type: 'varchar', nullable: true })
+  lastName: string | null;
 
-  @Column({ nullable: true })
-  companyName: string;
+  @Column({ type: 'varchar', nullable: true })
+  companyName: string | null;
 
   @Column({ type: 'boolean', default: true })
   active: boolean;
@@ -64,14 +64,14 @@ export class User {
   phoneVerified: boolean;
 
   @Column({ type: 'boolean', nullable: true })
-  emailVerified: boolean;
+  emailVerified: boolean | null;
 
   @CreateDateColumn()
   created_at: Date;
 
   @OneToMany(() => Listing, (listing) => listing.user)
-  listings: Listing[];
+  listings!: Listing[];
 
   @OneToMany(() => Favorite, (favorite) => favorite.user)
-  favorites: Favorite[];
+  favorites!: Favorite[];
 }

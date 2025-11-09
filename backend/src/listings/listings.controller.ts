@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Logger,
   Param,
   Patch,
   Post,
@@ -28,6 +29,8 @@ import { ListingsService } from './listings.service';
 @ApiTags('listings')
 @Controller('api/listings')
 export class ListingsController {
+  private readonly logger = new Logger(ListingsController.name);
+
   constructor(private readonly listingsService: ListingsService) {}
 
   @ApiOperation({ summary: 'Search listings' })
@@ -175,7 +178,11 @@ export class ListingsController {
 
       return listing;
     } catch (error) {
-      console.error('Error in findOne controller:', error);
+      if (error instanceof Error) {
+        this.logger.error('Error in findOne controller:', error.message, error.stack);
+      } else {
+        this.logger.error('Error in findOne controller:', error);
+      }
       throw error;
     }
   }

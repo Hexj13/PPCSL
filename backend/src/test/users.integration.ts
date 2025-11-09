@@ -12,7 +12,9 @@ describe('Users API Integration Tests', () => {
     const testEmail = `test${Date.now()}@example.com`;
     const testPassword = 'Test123!@#';
 
-    const registerResponse = await request.post('/api/auth/register').send({
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    let registerResponse = await request.post('/api/auth/register').send({
       email: testEmail,
       password: testPassword,
       type: 'Individual',
@@ -22,10 +24,30 @@ describe('Users API Integration Tests', () => {
       termsAccepted: true,
     });
 
+    let retries = 0;
+    while (registerResponse.status === 429 && retries < 3) {
+      await new Promise((resolve) => setTimeout(resolve, 2000 * (retries + 1)));
+      registerResponse = await request.post('/api/auth/register').send({
+        email: `test${Date.now() + retries}@example.com`,
+        password: testPassword,
+        type: 'Individual',
+        phone: `+3897012345${Math.floor(Math.random() * 1000)}`,
+        firstName: 'Test',
+        lastName: 'User',
+        termsAccepted: true,
+      });
+      retries++;
+    }
+
+    if (registerResponse.status !== 201) {
+      throw new Error(`Registration failed: ${JSON.stringify(registerResponse.body)}`);
+    }
+
     userId = registerResponse.body.id;
+    const actualEmail = retries > 0 ? registerResponse.body.email || testEmail : testEmail;
 
     const loginResponse = await request.post('/api/auth/login').send({
-      login: testEmail,
+      login: actualEmail,
       password: testPassword,
     });
 

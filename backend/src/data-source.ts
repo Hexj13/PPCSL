@@ -1,5 +1,6 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 
+import { RefreshToken } from './auth/entities/refresh-token.entity';
 import { Brand } from './brands/entities/brand.entity';
 import { VehicleModel } from './brands/entities/vehicle-model.entity';
 import { Favorite } from './favorites/entities/favorite.entity';
@@ -16,7 +17,7 @@ export const dataSourceOptions: DataSourceOptions = {
   password:
     process.env.DB_PASSWORD || (process.env.NODE_ENV === 'production' ? undefined : 'kupito123'),
   database: process.env.DB_NAME || 'kupito',
-  entities: [User, Listing, ListingView, Vehicle, Favorite, Brand, VehicleModel],
+  entities: [User, Listing, ListingView, Vehicle, Favorite, Brand, VehicleModel, RefreshToken],
   synchronize: process.env.NODE_ENV !== 'production',
   logging: process.env.NODE_ENV === 'development',
   migrations: ['dist/migrations/*.js'],

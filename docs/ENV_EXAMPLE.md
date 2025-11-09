@@ -94,10 +94,10 @@ NEXT_PUBLIC_SITE_URL=https://kupito.mk
 # Copy only the content value (the part between quotes)
 NEXT_PUBLIC_GOOGLE_VERIFICATION=your-verification-code
 
-# Google Analytics Measurement ID (OPTIONAL - See SEO_OPTIMIZATION.md for setup)
+# Google Analytics Measurement ID (OPTIONAL - See GOOGLE_ANALYTICS_SETUP.md for setup)
 # Get this ID from: https://analytics.google.com/
 # Format: G-XXXXXXXXXX
-# Note: You also need to create GoogleAnalytics component (see SEO_OPTIMIZATION.md)
+# Component is already created in frontend/components/GoogleAnalytics.tsx
 NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
 ```
 
@@ -108,8 +108,7 @@ NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
 - **NEXT_PUBLIC_GOOGLE_VERIFICATION**: Google Search Console verification code (optional, for site verification)
   - ⚠️ **TODO**: Setup required - see `docs/SEO_OPTIMIZATION.md` for instructions
 - **NEXT_PUBLIC_GA_ID**: Google Analytics Measurement ID (optional, for analytics tracking)
-  - ⚠️ **TODO**: Setup required - see `docs/SEO_OPTIMIZATION.md` for instructions
-  - ⚠️ **TODO**: Component creation required - see `docs/SEO_OPTIMIZATION.md` for code
+  - ✅ Component created - see `docs/GOOGLE_ANALYTICS_SETUP.md` for setup instructions
 
 ### Production Configuration
 

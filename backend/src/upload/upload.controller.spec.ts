@@ -1,3 +1,5 @@
+import { Readable } from 'stream';
+
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Response } from 'express';
@@ -19,7 +21,7 @@ describe('UploadController', () => {
     destination: '',
     filename: '',
     path: '',
-    stream: null,
+    stream: undefined as unknown as Readable,
   };
 
   beforeEach(async () => {
@@ -63,7 +65,9 @@ describe('UploadController', () => {
     });
 
     it('should throw BadRequestException when file is missing', async () => {
-      await expect(controller.uploadImage(null)).rejects.toThrow(BadRequestException);
+      await expect(
+        controller.uploadImage(undefined as unknown as Express.Multer.File),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 

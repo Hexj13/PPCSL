@@ -12,18 +12,41 @@ describe('Favorites API Integration Tests', () => {
     const testEmail = `test${Date.now()}@example.com`;
     const testPassword = 'Test123!@#';
 
-    await request.post('/api/auth/register').send({
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    let registerResponse = await request.post('/api/auth/register').send({
       email: testEmail,
       password: testPassword,
       type: 'Individual',
-      phone: `+3897012345${Math.floor(Math.random() * 1000)}`,
+      phone: `+3897012345${Math.floor(Math.random() * 10000)}`,
       firstName: 'Test',
       lastName: 'User',
       termsAccepted: true,
     });
 
+    let retries = 0;
+    while ((registerResponse.status === 429 || registerResponse.status === 400) && retries < 5) {
+      await new Promise((resolve) => setTimeout(resolve, 3000 * (retries + 1)));
+      registerResponse = await request.post('/api/auth/register').send({
+        email: `test${Date.now() + retries + Math.random()}@example.com`,
+        password: testPassword,
+        type: 'Individual',
+        phone: `+3897${Math.floor(Math.random() * 100000000)}`,
+        firstName: 'Test',
+        lastName: 'User',
+        termsAccepted: true,
+      });
+      retries++;
+    }
+
+    if (registerResponse.status !== 201) {
+      throw new Error(`Registration failed: ${JSON.stringify(registerResponse.body)}`);
+    }
+
+    const actualEmail = retries > 0 ? registerResponse.body.email || testEmail : testEmail;
+
     const loginResponse = await request.post('/api/auth/login').send({
-      login: testEmail,
+      login: actualEmail,
       password: testPassword,
     });
 

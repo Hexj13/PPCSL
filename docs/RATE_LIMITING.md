@@ -26,12 +26,13 @@
 #### Authentication
 
 **POST /api/auth/register** - Registration
-- **Limit:** 5 requests per minute
+- **Limit:** 3 requests per 10 minutes (600 seconds)
 - **Reason:** Preventing mass bot registration
 
 **POST /api/auth/login** - Login
-- **Limit:** 10 requests per minute
-- **Reason:** Protection against password brute force attacks
+- **Limit:** 5 requests per 5 minutes (300 seconds)
+- **Additional Protection:** IP-based brute force protection via `IpBlockGuard`
+- **Reason:** Enhanced protection against password brute force attacks
 
 **POST /api/auth/check-phone** - Phone Check
 - **Limit:** 10 requests per minute
@@ -103,8 +104,9 @@ Recommended to track:
 | Endpoint | Limit | Time Window | Reason |
 |----------|-------|-------------|--------|
 | All endpoints (default) | 100 | 60 sec | Basic protection |
-| POST /api/auth/register | 5 | 60 sec | Registration spam protection |
-| POST /api/auth/login | 10 | 60 sec | Brute force protection |
+| POST /api/auth/register | 3 | 600 sec (10 min) | Registration spam protection |
+| POST /api/auth/login | 5 | 300 sec (5 min) | Brute force protection + IP blocking |
+| POST /api/auth/request-password-reset | 3 | 300 sec (5 min) | Password reset spam protection + IP blocking |
 | POST /api/auth/check-phone | 10 | 60 sec | Spam protection |
 | POST /api/auth/send-sms | 3 | 60 sec | SMS cost savings |
 | POST /api/upload/image | 20 | 60 sec | Resource protection |

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 interface MultiSelectOption {
   value: string;
@@ -17,7 +17,7 @@ interface MultiSelectDropdownProps {
   searchable?: boolean;
 }
 
-export function MultiSelectDropdown({
+function MultiSelectDropdownComponent({
   values,
   onChange,
   options,
@@ -51,39 +51,54 @@ export function MultiSelectDropdown({
     };
   }, [isOpen, searchable]);
 
-  const selectedOptions = options.filter((opt) => values.includes(opt.value));
-  const displayText =
-    selectedOptions.length === 0
-      ? placeholder
-      : selectedOptions.length === 1
-        ? selectedOptions[0].label
-        : `Избрани ${selectedOptions.length}`;
+  const selectedOptions = useMemo(
+    () => options.filter((opt) => values.includes(opt.value)),
+    [options, values]
+  );
+  const displayText = useMemo(
+    () =>
+      selectedOptions.length === 0
+        ? placeholder
+        : selectedOptions.length === 1
+          ? selectedOptions[0].label
+          : `Избрани ${selectedOptions.length}`,
+    [selectedOptions, placeholder]
+  );
 
-  const filteredOptions =
-    searchable && searchQuery
-      ? options.filter((option) => option.label.toLowerCase().includes(searchQuery.toLowerCase()))
-      : options;
+  const filteredOptions = useMemo(
+    () =>
+      searchable && searchQuery
+        ? options.filter((option) => option.label.toLowerCase().includes(searchQuery.toLowerCase()))
+        : options,
+    [options, searchable, searchQuery]
+  );
 
-  const handleToggle = (optionValue: string) => {
-    if (values.includes(optionValue)) {
-      onChange(values.filter((v) => v !== optionValue));
-    } else {
-      onChange([...values, optionValue]);
-    }
-  };
+  const handleToggle = useCallback(
+    (optionValue: string) => {
+      if (values.includes(optionValue)) {
+        onChange(values.filter((v) => v !== optionValue));
+      } else {
+        onChange([...values, optionValue]);
+      }
+    },
+    [values, onChange]
+  );
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-    if (!isOpen) {
-      setIsOpen(true);
-    }
-  };
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchQuery(e.target.value);
+      if (!isOpen) {
+        setIsOpen(true);
+      }
+    },
+    [isOpen]
+  );
 
-  const handleInputFocus = () => {
+  const handleInputFocus = useCallback(() => {
     if (!disabled) {
       setIsOpen(true);
     }
-  };
+  }, [disabled]);
 
   return (
     <div ref={dropdownRef} className={`relative ${className}`}>
@@ -178,3 +193,5 @@ export function MultiSelectDropdown({
     </div>
   );
 }
+
+export const MultiSelectDropdown = React.memo(MultiSelectDropdownComponent);

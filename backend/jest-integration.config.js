@@ -10,6 +10,7 @@ module.exports = {
   testEnvironment: 'node',
   setupFilesAfterEnv: ['<rootDir>/test/jest-integration.setup.ts'],
   testTimeout: 30000,
+  maxWorkers: 1,
   moduleNameMapper: {
     '^src/(.*)$': '<rootDir>/$1',
   },

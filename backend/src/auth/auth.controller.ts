@@ -18,6 +18,7 @@ import { UsersService } from '../users/users.service';
 import { AuthService } from './auth.service';
 import { ChangePhoneRequestDto, ChangePhoneVerifyDto } from './dto/change-phone.dto';
 import { LoginDto } from './dto/login.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterDto } from './dto/register.dto';
 import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
@@ -82,7 +83,7 @@ export class AuthController {
       },
     },
   })
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Throttle({ default: { limit: 3, ttl: 600000 } })
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
@@ -98,6 +99,7 @@ export class AuthController {
           type: 'object',
           properties: {
             access_token: { type: 'string' },
+            refresh_token: { type: 'string' },
             user: {
               type: 'object',
               properties: {
@@ -132,11 +134,59 @@ export class AuthController {
       },
     },
   })
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle({ default: { limit: 5, ttl: 300000 } })
+  @UseGuards(IpBlockGuard)
   @HttpCode(200)
   @Post('login')
-  async login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto);
+  async login(@Request() req, @Body() loginDto: LoginDto) {
+    const ip = this.ipBlockService.getClientIp(req);
+    try {
+      const result = await this.authService.login(loginDto);
+      this.ipBlockService.resetAttempts(ip);
+      return result;
+    } catch (error) {
+      this.ipBlockService.recordFailedAttempt(ip);
+      throw error;
+    }
+  }
+
+  @ApiOperation({ summary: 'Refresh access token' })
+  @ApiResponse({
+    status: 200,
+    description: 'Tokens refreshed successfully',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            access_token: { type: 'string' },
+            refresh_token: { type: 'string' },
+            user: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', format: 'uuid' },
+                email: { type: 'string', nullable: true },
+                type: { type: 'string' },
+                firstName: { type: 'string', nullable: true },
+                lastName: { type: 'string', nullable: true },
+                companyName: { type: 'string', nullable: true },
+                phone: { type: 'string', nullable: true },
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid or expired refresh token',
+  })
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @HttpCode(200)
+  @Post('refresh')
+  async refresh(@Body() refreshTokenDto: RefreshTokenDto) {
+    return this.authService.refreshTokens(refreshTokenDto);
   }
 
   @ApiOperation({ summary: 'Get current user profile' })
@@ -609,12 +659,22 @@ export class AuthController {
       },
     },
   })
-  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @Throttle({ default: { limit: 3, ttl: 300000 } })
+  @UseGuards(IpBlockGuard)
   @HttpCode(200)
   @Post('request-password-reset')
-  async requestPasswordReset(@Body() requestPasswordResetDto: RequestPasswordResetDto) {
-    await this.authService.requestPasswordReset(requestPasswordResetDto);
-    return { success: true, message: 'SMS кодот за ресетирање на лозинка е испратен' };
+  async requestPasswordReset(
+    @Request() req,
+    @Body() requestPasswordResetDto: RequestPasswordResetDto,
+  ) {
+    const ip = this.ipBlockService.getClientIp(req);
+    try {
+      await this.authService.requestPasswordReset(requestPasswordResetDto);
+      return { success: true, message: 'SMS кодот за ресетирање на лозинка е испратен' };
+    } catch (error) {
+      this.ipBlockService.recordFailedAttempt(ip);
+      throw error;
+    }
   }
 
   @ApiOperation({ summary: 'Verify password reset code' })

@@ -10,12 +10,14 @@ import { UsersService } from '../users/users.service';
 
 import { ChangePhoneRequestDto, ChangePhoneVerifyDto } from './dto/change-phone.dto';
 import { LoginDto } from './dto/login.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterDto } from './dto/register.dto';
 import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { VerifyResetCodeDto } from './dto/verify-reset-code.dto';
 import { EmailService } from './services/email.service';
+import { RefreshTokenService } from './services/refresh-token.service';
 import { SmsService } from './services/sms.service';
 
 export type UserWithoutPassword = Omit<User, 'password'>;
@@ -28,6 +30,7 @@ export class AuthService {
     private smsService: SmsService,
     private emailService: EmailService,
     private listingsService: ListingsService,
+    private refreshTokenService: RefreshTokenService,
   ) {}
 
   async validateUser(login: string, password: string): Promise<UserWithoutPassword | null> {
@@ -35,7 +38,9 @@ export class AuthService {
     const normalizedPhone = isEmail ? null : this.smsService.normalizePhoneNumber(login);
     const user = isEmail
       ? await this.usersService.findByEmail(login)
-      : await this.usersService.findByPhone(normalizedPhone);
+      : normalizedPhone
+        ? await this.usersService.findByPhone(normalizedPhone)
+        : null;
 
     if (user && (await bcrypt.compare(password, user.password))) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -51,8 +56,43 @@ export class AuthService {
       throw new UnauthorizedException('Погрешни најавни податоци');
     }
     const payload = { email: user.email || '', sub: user.id, type: user.type };
+    const accessToken = this.jwtService.sign(payload);
+    const refreshToken = await this.refreshTokenService.generateToken(user.id);
+
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        type: user.type,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        companyName: user.companyName,
+        phone: user.phone,
+      },
+    };
+  }
+
+  async refreshTokens(refreshTokenDto: RefreshTokenDto) {
+    const refreshToken = await this.refreshTokenService.validateToken(
+      refreshTokenDto.refresh_token,
+    );
+
+    const user = await this.usersService.findOne(refreshToken.user_id);
+    if (!user || !user.active) {
+      throw new UnauthorizedException('Корисникот не е активен');
+    }
+
+    const payload = { email: user.email || '', sub: user.id, type: user.type };
+    const accessToken = this.jwtService.sign(payload);
+
+    await this.refreshTokenService.revokeToken(refreshTokenDto.refresh_token);
+    const newRefreshToken = await this.refreshTokenService.generateToken(user.id);
+
+    return {
+      access_token: accessToken,
+      refresh_token: newRefreshToken,
       user: {
         id: user.id,
         email: user.email,
@@ -351,6 +391,7 @@ export class AuthService {
     }
 
     await this.listingsService.closeAllUserListings(userId);
+    await this.refreshTokenService.revokeAllUserTokens(userId);
 
     await this.usersService.update(userId, {
       email: null,

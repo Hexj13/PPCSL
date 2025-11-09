@@ -8,21 +8,49 @@ describe('Upload API Integration Tests', () => {
 
   beforeAll(async () => {
     request = getTestRequest();
-    const testEmail = `test${Date.now()}@example.com`;
+    let testEmail = `test${Date.now()}@example.com`;
     const testPassword = 'Test123!@#';
 
-    await request.post('/api/auth/register').send({
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    let registerResponse = await request.post('/api/auth/register').send({
       email: testEmail,
       password: testPassword,
       type: 'Individual',
-      phone: `+3897012345${Math.floor(Math.random() * 1000)}`,
+      phone: `+3897012345${Math.floor(Math.random() * 10000)}`,
       firstName: 'Test',
       lastName: 'User',
       termsAccepted: true,
     });
 
+    let retries = 0;
+    while ((registerResponse.status === 429 || registerResponse.status === 400) && retries < 5) {
+      await new Promise((resolve) => setTimeout(resolve, 3000 * (retries + 1)));
+      const uniqueEmail = `test${Date.now() + retries + Math.random()}@example.com`;
+      registerResponse = await request.post('/api/auth/register').send({
+        email: uniqueEmail,
+        password: testPassword,
+        type: 'Individual',
+        phone: `+3897012345${Math.floor(Math.random() * 10000)}`,
+        firstName: 'Test',
+        lastName: 'User',
+        termsAccepted: true,
+      });
+      retries++;
+      if (registerResponse.status === 201) {
+        testEmail = uniqueEmail;
+      }
+    }
+
+    if (registerResponse.status !== 201) {
+      throw new Error(`Registration failed: ${JSON.stringify(registerResponse.body)}`);
+    }
+
+    const actualEmail =
+      registerResponse.status === 201 ? registerResponse.body.email || testEmail : testEmail;
+
     const loginResponse = await request.post('/api/auth/login').send({
-      login: testEmail,
+      login: actualEmail,
       password: testPassword,
     });
 

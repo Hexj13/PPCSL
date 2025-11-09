@@ -22,10 +22,18 @@ describe('AdminService', () => {
     type: UserType.Individual,
     firstName: 'Test',
     lastName: 'User',
+    companyName: null,
     active: true,
-    listings: [],
+    emailNotifications: false,
+    viber: false,
+    whatsapp: false,
+    telegram: false,
+    phoneVerified: false,
+    emailVerified: null,
     created_at: new Date(),
-  } as User;
+    listings: [],
+    favorites: [],
+  };
 
   const mockListing: Listing = {
     id: 'listing-1',
@@ -34,12 +42,26 @@ describe('AdminService', () => {
     currency: 'MKD' as const,
     city: 'Skopje',
     status: ListingStatus.Active,
+    description: null,
     user_id: 'user-1',
-    created_at: new Date(),
-    updated_at: new Date(),
+    user: mockUser,
+    vehicle_id: null,
+    vehicle: null,
+    images: null,
+    urgent: false,
+    is_new: false,
+    vin: null,
+    condition: 'Undamaged' as const,
+    registration_type: 'Local' as const,
+    horsepower: 100,
+    is_registered: null,
+    registration_expires_at: null,
     last_updated_at: new Date(),
     closed_at: null,
-  } as Listing;
+    views: 0,
+    created_at: new Date(),
+    updated_at: new Date(),
+  };
 
   beforeEach(async () => {
     const mockUsersRepository = {
@@ -204,7 +226,10 @@ describe('AdminService', () => {
         ...mockListing,
         user: null,
       };
-      listingsRepository.findAndCount.mockResolvedValue([[listingWithoutUser] as Listing[], 1]);
+      listingsRepository.findAndCount.mockResolvedValue([
+        [listingWithoutUser] as unknown as Listing[],
+        1,
+      ]);
 
       const result = await service.getAllListings();
 

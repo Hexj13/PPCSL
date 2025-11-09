@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { RedisService } from '../common/redis.service';
+import { CACHE_PREFIXES, CACHE_TTL, generateCacheKey } from '../common/utils/cache.utils';
 
 export interface City {
   name: string;
@@ -9,7 +10,7 @@ export interface City {
 
 @Injectable()
 export class CitiesService {
-  private readonly CACHE_TTL = 86400 * 7;
+  private readonly CACHE_TTL = CACHE_TTL.cities.all;
 
   constructor(private redisService: RedisService) {}
   private readonly cities: City[] = [
@@ -91,7 +92,7 @@ export class CitiesService {
   ];
 
   async getAll(): Promise<City[]> {
-    const cacheKey = 'cache:cities:all';
+    const cacheKey = generateCacheKey({ prefix: CACHE_PREFIXES.cities, parts: ['all'] });
     try {
       const cached = await this.redisService.getJson<City[]>(cacheKey);
       if (cached) {

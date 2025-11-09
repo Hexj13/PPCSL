@@ -108,8 +108,11 @@ describe('IpBlockGuard', () => {
         guard.canActivate(mockContext);
       } catch (error) {
         expect(error).toBeInstanceOf(HttpException);
-        expect(error.response.message).toContain('Достигнато е максималниот број на обиди');
-        expect(error.response.blockedUntil).toBe(blockedUntil.toISOString());
+        const httpError = error as HttpException;
+        expect(httpError.getResponse()).toHaveProperty('message');
+        const response = httpError.getResponse() as { message: string; blockedUntil: string };
+        expect(response.message).toContain('Достигнато е максималниот број на обиди');
+        expect(response.blockedUntil).toBe(blockedUntil.toISOString());
       }
     });
   });

@@ -1,8 +1,17 @@
 # Technical Specification (TS)
 
 Project: Platform for selling new and used cars
-Version: 1.4
+Version: 1.5
 Date: 2025-01-XX
+
+**Recent Updates (v1.5):**
+- Refresh tokens implementation (P1) - automatic token renewal, 1 hour access tokens, 7 days refresh tokens
+- TypeScript strict mode (P2) - improved type safety in backend
+- CI/CD automation (P2) - automated deployment and bundle analysis
+- Bundle optimization (P2) - webpack splitChunks, lazy loading
+- Frontend memoization (P1) - React.memo, useMemo, useCallback optimizations
+- Redis cache optimization (P1) - SCAN instead of KEYS, batch operations
+- Google Analytics integration (P1) - user behavior tracking
 
 ---
 
@@ -110,8 +119,12 @@ Create a simple, free website for posting listings for new and used cars in Mace
   * Backend IP-based brute force protection: 40 attempts per IP, 1-hour block
 * **Authentication:**
   * Login with email or phone number
-  * JWT-based authentication
+  * JWT-based authentication with access tokens (1 hour expiration)
+  * Refresh tokens (7 days) for automatic session renewal
+  * Automatic token refresh on 401 errors
+  * Token rotation for enhanced security
   * Password hashing with bcrypt (10 rounds)
+  * Rate limiting: 5 login attempts per 5 minutes + IP blocking
 * **Password Reset:**
   * Password reset via phone number only
   * 3-step flow: request reset → verify SMS code → set new password
@@ -201,7 +214,7 @@ Create a simple, free website for posting listings for new and used cars in Mace
 
 ## 4. Architecture
 
-* **Frontend:** Next.js 14 (SSR for SEO), React 18, TailwindCSS, Zustand (state management)
+* **Frontend:** Next.js 16 (SSR for SEO), React 19, TailwindCSS, Zustand (state management)
 * **Backend:** Node.js (NestJS), REST API, PostgreSQL, Redis, S3-compatible storage (planned)
 * **Database:** PostgreSQL 15 with TypeORM
   * **Optimizations:** Comprehensive indexing strategy with partial and composite indexes
@@ -211,12 +224,24 @@ Create a simple, free website for posting listings for new and used cars in Mace
 * **Search:** PostgreSQL Full-Text Search and custom query builder
 * **Image processing:** Sharp library for optimization and WebP conversion
 * **File storage:** Local file system (`/uploads`) with plans for S3 migration
-* **Authentication:** JWT tokens, Passport.js
+* **Authentication:** JWT tokens (1 hour expiration), Refresh tokens (7 days), Passport.js
+  * Access tokens expire after 1 hour for security
+  * Refresh tokens allow automatic token renewal without re-login
+  * Token rotation implemented for enhanced security
+  * See [REFRESH_TOKENS_COMPLETE.md](./REFRESH_TOKENS_COMPLETE.md) for details
 * **Task scheduling:** NestJS Schedule module (cron jobs)
 * **Monitoring:** 
   * Health check endpoint (`/health`) with database and Redis connectivity checks
-  * Basic logging via NestJS Logger
+  * Basic logging via NestJS Logger (replaces console.log)
+  * Google Analytics integration for frontend tracking
   * Sentry (planned) for error tracking
+* **Code Quality:**
+  * TypeScript strict mode enabled in backend
+  * CI/CD automation via GitHub Actions
+  * Bundle optimization (webpack splitChunks, lazy loading)
+  * Frontend component memoization (React.memo, useMemo, useCallback)
+  * Redis cache optimization (SCAN instead of KEYS, batch operations)
+  * See [OPTIMIZATION_PROGRESS.md](./OPTIMIZATION_PROGRESS.md) for details
 * **Backups:** Automated database backup scripts (TypeScript and Bash) with cron support
   * See [DATABASE_BACKUPS.md](./DATABASE_BACKUPS.md) for details
 
@@ -225,7 +250,8 @@ Create a simple, free website for posting listings for new and used cars in Mace
 ### Authentication
 ```http
 POST /api/auth/register              # Register new user
-POST /api/auth/login                  # Login (email or phone)
+POST /api/auth/login                  # Login (email or phone) - returns access_token and refresh_token
+POST /api/auth/refresh                # Refresh access token using refresh token
 GET    /api/auth/me                     # Get current user profile
 PATCH  /api/auth/profile              # Update user profile
 DELETE /api/auth/profile              # Delete user account (irreversible)
@@ -537,6 +563,9 @@ GET /api/listings?brand_id=xxx&year_gte=2018&price_lte=12000&city=Skopje&fuel=Pe
   cd frontend && npm test
   ```
 * **CI/CD:** All tests run automatically in GitHub Actions on push and pull requests
+  * Automated deployment job for production (main branch)
+  * Bundle size analysis in frontend CI
+  * See [TYPESCRIPT_CI_BUNDLE_OPTIMIZATION.md](./TYPESCRIPT_CI_BUNDLE_OPTIMIZATION.md) for details
 * **Email Service Mocking:** Email service is automatically mocked in integration tests to prevent failures due to missing email credentials
 * **Requirements:**
   * PostgreSQL database (for integration tests)
@@ -576,3 +605,5 @@ GET /api/listings?brand_id=xxx&year_gte=2018&price_lte=12000&city=Skopje&fuel=Pe
 **Version 1.3 updates:** Database optimizations (indexes, triggers, connection pooling), smart listing loading (auto-load 80, then button for 40), enhanced image optimization (lazy loading, sizes, SEO), increased thumbnail sizes, email service mocking in integration tests.
 
 **Version 1.4 updates:** Skeleton loaders for improved loading UX, optimized state updates to prevent flickering, delayed skeleton display (200-500ms), synchronous state updates using `flushSync`, header skeleton loaders, profile page with phone number change flow, email notifications preference.
+
+**Version 1.5 updates:** Refresh tokens implementation (automatic token renewal, 1 hour access tokens, 7 days refresh tokens), TypeScript strict mode for improved type safety, CI/CD automation (automated deployment and bundle analysis), bundle optimization (webpack splitChunks, lazy loading), frontend memoization (React.memo, useMemo, useCallback), Redis cache optimization (SCAN instead of KEYS, batch operations), Google Analytics integration for user behavior tracking.

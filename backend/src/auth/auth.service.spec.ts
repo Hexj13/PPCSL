@@ -10,6 +10,7 @@ import { UsersService } from '../users/users.service';
 
 import { AuthService } from './auth.service';
 import { EmailService } from './services/email.service';
+import { RefreshTokenService } from './services/refresh-token.service';
 import { SmsService } from './services/sms.service';
 
 jest.mock('bcrypt', () => ({
@@ -23,6 +24,7 @@ describe('AuthService', () => {
   let jwtService: jest.Mocked<JwtService>;
   let smsService: jest.Mocked<SmsService>;
   let listingsService: jest.Mocked<ListingsService>;
+  let mockRefreshTokenService: jest.Mocked<RefreshTokenService>;
 
   const mockUser = {
     id: '1',
@@ -68,6 +70,13 @@ describe('AuthService', () => {
       closeAllUserListings: jest.fn(),
     };
 
+    mockRefreshTokenService = {
+      generateToken: jest.fn(),
+      validateToken: jest.fn(),
+      revokeToken: jest.fn(),
+      revokeAllUserTokens: jest.fn(),
+    } as unknown as jest.Mocked<RefreshTokenService>;
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -90,6 +99,10 @@ describe('AuthService', () => {
         {
           provide: ListingsService,
           useValue: mockListingsService,
+        },
+        {
+          provide: RefreshTokenService,
+          useValue: mockRefreshTokenService,
         },
       ],
     }).compile();
@@ -165,6 +178,7 @@ describe('AuthService', () => {
       usersService.findByEmail.mockResolvedValue(mockUser as User);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
       jwtService.sign.mockReturnValue('mock-jwt-token');
+      mockRefreshTokenService.generateToken.mockResolvedValue('mock-refresh-token');
 
       const result = await service.login({
         login: 'test@test.com',
@@ -172,9 +186,11 @@ describe('AuthService', () => {
       });
 
       expect(result).toHaveProperty('access_token', 'mock-jwt-token');
+      expect(result).toHaveProperty('refresh_token', 'mock-refresh-token');
       expect(result).toHaveProperty('user');
       expect(result.user).not.toHaveProperty('password');
       expect(jwtService.sign).toHaveBeenCalled();
+      expect(mockRefreshTokenService.generateToken).toHaveBeenCalledWith(mockUser.id);
     });
 
     it('should throw UnauthorizedException when credentials are invalid', async () => {

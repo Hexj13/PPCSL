@@ -1,4 +1,8 @@
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+
+interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
 
 import {
   BodyType,
@@ -20,6 +24,24 @@ export const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (_value?: unknown) => void;
+  reject: (_error?: unknown) => void;
+}> = [];
+
+const processQueue = (error: AxiosError | null, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+
+  failedQueue = [];
+};
 
 api.interceptors.request.use((config) => {
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -57,9 +79,13 @@ const getErrorMessage = (error: AxiosError): string => {
       return message || 'Невалидна барање. Проверете ги внесените податоци.';
     case 401:
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
-        if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
-          window.location.href = '/login';
+        const refreshToken = localStorage.getItem('refresh_token');
+        if (!refreshToken) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('refresh_token');
+          if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+            window.location.href = '/login';
+          }
         }
       }
       return message || 'Неавторизиран пристап. Најавете се повторно.';
@@ -87,6 +113,83 @@ const getErrorMessage = (error: AxiosError): string => {
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
+    const originalRequest = error.config as ExtendedAxiosRequestConfig | undefined;
+
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            if (originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+            }
+            return api(originalRequest);
+          })
+          .catch((err) => {
+            return Promise.reject(err);
+          });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      const refreshToken =
+        typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null;
+
+      if (!refreshToken) {
+        processQueue(error);
+        isRefreshing = false;
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('token');
+          localStorage.removeItem('refresh_token');
+          if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+            window.location.href = '/login';
+          }
+        }
+        return Promise.reject(error);
+      }
+
+      try {
+        const response = await api.post<{
+          access_token: string;
+          refresh_token: string;
+          user: User;
+        }>(
+          '/api/auth/refresh',
+          { refresh_token: refreshToken },
+          { headers: { 'X-Skip-Error-Handling': 'true' } }
+        );
+
+        const { access_token, refresh_token: newRefreshToken } = response.data;
+
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('token', access_token);
+          localStorage.setItem('refresh_token', newRefreshToken);
+        }
+
+        if (originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${access_token}`;
+        }
+
+        processQueue(null, access_token);
+        isRefreshing = false;
+
+        return api(originalRequest);
+      } catch (refreshError) {
+        processQueue(refreshError as AxiosError);
+        isRefreshing = false;
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('token');
+          localStorage.removeItem('refresh_token');
+          if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+            window.location.href = '/login';
+          }
+        }
+        return Promise.reject(refreshError);
+      }
+    }
+
     if (error.config && !error.config.headers['X-Skip-Error-Handling']) {
       const errorMessage = getErrorMessage(error);
       if (typeof window !== 'undefined') {
@@ -374,10 +477,19 @@ export interface ChangePhoneVerifyDto {
   code: string;
 }
 
+export interface RefreshTokenDto {
+  refresh_token: string;
+}
+
 export const authApi = {
   register: (data: RegisterDto) => api.post('/api/auth/register', data),
   login: (data: LoginDto) =>
-    api.post<{ access_token: string; user: User }>('/api/auth/login', data),
+    api.post<{ access_token: string; refresh_token: string; user: User }>('/api/auth/login', data),
+  refresh: (data: RefreshTokenDto) =>
+    api.post<{ access_token: string; refresh_token: string; user: User }>(
+      '/api/auth/refresh',
+      data
+    ),
   me: () => api.get<User>('/api/auth/me'),
   updateProfile: (data: UpdateProfileDto) => api.patch<User>('/api/auth/profile', data),
   deleteAccount: () => api.delete<{ message: string }>('/api/auth/profile'),

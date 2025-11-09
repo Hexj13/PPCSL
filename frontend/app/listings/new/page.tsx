@@ -1,10 +1,18 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
-import { ListingForm } from '@/components/ListingForm';
 import { useAuthStore } from '@/lib/store';
+
+const ListingForm = dynamic(
+  () => import('@/components/ListingForm').then((mod) => ({ default: mod.ListingForm })),
+  {
+    loading: () => <div className="animate-pulse">Зарежување...</div>,
+    ssr: false,
+  }
+);
 
 export default function NewListingPage() {
   const router = useRouter();

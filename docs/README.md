@@ -86,7 +86,7 @@ npm run dev  # Runs both frontend and backend
 <details>
 <summary><b>Technologies</b></summary>
 
-- **Frontend:** Next.js 14, React, TailwindCSS, Zustand
+- **Frontend:** Next.js 16, React 19, TailwindCSS, Zustand
 - **Backend:** NestJS, PostgreSQL, TypeORM, Redis
 - **Storage:** S3-compatible storage (planned)
 
@@ -96,6 +96,8 @@ npm run dev  # Runs both frontend and backend
 <summary><b>Core Features</b></summary>
 
 - User registration and authentication (Individual and Business)
+- JWT authentication with refresh tokens (1 hour access token, 7 days refresh token)
+- Automatic token refresh on expiration
 - SMS verification during registration via Twilio (with IP-based brute force protection)
 - Phone number verification stored in database
 - Create, edit, and publish listings
@@ -145,7 +147,8 @@ Kupito/
 
 ### Authentication
 - `POST /api/auth/register` - Register
-- `POST /api/auth/login` - Login
+- `POST /api/auth/login` - Login (returns access_token and refresh_token)
+- `POST /api/auth/refresh` - Refresh access token
 - `GET /api/auth/me` - Current user
 - `POST /api/auth/send-sms` - Send SMS verification code
 - `POST /api/auth/verify-phone` - Verify phone number (JWT required)
@@ -206,6 +209,9 @@ Kupito/
 - **Database optimizations:** Comprehensive indexing, triggers for data integrity, connection pooling
 - **Health monitoring:** Health check endpoint with database and Redis connectivity checks
 - **Automated backups:** Database backup scripts with cron support for production
+- **Code quality:** TypeScript strict mode, CI/CD automation, bundle optimization
+- **Performance:** Frontend memoization, Redis cache optimization, lazy loading
+- **Analytics:** Google Analytics integration
 - Image optimization (resize, compress, convert to WebP with adaptive quality, lazy loading, SEO-friendly)
 - Responsive design with TailwindCSS
 - VIN search with privacy protection
@@ -243,8 +249,9 @@ For more details, see [Technical Documentation](TECH_DOCS.md#14-testing).
 - **[Setup Guide](SETUP.md)** - Detailed setup instructions
 - **[Restart Guide](RESTART.md)** - How to restart the project
 - **[Environment Variables](ENV_EXAMPLE.md)** - Environment configuration
-- **[SEO Optimization](SEO_OPTIMIZATION.md)** - SEO setup and optimizations ⭐ **NEW**
-- **[SEO TODO Checklist](SEO_TODO.md)** - Remaining SEO tasks ⚠️ **IMPORTANT**
+- **[SEO Optimization](SEO_OPTIMIZATION.md)** - SEO setup and optimizations
+- **[TODO List](TODO.md)** - Все задачи проекта (включая SEO) ⚠️ **IMPORTANT**
+- **[Optimization Progress](OPTIMIZATION_PROGRESS.md)** - Отчет о прогрессе оптимизации
 - **[Optimization Analysis](OPTIMIZATION_ANALYSIS.md)** - Performance optimization analysis
 - **[Database Optimizations](DATABASE_OPTIMIZATIONS.md)** - Database indexes, triggers, and connection pooling
 - **[Database Backups](DATABASE_BACKUPS.md)** - Automated backup setup and configuration ⭐ **NEW**

@@ -34,13 +34,13 @@ export class UsersService {
     return user;
   }
 
-  async findByEmail(email: string): Promise<User> {
+  async findByEmail(email: string): Promise<User | null> {
     return this.usersRepository.findOne({
       where: { email, active: true },
     });
   }
 
-  async findByPhone(phone: string): Promise<User> {
+  async findByPhone(phone: string): Promise<User | null> {
     return this.usersRepository.findOne({
       where: { phone, active: true },
     });

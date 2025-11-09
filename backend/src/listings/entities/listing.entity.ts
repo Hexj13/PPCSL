@@ -55,7 +55,7 @@ export class Listing {
   status: ListingStatus;
 
   @Column({ type: 'text', nullable: true })
-  description: string;
+  description: string | null;
 
   @Column('uuid')
   user_id: string;
@@ -64,15 +64,15 @@ export class Listing {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column('uuid', { nullable: true })
-  vehicle_id: string;
+  @Column({ type: 'uuid', nullable: true })
+  vehicle_id: string | null;
 
   @OneToOne(() => Vehicle, { cascade: true })
   @JoinColumn({ name: 'vehicle_id' })
-  vehicle: Vehicle;
+  vehicle: Vehicle | null;
 
   @Column('simple-array', { nullable: true })
-  images: string[];
+  images: string[] | null;
 
   @Column({ type: 'boolean', default: false })
   urgent: boolean;
@@ -80,8 +80,8 @@ export class Listing {
   @Column({ type: 'boolean', default: false })
   is_new: boolean;
 
-  @Column({ nullable: true, length: 17 })
-  vin: string;
+  @Column({ type: 'varchar', nullable: true, length: 17 })
+  vin: string | null;
 
   @Column({
     type: 'enum',
@@ -99,16 +99,16 @@ export class Listing {
   horsepower: number;
 
   @Column({ type: 'boolean', nullable: true })
-  is_registered: boolean;
+  is_registered: boolean | null;
 
   @Column({ type: 'date', nullable: true })
-  registration_expires_at: Date;
+  registration_expires_at: Date | null;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   last_updated_at: Date;
 
   @Column({ type: 'timestamp', nullable: true })
-  closed_at: Date;
+  closed_at: Date | null;
 
   @Column({ type: 'integer', default: 0 })
   views: number;

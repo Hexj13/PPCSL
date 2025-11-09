@@ -4,6 +4,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -13,6 +14,12 @@ import { In, LessThanOrEqual, Repository } from 'typeorm';
 import { BrandsService } from '../brands/brands.service';
 import { RedisService } from '../common/redis.service';
 import { Currency as CurrencyEnum, ListingStatus as ListingStatusEnum } from '../common/types';
+import {
+  CACHE_PREFIXES,
+  CACHE_TTL,
+  generateCacheKey,
+  generateCacheKeyWithHash,
+} from '../common/utils/cache.utils';
 import { sanitizeHtml } from '../common/utils/html-sanitizer';
 import { UsersService } from '../users/users.service';
 
@@ -25,7 +32,10 @@ import { Vehicle } from './entities/vehicle.entity';
 
 @Injectable()
 export class ListingsService {
-  private readonly CACHE_TTL = 300;
+  private readonly logger = new Logger(ListingsService.name);
+  private readonly CACHE_TTL_SEARCH = CACHE_TTL.listings.search;
+  private readonly CACHE_TTL_SINGLE = CACHE_TTL.listings.single;
+  private readonly CACHE_TTL_USER = CACHE_TTL.listings.userListings;
 
   constructor(
     @InjectRepository(Listing)
@@ -96,8 +106,10 @@ export class ListingsService {
     const savedListing = await this.listingsRepository.save(listing);
 
     try {
-      await this.redisService.delPattern('cache:listings:search:*');
-      await this.redisService.del(`cache:listings:${savedListing.id}`);
+      await this.redisService.invalidateByPrefix(CACHE_PREFIXES.listingsSearch);
+      await this.redisService.del(
+        generateCacheKey({ prefix: CACHE_PREFIXES.listings, parts: [savedListing.id] }),
+      );
     } catch {
       // Ignore cache errors
     }
@@ -109,7 +121,7 @@ export class ListingsService {
     const { page = 1, limit = 20, sortBy = 'created_at', sortOrder = 'DESC' } = searchDto;
     const skip = (page - 1) * limit;
 
-    const cacheKey = `cache:listings:search:${JSON.stringify(searchDto)}`;
+    const cacheKey = generateCacheKeyWithHash(CACHE_PREFIXES.listingsSearch, searchDto);
     try {
       const cached = await this.redisService.getJson<{
         data: Listing[];
@@ -360,7 +372,7 @@ export class ListingsService {
     };
 
     try {
-      await this.redisService.setJson(cacheKey, result, this.CACHE_TTL);
+      await this.redisService.setJson(cacheKey, result, this.CACHE_TTL_SEARCH);
     } catch {
       // Ignore cache errors
     }
@@ -387,7 +399,7 @@ export class ListingsService {
       }
 
       if (!listing.vehicle) {
-        console.error(`Listing ${id} has no vehicle`);
+        this.logger.error(`Listing ${id} has no vehicle`);
         throw new NotFoundException('Vehicle not found for listing');
       }
 
@@ -419,7 +431,7 @@ export class ListingsService {
 
       return listing;
     } catch (error) {
-      console.error(`Error in findOne for listing ${id}:`, error);
+      this.logger.error(`Error in findOne for listing ${id}:`, error);
       throw error;
     }
   }
@@ -476,7 +488,7 @@ export class ListingsService {
     const models = brand ? await this.brandsService.getModelsByBrand(vehicle.brand_id) : [];
     const model = models.find((m) => m.id === vehicle.model_id);
 
-    const titleParts = [];
+    const titleParts: string[] = [];
     if (brand) titleParts.push(brand.name);
     if (model) titleParts.push(model.name);
     if (vehicle.year) titleParts.push(vehicle.year.toString());
@@ -564,6 +576,9 @@ export class ListingsService {
     }
 
     // Load updated vehicle for title generation
+    if (!listing.vehicle_id) {
+      throw new NotFoundException('Vehicle ID not found');
+    }
     const updatedVehicle = await this.vehiclesRepository.findOne({
       where: { id: listing.vehicle_id },
       relations: ['brand', 'model'],
@@ -608,14 +623,23 @@ export class ListingsService {
 
     // Clear Redis cache
     try {
-      await this.redisService.delPattern('cache:listings:search:*');
-      await this.redisService.del(`cache:listings:${id}`);
+      await this.redisService.invalidateByPrefix(CACHE_PREFIXES.listingsSearch);
+      await this.redisService.del(
+        generateCacheKey({ prefix: CACHE_PREFIXES.listings, parts: [id] }),
+      );
 
       if (previousBrandId) {
-        await this.redisService.del(`cache:brands:${previousBrandId}:models`);
+        await this.redisService.del(
+          generateCacheKey({ prefix: CACHE_PREFIXES.brandsModels, parts: [previousBrandId] }),
+        );
       }
       if (updatedVehicle.brand_id && updatedVehicle.brand_id !== previousBrandId) {
-        await this.redisService.del(`cache:brands:${updatedVehicle.brand_id}:models`);
+        await this.redisService.del(
+          generateCacheKey({
+            prefix: CACHE_PREFIXES.brandsModels,
+            parts: [updatedVehicle.brand_id],
+          }),
+        );
       }
     } catch {
       // Ignore cache errors
@@ -653,8 +677,10 @@ export class ListingsService {
     const publishedListing = await this.listingsRepository.save(listing);
 
     try {
-      await this.redisService.delPattern('cache:listings:search:*');
-      await this.redisService.del(`cache:listings:${id}`);
+      await this.redisService.invalidateByPrefix(CACHE_PREFIXES.listingsSearch);
+      await this.redisService.del(
+        generateCacheKey({ prefix: CACHE_PREFIXES.listings, parts: [id] }),
+      );
     } catch {
       // Ignore cache errors
     }
@@ -672,8 +698,10 @@ export class ListingsService {
     const pausedListing = await this.listingsRepository.save(listing);
 
     try {
-      await this.redisService.delPattern('cache:listings:search:*');
-      await this.redisService.del(`cache:listings:${id}`);
+      await this.redisService.invalidateByPrefix(CACHE_PREFIXES.listingsSearch);
+      await this.redisService.del(
+        generateCacheKey({ prefix: CACHE_PREFIXES.listings, parts: [id] }),
+      );
     } catch {
       // Ignore cache errors
     }
@@ -692,8 +720,10 @@ export class ListingsService {
     const closedListing = await this.listingsRepository.save(listing);
 
     try {
-      await this.redisService.delPattern('cache:listings:search:*');
-      await this.redisService.del(`cache:listings:${id}`);
+      await this.redisService.invalidateByPrefix(CACHE_PREFIXES.listingsSearch);
+      await this.redisService.del(
+        generateCacheKey({ prefix: CACHE_PREFIXES.listings, parts: [id] }),
+      );
     } catch {
       // Ignore cache errors
     }

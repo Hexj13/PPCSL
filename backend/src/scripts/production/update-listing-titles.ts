@@ -38,7 +38,7 @@ async function updateListingTitles() {
       const brand = await brandRepo.findOne({ where: { id: vehicle.brand_id } });
       const model = await modelRepo.findOne({ where: { id: vehicle.model_id } });
 
-      const titleParts = [];
+      const titleParts: string[] = [];
       if (brand) titleParts.push(brand.name);
       if (model) titleParts.push(model.name);
       if (vehicle.year) titleParts.push(vehicle.year.toString());

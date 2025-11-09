@@ -1,4 +1,4 @@
-name: CI
+name: CI/CD
 
 on:
   push:
@@ -128,6 +128,12 @@ jobs:
           NEXT_PUBLIC_API_URL: http://localhost:4000
         run: npm run build
 
+      - name: Analyze bundle size
+        working-directory: ./frontend
+        run: |
+          echo "📦 Bundle size analysis:"
+          du -sh .next/static/chunks/* 2>/dev/null | sort -h | tail -10 || echo "Bundle analysis not available"
+
   backend-build:
     name: Backend Build
     runs-on: ubuntu-latest
@@ -150,4 +156,46 @@ jobs:
       - name: Build
         working-directory: ./backend
         run: npm run build
+
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-test, backend-build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production
+      url: https://kupito.mk
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Build backend
+        working-directory: ./backend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build frontend
+        working-directory: ./frontend
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_GA_ID: ${{ secrets.NEXT_PUBLIC_GA_ID }}
+          NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+        run: |
+          npm ci
+          npm run build
+
+      - name: Deploy
+        run: |
+          echo "🚀 Deployment placeholder"
+          echo "Add your deployment commands here:"
+          echo "- For Vercel: vercel --prod --token \${{ secrets.VERCEL_TOKEN }}"
+          echo "- For custom server: ssh deployment commands"
+          echo "- For Docker: docker build and push commands"
 

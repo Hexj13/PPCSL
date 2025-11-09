@@ -33,8 +33,12 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    if (this.client) {
-      await this.client.quit();
+    if (this.client && this.client.isOpen) {
+      try {
+        await this.client.quit();
+      } catch {
+        // Ignore errors during cleanup
+      }
     }
   }
 
@@ -105,11 +109,90 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       return;
     }
     try {
-      const keys = await this.client.keys(pattern);
+      const keys: string[] = [];
+      let cursor = 0;
+      do {
+        const result = await this.client.scan(cursor, {
+          MATCH: pattern,
+          COUNT: 100,
+        });
+        cursor = result.cursor;
+        keys.push(...result.keys);
+      } while (cursor !== 0);
+
       if (keys.length > 0) {
         await this.client.del(keys);
       }
     } catch {}
+  }
+
+  async invalidateByPrefix(prefix: string): Promise<number> {
+    if (!this.client?.isOpen) {
+      return 0;
+    }
+    try {
+      const pattern = `${prefix}*`;
+      const keys: string[] = [];
+      let cursor = 0;
+      do {
+        const result = await this.client.scan(cursor, {
+          MATCH: pattern,
+          COUNT: 100,
+        });
+        cursor = result.cursor;
+        keys.push(...result.keys);
+      } while (cursor !== 0);
+
+      if (keys.length > 0) {
+        await this.client.del(keys);
+        return keys.length;
+      }
+      return 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  async getMultiple<T>(keys: string[]): Promise<Map<string, T>> {
+    if (!this.client?.isOpen || keys.length === 0) {
+      return new Map();
+    }
+    try {
+      const values = await this.client.mGet(keys);
+      const result = new Map<string, T>();
+      keys.forEach((key, index) => {
+        const value = values[index];
+        if (value) {
+          try {
+            result.set(key, JSON.parse(value) as T);
+          } catch {
+            // Ignore parse errors
+          }
+        }
+      });
+      return result;
+    } catch {
+      return new Map();
+    }
+  }
+
+  async setMultiple(entries: Array<{ key: string; value: string; ttl?: number }>): Promise<void> {
+    if (!this.client?.isOpen || entries.length === 0) {
+      return;
+    }
+    try {
+      const pipeline = this.client.multi();
+      for (const entry of entries) {
+        if (entry.ttl) {
+          pipeline.setEx(entry.key, entry.ttl, entry.value);
+        } else {
+          pipeline.set(entry.key, entry.value);
+        }
+      }
+      await pipeline.exec();
+    } catch {
+      // Ignore errors
+    }
   }
 
   async ping(): Promise<boolean> {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 interface DropdownOption {
   value: string;
@@ -17,7 +17,7 @@ interface DropdownProps {
   searchable?: boolean;
 }
 
-export function Dropdown({
+function DropdownComponent({
   value,
   onChange,
   options,
@@ -51,32 +51,47 @@ export function Dropdown({
     };
   }, [isOpen, searchable]);
 
-  const selectedOption = options.find((opt) => opt.value === value);
-  const displayText = selectedOption ? selectedOption.label : placeholder;
+  const selectedOption = useMemo(
+    () => options.find((opt) => opt.value === value),
+    [options, value]
+  );
+  const displayText = useMemo(
+    () => (selectedOption ? selectedOption.label : placeholder),
+    [selectedOption, placeholder]
+  );
 
-  const filteredOptions =
-    searchable && searchQuery
-      ? options.filter((option) => option.label.toLowerCase().includes(searchQuery.toLowerCase()))
-      : options;
+  const filteredOptions = useMemo(
+    () =>
+      searchable && searchQuery
+        ? options.filter((option) => option.label.toLowerCase().includes(searchQuery.toLowerCase()))
+        : options,
+    [options, searchable, searchQuery]
+  );
 
-  const handleSelect = (optionValue: string) => {
-    onChange(optionValue);
-    setIsOpen(false);
-    setSearchQuery('');
-  };
+  const handleSelect = useCallback(
+    (optionValue: string) => {
+      onChange(optionValue);
+      setIsOpen(false);
+      setSearchQuery('');
+    },
+    [onChange]
+  );
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-    if (!isOpen) {
-      setIsOpen(true);
-    }
-  };
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchQuery(e.target.value);
+      if (!isOpen) {
+        setIsOpen(true);
+      }
+    },
+    [isOpen]
+  );
 
-  const handleInputFocus = () => {
+  const handleInputFocus = useCallback(() => {
     if (!disabled) {
       setIsOpen(true);
     }
-  };
+  }, [disabled]);
 
   return (
     <div ref={dropdownRef} className={`relative ${className}`}>
@@ -164,3 +179,5 @@ export function Dropdown({
     </div>
   );
 }
+
+export const Dropdown = React.memo(DropdownComponent);

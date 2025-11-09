@@ -1,12 +1,20 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
-import { ListingForm } from '@/components/ListingForm';
 import { api, listingsApi, Listing } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
+
+const ListingForm = dynamic(
+  () => import('@/components/ListingForm').then((mod) => ({ default: mod.ListingForm })),
+  {
+    loading: () => <div className="animate-pulse">Зарежување...</div>,
+    ssr: false,
+  }
+);
 
 export default function EditListingPage() {
   const params = useParams();

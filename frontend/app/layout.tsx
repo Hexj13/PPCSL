@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast';
 
 import { AuthProvider } from '@/components/AuthProvider';
 import { Footer } from '@/components/Footer';
+import { GoogleAnalytics } from '@/components/GoogleAnalytics';
 import { Header } from '@/components/Header';
 import { OrganizationSchema } from '@/components/OrganizationSchema';
 import './globals.css';
@@ -97,6 +98,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="mk">
       <body className={inter.className}>
+        <GoogleAnalytics />
         <OrganizationSchema />
         <AuthProvider>
           <div className="min-h-screen flex flex-col">

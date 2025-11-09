@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { RedisService } from '../common/redis.service';
+import { CACHE_PREFIXES, CACHE_TTL, generateCacheKey } from '../common/utils/cache.utils';
 import { Favorite } from '../favorites/entities/favorite.entity';
 import { ListingView } from '../listings/entities/listing-view.entity';
 import { Listing } from '../listings/entities/listing.entity';
@@ -14,7 +15,8 @@ import { VehicleModel } from './entities/vehicle-model.entity';
 @Injectable()
 export class BrandsService {
   private readonly logger = new Logger(BrandsService.name);
-  private readonly CACHE_TTL = 86400;
+  private readonly CACHE_TTL = CACHE_TTL.brands.all;
+  private readonly CACHE_TTL_MODELS = CACHE_TTL.brands.models;
 
   constructor(
     @InjectRepository(Brand)
@@ -33,7 +35,7 @@ export class BrandsService {
   ) {}
 
   async findAll(): Promise<Brand[]> {
-    const cacheKey = 'cache:brands:all';
+    const cacheKey = generateCacheKey({ prefix: CACHE_PREFIXES.brands, parts: ['all'] });
     try {
       const cached = await this.redisService.getJson<Brand[]>(cacheKey);
       if (cached) {
@@ -56,21 +58,21 @@ export class BrandsService {
     return brands;
   }
 
-  async findOne(id: string): Promise<Brand> {
+  async findOne(id: string): Promise<Brand | null> {
     return this.brandsRepository.findOne({
       where: { id },
       relations: ['models'],
     });
   }
 
-  async findByName(name: string): Promise<Brand> {
+  async findByName(name: string): Promise<Brand | null> {
     return this.brandsRepository.findOne({
       where: { name },
     });
   }
 
   async getModelsByBrand(brandId: string): Promise<VehicleModel[]> {
-    const cacheKey = `cache:brands:${brandId}:models`;
+    const cacheKey = generateCacheKey({ prefix: CACHE_PREFIXES.brandsModels, parts: [brandId] });
     try {
       const cached = await this.redisService.getJson<VehicleModel[]>(cacheKey);
       if (cached) {
@@ -87,7 +89,7 @@ export class BrandsService {
     });
 
     try {
-      await this.redisService.setJson(cacheKey, models, this.CACHE_TTL);
+      await this.redisService.setJson(cacheKey, models, this.CACHE_TTL_MODELS);
     } catch (error) {
       this.logger.warn(`Failed to set models cache for brand ${brandId}`, error);
     }
@@ -149,8 +151,12 @@ export class BrandsService {
     });
 
     try {
-      await this.redisService.del(`cache:brands:${brand.id}:models`);
-      await this.redisService.del('cache:brands:all');
+      await this.redisService.del(
+        generateCacheKey({ prefix: CACHE_PREFIXES.brandsModels, parts: [brand.id] }),
+      );
+      await this.redisService.del(
+        generateCacheKey({ prefix: CACHE_PREFIXES.brands, parts: ['all'] }),
+      );
     } catch (error) {
       this.logger.warn('Failed to invalidate cache after adding models', error);
     }
@@ -226,7 +232,7 @@ export class BrandsService {
     }
 
     try {
-      await this.redisService.delPattern('cache:brands:*');
+      await this.redisService.invalidateByPrefix(CACHE_PREFIXES.brands);
     } catch (error) {
       this.logger.warn('Failed to invalidate cache after deleting brands', error);
     }

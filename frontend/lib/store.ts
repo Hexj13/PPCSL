@@ -6,8 +6,9 @@ import { authApi, User } from './api';
 interface AuthState {
   user: User | null;
   token: string | null;
+  refreshToken: string | null;
   isInitialized: boolean;
-  setAuth: (_user: User | null, _token: string | null) => void;
+  setAuth: (_user: User | null, _token: string | null, _refreshToken?: string | null) => void;
   logout: () => void;
   initAuth: () => Promise<void>;
 }
@@ -17,32 +18,67 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       user: null,
       token: null,
+      refreshToken: null,
       isInitialized: false,
-      setAuth: (_user, _token) => {
-        set({ user: _user, token: _token, isInitialized: true });
-        if (_token && typeof window !== 'undefined') {
-          localStorage.setItem('token', _token);
+      setAuth: (_user, _token, _refreshToken = null) => {
+        set({ user: _user, token: _token, refreshToken: _refreshToken, isInitialized: true });
+        if (typeof window !== 'undefined') {
+          if (_token) {
+            localStorage.setItem('token', _token);
+          }
+          if (_refreshToken) {
+            localStorage.setItem('refresh_token', _refreshToken);
+          }
         }
       },
       logout: () => {
-        set({ user: null, token: null, isInitialized: true });
+        set({ user: null, token: null, refreshToken: null, isInitialized: true });
         if (typeof window !== 'undefined') {
           localStorage.removeItem('token');
+          localStorage.removeItem('refresh_token');
           localStorage.removeItem('pendingFavorites');
           localStorage.removeItem('returnUrl');
           useFavoritesStore.getState().clear();
         }
       },
       initAuth: async () => {
-        const { token } = get();
+        const { token, refreshToken } = get();
 
         if (token && typeof window !== 'undefined') {
           try {
             const response = await authApi.me();
-            set({ user: response.data, token, isInitialized: true });
+            const storedRefreshToken = localStorage.getItem('refresh_token');
+            set({
+              user: response.data,
+              token,
+              refreshToken: refreshToken || storedRefreshToken,
+              isInitialized: true,
+            });
           } catch {
-            get().logout();
-            set({ isInitialized: true });
+            const storedRefreshToken = localStorage.getItem('refresh_token');
+            if (storedRefreshToken) {
+              try {
+                const refreshResponse = await authApi.refresh({
+                  refresh_token: storedRefreshToken,
+                });
+                set({
+                  user: refreshResponse.data.user,
+                  token: refreshResponse.data.access_token,
+                  refreshToken: refreshResponse.data.refresh_token,
+                  isInitialized: true,
+                });
+                if (typeof window !== 'undefined') {
+                  localStorage.setItem('token', refreshResponse.data.access_token);
+                  localStorage.setItem('refresh_token', refreshResponse.data.refresh_token);
+                }
+              } catch {
+                get().logout();
+                set({ isInitialized: true });
+              }
+            } else {
+              get().logout();
+              set({ isInitialized: true });
+            }
           }
         } else {
           set({ isInitialized: true });
@@ -52,7 +88,11 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'auth-storage',
       storage: typeof window !== 'undefined' ? createJSONStorage(() => localStorage) : undefined,
-      partialize: (state) => ({ user: state.user, token: state.token }),
+      partialize: (state) => ({
+        user: state.user,
+        token: state.token,
+        refreshToken: state.refreshToken,
+      }),
     }
   )
 );

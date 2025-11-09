@@ -601,7 +601,7 @@ export default function ListingPage() {
           <div className="space-y-6">
             {vehicle && (
               <div className="bg-bg-light p-4 md:p-6 rounded-xl border border-primary-500/20">
-                <h2 className="text-xl md:text-2xl font-bold mb-6 text-white">Карактеристики</h2>
+                <h2 className="text-xl md:text-2xl font-bold mb-6 text-primary-400">Карактеристики</h2>
 
                 <div className="space-y-4">
                   {(vehicle.brand?.name || vehicle.model?.name || vehicle.year || listing.vin) && (
@@ -810,7 +810,7 @@ export default function ListingPage() {
 
             <div className="bg-bg-light p-4 md:p-6 rounded-xl border border-primary-500/20">
               <div className="mb-4">
-                <h3 className="text-lg font-bold mb-2 text-white flex items-center gap-2">
+                <h3 className="text-lg font-bold mb-2 text-primary-400 flex items-center gap-2">
                   {listing.vin ? 'Претходни објави за ова возило' : 'Историја на возило'}
                   {listing.vin && (
                     <div className="relative group">
@@ -933,7 +933,7 @@ export default function ListingPage() {
 
           <div className="space-y-6">
             <div className="bg-bg-light p-4 md:p-6 rounded-xl border border-primary-500/20">
-              <h2 className="text-xl md:text-2xl font-bold mb-4 text-white">
+              <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-400">
                 Контактни информации
               </h2>
               {listing.user && (

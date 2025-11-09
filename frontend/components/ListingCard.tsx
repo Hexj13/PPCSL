@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Listing, favoritesApi } from '@/lib/api';
@@ -24,47 +24,62 @@ interface ListingCardProps {
   onRemove?: () => void;
 }
 
-export function ListingCard({ listing, forceFavorite = false, onRemove }: ListingCardProps) {
-  const originalImageUrl = listing.images?.[0] || '/placeholder-car.jpg';
-  const imageUrl = getOptimizedImageUrl(originalImageUrl, 80, 1200);
+function ListingCardComponent({ listing, forceFavorite = false, onRemove }: ListingCardProps) {
+  const originalImageUrl = useMemo(
+    () => listing.images?.[0] || '/placeholder-car.jpg',
+    [listing.images]
+  );
+  const imageUrl = useMemo(
+    () => getOptimizedImageUrl(originalImageUrl, 80, 1200),
+    [originalImageUrl]
+  );
   const vehicle = listing.vehicle;
   const { user } = useAuthStore();
   const { check: checkFavorite, add: addFavorite, remove: removeFavorite } = useFavoritesStore();
-  const isFavorite = forceFavorite || checkFavorite(listing.id);
-  const isOwnListing = !!(user && listing.user && user.id === listing.user.id);
+  const isFavorite = useMemo(
+    () => forceFavorite || checkFavorite(listing.id),
+    [forceFavorite, listing.id, checkFavorite]
+  );
+  const isOwnListing = useMemo(
+    () => !!(user && listing.user && user.id === listing.user.id),
+    [user, listing.user]
+  );
   const [imageError, setImageError] = React.useState(false);
 
-  const handleToggleFavorite = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleToggleFavorite = useCallback(
+    async (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
 
-    if (!user) {
-      toast.error('Потребно е да се најавите');
-      return;
-    }
+      if (!user) {
+        toast.error('Потребно е да се најавите');
+        return;
+      }
 
-    if (isFavorite) {
+      if (isFavorite) {
+        try {
+          await favoritesApi.remove(listing.id);
+          removeFavorite(listing.id);
+          if (onRemove) {
+            onRemove();
+          }
+          toast.success('Отстрането од омилени');
+        } catch {}
+        return;
+      }
+
+      if (isOwnListing) {
+        return;
+      }
+
       try {
-        await favoritesApi.remove(listing.id);
-        removeFavorite(listing.id);
-        if (onRemove) {
-          onRemove();
-        }
-        toast.success('Отстрането од омилени');
+        await favoritesApi.add(listing.id);
+        addFavorite(listing.id);
+        toast.success('Додадено во омилени');
       } catch {}
-      return;
-    }
-
-    if (isOwnListing) {
-      return;
-    }
-
-    try {
-      await favoritesApi.add(listing.id);
-      addFavorite(listing.id);
-      toast.success('Додадено во омилени');
-    } catch {}
-  };
+    },
+    [user, isFavorite, isOwnListing, listing.id, removeFavorite, addFavorite, onRemove]
+  );
 
   return (
     <Link href={`/listings/${listing.id}`}>
@@ -217,3 +232,16 @@ export function ListingCard({ listing, forceFavorite = false, onRemove }: Listin
     </Link>
   );
 }
+
+export const ListingCard = React.memo(ListingCardComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.listing.id === nextProps.listing.id &&
+    prevProps.listing.title === nextProps.listing.title &&
+    prevProps.listing.price === nextProps.listing.price &&
+    prevProps.listing.images?.[0] === nextProps.listing.images?.[0] &&
+    prevProps.forceFavorite === nextProps.forceFavorite &&
+    prevProps.onRemove === nextProps.onRemove &&
+    prevProps.listing.status === nextProps.listing.status &&
+    prevProps.listing.views === nextProps.listing.views
+  );
+});

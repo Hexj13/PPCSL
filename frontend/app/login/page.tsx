@@ -65,7 +65,7 @@ export default function LoginPage() {
 
     try {
       const res = await authApi.login(formData);
-      setAuth(res.data.user, res.data.access_token);
+      setAuth(res.data.user, res.data.access_token, res.data.refresh_token);
 
       if (typeof window !== 'undefined') {
         const pendingFavorites = JSON.parse(localStorage.getItem('pendingFavorites') || '[]');

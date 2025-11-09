@@ -74,6 +74,8 @@
   "jest": {
     "testEnvironment": "jsdom",
     "preset": "ts-jest",
+    "testTimeout": 30000,
+    "maxWorkers": 1,
     "setupFilesAfterEnv": [
       "<rootDir>/jest.setup.js"
     ],
