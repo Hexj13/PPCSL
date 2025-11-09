@@ -14,7 +14,7 @@ describe('Listings API Integration Tests', () => {
     const testEmail = `test${Date.now()}@example.com`;
     const testPassword = 'Test123!@#';
 
-    const registerResponse = await request.post('/api/auth/register').send({
+    await request.post('/api/auth/register').send({
       email: testEmail,
       password: testPassword,
       type: 'Individual',
