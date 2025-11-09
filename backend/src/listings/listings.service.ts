@@ -431,7 +431,9 @@ export class ListingsService {
 
       return listing;
     } catch (error) {
-      this.logger.error(`Error in findOne for listing ${id}:`, error);
+      if (!(error instanceof NotFoundException)) {
+        this.logger.error(`Error in findOne for listing ${id}:`, error);
+      }
       throw error;
     }
   }

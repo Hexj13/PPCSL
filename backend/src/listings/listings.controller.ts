@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Logger,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -178,10 +179,12 @@ export class ListingsController {
 
       return listing;
     } catch (error) {
-      if (error instanceof Error) {
-        this.logger.error('Error in findOne controller:', error.message, error.stack);
-      } else {
-        this.logger.error('Error in findOne controller:', error);
+      if (!(error instanceof NotFoundException)) {
+        if (error instanceof Error) {
+          this.logger.error('Error in findOne controller:', error.message, error.stack);
+        } else {
+          this.logger.error('Error in findOne controller:', error);
+        }
       }
       throw error;
     }
