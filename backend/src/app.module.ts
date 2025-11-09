@@ -26,7 +26,7 @@ import { UsersModule } from './users/users.module';
     ThrottlerModule.forRoot([
       {
         ttl: 60000,
-        limit: 100,
+        limit: process.env.NODE_ENV === 'production' ? 100 : 10000,
       },
     ]),
     TypeOrmModule.forRoot(dataSourceOptions),

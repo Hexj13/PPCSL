@@ -84,7 +84,7 @@ export class BrandsService {
 
     const models = await this.modelsRepository.find({
       where: { brand_id: brandId },
-      order: { name: 'ASC' },
+      order: { order: 'ASC', name: 'ASC' },
       relations: ['brand'],
     });
 

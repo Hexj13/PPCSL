@@ -115,7 +115,33 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as ExtendedAxiosRequestConfig | undefined;
 
+    if (error.response?.status === 429 && originalRequest && !originalRequest._retry) {
+      originalRequest._retry = true;
+      const retryAfter = error.response.headers['retry-after']
+        ? parseInt(error.response.headers['retry-after'], 10) * 1000
+        : 2000;
+      
+      await new Promise((resolve) => setTimeout(resolve, retryAfter));
+      return api(originalRequest);
+    }
+
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+      const isLoginEndpoint = originalRequest.url?.includes('/api/auth/login');
+      const isRegisterEndpoint = originalRequest.url?.includes('/api/auth/register');
+      
+      if (isLoginEndpoint || isRegisterEndpoint) {
+        if (error.config && !error.config.headers['X-Skip-Error-Handling']) {
+          const errorMessage = getErrorMessage(error);
+          if (typeof window !== 'undefined') {
+            (async () => {
+              const { toast } = await import('react-hot-toast');
+              toast.error(errorMessage);
+            })();
+          }
+        }
+        return Promise.reject(error);
+      }
+
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });

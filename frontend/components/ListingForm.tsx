@@ -530,23 +530,34 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
           <div>
             <label className="block text-sm font-semibold mb-2 text-primary-400">Година *</label>
             <input
-              type="number"
+              type="text"
               required
-              min="1900"
-              max={new Date().getFullYear() + 1}
-              step="1"
               value={formData.vehicle.year}
               onChange={(e) => {
                 const value = e.target.value.replace(/[^0-9]/g, '');
-                if (
-                  value === '' ||
-                  (parseInt(value, 10) >= 1900 &&
-                    parseInt(value, 10) <= new Date().getFullYear() + 1)
-                ) {
+                if (value.length <= 4) {
                   setFormData((prev) => ({
                     ...prev,
                     vehicle: { ...prev.vehicle, year: value },
                   }));
+                }
+              }}
+              onBlur={(e) => {
+                const value = e.target.value.trim();
+                if (value) {
+                  const year = parseInt(value, 10);
+                  const currentYear = new Date().getFullYear();
+                  const maxYear = currentYear + 1;
+                  
+                  if (isNaN(year) || year < 1900 || year > maxYear) {
+                    toast.error(
+                      `Годината мора да биде помеѓу 1900 и ${maxYear}`
+                    );
+                    setFormData((prev) => ({
+                      ...prev,
+                      vehicle: { ...prev.vehicle, year: '' },
+                    }));
+                  }
                 }
               }}
               onWheel={handleWheel}

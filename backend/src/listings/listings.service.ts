@@ -443,12 +443,19 @@ export class ListingsService {
     userId: string | null,
     visitorId: string | null,
   ): Promise<void> {
-    const listing = await this.listingsRepository.findOne({ where: { id: listingId } });
+    if (!userId && !visitorId) {
+      return;
+    }
+
+    const listing = await this.listingsRepository.findOne({
+      where: { id: listingId },
+      select: ['id', 'user_id'],
+    });
     if (!listing) {
       return;
     }
 
-    if (userId && userId === listing.user_id) {
+    if (userId && listing.user_id && userId === listing.user_id) {
       return;
     }
 

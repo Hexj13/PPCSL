@@ -149,14 +149,20 @@ export function ListingManagementCard({
                   <span className="text-2xl md:text-3xl font-extrabold text-primary-400">••••</span>
                 )}
               </div>
-              {listing.urgent && (
-                <div className="mt-1.5">
+              <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+                {listing.is_new && (
+                  <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-semibold bg-primary-500/20 border border-primary-500/40 text-primary-300 shadow-sm">
+                    <span>✨</span>
+                    <span>Ново</span>
+                  </span>
+                )}
+                {listing.urgent && (
                   <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-semibold bg-primary-500/20 border border-primary-500/40 text-primary-300 shadow-sm">
                     <span>🔥</span>
                     <span>Итно</span>
                   </span>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
           {listing.vehicle && (

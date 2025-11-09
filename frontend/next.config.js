@@ -141,19 +141,6 @@ const nextConfig = {
         ],
       },
       {
-        source: '/listings/:path*',
-        headers: [
-          ...(isDev
-            ? []
-            : [
-                {
-                  key: 'Cache-Control',
-                  value: 'public, s-maxage=30, stale-while-revalidate=120',
-                },
-              ]),
-        ],
-      },
-      {
         source: '/_next/static/:path*',
         headers: [
           {
@@ -187,6 +174,19 @@ const nextConfig = {
         ],
       },
     ];
+    
+    if (!isDev) {
+      headers.push({
+        source: '/listings/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, s-maxage=30, stale-while-revalidate=120',
+          },
+        ],
+      });
+    }
+    
     return headers;
   },
   turbopack: {

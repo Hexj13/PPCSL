@@ -795,7 +795,7 @@ describe('ListingForm', () => {
       const yearLabel = screen.getByText(/Година/i);
       const yearInput = yearLabel
         .closest('div')
-        ?.querySelector('input[type="number"]') as HTMLInputElement;
+        ?.querySelector('input[type="text"]') as HTMLInputElement;
       expect(yearInput).toBeInTheDocument();
 
       fireEvent.change(yearInput, { target: { value: '2020' } });
@@ -843,18 +843,17 @@ describe('ListingForm', () => {
       const yearLabel = screen.getByText(/Година/i);
       const yearInput = yearLabel
         .closest('div')
-        ?.querySelector('input[type="number"]') as HTMLInputElement;
+        ?.querySelector('input[type="text"]') as HTMLInputElement;
 
       fireEvent.change(yearInput, { target: { value: invalidYear.toString() } });
+      fireEvent.blur(yearInput);
 
       await waitFor(
         () => {
-          expect(yearInput.value).not.toBe(invalidYear.toString());
+          expect(yearInput.value).toBe('');
         },
-        { timeout: 10000 }
+        { timeout: 2000 }
       );
-
-      fireEvent.blur(yearInput);
 
       await waitFor(
         () => {
@@ -917,16 +916,17 @@ describe('ListingForm', () => {
       const yearLabel = screen.getByText(/Година/i);
       const yearInput = yearLabel
         .closest('div')
-        ?.querySelector('input[type="number"]') as HTMLInputElement;
+        ?.querySelector('input[type="text"]') as HTMLInputElement;
       expect(yearInput).toBeInTheDocument();
 
       fireEvent.change(yearInput, { target: { value: '1899' } });
+      fireEvent.blur(yearInput);
 
       await waitFor(
         () => {
           expect(yearInput.value).toBe('');
         },
-        { timeout: 1000 }
+        { timeout: 2000 }
       );
 
       const engineInput = screen.getByPlaceholderText(/2\.0/i) as HTMLInputElement;
@@ -1057,7 +1057,7 @@ describe('ListingForm', () => {
       const yearLabel = screen.getByText(/Година/i);
       const yearInput = yearLabel
         .closest('div')
-        ?.querySelector('input[type="number"]') as HTMLInputElement;
+        ?.querySelector('input[type="text"]') as HTMLInputElement;
 
       fireEvent.change(yearInput, { target: { value: maxYear.toString() } });
       fireEvent.blur(yearInput);
@@ -1118,7 +1118,7 @@ describe('ListingForm', () => {
       const yearLabel = screen.getByText(/Година/i);
       const yearInput = yearLabel
         .closest('div')
-        ?.querySelector('input[type="number"]') as HTMLInputElement;
+        ?.querySelector('input[type="text"]') as HTMLInputElement;
 
       fireEvent.change(yearInput, { target: { value: invalidYear.toString() } });
       fireEvent.blur(yearInput);
@@ -1127,7 +1127,7 @@ describe('ListingForm', () => {
         () => {
           expect(yearInput.value).toBe('');
         },
-        { timeout: 1000 }
+        { timeout: 2000 }
       );
 
       const engineInput = screen.getByPlaceholderText(/2\.0/i) as HTMLInputElement;

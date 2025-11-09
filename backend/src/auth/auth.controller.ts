@@ -13,6 +13,11 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 
+const isProduction = process.env.NODE_ENV === 'production';
+const getThrottleLimit = (prodLimit: number, devLimit: number = prodLimit * 100) => ({
+  default: { limit: isProduction ? prodLimit : devLimit, ttl: 60000 },
+});
+
 import { UsersService } from '../users/users.service';
 
 import { AuthService } from './auth.service';
@@ -83,7 +88,7 @@ export class AuthController {
       },
     },
   })
-  @Throttle({ default: { limit: 3, ttl: 600000 } })
+  @Throttle(getThrottleLimit(3, 100))
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
@@ -134,7 +139,7 @@ export class AuthController {
       },
     },
   })
-  @Throttle({ default: { limit: 5, ttl: 300000 } })
+  @Throttle(getThrottleLimit(5, 200))
   @UseGuards(IpBlockGuard)
   @HttpCode(200)
   @Post('login')
@@ -182,7 +187,7 @@ export class AuthController {
     status: 401,
     description: 'Invalid or expired refresh token',
   })
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle(getThrottleLimit(10, 500))
   @HttpCode(200)
   @Post('refresh')
   async refresh(@Body() refreshTokenDto: RefreshTokenDto) {
@@ -459,7 +464,7 @@ export class AuthController {
       },
     },
   })
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle(getThrottleLimit(10, 500))
   @Post('check-phone')
   async checkPhone(@Body() sendSmsDto: SendSmsDto) {
     const normalizedPhone = this.smsService.normalizePhoneNumber(sendSmsDto.phone);
@@ -505,7 +510,7 @@ export class AuthController {
       },
     },
   })
-  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @Throttle(getThrottleLimit(3, 100))
   @Post('send-sms')
   async sendSms(@Body() sendSmsDto: SendSmsDto) {
     const normalizedPhone = this.smsService.normalizePhoneNumber(sendSmsDto.phone);
@@ -606,7 +611,7 @@ export class AuthController {
       },
     },
   })
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Throttle(getThrottleLimit(5, 200))
   @Post('verify-email')
   async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
     const user = await this.authService.verifyEmail(verifyEmailDto.token);
@@ -659,7 +664,7 @@ export class AuthController {
       },
     },
   })
-  @Throttle({ default: { limit: 3, ttl: 300000 } })
+  @Throttle(getThrottleLimit(3, 100))
   @UseGuards(IpBlockGuard)
   @HttpCode(200)
   @Post('request-password-reset')

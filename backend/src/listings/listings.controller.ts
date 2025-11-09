@@ -21,6 +21,7 @@ import {
 } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 
 import { CreateListingDto } from './dto/create-listing.dto';
 import { SearchListingsDto } from './dto/search-listings.dto';
@@ -157,6 +158,7 @@ export class ListingsController {
   })
   @ApiResponse({ status: 200, description: 'Listing details' })
   @ApiResponse({ status: 404, description: 'Listing not found' })
+  @UseGuards(OptionalJwtAuthGuard)
   @Get(':id')
   async findOne(@Param('id') id: string, @Request() req) {
     try {

@@ -1,4 +1,4 @@
-const ALLOWED_TAGS = ['p', 'br', 'strong', 'em', 'u', 'ul', 'ol', 'li', 'font'];
+const ALLOWED_TAGS = ['p', 'br', 'div', 'strong', 'em', 'i', 'b', 'u', 'ul', 'ol', 'li', 'font'];
 
 export function sanitizeHtml(html: string): string {
   if (!html || typeof html !== 'string') {

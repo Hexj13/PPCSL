@@ -814,14 +814,78 @@ export default function ListingPage() {
               <div className="surface">
                 <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-400">Опис</h2>
                 <div
-                  className="text-gray-300 leading-relaxed prose prose-invert prose-headings:text-white prose-p:text-gray-300 prose-strong:text-white prose-em:text-gray-200 max-w-none"
+                  className="text-gray-300 leading-relaxed max-w-none listing-description"
                   dangerouslySetInnerHTML={{
                     __html: DOMPurify.sanitize(listing.description, {
-                      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'ul', 'ol', 'li'],
-                      ALLOWED_ATTR: [],
+                      ALLOWED_TAGS: ['p', 'br', 'div', 'strong', 'em', 'i', 'b', 'u', 'ul', 'ol', 'li', 'font'],
+                      ALLOWED_ATTR: ['size'],
                     }),
                   }}
                 />
+                <style jsx>{`
+                  .listing-description {
+                    color: #d1d5db;
+                    line-height: 1.75;
+                  }
+                  .listing-description div,
+                  .listing-description p {
+                    display: block;
+                    margin: 0.75rem 0;
+                    min-height: 1.2em;
+                    line-height: 1.6;
+                    color: #d1d5db;
+                  }
+                  .listing-description div:empty,
+                  .listing-description p:empty {
+                    min-height: 1.5rem;
+                    margin: 0.5rem 0;
+                  }
+                  .listing-description div:first-child,
+                  .listing-description p:first-child {
+                    margin-top: 0;
+                  }
+                  .listing-description div:last-child,
+                  .listing-description p:last-child {
+                    margin-bottom: 0;
+                  }
+                  .listing-description p:has(br:only-child) {
+                    min-height: 1.5rem;
+                    margin: 0.5rem 0;
+                  }
+                  .listing-description font[size='2'] {
+                    font-size: 0.875rem !important;
+                  }
+                  .listing-description font[size='3'] {
+                    font-size: 1rem !important;
+                  }
+                  .listing-description font[size='5'] {
+                    font-size: 1.125rem !important;
+                  }
+                  .listing-description strong,
+                  .listing-description b {
+                    font-weight: 700 !important;
+                    color: #d1d5db !important;
+                  }
+                  .listing-description em,
+                  .listing-description i {
+                    font-style: italic !important;
+                    color: #d1d5db !important;
+                  }
+                  .listing-description u {
+                    text-decoration: underline;
+                    color: #d1d5db;
+                  }
+                  .listing-description ul,
+                  .listing-description ol {
+                    margin: 0.5rem 0;
+                    padding-left: 1.5rem;
+                    color: #d1d5db;
+                  }
+                  .listing-description li {
+                    margin: 0.25rem 0;
+                    color: #d1d5db;
+                  }
+                `}</style>
               </div>
             )}
 
@@ -941,7 +1005,7 @@ export default function ListingPage() {
                   </table>
                 </div>
               ) : (
-                <p className="font-semibold text-gray-300 text-sm">
+                <p className="text-gray-300">
                   Нема претходни објави за ова возило
                 </p>
               )}

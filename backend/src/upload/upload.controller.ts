@@ -29,6 +29,11 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 import { UploadService } from './upload.service';
 
+const isProduction = process.env.NODE_ENV === 'production';
+const getThrottleLimit = (prodLimit: number, devLimit: number = prodLimit * 50) => ({
+  default: { limit: isProduction ? prodLimit : devLimit, ttl: 60000 },
+});
+
 @ApiTags('upload')
 @Controller('api/upload')
 export class UploadController {
@@ -86,7 +91,7 @@ export class UploadController {
       },
     },
   })
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @Throttle(getThrottleLimit(20, 1000))
   @Post('image')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(

@@ -10,6 +10,43 @@ interface RichTextEditorProps {
   rows?: number;
 }
 
+const normalizeContent = (html: string): string => {
+  if (!html) return '';
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = html;
+  
+  const divs = tempDiv.querySelectorAll('div');
+  divs.forEach((div) => {
+    const p = document.createElement('p');
+    p.innerHTML = div.innerHTML;
+    if (div.innerHTML.trim() === '') {
+      p.innerHTML = '<br>';
+    }
+    div.parentNode?.replaceChild(p, div);
+  });
+  
+  const iTags = tempDiv.querySelectorAll('i');
+  iTags.forEach((i) => {
+    const em = document.createElement('em');
+    em.innerHTML = i.innerHTML;
+    i.parentNode?.replaceChild(em, i);
+  });
+  
+  const bTags = tempDiv.querySelectorAll('b');
+  bTags.forEach((b) => {
+    const strong = document.createElement('strong');
+    strong.innerHTML = b.innerHTML;
+    b.parentNode?.replaceChild(strong, b);
+  });
+  
+  const emptyPs = tempDiv.querySelectorAll('p:empty');
+  emptyPs.forEach((p) => {
+    p.innerHTML = '<br>';
+  });
+  
+  return tempDiv.innerHTML;
+};
+
 export function RichTextEditor({
   value,
   onChange,
@@ -46,16 +83,23 @@ export function RichTextEditor({
   };
 
   useEffect(() => {
-    if (editorRef.current && editorRef.current.innerHTML !== value) {
-      editorRef.current.innerHTML = value;
-      setTextLength(editorRef.current.textContent?.length || 0);
-      updateListButtonState();
+    if (editorRef.current) {
+      const normalizedValue = normalizeContent(value || '');
+      if (editorRef.current.innerHTML !== normalizedValue) {
+        editorRef.current.innerHTML = normalizedValue;
+        setTextLength(editorRef.current.textContent?.length || 0);
+        updateListButtonState();
+      }
     }
   }, [value]);
 
   useEffect(() => {
     const editor = editorRef.current;
     if (!editor) return;
+
+    if (editor.contentEditable === 'true') {
+      document.execCommand('defaultParagraphSeparator', false, 'p');
+    }
 
     const handleSelectionChange = () => {
       updateListButtonState();
@@ -75,11 +119,12 @@ export function RichTextEditor({
   const handleInput = () => {
     if (editorRef.current) {
       const textContent = editorRef.current.textContent || '';
-      const content = editorRef.current.innerHTML;
+      let content = editorRef.current.innerHTML;
 
       updateListButtonState();
 
       if (textContent.length <= maxLength) {
+        content = normalizeContent(content);
         setTextLength(textContent.length);
         onChange(content);
       } else {
@@ -280,6 +325,17 @@ export function RichTextEditor({
           } catch {
             isInList = false;
           }
+          
+          if (e.key === 'Enter' && !isInList && !e.shiftKey) {
+            e.preventDefault();
+            document.execCommand('defaultParagraphSeparator', false, 'p');
+            document.execCommand('insertParagraph', false);
+            setTimeout(() => {
+              handleInput();
+            }, 0);
+            return;
+          }
+          
           if (e.key === 'Enter' && isInList) {
             setTimeout(() => {
               handleInput();
