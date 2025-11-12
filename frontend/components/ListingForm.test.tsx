@@ -141,6 +141,9 @@ describe('ListingForm', () => {
     (api.brandsApi.getModels as jest.Mock).mockResolvedValue({ data: mockModels });
     (api.listingsApi.update as jest.Mock).mockResolvedValue({ data: mockListing as Listing });
     (api.listingsApi.create as jest.Mock).mockResolvedValue({ data: mockListing as Listing });
+    (api.uploadApi.uploadImage as jest.Mock).mockResolvedValue({
+      data: { url: 'http://localhost:4000/uploads/test-image.webp', path: '/uploads/test-image.webp' },
+    });
   });
 
   describe('Create mode', () => {
@@ -985,7 +988,7 @@ describe('ListingForm', () => {
       fireEvent.change(fileInput);
       await waitFor(
         () => {
-          expect(global.fetch).toHaveBeenCalled();
+          expect(api.uploadApi.uploadImage).toHaveBeenCalled();
           expect(toast.success).toHaveBeenCalledWith('Фото е вчитано');
         },
         { timeout: 10000 }
@@ -999,7 +1002,7 @@ describe('ListingForm', () => {
       fireEvent.change(fileInput);
       await waitFor(
         () => {
-          expect((global.fetch as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(2);
+          expect((api.uploadApi.uploadImage as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(2);
           const successCalls = (toast.success as jest.Mock).mock.calls.filter(
             (call: unknown[]) => String(call[0]) === 'Фото е вчитано'
           );
@@ -1070,15 +1073,6 @@ describe('ListingForm', () => {
     it('should validate year on form submit', async () => {
       const onSuccess = jest.fn();
       const { toast } = require('react-hot-toast');
-
-      let fetchCallCount = 0;
-      global.fetch = jest.fn().mockImplementation(() => {
-        fetchCallCount++;
-        return Promise.resolve({
-          ok: true,
-          json: async () => ({ url: `http://localhost:4000/uploads/test${fetchCallCount}.webp` }),
-        });
-      });
 
       render(<ListingForm mode="create" onSuccess={onSuccess} />);
 
@@ -1186,7 +1180,7 @@ describe('ListingForm', () => {
       fireEvent.change(fileInput);
       await waitFor(
         () => {
-          expect(global.fetch).toHaveBeenCalled();
+          expect(api.uploadApi.uploadImage).toHaveBeenCalled();
           expect(toast.success).toHaveBeenCalledWith('Фото е вчитано');
         },
         { timeout: 10000 }
@@ -1200,7 +1194,7 @@ describe('ListingForm', () => {
       fireEvent.change(fileInput);
       await waitFor(
         () => {
-          expect((global.fetch as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(2);
+          expect((api.uploadApi.uploadImage as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(2);
           const successCalls = (toast.success as jest.Mock).mock.calls.filter(
             (call: unknown[]) => String(call[0]) === 'Фото е вчитано'
           );

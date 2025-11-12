@@ -124,9 +124,13 @@ Or use online generator: https://randomkeygen.com/
 
 ```env
 FRONTEND_URL=https://your-frontend-domain.com
+API_URL=https://your-backend-domain.onrender.com
 ```
 
-Replace with your actual frontend URL (e.g., `https://kupito.mk` or your Render frontend service URL).
+- **FRONTEND_URL:** Your frontend URL (e.g., `https://kupito.club`). Used for CORS configuration.
+- **API_URL:** Your backend API URL (e.g., `https://kupito-backend.onrender.com`). Used to generate full URLs for uploaded images.
+
+**Important:** Both URLs should use `https://` in production.
 
 ### Optional Variables
 
@@ -433,14 +437,20 @@ This will clear Redis cache for brands and models, forcing the API to fetch fres
 
 Check that all required variables are set:
 
+**Backend Service:**
 - [ ] `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_NAME`
 - [ ] `REDIS_HOST`, `REDIS_PORT` (if using Redis)
 - [ ] `JWT_SECRET`
-- [ ] `FRONTEND_URL`
+- [ ] `FRONTEND_URL` (e.g., `https://kupito.club`)
+- [ ] `API_URL` (e.g., `https://kupito-backend.onrender.com`) - **Required for image uploads**
 - [ ] `NODE_ENV=production`
 - [ ] `PORT` (usually auto-set by Render)
 - [ ] `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_MESSAGING_SERVICE_SID` (for SMS)
 - [ ] `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` (for email)
+
+**Frontend Service (if deployed separately):**
+- [ ] `NEXT_PUBLIC_API_URL` (e.g., `https://kupito-backend.onrender.com`) - **Required for API calls**
+- [ ] `NEXT_PUBLIC_SITE_URL` (e.g., `https://kupito.club`) - For sitemap generation
 
 ### Step 5: Test API Endpoints
 
@@ -511,7 +521,106 @@ npm run check-models
 
 ---
 
-## 8. Useful Render.com Features
+## 8. Setting Up Cron Jobs
+
+### Automatic Closing of Old Listings
+
+The application has a built-in cron job that automatically closes listings older than 5 months. However, on Render's free tier, services can sleep after inactivity, which may prevent the cron from running.
+
+**Solution: Use Render Cron Job Service**
+
+1. **Set Environment Variable in Backend Service:**
+   - Go to Render Dashboard → Your Backend Service → **Environment**
+   - Add new variable:
+     ```env
+     CRON_SECRET=<generate-secure-random-key>
+     ```
+   - Generate a secure key:
+     ```bash
+     node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+     ```
+
+2. **Create Cron Job in Render Dashboard:**
+   - Go to Render Dashboard → Your Project → **"CREATE NEW"** → **Cron Job**
+   - Configure:
+     - **Name:** `close-old-listings`
+     - **Schedule:** `0 0 * * *` (runs daily at midnight UTC)
+     - **Command:** 
+       ```bash
+       curl -X POST https://your-backend.onrender.com/api/listings/cron/close-old -H "x-cron-secret: $CRON_SECRET"
+       ```
+     - **Environment:** Same environment as your backend service (this allows access to `$CRON_SECRET`)
+
+**Important:** 
+- Render Cron Jobs can access environment variables from the same environment
+- Use `$CRON_SECRET` in the command - it will be automatically replaced with the actual value
+- The endpoint is protected by the secret key, so only authorized cron jobs can call it
+
+**Note:** The built-in cron (`@Cron`) will still work if your service is always awake (paid tier). The Render Cron Job is a backup solution for free tier.
+
+---
+
+## 9. Frontend Service Setup (if deployed separately)
+
+If you deploy the frontend as a separate service on Render.com:
+
+### Create Static Site or Web Service
+
+1. Go to Render Dashboard → **New** → **Static Site** (recommended for Next.js) or **Web Service**
+2. Connect your GitHub repository
+3. Select repository: `Hexj13/Kupito` (or your fork)
+4. Configure service:
+
+#### Basic Settings
+
+- **Name:** `kupito-frontend`
+- **Region:** Same as backend (recommended)
+- **Branch:** `main`
+- **Root Directory:** `frontend`
+- **Build Command:** `npm ci && npm run build`
+- **Publish Directory:** `.next` (for Static Site) or use `npm run start` (for Web Service)
+
+#### Environment Variables
+
+Add these in Render Dashboard → Your Frontend Service → **Environment**:
+
+```env
+NEXT_PUBLIC_API_URL=https://your-backend.onrender.com
+NEXT_PUBLIC_SITE_URL=https://your-frontend-domain.com
+```
+
+**Important:**
+- `NEXT_PUBLIC_API_URL` must match your backend service URL
+- `NEXT_PUBLIC_SITE_URL` is used for sitemap generation
+- Both should use `https://` in production
+- Variables starting with `NEXT_PUBLIC_` are exposed to the browser
+
+### Troubleshooting Frontend Issues
+
+#### Images Not Uploading
+
+**Problem:** CORS errors when uploading images from frontend to backend.
+
+**Solution:**
+1. Verify `NEXT_PUBLIC_API_URL` is set correctly in frontend service
+2. Verify `FRONTEND_URL` is set correctly in backend service (must match frontend domain)
+3. Verify `API_URL` is set in backend service (used to generate image URLs)
+4. Check browser console for CORS errors
+5. Ensure both services use `https://` URLs
+
+#### API Calls Failing
+
+**Problem:** Frontend can't connect to backend API.
+
+**Solution:**
+1. Check `NEXT_PUBLIC_API_URL` is set correctly
+2. Verify backend service is running and accessible
+3. Test backend URL directly: `curl https://your-backend.onrender.com/health`
+4. Check CORS configuration in backend (should allow frontend origin)
+
+---
+
+## 10. Useful Render.com Features
 
 ### Manual Deploy
 
@@ -543,7 +652,7 @@ Monitor service:
 
 ---
 
-## 9. Cost Optimization
+## 11. Cost Optimization
 
 ### Free Tier Limitations
 
@@ -560,7 +669,7 @@ Monitor service:
 
 ---
 
-## 10. Security Best Practices
+## 12. Security Best Practices
 
 1. **Never commit `.env` files** to repository
 2. **Use strong JWT_SECRET** (minimum 32 characters, random)

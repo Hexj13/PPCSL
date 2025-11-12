@@ -750,12 +750,12 @@ export class ListingsService {
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
-  async autoCloseOldListings() {
+  async autoCloseOldListings(): Promise<{ closed: number }> {
     const fiveMonthsAgo = new Date();
     fiveMonthsAgo.setMonth(fiveMonthsAgo.getMonth() - 5);
     const closedAt = new Date();
 
-    await this.listingsRepository.update(
+    const result = await this.listingsRepository.update(
       {
         status: ListingStatusEnum.Active,
         last_updated_at: LessThanOrEqual(fiveMonthsAgo),
@@ -765,6 +765,9 @@ export class ListingsService {
         closed_at: closedAt,
       },
     );
+
+    this.logger.log(`Auto-closed ${result.affected || 0} old listings`);
+    return { closed: result.affected || 0 };
   }
 
   async getUserListings(

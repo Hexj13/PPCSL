@@ -8,7 +8,16 @@ import { toast } from 'react-hot-toast';
 
 import { Dropdown } from '@/components/Dropdown';
 import { RichTextEditor } from '@/components/RichTextEditor';
-import { listingsApi, brandsApi, citiesApi, Brand, VehicleModel, City, Listing } from '@/lib/api';
+import {
+  listingsApi,
+  brandsApi,
+  citiesApi,
+  uploadApi,
+  Brand,
+  VehicleModel,
+  City,
+  Listing,
+} from '@/lib/api';
 import {
   ConditionType,
   ConditionTypeEnum,
@@ -195,25 +204,10 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
   const handleFileUpload = async (file: File) => {
     setUploading(true);
     try {
-      const formDataUpload = new FormData();
-      formDataUpload.append('file', file);
-
-      const response = await fetch('http://localhost:4000/api/upload/image', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: formDataUpload,
-      });
-
-      if (!response.ok) {
-        throw new Error('Грешка при вчитување на датотека');
-      }
-
-      const data = await response.json();
+      const response = await uploadApi.uploadImage(file);
       setFormData((prev) => ({
         ...prev,
-        images: [...prev.images, data.url],
+        images: [...prev.images, response.data.url],
       }));
       toast.success('Фото е вчитано');
     } catch {

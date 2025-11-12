@@ -679,7 +679,7 @@ describe('ListingsService', () => {
       const updateResult: UpdateResult = { affected: 3, generatedMaps: [], raw: [] };
       listingsRepository.update.mockResolvedValue(updateResult);
 
-      await service.autoCloseOldListings();
+      const result = await service.autoCloseOldListings();
 
       expect(listingsRepository.update).toHaveBeenCalledWith(
         {
@@ -691,6 +691,7 @@ describe('ListingsService', () => {
           closed_at: expect.any(Date),
         }),
       );
+      expect(result).toEqual({ closed: 3 });
     });
   });
 

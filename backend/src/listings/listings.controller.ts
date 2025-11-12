@@ -1,7 +1,9 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   Get,
+  Headers,
   Logger,
   NotFoundException,
   Param,
@@ -321,5 +323,18 @@ export class ListingsController {
   @UseGuards(JwtAuthGuard)
   refreshDates(@Request() req) {
     return this.listingsService.refreshAllDates(req.user.id);
+  }
+
+  @ApiOperation({ summary: 'Close old listings (cron job endpoint)' })
+  @ApiResponse({ status: 200, description: 'Old listings closed successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid secret key' })
+  @Post('cron/close-old')
+  async closeOldListings(@Headers('x-cron-secret') secret: string) {
+    const expectedSecret = process.env.CRON_SECRET;
+    if (!expectedSecret || secret !== expectedSecret) {
+      throw new ForbiddenException('Invalid secret key');
+    }
+    const result = await this.listingsService.autoCloseOldListings();
+    return { message: 'Old listings closed successfully', result };
   }
 }
