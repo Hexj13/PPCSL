@@ -3,7 +3,7 @@
 import { AxiosError } from 'axios';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Dropdown } from '@/components/Dropdown';
@@ -209,9 +209,19 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
     setUploading(true);
     try {
       const response = await uploadApi.uploadImage(file);
+      let imageUrl = response.data.url;
+
+      if (
+        typeof window !== 'undefined' &&
+        window.location.protocol === 'https:' &&
+        imageUrl.startsWith('http://')
+      ) {
+        imageUrl = imageUrl.replace('http://', 'https://');
+      }
+
       setFormData((prev) => ({
         ...prev,
-        images: [...prev.images, response.data.url],
+        images: [...prev.images, imageUrl],
       }));
       toast.success('Фото е вчитано');
     } catch {
@@ -221,10 +231,12 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
     }
   };
 
-  const handleWheel = (e: React.WheelEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    e.currentTarget.blur();
-  };
+  const handleWheel = useCallback((e: React.WheelEvent<HTMLInputElement>) => {
+    const target = e.currentTarget;
+    if (target === document.activeElement && target.type === 'number') {
+      target.blur();
+    }
+  }, []);
 
   const validateForm = (): boolean => {
     if (!formData.vehicle.brand_id) {

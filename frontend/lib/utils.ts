@@ -119,6 +119,18 @@ export function formatBodyType(bodyType: string | undefined): string {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
+function normalizeUrl(url: string): string {
+  if (url.startsWith('http://')) {
+    if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+      return url.replace('http://', 'https://');
+    }
+    if (process.env.NODE_ENV === 'production') {
+      return url.replace('http://', 'https://');
+    }
+  }
+  return url;
+}
+
 export function getOptimizedImageUrl(
   imageUrl: string,
   quality: number = 85,
@@ -138,12 +150,12 @@ export function getOptimizedImageUrl(
       if (pathname.startsWith('/uploads/')) {
         relativePath = pathname.substring('/uploads/'.length);
       } else if (pathname.startsWith('/api/upload/image/')) {
-        return imageUrl;
+        return normalizeUrl(imageUrl);
       } else {
-        return imageUrl;
+        return normalizeUrl(imageUrl);
       }
     } catch {
-      return imageUrl;
+      return normalizeUrl(imageUrl);
     }
   } else if (imageUrl.startsWith('/uploads/')) {
     relativePath = imageUrl.substring('/uploads/'.length);
@@ -166,7 +178,8 @@ export function getOptimizedImageUrl(
   }
 
   const queryString = params.toString();
-  return `${API_URL}/api/upload/image/${encodeURIComponent(relativePath)}${queryString ? `?${queryString}` : ''}`;
+  const baseUrl = normalizeUrl(API_URL);
+  return `${baseUrl}/api/upload/image/${encodeURIComponent(relativePath)}${queryString ? `?${queryString}` : ''}`;
 }
 
 const cityNamesMap: Record<string, string> = {

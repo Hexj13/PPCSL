@@ -118,7 +118,11 @@ export class UploadController {
     }
 
     const filePath = await this.uploadService.saveFile(file);
-    const baseUrl = process.env.API_URL || 'http://localhost:4000';
+    let baseUrl = process.env.API_URL || 'http://localhost:4000';
+
+    if (process.env.NODE_ENV === 'production' && baseUrl.startsWith('http://')) {
+      baseUrl = baseUrl.replace('http://', 'https://');
+    }
 
     return {
       url: `${baseUrl}${filePath}`,

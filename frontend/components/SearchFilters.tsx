@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import React, { useState, useEffect, startTransition } from 'react';
+import React, { useState, useEffect, startTransition, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { brandsApi, citiesApi, Brand, VehicleModel, City } from '@/lib/api';
@@ -230,10 +230,12 @@ export function SearchFilters() {
     return true;
   };
 
-  const handleWheel = (e: React.WheelEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    e.currentTarget.blur();
-  };
+  const handleWheel = useCallback((e: React.WheelEvent<HTMLInputElement>) => {
+    const target = e.currentTarget;
+    if (target === document.activeElement && target.type === 'number') {
+      target.blur();
+    }
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

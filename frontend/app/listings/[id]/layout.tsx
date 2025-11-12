@@ -106,15 +106,25 @@ function getOptimizedImageUrl(imageUrl: string): string {
   }
 
   if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    if (process.env.NODE_ENV === 'production' && imageUrl.startsWith('http://')) {
+      return imageUrl.replace('http://', 'https://');
+    }
     return imageUrl;
   }
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+  let fullUrl = '';
   if (imageUrl.startsWith('/')) {
-    return `${apiUrl}${imageUrl}`;
+    fullUrl = `${apiUrl}${imageUrl}`;
+  } else {
+    fullUrl = `${apiUrl}/${imageUrl}`;
   }
 
-  return `${apiUrl}/${imageUrl}`;
+  if (process.env.NODE_ENV === 'production' && fullUrl.startsWith('http://')) {
+    return fullUrl.replace('http://', 'https://');
+  }
+
+  return fullUrl;
 }
 
 export default function ListingLayout({ children }: { children: React.ReactNode }) {

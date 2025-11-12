@@ -47,7 +47,9 @@ export function ListingImage({
         sizes={sizes}
         className={fill ? `object-cover ${className}` : className}
         onClick={onClick}
-        unoptimized={unoptimized || imageUrl.startsWith('http://localhost:4000')}
+        unoptimized={
+          unoptimized || (imageUrl.startsWith('http://') && process.env.NODE_ENV !== 'production')
+        }
       />
     );
   }
@@ -60,7 +62,9 @@ export function ListingImage({
       height={600}
       className={className}
       onClick={onClick}
-      unoptimized={unoptimized || imageUrl.startsWith('http://localhost:4000')}
+      unoptimized={
+        unoptimized || (imageUrl.startsWith('http://') && process.env.NODE_ENV !== 'production')
+      }
     />
   );
 }
