@@ -42,6 +42,7 @@
     "cleanup-brands": "ts-node -r tsconfig-paths/register src/scripts/stage/cleanup-brands.ts",
     "clear-database": "ts-node -r tsconfig-paths/register src/scripts/stage/clear-database.ts",
     "add-brands": "ts-node -r tsconfig-paths/register src/scripts/stage/add-brands.ts",
+    "seed:all-brands": "ts-node -r tsconfig-paths/register src/scripts/stage/seed-all-brands.ts",
     "add-models": "ts-node -r tsconfig-paths/register src/scripts/stage/add-models-to-brand.ts",
     "add-historical": "ts-node -r tsconfig-paths/register src/scripts/stage/add-historical-models.ts",
     "add-grand": "ts-node -r tsconfig-paths/register src/scripts/stage/add-grand-models.ts",

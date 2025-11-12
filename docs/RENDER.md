@@ -211,6 +211,39 @@ npm ci && npm run build && npm run migration:run
 
 **⚠️ Warning:** Only run migrations manually or via separate script, not in build command.
 
+### Loading Brands and Models (REQUIRED)
+
+After migrations, you need to load brands and models into the database. The application requires brands to function properly.
+
+1. Go to Render Dashboard → Your Service → **Shell**
+2. Run one of these commands:
+
+**Option 1: Basic brands (recommended for production):**
+```bash
+npm run add-brands
+```
+
+This will load the most common brands and models used in the application.
+
+**Option 2: Full vehicle database:**
+```bash
+npm run seed:vehicles
+```
+
+This loads a comprehensive list of brands and models (takes longer).
+
+**Option 3: Basic seed (for testing):**
+```bash
+npm run seed
+```
+
+This creates minimal test data including brands, models, users, and listings.
+
+**⚠️ Important:** 
+- Run migrations first (`npm run migration:run`)
+- Then load brands (`npm run add-brands` or `npm run seed:vehicles`)
+- Without brands, the `/api/brands` endpoint will return an empty array
+
 ---
 
 ## 6. Troubleshooting
@@ -333,17 +366,133 @@ Then set Start Command to: `npm run deploy`
 
 ## 7. Post-Deployment Checklist
 
-After deployment:
+After deployment, follow these steps in order:
 
-- [ ] Service status is "Live"
+### Step 1: Verify Service Status
+
+- [ ] Service status is "Live" in Render Dashboard
 - [ ] Database is running and accessible
-- [ ] Environment variables are set correctly
-- [ ] Database migrations are executed
-- [ ] Health check endpoint works: `https://your-service.onrender.com/health`
-- [ ] API endpoints respond correctly
+- [ ] Redis is running (if used)
+- [ ] No build errors in logs
+
+### Step 2: Run Database Migrations
+
+1. Go to Render Dashboard → Your Service → **Shell**
+2. Run:
+
+```bash
+npm run migration:run
+```
+
+**Expected output:** Should show all migrations executed successfully.
+
+- [ ] Migrations completed without errors
+- [ ] No "relation does not exist" errors
+
+### Step 3: Load Brands and Models
+
+**IMPORTANT:** This is required for the application to work properly.
+
+1. In Render Shell, run:
+
+```bash
+npm run seed:all-brands
+```
+
+This will load all brands and models from all scripts (Italian, American, German, Japanese, French brands).
+
+**Alternative (if seed:all-brands fails):**
+```bash
+npm run add-brands
+npm run add-italian-models
+npm run add-american-models
+npm run add-german-models
+npm run add-japanese-models
+npm run add-french-models
+```
+
+- [ ] Brands and models loaded successfully
+- [ ] Check brands count: `npm run check-brands` (should show ~55+ brands)
+
+### Step 4: Verify Environment Variables
+
+Check that all required variables are set:
+
+- [ ] `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_NAME`
+- [ ] `REDIS_HOST`, `REDIS_PORT` (if using Redis)
+- [ ] `JWT_SECRET`
+- [ ] `FRONTEND_URL`
+- [ ] `NODE_ENV=production`
+- [ ] `PORT` (usually auto-set by Render)
+- [ ] `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_MESSAGING_SERVICE_SID` (for SMS)
+- [ ] `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` (for email)
+
+### Step 5: Test API Endpoints
+
+Test critical endpoints:
+
+```bash
+# Health check
+curl https://your-backend.onrender.com/health
+
+# Brands (should return array, not empty)
+curl https://your-backend.onrender.com/api/brands
+
+# Should return JSON with brands array
+```
+
+- [ ] Health check endpoint works
+- [ ] `/api/brands` returns brands (not empty array)
+- [ ] API responds correctly
 - [ ] CORS is configured for frontend URL
-- [ ] Logs show no errors
-- [ ] Database connection is successful (no ECONNREFUSED errors)
+
+### Step 6: Check Logs
+
+1. Go to Render Dashboard → Your Service → **Logs**
+2. Check for:
+   - No `ECONNREFUSED` errors (database connection)
+   - No `ECONNRESET` errors (Redis connection)
+   - No TypeORM errors
+   - Application started successfully
+
+- [ ] No database connection errors
+- [ ] No Redis connection errors (if using Redis)
+- [ ] Application started successfully
+- [ ] No critical errors in logs
+
+### Step 7: Test Critical Features
+
+Test that core functionality works:
+
+- [ ] User registration works
+- [ ] User login works
+- [ ] SMS verification works (if configured)
+- [ ] Email verification works (if configured)
+- [ ] Listings can be created
+- [ ] Brands and models are available in forms
+
+### Step 8: Monitor Performance
+
+- [ ] Check service metrics (CPU, Memory)
+- [ ] Response times are acceptable
+- [ ] No memory leaks
+- [ ] Service stays awake (if paid tier)
+
+### Quick Verification Script
+
+You can run this in Render Shell to verify everything:
+
+```bash
+# Check brands count
+npm run check-brands
+
+# Check models stats
+npm run check-models
+
+# Should show:
+# - Brands: ~55+
+# - Models: 1000+
+```
 
 ---
 
