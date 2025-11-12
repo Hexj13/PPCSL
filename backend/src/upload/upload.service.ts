@@ -146,7 +146,6 @@ export class UploadService {
           Key: s3Key,
           Body: compressedBuffer,
           ContentType: 'image/webp',
-          ACL: 'public-read',
         });
 
         await this.s3Client.send(command);

@@ -201,8 +201,9 @@ AWS_CLOUDFRONT_URL=https://cdn.kupito.club
    - Go to AWS Console → S3 → Create bucket
    - Name: `kupito-uploads` (or your preferred name)
    - Region: `eu-north-1` (or closest to your users)
-   - Uncheck "Block all public access" (images need to be publicly accessible)
+   - **Important:** Leave "Block all public access" checked (we'll use Bucket Policy instead of ACL)
    - Enable "Default encryption"
+   - **Disable ACLs:** In "Object Ownership" section, select "Bucket owner enforced" (ACLs disabled)
 
 2. **Configure CORS for S3 bucket:**
    - In S3 bucket → Permissions → CORS
@@ -256,8 +257,7 @@ AWS_CLOUDFRONT_URL=https://cdn.kupito.club
          "Action": [
            "s3:PutObject",
            "s3:GetObject",
-           "s3:DeleteObject",
-           "s3:PutObjectAcl"
+           "s3:DeleteObject"
          ],
          "Resource": "arn:aws:s3:::kupito-uploads/*"
        },
@@ -269,6 +269,8 @@ AWS_CLOUDFRONT_URL=https://cdn.kupito.club
      ]
    }
    ```
+   
+   **Note:** `s3:PutObjectAcl` is not needed if ACLs are disabled (which is recommended for security).
 
 6. **CloudFront CDN (Optional but recommended):**
    - Faster image delivery
