@@ -13,6 +13,7 @@ export default function FavoritesPage() {
   const { user, isInitialized } = useAuthStore();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const showLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasLoadedRef = useRef(false);
 
@@ -39,6 +40,7 @@ export default function FavoritesPage() {
           : [];
         setListings(favoritesList);
         setLoading(false);
+        setIsInitialLoading(false);
         const { setFavorites } = useFavoritesStore.getState();
         const favoriteIds = favoritesList.map((listing: Listing) => listing.id);
         setFavorites(favoriteIds);
@@ -50,14 +52,11 @@ export default function FavoritesPage() {
         }
         setListings([]);
         setLoading(false);
+        setIsInitialLoading(false);
       });
   }, [user]);
 
   useEffect(() => {
-    if (!isInitialized && !user) {
-      return;
-    }
-
     if (isInitialized && !user) {
       router.push('/login');
       return;
@@ -68,31 +67,8 @@ export default function FavoritesPage() {
     }
   }, [user, isInitialized, router, loadFavorites]);
 
-  if (!isInitialized && !user) {
+  if (!isInitialized || !user) {
     return null;
-  }
-
-  if (isInitialized && !user) {
-    return null;
-  }
-
-  if (!user) {
-    return null;
-  }
-
-  if (loading) {
-    return (
-      <div>
-        <h1 className="text-3xl md:text-4xl font-extrabold mb-6 md:mb-8 bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-          Омилени
-        </h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
-          {[...Array(8)].map((_, i) => (
-            <ListingCardSkeleton key={i} />
-          ))}
-        </div>
-      </div>
-    );
   }
 
   return (
@@ -101,7 +77,13 @@ export default function FavoritesPage() {
         Омилени
       </h1>
 
-      {listings.length === 0 ? (
+      {isInitialLoading || loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
+          {[...Array(8)].map((_, i) => (
+            <ListingCardSkeleton key={i} />
+          ))}
+        </div>
+      ) : listings.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-300 text-lg">Во омилени сè уште нема ништо</p>
         </div>

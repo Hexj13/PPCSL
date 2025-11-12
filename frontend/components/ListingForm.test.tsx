@@ -142,7 +142,10 @@ describe('ListingForm', () => {
     (api.listingsApi.update as jest.Mock).mockResolvedValue({ data: mockListing as Listing });
     (api.listingsApi.create as jest.Mock).mockResolvedValue({ data: mockListing as Listing });
     (api.uploadApi.uploadImage as jest.Mock).mockResolvedValue({
-      data: { url: 'http://localhost:4000/uploads/test-image.webp', path: '/uploads/test-image.webp' },
+      data: {
+        url: 'http://localhost:4000/uploads/test-image.webp',
+        path: '/uploads/test-image.webp',
+      },
     });
   });
 
@@ -766,9 +769,20 @@ describe('ListingForm', () => {
       const onSuccess = jest.fn();
       render(<ListingForm mode="create" onSuccess={onSuccess} />);
 
-      await waitFor(() => {
-        expect(api.brandsApi.getAll).toHaveBeenCalled();
-      });
+      await waitFor(
+        () => {
+          expect(api.brandsApi.getAll).toHaveBeenCalled();
+          expect(api.citiesApi.getAll).toHaveBeenCalled();
+        },
+        { timeout: 10000 }
+      );
+
+      await waitFor(
+        () => {
+          expect(screen.queryByPlaceholderText(/50000/i)).toBeInTheDocument();
+        },
+        { timeout: 10000 }
+      );
 
       const mileageInput = screen.getByPlaceholderText(/50000/i);
       fireEvent.change(mileageInput, { target: { value: '000' } });
@@ -875,20 +889,19 @@ describe('ListingForm', () => {
       const onSuccess = jest.fn();
       const { toast } = require('react-hot-toast');
 
-      let fetchCallCount = 0;
-      global.fetch = jest.fn().mockImplementation(() => {
-        fetchCallCount++;
-        return Promise.resolve({
-          ok: true,
-          json: async () => ({ url: `http://localhost:4000/uploads/test${fetchCallCount}.webp` }),
-        });
-      });
-
       render(<ListingForm mode="create" onSuccess={onSuccess} />);
 
       await waitFor(
         () => {
           expect(api.brandsApi.getAll).toHaveBeenCalled();
+          expect(api.citiesApi.getAll).toHaveBeenCalled();
+        },
+        { timeout: 10000 }
+      );
+
+      await waitFor(
+        () => {
+          expect(screen.getAllByTestId('dropdown').length).toBeGreaterThan(0);
         },
         { timeout: 10000 }
       );
@@ -1002,7 +1015,9 @@ describe('ListingForm', () => {
       fireEvent.change(fileInput);
       await waitFor(
         () => {
-          expect((api.uploadApi.uploadImage as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(2);
+          expect((api.uploadApi.uploadImage as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(
+            2
+          );
           const successCalls = (toast.success as jest.Mock).mock.calls.filter(
             (call: unknown[]) => String(call[0]) === 'Фото е вчитано'
           );
@@ -1079,6 +1094,14 @@ describe('ListingForm', () => {
       await waitFor(
         () => {
           expect(api.brandsApi.getAll).toHaveBeenCalled();
+          expect(api.citiesApi.getAll).toHaveBeenCalled();
+        },
+        { timeout: 10000 }
+      );
+
+      await waitFor(
+        () => {
+          expect(screen.getAllByTestId('dropdown').length).toBeGreaterThan(0);
         },
         { timeout: 10000 }
       );
@@ -1194,7 +1217,9 @@ describe('ListingForm', () => {
       fireEvent.change(fileInput);
       await waitFor(
         () => {
-          expect((api.uploadApi.uploadImage as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(2);
+          expect((api.uploadApi.uploadImage as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(
+            2
+          );
           const successCalls = (toast.success as jest.Mock).mock.calls.filter(
             (call: unknown[]) => String(call[0]) === 'Фото е вчитано'
           );

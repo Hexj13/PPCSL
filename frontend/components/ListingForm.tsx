@@ -149,17 +149,21 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
   const [loadingModels, setLoadingModels] = useState(false);
   const [showVinHint, setShowVinHint] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [formData, setFormData] = useState<ListingFormData>(() => getInitialFormData(initialData));
 
   useEffect(() => {
-    brandsApi.getAll().then((res) => {
-      const sorted = [...res.data].sort((a, b) => a.name.localeCompare(b.name, 'mk'));
-      setBrands(sorted);
-    });
-    citiesApi.getAll().then((res) => {
-      const sorted = [...res.data].sort((a, b) => a.name.localeCompare(b.name, 'mk'));
-      setCities(sorted);
-    });
+    Promise.all([brandsApi.getAll(), citiesApi.getAll()])
+      .then(([brandsRes, citiesRes]) => {
+        const sortedBrands = [...brandsRes.data].sort((a, b) => a.name.localeCompare(b.name, 'mk'));
+        const sortedCities = [...citiesRes.data].sort((a, b) => a.name.localeCompare(b.name, 'mk'));
+        setBrands(sortedBrands);
+        setCities(sortedCities);
+        setIsInitialLoading(false);
+      })
+      .catch(() => {
+        setIsInitialLoading(false);
+      });
   }, []);
 
   useEffect(() => {
@@ -474,6 +478,14 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
       setLoading(false);
     }
   };
+
+  if (isInitialLoading) {
+    return (
+      <div className="card p-4 md:p-6 lg:p-8">
+        <div className="h-96" />
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="card p-4 md:p-6 lg:p-8">

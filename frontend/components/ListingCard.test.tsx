@@ -65,7 +65,6 @@ const mockListing: Listing = {
 };
 
 describe('ListingCard', () => {
-  const mockCheckFavorite = jest.fn();
   const mockAddFavorite = jest.fn();
   const mockRemoveFavorite = jest.fn();
 
@@ -75,11 +74,10 @@ describe('ListingCard', () => {
       user: { id: 'user-1' },
     });
     (useFavoritesStore as unknown as jest.Mock).mockReturnValue({
-      check: mockCheckFavorite,
+      favorites: [],
       add: mockAddFavorite,
       remove: mockRemoveFavorite,
     });
-    mockCheckFavorite.mockReturnValue(false);
   });
 
   it('should render listing information', () => {
@@ -97,7 +95,11 @@ describe('ListingCard', () => {
   });
 
   it('should show favorite button as active when listing is favorite', () => {
-    mockCheckFavorite.mockReturnValue(true);
+    (useFavoritesStore as unknown as jest.Mock).mockReturnValue({
+      favorites: [mockListing.id],
+      add: mockAddFavorite,
+      remove: mockRemoveFavorite,
+    });
     render(<ListingCard listing={mockListing} />);
 
     const favoriteButton = screen.getByLabelText('Отстрани од омилени');

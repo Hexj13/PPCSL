@@ -9,7 +9,6 @@ import { useAuthStore } from '@/lib/store';
 const ListingForm = dynamic(
   () => import('@/components/ListingForm').then((mod) => ({ default: mod.ListingForm })),
   {
-    loading: () => <div className="animate-pulse">Зарежување...</div>,
     ssr: false,
   }
 );
@@ -19,25 +18,12 @@ export default function NewListingPage() {
   const { user, isInitialized } = useAuthStore();
 
   useEffect(() => {
-    if (!isInitialized && !user) {
-      return;
-    }
-
     if (isInitialized && !user) {
       router.push('/login');
-      return;
     }
   }, [user, isInitialized, router]);
 
-  if (!isInitialized && !user) {
-    return null;
-  }
-
-  if (isInitialized && !user) {
-    return null;
-  }
-
-  if (!user) {
+  if (!isInitialized || !user) {
     return null;
   }
 

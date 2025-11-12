@@ -35,11 +35,18 @@ function ListingCardComponent({ listing, forceFavorite = false, onRemove }: List
   );
   const vehicle = listing.vehicle;
   const { user } = useAuthStore();
-  const { check: checkFavorite, add: addFavorite, remove: removeFavorite } = useFavoritesStore();
-  const isFavorite = useMemo(
-    () => forceFavorite || checkFavorite(listing.id),
-    [forceFavorite, listing.id, checkFavorite]
+  const { favorites, add: addFavorite, remove: removeFavorite } = useFavoritesStore();
+  const storeIsFavorite = useMemo(
+    () => forceFavorite || (favorites && favorites.includes(listing.id)),
+    [forceFavorite, listing.id, favorites]
   );
+  const [localIsFavorite, setLocalIsFavorite] = React.useState(storeIsFavorite);
+  const isFavorite = localIsFavorite;
+
+  React.useEffect(() => {
+    setLocalIsFavorite(storeIsFavorite);
+  }, [storeIsFavorite]);
+
   const isOwnListing = useMemo(
     () => !!(user && listing.user && user.id === listing.user.id),
     [user, listing.user]
@@ -56,27 +63,39 @@ function ListingCardComponent({ listing, forceFavorite = false, onRemove }: List
         return;
       }
 
+      const newFavoriteState = !isFavorite;
+      setLocalIsFavorite(newFavoriteState);
+
       if (isFavorite) {
+        removeFavorite(listing.id);
+        if (onRemove) {
+          onRemove();
+        }
         try {
           await favoritesApi.remove(listing.id);
-          removeFavorite(listing.id);
-          if (onRemove) {
-            onRemove();
-          }
           toast.success('Отстрането од омилени');
-        } catch {}
+        } catch {
+          setLocalIsFavorite(true);
+          addFavorite(listing.id);
+          toast.error('Грешка при отстранување од омилени');
+        }
         return;
       }
 
       if (isOwnListing) {
+        setLocalIsFavorite(false);
         return;
       }
 
+      addFavorite(listing.id);
       try {
         await favoritesApi.add(listing.id);
-        addFavorite(listing.id);
         toast.success('Додадено во омилени');
-      } catch {}
+      } catch {
+        setLocalIsFavorite(false);
+        removeFavorite(listing.id);
+        toast.error('Грешка при додавање во омилени');
+      }
     },
     [user, isFavorite, isOwnListing, listing.id, removeFavorite, addFavorite, onRemove]
   );
@@ -233,15 +252,4 @@ function ListingCardComponent({ listing, forceFavorite = false, onRemove }: List
   );
 }
 
-export const ListingCard = React.memo(ListingCardComponent, (prevProps, nextProps) => {
-  return (
-    prevProps.listing.id === nextProps.listing.id &&
-    prevProps.listing.title === nextProps.listing.title &&
-    prevProps.listing.price === nextProps.listing.price &&
-    prevProps.listing.images?.[0] === nextProps.listing.images?.[0] &&
-    prevProps.forceFavorite === nextProps.forceFavorite &&
-    prevProps.onRemove === nextProps.onRemove &&
-    prevProps.listing.status === nextProps.listing.status &&
-    prevProps.listing.views === nextProps.listing.views
-  );
-});
+export const ListingCard = ListingCardComponent;
