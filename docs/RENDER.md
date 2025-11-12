@@ -399,7 +399,11 @@ npm run migration:run
 npm run seed:all-brands
 ```
 
-This will load all brands and models from all scripts (Italian, American, German, Japanese, French brands).
+This will:
+- Load all brands and models from all scripts (Italian, American, German, Japanese, French brands)
+- **Automatically clear the Redis cache** for brands and models after loading
+
+**Note:** The script automatically clears the cache, so you don't need to do it manually. If you see old data in UI, wait a few seconds for cache to refresh, or manually clear cache (see below).
 
 **Alternative (if seed:all-brands fails):**
 ```bash
@@ -409,10 +413,21 @@ npm run add-american-models
 npm run add-german-models
 npm run add-japanese-models
 npm run add-french-models
+npm run clear-cache:brands
 ```
 
 - [ ] Brands and models loaded successfully
 - [ ] Check brands count: `npm run check-brands` (should show ~55+ brands)
+
+### Step 3.5: Clear Cache (if brands not visible in UI)
+
+If brands are loaded but not visible in UI, clear the cache manually:
+
+```bash
+npm run clear-cache:brands
+```
+
+This will clear Redis cache for brands and models, forcing the API to fetch fresh data from database.
 
 ### Step 4: Verify Environment Variables
 
