@@ -48,6 +48,9 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
+  }
   return config;
 });
 
@@ -461,11 +464,7 @@ export const uploadApi = {
   uploadImage: (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
-    return api.post<{ url: string; path: string }>('/api/upload/image', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    return api.post<{ url: string; path: string }>('/api/upload/image', formData);
   },
 };
 
