@@ -8,9 +8,16 @@ export class AddDriveTypeToVehicle1767000000000 implements MigrationInterface {
 
     const driveTypeColumn = table?.findColumnByName('drive_type');
     if (!driveTypeColumn) {
-      await queryRunner.query(`
-        CREATE TYPE "drive_type_enum" AS ENUM('FWD', 'RWD', 'AWD')
+      const typeExists = await queryRunner.query(`
+        SELECT 1 FROM pg_type WHERE typname = 'drive_type_enum'
       `);
+      
+      if (typeExists.length === 0) {
+        await queryRunner.query(`
+          CREATE TYPE "drive_type_enum" AS ENUM('FWD', 'RWD', 'AWD')
+        `);
+      }
+      
       await queryRunner.query(`
         ALTER TABLE "vehicles" ADD "drive_type" "drive_type_enum"
       `);

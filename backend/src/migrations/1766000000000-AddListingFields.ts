@@ -8,9 +8,16 @@ export class AddListingFields1766000000000 implements MigrationInterface {
 
     const conditionColumn = table?.findColumnByName('condition');
     if (!conditionColumn) {
-      await queryRunner.query(`
-        CREATE TYPE "condition_type_enum" AS ENUM('Undamaged', 'Damaged', 'ForParts')
+      const conditionTypeExists = await queryRunner.query(`
+        SELECT 1 FROM pg_type WHERE typname = 'condition_type_enum'
       `);
+      
+      if (conditionTypeExists.length === 0) {
+        await queryRunner.query(`
+          CREATE TYPE "condition_type_enum" AS ENUM('Undamaged', 'Damaged', 'ForParts')
+        `);
+      }
+      
       await queryRunner.query(`
         ALTER TABLE "listings" ADD "condition" "condition_type_enum" NOT NULL DEFAULT 'Undamaged'
       `);
@@ -18,9 +25,16 @@ export class AddListingFields1766000000000 implements MigrationInterface {
 
     const registrationTypeColumn = table?.findColumnByName('registration_type');
     if (!registrationTypeColumn) {
-      await queryRunner.query(`
-        CREATE TYPE "registration_type_enum" AS ENUM('Local', 'Foreign', 'Cleared')
+      const registrationTypeExists = await queryRunner.query(`
+        SELECT 1 FROM pg_type WHERE typname = 'registration_type_enum'
       `);
+      
+      if (registrationTypeExists.length === 0) {
+        await queryRunner.query(`
+          CREATE TYPE "registration_type_enum" AS ENUM('Local', 'Foreign', 'Cleared')
+        `);
+      }
+      
       await queryRunner.query(`
         ALTER TABLE "listings" ADD "registration_type" "registration_type_enum" NOT NULL DEFAULT 'Local'
       `);
