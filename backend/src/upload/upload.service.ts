@@ -8,13 +8,14 @@ import {
   GetObjectCommand,
   DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class UploadService {
+  private readonly logger = new Logger(UploadService.name);
   private readonly s3Client: S3Client | null;
   private readonly bucketName: string;
   private readonly useS3: boolean;
@@ -85,18 +86,31 @@ export class UploadService {
   }
 
   async saveFile(file: Express.Multer.File): Promise<string> {
+    this.logger.debug(
+      `Validating file signature. Buffer size: ${file.buffer.length}, mimetype: ${file.mimetype}`,
+    );
+
     if (!this.validateFileSignature(file.buffer, file.mimetype)) {
+      this.logger.warn(
+        `File signature validation failed. Buffer size: ${file.buffer.length}, mimetype: ${file.mimetype}`,
+      );
       throw new BadRequestException(
         'Невалиден тип на датотека. Фајлот не е валидна слика или типот на датотеката е подменет.',
       );
     }
 
+    this.logger.debug('File signature validation passed');
+
     const fileName = `${uuidv4()}.webp`;
     const s3Key = `uploads/${fileName}`;
 
     try {
+      this.logger.debug('Starting Sharp image processing');
       const image = sharp(file.buffer);
       const metadata = await image.metadata();
+      this.logger.debug(
+        `Image metadata: width=${metadata.width}, height=${metadata.height}, format=${metadata.format}`,
+      );
 
       if (!metadata || !metadata.width || !metadata.height) {
         throw new BadRequestException(
@@ -119,11 +133,14 @@ export class UploadService {
         });
       }
 
+      this.logger.debug('Converting image to WebP');
       const compressedBuffer = await processedImage
         .webp({ quality: this.quality, effort: 4 })
         .toBuffer();
+      this.logger.debug(`Image converted to WebP. Compressed size: ${compressedBuffer.length}`);
 
       if (this.useS3 && this.s3Client) {
+        this.logger.debug(`Uploading to S3. Bucket: ${this.bucketName}, Key: ${s3Key}`);
         const command = new PutObjectCommand({
           Bucket: this.bucketName,
           Key: s3Key,
@@ -133,6 +150,7 @@ export class UploadService {
         });
 
         await this.s3Client.send(command);
+        this.logger.debug(`File uploaded to S3 successfully: ${s3Key}`);
 
         return `/${s3Key}`;
       } else {
@@ -144,11 +162,15 @@ export class UploadService {
         return `/uploads/${fileName}`;
       }
     } catch (error) {
+      this.logger.error(
+        `Error processing image: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error instanceof Error ? error.stack : undefined,
+      );
       if (error instanceof BadRequestException) {
         throw error;
       }
       throw new BadRequestException(
-        'Грешка при обработка на сликата. Ве молиме осигурајте се дека фајлот е валидна слика.',
+        `Грешка при обработка на сликата: ${error instanceof Error ? error.message : 'Непозната грешка'}. Ве молиме осигурајте се дека фајлот е валидна слика.`,
       );
     }
   }
