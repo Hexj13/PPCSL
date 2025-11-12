@@ -1,8 +1,9 @@
 import 'reflect-metadata';
 import { execSync } from 'child_process';
-import { AppDataSource } from '../../data-source';
+
 import { Brand } from '../../brands/entities/brand.entity';
 import { VehicleModel } from '../../brands/entities/vehicle-model.entity';
+import { AppDataSource } from '../../data-source';
 
 async function seedAllBrands() {
   console.log('🌱 Започнување со полно сеење на сите марки и модели...\n');
