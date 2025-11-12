@@ -18,7 +18,7 @@ export const dataSourceOptions: DataSourceOptions = {
     process.env.DB_PASSWORD || (process.env.NODE_ENV === 'production' ? undefined : 'kupito123'),
   database: process.env.DB_NAME || 'kupito',
   entities: [User, Listing, ListingView, Vehicle, Favorite, Brand, VehicleModel, RefreshToken],
-  synchronize: process.env.NODE_ENV !== 'production',
+  synchronize: process.env.DB_SYNC === 'true' || process.env.NODE_ENV !== 'production',
   logging: process.env.NODE_ENV === 'development',
   migrations: ['dist/migrations/*.js'],
   extra: {
