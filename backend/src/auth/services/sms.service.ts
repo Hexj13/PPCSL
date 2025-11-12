@@ -8,7 +8,8 @@ import { RedisService } from '../../common/redis.service';
 @Injectable()
 export class SmsService {
   private twilioClient: twilio.Twilio | null = null;
-  private readonly senderId = 'Kupito';
+  private readonly messagingServiceSid: string | null = null;
+  private readonly fromNumber: string | null = null;
 
   constructor(
     private configService: ConfigService,
@@ -16,9 +17,13 @@ export class SmsService {
   ) {
     const accountSid = this.configService.get('TWILIO_ACCOUNT_SID');
     const authToken = this.configService.get('TWILIO_AUTH_TOKEN');
+    const messagingServiceSid = this.configService.get('TWILIO_MESSAGING_SERVICE_SID');
+    const fromNumber = this.configService.get('TWILIO_FROM_NUMBER');
 
     if (accountSid && authToken) {
       this.twilioClient = twilio(accountSid, authToken);
+      this.messagingServiceSid = messagingServiceSid || null;
+      this.fromNumber = fromNumber || null;
     } else {
       this.twilioClient = null;
     }
@@ -40,11 +45,25 @@ export class SmsService {
     }
 
     try {
-      await this.twilioClient.messages.create({
-        from: this.senderId,
+      const messageOptions: {
+        to: string;
+        body: string;
+        messagingServiceSid?: string;
+        from?: string;
+      } = {
         to: normalizedPhone,
         body: SMS_MESSAGES.VERIFICATION_CODE(code),
-      });
+      };
+
+      if (this.messagingServiceSid) {
+        messageOptions.messagingServiceSid = this.messagingServiceSid;
+      } else if (this.fromNumber) {
+        messageOptions.from = this.fromNumber;
+      } else {
+        throw new Error('TWILIO_MESSAGING_SERVICE_SID or TWILIO_FROM_NUMBER must be configured');
+      }
+
+      await this.twilioClient.messages.create(messageOptions);
     } catch (error: unknown) {
       try {
         await this.redisService.del(redisKey);
@@ -77,11 +96,25 @@ export class SmsService {
     }
 
     try {
-      await this.twilioClient.messages.create({
-        from: this.senderId,
+      const messageOptions: {
+        to: string;
+        body: string;
+        messagingServiceSid?: string;
+        from?: string;
+      } = {
         to: normalizedPhone,
         body: SMS_MESSAGES.PASSWORD_RESET_CODE(code),
-      });
+      };
+
+      if (this.messagingServiceSid) {
+        messageOptions.messagingServiceSid = this.messagingServiceSid;
+      } else if (this.fromNumber) {
+        messageOptions.from = this.fromNumber;
+      } else {
+        throw new Error('TWILIO_MESSAGING_SERVICE_SID or TWILIO_FROM_NUMBER must be configured');
+      }
+
+      await this.twilioClient.messages.create(messageOptions);
     } catch (error: unknown) {
       try {
         await this.redisService.del(redisKey);

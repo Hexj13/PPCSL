@@ -66,6 +66,7 @@ describe('SmsService', () => {
       configService.get.mockImplementation((key: string) => {
         if (key === 'TWILIO_ACCOUNT_SID') return 'test-sid';
         if (key === 'TWILIO_AUTH_TOKEN') return 'test-token';
+        if (key === 'TWILIO_MESSAGING_SERVICE_SID') return 'test-messaging-service-sid';
         return undefined;
       });
 
@@ -100,6 +101,7 @@ describe('SmsService', () => {
       configService.get.mockImplementation((key: string) => {
         if (key === 'TWILIO_ACCOUNT_SID') return 'test-sid';
         if (key === 'TWILIO_AUTH_TOKEN') return 'test-token';
+        if (key === 'TWILIO_MESSAGING_SERVICE_SID') return 'test-messaging-service-sid';
         return undefined;
       });
 
@@ -158,6 +160,7 @@ describe('SmsService', () => {
       configService.get.mockImplementation((key: string) => {
         if (key === 'TWILIO_ACCOUNT_SID') return 'test-sid';
         if (key === 'TWILIO_AUTH_TOKEN') return 'test-token';
+        if (key === 'TWILIO_MESSAGING_SERVICE_SID') return 'test-messaging-service-sid';
         return undefined;
       });
 
@@ -196,6 +199,7 @@ describe('SmsService', () => {
       configService.get.mockImplementation((key: string) => {
         if (key === 'TWILIO_ACCOUNT_SID') return 'test-sid';
         if (key === 'TWILIO_AUTH_TOKEN') return 'test-token';
+        if (key === 'TWILIO_MESSAGING_SERVICE_SID') return 'test-messaging-service-sid';
         return undefined;
       });
 

@@ -7,7 +7,7 @@ export class AddBodyTypeToVehicle1762042176581 implements MigrationInterface {
     const typeExists = await queryRunner.query(`
       SELECT 1 FROM pg_type WHERE typname = 'vehicles_body_type_enum'
     `);
-    
+
     if (typeExists.length === 0) {
       await queryRunner.query(
         `CREATE TYPE "public"."vehicles_body_type_enum" AS ENUM('Sedan', 'Hatchback', 'Wagon', 'SUV', 'Coupe', 'Convertible', 'Van', 'Pickup', 'Minivan')`,
