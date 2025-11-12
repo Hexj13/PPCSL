@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Controller,
   Get,
+  Logger,
   NotFoundException,
   Param,
   Post,
@@ -37,6 +38,8 @@ const getThrottleLimit = (prodLimit: number, devLimit: number = prodLimit * 50) 
 @ApiTags('upload')
 @Controller('api/upload')
 export class UploadController {
+  private readonly logger = new Logger(UploadController.name);
+
   constructor(private readonly uploadService: UploadService) {}
 
   @ApiOperation({ summary: 'Upload image' })
@@ -109,36 +112,60 @@ export class UploadController {
     }),
   )
   async uploadImage(@UploadedFile() file: Express.Multer.File) {
+    this.logger.debug(
+      `Upload request received. File: ${file ? `${file.originalname}, size: ${file.size}, mimetype: ${file.mimetype}` : 'null'}`,
+    );
+
     if (!file) {
+      this.logger.warn('Upload failed: No file provided');
       throw new BadRequestException('Фајлот не е приложен');
     }
 
     if (!file.buffer || file.buffer.length === 0) {
+      this.logger.warn(
+        `Upload failed: Empty file buffer. Originalname: ${file.originalname}, size: ${file.size}`,
+      );
       throw new BadRequestException('Фајлот е празен');
     }
 
-    const filePath = await this.uploadService.saveFile(file);
+    this.logger.debug(`File buffer size: ${file.buffer.length}, mimetype: ${file.mimetype}`);
 
-    let url: string;
+    try {
+      const filePath = await this.uploadService.saveFile(file);
+      this.logger.debug(`File saved successfully: ${filePath}`);
 
-    if (process.env.AWS_CLOUDFRONT_URL) {
-      url = `${process.env.AWS_CLOUDFRONT_URL}${filePath}`;
-    } else if (process.env.AWS_S3_BUCKET_NAME && process.env.AWS_REGION) {
-      const bucketName = process.env.AWS_S3_BUCKET_NAME;
-      const region = process.env.AWS_REGION;
-      url = `https://${bucketName}.s3.${region}.amazonaws.com${filePath}`;
-    } else {
-      let baseUrl = process.env.API_URL || 'http://localhost:4000';
-      if (process.env.NODE_ENV === 'production' && baseUrl.startsWith('http://')) {
-        baseUrl = baseUrl.replace('http://', 'https://');
+      let url: string;
+
+      if (process.env.AWS_CLOUDFRONT_URL) {
+        url = `${process.env.AWS_CLOUDFRONT_URL}${filePath}`;
+      } else if (process.env.AWS_S3_BUCKET_NAME && process.env.AWS_REGION) {
+        const bucketName = process.env.AWS_S3_BUCKET_NAME;
+        const region = process.env.AWS_REGION;
+        url = `https://${bucketName}.s3.${region}.amazonaws.com${filePath}`;
+      } else {
+        let baseUrl = process.env.API_URL || 'http://localhost:4000';
+        if (process.env.NODE_ENV === 'production' && baseUrl.startsWith('http://')) {
+          baseUrl = baseUrl.replace('http://', 'https://');
+        }
+        url = `${baseUrl}${filePath}`;
       }
-      url = `${baseUrl}${filePath}`;
-    }
 
-    return {
-      url,
-      path: filePath,
-    };
+      return {
+        url,
+        path: filePath,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException(
+        `Грешка при обработка на сликата: ${error instanceof Error ? error.message : 'Непозната грешка'}`,
+      );
+    }
   }
 
   @ApiOperation({ summary: 'Get optimized image' })
