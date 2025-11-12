@@ -3,13 +3,14 @@ module.exports = {
   rootDir: 'src',
   testRegex: '.*\\.integration\\.ts$',
   transform: {
-    '^.+\\.(t|j)s$': [
+    '^.+\\.ts$': [
       'ts-jest',
       {
         tsconfig: 'tsconfig.test.json',
       },
     ],
   },
+  transformIgnorePatterns: ['<rootDir>/../dist/'],
   collectCoverageFrom: ['**/*.(t|j)s'],
   coverageDirectory: '../coverage-integration',
   testEnvironment: 'node',
