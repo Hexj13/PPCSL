@@ -41,7 +41,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
 
@@ -145,7 +145,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
 
@@ -156,4 +156,17 @@ jobs:
       - name: Build
         working-directory: ./backend
         run: npm run build
+
+      - name: Verify build output
+        working-directory: ./backend
+        run: |
+          if [ ! -d "dist" ]; then
+            echo "❌ Build failed: dist directory not found"
+            exit 1
+          fi
+          if [ ! -f "dist/main.js" ]; then
+            echo "❌ Build failed: dist/main.js not found"
+            exit 1
+          fi
+          echo "✅ Build successful: dist/main.js exists"
 
