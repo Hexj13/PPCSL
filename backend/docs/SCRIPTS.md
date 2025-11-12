@@ -4,8 +4,8 @@ Scripts are organized into two directories based on their intended environment:
 
 ## Directory Structure
 
-- **`stage/`** - Scripts for staging, development, and testing environments
-- **`production/`** - Scripts safe to run in production environment
+- **`src/scripts/stage/`** - Scripts for staging, development, and testing environments
+- **`src/scripts/production/`** - Scripts safe to run in production environment
 
 ## Stage Scripts
 
@@ -95,7 +95,7 @@ Database migrations are handled separately and are located in:
 ## Database Backups
 
 For automated database backups, see:
-- **Documentation**: `docs/DATABASE_BACKUPS.md`
+- **Documentation**: `../../docs/DEPLOYMENT.md` (Database Backups section)
 - **TypeScript script**: `src/scripts/production/backup-database.ts`
 - **Bash script**: `scripts/backup-database.sh` (for cron)
 

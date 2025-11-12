@@ -1,6 +1,13 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { Readable } from 'stream';
 
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+} from '@aws-sdk/client-s3';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import sharp from 'sharp';
@@ -8,7 +15,10 @@ import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class UploadService {
-  private readonly uploadDir: string;
+  private readonly s3Client: S3Client | null;
+  private readonly bucketName: string;
+  private readonly useS3: boolean;
+  private readonly uploadDir?: string;
   private readonly maxWidth = 1920;
   private readonly quality = 85;
 
@@ -29,9 +39,27 @@ export class UploadService {
   };
 
   constructor(private configService: ConfigService) {
-    this.uploadDir = path.join(process.cwd(), 'uploads');
-    if (!fs.existsSync(this.uploadDir)) {
-      fs.mkdirSync(this.uploadDir, { recursive: true });
+    const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
+    const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
+    const region = process.env.AWS_REGION || 'eu-north-1';
+    this.bucketName = process.env.AWS_S3_BUCKET_NAME || 'kupito-uploads';
+
+    this.useS3 = !!(accessKeyId && secretAccessKey && this.bucketName);
+
+    if (this.useS3) {
+      this.s3Client = new S3Client({
+        region,
+        credentials: {
+          accessKeyId: accessKeyId!,
+          secretAccessKey: secretAccessKey!,
+        },
+      });
+    } else {
+      this.s3Client = null;
+      this.uploadDir = path.join(process.cwd(), 'uploads');
+      if (!fs.existsSync(this.uploadDir)) {
+        fs.mkdirSync(this.uploadDir, { recursive: true });
+      }
     }
   }
 
@@ -64,7 +92,7 @@ export class UploadService {
     }
 
     const fileName = `${uuidv4()}.webp`;
-    const filePath = path.join(this.uploadDir, fileName);
+    const s3Key = `uploads/${fileName}`;
 
     try {
       const image = sharp(file.buffer);
@@ -95,9 +123,26 @@ export class UploadService {
         .webp({ quality: this.quality, effort: 4 })
         .toBuffer();
 
-      fs.writeFileSync(filePath, compressedBuffer);
+      if (this.useS3 && this.s3Client) {
+        const command = new PutObjectCommand({
+          Bucket: this.bucketName,
+          Key: s3Key,
+          Body: compressedBuffer,
+          ContentType: 'image/webp',
+          ACL: 'public-read',
+        });
 
-      return `/uploads/${fileName}`;
+        await this.s3Client.send(command);
+
+        return `/${s3Key}`;
+      } else {
+        if (!this.uploadDir) {
+          throw new BadRequestException('Upload directory not configured');
+        }
+        const filePath = path.join(this.uploadDir, fileName);
+        fs.writeFileSync(filePath, compressedBuffer);
+        return `/uploads/${fileName}`;
+      }
     } catch (error) {
       if (error instanceof BadRequestException) {
         throw error;
@@ -109,9 +154,23 @@ export class UploadService {
   }
 
   async deleteFile(filePath: string): Promise<void> {
-    const fullPath = path.join(process.cwd(), filePath.replace(/^\//, ''));
-    if (fs.existsSync(fullPath)) {
-      fs.unlinkSync(fullPath);
+    if (this.useS3 && this.s3Client) {
+      const s3Key = filePath.replace(/^\//, '');
+      try {
+        const command = new DeleteObjectCommand({
+          Bucket: this.bucketName,
+          Key: s3Key,
+        });
+
+        await this.s3Client.send(command);
+      } catch (error) {
+        console.error('Error deleting file from S3:', error);
+      }
+    } else {
+      const fullPath = path.join(process.cwd(), filePath.replace(/^\//, ''));
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+      }
     }
   }
 
@@ -120,13 +179,42 @@ export class UploadService {
     quality: number = 85,
     maxWidth?: number,
   ): Promise<Buffer> {
-    const fullPath = path.join(process.cwd(), filePath.replace(/^\//, ''));
+    let imageBuffer: Buffer;
 
-    if (!fs.existsSync(fullPath)) {
-      throw new Error('File not found');
+    if (this.useS3 && this.s3Client) {
+      const s3Key = filePath.replace(/^\//, '');
+      try {
+        const command = new GetObjectCommand({
+          Bucket: this.bucketName,
+          Key: s3Key,
+        });
+
+        const result = await this.s3Client.send(command);
+
+        if (!result.Body) {
+          throw new Error('File not found');
+        }
+
+        const stream = result.Body as Readable;
+        const chunks: Buffer[] = [];
+
+        for await (const chunk of stream) {
+          chunks.push(chunk);
+        }
+
+        imageBuffer = Buffer.concat(chunks);
+      } catch (error) {
+        throw new Error('File not found');
+      }
+    } else {
+      const fullPath = path.join(process.cwd(), filePath.replace(/^\//, ''));
+      if (!fs.existsSync(fullPath)) {
+        throw new Error('File not found');
+      }
+      imageBuffer = fs.readFileSync(fullPath);
     }
 
-    const image = sharp(fullPath);
+    const image = sharp(imageBuffer);
     const metadata = await image.metadata();
 
     let processedImage = image;

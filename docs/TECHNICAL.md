@@ -29,8 +29,8 @@ Platform for selling new and used cars in Macedonia. Users can independently add
 
 - Fully free service, no payments, subscriptions, or paid options
 - Two user types: **Individual** and **Business**
-- Individual users: maximum **3 active listings** simultaneously
-- Business users: maximum **20 active listings** simultaneously
+- Individual users: maximum **100 active listings** simultaneously
+- Business users: maximum **100 active listings** simultaneously
 - Listings have three statuses: **Active**, **Paused**, **Closed**
 - Automatic closing after **5 months** (approximately 150 days) since last update
 
@@ -41,6 +41,7 @@ Platform for selling new and used cars in Macedonia. Users can independently add
 - **Database:** PostgreSQL 15 with comprehensive indexing and triggers
 - **Search:** PostgreSQL Full-Text Search
 - **Image Processing:** Sharp library for optimization and WebP conversion
+- **File Storage:** AWS S3 for image storage (using AWS SDK v3), AWS CloudFront CDN for delivery
 - **Authentication:** JWT tokens (1 hour expiration), Refresh tokens (7 days)
 - **Task Scheduling:** NestJS Schedule module (cron jobs)
 
@@ -217,6 +218,7 @@ Kupito/
 
 - **Image Processing:** Automatic compression, resizing (max 1920px width), conversion to WebP format (85% quality)
 - **Adaptive Quality:** Different quality levels for different contexts (60% for cards, 75% for detail pages, 85% for full-size)
+- **File Storage:** AWS S3 for persistent image storage (using AWS SDK v3, required for production on Render.com), AWS CloudFront CDN for fast global delivery
 - **Search:** PostgreSQL Full-Text Search with extensive filtering options
 - **Caching:** Redis for SMS codes, cache optimization (SCAN instead of KEYS)
 - **Monitoring:** Health check endpoint (`/health`) with database and Redis connectivity checks
@@ -582,7 +584,7 @@ The backend has `trust proxy: true` configured, which correctly identifies real 
 5. Enable SSL/TLS (Full strict mode)
 6. Enable WAF and Bot Protection
 
-See `CLOUDFLARE_SETUP.md` for detailed instructions.
+See [RENDER.md](./RENDER.md) for CloudFront CDN setup instructions (CloudFront is AWS's CDN service, similar to Cloudflare).
 
 ---
 

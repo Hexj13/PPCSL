@@ -2,6 +2,12 @@
 
 Platform for selling new and used cars in Macedonia.
 
+## Documentation Structure
+
+This directory contains **general project documentation**. For component-specific documentation, see:
+- **Backend documentation:** [`../backend/docs/`](../backend/docs/)
+- **Frontend documentation:** [`../frontend/docs/`](../frontend/docs/)
+
 ## Quick Start
 
 ```bash
@@ -30,7 +36,7 @@ npm run install:all
 
 2. **Configure environment variables:**
 
-Create `backend/.env` (see `ENV_EXAMPLE.md`):
+Create `backend/.env` (see environment variables section in [TECHNICAL.md](./TECHNICAL.md#3-environment-variables)):
 ```env
 PORT=4000
 DB_HOST=localhost
@@ -88,7 +94,7 @@ npm run dev  # Runs both frontend and backend
 
 - **Frontend:** Next.js 16, React 19, TailwindCSS, Zustand
 - **Backend:** NestJS, PostgreSQL, TypeORM, Redis
-- **Storage:** S3-compatible storage (planned)
+- **Storage:** AWS S3 for image storage, AWS CloudFront CDN for delivery
 
 </details>
 
@@ -107,7 +113,7 @@ npm run dev  # Runs both frontend and backend
   - Price validation (integers only)
   - Registration date format validation (MM.YYYY, month must be 2 digits)
 - Extended search and filtering
-- Listing limits (3 for Individuals, 20 for Business)
+- Listing limits (100 for Individuals, 100 for Business)
 - Listing statuses (Active, Paused, Closed)
 - Automatic listing closure after 5 months
 - Custom 404 and error pages
@@ -247,8 +253,21 @@ For more details, see [Technical Documentation](TECHNICAL.md#8-testing).
 
 ## Documentation
 
+### General Documentation
+
 - **[Technical Documentation](TECHNICAL.md)** - Complete technical documentation (architecture, API, database, security, testing, scripts, SEO)
 - **[Deployment Guide](DEPLOYMENT.md)** - Complete deployment instructions (VPS, cPanel, SSH setup, staging)
+- **[Render.com Deployment Guide](RENDER.md)** - Complete guide for deploying on Render.com
 - **[TODO List](TODO.md)** - All project tasks and todos ⚠️ **IMPORTANT**
-- **[Placeholder 1](PLACEHOLDER_1.md)** - Reserved for future documentation
-- **[Placeholder 2](PLACEHOLDER_2.md)** - Reserved for future documentation
+
+### Backend Documentation
+
+- **[Backend Documentation](../backend/docs/README.md)** - Backend-specific documentation
+  - **[Scripts Guide](../backend/docs/SCRIPTS.md)** - Scripts organization and usage
+  - **[Testing Guide](../backend/docs/TESTING.md)** - Integration testing documentation
+
+### Frontend Documentation
+
+- **[Frontend Documentation](../frontend/docs/README.md)** - Frontend-specific documentation
+  - **[Design System](../frontend/docs/DESIGN_SYSTEM.md)** - Design system and UI components
+  - **[Storybook Guide](../frontend/docs/STORYBOOK.md)** - Storybook setup guide

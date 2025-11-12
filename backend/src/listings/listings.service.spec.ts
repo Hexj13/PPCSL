@@ -211,8 +211,8 @@ describe('ListingsService', () => {
       };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       listingsRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
-      usersService.getListingLimit.mockResolvedValue(3);
-      listingsRepository.count.mockResolvedValue(2);
+      usersService.getListingLimit.mockResolvedValue(100);
+      listingsRepository.count.mockResolvedValue(99);
       listingsRepository.save.mockResolvedValue({ ...pausedListing, status: ListingStatus.Active });
 
       const result = await service.publish('listing-1', 'user-1');
@@ -230,8 +230,8 @@ describe('ListingsService', () => {
       };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       listingsRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
-      usersService.getListingLimit.mockResolvedValue(3);
-      listingsRepository.count.mockResolvedValue(3);
+      usersService.getListingLimit.mockResolvedValue(100);
+      listingsRepository.count.mockResolvedValue(100);
 
       await expect(service.publish('listing-1', 'user-1')).rejects.toThrow(BadRequestException);
     });
@@ -602,7 +602,7 @@ describe('ListingsService', () => {
       brandsService.getModelsByBrand.mockResolvedValue([
         { id: 'model-1', name: 'Model' },
       ] as VehicleModel[]);
-      usersService.getListingLimit.mockResolvedValue(3);
+      usersService.getListingLimit.mockResolvedValue(100);
       listingsRepository.count.mockResolvedValue(0);
       listingsRepository.create.mockReturnValue(mockListing as Listing);
       listingsRepository.save.mockResolvedValue(mockListing);

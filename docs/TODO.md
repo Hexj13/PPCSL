@@ -18,7 +18,7 @@
 - [ ] После верификации: Sitemaps → Отправить `sitemap.xml`
 - [ ] Мониторить индексацию и производительность
 
-**Инструкции**: См. `docs/SEO_OPTIMIZATION.md` раздел "Google Search Console Setup"
+**Инструкции**: См. раздел "SEO & Analytics" в [TECHNICAL.md](./TECHNICAL.md#10-seo--analytics)
 
 #### Google Analytics
 - [x] Создать компонент `frontend/components/GoogleAnalytics.tsx` ✅
@@ -32,7 +32,7 @@
 - [ ] Перезапустить сервер
 - [ ] Проверить работу: Analytics → Отчеты → В реальном времени
 
-**Инструкции**: См. `docs/GOOGLE_ANALYTICS_SETUP.md`
+**Инструкции**: См. раздел "SEO & Analytics" в [TECHNICAL.md](./TECHNICAL.md#10-seo--analytics)
 
 #### Favicon и иконки
 - [ ] Создать favicon.ico (размеры: 16x16, 32x32, 48x48)

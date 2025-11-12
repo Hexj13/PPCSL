@@ -32,9 +32,9 @@ npm run test:integration -- src/test/auth.integration.ts
 
 ## Test Structure
 
-- `setup-integration.ts` - Test app setup and Swagger document generation
-- `jest-integration.setup.ts` - Jest configuration for integration tests
-- `*.integration.ts` - Individual test files for each API module
+- `src/test/setup-integration.ts` - Test app setup and Swagger document generation
+- `src/test/jest-integration.setup.ts` - Jest configuration for integration tests
+- `src/test/*.integration.ts` - Individual test files for each API module
 
 ## Requirements
 
@@ -48,7 +48,7 @@ npm run test:integration -- src/test/auth.integration.ts
 
 ## Writing New Tests
 
-1. Create a new file: `[module].integration.ts`
+1. Create a new file: `src/test/[module].integration.ts`
 2. Import `getTestRequest` from `setup-integration.ts`
 3. Use `expect(response).toSatisfyApiSpec()` to validate responses
 
@@ -66,3 +66,4 @@ describe('My API Integration Tests', () => {
   });
 });
 ```
+

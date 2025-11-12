@@ -176,6 +176,112 @@ SMTP_PASSWORD=your-app-password
 SMTP_FROM=noreply@your-domain.com
 ```
 
+#### AWS S3 Configuration (REQUIRED for production on Render.com)
+
+**⚠️ Important:** On Render.com, the file system is ephemeral. Files saved to disk are lost on restart or redeploy. You **must** use S3 for file storage in production.
+
+**Required variables:**
+
+```env
+AWS_ACCESS_KEY_ID=<your-aws-access-key-id>
+AWS_SECRET_ACCESS_KEY=<your-aws-secret-access-key>
+AWS_S3_BUCKET_NAME=kupito-uploads
+AWS_REGION=eu-north-1
+```
+
+**Optional (if using CloudFront CDN):**
+
+```env
+AWS_CLOUDFRONT_URL=https://cdn.kupito.club
+```
+
+**Setup instructions:**
+
+1. **Create S3 bucket:**
+   - Go to AWS Console → S3 → Create bucket
+   - Name: `kupito-uploads` (or your preferred name)
+   - Region: `eu-north-1` (or closest to your users)
+   - Uncheck "Block all public access" (images need to be publicly accessible)
+   - Enable "Default encryption"
+
+2. **Configure CORS for S3 bucket:**
+   - In S3 bucket → Permissions → CORS
+   - Add CORS configuration:
+   ```json
+   [
+     {
+       "AllowedHeaders": ["*"],
+       "AllowedMethods": ["GET", "PUT", "POST", "DELETE", "HEAD"],
+       "AllowedOrigins": [
+         "https://your-frontend-domain.com",
+         "https://your-backend.onrender.com"
+       ],
+       "ExposeHeaders": ["ETag"],
+       "MaxAgeSeconds": 3000
+     }
+   ]
+   ```
+
+3. **Configure Bucket Policy (for public read access):**
+   - In S3 bucket → Permissions → Bucket policy
+   - Add policy:
+   ```json
+   {
+     "Version": "2012-10-17",
+     "Statement": [
+       {
+         "Sid": "PublicReadGetObject",
+         "Effect": "Allow",
+         "Principal": "*",
+         "Action": "s3:GetObject",
+         "Resource": "arn:aws:s3:::kupito-uploads/*"
+       }
+     ]
+   }
+   ```
+
+4. **Create IAM user for S3 access:**
+   - Go to AWS Console → IAM → Users → Create user
+   - Name: `kupito-s3-user`
+   - Attach policy with S3 permissions (see below)
+   - Create Access Key and save credentials
+
+5. **IAM Policy for S3 user:**
+   ```json
+   {
+     "Version": "2012-10-17",
+     "Statement": [
+       {
+         "Effect": "Allow",
+         "Action": [
+           "s3:PutObject",
+           "s3:GetObject",
+           "s3:DeleteObject",
+           "s3:PutObjectAcl"
+         ],
+         "Resource": "arn:aws:s3:::kupito-uploads/*"
+       },
+       {
+         "Effect": "Allow",
+         "Action": ["s3:ListBucket"],
+         "Resource": "arn:aws:s3:::kupito-uploads"
+       }
+     ]
+   }
+   ```
+
+6. **CloudFront CDN (Optional but recommended):**
+   - Faster image delivery
+   - Lower S3 costs
+   - Better performance globally
+   - Setup: AWS Console → CloudFront → Create distribution
+   - Origin: Your S3 bucket
+   - After setup, add `AWS_CLOUDFRONT_URL` variable
+
+**Notes:**
+- The application uses AWS SDK v3 (`@aws-sdk/client-s3`) for S3 operations. This is the modern, actively maintained version of the AWS SDK.
+- The application automatically detects S3 configuration. If AWS credentials are provided, it uses S3. Otherwise, it falls back to local file storage (for development only).
+
 ---
 
 ## 5. Build Configuration
@@ -442,9 +548,13 @@ Check that all required variables are set:
 - [ ] `REDIS_HOST`, `REDIS_PORT` (if using Redis)
 - [ ] `JWT_SECRET`
 - [ ] `FRONTEND_URL` (e.g., `https://kupito.club`)
-- [ ] `API_URL` (e.g., `https://kupito-backend.onrender.com`) - **Required for image uploads**
+- [ ] `API_URL` (e.g., `https://kupito-backend.onrender.com`) - **Required for image uploads (fallback)**
 - [ ] `NODE_ENV=production`
 - [ ] `PORT` (usually auto-set by Render)
+- [ ] `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` - **Required for S3 (production)**
+- [ ] `AWS_S3_BUCKET_NAME` (e.g., `kupito-uploads`) - **Required for S3**
+- [ ] `AWS_REGION` (e.g., `eu-north-1`) - **Required for S3**
+- [ ] `AWS_CLOUDFRONT_URL` (e.g., `https://cdn.kupito.club`) - **Optional (recommended for CDN)**
 - [ ] `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_MESSAGING_SERVICE_SID` (for SMS)
 - [ ] `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` (for email)
 

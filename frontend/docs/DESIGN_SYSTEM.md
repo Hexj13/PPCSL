@@ -129,3 +129,4 @@ All components use Tailwind CSS and existing classes from `globals.css`. Compone
 ## Interactive Documentation
 
 Visit `/design-system` route in the application to see interactive component documentation.
+

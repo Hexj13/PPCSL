@@ -6,17 +6,22 @@ Car marketplace platform.
 
 All documentation is located in the [`docs/`](./docs/) folder:
 
+### General Documentation
 - **[README.md](./docs/README.md)** - Detailed project documentation
-- **[SETUP.md](./docs/SETUP.md)** - Installation and configuration instructions
-- **[DEPLOYMENT.md](./docs/DEPLOYMENT.md)** - Production deployment guide (step-by-step instructions)
-- **[TECH_DOCS.md](./docs/TECH_DOCS.md)** - Technical documentation
-- **[SCRIPTS.md](./docs/SCRIPTS.md)** - Utility scripts documentation
-- **[ENV_EXAMPLE.md](./docs/ENV_EXAMPLE.md)** - Environment variables example
-- **[OPTIMIZATION_ANALYSIS.md](./docs/OPTIMIZATION_ANALYSIS.md)** - Optimization analysis
-- **[OPTIMIZATION_PROGRESS.md](./docs/OPTIMIZATION_PROGRESS.md)** - Optimization progress report
+- **[TECHNICAL.md](./docs/TECHNICAL.md)** - Complete technical documentation
+- **[DEPLOYMENT.md](./docs/DEPLOYMENT.md)** - Production deployment guide (VPS, cPanel, SSH setup)
+- **[RENDER.md](./docs/RENDER.md)** - Render.com deployment guide
 - **[TODO.md](./docs/TODO.md)** - All project tasks and TODOs
-- **[DATABASE_OPTIMIZATIONS.md](./docs/DATABASE_OPTIMIZATIONS.md)** - Database optimizations (indexes, triggers, connection pooling)
-- **[RESTART.md](./docs/RESTART.md)** - Restart instructions
+
+### Backend Documentation
+- **[Backend README](./backend/docs/README.md)** - Backend-specific documentation
+- **[Scripts Guide](./backend/docs/SCRIPTS.md)** - Backend utility scripts documentation
+- **[Testing Guide](./backend/docs/TESTING.md)** - Integration testing documentation
+
+### Frontend Documentation
+- **[Frontend README](./frontend/docs/README.md)** - Frontend-specific documentation
+- **[Design System](./frontend/docs/DESIGN_SYSTEM.md)** - Design system and UI components
+- **[Storybook Guide](./frontend/docs/STORYBOOK.md)** - Storybook setup guide
 
 ## 🚀 Quick Start
 
@@ -37,12 +42,15 @@ npm run dev
 ```
 Kupito/
 ├── backend/          # NestJS backend API
-│   └── src/
-│       ├── scripts/  # Utility scripts (brands, seeding, management)
-│       ├── brands/   # Brands and models
-│       └── ...
+│   ├── src/
+│   │   ├── scripts/  # Utility scripts (brands, seeding, management)
+│   │   ├── brands/   # Brands and models
+│   │   └── ...
+│   └── docs/         # Backend-specific documentation
 ├── frontend/         # Next.js frontend
-├── docs/             # Documentation
+│   ├── ui/           # Design system components
+│   └── docs/         # Frontend-specific documentation
+├── docs/             # General project documentation
 └── docker-compose.yml
 ```
 
@@ -65,7 +73,7 @@ npm run check-models    # Models statistics
 npm run cleanup-brands # Cleanup and synchronization
 ```
 
-For more information about scripts, see [SCRIPTS.md](./docs/SCRIPTS.md).
+For more information about scripts, see [backend/docs/SCRIPTS.md](./backend/docs/SCRIPTS.md).
 
 ## 🧪 Testing
 
