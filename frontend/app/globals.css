@@ -42,11 +42,62 @@ label {
 
 @layer components {
   .btn-primary {
-    @apply px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:from-primary-700 hover:to-primary-800 transform hover:-translate-y-0.5 transition-all duration-200 select-none text-center;
+    box-sizing: border-box !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    max-height: 52px !important;
+    padding: 0 24px !important;
+    margin: 0 !important;
+    background-color: #31a55f !important;
+    color: white !important;
+    font-weight: 600 !important;
+    font-size: 16px !important;
+    border-radius: 0.5rem !important;
+    box-shadow:
+      0 10px 15px -3px rgba(0, 0, 0, 0.1),
+      0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.2s !important;
+    user-select: none !important;
+    text-align: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: none !important;
+    cursor: pointer !important;
+  }
+
+  .btn-primary:hover {
+    background-color: #2a8c51 !important;
+    box-shadow:
+      0 20px 25px -5px rgba(0, 0, 0, 0.1),
+      0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
   }
 
   .btn-secondary {
-    @apply px-4 md:px-6 py-2.5 md:py-3 bg-bg-light border-2 border-primary-500/30 text-white font-semibold rounded-lg hover:bg-bg-light/80 hover:border-primary-500 transition-all duration-200 select-none text-center;
+    box-sizing: border-box !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    max-height: 52px !important;
+    padding: 0 24px !important;
+    margin: 0 !important;
+    background-color: rgb(35, 61, 55) !important;
+    border: 2px solid rgba(0, 255, 136, 0.3) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    font-size: 16px !important;
+    border-radius: 0.5rem !important;
+    transition: all 0.2s !important;
+    user-select: none !important;
+    text-align: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+  }
+
+  .btn-secondary:hover {
+    background-color: rgba(35, 61, 55, 0.8) !important;
+    border-color: rgb(0, 255, 136) !important;
   }
 
   .btn-outline {
@@ -54,21 +105,53 @@ label {
   }
 
   .btn-yellow {
-    @apply px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:from-yellow-600 hover:to-yellow-700 transform hover:-translate-y-0.5 transition-all duration-200 select-none text-center;
+    @apply px-4 md:px-6 py-2.5 md:py-3 bg-yellow-500 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:bg-yellow-600 transition-all duration-200 select-none text-center;
   }
 
   .btn-green-dark {
-    @apply px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-primary-700 to-primary-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:from-primary-800 hover:to-primary-900 transform hover:-translate-y-0.5 transition-all duration-200 select-none text-center;
+    @apply px-4 md:px-6 py-2.5 md:py-3 bg-primary-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:bg-primary-900 transition-all duration-200 select-none text-center;
   }
 
+  /* Unified field style - 52px height total */
   .input-field {
-    @apply w-full px-4 py-3 border-2 border-primary-500/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-bg-light text-white;
+    box-sizing: border-box !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    max-height: 52px !important;
+    width: 100% !important;
+    padding: 0 16px !important;
+    margin: 0 !important;
+    border: 2px solid rgba(0, 255, 136, 0.3) !important;
+    border-radius: 0.5rem !important;
+    background-color: rgb(35, 61, 55) !important;
+    color: white !important;
+    font-size: 16px !important;
+    line-height: 48px !important; /* 52px - 4px borders */
+    transition: all 0.2s !important;
+    outline: none !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .input-field:focus {
+    border-color: rgb(0, 255, 136) !important;
+    box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.2) !important;
+  }
+
+  .input-field:disabled {
+    background-color: rgb(26, 46, 42) !important;
+    cursor: not-allowed !important;
+    opacity: 0.6 !important;
   }
 
   .input-field::placeholder {
-    color: #6b7280;
-    -webkit-text-fill-color: #6b7280;
-    opacity: 1;
+    color: #9ca3af !important;
+  }
+
+  .input-field[type='email']::placeholder {
+    color: #9ca3af !important;
+    -webkit-text-fill-color: #9ca3af !important;
+    opacity: 1 !important;
   }
 
   .input-field[type='password'] {
@@ -76,14 +159,21 @@ label {
     -webkit-text-fill-color: white;
   }
 
+  .input-field[type='password']::placeholder {
+    color: #9ca3af !important;
+    -webkit-text-fill-color: #9ca3af !important;
+    opacity: 1 !important;
+  }
+
   .input-field[type='password']:-webkit-autofill,
   .input-field[type='password']:-webkit-autofill:hover,
-  .input-field[type='password']:-webkit-autofill:focus {
+  .input-field[type='password']:-webkit-autofill:focus,
+  .input-field[type='password']:-webkit-autofill:active {
     @apply bg-bg-light text-white;
-    -webkit-text-fill-color: white;
-    -webkit-box-shadow: 0 0 0px 1000px #233d37 inset;
-    box-shadow: 0 0 0px 1000px #233d37 inset;
-    transition: background-color 5000s ease-in-out 0s;
+    -webkit-text-fill-color: white !important;
+    -webkit-box-shadow: 0 0 0px 1000px #233d37 inset !important;
+    box-shadow: 0 0 0px 1000px #233d37 inset !important;
+    transition: background-color 5000s ease-in-out 0s !important;
   }
 
   .input-field[type='email'] {
@@ -93,32 +183,40 @@ label {
 
   .input-field[type='email']:-webkit-autofill,
   .input-field[type='email']:-webkit-autofill:hover,
-  .input-field[type='email']:-webkit-autofill:focus {
+  .input-field[type='email']:-webkit-autofill:focus,
+  .input-field[type='email']:-webkit-autofill:active {
     @apply bg-bg-light text-white;
-    -webkit-text-fill-color: white;
-    -webkit-box-shadow: 0 0 0px 1000px #233d37 inset;
-    box-shadow: 0 0 0px 1000px #233d37 inset;
-    transition: background-color 5000s ease-in-out 0s;
+    -webkit-text-fill-color: white !important;
+    -webkit-box-shadow: 0 0 0px 1000px #233d37 inset !important;
+    box-shadow: 0 0 0px 1000px #233d37 inset !important;
+    transition: background-color 5000s ease-in-out 0s !important;
   }
 
   .input-field[type='text']:-webkit-autofill,
   .input-field[type='text']:-webkit-autofill:hover,
   .input-field[type='text']:-webkit-autofill:focus,
+  .input-field[type='text']:-webkit-autofill:active,
+  .input-field[type='tel']:-webkit-autofill,
+  .input-field[type='tel']:-webkit-autofill:hover,
+  .input-field[type='tel']:-webkit-autofill:focus,
+  .input-field[type='tel']:-webkit-autofill:active,
   .input-field:-webkit-autofill,
   .input-field:-webkit-autofill:hover,
-  .input-field:-webkit-autofill:focus {
+  .input-field:-webkit-autofill:focus,
+  .input-field:-webkit-autofill:active {
     @apply bg-bg-light text-white;
-    -webkit-text-fill-color: white;
-    -webkit-box-shadow: 0 0 0px 1000px #233d37 inset;
-    box-shadow: 0 0 0px 1000px #233d37 inset;
-    transition: background-color 5000s ease-in-out 0s;
+    -webkit-text-fill-color: white !important;
+    -webkit-box-shadow: 0 0 0px 1000px #233d37 inset !important;
+    box-shadow: 0 0 0px 1000px #233d37 inset !important;
+    transition: background-color 5000s ease-in-out 0s !important;
   }
 
   .input-field[type='text']:autofill,
+  .input-field[type='tel']:autofill,
   .input-field:autofill {
     @apply bg-bg-light text-white;
-    -webkit-text-fill-color: white;
-    box-shadow: 0 0 0px 1000px #233d37 inset;
+    -webkit-text-fill-color: white !important;
+    box-shadow: 0 0 0px 1000px #233d37 inset !important;
   }
 
   .input-field[type='number'] {
@@ -137,6 +235,18 @@ label {
 
   textarea.input-field {
     @apply resize-y;
+  }
+
+  div[contentEditable].input-field {
+    height: auto !important;
+    min-height: 6rem;
+    max-height: none !important;
+    line-height: 1.5 !important;
+    display: block !important;
+    align-items: flex-start !important;
+    padding: 12px 16px !important;
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
   }
 
   .select-field {
@@ -271,5 +381,45 @@ label {
   .scrollbar-custom {
     scrollbar-width: thin;
     scrollbar-color: #6b7280 #233d37;
+  }
+
+  .text-hint {
+    color: #9ca3af !important;
+  }
+
+  .listing-description ul {
+    list-style-type: disc !important;
+    list-style-position: outside !important;
+    display: block !important;
+    margin: 0.75rem 0 !important;
+    padding-left: 2rem !important;
+    color: #d1d5db !important;
+  }
+
+  .listing-description ol {
+    list-style-type: decimal !important;
+    list-style-position: outside !important;
+    display: block !important;
+    margin: 0.75rem 0 !important;
+    padding-left: 2rem !important;
+    color: #d1d5db !important;
+  }
+
+  .listing-description li {
+    display: list-item !important;
+    list-style-position: outside !important;
+    margin: 0.25rem 0 !important;
+    padding-left: 0.5rem !important;
+    color: #d1d5db !important;
+  }
+
+  .listing-description ul li {
+    list-style-type: disc !important;
+    list-style-position: outside !important;
+  }
+
+  .listing-description ol li {
+    list-style-type: decimal !important;
+    list-style-position: outside !important;
   }
 }

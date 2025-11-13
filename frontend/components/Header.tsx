@@ -45,16 +45,16 @@ export function Header() {
 
   return (
     <header className="bg-bg-dark shadow-lg border-b-2 border-primary-500/20 sticky top-0 z-50 backdrop-blur-sm bg-bg-dark/95">
-      <div className="container mx-auto px-4 py-4">
+      <div className="container mx-auto px-4 py-3 md:py-4">
         <div className="flex justify-between items-center">
           <Link
             href="/"
-            className="text-2xl md:text-3xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent hover:from-primary-400 hover:to-primary-500 transition-all duration-200"
+            className="text-xl sm:text-2xl md:text-2xl lg:text-3xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent hover:from-primary-400 hover:to-primary-500 transition-all duration-200"
           >
             Kupito
           </Link>
 
-          <nav className="hidden md:flex gap-6 items-center">
+          <nav className="hidden md:flex gap-3 lg:gap-6 items-center">
             {!isInitialized ? (
               <div className="flex gap-4 items-center">
                 <div className="h-9 w-24 bg-bg-light/30 rounded animate-pulse" />
@@ -64,36 +64,36 @@ export function Header() {
               <>
                 <Link
                   href="/listings/new"
-                  className="text-white font-medium hover:text-primary-500 transition-colors duration-200"
+                  className="text-white font-medium text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap"
                 >
                   Додади објава
                 </Link>
                 <Link
                   href="/my-listings"
-                  className="text-white font-medium hover:text-primary-500 transition-colors duration-200"
+                  className="text-white font-medium text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap"
                 >
                   Мои објави
                 </Link>
                 <Link
                   href="/favorites"
-                  className="text-white font-medium hover:text-primary-500 transition-colors duration-200"
+                  className="text-white font-medium text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap"
                 >
                   Омилени
                 </Link>
                 {user.type === 'Admin' && (
                   <Link
                     href="/admin"
-                    className="text-white font-medium hover:text-primary-500 transition-colors duration-200"
+                    className="text-white font-medium text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap"
                   >
                     Админ
                   </Link>
                 )}
                 <Link
                   href="/profile"
-                  className="text-gray-300 font-medium px-3 py-1.5 bg-bg-light rounded-lg border border-primary-500/20 text-sm lg:text-base hover:text-primary-400 hover:border-primary-500/40 transition-colors duration-200 cursor-pointer flex items-center gap-2"
+                  className="text-gray-300 font-medium px-2 md:px-3 py-1.5 bg-bg-light rounded-lg border border-primary-500/20 text-xs md:text-sm lg:text-base hover:text-primary-400 hover:border-primary-500/40 transition-colors duration-200 cursor-pointer flex items-center gap-1.5 md:gap-2"
                 >
                   <svg
-                    className="w-4 h-4"
+                    className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -106,14 +106,16 @@ export function Header() {
                       d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                     />
                   </svg>
-                  {getUserDisplayName(user)}
+                  <span className="truncate max-w-[120px] md:max-w-[150px] lg:max-w-none">
+                    {getUserDisplayName(user)}
+                  </span>
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="text-gray-300 font-medium px-3 py-1.5 bg-bg-light rounded-lg border border-primary-500/20 text-sm lg:text-base hover:text-primary-400 hover:border-primary-500/40 transition-colors duration-200 cursor-pointer flex items-center gap-2"
+                  className="text-gray-300 font-medium px-2 md:px-3 py-1.5 bg-bg-light rounded-lg border border-primary-500/20 text-xs md:text-sm lg:text-base hover:text-primary-400 hover:border-primary-500/40 transition-colors duration-200 cursor-pointer flex items-center gap-1.5 md:gap-2 whitespace-nowrap"
                 >
                   <svg
-                    className="w-4 h-4"
+                    className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -131,10 +133,10 @@ export function Header() {
               </>
             ) : (
               <>
-                <Link href="/login" className="btn-outline">
+                <Link href="/login" className="btn-outline text-sm lg:text-base px-3 lg:px-4">
                   Најави се
                 </Link>
-                <Link href="/register" className="btn-primary">
+                <Link href="/register" className="btn-primary text-sm lg:text-base px-3 lg:px-4">
                   Регистрација
                 </Link>
               </>

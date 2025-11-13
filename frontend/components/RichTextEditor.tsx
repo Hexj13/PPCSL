@@ -348,7 +348,7 @@ export function RichTextEditor({
           document.execCommand('insertText', false, text);
           handleInput();
         }}
-        className="input-field min-h-[120px] overflow-y-auto scrollbar-custom"
+        className="input-field overflow-y-auto scrollbar-custom"
         style={{
           minHeight: `${rows * 1.5}rem`,
         }}

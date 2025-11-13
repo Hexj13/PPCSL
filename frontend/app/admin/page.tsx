@@ -209,8 +209,7 @@ function ListingsTab() {
     prevStatusFilterRef.current = statusFilter;
     prevSearchTypeRef.current = searchType;
     setCurrentPage(1);
-    fetchListings(1, false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setDisplayedCount(20);
   }, [statusFilter, searchType]);
 
   useEffect(() => {
@@ -220,11 +219,10 @@ function ListingsTab() {
     const timer = setTimeout(() => {
       prevSearchQueryRef.current = searchQuery;
       setCurrentPage(1);
-      fetchListings(1, false);
+      setDisplayedCount(20);
     }, 500);
 
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
 
   const handleAction = useCallback(async (id: string, action: 'publish' | 'pause' | 'close') => {
@@ -554,8 +552,6 @@ function UsersTab() {
 
     prevRoleFilterRef.current = roleFilter;
     setCurrentPage(1);
-    fetchUsers(1, false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roleFilter]);
 
   useEffect(() => {
@@ -565,11 +561,9 @@ function UsersTab() {
     const timer = setTimeout(() => {
       prevSearchQueryRef.current = searchQuery;
       setCurrentPage(1);
-      fetchUsers(1, false);
     }, 500);
 
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
 
   const handleLoadMore = useCallback(async () => {
@@ -794,7 +788,7 @@ function UsersTab() {
                               ? 'bg-purple-500/20 text-purple-300'
                               : user.type === 'Business'
                                 ? 'bg-blue-500/20 text-blue-300'
-                                : 'bg-green-500/20 text-green-300'
+                                : 'bg-primary-500/20 text-primary-300'
                           }`}
                         >
                           {user.type === 'Admin'
@@ -836,7 +830,7 @@ function UsersTab() {
                       className={`px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg font-medium transition-colors text-center w-full sm:w-auto ${
                         user.active !== false
                           ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/30'
-                          : 'bg-green-500/20 text-green-300 hover:bg-green-500/30 border border-green-500/30'
+                          : 'bg-primary-500/20 text-primary-300 hover:bg-primary-500/30 border border-primary-500/30'
                       }`}
                     >
                       {user.active !== false ? 'Деактивирај' : 'Активирај'}

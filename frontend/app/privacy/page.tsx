@@ -68,7 +68,7 @@ const privacy = {
         id: '1',
         title: '1. Вовед',
         content: [
-          'Kupito ("ние", "наш", "нас") е некомерцијална платформа посветена на заштитата на вашата приватност и личните податоци. Оваа Политика за приватност објаснува како собираме, користиме, складираме и штитиме вашите лични податоци кога користите нашата платформа за објавување и прегледување на огласи за продажба на автомобили (www.kupito.mk) ("Платформата").',
+          'Kupito ("ние", "наш", "нас") е некомерцијална платформа посветена на заштитата на вашата приватност и личните податоци. Оваа Политика за приватност објаснува како собираме, користиме, складираме и штитиме вашите лични податоци кога користите нашата платформа за објавување и прегледување на огласи за продажба на автомобили (www.kupito.club) ("Платформата").',
           'Kupito е некомерцијална организација и не генерира приход од користењето на Платформата. Сите услуги се обезбедени бесплатно за корисниците. Платформата функционира како посредник помеѓу продавачите и купачите без да учествува во финансиските трансакции или да наплатува комисија.',
           'Со користење на Платформата, вие се согласувате со собирањето и употребата на вашите податоци како што е опишано во оваа Политика за приватност. Ако не се согласувате со оваа политика, ве молиме да не ја користите Платформата.',
           'Оваа Политика за приватност е составен дел од нашите Услови за користење и се применува на сите корисници на Платформата, вклучувајќи ги посетителите, регистрираните корисници и корисниците кои објавуваат огласи.',
@@ -80,8 +80,8 @@ const privacy = {
         content: [
           'Контролерот на податоци за обработката на вашите лични податоци е:',
           'Kupito (некомерцијална организација)',
-          'Е-пошта: support@kupito.mk',
-          'Платформа: www.kupito.mk',
+          'Е-пошта: support@kupito.club',
+          'Платформа: www.kupito.club',
           'Kupito е некомерцијална организација која работи на удалена основа и не води бизнис активност. Платформата е бесплатна за сите корисници и не генерира приход.',
           'За сите прашања или барања во врска со обработката на вашите лични податоци, ве молиме контактирајте не на наведената е-пошта адреса. По отворањето на правно лице во Република Северна Македонија (ако ќе биде неопходно во иднина), оваа информација ќе биде ажурирана со целосни контакт детали.',
         ],
@@ -266,7 +266,7 @@ const privacy = {
           '• Можете да ја повлечете вашата согласност за обработка на податоци во секое време (за маркетинг и е-пошта известувања)',
           '9.8. Право на поднесување жалба:',
           '• Можете да поднесете жалба до Агенцијата за заштита на личните податоци на Република Северна Македонија ако сметате дека вашите права се нарушени',
-          'За да ги остварите вашите права, ве молиме контактирајте не на support@kupito.mk. Ќе одговориме на вашето барање во рок од 30 дена.',
+          'За да ги остварите вашите права, ве молиме контактирајте не на support@kupito.club. Ќе одговориме на вашето барање во рок од 30 дена.',
         ],
       },
       {
@@ -348,8 +348,8 @@ const privacy = {
         title: '14. Контакт информации',
         content: [
           'Ако имате прашања, забелешки или барања во врска со оваа Политика за приватност или обработката на вашите лични податоци, ве молиме контактирајте не на:',
-          'Е-пошта: support@kupito.mk',
-          'Платформа: www.kupito.mk',
+          'Е-пошта: support@kupito.club',
+          'Платформа: www.kupito.club',
           'Ќе одговориме на вашето барање во најкраток можен рок, најдоцна во рок од 30 дена од приемот на вашето барање.',
         ],
       },
@@ -418,7 +418,7 @@ const privacy = {
         id: '1',
         title: '1. Introduction',
         content: [
-          'Kupito ("we", "our", "us") is a non-commercial platform committed to protecting your privacy and personal data. This Privacy Policy explains how we collect, use, store, and protect your personal data when you use our platform for posting and viewing listings for the sale of vehicles (www.kupito.mk) ("Platform").',
+          'Kupito ("we", "our", "us") is a non-commercial platform committed to protecting your privacy and personal data. This Privacy Policy explains how we collect, use, store, and protect your personal data when you use our platform for posting and viewing listings for the sale of vehicles (www.kupito.club) ("Platform").',
           'Kupito is a non-commercial organization and does not generate revenue from the use of the Platform. All services are provided free of charge to users. The Platform operates as an intermediary between sellers and buyers without participating in financial transactions or charging commissions.',
           'By using the Platform, you agree to the collection and use of your data as described in this Privacy Policy. If you do not agree with this policy, please do not use the Platform.',
           'This Privacy Policy is an integral part of our Terms and Conditions and applies to all users of the Platform, including visitors, registered users, and users who post listings.',
@@ -430,8 +430,8 @@ const privacy = {
         content: [
           'The data controller for the processing of your personal data is:',
           'Kupito (non-commercial organization)',
-          'Email: support@kupito.mk',
-          'Platform: www.kupito.mk',
+          'Email: support@kupito.club',
+          'Platform: www.kupito.club',
           'Kupito is a non-commercial organization that operates on a remote basis and does not conduct business activities. The Platform is free for all users and does not generate revenue.',
           'For any questions or requests regarding the processing of your personal data, please contact us at the email address provided above. Upon establishment of a legal entity in the Republic of North Macedonia (if necessary in the future), this information will be updated with complete contact details.',
         ],
@@ -616,7 +616,7 @@ const privacy = {
           '• You can withdraw your consent for data processing at any time (for marketing and email notifications)',
           '9.8. Right to Lodge a Complaint:',
           '• You can lodge a complaint with the Personal Data Protection Agency of the Republic of North Macedonia if you believe your rights have been violated',
-          'To exercise your rights, please contact us at support@kupito.mk. We will respond to your request within 30 days.',
+          'To exercise your rights, please contact us at support@kupito.club. We will respond to your request within 30 days.',
         ],
       },
       {
@@ -698,8 +698,8 @@ const privacy = {
         title: '14. Contact Information',
         content: [
           'If you have questions, comments, or requests regarding this Privacy Policy or the processing of your personal data, please contact us at:',
-          'Email: support@kupito.mk',
-          'Platform: www.kupito.mk',
+          'Email: support@kupito.club',
+          'Platform: www.kupito.club',
           'We will respond to your request as soon as possible, no later than 30 days from receipt of your request.',
         ],
       },

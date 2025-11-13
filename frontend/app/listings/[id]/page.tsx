@@ -32,6 +32,9 @@ import {
   formatRegistrationType,
   getOptimizedImageUrl,
   getCityNameMk,
+  getTelegramUrl,
+  getWhatsAppUrl,
+  getViberUrl,
 } from '@/lib/utils';
 
 export default function ListingPage() {
@@ -53,6 +56,8 @@ export default function ListingPage() {
   const [loadingPrevious, setLoadingPrevious] = useState(false);
   const [showHistoryHint, setShowHistoryHint] = useState(false);
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
 
   const fetchListingData = useCallback(
     (forceRefresh = false) => {
@@ -295,8 +300,24 @@ export default function ListingPage() {
       }
     };
 
+    const preventScroll = (e: TouchEvent) => {
+      if (e.touches.length > 1) return;
+      e.preventDefault();
+    };
+
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('touchmove', preventScroll, { passive: false });
+
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('touchmove', preventScroll);
+    };
   }, [isImageModalOpen, imagesLength]);
 
   if (!listing && !showSkeleton) {
@@ -352,6 +373,32 @@ export default function ListingPage() {
     setModalImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchEndX.current = null;
+    touchStartX.current = e.targetTouches[0].clientX;
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    e.preventDefault();
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current) return;
+    const distance = touchStartX.current - touchEndX.current;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe && images.length > 1) {
+      nextImage();
+    }
+    if (isRightSwipe && images.length > 1) {
+      prevImage();
+    }
+  };
+
   const handleCopy = async (text: string, label: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -372,9 +419,9 @@ export default function ListingPage() {
         <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-6 md:gap-8">
           <div className="space-y-6">
             <div>
-              <button
+              <div
                 onClick={() => openImageModal(currentImageIndex)}
-                className="relative h-64 sm:h-80 md:h-96 bg-bg-darker rounded-xl overflow-hidden mb-4 cursor-pointer hover:opacity-90 transition-opacity w-full"
+                className="relative h-64 sm:h-80 md:h-96 bg-bg-darker rounded-xl overflow-hidden mb-4 w-full cursor-pointer border border-transparent hover:border-primary-500/50 transition-colors"
               >
                 {images[currentImageIndex] &&
                 images[currentImageIndex] !== '/placeholder-car.jpg' &&
@@ -424,7 +471,29 @@ export default function ListingPage() {
                     </svg>
                   </div>
                 )}
-              </button>
+                {/* <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openImageModal(currentImageIndex);
+                  }}
+                  className="absolute top-2 right-2 sm:top-3 sm:right-3 z-10 p-2 sm:p-2.5 bg-black hover:bg-gray-900 rounded-lg transition-all text-primary-400 hover:text-primary-300 border-2 border-primary-500 hover:border-primary-400"
+                  title="Отвори на полн формат"
+                >
+                  <svg
+                    className="w-5 h-5 sm:w-6 sm:h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+                    />
+                  </svg>
+                </button> */}
+              </div>
 
               {images.length > 1 && (
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
@@ -437,13 +506,12 @@ export default function ListingPage() {
                     const remainingCountDesktop = images.length - 4;
 
                     return (
-                      <button
+                      <div
                         key={index}
                         onClick={() => {
                           setCurrentImageIndex(index);
-                          openImageModal(index);
                         }}
-                        className={`relative h-28 sm:h-32 bg-bg-darker rounded-lg overflow-hidden transition-all ${
+                        className={`relative h-28 sm:h-32 bg-bg-darker rounded-lg overflow-hidden transition-all cursor-pointer ${
                           index === 3 ? 'hidden sm:block' : ''
                         } ${
                           currentImageIndex === index
@@ -484,18 +552,32 @@ export default function ListingPage() {
                                   />
                                 )}
                                 {isLastThumbnailMobile && hasMoreImagesMobile && (
-                                  <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center sm:hidden">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setCurrentImageIndex(index);
+                                      openImageModal(index);
+                                    }}
+                                    className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center sm:hidden cursor-pointer hover:bg-opacity-70 transition-opacity"
+                                  >
                                     <span className="text-white text-lg font-bold">
                                       +{remainingCountMobile}
                                     </span>
-                                  </div>
+                                  </button>
                                 )}
                                 {isLastThumbnailDesktop && hasMoreImagesDesktop && (
-                                  <div className="absolute inset-0 bg-black bg-opacity-60 hidden sm:flex items-center justify-center">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setCurrentImageIndex(index);
+                                      openImageModal(index);
+                                    }}
+                                    className="absolute inset-0 bg-black bg-opacity-60 hidden sm:flex items-center justify-center cursor-pointer hover:bg-opacity-70 transition-opacity"
+                                  >
                                     <span className="text-white text-lg sm:text-xl font-bold">
                                       +{remainingCountDesktop}
                                     </span>
-                                  </div>
+                                  </button>
                                 )}
                               </>
                             );
@@ -517,7 +599,7 @@ export default function ListingPage() {
                             </svg>
                           </div>
                         )}
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -530,8 +612,8 @@ export default function ListingPage() {
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-6 text-white">
                 {listing.title}
               </h1>
-              <div className="mb-8">
-                <div className="flex items-baseline gap-3 flex-wrap mb-5">
+              <div className="mb-6">
+                <div className="flex items-baseline gap-3 flex-wrap mb-6">
                   {listing.status === 'Closed' || listing.price === undefined ? (
                     <>
                       <span className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-primary-400">
@@ -577,7 +659,7 @@ export default function ListingPage() {
                 disabled={!!(user && listing.user && user.id === listing.user.id)}
                 className={`w-full sm:w-auto px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center gap-2 ${
                   user && listing.user && user.id === listing.user.id
-                    ? 'bg-bg-darker text-gray-500 cursor-not-allowed opacity-60'
+                    ? 'bg-primary-500/10 text-primary-300 border border-primary-500/30 cursor-not-allowed'
                     : isFavorite
                       ? 'bg-gradient-to-r from-gray-600 to-gray-700 text-white hover:shadow-lg hover:from-gray-700 hover:to-gray-800 border border-primary-500/20 hover:border-primary-500/30 transform hover:-translate-y-0.5'
                       : 'btn-secondary'
@@ -888,15 +970,36 @@ export default function ListingPage() {
                     text-decoration: underline;
                     color: #d1d5db;
                   }
-                  .listing-description ul,
+                  .listing-description ul {
+                    list-style-type: disc !important;
+                    list-style-position: outside !important;
+                    display: block !important;
+                    margin: 0.75rem 0 !important;
+                    padding-left: 2rem !important;
+                    color: #d1d5db !important;
+                  }
                   .listing-description ol {
-                    margin: 0.5rem 0;
-                    padding-left: 1.5rem;
-                    color: #d1d5db;
+                    list-style-type: decimal !important;
+                    list-style-position: outside !important;
+                    display: block !important;
+                    margin: 0.75rem 0 !important;
+                    padding-left: 2rem !important;
+                    color: #d1d5db !important;
                   }
                   .listing-description li {
-                    margin: 0.25rem 0;
-                    color: #d1d5db;
+                    display: list-item !important;
+                    list-style-position: outside !important;
+                    margin: 0.25rem 0 !important;
+                    padding-left: 0.5rem !important;
+                    color: #d1d5db !important;
+                  }
+                  .listing-description ul li {
+                    list-style-type: disc !important;
+                    list-style-position: outside !important;
+                  }
+                  .listing-description ol li {
+                    list-style-type: decimal !important;
+                    list-style-position: outside !important;
                   }
                 `}</style>
               </div>
@@ -915,7 +1018,7 @@ export default function ListingPage() {
                       className="focus:outline-none"
                     >
                       <svg
-                        className="w-4 h-4 text-green-400 hover:text-green-300 cursor-help transition-colors"
+                        className="w-4 h-4 text-primary-400 hover:text-primary-300 cursor-help transition-colors"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -943,9 +1046,9 @@ export default function ListingPage() {
                 )}
               </div>
               {!listing.vin ? (
-                <div className="flex items-start gap-3 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+                <div className="flex items-start gap-3 p-4 bg-primary-500/10 border border-primary-500/30 rounded-lg">
                   <svg
-                    className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5"
+                    className="w-5 h-5 text-primary-400 flex-shrink-0 mt-0.5"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -958,7 +1061,7 @@ export default function ListingPage() {
                     />
                   </svg>
                   <div>
-                    <p className="font-semibold text-green-300 text-sm mb-1">
+                    <p className="font-semibold text-primary-300 text-sm mb-1">
                       VIN кодот не е наведен
                     </p>
                     <p className="text-gray-300 text-sm">
@@ -1035,8 +1138,8 @@ export default function ListingPage() {
                     <span
                       className={`inline-flex items-center px-3 py-1 rounded-lg text-sm font-semibold ml-2 ${
                         listing.user.type === 'Business'
-                          ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                          : 'bg-green-500/20 text-green-300 border border-green-500/30'
+                          ? 'bg-blue-500/20 text-blue-300'
+                          : 'bg-primary-500/20 text-primary-300'
                       }`}
                     >
                       {listing.user.type === 'Business' ? 'Правно лице' : 'Физичко лице'}
@@ -1069,7 +1172,7 @@ export default function ListingPage() {
                     <span className="ml-2 text-gray-300">{getCityNameMk(listing.city)}</span>
                   </div>
 
-                  {listing.status === 'Closed' || !listing.user.email ? (
+                  {listing.status === 'Closed' ? (
                     <div>
                       <span className="font-semibold text-primary-400">Email:</span>
                       <span className="ml-2 text-primary-400">••••••••</span>
@@ -1111,7 +1214,7 @@ export default function ListingPage() {
                     )
                   )}
 
-                  {listing.status === 'Closed' || !listing.user.phone ? (
+                  {listing.status === 'Closed' ? (
                     <div>
                       <span className="font-semibold text-primary-400">Телефон:</span>
                       <span className="ml-2 text-primary-400">••••••••</span>
@@ -1160,20 +1263,35 @@ export default function ListingPage() {
                           Достапни месенџери:
                         </span>
                         <div className="flex flex-wrap gap-2">
-                          {listing.user.viber && (
-                            <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                          {listing.user.viber && listing.user.phone && (
+                            <a
+                              href={getViberUrl(listing.user.phone) || '#'}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 hover:border-purple-500/50 transition-colors cursor-pointer"
+                            >
                               Viber
-                            </span>
+                            </a>
                           )}
-                          {listing.user.whatsapp && (
-                            <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-green-500/20 text-green-300 border border-green-500/30">
+                          {listing.user.whatsapp && listing.user.phone && (
+                            <a
+                              href={getWhatsAppUrl(listing.user.phone) || '#'}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-primary-500/20 text-primary-300 border border-primary-500/30 hover:bg-primary-500/30 hover:border-primary-500/50 transition-colors cursor-pointer"
+                            >
                               WhatsApp
-                            </span>
+                            </a>
                           )}
-                          {listing.user.telegram && (
-                            <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                          {listing.user.telegram && listing.user.phone && (
+                            <a
+                              href={getTelegramUrl(listing.user.phone) || '#'}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30 hover:border-blue-500/50 transition-colors cursor-pointer"
+                            >
                               Telegram
-                            </span>
+                            </a>
                           )}
                         </div>
                       </div>
@@ -1315,7 +1433,7 @@ export default function ListingPage() {
                   e.stopPropagation();
                   prevImage();
                 }}
-                className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 text-primary-400 hover:text-primary-300 transition-all z-10 bg-black/70 hover:bg-black/90 rounded-full p-3 sm:p-4 border-2 border-primary-500/50 hover:border-primary-400 shadow-lg"
+                className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 text-primary-400 hover:text-primary-300 transition-all z-10 bg-black/70 hover:bg-black/90 rounded-full p-3 sm:p-4 border-2 border-primary-500/50 hover:border-primary-400 shadow-lg hidden sm:block"
               >
                 <svg
                   className="w-8 h-8 sm:w-10 sm:h-10"
@@ -1337,7 +1455,7 @@ export default function ListingPage() {
                   e.stopPropagation();
                   nextImage();
                 }}
-                className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 text-primary-400 hover:text-primary-300 transition-all z-10 bg-black/70 hover:bg-black/90 rounded-full p-3 sm:p-4 border-2 border-primary-500/50 hover:border-primary-400 shadow-lg"
+                className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 text-primary-400 hover:text-primary-300 transition-all z-10 bg-black/70 hover:bg-black/90 rounded-full p-3 sm:p-4 border-2 border-primary-500/50 hover:border-primary-400 shadow-lg hidden sm:block"
               >
                 <svg
                   className="w-8 h-8 sm:w-10 sm:h-10"
@@ -1359,6 +1477,9 @@ export default function ListingPage() {
           <div
             className="relative max-w-7xl w-full h-full flex items-center justify-center p-4"
             onClick={(e) => e.stopPropagation()}
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
           >
             {images[modalImageIndex] &&
             images[modalImageIndex] !== '/placeholder-car.jpg' &&

@@ -502,7 +502,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
   return (
     <form onSubmit={handleSubmit} className="card p-4 md:p-6 lg:p-8">
       <div className="mb-6">
-        <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">Основна информација</h2>
+        <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">Основна информација</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
           <div>
             <label className="block text-sm font-semibold mb-2 text-primary-400">Марка *</label>
@@ -593,7 +593,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                   className="focus:outline-none"
                 >
                   <svg
-                    className="w-4 h-4 text-green-400 hover:text-green-300 cursor-help transition-colors"
+                    className="w-4 h-4 text-primary-400 hover:text-primary-300 cursor-help transition-colors"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -610,7 +610,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                   className={`absolute right-0 bottom-full mb-2 ${showVinHint ? 'block' : 'hidden group-hover:block'} z-10 w-64`}
                 >
                   <div className="bg-bg-darker border-2 border-primary-500/50 rounded-lg p-3 shadow-lg">
-                    <p className="text-xs text-gray-300 leading-relaxed">
+                    <p className="text-xs text-hint leading-relaxed">
                       VIN кодот се користи за креирање на историја на возилото на веб-страницата. Во
                       историјата не се чуваат персональни податоци, туку само историјата на возилото
                     </p>
@@ -637,14 +637,14 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
               </p>
             )}
             {formData.vin && formData.vin.length === 17 && (
-              <p className="mt-1 text-sm text-green-400">✓ VIN е валиден</p>
+              <p className="mt-1 text-sm text-primary-400">✓ VIN е валиден</p>
             )}
           </div>
         </div>
       </div>
 
       <div className="border-t border-primary-500/20 pt-6 mb-6">
-        <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">
+        <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
           Технички карактеристики
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -831,7 +831,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
       </div>
 
       <div className="border-t border-primary-500/20 pt-6 mb-6">
-        <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">
+        <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
           Состојба и регистрација
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
@@ -1014,7 +1014,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
       </div>
 
       <div className="border-t border-primary-500/20 pt-6 mb-6">
-        <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">Надворешен изглед</h2>
+        <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">Надворешен изглед</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-semibold mb-2 text-primary-400">
@@ -1115,7 +1115,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
       </div>
 
       <div className="border-t border-primary-500/20 pt-6 mb-6">
-        <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">Цена и локација</h2>
+        <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">Цена и локација</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-semibold mb-2 text-primary-400">Цена *</label>
@@ -1178,7 +1178,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
       </div>
 
       <div className="border-t border-primary-500/20 pt-6 mb-6">
-        <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">
+        <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
           Дополнителна информација
         </h2>
         <div className="mb-4">
@@ -1256,8 +1256,8 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                 }}
                 className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
                   formData.is_new
-                    ? 'bg-gradient-to-r from-green-700 to-green-800 border-green-500'
-                    : 'border-green-500/50 bg-bg-light group-hover:border-green-500'
+                    ? 'bg-gradient-to-r from-primary-700 to-primary-800 border-primary-500'
+                    : 'border-primary-500/50 bg-bg-light group-hover:border-primary-500'
                 }`}
               >
                 {formData.is_new && (
@@ -1279,7 +1279,9 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
             </div>
             <span
               className={`text-sm font-semibold transition-colors duration-200 flex items-center gap-2 ${
-                formData.is_new ? 'text-green-400' : 'text-green-400/70 group-hover:text-green-400'
+                formData.is_new
+                  ? 'text-primary-400'
+                  : 'text-primary-400/70 group-hover:text-primary-400'
               }`}
             >
               <span>✨</span>
@@ -1290,50 +1292,60 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
       </div>
 
       <div className="border-t border-primary-500/20 pt-6 mb-6">
-        <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">Фотографии</h2>
-        <label className="block text-sm font-semibold mb-2 text-primary-400">
-          Фотографии на автомобилот *
-        </label>
-        <input
-          type="file"
-          accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
-          multiple
-          onChange={(e) => {
-            const files = Array.from(e.target.files || []);
-            files.forEach((file) => {
-              if (formData.images.length < 20) {
-                const allowedTypes = [
-                  'image/jpeg',
-                  'image/jpg',
-                  'image/png',
-                  'image/gif',
-                  'image/webp',
-                ];
-                if (!allowedTypes.includes(file.type)) {
-                  toast.error('Поддржани се само слики (JPEG, PNG, GIF, WebP)');
-                  return;
-                }
+        <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">Фотографии</h2>
+        <div className="mb-4">
+          <input
+            type="file"
+            accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+            multiple
+            onChange={(e) => {
+              const files = Array.from(e.target.files || []);
+              files.forEach((file) => {
+                if (formData.images.length < 20) {
+                  const allowedTypes = [
+                    'image/jpeg',
+                    'image/jpg',
+                    'image/png',
+                    'image/gif',
+                    'image/webp',
+                  ];
+                  if (!allowedTypes.includes(file.type)) {
+                    toast.error('Поддржани се само слики (JPEG, PNG, GIF, WebP)');
+                    return;
+                  }
 
-                const maxSize = 10 * 1024 * 1024;
-                if (file.size > maxSize) {
-                  toast.error('Максимална големина на фајлот е 10MB');
-                  return;
-                }
+                  const maxSize = 10 * 1024 * 1024;
+                  if (file.size > maxSize) {
+                    toast.error('Максимална големина на фајлот е 10MB');
+                    return;
+                  }
 
-                if (file.size === 0) {
-                  toast.error('Фајлот е празен');
-                  return;
-                }
+                  if (file.size === 0) {
+                    toast.error('Фајлот е празен');
+                    return;
+                  }
 
-                handleFileUpload(file);
-              } else {
-                toast.error('Максимум 20 фотографии');
-              }
-            });
-          }}
-          disabled={uploading || formData.images.length >= 20}
-          className="input-field file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 cursor-pointer"
-        />
+                  handleFileUpload(file);
+                } else {
+                  toast.error('Максимум 20 фотографии');
+                }
+              });
+            }}
+            disabled={uploading || formData.images.length >= 20}
+            id="image-upload"
+            className="hidden"
+          />
+          <label
+            htmlFor="image-upload"
+            className={`inline-flex items-center justify-center px-4 py-2 rounded-lg font-semibold text-sm transition-all cursor-pointer ${
+              uploading || formData.images.length >= 20
+                ? 'bg-primary-500/50 text-primary-400/50 cursor-not-allowed'
+                : 'bg-gradient-to-r from-primary-700 to-primary-800 text-white hover:from-primary-600 hover:to-primary-700'
+            }`}
+          >
+            {uploading ? 'Вчитување...' : 'Додади фотографии'}
+          </label>
+        </div>
         {formData.images.length > 0 && (
           <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
             {formData.images.map((url, index) => (
@@ -1370,7 +1382,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
 
       {mode === 'create' && (
         <div className="border-t border-primary-500/20 pt-6 mb-6">
-          <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">
+          <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
             Нагодувања на објавата
           </h2>
           <div>

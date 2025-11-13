@@ -17,6 +17,12 @@ ui/
 ├── Heading.tsx         # Heading component
 ├── Spinner.tsx         # Loading spinner component
 └── index.ts            # Export all components
+
+components/
+├── Dropdown.tsx        # Single-select dropdown (optimized with Set lookups)
+├── MultiSelectDropdown.tsx  # Multi-select dropdown with search, categories, action buttons
+├── SortDropdown.tsx    # Sort dropdown with URL parameter synchronization
+└── SearchFilters.tsx   # Advanced search filters component
 ```
 
 ## Usage
@@ -125,6 +131,22 @@ const spacing = designTokens.spacing.md;
 ## Styling
 
 All components use Tailwind CSS and existing classes from `globals.css`. Components are fully compatible with the current project styling system.
+
+## Additional Components
+
+### Dropdown Components
+
+The project includes optimized dropdown components in `components/`:
+
+- **Dropdown**: Single-select dropdown with optional search and action buttons
+- **MultiSelectDropdown**: Multi-select dropdown with:
+  - Search functionality
+  - Category grouping
+  - Action buttons (OK/Reset) for batch selection
+  - Set-based lookups for O(1) performance
+- **SortDropdown**: Sort dropdown component with URL parameter synchronization for listing sorting
+
+These components are optimized for performance using Set-based lookups instead of Array.includes() for better scalability with large option lists.
 
 ## Interactive Documentation
 

@@ -263,7 +263,9 @@ export default function ProfilePage() {
       </h1>
       <form onSubmit={handleSubmit} className="card p-4 md:p-6 lg:p-8">
         <div className="mb-6">
-          <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">Контакт информација</h2>
+          <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
+            Контакт информација
+          </h2>
           <div>
             <label className="block text-sm font-semibold mb-2 text-primary-400">Телефон</label>
             <div className="relative">
@@ -429,7 +431,9 @@ export default function ProfilePage() {
         </div>
 
         <div className="border-t border-primary-500/20 pt-6 mb-6">
-          <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">Email и известувања</h2>
+          <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
+            Email и известувања
+          </h2>
           <div>
             <label className="block text-sm font-semibold mb-2 text-primary-400">Email</label>
             <input
@@ -525,7 +529,7 @@ export default function ProfilePage() {
 
         {user.type === 'Business' && (
           <div className="border-t border-primary-500/20 pt-6 mb-6">
-            <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">
+            <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
               Информација за компанија
             </h2>
             <div>
@@ -551,7 +555,7 @@ export default function ProfilePage() {
 
         {user.type === 'Individual' && (
           <div className="border-t border-primary-500/20 pt-6 mb-6">
-            <h2 className="text-xl md:text-2xl font-bold mb-5 text-green-400">Лични податоци</h2>
+            <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">Лични податоци</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold mb-2 text-primary-400">Име</label>

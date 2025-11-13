@@ -220,33 +220,33 @@ export function ListingManagementCard({
           )}
           <div className="mt-auto pt-3 border-t border-primary-500/20">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-              <div className="flex items-center gap-3 flex-wrap">
-                <div className="bg-bg-dark/95 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-lg border-2 border-primary-500/30 inline-flex items-center gap-1.5">
-                  <div className="text-xs sm:text-sm font-semibold text-gray-200 leading-none">
-                    Статус:
-                  </div>
-                  <div
-                    className={
-                      listing.status === 'Active'
-                        ? 'text-green-400 font-bold text-xs sm:text-sm leading-none'
-                        : listing.status === 'Paused'
-                          ? 'text-yellow-400 font-bold text-xs sm:text-sm leading-none'
-                          : 'text-gray-200 font-bold text-xs sm:text-sm leading-none'
-                    }
-                  >
-                    {listing.status === 'Active'
-                      ? 'Активна'
-                      : listing.status === 'Paused'
-                        ? 'Привремено застарена'
-                        : 'Затворена'}
-                  </div>
+              <div className="bg-bg-dark/95 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-lg border-2 border-primary-500/30 inline-flex items-center gap-1.5 h-[52px]">
+                <div className="text-xs sm:text-sm font-semibold text-gray-200 leading-none">
+                  Статус:
                 </div>
+                <div
+                  className={
+                    listing.status === 'Active'
+                      ? 'text-primary-400 font-bold text-xs sm:text-sm leading-none'
+                      : listing.status === 'Paused'
+                        ? 'text-yellow-400 font-bold text-xs sm:text-sm leading-none'
+                        : 'text-gray-200 font-bold text-xs sm:text-sm leading-none'
+                  }
+                >
+                  {listing.status === 'Active'
+                    ? 'Активна'
+                    : listing.status === 'Paused'
+                      ? 'Привремено застарена'
+                      : 'Затворена'}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap ml-auto">
                 {onAction && (
                   <div className="flex gap-2 flex-wrap">
                     {listing.status === 'Paused' && (
                       <button
                         onClick={() => onAction(listing.id, 'publish')}
-                        className="px-3 sm:px-4 py-2 text-xs sm:text-sm bg-primary-500/20 border border-primary-500/40 text-primary-300 hover:bg-primary-500/30 hover:border-primary-500/60 rounded-lg font-semibold transition-colors"
+                        className="px-3 sm:px-4 py-2 text-xs sm:text-sm bg-primary-500/20 border border-primary-500/40 text-primary-300 hover:bg-primary-500/30 hover:border-primary-500/60 rounded-lg font-semibold transition-colors h-[52px] flex items-center"
                       >
                         Објави
                       </button>
@@ -254,7 +254,7 @@ export function ListingManagementCard({
                     {listing.status === 'Active' && (
                       <button
                         onClick={() => onAction(listing.id, 'pause')}
-                        className="px-3 sm:px-4 py-2 text-xs sm:text-sm bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 hover:bg-yellow-500/30 hover:border-yellow-500/60 rounded-lg font-semibold transition-colors"
+                        className="px-3 sm:px-4 py-2 text-xs sm:text-sm bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 hover:bg-yellow-500/30 hover:border-yellow-500/60 rounded-lg font-semibold transition-colors h-[52px] flex items-center"
                       >
                         Привремено застани
                       </button>
@@ -262,36 +262,36 @@ export function ListingManagementCard({
                     {listing.status !== 'Closed' && (
                       <button
                         onClick={() => onAction(listing.id, 'close')}
-                        className="btn-secondary px-3 sm:px-4 py-2 text-xs sm:text-sm"
+                        className="btn-secondary px-3 sm:px-4 py-2 text-xs sm:text-sm h-[52px] flex items-center"
                       >
                         Затвори
                       </button>
                     )}
                   </div>
                 )}
-              </div>
-              {mode === 'my-listings' && listing.status !== 'Closed' && (
-                <Link
-                  href={`/listings/${listing.id}/edit`}
-                  className="bg-bg-dark/95 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-lg border-2 border-primary-500/30 text-primary-400 hover:text-primary-300 hover:border-primary-500/50 transition-colors duration-200 inline-flex items-center justify-center flex-shrink-0"
-                  title="Уреди објава"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <svg
-                    className="w-4 h-4 sm:w-5 sm:h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                {mode === 'my-listings' && listing.status !== 'Closed' && (
+                  <Link
+                    href={`/listings/${listing.id}/edit`}
+                    className="bg-bg-dark/95 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-lg border-2 border-primary-500/30 text-primary-400 hover:text-primary-300 hover:border-primary-500/50 transition-colors duration-200 inline-flex items-center justify-center flex-shrink-0 h-[52px]"
+                    title="Уреди објава"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                    />
-                  </svg>
-                </Link>
-              )}
+                    <svg
+                      className="w-4 h-4 sm:w-5 sm:h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
         </div>

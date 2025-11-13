@@ -13,6 +13,13 @@ export function Footer() {
           </p>
           <div className="flex justify-center gap-4 text-xs sm:text-sm flex-wrap">
             <Link
+              href="/faq"
+              className="text-gray-400 hover:text-primary-400 transition-colors duration-200 underline"
+            >
+              Често поставувани прашања
+            </Link>
+            <span className="text-gray-500">|</span>
+            <Link
               href="/terms"
               className="text-gray-400 hover:text-primary-400 transition-colors duration-200 underline"
             >

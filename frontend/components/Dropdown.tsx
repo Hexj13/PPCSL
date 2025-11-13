@@ -2,6 +2,8 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { Button } from '@/ui';
+
 interface DropdownOption {
   value: string;
   label: string;
@@ -15,6 +17,7 @@ interface DropdownProps {
   placeholder?: string;
   className?: string;
   searchable?: boolean;
+  showActionButtons?: boolean;
 }
 
 function DropdownComponent({
@@ -25,11 +28,23 @@ function DropdownComponent({
   placeholder = '',
   className = '',
   searchable = false,
+  showActionButtons = false,
 }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [tempValue, setTempValue] = useState<string>(value);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setTempValue(value);
+  }, [value]);
+
+  useEffect(() => {
+    if (isOpen && showActionButtons) {
+      setTempValue(value);
+    }
+  }, [isOpen, value, showActionButtons]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -40,15 +55,21 @@ function DropdownComponent({
     };
 
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      const timer = setTimeout(() => {
+        document.addEventListener('mousedown', handleClickOutside);
+      }, 0);
+
       if (searchable && inputRef.current) {
         inputRef.current.focus();
       }
-    }
 
-    return () => {
+      return () => {
+        clearTimeout(timer);
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    } else {
       document.removeEventListener('mousedown', handleClickOutside);
-    };
+    }
   }, [isOpen, searchable]);
 
   const selectedOption = useMemo(
@@ -70,11 +91,15 @@ function DropdownComponent({
 
   const handleSelect = useCallback(
     (optionValue: string) => {
-      onChange(optionValue);
-      setIsOpen(false);
-      setSearchQuery('');
+      if (showActionButtons) {
+        setTempValue(optionValue);
+      } else {
+        onChange(optionValue);
+        setIsOpen(false);
+        setSearchQuery('');
+      }
     },
-    [onChange]
+    [showActionButtons, onChange]
   );
 
   const handleInputChange = useCallback(
@@ -105,18 +130,26 @@ function DropdownComponent({
             onFocus={handleInputFocus}
             disabled={disabled}
             placeholder={placeholder}
-            className={`w-full px-4 py-3 border-2 border-primary-500/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-bg-light text-white placeholder:text-gray-400 h-[48px] ${
-              disabled ? 'cursor-not-allowed opacity-60' : ''
-            } ${isOpen ? 'border-primary-500 ring-2 ring-primary-500' : ''}`}
-            style={{ paddingRight: '2.75rem' }}
+            className="input-field"
+            style={{ paddingRight: '44px' }}
           />
           <svg
-            className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-400 transition-transform duration-200 pointer-events-none ${
+            className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-400 transition-transform duration-200 cursor-pointer ${
               isOpen ? 'rotate-180' : ''
             }`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!disabled) {
+                if (isOpen && showActionButtons) {
+                  onChange(tempValue);
+                  setSearchQuery('');
+                }
+                setIsOpen((prev) => !prev);
+              }
+            }}
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
@@ -124,12 +157,22 @@ function DropdownComponent({
       ) : (
         <button
           type="button"
-          onClick={() => !disabled && setIsOpen(!isOpen)}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!disabled) {
+              if (isOpen && showActionButtons) {
+                onChange(tempValue);
+                setSearchQuery('');
+              }
+              setIsOpen((prev) => !prev);
+            }
+          }}
           disabled={disabled}
-          className={`w-full px-4 py-3 border-2 border-primary-500/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-bg-light text-white cursor-pointer text-left h-[48px] flex items-center overflow-hidden ${
-            disabled ? 'cursor-not-allowed opacity-60' : ''
-          } ${isOpen ? 'border-primary-500 ring-2 ring-primary-500' : ''}`}
-          style={{ paddingRight: '2.75rem' }}
+          className="input-field text-left cursor-pointer relative"
+          style={{ paddingRight: '44px' }}
         >
           <span className={`flex-1 truncate ${value ? 'text-white' : 'text-gray-400'}`}>
             {displayText}
@@ -148,31 +191,70 @@ function DropdownComponent({
       )}
 
       {isOpen && !disabled && (
-        <div className="absolute z-[100] w-full mt-1 top-full bg-bg-light border-2 border-primary-500/30 rounded-lg shadow-xl max-h-60 overflow-auto scrollbar-custom">
-          {filteredOptions.length > 0 ? (
-            filteredOptions.map((option) => (
+        <div className="absolute z-[100] w-full mt-1 top-full bg-bg-light border-2 border-primary-500/30 rounded-lg shadow-xl">
+          <div className="max-h-96 overflow-auto scrollbar-custom">
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map((option) => {
+                const isSelected = showActionButtons
+                  ? option.value === tempValue
+                  : option.value === value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => handleSelect(option.value)}
+                    className={`w-full px-4 py-3 text-left text-white hover:bg-primary-500/30 transition-colors duration-150 flex items-center justify-between ${
+                      isSelected ? 'bg-primary-800' : ''
+                    } ${isSelected ? 'font-semibold' : ''}`}
+                  >
+                    <span>{option.label}</span>
+                    {isSelected && (
+                      <svg
+                        className="w-5 h-5 text-primary-400"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                );
+              })
+            ) : (
+              <div className="px-4 py-3 text-gray-400 text-center">Не се пронајдени резултати</div>
+            )}
+          </div>
+          {showActionButtons && (
+            <div className="border-t border-primary-500/30 px-2 py-1.5 flex justify-end gap-1.5 bg-bg-dark">
               <button
-                key={option.value}
                 type="button"
-                onClick={() => handleSelect(option.value)}
-                className={`w-full px-4 py-3 text-left text-white hover:bg-primary-500/30 transition-colors duration-150 flex items-center justify-between ${
-                  option.value === value ? 'bg-primary-700' : ''
-                } ${option.value === value ? 'font-semibold' : ''}`}
+                onClick={() => {
+                  const emptyValue = '';
+                  setTempValue(emptyValue);
+                  onChange(emptyValue);
+                  setIsOpen(false);
+                  setSearchQuery('');
+                }}
+                className="px-3 py-1.5 text-sm text-white hover:text-primary-400 transition-colors duration-150"
               >
-                <span>{option.label}</span>
-                {option.value === value && (
-                  <svg className="w-5 h-5 text-primary-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                )}
+                Ресетирај
               </button>
-            ))
-          ) : (
-            <div className="px-4 py-3 text-gray-400 text-center">Не се пронајдени резултати</div>
+              <Button
+                variant="primary"
+                size="xs"
+                onClick={() => {
+                  onChange(tempValue);
+                  setIsOpen(false);
+                  setSearchQuery('');
+                }}
+              >
+                Ок
+              </Button>
+            </div>
           )}
         </div>
       )}

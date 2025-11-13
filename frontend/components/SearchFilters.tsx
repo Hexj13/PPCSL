@@ -9,6 +9,22 @@ import { ConditionType, DriveType, RegistrationType } from '@/lib/constants';
 
 import { Dropdown } from './Dropdown';
 import { MultiSelectDropdown } from './MultiSelectDropdown';
+import { SortDropdown } from './SortDropdown';
+
+const POPULAR_BRANDS = [
+  'Volkswagen',
+  'BMW',
+  'Mercedes-Benz',
+  'Audi',
+  'Renault',
+  'Peugeot',
+  'Opel',
+  'Ford',
+  'Toyota',
+  'Fiat',
+];
+
+const POPULAR_CITIES = ['Скопје', 'Битола', 'Куманово', 'Прилеп', 'Тетово'];
 
 export function SearchFilters() {
   const router = useRouter();
@@ -93,6 +109,120 @@ export function SearchFilters() {
     sortOrder: searchParams.get('sortOrder') || 'DESC',
   });
 
+  const getBrandOptions = useCallback(() => {
+    const popularBrands = brands
+      .filter((brand) => POPULAR_BRANDS.includes(brand.name))
+      .sort((a, b) => a.name.localeCompare(b.name, 'mk'));
+    const otherBrands = brands
+      .filter((brand) => !POPULAR_BRANDS.includes(brand.name))
+      .sort((a, b) => a.name.localeCompare(b.name, 'mk'));
+
+    const options: Array<{ value: string; label: string; category?: string }> = [
+      { value: 'all', label: 'Сите марки' },
+    ];
+
+    if (popularBrands.length > 0) {
+      options.push({ value: '', label: 'Популарни', category: 'Популарни' });
+      popularBrands.forEach((brand) => {
+        options.push({ value: brand.id, label: brand.name, category: 'Популарни' });
+      });
+    }
+
+    if (otherBrands.length > 0) {
+      options.push({ value: '', label: 'Други', category: 'Други' });
+      otherBrands.forEach((brand) => {
+        options.push({ value: brand.id, label: brand.name, category: 'Други' });
+      });
+    }
+
+    return options;
+  }, [brands]);
+
+  const getModelOptions = useCallback(() => {
+    const options: Array<{ value: string; label: string; category?: string }> = [
+      { value: 'all', label: 'Сите модели' },
+    ];
+
+    if (filters.brand_ids.length >= 2) {
+      const brandsMap = new Map(brands.map((b) => [b.id, b]));
+      const modelsByBrand = new Map<string, VehicleModel[]>();
+
+      models.forEach((model) => {
+        if (!modelsByBrand.has(model.brand_id)) {
+          modelsByBrand.set(model.brand_id, []);
+        }
+        modelsByBrand.get(model.brand_id)!.push(model);
+      });
+
+      const sortedBrandIds = [...filters.brand_ids].sort((a, b) => {
+        const brandA = brandsMap.get(a);
+        const brandB = brandsMap.get(b);
+        if (!brandA || !brandB) return 0;
+        return brandA.name.localeCompare(brandB.name, 'mk');
+      });
+
+      sortedBrandIds.forEach((brandId) => {
+        const brand = brandsMap.get(brandId);
+        if (brand) {
+          const brandModels = modelsByBrand.get(brandId) || [];
+          if (brandModels.length > 0) {
+            const sortedModels = [...brandModels].sort((a, b) =>
+              a.name.localeCompare(b.name, 'mk')
+            );
+            options.push({ value: '', label: brand.name, category: brand.name });
+            sortedModels.forEach((model) => {
+              options.push({ value: model.id, label: model.name, category: brand.name });
+            });
+          }
+        }
+      });
+    } else {
+      const sortedModels = [...models].sort((a, b) => a.name.localeCompare(b.name, 'mk'));
+      sortedModels.forEach((model) => {
+        options.push({ value: model.id, label: model.name });
+      });
+    }
+
+    return options;
+  }, [models, brands, filters.brand_ids]);
+
+  const getCityOptions = useCallback(() => {
+    const popularCities = cities
+      .filter((city) => POPULAR_CITIES.includes(city.name))
+      .sort((a, b) => a.name.localeCompare(b.name, 'mk'));
+    const otherCities = cities
+      .filter((city) => !POPULAR_CITIES.includes(city.name))
+      .sort((a, b) => a.name.localeCompare(b.name, 'mk'));
+
+    const options: Array<{ value: string; label: string; category?: string }> = [
+      { value: 'all', label: 'Сите градови' },
+    ];
+
+    if (popularCities.length > 0) {
+      options.push({ value: '', label: 'Популарни', category: 'Популарни' });
+      popularCities.forEach((city) => {
+        options.push({
+          value: city.nameEn,
+          label: `${city.name} (${city.nameEn})`,
+          category: 'Популарни',
+        });
+      });
+    }
+
+    if (otherCities.length > 0) {
+      options.push({ value: '', label: 'Други', category: 'Други' });
+      otherCities.forEach((city) => {
+        options.push({
+          value: city.nameEn,
+          label: `${city.name} (${city.nameEn})`,
+          category: 'Други',
+        });
+      });
+    }
+
+    return options;
+  }, [cities]);
+
   useEffect(() => {
     brandsApi.getAll().then((res) => {
       const sorted = [...res.data].sort((a, b) => a.name.localeCompare(b.name, 'mk'));
@@ -137,7 +267,8 @@ export function SearchFilters() {
   };
 
   const handleMultiSelectChange = (key: string, values: string[]) => {
-    setFilters({ ...filters, [key]: values });
+    const filteredValues = values.filter((v) => v !== 'all');
+    setFilters({ ...filters, [key]: filteredValues });
   };
 
   const handleCheckboxChange = (key: string, checked: boolean) => {
@@ -334,7 +465,7 @@ export function SearchFilters() {
         Основни критерии
       </h2>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4 pb-4 border-b border-primary-500/20">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-5">
         <div>
           <label className="block text-sm font-semibold mb-2 text-primary-400">Марка</label>
           <MultiSelectDropdown
@@ -342,7 +473,8 @@ export function SearchFilters() {
             onChange={(values) => handleMultiSelectChange('brand_ids', values)}
             searchable={true}
             placeholder="Избери марки"
-            options={brands.map((brand) => ({ value: brand.id, label: brand.name }))}
+            showActionButtons={true}
+            options={getBrandOptions()}
           />
         </div>
 
@@ -354,7 +486,8 @@ export function SearchFilters() {
             disabled={filters.brand_ids.length === 0 || loadingModels}
             searchable={true}
             placeholder="Избери модели"
-            options={models.map((model) => ({ value: model.id, label: model.name }))}
+            showActionButtons={true}
+            options={getModelOptions()}
           />
         </div>
 
@@ -365,15 +498,13 @@ export function SearchFilters() {
             onChange={(values) => handleMultiSelectChange('cities', values)}
             searchable={true}
             placeholder="Избери градови"
-            options={cities.map((city) => ({
-              value: city.nameEn,
-              label: `${city.name} (${city.nameEn})`,
-            }))}
+            showActionButtons={true}
+            options={getCityOptions()}
           />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 pb-4 border-b border-primary-500/20">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
         <div>
           <label className="block text-sm font-semibold mb-2 text-primary-400">Година од</label>
           <input
@@ -413,7 +544,7 @@ export function SearchFilters() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4 pb-4 border-b border-primary-500/20">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-5">
         <div>
           <label className="block text-sm font-semibold mb-2 text-primary-400">Валута</label>
           <Dropdown
@@ -456,19 +587,21 @@ export function SearchFilters() {
         </div>
       </div>
 
-      <div className="mb-4 pb-4 border-b border-primary-500/20">
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+      <div className="mb-5">
+        <div className="flex items-center gap-3 mb-4">
           <h2 className="text-base md:text-lg font-bold text-primary-400 underline">
             Дополнителни критерии
           </h2>
           <button
             type="button"
             onClick={() => setShowAdvanced(!showAdvanced)}
-            className="text-sm font-semibold bg-primary-500/20 hover:bg-primary-500/30 border border-primary-500/40 hover:border-primary-500/60 text-primary-300 hover:text-primary-200 px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 shadow-sm"
+            className="p-1 hover:bg-primary-500/10 rounded transition-colors duration-200"
+            aria-label={showAdvanced ? 'Сокриј' : 'Прикажи'}
           >
-            <span>{showAdvanced ? 'Сокриј' : 'Прикажи'}</span>
             <svg
-              className={`w-5 h-5 transition-transform duration-200 ${showAdvanced ? 'rotate-180' : ''}`}
+              className={`w-5 h-5 text-primary-400 transition-transform duration-200 ${
+                showAdvanced ? 'rotate-180' : ''
+              }`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -485,9 +618,9 @@ export function SearchFilters() {
 
         {showAdvanced && (
           <div className="space-y-5">
-            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               <div>
-                <label className="block text-sm font-semibold mb-2 text-primary-400">
+                <label className="block text-xs font-semibold mb-2 text-primary-400 leading-tight">
                   Запремина на моторот од (л)
                 </label>
                 <input
@@ -529,7 +662,7 @@ export function SearchFilters() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2 text-primary-400">
+                <label className="block text-xs font-semibold mb-2 text-primary-400 leading-tight">
                   Запремина на моторот до (л)
                 </label>
                 <input
@@ -571,7 +704,7 @@ export function SearchFilters() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2 text-primary-400">
+                <label className="block text-xs font-semibold mb-2 text-primary-400 leading-tight">
                   Коњски сили од
                 </label>
                 <input
@@ -600,7 +733,7 @@ export function SearchFilters() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2 text-primary-400">
+                <label className="block text-xs font-semibold mb-2 text-primary-400 leading-tight">
                   Коњски сили до
                 </label>
                 <input
@@ -629,7 +762,7 @@ export function SearchFilters() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2 text-primary-400">
+                <label className="block text-xs font-semibold mb-2 text-primary-400 leading-tight">
                   Поминување од (км)
                 </label>
                 <input
@@ -661,7 +794,7 @@ export function SearchFilters() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2 text-primary-400">
+                <label className="block text-xs font-semibold mb-2 text-primary-400 leading-tight">
                   Поминување до (км)
                 </label>
                 <input
@@ -700,6 +833,7 @@ export function SearchFilters() {
                   values={filters.fuels}
                   onChange={(values) => handleMultiSelectChange('fuels', values)}
                   placeholder="Избери топливо"
+                  showActionButtons={true}
                   options={[
                     { value: 'Petrol', label: 'Бензин' },
                     { value: 'Diesel', label: 'Дизел' },
@@ -716,6 +850,7 @@ export function SearchFilters() {
                   values={filters.transmissions}
                   onChange={(values) => handleMultiSelectChange('transmissions', values)}
                   placeholder="Избери пренос"
+                  showActionButtons={true}
                   options={[
                     { value: 'Manual', label: 'Мануелна' },
                     { value: 'Automatic', label: 'Автоматска' },
@@ -732,6 +867,7 @@ export function SearchFilters() {
                   values={filters.drive_types}
                   onChange={(values) => handleMultiSelectChange('drive_types', values)}
                   placeholder="Избери тип на погон"
+                  showActionButtons={true}
                   options={[
                     { value: DriveType.FWD, label: 'Преден' },
                     { value: DriveType.RWD, label: 'Заден' },
@@ -748,6 +884,7 @@ export function SearchFilters() {
                   values={filters.body_types}
                   onChange={(values) => handleMultiSelectChange('body_types', values)}
                   placeholder="Избери тип на каросерија"
+                  showActionButtons={true}
                   options={[
                     { value: 'Sedan', label: 'Седан' },
                     { value: 'Hatchback', label: 'Хечбек' },
@@ -769,6 +906,7 @@ export function SearchFilters() {
                   values={filters.colors}
                   onChange={(values) => handleMultiSelectChange('colors', values)}
                   placeholder="Избери боја"
+                  showActionButtons={true}
                   options={[
                     { value: 'Црна', label: 'Црна' },
                     { value: 'Бела', label: 'Бела' },
@@ -793,6 +931,7 @@ export function SearchFilters() {
                   values={filters.doors}
                   onChange={(values) => handleMultiSelectChange('doors', values)}
                   placeholder="Избери број на врати"
+                  showActionButtons={true}
                   options={[
                     { value: '2', label: '2' },
                     { value: '3', label: '3' },
@@ -810,6 +949,7 @@ export function SearchFilters() {
                   values={filters.conditions}
                   onChange={(values) => handleMultiSelectChange('conditions', values)}
                   placeholder="Избери состојба"
+                  showActionButtons={true}
                   options={[
                     { value: ConditionType.Undamaged, label: 'Без оштетувања' },
                     { value: ConditionType.Damaged, label: 'Со оштетувања' },
@@ -826,6 +966,7 @@ export function SearchFilters() {
                   values={filters.registration_types}
                   onChange={(values) => handleMultiSelectChange('registration_types', values)}
                   placeholder="Избери тип на регистрација"
+                  showActionButtons={true}
                   options={[
                     { value: RegistrationType.Local, label: 'Местна' },
                     { value: RegistrationType.Foreign, label: 'Странска' },
@@ -852,6 +993,7 @@ export function SearchFilters() {
                       value === 'true' ? 'true' : value === 'false' ? 'false' : ''
                     )
                   }
+                  showActionButtons={true}
                   options={[
                     { value: '', label: 'Сите' },
                     { value: 'true', label: 'Зарегистрирано' },
@@ -928,8 +1070,8 @@ export function SearchFilters() {
                     }}
                     className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
                       filters.is_new
-                        ? 'bg-gradient-to-r from-green-700 to-green-800 border-green-500'
-                        : 'border-green-500/50 bg-bg-light group-hover:border-green-500'
+                        ? 'bg-gradient-to-r from-primary-700 to-primary-800 border-primary-500'
+                        : 'border-primary-500/50 bg-bg-light group-hover:border-primary-500'
                     }`}
                   >
                     {filters.is_new && (
@@ -953,8 +1095,8 @@ export function SearchFilters() {
                   htmlFor="is_new"
                   className={`text-sm font-semibold transition-colors duration-200 flex items-center gap-2 cursor-pointer ${
                     filters.is_new
-                      ? 'text-green-400'
-                      : 'text-green-400/70 group-hover:text-green-400'
+                      ? 'text-primary-400'
+                      : 'text-primary-400/70 group-hover:text-primary-400'
                   }`}
                 >
                   <span>✨</span>
@@ -966,37 +1108,18 @@ export function SearchFilters() {
         )}
       </div>
 
-      <div className="mb-4 pb-4 border-b border-primary-500/20">
-        <label className="block text-sm font-semibold mb-2 text-primary-400">Подреди</label>
-        <Dropdown
-          value={`${filters.sortBy}_${filters.sortOrder}`}
-          onChange={(value) => {
-            const [sortBy, sortOrder] = value.split('_');
-            setFilters({ ...filters, sortBy, sortOrder });
-          }}
-          options={[
-            { value: 'created_at_DESC', label: 'Најнови прво' },
-            { value: 'created_at_ASC', label: 'Најстари прво' },
-            { value: 'views_DESC', label: 'Популарно' },
-            { value: 'price_ASC', label: 'Цена растечки' },
-            { value: 'price_DESC', label: 'Цена опаѓачки' },
-            { value: 'year_DESC', label: 'Година опаѓачки' },
-            { value: 'year_ASC', label: 'Година растечки' },
-          ]}
-        />
-      </div>
-
-      <div className="mt-5 flex flex-col sm:flex-row gap-3">
-        <button type="submit" className="w-full sm:w-auto btn-primary px-6 py-2.5">
-          Пребарај
-        </button>
-        <button
-          type="button"
-          onClick={handleReset}
-          className="w-full sm:w-auto btn-secondary px-6 py-2.5"
-        >
-          Ресетирај
-        </button>
+      <div className="mt-6 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          <button type="submit" className="w-full sm:w-auto btn-primary">
+            Пребарај
+          </button>
+          <button type="button" onClick={handleReset} className="w-full sm:w-auto btn-secondary">
+            Ресетирај
+          </button>
+        </div>
+        <div className="w-full sm:w-auto">
+          <SortDropdown />
+        </div>
       </div>
     </form>
   );

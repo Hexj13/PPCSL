@@ -134,7 +134,7 @@ function ListingCardComponent({ listing, forceFavorite = false, onRemove }: List
           )}
           <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
             {listing.is_new && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-bg-light border-2 border-green-500 text-green-400 shadow-lg">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-bg-light border-2 border-primary-500 text-primary-400 shadow-lg">
                 <span>✨</span>
                 <span>Ново</span>
               </span>

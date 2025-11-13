@@ -39,10 +39,6 @@ export default function RegisterPage() {
     }
   }, [user, isInitialized, router]);
 
-  if (isInitialized && user) {
-    return null;
-  }
-
   const validatePassword = (password: string): string => {
     if (password.length < 8) {
       return 'Лозинката мора да содржи минимум 8 карактери';
@@ -434,7 +430,7 @@ export default function RegisterPage() {
       </h1>
       <form onSubmit={handleSubmit} className="card p-6 md:p-8" autoComplete="off">
         <div className="mb-5">
-          <label className="block text-sm font-semibold mb-3 text-primary-400">
+          <label className="block text-sm font-semibold mb-2 text-primary-400">
             Тип на корисник
           </label>
           <div className="flex bg-bg-dark rounded-lg p-1 border-2 border-primary-500/30">
@@ -482,9 +478,9 @@ export default function RegisterPage() {
             </div>
 
             <div className="mb-5">
-              <label className="block text-sm font-semibold mb-3 text-primary-400">
+              <label className="block text-sm font-semibold mb-2 text-primary-400">
                 Достапни месенџери{' '}
-                <span className="text-gray-300 text-xs font-normal">(опционално)</span>
+                <span className="text-hint text-xs font-normal">(опционално)</span>
               </label>
               <div className="flex gap-3">
                 <div className="flex items-center gap-2 group">
@@ -681,7 +677,7 @@ export default function RegisterPage() {
 
             <div className="mb-5">
               <label className="block text-sm font-semibold mb-2 text-primary-400">
-                Презиме <span className="text-gray-300 text-xs">(опционално)</span>
+                Презиме <span className="text-hint text-xs">(опционално)</span>
               </label>
               <input
                 type="text"
@@ -697,7 +693,7 @@ export default function RegisterPage() {
             <div className="mb-5">
               <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center justify-between">
                 <span>
-                  Email <span className="text-gray-300 text-xs">(опционално)</span>
+                  Email <span className="text-hint text-xs">(опционално)</span>
                 </span>
                 <span className="group relative inline-block">
                   <svg
@@ -713,7 +709,7 @@ export default function RegisterPage() {
                       d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  <span className="absolute bottom-full right-0 mb-2 w-64 px-3 py-2 text-xs text-gray-300 bg-bg-darker border border-primary-500/30 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10 shadow-lg">
+                  <span className="absolute bottom-full right-0 mb-2 w-64 px-3 py-2 text-xs text-hint bg-bg-darker border border-primary-500/30 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10 shadow-lg">
                     Ако е наведена и пошта, најавата може да се изврши и по број на телефон и по
                     пошта
                   </span>
@@ -822,7 +818,7 @@ export default function RegisterPage() {
                 autoComplete="off"
               />
               {emailError && <p className="mt-1 text-sm text-red-400">{emailError}</p>}
-              <p className="mt-1 text-xs text-gray-300">
+              <p className="mt-1 text-xs text-hint">
                 Корпоративна пошта на која примате работни писма
               </p>
             </div>
@@ -841,13 +837,13 @@ export default function RegisterPage() {
                 autoComplete="off"
               />
               {phoneError && <p className="mt-1 text-sm text-red-400">{phoneError}</p>}
-              <p className="mt-1 text-xs text-gray-300">Работен телефон на кој работите</p>
+              <p className="mt-1 text-xs text-hint">Работен телефон на кој работите</p>
             </div>
 
             <div className="mb-5">
-              <label className="block text-sm font-semibold mb-3 text-primary-400">
+              <label className="block text-sm font-semibold mb-2 text-primary-400">
                 Достапни месенџери{' '}
-                <span className="text-gray-300 text-xs font-normal">(опционално)</span>
+                <span className="text-hint text-xs font-normal">(опционално)</span>
               </label>
               <div className="flex gap-3">
                 <div className="flex items-center gap-2 group">
@@ -1082,7 +1078,7 @@ export default function RegisterPage() {
           </>
         )}
 
-        <div className="mb-6">
+        <div className="mb-5">
           <div className="flex items-start gap-3 group">
             <div className="relative mt-0.5">
               <input
@@ -1146,7 +1142,7 @@ export default function RegisterPage() {
           {loading ? 'Регистрација...' : 'Регистрирај се'}
         </button>
 
-        <p className="mt-6 text-center text-sm text-gray-300">
+        <p className="mt-5 text-center text-sm text-hint">
           Веќе имате сметка?{' '}
           <a
             href="/login"

@@ -216,7 +216,7 @@ export default function LoginPage() {
           {loading ? 'Најава...' : 'Најави се'}
         </button>
 
-        <p className="mt-6 text-center text-sm text-gray-300">
+        <p className="mt-6 text-center text-sm text-hint">
           Немате сметка?{' '}
           <a
             href="/register"

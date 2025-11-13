@@ -583,7 +583,7 @@ export default function ResetPasswordPage() {
                 <div key={index} className="flex items-center gap-2">
                   {rule.isValid ? (
                     <svg
-                      className="w-3 h-3 text-green-400 flex-shrink-0"
+                      className="w-3 h-3 text-primary-400 flex-shrink-0"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -614,7 +614,7 @@ export default function ResetPasswordPage() {
                   )}
                   <p
                     className={`text-[10px] leading-tight ${
-                      rule.isValid ? 'text-green-400' : 'text-gray-400'
+                      rule.isValid ? 'text-primary-400' : 'text-gray-400'
                     } transition-colors`}
                   >
                     {rule.text}

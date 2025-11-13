@@ -46,7 +46,7 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 sm:p-6 md:p-8"
       onClick={onClose}
     >
       <div
@@ -54,7 +54,7 @@ export function Modal({
         onClick={(e) => e.stopPropagation()}
       >
         {title && (
-          <div className="sticky top-0 bg-bg-dark border-b border-primary-500/20 p-4 flex justify-between items-center">
+          <div className="sticky top-0 bg-bg-dark border-b border-primary-500/20 p-5 sm:p-6 flex justify-between items-center">
             <h2 className="text-2xl font-bold text-white">{title}</h2>
             <button
               onClick={onClose}
@@ -64,7 +64,7 @@ export function Modal({
             </button>
           </div>
         )}
-        <div className="p-4">{children}</div>
+        <div className="p-5 sm:p-6">{children}</div>
       </div>
     </div>
   );

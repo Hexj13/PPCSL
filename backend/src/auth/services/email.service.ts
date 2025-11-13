@@ -65,7 +65,7 @@ export class EmailService {
     }
 
     try {
-      const smtpFrom = this.configService.get('SMTP_FROM') || 'noreply@kupito.mk';
+      const smtpFrom = this.configService.get('SMTP_FROM') || 'noreply@kupito.club';
       await this.transporter.sendMail({
         from: smtpFrom,
         to: email,

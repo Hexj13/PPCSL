@@ -264,3 +264,36 @@ export function getCityNameMk(cityNameEn: string | undefined): string {
   if (!cityNameEn) return '';
   return cityNamesMap[cityNameEn] || cityNameEn;
 }
+
+function normalizePhoneDigits(phone: string): string {
+  return phone.replace(/\D/g, '');
+}
+
+function getPhoneWithCountryCode(phone: string): string {
+  const digits = normalizePhoneDigits(phone);
+  if (digits.startsWith('389')) {
+    return digits;
+  }
+  if (digits.length === 9) {
+    return `389${digits}`;
+  }
+  return digits;
+}
+
+export function getTelegramUrl(phone: string | undefined): string | null {
+  if (!phone) return null;
+  const withCountryCode = getPhoneWithCountryCode(phone);
+  return `https://t.me/+${withCountryCode}`;
+}
+
+export function getWhatsAppUrl(phone: string | undefined): string | null {
+  if (!phone) return null;
+  const withCountryCode = getPhoneWithCountryCode(phone);
+  return `https://wa.me/${withCountryCode}`;
+}
+
+export function getViberUrl(phone: string | undefined): string | null {
+  if (!phone) return null;
+  const withCountryCode = getPhoneWithCountryCode(phone);
+  return `viber://chat?number=${withCountryCode}`;
+}

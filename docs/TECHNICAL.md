@@ -166,7 +166,7 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
 SMTP_PASSWORD=your-app-password
-SMTP_FROM=noreply@kupito.mk
+SMTP_FROM=noreply@kupito.club
 ```
 
 ### Frontend (`frontend/.env.local`)
@@ -600,6 +600,9 @@ See [RENDER.md](./RENDER.md) for CloudFront CDN setup instructions (CloudFront i
 - React.memo, useMemo, useCallback for component memoization
 - Bundle optimization (webpack splitChunks, lazy loading)
 - Image optimization with adaptive quality
+- Set-based lookups in MultiSelectDropdown for O(1) performance instead of O(n) with Array.includes()
+- Optimized SortDropdown with memoized sort key resolution
+- URL parameter synchronization for search filters and sorting
 - Lazy loading for images
 - Skeleton loaders for improved UX
 

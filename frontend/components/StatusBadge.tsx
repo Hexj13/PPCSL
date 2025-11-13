@@ -8,9 +8,9 @@ export function StatusBadge({ status, showLabel = true, className = '' }: Status
   const statusConfig = {
     Active: {
       text: 'Активна',
-      textColor: 'text-green-400',
-      bgColor: 'bg-green-500/20',
-      borderColor: 'border-green-500/40',
+      textColor: 'text-primary-400',
+      bgColor: 'bg-primary-500/20',
+      borderColor: 'border-primary-500/40',
     },
     Paused: {
       text: 'Привремено застарена',

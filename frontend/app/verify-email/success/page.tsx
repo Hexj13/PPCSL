@@ -26,7 +26,7 @@ export default function VerifyEmailSuccessPage() {
       <div className="card p-6 md:p-8 text-center">
         <div className="mb-4">
           <svg
-            className="w-16 h-16 mx-auto text-green-500"
+            className="w-16 h-16 mx-auto text-primary-500"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"

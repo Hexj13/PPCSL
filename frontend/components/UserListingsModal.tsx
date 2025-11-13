@@ -108,15 +108,43 @@ function UserListingsModalComponent({
 
   const getUserDisplayName = useMemo(() => {
     if (!user) return 'Корисник';
-    if (user.firstName && user.lastName) {
-      return `${user.firstName} ${user.lastName}`;
+
+    if (user.type === 'Business' && user.companyName) {
+      return user.companyName;
     }
+
+    if (user.type === 'Individual') {
+      if (user.firstName && user.lastName) {
+        return `${user.firstName} ${user.lastName}`;
+      }
+      if (user.firstName) {
+        return user.firstName;
+      }
+      if (user.lastName) {
+        return user.lastName;
+      }
+    }
+
     if (user.companyName) {
       return user.companyName;
     }
+
+    if (user.firstName && user.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    }
+
+    if (user.firstName) {
+      return user.firstName;
+    }
+
+    if (user.lastName) {
+      return user.lastName;
+    }
+
     if (user.email) {
       return user.email;
     }
+
     return 'Корисник';
   }, [user]);
 
@@ -163,7 +191,7 @@ function UserListingsModalComponent({
                         <span
                           className={`px-2 py-1 rounded text-xs font-semibold ${
                             listing.status === 'Active'
-                              ? 'bg-green-500/20 text-green-300'
+                              ? 'bg-primary-500/20 text-primary-300'
                               : listing.status === 'Paused'
                                 ? 'bg-yellow-500/20 text-yellow-300'
                                 : 'bg-gray-500/20 text-gray-300'

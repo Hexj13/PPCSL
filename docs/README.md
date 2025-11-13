@@ -112,7 +112,10 @@ npm run dev  # Runs both frontend and backend
   - All fields can be updated including vehicle specifications
   - Price validation (integers only)
   - Registration date format validation (MM.YYYY, month must be 2 digits)
-- Extended search and filtering
+- Extended search and filtering with advanced filters
+- Sort functionality (by date, popularity, price, year) with URL parameter synchronization
+- Multi-select dropdowns with search, categories, and action buttons
+- Optimized dropdown components with Set-based lookups for performance
 - Listing limits (100 for Individuals, 100 for Business)
 - Listing statuses (Active, Paused, Closed)
 - Automatic listing closure after 5 months
