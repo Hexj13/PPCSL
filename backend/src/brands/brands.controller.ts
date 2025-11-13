@@ -3,14 +3,22 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   NotFoundException,
   Param,
   ParseUUIDPipe,
   Post,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
 import { BrandsService } from './brands.service';
+import { GetModelsBatchDto } from './dto/get-models-batch.dto';
+
+const isProduction = process.env.NODE_ENV === 'production';
+const getThrottleLimit = (prodLimit: number, devLimit: number = prodLimit * 100) => ({
+  default: { limit: isProduction ? prodLimit : devLimit, ttl: 60000 },
+});
 
 @ApiTags('brands')
 @Controller('api/brands')
@@ -32,6 +40,7 @@ export class BrandsController {
       },
     },
   })
+  @Throttle(getThrottleLimit(500, 10000))
   @Get()
   findAll() {
     return this.brandsService.findAll();
@@ -74,6 +83,7 @@ export class BrandsController {
       },
     },
   })
+  @Throttle(getThrottleLimit(500, 10000))
   @Get(':id/models')
   async getModels(@Param('id', ParseUUIDPipe) id: string) {
     const brand = await this.brandsService.findOne(id);
@@ -83,6 +93,35 @@ export class BrandsController {
     return this.brandsService.getModelsByBrand(id);
   }
 
+  @ApiOperation({ summary: 'Get models for multiple brands' })
+  @ApiBody({ type: GetModelsBatchDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Map of brand IDs to their models',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          additionalProperties: {
+            type: 'array',
+            items: { type: 'object' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid request body',
+  })
+  @HttpCode(200)
+  @Throttle(getThrottleLimit(100, 10000))
+  @Post('models/batch')
+  async getModelsBatch(@Body() body: GetModelsBatchDto) {
+    return this.brandsService.getModelsByBrands(body.brandIds);
+  }
+
+  @Throttle(getThrottleLimit(500, 10000))
   @ApiOperation({ summary: 'Get models by brand name' })
   @ApiParam({ name: 'name', example: 'BMW', description: 'Brand name' })
   @ApiResponse({ status: 200, description: 'List of models' })

@@ -576,6 +576,8 @@ export const favoritesApi = {
 export const brandsApi = {
   getAll: () => api.get<Brand[]>('/api/brands'),
   getModels: (brandId: string) => api.get<VehicleModel[]>(`/api/brands/${brandId}/models`),
+  getModelsBatch: (brandIds: string[]) =>
+    api.post<Record<string, VehicleModel[]>>('/api/brands/models/batch', { brandIds }),
   getModelsByName: (brandName: string) =>
     api.get<VehicleModel[]>(`/api/brands/name/${brandName}/models`),
   seed: () => api.post('/api/brands/seed'),

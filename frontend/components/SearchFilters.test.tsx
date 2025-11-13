@@ -22,6 +22,7 @@ jest.mock('@/lib/api', () => ({
   brandsApi: {
     getAll: jest.fn(),
     getModels: jest.fn(),
+    getModelsBatch: jest.fn(),
   },
   citiesApi: {
     getAll: jest.fn(),
@@ -135,6 +136,15 @@ describe('SearchFilters', () => {
         { id: 'model-2', name: 'Camry' },
       ],
     });
+
+    (brandsApi.getModelsBatch as jest.Mock).mockResolvedValue({
+      data: {
+        'brand-1': [
+          { id: 'model-1', name: 'Corolla' },
+          { id: 'model-2', name: 'Camry' },
+        ],
+      },
+    });
   });
 
   it('should render basic filters', async () => {
@@ -169,7 +179,7 @@ describe('SearchFilters', () => {
     fireEvent.change(brandDropdown, { target: { value: 'brand-1' } });
 
     await waitFor(() => {
-      expect(brandsApi.getModels).toHaveBeenCalledWith('brand-1');
+      expect(brandsApi.getModelsBatch).toHaveBeenCalledWith(['brand-1']);
     });
   });
 

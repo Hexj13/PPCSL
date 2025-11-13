@@ -237,9 +237,10 @@ export function SearchFilters() {
   useEffect(() => {
     if (filters.brand_ids.length > 0) {
       setLoadingModels(true);
-      Promise.all(filters.brand_ids.map((brandId) => brandsApi.getModels(brandId)))
-        .then((responses) => {
-          const allModels = responses.flatMap((res) => res.data);
+      brandsApi
+        .getModelsBatch(filters.brand_ids)
+        .then((response) => {
+          const allModels = Object.values(response.data).flat();
           const uniqueModels = Array.from(
             new Map(allModels.map((model) => [model.id, model])).values()
           );
@@ -375,6 +376,13 @@ export function SearchFilters() {
       return;
     }
 
+    const validBrandIds = filters.brand_ids.filter((id) => id !== 'all' && id !== '');
+    const validModelIds = filters.model_ids.filter((id) => id !== 'all' && id !== '');
+    const validCities = filters.cities.filter((city) => city !== 'all' && city !== '');
+    const allBrandsSelected = validBrandIds.length === brands.length && brands.length > 0;
+    const allModelsSelected = validModelIds.length === models.length && models.length > 0;
+    const allCitiesSelected = validCities.length === cities.length && cities.length > 0;
+
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
       if (key === 'sortBy' || key === 'sortOrder') {
@@ -392,9 +400,28 @@ export function SearchFilters() {
         }
         return;
       }
+      if (key === 'brand_ids') {
+        if (!allBrandsSelected && validBrandIds.length > 0) {
+          params.set(key, validBrandIds.join(','));
+        }
+        return;
+      }
+      if (key === 'model_ids') {
+        if (!allModelsSelected && validModelIds.length > 0) {
+          params.set(key, validModelIds.join(','));
+        }
+        return;
+      }
+      if (key === 'cities') {
+        if (!allCitiesSelected && validCities.length > 0) {
+          params.set(key, validCities.join(','));
+        }
+        return;
+      }
       if (Array.isArray(value)) {
-        if (value.length > 0) {
-          params.set(key, value.join(','));
+        const filteredArray = value.filter((v) => v !== 'all' && v !== '');
+        if (filteredArray.length > 0) {
+          params.set(key, filteredArray.join(','));
         }
       } else if (value !== '' && value !== undefined) {
         if (typeof value === 'boolean') {
@@ -406,6 +433,7 @@ export function SearchFilters() {
         }
       }
     });
+
     const newUrl = `/?${params.toString()}`;
     const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
     startTransition(() => {
@@ -414,6 +442,15 @@ export function SearchFilters() {
         requestAnimationFrame(() => {
           window.scrollTo({ top: scrollY, behavior: 'instant' });
         });
+      }
+      if (allBrandsSelected) {
+        setFilters((prev) => ({ ...prev, brand_ids: [] }));
+      }
+      if (allModelsSelected) {
+        setFilters((prev) => ({ ...prev, model_ids: [] }));
+      }
+      if (allCitiesSelected) {
+        setFilters((prev) => ({ ...prev, cities: [] }));
       }
     });
   };

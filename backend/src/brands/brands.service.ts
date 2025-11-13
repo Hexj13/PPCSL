@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 
 import { RedisService } from '../common/redis.service';
 import { CACHE_PREFIXES, CACHE_TTL, generateCacheKey } from '../common/utils/cache.utils';
@@ -95,6 +95,63 @@ export class BrandsService {
     }
 
     return models;
+  }
+
+  async getModelsByBrands(brandIds: string[]): Promise<Record<string, VehicleModel[]>> {
+    if (brandIds.length === 0) {
+      return {};
+    }
+
+    const result: Record<string, VehicleModel[]> = {};
+    const uncachedBrandIds: string[] = [];
+
+    for (const brandId of brandIds) {
+      const cacheKey = generateCacheKey({ prefix: CACHE_PREFIXES.brandsModels, parts: [brandId] });
+      try {
+        const cached = await this.redisService.getJson<VehicleModel[]>(cacheKey);
+        if (cached) {
+          result[brandId] = cached;
+        } else {
+          uncachedBrandIds.push(brandId);
+        }
+      } catch (error) {
+        this.logger.warn(`Failed to get models from cache for brand ${brandId}`, error);
+        uncachedBrandIds.push(brandId);
+      }
+    }
+
+    if (uncachedBrandIds.length > 0) {
+      const models = await this.modelsRepository.find({
+        where: { brand_id: In(uncachedBrandIds) },
+        order: { order: 'ASC', name: 'ASC' },
+        relations: ['brand'],
+      });
+
+      const modelsByBrand = new Map<string, VehicleModel[]>();
+      for (const model of models) {
+        if (!modelsByBrand.has(model.brand_id)) {
+          modelsByBrand.set(model.brand_id, []);
+        }
+        modelsByBrand.get(model.brand_id)!.push(model);
+      }
+
+      for (const brandId of uncachedBrandIds) {
+        const brandModels = modelsByBrand.get(brandId) || [];
+        result[brandId] = brandModels;
+
+        const cacheKey = generateCacheKey({
+          prefix: CACHE_PREFIXES.brandsModels,
+          parts: [brandId],
+        });
+        try {
+          await this.redisService.setJson(cacheKey, brandModels, this.CACHE_TTL_MODELS);
+        } catch (error) {
+          this.logger.warn(`Failed to set models cache for brand ${brandId}`, error);
+        }
+      }
+    }
+
+    return result;
   }
 
   async getModelsByBrandName(brandName: string): Promise<VehicleModel[]> {
