@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { authApi, favoritesApi, listingsApi, savedFiltersApi } from '@/lib/api';
-import { useAuthStore, useComparisonStore } from '@/lib/store';
+import { useAuthStore } from '@/lib/store';
 
 const isValidEmail = (value: string): boolean => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -18,7 +18,6 @@ const isValidPhone = (value: string): boolean => {
 export default function LoginPage() {
   const router = useRouter();
   const { setAuth, user, isInitialized } = useAuthStore();
-  const { add: addComparison } = useComparisonStore();
 
   useEffect(() => {
     if (isInitialized && user) {
@@ -94,18 +93,37 @@ export default function LoginPage() {
 
         const pendingComparisons = JSON.parse(localStorage.getItem('pendingComparisons') || '[]');
         if (pendingComparisons.length > 0) {
+          const { useComparisonStore } = await import('@/lib/store');
+          const comparisonStore = useComparisonStore.getState();
+          const validComparisons: string[] = [];
+
           for (const listingId of pendingComparisons) {
             try {
               const listingRes = await listingsApi.getOne(listingId);
               const listing = listingRes.data;
               if (listing.user && listing.user.id !== res.data.user.id) {
-                addComparison(listingId);
+                if (comparisonStore.add(listingId)) {
+                  validComparisons.push(listingId);
+                }
               }
             } catch {
               // Skip if listing not found or error occurred
             }
           }
+
+          if (validComparisons.length > 0 && typeof window !== 'undefined') {
+            const currentComparisons = comparisonStore.comparisons;
+            localStorage.setItem(
+              'comparison-storage',
+              JSON.stringify({
+                state: { comparisons: currentComparisons },
+                version: 0,
+              })
+            );
+          }
+
           localStorage.removeItem('pendingComparisons');
+          await new Promise((resolve) => setTimeout(resolve, 50));
         }
 
         const pendingSavedFilter = localStorage.getItem('pendingSavedFilter');
