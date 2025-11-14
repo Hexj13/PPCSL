@@ -4,6 +4,10 @@ import { VehicleModel } from '../../brands/entities/vehicle-model.entity';
 import { AppDataSource } from '../../data-source';
 
 const AMERICAN_BRANDS_TO_ADD = [
+  { name: 'Ford', order: 195 },
+  { name: 'Chevrolet', order: 196 },
+  { name: 'Dodge', order: 197 },
+  { name: 'Jeep', order: 198 },
   { name: 'Cadillac', order: 200 },
   { name: 'Buick', order: 201 },
   { name: 'GMC', order: 202 },
