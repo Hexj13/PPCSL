@@ -105,7 +105,10 @@ jest.mock('./MultiSelectDropdown', () => ({
         multiple
         value={values}
         onChange={(e) => {
-          const selectedValues = Array.from((e.target as HTMLSelectElement).selectedOptions, (opt) => opt.value);
+          const selectedValues = Array.from(
+            (e.target as HTMLSelectElement).selectedOptions,
+            (opt) => opt.value
+          );
           onChange(selectedValues);
         }}
         disabled={disabled}
@@ -594,11 +597,14 @@ describe('SearchFilters', () => {
         fireEvent.change(brandDropdown, mockEvent);
       }
 
-      await waitFor(() => {
-        const saveButton = screen.getByText('Додади во омилени');
-        expect(saveButton).toBeInTheDocument();
-        expect(saveButton).not.toBeDisabled();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          const saveButton = screen.getByText('Додади во омилени');
+          expect(saveButton).toBeInTheDocument();
+          expect(saveButton).not.toBeDisabled();
+        },
+        { timeout: 3000 }
+      );
     });
 
     it('should disable save button when no filters are active', async () => {
