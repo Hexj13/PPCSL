@@ -318,7 +318,9 @@ function VerifyPhoneContent() {
                 errorMessage ===
                   'Можете да зачувате максимум 20 филтри. Ве молиме избришете некој од постоечките филтри.' ||
                 (errorMessage.startsWith('Можете да зачувате максимум') &&
-                  errorMessage.includes('филтри. Ве молиме избришете некој од постоечките филтри.'));
+                  errorMessage.includes(
+                    'филтри. Ве молиме избришете некој од постоечките филтри.'
+                  ));
               if (isLimitError) {
                 localStorage.removeItem('returnUrl');
                 router.push('/favorites?tab=filters');

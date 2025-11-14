@@ -19,6 +19,7 @@ describe('SavedFiltersController', () => {
   const mockSavedFilter: SavedFilter = {
     id: 'filter-1',
     user_id: 'user-1',
+    user: undefined as any,
     name: 'Мој филтер',
     filters: { brand_ids: ['brand-1'], price_gte: '10000' },
     created_at: new Date(),
