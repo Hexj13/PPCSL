@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+import { RefreshTokenService } from '../auth/services/refresh-token.service';
 import {
   ListingStatus,
   ListingStatus as ListingStatusEnum,
@@ -17,6 +18,7 @@ export class AdminService {
     private usersRepository: Repository<User>,
     @InjectRepository(Listing)
     private listingsRepository: Repository<Listing>,
+    private refreshTokenService: RefreshTokenService,
   ) {}
 
   async getAllUsers(
@@ -76,8 +78,14 @@ export class AdminService {
     if (!user) {
       throw new NotFoundException('Корисникот не е пронајден');
     }
+    const wasActive = user.active;
     user.active = !user.active;
     const savedUser = await this.usersRepository.save(user);
+
+    if (wasActive && !savedUser.active) {
+      await this.refreshTokenService.revokeAllUserTokens(userId);
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...userWithoutPassword } = savedUser;
     return userWithoutPassword;

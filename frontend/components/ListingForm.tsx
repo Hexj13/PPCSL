@@ -1349,15 +1349,83 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
         {formData.images.length > 0 && (
           <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
             {formData.images.map((url, index) => (
-              <div key={index} className="relative">
-                <Image
-                  src={url}
-                  alt={`Photo ${index + 1}`}
-                  width={200}
-                  height={96}
-                  className="w-full h-24 object-cover rounded"
-                  unoptimized
-                />
+              <div key={index} className="relative group">
+                <div className="relative">
+                  <Image
+                    src={url}
+                    alt={`Photo ${index + 1}`}
+                    width={200}
+                    height={96}
+                    className="w-full h-24 object-cover rounded"
+                    unoptimized
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity rounded flex items-center justify-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (index > 0) {
+                          setFormData((prev) => {
+                            const newImages = [...prev.images];
+                            [newImages[index - 1], newImages[index]] = [
+                              newImages[index],
+                              newImages[index - 1],
+                            ];
+                            return { ...prev, images: newImages };
+                          });
+                        }
+                      }}
+                      disabled={index === 0}
+                      className="bg-primary-600 hover:bg-primary-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded p-1.5 transition-colors"
+                      title="Помести нагоре"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 15l7-7 7 7"
+                        />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (index < formData.images.length - 1) {
+                          setFormData((prev) => {
+                            const newImages = [...prev.images];
+                            [newImages[index], newImages[index + 1]] = [
+                              newImages[index + 1],
+                              newImages[index],
+                            ];
+                            return { ...prev, images: newImages };
+                          });
+                        }
+                      }}
+                      disabled={index === formData.images.length - 1}
+                      className="bg-primary-600 hover:bg-primary-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded p-1.5 transition-colors"
+                      title="Помести надолу"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
                 <button
                   type="button"
                   onClick={() => {
@@ -1366,10 +1434,14 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                       images: prev.images.filter((_, i) => i !== index),
                     }));
                   }}
-                  className="absolute top-0 right-0 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center hover:shadow-md transition-all"
+                  className="absolute top-1 right-1 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center hover:shadow-md transition-all z-10"
+                  title="Избриши"
                 >
                   ×
                 </button>
+                <div className="absolute bottom-1 left-1 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded">
+                  {index + 1}
+                </div>
               </div>
             ))}
           </div>

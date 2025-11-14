@@ -39,8 +39,8 @@ export function Header() {
 
   const handleLogout = () => {
     logout();
-    router.push('/');
     setIsMobileMenuOpen(false);
+    router.replace('/');
   };
 
   return (

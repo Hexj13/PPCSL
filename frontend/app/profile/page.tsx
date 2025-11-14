@@ -231,7 +231,7 @@ export default function ProfilePage() {
       await authApi.deleteAccount();
       toast.success('Аккаунтот е успешно избришан');
       logout();
-      router.push('/');
+      router.replace('/');
     } catch {
     } finally {
       setDeleting(false);
@@ -612,7 +612,7 @@ export default function ProfilePage() {
           <button
             type="button"
             onClick={() => setShowDeleteModal(true)}
-            className="w-full btn-secondary text-red-400 hover:text-red-300 border-red-500/30 hover:border-red-500/50"
+            className="w-full bg-transparent hover:bg-red-500/10 text-red-400 hover:text-red-300 font-semibold rounded-lg px-4 py-2.5 border-2 border-red-500/30 hover:border-red-500/50 transition-all duration-200"
           >
             Избриши аккаунт
           </button>
@@ -654,7 +654,7 @@ export default function ProfilePage() {
             <button
               onClick={handleDeleteAccount}
               disabled={deleting}
-              className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg px-4 py-2.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 bg-transparent hover:bg-red-500/10 text-red-400 hover:text-red-300 font-semibold rounded-lg px-4 py-2.5 border-2 border-red-500/30 hover:border-red-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
             >
               {deleting ? 'Бришење...' : 'Избриши аккаунт'}
             </button>

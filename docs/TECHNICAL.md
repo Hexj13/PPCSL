@@ -293,6 +293,7 @@ GET   /api/admin/listings             # Get all listings
 GET   /api/admin/stats                # Get statistics
 PATCH /api/admin/listings/:id/status  # Change listing status
 PATCH /api/admin/users/:id/toggle-status # Enable/disable user
+                                      # When deactivating, all user's refresh tokens are revoked
 ```
 
 ### Health

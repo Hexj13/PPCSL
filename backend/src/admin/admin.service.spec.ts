@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+import { RefreshTokenService } from '../auth/services/refresh-token.service';
 import { ListingStatus, UserType } from '../common/types';
 import { Listing } from '../listings/entities/listing.entity';
 import { User } from '../users/entities/user.entity';
@@ -11,8 +12,10 @@ import { AdminService } from './admin.service';
 
 describe('AdminService', () => {
   let service: AdminService;
+  let module: TestingModule;
   let usersRepository: jest.Mocked<Repository<User>>;
   let listingsRepository: jest.Mocked<Repository<Listing>>;
+  let refreshTokenService: RefreshTokenService;
 
   const mockUser: User = {
     id: 'user-1',
@@ -82,7 +85,11 @@ describe('AdminService', () => {
       count: jest.fn(),
     };
 
-    const module: TestingModule = await Test.createTestingModule({
+    const mockRefreshTokenService = {
+      revokeAllUserTokens: jest.fn().mockResolvedValue(undefined),
+    };
+
+    module = await Test.createTestingModule({
       providers: [
         AdminService,
         {
@@ -93,12 +100,17 @@ describe('AdminService', () => {
           provide: getRepositoryToken(Listing),
           useValue: mockListingsRepository,
         },
+        {
+          provide: RefreshTokenService,
+          useValue: mockRefreshTokenService,
+        },
       ],
     }).compile();
 
     service = module.get<AdminService>(AdminService);
     usersRepository = module.get(getRepositoryToken(User));
     listingsRepository = module.get(getRepositoryToken(Listing));
+    refreshTokenService = module.get<RefreshTokenService>(RefreshTokenService);
   });
 
   it('should be defined', () => {
@@ -174,11 +186,14 @@ describe('AdminService', () => {
       usersRepository.findOne.mockResolvedValue(activeUser as User);
       usersRepository.save.mockResolvedValue(inactiveUser as User);
 
+      const revokeSpy = jest.spyOn(refreshTokenService, 'revokeAllUserTokens');
+
       const result = await service.toggleUserStatus('user-1');
 
       expect(result.active).toBe(false);
       expect(result).not.toHaveProperty('password');
       expect(usersRepository.save).toHaveBeenCalledWith(inactiveUser);
+      expect(revokeSpy).toHaveBeenCalledWith('user-1');
     });
 
     it('should toggle user active status from false to true', async () => {

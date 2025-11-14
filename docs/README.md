@@ -209,6 +209,8 @@ Kupito/
 - `PATCH /api/admin/listings/:id/status` - Change listing status
 - `GET /api/admin/users/:id/listings` - User's listings
 - `PATCH /api/admin/users/:id/toggle-status` - Enable/disable user
+  - When deactivating a user, all their refresh tokens are automatically revoked
+  - Deactivated users cannot log in or refresh their tokens
 
 ### Health & Monitoring
 - `GET /` - API status check

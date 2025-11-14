@@ -11,9 +11,7 @@ import {
   formatEngineVolume,
   formatMileage,
   formatPrice,
-  formatTransmission,
   getOptimizedImageUrl,
-  getCityNameMk,
 } from '@/lib/utils';
 
 interface ListingManagementCardProps {
@@ -41,10 +39,10 @@ export function ListingManagementCard({
   const isAdminMode = mode === 'admin';
 
   return (
-    <div className="card overflow-hidden">
+    <div className="card overflow-visible">
       <div className="grid grid-cols-1 md:grid-cols-[350px_1fr] gap-0 md:gap-6 md:items-stretch">
         <Link href={`/listings/${listing.id}`} className="flex-shrink-0">
-          <div className="relative w-full h-[300px] md:h-full md:min-h-[320px] bg-bg-darker overflow-hidden rounded-t-xl md:rounded-l-xl md:rounded-t-none md:rounded-b-none">
+          <div className="relative w-full h-[200px] sm:h-[250px] md:h-full md:min-h-[320px] bg-bg-darker overflow-hidden rounded-t-xl md:rounded-l-xl md:rounded-t-none md:rounded-b-none">
             {hasImage ? (
               <Image
                 src={optimizedImageUrl}
@@ -75,10 +73,10 @@ export function ListingManagementCard({
             )}
           </div>
         </Link>
-        <div className="flex-1 p-5 flex flex-col">
+        <div className="flex-1 p-4 sm:p-5 flex flex-col min-w-0">
           <div className="mb-3">
-            <div className="flex items-start justify-between gap-4 mb-2">
-              <div className="flex-1">
+            <div className="flex items-start justify-between gap-2 sm:gap-4 mb-2">
+              <div className="flex-1 min-w-0">
                 {isAdminMode && (
                   <>
                     <div className="mb-1 flex items-center gap-2">
@@ -127,37 +125,36 @@ export function ListingManagementCard({
                   </>
                 )}
                 <Link href={`/listings/${listing.id}`}>
-                  <h3 className="font-bold text-lg md:text-xl mb-1.5 hover:text-primary-600 transition-colors line-clamp-2">
+                  <h3 className="font-bold text-base md:text-lg mb-1.5 hover:text-primary-600 transition-colors line-clamp-2">
                     {listing.title}
                   </h3>
                 </Link>
-              </div>
-              <div className="text-sm text-gray-200 font-medium flex-shrink-0">
-                {getCityNameMk(listing.city)}
               </div>
             </div>
             <div className="mb-2">
               <div className="flex items-baseline gap-2">
                 {listing.price !== undefined ? (
                   <>
-                    <span className="text-2xl md:text-3xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+                    <span className="text-xl md:text-2xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
                       {formatPrice(listing.price, listing.currency)}
                     </span>
-                    <span className="text-sm text-gray-200 font-medium">{listing.currency}</span>
+                    <span className="text-xs md:text-sm text-gray-300 font-medium">
+                      {listing.currency}
+                    </span>
                   </>
                 ) : (
-                  <span className="text-2xl md:text-3xl font-extrabold text-primary-400">••••</span>
+                  <span className="text-xl md:text-2xl font-extrabold text-primary-400">••••</span>
                 )}
               </div>
-              <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+              <div className="mt-1.5 flex items-center gap-1.5 sm:gap-2 flex-wrap">
                 {listing.is_new && (
-                  <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-semibold bg-primary-500/20 border border-primary-500/40 text-primary-300 shadow-sm">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-primary-500/20 border border-primary-500/40 text-primary-300 shadow-sm">
                     <span>✨</span>
                     <span>Ново</span>
                   </span>
                 )}
                 {listing.urgent && (
-                  <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-semibold bg-primary-500/20 border border-primary-500/40 text-primary-300 shadow-sm">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-primary-500/20 border border-primary-500/40 text-primary-300 shadow-sm">
                     <span>🔥</span>
                     <span>Итно</span>
                   </span>
@@ -167,60 +164,26 @@ export function ListingManagementCard({
           </div>
           {listing.vehicle && (
             <div className="mb-3 flex-1">
-              <h4 className="text-sm font-semibold text-primary-400 mb-3">Карактеристики</h4>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2.5 text-sm">
+              <div className="text-sm text-gray-300 space-y-1.5">
                 {listing.vehicle.engine_displ_l && (
-                  <div>
-                    <span className="text-primary-400">Мотор:</span>
-                    <span className="ml-2 font-medium text-gray-200">
-                      {formatEngineVolume(listing.vehicle.engine_displ_l)} л
-                    </span>
-                  </div>
+                  <div>Мотор: {formatEngineVolume(listing.vehicle.engine_displ_l)} л</div>
                 )}
-                {listing.vehicle.fuel && (
-                  <div>
-                    <span className="text-primary-400">Гориво:</span>
-                    <span className="ml-2 font-medium text-gray-200">{listing.vehicle.fuel}</span>
-                  </div>
-                )}
+                {listing.vehicle.fuel && <div>Гориво: {listing.vehicle.fuel}</div>}
                 {listing.vehicle.mileage_km && (
-                  <div>
-                    <span className="text-primary-400">Поминување:</span>
-                    <span className="ml-2 font-medium text-gray-200">
-                      {formatMileage(listing.vehicle.mileage_km)} км
-                    </span>
-                  </div>
-                )}
-                {listing.vehicle.transmission && (
-                  <div>
-                    <span className="text-primary-400">Пренос:</span>
-                    <span className="ml-2 font-medium text-gray-200">
-                      {formatTransmission(listing.vehicle.transmission)}
-                    </span>
-                  </div>
+                  <div>Поминување: {formatMileage(listing.vehicle.mileage_km)} км</div>
                 )}
                 {listing.vehicle.drive_type && (
-                  <div>
-                    <span className="text-primary-400">Тип на погон:</span>
-                    <span className="ml-2 font-medium text-gray-200">
-                      {formatDriveType(listing.vehicle.drive_type)}
-                    </span>
-                  </div>
+                  <div>Тип на погон: {formatDriveType(listing.vehicle.drive_type)}</div>
                 )}
                 {listing.vehicle.body_type && (
-                  <div>
-                    <span className="text-primary-400">Тип на каросерија:</span>
-                    <span className="ml-2 font-medium text-gray-200">
-                      {formatBodyType(listing.vehicle.body_type)}
-                    </span>
-                  </div>
+                  <div>Тип на каросерија: {formatBodyType(listing.vehicle.body_type)}</div>
                 )}
               </div>
             </div>
           )}
           <div className="mt-auto pt-3 border-t border-primary-500/20">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-              <div className="bg-bg-dark/95 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-lg border-2 border-primary-500/30 inline-flex items-center gap-1.5 h-[52px]">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-2 lg:gap-3">
+              <div className="bg-bg-dark/95 backdrop-blur-sm px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg border-2 border-primary-500/30 inline-flex items-center gap-1 sm:gap-1.5 h-auto lg:h-[52px] w-full lg:w-auto justify-center lg:justify-start">
                 <div className="text-xs sm:text-sm font-semibold text-gray-200 leading-none">
                   Статус:
                 </div>
@@ -240,13 +203,13 @@ export function ListingManagementCard({
                       : 'Затворена'}
                 </div>
               </div>
-              <div className="flex items-center gap-2 flex-wrap ml-auto">
+              <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 w-full lg:w-auto">
                 {onAction && (
-                  <div className="flex gap-2 flex-wrap">
+                  <>
                     {listing.status === 'Paused' && (
                       <button
                         onClick={() => onAction(listing.id, 'publish')}
-                        className="px-3 sm:px-4 py-2 text-xs sm:text-sm bg-primary-500/20 border border-primary-500/40 text-primary-300 hover:bg-primary-500/30 hover:border-primary-500/60 rounded-lg font-semibold transition-colors h-[52px] flex items-center"
+                        className="px-3 md:px-4 py-2.5 sm:py-2 text-xs sm:text-sm bg-primary-500/20 border-2 border-primary-500/40 text-primary-300 hover:bg-primary-500/30 hover:border-primary-500/60 rounded-lg font-semibold transition-colors h-12 lg:h-[52px] flex items-center justify-center w-full lg:w-auto"
                       >
                         Објави
                       </button>
@@ -254,7 +217,7 @@ export function ListingManagementCard({
                     {listing.status === 'Active' && (
                       <button
                         onClick={() => onAction(listing.id, 'pause')}
-                        className="px-3 sm:px-4 py-2 text-xs sm:text-sm bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 hover:bg-yellow-500/30 hover:border-yellow-500/60 rounded-lg font-semibold transition-colors h-[52px] flex items-center"
+                        className="px-3 md:px-4 py-2.5 sm:py-2 text-xs sm:text-sm bg-yellow-500/20 border-2 border-yellow-500/40 text-yellow-300 hover:bg-yellow-500/30 hover:border-yellow-500/60 rounded-lg font-semibold transition-colors h-12 lg:h-[52px] flex items-center justify-center w-full lg:w-auto"
                       >
                         Привремено застани
                       </button>
@@ -262,17 +225,17 @@ export function ListingManagementCard({
                     {listing.status !== 'Closed' && (
                       <button
                         onClick={() => onAction(listing.id, 'close')}
-                        className="btn-secondary px-3 sm:px-4 py-2 text-xs sm:text-sm h-[52px] flex items-center"
+                        className="px-3 md:px-4 py-2.5 sm:py-2 text-xs sm:text-sm bg-bg-light border-2 border-primary-500/30 text-white hover:bg-bg-dark hover:border-primary-500/50 rounded-lg font-semibold transition-colors h-12 lg:h-[52px] flex items-center justify-center w-full lg:w-auto"
                       >
                         Затвори
                       </button>
                     )}
-                  </div>
+                  </>
                 )}
                 {mode === 'my-listings' && listing.status !== 'Closed' && (
                   <Link
                     href={`/listings/${listing.id}/edit`}
-                    className="bg-bg-dark/95 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-lg border-2 border-primary-500/30 text-primary-400 hover:text-primary-300 hover:border-primary-500/50 transition-colors duration-200 inline-flex items-center justify-center flex-shrink-0 h-[52px]"
+                    className="bg-bg-dark/95 backdrop-blur-sm px-3 md:px-4 py-2.5 sm:py-2 rounded-lg border-2 border-primary-500/30 text-primary-400 hover:text-primary-300 hover:border-primary-500/50 transition-colors duration-200 inline-flex items-center justify-center h-12 lg:h-[52px] w-full lg:w-auto"
                     title="Уреди објава"
                     onClick={(e) => e.stopPropagation()}
                   >
@@ -289,6 +252,7 @@ export function ListingManagementCard({
                         d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                       />
                     </svg>
+                    <span className="ml-1.5 sm:hidden">Уреди објава</span>
                   </Link>
                 )}
               </div>

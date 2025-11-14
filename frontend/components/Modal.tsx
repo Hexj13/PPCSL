@@ -55,7 +55,9 @@ export function Modal({
       >
         {title && (
           <div className="sticky top-0 bg-bg-dark border-b border-primary-500/20 p-5 sm:p-6 flex justify-between items-center">
-            <h2 className="text-2xl font-bold text-white">{title}</h2>
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+              {title}
+            </h2>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-white text-2xl transition-colors"

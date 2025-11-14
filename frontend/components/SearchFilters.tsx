@@ -1,10 +1,10 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import React, { useState, useEffect, startTransition, useCallback } from 'react';
+import React, { useState, useEffect, startTransition, useCallback, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 
-import { brandsApi, citiesApi, Brand, VehicleModel, City } from '@/lib/api';
+import { brandsApi, citiesApi, Brand, VehicleModel, City, User } from '@/lib/api';
 import { ConditionType, DriveType, RegistrationType } from '@/lib/constants';
 import { useAuthStore } from '@/lib/store';
 
@@ -101,6 +101,7 @@ export function SearchFilters() {
   const [cities, setCities] = useState<City[]>([]);
   const [loadingModels, setLoadingModels] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const prevUserRef = useRef<User | null>(user);
 
   const currentYear = new Date().getFullYear().toString();
 
@@ -375,6 +376,49 @@ export function SearchFilters() {
       setFilters((prev) => ({ ...prev, model_ids: [] }));
     }
   }, [filters.brand_ids]);
+
+  useEffect(() => {
+    const prevUser = prevUserRef.current;
+    prevUserRef.current = user;
+
+    if (prevUser && !user) {
+      clearFiltersFromStorage();
+      setFilters({
+        brand_ids: [],
+        model_ids: [],
+        cities: [],
+        year_gte: '',
+        year_lte: currentYear,
+        price_gte: '',
+        price_lte: '',
+        mileage_gte: '',
+        mileage_lte: '',
+        fuels: [],
+        transmissions: [],
+        body_types: [],
+        engine_displ_l_gte: '',
+        engine_displ_l_lte: '',
+        colors: [],
+        doors: [],
+        currency: '',
+        urgent: false,
+        is_new: false,
+        conditions: [],
+        registration_types: [],
+        horsepower_gte: '',
+        horsepower_lte: '',
+        drive_types: [],
+        is_registered: undefined,
+        sortBy: 'created_at',
+        sortOrder: 'DESC',
+      });
+      if (searchParams.toString()) {
+        startTransition(() => {
+          router.replace('/');
+        });
+      }
+    }
+  }, [user, router, currentYear, searchParams]);
 
   const handleChange = (key: string, value: string) => {
     setFilters({ ...filters, [key]: value });

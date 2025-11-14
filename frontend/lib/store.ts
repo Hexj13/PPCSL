@@ -38,6 +38,8 @@ export const useAuthStore = create<AuthState>()(
           localStorage.removeItem('refresh_token');
           localStorage.removeItem('pendingFavorites');
           localStorage.removeItem('returnUrl');
+          sessionStorage.removeItem('kupito_search_filters');
+          localStorage.removeItem('kupito_search_filters');
           useFavoritesStore.getState().clear();
         }
       },

@@ -457,7 +457,7 @@ export function ListingGrid() {
       )}
 
       {showLoadMoreButton && !loadingMore && (
-        <div className="text-center py-8">
+        <div className="flex justify-center py-8">
           <button onClick={handleLoadMore} className="btn-primary px-8 py-3 text-lg font-semibold">
             Вчитај уште
           </button>

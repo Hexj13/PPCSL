@@ -171,14 +171,15 @@ function DropdownComponent({
             }
           }}
           disabled={disabled}
-          className="input-field text-left cursor-pointer relative"
-          style={{ paddingRight: '44px' }}
+          className="input-field dropdown-button text-left cursor-pointer relative"
         >
-          <span className={`flex-1 truncate ${value ? 'text-white' : 'text-gray-400'}`}>
+          <span
+            className={`flex-1 truncate min-w-0 pr-2 ${value ? 'text-white' : 'text-gray-400'}`}
+          >
             {displayText}
           </span>
           <svg
-            className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-400 transition-transform duration-200 flex-shrink-0 ${
+            className={`absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-400 transition-transform duration-200 flex-shrink-0 pointer-events-none ${
               isOpen ? 'rotate-180' : ''
             }`}
             fill="none"

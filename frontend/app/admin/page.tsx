@@ -311,8 +311,8 @@ function ListingsTab() {
     return (
       <div>
         <div className="mb-6 flex flex-row gap-4 items-center">
-          <div className="flex-1 h-[48px] bg-bg-light/30 rounded-lg animate-pulse" />
-          <div className="w-auto min-w-[200px] h-[48px] bg-bg-light/30 rounded-lg animate-pulse" />
+          <div className="flex-1 h-[52px] bg-bg-light/30 rounded-lg animate-pulse" />
+          <div className="w-auto min-w-[200px] h-[52px] bg-bg-light/30 rounded-lg animate-pulse" />
         </div>
         <div className="mb-6">
           <div className="flex flex-wrap gap-3">
@@ -333,7 +333,7 @@ function ListingsTab() {
 
   return (
     <div>
-      <div className="mb-6 flex flex-row gap-4 items-center">
+      <div className="mb-6 flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
         <input
           type="text"
           value={searchQuery}
@@ -341,7 +341,7 @@ function ListingsTab() {
           placeholder={
             searchType === 'id' ? 'Внесете ID на објава' : 'Внесете име, email или компанија'
           }
-          className="flex-1 px-4 py-3 rounded-lg bg-bg-light border-2 border-primary-500/30 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 h-[48px]"
+          className="flex-1 px-4 py-3 rounded-lg bg-bg-light border-2 border-primary-500/30 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 h-[52px]"
         />
         <Dropdown
           value={searchType}
@@ -350,7 +350,7 @@ function ListingsTab() {
             { value: 'creator', label: 'Пребарај по корисник' },
             { value: 'id', label: 'Пребарај по ID' },
           ]}
-          className="w-auto min-w-[200px]"
+          className="w-full sm:w-auto sm:min-w-[200px]"
         />
       </div>
 
@@ -415,7 +415,7 @@ function ListingsTab() {
           {!loadingMore && (
             <>
               {displayedCount < filteredListings.length ? (
-                <div className="text-center py-8">
+                <div className="flex justify-center py-8">
                   <button
                     onClick={handleLoadMore}
                     className="btn-primary px-8 py-3 text-lg font-semibold"
@@ -657,8 +657,8 @@ function UsersTab() {
     return (
       <div>
         <div className="mb-6 flex flex-row gap-4 items-center">
-          <div className="flex-1 h-[48px] bg-bg-light/30 rounded-lg animate-pulse" />
-          <div className="w-48 h-[48px] bg-bg-light/30 rounded-lg animate-pulse" />
+          <div className="flex-1 h-[52px] bg-bg-light/30 rounded-lg animate-pulse" />
+          <div className="w-48 h-[52px] bg-bg-light/30 rounded-lg animate-pulse" />
         </div>
         <div className="mb-4 h-5 bg-bg-light/30 rounded w-48 animate-pulse" />
         <div className="space-y-4">
@@ -688,13 +688,13 @@ function UsersTab() {
 
   return (
     <div>
-      <div className="mb-6 flex flex-row gap-4 items-center">
+      <div className="mb-6 flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Пребарај по ID, email, телефон, име, презиме или компанија"
-          className="flex-1 px-4 py-3 rounded-lg bg-bg-light border-2 border-primary-500/30 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 h-[48px]"
+          className="flex-1 px-4 py-3 rounded-lg bg-bg-light border-2 border-primary-500/30 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 h-[52px]"
         />
         <Dropdown
           value={roleFilter}
@@ -705,7 +705,7 @@ function UsersTab() {
             { value: 'Business', label: 'Правно лице' },
             { value: 'Admin', label: 'Админ' },
           ]}
-          className="w-48"
+          className="w-full sm:w-48"
         />
       </div>
 
@@ -820,14 +820,14 @@ function UsersTab() {
                     {(user.listings?.length || 0) > 0 && (
                       <button
                         onClick={() => handleViewListings(user)}
-                        className="px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg font-medium transition-colors bg-primary-700 hover:bg-primary-800 text-white text-center w-full sm:w-auto"
+                        className="px-3 sm:px-4 h-10 text-xs sm:text-sm rounded-lg font-medium transition-colors bg-primary-700 hover:bg-primary-800 text-white text-center w-full sm:w-auto flex items-center justify-center"
                       >
                         Види објави ({user.listings?.length || 0})
                       </button>
                     )}
                     <button
                       onClick={() => handleToggleStatus(user.id)}
-                      className={`px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg font-medium transition-colors text-center w-full sm:w-auto ${
+                      className={`px-3 sm:px-4 h-10 text-xs sm:text-sm rounded-lg font-medium transition-colors text-center w-full sm:w-auto flex items-center justify-center ${
                         user.active !== false
                           ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/30'
                           : 'bg-primary-500/20 text-primary-300 hover:bg-primary-500/30 border border-primary-500/30'
@@ -851,7 +851,7 @@ function UsersTab() {
           {!loadingMore && (
             <>
               {meta && meta.totalPages && currentPage < meta.totalPages ? (
-                <div className="text-center py-8">
+                <div className="flex justify-center py-8">
                   <button
                     onClick={handleLoadMore}
                     className="btn-primary px-8 py-3 text-lg font-semibold"
@@ -864,7 +864,7 @@ function UsersTab() {
                   <p className="text-gray-300">Нема повеќе корисници</p>
                 </div>
               ) : !meta && users.length >= 20 ? (
-                <div className="text-center py-8">
+                <div className="flex justify-center py-8">
                   <button
                     onClick={handleLoadMore}
                     className="btn-primary px-8 py-3 text-lg font-semibold"

@@ -275,6 +275,10 @@ export default function MyListingsPage() {
     return formatTimeRemaining(timeUntilRefresh);
   }, [timeUntilRefresh, formatTimeRemaining]);
 
+  const hasActiveListings = useMemo(() => {
+    return listings.some((listing) => listing.status === 'Active');
+  }, [listings]);
+
   if (!isInitialized && !user) {
     return null;
   }
@@ -309,7 +313,11 @@ export default function MyListingsPage() {
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <button
             onClick={handleRefreshDates}
-            disabled={isRefreshing || (timeUntilRefresh !== null && timeUntilRefresh > 0)}
+            disabled={
+              isRefreshing ||
+              (timeUntilRefresh !== null && timeUntilRefresh > 0) ||
+              !hasActiveListings
+            }
             className="w-full sm:w-auto btn-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
           >
             {isRefreshing ? (
@@ -323,15 +331,20 @@ export default function MyListingsPage() {
               'Обнови дата'
             )}
           </button>
+          {(!listings || listings.length === 0) && (
+            <a
+              href="/listings/new"
+              className="w-full sm:w-auto btn-primary inline-block text-center"
+            >
+              Креирај објава
+            </a>
+          )}
         </div>
       </div>
 
       {!listings || listings.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-300 text-lg mb-4">Сè уште немате објави</p>
-          <a href="/listings/new" className="btn-primary inline-block">
-            Креирај објава
-          </a>
+          <p className="text-gray-300 text-lg">Сè уште немате објави</p>
         </div>
       ) : (
         <>
@@ -354,7 +367,7 @@ export default function MyListingsPage() {
           )}
 
           {meta && meta.totalPages && currentPage < meta.totalPages && !loadingMore && (
-            <div className="text-center py-8">
+            <div className="flex justify-center py-8">
               <button
                 onClick={handleLoadMore}
                 className="btn-primary px-8 py-3 text-lg font-semibold"
