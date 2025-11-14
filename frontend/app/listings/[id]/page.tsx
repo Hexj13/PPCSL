@@ -661,7 +661,7 @@ export default function ListingPage() {
                   user && listing.user && user.id === listing.user.id
                     ? 'bg-primary-500/10 text-primary-300 border border-primary-500/30 cursor-not-allowed'
                     : isFavorite
-                      ? 'bg-gradient-to-r from-gray-600 to-gray-700 text-white hover:shadow-lg hover:from-gray-700 hover:to-gray-800 border border-primary-500/20 hover:border-primary-500/30 transform hover:-translate-y-0.5'
+                      ? 'bg-bg-light text-white border-2 border-primary-500/30 hover:bg-primary-500/10 hover:border-primary-500'
                       : 'btn-secondary'
                 }`}
                 title={

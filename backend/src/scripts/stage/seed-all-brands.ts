@@ -9,16 +9,24 @@ import { RedisService } from '../../common/redis.service';
 import { CACHE_PREFIXES } from '../../common/utils/cache.utils';
 import { AppDataSource } from '../../data-source';
 
-async function checkDuplicates() {
-  console.log('\n🔍 Проверка на дубликати...\n');
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function checkDuplicates(skipCheck: boolean = false) {
+  if (skipCheck) {
+    return { brandDuplicates: 0, modelDuplicates: 0 };
+  }
 
   const brandRepo = AppDataSource.getRepository(Brand);
   const modelRepo = AppDataSource.getRepository(VehicleModel);
 
-  console.log('📊 Проверка на дубликати на марки...\n');
   const allBrands = await brandRepo.find({
     order: { name: 'ASC' },
+    select: ['id', 'name', 'order'],
   });
+
+  await delay(100);
 
   const brandNames = new Map<string, Brand[]>();
   for (const brand of allBrands) {
@@ -33,74 +41,61 @@ async function checkDuplicates() {
   for (const [, brands] of brandNames.entries()) {
     if (brands.length > 1) {
       brandDuplicates++;
-      console.log(`⚠️  Дубликат марка: "${brands[0].name}" (${brands.length} записи)`);
-      brands.forEach((brand, index) => {
-        console.log(`   ${index + 1}. ID: ${brand.id}, Order: ${brand.order}`);
-      });
-      console.log('');
     }
   }
 
-  if (brandDuplicates === 0) {
-    console.log('✅ Нема дубликати на марки\n');
-  } else {
-    console.log(`\n📊 Најдени ${brandDuplicates} дубликати на марки\n`);
-  }
+  await delay(200);
 
-  console.log('📊 Проверка на дубликати на модели...\n');
-  const allModels = await modelRepo.find({
-    relations: ['brand'],
-    order: { name: 'ASC' },
-  });
-
+  const brands = await brandRepo.find({ select: ['id', 'name'] });
   const modelDuplicatesByBrand = new Map<string, Map<string, VehicleModel[]>>();
+  let duplicatesInBrand = 0;
+  const BATCH_SIZE = 20;
 
-  for (const model of allModels) {
-    const modelNameLower = model.name.toLowerCase().trim();
-    const brandName = model.brand?.name || 'Unknown';
+  for (let i = 0; i < brands.length; i += BATCH_SIZE) {
+    const batch = brands.slice(i, i + BATCH_SIZE);
 
-    if (!modelDuplicatesByBrand.has(brandName)) {
-      modelDuplicatesByBrand.set(brandName, new Map());
+    for (const brand of batch) {
+      const models = await modelRepo.find({
+        where: { brand_id: brand.id },
+        select: ['id', 'name', 'order'],
+        order: { name: 'ASC' },
+      });
+
+      if (!modelDuplicatesByBrand.has(brand.name)) {
+        modelDuplicatesByBrand.set(brand.name, new Map());
+      }
+      const brandModels = modelDuplicatesByBrand.get(brand.name)!;
+
+      for (const model of models) {
+        const modelNameLower = model.name.toLowerCase().trim();
+        if (!brandModels.has(modelNameLower)) {
+          brandModels.set(modelNameLower, []);
+        }
+        brandModels.get(modelNameLower)!.push(model);
+      }
     }
-    const brandModels = modelDuplicatesByBrand.get(brandName)!;
 
-    if (!brandModels.has(modelNameLower)) {
-      brandModels.set(modelNameLower, []);
-    }
-    brandModels.get(modelNameLower)!.push(model);
+    await delay(150);
   }
 
-  let duplicatesInBrand = 0;
-
-  console.log('🔍 Дубликати на модели во рамки на иста марка:\n');
-  for (const [brandName, models] of modelDuplicatesByBrand.entries()) {
+  for (const [, models] of modelDuplicatesByBrand.entries()) {
     for (const [, modelList] of models.entries()) {
       if (modelList.length > 1) {
         duplicatesInBrand++;
-        console.log(`⚠️  "${brandName}" - "${modelList[0].name}" (${modelList.length} записи)`);
-        modelList.forEach((model, index) => {
-          console.log(`   ${index + 1}. ID: ${model.id}, Order: ${model.order}`);
-        });
-        console.log('');
       }
     }
-  }
-
-  if (duplicatesInBrand === 0) {
-    console.log('✅ Нема дубликати на модели во рамки на иста марка\n');
-  } else {
-    console.log(`\n📊 Најдени ${duplicatesInBrand} дубликати на модели во рамки на иста марка\n`);
   }
 
   return { brandDuplicates, modelDuplicates: duplicatesInBrand };
 }
 
 async function seedAllBrands() {
-  console.log('🌱 Започнување со полно сеење на сите марки и модели...\n');
-  console.log('Ова ќе ги изврши сите скриптови за додавање на марки и модели.\n');
+  const skipDuplicateCheck = process.argv.includes('--skip-duplicates');
+  const delayBetweenScripts = parseInt(process.env.SCRIPT_DELAY_MS || '2000', 10);
+
+  console.log('🌱 Сеење на марки и модели...\n');
 
   await AppDataSource.initialize();
-  console.log('✅ Поврзано со базата на податоци\n');
 
   const scripts = [
     { name: 'Основни марки и модели', script: 'add-brands' },
@@ -114,72 +109,71 @@ async function seedAllBrands() {
     { name: 'Историски и ретки модели', script: 'add-historical' },
   ];
 
-  for (const { name, script } of scripts) {
+  for (let i = 0; i < scripts.length; i++) {
+    const { name, script } = scripts[i];
     try {
-      console.log(`\n📦 Извршување: ${name}...`);
+      process.stdout.write(`[${i + 1}/${scripts.length}] ${name}... `);
       execSync(`npm run ${script}`, {
-        stdio: 'inherit',
+        stdio: 'pipe',
         cwd: process.cwd(),
       });
-      console.log(`✅ ${name} - завршено\n`);
+      console.log('✅');
+
+      if (i < scripts.length - 1) {
+        await delay(delayBetweenScripts);
+      }
     } catch (error) {
-      console.error(`❌ Грешка при извршување на ${name}:`, error);
+      console.log('❌');
+      console.error(`   Грешка: ${name}`);
+      await delay(delayBetweenScripts);
     }
   }
 
-  console.log('\n✅ Сите скриптови се извршени успешно!');
-  console.log('\n📊 Проверка на резултатите...\n');
+  await delay(500);
 
   const brandRepo = AppDataSource.getRepository(Brand);
   const modelRepo = AppDataSource.getRepository(VehicleModel);
 
-  const brands = await brandRepo.find();
-  let totalModels = 0;
+  const brands = await brandRepo.find({ select: ['id'] });
+  const totalModels = await modelRepo.count();
 
-  for (const brand of brands) {
-    const models = await modelRepo.find({ where: { brand_id: brand.id } });
-    totalModels += models.length;
-  }
+  console.log(`\n📊 Резултати: ${brands.length} марки, ${totalModels} модели`);
 
-  console.log(`📊 Статистика:`);
-  console.log(`   - Вкупно марки: ${brands.length}`);
-  console.log(`   - Вкупно модели: ${totalModels}\n`);
+  await delay(500);
 
-  const duplicates = await checkDuplicates();
+  const duplicates = await checkDuplicates(skipDuplicateCheck);
 
   if (duplicates.brandDuplicates > 0 || duplicates.modelDuplicates > 0) {
-    console.log('\n⚠️  ВНИМАНИЕ: Најдени се дубликати!');
-    console.log('   Ве молиме извршете го скриптот: npm run remove-duplicates\n');
+    console.log(
+      `\n⚠️  Најдени дубликати: ${duplicates.brandDuplicates} марки, ${duplicates.modelDuplicates} модели`,
+    );
+    console.log('   Извршете: npm run remove-duplicates');
   }
 
-  console.log('🗑️  Чистење на кеш за марки и модели...\n');
+  await delay(500);
+
   try {
     const configService = new ConfigService();
     const redisService = new RedisService(configService);
     await redisService.onModuleInit();
 
-    const deletedBrands = await redisService.invalidateByPrefix(CACHE_PREFIXES.brands);
-    console.log(`   ✅ Избришани ${deletedBrands} кешови за марки`);
-
-    const deletedModels = await redisService.invalidateByPrefix(CACHE_PREFIXES.brandsModels);
-    console.log(`   ✅ Избришани ${deletedModels} кешови за модели\n`);
+    await redisService.invalidateByPrefix(CACHE_PREFIXES.brands);
+    await redisService.invalidateByPrefix(CACHE_PREFIXES.brandsModels);
 
     await redisService.onModuleDestroy();
   } catch (error) {
-    console.warn('⚠️  Не може да се исчисти кешот (можеби Redis не е достапен):', error);
-    console.warn('   Можете да го извршите: npm run clear-cache:brands\n');
+    console.warn('\n⚠️  Кешот не може да се исчисти (Redis не е достапен)');
   }
 
   await AppDataSource.destroy();
-  console.log('🔌 Врската со базата на податоци е затворена');
 }
 
 seedAllBrands()
   .then(() => {
-    console.log('\n✨ Скриптот заврши успешно!');
+    console.log('\n✅ Завршено');
     process.exit(0);
   })
   .catch((error) => {
-    console.error('❌ Грешка:', error);
+    console.error('\n❌ Грешка:', error.message);
     process.exit(1);
   });
