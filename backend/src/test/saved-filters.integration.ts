@@ -76,7 +76,15 @@ describe('Saved Filters API Integration Tests', () => {
     });
 
     it('should return 400 when limit of 20 filters is reached', async () => {
-      for (let i = 0; i < 20; i++) {
+      const existingFiltersResponse = await request
+        .get('/api/saved-filters')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      const existingCount = existingFiltersResponse.body.length;
+      const filtersToCreate = 20 - existingCount;
+
+      for (let i = 0; i < filtersToCreate; i++) {
         await request
           .post('/api/saved-filters')
           .set('Authorization', `Bearer ${authToken}`)
@@ -133,20 +141,31 @@ describe('Saved Filters API Integration Tests', () => {
 
   describe('PATCH /api/saved-filters/:id', () => {
     it('should update saved filter name and match OpenAPI schema', async () => {
-      if (!savedFilterId) {
-        const createResponse = await request
-          .post('/api/saved-filters')
+      let filterIdToUpdate = savedFilterId;
+
+      if (!filterIdToUpdate) {
+        const filtersResponse = await request
+          .get('/api/saved-filters')
           .set('Authorization', `Bearer ${authToken}`)
-          .send({
-            name: 'Тест филтер',
-            filters: { brand_ids: ['brand-1'] },
-          })
-          .expect(201);
-        savedFilterId = createResponse.body.id;
+          .expect(200);
+
+        if (filtersResponse.body.length > 0) {
+          filterIdToUpdate = filtersResponse.body[0].id;
+        } else {
+          const createResponse = await request
+            .post('/api/saved-filters')
+            .set('Authorization', `Bearer ${authToken}`)
+            .send({
+              name: 'Тест филтер',
+              filters: { brand_ids: ['brand-1'] },
+            })
+            .expect(201);
+          filterIdToUpdate = createResponse.body.id;
+        }
       }
 
       const response = await request
-        .patch(`/api/saved-filters/${savedFilterId}`)
+        .patch(`/api/saved-filters/${filterIdToUpdate}`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({ name: 'Ажурирано име' })
         .expect(200);
@@ -178,16 +197,26 @@ describe('Saved Filters API Integration Tests', () => {
 
   describe('DELETE /api/saved-filters/:id', () => {
     it('should delete saved filter and match OpenAPI schema', async () => {
-      let filterToDelete: string;
-      const createResponse = await request
-        .post('/api/saved-filters')
+      const filtersResponse = await request
+        .get('/api/saved-filters')
         .set('Authorization', `Bearer ${authToken}`)
-        .send({
-          name: 'Филтер за бришење',
-          filters: { brand_ids: ['brand-1'] },
-        })
-        .expect(201);
-      filterToDelete = createResponse.body.id;
+        .expect(200);
+
+      let filterToDelete: string;
+
+      if (filtersResponse.body.length > 0) {
+        filterToDelete = filtersResponse.body[0].id;
+      } else {
+        const createResponse = await request
+          .post('/api/saved-filters')
+          .set('Authorization', `Bearer ${authToken}`)
+          .send({
+            name: 'Филтер за бришење',
+            filters: { brand_ids: ['brand-1'] },
+          })
+          .expect(201);
+        filterToDelete = createResponse.body.id;
+      }
 
       const response = await request
         .delete(`/api/saved-filters/${filterToDelete}`)

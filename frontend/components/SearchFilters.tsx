@@ -142,73 +142,73 @@ export function SearchFilters() {
   const getInitialFilters = () => {
     const storedFilters = hasStorageFlag ? loadFiltersFromStorage() : null;
     return {
-      brand_ids:
-        storedFilters?.brand_ids ||
-        parseArrayParam(
-          searchParams.get('brand_ids') || searchParams.get('brand_id') || null,
-          hasEncodedArrays
-        ),
-      model_ids:
-        storedFilters?.model_ids ||
-        parseArrayParam(
-          searchParams.get('model_ids') || searchParams.get('model_id') || null,
-          hasEncodedArrays
-        ),
-      cities:
-        storedFilters?.cities ||
-        parseArrayParam(
-          searchParams.get('cities') || searchParams.get('city') || null,
-          hasEncodedArrays
-        ),
+      brand_ids: Array.isArray(storedFilters?.brand_ids)
+        ? (storedFilters.brand_ids as string[])
+        : parseArrayParam(
+            searchParams.get('brand_ids') || searchParams.get('brand_id') || null,
+            hasEncodedArrays
+          ),
+      model_ids: Array.isArray(storedFilters?.model_ids)
+        ? (storedFilters.model_ids as string[])
+        : parseArrayParam(
+            searchParams.get('model_ids') || searchParams.get('model_id') || null,
+            hasEncodedArrays
+          ),
+      cities: Array.isArray(storedFilters?.cities)
+        ? (storedFilters.cities as string[])
+        : parseArrayParam(
+            searchParams.get('cities') || searchParams.get('city') || null,
+            hasEncodedArrays
+          ),
       year_gte: searchParams.get('year_gte') || '',
       year_lte: searchParams.get('year_lte') || currentYear,
       price_gte: searchParams.get('price_gte') || '',
       price_lte: searchParams.get('price_lte') || '',
       mileage_gte: searchParams.get('mileage_gte') || '',
       mileage_lte: searchParams.get('mileage_lte') || '',
-      fuels:
-        storedFilters?.fuels ||
-        parseArrayParam(
-          searchParams.get('fuels') || searchParams.get('fuel') || null,
-          hasEncodedArrays
-        ),
-      transmissions:
-        storedFilters?.transmissions ||
-        parseArrayParam(
-          searchParams.get('transmissions') || searchParams.get('transmission') || null,
-          hasEncodedArrays
-        ),
-      body_types:
-        storedFilters?.body_types ||
-        parseArrayParam(
-          searchParams.get('body_types') || searchParams.get('body_type') || null,
-          hasEncodedArrays
-        ),
+      fuels: Array.isArray(storedFilters?.fuels)
+        ? (storedFilters.fuels as string[])
+        : parseArrayParam(
+            searchParams.get('fuels') || searchParams.get('fuel') || null,
+            hasEncodedArrays
+          ),
+      transmissions: Array.isArray(storedFilters?.transmissions)
+        ? (storedFilters.transmissions as string[])
+        : parseArrayParam(
+            searchParams.get('transmissions') || searchParams.get('transmission') || null,
+            hasEncodedArrays
+          ),
+      body_types: Array.isArray(storedFilters?.body_types)
+        ? (storedFilters.body_types as string[])
+        : parseArrayParam(
+            searchParams.get('body_types') || searchParams.get('body_type') || null,
+            hasEncodedArrays
+          ),
       engine_displ_l_gte: searchParams.get('engine_displ_l_gte') || '',
       engine_displ_l_lte: searchParams.get('engine_displ_l_lte') || '',
-      colors:
-        storedFilters?.colors ||
-        parseArrayParam(
-          searchParams.get('colors') || searchParams.get('color') || null,
-          hasEncodedArrays
-        ),
-      doors:
-        storedFilters?.doors ||
-        parseArrayParam(searchParams.get('doors') || null, hasEncodedArrays),
+      colors: Array.isArray(storedFilters?.colors)
+        ? (storedFilters.colors as string[])
+        : parseArrayParam(
+            searchParams.get('colors') || searchParams.get('color') || null,
+            hasEncodedArrays
+          ),
+      doors: Array.isArray(storedFilters?.doors)
+        ? (storedFilters.doors as string[])
+        : parseArrayParam(searchParams.get('doors') || null, hasEncodedArrays),
       currency: searchParams.get('currency') || '',
       urgent: searchParams.get('urgent') === 'true',
       is_new: searchParams.get('is_new') === 'true',
-      conditions:
-        storedFilters?.conditions ||
-        parseArrayParam(searchParams.get('conditions') || null, hasEncodedArrays),
-      registration_types:
-        storedFilters?.registration_types ||
-        parseArrayParam(searchParams.get('registration_types') || null, hasEncodedArrays),
+      conditions: Array.isArray(storedFilters?.conditions)
+        ? (storedFilters.conditions as string[])
+        : parseArrayParam(searchParams.get('conditions') || null, hasEncodedArrays),
+      registration_types: Array.isArray(storedFilters?.registration_types)
+        ? (storedFilters.registration_types as string[])
+        : parseArrayParam(searchParams.get('registration_types') || null, hasEncodedArrays),
       horsepower_gte: searchParams.get('horsepower_gte') || '',
       horsepower_lte: searchParams.get('horsepower_lte') || '',
-      drive_types:
-        storedFilters?.drive_types ||
-        parseArrayParam(searchParams.get('drive_types') || null, hasEncodedArrays),
+      drive_types: Array.isArray(storedFilters?.drive_types)
+        ? (storedFilters.drive_types as string[])
+        : parseArrayParam(searchParams.get('drive_types') || null, hasEncodedArrays),
       is_registered:
         searchParams.get('is_registered') === 'true'
           ? true

@@ -171,7 +171,7 @@ describe('SearchFilters', () => {
       },
     });
 
-    (useAuthStore as jest.Mock).mockReturnValue({
+    (useAuthStore as unknown as jest.Mock).mockReturnValue({
       user: null,
     });
 
@@ -396,7 +396,7 @@ describe('SearchFilters', () => {
       });
 
       const priceInputs = screen.getAllByTitle(/Внесете цена.*0-999999999/i);
-      const priceInput = priceInputs[0];
+      const priceInput = priceInputs[0] as HTMLInputElement;
 
       fireEvent.change(priceInput, { target: { value: '1000000000' } });
 
@@ -518,7 +518,7 @@ describe('SearchFilters', () => {
         expect(brandsApi.getAll).toHaveBeenCalled();
       });
 
-      const yearInput = screen.getByPlaceholderText(/2018/i);
+      const yearInput = screen.getByPlaceholderText(/2018/i) as HTMLInputElement;
       fireEvent.change(yearInput, { target: { value: '2020abc' } });
 
       await waitFor(() => {
@@ -534,7 +534,7 @@ describe('SearchFilters', () => {
         expect(brandsApi.getAll).toHaveBeenCalled();
       });
 
-      const yearInput = screen.getByPlaceholderText(/2018/i);
+      const yearInput = screen.getByPlaceholderText(/2018/i) as HTMLInputElement;
       fireEvent.change(yearInput, { target: { value: '20201' } });
 
       await waitFor(() => {
@@ -590,7 +590,7 @@ describe('SearchFilters', () => {
     });
 
     it('should open modal when authenticated user clicks save button', async () => {
-      (useAuthStore as jest.Mock).mockReturnValue({
+      (useAuthStore as unknown as jest.Mock).mockReturnValue({
         user: { id: 'user-1', email: 'test@example.com' },
       });
 
@@ -617,7 +617,7 @@ describe('SearchFilters', () => {
     });
 
     it('should redirect to login when unauthenticated user clicks save button', async () => {
-      (useAuthStore as jest.Mock).mockReturnValue({
+      (useAuthStore as unknown as jest.Mock).mockReturnValue({
         user: null,
       });
 
@@ -652,7 +652,7 @@ describe('SearchFilters', () => {
     });
 
     it('should show correct button text for authenticated user', async () => {
-      (useAuthStore as jest.Mock).mockReturnValue({
+      (useAuthStore as unknown as jest.Mock).mockReturnValue({
         user: { id: 'user-1', email: 'test@example.com' },
       });
 
@@ -671,7 +671,7 @@ describe('SearchFilters', () => {
     });
 
     it('should show correct button text for unauthenticated user', async () => {
-      (useAuthStore as jest.Mock).mockReturnValue({
+      (useAuthStore as unknown as jest.Mock).mockReturnValue({
         user: null,
       });
 
