@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
 import { ListingCard } from '@/components/ListingCard';
 import { ListingCardSkeleton } from '@/components/ListingCardSkeleton';
@@ -11,7 +11,7 @@ import { useAuthStore, useFavoritesStore } from '@/lib/store';
 
 type FavoritesTab = 'listings' | 'filters';
 
-export default function FavoritesPage() {
+function FavoritesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isInitialized } = useAuthStore();
@@ -156,5 +156,13 @@ export default function FavoritesPage() {
 
       {activeTab === 'filters' && <SavedFiltersList />}
     </div>
+  );
+}
+
+export default function FavoritesPage() {
+  return (
+    <Suspense fallback={<div>Вчитување...</div>}>
+      <FavoritesContent />
+    </Suspense>
   );
 }

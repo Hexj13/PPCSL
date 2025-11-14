@@ -98,10 +98,8 @@ interface MultiSelectDropdownProps {
 jest.mock('./MultiSelectDropdown', () => ({
   MultiSelectDropdown: (props: MultiSelectDropdownProps) => {
     const { values, onChange, options, disabled, placeholder } = props;
-    const selectRef = React.useRef<HTMLSelectElement>(null);
     return (
       <select
-        ref={selectRef}
         multiple
         value={values}
         onChange={(e) => {
@@ -113,7 +111,6 @@ jest.mock('./MultiSelectDropdown', () => ({
         }}
         disabled={disabled}
         data-testid="multiselect-dropdown"
-        data-onchange={(onChange as any).__testHelper}
         {...(placeholder ? ({ 'data-placeholder': placeholder } as Record<string, string>) : {})}
       >
         {options.map((opt: DropdownOption) => (
