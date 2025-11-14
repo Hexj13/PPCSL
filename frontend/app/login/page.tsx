@@ -113,17 +113,24 @@ export default function LoginPage() {
 
           if (validComparisons.length > 0 && typeof window !== 'undefined') {
             const currentComparisons = comparisonStore.comparisons;
-            localStorage.setItem(
-              'comparison-storage',
-              JSON.stringify({
-                state: { comparisons: currentComparisons },
-                version: 0,
+            const storageData = {
+              state: { comparisons: currentComparisons },
+              version: 0,
+            };
+
+            localStorage.setItem('comparison-storage', JSON.stringify(storageData));
+
+            await new Promise((resolve) =>
+              requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                  localStorage.setItem('comparison-storage', JSON.stringify(storageData));
+                  setTimeout(resolve, 200);
+                });
               })
             );
           }
 
           localStorage.removeItem('pendingComparisons');
-          await new Promise((resolve) => setTimeout(resolve, 50));
         }
 
         const pendingSavedFilter = localStorage.getItem('pendingSavedFilter');
