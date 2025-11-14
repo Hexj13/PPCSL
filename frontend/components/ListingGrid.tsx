@@ -9,6 +9,36 @@ import { useAuthStore, useFavoritesStore } from '@/lib/store';
 import { ListingCard } from './ListingCard';
 import { ListingCardSkeleton } from './ListingCardSkeleton';
 
+const FILTERS_STORAGE_KEY = 'kupito_search_filters';
+
+const decodeArray = (encoded: string): string[] => {
+  if (!encoded) return [];
+  try {
+    let base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4) {
+      base64 += '=';
+    }
+    const json = atob(base64);
+    return JSON.parse(json);
+  } catch {
+    return encoded.split(',').filter((v) => v.trim() !== '');
+  }
+};
+
+const loadFiltersFromStorage = (): Record<string, string[]> | null => {
+  if (typeof window !== 'undefined') {
+    try {
+      const stored =
+        sessionStorage.getItem(FILTERS_STORAGE_KEY) || localStorage.getItem(FILTERS_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : null;
+    } catch (e) {
+      console.error('Failed to load filters from storage:', e);
+      return null;
+    }
+  }
+  return null;
+};
+
 export function ListingGrid() {
   const searchParams = useSearchParams();
   const [listings, setListings] = useState<Listing[]>([]);
@@ -32,7 +62,44 @@ export function ListingGrid() {
         limit,
       };
 
+      const hasStorageFlag = searchParams.get('_f') === '1';
+      const hasEncodedArrays = searchParams.get('_e') === '1';
+      const storedFilters = hasStorageFlag ? loadFiltersFromStorage() : null;
+
+      if (storedFilters) {
+        Object.entries(storedFilters).forEach(([key, values]) => {
+          if (Array.isArray(values) && values.length > 0) {
+            params[key] = values.join(',');
+          }
+        });
+      }
+
       searchParams.forEach((value, key) => {
+        if (key === '_f' || key === '_e') {
+          return;
+        }
+        if (hasEncodedArrays && !storedFilters) {
+          const arrayParams = [
+            'brand_ids',
+            'model_ids',
+            'cities',
+            'fuels',
+            'transmissions',
+            'body_types',
+            'colors',
+            'doors',
+            'conditions',
+            'registration_types',
+            'drive_types',
+          ];
+          if (arrayParams.includes(key)) {
+            const decoded = decodeArray(value);
+            if (decoded.length > 0) {
+              params[key] = decoded.join(',');
+            }
+            return;
+          }
+        }
         if (key === 'engine_displ_l_gte' || key === 'engine_displ_l_lte') {
           params[key] = parseFloat(value);
         } else if (
@@ -200,7 +267,44 @@ export function ListingGrid() {
         limit: 20,
       };
 
+      const hasStorageFlag = searchParams.get('_f') === '1';
+      const hasEncodedArrays = searchParams.get('_e') === '1';
+      const storedFilters = hasStorageFlag ? loadFiltersFromStorage() : null;
+
+      if (storedFilters) {
+        Object.entries(storedFilters).forEach(([key, values]) => {
+          if (Array.isArray(values) && values.length > 0) {
+            params[key] = values.join(',');
+          }
+        });
+      }
+
       searchParams.forEach((value, key) => {
+        if (key === '_f' || key === '_e') {
+          return;
+        }
+        if (hasEncodedArrays && !storedFilters) {
+          const arrayParams = [
+            'brand_ids',
+            'model_ids',
+            'cities',
+            'fuels',
+            'transmissions',
+            'body_types',
+            'colors',
+            'doors',
+            'conditions',
+            'registration_types',
+            'drive_types',
+          ];
+          if (arrayParams.includes(key)) {
+            const decoded = decodeArray(value);
+            if (decoded.length > 0) {
+              params[key] = decoded.join(',');
+            }
+            return;
+          }
+        }
         if (key === 'engine_displ_l_gte' || key === 'engine_displ_l_lte') {
           params[key] = parseFloat(value);
         } else if (

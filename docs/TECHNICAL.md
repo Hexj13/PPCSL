@@ -207,6 +207,7 @@ Kupito/
 │   │   ├── users/    # Users
 │   │   ├── listings/ # Listings
 │   │   ├── favorites/# Favorites
+│   │   ├── saved-filters/ # Saved search filters
 │   │   ├── brands/   # Brands and models
 │   │   ├── admin/    # Admin panel
 │   │   └── scripts/  # Utility scripts
@@ -267,6 +268,15 @@ DELETE /api/favorites/:id             # Remove from favorites
 GET    /api/favorites/check/:id       # Check if listing is in favorites
 ```
 
+### Saved Filters
+
+```http
+GET    /api/saved-filters              # Get all saved filters (authenticated users)
+POST   /api/saved-filters              # Create saved filter (max 20 per user)
+PATCH  /api/saved-filters/:id          # Update saved filter name
+DELETE /api/saved-filters/:id          # Delete saved filter
+```
+
 ### Upload
 
 ```http
@@ -313,6 +323,9 @@ GET /health                          # Health check (database, Redis)
 
 **Users Table:**
 - `phone` (partial), `type`, `active`, `email` (unique)
+
+**Saved Filters Table:**
+- `user_id`, `created_at`
 
 #### Triggers
 

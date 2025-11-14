@@ -1,16 +1,25 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ListingCard } from '@/components/ListingCard';
 import { ListingCardSkeleton } from '@/components/ListingCardSkeleton';
+import { SavedFiltersList } from '@/components/SavedFiltersList';
 import { favoritesApi, Listing } from '@/lib/api';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
 
+type FavoritesTab = 'listings' | 'filters';
+
 export default function FavoritesPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isInitialized } = useAuthStore();
+  const getInitialTab = (): FavoritesTab => {
+    const tabParam = searchParams.get('tab');
+    return tabParam === 'filters' || tabParam === 'listings' ? tabParam : 'listings';
+  };
+  const [activeTab, setActiveTab] = useState<FavoritesTab>(getInitialTab());
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -57,6 +66,20 @@ export default function FavoritesPage() {
   }, [user]);
 
   useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'filters' || tabParam === 'listings') {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (tab: FavoritesTab) => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', tab);
+    router.replace(`/favorites?${params.toString()}`, { scroll: false });
+  };
+
+  useEffect(() => {
     if (isInitialized && !user) {
       router.push('/login');
       return;
@@ -77,30 +100,61 @@ export default function FavoritesPage() {
         Омилени
       </h1>
 
-      {isInitialLoading || loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
-          {[...Array(8)].map((_, i) => (
-            <ListingCardSkeleton key={i} />
-          ))}
+      <div className="mb-6">
+        <div className="flex gap-3 border-b border-primary-500/20">
+          <button
+            onClick={() => handleTabChange('listings')}
+            className={`px-6 py-3 font-semibold transition-colors border-b-2 ${
+              activeTab === 'listings'
+                ? 'border-primary-500 text-primary-500'
+                : 'border-transparent text-gray-400 hover:text-gray-300'
+            }`}
+          >
+            Автомобили
+          </button>
+          <button
+            onClick={() => handleTabChange('filters')}
+            className={`px-6 py-3 font-semibold transition-colors border-b-2 ${
+              activeTab === 'filters'
+                ? 'border-primary-500 text-primary-500'
+                : 'border-transparent text-gray-400 hover:text-gray-300'
+            }`}
+          >
+            Филтри
+          </button>
         </div>
-      ) : listings.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-300 text-lg">Во омилени сè уште нема ништо</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
-          {listings.map((listing) => (
-            <ListingCard
-              key={listing.id}
-              listing={listing}
-              forceFavorite={true}
-              onRemove={() => {
-                setListings((prev) => prev.filter((l) => l.id !== listing.id));
-              }}
-            />
-          ))}
-        </div>
+      </div>
+
+      {activeTab === 'listings' && (
+        <>
+          {isInitialLoading || loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
+              {[...Array(8)].map((_, i) => (
+                <ListingCardSkeleton key={i} />
+              ))}
+            </div>
+          ) : listings.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-300 text-lg">Во омилени сè уште нема ништо</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
+              {listings.map((listing) => (
+                <ListingCard
+                  key={listing.id}
+                  listing={listing}
+                  forceFavorite={true}
+                  onRemove={() => {
+                    setListings((prev) => prev.filter((l) => l.id !== listing.id));
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
+
+      {activeTab === 'filters' && <SavedFiltersList />}
     </div>
   );
 }

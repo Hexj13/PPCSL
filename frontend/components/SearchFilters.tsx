@@ -6,9 +6,11 @@ import { toast } from 'react-hot-toast';
 
 import { brandsApi, citiesApi, Brand, VehicleModel, City } from '@/lib/api';
 import { ConditionType, DriveType, RegistrationType } from '@/lib/constants';
+import { useAuthStore } from '@/lib/store';
 
 import { Dropdown } from './Dropdown';
 import { MultiSelectDropdown } from './MultiSelectDropdown';
+import { SaveFilterModal } from './SaveFilterModal';
 import { SortDropdown } from './SortDropdown';
 
 const POPULAR_BRANDS = [
@@ -26,21 +28,92 @@ const POPULAR_BRANDS = [
 
 const POPULAR_CITIES = ['Скопје', 'Битола', 'Куманово', 'Прилеп', 'Тетово'];
 
+const FILTERS_STORAGE_KEY = 'kupito_search_filters';
+const MAX_URL_LENGTH = 1800;
+
+const encodeArray = (arr: string[]): string => {
+  if (arr.length === 0) return '';
+  try {
+    const json = JSON.stringify(arr);
+    return btoa(json).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  } catch (e) {
+    console.error('Failed to encode array:', e);
+    return arr.join(',');
+  }
+};
+
+const decodeArray = (encoded: string): string[] => {
+  if (!encoded) return [];
+  try {
+    let base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4) {
+      base64 += '=';
+    }
+    const json = atob(base64);
+    return JSON.parse(json);
+  } catch {
+    return encoded.split(',').filter((v) => v.trim() !== '');
+  }
+};
+
+const saveFiltersToStorage = (filters: Record<string, unknown>) => {
+  if (typeof window !== 'undefined') {
+    try {
+      sessionStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filters));
+      localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filters));
+    } catch (e) {
+      console.error('Failed to save filters to storage:', e);
+    }
+  }
+};
+
+const loadFiltersFromStorage = (): Record<string, unknown> | null => {
+  if (typeof window !== 'undefined') {
+    try {
+      const stored =
+        sessionStorage.getItem(FILTERS_STORAGE_KEY) || localStorage.getItem(FILTERS_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : null;
+    } catch (e) {
+      console.error('Failed to load filters from storage:', e);
+      return null;
+    }
+  }
+  return null;
+};
+
+const clearFiltersFromStorage = () => {
+  if (typeof window !== 'undefined') {
+    try {
+      sessionStorage.removeItem(FILTERS_STORAGE_KEY);
+      localStorage.removeItem(FILTERS_STORAGE_KEY);
+    } catch (e) {
+      console.error('Failed to clear filters from storage:', e);
+    }
+  }
+};
+
 export function SearchFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user } = useAuthStore();
   const [brands, setBrands] = useState<Brand[]>([]);
   const [models, setModels] = useState<VehicleModel[]>([]);
   const [cities, setCities] = useState<City[]>([]);
   const [loadingModels, setLoadingModels] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
 
   const currentYear = new Date().getFullYear().toString();
 
-  const parseArrayParam = (param: string | null): string[] => {
+  const parseArrayParam = (param: string | null, isEncoded: boolean = false): string[] => {
     if (!param) return [];
+    if (isEncoded) {
+      return decodeArray(param);
+    }
     return param.split(',').filter((v) => v.trim() !== '');
   };
 
+  const hasStorageFlag = searchParams.get('_f') === '1';
+  const hasEncodedArrays = searchParams.get('_e') === '1';
   const hasAdvancedFilters =
     searchParams.get('mileage_gte') ||
     searchParams.get('mileage_lte') ||
@@ -66,48 +139,88 @@ export function SearchFilters() {
 
   const [showAdvanced, setShowAdvanced] = useState(!!hasAdvancedFilters);
 
-  const [filters, setFilters] = useState({
-    brand_ids: parseArrayParam(
-      searchParams.get('brand_ids') || searchParams.get('brand_id') || null
-    ),
-    model_ids: parseArrayParam(
-      searchParams.get('model_ids') || searchParams.get('model_id') || null
-    ),
-    cities: parseArrayParam(searchParams.get('cities') || searchParams.get('city') || null),
-    year_gte: searchParams.get('year_gte') || '',
-    year_lte: searchParams.get('year_lte') || currentYear,
-    price_gte: searchParams.get('price_gte') || '',
-    price_lte: searchParams.get('price_lte') || '',
-    mileage_gte: searchParams.get('mileage_gte') || '',
-    mileage_lte: searchParams.get('mileage_lte') || '',
-    fuels: parseArrayParam(searchParams.get('fuels') || searchParams.get('fuel') || null),
-    transmissions: parseArrayParam(
-      searchParams.get('transmissions') || searchParams.get('transmission') || null
-    ),
-    body_types: parseArrayParam(
-      searchParams.get('body_types') || searchParams.get('body_type') || null
-    ),
-    engine_displ_l_gte: searchParams.get('engine_displ_l_gte') || '',
-    engine_displ_l_lte: searchParams.get('engine_displ_l_lte') || '',
-    colors: parseArrayParam(searchParams.get('colors') || searchParams.get('color') || null),
-    doors: parseArrayParam(searchParams.get('doors') || null),
-    currency: searchParams.get('currency') || '',
-    urgent: searchParams.get('urgent') === 'true',
-    is_new: searchParams.get('is_new') === 'true',
-    conditions: parseArrayParam(searchParams.get('conditions') || null),
-    registration_types: parseArrayParam(searchParams.get('registration_types') || null),
-    horsepower_gte: searchParams.get('horsepower_gte') || '',
-    horsepower_lte: searchParams.get('horsepower_lte') || '',
-    drive_types: parseArrayParam(searchParams.get('drive_types') || null),
-    is_registered:
-      searchParams.get('is_registered') === 'true'
-        ? true
-        : searchParams.get('is_registered') === 'false'
-          ? false
-          : undefined,
-    sortBy: searchParams.get('sortBy') || 'created_at',
-    sortOrder: searchParams.get('sortOrder') || 'DESC',
-  });
+  const getInitialFilters = () => {
+    const storedFilters = hasStorageFlag ? loadFiltersFromStorage() : null;
+    return {
+      brand_ids:
+        storedFilters?.brand_ids ||
+        parseArrayParam(
+          searchParams.get('brand_ids') || searchParams.get('brand_id') || null,
+          hasEncodedArrays
+        ),
+      model_ids:
+        storedFilters?.model_ids ||
+        parseArrayParam(
+          searchParams.get('model_ids') || searchParams.get('model_id') || null,
+          hasEncodedArrays
+        ),
+      cities:
+        storedFilters?.cities ||
+        parseArrayParam(
+          searchParams.get('cities') || searchParams.get('city') || null,
+          hasEncodedArrays
+        ),
+      year_gte: searchParams.get('year_gte') || '',
+      year_lte: searchParams.get('year_lte') || currentYear,
+      price_gte: searchParams.get('price_gte') || '',
+      price_lte: searchParams.get('price_lte') || '',
+      mileage_gte: searchParams.get('mileage_gte') || '',
+      mileage_lte: searchParams.get('mileage_lte') || '',
+      fuels:
+        storedFilters?.fuels ||
+        parseArrayParam(
+          searchParams.get('fuels') || searchParams.get('fuel') || null,
+          hasEncodedArrays
+        ),
+      transmissions:
+        storedFilters?.transmissions ||
+        parseArrayParam(
+          searchParams.get('transmissions') || searchParams.get('transmission') || null,
+          hasEncodedArrays
+        ),
+      body_types:
+        storedFilters?.body_types ||
+        parseArrayParam(
+          searchParams.get('body_types') || searchParams.get('body_type') || null,
+          hasEncodedArrays
+        ),
+      engine_displ_l_gte: searchParams.get('engine_displ_l_gte') || '',
+      engine_displ_l_lte: searchParams.get('engine_displ_l_lte') || '',
+      colors:
+        storedFilters?.colors ||
+        parseArrayParam(
+          searchParams.get('colors') || searchParams.get('color') || null,
+          hasEncodedArrays
+        ),
+      doors:
+        storedFilters?.doors ||
+        parseArrayParam(searchParams.get('doors') || null, hasEncodedArrays),
+      currency: searchParams.get('currency') || '',
+      urgent: searchParams.get('urgent') === 'true',
+      is_new: searchParams.get('is_new') === 'true',
+      conditions:
+        storedFilters?.conditions ||
+        parseArrayParam(searchParams.get('conditions') || null, hasEncodedArrays),
+      registration_types:
+        storedFilters?.registration_types ||
+        parseArrayParam(searchParams.get('registration_types') || null, hasEncodedArrays),
+      horsepower_gte: searchParams.get('horsepower_gte') || '',
+      horsepower_lte: searchParams.get('horsepower_lte') || '',
+      drive_types:
+        storedFilters?.drive_types ||
+        parseArrayParam(searchParams.get('drive_types') || null, hasEncodedArrays),
+      is_registered:
+        searchParams.get('is_registered') === 'true'
+          ? true
+          : searchParams.get('is_registered') === 'false'
+            ? false
+            : undefined,
+      sortBy: searchParams.get('sortBy') || 'created_at',
+      sortOrder: searchParams.get('sortOrder') || 'DESC',
+    };
+  };
+
+  const [filters, setFilters] = useState(getInitialFilters);
 
   const getBrandOptions = useCallback(() => {
     const popularBrands = brands
@@ -384,6 +497,8 @@ export function SearchFilters() {
     const allCitiesSelected = validCities.length === cities.length && cities.length > 0;
 
     const params = new URLSearchParams();
+    const largeArrays: Record<string, string[]> = {};
+
     Object.entries(filters).forEach(([key, value]) => {
       if (key === 'sortBy' || key === 'sortOrder') {
         if (value !== '') {
@@ -402,26 +517,40 @@ export function SearchFilters() {
       }
       if (key === 'brand_ids') {
         if (!allBrandsSelected && validBrandIds.length > 0) {
-          params.set(key, validBrandIds.join(','));
+          largeArrays[key] = validBrandIds;
         }
         return;
       }
       if (key === 'model_ids') {
         if (!allModelsSelected && validModelIds.length > 0) {
-          params.set(key, validModelIds.join(','));
+          largeArrays[key] = validModelIds;
         }
         return;
       }
       if (key === 'cities') {
         if (!allCitiesSelected && validCities.length > 0) {
-          params.set(key, validCities.join(','));
+          largeArrays[key] = validCities;
         }
         return;
       }
       if (Array.isArray(value)) {
         const filteredArray = value.filter((v) => v !== 'all' && v !== '');
         if (filteredArray.length > 0) {
-          params.set(key, filteredArray.join(','));
+          const arrayParams = [
+            'fuels',
+            'transmissions',
+            'body_types',
+            'colors',
+            'doors',
+            'conditions',
+            'registration_types',
+            'drive_types',
+          ];
+          if (arrayParams.includes(key)) {
+            largeArrays[key] = filteredArray;
+          } else {
+            params.set(key, filteredArray.join(','));
+          }
         }
       } else if (value !== '' && value !== undefined) {
         if (typeof value === 'boolean') {
@@ -434,7 +563,47 @@ export function SearchFilters() {
       }
     });
 
-    const newUrl = `/?${params.toString()}`;
+    let urlString = params.toString();
+    let needsStorage = false;
+    if (Object.keys(largeArrays).length > 0) {
+      const testParamsPlain = new URLSearchParams(params);
+      Object.entries(largeArrays).forEach(([key, values]) => {
+        testParamsPlain.set(key, values.join(','));
+      });
+      const testUrlPlain = `/?${testParamsPlain.toString()}`;
+
+      if (testUrlPlain.length > MAX_URL_LENGTH) {
+        const testParamsEncoded = new URLSearchParams(params);
+        Object.entries(largeArrays).forEach(([key, values]) => {
+          testParamsEncoded.set(key, encodeArray(values));
+        });
+        testParamsEncoded.set('_e', '1');
+        const testUrlEncoded = `/?${testParamsEncoded.toString()}`;
+
+        if (testUrlEncoded.length > MAX_URL_LENGTH) {
+          needsStorage = true;
+          saveFiltersToStorage(largeArrays);
+          params.set('_f', '1');
+        } else {
+          Object.entries(largeArrays).forEach(([key, values]) => {
+            params.set(key, encodeArray(values));
+          });
+          params.set('_e', '1');
+          urlString = params.toString();
+        }
+      } else {
+        Object.entries(largeArrays).forEach(([key, values]) => {
+          params.set(key, values.join(','));
+        });
+        urlString = params.toString();
+      }
+    }
+
+    if (!needsStorage) {
+      clearFiltersFromStorage();
+    }
+
+    const newUrl = `/?${urlString}`;
     const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
     startTransition(() => {
       router.replace(newUrl, { scroll: false });
@@ -455,7 +624,43 @@ export function SearchFilters() {
     });
   };
 
+  const hasActiveFilters = () => {
+    if (
+      filters.brand_ids.length > 0 ||
+      filters.model_ids.length > 0 ||
+      filters.cities.length > 0 ||
+      filters.year_gte !== '' ||
+      filters.year_lte !== currentYear ||
+      filters.price_gte !== '' ||
+      filters.price_lte !== '' ||
+      filters.mileage_gte !== '' ||
+      filters.mileage_lte !== '' ||
+      filters.fuels.length > 0 ||
+      filters.transmissions.length > 0 ||
+      filters.body_types.length > 0 ||
+      filters.engine_displ_l_gte !== '' ||
+      filters.engine_displ_l_lte !== '' ||
+      filters.colors.length > 0 ||
+      filters.doors.length > 0 ||
+      filters.currency !== '' ||
+      filters.urgent ||
+      filters.is_new ||
+      filters.conditions.length > 0 ||
+      filters.registration_types.length > 0 ||
+      filters.horsepower_gte !== '' ||
+      filters.horsepower_lte !== '' ||
+      filters.drive_types.length > 0 ||
+      filters.is_registered !== undefined ||
+      filters.sortBy !== 'created_at' ||
+      filters.sortOrder !== 'DESC'
+    ) {
+      return true;
+    }
+    return false;
+  };
+
   const handleReset = () => {
+    clearFiltersFromStorage();
     setFilters({
       brand_ids: [],
       model_ids: [],
@@ -494,6 +699,14 @@ export function SearchFilters() {
         });
       }
     });
+  };
+
+  const canSaveFilter = () => {
+    return hasActiveFilters();
+  };
+
+  const getFiltersForSave = () => {
+    return { ...filters };
   };
 
   return (
@@ -1150,14 +1363,59 @@ export function SearchFilters() {
           <button type="submit" className="w-full sm:w-auto btn-primary">
             Пребарај
           </button>
-          <button type="button" onClick={handleReset} className="w-full sm:w-auto btn-secondary">
+          <button
+            type="button"
+            onClick={handleReset}
+            disabled={!hasActiveFilters()}
+            className="w-full sm:w-auto btn-secondary"
+          >
             Ресетирај
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (user) {
+                setShowSaveModal(true);
+              } else {
+                if (typeof window !== 'undefined') {
+                  localStorage.setItem('pendingSavedFilter', JSON.stringify(getFiltersForSave()));
+                  localStorage.setItem('returnUrl', '/favorites?tab=filters');
+                }
+                router.push('/login');
+              }
+            }}
+            disabled={!canSaveFilter()}
+            className="w-full sm:w-auto btn-secondary flex items-center justify-center gap-2"
+            title={!user ? 'Најави се' : ''}
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+              />
+            </svg>
+            <span>{user ? 'Додади во омилени' : 'Најави се'}</span>
           </button>
         </div>
         <div className="w-full sm:w-auto">
           <SortDropdown />
         </div>
       </div>
+
+      <SaveFilterModal
+        isOpen={showSaveModal}
+        onClose={() => setShowSaveModal(false)}
+        onSave={() => {}}
+        filters={getFiltersForSave()}
+      />
     </form>
   );
 }

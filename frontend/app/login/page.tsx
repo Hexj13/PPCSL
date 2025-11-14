@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 
-import { authApi, favoritesApi, listingsApi } from '@/lib/api';
+import { authApi, favoritesApi, listingsApi, savedFiltersApi } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 
 const isValidEmail = (value: string): boolean => {
@@ -91,12 +91,55 @@ export default function LoginPage() {
           localStorage.removeItem('pendingFavorites');
         }
 
-        const returnUrl = localStorage.getItem('returnUrl');
-        if (returnUrl) {
-          localStorage.removeItem('returnUrl');
-          router.push(returnUrl);
+        const pendingSavedFilter = localStorage.getItem('pendingSavedFilter');
+        if (pendingSavedFilter) {
+          try {
+            const filters = JSON.parse(pendingSavedFilter);
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const filterName = `Филтер ${day}.${month}.${year} ${hours}:${minutes}`;
+            await savedFiltersApi.create(filterName, filters);
+            localStorage.removeItem('pendingSavedFilter');
+            localStorage.removeItem('returnUrl');
+            toast.success('Филтерот е успешно зачуван');
+            router.push('/favorites?tab=filters');
+          } catch (error: unknown) {
+            const errorMessage =
+              (error && typeof error === 'object' && 'response' in error
+                ? (error.response as { data?: { message?: string } })?.data?.message
+                : null) || 'Грешка при зачувување на филтерот';
+            toast.error(errorMessage);
+            localStorage.removeItem('pendingSavedFilter');
+            const isLimitError =
+              errorMessage ===
+                'Можете да зачувате максимум 20 филтри. Ве молиме избришете некој од постоечките филтри.' ||
+              (errorMessage.startsWith('Можете да зачувате максимум') &&
+                errorMessage.includes('филтри. Ве молиме избришете некој од постоечките филтри.'));
+            if (isLimitError) {
+              localStorage.removeItem('returnUrl');
+              router.push('/favorites?tab=filters');
+            } else {
+              const returnUrl = localStorage.getItem('returnUrl');
+              if (returnUrl) {
+                localStorage.removeItem('returnUrl');
+                router.push(returnUrl);
+              } else {
+                router.push('/');
+              }
+            }
+          }
         } else {
-          router.push('/');
+          const returnUrl = localStorage.getItem('returnUrl');
+          if (returnUrl) {
+            localStorage.removeItem('returnUrl');
+            router.push(returnUrl);
+          } else {
+            router.push('/');
+          }
         }
       } else {
         router.push('/');

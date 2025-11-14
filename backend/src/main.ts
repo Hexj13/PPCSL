@@ -122,6 +122,7 @@ async function bootstrap() {
     .addTag('auth', 'Authentication and authorization')
     .addTag('listings', 'Listings')
     .addTag('favorites', 'Favorites')
+    .addTag('saved-filters', 'Saved search filters')
     .addTag('users', 'Users')
     .addTag('brands', 'Brands and models')
     .addTag('cities', 'Cities')

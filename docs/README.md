@@ -116,6 +116,7 @@ npm run dev  # Runs both frontend and backend
 - Sort functionality (by date, popularity, price, year) with URL parameter synchronization
 - Multi-select dropdowns with search, categories, and action buttons
 - Optimized dropdown components with Set-based lookups for performance
+- **Saved filters:** Save up to 20 filter sets per user with custom names, edit and delete saved filters, apply saved filters with one click
 - Listing limits (100 for Individuals, 100 for Business)
 - Listing statuses (Active, Paused, Closed)
 - Automatic listing closure after 5 months
@@ -142,6 +143,7 @@ Kupito/
 │   │   ├── users/    # Users
 │   │   ├── listings/ # Listings
 │   │   ├── favorites/# Favorites
+│   │   ├── saved-filters/ # Saved search filters
 │   │   ├── brands/   # Brands and models
 │   │   ├── admin/    # Admin panel
 │   │   └── scripts/  # Utility scripts
@@ -182,6 +184,12 @@ Kupito/
 - `DELETE /api/favorites/:id` - Remove from favorites
 - `GET /api/favorites/check/:id` - Check if listing is in favorites
 
+### Saved Filters
+- `GET /api/saved-filters` - Get all saved filters (authenticated users)
+- `POST /api/saved-filters` - Create saved filter (max 20 per user)
+- `PATCH /api/saved-filters/:id` - Update saved filter name
+- `DELETE /api/saved-filters/:id` - Delete saved filter
+
 ### Upload
 - `POST /api/upload/image` - Upload image (JWT required)
 - `GET /api/upload/image/:filename` - Get optimized image version (query params: `quality`, `width`)
@@ -214,6 +222,7 @@ Kupito/
 - Automatic listing closure after 5 months (cron job runs daily at midnight)
 - Active listing limit validation on publish
 - Favorites stored in localStorage for guests and on server for authenticated users
+- **Saved filters:** Users can save up to 20 filter sets with custom names, edit and delete them, apply with one click
 - PostgreSQL Full-Text Search for search functionality
 - **Database optimizations:** Comprehensive indexing, triggers for data integrity, connection pooling
 - **Health monitoring:** Health check endpoint with database and Redis connectivity checks

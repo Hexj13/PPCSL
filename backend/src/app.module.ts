@@ -15,6 +15,7 @@ import { CommonModule } from './common/common.module';
 import { dataSourceOptions } from './data-source';
 import { FavoritesModule } from './favorites/favorites.module';
 import { ListingsModule } from './listings/listings.module';
+import { SavedFiltersModule } from './saved-filters/saved-filters.module';
 import { UploadModule } from './upload/upload.module';
 import { UsersModule } from './users/users.module';
 
@@ -36,6 +37,7 @@ import { UsersModule } from './users/users.module';
     UsersModule,
     ListingsModule,
     FavoritesModule,
+    SavedFiltersModule,
     AdminModule,
     BrandsModule,
     UploadModule,

@@ -28,6 +28,7 @@ describe('FavoritesService', () => {
       find: jest.fn(),
       findOne: jest.fn(),
       delete: jest.fn(),
+      createQueryBuilder: jest.fn(),
     };
 
     const mockListingsRepository = {
@@ -186,6 +187,65 @@ describe('FavoritesService', () => {
       const result = await service.getUserFavoriteIds('user-1');
 
       expect(result).toEqual([]);
+    });
+  });
+
+  describe('checkBatch', () => {
+    it('should return favorite statuses for multiple listings', async () => {
+      const mockFavorites = [{ listing_id: 'listing-1' }, { listing_id: 'listing-2' }];
+      const mockQueryBuilder = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue(mockFavorites),
+      };
+      repository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+
+      const result = await service.checkBatch('user-1', ['listing-1', 'listing-2', 'listing-3']);
+
+      expect(result).toEqual({
+        'listing-1': true,
+        'listing-2': true,
+        'listing-3': false,
+      });
+      expect(repository.createQueryBuilder).toHaveBeenCalledWith('favorite');
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith('favorite.user_id = :userId', {
+        userId: 'user-1',
+      });
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'favorite.listing_id IN (:...listingIds)',
+        { listingIds: ['listing-1', 'listing-2', 'listing-3'] },
+      );
+    });
+
+    it('should return empty object when no listing IDs provided', async () => {
+      const result = await service.checkBatch('user-1', []);
+
+      expect(result).toEqual({});
+      expect(repository.createQueryBuilder).not.toHaveBeenCalled();
+    });
+
+    it('should return empty object when listingIds is null', async () => {
+      const result = await service.checkBatch('user-1', null as any);
+
+      expect(result).toEqual({});
+    });
+
+    it('should return all false when no favorites exist', async () => {
+      const mockQueryBuilder = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([]),
+      };
+      repository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+
+      const result = await service.checkBatch('user-1', ['listing-1', 'listing-2']);
+
+      expect(result).toEqual({
+        'listing-1': false,
+        'listing-2': false,
+      });
     });
   });
 });

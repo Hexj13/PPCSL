@@ -3,6 +3,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import React from 'react';
 
 import { brandsApi, citiesApi } from '@/lib/api';
+import { useAuthStore } from '@/lib/store';
 
 import { SearchFilters } from './SearchFilters';
 
@@ -26,6 +27,30 @@ jest.mock('@/lib/api', () => ({
   },
   citiesApi: {
     getAll: jest.fn(),
+  },
+}));
+
+jest.mock('@/lib/store', () => ({
+  useAuthStore: jest.fn(),
+}));
+
+interface SaveFilterModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  filters?: Record<string, unknown>;
+}
+
+jest.mock('./SaveFilterModal', () => ({
+  SaveFilterModal: ({ isOpen, onClose, filters }: SaveFilterModalProps) => {
+    if (!isOpen) return null;
+    return (
+      <div data-testid="save-filter-modal">
+        <button data-testid="modal-close" onClick={onClose}>
+          Close
+        </button>
+        <div data-testid="modal-filters">{JSON.stringify(filters)}</div>
+      </div>
+    );
   },
 }));
 
@@ -144,6 +169,19 @@ describe('SearchFilters', () => {
           { id: 'model-2', name: 'Camry' },
         ],
       },
+    });
+
+    (useAuthStore as jest.Mock).mockReturnValue({
+      user: null,
+    });
+
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        getItem: jest.fn(),
+        setItem: jest.fn(),
+        removeItem: jest.fn(),
+      },
+      writable: true,
     });
   });
 
@@ -518,6 +556,136 @@ describe('SearchFilters', () => {
 
       await waitFor(() => {
         expect(priceInput).toHaveValue('10000');
+      });
+    });
+  });
+
+  describe('Save filter button', () => {
+    it('should show save button when filters are active', async () => {
+      render(<SearchFilters />);
+
+      await waitFor(() => {
+        expect(brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const brandDropdown = screen.getAllByTestId('multiselect-dropdown')[0];
+      fireEvent.change(brandDropdown, { target: { selectedOptions: [{ value: 'brand-1' }] } });
+
+      await waitFor(() => {
+        const saveButton = screen.getByText('Додади во омилени');
+        expect(saveButton).toBeInTheDocument();
+        expect(saveButton).not.toBeDisabled();
+      });
+    });
+
+    it('should disable save button when no filters are active', async () => {
+      render(<SearchFilters />);
+
+      await waitFor(() => {
+        expect(brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const saveButton = screen.getByText('Најави се');
+      expect(saveButton).toBeDisabled();
+    });
+
+    it('should open modal when authenticated user clicks save button', async () => {
+      (useAuthStore as jest.Mock).mockReturnValue({
+        user: { id: 'user-1', email: 'test@example.com' },
+      });
+
+      render(<SearchFilters />);
+
+      await waitFor(() => {
+        expect(brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const brandDropdown = screen.getAllByTestId('multiselect-dropdown')[0];
+      fireEvent.change(brandDropdown, { target: { selectedOptions: [{ value: 'brand-1' }] } });
+
+      await waitFor(() => {
+        const saveButton = screen.getByText('Додади во омилени');
+        expect(saveButton).not.toBeDisabled();
+      });
+
+      const saveButton = screen.getByText('Додади во омилени');
+      fireEvent.click(saveButton);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('save-filter-modal')).toBeInTheDocument();
+      });
+    });
+
+    it('should redirect to login when unauthenticated user clicks save button', async () => {
+      (useAuthStore as jest.Mock).mockReturnValue({
+        user: null,
+      });
+
+      render(<SearchFilters />);
+
+      await waitFor(() => {
+        expect(brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const brandDropdown = screen.getAllByTestId('multiselect-dropdown')[0];
+      fireEvent.change(brandDropdown, { target: { selectedOptions: [{ value: 'brand-1' }] } });
+
+      await waitFor(() => {
+        const saveButton = screen.getByText('Најави се');
+        expect(saveButton).not.toBeDisabled();
+      });
+
+      const saveButton = screen.getByText('Најави се');
+      fireEvent.click(saveButton);
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith('/login');
+        expect(window.localStorage.setItem).toHaveBeenCalledWith(
+          'pendingSavedFilter',
+          expect.any(String)
+        );
+        expect(window.localStorage.setItem).toHaveBeenCalledWith(
+          'returnUrl',
+          '/favorites?tab=filters'
+        );
+      });
+    });
+
+    it('should show correct button text for authenticated user', async () => {
+      (useAuthStore as jest.Mock).mockReturnValue({
+        user: { id: 'user-1', email: 'test@example.com' },
+      });
+
+      render(<SearchFilters />);
+
+      await waitFor(() => {
+        expect(brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const brandDropdown = screen.getAllByTestId('multiselect-dropdown')[0];
+      fireEvent.change(brandDropdown, { target: { selectedOptions: [{ value: 'brand-1' }] } });
+
+      await waitFor(() => {
+        expect(screen.getByText('Додади во омилени')).toBeInTheDocument();
+      });
+    });
+
+    it('should show correct button text for unauthenticated user', async () => {
+      (useAuthStore as jest.Mock).mockReturnValue({
+        user: null,
+      });
+
+      render(<SearchFilters />);
+
+      await waitFor(() => {
+        expect(brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const brandDropdown = screen.getAllByTestId('multiselect-dropdown')[0];
+      fireEvent.change(brandDropdown, { target: { selectedOptions: [{ value: 'brand-1' }] } });
+
+      await waitFor(() => {
+        expect(screen.getByText('Најави се')).toBeInTheDocument();
       });
     });
   });
