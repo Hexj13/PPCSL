@@ -85,7 +85,8 @@ describe('SavedFiltersList', () => {
 
       render(<SavedFiltersList />);
 
-      expect(screen.getByText('Вчитување...')).toBeInTheDocument();
+      const skeletonCards = document.querySelectorAll('.animate-pulse');
+      expect(skeletonCards.length).toBeGreaterThan(0);
     });
   });
 
@@ -130,8 +131,11 @@ describe('SavedFiltersList', () => {
       render(<SavedFiltersList />);
 
       await waitFor(() => {
-        expect(screen.getByText(/Креиран:/)).toBeInTheDocument();
+        expect(screen.getByText('Мој филтер 1')).toBeInTheDocument();
       });
+
+      const dateTexts = screen.getAllByText(/Креиран:/i);
+      expect(dateTexts.length).toBeGreaterThan(0);
     });
   });
 
@@ -151,8 +155,8 @@ describe('SavedFiltersList', () => {
       }
 
       await waitFor(() => {
-        expect(mockReplace).toHaveBeenCalledWith(expect.stringContaining('brand_ids=brand-1'));
-        expect(mockReplace).toHaveBeenCalledWith(expect.stringContaining('price_gte=10000'));
+        expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('brand_ids=brand-1'));
+        expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('price_gte=10000'));
       });
     });
   });
