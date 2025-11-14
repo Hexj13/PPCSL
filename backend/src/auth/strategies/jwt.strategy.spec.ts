@@ -46,10 +46,10 @@ describe('JwtStrategy', () => {
   });
 
   describe('validate', () => {
-    it('should return user object from JWT payload when user is active', async () => {
+    it('should return user object with data from database when user is active', async () => {
       const payload = {
         sub: 'user-1',
-        email: 'test@example.com',
+        email: 'old@example.com',
         type: UserType.Individual,
       };
 
@@ -57,7 +57,7 @@ describe('JwtStrategy', () => {
         id: 'user-1',
         active: true,
         email: 'test@example.com',
-        type: UserType.Individual,
+        type: UserType.Admin,
       };
       usersService.findOne.mockResolvedValue(mockUser as User);
 
@@ -66,7 +66,7 @@ describe('JwtStrategy', () => {
       expect(result).toEqual({
         id: 'user-1',
         email: 'test@example.com',
-        type: UserType.Individual,
+        type: UserType.Admin,
       });
       expect(usersService.findOne).toHaveBeenCalledWith('user-1');
     });
@@ -91,7 +91,7 @@ describe('JwtStrategy', () => {
       expect(usersService.findOne).toHaveBeenCalledWith('user-1');
     });
 
-    it('should handle payload without email and type when user is active', async () => {
+    it('should return user data from database when payload is minimal', async () => {
       const payload = {
         sub: 'user-1',
       };
@@ -108,22 +108,22 @@ describe('JwtStrategy', () => {
 
       expect(result).toEqual({
         id: 'user-1',
-        email: undefined,
-        type: undefined,
+        email: null,
+        type: UserType.Individual,
       });
     });
 
-    it('should handle payload with only sub when user is active', async () => {
+    it('should return user data from database even when payload has different values', async () => {
       const payload = {
         sub: 'user-1',
-        email: 'test@example.com',
+        email: 'old@example.com',
       };
 
       const mockUser: Partial<User> = {
         id: 'user-1',
         active: true,
         email: 'test@example.com',
-        type: UserType.Individual,
+        type: UserType.Business,
       };
       usersService.findOne.mockResolvedValue(mockUser as User);
 
@@ -132,7 +132,7 @@ describe('JwtStrategy', () => {
       expect(result).toEqual({
         id: 'user-1',
         email: 'test@example.com',
-        type: undefined,
+        type: UserType.Business,
       });
     });
   });

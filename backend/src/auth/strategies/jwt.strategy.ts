@@ -41,6 +41,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user.active) {
       throw new UnauthorizedException('Корисникот е деактивиран');
     }
-    return { id: payload.sub, email: payload.email, type: payload.type };
+    return { id: payload.sub, email: user.email, type: user.type };
   }
 }
