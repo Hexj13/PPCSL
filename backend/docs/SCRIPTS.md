@@ -41,6 +41,7 @@ These scripts are **blocked from running in production** and can only be execute
 
 These scripts can be run in production, but should still be used with caution:
 
+- `make-admin.ts` - Create or promote user to admin (production-safe)
 - `update-listing-titles.ts` - Update listing titles based on vehicle data
 - `backup-database.ts` - Create database backup (uses pg_dump)
 
@@ -74,9 +75,36 @@ npm run clear-database
 
 ```bash
 # On any environment (including production)
+npm run make-admin:prod
 npm run update-titles
 npm run backup
 ```
+
+#### Creating Admin User in Production
+
+To create an admin user in production:
+
+```bash
+# Basic usage (creates admin@admin.com with password admin123)
+npm run make-admin:prod
+
+# With custom email and password
+npm run make-admin:prod -- --email your-email@example.com --password your-secure-password
+
+# With all options
+npm run make-admin:prod -- --email your-email@example.com --password your-secure-password --first-name Admin --last-name User --phone +38970111111
+
+# Update existing user's password
+npm run make-admin:prod -- --email existing@example.com --password new-password --update-password
+```
+
+**Options:**
+- `--email` - Email address (default: admin@admin.com)
+- `--password` - Password (default: admin123)
+- `--first-name` - First name (default: Admin)
+- `--last-name` - Last name (default: User)
+- `--phone` - Phone number (default: +38970111111)
+- `--update-password` - Update password for existing user
 
 ## Migration Scripts
 

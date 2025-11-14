@@ -531,7 +531,32 @@ npm run clear-cache:brands
 - [ ] Brands and models loaded successfully
 - [ ] Check brands count: `npm run check-brands` (should show ~55+ brands)
 
-### Step 3.5: Clear Cache (if brands not visible in UI)
+### Step 3.5: Create Admin User
+
+**IMPORTANT:** Create an admin user to access the admin panel.
+
+1. In Render Shell, run:
+
+```bash
+# Basic usage (creates admin@admin.com with password admin123)
+npm run make-admin:prod
+
+# Or with custom email and password
+npm run make-admin:prod -- --email your-email@example.com --password your-secure-password
+```
+
+**Options:**
+- `--email` - Email address (default: admin@admin.com)
+- `--password` - Password (default: admin123)
+- `--first-name` - First name (default: Admin)
+- `--last-name` - Last name (default: User)
+- `--phone` - Phone number (default: +38970111111)
+- `--update-password` - Update password for existing user
+
+- [ ] Admin user created successfully
+- [ ] Can log in with admin credentials
+
+### Step 3.6: Clear Cache (if brands not visible in UI)
 
 If brands are loaded but not visible in UI, clear the cache manually:
 
