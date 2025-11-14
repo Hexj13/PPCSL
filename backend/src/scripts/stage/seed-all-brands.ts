@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { execSync } from 'child_process';
+import { spawn } from 'child_process';
 
 import { ConfigService } from '@nestjs/config';
 
@@ -11,6 +11,128 @@ import { AppDataSource } from '../../data-source';
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function forceGarbageCollection(): void {
+  if (global.gc) {
+    global.gc();
+  }
+}
+
+async function safeDelay(ms: number): Promise<void> {
+  await delay(ms);
+  forceGarbageCollection();
+}
+
+const SPINNER_FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+
+type Loader = {
+  start: (text: string) => void;
+  succeed: (text: string) => void;
+  fail: (text: string) => void;
+};
+
+function createLoader(): Loader {
+  if (!process.stdout.isTTY) {
+    return {
+      start: (text: string) => process.stdout.write(`${text}\n`),
+      succeed: (text: string) => process.stdout.write(`${text}\n`),
+      fail: (text: string) => process.stdout.write(`${text}\n`),
+    };
+  }
+
+  let interval: NodeJS.Timeout | undefined;
+  let frame = 0;
+  let currentText = '';
+
+  const render = () => {
+    process.stdout.clearLine(0);
+    process.stdout.cursorTo(0);
+    process.stdout.write(`${currentText} ${SPINNER_FRAMES[frame]}`);
+    frame = (frame + 1) % SPINNER_FRAMES.length;
+  };
+
+  const stop = (text: string) => {
+    if (interval) {
+      clearInterval(interval);
+      interval = undefined;
+    }
+    process.stdout.clearLine(0);
+    process.stdout.cursorTo(0);
+    process.stdout.write(`${text}\n`);
+  };
+
+  return {
+    start: (text: string) => {
+      currentText = text;
+      frame = 0;
+      render();
+      interval = setInterval(render, 120);
+    },
+    succeed: (text: string) => stop(text),
+    fail: (text: string) => stop(text),
+  };
+}
+
+function runScript(scriptName: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    let stdoutBuffer = '';
+    const child = spawn('npm', ['run', scriptName], {
+      cwd: process.cwd(),
+      env: process.env,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+
+    if (child.stdout) {
+      child.stdout.on('data', (chunk) => {
+        stdoutBuffer += chunk.toString();
+      });
+    }
+
+    if (child.stderr) {
+      child.stderr.on('data', (chunk) => {
+        process.stderr.write(chunk);
+      });
+    }
+
+    child.on('error', (error) => {
+      reject(error);
+    });
+
+    child.on('close', (code) => {
+      if (code === 0) {
+        resolve(stdoutBuffer.trim());
+      } else {
+        reject(new Error(`Script "${scriptName}" exited with code ${code}`));
+      }
+    });
+  });
+}
+
+async function runStageScript(index: number, total: number, name: string, scriptName: string) {
+  const loader = createLoader();
+  const label = `[${index}/${total}] ${name}`;
+
+  loader.start(label);
+
+  try {
+    const output = await runScript(scriptName);
+    loader.succeed(`${label} ✅`);
+    if (output) {
+      const lines = output
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+      if (lines.length > 0) {
+        const lastLine = lines[lines.length - 1];
+        console.log(`   ${lastLine}`);
+      }
+    }
+  } catch (error) {
+    loader.fail(`${label} ❌`);
+    throw error;
+  }
 }
 
 async function checkDuplicates(skipCheck: boolean = false) {
@@ -49,7 +171,7 @@ async function checkDuplicates(skipCheck: boolean = false) {
   const brands = await brandRepo.find({ select: ['id', 'name'] });
   const modelDuplicatesByBrand = new Map<string, Map<string, VehicleModel[]>>();
   let duplicatesInBrand = 0;
-  const BATCH_SIZE = 20;
+  const BATCH_SIZE = 10;
 
   for (let i = 0; i < brands.length; i += BATCH_SIZE) {
     const batch = brands.slice(i, i + BATCH_SIZE);
@@ -75,7 +197,7 @@ async function checkDuplicates(skipCheck: boolean = false) {
       }
     }
 
-    await delay(150);
+    await safeDelay(300);
   }
 
   for (const [, models] of modelDuplicatesByBrand.entries()) {
@@ -91,45 +213,54 @@ async function checkDuplicates(skipCheck: boolean = false) {
 
 async function seedAllBrands() {
   const skipDuplicateCheck = process.argv.includes('--skip-duplicates');
-  const delayBetweenScripts = parseInt(process.env.SCRIPT_DELAY_MS || '2000', 10);
+  const skipHeavyScripts = process.argv.includes('--skip-heavy');
+  const delayBetweenScripts = parseInt(process.env.SCRIPT_DELAY_MS || '8000', 10);
 
   console.log('🌱 Сеење на марки и модели...\n');
+  if (skipHeavyScripts) {
+    console.log('⚠️  Тешки скриптови се прескокнуваат\n');
+  }
 
   await AppDataSource.initialize();
 
-  const scripts = [
-    { name: 'Основни марки и модели', script: 'add-brands' },
-    { name: 'Италијански марки', script: 'add-italian-models' },
-    { name: 'Американски марки', script: 'add-american-models' },
-    { name: 'Германски марки', script: 'add-german-models' },
-    { name: 'Јапонски марки', script: 'add-japanese-models' },
-    { name: 'Француски марки', script: 'add-french-models' },
-    { name: 'Комерцијални модели', script: 'add-commercial-models' },
-    { name: 'Grand верзии', script: 'add-grand' },
-    { name: 'Историски и ретки модели', script: 'add-historical' },
+  const allScripts = [
+    { name: 'Основни марки и модели', script: 'add-brands', heavy: false },
+    { name: 'Италијански марки', script: 'add-italian-models', heavy: false },
+    { name: 'Американски марки', script: 'add-american-models', heavy: true },
+    { name: 'Германски марки', script: 'add-german-models', heavy: false },
+    { name: 'Јапонски марки', script: 'add-japanese-models', heavy: true },
+    { name: 'Француски марки', script: 'add-french-models', heavy: false },
+    { name: 'Комерцијални модели', script: 'add-commercial-models', heavy: true },
+    { name: 'Grand верзии', script: 'add-grand', heavy: false },
+    { name: 'Историски и ретки модели', script: 'add-historical', heavy: true },
   ];
+
+  const scripts = skipHeavyScripts ? allScripts.filter((s) => !s.heavy) : allScripts;
+
+  const scriptErrors: string[] = [];
 
   for (let i = 0; i < scripts.length; i++) {
     const { name, script } = scripts[i];
     try {
-      process.stdout.write(`[${i + 1}/${scripts.length}] ${name}... `);
-      execSync(`npm run ${script}`, {
-        stdio: 'pipe',
-        cwd: process.cwd(),
-      });
-      console.log('✅');
-
-      if (i < scripts.length - 1) {
-        await delay(delayBetweenScripts);
-      }
+      await runStageScript(i + 1, scripts.length, name, script);
     } catch (error) {
-      console.log('❌');
-      console.error(`   Грешка: ${name}`);
-      await delay(delayBetweenScripts);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      scriptErrors.push(`${name}: ${errorMessage}`);
+    }
+
+    if (i < scripts.length - 1) {
+      await safeDelay(delayBetweenScripts);
     }
   }
 
-  await delay(500);
+  if (scriptErrors.length > 0) {
+    console.warn('\n⚠️  Грешки при извршување на дочерни скрипти:');
+    for (const errorMessage of scriptErrors) {
+      console.warn(`   - ${errorMessage}`);
+    }
+  }
+
+  await safeDelay(1000);
 
   const brandRepo = AppDataSource.getRepository(Brand);
   const modelRepo = AppDataSource.getRepository(VehicleModel);
@@ -139,7 +270,7 @@ async function seedAllBrands() {
 
   console.log(`\n📊 Резултати: ${brands.length} марки, ${totalModels} модели`);
 
-  await delay(500);
+  await safeDelay(1000);
 
   const duplicates = await checkDuplicates(skipDuplicateCheck);
 
@@ -150,7 +281,7 @@ async function seedAllBrands() {
     console.log('   Извршете: npm run remove-duplicates');
   }
 
-  await delay(500);
+  await safeDelay(1000);
 
   try {
     const configService = new ConfigService();

@@ -23,6 +23,7 @@ These scripts are **blocked from running in production** and can only be execute
 - `reset-users.ts` - Reset user data
 - `make-admin.ts` - Create admin user
 - `add-brands.ts` - Add basic brands and models
+- `seed-all-brands.ts` - Run all brand and model seeding scripts sequentially (optimized for low memory usage)
 - `add-grand-models.ts` - Add Grand versions and extended models
 - `add-historical-models.ts` - Add historical models
 - `add-models-to-brand.ts` - Add models to existing brand
@@ -70,6 +71,38 @@ npm run make-admin
 npm run clear-database
 # etc.
 ```
+
+#### Seeding All Brands and Models
+
+The `seed:all-brands` script runs all brand and model seeding scripts sequentially with memory optimizations:
+
+```bash
+# Basic usage (runs all scripts with 8 second delays between them)
+npm run seed:all-brands
+
+# Skip duplicate check to save memory
+npm run seed:all-brands -- --skip-duplicates
+
+# Skip heavy scripts (American, Japanese, Commercial, Historical models)
+npm run seed:all-brands -- --skip-heavy
+
+# Custom delay between scripts (in milliseconds, default: 8000)
+SCRIPT_DELAY_MS=10000 npm run seed:all-brands
+
+# Combine options
+SCRIPT_DELAY_MS=10000 npm run seed:all-brands -- --skip-duplicates --skip-heavy
+```
+
+**Options:**
+- `--skip-duplicates` - Skip duplicate checking (saves memory)
+- `--skip-heavy` - Skip heavy scripts (American, Japanese, Commercial, Historical models)
+- `SCRIPT_DELAY_MS` - Delay between scripts in milliseconds (default: 8000ms)
+
+**Note:** The script is optimized for low memory usage with:
+- Automatic garbage collection between operations
+- Increased delays between scripts (8 seconds by default)
+- Smaller batch sizes for duplicate checking
+- Memory-efficient database queries
 
 ### Running Production Scripts
 

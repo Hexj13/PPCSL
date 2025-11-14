@@ -392,22 +392,34 @@ const BRANDS_AND_MODELS = {
   BelAZ: ['BelAZ-7555', 'BelAZ-75710', 'BelAZ-7513'],
 };
 
-async function addBrandsAndModels() {
-  console.log('🚀 Започнување на додавање на марки и модели...\n');
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
+function forceGarbageCollection(): void {
+  if (global.gc) {
+    global.gc();
+  }
+}
+
+async function addBrandsAndModels() {
   await AppDataSource.initialize();
-  console.log('✅ Поврзано со базата на податоци\n');
 
   const brandRepo = AppDataSource.getRepository(Brand);
   const modelRepo = AppDataSource.getRepository(VehicleModel);
 
   let order = 1;
   let totalBrands = 0;
-  let totalModels = 0;
   let newBrands = 0;
   let newModels = 0;
+  let updatedModels = 0;
 
-  for (const [brandName, models] of Object.entries(BRANDS_AND_MODELS)) {
+  const brandsEntries = Object.entries(BRANDS_AND_MODELS);
+  const DELAY_BETWEEN_BRANDS = 200;
+  const BATCH_SIZE = 10;
+
+  for (let idx = 0; idx < brandsEntries.length; idx++) {
+    const [brandName, models] = brandsEntries[idx];
     let brand = await brandRepo.findOne({ where: { name: brandName } });
 
     if (!brand) {
@@ -417,21 +429,23 @@ async function addBrandsAndModels() {
       });
       brand = await brandRepo.save(brand);
       newBrands++;
-      console.log(`✅ Креиран нов бренд: ${brandName}`);
     } else {
       brand.order = order++;
       brand = await brandRepo.save(brand);
-      console.log(`♻️  Ажуриран бренд: ${brandName}`);
     }
     totalBrands++;
 
     const existingModels = await modelRepo.find({
       where: { brand_id: brand.id },
+      select: ['id', 'name'],
     });
     const existingModelsMap = new Map<string, VehicleModel>();
     for (const model of existingModels) {
       existingModelsMap.set(model.name.toLowerCase(), model);
     }
+
+    const modelsToCreate: VehicleModel[] = [];
+    const modelsToUpdate: VehicleModel[] = [];
 
     for (let i = 0; i < models.length; i++) {
       const modelName = models[i];
@@ -445,36 +459,60 @@ async function addBrandsAndModels() {
           brand_id: brand.id,
           order: i + 1,
         });
-        await modelRepo.save(model);
+        modelsToCreate.push(model);
         newModels++;
-        totalModels++;
       } else {
         existingModel.order = i + 1;
-        await modelRepo.save(existingModel);
-        totalModels++;
+        modelsToUpdate.push(existingModel);
+        updatedModels++;
       }
     }
 
-    console.log(`   ✓ ${models.length} модели за ${brandName}`);
+    if (modelsToCreate.length > 0) {
+      for (let i = 0; i < modelsToCreate.length; i += BATCH_SIZE) {
+        const batch = modelsToCreate.slice(i, i + BATCH_SIZE);
+        await modelRepo.save(batch);
+        await delay(50);
+      }
+    }
+
+    if (modelsToUpdate.length > 0) {
+      for (let i = 0; i < modelsToUpdate.length; i += BATCH_SIZE) {
+        const batch = modelsToUpdate.slice(i, i + BATCH_SIZE);
+        await modelRepo.save(batch);
+        await delay(50);
+      }
+    }
+
+    if (idx < brandsEntries.length - 1) {
+      await delay(DELAY_BETWEEN_BRANDS);
+      if (idx % 20 === 0) {
+        forceGarbageCollection();
+      }
+    }
   }
 
-  console.log(`\n✅ Завршено!`);
-  console.log(`\n📊 Статистика:`);
-  console.log(`   - Вкупно марки: ${totalBrands}`);
-  console.log(`   - Нови марки: ${newBrands}`);
-  console.log(`   - Вкупно модели: ${totalModels}`);
-  console.log(`   - Нови модели: ${newModels}\n`);
+  console.log(
+    `📦 Основни брендови: обработени ${totalBrands}, нови брендови ${newBrands}, модели ${newModels + updatedModels} (нови ${newModels}, ажурирани ${updatedModels})`,
+  );
+
+  const summary = {
+    brandsProcessed: totalBrands,
+    brandsCreated: newBrands,
+    modelsInserted: newModels,
+    modelsReordered: updatedModels,
+  };
+
+  console.log(JSON.stringify(summary));
 
   await AppDataSource.destroy();
-  console.log('🔌 Врската со базата на податоци е затворена');
 }
 
 addBrandsAndModels()
   .then(() => {
-    console.log('✅ Скриптот заврши успешно');
     process.exit(0);
   })
   .catch((error) => {
-    console.error('❌ Грешка:', error);
+    console.error('❌ Грешка:', error.message);
     process.exit(1);
   });

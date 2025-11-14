@@ -490,11 +490,18 @@ const HISTORICAL_AND_RARE_MODELS: Record<string, string[]> = {
   XPeng: ['P7', 'G6', 'G9', 'P5', 'G3', 'P7i'],
 };
 
-async function addHistoricalModels() {
-  console.log('🚀 Започнување на додавање на историски и ретки модели...\n');
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
+function forceGarbageCollection(): void {
+  if (global.gc) {
+    global.gc();
+  }
+}
+
+async function addHistoricalModels() {
   await AppDataSource.initialize();
-  console.log('✅ Поврзано со базата на податоци\n');
 
   const brandRepo = AppDataSource.getRepository(Brand);
   const modelRepo = AppDataSource.getRepository(VehicleModel);
@@ -502,31 +509,45 @@ async function addHistoricalModels() {
   let totalAdded = 0;
   let totalUpdated = 0;
   let brandsProcessed = 0;
+  let brandsNotFound = 0;
+  const missingBrands: string[] = [];
 
-  for (const [brandName, models] of Object.entries(HISTORICAL_AND_RARE_MODELS)) {
+  const DELAY_BETWEEN_BRANDS = 300;
+  const BATCH_SIZE = 10;
+  const entries = Object.entries(HISTORICAL_AND_RARE_MODELS);
+
+  for (let idx = 0; idx < entries.length; idx++) {
+    const [brandName, models] = entries[idx];
     const brand = await brandRepo.findOne({ where: { name: brandName } });
 
     if (!brand) {
-      console.log(`⚠️  Бренд "${brandName}" не е пронајден, прескокнување...\n`);
+      brandsNotFound++;
+      missingBrands.push(brandName);
       continue;
     }
 
     brandsProcessed++;
     const existingModels = await modelRepo.find({
       where: { brand_id: brand.id },
+      select: ['id', 'name', 'order'],
     });
 
     const maxOrder =
       existingModels.length > 0 ? Math.max(...existingModels.map((m) => m.order || 0)) : 0;
 
-    let added = 0;
-    let updated = 0;
+    const existingModelsMap = new Map<string, VehicleModel>();
+    for (const model of existingModels) {
+      existingModelsMap.set(model.name.toLowerCase(), model);
+    }
+
+    const modelsToCreate: VehicleModel[] = [];
+    const modelsToUpdate: VehicleModel[] = [];
 
     for (let i = 0; i < models.length; i++) {
       const modelName = models[i];
       const modelNameLower = modelName.toLowerCase();
 
-      const existingModel = existingModels.find((m) => m.name.toLowerCase() === modelNameLower);
+      const existingModel = existingModelsMap.get(modelNameLower);
 
       if (!existingModel) {
         const model = modelRepo.create({
@@ -534,39 +555,65 @@ async function addHistoricalModels() {
           brand_id: brand.id,
           order: maxOrder + i + 1,
         });
-        await modelRepo.save(model);
-        added++;
+        modelsToCreate.push(model);
+        totalAdded++;
       } else {
         existingModel.order = maxOrder + i + 1;
-        await modelRepo.save(existingModel);
-        updated++;
+        modelsToUpdate.push(existingModel);
+        totalUpdated++;
       }
     }
 
-    totalAdded += added;
-    totalUpdated += updated;
+    if (modelsToCreate.length > 0) {
+      for (let i = 0; i < modelsToCreate.length; i += BATCH_SIZE) {
+        const batch = modelsToCreate.slice(i, i + BATCH_SIZE);
+        await modelRepo.save(batch);
+        await delay(50);
+      }
+    }
 
-    console.log(`📊 ${brandName}:`);
-    console.log(`   - Додадени модели: ${added}`);
-    console.log(`   - Ажурирани модели: ${updated}`);
-    console.log(`   - Вкупно модели: ${existingModels.length + added}\n`);
+    if (modelsToUpdate.length > 0) {
+      for (let i = 0; i < modelsToUpdate.length; i += BATCH_SIZE) {
+        const batch = modelsToUpdate.slice(i, i + BATCH_SIZE);
+        await modelRepo.save(batch);
+        await delay(50);
+      }
+    }
+
+    if (idx < entries.length - 1) {
+      await delay(DELAY_BETWEEN_BRANDS);
+      if (idx % 15 === 0) {
+        forceGarbageCollection();
+      }
+    }
   }
 
-  console.log(`\n✅ Завршено!`);
-  console.log(`   - Обработени брендови: ${brandsProcessed}`);
-  console.log(`   - Вкупно додадени модели: ${totalAdded}`);
-  console.log(`   - Вкупно ажурирани модели: ${totalUpdated}\n`);
+  const totalModels = totalAdded + totalUpdated;
+  console.log(
+    `📦 Историски модели: обработени брендови ${brandsProcessed}, модели ${totalModels} (нови ${totalAdded}, ажурирани ${totalUpdated})`,
+  );
+  if (brandsNotFound > 0) {
+    console.warn(`⚠️  Прескокнати брендови (${brandsNotFound}): ${missingBrands.join(', ')}`);
+  }
+
+  const summary = {
+    brandsProcessed,
+    brandsCreated: 0,
+    brandsMissing: brandsNotFound,
+    modelsInserted: totalAdded,
+    modelsReordered: totalUpdated,
+  };
+
+  console.log(JSON.stringify(summary));
 
   await AppDataSource.destroy();
-  console.log('🔌 Врската со базата на податоци е затворена');
 }
 
 addHistoricalModels()
   .then(() => {
-    console.log('✅ Скриптот заврши успешно');
     process.exit(0);
   })
   .catch((error) => {
-    console.error('❌ Грешка:', error);
+    console.error('❌ Грешка:', error.message);
     process.exit(1);
   });
