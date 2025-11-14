@@ -243,7 +243,7 @@ function ListingCardComponent({ listing, forceFavorite = false, onRemove }: List
                   {listing.views}
                 </span>
               )}
-              <span>{formatDateShort(listing.created_at)}</span>
+              <span>{formatDateShort(listing.last_updated_at)}</span>
             </div>
           </div>
         </div>
