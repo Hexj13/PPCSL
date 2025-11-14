@@ -66,6 +66,12 @@ export class User {
   @Column({ type: 'boolean', nullable: true })
   emailVerified: boolean | null;
 
+  @Column({ type: 'varchar', nullable: true })
+  registration_ip: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  last_login_ip: string | null;
+
   @CreateDateColumn()
   created_at: Date;
 

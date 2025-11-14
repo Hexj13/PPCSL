@@ -30,6 +30,8 @@ describe('AdminService', () => {
     telegram: false,
     phoneVerified: false,
     emailVerified: null,
+    registration_ip: null,
+    last_login_ip: null,
     created_at: new Date(),
     listings: [],
     favorites: [],

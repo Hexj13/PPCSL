@@ -90,8 +90,9 @@ export class AuthController {
   })
   @Throttle(getThrottleLimit(3, 100))
   @Post('register')
-  async register(@Body() registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
+  async register(@Request() req, @Body() registerDto: RegisterDto) {
+    const ip = this.ipBlockService.getClientIp(req);
+    return this.authService.register(registerDto, ip);
   }
 
   @ApiOperation({ summary: 'Login user' })
@@ -146,7 +147,7 @@ export class AuthController {
   async login(@Request() req, @Body() loginDto: LoginDto) {
     const ip = this.ipBlockService.getClientIp(req);
     try {
-      const result = await this.authService.login(loginDto);
+      const result = await this.authService.login(loginDto, ip);
       this.ipBlockService.resetAttempts(ip);
       return result;
     } catch (error) {

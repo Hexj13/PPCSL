@@ -24,6 +24,8 @@ describe('UsersController', () => {
     telegram: false,
     phoneVerified: false,
     emailVerified: false,
+    registration_ip: null,
+    last_login_ip: null,
     created_at: new Date(),
     listings: [],
     favorites: [],

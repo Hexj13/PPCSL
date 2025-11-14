@@ -39,6 +39,8 @@ describe('AuthController', () => {
     emailVerified: false,
     phoneVerified: false,
     password: 'hashed-password',
+    registration_ip: null,
+    last_login_ip: null,
     created_at: new Date(),
     listings: [],
     favorites: [],
@@ -108,11 +110,14 @@ describe('AuthController', () => {
         termsAccepted: true,
       };
 
+      const mockRequest = { headers: {}, ip: '127.0.0.1' };
+      ipBlockService.getClientIp.mockReturnValue('127.0.0.1');
       authService.register.mockResolvedValue(mockUser);
 
-      const result = await controller.register(registerDto);
+      const result = await controller.register(mockRequest, registerDto);
 
-      expect(authService.register).toHaveBeenCalledWith(registerDto);
+      expect(ipBlockService.getClientIp).toHaveBeenCalledWith(mockRequest);
+      expect(authService.register).toHaveBeenCalledWith(registerDto, '127.0.0.1');
       expect(result).toEqual(mockUser);
     });
   });
@@ -147,7 +152,7 @@ describe('AuthController', () => {
       const result = await controller.login(req, loginDto);
 
       expect(ipBlockService.getClientIp).toHaveBeenCalledWith(req);
-      expect(authService.login).toHaveBeenCalledWith(loginDto);
+      expect(authService.login).toHaveBeenCalledWith(loginDto, '127.0.0.1');
       expect(ipBlockService.resetAttempts).toHaveBeenCalledWith('127.0.0.1');
       expect(result).toEqual(mockResponse);
     });
@@ -225,6 +230,8 @@ describe('AuthController', () => {
         telegram: mockUser.telegram,
         phoneVerified: true,
         emailVerified: mockUser.emailVerified,
+        registration_ip: mockUser.registration_ip,
+        last_login_ip: mockUser.last_login_ip,
         created_at: mockUser.created_at,
         listings: [],
         favorites: [],
@@ -344,6 +351,8 @@ describe('AuthController', () => {
         telegram: mockUser.telegram,
         phoneVerified: mockUser.phoneVerified,
         emailVerified: true,
+        registration_ip: mockUser.registration_ip,
+        last_login_ip: mockUser.last_login_ip,
         created_at: mockUser.created_at,
         listings: [],
         favorites: [],
@@ -477,6 +486,8 @@ describe('AuthController', () => {
         telegram: mockUser.telegram,
         phoneVerified: mockUser.phoneVerified,
         emailVerified: mockUser.emailVerified,
+        registration_ip: mockUser.registration_ip,
+        last_login_ip: mockUser.last_login_ip,
         created_at: mockUser.created_at,
         listings: [],
         favorites: [],
@@ -584,6 +595,8 @@ describe('AuthController', () => {
         telegram: mockUser.telegram,
         phoneVerified: mockUser.phoneVerified,
         emailVerified: mockUser.emailVerified,
+        registration_ip: mockUser.registration_ip,
+        last_login_ip: mockUser.last_login_ip,
         created_at: mockUser.created_at,
         listings: [],
         favorites: [],
@@ -636,6 +649,8 @@ describe('AuthController', () => {
         telegram: mockUser.telegram,
         phoneVerified: true,
         emailVerified: mockUser.emailVerified,
+        registration_ip: mockUser.registration_ip,
+        last_login_ip: mockUser.last_login_ip,
         created_at: mockUser.created_at,
         listings: [],
         favorites: [],

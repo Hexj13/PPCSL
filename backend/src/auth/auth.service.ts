@@ -50,11 +50,16 @@ export class AuthService {
     return null;
   }
 
-  async login(loginDto: LoginDto) {
+  async login(loginDto: LoginDto, ip?: string) {
     const user = await this.validateUser(loginDto.login, loginDto.password);
     if (!user) {
       throw new UnauthorizedException('Погрешни најавни податоци');
     }
+
+    if (ip) {
+      await this.usersService.update(user.id, { last_login_ip: ip });
+    }
+
     const payload = { email: user.email || '', sub: user.id, type: user.type };
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = await this.refreshTokenService.generateToken(user.id);
@@ -105,7 +110,7 @@ export class AuthService {
     };
   }
 
-  async register(registerDto: RegisterDto) {
+  async register(registerDto: RegisterDto, ip?: string) {
     if (!registerDto.termsAccepted) {
       throw new BadRequestException('Мора да ги прифатите условите за користење');
     }
@@ -132,6 +137,7 @@ export class AuthService {
     const cleanedUserData: Partial<User> = {
       ...userData,
       password: hashedPassword,
+      registration_ip: ip || null,
     };
 
     if (cleanedUserData.phone) {
