@@ -117,11 +117,13 @@ npm run dev  # Runs both frontend and backend
 - Multi-select dropdowns with search, categories, and action buttons
 - Optimized dropdown components with Set-based lookups for performance
 - **Saved filters:** Save up to 20 filter sets per user with custom names, edit and delete saved filters, apply saved filters with one click
+- **Car comparison:** Compare up to 3 cars simultaneously with detailed side-by-side comparison table
 - Listing limits (100 for Individuals, 100 for Business)
 - Listing statuses (Active, Paused, Closed)
 - Automatic listing closure after 5 months
 - Custom 404 and error pages
-- Favorites (for authenticated users and guests)
+- Favorites (for authenticated users and guests) with tab counters
+- **My Listings page:** Status filters with counters (All, Active, Paused, Closed) for easy management
 - VIN search functionality
 - Image upload with automatic WebP conversion and adaptive quality optimization
 - Admin panel for management
@@ -225,6 +227,8 @@ Kupito/
 - Active listing limit validation on publish
 - Favorites stored in localStorage for guests and on server for authenticated users
 - **Saved filters:** Users can save up to 20 filter sets with custom names, edit and delete them, apply with one click
+- **Car comparison:** Users can compare up to 3 cars simultaneously. Comparison data stored locally, cleared on logout. Unauthorized users can add cars to comparison, which are automatically added after login/registration
+- **Breadcrumbs:** Navigation breadcrumbs on favorites, my listings, and comparison pages
 - PostgreSQL Full-Text Search for search functionality
 - **Database optimizations:** Comprehensive indexing, triggers for data integrity, connection pooling
 - **Health monitoring:** Health check endpoint with database and Redis connectivity checks

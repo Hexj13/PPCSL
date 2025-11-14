@@ -19,7 +19,7 @@ import {
 import { StructuredData } from '@/components/StructuredData';
 import { UserListingsModal } from '@/components/UserListingsModal';
 import { api, listingsApi, Listing, favoritesApi } from '@/lib/api';
-import { useAuthStore, useFavoritesStore } from '@/lib/store';
+import { useAuthStore, useFavoritesStore, useComparisonStore } from '@/lib/store';
 import {
   formatPrice,
   formatDate,
@@ -43,8 +43,15 @@ export default function ListingPage() {
   const id = params.id as string;
   const { user } = useAuthStore();
   const { add: addFavorite, remove: removeFavorite, check } = useFavoritesStore();
+  const {
+    add: addComparison,
+    remove: removeComparison,
+    check: checkComparison,
+    count: comparisonCount,
+  } = useComparisonStore();
   const [listing, setListing] = useState<Listing | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [isInComparison, setIsInComparison] = useState(false);
   const [showSkeleton, setShowSkeleton] = useState(false);
   const showLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasLoadedRef = useRef(false);
@@ -94,6 +101,8 @@ export default function ListingPage() {
             .catch(() => check(currentId))
         : Promise.resolve(check(currentId));
 
+      const comparisonValue = checkComparison(currentId);
+
       Promise.all([listingPromise, favoritePromise])
         .then(([listingRes, favoriteValue]) => {
           // Check if component is still mounted and id hasn't changed
@@ -114,6 +123,7 @@ export default function ListingPage() {
           const hasVin = listingRes.data.vin;
           setListing(listingRes.data);
           setIsFavorite(favoriteValue);
+          setIsInComparison(comparisonValue);
           setShowSkeleton(false);
           if (hasVin) {
             setLoadingPrevious(true);
@@ -170,8 +180,10 @@ export default function ListingPage() {
           }
 
           const favoriteValue = check(currentId);
+          const comparisonValue = checkComparison(currentId);
           setListing(null);
           setIsFavorite(favoriteValue);
+          setIsInComparison(comparisonValue);
           setShowSkeleton(false);
 
           if (needsRefresh) {
@@ -179,7 +191,7 @@ export default function ListingPage() {
           }
         });
     },
-    [id, user, check]
+    [id, user, check, checkComparison]
   );
 
   useEffect(() => {
@@ -265,6 +277,42 @@ export default function ListingPage() {
     } catch {
       addFavorite(id);
       setIsFavorite(true);
+    }
+  };
+
+  const handleToggleComparison = () => {
+    if (!user) {
+      if (typeof window !== 'undefined') {
+        const pendingComparisons = JSON.parse(localStorage.getItem('pendingComparisons') || '[]');
+        if (!pendingComparisons.includes(id)) {
+          pendingComparisons.push(id);
+          localStorage.setItem('pendingComparisons', JSON.stringify(pendingComparisons));
+        }
+        const returnUrl = `/listings/${id}`;
+        localStorage.setItem('returnUrl', returnUrl);
+      }
+      router.push('/login');
+      return;
+    }
+
+    if (isInComparison) {
+      removeComparison(id);
+      setIsInComparison(false);
+      toast.success('Отстрането од споредба');
+      return;
+    }
+
+    if (comparisonCount() >= 3) {
+      toast.error('Можете да споредувате максимум 3 возила');
+      return;
+    }
+
+    const added = addComparison(id);
+    if (added) {
+      setIsInComparison(true);
+      toast.success('Додадено во споредба');
+    } else {
+      toast.error('Возилото е веќе во споредба');
     }
   };
 
@@ -654,41 +702,65 @@ export default function ListingPage() {
                 </div>
               </div>
 
-              <button
-                onClick={handleToggleFavorite}
-                disabled={!!(user && listing.user && user.id === listing.user.id)}
-                className={`w-full sm:w-auto px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center gap-2 ${
-                  user && listing.user && user.id === listing.user.id
-                    ? 'bg-primary-500/10 text-primary-300 border border-primary-500/30 cursor-not-allowed'
-                    : isFavorite
-                      ? 'bg-bg-light text-white border-2 border-primary-500/30 hover:bg-primary-500/10 hover:border-primary-500'
-                      : 'btn-secondary'
-                }`}
-                title={
-                  user && listing.user && user.id === listing.user.id
-                    ? 'Не можете да додадете своја објава во омилени'
-                    : ''
-                }
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill={isFavorite ? 'currentColor' : 'none'}
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={handleToggleFavorite}
+                  disabled={!!(user && listing.user && user.id === listing.user.id)}
+                  className={`w-full sm:w-auto sm:max-w-fit px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center gap-2 ${
+                    user && listing.user && user.id === listing.user.id
+                      ? 'bg-primary-500/10 text-primary-300 border border-primary-500/30 cursor-not-allowed'
+                      : isFavorite
+                        ? 'bg-bg-light text-white border-2 border-primary-500/30 hover:bg-primary-500/10 hover:border-primary-500'
+                        : 'btn-secondary'
+                  }`}
+                  title={
+                    user && listing.user && user.id === listing.user.id
+                      ? 'Не можете да додадете своја објава во омилени'
+                      : ''
+                  }
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                  />
-                </svg>
-                {user && listing.user && user.id === listing.user.id
-                  ? 'Ваша објава'
-                  : isFavorite
-                    ? 'Отстрани од омилени'
-                    : 'Додади во омилени'}
-              </button>
+                  <svg
+                    className="w-5 h-5"
+                    fill={isFavorite ? 'currentColor' : 'none'}
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                    />
+                  </svg>
+                  {user && listing.user && user.id === listing.user.id
+                    ? 'Ваша објава'
+                    : isFavorite
+                      ? 'Отстрани од омилени'
+                      : 'Додади во омилени'}
+                </button>
+                {listing.status !== 'Closed' && (
+                  <button
+                    onClick={handleToggleComparison}
+                    disabled={isInComparison}
+                    className={`w-full sm:w-auto sm:max-w-fit px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center gap-2 ${
+                      isInComparison
+                        ? 'bg-primary-500/10 text-primary-300 border border-primary-500/30 cursor-not-allowed'
+                        : 'btn-secondary'
+                    }`}
+                    title={isInComparison ? 'Возилото е веќе во споредба' : ''}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"
+                      />
+                    </svg>
+                    {isInComparison ? 'Веќе во споредба' : 'Спореди'}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>

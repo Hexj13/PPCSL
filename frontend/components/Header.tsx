@@ -5,10 +5,11 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { User } from '@/lib/api';
-import { useAuthStore } from '@/lib/store';
+import { useAuthStore, useComparisonStore } from '@/lib/store';
 
 export function Header() {
   const { user, logout, isInitialized } = useAuthStore();
+  const comparisonCount = useComparisonStore((state) => state.count());
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -79,6 +80,17 @@ export function Header() {
                   className="text-white font-medium text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap"
                 >
                   Омилени
+                </Link>
+                <Link
+                  href="/compare"
+                  className="text-white font-medium text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-2"
+                >
+                  Споредба
+                  {comparisonCount > 0 && (
+                    <span className="bg-bg-light border border-primary-500/20 text-gray-300 text-xs font-bold rounded-[4px] w-5 h-5 flex items-center justify-center">
+                      {comparisonCount}
+                    </span>
+                  )}
                 </Link>
                 {user.type === 'Admin' && (
                   <Link
@@ -197,6 +209,18 @@ export function Header() {
                   className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2"
                 >
                   Омилени
+                </Link>
+                <Link
+                  href="/compare"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 flex items-center gap-2"
+                >
+                  Споредба
+                  {comparisonCount > 0 && (
+                    <span className="bg-green-700 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      {comparisonCount}
+                    </span>
+                  )}
                 </Link>
                 {user.type === 'Admin' && (
                   <Link

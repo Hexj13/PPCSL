@@ -268,6 +268,18 @@ DELETE /api/favorites/:id             # Remove from favorites
 GET    /api/favorites/check/:id       # Check if listing is in favorites
 ```
 
+**Note:** Favorites page includes tab counters showing the number of listings and saved filters.
+
+### Car Comparison
+
+Car comparison feature allows users to compare up to 3 cars simultaneously:
+- Comparison data stored in `localStorage` (Zustand store with persist middleware)
+- Maximum 3 cars can be added to comparison
+- Comparison page displays detailed side-by-side table with all vehicle specifications
+- Unauthorized users can add cars to comparison; data is stored in `pendingComparisons` and automatically added after login/registration
+- Comparison data is cleared on logout
+- Comparison button in header shows counter badge when items are added
+
 ### Saved Filters
 
 ```http
@@ -619,6 +631,9 @@ See [RENDER.md](./RENDER.md) for CloudFront CDN setup instructions (CloudFront i
 - URL parameter synchronization for search filters and sorting
 - Lazy loading for images
 - Skeleton loaders for improved UX
+- Optimistic UI updates for car comparison (no flickering on item removal)
+- Cached filter loading to prevent skeleton flickering on tab switches
+- Zustand stores with persist middleware for favorites and comparisons (localStorage)
 
 ### Redis Optimizations
 - SCAN instead of KEYS for better performance
@@ -678,5 +693,12 @@ Or use `npm run dev` in root - it will start both servers.
 ---
 
 **Last Updated:** 2025-01-XX
-**Version:** 1.6
+**Version:** 1.7
+
+### Recent Updates
+- Added car comparison feature (up to 3 cars)
+- Added status filters with counters on My Listings page
+- Added tab counters on Favorites page
+- Added breadcrumbs navigation on key pages
+- Optimized filter loading to prevent skeleton flickering
 

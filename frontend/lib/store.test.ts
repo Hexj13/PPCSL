@@ -1,7 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
 
 import { authApi, User } from './api';
-import { useAuthStore, useFavoritesStore } from './store';
+import { useAuthStore, useFavoritesStore, useComparisonStore } from './store';
 
 jest.mock('./api', () => ({
   authApi: {
@@ -67,6 +67,7 @@ describe('useAuthStore', () => {
     expect(result.current.isInitialized).toBe(true);
     expect(localStorage.getItem('token')).toBeNull();
     expect(localStorage.getItem('pendingFavorites')).toBeNull();
+    expect(localStorage.getItem('pendingComparisons')).toBeNull();
     expect(localStorage.getItem('returnUrl')).toBeNull();
   });
 
@@ -197,5 +198,158 @@ describe('useFavoritesStore', () => {
     });
 
     expect(result.current.favorites).toEqual([]);
+  });
+});
+
+describe('useComparisonStore', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    useComparisonStore.setState({
+      comparisons: [],
+    });
+  });
+
+  it('should initialize with empty comparisons', () => {
+    const { result } = renderHook(() => useComparisonStore());
+
+    expect(result.current.comparisons).toEqual([]);
+    expect(result.current.count()).toBe(0);
+  });
+
+  it('should add comparison', () => {
+    const { result } = renderHook(() => useComparisonStore());
+
+    act(() => {
+      const added = result.current.add('listing-1');
+      expect(added).toBe(true);
+    });
+
+    expect(result.current.comparisons).toContain('listing-1');
+    expect(result.current.count()).toBe(1);
+  });
+
+  it('should not add duplicate comparison', () => {
+    const { result } = renderHook(() => useComparisonStore());
+
+    act(() => {
+      result.current.add('listing-1');
+    });
+
+    act(() => {
+      const added = result.current.add('listing-1');
+      expect(added).toBe(false);
+    });
+
+    expect(result.current.comparisons).toEqual(['listing-1']);
+    expect(result.current.count()).toBe(1);
+  });
+
+  it('should enforce maximum of 3 comparisons', () => {
+    const { result } = renderHook(() => useComparisonStore());
+
+    act(() => {
+      result.current.add('listing-1');
+      result.current.add('listing-2');
+      result.current.add('listing-3');
+    });
+
+    expect(result.current.count()).toBe(3);
+
+    act(() => {
+      const added = result.current.add('listing-4');
+      expect(added).toBe(false);
+    });
+
+    expect(result.current.comparisons).toHaveLength(3);
+    expect(result.current.comparisons).not.toContain('listing-4');
+    expect(result.current.count()).toBe(3);
+  });
+
+  it('should remove comparison', () => {
+    const { result } = renderHook(() => useComparisonStore());
+
+    act(() => {
+      result.current.add('listing-1');
+      result.current.add('listing-2');
+      result.current.add('listing-3');
+    });
+
+    act(() => {
+      result.current.remove('listing-2');
+    });
+
+    expect(result.current.comparisons).not.toContain('listing-2');
+    expect(result.current.comparisons).toContain('listing-1');
+    expect(result.current.comparisons).toContain('listing-3');
+    expect(result.current.count()).toBe(2);
+  });
+
+  it('should check if comparison exists', () => {
+    const { result } = renderHook(() => useComparisonStore());
+
+    act(() => {
+      result.current.add('listing-1');
+    });
+
+    expect(result.current.check('listing-1')).toBe(true);
+    expect(result.current.check('listing-2')).toBe(false);
+  });
+
+  it('should clear all comparisons', () => {
+    const { result } = renderHook(() => useComparisonStore());
+
+    act(() => {
+      result.current.add('listing-1');
+      result.current.add('listing-2');
+      result.current.add('listing-3');
+    });
+
+    act(() => {
+      result.current.clear();
+    });
+
+    expect(result.current.comparisons).toEqual([]);
+    expect(result.current.count()).toBe(0);
+  });
+
+  it('should persist comparisons to localStorage', () => {
+    const { result } = renderHook(() => useComparisonStore());
+
+    act(() => {
+      result.current.add('listing-1');
+      result.current.add('listing-2');
+    });
+
+    const stored = localStorage.getItem('comparison-storage');
+    expect(stored).toBeTruthy();
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      expect(parsed.state.comparisons).toEqual(['listing-1', 'listing-2']);
+    }
+  });
+
+  it('should be cleared on logout', () => {
+    const { result: authResult } = renderHook(() => useAuthStore());
+    const { result: comparisonResult } = renderHook(() => useComparisonStore());
+    const mockUser: User = {
+      id: 'user-1',
+      email: 'test@example.com',
+      type: 'Individual',
+    };
+
+    act(() => {
+      authResult.current.setAuth(mockUser, 'test-token');
+      comparisonResult.current.add('listing-1');
+      comparisonResult.current.add('listing-2');
+    });
+
+    expect(comparisonResult.current.count()).toBe(2);
+
+    act(() => {
+      authResult.current.logout();
+    });
+
+    expect(comparisonResult.current.comparisons).toEqual([]);
+    expect(comparisonResult.current.count()).toBe(0);
   });
 });

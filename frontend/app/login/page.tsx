@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { authApi, favoritesApi, listingsApi, savedFiltersApi } from '@/lib/api';
-import { useAuthStore } from '@/lib/store';
+import { useAuthStore, useComparisonStore } from '@/lib/store';
 
 const isValidEmail = (value: string): boolean => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -18,6 +18,7 @@ const isValidPhone = (value: string): boolean => {
 export default function LoginPage() {
   const router = useRouter();
   const { setAuth, user, isInitialized } = useAuthStore();
+  const { add: addComparison } = useComparisonStore();
 
   useEffect(() => {
     if (isInitialized && user) {
@@ -89,6 +90,22 @@ export default function LoginPage() {
             await Promise.all(addPromises);
           }
           localStorage.removeItem('pendingFavorites');
+        }
+
+        const pendingComparisons = JSON.parse(localStorage.getItem('pendingComparisons') || '[]');
+        if (pendingComparisons.length > 0) {
+          for (const listingId of pendingComparisons) {
+            try {
+              const listingRes = await listingsApi.getOne(listingId);
+              const listing = listingRes.data;
+              if (listing.user && listing.user.id !== res.data.user.id) {
+                addComparison(listingId);
+              }
+            } catch {
+              // Skip if listing not found or error occurred
+            }
+          }
+          localStorage.removeItem('pendingComparisons');
         }
 
         const pendingSavedFilter = localStorage.getItem('pendingSavedFilter');

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { ListingManagementCard } from '@/components/ListingManagementCard';
 import { ListingManagementCardSkeleton } from '@/components/ListingManagementCardSkeleton';
 import { listingsApi, Listing, PaginationMeta } from '@/lib/api';
@@ -19,6 +20,7 @@ export default function MyListingsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [timeUntilRefresh, setTimeUntilRefresh] = useState<number | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<'All' | 'Active' | 'Paused' | 'Closed'>('All');
   const loadingRef = useRef(false);
   const loadingMoreRef = useRef(false);
   const hasLoadedRef = useRef(false);
@@ -279,6 +281,21 @@ export default function MyListingsPage() {
     return listings.some((listing) => listing.status === 'Active');
   }, [listings]);
 
+  const filteredListings = useMemo(() => {
+    if (statusFilter === 'All') {
+      return listings;
+    }
+    return listings.filter((listing) => listing.status === statusFilter);
+  }, [listings, statusFilter]);
+
+  const statusCounts = useMemo(() => {
+    return {
+      Active: listings.filter((l) => l.status === 'Active').length,
+      Paused: listings.filter((l) => l.status === 'Paused').length,
+      Closed: listings.filter((l) => l.status === 'Closed').length,
+    };
+  }, [listings]);
+
   if (!isInitialized && !user) {
     return null;
   }
@@ -290,6 +307,10 @@ export default function MyListingsPage() {
   if (loading || !hasLoadedRef.current) {
     return (
       <div>
+        <Breadcrumbs
+          items={[{ label: 'Почетна', href: '/' }, { label: 'Мои објави' }]}
+          className="mb-6"
+        />
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
           <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
             Мои објави
@@ -306,6 +327,10 @@ export default function MyListingsPage() {
 
   return (
     <div>
+      <Breadcrumbs
+        items={[{ label: 'Почетна', href: '/' }, { label: 'Мои објави' }]}
+        className="mb-6"
+      />
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
         <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
           Мои објави
@@ -342,22 +367,61 @@ export default function MyListingsPage() {
         </div>
       </div>
 
+      {listings && listings.length > 0 && (
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-3">
+            {(['All', 'Active', 'Paused', 'Closed'] as const).map((status) => (
+              <button
+                key={status}
+                onClick={() => setStatusFilter(status)}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  statusFilter === status
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-bg-light text-gray-300 hover:bg-bg-dark border border-primary-500/20'
+                }`}
+              >
+                {status === 'All'
+                  ? 'Сите'
+                  : status === 'Active'
+                    ? 'Активни'
+                    : status === 'Paused'
+                      ? 'Привремено застарени'
+                      : 'Затворени'}
+                {status !== 'All' && (
+                  <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-xs">
+                    {statusCounts[status]}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {!listings || listings.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-300 text-lg">Сè уште немате објави</p>
         </div>
       ) : (
         <>
-          <div className="space-y-4">
-            {listings.map((listing) => (
-              <ListingManagementCard
-                key={listing.id}
-                listing={listing}
-                mode="my-listings"
-                onAction={handleAction}
-              />
-            ))}
-          </div>
+          {filteredListings.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-300 text-lg">Нема објави со избраниот статус</p>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-4">
+                {filteredListings.map((listing) => (
+                  <ListingManagementCard
+                    key={listing.id}
+                    listing={listing}
+                    mode="my-listings"
+                    onAction={handleAction}
+                  />
+                ))}
+              </div>
+            </>
+          )}
 
           {loadingMore && (
             <div className="text-center py-8">
@@ -366,21 +430,25 @@ export default function MyListingsPage() {
             </div>
           )}
 
-          {meta && meta.totalPages && currentPage < meta.totalPages && !loadingMore && (
-            <div className="flex justify-center py-8">
-              <button
-                onClick={handleLoadMore}
-                className="btn-primary px-8 py-3 text-lg font-semibold"
-              >
-                Вчитај уште
-              </button>
-            </div>
-          )}
+          {filteredListings.length > 0 && (
+            <>
+              {meta && meta.totalPages && currentPage < meta.totalPages && !loadingMore && (
+                <div className="flex justify-center py-8">
+                  <button
+                    onClick={handleLoadMore}
+                    className="btn-primary px-8 py-3 text-lg font-semibold"
+                  >
+                    Вчитај уште
+                  </button>
+                </div>
+              )}
 
-          {meta && meta.totalPages && currentPage >= meta.totalPages && listings.length > 0 && (
-            <div className="text-center py-8">
-              <p className="text-gray-300">Нема повеќе објави</p>
-            </div>
+              {meta && meta.totalPages && currentPage >= meta.totalPages && listings.length > 0 && (
+                <div className="text-center py-8">
+                  <p className="text-gray-300">Нема повеќе објави</p>
+                </div>
+              )}
+            </>
           )}
         </>
       )}

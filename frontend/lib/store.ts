@@ -37,10 +37,12 @@ export const useAuthStore = create<AuthState>()(
           localStorage.removeItem('token');
           localStorage.removeItem('refresh_token');
           localStorage.removeItem('pendingFavorites');
+          localStorage.removeItem('pendingComparisons');
           localStorage.removeItem('returnUrl');
           sessionStorage.removeItem('kupito_search_filters');
           localStorage.removeItem('kupito_search_filters');
           useFavoritesStore.getState().clear();
+          useComparisonStore.getState().clear();
         }
       },
       initAuth: async () => {
@@ -120,6 +122,43 @@ export const useFavoritesStore = create<FavoritesState>()(
     }),
     {
       name: 'favorites-storage',
+      storage: typeof window !== 'undefined' ? createJSONStorage(() => localStorage) : undefined,
+    }
+  )
+);
+
+interface ComparisonState {
+  comparisons: string[];
+  add: (_id: string) => boolean;
+  remove: (_id: string) => void;
+  check: (_id: string) => boolean;
+  clear: () => void;
+  count: () => number;
+}
+
+export const useComparisonStore = create<ComparisonState>()(
+  persist(
+    (set, get) => ({
+      comparisons: [],
+      add: (_id) => {
+        const current = get().comparisons;
+        if (current.includes(_id)) {
+          return false;
+        }
+        if (current.length >= 3) {
+          return false;
+        }
+        set({ comparisons: [...current, _id] });
+        return true;
+      },
+      remove: (_id) =>
+        set((state) => ({ comparisons: state.comparisons.filter((c) => c !== _id) })),
+      check: (_id) => get().comparisons.includes(_id),
+      clear: () => set({ comparisons: [] }),
+      count: () => get().comparisons.length,
+    }),
+    {
+      name: 'comparison-storage',
       storage: typeof window !== 'undefined' ? createJSONStorage(() => localStorage) : undefined,
     }
   )

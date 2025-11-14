@@ -5,12 +5,13 @@ import { Suspense, useState, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { authApi, favoritesApi, listingsApi, RegisterDto, savedFiltersApi } from '@/lib/api';
-import { useAuthStore } from '@/lib/store';
+import { useAuthStore, useComparisonStore } from '@/lib/store';
 
 function VerifyPhoneContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setAuth } = useAuthStore();
+  const { add: addComparison } = useComparisonStore();
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -289,6 +290,22 @@ function VerifyPhoneContent() {
               await Promise.all(addPromises);
             }
             localStorage.removeItem('pendingFavorites');
+          }
+
+          const pendingComparisons = JSON.parse(localStorage.getItem('pendingComparisons') || '[]');
+          if (pendingComparisons.length > 0) {
+            for (const listingId of pendingComparisons) {
+              try {
+                const listingRes = await listingsApi.getOne(listingId);
+                const listing = listingRes.data;
+                if (listing.user && listing.user.id !== loginRes.data.user.id) {
+                  addComparison(listingId);
+                }
+              } catch {
+                // Skip if listing not found or error occurred
+              }
+            }
+            localStorage.removeItem('pendingComparisons');
           }
 
           const pendingSavedFilter = localStorage.getItem('pendingSavedFilter');

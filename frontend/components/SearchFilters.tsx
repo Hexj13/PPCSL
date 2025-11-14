@@ -236,14 +236,14 @@ export function SearchFilters() {
     ];
 
     if (popularBrands.length > 0) {
-      options.push({ value: '', label: 'Популарни', category: 'Популарни' });
+      options.push({ value: '__category__Популарни', label: 'Популарни', category: 'Популарни' });
       popularBrands.forEach((brand) => {
         options.push({ value: brand.id, label: brand.name, category: 'Популарни' });
       });
     }
 
     if (otherBrands.length > 0) {
-      options.push({ value: '', label: 'Други', category: 'Други' });
+      options.push({ value: '__category__Други', label: 'Други', category: 'Други' });
       otherBrands.forEach((brand) => {
         options.push({ value: brand.id, label: brand.name, category: 'Други' });
       });
@@ -283,7 +283,11 @@ export function SearchFilters() {
             const sortedModels = [...brandModels].sort((a, b) =>
               a.name.localeCompare(b.name, 'mk')
             );
-            options.push({ value: '', label: brand.name, category: brand.name });
+            options.push({
+              value: `__category__${brand.id}`,
+              label: brand.name,
+              category: brand.name,
+            });
             sortedModels.forEach((model) => {
               options.push({ value: model.id, label: model.name, category: brand.name });
             });
@@ -313,7 +317,7 @@ export function SearchFilters() {
     ];
 
     if (popularCities.length > 0) {
-      options.push({ value: '', label: 'Популарни', category: 'Популарни' });
+      options.push({ value: '__category__Популарни', label: 'Популарни', category: 'Популарни' });
       popularCities.forEach((city) => {
         options.push({
           value: city.nameEn,
@@ -324,7 +328,7 @@ export function SearchFilters() {
     }
 
     if (otherCities.length > 0) {
-      options.push({ value: '', label: 'Други', category: 'Други' });
+      options.push({ value: '__category__Други', label: 'Други', category: 'Други' });
       otherCities.forEach((city) => {
         options.push({
           value: city.nameEn,
@@ -425,7 +429,7 @@ export function SearchFilters() {
   };
 
   const handleMultiSelectChange = (key: string, values: string[]) => {
-    const filteredValues = values.filter((v) => v !== 'all');
+    const filteredValues = values.filter((v) => v !== 'all' && !v.startsWith('__category__'));
     setFilters({ ...filters, [key]: filteredValues });
   };
 
@@ -533,9 +537,15 @@ export function SearchFilters() {
       return;
     }
 
-    const validBrandIds = filters.brand_ids.filter((id) => id !== 'all' && id !== '');
-    const validModelIds = filters.model_ids.filter((id) => id !== 'all' && id !== '');
-    const validCities = filters.cities.filter((city) => city !== 'all' && city !== '');
+    const validBrandIds = filters.brand_ids.filter(
+      (id) => id !== 'all' && id !== '' && !id.startsWith('__category__')
+    );
+    const validModelIds = filters.model_ids.filter(
+      (id) => id !== 'all' && id !== '' && !id.startsWith('__category__')
+    );
+    const validCities = filters.cities.filter(
+      (city) => city !== 'all' && city !== '' && !city.startsWith('__category__')
+    );
     const allBrandsSelected = validBrandIds.length === brands.length && brands.length > 0;
     const allModelsSelected = validModelIds.length === models.length && models.length > 0;
     const allCitiesSelected = validCities.length === cities.length && cities.length > 0;
@@ -578,7 +588,9 @@ export function SearchFilters() {
         return;
       }
       if (Array.isArray(value)) {
-        const filteredArray = value.filter((v) => v !== 'all' && v !== '');
+        const filteredArray = value.filter(
+          (v) => v !== 'all' && v !== '' && !v.startsWith('__category__')
+        );
         if (filteredArray.length > 0) {
           const arrayParams = [
             'fuels',

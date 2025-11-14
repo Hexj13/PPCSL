@@ -1,34 +1,57 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { savedFiltersApi, SavedFilter } from '@/lib/api';
 
 import { SaveFilterModal } from './SaveFilterModal';
 
-export function SavedFiltersList() {
+interface SavedFiltersListProps {
+  onFiltersChange?: (_count: number) => void;
+}
+
+export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}) {
   const router = useRouter();
   const [filters, setFilters] = useState<SavedFilter[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
   const [editingFilterId, setEditingFilterId] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const hasLoadedRef = useRef(false);
+  const cachedFiltersRef = useRef<SavedFilter[] | null>(null);
 
-  const loadFilters = useCallback(() => {
-    setLoading(true);
-    savedFiltersApi
-      .getAll()
-      .then((res) => {
-        setFilters(Array.isArray(res.data) ? res.data : []);
+  const loadFilters = useCallback(
+    (forceReload = false) => {
+      if (!forceReload && hasLoadedRef.current && cachedFiltersRef.current !== null) {
+        setFilters(cachedFiltersRef.current);
         setLoading(false);
-      })
-      .catch(() => {
-        setFilters([]);
-        setLoading(false);
-      });
-  }, []);
+        onFiltersChange?.(cachedFiltersRef.current.length);
+        return;
+      }
+
+      setLoading(true);
+      savedFiltersApi
+        .getAll()
+        .then((res) => {
+          const filtersList = Array.isArray(res.data) ? res.data : [];
+          cachedFiltersRef.current = filtersList;
+          setFilters(filtersList);
+          setLoading(false);
+          hasLoadedRef.current = true;
+          onFiltersChange?.(filtersList.length);
+        })
+        .catch(() => {
+          cachedFiltersRef.current = [];
+          setFilters([]);
+          setLoading(false);
+          hasLoadedRef.current = true;
+          onFiltersChange?.(0);
+        });
+    },
+    [onFiltersChange]
+  );
 
   useEffect(() => {
     loadFilters();
@@ -41,7 +64,9 @@ export function SavedFiltersList() {
     try {
       await savedFiltersApi.remove(id);
       toast.success('Филтерот е успешно избришан');
-      setFilters((prev) => prev.filter((f) => f.id !== id));
+      cachedFiltersRef.current = null;
+      hasLoadedRef.current = false;
+      loadFilters(true);
     } catch (error: unknown) {
       const errorMessage =
         (error && typeof error === 'object' && 'response' in error
@@ -244,7 +269,9 @@ export function SavedFiltersList() {
             setEditingFilterId(null);
           }}
           onSave={() => {
-            loadFilters();
+            cachedFiltersRef.current = null;
+            hasLoadedRef.current = false;
+            loadFilters(true);
           }}
           filterId={editingFilterId}
           initialName={filters.find((f) => f.id === editingFilterId)?.name || ''}
