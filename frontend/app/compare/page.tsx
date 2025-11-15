@@ -28,7 +28,6 @@ export default function ComparePage() {
 
   useEffect(() => {
     const rehydrateAndFetch = async () => {
-      // Ensure store is properly rehydrated from localStorage
       if (!hasRehydratedRef.current) {
         hasRehydratedRef.current = true;
         await rehydrate();
@@ -43,11 +42,10 @@ export default function ComparePage() {
             const parsed = JSON.parse(backup);
             if (parsed.state?.comparisons?.length > 0) {
               currentComparisons = parsed.state.comparisons;
-              // Use rehydrate instead of setState
               await rehydrate();
             }
           } catch {
-            // Ignore backup parse errors
+            // Ignore errors
           }
         }
       }

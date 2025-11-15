@@ -179,7 +179,7 @@ export const useComparisonStore = create<ComparisonState>()(
                 set({ comparisons: parsed.state.comparisons });
               }
             } catch {
-              // Ignore parse errors
+              // Ignore errors
             }
           }
         }

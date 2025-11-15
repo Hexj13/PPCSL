@@ -100,28 +100,31 @@ export default function LoginPage() {
             try {
               const listingRes = await listingsApi.getOne(listingId);
               const listing = listingRes.data;
-              // Only add if user is not the owner
               if (listing.user && listing.user.id !== res.data.user.id) {
                 comparisonStore.add(listingId);
               }
             } catch {
-              // Skip if listing not found or error occurred
+              // Ignore errors
             }
           }
 
-          // Force synchronous write to localStorage to ensure data is persisted
           if (typeof window !== 'undefined' && comparisonStore.comparisons.length > 0) {
             const storageData = {
               state: { comparisons: comparisonStore.comparisons },
               version: 0,
             };
-            // Write directly to ensure it persists before redirect
             localStorage.setItem('comparison-storage', JSON.stringify(storageData));
-            // Extra safeguard: write again after a tick
+            const verify = localStorage.getItem('comparison-storage');
+            if (!verify || verify !== JSON.stringify(storageData)) {
+              localStorage.setItem('comparison-storage', JSON.stringify(storageData));
+            }
             await new Promise((resolve) => {
               requestAnimationFrame(() => {
                 localStorage.setItem('comparison-storage', JSON.stringify(storageData));
-                resolve(undefined);
+                requestAnimationFrame(() => {
+                  localStorage.setItem('comparison-storage', JSON.stringify(storageData));
+                  setTimeout(resolve, 100);
+                });
               });
             });
           }
@@ -144,7 +147,8 @@ export default function LoginPage() {
             localStorage.removeItem('pendingSavedFilter');
             localStorage.removeItem('returnUrl');
             toast.success('Филтерот е успешно зачуван');
-            router.push('/favorites?tab=filters');
+            window.location.href = '/favorites?tab=filters';
+            return;
           } catch (error: unknown) {
             const errorMessage =
               (error && typeof error === 'object' && 'response' in error
@@ -159,14 +163,17 @@ export default function LoginPage() {
                 errorMessage.includes('филтри. Ве молиме избришете некој од постоечките филтри.'));
             if (isLimitError) {
               localStorage.removeItem('returnUrl');
-              router.push('/favorites?tab=filters');
+              window.location.href = '/favorites?tab=filters';
+              return;
             } else {
               const returnUrl = localStorage.getItem('returnUrl');
               if (returnUrl) {
                 localStorage.removeItem('returnUrl');
-                router.push(returnUrl);
+                window.location.href = returnUrl;
+                return;
               } else {
-                router.push('/');
+                window.location.href = '/';
+                return;
               }
             }
           }
@@ -174,16 +181,18 @@ export default function LoginPage() {
           const returnUrl = localStorage.getItem('returnUrl');
           if (returnUrl) {
             localStorage.removeItem('returnUrl');
-            router.push(returnUrl);
+            window.location.href = returnUrl;
+            return;
           } else {
-            router.push('/');
+            window.location.href = '/';
+            return;
           }
         }
       } else {
-        router.push('/');
+        window.location.href = '/';
+        return;
       }
 
-      toast.success('Успешна најава');
     } catch {
       // Error is already handled by API interceptor
     } finally {
