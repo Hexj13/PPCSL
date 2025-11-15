@@ -310,12 +310,8 @@ function VerifyPhoneContent() {
                   'current user:',
                   loginRes.data.user.id
                 );
-                if (listing.user && listing.user.id !== loginRes.data.user.id) {
-                  const added = comparisonStore.add(listingId);
-                  console.log('[VERIFY-PHONE] Added to comparison:', listingId, 'result:', added);
-                } else {
-                  console.log('[VERIFY-PHONE] Skipped listing (owner check):', listingId);
-                }
+                const added = comparisonStore.add(listingId);
+                console.log('[VERIFY-PHONE] Added to comparison:', listingId, 'result:', added);
               } catch (error) {
                 console.error('[VERIFY-PHONE] Error processing listing:', listingId, error);
               }

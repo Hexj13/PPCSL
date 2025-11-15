@@ -110,12 +110,8 @@ export default function LoginPage() {
                 'current user:',
                 res.data.user.id
               );
-              if (listing.user && listing.user.id !== res.data.user.id) {
-                const added = comparisonStore.add(listingId);
-                console.log('[LOGIN] Added to comparison:', listingId, 'result:', added);
-              } else {
-                console.log('[LOGIN] Skipped listing (owner check):', listingId);
-              }
+              const added = comparisonStore.add(listingId);
+              console.log('[LOGIN] Added to comparison:', listingId, 'result:', added);
             } catch (error) {
               console.error('[LOGIN] Error processing listing:', listingId, error);
             }
