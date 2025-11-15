@@ -12,15 +12,18 @@ interface SavedFiltersListProps {
   onFiltersChange?: (_count: number) => void;
 }
 
+let moduleCache: SavedFilter[] | null = null;
+let moduleHasLoaded = false;
+
+export function updateSavedFiltersCache(filters: SavedFilter[]) {
+  moduleCache = filters;
+  moduleHasLoaded = true;
+}
+
 export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}) {
   const router = useRouter();
-  const [filters, setFilters] = useState<SavedFilter[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
-  const [editingFilterId, setEditingFilterId] = useState<string | null>(null);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const hasLoadedRef = useRef(false);
-  const cachedFiltersRef = useRef<SavedFilter[] | null>(null);
+  const hasLoadedRef = useRef(moduleHasLoaded);
+  const cachedFiltersRef = useRef<SavedFilter[] | null>(moduleCache);
 
   const loadFilters = useCallback(
     (forceReload = false) => {
@@ -37,21 +40,40 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
         .then((res) => {
           const filtersList = Array.isArray(res.data) ? res.data : [];
           cachedFiltersRef.current = filtersList;
+          moduleCache = filtersList;
+          hasLoadedRef.current = true;
+          moduleHasLoaded = true;
           setFilters(filtersList);
           setLoading(false);
-          hasLoadedRef.current = true;
           onFiltersChange?.(filtersList.length);
         })
         .catch(() => {
           cachedFiltersRef.current = [];
+          moduleCache = [];
+          hasLoadedRef.current = true;
+          moduleHasLoaded = true;
           setFilters([]);
           setLoading(false);
-          hasLoadedRef.current = true;
           onFiltersChange?.(0);
         });
     },
     [onFiltersChange]
   );
+
+  const [filters, setFilters] = useState<SavedFilter[]>(() => {
+    if (hasLoadedRef.current && cachedFiltersRef.current !== null) {
+      return cachedFiltersRef.current;
+    }
+    return [];
+  });
+
+  const [loading, setLoading] = useState(() => {
+    return !(hasLoadedRef.current && cachedFiltersRef.current !== null);
+  });
+
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+  const [editingFilterId, setEditingFilterId] = useState<string | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     loadFilters();
@@ -65,7 +87,9 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
       await savedFiltersApi.remove(id);
       toast.success('Филтерот е успешно избришан');
       cachedFiltersRef.current = null;
+      moduleCache = null;
       hasLoadedRef.current = false;
+      moduleHasLoaded = false;
       loadFilters(true);
     } catch (error: unknown) {
       const errorMessage =
@@ -270,7 +294,9 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
           }}
           onSave={() => {
             cachedFiltersRef.current = null;
+            moduleCache = null;
             hasLoadedRef.current = false;
+            moduleHasLoaded = false;
             loadFilters(true);
           }}
           filterId={editingFilterId}

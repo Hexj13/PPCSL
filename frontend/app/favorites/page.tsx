@@ -6,7 +6,7 @@ import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { ListingCard } from '@/components/ListingCard';
 import { ListingCardSkeleton } from '@/components/ListingCardSkeleton';
-import { SavedFiltersList } from '@/components/SavedFiltersList';
+import { SavedFiltersList, updateSavedFiltersCache } from '@/components/SavedFiltersList';
 import { favoritesApi, Listing, savedFiltersApi } from '@/lib/api';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
 
@@ -92,10 +92,13 @@ function FavoritesContent() {
       savedFiltersApi
         .getAll()
         .then((res) => {
-          setFiltersCount(Array.isArray(res.data) ? res.data.length : 0);
+          const filtersList = Array.isArray(res.data) ? res.data : [];
+          setFiltersCount(filtersList.length);
+          updateSavedFiltersCache(filtersList);
         })
         .catch(() => {
           setFiltersCount(0);
+          updateSavedFiltersCache([]);
         });
     }
   }, [user, isInitialized, router, loadFavorites]);
