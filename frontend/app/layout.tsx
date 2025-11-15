@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
 
 import { AuthProvider } from '@/components/AuthProvider';
+import { CookieConsent } from '@/components/CookieConsent';
 import { Footer } from '@/components/Footer';
 import { GoogleAnalytics } from '@/components/GoogleAnalytics';
 import { Header } from '@/components/Header';
@@ -100,6 +101,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={inter.className} suppressHydrationWarning>
         <GoogleAnalytics />
         <OrganizationSchema />
+        <CookieConsent />
         <AuthProvider>
           <div className="min-h-screen flex flex-col">
             <Header />
