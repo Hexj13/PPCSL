@@ -347,7 +347,9 @@ function VerifyPhoneContent() {
               localStorage.removeItem('pendingSavedFilter');
               localStorage.removeItem('returnUrl');
               toast.success('Филтерот е успешно зачуван');
-              window.location.href = '/favorites?tab=filters';
+              if (typeof window !== 'undefined' && window.location) {
+                window.location.href = '/favorites?tab=filters';
+              }
               return;
             } catch (error: unknown) {
               const errorMessage =
@@ -365,16 +367,22 @@ function VerifyPhoneContent() {
                   ));
               if (isLimitError) {
                 localStorage.removeItem('returnUrl');
-                window.location.href = '/favorites?tab=filters';
+                if (typeof window !== 'undefined' && window.location) {
+                  window.location.href = '/favorites?tab=filters';
+                }
                 return;
               } else {
                 const returnUrl = localStorage.getItem('returnUrl');
                 if (returnUrl) {
                   localStorage.removeItem('returnUrl');
-                  window.location.href = returnUrl;
+                  if (typeof window !== 'undefined' && window.location) {
+                    window.location.href = returnUrl;
+                  }
                   return;
                 } else {
-                  window.location.href = '/';
+                  if (typeof window !== 'undefined' && window.location) {
+                    window.location.href = '/';
+                  }
                   return;
                 }
               }
@@ -383,18 +391,26 @@ function VerifyPhoneContent() {
             const returnUrl = localStorage.getItem('returnUrl');
             if (returnUrl) {
               localStorage.removeItem('returnUrl');
-              window.location.href = returnUrl;
+              if (typeof window !== 'undefined' && window.location) {
+                window.location.href = returnUrl;
+              }
               return;
             } else {
-              window.location.href = '/';
+              if (typeof window !== 'undefined' && window.location) {
+                window.location.href = '/';
+              }
               return;
             }
           }
         } else {
-          window.location.href = '/';
+          if (typeof window !== 'undefined') {
+            const win = window as unknown as Window;
+            if (win.location) {
+              win.location.href = '/';
+            }
+          }
           return;
         }
-
       } catch {
         toast.error('Регистрацијата е успешна, но најавата не успеа. Најавете се рачно.');
         router.push('/login');

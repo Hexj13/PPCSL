@@ -147,7 +147,9 @@ export default function LoginPage() {
             localStorage.removeItem('pendingSavedFilter');
             localStorage.removeItem('returnUrl');
             toast.success('Филтерот е успешно зачуван');
-            window.location.href = '/favorites?tab=filters';
+            if (typeof window !== 'undefined' && window.location) {
+              window.location.href = '/favorites?tab=filters';
+            }
             return;
           } catch (error: unknown) {
             const errorMessage =
@@ -163,16 +165,22 @@ export default function LoginPage() {
                 errorMessage.includes('филтри. Ве молиме избришете некој од постоечките филтри.'));
             if (isLimitError) {
               localStorage.removeItem('returnUrl');
-              window.location.href = '/favorites?tab=filters';
+              if (typeof window !== 'undefined' && window.location) {
+                window.location.href = '/favorites?tab=filters';
+              }
               return;
             } else {
               const returnUrl = localStorage.getItem('returnUrl');
               if (returnUrl) {
                 localStorage.removeItem('returnUrl');
-                window.location.href = returnUrl;
+                if (typeof window !== 'undefined' && window.location) {
+                  window.location.href = returnUrl;
+                }
                 return;
               } else {
-                window.location.href = '/';
+                if (typeof window !== 'undefined' && window.location) {
+                  window.location.href = '/';
+                }
                 return;
               }
             }
@@ -181,18 +189,26 @@ export default function LoginPage() {
           const returnUrl = localStorage.getItem('returnUrl');
           if (returnUrl) {
             localStorage.removeItem('returnUrl');
-            window.location.href = returnUrl;
+            if (typeof window !== 'undefined' && window.location) {
+              window.location.href = returnUrl;
+            }
             return;
           } else {
-            window.location.href = '/';
+            if (typeof window !== 'undefined' && window.location) {
+              window.location.href = '/';
+            }
             return;
           }
         }
       } else {
-        window.location.href = '/';
+        if (typeof window !== 'undefined') {
+          const win = window as unknown as Window;
+          if (win.location) {
+            win.location.href = '/';
+          }
+        }
         return;
       }
-
     } catch {
       // Error is already handled by API interceptor
     } finally {
