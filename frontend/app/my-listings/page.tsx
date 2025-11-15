@@ -123,6 +123,12 @@ export default function MyListingsPage() {
     }
 
     if (user) {
+      const shouldRefresh = sessionStorage.getItem('refreshMyListings');
+      if (shouldRefresh === 'true') {
+        sessionStorage.removeItem('refreshMyListings');
+        hasLoadedRef.current = false;
+      }
+
       if (!hasLoadedRef.current) {
         hasLoadedRef.current = true;
         fetchListings(1, false);
@@ -139,13 +145,6 @@ export default function MyListingsPage() {
             const remaining = twoDays - timePassed;
             setTimeUntilRefresh(remaining);
           }
-        }
-      } else {
-        const shouldRefresh = sessionStorage.getItem('refreshMyListings');
-        if (shouldRefresh === 'true') {
-          sessionStorage.removeItem('refreshMyListings');
-          hasLoadedRef.current = false;
-          fetchListings(1, false);
         }
       }
     }
