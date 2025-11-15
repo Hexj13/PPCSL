@@ -292,30 +292,47 @@ function VerifyPhoneContent() {
           }
 
           const pendingComparisons = JSON.parse(localStorage.getItem('pendingComparisons') || '[]');
+          console.log('[VERIFY-PHONE] pendingComparisons:', pendingComparisons);
           if (pendingComparisons.length > 0) {
             const { useComparisonStore } = await import('@/lib/store');
             const comparisonStore = useComparisonStore.getState();
+            console.log('[VERIFY-PHONE] Initial store comparisons:', comparisonStore.comparisons);
 
             for (const listingId of pendingComparisons) {
               try {
                 const listingRes = await listingsApi.getOne(listingId);
                 const listing = listingRes.data;
+                console.log(
+                  '[VERIFY-PHONE] Processing listing:',
+                  listingId,
+                  'owner:',
+                  listing.user?.id,
+                  'current user:',
+                  loginRes.data.user.id
+                );
                 if (listing.user && listing.user.id !== loginRes.data.user.id) {
-                  comparisonStore.add(listingId);
+                  const added = comparisonStore.add(listingId);
+                  console.log('[VERIFY-PHONE] Added to comparison:', listingId, 'result:', added);
+                } else {
+                  console.log('[VERIFY-PHONE] Skipped listing (owner check):', listingId);
                 }
-              } catch {
-                // Ignore errors
+              } catch (error) {
+                console.error('[VERIFY-PHONE] Error processing listing:', listingId, error);
               }
             }
 
+            console.log('[VERIFY-PHONE] Final store comparisons:', comparisonStore.comparisons);
             if (typeof window !== 'undefined' && comparisonStore.comparisons.length > 0) {
               const storageData = {
                 state: { comparisons: comparisonStore.comparisons },
                 version: 0,
               };
+              console.log('[VERIFY-PHONE] Saving to localStorage:', storageData);
               localStorage.setItem('comparison-storage', JSON.stringify(storageData));
               const verify = localStorage.getItem('comparison-storage');
+              console.log('[VERIFY-PHONE] Verification read:', verify);
               if (!verify || verify !== JSON.stringify(storageData)) {
+                console.warn('[VERIFY-PHONE] Verification failed, saving again');
                 localStorage.setItem('comparison-storage', JSON.stringify(storageData));
               }
               await new Promise((resolve) => {
@@ -323,13 +340,18 @@ function VerifyPhoneContent() {
                   localStorage.setItem('comparison-storage', JSON.stringify(storageData));
                   requestAnimationFrame(() => {
                     localStorage.setItem('comparison-storage', JSON.stringify(storageData));
+                    const finalCheck = localStorage.getItem('comparison-storage');
+                    console.log('[VERIFY-PHONE] Final localStorage check:', finalCheck);
                     setTimeout(resolve, 100);
                   });
                 });
               });
+            } else {
+              console.log('[VERIFY-PHONE] No comparisons to save or window undefined');
             }
 
             localStorage.removeItem('pendingComparisons');
+            console.log('[VERIFY-PHONE] Removed pendingComparisons from localStorage');
           }
 
           const pendingSavedFilter = localStorage.getItem('pendingSavedFilter');
@@ -389,13 +411,21 @@ function VerifyPhoneContent() {
             }
           } else {
             const returnUrl = localStorage.getItem('returnUrl');
+            console.log('[VERIFY-PHONE] No pendingSavedFilter, returnUrl:', returnUrl);
+            const finalStorageCheck = localStorage.getItem('comparison-storage');
+            console.log(
+              '[VERIFY-PHONE] Before redirect, localStorage comparison-storage:',
+              finalStorageCheck
+            );
             if (returnUrl) {
               localStorage.removeItem('returnUrl');
+              console.log('[VERIFY-PHONE] Redirecting to returnUrl:', returnUrl);
               if (typeof window !== 'undefined' && window.location) {
                 window.location.href = returnUrl;
               }
               return;
             } else {
+              console.log('[VERIFY-PHONE] Redirecting to home');
               if (typeof window !== 'undefined' && window.location) {
                 window.location.href = '/';
               }
@@ -403,9 +433,15 @@ function VerifyPhoneContent() {
             }
           }
         } else {
+          const finalStorageCheck = localStorage.getItem('comparison-storage');
+          console.log(
+            '[VERIFY-PHONE] No pendingComparisons, before redirect, localStorage comparison-storage:',
+            finalStorageCheck
+          );
           if (typeof window !== 'undefined') {
             const win = window as unknown as Window;
             if (win.location) {
+              console.log('[VERIFY-PHONE] Redirecting to home (no pendingComparisons)');
               win.location.href = '/';
             }
           }

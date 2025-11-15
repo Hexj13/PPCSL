@@ -28,24 +28,35 @@ export default function ComparePage() {
 
   useEffect(() => {
     const rehydrateAndFetch = async () => {
+      console.log('[COMPARE] useEffect triggered, comparisons:', comparisons);
       if (!hasRehydratedRef.current) {
         hasRehydratedRef.current = true;
+        console.log('[COMPARE] Rehydrating store...');
         await rehydrate();
+        console.log(
+          '[COMPARE] After rehydrate, comparisons:',
+          useComparisonStore.getState().comparisons
+        );
       }
 
       let currentComparisons = comparisons;
+      console.log('[COMPARE] Current comparisons from store:', currentComparisons);
 
       if (currentComparisons.length === 0 && typeof window !== 'undefined') {
+        const stored = localStorage.getItem('comparison-storage');
+        console.log('[COMPARE] localStorage comparison-storage:', stored);
         const backup = localStorage.getItem('comparison-storage-backup');
+        console.log('[COMPARE] localStorage comparison-storage-backup:', backup);
         if (backup) {
           try {
             const parsed = JSON.parse(backup);
             if (parsed.state?.comparisons?.length > 0) {
+              console.log('[COMPARE] Found backup, restoring:', parsed.state.comparisons);
               currentComparisons = parsed.state.comparisons;
               await rehydrate();
             }
-          } catch {
-            // Ignore errors
+          } catch (error) {
+            console.error('[COMPARE] Error parsing backup:', error);
           }
         }
       }

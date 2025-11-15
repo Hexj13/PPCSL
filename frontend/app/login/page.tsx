@@ -92,30 +92,47 @@ export default function LoginPage() {
         }
 
         const pendingComparisons = JSON.parse(localStorage.getItem('pendingComparisons') || '[]');
+        console.log('[LOGIN] pendingComparisons:', pendingComparisons);
         if (pendingComparisons.length > 0) {
           const { useComparisonStore } = await import('@/lib/store');
           const comparisonStore = useComparisonStore.getState();
+          console.log('[LOGIN] Initial store comparisons:', comparisonStore.comparisons);
 
           for (const listingId of pendingComparisons) {
             try {
               const listingRes = await listingsApi.getOne(listingId);
               const listing = listingRes.data;
+              console.log(
+                '[LOGIN] Processing listing:',
+                listingId,
+                'owner:',
+                listing.user?.id,
+                'current user:',
+                res.data.user.id
+              );
               if (listing.user && listing.user.id !== res.data.user.id) {
-                comparisonStore.add(listingId);
+                const added = comparisonStore.add(listingId);
+                console.log('[LOGIN] Added to comparison:', listingId, 'result:', added);
+              } else {
+                console.log('[LOGIN] Skipped listing (owner check):', listingId);
               }
-            } catch {
-              // Ignore errors
+            } catch (error) {
+              console.error('[LOGIN] Error processing listing:', listingId, error);
             }
           }
 
+          console.log('[LOGIN] Final store comparisons:', comparisonStore.comparisons);
           if (typeof window !== 'undefined' && comparisonStore.comparisons.length > 0) {
             const storageData = {
               state: { comparisons: comparisonStore.comparisons },
               version: 0,
             };
+            console.log('[LOGIN] Saving to localStorage:', storageData);
             localStorage.setItem('comparison-storage', JSON.stringify(storageData));
             const verify = localStorage.getItem('comparison-storage');
+            console.log('[LOGIN] Verification read:', verify);
             if (!verify || verify !== JSON.stringify(storageData)) {
+              console.warn('[LOGIN] Verification failed, saving again');
               localStorage.setItem('comparison-storage', JSON.stringify(storageData));
             }
             await new Promise((resolve) => {
@@ -123,13 +140,18 @@ export default function LoginPage() {
                 localStorage.setItem('comparison-storage', JSON.stringify(storageData));
                 requestAnimationFrame(() => {
                   localStorage.setItem('comparison-storage', JSON.stringify(storageData));
+                  const finalCheck = localStorage.getItem('comparison-storage');
+                  console.log('[LOGIN] Final localStorage check:', finalCheck);
                   setTimeout(resolve, 100);
                 });
               });
             });
+          } else {
+            console.log('[LOGIN] No comparisons to save or window undefined');
           }
 
           localStorage.removeItem('pendingComparisons');
+          console.log('[LOGIN] Removed pendingComparisons from localStorage');
         }
 
         const pendingSavedFilter = localStorage.getItem('pendingSavedFilter');
@@ -187,13 +209,21 @@ export default function LoginPage() {
           }
         } else {
           const returnUrl = localStorage.getItem('returnUrl');
+          console.log('[LOGIN] No pendingSavedFilter, returnUrl:', returnUrl);
+          const finalStorageCheck = localStorage.getItem('comparison-storage');
+          console.log(
+            '[LOGIN] Before redirect, localStorage comparison-storage:',
+            finalStorageCheck
+          );
           if (returnUrl) {
             localStorage.removeItem('returnUrl');
+            console.log('[LOGIN] Redirecting to returnUrl:', returnUrl);
             if (typeof window !== 'undefined' && window.location) {
               window.location.href = returnUrl;
             }
             return;
           } else {
+            console.log('[LOGIN] Redirecting to home');
             if (typeof window !== 'undefined' && window.location) {
               window.location.href = '/';
             }
@@ -201,9 +231,15 @@ export default function LoginPage() {
           }
         }
       } else {
+        const finalStorageCheck = localStorage.getItem('comparison-storage');
+        console.log(
+          '[LOGIN] No pendingComparisons, before redirect, localStorage comparison-storage:',
+          finalStorageCheck
+        );
         if (typeof window !== 'undefined') {
           const win = window as unknown as Window;
           if (win.location) {
+            console.log('[LOGIN] Redirecting to home (no pendingComparisons)');
             win.location.href = '/';
           }
         }

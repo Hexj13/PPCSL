@@ -143,15 +143,22 @@ export const useComparisonStore = create<ComparisonState>()(
       comparisons: [],
       add: (_id) => {
         const current = get().comparisons;
+        console.log('[STORE] add() called with id:', _id, 'current comparisons:', current);
         if (current.includes(_id)) {
+          console.log('[STORE] ID already in comparisons, returning false');
           return false;
         }
         if (current.length >= 3) {
+          console.log('[STORE] Max comparisons reached, returning false');
           return false;
         }
-        set({ comparisons: [...current, _id] });
+        const newComparisons = [...current, _id];
+        console.log('[STORE] Setting new comparisons:', newComparisons);
+        set({ comparisons: newComparisons });
         if (typeof window !== 'undefined') {
           localStorage.removeItem('comparison-storage-backup');
+          const stored = localStorage.getItem('comparison-storage');
+          console.log('[STORE] localStorage after set:', stored);
         }
         return true;
       },
@@ -170,18 +177,29 @@ export const useComparisonStore = create<ComparisonState>()(
       },
       count: () => get().comparisons.length,
       rehydrate: async () => {
+        console.log('[STORE] rehydrate() called');
         if (typeof window !== 'undefined') {
           const stored = localStorage.getItem('comparison-storage');
+          console.log('[STORE] rehydrate() localStorage value:', stored);
           if (stored) {
             try {
               const parsed = JSON.parse(stored);
+              console.log('[STORE] rehydrate() parsed:', parsed);
               if (parsed.state?.comparisons) {
+                console.log('[STORE] rehydrate() setting comparisons:', parsed.state.comparisons);
                 set({ comparisons: parsed.state.comparisons });
+                console.log('[STORE] rehydrate() after set, current state:', get().comparisons);
+              } else {
+                console.log('[STORE] rehydrate() no comparisons in parsed state');
               }
-            } catch {
-              // Ignore errors
+            } catch (error) {
+              console.error('[STORE] rehydrate() error parsing:', error);
             }
+          } else {
+            console.log('[STORE] rehydrate() no stored value in localStorage');
           }
+        } else {
+          console.log('[STORE] rehydrate() window undefined');
         }
       },
     }),
