@@ -95,39 +95,35 @@ export default function LoginPage() {
         if (pendingComparisons.length > 0) {
           const { useComparisonStore } = await import('@/lib/store');
           const comparisonStore = useComparisonStore.getState();
-          const validComparisons: string[] = [];
 
           for (const listingId of pendingComparisons) {
             try {
               const listingRes = await listingsApi.getOne(listingId);
               const listing = listingRes.data;
+              // Only add if user is not the owner
               if (listing.user && listing.user.id !== res.data.user.id) {
-                if (comparisonStore.add(listingId)) {
-                  validComparisons.push(listingId);
-                }
+                comparisonStore.add(listingId);
               }
             } catch {
               // Skip if listing not found or error occurred
             }
           }
 
-          if (validComparisons.length > 0 && typeof window !== 'undefined') {
-            const currentComparisons = comparisonStore.comparisons;
+          // Force synchronous write to localStorage to ensure data is persisted
+          if (typeof window !== 'undefined' && comparisonStore.comparisons.length > 0) {
             const storageData = {
-              state: { comparisons: currentComparisons },
+              state: { comparisons: comparisonStore.comparisons },
               version: 0,
             };
-
+            // Write directly to ensure it persists before redirect
             localStorage.setItem('comparison-storage', JSON.stringify(storageData));
-
-            await new Promise((resolve) =>
+            // Extra safeguard: write again after a tick
+            await new Promise((resolve) => {
               requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                  localStorage.setItem('comparison-storage', JSON.stringify(storageData));
-                  setTimeout(resolve, 200);
-                });
-              })
-            );
+                localStorage.setItem('comparison-storage', JSON.stringify(storageData));
+                resolve(undefined);
+              });
+            });
           }
 
           localStorage.removeItem('pendingComparisons');

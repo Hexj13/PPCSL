@@ -134,6 +134,7 @@ interface ComparisonState {
   check: (_id: string) => boolean;
   clear: () => void;
   count: () => number;
+  rehydrate: () => Promise<void>;
 }
 
 export const useComparisonStore = create<ComparisonState>()(
@@ -149,13 +150,40 @@ export const useComparisonStore = create<ComparisonState>()(
           return false;
         }
         set({ comparisons: [...current, _id] });
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('comparison-storage-backup');
+        }
         return true;
       },
-      remove: (_id) =>
-        set((state) => ({ comparisons: state.comparisons.filter((c) => c !== _id) })),
+      remove: (_id) => {
+        set((state) => ({ comparisons: state.comparisons.filter((c) => c !== _id) }));
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('comparison-storage-backup');
+        }
+      },
       check: (_id) => get().comparisons.includes(_id),
-      clear: () => set({ comparisons: [] }),
+      clear: () => {
+        set({ comparisons: [] });
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('comparison-storage-backup');
+        }
+      },
       count: () => get().comparisons.length,
+      rehydrate: async () => {
+        if (typeof window !== 'undefined') {
+          const stored = localStorage.getItem('comparison-storage');
+          if (stored) {
+            try {
+              const parsed = JSON.parse(stored);
+              if (parsed.state?.comparisons) {
+                set({ comparisons: parsed.state.comparisons });
+              }
+            } catch {
+              // Ignore parse errors
+            }
+          }
+        }
+      },
     }),
     {
       name: 'comparison-storage',

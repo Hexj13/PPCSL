@@ -19,15 +19,40 @@ import {
 } from '@/lib/utils';
 
 export default function ComparePage() {
-  const { comparisons, remove } = useComparisonStore();
+  const { comparisons, remove, rehydrate } = useComparisonStore();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const prevComparisonsRef = useRef<string[]>([]);
   const listingsLengthRef = useRef(0);
+  const hasRehydratedRef = useRef(false);
 
   useEffect(() => {
-    const fetchListings = async () => {
-      if (comparisons.length === 0) {
+    const rehydrateAndFetch = async () => {
+      // Ensure store is properly rehydrated from localStorage
+      if (!hasRehydratedRef.current) {
+        hasRehydratedRef.current = true;
+        await rehydrate();
+      }
+
+      let currentComparisons = comparisons;
+
+      if (currentComparisons.length === 0 && typeof window !== 'undefined') {
+        const backup = localStorage.getItem('comparison-storage-backup');
+        if (backup) {
+          try {
+            const parsed = JSON.parse(backup);
+            if (parsed.state?.comparisons?.length > 0) {
+              currentComparisons = parsed.state.comparisons;
+              // Use rehydrate instead of setState
+              await rehydrate();
+            }
+          } catch {
+            // Ignore backup parse errors
+          }
+        }
+      }
+
+      if (currentComparisons.length === 0) {
         setListings([]);
         setLoading(false);
         prevComparisonsRef.current = [];
@@ -36,8 +61,8 @@ export default function ComparePage() {
       }
 
       const prevIds = new Set(prevComparisonsRef.current);
-      const currentIds = new Set(comparisons);
-      const newIds = comparisons.filter((id) => !prevIds.has(id));
+      const currentIds = new Set(currentComparisons);
+      const newIds = currentComparisons.filter((id) => !prevIds.has(id));
 
       if (newIds.length === 0 && listingsLengthRef.current > 0) {
         setListings((prev) => {
@@ -54,7 +79,7 @@ export default function ComparePage() {
       }
 
       try {
-        const idsToFetch = newIds.length > 0 ? newIds : comparisons;
+        const idsToFetch = newIds.length > 0 ? newIds : currentComparisons;
         const promises = idsToFetch.map((id) => listingsApi.getOne(id).catch(() => null));
         const results = await Promise.all(promises);
         const validListings = results.filter((r) => r !== null).map((r) => r!.data);
@@ -71,7 +96,7 @@ export default function ComparePage() {
           setListings(validListings);
           listingsLengthRef.current = validListings.length;
         }
-        prevComparisonsRef.current = comparisons;
+        prevComparisonsRef.current = currentComparisons;
       } catch (error) {
         console.error('Error fetching listings:', error);
         toast.error('Грешка при вчитување на објави');
@@ -80,8 +105,8 @@ export default function ComparePage() {
       }
     };
 
-    fetchListings();
-  }, [comparisons]);
+    rehydrateAndFetch();
+  }, [comparisons, rehydrate]);
 
   const handleRemove = (id: string) => {
     setListings((prev) => prev.filter((listing) => listing.id !== id));
@@ -162,6 +187,9 @@ export default function ComparePage() {
         <button
           onClick={() => {
             comparisons.forEach((id) => remove(id));
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('comparison-storage-backup');
+            }
             toast.success('Сите возила се отстранети од споредба');
           }}
           className="h-[52px] px-6 py-3 rounded-lg font-semibold transition-all duration-200 btn-secondary"
