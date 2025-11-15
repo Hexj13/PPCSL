@@ -20,13 +20,18 @@ export function updateSavedFiltersCache(filters: SavedFilter[]) {
   moduleHasLoaded = true;
 }
 
+export function clearSavedFiltersCache() {
+  moduleCache = null;
+  moduleHasLoaded = false;
+}
+
 export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}) {
   const router = useRouter();
   const hasLoadedRef = useRef(moduleHasLoaded);
   const cachedFiltersRef = useRef<SavedFilter[] | null>(moduleCache);
 
   const loadFilters = useCallback(
-    (forceReload = false) => {
+    (forceReload = false, silent = false) => {
       if (!forceReload && hasLoadedRef.current && cachedFiltersRef.current !== null) {
         setFilters(cachedFiltersRef.current);
         setLoading(false);
@@ -34,7 +39,9 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
         return;
       }
 
-      setLoading(true);
+      if (!silent) {
+        setLoading(true);
+      }
       savedFiltersApi
         .getAll()
         .then((res) => {
@@ -83,6 +90,8 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
     if (deletingIds.has(id)) return;
 
     setDeletingIds((prev) => new Set(prev).add(id));
+    const previousFilters = filters;
+    setFilters((prev) => prev.filter((f) => f.id !== id));
     try {
       await savedFiltersApi.remove(id);
       toast.success('Филтерот е успешно избришан');
@@ -90,8 +99,9 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
       moduleCache = null;
       hasLoadedRef.current = false;
       moduleHasLoaded = false;
-      loadFilters(true);
+      loadFilters(true, true);
     } catch (error: unknown) {
+      setFilters(previousFilters);
       const errorMessage =
         (error && typeof error === 'object' && 'response' in error
           ? (error.response as { data?: { message?: string } })?.data?.message
@@ -297,7 +307,7 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
             moduleCache = null;
             hasLoadedRef.current = false;
             moduleHasLoaded = false;
-            loadFilters(true);
+            loadFilters(true, true);
           }}
           filterId={editingFilterId}
           initialName={filters.find((f) => f.id === editingFilterId)?.name || ''}

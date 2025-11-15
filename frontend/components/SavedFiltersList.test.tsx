@@ -4,7 +4,7 @@ import { toast } from 'react-hot-toast';
 
 import { savedFiltersApi, SavedFilter } from '@/lib/api';
 
-import { SavedFiltersList } from './SavedFiltersList';
+import { SavedFiltersList, clearSavedFiltersCache } from './SavedFiltersList';
 
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
@@ -73,6 +73,7 @@ describe('SavedFiltersList', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    clearSavedFiltersCache();
     (useRouter as jest.Mock).mockReturnValue({
       push: mockPush,
       replace: mockReplace,
