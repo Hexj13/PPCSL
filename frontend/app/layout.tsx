@@ -96,8 +96,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="mk">
-      <body className={inter.className}>
+    <html lang="mk" suppressHydrationWarning>
+      <body className={inter.className} suppressHydrationWarning>
         <GoogleAnalytics />
         <OrganizationSchema />
         <AuthProvider>
