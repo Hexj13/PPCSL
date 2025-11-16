@@ -54,7 +54,7 @@ export const metadata: Metadata = {
     description: defaultDescription,
     images: [
       {
-        url: '/og-image.jpg',
+        url: `${siteUrl}/opengraph-image`,
         width: 1200,
         height: 630,
         alt: siteName,
@@ -65,7 +65,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: defaultTitle,
     description: defaultDescription,
-    images: ['/og-image.jpg'],
+    images: [`${siteUrl}/opengraph-image`],
   },
   robots: {
     index: true,
@@ -85,7 +85,11 @@ export const metadata: Metadata = {
     google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION,
   },
   icons: {
-    icon: [{ url: '/favicon.ico' }],
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/pwa192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: [{ url: '/logo.png', sizes: '180x180', type: 'image/png' }],
   },
   manifest: '/manifest.json',
 };

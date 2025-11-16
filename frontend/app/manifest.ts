@@ -9,7 +9,20 @@ export default function manifest(): MetadataRoute.Manifest {
     display: 'standalone',
     background_color: '#0f172a',
     theme_color: '#3b82f6',
-    icons: [],
+    icons: [
+      {
+        src: '/pwa192.png',
+        sizes: '192x192',
+        type: 'image/png',
+        purpose: 'any',
+      },
+      {
+        src: '/logo.png',
+        sizes: '512x512',
+        type: 'image/png',
+        purpose: 'any',
+      },
+    ],
     categories: ['automotive', 'shopping', 'marketplace'],
     lang: 'mk',
     dir: 'ltr',
