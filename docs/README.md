@@ -276,6 +276,7 @@ For more details, see [Technical Documentation](TECHNICAL.md#8-testing).
 - **[Technical Documentation](TECHNICAL.md)** - Complete technical documentation (architecture, API, database, security, testing, scripts, SEO)
 - **[Deployment Guide](DEPLOYMENT.md)** - Complete deployment instructions (VPS, cPanel, SSH setup, staging)
 - **[Render.com Deployment Guide](RENDER.md)** - Complete guide for deploying on Render.com
+- **[Multi-Repository Architecture](MULTI_REPOSITORY_ARCHITECTURE.md)** - Guide for multi-locale architecture with core and locale-specific repositories
 - **[TODO List](TODO.md)** - All project tasks and todos ⚠️ **IMPORTANT**
 
 ### Backend Documentation
