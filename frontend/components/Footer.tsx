@@ -9,7 +9,7 @@ export function Footer() {
             &copy; 2025 Kupito. Сите права се задржани.
           </p>
           <p className="text-xs sm:text-sm text-gray-400 px-2 mb-3">
-            Купете или продадете авто на Kupito!
+            Платформа за објавување на огласи за продажба на автомобили во Македонија
           </p>
           <div className="flex justify-center gap-4 text-xs sm:text-sm flex-wrap">
             <Link
