@@ -16,24 +16,48 @@ These scripts are **blocked from running in production** and can only be execute
 
 ### Available Stage Scripts
 
+#### Seeding Scripts
 - `seed.ts` - Seed test data (brands, models, users, listings)
 - `seed-vin-test.ts` - Seed test data with VIN codes
 - `seed-vehicles-full.ts` - Full vehicle seeding
-- `clear-database.ts` - Clear all database data
-- `reset-users.ts` - Reset user data
-- `make-admin.ts` - Create admin user
+- `reset-and-seed.ts` - Reset database and seed test data
+- `copy-images-to-seed.ts` - Copy images for seeding
+- `create-test-listing.ts` - Create a test listing
+
+#### Brand and Model Scripts
 - `add-brands.ts` - Add basic brands and models
 - `seed-all-brands.ts` - Run all brand and model seeding scripts sequentially (optimized for low memory usage)
 - `add-grand-models.ts` - Add Grand versions and extended models
 - `add-historical-models.ts` - Add historical models
 - `add-models-to-brand.ts` - Add models to existing brand
+- `add-french-brands-models.ts` - Add French brands and models
+- `add-german-brands-models.ts` - Add German brands and models
+- `add-italian-brands-models.ts` - Add Italian brands and models
+- `add-japanese-brands-models.ts` - Add Japanese brands and models
+- `add-american-brands-models.ts` - Add American brands and models
+- `add-commercial-models.ts` - Add commercial vehicle models
+- `add-other-model.ts` - Add other model to existing brand
 - `delete-all-brands.ts` - Delete all brands
 - `check-brands-count.ts` - Check brand count
 - `check-brands-dates.ts` - Check brand creation dates (not available via npm script, internal utility)
 - `check-models-stats.ts` - Models statistics
+- `check-citroen-models.ts` - Check Citroen models
+- `check-duplicates.ts` - Check for duplicate brands/models
+- `remove-duplicates.ts` - Remove duplicate brands/models
 - `cleanup-brands.ts` - Cleanup and synchronize brands
 - `sync-carquery.ts` - Synchronize from CarQuery API
 - `update-engine-volumes.ts` - Update engine volumes
+- `generate-listings-for-all-models.ts` - Generate listings for all models
+
+#### Database Management Scripts
+- `clear-database.ts` - Clear all database data
+- `reset-users.ts` - Reset user data
+- `check-user.ts` - Check user data
+
+#### User Management Scripts
+- `make-admin.ts` - Create admin user
+
+#### Cache Management Scripts
 - `clear-cache.ts` - Clear all Redis cache
 - `clear-listing-cache.ts` - Clear listings cache (with optional listing ID)
 - `clear-brands-cache.ts` - Clear brands and models cache

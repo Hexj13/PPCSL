@@ -502,13 +502,25 @@ npm run add-brands
 npm run add-historical
 npm run add-grand
 npm run add-models
+npm run add-french-models
+npm run add-german-models
+npm run add-italian-models
+npm run add-japanese-models
+npm run add-american-models
+npm run add-commercial-models
+npm run add-other-model
+npm run seed:all-brands  # Run all brand scripts sequentially (optimized)
 
 # Check and manage
 npm run check-brands
 npm run check-models
+npm run check-citroen
+npm run check-duplicates
+npm run remove-duplicates
 npm run delete-all-brands
 npm run cleanup-brands
 npm run sync-carquery
+npm run generate-listings-for-models
 ```
 
 ### Database Scripts
@@ -519,10 +531,13 @@ npm run seed
 npm run reset-and-seed
 npm run seed:vin
 npm run seed:vehicles
+npm run copy-seed-images
+npm run create-test-listing
 
 # Management
 npm run clear-database
 npm run update-titles
+npm run check-user
 ```
 
 ### Cache Management

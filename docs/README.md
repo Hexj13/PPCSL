@@ -162,10 +162,19 @@ Kupito/
 - `POST /api/auth/register` - Register
 - `POST /api/auth/login` - Login (returns access_token and refresh_token)
 - `POST /api/auth/refresh` - Refresh access token
-- `GET /api/auth/me` - Current user
+- `GET /api/auth/me` - Current user profile
+- `PATCH /api/auth/profile` - Update user profile
+- `DELETE /api/auth/profile` - Delete user account
 - `POST /api/auth/send-sms` - Send SMS verification code
-- `POST /api/auth/verify-phone` - Verify phone number (JWT required)
 - `POST /api/auth/verify-sms` - Verify SMS code (with IP-based brute force protection)
+- `POST /api/auth/verify-phone` - Verify phone number (JWT required)
+- `POST /api/auth/check-phone` - Check if phone number is available
+- `POST /api/auth/change-phone-request` - Request phone number change
+- `POST /api/auth/change-phone-verify` - Verify phone number change
+- `POST /api/auth/verify-email` - Verify email address
+- `POST /api/auth/request-password-reset` - Request password reset
+- `POST /api/auth/verify-reset-code` - Verify password reset code
+- `POST /api/auth/reset-password` - Reset password
 
 ### Listings
 - `GET /api/listings` - List listings (with filters)
@@ -177,8 +186,9 @@ Kupito/
 - `POST /api/listings/:id/close` - Close
 - `GET /api/listings/my` - My listings
 - `GET /api/listings/user/:userId/active` - User's active listings
-- `GET /api/listings/vin/:vin` - Find listings by VIN
+- `GET /api/listings/vin/:vin` - Find listings by VIN (with optional excludeId query param)
 - `POST /api/listings/refresh-dates` - Refresh all user's listing dates
+- `POST /api/listings/cron/close-old` - Close old listings (cron job endpoint, requires x-cron-secret header)
 
 ### Favorites
 - `GET /api/favorites` - Favorites list

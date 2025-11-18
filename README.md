@@ -56,21 +56,32 @@ Kupito/
 
 ## 🛠️ Utility Scripts
 
-For working with brands and models:
+For working with brands and models (run from `backend/` directory):
 
 ```bash
+cd backend
+
 # Add brands and models
 npm run add-brands
 npm run add-historical  # Historical models
 npm run add-grand       # Grand versions
 npm run add-models      # Add models to existing brand
+npm run add-french-models   # French brands
+npm run add-german-models   # German brands
+npm run add-italian-models  # Italian brands
+npm run add-japanese-models # Japanese brands
+npm run add-american-models # American brands
+npm run add-commercial-models # Commercial vehicles
 
 # Check
 npm run check-brands    # Brand count
 npm run check-models    # Models statistics
+npm run check-citroen   # Check Citroen models
+npm run check-duplicates # Check for duplicates
 
 # Management
 npm run cleanup-brands # Cleanup and synchronization
+npm run seed:all-brands # Seed all brands and models (optimized)
 ```
 
 For more information about scripts, see [backend/docs/SCRIPTS.md](./backend/docs/SCRIPTS.md).
