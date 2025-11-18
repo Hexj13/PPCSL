@@ -144,8 +144,16 @@ export class AuthService {
       cleanedUserData.phone = this.smsService.normalizePhoneNumber(cleanedUserData.phone);
     }
 
+    if (cleanedUserData.firstName === '' || cleanedUserData.firstName === null) {
+      cleanedUserData.firstName = null;
+    } else if (cleanedUserData.firstName) {
+      cleanedUserData.firstName = cleanedUserData.firstName.trim();
+    }
+
     if (cleanedUserData.lastName === '' || cleanedUserData.lastName === null) {
       cleanedUserData.lastName = null;
+    } else if (cleanedUserData.lastName) {
+      cleanedUserData.lastName = cleanedUserData.lastName.trim();
     }
 
     if (cleanedUserData.email === '' || cleanedUserData.email === null) {

@@ -771,9 +771,11 @@ function UsersTab() {
                         </button>
                       </div>
                       <h3 className="text-lg md:text-xl font-bold text-white break-words">
-                        {user.firstName && user.lastName
-                          ? `${user.firstName} ${user.lastName}`
-                          : user.companyName || user.email || 'Избришан корисник'}
+                        {user.firstName
+                          ? user.lastName
+                            ? `${user.firstName} ${user.lastName}`
+                            : user.firstName
+                          : user.companyName || user.email || user.phone || 'Избришан корисник'}
                       </h3>
                       {user.companyName && (
                         <p className="text-xs md:text-sm text-gray-300 mt-1 break-words">
