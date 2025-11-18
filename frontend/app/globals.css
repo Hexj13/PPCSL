@@ -1,5 +1,8 @@
+/* postcss-disable-next-line */
 @tailwind base;
+/* postcss-disable-next-line */
 @tailwind components;
+/* postcss-disable-next-line */
 @tailwind utilities;
 
 @font-face {
@@ -41,17 +44,16 @@ label {
 }
 
 @layer components {
+  /* stylelint-disable at-rule-no-unknown */
   .btn-primary {
     box-sizing: border-box !important;
-    height: 52px !important;
-    min-height: 52px !important;
-    max-height: 52px !important;
-    padding: 0 24px !important;
+    height: 52px;
+    padding: 0 24px;
     margin: 0 !important;
     background-color: #31a55f !important;
     color: white !important;
     font-weight: 600 !important;
-    font-size: 16px !important;
+    font-size: 16px;
     border-radius: 0.5rem !important;
     box-shadow:
       0 10px 15px -3px rgba(0, 0, 0, 0.1),
@@ -111,7 +113,30 @@ label {
   }
 
   .btn-outline {
-    @apply px-4 md:px-6 py-2.5 md:py-3 bg-transparent border-2 border-primary-500 text-primary-500 font-semibold rounded-lg hover:bg-primary-500/10 hover:border-primary-400 transition-all duration-200 select-none text-center;
+    box-sizing: border-box !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    max-height: 52px !important;
+    padding: 0 24px !important;
+    margin: 0 !important;
+    background-color: transparent !important;
+    border: 2px solid #00ff88 !important;
+    color: #00ff88 !important;
+    font-weight: 600 !important;
+    font-size: 16px !important;
+    border-radius: 0.5rem !important;
+    transition: all 0.2s !important;
+    user-select: none !important;
+    text-align: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+  }
+
+  .btn-outline:hover {
+    background-color: rgba(0, 255, 136, 0.1) !important;
+    border-color: #00ff99 !important;
   }
 
   .btn-yellow {
@@ -242,6 +267,7 @@ label {
 
   .input-field[type='number'] {
     -moz-appearance: textfield;
+    appearance: textfield;
   }
 
   .input-field[type='number']::-webkit-outer-spin-button,

@@ -65,7 +65,7 @@ export function Header() {
               <>
                 <Link
                   href="/listings/new"
-                  className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded hover:bg-bg-light/20"
+                  className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded"
                 >
                   <svg
                     className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
@@ -85,7 +85,7 @@ export function Header() {
                 </Link>
                 <Link
                   href="/my-listings"
-                  className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded hover:bg-bg-light/20"
+                  className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded"
                 >
                   <svg
                     className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
@@ -105,7 +105,7 @@ export function Header() {
                 </Link>
                 <Link
                   href="/favorites"
-                  className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded hover:bg-bg-light/20"
+                  className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded"
                 >
                   <svg
                     className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
@@ -125,7 +125,7 @@ export function Header() {
                 </Link>
                 <Link
                   href="/compare"
-                  className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded hover:bg-bg-light/20"
+                  className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded"
                 >
                   <svg
                     className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
@@ -151,7 +151,7 @@ export function Header() {
                 {user.type === 'Admin' && (
                   <Link
                     href="/admin"
-                    className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded hover:bg-bg-light/20"
+                    className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded"
                   >
                     <svg
                       className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
@@ -216,17 +216,11 @@ export function Header() {
               </>
             ) : (
               <>
-                <Link
-                  href="/login"
-                  className="btn-outline text-xs md:text-sm lg:text-base px-2 md:px-3 lg:px-4 py-1.5 md:py-2"
-                >
+                <Link href="/login" className="btn-outline">
                   <span className="hidden xl:inline">Најави се</span>
                   <span className="xl:hidden">Најави</span>
                 </Link>
-                <Link
-                  href="/register"
-                  className="btn-primary text-xs md:text-sm lg:text-base px-2 md:px-3 lg:px-4 py-1.5 md:py-2"
-                >
+                <Link href="/register" className="btn-primary">
                   Регистрација
                 </Link>
               </>
