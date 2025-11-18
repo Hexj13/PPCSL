@@ -261,8 +261,8 @@ export default function ProfilePage() {
       <h1 className="text-3xl md:text-4xl font-extrabold mb-6 pl-4 md:pl-6 lg:pl-8 bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
         Профил
       </h1>
-      <form onSubmit={handleSubmit} className="card p-4 md:p-6 lg:p-8">
-        <div className="mb-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="card p-4 md:p-6 lg:p-8">
           <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
             Контакт информација
           </h2>
@@ -430,7 +430,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <div className="border-t border-primary-500/20 pt-6 mb-6">
+        <div className="card p-4 md:p-6 lg:p-8">
           <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
             Email и известувања
           </h2>
@@ -528,7 +528,7 @@ export default function ProfilePage() {
         </div>
 
         {user.type === 'Business' && (
-          <div className="border-t border-primary-500/20 pt-6 mb-6">
+          <div className="card p-4 md:p-6 lg:p-8">
             <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
               Информација за компанија
             </h2>
@@ -554,7 +554,7 @@ export default function ProfilePage() {
         )}
 
         {user.type === 'Individual' && (
-          <div className="border-t border-primary-500/20 pt-6 mb-6">
+          <div className="card p-4 md:p-6 lg:p-8">
             <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">Лични податоци</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -594,7 +594,7 @@ export default function ProfilePage() {
           </div>
         )}
 
-        <div className="border-t border-primary-500/20 pt-6 mb-6">
+        <div className="card p-4 md:p-6 lg:p-8">
           <button
             type="submit"
             disabled={loading}
@@ -604,7 +604,7 @@ export default function ProfilePage() {
           </button>
         </div>
 
-        <div className="border-t border-red-500/30 pt-6">
+        <div className="card p-4 md:p-6 lg:p-8 border-red-500/30">
           <h2 className="text-xl md:text-2xl font-bold mb-5 text-red-400">Опасна зона</h2>
           <p className="text-sm text-gray-400 mb-4">
             Неповратни акции кои влијаат на вашиот аккаунт

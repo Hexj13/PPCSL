@@ -229,10 +229,11 @@ function MultiSelectDropdownComponent({
                 const isSelected = showActionButtons
                   ? tempValuesSet.has(option.value)
                   : valuesSet.has(option.value);
-                const isCategory = option.category && !option.value;
+                const isCategory =
+                  option.category && (!option.value || option.value.startsWith('__category__'));
                 const prevOption = index > 0 ? filteredOptions[index - 1] : null;
                 const showCategoryHeader =
-                  option.category && prevOption?.category !== option.category;
+                  option.category && prevOption?.category !== option.category && !isCategory;
                 const isFirstCategory = showCategoryHeader && index === 0;
 
                 if (isCategory) {

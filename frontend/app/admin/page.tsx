@@ -8,7 +8,7 @@ import { Dropdown } from '@/components/Dropdown';
 import { ListingManagementCard } from '@/components/ListingManagementCard';
 import { ListingManagementCardSkeleton } from '@/components/ListingManagementCardSkeleton';
 import { UserListingsModal } from '@/components/UserListingsModal';
-import { adminApi, Listing, PaginationMeta, User } from '@/lib/api';
+import { adminApi, Listing, User } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 
 type AdminTab = 'listings' | 'users';
@@ -54,11 +54,11 @@ export default function AdminPage() {
         </h1>
       </div>
 
-      <div className="mb-6">
-        <div className="flex gap-3 border-b border-primary-500/20">
+      <div className="mb-4 md:mb-6">
+        <div className="flex gap-2 md:gap-3 border-b border-primary-500/20 overflow-x-auto">
           <button
             onClick={() => setActiveTab('listings')}
-            className={`px-6 py-3 font-semibold transition-colors border-b-2 ${
+            className={`px-4 md:px-6 py-2 md:py-3 font-semibold transition-colors border-b-2 whitespace-nowrap ${
               activeTab === 'listings'
                 ? 'border-primary-500 text-primary-500'
                 : 'border-transparent text-gray-400 hover:text-gray-300'
@@ -68,7 +68,7 @@ export default function AdminPage() {
           </button>
           <button
             onClick={() => setActiveTab('users')}
-            className={`px-6 py-3 font-semibold transition-colors border-b-2 ${
+            className={`px-4 md:px-6 py-2 md:py-3 font-semibold transition-colors border-b-2 whitespace-nowrap ${
               activeTab === 'users'
                 ? 'border-primary-500 text-primary-500'
                 : 'border-transparent text-gray-400 hover:text-gray-300'
@@ -90,10 +90,6 @@ function ListingsTab() {
   const [displayedCount, setDisplayedCount] = useState(20);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
-  const [meta, setMeta] = useState<PaginationMeta | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
-  const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<'All' | 'Active' | 'Paused' | 'Closed'>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchType, setSearchType] = useState<'creator' | 'id'>('creator');
@@ -146,32 +142,19 @@ function ListingsTab() {
         const responseData = res.data;
 
         let allListings: Listing[] = [];
-        let responseMeta: PaginationMeta | null = null;
 
         if (Array.isArray(responseData)) {
           allListings = responseData;
-          const total = allListings.length;
-          const totalPages = Math.ceil(total / limit);
-          responseMeta = {
-            total,
-            page,
-            limit,
-            totalPages,
-          };
         } else if (responseData && typeof responseData === 'object') {
           allListings = responseData.data || [];
-          responseMeta = responseData.meta || null;
         }
 
         if (append) {
           setDisplayedCount((prev) => prev + limit);
-          setCurrentPage(page);
         } else {
           setAllListings(allListings);
           setDisplayedCount(limit);
-          setCurrentPage(1);
         }
-        setMeta(responseMeta);
       } catch {
         toast.error('Грешка при вчитување на објави');
         if (!append) {
@@ -208,7 +191,6 @@ function ListingsTab() {
 
     prevStatusFilterRef.current = statusFilter;
     prevSearchTypeRef.current = searchType;
-    setCurrentPage(1);
     setDisplayedCount(20);
   }, [statusFilter, searchType]);
 
@@ -218,7 +200,6 @@ function ListingsTab() {
 
     const timer = setTimeout(() => {
       prevSearchQueryRef.current = searchQuery;
-      setCurrentPage(1);
       setDisplayedCount(20);
     }, 500);
 
@@ -302,7 +283,6 @@ function ListingsTab() {
     setLoadingMore(true);
     setTimeout(() => {
       setDisplayedCount((prev) => Math.min(prev + 20, filteredCount));
-      setCurrentPage((prev) => prev + 1);
       setLoadingMore(false);
     }, 100);
   }, [loadingMore, filteredListings.length, displayedCount]);
@@ -310,19 +290,22 @@ function ListingsTab() {
   if (loading) {
     return (
       <div>
-        <div className="mb-6 flex flex-row gap-4 items-center">
-          <div className="flex-1 h-[52px] bg-bg-light/30 rounded-lg animate-pulse" />
-          <div className="w-auto min-w-[200px] h-[52px] bg-bg-light/30 rounded-lg animate-pulse" />
+        <div className="mb-4 md:mb-6 flex flex-col md:flex-row gap-3 md:gap-4 items-stretch md:items-center">
+          <div className="flex-1 h-[48px] md:h-[52px] bg-bg-light/30 rounded-lg animate-pulse" />
+          <div className="w-full md:w-auto md:min-w-[200px] h-[48px] md:h-[52px] bg-bg-light/30 rounded-lg animate-pulse" />
         </div>
-        <div className="mb-6">
-          <div className="flex flex-wrap gap-3">
+        <div className="mb-4 md:mb-6">
+          <div className="flex flex-wrap gap-2 md:gap-3">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-10 w-24 bg-bg-light/30 rounded-lg animate-pulse" />
+              <div
+                key={i}
+                className="h-9 md:h-10 w-20 md:w-24 bg-bg-light/30 rounded-lg animate-pulse"
+              />
             ))}
           </div>
         </div>
-        <div className="mb-4 h-5 bg-bg-light/30 rounded w-48 animate-pulse" />
-        <div className="space-y-4">
+        <div className="mb-3 md:mb-4 h-4 md:h-5 bg-bg-light/30 rounded w-40 md:w-48 animate-pulse" />
+        <div className="space-y-3 md:space-y-4">
           {[...Array(3)].map((_, i) => (
             <ListingManagementCardSkeleton key={i} />
           ))}
@@ -333,7 +316,7 @@ function ListingsTab() {
 
   return (
     <div>
-      <div className="mb-6 flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+      <div className="mb-4 md:mb-6 flex flex-col md:flex-row gap-3 md:gap-4 items-stretch md:items-center">
         <input
           type="text"
           value={searchQuery}
@@ -341,7 +324,7 @@ function ListingsTab() {
           placeholder={
             searchType === 'id' ? 'Внесете ID на објава' : 'Внесете име, email или компанија'
           }
-          className="flex-1 px-4 py-3 rounded-lg bg-bg-light border-2 border-primary-500/30 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 h-[52px]"
+          className="flex-1 px-4 py-2.5 md:py-3 rounded-lg bg-bg-light border-2 border-primary-500/30 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
         />
         <Dropdown
           value={searchType}
@@ -350,17 +333,17 @@ function ListingsTab() {
             { value: 'creator', label: 'Пребарај по корисник' },
             { value: 'id', label: 'Пребарај по ID' },
           ]}
-          className="w-full sm:w-auto sm:min-w-[200px]"
+          className="w-full md:w-auto md:min-w-[200px]"
         />
       </div>
 
-      <div className="mb-6">
-        <div className="flex flex-wrap gap-3">
+      <div className="mb-4 md:mb-6">
+        <div className="flex flex-wrap gap-2 md:gap-3">
           {(['All', 'Active', 'Paused', 'Closed'] as const).map((status) => (
             <button
               key={status}
               onClick={() => setStatusFilter(status)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium transition-colors text-sm md:text-base ${
                 statusFilter === status
                   ? 'bg-primary-600 text-white'
                   : 'bg-bg-light text-gray-300 hover:bg-bg-dark border border-primary-500/20'
@@ -383,17 +366,17 @@ function ListingsTab() {
         </div>
       </div>
 
-      <div className="mb-4 text-gray-300">
+      <div className="mb-3 md:mb-4 text-sm md:text-base text-gray-300">
         Вкупно објави: <span className="font-semibold text-white">{filteredListings.length}</span>
       </div>
 
       {filteredListings.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-300 text-lg">Нема објави</p>
+        <div className="text-center py-10 md:py-12">
+          <p className="text-gray-300 text-base md:text-lg">Нема објави</p>
         </div>
       ) : (
         <>
-          <div className="space-y-4">
+          <div className="space-y-3 md:space-y-4">
             {displayedListings.map((listing) => (
               <ListingManagementCard
                 key={listing.id}
@@ -406,26 +389,26 @@ function ListingsTab() {
           </div>
 
           {loadingMore && (
-            <div className="text-center py-8">
+            <div className="text-center py-6 md:py-8">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-              <p className="mt-2 text-gray-300">Вчитување...</p>
+              <p className="mt-2 text-gray-300 text-sm md:text-base">Вчитување...</p>
             </div>
           )}
 
           {!loadingMore && (
             <>
               {displayedCount < filteredListings.length ? (
-                <div className="flex justify-center py-8">
+                <div className="flex justify-center py-6 md:py-8">
                   <button
                     onClick={handleLoadMore}
-                    className="btn-primary px-8 py-3 text-lg font-semibold"
+                    className="btn-primary px-6 md:px-8 py-2.5 md:py-3 text-base md:text-lg font-semibold"
                   >
                     Вчитај уште
                   </button>
                 </div>
               ) : displayedCount >= filteredListings.length && filteredListings.length > 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-300">Нема повеќе објави</p>
+                <div className="text-center py-6 md:py-8">
+                  <p className="text-gray-300 text-sm md:text-base">Нема повеќе објави</p>
                 </div>
               ) : null}
             </>
@@ -438,10 +421,9 @@ function ListingsTab() {
 
 function UsersTab() {
   const [users, setUsers] = useState<User[]>([]);
+  const [displayedCount, setDisplayedCount] = useState(20);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [meta, setMeta] = useState<PaginationMeta | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<'All' | 'Individual' | 'Business' | 'Admin'>('All');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -485,39 +467,37 @@ function UsersTab() {
       }
 
       try {
-        const res = await adminApi.getAllUsers(page, limit);
-        const responseData = res.data;
+        if (!append) {
+          const res = await adminApi.getAllUsers(1, 10000);
+          const responseData = res.data;
 
-        let newUsers: User[] = [];
-        let responseMeta: PaginationMeta | null = null;
+          let allUsers: User[] = [];
 
-        if (Array.isArray(responseData)) {
-          newUsers = responseData.slice((page - 1) * limit, page * limit);
-          const total = responseData.length;
-          const totalPages = Math.ceil(total / limit);
-          responseMeta = {
-            total,
-            page,
-            limit,
-            totalPages,
-          };
-        } else if (responseData && typeof responseData === 'object') {
-          newUsers = responseData.data || [];
-          responseMeta = responseData.meta || null;
-        }
+          if (Array.isArray(responseData)) {
+            allUsers = responseData;
+          } else if (responseData && typeof responseData === 'object') {
+            allUsers = responseData.data || [];
+          }
 
-        if (append) {
+          setUsers(allUsers);
+        } else {
+          const res = await adminApi.getAllUsers(page, limit);
+          const responseData = res.data;
+
+          let newUsers: User[] = [];
+
+          if (Array.isArray(responseData)) {
+            newUsers = responseData.slice((page - 1) * limit, page * limit);
+          } else if (responseData && typeof responseData === 'object') {
+            newUsers = responseData.data || [];
+          }
+
           setUsers((prev) => {
             const existingIds = new Set(prev.map((u) => u.id));
             const uniqueNewUsers = newUsers.filter((u) => !existingIds.has(u.id));
             return [...prev, ...uniqueNewUsers];
           });
-          setCurrentPage(page);
-        } else {
-          setUsers(newUsers);
-          setCurrentPage(page);
         }
-        setMeta(responseMeta);
       } catch {
         toast.error('Грешка при вчитување на корисници');
         if (!append) {
@@ -551,7 +531,7 @@ function UsersTab() {
     if (prevRoleFilterRef.current === roleFilter) return;
 
     prevRoleFilterRef.current = roleFilter;
-    setCurrentPage(1);
+    setDisplayedCount(20);
   }, [roleFilter]);
 
   useEffect(() => {
@@ -560,26 +540,64 @@ function UsersTab() {
 
     const timer = setTimeout(() => {
       prevSearchQueryRef.current = searchQuery;
-      setCurrentPage(1);
+      setDisplayedCount(20);
     }, 500);
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const handleLoadMore = useCallback(async () => {
+  const filteredUsers = useMemo(() => {
+    return users.filter((user) => {
+      const roleMatch = roleFilter === 'All' || user.type === roleFilter;
+
+      if (searchQuery.trim()) {
+        const searchLower = searchQuery.toLowerCase();
+        const idMatch = user.id?.toLowerCase().includes(searchLower);
+        const emailMatch = user.email?.toLowerCase().includes(searchLower);
+        const phoneMatch = user.phone?.toLowerCase().includes(searchLower);
+        const firstNameMatch = user.firstName?.toLowerCase().includes(searchLower);
+        const lastNameMatch = user.lastName?.toLowerCase().includes(searchLower);
+        const companyMatch = user.companyName?.toLowerCase().includes(searchLower);
+        return (
+          roleMatch &&
+          (idMatch || emailMatch || phoneMatch || firstNameMatch || lastNameMatch || companyMatch)
+        );
+      }
+
+      return roleMatch;
+    });
+  }, [users, roleFilter, searchQuery]);
+
+  const displayedUsers = useMemo(() => {
+    return filteredUsers.slice(0, displayedCount);
+  }, [filteredUsers, displayedCount]);
+
+  const roleCounts = useMemo(() => {
+    return {
+      All: users.length,
+      Individual: users.filter((u) => u.type === 'Individual').length,
+      Business: users.filter((u) => u.type === 'Business').length,
+      Admin: users.filter((u) => u.type === 'Admin').length,
+    };
+  }, [users]);
+
+  const handleLoadMore = useCallback(() => {
     if (loadingMore) {
       return;
     }
 
-    if (meta && meta.totalPages) {
-      if (currentPage >= meta.totalPages) {
-        return;
-      }
+    const filteredCount = filteredUsers.length;
+
+    if (displayedCount >= filteredCount) {
+      return;
     }
 
-    const nextPage = currentPage + 1;
-    await fetchUsers(nextPage, true, 20);
-  }, [loadingMore, meta, currentPage, fetchUsers]);
+    setLoadingMore(true);
+    setTimeout(() => {
+      setDisplayedCount((prev) => Math.min(prev + 20, filteredCount));
+      setLoadingMore(false);
+    }, 100);
+  }, [loadingMore, filteredUsers.length, displayedCount]);
 
   const handleToggleStatus = useCallback(
     async (userId: string) => {
@@ -631,52 +649,37 @@ function UsersTab() {
     }
   }, []);
 
-  const filteredUsers = useMemo(() => {
-    return users.filter((user) => {
-      const roleMatch = roleFilter === 'All' || user.type === roleFilter;
-
-      if (searchQuery.trim()) {
-        const searchLower = searchQuery.toLowerCase();
-        const idMatch = user.id?.toLowerCase().includes(searchLower);
-        const emailMatch = user.email?.toLowerCase().includes(searchLower);
-        const phoneMatch = user.phone?.toLowerCase().includes(searchLower);
-        const firstNameMatch = user.firstName?.toLowerCase().includes(searchLower);
-        const lastNameMatch = user.lastName?.toLowerCase().includes(searchLower);
-        const companyMatch = user.companyName?.toLowerCase().includes(searchLower);
-        return (
-          roleMatch &&
-          (idMatch || emailMatch || phoneMatch || firstNameMatch || lastNameMatch || companyMatch)
-        );
-      }
-
-      return roleMatch;
-    });
-  }, [users, roleFilter, searchQuery]);
-
   if (loading) {
     return (
       <div>
-        <div className="mb-6 flex flex-row gap-4 items-center">
-          <div className="flex-1 h-[52px] bg-bg-light/30 rounded-lg animate-pulse" />
-          <div className="w-48 h-[52px] bg-bg-light/30 rounded-lg animate-pulse" />
+        <div className="mb-4 md:mb-6 flex flex-col gap-3 md:gap-4">
+          <div className="flex-1 h-[48px] md:h-[52px] bg-bg-light/30 rounded-lg animate-pulse" />
+          <div className="flex flex-wrap gap-2 md:gap-3">
+            {[...Array(4)].map((_, i) => (
+              <div
+                key={i}
+                className="h-9 md:h-10 w-24 md:w-28 bg-bg-light/30 rounded-lg animate-pulse"
+              />
+            ))}
+          </div>
         </div>
-        <div className="mb-4 h-5 bg-bg-light/30 rounded w-48 animate-pulse" />
-        <div className="space-y-4">
+        <div className="mb-3 md:mb-4 h-4 md:h-5 bg-bg-light/30 rounded w-40 md:w-48 animate-pulse" />
+        <div className="space-y-3 md:space-y-4">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="card p-5">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div className="flex-1 space-y-3">
-                  <div className="h-4 bg-bg-light/30 rounded w-32 animate-pulse" />
-                  <div className="h-6 bg-bg-light/40 rounded w-3/4 animate-pulse" />
+            <div key={i} className="card p-4 md:p-5">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 md:gap-4">
+                <div className="flex-1 space-y-2 md:space-y-3">
+                  <div className="h-3 md:h-4 bg-bg-light/30 rounded w-28 md:w-32 animate-pulse" />
+                  <div className="h-5 md:h-6 bg-bg-light/40 rounded w-3/4 animate-pulse" />
                   <div className="space-y-2">
-                    <div className="h-4 bg-bg-light/30 rounded w-full animate-pulse" />
-                    <div className="h-4 bg-bg-light/30 rounded w-5/6 animate-pulse" />
-                    <div className="h-4 bg-bg-light/30 rounded w-4/6 animate-pulse" />
+                    <div className="h-3 md:h-4 bg-bg-light/30 rounded w-full animate-pulse" />
+                    <div className="h-3 md:h-4 bg-bg-light/30 rounded w-5/6 animate-pulse" />
+                    <div className="h-3 md:h-4 bg-bg-light/30 rounded w-4/6 animate-pulse" />
                   </div>
                 </div>
-                <div className="flex flex-col gap-2">
-                  <div className="h-8 bg-bg-light/30 rounded w-32 animate-pulse" />
-                  <div className="h-8 bg-bg-light/30 rounded w-28 animate-pulse" />
+                <div className="flex flex-row lg:flex-col gap-2">
+                  <div className="h-8 md:h-10 bg-bg-light/30 rounded flex-1 lg:flex-none lg:w-32 animate-pulse" />
+                  <div className="h-8 md:h-10 bg-bg-light/30 rounded flex-1 lg:flex-none lg:w-28 animate-pulse" />
                 </div>
               </div>
             </div>
@@ -688,55 +691,72 @@ function UsersTab() {
 
   return (
     <div>
-      <div className="mb-6 flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+      <div className="mb-4 md:mb-6 flex flex-col gap-3 md:gap-4">
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Пребарај по ID, email, телефон, име, презиме или компанија"
-          className="flex-1 px-4 py-3 rounded-lg bg-bg-light border-2 border-primary-500/30 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 h-[52px]"
+          className="flex-1 px-4 py-2.5 md:py-3 rounded-lg bg-bg-light border-2 border-primary-500/30 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
         />
-        <Dropdown
-          value={roleFilter}
-          onChange={(value) => setRoleFilter(value as typeof roleFilter)}
-          options={[
-            { value: 'All', label: 'Сите роли' },
-            { value: 'Individual', label: 'Физичко лице' },
-            { value: 'Business', label: 'Правно лице' },
-            { value: 'Admin', label: 'Админ' },
-          ]}
-          className="w-full sm:w-48"
-        />
+        <div className="flex flex-wrap gap-2 md:gap-3">
+          {(['All', 'Individual', 'Business', 'Admin'] as const).map((role) => (
+            <button
+              key={role}
+              onClick={() => setRoleFilter(role)}
+              className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium transition-colors text-sm md:text-base ${
+                roleFilter === role
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-bg-light text-gray-300 hover:bg-bg-dark border border-primary-500/20'
+              }`}
+            >
+              {role === 'All'
+                ? 'Сите роли'
+                : role === 'Individual'
+                  ? 'Физичко лице'
+                  : role === 'Business'
+                    ? 'Правно лице'
+                    : 'Админ'}
+              {role !== 'All' && (
+                <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-xs">
+                  {roleCounts[role]}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="mb-4 text-gray-300">
+      <div className="mb-3 md:mb-4 text-sm md:text-base text-gray-300">
         Вкупно корисници: <span className="font-semibold text-white">{filteredUsers.length}</span>
       </div>
 
       {filteredUsers.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-300 text-lg">Нема корисници</p>
+        <div className="text-center py-10 md:py-12">
+          <p className="text-gray-300 text-base md:text-lg">Нема корисници</p>
         </div>
       ) : (
         <>
-          <div className="space-y-4">
-            {filteredUsers.map((user) => (
-              <div key={user.id} className="card p-5">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                  <div className="flex-1">
+          <div className="space-y-3 md:space-y-4">
+            {displayedUsers.map((user) => (
+              <div key={user.id} className="card p-4 md:p-5">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 md:gap-4">
+                  <div className="flex-1 min-w-0">
                     <div className="mb-2">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs text-gray-400 font-mono">ID: {user.id}</span>
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className="text-xs md:text-sm text-gray-400 font-mono break-all">
+                          ID: {user.id}
+                        </span>
                         <button
                           onClick={(e) => {
                             e.preventDefault();
                             handleCopy(user.id, 'ID');
                           }}
-                          className="p-1 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors"
+                          className="p-1 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors flex-shrink-0"
                           title="Копирај ID"
                         >
                           <svg
-                            className="w-3.5 h-3.5"
+                            className="w-3.5 h-3.5 md:w-4 md:h-4"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -750,18 +770,20 @@ function UsersTab() {
                           </svg>
                         </button>
                       </div>
-                      <h3 className="text-xl font-bold text-white">
+                      <h3 className="text-lg md:text-xl font-bold text-white break-words">
                         {user.firstName && user.lastName
                           ? `${user.firstName} ${user.lastName}`
                           : user.companyName || user.email || 'Избришан корисник'}
                       </h3>
                       {user.companyName && (
-                        <p className="text-sm text-gray-300 mt-1">{user.companyName}</p>
+                        <p className="text-xs md:text-sm text-gray-300 mt-1 break-words">
+                          {user.companyName}
+                        </p>
                       )}
                     </div>
-                    <div className="space-y-1 text-sm text-gray-300">
+                    <div className="space-y-1 text-xs md:text-sm text-gray-300">
                       {user.email ? (
-                        <div>
+                        <div className="break-words">
                           <span className="text-primary-400">Email:</span> {user.email}
                         </div>
                       ) : (
@@ -780,7 +802,7 @@ function UsersTab() {
                           <span className="text-gray-500">Недостапно</span>
                         </div>
                       )}
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-primary-400">Тип:</span>
                         <span
                           className={`px-2 py-1 rounded text-xs font-semibold ${
@@ -798,7 +820,7 @@ function UsersTab() {
                               : 'Физичко лице'}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-primary-400">Статус:</span>
                         <span
                           className={`px-2 py-1 rounded text-xs font-semibold ${
@@ -816,18 +838,18 @@ function UsersTab() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-row lg:flex-col gap-2 flex-shrink-0">
                     {(user.listings?.length || 0) > 0 && (
                       <button
                         onClick={() => handleViewListings(user)}
-                        className="px-3 sm:px-4 h-10 text-xs sm:text-sm rounded-lg font-medium transition-colors bg-primary-700 hover:bg-primary-800 text-white text-center w-full sm:w-auto flex items-center justify-center"
+                        className="px-3 md:px-4 h-10 text-xs md:text-sm rounded-lg font-medium transition-colors bg-primary-700 hover:bg-primary-800 text-white text-center flex-1 lg:flex-none lg:w-auto flex items-center justify-center"
                       >
                         Види објави ({user.listings?.length || 0})
                       </button>
                     )}
                     <button
                       onClick={() => handleToggleStatus(user.id)}
-                      className={`px-3 sm:px-4 h-10 text-xs sm:text-sm rounded-lg font-medium transition-colors text-center w-full sm:w-auto flex items-center justify-center ${
+                      className={`px-3 md:px-4 h-10 text-xs md:text-sm rounded-lg font-medium transition-colors text-center flex-1 lg:flex-none lg:w-auto flex items-center justify-center ${
                         user.active !== false
                           ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/30'
                           : 'bg-primary-500/20 text-primary-300 hover:bg-primary-500/30 border border-primary-500/30'
@@ -842,35 +864,26 @@ function UsersTab() {
           </div>
 
           {loadingMore && (
-            <div className="text-center py-8">
+            <div className="text-center py-6 md:py-8">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-              <p className="mt-2 text-gray-300">Вчитување...</p>
+              <p className="mt-2 text-gray-300 text-sm md:text-base">Вчитување...</p>
             </div>
           )}
 
           {!loadingMore && (
             <>
-              {meta && meta.totalPages && currentPage < meta.totalPages ? (
-                <div className="flex justify-center py-8">
+              {displayedCount < filteredUsers.length ? (
+                <div className="flex justify-center py-6 md:py-8">
                   <button
                     onClick={handleLoadMore}
-                    className="btn-primary px-8 py-3 text-lg font-semibold"
+                    className="btn-primary px-6 md:px-8 py-2.5 md:py-3 text-base md:text-lg font-semibold"
                   >
                     Вчитај уште
                   </button>
                 </div>
-              ) : meta && meta.totalPages && currentPage >= meta.totalPages && users.length > 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-300">Нема повеќе корисници</p>
-                </div>
-              ) : !meta && users.length >= 20 ? (
-                <div className="flex justify-center py-8">
-                  <button
-                    onClick={handleLoadMore}
-                    className="btn-primary px-8 py-3 text-lg font-semibold"
-                  >
-                    Вчитај уште
-                  </button>
+              ) : displayedCount >= filteredUsers.length && filteredUsers.length > 0 ? (
+                <div className="text-center py-6 md:py-8">
+                  <p className="text-gray-300 text-sm md:text-base">Нема повеќе корисници</p>
                 </div>
               ) : null}
             </>

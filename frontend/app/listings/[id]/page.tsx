@@ -1208,7 +1208,7 @@ export default function ListingPage() {
                   <div>
                     <span className="font-semibold text-primary-400">Тип на продавач:</span>
                     <span
-                      className={`inline-flex items-center px-3 py-1 rounded-lg text-sm font-semibold ml-2 ${
+                      className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold ml-2 ${
                         listing.user.type === 'Business'
                           ? 'bg-blue-500/20 text-blue-300'
                           : 'bg-primary-500/20 text-primary-300'
@@ -1374,15 +1374,15 @@ export default function ListingPage() {
                       <button
                         onClick={() => setIsUserListingsModalOpen(true)}
                         disabled={listing.status === 'Closed'}
-                        className={`text-sm font-medium flex items-start gap-2 transition-colors w-full text-left ${
+                        className={`w-full px-4 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
                           listing.status === 'Closed'
-                            ? 'text-gray-500 cursor-not-allowed opacity-50'
-                            : 'text-primary-400 hover:text-primary-300'
+                            ? 'bg-bg-darker text-gray-500 border-2 border-primary-500/20 cursor-not-allowed opacity-50'
+                            : 'bg-bg-light border-2 border-primary-500/30 text-primary-400 hover:bg-bg-light/80 hover:border-primary-500'
                         }`}
                         title={listing.status === 'Closed' ? 'Недостапно за затворени објави' : ''}
                       >
                         <svg
-                          className="w-4 h-4 flex-shrink-0 mt-0.5"
+                          className="w-5 h-5 flex-shrink-0"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -1394,9 +1394,7 @@ export default function ListingPage() {
                             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                           />
                         </svg>
-                        <span className="flex-1 break-words">
-                          Погледни сите активни објави од овој продавач
-                        </span>
+                        <span>Сите објави од продавачот</span>
                       </button>
                     </div>
                   )}

@@ -31,6 +31,95 @@ const POPULAR_CITIES = ['Скопје', 'Битола', 'Куманово', 'П�
 const FILTERS_STORAGE_KEY = 'kupito_search_filters';
 const MAX_URL_LENGTH = 1800;
 
+type LabeledOption<T = string> = { value: T; label: string };
+
+const sortOptionsByLabel = <T,>(options: Array<LabeledOption<T>>) =>
+  [...options].sort((a, b) => a.label.localeCompare(b.label, 'mk'));
+
+const FUEL_OPTIONS = sortOptionsByLabel([
+  { value: 'Petrol', label: 'Бензин' },
+  { value: 'Diesel', label: 'Дизел' },
+  { value: 'Electric', label: 'Електричен' },
+  { value: 'Hybrid', label: 'Хибриден' },
+  { value: 'LPG', label: 'LPG' },
+]);
+
+const TRANSMISSION_OPTIONS = sortOptionsByLabel([
+  { value: 'Manual', label: 'Мануелна' },
+  { value: 'Automatic', label: 'Автоматска' },
+  { value: 'CVT', label: 'Варијатор' },
+]);
+
+const DRIVE_TYPE_OPTIONS = sortOptionsByLabel([
+  { value: DriveType.FWD, label: 'Преден' },
+  { value: DriveType.RWD, label: 'Заден' },
+  { value: DriveType.AWD, label: 'Полн' },
+]);
+
+const BODY_TYPE_OPTIONS = sortOptionsByLabel([
+  { value: 'Sedan', label: 'Седан' },
+  { value: 'Hatchback', label: 'Хечбек' },
+  { value: 'Wagon', label: 'Караван' },
+  { value: 'SUV', label: 'SUV' },
+  { value: 'Coupe', label: 'Купе' },
+  { value: 'Convertible', label: 'Кабриолет' },
+  { value: 'Van', label: 'Фургон' },
+  { value: 'Pickup', label: 'Пикап' },
+  { value: 'Minivan', label: 'Миниван' },
+  { value: 'Truck', label: 'Грузовик' },
+]);
+
+const COLOR_OPTIONS = sortOptionsByLabel([
+  { value: 'Црна', label: 'Црна' },
+  { value: 'Бела', label: 'Бела' },
+  { value: 'Сива', label: 'Сива' },
+  { value: 'Сребрена', label: 'Сребрена' },
+  { value: 'Сина', label: 'Сина' },
+  { value: 'Црвена', label: 'Црвена' },
+  { value: 'Зелена', label: 'Зелена' },
+  { value: 'Жолта', label: 'Жолта' },
+  { value: 'Кафена', label: 'Кафена' },
+  { value: 'Портокалова', label: 'Портокалова' },
+  { value: 'Розова', label: 'Розова' },
+  { value: 'Виолетова', label: 'Виолетова' },
+  { value: 'Бежова', label: 'Бежова' },
+]);
+
+const DOOR_OPTIONS = sortOptionsByLabel([
+  { value: '2', label: '2' },
+  { value: '3', label: '3' },
+  { value: '4', label: '4' },
+  { value: '5', label: '5' },
+]);
+
+const CONDITION_OPTIONS = sortOptionsByLabel([
+  { value: ConditionType.Undamaged, label: 'Без оштетувања' },
+  { value: ConditionType.Damaged, label: 'Со оштетувања' },
+  { value: ConditionType.ForParts, label: 'За делови' },
+]);
+
+const REGISTRATION_TYPE_OPTIONS = sortOptionsByLabel([
+  { value: RegistrationType.Local, label: 'Местна' },
+  { value: RegistrationType.Foreign, label: 'Странска' },
+  { value: RegistrationType.Cleared, label: 'Цариниран (на име на купувачот)' },
+]);
+
+const CURRENCY_OPTIONS: Array<LabeledOption> = [
+  { value: '', label: 'Сите валути' },
+  ...sortOptionsByLabel([
+    { value: 'EUR', label: 'EUR' },
+    { value: 'MKD', label: 'MKD' },
+  ]),
+];
+
+const REGISTRATION_OPTIONS: Array<LabeledOption> = [
+  { value: '', label: 'Сите' },
+  ...sortOptionsByLabel([
+    { value: 'true', label: 'Зарегистрирано' },
+    { value: 'false', label: 'Не е зарегистрирано' },
+  ]),
+];
+
 const encodeArray = (arr: string[]): string => {
   if (arr.length === 0) return '';
   try {
@@ -856,11 +945,7 @@ export function SearchFilters() {
           <Dropdown
             value={filters.currency}
             onChange={(value) => handleChange('currency', value)}
-            options={[
-              { value: '', label: 'Сите валути' },
-              { value: 'MKD', label: 'MKD' },
-              { value: 'EUR', label: 'EUR' },
-            ]}
+            options={CURRENCY_OPTIONS}
           />
         </div>
 
@@ -1140,13 +1225,7 @@ export function SearchFilters() {
                   onChange={(values) => handleMultiSelectChange('fuels', values)}
                   placeholder="Избери топливо"
                   showActionButtons={true}
-                  options={[
-                    { value: 'Petrol', label: 'Бензин' },
-                    { value: 'Diesel', label: 'Дизел' },
-                    { value: 'Electric', label: 'Електричен' },
-                    { value: 'Hybrid', label: 'Хибриден' },
-                    { value: 'LPG', label: 'LPG' },
-                  ]}
+                  options={FUEL_OPTIONS}
                 />
               </div>
 
@@ -1157,11 +1236,7 @@ export function SearchFilters() {
                   onChange={(values) => handleMultiSelectChange('transmissions', values)}
                   placeholder="Избери пренос"
                   showActionButtons={true}
-                  options={[
-                    { value: 'Manual', label: 'Мануелна' },
-                    { value: 'Automatic', label: 'Автоматска' },
-                    { value: 'CVT', label: 'Варијатор' },
-                  ]}
+                  options={TRANSMISSION_OPTIONS}
                 />
               </div>
 
@@ -1174,11 +1249,7 @@ export function SearchFilters() {
                   onChange={(values) => handleMultiSelectChange('drive_types', values)}
                   placeholder="Избери тип на погон"
                   showActionButtons={true}
-                  options={[
-                    { value: DriveType.FWD, label: 'Преден' },
-                    { value: DriveType.RWD, label: 'Заден' },
-                    { value: DriveType.AWD, label: 'Полн' },
-                  ]}
+                  options={DRIVE_TYPE_OPTIONS}
                 />
               </div>
 
@@ -1191,18 +1262,7 @@ export function SearchFilters() {
                   onChange={(values) => handleMultiSelectChange('body_types', values)}
                   placeholder="Избери тип на каросерија"
                   showActionButtons={true}
-                  options={[
-                    { value: 'Sedan', label: 'Седан' },
-                    { value: 'Hatchback', label: 'Хечбек' },
-                    { value: 'Wagon', label: 'Караван' },
-                    { value: 'SUV', label: 'SUV' },
-                    { value: 'Coupe', label: 'Купе' },
-                    { value: 'Convertible', label: 'Кабриолет' },
-                    { value: 'Van', label: 'Фургон' },
-                    { value: 'Pickup', label: 'Пикап' },
-                    { value: 'Minivan', label: 'Миниван' },
-                    { value: 'Truck', label: 'Грузовик' },
-                  ]}
+                  options={BODY_TYPE_OPTIONS}
                 />
               </div>
 
@@ -1213,21 +1273,7 @@ export function SearchFilters() {
                   onChange={(values) => handleMultiSelectChange('colors', values)}
                   placeholder="Избери боја"
                   showActionButtons={true}
-                  options={[
-                    { value: 'Црна', label: 'Црна' },
-                    { value: 'Бела', label: 'Бела' },
-                    { value: 'Сива', label: 'Сива' },
-                    { value: 'Сребрена', label: 'Сребрена' },
-                    { value: 'Сина', label: 'Сина' },
-                    { value: 'Црвена', label: 'Црвена' },
-                    { value: 'Зелена', label: 'Зелена' },
-                    { value: 'Жолта', label: 'Жолта' },
-                    { value: 'Кафена', label: 'Кафена' },
-                    { value: 'Портокалова', label: 'Портокалова' },
-                    { value: 'Розова', label: 'Розова' },
-                    { value: 'Виолетова', label: 'Виолетова' },
-                    { value: 'Бежова', label: 'Бежова' },
-                  ]}
+                  options={COLOR_OPTIONS}
                 />
               </div>
 
@@ -1238,12 +1284,7 @@ export function SearchFilters() {
                   onChange={(values) => handleMultiSelectChange('doors', values)}
                   placeholder="Избери број на врати"
                   showActionButtons={true}
-                  options={[
-                    { value: '2', label: '2' },
-                    { value: '3', label: '3' },
-                    { value: '4', label: '4' },
-                    { value: '5', label: '5' },
-                  ]}
+                  options={DOOR_OPTIONS}
                 />
               </div>
 
@@ -1256,11 +1297,7 @@ export function SearchFilters() {
                   onChange={(values) => handleMultiSelectChange('conditions', values)}
                   placeholder="Избери состојба"
                   showActionButtons={true}
-                  options={[
-                    { value: ConditionType.Undamaged, label: 'Без оштетувања' },
-                    { value: ConditionType.Damaged, label: 'Со оштетувања' },
-                    { value: ConditionType.ForParts, label: 'За делови' },
-                  ]}
+                  options={CONDITION_OPTIONS}
                 />
               </div>
 
@@ -1273,11 +1310,7 @@ export function SearchFilters() {
                   onChange={(values) => handleMultiSelectChange('registration_types', values)}
                   placeholder="Избери тип на регистрација"
                   showActionButtons={true}
-                  options={[
-                    { value: RegistrationType.Local, label: 'Местна' },
-                    { value: RegistrationType.Foreign, label: 'Странска' },
-                    { value: RegistrationType.Cleared, label: 'Цариниран' },
-                  ]}
+                  options={REGISTRATION_TYPE_OPTIONS}
                 />
               </div>
 
@@ -1300,11 +1333,7 @@ export function SearchFilters() {
                     )
                   }
                   showActionButtons={true}
-                  options={[
-                    { value: '', label: 'Сите' },
-                    { value: 'true', label: 'Зарегистрирано' },
-                    { value: 'false', label: 'Не е зарегистрирано' },
-                  ]}
+                  options={REGISTRATION_OPTIONS}
                 />
               </div>
             </div>

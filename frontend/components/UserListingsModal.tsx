@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
@@ -13,6 +14,7 @@ import {
   formatPrice,
   formatTransmission,
   getCityNameMk,
+  getOptimizedImageUrl,
 } from '@/lib/utils';
 
 import { Modal } from './Modal';
@@ -36,6 +38,7 @@ function UserListingsModalComponent({
 }: UserListingsModalProps) {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(false);
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
   const targetUserId = useMemo(() => userId || user?.id, [userId, user?.id]);
   const fetchListingsRef = useRef(fetchListings);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -48,6 +51,7 @@ function UserListingsModalComponent({
     if (!isOpen) {
       setListings([]);
       setLoading(false);
+      setImageErrors(new Set());
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
         abortControllerRef.current = null;
@@ -170,93 +174,147 @@ function UserListingsModalComponent({
         <div className="space-y-6">
           {displayListings.map((listing) => {
             const vehicle = listing.vehicle;
+            const originalImageUrl = listing.images?.[0] || '/placeholder-car.jpg';
+            const imageUrl = getOptimizedImageUrl(originalImageUrl, 80, 400);
+            const hasImage = originalImageUrl && originalImageUrl !== '/placeholder-car.jpg';
+            const imageError = imageErrors.has(listing.id);
+
             return (
               <Link
                 key={listing.id}
                 href={`/listings/${listing.id}`}
-                className="block card p-6 hover:bg-bg-light transition-colors"
+                className="block card overflow-hidden hover:bg-bg-light transition-colors"
               >
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-bold text-lg text-white mb-3">{listing.title}</h3>
-                    <div className="flex items-center gap-3 mb-3">
-                      {listing.price !== undefined ? (
-                        <span className="text-xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-                          {formatPrice(listing.price, listing.currency)} {listing.currency}
-                        </span>
+                <div className="p-6 space-y-4">
+                  <div className="flex flex-col md:flex-row gap-4 items-start">
+                    <div className="relative w-full md:w-40 md:h-[90px] aspect-video md:aspect-auto bg-bg-darker overflow-hidden rounded-xl">
+                      {hasImage && !imageError ? (
+                        (() => {
+                          const isExternal =
+                            imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
+                          return isExternal ? (
+                            <img
+                              src={imageUrl}
+                              alt={listing.title}
+                              className="w-full h-full object-cover rounded-xl"
+                              crossOrigin="anonymous"
+                              onError={() => {
+                                setImageErrors((prev) => new Set(prev).add(listing.id));
+                              }}
+                            />
+                          ) : (
+                            <div className="relative w-full h-full">
+                              <Image
+                                src={imageUrl}
+                                alt={listing.title}
+                                fill
+                                sizes="(max-width: 768px) 100vw, 160px"
+                                className="object-cover rounded-xl"
+                                onError={() => {
+                                  setImageErrors((prev) => new Set(prev).add(listing.id));
+                                }}
+                              />
+                            </div>
+                          );
+                        })()
                       ) : (
-                        <span className="text-xl font-extrabold text-primary-400">••••</span>
+                        <div className="w-full h-full flex items-center justify-center text-gray-500">
+                          <svg
+                            className="w-12 h-12"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={1.5}
+                              d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"
+                            />
+                          </svg>
+                        </div>
                       )}
-                      {!showOnlyActive && (
-                        <span
-                          className={`px-2 py-1 rounded text-xs font-semibold ${
-                            listing.status === 'Active'
-                              ? 'bg-primary-500/20 text-primary-300'
+                    </div>
+                    <div className="flex-1 min-w-0 w-full md:w-auto grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 md:gap-6">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-lg text-white mb-3">{listing.title}</h3>
+                        {vehicle && (
+                          <div className="text-sm text-gray-300 space-y-1.5">
+                            {vehicle.engine_displ_l && (
+                              <div>
+                                <span className="text-primary-400 font-semibold">Мотор:</span>
+                                <span className="ml-2">
+                                  {formatEngineVolume(vehicle.engine_displ_l)} л
+                                </span>
+                              </div>
+                            )}
+                            {vehicle.fuel && (
+                              <div>
+                                <span className="text-primary-400 font-semibold">Гориво:</span>
+                                <span className="ml-2">{vehicle.fuel}</span>
+                              </div>
+                            )}
+                            {vehicle.mileage_km && (
+                              <div>
+                                <span className="text-primary-400 font-semibold">Поминување:</span>
+                                <span className="ml-2">{formatMileage(vehicle.mileage_km)} км</span>
+                              </div>
+                            )}
+                            {vehicle.transmission && (
+                              <div>
+                                <span className="text-primary-400 font-semibold">Пренос:</span>
+                                <span className="ml-2">
+                                  {formatTransmission(vehicle.transmission)}
+                                </span>
+                              </div>
+                            )}
+                            {vehicle.drive_type && (
+                              <div>
+                                <span className="text-primary-400 font-semibold">
+                                  Тип на погон:
+                                </span>
+                                <span className="ml-2">{formatDriveType(vehicle.drive_type)}</span>
+                              </div>
+                            )}
+                            {vehicle.body_type && (
+                              <div>
+                                <span className="text-primary-400 font-semibold">
+                                  Тип на каросерија:
+                                </span>
+                                <span className="ml-2">{formatBodyType(vehicle.body_type)}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-start text-left w-full md:items-end md:text-right md:min-w-[140px] md:w-auto">
+                        {listing.price !== undefined ? (
+                          <span className="text-xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent whitespace-nowrap mb-3">
+                            {formatPrice(listing.price, listing.currency)} {listing.currency}
+                          </span>
+                        ) : (
+                          <span className="text-xl font-extrabold text-primary-400 mb-3">••••</span>
+                        )}
+                        {!showOnlyActive && (
+                          <span
+                            className={`px-2 py-1 rounded text-xs font-semibold ${
+                              listing.status === 'Active'
+                                ? 'bg-primary-500/20 text-primary-300'
+                                : listing.status === 'Paused'
+                                  ? 'bg-yellow-500/20 text-yellow-300'
+                                  : 'bg-gray-500/20 text-gray-300'
+                            }`}
+                          >
+                            {listing.status === 'Active'
+                              ? 'Активна'
                               : listing.status === 'Paused'
-                                ? 'bg-yellow-500/20 text-yellow-300'
-                                : 'bg-gray-500/20 text-gray-300'
-                          }`}
-                        >
-                          {listing.status === 'Active'
-                            ? 'Активна'
-                            : listing.status === 'Paused'
-                              ? 'Привремено застарена'
-                              : 'Затворена'}
-                        </span>
-                      )}
+                                ? 'Привремено застарена'
+                                : 'Затворена'}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-
-                  {vehicle && (
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3 text-sm border-t border-primary-500/20 pt-4">
-                      {vehicle.engine_displ_l && (
-                        <div>
-                          <span className="text-primary-400 font-semibold">Мотор:</span>
-                          <span className="ml-2 text-gray-300">
-                            {formatEngineVolume(vehicle.engine_displ_l)} л
-                          </span>
-                        </div>
-                      )}
-                      {vehicle.fuel && (
-                        <div>
-                          <span className="text-primary-400 font-semibold">Гориво:</span>
-                          <span className="ml-2 text-gray-300">{vehicle.fuel}</span>
-                        </div>
-                      )}
-                      {vehicle.mileage_km && (
-                        <div>
-                          <span className="text-primary-400 font-semibold">Поминување:</span>
-                          <span className="ml-2 text-gray-300">
-                            {formatMileage(vehicle.mileage_km)} км
-                          </span>
-                        </div>
-                      )}
-                      {vehicle.transmission && (
-                        <div>
-                          <span className="text-primary-400 font-semibold">Пренос:</span>
-                          <span className="ml-2 text-gray-300">
-                            {formatTransmission(vehicle.transmission)}
-                          </span>
-                        </div>
-                      )}
-                      {vehicle.drive_type && (
-                        <div>
-                          <span className="text-primary-400 font-semibold">Тип на погон:</span>
-                          <span className="ml-2 text-gray-300">
-                            {formatDriveType(vehicle.drive_type)}
-                          </span>
-                        </div>
-                      )}
-                      {vehicle.body_type && (
-                        <div>
-                          <span className="text-primary-400 font-semibold">Тип на каросерија:</span>
-                          <span className="ml-2 text-gray-300">
-                            {formatBodyType(vehicle.body_type)}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  )}
 
                   {listing.city && (
                     <div className="text-sm border-t border-primary-500/20 pt-4">

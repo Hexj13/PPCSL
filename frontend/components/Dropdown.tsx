@@ -18,6 +18,7 @@ interface DropdownProps {
   className?: string;
   searchable?: boolean;
   showActionButtons?: boolean;
+  error?: boolean;
 }
 
 function DropdownComponent({
@@ -29,6 +30,7 @@ function DropdownComponent({
   className = '',
   searchable = false,
   showActionButtons = false,
+  error = false,
 }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -130,7 +132,7 @@ function DropdownComponent({
             onFocus={handleInputFocus}
             disabled={disabled}
             placeholder={placeholder}
-            className="input-field"
+            className={`input-field ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
             style={{ paddingRight: '44px' }}
           />
           <svg
@@ -171,7 +173,7 @@ function DropdownComponent({
             }
           }}
           disabled={disabled}
-          className="input-field dropdown-button text-left cursor-pointer relative"
+          className={`input-field dropdown-button text-left cursor-pointer relative ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
         >
           <span
             className={`flex-1 truncate min-w-0 pr-2 ${value ? 'text-white' : 'text-gray-400'}`}

@@ -67,6 +67,101 @@ interface ListingFormProps {
   onSuccess?: (_updatedListing?: Listing) => void;
 }
 
+type LabeledOption<T = string> = { value: T; label: string };
+
+const sortOptionsByLabel = <T,>(options: Array<LabeledOption<T>>) =>
+  [...options].sort((a, b) => a.label.localeCompare(b.label, 'mk'));
+
+const FUEL_OPTIONS = sortOptionsByLabel([
+  { value: 'Petrol', label: 'Бензин' },
+  { value: 'Diesel', label: 'Дизел' },
+  { value: 'Electric', label: 'Електричен' },
+  { value: 'Hybrid', label: 'Хибриден' },
+  { value: 'LPG', label: 'LPG' },
+]);
+
+const TRANSMISSION_OPTIONS = sortOptionsByLabel([
+  { value: 'Manual', label: 'Мануелна' },
+  { value: 'Automatic', label: 'Автоматска' },
+  { value: 'CVT', label: 'Варијатор' },
+]);
+
+const DRIVE_TYPE_OPTIONS = sortOptionsByLabel([
+  { value: DriveTypeEnum.FWD, label: 'Преден' },
+  { value: DriveTypeEnum.RWD, label: 'Заден' },
+  { value: DriveTypeEnum.AWD, label: 'Полн' },
+]);
+
+const BODY_TYPE_OPTIONS = sortOptionsByLabel([
+  { value: 'Sedan', label: 'Седан' },
+  { value: 'Hatchback', label: 'Хечбек' },
+  { value: 'Wagon', label: 'Караван' },
+  { value: 'SUV', label: 'SUV' },
+  { value: 'Coupe', label: 'Купе' },
+  { value: 'Convertible', label: 'Кабриолет' },
+  { value: 'Van', label: 'Фургон' },
+  { value: 'Pickup', label: 'Пикап' },
+  { value: 'Minivan', label: 'Миниван' },
+  { value: 'Truck', label: 'Грузовик' },
+]);
+
+const COLOR_OPTIONS = sortOptionsByLabel([
+  { value: 'Црна', label: 'Црна' },
+  { value: 'Бела', label: 'Бела' },
+  { value: 'Сива', label: 'Сива' },
+  { value: 'Сребрена', label: 'Сребрена' },
+  { value: 'Сина', label: 'Сина' },
+  { value: 'Црвена', label: 'Црвена' },
+  { value: 'Зелена', label: 'Зелена' },
+  { value: 'Жолта', label: 'Жолта' },
+  { value: 'Кафена', label: 'Кафена' },
+  { value: 'Портокалова', label: 'Портокалова' },
+  { value: 'Розова', label: 'Розова' },
+  { value: 'Виолетова', label: 'Виолетова' },
+  { value: 'Бежова', label: 'Бежова' },
+  { value: 'Златна', label: 'Златна' },
+  { value: 'Бронзена', label: 'Бронзена' },
+  { value: 'Темносина', label: 'Темносина' },
+  { value: 'Светлосина', label: 'Светлосина' },
+  { value: 'Темносива', label: 'Темносива' },
+  { value: 'Светлосива', label: 'Светлосива' },
+  { value: 'Металик црна', label: 'Металик црна' },
+  { value: 'Металик бела', label: 'Металик бела' },
+  { value: 'Металик сива', label: 'Металик сива' },
+  { value: 'Металик сребрена', label: 'Металик сребрена' },
+  { value: 'Металик сина', label: 'Металик сина' },
+  { value: 'Металик црвена', label: 'Металик црвена' },
+  { value: 'Перла', label: 'Перла' },
+  { value: 'Металик перла', label: 'Металик перла' },
+  { value: 'Матирана црна', label: 'Матирана црна' },
+  { value: 'Матирана сива', label: 'Матирана сива' },
+  { value: 'Матирана сина', label: 'Матирана сина' },
+]);
+
+const DOOR_OPTIONS = sortOptionsByLabel([
+  { value: '2', label: '2 врати' },
+  { value: '3', label: '3 врати' },
+  { value: '4', label: '4 врати' },
+  { value: '5', label: '5 врати' },
+]);
+
+const CONDITION_OPTIONS = sortOptionsByLabel([
+  { value: ConditionTypeEnum.Undamaged, label: 'Без оштетувања' },
+  { value: ConditionTypeEnum.Damaged, label: 'Со оштетувања' },
+  { value: ConditionTypeEnum.ForParts, label: 'За делови' },
+]);
+
+const REGISTRATION_TYPE_OPTIONS = sortOptionsByLabel([
+  { value: RegistrationTypeEnum.Local, label: 'Местна' },
+  { value: RegistrationTypeEnum.Foreign, label: 'Странска' },
+  { value: RegistrationTypeEnum.Cleared, label: 'Цариниран (на име на купувачот)' },
+]);
+
+const CURRENCY_OPTIONS = sortOptionsByLabel([
+  { value: CurrencyEnum.EUR, label: 'EUR' },
+  { value: CurrencyEnum.MKD, label: 'MKD' },
+]);
+
 const getInitialFormData = (initialData?: Listing): ListingFormData => {
   if (!initialData) {
     return {
@@ -151,6 +246,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
   const [uploading, setUploading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [formData, setFormData] = useState<ListingFormData>(() => getInitialFormData(initialData));
+  const [errors, setErrors] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     Promise.all([brandsApi.getAll(), citiesApi.getAll()])
@@ -238,116 +334,120 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
     }
   }, []);
 
+  const clearError = (fieldName: string) => {
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors[fieldName];
+      return newErrors;
+    });
+  };
+
   const validateForm = (): boolean => {
+    const newErrors: Record<string, boolean> = {};
+
     if (!formData.vehicle.brand_id) {
       toast.error('Потребно е да изберете марка');
-      return false;
+      newErrors['vehicle.brand_id'] = true;
     }
 
     if (!formData.vehicle.model_id) {
       toast.error('Потребно е да изберете модел');
-      return false;
+      newErrors['vehicle.model_id'] = true;
     }
 
     if (!formData.vehicle.year) {
       toast.error('Потребно е да внесете година');
-      return false;
-    }
-
-    const year = parseInt(formData.vehicle.year, 10);
-    if (isNaN(year) || !Number.isInteger(year) || year <= 0) {
-      toast.error('Годината мора да биде позитивен цел број');
-      return false;
-    }
-
-    if (year < 1900) {
-      toast.error('Годината не може да биде помала од 1900');
-      return false;
-    }
-
-    const currentYear = new Date().getFullYear();
-    const maxYear = currentYear + 1;
-    if (year > maxYear) {
-      toast.error(`Годината не може да биде поголема од ${maxYear}`);
-      return false;
+      newErrors['vehicle.year'] = true;
+    } else {
+      const year = parseInt(formData.vehicle.year, 10);
+      if (isNaN(year) || !Number.isInteger(year) || year <= 0) {
+        toast.error('Годината мора да биде позитивен цел број');
+        newErrors['vehicle.year'] = true;
+      } else if (year < 1900) {
+        toast.error('Годината не може да биде помала од 1900');
+        newErrors['vehicle.year'] = true;
+      } else {
+        const currentYear = new Date().getFullYear();
+        const maxYear = currentYear + 1;
+        if (year > maxYear) {
+          toast.error(`Годината не може да биде поголема од ${maxYear}`);
+          newErrors['vehicle.year'] = true;
+        }
+      }
     }
 
     if (!formData.vehicle.engine_displ_l) {
       toast.error('Потребно е да внесете запремина на моторот');
-      return false;
+      newErrors['vehicle.engine_displ_l'] = true;
     }
 
     if (!formData.vehicle.mileage_km) {
       toast.error('Потребно е да внесете поминување');
-      return false;
+      newErrors['vehicle.mileage_km'] = true;
     }
 
     if (!formData.vehicle.fuel) {
       toast.error('Потребно е да изберете топливо');
-      return false;
+      newErrors['vehicle.fuel'] = true;
     }
 
     if (!formData.vehicle.transmission) {
       toast.error('Потребно е да изберете пренос');
-      return false;
+      newErrors['vehicle.transmission'] = true;
     }
 
     if (!formData.vehicle.body_type) {
       toast.error('Потребно е да изберете тип на каросерија');
-      return false;
+      newErrors['vehicle.body_type'] = true;
     }
 
     if (!formData.vehicle.drive_type) {
       toast.error('Потребно е да изберете тип на погон');
-      return false;
+      newErrors['vehicle.drive_type'] = true;
     }
 
     if (!formData.price || parseInt(formData.price, 10) <= 0) {
       toast.error('Потребно е да внесете валидна цена (само цели броеви)');
-      return false;
+      newErrors['price'] = true;
     }
 
     if (!formData.city) {
       toast.error('Потребно е да изберете град');
-      return false;
+      newErrors['city'] = true;
     }
 
     if (formData.images.length < 2) {
       toast.error('Потребно е да вчитате минимум 2 фотографии');
-      return false;
+      newErrors['images'] = true;
     }
 
     if (formData.vin && formData.vin.length !== 17) {
       toast.error('VIN мора да биде точно 17 карактери');
-      return false;
-    }
-
-    if (formData.vin && !/^[A-HJ-NPR-Z0-9]{17}$/i.test(formData.vin)) {
+      newErrors['vin'] = true;
+    } else if (formData.vin && !/^[A-HJ-NPR-Z0-9]{17}$/i.test(formData.vin)) {
       toast.error('VIN мора да содржи само букви и бројки (без I, O, Q)');
-      return false;
+      newErrors['vin'] = true;
     }
 
     if (!formData.condition) {
       toast.error('Потребно е да изберете состојба');
-      return false;
+      newErrors['condition'] = true;
     }
 
     if (!formData.registration_type) {
       toast.error('Потребно е да изберете тип на регистрација');
-      return false;
+      newErrors['registration_type'] = true;
     }
 
     if (!formData.horsepower || parseFloat(formData.horsepower) <= 0) {
       toast.error('Потребно е да внесете валидни коњски сили');
-      return false;
+      newErrors['horsepower'] = true;
     }
 
     if (formData.is_registered && !formData.registration_expires_at) {
       toast.error('Потребно е да внесете дата до кога е регистрирано');
-      return false;
-    }
-
-    if (
+      newErrors['registration_expires_at'] = true;
+    } else if (
       formData.is_registered &&
       formData.registration_expires_at &&
       !/^\d{2}\.\d{4}$/.test(formData.registration_expires_at)
@@ -355,10 +455,8 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
       toast.error(
         'Датата мора да биде во формат месец.година (на пример: 05.2025). Месецот мора да биде двоцифрен.'
       );
-      return false;
-    }
-
-    if (formData.is_registered && formData.registration_expires_at) {
+      newErrors['registration_expires_at'] = true;
+    } else if (formData.is_registered && formData.registration_expires_at) {
       const [month, year] = formData.registration_expires_at.split('.');
       const currentDate = new Date();
       const currentMonth = currentDate.getMonth() + 1;
@@ -368,11 +466,12 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
 
       if (inputYear < currentYear || (inputYear === currentYear && inputMonth < currentMonth)) {
         toast.error('Датата на регистрација не може да биде помала од тековниот месец и година');
-        return false;
+        newErrors['registration_expires_at'] = true;
       }
     }
 
-    return true;
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -508,14 +607,16 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
             <label className="block text-sm font-semibold mb-2 text-primary-400">Марка *</label>
             <Dropdown
               value={formData.vehicle.brand_id}
-              onChange={(value) =>
+              onChange={(value) => {
+                clearError('vehicle.brand_id');
                 setFormData((prev) => ({
                   ...prev,
                   vehicle: { ...prev.vehicle, brand_id: value },
-                }))
-              }
+                }));
+              }}
               searchable={true}
               placeholder="Изберете марка"
+              error={!!errors['vehicle.brand_id']}
               options={[
                 { value: '', label: 'Изберете марка' },
                 ...brands.map((brand) => ({ value: brand.id, label: brand.name })),
@@ -527,15 +628,17 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
             <label className="block text-sm font-semibold mb-2 text-primary-400">Модел *</label>
             <Dropdown
               value={formData.vehicle.model_id}
-              onChange={(value) =>
+              onChange={(value) => {
+                clearError('vehicle.model_id');
                 setFormData((prev) => ({
                   ...prev,
                   vehicle: { ...prev.vehicle, model_id: value },
-                }))
-              }
+                }));
+              }}
               disabled={!formData.vehicle.brand_id || loadingModels}
               searchable={true}
               placeholder={loadingModels ? 'Вчитување...' : 'Изберете модел'}
+              error={!!errors['vehicle.model_id']}
               options={[
                 { value: '', label: 'Изберете модел' },
                 ...models.map((model) => ({ value: model.id, label: model.name })),
@@ -552,6 +655,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
               required
               value={formData.vehicle.year}
               onChange={(e) => {
+                clearError('vehicle.year');
                 const value = e.target.value.replace(/[^0-9]/g, '');
                 if (value.length <= 4) {
                   setFormData((prev) => ({
@@ -577,7 +681,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                 }
               }}
               onWheel={handleWheel}
-              className="input-field h-[48px]"
+              className={`input-field h-[48px] ${errors['vehicle.year'] ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
               placeholder="2020"
               title="Внесете година на производство на автомобилот"
             />
@@ -624,10 +728,11 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
               maxLength={17}
               value={formData.vin}
               onChange={(e) => {
+                clearError('vin');
                 const value = e.target.value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, '');
                 setFormData((prev) => ({ ...prev, vin: value }));
               }}
-              className="input-field h-[48px]"
+              className={`input-field h-[48px] ${errors['vin'] ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
               placeholder="17 карактери (без I, O, Q)"
               title="Внесете VIN код (17 карактери, без буквите I, O, Q)"
             />
@@ -660,6 +765,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
               max="99"
               value={formData.vehicle.engine_displ_l}
               onChange={(e) => {
+                clearError('vehicle.engine_displ_l');
                 let value = e.target.value.replace(',', '.');
                 value = value.replace(/[^0-9.]/g, '');
                 const parts = value.split('.');
@@ -700,7 +806,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                   }
                 }
               }}
-              className="input-field h-[48px]"
+              className={`input-field h-[48px] ${errors['vehicle.engine_displ_l'] ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
               placeholder="2.0"
               title="Внесете запремина на моторот во литри (0-99, на пример: 2.0)"
             />
@@ -717,6 +823,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
               max="9999"
               value={formData.horsepower}
               onChange={(e) => {
+                clearError('horsepower');
                 const value = e.target.value.replace(/[^0-9]/g, '');
                 if (value === '' || (parseInt(value) >= 1 && parseInt(value) <= 9999)) {
                   setFormData((prev) => ({
@@ -726,7 +833,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                 }
               }}
               onWheel={handleWheel}
-              className="input-field h-[48px]"
+              className={`input-field h-[48px] ${errors['horsepower'] ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
               placeholder="150"
               title="Внесете коњски сили на автомобилот (1-9999)"
             />
@@ -736,20 +843,15 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
             <label className="block text-sm font-semibold mb-2 text-primary-400">Топливо *</label>
             <Dropdown
               value={formData.vehicle.fuel}
-              onChange={(value) =>
+              onChange={(value) => {
+                clearError('vehicle.fuel');
                 setFormData((prev) => ({
                   ...prev,
                   vehicle: { ...prev.vehicle, fuel: value },
-                }))
-              }
-              options={[
-                { value: '', label: 'Изберете' },
-                { value: 'Petrol', label: 'Бензин' },
-                { value: 'Diesel', label: 'Дизел' },
-                { value: 'Electric', label: 'Електричен' },
-                { value: 'Hybrid', label: 'Хибриден' },
-                { value: 'LPG', label: 'LPG' },
-              ]}
+                }));
+              }}
+              error={!!errors['vehicle.fuel']}
+              options={[{ value: '', label: 'Изберете' }, ...FUEL_OPTIONS]}
             />
           </div>
 
@@ -757,18 +859,15 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
             <label className="block text-sm font-semibold mb-2 text-primary-400">Пренос *</label>
             <Dropdown
               value={formData.vehicle.transmission}
-              onChange={(value) =>
+              onChange={(value) => {
+                clearError('vehicle.transmission');
                 setFormData((prev) => ({
                   ...prev,
                   vehicle: { ...prev.vehicle, transmission: value },
-                }))
-              }
-              options={[
-                { value: '', label: 'Изберете' },
-                { value: 'Manual', label: 'Мануелна' },
-                { value: 'Automatic', label: 'Автоматска' },
-                { value: 'CVT', label: 'Варијатор' },
-              ]}
+                }));
+              }}
+              error={!!errors['vehicle.transmission']}
+              options={[{ value: '', label: 'Изберете' }, ...TRANSMISSION_OPTIONS]}
             />
           </div>
 
@@ -778,18 +877,15 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
             </label>
             <Dropdown
               value={formData.vehicle.drive_type}
-              onChange={(value) =>
+              onChange={(value) => {
+                clearError('vehicle.drive_type');
                 setFormData((prev) => ({
                   ...prev,
                   vehicle: { ...prev.vehicle, drive_type: value },
-                }))
-              }
-              options={[
-                { value: '', label: 'Изберете' },
-                { value: DriveTypeEnum.FWD, label: 'Преден' },
-                { value: DriveTypeEnum.RWD, label: 'Заден' },
-                { value: DriveTypeEnum.AWD, label: 'Полн' },
-              ]}
+                }));
+              }}
+              error={!!errors['vehicle.drive_type']}
+              options={[{ value: '', label: 'Изберете' }, ...DRIVE_TYPE_OPTIONS]}
             />
           </div>
 
@@ -804,6 +900,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
               max="9999999"
               value={formData.vehicle.mileage_km}
               onChange={(e) => {
+                clearError('vehicle.mileage_km');
                 const value = e.target.value.replace(/[^0-9]/g, '');
                 if (value === '' || (parseInt(value) >= 0 && parseInt(value) <= 9999999)) {
                   setFormData((prev) => ({
@@ -822,7 +919,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                 }
               }}
               onWheel={handleWheel}
-              className="input-field h-[48px]"
+              className={`input-field h-[48px] ${errors['vehicle.mileage_km'] ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
               placeholder="50000"
               title="Внесете поминување на автомобилот во километри (0-9999999)"
             />
@@ -839,17 +936,15 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
             <label className="block text-sm font-semibold mb-2 text-primary-400">Состојба *</label>
             <Dropdown
               value={formData.condition}
-              onChange={(value) =>
+              onChange={(value) => {
+                clearError('condition');
                 setFormData((prev) => ({
                   ...prev,
                   condition: value as ConditionType,
-                }))
-              }
-              options={[
-                { value: ConditionTypeEnum.Undamaged, label: 'Без оштетувања' },
-                { value: ConditionTypeEnum.Damaged, label: 'Со оштетувања' },
-                { value: ConditionTypeEnum.ForParts, label: 'За делови' },
-              ]}
+                }));
+              }}
+              error={!!errors['condition']}
+              options={CONDITION_OPTIONS}
             />
           </div>
 
@@ -859,17 +954,15 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
             </label>
             <Dropdown
               value={formData.registration_type}
-              onChange={(value) =>
+              onChange={(value) => {
+                clearError('registration_type');
                 setFormData((prev) => ({
                   ...prev,
                   registration_type: value as RegistrationType,
-                }))
-              }
-              options={[
-                { value: RegistrationTypeEnum.Local, label: 'Местна' },
-                { value: RegistrationTypeEnum.Foreign, label: 'Странска' },
-                { value: RegistrationTypeEnum.Cleared, label: 'Цариниран' },
-              ]}
+                }));
+              }}
+              error={!!errors['registration_type']}
+              options={REGISTRATION_TYPE_OPTIONS}
             />
           </div>
         </div>
@@ -943,6 +1036,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                 type="text"
                 value={formData.registration_expires_at}
                 onChange={(e) => {
+                  clearError('registration_expires_at');
                   let value = e.target.value.replace(/[^0-9.]/g, '');
                   const parts = value.split('.');
                   if (parts.length > 2) {
@@ -1004,7 +1098,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                     }
                   }
                 }}
-                className="input-field h-[48px]"
+                className={`input-field h-[48px] ${errors['registration_expires_at'] ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                 placeholder="12.2025"
                 title="Внесете дата до кога е регистрирано (формат: месец.година, на пример: 12.2025). Не може да биде помала од тековниот месец и година."
               />
@@ -1022,25 +1116,15 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
             </label>
             <Dropdown
               value={formData.vehicle.body_type}
-              onChange={(value) =>
+              onChange={(value) => {
+                clearError('vehicle.body_type');
                 setFormData((prev) => ({
                   ...prev,
                   vehicle: { ...prev.vehicle, body_type: value },
-                }))
-              }
-              options={[
-                { value: '', label: 'Изберете' },
-                { value: 'Sedan', label: 'Седан' },
-                { value: 'Hatchback', label: 'Хечбек' },
-                { value: 'Wagon', label: 'Караван' },
-                { value: 'SUV', label: 'SUV' },
-                { value: 'Coupe', label: 'Купе' },
-                { value: 'Convertible', label: 'Кабриолет' },
-                { value: 'Van', label: 'Фургон' },
-                { value: 'Pickup', label: 'Пикап' },
-                { value: 'Minivan', label: 'Миниван' },
-                { value: 'Truck', label: 'Грузовик' },
-              ]}
+                }));
+              }}
+              error={!!errors['vehicle.body_type']}
+              options={[{ value: '', label: 'Изберете' }, ...BODY_TYPE_OPTIONS]}
             />
           </div>
 
@@ -1054,39 +1138,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                   vehicle: { ...prev.vehicle, color: value },
                 }))
               }
-              options={[
-                { value: '', label: 'Изберете боја' },
-                { value: 'Црна', label: 'Црна' },
-                { value: 'Бела', label: 'Бела' },
-                { value: 'Сива', label: 'Сива' },
-                { value: 'Сребрена', label: 'Сребрена' },
-                { value: 'Сина', label: 'Сина' },
-                { value: 'Црвена', label: 'Црвена' },
-                { value: 'Зелена', label: 'Зелена' },
-                { value: 'Жолта', label: 'Жолта' },
-                { value: 'Кафена', label: 'Кафена' },
-                { value: 'Портокалова', label: 'Портокалова' },
-                { value: 'Розова', label: 'Розова' },
-                { value: 'Виолетова', label: 'Виолетова' },
-                { value: 'Бежова', label: 'Бежова' },
-                { value: 'Златна', label: 'Златна' },
-                { value: 'Бронзена', label: 'Бронзена' },
-                { value: 'Темносина', label: 'Темносина' },
-                { value: 'Светлосина', label: 'Светлосина' },
-                { value: 'Темносива', label: 'Темносива' },
-                { value: 'Светлосива', label: 'Светлосива' },
-                { value: 'Металик црна', label: 'Металик црна' },
-                { value: 'Металик бела', label: 'Металик бела' },
-                { value: 'Металик сива', label: 'Металик сива' },
-                { value: 'Металик сребрена', label: 'Металик сребрена' },
-                { value: 'Металик сина', label: 'Металик сина' },
-                { value: 'Металик црвена', label: 'Металик црвена' },
-                { value: 'Перла', label: 'Перла' },
-                { value: 'Металик перла', label: 'Металик перла' },
-                { value: 'Матирана црна', label: 'Матирана црна' },
-                { value: 'Матирана сива', label: 'Матирана сива' },
-                { value: 'Матирана сина', label: 'Матирана сина' },
-              ]}
+              options={[{ value: '', label: 'Изберете боја' }, ...COLOR_OPTIONS]}
             />
           </div>
 
@@ -1102,13 +1154,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                   vehicle: { ...prev.vehicle, doors: value },
                 }))
               }
-              options={[
-                { value: '', label: 'Изберете' },
-                { value: '2', label: '2 врати' },
-                { value: '3', label: '3 врати' },
-                { value: '4', label: '4 врати' },
-                { value: '5', label: '5 врати' },
-              ]}
+              options={[{ value: '', label: 'Изберете' }, ...DOOR_OPTIONS]}
             />
           </div>
         </div>
@@ -1127,6 +1173,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                 max="999999999"
                 value={formData.price}
                 onChange={(e) => {
+                  clearError('price');
                   const value = e.target.value.replace(/[^0-9]/g, '');
                   setFormData((prev) => ({ ...prev, price: value }));
                 }}
@@ -1140,7 +1187,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                   }
                 }}
                 onWheel={handleWheel}
-                className="input-field flex-1 h-[48px]"
+                className={`input-field flex-1 h-[48px] ${errors['price'] ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                 placeholder="0"
                 title="Внесете цена на автомобилот (само цели броеви)"
               />
@@ -1150,10 +1197,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                   setFormData((prev) => ({ ...prev, currency: value as Currency }))
                 }
                 className="w-32 flex-shrink-0"
-                options={[
-                  { value: CurrencyEnum.MKD, label: 'MKD' },
-                  { value: CurrencyEnum.EUR, label: 'EUR' },
-                ]}
+                options={CURRENCY_OPTIONS}
               />
             </div>
           </div>
@@ -1162,9 +1206,13 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
             <label className="block text-sm font-semibold mb-2 text-primary-400">Град *</label>
             <Dropdown
               value={formData.city}
-              onChange={(value) => setFormData((prev) => ({ ...prev, city: value }))}
+              onChange={(value) => {
+                clearError('city');
+                setFormData((prev) => ({ ...prev, city: value }));
+              }}
               searchable={true}
               placeholder="Изберете град"
+              error={!!errors['city']}
               options={[
                 { value: '', label: 'Изберете град' },
                 ...cities.map((city) => ({

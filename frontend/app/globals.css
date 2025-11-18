@@ -148,6 +148,17 @@ label {
     box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.2) !important;
   }
 
+  .input-field.input-field-error,
+  .input-field.border-red-500 {
+    border-color: rgb(239, 68, 68) !important;
+  }
+
+  .input-field.input-field-error:focus,
+  .input-field.border-red-500:focus {
+    border-color: rgb(239, 68, 68) !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+  }
+
   .input-field:disabled {
     background-color: rgb(26, 46, 42) !important;
     cursor: not-allowed !important;
@@ -261,6 +272,17 @@ label {
 
   .input-field.dropdown-button {
     padding-right: 48px !important;
+  }
+
+  .input-field.dropdown-button.border-red-500,
+  .input-field.dropdown-button.input-field-error {
+    border-color: rgb(239, 68, 68) !important;
+  }
+
+  .input-field.dropdown-button.border-red-500:focus,
+  .input-field.dropdown-button.input-field-error:focus {
+    border-color: rgb(239, 68, 68) !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
   }
 
   .select-field {

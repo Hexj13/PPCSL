@@ -46,7 +46,7 @@ export function Header() {
 
   return (
     <header className="bg-bg-dark shadow-lg border-b-2 border-primary-500/20 sticky top-0 z-50 backdrop-blur-sm bg-bg-dark/95">
-      <div className="container mx-auto px-4 py-3 md:py-4">
+      <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 md:py-4">
         <div className="flex justify-between items-center">
           <Link
             href="/"
@@ -55,7 +55,7 @@ export function Header() {
             Kupito
           </Link>
 
-          <nav className="hidden md:flex gap-3 lg:gap-6 items-center">
+          <nav className="hidden lg:flex gap-3 lg:gap-6 items-center">
             {!isInitialized ? (
               <div className="flex gap-4 items-center">
                 <div className="h-9 w-24 bg-bg-light/30 rounded animate-pulse" />
@@ -65,9 +65,14 @@ export function Header() {
               <>
                 <Link
                   href="/listings/new"
-                  className="text-white font-medium text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-2"
+                  className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded hover:bg-bg-light/20"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -75,13 +80,19 @@ export function Header() {
                       d="M12 4v16m8-8H4"
                     />
                   </svg>
-                  Додади објава
+                  <span className="hidden xl:inline">Додади објава</span>
+                  <span className="xl:hidden">Додади</span>
                 </Link>
                 <Link
                   href="/my-listings"
-                  className="text-white font-medium text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-2"
+                  className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded hover:bg-bg-light/20"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -89,13 +100,19 @@ export function Header() {
                       d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                     />
                   </svg>
-                  Мои објави
+                  <span className="hidden xl:inline">Мои објави</span>
+                  <span className="xl:hidden">Мои</span>
                 </Link>
                 <Link
                   href="/favorites"
-                  className="text-white font-medium text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-2"
+                  className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded hover:bg-bg-light/20"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -103,13 +120,19 @@ export function Header() {
                       d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
                     />
                   </svg>
-                  Омилени
+                  <span className="hidden lg:inline">Омилени</span>
+                  <span className="lg:hidden">Омилени</span>
                 </Link>
                 <Link
                   href="/compare"
-                  className="text-white font-medium text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-2"
+                  className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded hover:bg-bg-light/20"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -117,9 +140,10 @@ export function Header() {
                       d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"
                     />
                   </svg>
-                  Споредба
+                  <span className="hidden lg:inline">Споредба</span>
+                  <span className="lg:hidden">Споредба</span>
                   {comparisonCount > 0 && (
-                    <span className="bg-bg-light border border-primary-500/20 text-gray-300 text-xs font-bold rounded-[4px] w-5 h-5 flex items-center justify-center">
+                    <span className="bg-bg-light border border-primary-500/20 text-gray-300 text-[10px] md:text-xs font-bold rounded-[4px] w-4 h-4 md:w-5 md:h-5 flex items-center justify-center ml-1">
                       {comparisonCount}
                     </span>
                   )}
@@ -127,9 +151,14 @@ export function Header() {
                 {user.type === 'Admin' && (
                   <Link
                     href="/admin"
-                    className="text-white font-medium text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-2"
+                    className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded hover:bg-bg-light/20"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg
+                      className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -137,12 +166,13 @@ export function Header() {
                         d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
                       />
                     </svg>
-                    Админ
+                    <span className="hidden lg:inline">Админ</span>
+                    <span className="lg:hidden">Админ</span>
                   </Link>
                 )}
                 <Link
                   href="/profile"
-                  className="text-gray-300 font-medium px-2 md:px-3 py-1.5 bg-bg-light rounded-lg border border-primary-500/20 text-xs md:text-sm lg:text-base hover:text-primary-400 hover:border-primary-500/40 transition-colors duration-200 cursor-pointer flex items-center gap-1.5 md:gap-2"
+                  className="text-gray-300 font-medium px-2 md:px-3 py-1.5 md:py-2 bg-bg-light rounded-lg border border-primary-500/20 text-xs md:text-sm lg:text-base hover:text-primary-400 hover:border-primary-500/40 transition-colors duration-200 cursor-pointer flex items-center gap-1.5 md:gap-2"
                 >
                   <svg
                     className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
@@ -158,13 +188,13 @@ export function Header() {
                       d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                     />
                   </svg>
-                  <span className="truncate max-w-[120px] md:max-w-[150px] lg:max-w-none">
+                  <span className="truncate max-w-[100px] md:max-w-[140px] lg:max-w-[180px] xl:max-w-none">
                     {getUserDisplayName(user)}
                   </span>
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="text-gray-300 font-medium px-2 md:px-3 py-1.5 bg-bg-light rounded-lg border border-primary-500/20 text-xs md:text-sm lg:text-base hover:text-primary-400 hover:border-primary-500/40 transition-colors duration-200 cursor-pointer flex items-center gap-1.5 md:gap-2 whitespace-nowrap"
+                  className="text-gray-300 font-medium px-2 md:px-3 py-1.5 md:py-2 bg-bg-light rounded-lg border border-primary-500/20 text-xs md:text-sm lg:text-base hover:text-primary-400 hover:border-primary-500/40 transition-colors duration-200 cursor-pointer flex items-center gap-1.5 md:gap-2 whitespace-nowrap"
                 >
                   <svg
                     className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
@@ -180,15 +210,23 @@ export function Header() {
                       d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                     />
                   </svg>
-                  Одјави се
+                  <span className="hidden xl:inline">Одјави се</span>
+                  <span className="xl:hidden">Одјави</span>
                 </button>
               </>
             ) : (
               <>
-                <Link href="/login" className="btn-outline text-sm lg:text-base px-3 lg:px-4">
-                  Најави се
+                <Link
+                  href="/login"
+                  className="btn-outline text-xs md:text-sm lg:text-base px-2 md:px-3 lg:px-4 py-1.5 md:py-2"
+                >
+                  <span className="hidden xl:inline">Најави се</span>
+                  <span className="xl:hidden">Најави</span>
                 </Link>
-                <Link href="/register" className="btn-primary text-sm lg:text-base px-3 lg:px-4">
+                <Link
+                  href="/register"
+                  className="btn-primary text-xs md:text-sm lg:text-base px-2 md:px-3 lg:px-4 py-1.5 md:py-2"
+                >
                   Регистрација
                 </Link>
               </>
@@ -197,7 +235,7 @@ export function Header() {
 
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden text-white hover:text-primary-500 transition-colors duration-200 p-2"
+            className="lg:hidden text-white hover:text-primary-500 transition-colors duration-200 p-2 -mr-2"
             aria-label="Toggle menu"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -221,7 +259,7 @@ export function Header() {
         </div>
 
         {isMobileMenuOpen && (
-          <nav className="md:hidden mt-4 pb-4 border-t border-primary-500/20 pt-4">
+          <nav className="lg:hidden mt-4 pb-4 border-t border-primary-500/20 pt-4">
             {!isInitialized ? (
               <div className="flex flex-col gap-3">
                 <div className="h-10 bg-bg-light/30 rounded animate-pulse" />

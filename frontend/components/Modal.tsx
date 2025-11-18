@@ -54,7 +54,7 @@ export function Modal({
         onClick={(e) => e.stopPropagation()}
       >
         {title && (
-          <div className="sticky top-0 bg-bg-dark border-b border-primary-500/20 p-5 sm:p-6 flex justify-between items-center">
+          <div className="sticky top-0 z-10 bg-bg-dark border-b border-primary-500/20 p-5 sm:p-6 flex justify-between items-center">
             <h2 className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
               {title}
             </h2>

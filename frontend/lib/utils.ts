@@ -83,7 +83,7 @@ export function formatRegistrationType(registrationType: string | undefined): st
     case 'Foreign':
       return 'Странска';
     case 'Cleared':
-      return 'Цариниран';
+      return 'Цариниран (на име на купувачот)';
     default:
       return registrationType;
   }

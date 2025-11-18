@@ -40,16 +40,16 @@ export function ListingManagementCard({
 
   return (
     <div className="card overflow-visible">
-      <div className="grid grid-cols-1 md:grid-cols-[350px_1fr] gap-0 md:gap-6 md:items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-[450px_1fr] gap-0 lg:gap-6 lg:items-stretch">
         <Link href={`/listings/${listing.id}`} className="flex-shrink-0">
-          <div className="relative w-full h-[200px] sm:h-[250px] md:h-full md:min-h-[320px] bg-bg-darker overflow-hidden rounded-t-xl md:rounded-l-xl md:rounded-t-none md:rounded-b-none">
+          <div className="relative w-full h-[200px] sm:h-[250px] lg:h-full lg:min-h-[250px] bg-bg-darker overflow-hidden rounded-t-xl lg:rounded-tl-xl lg:rounded-bl-xl lg:rounded-tr-none lg:rounded-br-none">
             {hasImage ? (
               <Image
                 src={optimizedImageUrl}
                 alt={listing.title}
                 fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 300px"
+                className="object-cover rounded-t-xl lg:rounded-tl-xl lg:rounded-bl-xl lg:rounded-tr-none lg:rounded-br-none"
+                sizes="(max-width: 1024px) 100vw, 450px"
                 loading="lazy"
                 unoptimized={
                   optimizedImageUrl.startsWith('http://') ||
@@ -74,79 +74,89 @@ export function ListingManagementCard({
           </div>
         </Link>
         <div className="flex-1 p-4 sm:p-5 flex flex-col min-w-0">
-          <div className="mb-3">
-            <div className="flex items-start justify-between gap-2 sm:gap-4 mb-2">
-              <div className="flex-1 min-w-0">
-                {isAdminMode && (
-                  <>
-                    <div className="mb-1 flex items-center gap-2">
-                      <span className="text-xs text-gray-400 font-mono">ID: {listing.id}</span>
-                      {onCopyId && (
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            onCopyId(listing.id);
-                          }}
-                          className="p-1 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors"
-                          title="Копирај ID"
+          <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 lg:gap-6">
+            <div className="flex-1 min-w-0">
+              {isAdminMode && (
+                <>
+                  <div className="mb-1 flex items-center gap-2">
+                    <span className="text-xs text-gray-400 font-mono">ID: {listing.id}</span>
+                    {onCopyId && (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          onCopyId(listing.id);
+                        }}
+                        className="p-1 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors"
+                        title="Копирај ID"
+                      >
+                        <svg
+                          className="w-3.5 h-3.5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
                         >
-                          <svg
-                            className="w-3.5 h-3.5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                            />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
-                    {listing.user && (
-                      <div className="mb-2 text-sm text-gray-300">
-                        <span className="text-primary-400">Корисник:</span>{' '}
-                        <span className="font-medium">
-                          {[
-                            listing.user.firstName,
-                            listing.user.lastName,
-                            listing.user.companyName,
-                            listing.user.email,
-                            listing.user.phone,
-                          ]
-                            .filter(Boolean)
-                            .join(' ') || 'Избришан корисник'}
-                        </span>
-                      </div>
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                          />
+                        </svg>
+                      </button>
                     )}
-                  </>
-                )}
-                <Link href={`/listings/${listing.id}`}>
-                  <h3 className="font-bold text-base md:text-lg mb-1.5 hover:text-primary-600 transition-colors line-clamp-2">
-                    {listing.title}
-                  </h3>
-                </Link>
-              </div>
+                  </div>
+                  {listing.user && (
+                    <div className="mb-2 text-sm text-gray-300">
+                      <span className="text-primary-400">Корисник:</span>{' '}
+                      <span className="font-medium">
+                        {[
+                          listing.user.firstName,
+                          listing.user.lastName,
+                          listing.user.companyName,
+                          listing.user.email,
+                          listing.user.phone,
+                        ]
+                          .filter(Boolean)
+                          .join(' ') || 'Избришан корисник'}
+                      </span>
+                    </div>
+                  )}
+                </>
+              )}
+              <Link href={`/listings/${listing.id}`}>
+                <h3 className="font-bold text-base md:text-lg hover:text-primary-600 transition-colors line-clamp-2 mb-3">
+                  {listing.title}
+                </h3>
+              </Link>
+              {listing.vehicle && (
+                <div className="text-sm text-gray-300 space-y-1.5 mb-3">
+                  {listing.vehicle.engine_displ_l && (
+                    <div>Мотор: {formatEngineVolume(listing.vehicle.engine_displ_l)} л</div>
+                  )}
+                  {listing.vehicle.fuel && <div>Гориво: {listing.vehicle.fuel}</div>}
+                  {listing.vehicle.mileage_km && (
+                    <div>Поминување: {formatMileage(listing.vehicle.mileage_km)} км</div>
+                  )}
+                  {listing.vehicle.drive_type && (
+                    <div>Тип на погон: {formatDriveType(listing.vehicle.drive_type)}</div>
+                  )}
+                  {listing.vehicle.body_type && (
+                    <div>Тип на каросерија: {formatBodyType(listing.vehicle.body_type)}</div>
+                  )}
+                </div>
+              )}
             </div>
-            <div className="mb-2">
-              <div className="flex items-baseline gap-2">
-                {listing.price !== undefined ? (
-                  <>
-                    <span className="text-xl md:text-2xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-                      {formatPrice(listing.price, listing.currency)}
-                    </span>
-                    <span className="text-xs md:text-sm text-gray-300 font-medium">
-                      {listing.currency}
-                    </span>
-                  </>
-                ) : (
-                  <span className="text-xl md:text-2xl font-extrabold text-primary-400">••••</span>
-                )}
-              </div>
-              <div className="mt-1.5 flex items-center gap-1.5 sm:gap-2 flex-wrap">
+            <div className="flex flex-col items-start text-left w-full lg:items-end lg:text-right lg:min-w-[140px] lg:w-auto mb-3">
+              {listing.price !== undefined ? (
+                <span className="text-lg sm:text-xl md:text-2xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent leading-snug whitespace-nowrap mb-3">
+                  {formatPrice(listing.price, listing.currency)} {listing.currency}
+                </span>
+              ) : (
+                <span className="text-lg sm:text-xl md:text-2xl font-extrabold text-primary-400 mb-3">
+                  ••••
+                </span>
+              )}
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-start md:justify-end">
                 {listing.is_new && (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-primary-500/20 border border-primary-500/40 text-primary-300 shadow-sm">
                     <span>✨</span>
@@ -162,38 +172,17 @@ export function ListingManagementCard({
               </div>
             </div>
           </div>
-          {listing.vehicle && (
-            <div className="mb-3 flex-1">
-              <div className="text-sm text-gray-300 space-y-1.5">
-                {listing.vehicle.engine_displ_l && (
-                  <div>Мотор: {formatEngineVolume(listing.vehicle.engine_displ_l)} л</div>
-                )}
-                {listing.vehicle.fuel && <div>Гориво: {listing.vehicle.fuel}</div>}
-                {listing.vehicle.mileage_km && (
-                  <div>Поминување: {formatMileage(listing.vehicle.mileage_km)} км</div>
-                )}
-                {listing.vehicle.drive_type && (
-                  <div>Тип на погон: {formatDriveType(listing.vehicle.drive_type)}</div>
-                )}
-                {listing.vehicle.body_type && (
-                  <div>Тип на каросерија: {formatBodyType(listing.vehicle.body_type)}</div>
-                )}
-              </div>
-            </div>
-          )}
           <div className="mt-auto pt-3 border-t border-primary-500/20">
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-2 lg:gap-3">
-              <div className="bg-bg-dark/95 backdrop-blur-sm px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg border-2 border-primary-500/30 inline-flex items-center gap-1 sm:gap-1.5 h-auto lg:h-[52px] w-full lg:w-auto justify-center lg:justify-start">
-                <div className="text-xs sm:text-sm font-semibold text-gray-200 leading-none">
-                  Статус:
-                </div>
+              <div className="inline-flex items-center gap-1 sm:gap-1.5">
+                <div className="text-xs sm:text-sm font-semibold text-gray-200">Статус:</div>
                 <div
                   className={
                     listing.status === 'Active'
-                      ? 'text-primary-400 font-bold text-xs sm:text-sm leading-none'
+                      ? 'text-primary-400 font-bold text-xs sm:text-sm'
                       : listing.status === 'Paused'
-                        ? 'text-yellow-400 font-bold text-xs sm:text-sm leading-none'
-                        : 'text-gray-200 font-bold text-xs sm:text-sm leading-none'
+                        ? 'text-yellow-400 font-bold text-xs sm:text-sm'
+                        : 'text-gray-200 font-bold text-xs sm:text-sm'
                   }
                 >
                   {listing.status === 'Active'
