@@ -413,6 +413,12 @@ export default function ListingPage() {
   const vehicle = listing.vehicle;
   const closingDate = getClosingDate(listing.last_updated_at);
 
+  const brand = vehicle?.brand?.name || '';
+  const model = vehicle?.model?.name || '';
+  const year = vehicle?.year || '';
+  const vehicleInfo = [brand, model, year].filter(Boolean).join(' ');
+  const h1Title = vehicleInfo || listing.title || 'Автомобил за продажба';
+
   const nextImage = () => {
     setModalImageIndex((prev) => (prev + 1) % images.length);
   };
@@ -658,7 +664,7 @@ export default function ListingPage() {
           <div className="space-y-6">
             <div>
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-6 text-white">
-                {listing.title}
+                {h1Title}
               </h1>
               <div className="mb-6">
                 <div className="flex items-baseline gap-3 flex-wrap mb-6">

@@ -66,7 +66,11 @@ export function InfoBlockSkeleton() {
 }
 
 export function TitleSkeleton() {
-  return <div className="h-10 bg-bg-light/30 rounded w-3/4 mb-6 animate-pulse" />;
+  return (
+    <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-6">
+      <span className="inline-block h-10 bg-bg-light/30 rounded w-3/4 animate-pulse" />
+    </h1>
+  );
 }
 
 export function BadgesSkeleton() {

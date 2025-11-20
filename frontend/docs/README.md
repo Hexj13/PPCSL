@@ -26,6 +26,20 @@ This directory contains frontend-specific documentation.
 - **Breadcrumbs** - Navigation component with dynamic items
 - **ListingManagementCard** - Card component for managing listings with status actions
 
+### SEO & Metadata
+- **Open Graph tags** - Full OG meta tags on all pages:
+  - Homepage: Static OG tags with platform description
+  - Listing pages: Dynamic OG tags generated from listing data (brand + model + year for title, listing description, main image)
+  - Auth pages: Page-specific OG tags (`/login`, `/register`, `/reset-password`)
+  - Legal pages: Content-specific OG tags (`/terms`, `/privacy`, `/faq`)
+- **Twitter Cards** - `summary_large_image` cards on all pages
+- **Meta descriptions** - Optimized to 110-160 characters (Open Graph recommendation)
+- **H1 tags** - Proper semantic H1 tags on all pages:
+  - Listing pages: Dynamic H1 from vehicle info with fallback
+  - Skeleton components: Use semantic H1 tags during loading
+- **Canonical URLs** - Absolute canonical URLs for all pages
+- **Layout files** - Each page has its own `layout.tsx` with metadata configuration
+
 ## General Documentation
 
 For general project documentation, see the main [`docs/`](../../docs/) folder:

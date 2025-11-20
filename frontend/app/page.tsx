@@ -4,9 +4,12 @@ import { Suspense } from 'react';
 import { ListingGrid } from '@/components/ListingGrid';
 import { SearchFilters } from '@/components/SearchFilters';
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club';
+
 export const metadata: Metadata = {
   title: 'Автомобили во Македонија',
-  description: 'Купете или продадете авто на Kupito! Барајте по марка, модел, цена, град и повеќе.',
+  description:
+    'Купете или продадете авто на Kupito! Платформа за купување и продавање автомобили во Македонија. Бесплатно објавување огласи за приватни лица и авто-плацови.',
   keywords: [
     'автомобили',
     'купи автомобил',
@@ -21,8 +24,27 @@ export const metadata: Metadata = {
     'автомобили онлајн',
   ],
   openGraph: {
-    title: 'Автомобили во Македонија | Kupito',
-    description: 'Купете или продадете авто на Kupito!',
+    type: 'website',
+    url: `${siteUrl}/`,
+    title: 'Kupito – огласи за продажба на автомобили во Македонија',
+    description:
+      'Нова платформа за купување и продавање автомобили во Македонија. Бесплатно објавување огласи за приватни лица и авто-плацови.',
+    images: [
+      {
+        url: `${siteUrl}/og-image.jpg`,
+        width: 1200,
+        height: 630,
+        alt: 'Kupito',
+      },
+    ],
+    siteName: 'Kupito',
+    locale: 'mk_MK',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Kupito – огласи за продажба на автомобили во Македонија',
+    description: 'Нова платформа за купување и продавање автомобили во Македонија.',
+    images: [`${siteUrl}/og-image.jpg`],
   },
 };
 

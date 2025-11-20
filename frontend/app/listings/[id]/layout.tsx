@@ -1,8 +1,6 @@
 import type { Metadata } from 'next';
 
-import { formatPrice } from '@/lib/utils';
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.mk';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 async function getListing(id: string) {
@@ -41,23 +39,22 @@ export async function generateMetadata({
     };
   }
 
-  const title = listing.title || 'Автомобил за продажба';
-  const vehicleInfo = listing.vehicle
-    ? `${listing.vehicle.brand?.name || ''} ${listing.vehicle.model?.name || ''} ${listing.vehicle.year || ''}`.trim()
-    : '';
-  const priceText =
-    listing.price !== undefined
-      ? `${formatPrice(listing.price, listing.currency)} ${listing.currency}`
-      : '';
+  const brand = listing.vehicle?.brand?.name || '';
+  const model = listing.vehicle?.model?.name || '';
+  const year = listing.vehicle?.year || '';
+  const vehicleInfo = [brand, model, year].filter(Boolean).join(' ');
+  const fullTitle = vehicleInfo || listing.title || 'Автомобил за продажба';
+
   const description =
     listing.description?.replace(/<[^>]*>/g, '').substring(0, 160) ||
-    `${vehicleInfo || title}${priceText ? ` - ${priceText}` : ''}. Купете или продадете авто на Kupito!`;
+    `${vehicleInfo || listing.title || 'Автомобил за продажба'}. Купете или продадете авто на Kupito!`;
+
   const imageUrl =
     listing.images && listing.images.length > 0
       ? getOptimizedImageUrl(listing.images[0])
-      : `${siteUrl}/placeholder-car.jpg`;
+      : `${siteUrl}/og-image.jpg`;
 
-  const fullTitle = vehicleInfo ? `${vehicleInfo} - ${title}` : title;
+  const listingUrl = `${siteUrl}/listings/${id}`;
 
   return {
     title: fullTitle,
@@ -73,8 +70,7 @@ export async function generateMetadata({
     ].filter(Boolean),
     openGraph: {
       type: 'website',
-      locale: 'mk_MK',
-      url: `${siteUrl}/listings/${id}`,
+      url: listingUrl,
       title: fullTitle,
       description,
       images: [
@@ -82,10 +78,11 @@ export async function generateMetadata({
           url: imageUrl,
           width: 1200,
           height: 630,
-          alt: title,
+          alt: fullTitle,
         },
       ],
       siteName: 'Kupito',
+      locale: 'mk_MK',
     },
     twitter: {
       card: 'summary_large_image',
@@ -94,15 +91,15 @@ export async function generateMetadata({
       images: [imageUrl],
     },
     alternates: {
-      canonical: `${siteUrl}/listings/${id}`,
+      canonical: listingUrl,
     },
   };
 }
 
 function getOptimizedImageUrl(imageUrl: string): string {
   if (!imageUrl || imageUrl === '/placeholder-car.jpg') {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.mk';
-    return `${siteUrl}/placeholder-car.jpg`;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club';
+    return `${siteUrl}/og-image.jpg`;
   }
 
   if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {

@@ -246,6 +246,14 @@ Kupito/
 - **Code quality:** TypeScript strict mode, CI/CD automation, bundle optimization
 - **Performance:** Frontend memoization, Redis cache optimization, lazy loading
 - **Analytics:** Google Analytics integration
+- **SEO & Metadata:**
+  - Full Open Graph and Twitter Card meta tags on all pages
+  - Dynamic meta tags for listing pages (generated from vehicle data)
+  - Static meta tags for key pages (homepage, auth, legal pages)
+  - Optimized meta descriptions (110-160 characters)
+  - Proper H1 tags on all pages with fallback logic
+  - Canonical URLs for all pages
+  - Absolute URLs for all OG images and links
 - Image optimization (resize, compress, convert to WebP with adaptive quality, lazy loading, SEO-friendly)
 - **File upload security:** Magic byte validation, metadata checking, dimension limits
 - **HTML sanitization:** Backend sanitization for listing descriptions to prevent XSS attacks

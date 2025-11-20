@@ -1,0 +1,37 @@
+import type { Metadata } from 'next';
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club';
+
+export const metadata: Metadata = {
+  title: 'Често поставувани прашања (FAQ)',
+  description:
+    'Најдете одговори на најчестите прашања за Kupito. Дознајте како да објавите оглас, управувате со вашите огласи, пребарувате и споредувате автомобили.',
+  openGraph: {
+    type: 'website',
+    url: `${siteUrl}/faq`,
+    title: 'Често поставувани прашања (FAQ) - Kupito',
+    description:
+      'Најдете одговори на најчестите прашања за Kupito. Дознајте како да објавите оглас, како да управувате со вашите огласи, како да пребарувате и споредувате автомобили, и многу повеќе.',
+    images: [
+      {
+        url: `${siteUrl}/og-image.jpg`,
+        width: 1200,
+        height: 630,
+        alt: 'Kupito - Често поставувани прашања',
+      },
+    ],
+    siteName: 'Kupito',
+    locale: 'mk_MK',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Често поставувани прашања (FAQ) - Kupito',
+    description:
+      'Најдете одговори на најчестите прашања за Kupito. Дознајте како да објавите оглас, како да управувате со вашите огласи, како да пребарувате и споредувате автомобили, и многу повеќе.',
+    images: [`${siteUrl}/og-image.jpg`],
+  },
+};
+
+export default function FAQLayout({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
+}

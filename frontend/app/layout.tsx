@@ -13,7 +13,7 @@ import './globals.css';
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.mk';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club';
 const siteName = 'Kupito';
 const defaultTitle = 'Kupito - Автомобили во Македонија';
 const defaultDescription = 'Купете или продадете авто на Kupito!';

@@ -573,11 +573,26 @@ All scripts are located in `backend/src/scripts/` and can be executed via npm co
 ### SEO Optimizations
 
 #### Meta Tags
-- Comprehensive metadata (title, description, keywords)
-- Open Graph tags for social media sharing
-- Twitter Cards
-- Canonical URLs
-- Dynamic meta tags for listings
+- **Comprehensive metadata** (title, description, keywords) on all pages
+- **Open Graph tags** for social media sharing:
+  - `og:type`, `og:url`, `og:title`, `og:description`, `og:image`, `og:site_name`, `og:locale`
+  - All URLs are absolute (using `NEXT_PUBLIC_SITE_URL`)
+  - Image size: 1200×630 pixels
+- **Twitter Cards** (`summary_large_image`) with title, description, and image
+- **Canonical URLs** for all pages
+- **Dynamic meta tags for listings** (`/listings/[id]`):
+  - Title generated from vehicle info (brand + model + year)
+  - Description from listing content (first 160 characters, HTML stripped)
+  - Image from listing's main photo or fallback to default OG image
+  - URL: `https://kupito.club/listings/{id}`
+- **Static meta tags for key pages**:
+  - Homepage (`/`): Static OG tags with platform description
+  - Auth pages (`/login`, `/register`, `/reset-password`): Page-specific descriptions
+  - Legal pages (`/terms`, `/privacy`, `/faq`): Content-specific descriptions
+- **Meta description length**: All descriptions are optimized to 110-160 characters (Open Graph recommendation)
+- **H1 tags**: All pages have proper `<h1>` tags:
+  - Listing pages: Dynamic H1 from vehicle info (brand + model + year) with fallback
+  - Other pages: Page-specific H1 tags
 
 #### Structured Data (Schema.org)
 - **Organization Schema** - Business entity information
