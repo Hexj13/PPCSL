@@ -16,7 +16,7 @@ export default async function Image() {
     const imagePath = join(process.cwd(), 'public', 'opengraph-image.png');
     const imageBuffer = await readFile(imagePath);
     const base64Image = imageBuffer.toString('base64');
-    
+
     return new ImageResponse(
       (
         <div
