@@ -11,7 +11,7 @@ interface StructuredDataProps {
 
 export function StructuredData({ listing }: StructuredDataProps) {
   useEffect(() => {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.mk';
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club';
 
     const vehicle = listing.vehicle;
     const brandName = vehicle?.brand?.name || '';

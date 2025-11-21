@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 
 export function OrganizationSchema() {
   useEffect(() => {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.mk';
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club';
 
     const schemaData = {
       '@context': 'https://schema.org',
