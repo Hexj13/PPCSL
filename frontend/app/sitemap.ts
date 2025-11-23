@@ -63,7 +63,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }
 
       const data = await response.json().catch(() => null);
-      
+
       if (!data || !Array.isArray(data.data)) {
         return baseUrls;
       }
@@ -72,9 +72,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
       const listingUrls: MetadataRoute.Sitemap = listings.map((listing: Listing) => ({
         url: ensureAbsoluteUrl(`/listings/${listing.id}`),
-        lastModified: listing.updated_at || listing.created_at 
-          ? new Date(listing.updated_at || listing.created_at)
-          : new Date(),
+        lastModified:
+          listing.updated_at || listing.created_at
+            ? new Date(listing.updated_at || listing.created_at)
+            : new Date(),
         changeFrequency: 'weekly' as const,
         priority: 0.8,
       }));
