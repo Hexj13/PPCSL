@@ -8,10 +8,13 @@ import { useCookieConsent } from '@/hooks/useCookieConsent';
 export function CookieConsent() {
   const { hasConsent, isLoading, grantConsent, denyConsent } = useCookieConsent();
   const [isVisible, setIsVisible] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !hasConsent) {
+      setIsMounted(false);
       setIsVisible(true);
+      setTimeout(() => setIsMounted(true), 10);
     }
   }, [hasConsent, isLoading]);
 
@@ -22,47 +25,65 @@ export function CookieConsent() {
     setIsVisible(false);
   };
 
-  const handleReject = () => {
+  const handleClose = () => {
     denyConsent();
     setIsVisible(false);
   };
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-50 bg-bg-dark border-t-2 border-primary-500/30 shadow-2xl"
+      className={`fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-full sm:max-w-sm z-50 bg-bg-light rounded-xl shadow-2xl border border-primary-500/20 p-3 sm:p-4 md:p-5 transition-all duration-300 ${
+        isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+      }`}
       role="dialog"
       aria-label="Прифаќање на cookies"
     >
-      <div className="container mx-auto px-3 sm:px-4 py-3 md:py-4">
-        <div className="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4">
-          <div className="flex-1">
-            <p className="text-sm md:text-base text-gray-300 leading-relaxed">
-              Користиме cookies за анализирање на употребата на страницата.{' '}
-              <Link
-                href="/privacy"
-                className="text-primary-400 hover:text-primary-300 underline transition-colors"
-              >
-                Повеќе информации
-              </Link>
-              .
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-            <button
-              onClick={handleReject}
-              className="px-4 py-2 bg-bg-light border-2 border-primary-500/30 rounded-lg hover:bg-bg-light/80 hover:border-primary-500/50 transition-all duration-200 text-white font-medium text-sm md:text-base whitespace-nowrap"
-            >
-              Одбиј
-            </button>
-            <button
-              onClick={handleAccept}
-              className="px-4 py-2 bg-gradient-to-r from-primary-700 to-primary-800 border-2 border-primary-700 rounded-lg hover:from-primary-800 hover:to-primary-900 transition-all duration-200 text-white font-medium text-sm md:text-base whitespace-nowrap shadow-lg"
-            >
-              Прифати
-            </button>
-          </div>
-        </div>
+      <button
+        onClick={handleClose}
+        className="absolute top-2 right-2 sm:top-3 sm:right-3 text-gray-400 hover:text-white transition-colors p-1 touch-manipulation"
+        aria-label="Затвори"
+      >
+        <svg
+          className="w-4 h-4 sm:w-5 sm:h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+
+      <div className="flex flex-col items-center text-center mb-3 sm:mb-4">
+        <div className="text-3xl sm:text-4xl mb-2 sm:mb-3">🍪</div>
+        <p className="text-xs sm:text-sm text-gray-300 leading-relaxed px-1">
+          Користиме cookies за подобрување на корисничкото искуство, анализирање и маркетинг.{' '}
+          <Link
+            href="/cookie-settings"
+            className="text-primary-400 hover:text-primary-300 underline transition-colors"
+          >
+            Настройки
+          </Link>
+          {' · '}
+          <Link
+            href="/privacy"
+            className="text-primary-400 hover:text-primary-300 underline transition-colors"
+          >
+            Повеќе информации
+          </Link>
+        </p>
       </div>
+
+      <button
+        onClick={handleAccept}
+        className="w-full px-4 py-2 sm:py-2.5 bg-[#31A55F] hover:bg-[#2a8c51] active:bg-[#247a47] text-white font-semibold text-sm sm:text-base rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl touch-manipulation"
+      >
+        Добро
+      </button>
     </div>
   );
 }

@@ -45,6 +45,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly',
       priority: 0.5,
     },
+    {
+      url: ensureAbsoluteUrl('/cookie-settings'),
+      lastModified: staticPagesLastModified,
+      changeFrequency: 'monthly',
+      priority: 0.3,
+    },
   ];
 
   try {

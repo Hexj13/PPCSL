@@ -7,6 +7,7 @@ import { CookieConsent } from '@/components/CookieConsent';
 import { Footer } from '@/components/Footer';
 import { GoogleAnalytics } from '@/components/GoogleAnalytics';
 import { GoogleAnalyticsConsent } from '@/components/GoogleAnalyticsConsent';
+import { GoogleTagManager, GoogleTagManagerNoscript } from '@/components/GoogleTagManager';
 import { Header } from '@/components/Header';
 import { OrganizationSchema } from '@/components/OrganizationSchema';
 import './globals.css';
@@ -107,6 +108,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="mk" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
+        <GoogleTagManager />
+        <GoogleTagManagerNoscript />
         <GoogleAnalyticsConsent />
         <GoogleAnalytics />
         <OrganizationSchema />

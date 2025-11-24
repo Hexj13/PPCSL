@@ -51,9 +51,20 @@ export function useCookieConsent() {
       localStorage.setItem(CONSENT_STORAGE_KEY, JSON.stringify(preferences));
       setConsent(preferences);
 
+      const analyticsStorage = analytics === 'granted' ? 'granted' : 'denied';
+
       if (window.gtag) {
         window.gtag('consent', 'update', {
-          analytics_storage: analytics === 'granted' ? 'granted' : 'denied',
+          analytics_storage: analyticsStorage,
+          ad_storage: analyticsStorage,
+        });
+      }
+
+      if (window.dataLayer) {
+        window.dataLayer.push({
+          event: 'consent_update',
+          analytics_storage: analyticsStorage,
+          ad_storage: analyticsStorage,
         });
       }
     } catch (error) {

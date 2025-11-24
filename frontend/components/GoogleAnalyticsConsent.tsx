@@ -1,10 +1,6 @@
 import Script from 'next/script';
 
 export function GoogleAnalyticsConsent() {
-  const gaId = process.env.NEXT_PUBLIC_GA_ID;
-
-  if (!gaId) return null;
-
   return (
     <Script
       id="google-analytics-consent"

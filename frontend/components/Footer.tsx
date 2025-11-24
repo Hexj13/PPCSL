@@ -32,6 +32,13 @@ export function Footer() {
             >
               Политика за приватност
             </Link>
+            <span className="text-gray-500">|</span>
+            <Link
+              href="/cookie-settings"
+              className="text-gray-400 hover:text-primary-400 transition-colors duration-200 underline"
+            >
+              Настройки за cookies
+            </Link>
           </div>
         </div>
       </div>
