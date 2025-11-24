@@ -6,6 +6,8 @@ This directory contains frontend-specific documentation.
 
 - **[DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md)** - Design system and UI components documentation
 - **[STORYBOOK.md](./STORYBOOK.md)** - Storybook setup guide (alternative documentation tool)
+- **[TEST_REVIEW.md](./TEST_REVIEW.md)** - Test coverage review and recommendations
+- **[OPTIMIZATION_PROMPTS.md](./OPTIMIZATION_PROMPTS.md)** - Frontend optimization tasks and prompts
 
 ## Key Features
 
@@ -25,6 +27,13 @@ This directory contains frontend-specific documentation.
 - **SavedFiltersList** - Displays saved filters with caching to prevent skeleton flickering
 - **Breadcrumbs** - Navigation component with dynamic items
 - **ListingManagementCard** - Card component for managing listings with status actions
+- **ListingGrid** - Listings grid component with server-side initial data loading and client-side infinite scroll
+
+### Data Fetching Architecture
+- **Server Components:** Homepage (`app/page.tsx`) fetches initial listings data on the server
+- **Server API:** `lib/server-api.ts` provides server-side data fetching functions using native `fetch` with Next.js Data Cache
+- **Client API:** `lib/api.ts` provides client-side API client (Axios) for subsequent data loads and user interactions
+- **Hybrid Approach:** Initial data loaded on server for SEO, subsequent loads handled on client for interactivity
 
 ### SEO & Metadata
 - **Open Graph tags** - Full OG meta tags on all pages:

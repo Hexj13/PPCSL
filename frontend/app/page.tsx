@@ -3,6 +3,7 @@ import { Suspense } from 'react';
 
 import { ListingGrid } from '@/components/ListingGrid';
 import { SearchFilters } from '@/components/SearchFilters';
+import { getListings } from '@/lib/server-api';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club';
 
@@ -56,15 +57,34 @@ function SearchFiltersWrapper() {
   );
 }
 
-function ListingGridWrapper() {
+async function ListingGridServer({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const initialData = await getListings(params);
+
+  return <ListingGrid initialData={initialData} />;
+}
+
+function ListingGridWrapper({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   return (
     <Suspense fallback={<div className="animate-pulse h-96" />}>
-      <ListingGrid />
+      <ListingGridServer searchParams={searchParams} />
     </Suspense>
   );
 }
 
-export default function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   return (
     <div>
       <div className="mb-8 md:mb-12 relative">
@@ -86,7 +106,7 @@ export default function Home() {
 
       <SearchFiltersWrapper />
 
-      <ListingGridWrapper />
+      <ListingGridWrapper searchParams={searchParams} />
     </div>
   );
 }

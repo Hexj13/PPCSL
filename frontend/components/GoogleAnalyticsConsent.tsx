@@ -17,7 +17,7 @@ export function GoogleAnalyticsConsent() {
               hostname === '0.0.0.0';
             if (isLocalhost) return;
             window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
+            function gtag(){window.dataLayer.push(arguments);}
             gtag('consent', 'default', {
               analytics_storage: 'denied',
               ad_storage: 'denied',

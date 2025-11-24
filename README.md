@@ -92,6 +92,7 @@ The project includes comprehensive testing:
 
 - **Unit Tests:** Jest-based tests for services and components
 - **Integration Tests:** API contract tests against Swagger specification
+- **Frontend Tests:** 185 tests across 12 test suites (components, utilities, API, server API)
 - **CI/CD:** Automated testing in GitHub Actions
 
 ```bash
@@ -104,5 +105,11 @@ cd backend && npm run test:integration
 # Frontend tests
 cd frontend && npm test
 ```
+
+**Test Coverage:**
+- ✅ All critical backend services and controllers
+- ✅ All critical frontend components (ListingCard, SearchFilters, ListingForm, ListingGrid, AuthProvider)
+- ✅ Server-side data fetching functions
+- ✅ Utility functions and API clients
 
 For detailed documentation, see [documentation](./docs/).

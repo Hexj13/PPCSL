@@ -198,9 +198,11 @@ NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
 ```
 Kupito/
 ├── frontend/          # Next.js application
-│   ├── app/          # Pages and routes
-│   ├── components/   # React components
+│   ├── app/          # Pages and routes (Server Components)
+│   ├── components/   # React components (Client/Server)
 │   └── lib/          # Utilities and API clients
+│       ├── api.ts    # Client-side API client (Axios)
+│       └── server-api.ts # Server-side API functions (native fetch)
 ├── backend/          # NestJS API
 │   ├── src/
 │   │   ├── auth/     # Authentication
@@ -214,6 +216,19 @@ Kupito/
 ├── docs/             # Documentation
 └── docker-compose.yml # Database configuration
 ```
+
+### Frontend Architecture
+
+**Server Components (Next.js App Router):**
+- Homepage (`app/page.tsx`) is an async Server Component that fetches initial listings data
+- Server-side data fetching uses native `fetch` with Next.js Data Cache and Request Memoization
+- Initial data passed as props to client components for infinite scroll functionality
+- Improves SEO, reduces client-side JavaScript, and improves initial page load performance
+
+**Client Components:**
+- Interactive components (forms, modals, infinite scroll) remain as Client Components
+- State management handled by Zustand stores
+- API calls for subsequent data loads use Axios client (`lib/api.ts`)
 
 ### Key Features
 
@@ -482,7 +497,14 @@ cd frontend && npm test
 **Backend Services:** ✅ All critical services have unit tests
 **Controllers:** ✅ All controllers have comprehensive unit tests
 **Guards:** ✅ JwtAuthGuard, AdminGuard, IpBlockGuard tested
-**Frontend Components:** ✅ Core components tested (ListingCard, SearchFilters, ListingForm, AuthProvider)
+**Frontend Components:** ✅ Core components tested (ListingCard, SearchFilters, ListingForm, AuthProvider, ListingGrid)
+**Frontend Server API:** ✅ Server-side data fetching functions tested (`lib/server-api.test.ts`)
+**Frontend Integration:** ✅ Server Components integration tested (ListingGrid with initialData)
+
+**Test Statistics:**
+- **Total Tests:** 185 tests across 12 test suites
+- **Backend:** Unit and integration tests
+- **Frontend:** Component tests, utility tests, API tests, server API tests
 
 ### CI/CD
 
@@ -653,9 +675,14 @@ See [RENDER.md](./RENDER.md) for CloudFront CDN setup instructions (CloudFront i
 - Full-text search support with GIN indexes (if pg_trgm available)
 
 ### Frontend Optimizations
+- **Server-side data fetching:** Initial listings data loaded on server using Next.js Server Components and native `fetch` API, improving SEO and initial page load performance
 - React.memo, useMemo, useCallback for component memoization
-- Bundle optimization (webpack splitChunks, lazy loading)
-- Image optimization with adaptive quality
+- Next.js built-in bundle optimization (removed custom webpack splitChunks configuration)
+- Image optimization with adaptive quality and Next.js Image component
+  - Automatic optimization for external images via `remotePatterns` configuration
+  - Conditional `unoptimized` prop for localhost images in development
+  - Proper `sizes` attribute for responsive image loading
+- Third-party scripts optimization (Google Analytics, Google Tag Manager) using `lazyOnload` strategy to reduce Total Blocking Time (TBT)
 - Set-based lookups in MultiSelectDropdown for O(1) performance instead of O(n) with Array.includes()
 - Optimized SortDropdown with memoized sort key resolution
 - URL parameter synchronization for search filters and sorting
@@ -722,13 +749,19 @@ Or use `npm run dev` in root - it will start both servers.
 
 ---
 
-**Last Updated:** 2025-01-XX
-**Version:** 1.7
+**Last Updated:** 2025-01-27
+**Version:** 1.8
 
 ### Recent Updates
+- **Performance Optimizations (2025-01):**
+  - Migrated initial data fetching to Server Components for improved SEO and initial page load
+  - Optimized third-party scripts (Google Analytics, Google Tag Manager) with `lazyOnload` strategy
+  - Enhanced image optimization with proper Next.js Image configuration
+  - Removed custom webpack configuration, relying on Next.js built-in optimizations
 - Added car comparison feature (up to 3 cars)
 - Added status filters with counters on My Listings page
 - Added tab counters on Favorites page
 - Added breadcrumbs navigation on key pages
 - Optimized filter loading to prevent skeleton flickering
+- Comprehensive test coverage: 185 tests across 12 test suites
 

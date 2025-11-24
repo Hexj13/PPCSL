@@ -39,19 +39,24 @@ const loadFiltersFromStorage = (): Record<string, string[]> | null => {
   return null;
 };
 
-export function ListingGrid() {
+interface ListingGridProps {
+  initialData?: { data: Listing[]; meta: PaginationMeta };
+}
+
+export function ListingGrid({ initialData }: ListingGridProps) {
   const searchParams = useSearchParams();
-  const [listings, setListings] = useState<Listing[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [listings, setListings] = useState<Listing[]>(initialData?.data || []);
+  const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [meta, setMeta] = useState<PaginationMeta | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [meta, setMeta] = useState<PaginationMeta | null>(initialData?.meta || null);
+  const [currentPage, setCurrentPage] = useState(initialData?.meta?.page || 1);
   const [error, setError] = useState<string | null>(null);
   const [autoLoadCount, setAutoLoadCount] = useState(0);
   const observerTarget = useRef<HTMLDivElement>(null);
-  const listingsRef = useRef<Listing[]>([]);
+  const listingsRef = useRef<Listing[]>(initialData?.data || []);
   const { user } = useAuthStore();
   const { setFavorites } = useFavoritesStore();
+  const prevSearchParamsString = useRef<string>('');
 
   const searchParamsString = useMemo(() => searchParams.toString(), [searchParams]);
 
@@ -205,10 +210,30 @@ export function ListingGrid() {
   );
 
   useEffect(() => {
-    setCurrentPage(1);
-    setAutoLoadCount(0);
-    fetchListings(1, false);
-  }, [fetchListings]);
+    if (searchParamsString !== prevSearchParamsString.current) {
+      prevSearchParamsString.current = searchParamsString;
+      setCurrentPage(1);
+      setAutoLoadCount(0);
+      fetchListings(1, false);
+    }
+  }, [fetchListings, searchParamsString]);
+
+  useEffect(() => {
+    if (initialData && initialData.data.length > 0 && user) {
+      const listingIds = initialData.data.map((l) => l.id);
+      favoritesApi
+        .checkBatch(listingIds)
+        .then((favoritesRes) => {
+          const favoriteIds = Object.entries(favoritesRes.data)
+            .filter(([, isFavorite]) => isFavorite)
+            .map(([listingId]) => listingId);
+          const currentFavorites = useFavoritesStore.getState().favorites;
+          const updatedFavorites = new Set([...currentFavorites, ...favoriteIds]);
+          setFavorites(Array.from(updatedFavorites));
+        })
+        .catch(() => {});
+    }
+  }, [initialData, user, setFavorites]);
 
   useEffect(() => {
     if (autoLoadCount >= 3 || loading || !meta || !observerTarget.current) {

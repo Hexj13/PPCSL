@@ -60,7 +60,7 @@ export function GoogleAnalytics() {
       {isProd && (
         <Script
           id="google-analytics-gtag"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
           src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
           onLoad={() => {
             if (typeof window !== 'undefined' && window.gtag) {

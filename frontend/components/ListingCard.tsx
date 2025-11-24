@@ -33,6 +33,10 @@ function ListingCardComponent({ listing, forceFavorite = false, onRemove }: List
     () => getOptimizedImageUrl(originalImageUrl, 80, 1200),
     [originalImageUrl]
   );
+  const isLocalhostImage = useMemo(
+    () => imageUrl.startsWith('http://localhost:') || imageUrl.startsWith('http://127.0.0.1:'),
+    [imageUrl]
+  );
   const vehicle = listing.vehicle;
   const { user } = useAuthStore();
   const { favorites, add: addFavorite, remove: removeFavorite } = useFavoritesStore();
@@ -112,13 +116,13 @@ function ListingCardComponent({ listing, forceFavorite = false, onRemove }: List
               src={imageUrl}
               alt={listing.title}
               fill
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
               className="object-cover group-hover:scale-105 transition-transform duration-300"
               loading="lazy"
               onError={() => {
                 setImageError(true);
               }}
-              unoptimized={imageUrl.startsWith('http')}
+              unoptimized={isLocalhostImage && process.env.NODE_ENV === 'development'}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-300">
