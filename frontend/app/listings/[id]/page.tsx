@@ -368,6 +368,35 @@ export default function ListingPage() {
     };
   }, [isImageModalOpen, imagesLength]);
 
+  useEffect(() => {
+    if (isImageModalOpen || !listing) return;
+
+    const images =
+      listing.images && listing.images.length > 0 ? listing.images : ['/placeholder-car.jpg'];
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
+      }
+
+      if (e.key === 'ArrowLeft' && images.length > 1) {
+        e.preventDefault();
+        setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+      }
+      if (e.key === 'ArrowRight' && images.length > 1) {
+        e.preventDefault();
+        setCurrentImageIndex((prev) => (prev + 1) % images.length);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isImageModalOpen, listing]);
+
   if (!listing && !showSkeleton) {
     return null;
   }
