@@ -59,11 +59,20 @@ describe('UploadService', () => {
 
       const mockMetadata = { width: 2000, height: 1500 };
       const mockBuffer = Buffer.from('compressed-image');
+      const resizedBuffer = Buffer.from('resized-image');
       const mockImage = {
         metadata: jest.fn().mockResolvedValue(mockMetadata),
         resize: jest.fn().mockReturnThis(),
         webp: jest.fn().mockReturnThis(),
-        toBuffer: jest.fn().mockResolvedValue(mockBuffer),
+        toBuffer: jest.fn((options?: { resolveWithObject?: boolean }) => {
+          if (options?.resolveWithObject) {
+            return Promise.resolve({
+              data: resizedBuffer,
+              info: { width: 1920, height: 1440 },
+            });
+          }
+          return Promise.resolve(mockBuffer);
+        }),
       };
 
       (sharp as unknown as jest.Mock).mockReturnValue(mockImage);
@@ -258,14 +267,53 @@ describe('UploadService', () => {
 
       const mockMetadata = { width: 1000, height: 750 };
       const mockBuffer = Buffer.from('compressed-image');
+      const watermarkMetadata = { width: 100, height: 100 };
+      const watermarkBuffer = Buffer.from('watermark');
+      const resizedWatermarkBuffer = Buffer.from('resized-watermark');
+
+      let callCount = 0;
       const mockImage = {
-        metadata: jest.fn().mockResolvedValue(mockMetadata),
+        metadata: jest.fn().mockImplementation(() => {
+          callCount++;
+          if (callCount === 1) {
+            return Promise.resolve(mockMetadata);
+          }
+          return Promise.resolve(watermarkMetadata);
+        }),
         resize: jest.fn().mockReturnThis(),
         webp: jest.fn().mockReturnThis(),
-        toBuffer: jest.fn().mockResolvedValue(mockBuffer),
+        ensureAlpha: jest.fn().mockReturnThis(),
+        raw: jest.fn().mockReturnThis(),
+        composite: jest.fn().mockReturnThis(),
+        toBuffer: jest.fn().mockImplementation((options?: { resolveWithObject?: boolean }) => {
+          if (options?.resolveWithObject) {
+            return Promise.resolve({
+              data: resizedWatermarkBuffer,
+              info: { width: 150, height: 150 },
+            });
+          }
+          return Promise.resolve(mockBuffer);
+        }),
       };
 
-      (sharp as unknown as jest.Mock).mockReturnValue(mockImage);
+      const mockWatermarkImage = {
+        metadata: jest.fn().mockResolvedValue(watermarkMetadata),
+        resize: jest.fn().mockReturnThis(),
+        ensureAlpha: jest.fn().mockReturnThis(),
+        raw: jest.fn().mockReturnValue({
+          toBuffer: jest.fn().mockResolvedValue({
+            data: watermarkBuffer,
+            info: { width: 150, height: 150 },
+          }),
+        }),
+      };
+
+      (sharp as unknown as jest.Mock).mockImplementation((input?: Buffer | string) => {
+        if (typeof input === 'string') {
+          return mockWatermarkImage;
+        }
+        return mockImage;
+      });
       (fs.existsSync as jest.Mock).mockReturnValue(true);
       (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
 

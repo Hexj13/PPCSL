@@ -254,8 +254,10 @@ export class UploadService {
           })
           .toBuffer({ resolveWithObject: true });
 
-        finalWidth = resizedResult.info.width || metadata.width;
-        finalHeight = resizedResult.info.height || metadata.height;
+        if (resizedResult.info && resizedResult.info.width && resizedResult.info.height) {
+          finalWidth = resizedResult.info.width;
+          finalHeight = resizedResult.info.height;
+        }
         processedImage = sharp(resizedResult.data);
       }
 
