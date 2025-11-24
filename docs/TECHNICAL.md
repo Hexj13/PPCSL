@@ -212,7 +212,11 @@ Kupito/
 │   │   ├── saved-filters/ # Saved search filters
 │   │   ├── brands/   # Brands and models
 │   │   ├── admin/    # Admin panel
+│   │   ├── upload/   # File upload service (with watermark support)
 │   │   └── scripts/  # Utility scripts
+│   ├── assets/
+│   │   └── watermark/ # Watermark assets (logo.png)
+│   └── uploads/       # Local file storage (development)
 ├── docs/             # Documentation
 └── docker-compose.yml # Database configuration
 ```
@@ -308,9 +312,19 @@ DELETE /api/saved-filters/:id          # Delete saved filter
 
 ```http
 POST /api/upload/image                # Upload and optimize image
+                                      # Automatically applies watermark (logo + "kupito.club" text)
+                                      # Images are resized, watermarked, and converted to WebP
 GET  /api/upload/image/:filename      # Get optimized image version
                                      # Query params: ?quality=X&width=Y
 ```
+
+**Watermark Details:**
+- Watermark is automatically applied to all uploaded images
+- Logo file location: `backend/assets/watermark/logo.png`
+- Watermark includes: logo (15% of image size) + "kupito.club" text below
+- Watermark opacity: 35%
+- Watermark position: bottom-right corner with 3% padding
+- Logo is centered relative to the text
 
 ### Admin
 

@@ -204,6 +204,8 @@ Kupito/
 
 ### Upload
 - `POST /api/upload/image` - Upload image (JWT required)
+  - Automatically applies watermark (logo + "kupito.club" text)
+  - Images are resized, watermarked, and converted to WebP format
 - `GET /api/upload/image/:filename` - Get optimized image version (query params: `quality`, `width`)
 
 ### Brands & Cities

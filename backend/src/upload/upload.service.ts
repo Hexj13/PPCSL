@@ -22,6 +22,7 @@ export class UploadService {
   private readonly uploadDir?: string;
   private readonly maxWidth = 1920;
   private readonly quality = 85;
+  private readonly watermarkPath: string;
 
   private readonly imageMagicNumbers: { [key: string]: Buffer[] } = {
     'image/jpeg': [
@@ -62,6 +63,8 @@ export class UploadService {
         fs.mkdirSync(this.uploadDir, { recursive: true });
       }
     }
+
+    this.watermarkPath = path.join(process.cwd(), 'assets', 'watermark', 'logo.png');
   }
 
   private validateFileSignature(buffer: Buffer, mimetype: string): boolean {
@@ -83,6 +86,121 @@ export class UploadService {
       }
       return buffer.slice(0, magic.length).equals(magic);
     });
+  }
+
+  private async applyWatermark(
+    image: sharp.Sharp,
+    width: number,
+    height: number,
+  ): Promise<sharp.Sharp> {
+    if (!fs.existsSync(this.watermarkPath)) {
+      this.logger.warn(`Watermark file not found at ${this.watermarkPath}, skipping watermark`);
+      return image;
+    }
+
+    try {
+      const watermarkSize = Math.min(width, height) * 0.15;
+      const padding = Math.min(width, height) * 0.03;
+      const opacity = 0.35;
+
+      const watermark = sharp(this.watermarkPath);
+      const watermarkMetadata = await watermark.metadata();
+
+      if (!watermarkMetadata.width || !watermarkMetadata.height) {
+        this.logger.warn('Could not read watermark metadata, skipping watermark');
+        return image;
+      }
+
+      const watermarkAspectRatio = watermarkMetadata.width / watermarkMetadata.height;
+      const targetWatermarkWidth = Math.round(watermarkSize);
+      const targetWatermarkHeight = Math.round(watermarkSize / watermarkAspectRatio);
+
+      const resizedWatermarkBuffer = await watermark
+        .resize(targetWatermarkWidth, targetWatermarkHeight, {
+          fit: 'inside',
+          withoutEnlargement: true,
+        })
+        .ensureAlpha()
+        .png()
+        .toBuffer();
+
+      const resizedWatermarkImage = sharp(resizedWatermarkBuffer);
+      const resizedWatermarkMetadata = await resizedWatermarkImage.metadata();
+
+      if (!resizedWatermarkMetadata.width || !resizedWatermarkMetadata.height) {
+        this.logger.warn('Could not read resized watermark metadata, skipping watermark');
+        return image;
+      }
+
+      const actualWatermarkWidth = resizedWatermarkMetadata.width;
+      const actualWatermarkHeight = resizedWatermarkMetadata.height;
+
+      const watermarkData = await resizedWatermarkImage.raw().toBuffer({ resolveWithObject: true });
+
+      const pixels = watermarkData.data;
+      for (let i = 3; i < pixels.length; i += 4) {
+        pixels[i] = Math.round(pixels[i] * opacity);
+      }
+
+      const watermarkWithOpacity = await sharp(pixels, {
+        raw: {
+          width: actualWatermarkWidth,
+          height: actualWatermarkHeight,
+          channels: 4,
+        },
+      })
+        .png()
+        .toBuffer();
+
+      const textSize = Math.min(width, height) * 0.03;
+      const textHeight = Math.round(textSize * 1.5);
+      const textSpacing = Math.round(textSize * 0.3);
+      const textPadding = Math.round(textSize * 0.5);
+      const textWidth = actualWatermarkWidth + textPadding * 2;
+
+      const textSvg = `
+        <svg width="${textWidth}" height="${textHeight}" xmlns="http://www.w3.org/2000/svg">
+          <text
+            x="50%"
+            y="50%"
+            font-family="Arial, sans-serif"
+            font-size="${textSize}"
+            font-weight="bold"
+            fill="rgba(255, 255, 255, ${opacity})"
+            text-anchor="middle"
+            dominant-baseline="middle"
+          >kupito.club</text>
+        </svg>
+      `;
+
+      const textBuffer = Buffer.from(textSvg);
+
+      const textX = Math.round(width - textWidth - padding);
+      const textCenterX = textX + textWidth / 2;
+      const logoX = Math.round(textCenterX - actualWatermarkWidth / 2);
+      const logoY = Math.round(height - actualWatermarkHeight - textHeight - textSpacing - padding);
+      const textY = Math.round(height - textHeight - padding);
+
+      return image.composite([
+        {
+          input: watermarkWithOpacity,
+          top: logoY,
+          left: logoX,
+          blend: 'over',
+        },
+        {
+          input: textBuffer,
+          top: textY,
+          left: textX,
+          blend: 'over',
+        },
+      ]);
+    } catch (error) {
+      this.logger.warn(
+        `Error applying watermark: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+      return image;
+    }
   }
 
   async saveFile(file: Express.Multer.File): Promise<string> {
@@ -125,13 +243,24 @@ export class UploadService {
       }
 
       let processedImage = image;
+      let finalWidth = metadata.width;
+      let finalHeight = metadata.height;
 
       if (metadata.width && metadata.width > this.maxWidth) {
-        processedImage = processedImage.resize(this.maxWidth, null, {
-          withoutEnlargement: true,
-          fit: 'inside',
-        });
+        const resizedResult = await image
+          .resize(this.maxWidth, null, {
+            withoutEnlargement: true,
+            fit: 'inside',
+          })
+          .toBuffer({ resolveWithObject: true });
+
+        finalWidth = resizedResult.info.width || metadata.width;
+        finalHeight = resizedResult.info.height || metadata.height;
+        processedImage = sharp(resizedResult.data);
       }
+
+      this.logger.debug('Applying watermark');
+      processedImage = await this.applyWatermark(processedImage, finalWidth, finalHeight);
 
       this.logger.debug('Converting image to WebP');
       const compressedBuffer = await processedImage

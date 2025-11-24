@@ -45,7 +45,10 @@ Kupito/
 │   ├── src/
 │   │   ├── scripts/  # Utility scripts (brands, seeding, management)
 │   │   ├── brands/   # Brands and models
+│   │   ├── upload/   # File upload service (with watermark support)
 │   │   └── ...
+│   ├── assets/
+│   │   └── watermark/ # Watermark assets (logo.png)
 │   └── docs/         # Backend-specific documentation
 ├── frontend/         # Next.js frontend
 │   ├── ui/           # Design system components

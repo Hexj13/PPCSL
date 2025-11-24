@@ -274,6 +274,17 @@ mkdir -p /var/www/kupito/backend/uploads
 chmod 755 /var/www/kupito/backend/uploads
 ```
 
+#### Create Watermark Assets Directory
+
+```bash
+mkdir -p /var/www/kupito/backend/assets/watermark
+chmod 755 /var/www/kupito/backend/assets/watermark
+# Copy logo.png from frontend/public/logo.png to backend/assets/watermark/logo.png
+cp /var/www/kupito/frontend/public/logo.png /var/www/kupito/backend/assets/watermark/logo.png
+```
+
+**Note:** The watermark logo file is required for automatic watermarking of uploaded images. If the file is missing, images will be uploaded without watermark (with a warning in logs).
+
 ### Step 7: Configure Nginx
 
 #### Backend API Configuration
@@ -533,6 +544,12 @@ npm run build
 # Create uploads directory
 mkdir -p ~/public_html/kupito/backend/uploads
 chmod 755 ~/public_html/kupito/backend/uploads
+
+# Create watermark assets directory
+mkdir -p ~/public_html/kupito/backend/assets/watermark
+chmod 755 ~/public_html/kupito/backend/assets/watermark
+# Copy logo.png from frontend/public/logo.png to backend/assets/watermark/logo.png
+cp ~/public_html/kupito/frontend/public/logo.png ~/public_html/kupito/backend/assets/watermark/logo.png
 ```
 
 ### Step 6: Configure Node.js Apps in cPanel

@@ -283,6 +283,7 @@ AWS_CLOUDFRONT_URL=https://cdn.kupito.club
 **Notes:**
 - The application uses AWS SDK v3 (`@aws-sdk/client-s3`) for S3 operations. This is the modern, actively maintained version of the AWS SDK.
 - The application automatically detects S3 configuration. If AWS credentials are provided, it uses S3. Otherwise, it falls back to local file storage (for development only).
+- **Watermark:** The watermark logo file (`backend/assets/watermark/logo.png`) must be present in the repository. Images uploaded through the API are automatically watermarked with the logo and "kupito.club" text. If the watermark file is missing, images will be uploaded without watermark (with a warning in logs).
 
 ---
 
