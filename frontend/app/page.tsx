@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 
+import { ConversionEvent } from '@/components/ConversionEvent';
 import { ListingGrid } from '@/components/ListingGrid';
 import { SearchFilters } from '@/components/SearchFilters';
 import { getListings } from '@/lib/server-api';
@@ -87,6 +88,7 @@ export default async function Home({
 }) {
   return (
     <div>
+      <ConversionEvent />
       <div className="mb-8 md:mb-12 relative">
         <div className="absolute inset-0 bg-gradient-to-r from-primary-500/10 via-primary-400/5 to-transparent rounded-2xl blur-3xl -z-10" />
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 md:mb-6 leading-tight">
