@@ -84,7 +84,7 @@ describe('UploadController', () => {
 
       await controller.getOptimizedImage(filename, res, undefined, undefined);
 
-      expect(service.getOptimizedImage).toHaveBeenCalledWith('/uploads/test.webp', 85, undefined);
+      expect(service.getOptimizedImage).toHaveBeenCalledWith('/uploads/test.webp', 75, undefined);
       expect(res.set).toHaveBeenCalledWith({
         'Content-Type': 'image/webp',
         'Cache-Control': 'public, max-age=2592000, stale-while-revalidate=86400',
