@@ -194,10 +194,18 @@ label {
     color: #9ca3af !important;
   }
 
+  .input-field:focus::placeholder {
+    opacity: 0 !important;
+  }
+
   .input-field[type='email']::placeholder {
     color: #9ca3af !important;
     -webkit-text-fill-color: #9ca3af !important;
     opacity: 1 !important;
+  }
+
+  .input-field[type='email']:focus::placeholder {
+    opacity: 0 !important;
   }
 
   .input-field[type='password'] {
@@ -208,6 +216,10 @@ label {
   .input-field[type='password']::placeholder {
     color: #9ca3af !important;
     -webkit-text-fill-color: #9ca3af !important;
+    opacity: 1 !important;
+  }
+
+  .input-field[type='password']:focus::placeholder {
     opacity: 1 !important;
   }
 

@@ -160,7 +160,7 @@ function MultiSelectDropdownComponent({
             onChange={handleInputChange}
             onFocus={handleInputFocus}
             disabled={disabled}
-            placeholder={placeholder}
+            placeholder={isOpen ? '' : placeholder}
             className="input-field"
             style={{ paddingRight: '44px' }}
           />

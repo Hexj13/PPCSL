@@ -91,12 +91,12 @@ export default async function Home({
       <ConversionEvent />
       <div className="mb-8 md:mb-12 relative">
         <div className="absolute inset-0 bg-gradient-to-r from-primary-500/10 via-primary-400/5 to-transparent rounded-2xl blur-3xl -z-10" />
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 md:mb-6 leading-tight">
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 md:mb-6 leading-tight pl-4 md:pl-5">
           <span className="bg-gradient-to-r from-primary-400 via-primary-500 to-primary-600 bg-clip-text text-transparent drop-shadow-lg">
             Автомобили во Македонија
           </span>
         </h1>
-        <p className="text-xl md:text-2xl font-medium text-gray-200 leading-relaxed tracking-wide">
+        <p className="text-xl md:text-2xl font-medium text-gray-200 leading-relaxed tracking-wide pl-4 md:pl-5">
           <span className="bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent">
             Купете или продадете авто на{' '}
           </span>

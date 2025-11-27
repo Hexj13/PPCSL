@@ -131,7 +131,7 @@ function DropdownComponent({
             onChange={handleInputChange}
             onFocus={handleInputFocus}
             disabled={disabled}
-            placeholder={placeholder}
+            placeholder={isOpen ? '' : placeholder}
             className={`input-field ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
             style={{ paddingRight: '44px' }}
           />

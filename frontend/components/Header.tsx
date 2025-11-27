@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -46,13 +47,30 @@ export function Header() {
 
   return (
     <header className="bg-bg-dark shadow-lg border-b-2 border-primary-500/20 sticky top-0 z-50 backdrop-blur-sm bg-bg-dark/95">
-      <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 md:py-4">
+      <div className="container mx-auto px-3 sm:px-4 py-3 md:py-4">
         <div className="flex justify-between items-center">
           <Link
             href="/"
-            className="text-xl sm:text-2xl md:text-2xl lg:text-3xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent hover:from-primary-400 hover:to-primary-500 transition-all duration-200"
+            className="flex items-center hover:opacity-80 transition-opacity duration-200 select-none"
           >
-            Kupito
+            <Image
+              src="/logo-mobile.png"
+              alt="Kupito"
+              width={260}
+              height={112}
+              className="block md:hidden h-auto w-auto"
+              style={{ width: '98px', height: 'auto' }}
+              priority
+            />
+            <Image
+              src="/logo-desktop.png"
+              alt="Kupito"
+              width={392}
+              height={144}
+              className="hidden md:block h-auto w-auto"
+              style={{ width: '147px', height: 'auto' }}
+              priority
+            />
           </Link>
 
           <nav className="hidden lg:flex gap-3 lg:gap-6 items-center">
@@ -65,7 +83,7 @@ export function Header() {
               <>
                 <Link
                   href="/listings/new"
-                  className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded"
+                  className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded select-none"
                 >
                   <svg
                     className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
@@ -85,7 +103,7 @@ export function Header() {
                 </Link>
                 <Link
                   href="/my-listings"
-                  className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded"
+                  className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded select-none"
                 >
                   <svg
                     className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
@@ -105,7 +123,7 @@ export function Header() {
                 </Link>
                 <Link
                   href="/favorites"
-                  className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded"
+                  className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded select-none"
                 >
                   <svg
                     className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
@@ -125,7 +143,7 @@ export function Header() {
                 </Link>
                 <Link
                   href="/compare"
-                  className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded"
+                  className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded select-none"
                 >
                   <svg
                     className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
@@ -151,7 +169,7 @@ export function Header() {
                 {user.type === 'Admin' && (
                   <Link
                     href="/admin"
-                    className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded"
+                    className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded select-none"
                   >
                     <svg
                       className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
@@ -172,7 +190,7 @@ export function Header() {
                 )}
                 <Link
                   href="/profile"
-                  className="text-gray-300 font-medium px-2 md:px-3 py-1.5 md:py-2 bg-bg-light rounded-lg border border-primary-500/20 text-xs md:text-sm lg:text-base hover:text-primary-400 hover:border-primary-500/40 transition-colors duration-200 cursor-pointer flex items-center gap-1.5 md:gap-2"
+                  className="text-gray-300 font-medium px-2 md:px-3 py-1.5 md:py-2 bg-bg-light rounded-lg border border-primary-500/20 text-xs md:text-sm lg:text-base hover:text-primary-400 hover:border-primary-500/40 transition-colors duration-200 cursor-pointer flex items-center gap-1.5 md:gap-2 select-none"
                 >
                   <svg
                     className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
@@ -194,7 +212,7 @@ export function Header() {
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="text-gray-300 font-medium px-2 md:px-3 py-1.5 md:py-2 bg-bg-light rounded-lg border border-primary-500/20 text-xs md:text-sm lg:text-base hover:text-primary-400 hover:border-primary-500/40 transition-colors duration-200 cursor-pointer flex items-center gap-1.5 md:gap-2 whitespace-nowrap"
+                  className="text-gray-300 font-medium px-2 md:px-3 py-1.5 md:py-2 bg-bg-light rounded-lg border border-primary-500/20 text-xs md:text-sm lg:text-base hover:text-primary-400 hover:border-primary-500/40 transition-colors duration-200 cursor-pointer flex items-center gap-1.5 md:gap-2 whitespace-nowrap select-none"
                 >
                   <svg
                     className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
@@ -223,7 +241,7 @@ export function Header() {
                       localStorage.setItem('returnUrl', '/listings/new');
                     }
                   }}
-                  className="btn-outline flex items-center gap-2"
+                  className="btn-outline flex items-center gap-2 select-none"
                 >
                   <svg
                     className="w-4 h-4 flex-shrink-0"
@@ -241,11 +259,11 @@ export function Header() {
                   <span className="hidden xl:inline">Креирај објава</span>
                   <span className="xl:hidden">Креирај</span>
                 </Link>
-                <Link href="/login" className="btn-outline">
+                <Link href="/login" className="btn-outline select-none">
                   <span className="hidden xl:inline">Најави се</span>
                   <span className="xl:hidden">Најави</span>
                 </Link>
-                <Link href="/register" className="btn-primary">
+                <Link href="/register" className="btn-primary select-none">
                   Регистрација
                 </Link>
               </>
@@ -254,7 +272,7 @@ export function Header() {
 
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden text-white hover:text-primary-500 transition-colors duration-200 p-2 -mr-2"
+            className="lg:hidden text-white hover:text-primary-500 transition-colors duration-200 p-2 -mr-2 select-none"
             aria-label="Toggle menu"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -289,7 +307,7 @@ export function Header() {
                 <Link
                   href="/listings/new"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 flex items-center gap-2"
+                  className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 flex items-center gap-2 select-none"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -304,7 +322,7 @@ export function Header() {
                 <Link
                   href="/my-listings"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 flex items-center gap-2"
+                  className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 flex items-center gap-2 select-none"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -319,7 +337,7 @@ export function Header() {
                 <Link
                   href="/favorites"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 flex items-center gap-2"
+                  className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 flex items-center gap-2 select-none"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -334,7 +352,7 @@ export function Header() {
                 <Link
                   href="/compare"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 flex items-center gap-2"
+                  className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 flex items-center gap-2 select-none"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -355,7 +373,7 @@ export function Header() {
                   <Link
                     href="/admin"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 flex items-center gap-2"
+                    className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 flex items-center gap-2 select-none"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
@@ -371,7 +389,7 @@ export function Header() {
                 <Link
                   href="/profile"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-gray-300 font-medium px-3 py-2 bg-bg-light rounded-lg border border-primary-500/20 text-sm break-all hover:text-primary-400 hover:border-primary-500/40 transition-colors duration-200 cursor-pointer flex items-center gap-2"
+                  className="text-gray-300 font-medium px-3 py-2 bg-bg-light rounded-lg border border-primary-500/20 text-sm break-all hover:text-primary-400 hover:border-primary-500/40 transition-colors duration-200 cursor-pointer flex items-center gap-2 select-none"
                 >
                   <svg
                     className="w-4 h-4 flex-shrink-0"
@@ -391,7 +409,7 @@ export function Header() {
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="text-gray-300 font-medium px-3 py-2 bg-bg-light rounded-lg border border-primary-500/20 text-sm hover:text-primary-400 hover:border-primary-500/40 transition-colors duration-200 cursor-pointer w-full flex items-center gap-2"
+                  className="text-gray-300 font-medium px-3 py-2 bg-bg-light rounded-lg border border-primary-500/20 text-sm hover:text-primary-400 hover:border-primary-500/40 transition-colors duration-200 cursor-pointer w-full flex items-center gap-2 select-none"
                 >
                   <svg
                     className="w-4 h-4 flex-shrink-0"
@@ -420,7 +438,7 @@ export function Header() {
                       localStorage.setItem('returnUrl', '/listings/new');
                     }
                   }}
-                  className="btn-outline text-center flex items-center justify-center gap-2"
+                  className="btn-outline text-center flex items-center justify-center gap-2 select-none"
                 >
                   <svg
                     className="w-4 h-4 flex-shrink-0"
@@ -440,14 +458,14 @@ export function Header() {
                 <Link
                   href="/login"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="btn-outline text-center"
+                  className="btn-outline text-center select-none"
                 >
                   Најави се
                 </Link>
                 <Link
                   href="/register"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="btn-primary text-center"
+                  className="btn-primary text-center select-none"
                 >
                   Регистрација
                 </Link>
