@@ -12,7 +12,8 @@ export function OrganizationSchema() {
       name: 'Kupito',
       url: siteUrl,
       logo: `${siteUrl}/logo.png`,
-      description: 'Купете или продадете авто на Kupito!',
+      description:
+        'Купете или продадете авто на Kupito! Објавете оглас бесплатно. Платформа за купување и продавање автомобили онлајн во Македонија. Автомобили огласи Македонија.',
       address: {
         '@type': 'PostalAddress',
         addressCountry: 'MK',

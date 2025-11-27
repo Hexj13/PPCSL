@@ -355,7 +355,7 @@ export function useTranslations(): Translations {
   },
   "footer": {
     "copyright": "Сите права се задржани",
-    "tagline": "Купете или продадете авто на Kupito!",
+    "tagline": "Купете или продадете авто на Kupito! Објавете оглас бесплатно.",
     "faq": "Често поставувани прашања",
     "terms": "Услови за користење",
     "privacy": "Политика за приватност"

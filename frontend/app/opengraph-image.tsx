@@ -76,7 +76,7 @@ export default async function Image() {
               padding: '0 40px',
             }}
           >
-            Купете или продадете авто на Kupito!
+            Купете или продадете авто на Kupito! Објавете оглас бесплатно.
           </div>
         </div>
       ),

@@ -17,7 +17,7 @@ const inter = Inter({ subsets: ['latin', 'cyrillic'] });
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club';
 const siteName = 'Kupito';
 const defaultTitle = 'Kupito - Автомобили во Македонија';
-const defaultDescription = 'Купете или продадете авто на Kupito!';
+const defaultDescription = 'Купете или продадете авто на Kupito! Објавете оглас бесплатно.';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -27,16 +27,14 @@ export const metadata: Metadata = {
   },
   description: defaultDescription,
   keywords: [
-    'автомобили',
-    'купи автомобил',
-    'продади автомобил',
-    'користени автомобили',
-    'нови автомобили',
-    'Северна Македонија',
-    'Скопје',
     'автомобили Македонија',
-    'авто плаза',
-    'автомобили за продажба',
+    'купување автомобили онлајн',
+    'продажба автомобили Македонија',
+    'автомобили огласи Македонија',
+    'avtomobili makedonija',
+    'kupuvanje avtomobili online',
+    'prodazba avtomobili mk',
+    'avtomobil oglasi makedonija',
   ],
   authors: [{ name: siteName }],
   creator: siteName,

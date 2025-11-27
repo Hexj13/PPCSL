@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Kupito - Автомобили во Македонија',
     short_name: 'Kupito',
-    description: 'Купете или продадете авто на Kupito!',
+    description: 'Купете или продадете авто на Kupito! Објавете оглас бесплатно.',
     start_url: '/',
     display: 'standalone',
     background_color: '#0f172a',

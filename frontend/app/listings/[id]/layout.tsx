@@ -47,7 +47,7 @@ export async function generateMetadata({
 
   const description =
     listing.description?.replace(/<[^>]*>/g, '').substring(0, 160) ||
-    `${vehicleInfo || listing.title || 'Автомобил за продажба'}. Купете или продадете авто на Kupito!`;
+    `${vehicleInfo || listing.title || 'Автомобил за продажба'}. Купете или продадете авто на Kupito! Објавете оглас бесплатно.`;
 
   const imageUrl =
     listing.images && listing.images.length > 0

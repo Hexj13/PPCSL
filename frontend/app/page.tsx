@@ -11,26 +11,23 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club';
 export const metadata: Metadata = {
   title: 'Автомобили во Македонија',
   description:
-    'Купете или продадете авто на Kupito! Платформа за купување и продавање автомобили во Македонија. Бесплатно објавување огласи за приватни лица и авто-плацови.',
+    'Купете или продадете авто на Kupito! Објавете оглас бесплатно. Платформа за купување и продавање автомобили онлајн во Македонија. Автомобили огласи Македонија - бесплатно објавување огласи за приватни лица и авто-плацови.',
   keywords: [
-    'автомобили',
-    'купи автомобил',
-    'продади автомобил',
-    'користени автомобили',
-    'нови автомобили',
-    'Северна Македонија',
-    'Скопје',
     'автомобили Македонија',
-    'авто плаза',
-    'автомобили за продажба',
-    'автомобили онлајн',
+    'купување автомобили онлајн',
+    'продажба автомобили Македонија',
+    'автомобили огласи Македонија',
+    'avtomobili makedonija',
+    'kupuvanje avtomobili online',
+    'prodazba avtomobili mk',
+    'avtomobil oglasi makedonija',
   ],
   openGraph: {
     type: 'website',
     url: `${siteUrl}/`,
     title: 'Kupito – огласи за продажба на автомобили во Македонија',
     description:
-      'Нова платформа за купување и продавање автомобили во Македонија. Бесплатно објавување огласи за приватни лица и авто-плацови.',
+      'Купете или продадете авто на Kupito! Објавете оглас бесплатно. Нова платформа за купување и продавање автомобили онлајн во Македонија. Автомобили огласи Македонија - бесплатно објавување огласи за приватни лица и авто-плацови.',
     images: [
       {
         url: `${siteUrl}/og-image.jpg`,
@@ -96,12 +93,15 @@ export default async function Home({
             Автомобили во Македонија
           </span>
         </h1>
-        <p className="text-xl md:text-2xl font-medium text-gray-200 leading-relaxed tracking-wide pl-4 md:pl-5">
-          <span className="bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent">
-            Купете или продадете авто на{' '}
+        <p className="text-xl md:text-2xl font-medium leading-relaxed tracking-wide pl-4 md:pl-5">
+          <span className="text-white">Купете или продадете авто на </span>
+          <span className="text-primary-500 font-bold">Kupito!</span>
+          <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+            {' '}
+            Објавете оглас{' '}
           </span>
-          <span className="bg-gradient-to-r from-primary-400 to-primary-500 bg-clip-text text-transparent font-bold">
-            Kupito!
+          <span className="bg-gradient-to-r from-primary-400 to-[#3ECA74] bg-clip-text text-transparent">
+            бесплатно.
           </span>
         </p>
       </div>
