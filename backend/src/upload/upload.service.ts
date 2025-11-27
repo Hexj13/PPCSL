@@ -21,7 +21,7 @@ export class UploadService {
   private readonly useS3: boolean;
   private readonly uploadDir?: string;
   private readonly maxWidth = 1920;
-  private readonly quality = 85;
+  private readonly quality = 75;
   private readonly watermarkPath: string;
 
   private readonly imageMagicNumbers: { [key: string]: Buffer[] } = {
@@ -328,7 +328,7 @@ export class UploadService {
 
   async getOptimizedImage(
     filePath: string,
-    quality: number = 85,
+    quality: number = 75,
     maxWidth?: number,
   ): Promise<Buffer> {
     let imageBuffer: Buffer;

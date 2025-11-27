@@ -133,7 +133,7 @@ function normalizeUrl(url: string): string {
 
 export function getOptimizedImageUrl(
   imageUrl: string,
-  quality: number = 85,
+  quality: number = 75,
   width?: number
 ): string {
   if (!imageUrl || imageUrl === '/placeholder-car.jpg') {

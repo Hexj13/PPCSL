@@ -257,7 +257,7 @@ export class UploadController {
       }
 
       const filePath = `/uploads/${decodedFilename}`;
-      const qualityValue = quality ? parseInt(quality, 10) : 85;
+      const qualityValue = quality ? parseInt(quality, 10) : 75;
       const widthValue = width ? parseInt(width, 10) : undefined;
 
       const buffer = await this.uploadService.getOptimizedImage(filePath, qualityValue, widthValue);

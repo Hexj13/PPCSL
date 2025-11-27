@@ -236,8 +236,8 @@ Kupito/
 
 ### Key Features
 
-- **Image Processing:** Automatic compression, resizing (max 1920px width), conversion to WebP format (85% quality)
-- **Adaptive Quality:** Different quality levels for different contexts (60% for cards, 75% for detail pages, 85% for full-size)
+- **Image Processing:** Automatic compression, resizing (max 1920px width), conversion to WebP format (75% quality by default)
+- **Adaptive Quality:** Different quality levels for different contexts (70% for thumbnails, 75-80% for cards and detail pages, 85% for full-size modal views)
 - **File Storage:** AWS S3 for persistent image storage (using AWS SDK v3, required for production on Render.com), AWS CloudFront CDN for fast global delivery
 - **Search:** PostgreSQL Full-Text Search with extensive filtering options
 - **Caching:** Redis for SMS codes, cache optimization (SCAN instead of KEYS)

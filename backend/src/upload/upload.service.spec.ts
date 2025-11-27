@@ -87,7 +87,7 @@ describe('UploadService', () => {
         withoutEnlargement: true,
         fit: 'inside',
       });
-      expect(mockImage.webp).toHaveBeenCalledWith({ quality: 85, effort: 4 });
+      expect(mockImage.webp).toHaveBeenCalledWith({ quality: 75, effort: 4 });
       expect(fs.writeFileSync).toHaveBeenCalled();
     });
 

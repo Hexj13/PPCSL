@@ -125,7 +125,7 @@ npm run dev  # Runs both frontend and backend
 - Favorites (for authenticated users and guests) with tab counters
 - **My Listings page:** Status filters with counters (All, Active, Paused, Closed) for easy management
 - VIN search functionality
-- Image upload with automatic WebP conversion and adaptive quality optimization
+- Image upload with automatic WebP conversion and adaptive quality optimization (75% default quality)
 - Admin panel for management
 
 </details>
