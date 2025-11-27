@@ -233,19 +233,19 @@ export function SearchFilters() {
     const storedFilters = hasStorageFlag ? loadFiltersFromStorage() : null;
     return {
       brand_ids: Array.isArray(storedFilters?.brand_ids)
-        ? (storedFilters.brand_ids as string[])
+        ? (storedFilters?.brand_ids as string[])
         : parseArrayParam(
             searchParams.get('brand_ids') || searchParams.get('brand_id') || null,
             hasEncodedArrays
           ),
       model_ids: Array.isArray(storedFilters?.model_ids)
-        ? (storedFilters.model_ids as string[])
+        ? (storedFilters?.model_ids as string[])
         : parseArrayParam(
             searchParams.get('model_ids') || searchParams.get('model_id') || null,
             hasEncodedArrays
           ),
       cities: Array.isArray(storedFilters?.cities)
-        ? (storedFilters.cities as string[])
+        ? (storedFilters?.cities as string[])
         : parseArrayParam(
             searchParams.get('cities') || searchParams.get('city') || null,
             hasEncodedArrays
@@ -257,19 +257,19 @@ export function SearchFilters() {
       mileage_gte: searchParams.get('mileage_gte') || '',
       mileage_lte: searchParams.get('mileage_lte') || '',
       fuels: Array.isArray(storedFilters?.fuels)
-        ? (storedFilters.fuels as string[])
+        ? (storedFilters?.fuels as string[])
         : parseArrayParam(
             searchParams.get('fuels') || searchParams.get('fuel') || null,
             hasEncodedArrays
           ),
       transmissions: Array.isArray(storedFilters?.transmissions)
-        ? (storedFilters.transmissions as string[])
+        ? (storedFilters?.transmissions as string[])
         : parseArrayParam(
             searchParams.get('transmissions') || searchParams.get('transmission') || null,
             hasEncodedArrays
           ),
       body_types: Array.isArray(storedFilters?.body_types)
-        ? (storedFilters.body_types as string[])
+        ? (storedFilters?.body_types as string[])
         : parseArrayParam(
             searchParams.get('body_types') || searchParams.get('body_type') || null,
             hasEncodedArrays
@@ -277,27 +277,27 @@ export function SearchFilters() {
       engine_displ_l_gte: searchParams.get('engine_displ_l_gte') || '',
       engine_displ_l_lte: searchParams.get('engine_displ_l_lte') || '',
       colors: Array.isArray(storedFilters?.colors)
-        ? (storedFilters.colors as string[])
+        ? (storedFilters?.colors as string[])
         : parseArrayParam(
             searchParams.get('colors') || searchParams.get('color') || null,
             hasEncodedArrays
           ),
       doors: Array.isArray(storedFilters?.doors)
-        ? (storedFilters.doors as string[])
+        ? (storedFilters?.doors as string[])
         : parseArrayParam(searchParams.get('doors') || null, hasEncodedArrays),
       currency: searchParams.get('currency') || '',
       urgent: searchParams.get('urgent') === 'true',
       is_new: searchParams.get('is_new') === 'true',
       conditions: Array.isArray(storedFilters?.conditions)
-        ? (storedFilters.conditions as string[])
+        ? (storedFilters?.conditions as string[])
         : parseArrayParam(searchParams.get('conditions') || null, hasEncodedArrays),
       registration_types: Array.isArray(storedFilters?.registration_types)
-        ? (storedFilters.registration_types as string[])
+        ? (storedFilters?.registration_types as string[])
         : parseArrayParam(searchParams.get('registration_types') || null, hasEncodedArrays),
       horsepower_gte: searchParams.get('horsepower_gte') || '',
       horsepower_lte: searchParams.get('horsepower_lte') || '',
       drive_types: Array.isArray(storedFilters?.drive_types)
-        ? (storedFilters.drive_types as string[])
+        ? (storedFilters?.drive_types as string[])
         : parseArrayParam(searchParams.get('drive_types') || null, hasEncodedArrays),
       is_registered:
         searchParams.get('is_registered') === 'true'
@@ -887,7 +887,6 @@ export function SearchFilters() {
         </div>
         <div>
           <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
-            Пренос
             <svg
               width="16"
               height="16"
@@ -912,6 +911,7 @@ export function SearchFilters() {
                 S448,436.209,448,448S438.458,469.333,426.667,469.333z"
               />
             </svg>
+            Пренос
           </label>
           <MultiSelectDropdown
             values={filters.transmissions}
@@ -926,7 +926,6 @@ export function SearchFilters() {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-5">
         <div>
           <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
-            Град
             <svg
               width="16"
               height="16"
@@ -943,6 +942,7 @@ export function SearchFilters() {
                 strokeLinejoin="round"
               />
             </svg>
+            Град
           </label>
           <MultiSelectDropdown
             values={filters.cities}
@@ -996,7 +996,6 @@ export function SearchFilters() {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-5">
         <div>
           <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
-            Валута
             <svg
               width="16"
               height="16"
@@ -1050,6 +1049,7 @@ export function SearchFilters() {
                 strokeWidth="1.92"
               />
             </svg>
+            Валута
           </label>
           <Dropdown
             value={filters.currency}
@@ -1121,7 +1121,6 @@ export function SearchFilters() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
-                  Гориво
                   <svg
                     width="16"
                     height="16"
@@ -1150,6 +1149,7 @@ export function SearchFilters() {
                       c11.782,0,21.333-9.551,21.333-21.333C192.002,244.219,182.451,234.668,170.669,234.668z"
                     />
                   </svg>
+                  Гориво
                 </label>
                 <MultiSelectDropdown
                   values={filters.fuels}
@@ -1162,7 +1162,6 @@ export function SearchFilters() {
 
               <div>
                 <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
-                  Тип на погон
                   <svg
                     width="16"
                     height="16"
@@ -1187,6 +1186,7 @@ export function SearchFilters() {
                       l-32.477-32.477L409.612,213.286z M450.57,430.083h-81.92v-20.48h81.92V430.083z"
                     />
                   </svg>
+                  Тип на погон
                 </label>
                 <MultiSelectDropdown
                   values={filters.drive_types}
@@ -1199,7 +1199,6 @@ export function SearchFilters() {
 
               <div>
                 <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
-                  Поминување од (км)
                   <svg
                     width="16"
                     height="16"
@@ -1228,6 +1227,7 @@ export function SearchFilters() {
                       c11.782,0,21.333-9.551,21.333-21.333S331.782,362.671,320,362.671z"
                     />
                   </svg>
+                  Поминување од (км)
                 </label>
                 <input
                   type="text"
@@ -1259,7 +1259,6 @@ export function SearchFilters() {
 
               <div>
                 <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
-                  Поминување до (км)
                   <svg
                     width="16"
                     height="16"
@@ -1288,6 +1287,7 @@ export function SearchFilters() {
                       c11.782,0,21.333-9.551,21.333-21.333S331.782,362.671,320,362.671z"
                     />
                   </svg>
+                  Поминување до (км)
                 </label>
                 <input
                   type="text"
@@ -1465,7 +1465,6 @@ export function SearchFilters() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
-                  Тип на каросерија
                   <svg
                     width="16"
                     height="16"
@@ -1488,6 +1487,7 @@ export function SearchFilters() {
                        M399.944,215.754v-59.128h13.142c11.879,0,22.756,6.004,29.067,16.065l27.062,43.063H399.944z"
                     />
                   </svg>
+                  Тип на каросерија
                 </label>
                 <MultiSelectDropdown
                   values={filters.body_types}
