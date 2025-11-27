@@ -350,12 +350,20 @@ This loads a comprehensive list of brands and models (takes longer).
 npm run seed
 ```
 
-This creates minimal test data including brands, models, users, and listings.
+This creates minimal test data (users and listings). **Note:** Requires brands and models to exist in database first (run `npm run add-brands` or `npm run seed:all-brands` before this).
+
+**Option 4: Reset and seed (for development/testing):**
+```bash
+npm run reset-and-seed
+```
+
+This clears the database, automatically adds brands/models, and then seeds test data. Useful for development environments.
 
 **⚠️ Important:** 
 - Run migrations first (`npm run migration:run`)
-- Then load brands (`npm run add-brands` or `npm run seed:vehicles`)
+- Then load brands (`npm run add-brands` or `npm run seed:vehicles` or `npm run seed:all-brands`)
 - Without brands, the `/api/brands` endpoint will return an empty array
+- The `seed` script requires brands to exist in the database (it will fail with "No brands with models available!" if brands are missing)
 
 ---
 

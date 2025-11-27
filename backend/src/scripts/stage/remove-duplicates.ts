@@ -12,6 +12,69 @@ async function removeDuplicates() {
   const brandRepo = AppDataSource.getRepository(Brand);
   const modelRepo = AppDataSource.getRepository(VehicleModel);
 
+  console.log('📊 Бришење на дубликати на марки...\n');
+
+  const allBrandsForCheck = await brandRepo.find({
+    relations: ['models'],
+    order: { name: 'ASC' },
+  });
+
+  const brandNames = new Map<string, Brand[]>();
+  for (const brand of allBrandsForCheck) {
+    const nameLower = brand.name.toLowerCase().trim();
+    if (!brandNames.has(nameLower)) {
+      brandNames.set(nameLower, []);
+    }
+    brandNames.get(nameLower)!.push(brand);
+  }
+
+  let brandsRemoved = 0;
+  for (const [, brands] of brandNames.entries()) {
+    if (brands.length > 1) {
+      console.log(
+        `⚠️  Дубликат марка: "${brands[0].name}" (${brands.length} записи), бришење дубликати...`,
+      );
+
+      const sortedBrands = brands.sort((a, b) => {
+        const aModelCount = a.models?.length || 0;
+        const bModelCount = b.models?.length || 0;
+        if (aModelCount !== bModelCount) {
+          return bModelCount - aModelCount;
+        }
+        if (a.order !== b.order) {
+          return a.order - b.order;
+        }
+        return a.created_at.getTime() - b.created_at.getTime();
+      });
+
+      const keepBrand = sortedBrands[0];
+      const removeBrands = sortedBrands.slice(1);
+
+      for (const brandToRemove of removeBrands) {
+        const modelsToMove = await modelRepo.find({
+          where: { brand_id: brandToRemove.id },
+        });
+
+        for (const model of modelsToMove) {
+          await modelRepo.update(model.id, { brand_id: keepBrand.id });
+        }
+
+        await brandRepo.remove(brandToRemove);
+        brandsRemoved++;
+        console.log(
+          `   ✅ Избришан дубликат: ID ${brandToRemove.id}, преместени ${modelsToMove.length} модели`,
+        );
+      }
+      console.log(`   ✅ Зачувана марка: ID ${keepBrand.id}, Order: ${keepBrand.order}\n`);
+    }
+  }
+
+  if (brandsRemoved === 0) {
+    console.log('✅ Нема дубликати на марки\n');
+  } else {
+    console.log(`\n✅ Избришани ${brandsRemoved} дубликати на марки\n`);
+  }
+
   console.log('📊 Бришење на дубликати на модели во рамки на иста марка...\n');
 
   const allBrands = await brandRepo.find();

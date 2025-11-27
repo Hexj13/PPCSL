@@ -146,6 +146,12 @@ async function main() {
     console.log('🔌 Врската со базата на податоци е затворена\n');
 
     console.log('🌱 Започнување на генерирање на нови податоци...\n');
+
+    console.log('📦 Додавање на марки и модели...\n');
+    const { addBrandsAndModels } = await import('./add-brands');
+    await addBrandsAndModels();
+    console.log('');
+
     const { seed } = await import('./seed');
     await seed();
 

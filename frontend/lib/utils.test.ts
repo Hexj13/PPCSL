@@ -124,7 +124,7 @@ describe('utils', () => {
     });
 
     it('should format Truck', () => {
-      expect(formatBodyType('Truck')).toBe('Грузовик');
+      expect(formatBodyType('Truck')).toBe('Камион');
     });
 
     it('should return empty string for undefined', () => {

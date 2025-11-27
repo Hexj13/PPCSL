@@ -66,7 +66,7 @@ const BODY_TYPE_OPTIONS = sortOptionsByLabel([
   { value: 'Van', label: 'Фургон' },
   { value: 'Pickup', label: 'Пикап' },
   { value: 'Minivan', label: 'Миниван' },
-  { value: 'Truck', label: 'Грузовик' },
+  { value: 'Truck', label: 'Камион' },
 ]);
 
 const COLOR_OPTIONS = sortOptionsByLabel([

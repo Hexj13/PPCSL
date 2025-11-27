@@ -17,10 +17,10 @@ These scripts are **blocked from running in production** and can only be execute
 ### Available Stage Scripts
 
 #### Seeding Scripts
-- `seed.ts` - Seed test data (brands, models, users, listings)
+- `seed.ts` - Seed test data (users and listings). **Note:** Requires brands and models to exist in database (use `add-brands.ts` or `seed:all-brands` first)
 - `seed-vin-test.ts` - Seed test data with VIN codes
 - `seed-vehicles-full.ts` - Full vehicle seeding
-- `reset-and-seed.ts` - Reset database and seed test data
+- `reset-and-seed.ts` - Reset database, add brands/models, and seed test data (automatically calls `add-brands.ts` before seeding)
 - `copy-images-to-seed.ts` - Copy images for seeding
 - `create-test-listing.ts` - Create a test listing
 
@@ -43,7 +43,7 @@ These scripts are **blocked from running in production** and can only be execute
 - `check-models-stats.ts` - Models statistics
 - `check-citroen-models.ts` - Check Citroen models
 - `check-duplicates.ts` - Check for duplicate brands/models
-- `remove-duplicates.ts` - Remove duplicate brands/models
+- `remove-duplicates.ts` - Remove duplicate brands and models (handles both brand duplicates and model duplicates within the same brand)
 - `cleanup-brands.ts` - Cleanup and synchronize brands
 - `sync-carquery.ts` - Synchronize from CarQuery API
 - `update-engine-volumes.ts` - Update engine volumes
