@@ -4,8 +4,8 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 
-import { authApi, favoritesApi, listingsApi, savedFiltersApi } from '@/lib/api';
 import { analytics } from '@/lib/analytics';
+import { authApi, favoritesApi, listingsApi, savedFiltersApi } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 
 const isValidEmail = (value: string): boolean => {

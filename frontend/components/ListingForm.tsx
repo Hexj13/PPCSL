@@ -8,6 +8,7 @@ import { toast } from 'react-hot-toast';
 
 import { Dropdown } from '@/components/Dropdown';
 import { RichTextEditor } from '@/components/RichTextEditor';
+import { analytics } from '@/lib/analytics';
 import {
   listingsApi,
   brandsApi,
@@ -18,7 +19,6 @@ import {
   City,
   Listing,
 } from '@/lib/api';
-import { analytics } from '@/lib/analytics';
 import {
   ConditionType,
   ConditionTypeEnum,

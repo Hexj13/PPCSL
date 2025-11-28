@@ -757,7 +757,7 @@ export function SearchFilters() {
     if (filters.price_lte) searchFilters.price_max = filters.price_lte;
     if (filters.year_gte) searchFilters.year_min = filters.year_gte;
     if (filters.year_lte) searchFilters.year_max = filters.year_lte;
-    
+
     analytics.search(undefined, searchFilters);
 
     const newUrl = `/?${urlString}`;

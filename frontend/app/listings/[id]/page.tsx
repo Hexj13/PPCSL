@@ -18,8 +18,8 @@ import {
 } from '@/components/ListingPageSkeleton';
 import { StructuredData } from '@/components/StructuredData';
 import { UserListingsModal } from '@/components/UserListingsModal';
-import { api, listingsApi, Listing, favoritesApi } from '@/lib/api';
 import { analytics } from '@/lib/analytics';
+import { api, listingsApi, Listing, favoritesApi } from '@/lib/api';
 import { useAuthStore, useFavoritesStore, useComparisonStore } from '@/lib/store';
 import {
   formatPrice,
@@ -126,14 +126,14 @@ export default function ListingPage() {
           setIsFavorite(favoriteValue);
           setIsInComparison(comparisonValue);
           setShowSkeleton(false);
-          
+
           analytics.viewItem(currentId, {
             title: listingRes.data.title,
             price: listingRes.data.price,
             brand: listingRes.data.vehicle?.brand?.name,
             model: listingRes.data.vehicle?.model?.name,
           });
-          
+
           if (hasVin) {
             setLoadingPrevious(true);
           }

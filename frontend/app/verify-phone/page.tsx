@@ -4,8 +4,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 
-import { authApi, favoritesApi, listingsApi, RegisterDto, savedFiltersApi } from '@/lib/api';
 import { analytics } from '@/lib/analytics';
+import { authApi, favoritesApi, listingsApi, RegisterDto, savedFiltersApi } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 
 function VerifyPhoneContent() {
@@ -241,7 +241,7 @@ function VerifyPhoneContent() {
 
     try {
       await authApi.register(formData);
-      
+
       const signUpMethod = formData.email && formData.email.trim() ? 'email' : 'phone';
       analytics.signUp(signUpMethod);
 

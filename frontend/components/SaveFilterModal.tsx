@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
-import { savedFiltersApi } from '@/lib/api';
 import { analytics } from '@/lib/analytics';
+import { savedFiltersApi } from '@/lib/api';
 
 import { Modal } from './Modal';
 

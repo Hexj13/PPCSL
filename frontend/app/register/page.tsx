@@ -6,7 +6,6 @@ import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { authApi, RegisterDto } from '@/lib/api';
-import { analytics } from '@/lib/analytics';
 import { useAuthStore } from '@/lib/store';
 
 export default function RegisterPage() {

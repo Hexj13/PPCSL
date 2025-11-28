@@ -23,12 +23,14 @@
 #### Google Analytics
 - [x] Создать компонент `frontend/components/GoogleAnalytics.tsx` ✅
 - [x] Добавить компонент в `frontend/app/layout.tsx` ✅
+- [x] Реализовать Consent Mode v2 для GDPR соответствия ✅
+- [x] Добавить отслеживание событий (view_item, search, favorites, comparison, contacts, etc.) ✅
 - [ ] Перейти на https://analytics.google.com/
 - [ ] Создать аккаунт: "Kupito"
 - [ ] Создать ресурс: "Kupito Website"
 - [ ] Настроить поток данных: Web → `https://kupito.mk`
 - [ ] Скопировать Measurement ID (формат: `G-XXXXXXXXXX`)
-- [ ] Добавить в `frontend/.env.local`: `NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX`
+- [ ] Добавить в production environment variables: `NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX`
 - [ ] Перезапустить сервер
 - [ ] Проверить работу: Analytics → Отчеты → В реальном времени
 

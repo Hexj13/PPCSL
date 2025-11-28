@@ -5,8 +5,8 @@ import Link from 'next/link';
 import React, { useCallback, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 
-import { Listing, favoritesApi } from '@/lib/api';
 import { analytics } from '@/lib/analytics';
+import { Listing, favoritesApi } from '@/lib/api';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
 import {
   formatPrice,
@@ -107,7 +107,17 @@ function ListingCardComponent({ listing, forceFavorite = false, onRemove }: List
         toast.error('Грешка при додавање во омилени');
       }
     },
-    [user, isFavorite, isOwnListing, listing.id, removeFavorite, addFavorite, onRemove]
+    [
+      user,
+      isFavorite,
+      isOwnListing,
+      listing.id,
+      listing.title,
+      listing.price,
+      removeFavorite,
+      addFavorite,
+      onRemove,
+    ]
   );
 
   return (

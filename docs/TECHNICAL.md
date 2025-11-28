@@ -659,8 +659,29 @@ All scripts are located in `backend/src/scripts/` and can be executed via npm co
 3. Create property: "Kupito Website"
 4. Create data stream: Web → `https://kupito.mk`
 5. Copy Measurement ID (format: `G-XXXXXXXXXX`)
-6. Add to `NEXT_PUBLIC_GA_ID` in `.env.local`
+6. Add to `NEXT_PUBLIC_GA_ID` in `.env.local` (or production environment variables)
 7. Component `GoogleAnalytics.tsx` is already created and integrated
+
+#### Google Analytics Features
+
+**Consent Mode v2:**
+- Implements Google Analytics Consent Mode v2 for GDPR compliance
+- Analytics are disabled by default until user grants consent
+- Consent can be managed via `/cookie-settings` page
+- All events respect user consent preferences
+
+**Tracked Events:**
+- `view_item` - When user views a listing detail page
+- `search` - When user performs search/filtering
+- `add_to_wishlist` / `remove_from_wishlist` - Favorite management
+- `add_to_comparison` / `remove_from_comparison` - Car comparison
+- `contact_seller` - When user contacts seller (phone/Viber/WhatsApp/Telegram)
+- `create_listing` - When user creates a new listing
+- `save_filter` - When user saves a search filter
+- `login` / `sign_up` - Authentication events
+- `conversion_event_page_view` - Homepage conversion tracking
+
+All events are sent only after user grants analytics consent.
 
 ### Cloudflare Setup (Optional)
 

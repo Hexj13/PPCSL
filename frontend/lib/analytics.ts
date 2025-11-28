@@ -2,11 +2,11 @@
 
 function checkConsent(): boolean {
   if (typeof window === 'undefined') return false;
-  
+
   const consentKey = 'cookie_consent';
   const stored = localStorage.getItem(consentKey);
   if (!stored) return false;
-  
+
   try {
     const parsed = JSON.parse(stored);
     return parsed.analytics === 'granted';
@@ -28,7 +28,10 @@ export function trackEvent(eventName: string, params?: Record<string, unknown>) 
 }
 
 export const analytics = {
-  viewItem: (listingId: string, listing: { title?: string; price?: number; brand?: string; model?: string }) => {
+  viewItem: (
+    listingId: string,
+    listing: { title?: string; price?: number; brand?: string; model?: string }
+  ) => {
     trackEvent('view_item', {
       currency: 'MKD',
       value: listing.price,
@@ -116,7 +119,11 @@ export const analytics = {
     });
   },
 
-  contactSeller: (listingId: string, method: 'phone' | 'viber' | 'whatsapp' | 'telegram', listing?: { title?: string; price?: number }) => {
+  contactSeller: (
+    listingId: string,
+    method: 'phone' | 'viber' | 'whatsapp' | 'telegram',
+    listing?: { title?: string; price?: number }
+  ) => {
     trackEvent('contact_seller', {
       currency: 'MKD',
       value: listing?.price,
@@ -166,4 +173,3 @@ export const analytics = {
     });
   },
 };
-
