@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useState, useEffect, startTransition, useCallback, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { analytics } from '@/lib/analytics';
 import { brandsApi, citiesApi, Brand, VehicleModel, City, User } from '@/lib/api';
 import { ConditionType, DriveType, RegistrationType } from '@/lib/constants';
 import { useAuthStore } from '@/lib/store';
@@ -747,6 +748,17 @@ export function SearchFilters() {
     if (!needsStorage) {
       clearFiltersFromStorage();
     }
+
+    const searchFilters: Record<string, unknown> = {};
+    if (validBrandIds.length > 0) searchFilters.brand_ids_count = validBrandIds.length;
+    if (validModelIds.length > 0) searchFilters.model_ids_count = validModelIds.length;
+    if (validCities.length > 0) searchFilters.cities_count = validCities.length;
+    if (filters.price_gte) searchFilters.price_min = filters.price_gte;
+    if (filters.price_lte) searchFilters.price_max = filters.price_lte;
+    if (filters.year_gte) searchFilters.year_min = filters.year_gte;
+    if (filters.year_lte) searchFilters.year_max = filters.year_lte;
+    
+    analytics.search(undefined, searchFilters);
 
     const newUrl = `/?${urlString}`;
     const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;

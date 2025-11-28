@@ -1,9 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
+import { useCookieConsent } from '@/hooks/useCookieConsent';
 
 export function ConversionEvent() {
   const [isGtagReady, setIsGtagReady] = useState(false);
+  const { consent, isLoading } = useCookieConsent();
+  const hasFiredRef = useRef(false);
 
   useEffect(() => {
     const checkGtag = () => {
@@ -35,10 +39,19 @@ export function ConversionEvent() {
   }, []);
 
   useEffect(() => {
-    if (!isGtagReady || typeof window === 'undefined' || typeof window.gtag !== 'function') return;
+    if (
+      hasFiredRef.current ||
+      !isGtagReady ||
+      isLoading ||
+      consent !== 'granted' ||
+      typeof window === 'undefined' ||
+      typeof window.gtag !== 'function'
+    )
+      return;
 
     window.gtag('event', 'conversion_event_page_view', {});
-  }, [isGtagReady]);
+    hasFiredRef.current = true;
+  }, [isGtagReady, consent, isLoading]);
 
   return null;
 }

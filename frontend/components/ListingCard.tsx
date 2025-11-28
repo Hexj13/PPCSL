@@ -6,6 +6,7 @@ import React, { useCallback, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Listing, favoritesApi } from '@/lib/api';
+import { analytics } from '@/lib/analytics';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
 import {
   formatPrice,
@@ -77,6 +78,7 @@ function ListingCardComponent({ listing, forceFavorite = false, onRemove }: List
         }
         try {
           await favoritesApi.remove(listing.id);
+          analytics.removeFromWishlist(listing.id);
           toast.success('Отстрането од омилени');
         } catch {
           setLocalIsFavorite(true);
@@ -94,6 +96,10 @@ function ListingCardComponent({ listing, forceFavorite = false, onRemove }: List
       addFavorite(listing.id);
       try {
         await favoritesApi.add(listing.id);
+        analytics.addToWishlist(listing.id, {
+          title: listing.title,
+          price: listing.price,
+        });
         toast.success('Додадено во омилени');
       } catch {
         setLocalIsFavorite(false);

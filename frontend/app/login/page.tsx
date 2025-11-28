@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { authApi, favoritesApi, listingsApi, savedFiltersApi } from '@/lib/api';
+import { analytics } from '@/lib/analytics';
 import { useAuthStore } from '@/lib/store';
 
 const isValidEmail = (value: string): boolean => {
@@ -65,6 +66,8 @@ export default function LoginPage() {
 
     try {
       const res = await authApi.login(formData);
+      const loginMethod = isValidEmail(formData.login) ? 'email' : 'phone';
+      analytics.login(loginMethod);
       setAuth(res.data.user, res.data.access_token, res.data.refresh_token);
 
       if (typeof window !== 'undefined') {

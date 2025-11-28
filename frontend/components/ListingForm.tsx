@@ -18,6 +18,7 @@ import {
   City,
   Listing,
 } from '@/lib/api';
+import { analytics } from '@/lib/analytics';
 import {
   ConditionType,
   ConditionTypeEnum,
@@ -552,6 +553,10 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
 
       if (mode === 'create') {
         const res = await listingsApi.create(payload);
+        analytics.createListing(res.data.id, {
+          title: res.data.title,
+          price: res.data.price,
+        });
         toast.success('Објавата е креирана');
         router.push(`/listings/${res.data.id}`);
       } else {

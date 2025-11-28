@@ -30,10 +30,18 @@ export function GoogleAnalytics() {
   }, []);
 
   useEffect(() => {
-    if (!isProd || !gaId || !isScriptLoaded || typeof window === 'undefined' || !window.gtag)
+    if (
+      !isProd ||
+      !gaId ||
+      !isScriptLoaded ||
+      typeof window === 'undefined' ||
+      !window.gtag ||
+      isLoading ||
+      consent !== 'granted'
+    )
       return;
     window.gtag('config', gaId, { page_path: pathname });
-  }, [pathname, gaId, isProd, isScriptLoaded]);
+  }, [pathname, gaId, isProd, isScriptLoaded, consent, isLoading]);
 
   useEffect(() => {
     if (
@@ -42,7 +50,8 @@ export function GoogleAnalytics() {
       !isScriptLoaded ||
       typeof window === 'undefined' ||
       !window.gtag ||
-      isLoading
+      isLoading ||
+      consent === null
     )
       return;
 
@@ -66,9 +75,6 @@ export function GoogleAnalytics() {
             if (typeof window !== 'undefined' && window.gtag) {
               window.gtag('js', new Date());
               setIsScriptLoaded(true);
-              window.gtag('config', gaId, {
-                page_path: window.location.pathname,
-              });
             }
           }}
         />

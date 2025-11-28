@@ -18,6 +18,7 @@ export function GoogleAnalyticsConsent() {
             if (isLocalhost) return;
             window.dataLayer = window.dataLayer || [];
             function gtag(){window.dataLayer.push(arguments);}
+            window.gtag = gtag;
             gtag('consent', 'default', {
               analytics_storage: 'denied',
               ad_storage: 'denied',

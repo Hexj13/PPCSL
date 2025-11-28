@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { savedFiltersApi } from '@/lib/api';
+import { analytics } from '@/lib/analytics';
 
 import { Modal } from './Modal';
 
@@ -56,6 +57,7 @@ export function SaveFilterModal({
         toast.success('Филтерот е успешно ажуриран');
       } else if (filters) {
         await savedFiltersApi.create(name.trim(), filters);
+        analytics.saveFilter(name.trim(), filters);
         toast.success('Филтерот е успешно зачуван');
       }
       setName('');

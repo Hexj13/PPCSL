@@ -19,6 +19,7 @@ import {
 import { StructuredData } from '@/components/StructuredData';
 import { UserListingsModal } from '@/components/UserListingsModal';
 import { api, listingsApi, Listing, favoritesApi } from '@/lib/api';
+import { analytics } from '@/lib/analytics';
 import { useAuthStore, useFavoritesStore, useComparisonStore } from '@/lib/store';
 import {
   formatPrice,
@@ -125,6 +126,14 @@ export default function ListingPage() {
           setIsFavorite(favoriteValue);
           setIsInComparison(comparisonValue);
           setShowSkeleton(false);
+          
+          analytics.viewItem(currentId, {
+            title: listingRes.data.title,
+            price: listingRes.data.price,
+            brand: listingRes.data.vehicle?.brand?.name,
+            model: listingRes.data.vehicle?.model?.name,
+          });
+          
           if (hasVin) {
             setLoadingPrevious(true);
           }
@@ -257,6 +266,7 @@ export default function ListingPage() {
         await favoritesApi.remove(id);
         removeFavorite(id);
         setIsFavorite(false);
+        analytics.removeFromWishlist(id);
         toast.success('Отстрането од омилени');
       } catch {
         removeFavorite(id);
@@ -273,6 +283,10 @@ export default function ListingPage() {
       await favoritesApi.add(id);
       addFavorite(id);
       setIsFavorite(true);
+      analytics.addToWishlist(id, {
+        title: listing?.title,
+        price: listing?.price,
+      });
       toast.success('Додадено во омилени');
     } catch {
       addFavorite(id);
@@ -298,6 +312,7 @@ export default function ListingPage() {
     if (isInComparison) {
       removeComparison(id);
       setIsInComparison(false);
+      analytics.removeFromComparison(id);
       toast.success('Отстрането од споредба');
       return;
     }
@@ -310,6 +325,10 @@ export default function ListingPage() {
     const added = addComparison(id);
     if (added) {
       setIsInComparison(true);
+      analytics.addToComparison(id, {
+        title: listing?.title,
+        price: listing?.price,
+      });
       toast.success('Додадено во споредба');
     } else {
       toast.error('Возилото е веќе во споредба');
@@ -1332,6 +1351,12 @@ export default function ListingPage() {
                         <span className="font-semibold text-primary-400">Телефон:</span>
                         <a
                           href={`tel:${listing.user.phone}`}
+                          onClick={() => {
+                            analytics.contactSeller(id, 'phone', {
+                              title: listing.title,
+                              price: listing.price,
+                            });
+                          }}
                           className="ml-2 text-gray-300 hover:text-primary-300 transition-colors underline"
                         >
                           {listing.user.phone}
@@ -1373,6 +1398,12 @@ export default function ListingPage() {
                           {listing.user.viber && listing.user.phone && (
                             <a
                               href={getViberUrl(listing.user.phone) || '#'}
+                              onClick={() => {
+                                analytics.contactSeller(id, 'viber', {
+                                  title: listing.title,
+                                  price: listing.price,
+                                });
+                              }}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 hover:border-purple-500/50 transition-colors cursor-pointer"
@@ -1383,6 +1414,12 @@ export default function ListingPage() {
                           {listing.user.whatsapp && listing.user.phone && (
                             <a
                               href={getWhatsAppUrl(listing.user.phone) || '#'}
+                              onClick={() => {
+                                analytics.contactSeller(id, 'whatsapp', {
+                                  title: listing.title,
+                                  price: listing.price,
+                                });
+                              }}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-primary-500/20 text-primary-300 border border-primary-500/30 hover:bg-primary-500/30 hover:border-primary-500/50 transition-colors cursor-pointer"
@@ -1393,6 +1430,12 @@ export default function ListingPage() {
                           {listing.user.telegram && listing.user.phone && (
                             <a
                               href={getTelegramUrl(listing.user.phone) || '#'}
+                              onClick={() => {
+                                analytics.contactSeller(id, 'telegram', {
+                                  title: listing.title,
+                                  price: listing.price,
+                                });
+                              }}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30 hover:border-blue-500/50 transition-colors cursor-pointer"
