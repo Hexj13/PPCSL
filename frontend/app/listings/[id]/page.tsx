@@ -66,6 +66,7 @@ export default function ListingPage() {
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
+  const preloadedImagesRef = useRef<Set<string>>(new Set());
 
   const fetchListingData = useCallback(
     (forceRefresh = false) => {
@@ -415,6 +416,120 @@ export default function ListingPage() {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isImageModalOpen, listing]);
+
+  useEffect(() => {
+    if (!listing || typeof window === 'undefined') return;
+
+    const images =
+      listing.images && listing.images.length > 0 ? listing.images : ['/placeholder-car.jpg'];
+
+    const preloadImage = (imageUrl: string, quality: number = 75, width: number = 1200) => {
+      if (!imageUrl || imageUrl === '/placeholder-car.jpg') return;
+
+      const optimizedUrl = getOptimizedImageUrl(imageUrl, quality, width);
+      if (preloadedImagesRef.current.has(optimizedUrl)) return;
+
+      const img = new Image();
+      img.src = optimizedUrl;
+      preloadedImagesRef.current.add(optimizedUrl);
+    };
+
+    const preloadAdjacentImages = () => {
+      if (images.length <= 1) return;
+
+      const prevIndex = (currentImageIndex - 1 + images.length) % images.length;
+      const nextIndex = (currentImageIndex + 1) % images.length;
+
+      if (images[prevIndex] && !imageErrors.has(prevIndex)) {
+        preloadImage(images[prevIndex]);
+      }
+      if (images[nextIndex] && !imageErrors.has(nextIndex)) {
+        preloadImage(images[nextIndex]);
+      }
+    };
+
+    preloadAdjacentImages();
+  }, [currentImageIndex, listing, imageErrors]);
+
+  useEffect(() => {
+    if (!listing || typeof window === 'undefined') return;
+
+    const images =
+      listing.images && listing.images.length > 0 ? listing.images : ['/placeholder-car.jpg'];
+
+    const preloadImage = (imageUrl: string, quality: number = 75, width: number = 1200) => {
+      if (!imageUrl || imageUrl === '/placeholder-car.jpg') return;
+
+      const optimizedUrl = getOptimizedImageUrl(imageUrl, quality, width);
+      if (preloadedImagesRef.current.has(optimizedUrl)) return;
+
+      const img = new Image();
+      img.src = optimizedUrl;
+      preloadedImagesRef.current.add(optimizedUrl);
+    };
+
+    const preloadAllImages = () => {
+      images.forEach((imageUrl, index) => {
+        if (imageUrl && imageUrl !== '/placeholder-car.jpg' && !imageErrors.has(index)) {
+          preloadImage(imageUrl, 75, 1200);
+        }
+      });
+    };
+
+    const timeoutId = setTimeout(() => {
+      preloadAllImages();
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [listing, imageErrors]);
+
+  useEffect(() => {
+    if (!isImageModalOpen || !listing || typeof window === 'undefined') return;
+
+    const images =
+      listing.images && listing.images.length > 0 ? listing.images : ['/placeholder-car.jpg'];
+
+    const preloadModalImage = (imageUrl: string) => {
+      if (!imageUrl || imageUrl === '/placeholder-car.jpg') return;
+
+      const optimizedUrl = getOptimizedImageUrl(imageUrl, 85, 1920);
+      if (preloadedImagesRef.current.has(optimizedUrl)) return;
+
+      const img = new Image();
+      img.src = optimizedUrl;
+      preloadedImagesRef.current.add(optimizedUrl);
+    };
+
+    const preloadModalAdjacentImages = () => {
+      if (images.length <= 1) return;
+
+      const prevIndex = (modalImageIndex - 1 + images.length) % images.length;
+      const nextIndex = (modalImageIndex + 1) % images.length;
+
+      if (images[prevIndex] && !imageErrors.has(prevIndex)) {
+        preloadModalImage(images[prevIndex]);
+      }
+      if (images[nextIndex] && !imageErrors.has(nextIndex)) {
+        preloadModalImage(images[nextIndex]);
+      }
+    };
+
+    const preloadAllModalImages = () => {
+      images.forEach((imageUrl, index) => {
+        if (imageUrl && imageUrl !== '/placeholder-car.jpg' && !imageErrors.has(index)) {
+          preloadModalImage(imageUrl);
+        }
+      });
+    };
+
+    preloadModalAdjacentImages();
+
+    const timeoutId = setTimeout(() => {
+      preloadAllModalImages();
+    }, 200);
+
+    return () => clearTimeout(timeoutId);
+  }, [modalImageIndex, isImageModalOpen, listing, imageErrors]);
 
   if (!listing && !showSkeleton) {
     return null;

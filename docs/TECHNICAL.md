@@ -717,6 +717,11 @@ See [RENDER.md](./RENDER.md) for CloudFront CDN setup instructions (CloudFront i
   - Automatic optimization for external images via `remotePatterns` configuration
   - Conditional `unoptimized` prop for localhost images in development
   - Proper `sizes` attribute for responsive image loading
+- **Image preloading on listing page:** Proactive image preloading to eliminate delays when switching between images
+  - All images are preloaded in the background after page load (1200px, quality 75 for main view)
+  - Adjacent images (previous/next) are preloaded when switching images
+  - High-resolution images (1920px, quality 85) are preloaded when opening the full-size modal
+  - Preloaded images are cached in browser memory, ensuring instant switching without loading delays
 - Third-party scripts optimization (Google Analytics, Google Tag Manager) using `lazyOnload` strategy to reduce Total Blocking Time (TBT)
 - Set-based lookups in MultiSelectDropdown for O(1) performance instead of O(n) with Array.includes()
 - Optimized SortDropdown with memoized sort key resolution
