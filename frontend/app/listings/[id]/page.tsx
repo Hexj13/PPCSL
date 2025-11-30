@@ -429,7 +429,7 @@ export default function ListingPage() {
       const optimizedUrl = getOptimizedImageUrl(imageUrl, quality, width);
       if (preloadedImagesRef.current.has(optimizedUrl)) return;
 
-      const img = new Image();
+      const img = new window.Image();
       img.src = optimizedUrl;
       preloadedImagesRef.current.add(optimizedUrl);
     };
@@ -463,7 +463,7 @@ export default function ListingPage() {
       const optimizedUrl = getOptimizedImageUrl(imageUrl, quality, width);
       if (preloadedImagesRef.current.has(optimizedUrl)) return;
 
-      const img = new Image();
+      const img = new window.Image();
       img.src = optimizedUrl;
       preloadedImagesRef.current.add(optimizedUrl);
     };
@@ -495,7 +495,7 @@ export default function ListingPage() {
       const optimizedUrl = getOptimizedImageUrl(imageUrl, 85, 1920);
       if (preloadedImagesRef.current.has(optimizedUrl)) return;
 
-      const img = new Image();
+      const img = new window.Image();
       img.src = optimizedUrl;
       preloadedImagesRef.current.add(optimizedUrl);
     };
