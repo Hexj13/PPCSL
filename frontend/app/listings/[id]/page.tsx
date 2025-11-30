@@ -67,6 +67,12 @@ export default function ListingPage() {
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
   const preloadedImagesRef = useRef<Set<string>>(new Set());
+  const preloadQueueRef = useRef<Array<{ url: string; priority: number }>>([]);
+  const activePreloadsRef = useRef<number>(0);
+  const modalPreloadQueueRef = useRef<Array<{ url: string; priority: number }>>([]);
+  const modalActivePreloadsRef = useRef<number>(0);
+  const maxConcurrentPreloads = 3;
+  const maxPreloadImages = 20;
 
   const fetchListingData = useCallback(
     (forceRefresh = false) => {
@@ -423,15 +429,33 @@ export default function ListingPage() {
     const images =
       listing.images && listing.images.length > 0 ? listing.images : ['/placeholder-car.jpg'];
 
-    const preloadImage = (imageUrl: string, quality: number = 75, width: number = 1200) => {
-      if (!imageUrl || imageUrl === '/placeholder-car.jpg') return;
+    const preloadImage = (
+      imageUrl: string,
+      quality: number = 75,
+      width: number = 1200
+    ): Promise<void> => {
+      return new Promise((resolve) => {
+        if (!imageUrl || imageUrl === '/placeholder-car.jpg') {
+          resolve();
+          return;
+        }
 
-      const optimizedUrl = getOptimizedImageUrl(imageUrl, quality, width);
-      if (preloadedImagesRef.current.has(optimizedUrl)) return;
+        const optimizedUrl = getOptimizedImageUrl(imageUrl, quality, width);
+        if (preloadedImagesRef.current.has(optimizedUrl)) {
+          resolve();
+          return;
+        }
 
-      const img = new window.Image();
-      img.src = optimizedUrl;
-      preloadedImagesRef.current.add(optimizedUrl);
+        const img = new window.Image();
+        img.onload = () => {
+          preloadedImagesRef.current.add(optimizedUrl);
+          resolve();
+        };
+        img.onerror = () => {
+          resolve();
+        };
+        img.src = optimizedUrl;
+      });
     };
 
     const preloadAdjacentImages = () => {
@@ -457,31 +481,86 @@ export default function ListingPage() {
     const images =
       listing.images && listing.images.length > 0 ? listing.images : ['/placeholder-car.jpg'];
 
-    const preloadImage = (imageUrl: string, quality: number = 75, width: number = 1200) => {
-      if (!imageUrl || imageUrl === '/placeholder-car.jpg') return;
+    const preloadImage = (
+      imageUrl: string,
+      quality: number = 75,
+      width: number = 1200,
+      _priority: number = 0
+    ): Promise<void> => {
+      return new Promise((resolve, _reject) => {
+        if (!imageUrl || imageUrl === '/placeholder-car.jpg') {
+          resolve();
+          return;
+        }
 
-      const optimizedUrl = getOptimizedImageUrl(imageUrl, quality, width);
-      if (preloadedImagesRef.current.has(optimizedUrl)) return;
+        const optimizedUrl = getOptimizedImageUrl(imageUrl, quality, width);
+        if (preloadedImagesRef.current.has(optimizedUrl)) {
+          resolve();
+          return;
+        }
 
-      const img = new window.Image();
-      img.src = optimizedUrl;
-      preloadedImagesRef.current.add(optimizedUrl);
+        const img = new window.Image();
+        img.onload = () => {
+          preloadedImagesRef.current.add(optimizedUrl);
+          activePreloadsRef.current--;
+          resolve();
+          processPreloadQueue();
+        };
+        img.onerror = () => {
+          activePreloadsRef.current--;
+          resolve();
+          processPreloadQueue();
+        };
+        img.src = optimizedUrl;
+        activePreloadsRef.current++;
+      });
+    };
+
+    const processPreloadQueue = () => {
+      while (
+        activePreloadsRef.current < maxConcurrentPreloads &&
+        preloadQueueRef.current.length > 0
+      ) {
+        const item = preloadQueueRef.current.shift();
+        if (item) {
+          preloadImage(item.url, 75, 1200, item.priority).catch(() => {
+            activePreloadsRef.current--;
+            processPreloadQueue();
+          });
+        }
+      }
     };
 
     const preloadAllImages = () => {
-      images.forEach((imageUrl, index) => {
-        if (imageUrl && imageUrl !== '/placeholder-car.jpg' && !imageErrors.has(index)) {
-          preloadImage(imageUrl, 75, 1200);
-        }
-      });
+      const validImages = images
+        .map((imageUrl, index) => ({
+          url: imageUrl,
+          index,
+          priority: Math.abs(index - currentImageIndex),
+        }))
+        .filter(
+          (item) => item.url && item.url !== '/placeholder-car.jpg' && !imageErrors.has(item.index)
+        )
+        .sort((a, b) => a.priority - b.priority)
+        .slice(0, maxPreloadImages);
+
+      preloadQueueRef.current = validImages.map((item) => ({
+        url: item.url,
+        priority: item.priority,
+      }));
+
+      processPreloadQueue();
     };
 
     const timeoutId = setTimeout(() => {
       preloadAllImages();
     }, 100);
 
-    return () => clearTimeout(timeoutId);
-  }, [listing, imageErrors]);
+    return () => {
+      clearTimeout(timeoutId);
+      preloadQueueRef.current = [];
+    };
+  }, [listing, imageErrors, currentImageIndex]);
 
   useEffect(() => {
     if (!isImageModalOpen || !listing || typeof window === 'undefined') return;
@@ -489,15 +568,49 @@ export default function ListingPage() {
     const images =
       listing.images && listing.images.length > 0 ? listing.images : ['/placeholder-car.jpg'];
 
-    const preloadModalImage = (imageUrl: string) => {
-      if (!imageUrl || imageUrl === '/placeholder-car.jpg') return;
+    const preloadModalImage = (imageUrl: string, _priority: number = 0): Promise<void> => {
+      return new Promise((resolve, _reject) => {
+        if (!imageUrl || imageUrl === '/placeholder-car.jpg') {
+          resolve();
+          return;
+        }
 
-      const optimizedUrl = getOptimizedImageUrl(imageUrl, 85, 1920);
-      if (preloadedImagesRef.current.has(optimizedUrl)) return;
+        const optimizedUrl = getOptimizedImageUrl(imageUrl, 85, 1920);
+        if (preloadedImagesRef.current.has(optimizedUrl)) {
+          resolve();
+          return;
+        }
 
-      const img = new window.Image();
-      img.src = optimizedUrl;
-      preloadedImagesRef.current.add(optimizedUrl);
+        const img = new window.Image();
+        img.onload = () => {
+          preloadedImagesRef.current.add(optimizedUrl);
+          modalActivePreloadsRef.current--;
+          resolve();
+          processModalPreloadQueue();
+        };
+        img.onerror = () => {
+          modalActivePreloadsRef.current--;
+          resolve();
+          processModalPreloadQueue();
+        };
+        img.src = optimizedUrl;
+        modalActivePreloadsRef.current++;
+      });
+    };
+
+    const processModalPreloadQueue = () => {
+      while (
+        modalActivePreloadsRef.current < maxConcurrentPreloads &&
+        modalPreloadQueueRef.current.length > 0
+      ) {
+        const item = modalPreloadQueueRef.current.shift();
+        if (item) {
+          preloadModalImage(item.url, item.priority).catch(() => {
+            modalActivePreloadsRef.current--;
+            processModalPreloadQueue();
+          });
+        }
+      }
     };
 
     const preloadModalAdjacentImages = () => {
@@ -507,19 +620,32 @@ export default function ListingPage() {
       const nextIndex = (modalImageIndex + 1) % images.length;
 
       if (images[prevIndex] && !imageErrors.has(prevIndex)) {
-        preloadModalImage(images[prevIndex]);
+        preloadModalImage(images[prevIndex], 0);
       }
       if (images[nextIndex] && !imageErrors.has(nextIndex)) {
-        preloadModalImage(images[nextIndex]);
+        preloadModalImage(images[nextIndex], 0);
       }
     };
 
     const preloadAllModalImages = () => {
-      images.forEach((imageUrl, index) => {
-        if (imageUrl && imageUrl !== '/placeholder-car.jpg' && !imageErrors.has(index)) {
-          preloadModalImage(imageUrl);
-        }
-      });
+      const validImages = images
+        .map((imageUrl, index) => ({
+          url: imageUrl,
+          index,
+          priority: Math.abs(index - modalImageIndex),
+        }))
+        .filter(
+          (item) => item.url && item.url !== '/placeholder-car.jpg' && !imageErrors.has(item.index)
+        )
+        .sort((a, b) => a.priority - b.priority)
+        .slice(0, maxPreloadImages);
+
+      modalPreloadQueueRef.current = validImages.map((item) => ({
+        url: item.url,
+        priority: item.priority,
+      }));
+
+      processModalPreloadQueue();
     };
 
     preloadModalAdjacentImages();
@@ -528,7 +654,10 @@ export default function ListingPage() {
       preloadAllModalImages();
     }, 200);
 
-    return () => clearTimeout(timeoutId);
+    return () => {
+      clearTimeout(timeoutId);
+      modalPreloadQueueRef.current = [];
+    };
   }, [modalImageIndex, isImageModalOpen, listing, imageErrors]);
 
   if (!listing && !showSkeleton) {

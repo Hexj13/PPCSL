@@ -719,9 +719,15 @@ See [RENDER.md](./RENDER.md) for CloudFront CDN setup instructions (CloudFront i
   - Proper `sizes` attribute for responsive image loading
 - **Image preloading on listing page:** Proactive image preloading to eliminate delays when switching between images
   - All images are preloaded in the background after page load (1200px, quality 75 for main view)
-  - Adjacent images (previous/next) are preloaded when switching images
+  - Adjacent images (previous/next) are preloaded immediately when switching images
   - High-resolution images (1920px, quality 85) are preloaded when opening the full-size modal
   - Preloaded images are cached in browser memory, ensuring instant switching without loading delays
+  - **Optimized for large image sets:**
+    - Priority-based preloading: images closer to current index are preloaded first
+    - Concurrent request limiting: maximum 3 simultaneous preload requests to avoid browser connection limits
+    - Maximum preload limit: only first 20 images are preloaded to prevent excessive bandwidth usage
+    - Queue-based processing: images are preloaded in batches using a priority queue
+    - Smart batching: prevents overwhelming the browser with too many simultaneous requests
 - Third-party scripts optimization (Google Analytics, Google Tag Manager) using `lazyOnload` strategy to reduce Total Blocking Time (TBT)
 - Set-based lookups in MultiSelectDropdown for O(1) performance instead of O(n) with Array.includes()
 - Optimized SortDropdown with memoized sort key resolution
