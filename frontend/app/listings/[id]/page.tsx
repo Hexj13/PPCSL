@@ -619,7 +619,7 @@ export default function ListingPage() {
 
     const processPreloadQueue = () => {
       while (activePreloadsRef.current < maxConcurrentPreloads) {
-        let item: { url: string; priority: number } | undefined;
+        let item: { url: string; originalUrl: string; priority: number } | undefined;
 
         if (adjacentPreloadQueueRef.current.length > 0) {
           item = adjacentPreloadQueueRef.current.shift();
