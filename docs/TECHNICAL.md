@@ -683,6 +683,16 @@ All scripts are located in `backend/src/scripts/` and can be executed via npm co
 
 All events are sent only after user grants analytics consent.
 
+#### Google Ads Conversion Tracking
+
+For detailed setup instructions, see [GOOGLE_ADS_SETUP.md](./GOOGLE_ADS_SETUP.md).
+
+**Quick Setup:**
+1. Link GA4 property to Google Ads account
+2. Import conversions from GA4 (conversion_event_page_view, sign_up, create_listing)
+3. Configure conversion settings (optimization, attribution, value)
+4. Set up campaign goals using imported conversions
+
 ### Cloudflare Setup (Optional)
 
 **Code is already ready for Cloudflare!** ✅
