@@ -717,17 +717,20 @@ See [RENDER.md](./RENDER.md) for CloudFront CDN setup instructions (CloudFront i
   - Automatic optimization for external images via `remotePatterns` configuration
   - Conditional `unoptimized` prop for localhost images in development
   - Proper `sizes` attribute for responsive image loading
-- **Image preloading on listing page:** Proactive image preloading to eliminate delays when switching between images
-  - All images are preloaded in the background after page load (1200px, quality 75 for main view)
-  - Adjacent images (previous/next) are preloaded immediately when switching images
-  - High-resolution images (1920px, quality 85) are preloaded when opening the full-size modal
+- **Image preloading on listing page:** Hybrid preloading strategy to eliminate delays when switching between images
+  - **Critical preloading (P0):** Adjacent images (previous/next) are preloaded immediately when switching
+  - **Priority preloading (P1):** Images ±2, ±3 from current index are preloaded with small delays (50ms, 100ms) for fast navigation
+  - **Radius-based preloading:** Only images within ±5 radius from current index are preloaded (max 10 images)
+  - **Hover preloading:** Images are preloaded when hovering over thumbnails (desktop) or touching thumbnails (mobile)
+  - **Modal preloading:** High-resolution images (1920px, quality 85) are preloaded immediately when opening full-size modal
   - Preloaded images are cached in browser memory, ensuring instant switching without loading delays
   - **Optimized for large image sets:**
     - Priority-based preloading: images closer to current index are preloaded first
     - Concurrent request limiting: maximum 3 simultaneous preload requests to avoid browser connection limits
-    - Maximum preload limit: only first 20 images are preloaded to prevent excessive bandwidth usage
+    - Maximum preload limit: only 10 images are preloaded to prevent excessive bandwidth usage
     - Queue-based processing: images are preloaded in batches using a priority queue
     - Smart batching: prevents overwhelming the browser with too many simultaneous requests
+    - Separate queues for main view and modal to prevent conflicts
 - Third-party scripts optimization (Google Analytics, Google Tag Manager) using `lazyOnload` strategy to reduce Total Blocking Time (TBT)
 - Set-based lookups in MultiSelectDropdown for O(1) performance instead of O(n) with Array.includes()
 - Optimized SortDropdown with memoized sort key resolution

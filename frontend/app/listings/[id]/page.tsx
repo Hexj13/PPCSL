@@ -67,12 +67,20 @@ export default function ListingPage() {
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
   const preloadedImagesRef = useRef<Set<string>>(new Set());
-  const preloadQueueRef = useRef<Array<{ url: string; priority: number }>>([]);
+  const preloadQueueRef = useRef<Array<{ url: string; originalUrl: string; priority: number }>>([]);
   const activePreloadsRef = useRef<number>(0);
-  const modalPreloadQueueRef = useRef<Array<{ url: string; priority: number }>>([]);
+  const adjacentPreloadQueueRef = useRef<
+    Array<{ url: string; originalUrl: string; priority: number }>
+  >([]);
+  const modalPreloadQueueRef = useRef<
+    Array<{ url: string; originalUrl: string; priority: number }>
+  >([]);
   const modalActivePreloadsRef = useRef<number>(0);
+  const preloadTimeoutsRef = useRef<Array<ReturnType<typeof setTimeout>>>([]);
+  const modalPreloadTimeoutsRef = useRef<Array<ReturnType<typeof setTimeout>>>([]);
   const maxConcurrentPreloads = 3;
-  const maxPreloadImages = 20;
+  const maxPreloadImages = 10;
+  const preloadRadius = 5;
 
   const fetchListingData = useCallback(
     (forceRefresh = false) => {
@@ -423,57 +431,150 @@ export default function ListingPage() {
     };
   }, [isImageModalOpen, listing]);
 
+  const processPreloadQueue = useCallback(() => {
+    if (typeof window === 'undefined') return;
+
+    while (activePreloadsRef.current < maxConcurrentPreloads) {
+      let item: { url: string; originalUrl: string; priority: number } | undefined;
+
+      if (adjacentPreloadQueueRef.current.length > 0) {
+        item = adjacentPreloadQueueRef.current.shift();
+      } else if (preloadQueueRef.current.length > 0) {
+        item = preloadQueueRef.current.shift();
+      } else {
+        break;
+      }
+
+      if (item) {
+        const optimizedUrl = item.url;
+        if (preloadedImagesRef.current.has(optimizedUrl)) {
+          continue;
+        }
+
+        const img = new window.Image();
+        activePreloadsRef.current++;
+        img.onload = () => {
+          preloadedImagesRef.current.add(optimizedUrl);
+          activePreloadsRef.current--;
+          processPreloadQueue();
+        };
+        img.onerror = () => {
+          activePreloadsRef.current--;
+          processPreloadQueue();
+        };
+        img.src = optimizedUrl;
+      }
+    }
+  }, []);
+
   useEffect(() => {
     if (!listing || typeof window === 'undefined') return;
 
     const images =
       listing.images && listing.images.length > 0 ? listing.images : ['/placeholder-car.jpg'];
 
-    const preloadImage = (
-      imageUrl: string,
-      quality: number = 75,
-      width: number = 1200
-    ): Promise<void> => {
-      return new Promise((resolve) => {
-        if (!imageUrl || imageUrl === '/placeholder-car.jpg') {
-          resolve();
-          return;
-        }
-
-        const optimizedUrl = getOptimizedImageUrl(imageUrl, quality, width);
-        if (preloadedImagesRef.current.has(optimizedUrl)) {
-          resolve();
-          return;
-        }
-
-        const img = new window.Image();
-        img.onload = () => {
-          preloadedImagesRef.current.add(optimizedUrl);
-          resolve();
-        };
-        img.onerror = () => {
-          resolve();
-        };
-        img.src = optimizedUrl;
-      });
-    };
-
     const preloadAdjacentImages = () => {
       if (images.length <= 1) return;
 
+      preloadTimeoutsRef.current.forEach((timeout) => clearTimeout(timeout));
+      preloadTimeoutsRef.current = [];
+      adjacentPreloadQueueRef.current = [];
+
       const prevIndex = (currentImageIndex - 1 + images.length) % images.length;
       const nextIndex = (currentImageIndex + 1) % images.length;
+      const prev2Index = (currentImageIndex - 2 + images.length) % images.length;
+      const next2Index = (currentImageIndex + 2) % images.length;
+      const prev3Index = (currentImageIndex - 3 + images.length) % images.length;
+      const next3Index = (currentImageIndex + 3) % images.length;
 
-      if (images[prevIndex] && !imageErrors.has(prevIndex)) {
-        preloadImage(images[prevIndex]);
-      }
-      if (images[nextIndex] && !imageErrors.has(nextIndex)) {
-        preloadImage(images[nextIndex]);
-      }
+      const indicesToPreload = [
+        { index: prevIndex, priority: 0 },
+        { index: nextIndex, priority: 0 },
+        { index: prev2Index, priority: 1 },
+        { index: next2Index, priority: 1 },
+        { index: prev3Index, priority: 2 },
+        { index: next3Index, priority: 2 },
+      ]
+        .filter((item) => images[item.index] && !imageErrors.has(item.index))
+        .sort((a, b) => a.priority - b.priority);
+
+      indicesToPreload.forEach(({ index, priority }) => {
+        const imageUrl = images[index];
+        const optimizedUrl = getOptimizedImageUrl(imageUrl, 75, 1200);
+        if (!preloadedImagesRef.current.has(optimizedUrl)) {
+          if (priority === 0) {
+            adjacentPreloadQueueRef.current.push({
+              url: optimizedUrl,
+              originalUrl: imageUrl,
+              priority,
+            });
+          } else {
+            const timeout = setTimeout(() => {
+              adjacentPreloadQueueRef.current.push({
+                url: optimizedUrl,
+                originalUrl: imageUrl,
+                priority,
+              });
+              processPreloadQueue();
+            }, priority * 50);
+            preloadTimeoutsRef.current.push(timeout);
+          }
+        }
+      });
+
+      processPreloadQueue();
     };
 
     preloadAdjacentImages();
-  }, [currentImageIndex, listing, imageErrors]);
+
+    return () => {
+      preloadTimeoutsRef.current.forEach((timeout) => clearTimeout(timeout));
+      preloadTimeoutsRef.current = [];
+      adjacentPreloadQueueRef.current = [];
+      preloadQueueRef.current = [];
+    };
+  }, [currentImageIndex, listing, imageErrors, processPreloadQueue]);
+
+  const preloadImageOnHover = useCallback(
+    (imageIndex: number) => {
+      if (!listing || typeof window === 'undefined') return;
+
+      const imagesList =
+        listing.images && listing.images.length > 0 ? listing.images : ['/placeholder-car.jpg'];
+
+      if (imageIndex < 0 || imageIndex >= imagesList.length) return;
+      if (imageErrors.has(imageIndex)) return;
+
+      const imageUrl = imagesList[imageIndex];
+      if (!imageUrl || imageUrl === '/placeholder-car.jpg') return;
+
+      const optimizedUrl = getOptimizedImageUrl(imageUrl, 75, 1200);
+      if (preloadedImagesRef.current.has(optimizedUrl)) return;
+
+      if (activePreloadsRef.current >= maxConcurrentPreloads) {
+        adjacentPreloadQueueRef.current.push({
+          url: optimizedUrl,
+          originalUrl: imageUrl,
+          priority: 0,
+        });
+        return;
+      }
+
+      const img = new window.Image();
+      activePreloadsRef.current++;
+      img.onload = () => {
+        preloadedImagesRef.current.add(optimizedUrl);
+        activePreloadsRef.current--;
+        processPreloadQueue();
+      };
+      img.onerror = () => {
+        activePreloadsRef.current--;
+        processPreloadQueue();
+      };
+      img.src = optimizedUrl;
+    },
+    [listing, imageErrors, processPreloadQueue]
+  );
 
   useEffect(() => {
     if (!listing || typeof window === 'undefined') return;
@@ -500,6 +601,7 @@ export default function ListingPage() {
         }
 
         const img = new window.Image();
+        activePreloadsRef.current++;
         img.onload = () => {
           preloadedImagesRef.current.add(optimizedUrl);
           activePreloadsRef.current--;
@@ -512,18 +614,23 @@ export default function ListingPage() {
           processPreloadQueue();
         };
         img.src = optimizedUrl;
-        activePreloadsRef.current++;
       });
     };
 
     const processPreloadQueue = () => {
-      while (
-        activePreloadsRef.current < maxConcurrentPreloads &&
-        preloadQueueRef.current.length > 0
-      ) {
-        const item = preloadQueueRef.current.shift();
+      while (activePreloadsRef.current < maxConcurrentPreloads) {
+        let item: { url: string; priority: number } | undefined;
+
+        if (adjacentPreloadQueueRef.current.length > 0) {
+          item = adjacentPreloadQueueRef.current.shift();
+        } else if (preloadQueueRef.current.length > 0) {
+          item = preloadQueueRef.current.shift();
+        } else {
+          break;
+        }
+
         if (item) {
-          preloadImage(item.url, 75, 1200, item.priority).catch(() => {
+          preloadImage(item.originalUrl, 75, 1200, item.priority).catch(() => {
             activePreloadsRef.current--;
             processPreloadQueue();
           });
@@ -532,21 +639,39 @@ export default function ListingPage() {
     };
 
     const preloadAllImages = () => {
+      const currentIndex = currentImageIndex;
+      const imagesLength = images.length;
+
+      const getDistance = (index: number) => {
+        const direct = Math.abs(index - currentIndex);
+        const wrapped = imagesLength - direct;
+        return Math.min(direct, wrapped);
+      };
+
       const validImages = images
         .map((imageUrl, index) => ({
           url: imageUrl,
           index,
-          priority: Math.abs(index - currentImageIndex),
+          distance: getDistance(index),
         }))
         .filter(
-          (item) => item.url && item.url !== '/placeholder-car.jpg' && !imageErrors.has(item.index)
+          (item) =>
+            item.url &&
+            item.url !== '/placeholder-car.jpg' &&
+            !imageErrors.has(item.index) &&
+            item.distance <= preloadRadius &&
+            item.index !== currentIndex
         )
-        .sort((a, b) => a.priority - b.priority)
+        .sort((a, b) => {
+          if (a.distance !== b.distance) return a.distance - b.distance;
+          return a.index - b.index;
+        })
         .slice(0, maxPreloadImages);
 
       preloadQueueRef.current = validImages.map((item) => ({
-        url: item.url,
-        priority: item.priority,
+        url: getOptimizedImageUrl(item.url, 75, 1200),
+        originalUrl: item.url,
+        priority: item.distance,
       }));
 
       processPreloadQueue();
@@ -582,6 +707,7 @@ export default function ListingPage() {
         }
 
         const img = new window.Image();
+        modalActivePreloadsRef.current++;
         img.onload = () => {
           preloadedImagesRef.current.add(optimizedUrl);
           modalActivePreloadsRef.current--;
@@ -594,7 +720,6 @@ export default function ListingPage() {
           processModalPreloadQueue();
         };
         img.src = optimizedUrl;
-        modalActivePreloadsRef.current++;
       });
     };
 
@@ -605,7 +730,7 @@ export default function ListingPage() {
       ) {
         const item = modalPreloadQueueRef.current.shift();
         if (item) {
-          preloadModalImage(item.url, item.priority).catch(() => {
+          preloadModalImage(item.originalUrl, item.priority).catch(() => {
             modalActivePreloadsRef.current--;
             processModalPreloadQueue();
           });
@@ -616,33 +741,94 @@ export default function ListingPage() {
     const preloadModalAdjacentImages = () => {
       if (images.length <= 1) return;
 
+      modalPreloadTimeoutsRef.current.forEach((timeout) => clearTimeout(timeout));
+      modalPreloadTimeoutsRef.current = [];
+
       const prevIndex = (modalImageIndex - 1 + images.length) % images.length;
       const nextIndex = (modalImageIndex + 1) % images.length;
+      const prev2Index = (modalImageIndex - 2 + images.length) % images.length;
+      const next2Index = (modalImageIndex + 2) % images.length;
+      const prev3Index = (modalImageIndex - 3 + images.length) % images.length;
+      const next3Index = (modalImageIndex + 3) % images.length;
 
-      if (images[prevIndex] && !imageErrors.has(prevIndex)) {
-        preloadModalImage(images[prevIndex], 0);
-      }
-      if (images[nextIndex] && !imageErrors.has(nextIndex)) {
-        preloadModalImage(images[nextIndex], 0);
-      }
+      const indicesToPreload = [
+        { index: prevIndex, priority: 0 },
+        { index: nextIndex, priority: 0 },
+        { index: prev2Index, priority: 1 },
+        { index: next2Index, priority: 1 },
+        { index: prev3Index, priority: 2 },
+        { index: next3Index, priority: 2 },
+      ];
+
+      indicesToPreload.forEach(({ index, priority }) => {
+        if (images[index] && !imageErrors.has(index)) {
+          const imageUrl = images[index];
+          const optimizedUrl = getOptimizedImageUrl(imageUrl, 85, 1920);
+          if (!preloadedImagesRef.current.has(optimizedUrl)) {
+            if (priority === 0) {
+              if (modalActivePreloadsRef.current < maxConcurrentPreloads) {
+                preloadModalImage(imageUrl, priority);
+              } else {
+                modalPreloadQueueRef.current.unshift({
+                  url: optimizedUrl,
+                  originalUrl: imageUrl,
+                  priority,
+                });
+              }
+            } else {
+              const timeout = setTimeout(() => {
+                if (modalActivePreloadsRef.current < maxConcurrentPreloads) {
+                  preloadModalImage(imageUrl, priority);
+                } else {
+                  modalPreloadQueueRef.current.push({
+                    url: optimizedUrl,
+                    originalUrl: imageUrl,
+                    priority,
+                  });
+                  processModalPreloadQueue();
+                }
+              }, priority * 50);
+              modalPreloadTimeoutsRef.current.push(timeout);
+            }
+          }
+        }
+      });
     };
 
     const preloadAllModalImages = () => {
+      const currentIndex = modalImageIndex;
+      const imagesLength = images.length;
+
+      const getDistance = (index: number) => {
+        const direct = Math.abs(index - currentIndex);
+        const wrapped = imagesLength - direct;
+        return Math.min(direct, wrapped);
+      };
+
       const validImages = images
         .map((imageUrl, index) => ({
           url: imageUrl,
           index,
-          priority: Math.abs(index - modalImageIndex),
+          distance: getDistance(index),
         }))
         .filter(
-          (item) => item.url && item.url !== '/placeholder-car.jpg' && !imageErrors.has(item.index)
+          (item) =>
+            item.url &&
+            item.url !== '/placeholder-car.jpg' &&
+            !imageErrors.has(item.index) &&
+            item.distance <= preloadRadius &&
+            item.index !== currentIndex
         )
-        .sort((a, b) => a.priority - b.priority)
+        .sort((a, b) => {
+          if (a.distance !== b.distance) return a.distance - b.distance;
+          return a.index - b.index;
+        })
         .slice(0, maxPreloadImages);
 
       modalPreloadQueueRef.current = validImages.map((item) => ({
-        url: item.url,
-        priority: item.priority,
+        url: getOptimizedImageUrl(item.url, 85, 1920),
+        originalUrl: item.url,
+        priority: item.distance,
       }));
 
       processModalPreloadQueue();
@@ -656,6 +842,8 @@ export default function ListingPage() {
 
     return () => {
       clearTimeout(timeoutId);
+      modalPreloadTimeoutsRef.current.forEach((timeout) => clearTimeout(timeout));
+      modalPreloadTimeoutsRef.current = [];
       modalPreloadQueueRef.current = [];
     };
   }, [modalImageIndex, isImageModalOpen, listing, imageErrors]);
@@ -856,6 +1044,12 @@ export default function ListingPage() {
                         key={index}
                         onClick={() => {
                           setCurrentImageIndex(index);
+                        }}
+                        onMouseEnter={() => {
+                          preloadImageOnHover(index);
+                        }}
+                        onTouchStart={() => {
+                          preloadImageOnHover(index);
                         }}
                         className={`relative h-28 sm:h-32 bg-bg-darker rounded-lg overflow-hidden transition-all cursor-pointer ${
                           index === 3 ? 'hidden sm:block' : ''
