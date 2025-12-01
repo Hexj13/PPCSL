@@ -4,10 +4,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { useTranslation } from '@/hooks/useTranslation';
 import { authApi } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 
 function VerifyPhoneChangeContent() {
+  const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setAuth } = useAuthStore();
@@ -223,16 +225,16 @@ function VerifyPhoneChangeContent() {
   return (
     <div className="max-w-md mx-auto mt-6 md:mt-12">
       <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-        Потврда на нов телефон
+        {t('profile.verifyPhoneChange.title')}
       </h1>
       <div className="card p-6 md:p-8">
         <div className="space-y-6">
           <div className="text-center">
             <p className="text-gray-300 mb-2">
-              Испратениот код на телефон{' '}
+              {t('profile.verifyPhoneChange.codeSent')}{' '}
               {phoneNumber && <span className="font-semibold text-white">{phoneNumber}</span>}
             </p>
-            <p className="text-sm text-gray-400">Внесете го 6-цифрениот код од СМС пораката</p>
+            <p className="text-sm text-gray-400">{t('profile.verifyPhoneChange.enterCode')}</p>
           </div>
 
           <form onSubmit={handleVerifyCode} className="space-y-4">
@@ -291,7 +293,7 @@ function VerifyPhoneChangeContent() {
                 disabled={loading}
                 className="flex-1 btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Назад
+                {t('common.back')}
               </button>
               <button
                 type="submit"
@@ -319,20 +321,23 @@ function VerifyPhoneChangeContent() {
   );
 }
 
+function VerifyPhoneChangeFallback() {
+  const { t } = useTranslation();
+  return (
+    <div className="max-w-md mx-auto mt-6 md:mt-12">
+      <div className="card p-6 md:p-8 text-center">
+        <div className="mb-4">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent"></div>
+        </div>
+        <h1 className="text-2xl font-bold mb-4 text-primary-400">{t('common.loading')}</h1>
+      </div>
+    </div>
+  );
+}
+
 export default function VerifyPhoneChangePage() {
   return (
-    <Suspense
-      fallback={
-        <div className="max-w-md mx-auto mt-6 md:mt-12">
-          <div className="card p-6 md:p-8 text-center">
-            <div className="mb-4">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent"></div>
-            </div>
-            <h1 className="text-2xl font-bold mb-4 text-primary-400">Вчитување...</h1>
-          </div>
-        </div>
-      }
-    >
+    <Suspense fallback={<VerifyPhoneChangeFallback />}>
       <VerifyPhoneChangeContent />
     </Suspense>
   );

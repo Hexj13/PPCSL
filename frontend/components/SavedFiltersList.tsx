@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { useTranslation } from '@/hooks/useTranslation';
 import { savedFiltersApi, SavedFilter } from '@/lib/api';
 
 import { SaveFilterModal } from './SaveFilterModal';
@@ -27,6 +28,7 @@ export function clearSavedFiltersCache() {
 
 export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}) {
   const router = useRouter();
+  const { t } = useTranslation();
   const hasLoadedRef = useRef(moduleHasLoaded);
   const cachedFiltersRef = useRef<SavedFilter[] | null>(moduleCache);
 
@@ -94,7 +96,7 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
     setFilters((prev) => prev.filter((f) => f.id !== id));
     try {
       await savedFiltersApi.remove(id);
-      toast.success('Филтерот е успешно избришан');
+      toast.success(t('savedFiltersList.deleteSuccess'));
       cachedFiltersRef.current = null;
       moduleCache = null;
       hasLoadedRef.current = false;
@@ -105,7 +107,7 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
       const errorMessage =
         (error && typeof error === 'object' && 'response' in error
           ? (error.response as { data?: { message?: string } })?.data?.message
-          : null) || 'Грешка при бришење на филтерот';
+          : null) || t('savedFiltersList.deleteError');
       toast.error(errorMessage);
     } finally {
       setDeletingIds((prev) => {
@@ -202,7 +204,7 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
   if (filters.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-300 text-lg">Немате зачувани филтри</p>
+        <p className="text-gray-300 text-lg">{t('savedFiltersList.empty')}</p>
       </div>
     );
   }
@@ -223,7 +225,9 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
                   {filter.name}
                 </h3>
               </div>
-              <p className="text-sm text-gray-400">Креиран: {formatDate(filter.created_at)}</p>
+              <p className="text-sm text-gray-400">
+                {t('savedFiltersList.created')}: {formatDate(filter.created_at)}
+              </p>
             </div>
             <div className="flex gap-2">
               <button
@@ -233,7 +237,7 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
                   setShowEditModal(true);
                 }}
                 className="flex-shrink-0 p-2 text-gray-400 hover:text-primary-400 transition-colors duration-200"
-                title="Уреди"
+                title={t('common.edit')}
               >
                 <svg
                   className="w-6 h-6"
@@ -257,7 +261,7 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
                 }}
                 disabled={deletingIds.has(filter.id)}
                 className="flex-shrink-0 p-2 text-gray-400 hover:text-red-400 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Избриши"
+                title={t('common.delete')}
               >
                 {deletingIds.has(filter.id) ? (
                   <svg

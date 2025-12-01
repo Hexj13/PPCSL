@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useMemo, startTransition } from 'react';
 
+import { useTranslation } from '@/hooks/useTranslation';
 import {
   LISTING_SORT_OPTIONS,
   LISTING_SORTS,
@@ -15,6 +16,7 @@ import { Dropdown } from './Dropdown';
 export function SortDropdown() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useTranslation();
 
   const currentSortKey = useMemo(
     () => resolveListingSortKey(searchParams.get('sortBy'), searchParams.get('sortOrder')),
@@ -53,7 +55,7 @@ export function SortDropdown() {
           const { sortBy, sortOrder } = LISTING_SORTS[value];
           updateSortParams(sortBy, sortOrder);
         }}
-        placeholder="Избери подредување"
+        placeholder={t('common.selectSorting')}
         options={LISTING_SORT_OPTIONS}
       />
     </div>

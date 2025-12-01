@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
+import { useTranslation } from '@/hooks/useTranslation';
 import { User } from '@/lib/api';
 import { useAuthStore, useComparisonStore } from '@/lib/store';
 
@@ -13,6 +14,7 @@ export function Header() {
   const comparisonCount = useComparisonStore((state) => state.count());
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { t } = useTranslation();
 
   const getUserDisplayName = (userParam: User | null): string => {
     if (!userParam) return '';
@@ -55,7 +57,7 @@ export function Header() {
           >
             <Image
               src="/logo-mobile.png"
-              alt="Kupito"
+              alt={t('header.brandName')}
               width={260}
               height={112}
               className="block md:hidden h-auto w-auto"
@@ -64,7 +66,7 @@ export function Header() {
             />
             <Image
               src="/logo-desktop.png"
-              alt="Kupito"
+              alt={t('header.brandName')}
               width={392}
               height={144}
               className="hidden md:block h-auto w-auto"
@@ -98,8 +100,8 @@ export function Header() {
                       d="M12 4v16m8-8H4"
                     />
                   </svg>
-                  <span className="hidden xl:inline">Додади објава</span>
-                  <span className="xl:hidden">Додади</span>
+                  <span className="hidden xl:inline">{t('header.addListing')}</span>
+                  <span className="xl:hidden">{t('header.addListingShort')}</span>
                 </Link>
                 <Link
                   href="/my-listings"
@@ -118,8 +120,8 @@ export function Header() {
                       d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                     />
                   </svg>
-                  <span className="hidden xl:inline">Мои објави</span>
-                  <span className="xl:hidden">Мои</span>
+                  <span className="hidden xl:inline">{t('header.myListings')}</span>
+                  <span className="xl:hidden">{t('header.myListingsShort')}</span>
                 </Link>
                 <Link
                   href="/favorites"
@@ -138,8 +140,8 @@ export function Header() {
                       d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
                     />
                   </svg>
-                  <span className="hidden lg:inline">Омилени</span>
-                  <span className="lg:hidden">Омилени</span>
+                  <span className="hidden lg:inline">{t('header.favorites')}</span>
+                  <span className="lg:hidden">{t('header.favorites')}</span>
                 </Link>
                 <Link
                   href="/compare"
@@ -158,8 +160,8 @@ export function Header() {
                       d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"
                     />
                   </svg>
-                  <span className="hidden lg:inline">Споредба</span>
-                  <span className="lg:hidden">Споредба</span>
+                  <span className="hidden lg:inline">{t('header.compare')}</span>
+                  <span className="lg:hidden">{t('header.compare')}</span>
                   {comparisonCount > 0 && (
                     <span className="bg-bg-light border border-primary-500/20 text-gray-300 text-[10px] md:text-xs font-bold rounded-[4px] w-4 h-4 md:w-5 md:h-5 flex items-center justify-center ml-1">
                       {comparisonCount}
@@ -184,8 +186,8 @@ export function Header() {
                         d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
                       />
                     </svg>
-                    <span className="hidden lg:inline">Админ</span>
-                    <span className="lg:hidden">Админ</span>
+                    <span className="hidden lg:inline">{t('header.admin')}</span>
+                    <span className="lg:hidden">{t('header.admin')}</span>
                   </Link>
                 )}
                 <Link
@@ -228,8 +230,8 @@ export function Header() {
                       d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                     />
                   </svg>
-                  <span className="hidden xl:inline">Одјави се</span>
-                  <span className="xl:hidden">Одјави</span>
+                  <span className="hidden xl:inline">{t('header.logout')}</span>
+                  <span className="xl:hidden">{t('header.logoutShort')}</span>
                 </button>
               </>
             ) : (
@@ -256,15 +258,26 @@ export function Header() {
                       d="M12 4v16m8-8H4"
                     />
                   </svg>
-                  <span className="hidden xl:inline">Креирај објава</span>
-                  <span className="xl:hidden">Креирај</span>
+                  <span className="hidden xl:inline">{t('header.createListing')}</span>
+                  <span className="xl:hidden">{t('header.createListingShort')}</span>
                 </Link>
-                <Link href="/login" className="btn-outline select-none">
-                  <span className="hidden xl:inline">Најави се</span>
-                  <span className="xl:hidden">Најави</span>
+                <Link
+                  href="/login"
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      const currentUrl = window.location.pathname + window.location.search;
+                      if (currentUrl !== '/login' && currentUrl !== '/register') {
+                        localStorage.setItem('returnUrl', currentUrl);
+                      }
+                    }
+                  }}
+                  className="btn-outline select-none"
+                >
+                  <span className="hidden xl:inline">{t('header.login')}</span>
+                  <span className="xl:hidden">{t('header.loginShort')}</span>
                 </Link>
                 <Link href="/register" className="btn-primary select-none">
-                  Регистрација
+                  {t('header.register')}
                 </Link>
               </>
             )}
@@ -273,7 +286,7 @@ export function Header() {
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="lg:hidden text-white hover:text-primary-500 transition-colors duration-200 p-2 -mr-2 select-none"
-            aria-label="Toggle menu"
+            aria-label={t('header.toggleMenu')}
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {isMobileMenuOpen ? (
@@ -317,7 +330,7 @@ export function Header() {
                       d="M12 4v16m8-8H4"
                     />
                   </svg>
-                  Додај објава
+                  {t('header.addListing')}
                 </Link>
                 <Link
                   href="/my-listings"
@@ -332,7 +345,7 @@ export function Header() {
                       d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                     />
                   </svg>
-                  Мои објави
+                  {t('header.myListings')}
                 </Link>
                 <Link
                   href="/favorites"
@@ -347,7 +360,7 @@ export function Header() {
                       d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
                     />
                   </svg>
-                  Омилени
+                  {t('header.favorites')}
                 </Link>
                 <Link
                   href="/compare"
@@ -362,7 +375,7 @@ export function Header() {
                       d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"
                     />
                   </svg>
-                  Споредба
+                  {t('header.compare')}
                   {comparisonCount > 0 && (
                     <span className="bg-bg-light border border-primary-500/20 text-gray-300 text-xs font-bold rounded-[4px] w-5 h-5 flex items-center justify-center">
                       {comparisonCount}
@@ -383,7 +396,7 @@ export function Header() {
                         d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
                       />
                     </svg>
-                    Админ
+                    {t('header.admin')}
                   </Link>
                 )}
                 <Link
@@ -425,7 +438,7 @@ export function Header() {
                       d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                     />
                   </svg>
-                  Одјави се
+                  {t('header.logout')}
                 </button>
               </div>
             ) : (
@@ -453,21 +466,29 @@ export function Header() {
                       d="M12 4v16m8-8H4"
                     />
                   </svg>
-                  Креирај објава
+                  {t('header.createListing')}
                 </Link>
                 <Link
                   href="/login"
-                  onClick={() => setIsMobileMenuOpen(false)}
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    if (typeof window !== 'undefined') {
+                      const currentUrl = window.location.pathname + window.location.search;
+                      if (currentUrl !== '/login' && currentUrl !== '/register') {
+                        localStorage.setItem('returnUrl', currentUrl);
+                      }
+                    }
+                  }}
                   className="btn-outline text-center select-none"
                 >
-                  Најави се
+                  {t('header.login')}
                 </Link>
                 <Link
                   href="/register"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="btn-primary text-center select-none"
                 >
-                  Регистрација
+                  {t('header.register')}
                 </Link>
               </div>
             )}

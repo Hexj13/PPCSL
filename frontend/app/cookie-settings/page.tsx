@@ -4,8 +4,10 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { useCookieConsent } from '@/hooks/useCookieConsent';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function CookieSettingsPage() {
+  const { t } = useTranslation();
   const { consent, isLoading, grantConsent, denyConsent } = useCookieConsent();
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -34,7 +36,7 @@ export default function CookieSettingsPage() {
     return (
       <div className="max-w-3xl mx-auto">
         <div className="surface p-8 text-center">
-          <p className="text-gray-400">Вчитување...</p>
+          <p className="text-gray-400">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -44,48 +46,46 @@ export default function CookieSettingsPage() {
     <div className="max-w-3xl mx-auto">
       <div className="mb-8">
         <h1 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent mb-4">
-          Настройки за cookies
+          {t('cookieSettings.title')}
         </h1>
         <p className="text-gray-400 text-sm sm:text-base leading-relaxed">
-          Овде можете да управувате со вашите преференци за cookies. Cookies се мали датотеки кои се
-          чуваат на вашиот уред и ни помагаат да ја подобриме вашата корисничка средина, да
-          анализираме употреба на веб-сајтот и да обезбедиме релевантна содржина.
+          {t('cookieSettings.description')}
         </p>
       </div>
 
       {showSuccess && (
         <div className="surface border-2 border-[#31A55F] bg-[#31A55F]/10 p-4 mb-6 rounded-lg">
-          <p className="text-[#31A55F] font-medium">✓ Вашите преференци се зачувани успешно</p>
+          <p className="text-[#31A55F] font-medium">{t('cookieSettings.preferencesSaved')}</p>
         </div>
       )}
 
       <div className="surface mb-6">
-        <h2 className="text-2xl font-bold mb-4">Неопходни cookies</h2>
+        <h2 className="text-2xl font-bold mb-4">{t('cookieSettings.necessary.title')}</h2>
         <p className="text-gray-300 text-sm mb-4 leading-relaxed">
-          Овие cookies се неопходни за функционирање на веб-сајтот и не можат да се оневозможат. Тие
-          вклучуваат cookies за сесија, безбедност и основна функционалност на платформата.
+          {t('cookieSettings.necessary.description')}
         </p>
         <div className="bg-bg-darker p-3 rounded-lg">
           <p className="text-gray-400 text-sm">
-            Статус: <span className="text-[#31A55F]">Активни</span>
+            {t('cookieSettings.status')}{' '}
+            <span className="text-[#31A55F]">{t('cookieSettings.active')}</span>
           </p>
         </div>
       </div>
 
       <div className="surface mb-6">
-        <h2 className="text-2xl font-bold mb-4">Аналитички cookies</h2>
+        <h2 className="text-2xl font-bold mb-4">{t('cookieSettings.analytical.title')}</h2>
         <p className="text-gray-300 text-sm mb-4 leading-relaxed">
-          Овие cookies ни помагаат да разбереме како посетителите ја користат нашата веб-страница,
-          собирајќи информации анонимно. Ова ни помага да ја подобриме функционалноста и
-          корисничкото искуство.
+          {t('cookieSettings.analytical.description')}
         </p>
         <div className="space-y-4">
           <div className="bg-bg-darker p-4 rounded-lg">
             <div className="flex items-center justify-between mb-2">
               <div>
-                <h3 className="font-semibold text-white mb-1">Google Analytics</h3>
+                <h3 className="font-semibold text-white mb-1">
+                  {t('cookieSettings.googleAnalytics.title')}
+                </h3>
                 <p className="text-gray-400 text-xs">
-                  Користиме Google Analytics за анализирање на употребата на веб-сајтот
+                  {t('cookieSettings.googleAnalytics.description')}
                 </p>
               </div>
               <div className="flex items-center gap-3">
@@ -94,7 +94,9 @@ export default function CookieSettingsPage() {
                     consent === 'granted' ? 'text-[#31A55F]' : 'text-gray-500'
                   }`}
                 >
-                  {consent === 'granted' ? 'Активни' : 'Неактивни'}
+                  {consent === 'granted'
+                    ? t('cookieSettings.active')
+                    : t('cookieSettings.inactive')}
                 </span>
               </div>
             </div>
@@ -102,9 +104,11 @@ export default function CookieSettingsPage() {
           <div className="bg-bg-darker p-4 rounded-lg">
             <div className="flex items-center justify-between mb-2">
               <div>
-                <h3 className="font-semibold text-white mb-1">Google Tag Manager</h3>
+                <h3 className="font-semibold text-white mb-1">
+                  {t('cookieSettings.googleTagManager.title')}
+                </h3>
                 <p className="text-gray-400 text-xs">
-                  Користиме Google Tag Manager за управување со тагови и скрипти
+                  {t('cookieSettings.googleTagManager.description')}
                 </p>
               </div>
               <div className="flex items-center gap-3">
@@ -113,7 +117,9 @@ export default function CookieSettingsPage() {
                     consent === 'granted' ? 'text-[#31A55F]' : 'text-gray-500'
                   }`}
                 >
-                  {consent === 'granted' ? 'Активни' : 'Неактивни'}
+                  {consent === 'granted'
+                    ? t('cookieSettings.active')
+                    : t('cookieSettings.inactive')}
                 </span>
               </div>
             </div>
@@ -122,7 +128,7 @@ export default function CookieSettingsPage() {
       </div>
 
       <div className="surface mb-6">
-        <h2 className="text-2xl font-bold mb-4">Вашиот избор</h2>
+        <h2 className="text-2xl font-bold mb-4">{t('cookieSettings.yourChoice.title')}</h2>
         <div className="flex flex-col sm:flex-row gap-4">
           <button
             onClick={() => handleSave('granted')}
@@ -133,7 +139,7 @@ export default function CookieSettingsPage() {
                 : 'bg-bg-darker hover:bg-bg-darker/80 text-white border-2 border-primary-500/30 hover:border-primary-500/50'
             }`}
           >
-            {isSaving ? 'Зачувување...' : 'Прифати аналитички cookies'}
+            {isSaving ? t('common.saving') : t('cookieSettings.acceptAnalytical')}
           </button>
           <button
             onClick={() => handleSave('denied')}
@@ -144,28 +150,24 @@ export default function CookieSettingsPage() {
                 : 'bg-bg-darker hover:bg-bg-darker/80 text-white border-2 border-primary-500/30 hover:border-primary-500/50'
             }`}
           >
-            {isSaving ? 'Зачувување...' : 'Одбиј аналитички cookies'}
+            {isSaving ? t('common.saving') : t('cookieSettings.denyAnalytical')}
           </button>
         </div>
       </div>
 
       <div className="surface">
-        <h2 className="text-2xl font-bold mb-4">Повеќе информации</h2>
+        <h2 className="text-2xl font-bold mb-4">{t('cookieSettings.moreInfo.title')}</h2>
         <p className="text-gray-300 text-sm mb-4 leading-relaxed">
-          За повеќе информации за тоа како ги користиме cookies и како ги заштитуваме вашите
-          податоци, ве молиме прочитајте ја нашата{' '}
+          {t('cookieSettings.moreInfo.description')}{' '}
           <Link
             href="/privacy"
             className="text-primary-400 hover:text-primary-300 underline transition-colors"
           >
-            Политика за приватност
+            {t('cookieSettings.privacyPolicy')}
           </Link>
           .
         </p>
-        <p className="text-gray-400 text-xs">
-          Вашите преференци се зачувани во вашиот прелистувач и ќе останат активни 365 дена. Можете
-          да ги промените во секое време од оваа страница.
-        </p>
+        <p className="text-gray-400 text-xs">{t('cookieSettings.preferencesSavedMessage')}</p>
       </div>
     </div>
   );

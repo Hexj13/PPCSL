@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useTranslation } from '@/hooks/useTranslation';
 import { Button } from '@/ui';
 
 interface DropdownOption {
@@ -32,6 +33,7 @@ function DropdownComponent({
   showActionButtons = false,
   error = false,
 }: DropdownProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [tempValue, setTempValue] = useState<string>(value);
@@ -228,7 +230,9 @@ function DropdownComponent({
                 );
               })
             ) : (
-              <div className="px-4 py-3 text-gray-400 text-center">Не се пронајдени резултати</div>
+              <div className="px-4 py-3 text-gray-400 text-center">
+                {t('searchFilters.noResults')}
+              </div>
             )}
           </div>
           {showActionButtons && (
@@ -244,7 +248,7 @@ function DropdownComponent({
                 }}
                 className="px-3 py-1.5 text-sm text-white hover:text-primary-400 transition-colors duration-150"
               >
-                Ресетирај
+                {t('common.reset')}
               </button>
               <Button
                 variant="primary"
@@ -255,7 +259,7 @@ function DropdownComponent({
                   setSearchQuery('');
                 }}
               >
-                Ок
+                {t('common.ok')}
               </Button>
             </div>
           )}

@@ -6,6 +6,7 @@ import reactPlugin from 'eslint-plugin-react';
 import importPlugin from 'eslint-plugin-import';
 import prettierConfig from 'eslint-config-prettier';
 import globals from 'globals';
+import noHardcodedTextPlugin from './eslint-plugin-no-hardcoded-text.mjs';
 
 export default [
   js.configs.recommended,
@@ -32,7 +33,14 @@ export default [
   },
   {
     files: ['**/*.{ts,tsx}'],
-    ignores: ['**/.storybook/**', '**/*.stories.tsx', '**/*.stories.ts', 'vitest.config.ts', 'scripts/**'],
+    ignores: [
+      '**/.storybook/**',
+      '**/*.stories.tsx',
+      '**/*.stories.ts',
+      'vitest.config.ts',
+      'scripts/**',
+      '**/design-system/**',
+    ],
     languageOptions: {
       parser: typescriptParser,
       parserOptions: {
@@ -44,6 +52,7 @@ export default [
       react: reactPlugin,
       'react-hooks': reactHooksPlugin,
       import: importPlugin,
+      'no-hardcoded-text': noHardcodedTextPlugin,
     },
     settings: {
       react: {
@@ -98,6 +107,25 @@ export default [
           },
         },
       ],
+      'no-hardcoded-text/no-hardcoded-text': [
+        'warn',
+        {
+          allowedElements: ['script', 'style', 'noscript', 'meta', 'link'],
+          allowedAttributes: ['className', 'id', 'key', 'data-testid', 'data-cy', 'href', 'src'],
+          translationFunction: 't',
+          ignorePatterns: [
+            '^\\s*$',
+            '^[0-9\\s.,\\-+()]+$',
+            '^[a-z]+://',
+            '^www\\.',
+            '^mailto:',
+            '^#',
+            '^[:;|•\\-\\s\\/×·]+$',
+            '^[×·\\/|:\\-;]+$',
+            '^[A-Z]$',
+          ],
+        },
+      ],
     },
   },
   {
@@ -108,6 +136,9 @@ export default [
         ...globals.browser,
         ...globals.node,
       },
+    },
+    rules: {
+      'no-hardcoded-text/no-hardcoded-text': 'off',
     },
   },
   {

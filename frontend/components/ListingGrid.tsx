@@ -3,6 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 
+import { useTranslation } from '@/hooks/useTranslation';
 import { favoritesApi, listingsApi, Listing, PaginationMeta } from '@/lib/api';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
 
@@ -44,6 +45,7 @@ interface ListingGridProps {
 }
 
 export function ListingGrid({ initialData }: ListingGridProps) {
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const [listings, setListings] = useState<Listing[]>(initialData?.data || []);
   const [loading, setLoading] = useState(false);
@@ -198,7 +200,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       } catch {
         if (!append) {
           setListings([]);
-          setError('Грешка при вчитување на објави. Проверете дали бекенд серверот е стартуван.');
+          setError(t('listings.loadError'));
         }
       } finally {
         setLoadingMore(false);
@@ -206,7 +208,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [searchParamsString]
+    [searchParamsString, setFavorites, user, t]
   );
 
   useEffect(() => {
@@ -448,7 +450,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
     return (
       <div className="text-center py-12">
         <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6 max-w-md mx-auto">
-          <p className="text-red-400 text-lg font-semibold mb-2">Грешка</p>
+          <p className="text-red-400 text-lg font-semibold mb-2">{t('common.error')}</p>
           <p className="text-gray-300">{error}</p>
         </div>
       </div>
@@ -458,7 +460,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   if (listings.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-300 text-lg">Објави не се пронајдени</p>
+        <p className="text-gray-300 text-lg">{t('listings.notFound')}</p>
       </div>
     );
   }
@@ -477,21 +479,21 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       {loadingMore && (
         <div className="text-center py-8">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-          <p className="mt-2 text-gray-300">Вчитување...</p>
+          <p className="mt-2 text-gray-300">{t('common.loading')}</p>
         </div>
       )}
 
       {showLoadMoreButton && !loadingMore && (
         <div className="flex justify-center py-8">
           <button onClick={handleLoadMore} className="btn-primary px-8 py-3 text-lg font-semibold">
-            Вчитај уште
+            {t('listings.loadMore')}
           </button>
         </div>
       )}
 
       {!hasMore && listings.length > 0 && (
         <div className="text-center py-8">
-          <p className="text-gray-300">Нема повеќе објави</p>
+          <p className="text-gray-300">{t('listings.noMoreListings')}</p>
         </div>
       )}
 

@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 
+import { useTranslation } from '@/hooks/useTranslation';
 import { Listing } from '@/lib/api';
 import {
   formatBodyType,
@@ -27,6 +28,7 @@ export function ListingManagementCard({
   onAction,
   onCopyId,
 }: ListingManagementCardProps) {
+  const { t } = useTranslation();
   const [imageError, setImageError] = useState(false);
 
   const imageUrl =
@@ -79,7 +81,9 @@ export function ListingManagementCard({
               {isAdminMode && (
                 <>
                   <div className="mb-1 flex items-center gap-2">
-                    <span className="text-xs text-gray-400 font-mono">ID: {listing.id}</span>
+                    <span className="text-xs text-gray-400 font-mono">
+                      {t('listings.id')} {listing.id}
+                    </span>
                     {onCopyId && (
                       <button
                         onClick={(e) => {
@@ -87,7 +91,7 @@ export function ListingManagementCard({
                           onCopyId(listing.id);
                         }}
                         className="p-1 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors"
-                        title="Копирај ID"
+                        title={t('common.copyId')}
                       >
                         <svg
                           className="w-3.5 h-3.5"
@@ -107,7 +111,7 @@ export function ListingManagementCard({
                   </div>
                   {listing.user && (
                     <div className="mb-2 text-sm text-gray-300">
-                      <span className="text-primary-400">Корисник:</span>{' '}
+                      <span className="text-primary-400">{t('admin.usersTab.user')}</span>{' '}
                       <span className="font-medium">
                         {[
                           listing.user.firstName,
@@ -117,7 +121,7 @@ export function ListingManagementCard({
                           listing.user.phone,
                         ]
                           .filter(Boolean)
-                          .join(' ') || 'Избришан корисник'}
+                          .join(' ') || t('admin.usersTab.deletedUser')}
                       </span>
                     </div>
                   )}
@@ -131,17 +135,31 @@ export function ListingManagementCard({
               {listing.vehicle && (
                 <div className="text-sm text-gray-300 space-y-1.5 mb-3">
                   {listing.vehicle.engine_displ_l && (
-                    <div>Мотор: {formatEngineVolume(listing.vehicle.engine_displ_l)} л</div>
+                    <div>
+                      {t('userListings.engine')}:{' '}
+                      {formatEngineVolume(listing.vehicle.engine_displ_l)} {t('listings.liters')}
+                    </div>
                   )}
-                  {listing.vehicle.fuel && <div>Гориво: {listing.vehicle.fuel}</div>}
+                  {listing.vehicle.fuel && (
+                    <div>
+                      {t('userListings.fuel')}: {listing.vehicle.fuel}
+                    </div>
+                  )}
                   {listing.vehicle.mileage_km && (
-                    <div>Поминување: {formatMileage(listing.vehicle.mileage_km)} км</div>
+                    <div>
+                      {t('userListings.mileage')}: {formatMileage(listing.vehicle.mileage_km)}{' '}
+                      {t('listings.km')}
+                    </div>
                   )}
                   {listing.vehicle.drive_type && (
-                    <div>Тип на погон: {formatDriveType(listing.vehicle.drive_type)}</div>
+                    <div>
+                      {t('userListings.driveType')}: {formatDriveType(listing.vehicle.drive_type)}
+                    </div>
                   )}
                   {listing.vehicle.body_type && (
-                    <div>Тип на каросерија: {formatBodyType(listing.vehicle.body_type)}</div>
+                    <div>
+                      {t('userListings.bodyType')}: {formatBodyType(listing.vehicle.body_type)}
+                    </div>
                   )}
                 </div>
               )}
@@ -159,14 +177,15 @@ export function ListingManagementCard({
               <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-start md:justify-end">
                 {listing.is_new && (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-primary-500/20 border border-primary-500/40 text-primary-300 shadow-sm">
+                    {/* eslint-disable-next-line no-hardcoded-text/no-hardcoded-text */}
                     <span>✨</span>
-                    <span>Ново</span>
+                    <span>{t('listings.new')}</span>
                   </span>
                 )}
                 {listing.urgent && (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-primary-500/20 border border-primary-500/40 text-primary-300 shadow-sm">
                     <span>🔥</span>
-                    <span>Итно</span>
+                    <span>{t('listings.urgent')}</span>
                   </span>
                 )}
               </div>
@@ -175,7 +194,9 @@ export function ListingManagementCard({
           <div className="mt-auto pt-3 border-t border-primary-500/20">
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-2 lg:gap-3">
               <div className="inline-flex items-center gap-1 sm:gap-1.5">
-                <div className="text-xs sm:text-sm font-semibold text-gray-200">Статус:</div>
+                <div className="text-xs sm:text-sm font-semibold text-gray-200">
+                  {t('listings.status')}
+                </div>
                 <div
                   className={
                     listing.status === 'Active'
@@ -186,13 +207,13 @@ export function ListingManagementCard({
                   }
                 >
                   {listing.status === 'Active'
-                    ? 'Активна'
+                    ? t('userListings.active')
                     : listing.status === 'Paused'
-                      ? 'Привремено застарена'
-                      : 'Затворена'}
+                      ? t('userListings.paused')
+                      : t('userListings.closed')}
                 </div>
               </div>
-              <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 w-full lg:w-auto">
+              <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 w-full lg:w-auto min-h-[48px] lg:min-h-[52px]">
                 {onAction && (
                   <>
                     {listing.status === 'Paused' && (
@@ -200,7 +221,7 @@ export function ListingManagementCard({
                         onClick={() => onAction(listing.id, 'publish')}
                         className="px-3 md:px-4 py-2.5 sm:py-2 text-xs sm:text-sm bg-primary-500/20 border-2 border-primary-500/40 text-primary-300 hover:bg-primary-500/30 hover:border-primary-500/60 rounded-lg font-semibold transition-colors h-12 lg:h-[52px] flex items-center justify-center w-full lg:w-auto"
                       >
-                        Објави
+                        {t('listings.publishAction')}
                       </button>
                     )}
                     {listing.status === 'Active' && (
@@ -208,7 +229,7 @@ export function ListingManagementCard({
                         onClick={() => onAction(listing.id, 'pause')}
                         className="px-3 md:px-4 py-2.5 sm:py-2 text-xs sm:text-sm bg-yellow-500/20 border-2 border-yellow-500/40 text-yellow-300 hover:bg-yellow-500/30 hover:border-yellow-500/60 rounded-lg font-semibold transition-colors h-12 lg:h-[52px] flex items-center justify-center w-full lg:w-auto"
                       >
-                        Привремено застани
+                        {t('listings.pauseAction')}
                       </button>
                     )}
                     {listing.status !== 'Closed' && (
@@ -216,7 +237,7 @@ export function ListingManagementCard({
                         onClick={() => onAction(listing.id, 'close')}
                         className="px-3 md:px-4 py-2.5 sm:py-2 text-xs sm:text-sm bg-bg-light border-2 border-primary-500/30 text-white hover:bg-bg-dark hover:border-primary-500/50 rounded-lg font-semibold transition-colors h-12 lg:h-[52px] flex items-center justify-center w-full lg:w-auto"
                       >
-                        Затвори
+                        {t('common.close')}
                       </button>
                     )}
                   </>
@@ -225,7 +246,7 @@ export function ListingManagementCard({
                   <Link
                     href={`/listings/${listing.id}/edit`}
                     className="bg-bg-dark/95 backdrop-blur-sm px-3 md:px-4 py-2.5 sm:py-2 rounded-lg border-2 border-primary-500/30 text-primary-400 hover:text-primary-300 hover:border-primary-500/50 transition-colors duration-200 inline-flex items-center justify-center h-12 lg:h-[52px] w-full lg:w-auto"
-                    title="Уреди објава"
+                    title={t('common.editListing')}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <svg
@@ -241,7 +262,7 @@ export function ListingManagementCard({
                         d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                       />
                     </svg>
-                    <span className="ml-1.5 sm:hidden">Уреди објава</span>
+                    <span className="ml-1.5 sm:hidden">{t('common.editListing')}</span>
                   </Link>
                 )}
               </div>

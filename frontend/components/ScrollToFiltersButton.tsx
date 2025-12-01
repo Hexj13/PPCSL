@@ -1,13 +1,68 @@
 'use client';
 
+import { useSearchParams } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
 
+import { useTranslation } from '@/hooks/useTranslation';
+
 export function ScrollToFiltersButton() {
+  const { t } = useTranslation();
+  const searchParams = useSearchParams();
   const [isVisible, setIsVisible] = useState(false);
   const [showBackButton, setShowBackButton] = useState(false);
   const scrollPositionRef = useRef<number>(0);
   const filtersElementRef = useRef<HTMLElement | null>(null);
   const hasScrolledToFiltersRef = useRef<boolean>(false);
+  const previousSearchParamsRef = useRef<string>('');
+  const isInitialMountRef = useRef<boolean>(true);
+
+  useEffect(() => {
+    const checkParamsChange = () => {
+      const getCurrentParams = () => {
+        if (typeof window !== 'undefined') {
+          return window.location.search;
+        }
+        return searchParams.toString();
+      };
+
+      const currentSearchParams = getCurrentParams();
+
+      if (isInitialMountRef.current) {
+        isInitialMountRef.current = false;
+        previousSearchParamsRef.current = currentSearchParams;
+        return;
+      }
+
+      if (previousSearchParamsRef.current !== currentSearchParams) {
+        scrollPositionRef.current = 0;
+        hasScrolledToFiltersRef.current = false;
+        setShowBackButton(false);
+        previousSearchParamsRef.current = currentSearchParams;
+
+        if (typeof window !== 'undefined') {
+          const filtersElement = document.getElementById('search-filters');
+          if (filtersElement) {
+            const scrollY = window.scrollY;
+            const filtersRect = filtersElement.getBoundingClientRect();
+            const filtersBottom = filtersRect.bottom + scrollY;
+            const isScrolledPastFilters = scrollY > filtersBottom + 100;
+
+            if (!isScrolledPastFilters) {
+              setIsVisible(false);
+            }
+          }
+        }
+      }
+    };
+
+    checkParamsChange();
+
+    if (typeof window !== 'undefined') {
+      requestAnimationFrame(() => {
+        checkParamsChange();
+      });
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -44,7 +99,11 @@ export function ScrollToFiltersButton() {
       ) {
         setIsVisible(true);
         setShowBackButton(true);
-      } else if (scrollY < scrollPositionRef.current - 100 && scrollPositionRef.current > 0) {
+      } else if (
+        scrollY < scrollPositionRef.current - 100 &&
+        scrollPositionRef.current > 0 &&
+        !hasScrolledToFiltersRef.current
+      ) {
         scrollPositionRef.current = 0;
         hasScrolledToFiltersRef.current = false;
         setIsVisible(false);
@@ -118,7 +177,7 @@ export function ScrollToFiltersButton() {
           e.currentTarget.style.boxShadow =
             '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
         }}
-        aria-label={showBackButton ? 'Врати се назад' : 'Скроллирај до филтри'}
+        aria-label={showBackButton ? t('common.scrollBack') : t('common.scrollToFilters')}
       >
         {showBackButton ? (
           <svg

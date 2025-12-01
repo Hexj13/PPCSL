@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Modal } from '@/components/Modal';
+import { useTranslation } from '@/hooks/useTranslation';
 import { authApi, UpdateProfileDto, User } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 
@@ -53,6 +54,7 @@ const initializeFormData = (user: User | null): UpdateProfileDto => {
 export default function ProfilePage() {
   const router = useRouter();
   const { user, isInitialized, setAuth, token, logout } = useAuthStore();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [formData, setFormData] = useState<UpdateProfileDto>(() => initializeFormData(user));
@@ -162,20 +164,23 @@ export default function ProfilePage() {
     }
   }, [user]);
 
-  const handleChange = useCallback((field: keyof UpdateProfileDto, value: string | boolean) => {
-    setFormData((prev) => {
-      const newData = { ...prev, [field]: value };
-      if (field === 'email') {
-        const emailValue = value as string;
-        if (emailValue && !validateEmail(emailValue)) {
-          setEmailError('Невалидна email адреса');
-        } else {
-          setEmailError('');
+  const handleChange = useCallback(
+    (field: keyof UpdateProfileDto, value: string | boolean) => {
+      setFormData((prev) => {
+        const newData = { ...prev, [field]: value };
+        if (field === 'email') {
+          const emailValue = value as string;
+          if (emailValue && !validateEmail(emailValue)) {
+            setEmailError(t('profile.invalidEmail'));
+          } else {
+            setEmailError('');
+          }
         }
-      }
-      return newData;
-    });
-  }, []);
+        return newData;
+      });
+    },
+    [t]
+  );
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -184,12 +189,12 @@ export default function ProfilePage() {
       if (!user) return;
 
       if (emailError) {
-        toast.error('Ве молиме, поправете ја email адресата');
+        toast.error(t('profile.fixEmail'));
         return;
       }
 
       if (formData.email && !validateEmail(formData.email)) {
-        toast.error('Невалидна email адреса');
+        toast.error(t('profile.invalidEmail'));
         return;
       }
 
@@ -205,7 +210,7 @@ export default function ProfilePage() {
         formData.telegram !== initialData.telegram;
 
       if (!hasChanges) {
-        toast.success('Нема промени за зачувување');
+        toast.success(t('profile.noChanges'));
         return;
       }
 
@@ -214,13 +219,13 @@ export default function ProfilePage() {
       try {
         const response = await authApi.updateProfile(formData);
         setAuth(response.data, useAuthStore.getState().token);
-        toast.success('Профилот е успешно ажуриран');
+        toast.success(t('profile.updateSuccess'));
       } catch {
       } finally {
         setLoading(false);
       }
     },
-    [formData, user, setAuth, emailError]
+    [formData, user, setAuth, emailError, t]
   );
 
   const handleDeleteAccount = useCallback(async () => {
@@ -229,7 +234,7 @@ export default function ProfilePage() {
     setDeleting(true);
     try {
       await authApi.deleteAccount();
-      toast.success('Аккаунтот е успешно избришан');
+      toast.success(t('profile.deleteSuccess'));
       logout();
       router.replace('/');
     } catch {
@@ -237,7 +242,7 @@ export default function ProfilePage() {
       setDeleting(false);
       setShowDeleteModal(false);
     }
-  }, [user, router, logout]);
+  }, [user, router, logout, t]);
 
   if (!isInitialized && !user) {
     return null;
@@ -247,7 +252,7 @@ export default function ProfilePage() {
     return (
       <div className="text-center py-12">
         <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-        <p className="mt-4 text-gray-300">Вчитување...</p>
+        <p className="mt-4 text-gray-300">{t('common.loading')}</p>
       </div>
     );
   }
@@ -259,15 +264,17 @@ export default function ProfilePage() {
   return (
     <div className="max-w-4xl mx-auto mt-6 md:mt-12">
       <h1 className="text-3xl md:text-4xl font-extrabold mb-6 pl-4 md:pl-6 lg:pl-8 bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-        Профил
+        {t('profile.title')}
       </h1>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="card p-4 md:p-6 lg:p-8">
           <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
-            Контакт информација
+            {t('profile.contactInfo')}
           </h2>
           <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400">Телефон</label>
+            <label className="block text-sm font-semibold mb-2 text-primary-400">
+              {t('profile.phone')}
+            </label>
             <div className="relative">
               <input
                 type="tel"
@@ -278,7 +285,7 @@ export default function ProfilePage() {
               <Link
                 href="/profile/change-phone"
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-primary-400 hover:text-primary-300 transition-colors duration-200 p-1"
-                title="Промени телефон"
+                title={t('common.changePhone')}
               >
                 <svg
                   className="w-5 h-5"
@@ -333,6 +340,7 @@ export default function ProfilePage() {
                     )}
                   </div>
                 </div>
+                {/* eslint-disable no-hardcoded-text/no-hardcoded-text */}
                 <span
                   onClick={() => handleChange('viber', !formData.viber)}
                   className="text-sm text-white cursor-pointer"
@@ -426,16 +434,19 @@ export default function ProfilePage() {
                   Telegram
                 </span>
               </div>
+              {/* eslint-enable no-hardcoded-text/no-hardcoded-text */}
             </div>
           </div>
         </div>
 
         <div className="card p-4 md:p-6 lg:p-8">
           <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
-            Email и известувања
+            {t('profile.emailAndNotifications')}
           </h2>
           <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400">Email</label>
+            <label className="block text-sm font-semibold mb-2 text-primary-400">
+              {t('profile.email')}
+            </label>
             <input
               type="email"
               value={formData.email || ''}
@@ -444,11 +455,11 @@ export default function ProfilePage() {
               className={`input-field ${emailError ? 'border-red-500' : ''} ${
                 user.email ? 'bg-bg-light/50 cursor-not-allowed opacity-70' : ''
               }`}
-              placeholder="Внесете email адреса"
+              placeholder={t('profile.emailPlaceholder')}
             />
             {emailError && <p className="mt-1 text-sm text-red-400">{emailError}</p>}
             {user.email && (
-              <p className="mt-1 text-xs text-gray-400">Email адресата не може да се промени</p>
+              <p className="mt-1 text-xs text-gray-400">{t('profile.emailCannotBeChanged')}</p>
             )}
             <div className="mt-4">
               <div className="flex items-center gap-3 group">
@@ -515,12 +526,12 @@ export default function ProfilePage() {
                       : 'text-white cursor-pointer'
                   }`}
                 >
-                  Примај рассилка на е-пошта
+                  {t('profile.receiveEmailNotifications')}
                 </span>
               </div>
               {!formData.email && !user.email && (
                 <p className="mt-2 text-xs text-gray-400">
-                  За да примате известувања, внесете email адреса
+                  {t('profile.enterEmailForNotifications')}
                 </p>
               )}
             </div>
@@ -530,11 +541,11 @@ export default function ProfilePage() {
         {user.type === 'Business' && (
           <div className="card p-4 md:p-6 lg:p-8">
             <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
-              Информација за компанија
+              {t('profile.companyInfo')}
             </h2>
             <div>
               <label className="block text-sm font-semibold mb-2 text-primary-400">
-                Име на компанија
+                {t('profile.companyName')}
               </label>
               <input
                 type="text"
@@ -547,7 +558,7 @@ export default function ProfilePage() {
                   }
                 }}
                 className="input-field"
-                placeholder="Внесете го името на компанијата"
+                placeholder={t('profile.companyNamePlaceholder')}
               />
             </div>
           </div>
@@ -555,10 +566,14 @@ export default function ProfilePage() {
 
         {user.type === 'Individual' && (
           <div className="card p-4 md:p-6 lg:p-8">
-            <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">Лични податоци</h2>
+            <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
+              {t('profile.personalData')}
+            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold mb-2 text-primary-400">Име</label>
+                <label className="block text-sm font-semibold mb-2 text-primary-400">
+                  {t('profile.firstName')}
+                </label>
                 <input
                   type="text"
                   maxLength={50}
@@ -570,12 +585,14 @@ export default function ProfilePage() {
                     }
                   }}
                   className="input-field"
-                  placeholder="Внесете го вашето име"
+                  placeholder={t('profile.firstNamePlaceholder')}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2 text-primary-400">Презиме</label>
+                <label className="block text-sm font-semibold mb-2 text-primary-400">
+                  {t('profile.lastName')}
+                </label>
                 <input
                   type="text"
                   maxLength={50}
@@ -587,7 +604,7 @@ export default function ProfilePage() {
                     }
                   }}
                   className="input-field"
-                  placeholder="Внесете го вашето презиме"
+                  placeholder={t('profile.lastNamePlaceholder')}
                 />
               </div>
             </div>
@@ -600,21 +617,21 @@ export default function ProfilePage() {
             disabled={loading}
             className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           >
-            {loading ? 'Зачувување...' : 'Зачувај промени'}
+            {loading ? t('profile.saving') : t('profile.saveChanges')}
           </button>
         </div>
 
         <div className="card p-4 md:p-6 lg:p-8 border-red-500/30">
-          <h2 className="text-xl md:text-2xl font-bold mb-5 text-red-400">Опасна зона</h2>
-          <p className="text-sm text-gray-400 mb-4">
-            Неповратни акции кои влијаат на вашиот аккаунт
-          </p>
+          <h2 className="text-xl md:text-2xl font-bold mb-5 text-red-400">
+            {t('profile.dangerZone')}
+          </h2>
+          <p className="text-sm text-gray-400 mb-4">{t('profile.dangerZoneDescription')}</p>
           <button
             type="button"
             onClick={() => setShowDeleteModal(true)}
             className="w-full bg-transparent hover:bg-red-500/10 text-red-400 hover:text-red-300 font-semibold rounded-lg px-4 py-2.5 border-2 border-red-500/30 hover:border-red-500/50 transition-all duration-200"
           >
-            Избриши аккаунт
+            {t('profile.deleteAccount')}
           </button>
         </div>
       </form>
@@ -622,26 +639,24 @@ export default function ProfilePage() {
       <Modal
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
-        title="Избриши аккаунт"
+        title={t('common.deleteAccount')}
         size="medium"
       >
         <div className="space-y-4">
           <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
-            <p className="text-lg text-red-400 font-semibold mb-2">⚠️ Внимание!</p>
+            <p className="text-lg text-red-400 font-semibold mb-2">{t('profile.deleteWarning')}</p>
             <p className="text-gray-300 text-sm leading-relaxed">
-              Оваа акција е неповратна. Со бришење на вашиот аккаунт:
+              {t('profile.deleteWarningDescription')}
             </p>
             <ul className="list-disc list-inside text-gray-300 text-sm mt-2 space-y-1 ml-2">
-              <li>Сите ваши лични податоци (име, е-пошта, телефон) ќе бидат трајно избришани</li>
-              <li>Сите ваши огласи ќе бидат затворени</li>
-              <li>На вашите огласи повеќе нема да се прикажуваат вашите лични податоци</li>
-              <li>Огласите ќе останат на платформата, но без контакт информации</li>
+              <li>{t('profile.deleteWarningPoint1')}</li>
+              <li>{t('profile.deleteWarningPoint2')}</li>
+              <li>{t('profile.deleteWarningPoint3')}</li>
+              <li>{t('profile.deleteWarningPoint4')}</li>
             </ul>
           </div>
 
-          <p className="text-gray-300 text-sm">
-            Дали сте сигурни дека сакате да го избришете вашиот аккаунт?
-          </p>
+          <p className="text-gray-300 text-sm">{t('profile.deleteConfirm')}</p>
 
           <div className="flex gap-3 pt-4">
             <button
@@ -649,14 +664,14 @@ export default function ProfilePage() {
               className="flex-1 btn-secondary"
               disabled={deleting}
             >
-              Откажи
+              {t('common.cancel')}
             </button>
             <button
               onClick={handleDeleteAccount}
               disabled={deleting}
               className="flex-1 bg-transparent hover:bg-red-500/10 text-red-400 hover:text-red-300 font-semibold rounded-lg px-4 py-2.5 border-2 border-red-500/30 hover:border-red-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
             >
-              {deleting ? 'Бришење...' : 'Избриши аккаунт'}
+              {deleting ? t('profile.deleting') : t('profile.deleteAccount')}
             </button>
           </div>
         </div>

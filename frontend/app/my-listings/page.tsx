@@ -7,12 +7,14 @@ import { toast } from 'react-hot-toast';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { ListingManagementCard } from '@/components/ListingManagementCard';
 import { ListingManagementCardSkeleton } from '@/components/ListingManagementCardSkeleton';
+import { useTranslation } from '@/hooks/useTranslation';
 import { listingsApi, Listing, PaginationMeta } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 
 export default function MyListingsPage() {
   const router = useRouter();
   const { user, isInitialized } = useAuthStore();
+  const { t } = useTranslation();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -204,54 +206,59 @@ export default function MyListingsPage() {
     await fetchListings(nextPage, true);
   }, [loadingMore, meta, currentPage, fetchListings]);
 
-  const handleAction = useCallback(async (id: string, action: 'publish' | 'pause' | 'close') => {
-    try {
-      switch (action) {
-        case 'publish':
-          await listingsApi.publish(id);
-          toast.success('Објавата е објавена');
-          break;
-        case 'pause':
-          await listingsApi.pause(id);
-          toast.success('Објавата е привремено застарена');
-          break;
-        case 'close':
-          await listingsApi.close(id);
-          toast.success('Објавата е затворена');
-          break;
-      }
+  const handleAction = useCallback(
+    async (id: string, action: 'publish' | 'pause' | 'close') => {
+      try {
+        switch (action) {
+          case 'publish':
+            await listingsApi.publish(id);
+            toast.success(t('myListings.published'));
+            break;
+          case 'pause':
+            await listingsApi.pause(id);
+            toast.success(t('myListings.pausedMessage'));
+            break;
+          case 'close':
+            await listingsApi.close(id);
+            toast.success(t('myListings.closedMessage'));
+            break;
+        }
 
-      setListings((prev) => {
-        const updated = prev.map((listing) => {
-          if (listing.id === id) {
-            const statusMap: Record<'publish' | 'pause' | 'close', 'Active' | 'Paused' | 'Closed'> =
-              {
+        setListings((prev) => {
+          const updated = prev.map((listing) => {
+            if (listing.id === id) {
+              const statusMap: Record<
+                'publish' | 'pause' | 'close',
+                'Active' | 'Paused' | 'Closed'
+              > = {
                 publish: 'Active',
                 pause: 'Paused',
                 close: 'Closed',
               };
-            return { ...listing, status: statusMap[action] };
-          }
-          return listing;
+              return { ...listing, status: statusMap[action] };
+            }
+            return listing;
+          });
+          listingsRef.current = updated;
+          return updated;
         });
-        listingsRef.current = updated;
-        return updated;
-      });
-    } catch {
-      toast.error('Грешка при ажурирање на статус');
-    }
-  }, []);
+      } catch {
+        toast.error(t('myListings.statusUpdateError'));
+      }
+    },
+    [t]
+  );
 
   const handleRefreshDates = useCallback(async () => {
     if (timeUntilRefresh !== null && timeUntilRefresh > 0) {
-      toast.error('Можете да ја користите оваа функција на секои 48 часа');
+      toast.error(t('myListings.refreshDateLimit'));
       return;
     }
 
     setIsRefreshing(true);
     try {
       const res = await listingsApi.refreshDates();
-      toast.success(`Датите се ажурирани за ${res.data.updated} објави`);
+      toast.success(t('myListings.datesUpdated', { count: res.data.updated }));
 
       const lastRefreshKey = `lastRefreshDate_${user?.id}`;
       localStorage.setItem(lastRefreshKey, Date.now().toString());
@@ -262,7 +269,7 @@ export default function MyListingsPage() {
     } finally {
       setIsRefreshing(false);
     }
-  }, [timeUntilRefresh, user?.id, fetchListings]);
+  }, [timeUntilRefresh, user?.id, fetchListings, t]);
 
   const formatTimeRemaining = useCallback((ms: number): string => {
     const hours = Math.floor(ms / (1000 * 60 * 60));
@@ -307,12 +314,12 @@ export default function MyListingsPage() {
     return (
       <div>
         <Breadcrumbs
-          items={[{ label: 'Почетна', href: '/' }, { label: 'Мои објави' }]}
+          items={[{ label: t('myListings.home'), href: '/' }, { label: t('myListings.title') }]}
           className="mb-6"
         />
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
           <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-            Мои објави
+            {t('myListings.title')}
           </h1>
         </div>
         <div className="space-y-4">
@@ -327,12 +334,12 @@ export default function MyListingsPage() {
   return (
     <div>
       <Breadcrumbs
-        items={[{ label: 'Почетна', href: '/' }, { label: 'Мои објави' }]}
+        items={[{ label: t('myListings.home'), href: '/' }, { label: t('myListings.title') }]}
         className="mb-6"
       />
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
         <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-          Мои објави
+          {t('myListings.title')}
         </h1>
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <button
@@ -347,12 +354,12 @@ export default function MyListingsPage() {
             {isRefreshing ? (
               <>
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                Ажурирање...
+                {t('myListings.refreshing')}
               </>
             ) : formattedTime ? (
-              <>Обнови дата ({formattedTime})</>
+              <>{t('myListings.refreshDateWithTime', { time: formattedTime })}</>
             ) : (
-              'Обнови дата'
+              t('myListings.refreshDate')
             )}
           </button>
           {(!listings || listings.length === 0) && (
@@ -360,7 +367,7 @@ export default function MyListingsPage() {
               href="/listings/new"
               className="w-full sm:w-auto btn-primary inline-block text-center"
             >
-              Креирај објава
+              {t('myListings.createListing')}
             </a>
           )}
         </div>
@@ -380,12 +387,12 @@ export default function MyListingsPage() {
                 }`}
               >
                 {status === 'All'
-                  ? 'Сите'
+                  ? t('myListings.all')
                   : status === 'Active'
-                    ? 'Активни'
+                    ? t('myListings.active')
                     : status === 'Paused'
-                      ? 'Привремено застарени'
-                      : 'Затворени'}
+                      ? t('myListings.paused')
+                      : t('myListings.closed')}
                 {status !== 'All' && (
                   <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-xs">
                     {statusCounts[status]}
@@ -399,13 +406,13 @@ export default function MyListingsPage() {
 
       {!listings || listings.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-300 text-lg">Сè уште немате објави</p>
+          <p className="text-gray-300 text-lg">{t('myListings.noListingsYet')}</p>
         </div>
       ) : (
         <>
           {filteredListings.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-300 text-lg">Нема објави со избраниот статус</p>
+              <p className="text-gray-300 text-lg">{t('myListings.noListingsWithStatus')}</p>
             </div>
           ) : (
             <>
@@ -425,7 +432,7 @@ export default function MyListingsPage() {
           {loadingMore && (
             <div className="text-center py-8">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-              <p className="mt-2 text-gray-300">Вчитување...</p>
+              <p className="mt-2 text-gray-300">{t('common.loading')}</p>
             </div>
           )}
 
@@ -437,14 +444,14 @@ export default function MyListingsPage() {
                     onClick={handleLoadMore}
                     className="btn-primary px-8 py-3 text-lg font-semibold"
                   >
-                    Вчитај уште
+                    {t('myListings.loadMore')}
                   </button>
                 </div>
               )}
 
               {meta && meta.totalPages && currentPage >= meta.totalPages && listings.length > 0 && (
                 <div className="text-center py-8">
-                  <p className="text-gray-300">Нема повеќе објави</p>
+                  <p className="text-gray-300">{t('myListings.noMoreListings')}</p>
                 </div>
               )}
             </>

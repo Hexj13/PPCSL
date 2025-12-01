@@ -1,3 +1,4 @@
+import { useTranslation } from '@/hooks/useTranslation';
 import { formatPrice } from '@/lib/utils';
 
 interface PriceDisplayProps {
@@ -17,6 +18,7 @@ export function PriceDisplay({
   urgent = false,
   className = '',
 }: PriceDisplayProps) {
+  const { t } = useTranslation();
   const sizeClasses = {
     small: 'text-xl md:text-2xl',
     medium: 'text-2xl md:text-3xl',
@@ -47,7 +49,7 @@ export function PriceDisplay({
         <div className="mt-1.5 md:mt-2">
           <span className="inline-flex items-center gap-1 px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-sm font-semibold bg-primary-500/20 border border-primary-500/40 text-primary-300 shadow-sm">
             <span>🔥</span>
-            <span>Итно</span>
+            <span>{t('listings.urgent')}</span>
           </span>
         </div>
       )}

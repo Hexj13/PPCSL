@@ -2,13 +2,18 @@
 
 import Link from 'next/link';
 
-export default function Error({
+import { I18nProvider } from '@/components/I18nProvider';
+import { useTranslation } from '@/hooks/useTranslation';
+
+function ErrorContent({
   error: _error,
   reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { t } = useTranslation();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-bg-dark to-bg-darker flex items-center justify-center px-4">
       <div className="text-center max-w-2xl w-full">
@@ -30,25 +35,35 @@ export default function Error({
             </svg>
           </div>
           <h1 className="text-3xl md:text-4xl font-extrabold text-gray-300 mb-4">
-            Нешто не е во ред
+            {t('error.heading')}
           </h1>
-          <p className="text-gray-400 text-base mb-2">
-            Настана грешка при вчитување на страницата.
-          </p>
-          <p className="text-gray-400 text-sm mb-8">
-            Ве молиме обидете се повторно или контактирајте не подоцна ако проблемот продолжи.
-          </p>
+          <p className="text-gray-400 text-base mb-2">{t('error.description')}</p>
+          <p className="text-gray-400 text-sm mb-8">{t('error.description2')}</p>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
           <button onClick={reset} className="btn-primary px-6 py-2.5 text-base font-semibold">
-            Обиди се повторно
+            {t('error.tryAgain')}
           </button>
           <Link href="/" className="btn-outline px-6 py-2.5 text-base font-semibold">
-            Кон почетна
+            {t('error.backToHome')}
           </Link>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Error({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  return (
+    <I18nProvider>
+      <ErrorContent error={error} reset={reset} />
+    </I18nProvider>
   );
 }

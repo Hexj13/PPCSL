@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useTranslation } from '@/hooks/useTranslation';
 import { Button } from '@/ui';
 
 interface MultiSelectOption {
@@ -31,6 +32,7 @@ function MultiSelectDropdownComponent({
   searchable = false,
   showActionButtons = false,
 }: MultiSelectDropdownProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [tempValues, setTempValues] = useState<string[]>(values);
@@ -286,7 +288,9 @@ function MultiSelectDropdownComponent({
                 );
               })
             ) : (
-              <div className="px-4 py-3 text-gray-400 text-center">Не се пронајдени резултати</div>
+              <div className="px-4 py-3 text-gray-400 text-center">
+                {t('searchFilters.noResults')}
+              </div>
             )}
           </div>
           {showActionButtons && (
@@ -301,7 +305,7 @@ function MultiSelectDropdownComponent({
                 }}
                 className="px-3 py-1.5 text-sm text-white hover:text-primary-400 transition-colors duration-150"
               >
-                Ресетирај
+                {t('common.reset')}
               </button>
               <Button
                 variant="primary"
@@ -312,7 +316,7 @@ function MultiSelectDropdownComponent({
                   setSearchQuery('');
                 }}
               >
-                Ок
+                {t('common.ok')}
               </Button>
             </div>
           )}

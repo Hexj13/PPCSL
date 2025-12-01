@@ -3,9 +3,11 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState, useEffect } from 'react';
 
+import { useTranslation } from '@/hooks/useTranslation';
 import { authApi } from '@/lib/api';
 
 function VerifyEmailContent() {
+  const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isVerifying, setIsVerifying] = useState(false);
@@ -50,8 +52,8 @@ function VerifyEmailContent() {
             <div className="mb-4">
               <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent"></div>
             </div>
-            <h1 className="text-2xl font-bold mb-4 text-primary-400">Потврда на email адреса</h1>
-            <p className="text-gray-300">Ве молиме почекајте...</p>
+            <h1 className="text-2xl font-bold mb-4 text-primary-400">{t('verifyEmail.title')}</h1>
+            <p className="text-gray-300">{t('verifyEmail.pleaseWait')}</p>
           </>
         ) : error ? (
           <>
@@ -70,10 +72,10 @@ function VerifyEmailContent() {
                 />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold mb-4 text-red-400">Грешка</h1>
+            <h1 className="text-2xl font-bold mb-4 text-red-400">{t('common.error')}</h1>
             <p className="text-gray-300 mb-6">{error}</p>
             <button onClick={() => router.push('/')} className="btn-primary w-full">
-              На главна
+              {t('common.goToHome')}
             </button>
           </>
         ) : null}
@@ -82,20 +84,23 @@ function VerifyEmailContent() {
   );
 }
 
+function VerifyEmailFallback() {
+  const { t } = useTranslation();
+  return (
+    <div className="max-w-md mx-auto mt-6 md:mt-12">
+      <div className="card p-6 md:p-8 text-center">
+        <div className="mb-4">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent"></div>
+        </div>
+        <h1 className="text-2xl font-bold mb-4 text-primary-400">{t('common.loading')}</h1>
+      </div>
+    </div>
+  );
+}
+
 export default function VerifyEmailPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="max-w-md mx-auto mt-6 md:mt-12">
-          <div className="card p-6 md:p-8 text-center">
-            <div className="mb-4">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent"></div>
-            </div>
-            <h1 className="text-2xl font-bold mb-4 text-primary-400">Вчитување...</h1>
-          </div>
-        </div>
-      }
-    >
+    <Suspense fallback={<VerifyEmailFallback />}>
       <VerifyEmailContent />
     </Suspense>
   );

@@ -2,10 +2,13 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 
 import { ConversionEvent } from '@/components/ConversionEvent';
+import { HomeHero } from '@/components/HomeHero';
 import { ListingGrid } from '@/components/ListingGrid';
 import { ScrollToFiltersButton } from '@/components/ScrollToFiltersButton';
 import { SearchFilters } from '@/components/SearchFilters';
 import { getListings } from '@/lib/server-api';
+
+export const dynamic = 'force-dynamic';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club';
 
@@ -87,25 +90,7 @@ export default async function Home({
   return (
     <div>
       <ConversionEvent />
-      <div className="mb-8 md:mb-12 relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary-500/10 via-primary-400/5 to-transparent rounded-2xl blur-3xl -z-10" />
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 md:mb-6 leading-tight pl-4 md:pl-5">
-          <span className="bg-gradient-to-r from-primary-400 via-primary-500 to-primary-600 bg-clip-text text-transparent drop-shadow-lg">
-            Автомобили во Македонија
-          </span>
-        </h1>
-        <p className="text-xl md:text-2xl font-medium leading-relaxed tracking-wide pl-4 md:pl-5">
-          <span className="text-white">Купете или продадете авто на </span>
-          <span className="text-primary-500 font-bold">Kupito!</span>
-          <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-            {' '}
-            Објавете оглас{' '}
-          </span>
-          <span className="bg-gradient-to-r from-primary-400 to-[#3ECA74] bg-clip-text text-transparent">
-            бесплатно.
-          </span>
-        </p>
-      </div>
+      <HomeHero />
 
       <SearchFiltersWrapper />
 

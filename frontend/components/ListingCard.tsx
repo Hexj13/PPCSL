@@ -5,6 +5,7 @@ import Link from 'next/link';
 import React, { useCallback, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { Listing, favoritesApi } from '@/lib/api';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
@@ -26,6 +27,7 @@ interface ListingCardProps {
 }
 
 function ListingCardComponent({ listing, forceFavorite = false, onRemove }: ListingCardProps) {
+  const { t } = useTranslation();
   const originalImageUrl = useMemo(
     () => listing.images?.[0] || '/placeholder-car.jpg',
     [listing.images]
@@ -64,7 +66,7 @@ function ListingCardComponent({ listing, forceFavorite = false, onRemove }: List
       e.stopPropagation();
 
       if (!user) {
-        toast.error('Потребно е да се најавите');
+        toast.error(t('common.loginRequired'));
         return;
       }
 
@@ -79,11 +81,11 @@ function ListingCardComponent({ listing, forceFavorite = false, onRemove }: List
         try {
           await favoritesApi.remove(listing.id);
           analytics.removeFromWishlist(listing.id);
-          toast.success('Отстрането од омилени');
+          toast.success(t('listings.removeFromFavorites'));
         } catch {
           setLocalIsFavorite(true);
           addFavorite(listing.id);
-          toast.error('Грешка при отстранување од омилени');
+          toast.error(t('listings.removeFromFavoritesError'));
         }
         return;
       }
@@ -100,11 +102,11 @@ function ListingCardComponent({ listing, forceFavorite = false, onRemove }: List
           title: listing.title,
           price: listing.price,
         });
-        toast.success('Додадено во омилени');
+        toast.success(t('listings.addToFavorites'));
       } catch {
         setLocalIsFavorite(false);
         removeFavorite(listing.id);
-        toast.error('Грешка при додавање во омилени');
+        toast.error(t('listings.addToFavoritesError'));
       }
     },
     [
@@ -117,6 +119,7 @@ function ListingCardComponent({ listing, forceFavorite = false, onRemove }: List
       removeFavorite,
       addFavorite,
       onRemove,
+      t,
     ]
   );
 
@@ -155,14 +158,15 @@ function ListingCardComponent({ listing, forceFavorite = false, onRemove }: List
           <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
             {listing.is_new && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-bg-light border-2 border-primary-500 text-primary-400 shadow-lg">
+                {/* eslint-disable-next-line no-hardcoded-text/no-hardcoded-text */}
                 <span>✨</span>
-                <span>Ново</span>
+                <span>{t('listings.new')}</span>
               </span>
             )}
             {listing.urgent && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-bg-light border-2 border-primary-500 text-primary-400 shadow-lg">
                 <span>🔥</span>
-                <span>Итно</span>
+                <span>{t('listings.urgent')}</span>
               </span>
             )}
           </div>
@@ -221,17 +225,31 @@ function ListingCardComponent({ listing, forceFavorite = false, onRemove }: List
             {vehicle && (
               <div className="text-sm text-gray-300 space-y-1.5">
                 {vehicle.engine_displ_l && (
-                  <div>Мотор: {formatEngineVolume(vehicle.engine_displ_l)} л</div>
+                  <div>
+                    {t('userListings.engine')}: {formatEngineVolume(vehicle.engine_displ_l)}{' '}
+                    {t('listings.liters')}
+                  </div>
                 )}
-                {vehicle.fuel && <div>Гориво: {vehicle.fuel}</div>}
+                {vehicle.fuel && (
+                  <div>
+                    {t('userListings.fuel')}: {vehicle.fuel}
+                  </div>
+                )}
                 {vehicle.mileage_km && (
-                  <div>Поминување: {formatMileage(vehicle.mileage_km)} км</div>
+                  <div>
+                    {t('userListings.mileage')}: {formatMileage(vehicle.mileage_km)}{' '}
+                    {t('listings.km')}
+                  </div>
                 )}
                 {vehicle.drive_type && (
-                  <div>Тип на погон: {formatDriveType(vehicle.drive_type)}</div>
+                  <div>
+                    {t('userListings.driveType')}: {formatDriveType(vehicle.drive_type)}
+                  </div>
                 )}
                 {vehicle.body_type && (
-                  <div>Тип на каросерија: {formatBodyType(vehicle.body_type)}</div>
+                  <div>
+                    {t('userListings.bodyType')}: {formatBodyType(vehicle.body_type)}
+                  </div>
                 )}
               </div>
             )}

@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
+import { useTranslation } from '@/hooks/useTranslation';
 import { useAuthStore } from '@/lib/store';
 
 const ListingForm = dynamic(
@@ -15,6 +16,7 @@ const ListingForm = dynamic(
 
 export default function NewListingPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user, isInitialized } = useAuthStore();
 
   useEffect(() => {
@@ -30,7 +32,7 @@ export default function NewListingPage() {
   return (
     <div className="max-w-4xl mx-auto mt-6 md:mt-12">
       <h1 className="text-3xl md:text-4xl font-extrabold mb-6 pl-4 md:pl-6 lg:pl-8 bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-        Додади објава
+        {t('header.addListing')}
       </h1>
       <ListingForm mode="create" onSuccess={() => router.push('/my-listings')} />
     </div>

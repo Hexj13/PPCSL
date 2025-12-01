@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { useTranslation } from '@/hooks/useTranslation';
 import { listingsApi, Listing } from '@/lib/api';
 import { useComparisonStore } from '@/lib/store';
 import {
@@ -19,6 +20,7 @@ import {
 } from '@/lib/utils';
 
 export default function ComparePage() {
+  const { t } = useTranslation();
   const { comparisons, remove, rehydrate } = useComparisonStore();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -97,24 +99,24 @@ export default function ComparePage() {
         prevComparisonsRef.current = currentComparisons;
       } catch (error) {
         console.error('Error fetching listings:', error);
-        toast.error('Грешка при вчитување на објави');
+        toast.error(t('compare.loadError'));
       } finally {
         setLoading(false);
       }
     };
 
     rehydrateAndFetch();
-  }, [comparisons, rehydrate]);
+  }, [comparisons, rehydrate, t]);
 
   const handleRemove = (id: string) => {
     setListings((prev) => prev.filter((listing) => listing.id !== id));
     remove(id);
-    toast.success('Отстрането од споредба');
+    toast.success(t('compare.removedFromComparison'));
   };
 
   const getValue = (value: string | number | undefined | null): string => {
     if (value === undefined || value === null || value === '') {
-      return 'N/A';
+      return t('compare.notAvailable');
     }
     return String(value);
   };
@@ -123,12 +125,12 @@ export default function ComparePage() {
     return (
       <div className="max-w-7xl mx-auto">
         <Breadcrumbs
-          items={[{ label: 'Почетна', href: '/' }, { label: 'Споредба' }]}
+          items={[{ label: t('breadcrumbs.home'), href: '/' }, { label: t('compare.title') }]}
           className="mb-6"
         />
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-          <p className="mt-4 text-gray-300">Вчитување...</p>
+          <p className="mt-4 text-gray-300">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -138,11 +140,11 @@ export default function ComparePage() {
     return (
       <div className="max-w-7xl mx-auto">
         <Breadcrumbs
-          items={[{ label: 'Почетна', href: '/' }, { label: 'Споредба' }]}
+          items={[{ label: t('breadcrumbs.home'), href: '/' }, { label: t('compare.title') }]}
           className="mb-6"
         />
         <h1 className="text-3xl md:text-4xl font-extrabold mb-6 bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-          Споредба на возила
+          {t('compare.title')}
         </h1>
         <div className="surface text-center py-12">
           <svg
@@ -158,13 +160,11 @@ export default function ComparePage() {
               d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"
             />
           </svg>
-          <h2 className="text-2xl font-bold text-primary-400 mb-2">Нема возила за споредба</h2>
-          <p className="text-gray-300 mb-6">
-            Додадете возила од страниците на објави за да ги споредите
-          </p>
+          <h2 className="text-2xl font-bold text-primary-400 mb-2">{t('compare.noVehicles')}</h2>
+          <p className="text-gray-300 mb-6">{t('compare.addVehiclesHint')}</p>
           <div className="flex justify-center">
             <Link href="/" className="btn-primary">
-              Прегледај објави
+              {t('compare.browseListings')}
             </Link>
           </div>
         </div>
@@ -175,12 +175,12 @@ export default function ComparePage() {
   return (
     <div className="max-w-7xl mx-auto">
       <Breadcrumbs
-        items={[{ label: 'Почетна', href: '/' }, { label: 'Споредба' }]}
+        items={[{ label: t('breadcrumbs.home'), href: '/' }, { label: t('compare.title') }]}
         className="mb-6"
       />
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-          Споредба на возила
+          {t('compare.title')}
         </h1>
         <button
           onClick={() => {
@@ -188,11 +188,11 @@ export default function ComparePage() {
             if (typeof window !== 'undefined') {
               localStorage.removeItem('comparison-storage-backup');
             }
-            toast.success('Сите возила се отстранети од споредба');
+            toast.success(t('compare.allRemoved'));
           }}
           className="h-[52px] px-6 py-3 rounded-lg font-semibold transition-all duration-200 btn-secondary"
         >
-          Исчисти
+          {t('compare.clearAll')}
         </button>
       </div>
 
@@ -200,7 +200,9 @@ export default function ComparePage() {
         <table className="w-full min-w-[800px]">
           <thead>
             <tr className="border-b border-primary-500/20">
-              <th className="text-left py-4 px-4 text-primary-400 font-semibold">Параметар</th>
+              <th className="text-left py-4 px-4 text-primary-400 font-semibold">
+                {t('compare.parameter')}
+              </th>
               {listings.map((listing) => (
                 <th
                   key={listing.id}
@@ -210,7 +212,7 @@ export default function ComparePage() {
                     <button
                       onClick={() => handleRemove(listing.id)}
                       className="p-2 text-gray-400 hover:text-red-400 transition-colors"
-                      title="Отстрани од споредба"
+                      title={t('common.removeFromComparison')}
                     >
                       <svg
                         className="w-6 h-6"
@@ -234,7 +236,9 @@ export default function ComparePage() {
           </thead>
           <tbody>
             <tr className="border-b border-primary-500/10">
-              <td className="py-4 px-4 text-primary-400 font-semibold">Наслов</td>
+              <td className="py-4 px-4 text-primary-400 font-semibold">
+                {t('compare.titleColumn')}
+              </td>
               {listings.map((listing) => (
                 <td key={listing.id} className="py-4 px-4 text-center">
                   <Link
@@ -247,7 +251,7 @@ export default function ComparePage() {
               ))}
             </tr>
             <tr className="border-b border-primary-500/10">
-              <td className="py-4 px-4 text-primary-400 font-semibold">Марка</td>
+              <td className="py-4 px-4 text-primary-400 font-semibold">{t('compare.brand')}</td>
               {listings.map((listing) => (
                 <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
                   {getValue(listing.vehicle?.brand?.name)}
@@ -255,7 +259,7 @@ export default function ComparePage() {
               ))}
             </tr>
             <tr className="border-b border-primary-500/10">
-              <td className="py-4 px-4 text-primary-400 font-semibold">Модел</td>
+              <td className="py-4 px-4 text-primary-400 font-semibold">{t('compare.model')}</td>
               {listings.map((listing) => (
                 <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
                   {getValue(listing.vehicle?.model?.name)}
@@ -263,7 +267,7 @@ export default function ComparePage() {
               ))}
             </tr>
             <tr className="border-b border-primary-500/10">
-              <td className="py-4 px-4 text-primary-400 font-semibold">Година</td>
+              <td className="py-4 px-4 text-primary-400 font-semibold">{t('compare.year')}</td>
               {listings.map((listing) => (
                 <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
                   {getValue(listing.vehicle?.year)}
@@ -271,27 +275,29 @@ export default function ComparePage() {
               ))}
             </tr>
             <tr className="border-b border-primary-500/10">
-              <td className="py-4 px-4 text-primary-400 font-semibold">Поминување</td>
+              <td className="py-4 px-4 text-primary-400 font-semibold">{t('compare.mileage')}</td>
               {listings.map((listing) => (
                 <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
                   {listing.vehicle?.mileage_km
                     ? `${formatMileage(listing.vehicle.mileage_km)} км`
-                    : 'N/A'}
+                    : t('compare.notAvailable')}
                 </td>
               ))}
             </tr>
             <tr className="border-b border-primary-500/10">
-              <td className="py-4 px-4 text-primary-400 font-semibold">Мотор</td>
+              <td className="py-4 px-4 text-primary-400 font-semibold">{t('compare.engine')}</td>
               {listings.map((listing) => (
                 <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
                   {listing.vehicle?.engine_displ_l
                     ? `${formatEngineVolume(listing.vehicle.engine_displ_l)} л`
-                    : 'N/A'}
+                    : t('compare.notAvailable')}
                 </td>
               ))}
             </tr>
             <tr className="border-b border-primary-500/10">
-              <td className="py-4 px-4 text-primary-400 font-semibold">Коњски сили</td>
+              <td className="py-4 px-4 text-primary-400 font-semibold">
+                {t('compare.horsepower')}
+              </td>
               {listings.map((listing) => (
                 <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
                   {getValue(listing.horsepower)}
@@ -299,7 +305,7 @@ export default function ComparePage() {
               ))}
             </tr>
             <tr className="border-b border-primary-500/10">
-              <td className="py-4 px-4 text-primary-400 font-semibold">Гориво</td>
+              <td className="py-4 px-4 text-primary-400 font-semibold">{t('compare.fuel')}</td>
               {listings.map((listing) => (
                 <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
                   {getValue(listing.vehicle?.fuel)}
@@ -307,35 +313,39 @@ export default function ComparePage() {
               ))}
             </tr>
             <tr className="border-b border-primary-500/10">
-              <td className="py-4 px-4 text-primary-400 font-semibold">Пренос</td>
+              <td className="py-4 px-4 text-primary-400 font-semibold">
+                {t('compare.transmission')}
+              </td>
               {listings.map((listing) => (
                 <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
                   {listing.vehicle?.transmission
                     ? formatTransmission(listing.vehicle.transmission)
-                    : 'N/A'}
+                    : t('compare.notAvailable')}
                 </td>
               ))}
             </tr>
             <tr className="border-b border-primary-500/10">
-              <td className="py-4 px-4 text-primary-400 font-semibold">Тип на погон</td>
+              <td className="py-4 px-4 text-primary-400 font-semibold">{t('compare.driveType')}</td>
               {listings.map((listing) => (
                 <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
                   {listing.vehicle?.drive_type
                     ? formatDriveType(listing.vehicle.drive_type)
-                    : 'N/A'}
+                    : t('compare.notAvailable')}
                 </td>
               ))}
             </tr>
             <tr className="border-b border-primary-500/10">
-              <td className="py-4 px-4 text-primary-400 font-semibold">Тип на каросерија</td>
+              <td className="py-4 px-4 text-primary-400 font-semibold">{t('compare.bodyType')}</td>
               {listings.map((listing) => (
                 <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
-                  {listing.vehicle?.body_type ? formatBodyType(listing.vehicle.body_type) : 'N/A'}
+                  {listing.vehicle?.body_type
+                    ? formatBodyType(listing.vehicle.body_type)
+                    : t('compare.notAvailable')}
                 </td>
               ))}
             </tr>
             <tr className="border-b border-primary-500/10">
-              <td className="py-4 px-4 text-primary-400 font-semibold">Боја</td>
+              <td className="py-4 px-4 text-primary-400 font-semibold">{t('compare.color')}</td>
               {listings.map((listing) => (
                 <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
                   {getValue(listing.vehicle?.color)}
@@ -343,7 +353,7 @@ export default function ComparePage() {
               ))}
             </tr>
             <tr className="border-b border-primary-500/10">
-              <td className="py-4 px-4 text-primary-400 font-semibold">Врати</td>
+              <td className="py-4 px-4 text-primary-400 font-semibold">{t('compare.doors')}</td>
               {listings.map((listing) => (
                 <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
                   {getValue(listing.vehicle?.doors)}
@@ -351,41 +361,47 @@ export default function ComparePage() {
               ))}
             </tr>
             <tr className="border-b border-primary-500/10">
-              <td className="py-4 px-4 text-primary-400 font-semibold">Состојба</td>
+              <td className="py-4 px-4 text-primary-400 font-semibold">{t('compare.condition')}</td>
               {listings.map((listing) => (
                 <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
-                  {listing.condition ? formatCondition(listing.condition) : 'N/A'}
+                  {listing.condition
+                    ? formatCondition(listing.condition)
+                    : t('compare.notAvailable')}
                 </td>
               ))}
             </tr>
             <tr className="border-b border-primary-500/10">
-              <td className="py-4 px-4 text-primary-400 font-semibold">Тип на регистрација</td>
+              <td className="py-4 px-4 text-primary-400 font-semibold">
+                {t('compare.registrationType')}
+              </td>
               {listings.map((listing) => (
                 <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
                   {listing.registration_type
                     ? formatRegistrationType(listing.registration_type)
-                    : 'N/A'}
+                    : t('compare.notAvailable')}
                 </td>
               ))}
             </tr>
             <tr className="border-b border-primary-500/10">
-              <td className="py-4 px-4 text-primary-400 font-semibold">Регистрација</td>
+              <td className="py-4 px-4 text-primary-400 font-semibold">
+                {t('compare.registration')}
+              </td>
               {listings.map((listing) => (
                 <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
                   {listing.is_registered !== undefined
                     ? listing.is_registered
-                      ? 'Зарегистрирано'
-                      : 'Не е зарегистрирано'
-                    : 'N/A'}
+                      ? t('compare.registered')
+                      : t('compare.notRegistered')
+                    : t('compare.notAvailable')}
                 </td>
               ))}
             </tr>
             <tr className="border-b border-primary-500/10">
-              <td className="py-4 px-4 text-primary-400 font-semibold">Цена</td>
+              <td className="py-4 px-4 text-primary-400 font-semibold">{t('compare.price')}</td>
               {listings.map((listing) => (
                 <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
                   {listing.status === 'Closed' || listing.price === undefined
-                    ? 'N/A'
+                    ? t('compare.notAvailable')
                     : `${formatPrice(listing.price, listing.currency)} ${listing.currency || 'MKD'}`}
                 </td>
               ))}

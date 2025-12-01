@@ -4,8 +4,10 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { useCookieConsent } from '@/hooks/useCookieConsent';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export function CookieConsent() {
+  const { t } = useTranslation();
   const { hasConsent, isLoading, grantConsent, denyConsent } = useCookieConsent();
   const [isVisible, setIsVisible] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -36,12 +38,12 @@ export function CookieConsent() {
         isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}
       role="dialog"
-      aria-label="Прифаќање на cookies"
+      aria-label={t('common.acceptCookies')}
     >
       <button
         onClick={handleClose}
         className="absolute top-2 right-2 sm:top-3 sm:right-3 text-gray-400 hover:text-white transition-colors p-1 touch-manipulation"
-        aria-label="Затвори"
+        aria-label={t('common.closeCookies')}
       >
         <svg
           className="w-4 h-4 sm:w-5 sm:h-5"
@@ -61,19 +63,19 @@ export function CookieConsent() {
       <div className="flex flex-col items-center text-center mb-3 sm:mb-4">
         <div className="text-3xl sm:text-4xl mb-2 sm:mb-3">🍪</div>
         <p className="text-xs sm:text-sm text-gray-300 leading-relaxed px-1">
-          Користиме cookies за подобрување на корисничкото искуство, анализирање и маркетинг.{' '}
+          {t('common.cookieConsentMessage')}{' '}
           <Link
             href="/cookie-settings"
             className="text-primary-400 hover:text-primary-300 underline transition-colors"
           >
-            Настройки
+            {t('common.cookieConsentSettings')}
           </Link>
           {' · '}
           <Link
             href="/privacy"
             className="text-primary-400 hover:text-primary-300 underline transition-colors"
           >
-            Повеќе информации
+            {t('common.cookieConsentMoreInfo')}
           </Link>
         </p>
       </div>
@@ -82,7 +84,7 @@ export function CookieConsent() {
         onClick={handleAccept}
         className="w-full px-4 py-2 sm:py-2.5 bg-[#31A55F] hover:bg-[#2a8c51] active:bg-[#247a47] text-white font-semibold text-sm sm:text-base rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl touch-manipulation"
       >
-        Добро
+        {t('common.cookieConsentAccept')}
       </button>
     </div>
   );

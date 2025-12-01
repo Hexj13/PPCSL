@@ -1,0 +1,74 @@
+{
+  "footer": {
+    "copyright": "© 2025 Kupito. All rights reserved.",
+    "tagline": "Platform for posting car sale listings in Macedonia",
+    "faq": "Frequently Asked Questions",
+    "terms": "Terms of Use",
+    "privacy": "Privacy Policy",
+    "cookieSettings": "Cookie Settings",
+    "language": "Language:"
+  },
+  "header": {
+    "addListing": "Add Listing",
+    "addListingShort": "Add",
+    "myListings": "My Listings",
+    "myListingsShort": "My",
+    "favorites": "Favorites",
+    "compare": "Compare",
+    "admin": "Admin",
+    "logout": "Logout",
+    "logoutShort": "Logout",
+    "createListing": "Create Listing",
+    "createListingShort": "Create",
+    "login": "Login",
+    "loginShort": "Login",
+    "register": "Register"
+  },
+  "home": {
+    "title": "Cars in Macedonia",
+    "subtitle": "Buy or sell a car on",
+    "subtitleBold": "Kupito!",
+    "subtitle2": "Post a listing",
+    "subtitle3": "for free."
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No",
+    "search": "Search",
+    "filter": "Filter",
+    "reset": "Reset",
+    "apply": "Apply",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "confirm": "Confirm",
+    "continue": "Continue"
+  },
+  "login": {
+    "title": "Login",
+    "emailOrPhone": "Email or Phone",
+    "password": "Password",
+    "emailOrPhoneRequired": "Email or phone is required",
+    "emailOrPhoneInvalid": "Enter a valid email or phone (format: +country code number)",
+    "passwordRequired": "Password is required",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "Don't have an account?",
+    "register": "Register"
+  },
+  "notFound": {
+    "title": "404",
+    "heading": "Page not found",
+    "description": "Sorry, the page you are looking for does not exist or has been moved.",
+    "backToHome": "Back to home",
+    "imageAlt": "All-seeing eye"
+  }
+}

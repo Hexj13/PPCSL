@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { useTranslation } from '@/hooks/useTranslation';
 import { authApi } from '@/lib/api';
 
 type Step = 'phone' | 'code' | 'password';
@@ -14,6 +15,7 @@ const isValidPhone = (value: string): boolean => {
 
 export default function ResetPasswordPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [step, setStep] = useState<Step>('phone');
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState(['', '', '', '', '', '']);
@@ -73,12 +75,12 @@ export default function ResetPasswordPage() {
     e.preventDefault();
 
     if (!phone.trim()) {
-      setErrors({ phone: 'Телефонскиот број е задолжителен' });
+      setErrors({ phone: t('resetPassword.phoneRequired') });
       return;
     }
 
     if (!isValidPhone(phone)) {
-      setErrors({ phone: 'Внесете валиден телефон (формат: +код држава број)' });
+      setErrors({ phone: t('resetPassword.phoneInvalid') });
       return;
     }
 
@@ -87,12 +89,12 @@ export default function ResetPasswordPage() {
 
     try {
       await authApi.requestPasswordReset({ phone });
-      toast.success('SMS кодот е испратен');
+      toast.success(t('resetPassword.codeSent'));
       setStep('code');
       setResendCooldown(60);
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { message?: string } } };
-      setErrors({ phone: axiosError.response?.data?.message || 'Грешка при испраќање на SMS' });
+      setErrors({ phone: axiosError.response?.data?.message || t('resetPassword.sendError') });
     } finally {
       setLoading(false);
     }
@@ -152,18 +154,18 @@ export default function ResetPasswordPage() {
     e.preventDefault();
 
     if (isVerificationBlocked) {
-      setErrors({ code: 'Достигнато е максималниот број на обиди. Испратете го кодот повторно.' });
+      setErrors({ code: t('resetPassword.maxAttemptsReached') });
       return;
     }
 
     const fullCode = code.join('').trim();
     if (fullCode.length !== 6) {
-      setErrors({ code: 'Кодот мора да содржи точно 6 цифри' });
+      setErrors({ code: t('resetPassword.codeRequired') });
       return;
     }
 
     if (!/^\d{6}$/.test(fullCode)) {
-      setErrors({ code: 'Кодот мора да содржи само цифри' });
+      setErrors({ code: t('resetPassword.codeDigitsOnly') });
       return;
     }
 
@@ -172,7 +174,7 @@ export default function ResetPasswordPage() {
 
     try {
       await authApi.verifyResetCode({ phone, code: fullCode });
-      toast.success('Кодот е успешно верифициран');
+      toast.success(t('resetPassword.codeVerified'));
       setStep('password');
       setLoading(false);
     } catch (err: unknown) {
@@ -190,12 +192,14 @@ export default function ResetPasswordPage() {
           const now = new Date();
           const remainingMinutes = Math.ceil((blockedDate.getTime() - now.getTime()) / (1000 * 60));
           setErrors({
-            code: `Достигнато е максималниот број на обиди. Обидете се повторно за ${remainingMinutes} минути`,
+            code: t('resetPassword.maxAttemptsReachedWithMinutes', {
+              minutes: remainingMinutes.toString(),
+            }),
           });
           setIsVerificationBlocked(true);
           setCode(['', '', '', '', '', '']);
           setLoading(false);
-          toast.error(`IP адресата е блокирана за ${remainingMinutes} минути`);
+          toast.error(t('resetPassword.ipBlocked', { minutes: remainingMinutes.toString() }));
           return;
         }
       }
@@ -206,13 +210,13 @@ export default function ResetPasswordPage() {
       if (newAttempts >= 10) {
         setIsVerificationBlocked(true);
         setErrors({
-          code: 'Достигнато е максималниот број на обиди (10). Испратете го кодот повторно за да продолжите.',
+          code: t('resetPassword.maxAttempts'),
         });
       } else {
         setErrors({
           code:
             axiosError.response?.data?.message ||
-            `Невалиден код. Обидете се повторно. (${newAttempts}/10)`,
+            t('resetPassword.invalidCodeWithAttempts', { attempts: newAttempts.toString() }),
         });
       }
 
@@ -226,16 +230,16 @@ export default function ResetPasswordPage() {
 
   const validatePassword = (passwordValue: string): string => {
     if (passwordValue.length < 8) {
-      return 'Лозинката мора да содржи минимум 8 карактери';
+      return t('register.passwordMinLength');
     }
     if (!/[A-Z]/.test(passwordValue)) {
-      return 'Лозинката мора да содржи барем една голема буква';
+      return t('register.passwordUppercase');
     }
     if (!/[a-z]/.test(passwordValue)) {
-      return 'Лозинката мора да содржи барем една мала буква';
+      return t('register.passwordLowercase');
     }
     if (!/[!@#$%^&*()_+=[\]{};':"\\|,.<>/?-]/.test(passwordValue)) {
-      return 'Лозинката мора да содржи барем еден специјален карактер';
+      return t('register.passwordSpecial');
     }
     return '';
   };
@@ -262,7 +266,7 @@ export default function ResetPasswordPage() {
     const newErrors: { password?: string; confirmPassword?: string } = {};
 
     if (!password.trim()) {
-      newErrors.password = 'Лозинката е задолжителна';
+      newErrors.password = t('register.passwordRequired');
     } else {
       const passwordValidationError = validatePassword(password);
       if (passwordValidationError) {
@@ -271,9 +275,9 @@ export default function ResetPasswordPage() {
     }
 
     if (!confirmPassword.trim()) {
-      newErrors.confirmPassword = 'Потврдата на лозинката е задолжителна';
+      newErrors.confirmPassword = t('resetPassword.confirmPasswordRequired');
     } else if (password !== confirmPassword) {
-      newErrors.confirmPassword = 'Лозинките не се совпаѓаат';
+      newErrors.confirmPassword = t('resetPassword.passwordsMismatch');
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -292,7 +296,7 @@ export default function ResetPasswordPage() {
         code: fullCode,
         newPassword: password,
       });
-      toast.success('Лозинката е успешно ресетирана');
+      toast.success(t('resetPassword.passwordResetSuccess'));
       setLoading(false);
       router.push('/login');
     } catch {
@@ -315,10 +319,10 @@ export default function ResetPasswordPage() {
 
     try {
       await authApi.requestPasswordReset({ phone });
-      toast.success('Кодот е испратен повторно');
+      toast.success(t('resetPassword.codeResent'));
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { message?: string } } };
-      toast.error(axiosError.response?.data?.message || 'Грешка при испраќање на SMS');
+      toast.error(axiosError.response?.data?.message || t('resetPassword.sendError'));
     }
   };
 
@@ -341,19 +345,19 @@ export default function ResetPasswordPage() {
   const getPasswordValidationRules = (passwordValue: string) => {
     return [
       {
-        text: 'Минимум 8 карактери',
+        text: t('register.passwordRuleMinLength'),
         isValid: passwordValue.length >= 8,
       },
       {
-        text: 'Барем една голема буква',
+        text: t('register.passwordRuleUppercase'),
         isValid: /[A-Z]/.test(passwordValue),
       },
       {
-        text: 'Барем една мала буква',
+        text: t('register.passwordRuleLowercase'),
         isValid: /[a-z]/.test(passwordValue),
       },
       {
-        text: 'Барем еден специјален карактер',
+        text: t('register.passwordRuleSpecial'),
         isValid: /[!@#$%^&*()_+=[\]{};':"\\|,.<>/?-]/.test(passwordValue),
       },
     ];
@@ -376,14 +380,14 @@ export default function ResetPasswordPage() {
   return (
     <div className="max-w-md mx-auto mt-6 md:mt-12">
       <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-        Ресетирање на лозинка
+        {t('resetPassword.title')}
       </h1>
 
       {step === 'phone' && (
         <form onSubmit={handleRequestReset} className="card p-6 md:p-8">
           <div className="mb-5">
             <label className="block text-sm font-semibold mb-2 text-primary-400">
-              Телефонски број
+              {t('resetPassword.phoneNumber')}
             </label>
             <input
               type="text"
@@ -406,7 +410,7 @@ export default function ResetPasswordPage() {
             disabled={loading}
             className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           >
-            {loading ? 'Испраќање...' : 'Испрати код'}
+            {loading ? t('resetPassword.sending') : t('resetPassword.sendCode')}
           </button>
 
           <p className="mt-6 text-center text-sm text-gray-300">
@@ -414,7 +418,7 @@ export default function ResetPasswordPage() {
               href="/login"
               className="text-primary-500 font-semibold hover:text-primary-400 hover:underline transition-colors"
             >
-              Назад кон најава
+              {t('resetPassword.backToLogin')}
             </a>
           </p>
         </form>
@@ -425,10 +429,10 @@ export default function ResetPasswordPage() {
           <div className="space-y-6">
             <div className="text-center">
               <p className="text-gray-300 mb-2">
-                Испратениот код на телефон{' '}
+                {t('resetPassword.codeSentTo')}{' '}
                 {phone && <span className="font-semibold text-white">{phone}</span>}
               </p>
-              <p className="text-sm text-gray-400">Внесете го 6-цифрениот код од СМС пораката</p>
+              <p className="text-sm text-gray-400">{t('resetPassword.enterCode')}</p>
             </div>
 
             <form onSubmit={handleVerifyCode} className="space-y-4">
@@ -487,14 +491,18 @@ export default function ResetPasswordPage() {
                   disabled={loading}
                   className="flex-1 btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Назад
+                  {t('common.back')}
                 </button>
                 <button
                   type="submit"
                   disabled={loading || code.join('').trim().length !== 6 || isVerificationBlocked}
                   className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
-                  {loading ? 'Проверување...' : isVerificationBlocked ? 'Блокирано' : 'Потврди'}
+                  {loading
+                    ? t('resetPassword.verifying')
+                    : isVerificationBlocked
+                      ? t('resetPassword.blocked')
+                      : t('resetPassword.verify')}
                 </button>
               </div>
             </form>
@@ -506,7 +514,9 @@ export default function ResetPasswordPage() {
                 disabled={loading || resendCooldown > 0}
                 className="text-sm text-primary-400 hover:text-primary-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {resendCooldown > 0 ? `Испрати нов код (${resendCooldown}с)` : 'Испрати нов код'}
+                {resendCooldown > 0
+                  ? `${t('resetPassword.resendCode')} (${resendCooldown}с)`
+                  : t('resetPassword.resendCode')}
               </button>
             </div>
           </div>
@@ -517,7 +527,7 @@ export default function ResetPasswordPage() {
         <form onSubmit={handleResetPassword} className="card p-6 md:p-8">
           <div className="mb-5">
             <label className="block text-sm font-semibold mb-2 text-primary-400">
-              Нова лозинка
+              {t('resetPassword.newPassword')}
             </label>
             <div className="relative">
               <input
@@ -530,7 +540,7 @@ export default function ResetPasswordPage() {
                   }
                 }}
                 className={`input-field pr-10 ${errors.password ? 'border-red-500' : ''}`}
-                placeholder="Внесете нова лозинка"
+                placeholder={t('resetPassword.newPassword')}
                 autoComplete="new-password"
               />
               <button
@@ -626,7 +636,7 @@ export default function ResetPasswordPage() {
 
           <div className="mb-6">
             <label className="block text-sm font-semibold mb-2 text-primary-400">
-              Потврди лозинка
+              {t('resetPassword.confirmPassword')}
             </label>
             <div className="relative">
               <input
@@ -639,7 +649,7 @@ export default function ResetPasswordPage() {
                   }
                 }}
                 className={`input-field pr-10 ${errors.confirmPassword ? 'border-red-500' : ''}`}
-                placeholder="Потврдете ја лозинката"
+                placeholder={t('resetPassword.confirmPassword')}
                 autoComplete="new-password"
               />
               <button
@@ -699,14 +709,14 @@ export default function ResetPasswordPage() {
               disabled={loading}
               className="flex-1 btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Назад
+              {t('common.back')}
             </button>
             <button
               type="submit"
               disabled={loading || !isFormValid}
               className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              {loading ? 'Ресетирање...' : 'Ресетирај'}
+              {loading ? t('common.loading') : t('resetPassword.resetButton')}
             </button>
           </div>
         </form>

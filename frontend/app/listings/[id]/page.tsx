@@ -18,6 +18,7 @@ import {
 } from '@/components/ListingPageSkeleton';
 import { StructuredData } from '@/components/StructuredData';
 import { UserListingsModal } from '@/components/UserListingsModal';
+import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { api, listingsApi, Listing, favoritesApi } from '@/lib/api';
 import { useAuthStore, useFavoritesStore, useComparisonStore } from '@/lib/store';
@@ -44,6 +45,7 @@ export default function ListingPage() {
   const id = params.id as string;
   const { user } = useAuthStore();
   const { add: addFavorite, remove: removeFavorite, check } = useFavoritesStore();
+  const { t } = useTranslation();
   const {
     add: addComparison,
     remove: removeComparison,
@@ -296,7 +298,7 @@ export default function ListingPage() {
         removeFavorite(id);
         setIsFavorite(false);
         analytics.removeFromWishlist(id);
-        toast.success('Отстрането од омилени');
+        toast.success(t('listingDetail.removeFromFavorites'));
       } catch {
         removeFavorite(id);
         setIsFavorite(false);
@@ -316,7 +318,7 @@ export default function ListingPage() {
         title: listing?.title,
         price: listing?.price,
       });
-      toast.success('Додадено во омилени');
+      toast.success(t('listingDetail.addToFavorites'));
     } catch {
       addFavorite(id);
       setIsFavorite(true);
@@ -342,12 +344,12 @@ export default function ListingPage() {
       removeComparison(id);
       setIsInComparison(false);
       analytics.removeFromComparison(id);
-      toast.success('Отстрането од споредба');
+      toast.success(t('listingDetail.removedFromComparison'));
       return;
     }
 
     if (comparisonCount() >= 3) {
-      toast.error('Можете да споредувате максимум 3 возила');
+      toast.error(t('listingDetail.cannotCompareMore'));
       return;
     }
 
@@ -358,9 +360,9 @@ export default function ListingPage() {
         title: listing?.title,
         price: listing?.price,
       });
-      toast.success('Додадено во споредба');
+      toast.success(t('listingDetail.addedToComparison'));
     } else {
-      toast.error('Возилото е веќе во споредба');
+      toast.error(t('listingDetail.alreadyInComparisonError'));
     }
   };
 
@@ -977,7 +979,7 @@ export default function ListingPage() {
 
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-            <p className="mt-4 text-gray-300">Вчитување...</p>
+            <p className="mt-4 text-gray-300">{t('common.loading')}</p>
           </div>
         </div>
       </>
@@ -993,7 +995,7 @@ export default function ListingPage() {
   const model = vehicle?.model?.name || '';
   const year = vehicle?.year || '';
   const vehicleInfo = [brand, model, year].filter(Boolean).join(' ');
-  const h1Title = vehicleInfo || listing.title || 'Автомобил за продажба';
+  const h1Title = vehicleInfo || listing.title || t('listings.defaultTitle');
 
   const nextImage = () => {
     setModalImageIndex((prev) => (prev + 1) % images.length);
@@ -1032,9 +1034,9 @@ export default function ListingPage() {
   const handleCopy = async (text: string, label: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      toast.success(`${label} е копирано`);
+      toast.success(t('listingDetail.copied', { label }));
     } catch {
-      toast.error('Грешка при копирање');
+      toast.error(t('listingDetail.copyError'));
     }
   };
 
@@ -1043,7 +1045,7 @@ export default function ListingPage() {
       <StructuredData listing={listing} />
       <div className="max-w-6xl mx-auto">
         <Breadcrumbs
-          items={[{ label: 'Почетна', href: '/' }, { label: listing.title }]}
+          items={[{ label: t('listingDetail.home'), href: '/' }, { label: listing.title }]}
           className="mb-6"
         />
         <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-6 md:gap-8">
@@ -1107,7 +1109,7 @@ export default function ListingPage() {
                     openImageModal(currentImageIndex);
                   }}
                   className="absolute top-2 right-2 sm:top-3 sm:right-3 z-10 p-2 sm:p-2.5 bg-black hover:bg-gray-900 rounded-lg transition-all text-primary-400 hover:text-primary-300 border-2 border-primary-500 hover:border-primary-400"
-                  title="Отвори на полн формат"
+                  title={t('listingDetail.openFullSize')}
                 >
                   <svg
                     className="w-5 h-5 sm:w-6 sm:h-6"
@@ -1166,7 +1168,10 @@ export default function ListingPage() {
                                 {isExternal ? (
                                   <img
                                     src={optimizedUrl}
-                                    alt={`${listing.title} - Слика ${index + 1}`}
+                                    alt={t('listings.imageAlt', {
+                                      title: listing.title,
+                                      index: (index + 1).toString(),
+                                    })}
                                     className="w-full h-full object-cover"
                                     loading="lazy"
                                     crossOrigin="anonymous"
@@ -1177,7 +1182,10 @@ export default function ListingPage() {
                                 ) : (
                                   <Image
                                     src={optimizedUrl}
-                                    alt={`${listing.title} - Слика ${index + 1}`}
+                                    alt={t('listings.imageAlt', {
+                                      title: listing.title,
+                                      index: (index + 1).toString(),
+                                    })}
                                     fill
                                     sizes="(max-width: 640px) 33vw, 25vw"
                                     className="object-cover"
@@ -1272,19 +1280,20 @@ export default function ListingPage() {
                   {listing.status === 'Closed' && (
                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold bg-red-500/20 border border-red-500/40 text-red-300 shadow-sm">
                       <span>🔒</span>
-                      <span>Затворено</span>
+                      <span>{t('listingDetail.closed')}</span>
                     </span>
                   )}
                   {listing.is_new && (
                     <span className="inline-flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-semibold bg-primary-500/20 border border-primary-500/40 text-primary-300 shadow-sm">
+                      {/* eslint-disable-next-line no-hardcoded-text/no-hardcoded-text */}
                       <span>✨</span>
-                      <span>Ново</span>
+                      <span>{t('listingDetail.new')}</span>
                     </span>
                   )}
                   {listing.urgent && (
                     <span className="inline-flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-semibold bg-primary-500/20 border border-primary-500/40 text-primary-300 shadow-sm">
                       <span>🔥</span>
-                      <span>Итно</span>
+                      <span>{t('listingDetail.urgent')}</span>
                     </span>
                   )}
                 </div>
@@ -1303,7 +1312,7 @@ export default function ListingPage() {
                   }`}
                   title={
                     user && listing.user && user.id === listing.user.id
-                      ? 'Не можете да додадете своја објава во омилени'
+                      ? t('listingDetail.cannotAddOwnListing')
                       : ''
                   }
                 >
@@ -1321,10 +1330,10 @@ export default function ListingPage() {
                     />
                   </svg>
                   {user && listing.user && user.id === listing.user.id
-                    ? 'Ваша објава'
+                    ? t('listingDetail.yourListing')
                     : isFavorite
-                      ? 'Отстрани од омилени'
-                      : 'Додади во омилени'}
+                      ? t('listingDetail.removeFromFavorites')
+                      : t('listingDetail.addToFavorites')}
                 </button>
                 {listing.status !== 'Closed' && (
                   <button
@@ -1335,7 +1344,7 @@ export default function ListingPage() {
                         ? 'bg-primary-500/10 text-primary-300 border border-primary-500/30 cursor-not-allowed'
                         : 'btn-secondary'
                     }`}
-                    title={isInComparison ? 'Возилото е веќе во споредба' : ''}
+                    title={isInComparison ? t('listingDetail.alreadyInComparisonError') : ''}
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
@@ -1345,7 +1354,9 @@ export default function ListingPage() {
                         d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"
                       />
                     </svg>
-                    {isInComparison ? 'Веќе во споредба' : 'Спореди'}
+                    {isInComparison
+                      ? t('listingDetail.alreadyInComparison')
+                      : t('listingDetail.compare')}
                   </button>
                 )}
               </div>
@@ -1360,7 +1371,7 @@ export default function ListingPage() {
             {vehicle && (
               <div className="surface">
                 <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-400">
-                  Карактеристики
+                  {t('listingDetail.characteristics')}
                 </h2>
                 <div className="space-y-4">
                   {(vehicle.brand?.name || vehicle.model?.name || vehicle.year || listing.vin) && (
@@ -1368,33 +1379,41 @@ export default function ListingPage() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {vehicle.brand?.name && (
                           <div>
-                            <span className="text-primary-400 font-semibold">Марка:</span>
+                            <span className="text-primary-400 font-semibold">
+                              {t('listingDetail.brand')}:
+                            </span>
                             <span className="ml-2 text-gray-300">{vehicle.brand.name}</span>
                           </div>
                         )}
                         {vehicle.model?.name && (
                           <div>
-                            <span className="text-primary-400 font-semibold">Модел:</span>
+                            <span className="text-primary-400 font-semibold">
+                              {t('listingDetail.model')}:
+                            </span>
                             <span className="ml-2 text-gray-300">{vehicle.model.name}</span>
                           </div>
                         )}
                         {vehicle.year && (
                           <div>
-                            <span className="text-primary-400 font-semibold">Година:</span>
+                            <span className="text-primary-400 font-semibold">
+                              {t('listingDetail.year')}:
+                            </span>
                             <span className="ml-2 text-gray-300">{vehicle.year}</span>
                           </div>
                         )}
                         {listing.vin && (
                           <div className="flex items-center">
-                            <span className="text-primary-400 font-semibold">VIN:</span>
+                            <span className="text-primary-400 font-semibold">
+                              {t('listingDetail.vin')}:
+                            </span>
                             <span className="ml-2 text-gray-300">{listing.vin}</span>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleCopy(listing.vin!, 'VIN');
+                                handleCopy(listing.vin!, t('listingDetail.vin'));
                               }}
                               className="ml-2 p-1.5 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors"
-                              title="Копирај VIN"
+                              title={t('listingDetail.copyVin')}
                             >
                               <svg
                                 className="w-4 h-4"
@@ -1426,27 +1445,35 @@ export default function ListingPage() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {vehicle.engine_displ_l && (
                           <div>
-                            <span className="text-primary-400 font-semibold">Мотор:</span>
+                            <span className="text-primary-400 font-semibold">
+                              {t('listingDetail.engine')}:
+                            </span>
                             <span className="ml-2 text-gray-300">
-                              {formatEngineVolume(vehicle.engine_displ_l)} л
+                              {formatEngineVolume(vehicle.engine_displ_l)} {t('listings.liters')}
                             </span>
                           </div>
                         )}
                         {listing.horsepower !== undefined && listing.horsepower !== null && (
                           <div>
-                            <span className="text-primary-400 font-semibold">Коњски сили:</span>
+                            <span className="text-primary-400 font-semibold">
+                              {t('listingDetail.horsepower')}:
+                            </span>
                             <span className="ml-2 text-gray-300">{listing.horsepower}</span>
                           </div>
                         )}
                         {vehicle.fuel && (
                           <div>
-                            <span className="text-primary-400 font-semibold">Гориво:</span>
+                            <span className="text-primary-400 font-semibold">
+                              {t('listingDetail.fuel')}:
+                            </span>
                             <span className="ml-2 text-gray-300">{vehicle.fuel}</span>
                           </div>
                         )}
                         {vehicle.transmission && (
                           <div>
-                            <span className="text-primary-400 font-semibold">Пренос:</span>
+                            <span className="text-primary-400 font-semibold">
+                              {t('listingDetail.transmission')}:
+                            </span>
                             <span className="ml-2 text-gray-300">
                               {formatTransmission(vehicle.transmission)}
                             </span>
@@ -1454,7 +1481,9 @@ export default function ListingPage() {
                         )}
                         {vehicle.drive_type && (
                           <div>
-                            <span className="text-primary-400 font-semibold">Тип на погон:</span>
+                            <span className="text-primary-400 font-semibold">
+                              {t('listingDetail.driveType')}:
+                            </span>
                             <span className="ml-2 text-gray-300">
                               {formatDriveType(vehicle.drive_type)}
                             </span>
@@ -1462,9 +1491,11 @@ export default function ListingPage() {
                         )}
                         {vehicle.mileage_km && (
                           <div>
-                            <span className="text-primary-400 font-semibold">Поминување:</span>
+                            <span className="text-primary-400 font-semibold">
+                              {t('listingDetail.mileage')}:
+                            </span>
                             <span className="ml-2 text-gray-300">
-                              {formatMileage(vehicle.mileage_km)} км
+                              {formatMileage(vehicle.mileage_km)} {t('listings.km')}
                             </span>
                           </div>
                         )}
@@ -1478,7 +1509,7 @@ export default function ListingPage() {
                         {vehicle.body_type && (
                           <div>
                             <span className="text-primary-400 font-semibold">
-                              Тип на каросерија:
+                              {t('listingDetail.bodyType')}:
                             </span>
                             <span className="ml-2 text-gray-300">
                               {formatBodyType(vehicle.body_type)}
@@ -1487,13 +1518,17 @@ export default function ListingPage() {
                         )}
                         {vehicle.color && (
                           <div>
-                            <span className="text-primary-400 font-semibold">Боја:</span>
+                            <span className="text-primary-400 font-semibold">
+                              {t('listingDetail.color')}:
+                            </span>
                             <span className="ml-2 text-gray-300">{vehicle.color}</span>
                           </div>
                         )}
                         {vehicle.doors && (
                           <div>
-                            <span className="text-primary-400 font-semibold">Врати:</span>
+                            <span className="text-primary-400 font-semibold">
+                              {t('listingDetail.doors')}:
+                            </span>
                             <span className="ml-2 text-gray-300">{vehicle.doors}</span>
                           </div>
                         )}
@@ -1508,7 +1543,9 @@ export default function ListingPage() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {listing.condition && (
                           <div>
-                            <span className="text-primary-400 font-semibold">Состојба:</span>
+                            <span className="text-primary-400 font-semibold">
+                              {t('listingDetail.condition')}:
+                            </span>
                             <span className="ml-2 text-gray-300">
                               {formatCondition(listing.condition)}
                             </span>
@@ -1517,7 +1554,7 @@ export default function ListingPage() {
                         {listing.registration_type && (
                           <div>
                             <span className="text-primary-400 font-semibold">
-                              Тип на регистрација:
+                              {t('listingDetail.registrationType')}:
                             </span>
                             <span className="ml-2 text-gray-300">
                               {formatRegistrationType(listing.registration_type)}
@@ -1526,15 +1563,21 @@ export default function ListingPage() {
                         )}
                         {listing.is_registered !== undefined && (
                           <div>
-                            <span className="text-primary-400 font-semibold">Регистрација:</span>
+                            <span className="text-primary-400 font-semibold">
+                              {t('listingDetail.registration')}:
+                            </span>
                             <span className="ml-2 text-gray-300">
-                              {listing.is_registered ? 'Зарегистрирано' : 'Не е зарегистрирано'}
+                              {listing.is_registered
+                                ? t('listingDetail.registered')
+                                : t('listingDetail.notRegistered')}
                             </span>
                           </div>
                         )}
                         {listing.is_registered && listing.registration_expires_at && (
                           <div>
-                            <span className="text-primary-400 font-semibold">Регистрирано до:</span>
+                            <span className="text-primary-400 font-semibold">
+                              {t('listingDetail.registeredUntil')}:
+                            </span>
                             <span className="ml-2 text-gray-300">
                               {(() => {
                                 const date = new Date(listing.registration_expires_at);
@@ -1554,7 +1597,9 @@ export default function ListingPage() {
 
             {listing.description && (
               <div className="surface">
-                <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-400">Опис</h2>
+                <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-400">
+                  {t('listingDetail.description')}
+                </h2>
                 <div
                   className="text-gray-300 leading-relaxed max-w-none listing-description"
                   dangerouslySetInnerHTML={{
@@ -1668,7 +1713,9 @@ export default function ListingPage() {
             <div className="surface">
               <div className="flex items-center gap-2 mb-4">
                 <h2 className="text-xl md:text-2xl font-bold text-primary-400">
-                  {listing.vin ? 'Претходни објави за ова возило' : 'Историја на возило'}
+                  {listing.vin
+                    ? t('listingDetail.previousListings')
+                    : t('listingDetail.vehicleHistory')}
                 </h2>
                 {listing.vin && (
                   <div className="relative group">
@@ -1696,9 +1743,7 @@ export default function ListingPage() {
                     >
                       <div className="bg-bg-darker border-2 border-primary-500/50 rounded-lg p-3 shadow-lg">
                         <p className="text-xs font-semibold text-gray-300 leading-relaxed">
-                          Прикажуваме претходни објави за ова возило со ист VIN. За заштита на
-                          приватност, цената и личните податоци на авторите се скриени за затворени
-                          објави.
+                          {t('listingDetail.historyHint')}
                         </p>
                       </div>
                     </div>
@@ -1722,12 +1767,10 @@ export default function ListingPage() {
                   </svg>
                   <div>
                     <p className="font-semibold text-primary-300 text-sm mb-1">
-                      VIN кодот не е наведен
+                      {t('listingDetail.vinNotProvided')}
                     </p>
                     <p className="text-gray-300 text-sm">
-                      За да можеме да провериме историјата на ова возило, потребно е да биде наведен
-                      VIN код во објавата. Без VIN код, не можеме да идентификуваме претходни објави
-                      за истото возило.
+                      {t('listingDetail.vinNotProvidedDescription')}
                     </p>
                   </div>
                 </div>
@@ -1741,13 +1784,13 @@ export default function ListingPage() {
                     <thead>
                       <tr className="border-b border-primary-500/20">
                         <th className="text-left py-2 px-2 sm:px-3 text-gray-300 font-semibold text-xs sm:text-sm">
-                          Наслов
+                          {t('listingDetail.title')}
                         </th>
                         <th className="text-left py-2 px-2 sm:px-3 text-gray-300 font-semibold text-xs sm:text-sm hidden sm:table-cell">
-                          Поминување
+                          {t('listingDetail.mileage')}
                         </th>
                         <th className="text-left py-2 px-2 sm:px-3 text-gray-300 font-semibold text-xs sm:text-sm hidden md:table-cell">
-                          Затворено
+                          {t('listingDetail.closedAt')}
                         </th>
                         <th className="text-left sm:text-right py-2 px-2 sm:px-3 text-gray-300 font-semibold text-xs sm:text-sm"></th>
                       </tr>
@@ -1772,7 +1815,7 @@ export default function ListingPage() {
                           </td>
                           <td className="py-3 px-2 sm:px-3 text-left sm:text-right">
                             <span className="text-primary-400 hover:text-primary-300 transition-colors text-xs font-medium">
-                              Отвори →
+                              {t('listingDetail.open')}
                             </span>
                           </td>
                         </tr>
@@ -1781,7 +1824,7 @@ export default function ListingPage() {
                   </table>
                 </div>
               ) : (
-                <p className="text-gray-300">Нема претходни објави за ова возило</p>
+                <p className="text-gray-300">{t('listingDetail.noPreviousListings')}</p>
               )}
             </div>
           </div>
@@ -1789,12 +1832,14 @@ export default function ListingPage() {
           <div className="space-y-6">
             <div className="surface">
               <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-400">
-                Контактни информации
+                {t('listingDetail.contactInfo')}
               </h2>
               {listing.user && (
                 <div className="space-y-4">
                   <div>
-                    <span className="font-semibold text-primary-400">Тип на продавач:</span>
+                    <span className="font-semibold text-primary-400">
+                      {t('listingDetail.sellerType')}:
+                    </span>
                     <span
                       className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold ml-2 ${
                         listing.user.type === 'Business'
@@ -1802,7 +1847,9 @@ export default function ListingPage() {
                           : 'bg-primary-500/20 text-primary-300'
                       }`}
                     >
-                      {listing.user.type === 'Business' ? 'Правно лице' : 'Физичко лице'}
+                      {listing.user.type === 'Business'
+                        ? t('listingDetail.business')
+                        : t('listingDetail.individual')}
                     </span>
                   </div>
 
@@ -1810,7 +1857,9 @@ export default function ListingPage() {
                     listing.user.type === 'Business' &&
                     listing.user.companyName && (
                       <div>
-                        <span className="font-semibold text-primary-400">Компанија:</span>
+                        <span className="font-semibold text-primary-400">
+                          {t('listingDetail.company')}:
+                        </span>
                         <span className="ml-2 text-gray-300">{listing.user.companyName}</span>
                       </div>
                     )}
@@ -1820,7 +1869,9 @@ export default function ListingPage() {
                     listing.user.firstName &&
                     listing.user.lastName && (
                       <div>
-                        <span className="font-semibold text-primary-400">Име:</span>
+                        <span className="font-semibold text-primary-400">
+                          {t('listingDetail.name')}:
+                        </span>
                         <span className="ml-2 text-gray-300">
                           {listing.user.firstName} {listing.user.lastName}
                         </span>
@@ -1828,19 +1879,25 @@ export default function ListingPage() {
                     )}
 
                   <div>
-                    <span className="font-semibold text-primary-400">Град:</span>
+                    <span className="font-semibold text-primary-400">
+                      {t('listingDetail.city')}:
+                    </span>
                     <span className="ml-2 text-gray-300">{getCityNameMk(listing.city)}</span>
                   </div>
 
                   {listing.status === 'Closed' ? (
                     <div>
-                      <span className="font-semibold text-primary-400">Email:</span>
+                      <span className="font-semibold text-primary-400">
+                        {t('listingDetail.email')}:
+                      </span>
                       <span className="ml-2 text-primary-400">••••••••</span>
                     </div>
                   ) : (
                     listing.user.email && (
                       <div className="flex items-center">
-                        <span className="font-semibold text-primary-400">Email:</span>
+                        <span className="font-semibold text-primary-400">
+                          {t('listingDetail.email')}:
+                        </span>
                         <a
                           href={`mailto:${listing.user.email}`}
                           className="ml-2 text-gray-300 hover:text-primary-300 transition-colors underline"
@@ -1851,10 +1908,10 @@ export default function ListingPage() {
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            handleCopy(listing.user!.email!, 'Email');
+                            handleCopy(listing.user!.email!, t('listingDetail.email'));
                           }}
                           className="ml-2 p-1.5 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors"
-                          title="Копирај email"
+                          title={t('listingDetail.copyEmail')}
                         >
                           <svg
                             className="w-4 h-4"
@@ -1876,13 +1933,17 @@ export default function ListingPage() {
 
                   {listing.status === 'Closed' ? (
                     <div>
-                      <span className="font-semibold text-primary-400">Телефон:</span>
+                      <span className="font-semibold text-primary-400">
+                        {t('listingDetail.phone')}:
+                      </span>
                       <span className="ml-2 text-primary-400">••••••••</span>
                     </div>
                   ) : (
                     listing.user.phone && (
                       <div className="flex items-center">
-                        <span className="font-semibold text-primary-400">Телефон:</span>
+                        <span className="font-semibold text-primary-400">
+                          {t('listingDetail.phone')}:
+                        </span>
                         <a
                           href={`tel:${listing.user.phone}`}
                           onClick={() => {
@@ -1899,10 +1960,10 @@ export default function ListingPage() {
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            handleCopy(listing.user!.phone!, 'Телефон');
+                            handleCopy(listing.user!.phone!, t('listingDetail.phone'));
                           }}
                           className="ml-2 p-1.5 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors"
-                          title="Копирај телефон"
+                          title={t('listingDetail.copyPhone')}
                         >
                           <svg
                             className="w-4 h-4"
@@ -1926,9 +1987,10 @@ export default function ListingPage() {
                     (listing.user.viber || listing.user.whatsapp || listing.user.telegram) && (
                       <div>
                         <span className="font-semibold text-primary-400 mb-2 block">
-                          Достапни месенџери:
+                          {t('listingDetail.availableMessengers')}:
                         </span>
                         <div className="flex flex-wrap gap-2">
+                          {/* eslint-disable no-hardcoded-text/no-hardcoded-text */}
                           {listing.user.viber && listing.user.phone && (
                             <a
                               href={getViberUrl(listing.user.phone) || '#'}
@@ -1977,6 +2039,7 @@ export default function ListingPage() {
                               Telegram
                             </a>
                           )}
+                          {/* eslint-enable no-hardcoded-text/no-hardcoded-text */}
                         </div>
                       </div>
                     )}
@@ -1991,7 +2054,9 @@ export default function ListingPage() {
                             ? 'bg-bg-darker text-gray-500 border-2 border-primary-500/20 cursor-not-allowed opacity-50'
                             : 'bg-bg-light border-2 border-primary-500/30 text-primary-400 hover:bg-bg-light/80 hover:border-primary-500'
                         }`}
-                        title={listing.status === 'Closed' ? 'Недостапно за затворени објави' : ''}
+                        title={
+                          listing.status === 'Closed' ? t('listingDetail.unavailableForClosed') : ''
+                        }
                       >
                         <svg
                           className="w-5 h-5 flex-shrink-0"
@@ -2006,7 +2071,7 @@ export default function ListingPage() {
                             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                           />
                         </svg>
-                        <span>Сите објави од продавачот</span>
+                        <span>{t('listingDetail.allListingsFromSeller')}</span>
                       </button>
                     </div>
                   )}
@@ -2037,7 +2102,9 @@ export default function ListingPage() {
                         d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                       />
                     </svg>
-                    <span className="font-semibold text-primary-400">Прегледи:</span>
+                    <span className="font-semibold text-primary-400">
+                      {t('listingDetail.views')}:
+                    </span>
                     <span className="text-gray-300">{listing.views}</span>
                   </div>
                 )}
@@ -2055,7 +2122,9 @@ export default function ListingPage() {
                       d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  <span className="font-semibold text-primary-400">Ажурирано:</span>
+                  <span className="font-semibold text-primary-400">
+                    {t('listingDetail.updated')}:
+                  </span>
                   <span className="text-gray-300">{formatDate(listing.last_updated_at)}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
@@ -2072,7 +2141,9 @@ export default function ListingPage() {
                       d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                     />
                   </svg>
-                  <span className="font-semibold text-primary-400">Ќе се затвори:</span>
+                  <span className="font-semibold text-primary-400">
+                    {t('listingDetail.willClose')}:
+                  </span>
                   <span className="text-gray-300">{formatDate(closingDate)}</span>
                 </div>
               </div>
@@ -2173,7 +2244,11 @@ export default function ListingPage() {
                 return isExternal ? (
                   <img
                     src={optimizedUrl}
-                    alt={`${listing.title} - Слика ${modalImageIndex + 1} од ${images.length}`}
+                    alt={t('listings.imageAltWithTotal', {
+                      title: listing.title,
+                      index: (modalImageIndex + 1).toString(),
+                      total: images.length.toString(),
+                    })}
                     className="max-w-full max-h-[90vh] w-auto h-auto object-contain"
                     crossOrigin="anonymous"
                     onError={() => {
@@ -2183,7 +2258,11 @@ export default function ListingPage() {
                 ) : (
                   <Image
                     src={optimizedUrl}
-                    alt={`${listing.title} - Слика ${modalImageIndex + 1} од ${images.length}`}
+                    alt={t('listings.imageAltWithTotal', {
+                      title: listing.title,
+                      index: (modalImageIndex + 1).toString(),
+                      total: images.length.toString(),
+                    })}
                     width={1200}
                     height={900}
                     sizes="(max-width: 768px) 100vw, 90vw"

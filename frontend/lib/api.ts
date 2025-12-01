@@ -173,6 +173,8 @@ api.interceptors.response.use(
           localStorage.removeItem('token');
           localStorage.removeItem('refresh_token');
           if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+            const currentUrl = window.location.pathname + window.location.search;
+            localStorage.setItem('returnUrl', currentUrl);
             window.location.href = '/login';
           }
         }
@@ -212,6 +214,8 @@ api.interceptors.response.use(
           localStorage.removeItem('token');
           localStorage.removeItem('refresh_token');
           if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+            const currentUrl = window.location.pathname + window.location.search;
+            localStorage.setItem('returnUrl', currentUrl);
             window.location.href = '/login';
           }
         }

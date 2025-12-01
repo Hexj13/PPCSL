@@ -235,10 +235,24 @@ git push -u origin main
 
 ### 5.1. Translation System
 
+The translation system uses **synchronous static imports** to prevent "blinking" of translation keys on page load. Translations are loaded immediately when the module is initialized.
+
 #### Create `frontend/lib/i18n.ts` in kupito-core
 
 ```typescript
+import mkTranslations from '@/messages/mk.json';
+
+export type Locale = 'mk';
+
 export interface Translations {
+  footer: {
+    copyright: string;
+    tagline: string;
+    faq: string;
+    terms: string;
+    privacy: string;
+    cookieSettings: string;
+  };
   header: {
     addListing: string;
     myListings: string;
@@ -247,94 +261,119 @@ export interface Translations {
     login: string;
     register: string;
     logout: string;
-    profile: string;
-    admin: string;
+    // ... all translation keys
   };
-  footer: {
-    copyright: string;
-    tagline: string;
-    faq: string;
-    terms: string;
-    privacy: string;
-  };
-  common: {
-    loading: string;
-    error: string;
-    success: string;
-    save: string;
-    cancel: string;
-    delete: string;
-    edit: string;
-    // ... add all common texts
-  };
-  // ... add all translation keys
+  // ... all translation sections
 }
 
-let translations: Translations | null = null;
+const DEFAULT_LOCALE: Locale = 'mk';
 
-export async function loadTranslations(country: string): Promise<Translations> {
-  if (translations) {
-    return translations;
+export function loadTranslations(locale: Locale): Translations {
+  if (locale === 'mk') {
+    return mkTranslations as Translations;
   }
-
-  try {
-    const module = await import(`./locales/${country}.json`);
-    translations = module.default;
-    return translations;
-  } catch (error) {
-    console.error(`Failed to load translations for ${country}:`, error);
-    throw new Error(`Translations for ${country} not found`);
-  }
-}
-
-export function getTranslations(): Translations {
-  if (!translations) {
-    throw new Error('Translations not loaded. Call loadTranslations first.');
-  }
-  return translations;
-}
-
-export function useTranslations(): Translations {
-  const [t, setT] = useState<Translations | null>(null);
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
-
-  useEffect(() => {
-    loadTranslations(country).then(setT);
-  }, [country]);
-
-  if (!t) {
-    return {} as Translations; // Return empty object during loading
-  }
-
-  return t;
+  // Fallback to Macedonian if an unsupported locale is requested
+  return mkTranslations as Translations;
 }
 ```
 
-#### Create `frontend/lib/i18n-hook.tsx` (React Hook)
+#### Create `frontend/components/I18nProvider.tsx` (React Context Provider)
 
 ```typescript
 'use client';
 
-import { useEffect, useState } from 'react';
-import { loadTranslations, Translations } from './i18n';
+import { createContext, useContext, ReactNode } from 'react';
+import { loadTranslations, type Locale, type Translations } from '@/lib/i18n';
 
-export function useTranslations(): Translations {
-  const [translations, setTranslations] = useState<Translations | null>(null);
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+interface I18nContextType {
+  locale: Locale;
+  translations: Translations;
+}
 
-  useEffect(() => {
-    loadTranslations(country)
-      .then(setTranslations)
-      .catch((error) => {
-        console.error('Failed to load translations:', error);
-      });
-  }, [country]);
+// Load translations synchronously at module initialization
+const initialTranslations = loadTranslations('mk');
+const initialLocale: Locale = 'mk';
 
-  if (!translations) {
-    return {} as Translations;
+const I18nContext = createContext<I18nContextType>({
+  locale: initialLocale,
+  translations: initialTranslations,
+});
+
+export function I18nProvider({ children }: { children: ReactNode }) {
+  return (
+    <I18nContext.Provider value={{ locale: initialLocale, translations: initialTranslations }}>
+      {children}
+    </I18nContext.Provider>
+  );
+}
+
+export function useI18n() {
+  const context = useContext(I18nContext);
+  if (context === undefined) {
+    throw new Error('useI18n must be used within an I18nProvider');
   }
+  return context;
+}
+```
 
-  return translations;
+#### Create `frontend/hooks/useTranslation.ts` (Translation Hook)
+
+```typescript
+'use client';
+
+import { useI18n } from '@/components/I18nProvider';
+import type { Translations } from '@/lib/i18n';
+
+export function useTranslation() {
+  const { translations } = useI18n();
+
+  const t = (key: string, params?: Record<string, string | number>): string => {
+    const keys = key.split('.');
+    let value: unknown = translations as Translations;
+
+    for (const k of keys) {
+      if (value && typeof value === 'object' && k in value) {
+        value = (value as Record<string, unknown>)[k];
+      } else {
+        return key; // Return key if translation not found
+      }
+    }
+
+    if (typeof value !== 'string') {
+      return key;
+    }
+
+    // Support parameter replacement: t('message', { name: 'John' })
+    if (params) {
+      return value.replace(/\{(\w+)\}/g, (match, paramKey) => {
+        return params[paramKey]?.toString() || match;
+      });
+    }
+
+    return value;
+  };
+
+  return { t, translations: translations as Translations };
+}
+```
+
+**Usage in components:**
+
+```typescript
+'use client';
+
+import { useTranslation } from '@/hooks/useTranslation';
+
+export function MyComponent() {
+  const { t } = useTranslation();
+
+  return (
+    <div>
+      <h1>{t('header.addListing')}</h1>
+      <p>{t('common.loading')}</p>
+      <p>{t('userListings.title', { name: 'John' })}</p>
+    </div>
+  );
 }
 ```
 
@@ -671,14 +710,14 @@ export default config;
 ```typescript
 'use client';
 
-import { useTranslations } from '@/lib/i18n-hook';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export function Header() {
-  const t = useTranslations();
+  const { t } = useTranslation();
   
   return (
     <Link href="/listings/new">
-      {t.header.addListing}
+      {t('header.addListing')}
     </Link>
   );
 }
@@ -1108,7 +1147,7 @@ jobs:
 
 2. **Create translation keys** for each text
 
-3. **Replace hardcoded texts** with `t.key` calls
+3. **Replace hardcoded texts** with `t('key.path')` calls using the `useTranslation` hook
 
 4. **Create JSON files** with all translations
 
@@ -1139,11 +1178,11 @@ jobs:
 ### 7.4. Migration Checklist
 
 - [ ] Create kupito-core repository
-- [ ] Remove all hardcoded texts from components
-- [ ] Create translation system
+- [x] Remove all hardcoded texts from components
+- [x] Create translation system
 - [ ] Create theme system
 - [ ] Create site config system
-- [ ] Update all components to use translations
+- [x] Update all components to use translations
 - [ ] Update Tailwind config
 - [ ] Create kupito-mk repository
 - [ ] Create kupito-al repository

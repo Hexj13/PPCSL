@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { savedFiltersApi } from '@/lib/api';
 
@@ -25,6 +26,7 @@ export function SaveFilterModal({
   filterId,
   initialName = '',
 }: SaveFilterModalProps) {
+  const { t } = useTranslation();
   const [name, setName] = useState(initialName);
   const [saving, setSaving] = useState(false);
 
@@ -36,12 +38,12 @@ export function SaveFilterModal({
 
   const handleSave = async () => {
     if (!name.trim()) {
-      toast.error('Внесете име за филтерот');
+      toast.error(t('saveFilter.nameRequired'));
       return;
     }
 
     if (name.length > 100) {
-      toast.error('Името не може да биде подолго од 100 карактери');
+      toast.error(t('saveFilter.nameMaxLength'));
       return;
     }
 
@@ -54,11 +56,11 @@ export function SaveFilterModal({
     try {
       if (filterId) {
         await savedFiltersApi.update(filterId, name.trim());
-        toast.success('Филтерот е успешно ажуриран');
+        toast.success(t('saveFilter.filterUpdated'));
       } else if (filters) {
         await savedFiltersApi.create(name.trim(), filters);
         analytics.saveFilter(name.trim(), filters);
-        toast.success('Филтерот е успешно зачуван');
+        toast.success(t('saveFilter.filterSaved'));
       }
       setName('');
       onSave();
@@ -67,8 +69,7 @@ export function SaveFilterModal({
       const errorMessage =
         (error && typeof error === 'object' && 'response' in error
           ? (error.response as { data?: { message?: string } })?.data?.message
-          : null) ||
-        (filterId ? 'Грешка при ажурирање на филтерот' : 'Грешка при зачувување на филтерот');
+          : null) || (filterId ? t('saveFilter.updateError') : t('saveFilter.saveError'));
       toast.error(errorMessage);
     } finally {
       setSaving(false);
@@ -84,12 +85,14 @@ export function SaveFilterModal({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title={filterId ? 'Уреди филтер' : 'Зачувај филтер'}
+      title={filterId ? t('saveFilter.editTitle') : t('saveFilter.saveTitle')}
       size="small"
     >
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-400">Име</label>
+          <label className="block text-sm font-semibold mb-2 text-primary-400">
+            {t('saveFilter.name')}
+          </label>
           <input
             type="text"
             value={name}
@@ -101,10 +104,13 @@ export function SaveFilterModal({
             }}
             maxLength={100}
             className="input-field"
-            placeholder="Внесете име за филтерот"
+            placeholder={t('saveFilter.nameRequired')}
             autoFocus
           />
-          <p className="text-xs text-gray-400 mt-1">{name.length}/100</p>
+          <p className="text-xs text-gray-400 mt-1">
+            {name.length}
+            {t('saveFilter.maxLength')}
+          </p>
         </div>
 
         <div className="flex gap-3 pt-4">
@@ -114,13 +120,7 @@ export function SaveFilterModal({
             disabled={saving || !name.trim()}
             className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {saving
-              ? filterId
-                ? 'Ажурирање...'
-                : 'Зачувување...'
-              : filterId
-                ? 'Зачувај'
-                : 'Зачувај'}
+            {saving ? t('saveFilter.saving') : t('saveFilter.save')}
           </button>
           <button
             type="button"
@@ -128,7 +128,7 @@ export function SaveFilterModal({
             disabled={saving}
             className="flex-1 btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Откажи
+            {t('common.cancel')}
           </button>
         </div>
       </div>

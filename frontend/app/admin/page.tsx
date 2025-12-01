@@ -8,6 +8,7 @@ import { Dropdown } from '@/components/Dropdown';
 import { ListingManagementCard } from '@/components/ListingManagementCard';
 import { ListingManagementCardSkeleton } from '@/components/ListingManagementCardSkeleton';
 import { UserListingsModal } from '@/components/UserListingsModal';
+import { useTranslation } from '@/hooks/useTranslation';
 import { adminApi, Listing, User } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 
@@ -16,6 +17,7 @@ type AdminTab = 'listings' | 'users';
 export default function AdminPage() {
   const router = useRouter();
   const { user, isInitialized } = useAuthStore();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<AdminTab>('listings');
 
   useEffect(() => {
@@ -50,7 +52,7 @@ export default function AdminPage() {
     <div>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
         <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-          Админ панел
+          {t('admin.title')}
         </h1>
       </div>
 
@@ -64,7 +66,7 @@ export default function AdminPage() {
                 : 'border-transparent text-gray-400 hover:text-gray-300'
             }`}
           >
-            Објави
+            {t('admin.listingsTabLabel')}
           </button>
           <button
             onClick={() => setActiveTab('users')}
@@ -74,7 +76,7 @@ export default function AdminPage() {
                 : 'border-transparent text-gray-400 hover:text-gray-300'
             }`}
           >
-            Корисници
+            {t('admin.usersTabLabel')}
           </button>
         </div>
       </div>
@@ -86,6 +88,7 @@ export default function AdminPage() {
 }
 
 function ListingsTab() {
+  const { t } = useTranslation();
   const [allListings, setAllListings] = useState<Listing[]>([]);
   const [displayedCount, setDisplayedCount] = useState(20);
   const [loading, setLoading] = useState(true);
@@ -156,7 +159,7 @@ function ListingsTab() {
           setDisplayedCount(limit);
         }
       } catch {
-        toast.error('Грешка при вчитување на објави');
+        toast.error(t('admin.listingsTab.loadError'));
         if (!append) {
           setAllListings([]);
           setDisplayedCount(20);
@@ -173,7 +176,7 @@ function ListingsTab() {
         fetchInProgressRef.current = false;
       }
     },
-    [allListings.length]
+    [allListings.length, t]
   );
 
   useEffect(() => {
@@ -206,34 +209,40 @@ function ListingsTab() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const handleAction = useCallback(async (id: string, action: 'publish' | 'pause' | 'close') => {
-    const statusMap: Record<'publish' | 'pause' | 'close', 'Active' | 'Paused' | 'Closed'> = {
-      publish: 'Active',
-      pause: 'Paused',
-      close: 'Closed',
-    };
-    const newStatus = statusMap[action];
+  const handleAction = useCallback(
+    async (id: string, action: 'publish' | 'pause' | 'close') => {
+      const statusMap: Record<'publish' | 'pause' | 'close', 'Active' | 'Paused' | 'Closed'> = {
+        publish: 'Active',
+        pause: 'Paused',
+        close: 'Closed',
+      };
+      const newStatus = statusMap[action];
 
-    try {
-      await adminApi.updateListingStatus(id, newStatus);
-      toast.success('Статусот е успешно ажуриран');
+      try {
+        await adminApi.updateListingStatus(id, newStatus);
+        toast.success(t('admin.listingsTab.statusUpdateSuccess'));
 
-      setAllListings((prev) =>
-        prev.map((listing) => (listing.id === id ? { ...listing, status: newStatus } : listing))
-      );
-    } catch {
-      toast.error('Грешка при ажурирање на статус');
-    }
-  }, []);
+        setAllListings((prev) =>
+          prev.map((listing) => (listing.id === id ? { ...listing, status: newStatus } : listing))
+        );
+      } catch {
+        toast.error(t('admin.listingsTab.statusUpdateError'));
+      }
+    },
+    [t]
+  );
 
-  const handleCopy = useCallback(async (text: string, label: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success(`${label} е копирано`);
-    } catch {
-      toast.error('Грешка при копирање');
-    }
-  }, []);
+  const handleCopy = useCallback(
+    async (text: string, label: string) => {
+      try {
+        await navigator.clipboard.writeText(text);
+        toast.success(t('admin.listingsTab.copySuccess', { label }));
+      } catch {
+        toast.error(t('admin.listingsTab.copyError'));
+      }
+    },
+    [t]
+  );
 
   const filteredListings = useMemo(() => {
     return allListings.filter((listing) => {
@@ -247,7 +256,7 @@ function ListingsTab() {
           const user = listing.user;
           if (!user) return false;
           const creatorName =
-            `${user.firstName || ''} ${user.lastName || ''} ${user.email || ''} ${user.companyName || ''} ${!user.email && !user.phone ? 'избришан' : ''}`.toLowerCase();
+            `${user.firstName || ''} ${user.lastName || ''} ${user.email || ''} ${user.companyName || ''} ${!user.email && !user.phone ? t('admin.listingsTab.deletedUser') : ''}`.toLowerCase();
           const nameMatch = creatorName.includes(searchQuery.toLowerCase());
           return statusMatch && nameMatch;
         }
@@ -255,7 +264,7 @@ function ListingsTab() {
 
       return statusMatch;
     });
-  }, [allListings, statusFilter, searchQuery, searchType]);
+  }, [allListings, statusFilter, searchQuery, searchType, t]);
 
   const displayedListings = useMemo(() => {
     return filteredListings.slice(0, displayedCount);
@@ -322,7 +331,9 @@ function ListingsTab() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={
-            searchType === 'id' ? 'Внесете ID на објава' : 'Внесете име, email или компанија'
+            searchType === 'id'
+              ? t('admin.listingsTab.searchByIdPlaceholder')
+              : t('admin.listingsTab.searchByCreatorPlaceholder')
           }
           className="flex-1 px-4 py-2.5 md:py-3 rounded-lg bg-bg-light border-2 border-primary-500/30 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
         />
@@ -330,8 +341,8 @@ function ListingsTab() {
           value={searchType}
           onChange={(value) => setSearchType(value as 'creator' | 'id')}
           options={[
-            { value: 'creator', label: 'Пребарај по корисник' },
-            { value: 'id', label: 'Пребарај по ID' },
+            { value: 'creator', label: t('admin.listingsTab.searchByCreator') },
+            { value: 'id', label: t('admin.listingsTab.searchById') },
           ]}
           className="w-full md:w-auto md:min-w-[200px]"
         />
@@ -350,12 +361,12 @@ function ListingsTab() {
               }`}
             >
               {status === 'All'
-                ? 'Сите'
+                ? t('admin.listingsTab.all')
                 : status === 'Active'
-                  ? 'Активни'
+                  ? t('admin.listingsTab.active')
                   : status === 'Paused'
-                    ? 'Привремено застарени'
-                    : 'Затворени'}
+                    ? t('admin.listingsTab.paused')
+                    : t('admin.listingsTab.closed')}
               {status !== 'All' && (
                 <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-xs">
                   {statusCounts[status]}
@@ -367,12 +378,13 @@ function ListingsTab() {
       </div>
 
       <div className="mb-3 md:mb-4 text-sm md:text-base text-gray-300">
-        Вкупно објави: <span className="font-semibold text-white">{filteredListings.length}</span>
+        {t('admin.listingsTab.totalListings')}:{' '}
+        <span className="font-semibold text-white">{filteredListings.length}</span>
       </div>
 
       {filteredListings.length === 0 ? (
         <div className="text-center py-10 md:py-12">
-          <p className="text-gray-300 text-base md:text-lg">Нема објави</p>
+          <p className="text-gray-300 text-base md:text-lg">{t('admin.listingsTab.noListings')}</p>
         </div>
       ) : (
         <>
@@ -391,7 +403,9 @@ function ListingsTab() {
           {loadingMore && (
             <div className="text-center py-6 md:py-8">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-              <p className="mt-2 text-gray-300 text-sm md:text-base">Вчитување...</p>
+              <p className="mt-2 text-gray-300 text-sm md:text-base">
+                {t('admin.listingsTab.loading')}
+              </p>
             </div>
           )}
 
@@ -403,12 +417,14 @@ function ListingsTab() {
                     onClick={handleLoadMore}
                     className="btn-primary px-6 md:px-8 py-2.5 md:py-3 text-base md:text-lg font-semibold"
                   >
-                    Вчитај уште
+                    {t('admin.listingsTab.loadMore')}
                   </button>
                 </div>
               ) : displayedCount >= filteredListings.length && filteredListings.length > 0 ? (
                 <div className="text-center py-6 md:py-8">
-                  <p className="text-gray-300 text-sm md:text-base">Нема повеќе објави</p>
+                  <p className="text-gray-300 text-sm md:text-base">
+                    {t('admin.listingsTab.noMoreListings')}
+                  </p>
                 </div>
               ) : null}
             </>
@@ -420,6 +436,7 @@ function ListingsTab() {
 }
 
 function UsersTab() {
+  const { t } = useTranslation();
   const [users, setUsers] = useState<User[]>([]);
   const [displayedCount, setDisplayedCount] = useState(20);
   const [loading, setLoading] = useState(true);
@@ -499,7 +516,7 @@ function UsersTab() {
           });
         }
       } catch {
-        toast.error('Грешка при вчитување на корисници');
+        toast.error(t('admin.usersTab.loadError'));
         if (!append) {
           setUsers([]);
         }
@@ -515,7 +532,7 @@ function UsersTab() {
         fetchInProgressRef.current = false;
       }
     },
-    [users.length]
+    [users.length, t]
   );
 
   useEffect(() => {
@@ -612,42 +629,48 @@ function UsersTab() {
 
       try {
         await adminApi.toggleUserStatus(userId);
-        toast.success('Статусот на корисникот е ажуриран');
+        toast.success(t('admin.usersTab.userStatusUpdateSuccess'));
       } catch {
         if (previousActive !== undefined) {
           setUsers((prev) =>
             prev.map((user) => (user.id === userId ? { ...user, active: previousActive } : user))
           );
         }
-        toast.error('Грешка при ажурирање на статус');
+        toast.error(t('admin.usersTab.statusUpdateError'));
       }
     },
-    [users]
+    [users, t]
   );
 
-  const handleCopy = useCallback(async (text: string, label: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success(`${label} е копирано`);
-    } catch {
-      toast.error('Грешка при копирање');
-    }
-  }, []);
+  const handleCopy = useCallback(
+    async (text: string, label: string) => {
+      try {
+        await navigator.clipboard.writeText(text);
+        toast.success(t('admin.usersTab.copySuccess', { label }));
+      } catch {
+        toast.error(t('admin.usersTab.copyError'));
+      }
+    },
+    [t]
+  );
 
   const handleViewListings = useCallback((user: User) => {
     setSelectedUser(user);
     setShowListingsModal(true);
   }, []);
 
-  const fetchUserListings = useCallback(async (userId: string): Promise<Listing[]> => {
-    try {
-      const res = await adminApi.getUserListings(userId);
-      return res.data;
-    } catch {
-      toast.error('Грешка при вчитување на објави');
-      return [];
-    }
-  }, []);
+  const fetchUserListings = useCallback(
+    async (userId: string): Promise<Listing[]> => {
+      try {
+        const res = await adminApi.getUserListings(userId);
+        return res.data;
+      } catch {
+        toast.error(t('admin.usersTab.listingsLoadError'));
+        return [];
+      }
+    },
+    [t]
+  );
 
   if (loading) {
     return (
@@ -696,7 +719,7 @@ function UsersTab() {
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Пребарај по ID, email, телефон, име, презиме или компанија"
+          placeholder={t('admin.searchPlaceholder')}
           className="flex-1 px-4 py-2.5 md:py-3 rounded-lg bg-bg-light border-2 border-primary-500/30 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
         />
         <div className="flex flex-wrap gap-2 md:gap-3">
@@ -711,12 +734,12 @@ function UsersTab() {
               }`}
             >
               {role === 'All'
-                ? 'Сите роли'
+                ? t('admin.usersTab.allRoles')
                 : role === 'Individual'
-                  ? 'Физичко лице'
+                  ? t('admin.usersTab.individual')
                   : role === 'Business'
-                    ? 'Правно лице'
-                    : 'Админ'}
+                    ? t('admin.usersTab.business')
+                    : t('admin.usersTab.admin')}
               {role !== 'All' && (
                 <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-xs">
                   {roleCounts[role]}
@@ -728,12 +751,13 @@ function UsersTab() {
       </div>
 
       <div className="mb-3 md:mb-4 text-sm md:text-base text-gray-300">
-        Вкупно корисници: <span className="font-semibold text-white">{filteredUsers.length}</span>
+        {t('admin.usersTab.totalUsers')}:{' '}
+        <span className="font-semibold text-white">{filteredUsers.length}</span>
       </div>
 
       {filteredUsers.length === 0 ? (
         <div className="text-center py-10 md:py-12">
-          <p className="text-gray-300 text-base md:text-lg">Нема корисници</p>
+          <p className="text-gray-300 text-base md:text-lg">{t('admin.usersTab.noUsers')}</p>
         </div>
       ) : (
         <>
@@ -745,7 +769,7 @@ function UsersTab() {
                     <div className="mb-2">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <span className="text-xs md:text-sm text-gray-400 font-mono break-all">
-                          ID: {user.id}
+                          {t('admin.usersTab.id')} {user.id}
                         </span>
                         <button
                           onClick={(e) => {
@@ -753,7 +777,7 @@ function UsersTab() {
                             handleCopy(user.id, 'ID');
                           }}
                           className="p-1 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors flex-shrink-0"
-                          title="Копирај ID"
+                          title={t('common.copyId')}
                         >
                           <svg
                             className="w-3.5 h-3.5 md:w-4 md:h-4"
@@ -775,7 +799,10 @@ function UsersTab() {
                           ? user.lastName
                             ? `${user.firstName} ${user.lastName}`
                             : user.firstName
-                          : user.companyName || user.email || user.phone || 'Избришан корисник'}
+                          : user.companyName ||
+                            user.email ||
+                            user.phone ||
+                            t('admin.usersTab.deletedUser')}
                       </h3>
                       {user.companyName && (
                         <p className="text-xs md:text-sm text-gray-300 mt-1 break-words">
@@ -786,26 +813,28 @@ function UsersTab() {
                     <div className="space-y-1 text-xs md:text-sm text-gray-300">
                       {user.email ? (
                         <div className="break-words">
-                          <span className="text-primary-400">Email:</span> {user.email}
+                          <span className="text-primary-400">{t('admin.usersTab.email')}</span>{' '}
+                          {user.email}
                         </div>
                       ) : (
                         <div>
-                          <span className="text-primary-400">Email:</span>{' '}
-                          <span className="text-gray-500">Недостапно</span>
+                          <span className="text-primary-400">{t('admin.usersTab.email')}</span>{' '}
+                          <span className="text-gray-500">{t('admin.usersTab.unavailable')}</span>
                         </div>
                       )}
                       {user.phone ? (
                         <div>
-                          <span className="text-primary-400">Телефон:</span> {user.phone}
+                          <span className="text-primary-400">{t('admin.usersTab.phone')}</span>{' '}
+                          {user.phone}
                         </div>
                       ) : (
                         <div>
-                          <span className="text-primary-400">Телефон:</span>{' '}
-                          <span className="text-gray-500">Недостапно</span>
+                          <span className="text-primary-400">{t('admin.usersTab.phone')}</span>{' '}
+                          <span className="text-gray-500">{t('admin.usersTab.unavailable')}</span>
                         </div>
                       )}
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-primary-400">Тип:</span>
+                        <span className="text-primary-400">{t('admin.usersTab.type')}</span>
                         <span
                           className={`px-2 py-1 rounded text-xs font-semibold ${
                             user.type === 'Admin'
@@ -816,14 +845,14 @@ function UsersTab() {
                           }`}
                         >
                           {user.type === 'Admin'
-                            ? 'Админ'
+                            ? t('admin.usersTab.admin')
                             : user.type === 'Business'
-                              ? 'Правно лице'
-                              : 'Физичко лице'}
+                              ? t('admin.usersTab.business')
+                              : t('admin.usersTab.individual')}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-primary-400">Статус:</span>
+                        <span className="text-primary-400">{t('admin.usersTab.status')}</span>
                         <span
                           className={`px-2 py-1 rounded text-xs font-semibold ${
                             user.active !== false
@@ -831,11 +860,13 @@ function UsersTab() {
                               : 'bg-red-500/20 text-red-300'
                           }`}
                         >
-                          {user.active !== false ? 'Активен' : 'Деактивиран'}
+                          {user.active !== false
+                            ? t('admin.usersTab.active')
+                            : t('admin.usersTab.inactive')}
                         </span>
                       </div>
                       <div>
-                        <span className="text-primary-400">Објави:</span>{' '}
+                        <span className="text-primary-400">{t('admin.usersTab.listings')}</span>{' '}
                         {user.listings?.length || 0}
                       </div>
                     </div>
@@ -846,7 +877,7 @@ function UsersTab() {
                         onClick={() => handleViewListings(user)}
                         className="px-3 md:px-4 h-10 text-xs md:text-sm rounded-lg font-medium transition-colors bg-primary-700 hover:bg-primary-800 text-white text-center flex-1 lg:flex-none lg:w-auto flex items-center justify-center"
                       >
-                        Види објави ({user.listings?.length || 0})
+                        {t('admin.usersTab.viewListings', { count: user.listings?.length || 0 })}
                       </button>
                     )}
                     <button
@@ -857,7 +888,9 @@ function UsersTab() {
                           : 'bg-primary-500/20 text-primary-300 hover:bg-primary-500/30 border border-primary-500/30'
                       }`}
                     >
-                      {user.active !== false ? 'Деактивирај' : 'Активирај'}
+                      {user.active !== false
+                        ? t('admin.usersTab.deactivate')
+                        : t('admin.usersTab.activate')}
                     </button>
                   </div>
                 </div>
@@ -868,7 +901,9 @@ function UsersTab() {
           {loadingMore && (
             <div className="text-center py-6 md:py-8">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-              <p className="mt-2 text-gray-300 text-sm md:text-base">Вчитување...</p>
+              <p className="mt-2 text-gray-300 text-sm md:text-base">
+                {t('admin.listingsTab.loading')}
+              </p>
             </div>
           )}
 
@@ -880,12 +915,14 @@ function UsersTab() {
                     onClick={handleLoadMore}
                     className="btn-primary px-6 md:px-8 py-2.5 md:py-3 text-base md:text-lg font-semibold"
                   >
-                    Вчитај уште
+                    {t('admin.listingsTab.loadMore')}
                   </button>
                 </div>
               ) : displayedCount >= filteredUsers.length && filteredUsers.length > 0 ? (
                 <div className="text-center py-6 md:py-8">
-                  <p className="text-gray-300 text-sm md:text-base">Нема повеќе корисници</p>
+                  <p className="text-gray-300 text-sm md:text-base">
+                    {t('admin.usersTab.noMoreUsers')}
+                  </p>
                 </div>
               ) : null}
             </>

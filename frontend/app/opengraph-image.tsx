@@ -60,6 +60,7 @@ export default async function Image() {
             fontFamily: 'system-ui',
           }}
         >
+          {/* eslint-disable no-hardcoded-text/no-hardcoded-text */}
           <div
             style={{
               fontSize: 72,
@@ -78,6 +79,7 @@ export default async function Image() {
           >
             Купете или продадете авто на Kupito! Објавете оглас бесплатно.
           </div>
+          {/* eslint-enable no-hardcoded-text/no-hardcoded-text */}
         </div>
       ),
       {

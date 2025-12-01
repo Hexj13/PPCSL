@@ -1,5 +1,7 @@
 import Link from 'next/link';
 
+import { useTranslation } from '@/hooks/useTranslation';
+
 interface BreadcrumbItem {
   label: string;
   href?: string;
@@ -11,10 +13,14 @@ interface BreadcrumbsProps {
 }
 
 export function Breadcrumbs({ items, className = '' }: BreadcrumbsProps) {
+  const { t } = useTranslation();
   if (items.length === 0) return null;
 
   return (
-    <nav className={`flex items-center space-x-2 text-sm ${className}`} aria-label="Breadcrumb">
+    <nav
+      className={`flex items-center space-x-2 text-sm ${className}`}
+      aria-label={t('breadcrumbs.ariaLabel')}
+    >
       <ol className="flex items-center space-x-2">
         {items.flatMap((item, index) => {
           const isLast = index === items.length - 1;

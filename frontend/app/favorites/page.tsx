@@ -7,6 +7,7 @@ import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { ListingCard } from '@/components/ListingCard';
 import { ListingCardSkeleton } from '@/components/ListingCardSkeleton';
 import { SavedFiltersList, updateSavedFiltersCache } from '@/components/SavedFiltersList';
+import { useTranslation } from '@/hooks/useTranslation';
 import { favoritesApi, Listing, savedFiltersApi } from '@/lib/api';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
 
@@ -16,6 +17,7 @@ function FavoritesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isInitialized } = useAuthStore();
+  const { t } = useTranslation();
   const getInitialTab = (): FavoritesTab => {
     const tabParam = searchParams.get('tab');
     return tabParam === 'filters' || tabParam === 'listings' ? tabParam : 'listings';
@@ -111,18 +113,18 @@ function FavoritesContent() {
     <div>
       <Breadcrumbs
         items={[
-          { label: 'Почетна', href: '/' },
-          { label: 'Омилени', href: '/favorites' },
+          { label: t('favorites.home'), href: '/' },
+          { label: t('favorites.title'), href: '/favorites' },
           ...(activeTab === 'filters'
-            ? [{ label: 'Филтри' }]
+            ? [{ label: t('favorites.filters') }]
             : activeTab === 'listings'
-              ? [{ label: 'Автомобили' }]
+              ? [{ label: t('favorites.listings') }]
               : []),
         ]}
         className="mb-6"
       />
       <h1 className="text-3xl md:text-4xl font-extrabold mb-6 md:mb-8 bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-        Омилени
+        {t('favorites.title')}
       </h1>
 
       <div className="mb-6">
@@ -135,7 +137,7 @@ function FavoritesContent() {
                 : 'border-transparent text-gray-400 hover:text-gray-300'
             }`}
           >
-            Автомобили
+            {t('favorites.listings')}
             {listings.length > 0 && (
               <span className="bg-bg-light border border-primary-500/20 text-gray-300 text-xs font-bold rounded-[4px] px-1.5 py-0.5 min-w-[20px] flex items-center justify-center">
                 {listings.length}
@@ -150,7 +152,7 @@ function FavoritesContent() {
                 : 'border-transparent text-gray-400 hover:text-gray-300'
             }`}
           >
-            Филтри
+            {t('favorites.filters')}
             {filtersCount > 0 && (
               <span className="bg-bg-light border border-primary-500/20 text-gray-300 text-xs font-bold rounded-[4px] px-1.5 py-0.5 min-w-[20px] flex items-center justify-center">
                 {filtersCount}
@@ -170,7 +172,7 @@ function FavoritesContent() {
             </div>
           ) : listings.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-300 text-lg">Во омилени сè уште нема ништо</p>
+              <p className="text-gray-300 text-lg">{t('favorites.empty')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
@@ -197,8 +199,10 @@ function FavoritesContent() {
 }
 
 export default function FavoritesPage() {
+  const { t } = useTranslation();
+
   return (
-    <Suspense fallback={<div>Вчитување...</div>}>
+    <Suspense fallback={<div>{t('common.loading')}</div>}>
       <FavoritesContent />
     </Suspense>
   );

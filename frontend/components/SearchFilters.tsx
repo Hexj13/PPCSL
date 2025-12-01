@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useState, useEffect, startTransition, useCallback, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { brandsApi, citiesApi, Brand, VehicleModel, City, User } from '@/lib/api';
 import { ConditionType, DriveType, RegistrationType } from '@/lib/constants';
@@ -36,90 +37,6 @@ type LabeledOption<T = string> = { value: T; label: string };
 
 const sortOptionsByLabel = <T,>(options: Array<LabeledOption<T>>) =>
   [...options].sort((a, b) => a.label.localeCompare(b.label, 'mk'));
-
-const FUEL_OPTIONS = sortOptionsByLabel([
-  { value: 'Petrol', label: 'Бензин' },
-  { value: 'Diesel', label: 'Дизел' },
-  { value: 'Electric', label: 'Електричен' },
-  { value: 'Hybrid', label: 'Хибриден' },
-  { value: 'LPG', label: 'LPG' },
-]);
-
-const TRANSMISSION_OPTIONS = sortOptionsByLabel([
-  { value: 'Manual', label: 'Мануелна' },
-  { value: 'Automatic', label: 'Автоматска' },
-  { value: 'CVT', label: 'Варијатор' },
-]);
-
-const DRIVE_TYPE_OPTIONS = sortOptionsByLabel([
-  { value: DriveType.FWD, label: 'Преден' },
-  { value: DriveType.RWD, label: 'Заден' },
-  { value: DriveType.AWD, label: 'Полн' },
-]);
-
-const BODY_TYPE_OPTIONS = sortOptionsByLabel([
-  { value: 'Sedan', label: 'Седан' },
-  { value: 'Hatchback', label: 'Хечбек' },
-  { value: 'Wagon', label: 'Караван' },
-  { value: 'SUV', label: 'SUV' },
-  { value: 'Coupe', label: 'Купе' },
-  { value: 'Convertible', label: 'Кабриолет' },
-  { value: 'Van', label: 'Фургон' },
-  { value: 'Pickup', label: 'Пикап' },
-  { value: 'Minivan', label: 'Миниван' },
-  { value: 'Truck', label: 'Камион' },
-]);
-
-const COLOR_OPTIONS = sortOptionsByLabel([
-  { value: 'Црна', label: 'Црна' },
-  { value: 'Бела', label: 'Бела' },
-  { value: 'Сива', label: 'Сива' },
-  { value: 'Сребрена', label: 'Сребрена' },
-  { value: 'Сина', label: 'Сина' },
-  { value: 'Црвена', label: 'Црвена' },
-  { value: 'Зелена', label: 'Зелена' },
-  { value: 'Жолта', label: 'Жолта' },
-  { value: 'Кафена', label: 'Кафена' },
-  { value: 'Портокалова', label: 'Портокалова' },
-  { value: 'Розова', label: 'Розова' },
-  { value: 'Виолетова', label: 'Виолетова' },
-  { value: 'Бежова', label: 'Бежова' },
-]);
-
-const DOOR_OPTIONS = sortOptionsByLabel([
-  { value: '2', label: '2' },
-  { value: '3', label: '3' },
-  { value: '4', label: '4' },
-  { value: '5', label: '5' },
-]);
-
-const CONDITION_OPTIONS = sortOptionsByLabel([
-  { value: ConditionType.Undamaged, label: 'Без оштетувања' },
-  { value: ConditionType.Damaged, label: 'Со оштетувања' },
-  { value: ConditionType.ForParts, label: 'За делови' },
-]);
-
-const REGISTRATION_TYPE_OPTIONS = sortOptionsByLabel([
-  { value: RegistrationType.Local, label: 'Местна' },
-  { value: RegistrationType.Foreign, label: 'Странска' },
-  { value: RegistrationType.Cleared, label: 'Цариниран (на име на купувачот)' },
-]);
-
-const CURRENCY_OPTIONS: Array<LabeledOption> = [
-  { value: '', label: 'Сите валути' },
-  ...sortOptionsByLabel([
-    { value: 'EUR', label: 'EUR' },
-    { value: 'MKD', label: 'MKD' },
-  ]),
-];
-
-const REGISTRATION_OPTIONS: Array<LabeledOption> = [
-  { value: '', label: 'Сите' },
-  ...sortOptionsByLabel([
-    { value: 'true', label: 'Зарегистрирано' },
-    { value: 'false', label: 'Не е зарегистрирано' },
-  ]),
-];
 
 const encodeArray = (arr: string[]): string => {
   if (arr.length === 0) return '';
@@ -186,10 +103,108 @@ export function SearchFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuthStore();
+  const { t } = useTranslation();
   const [brands, setBrands] = useState<Brand[]>([]);
   const [models, setModels] = useState<VehicleModel[]>([]);
   const [cities, setCities] = useState<City[]>([]);
   const [loadingModels, setLoadingModels] = useState(false);
+
+  const getFuelOptions = () =>
+    sortOptionsByLabel([
+      { value: 'Petrol', label: t('vehicleOptions.fuel.Petrol') },
+      { value: 'Diesel', label: t('vehicleOptions.fuel.Diesel') },
+      { value: 'Electric', label: t('vehicleOptions.fuel.Electric') },
+      { value: 'Hybrid', label: t('vehicleOptions.fuel.Hybrid') },
+      { value: 'LPG', label: t('vehicleOptions.fuel.LPG') },
+    ]);
+
+  const getTransmissionOptions = () =>
+    sortOptionsByLabel([
+      { value: 'Manual', label: t('vehicleOptions.transmission.Manual') },
+      { value: 'Automatic', label: t('vehicleOptions.transmission.Automatic') },
+      { value: 'CVT', label: t('vehicleOptions.transmission.CVT') },
+    ]);
+
+  const getDriveTypeOptions = () =>
+    sortOptionsByLabel([
+      { value: DriveType.FWD, label: t('vehicleOptions.driveType.FWD') },
+      { value: DriveType.RWD, label: t('vehicleOptions.driveType.RWD') },
+      { value: DriveType.AWD, label: t('vehicleOptions.driveType.AWD') },
+    ]);
+
+  const getBodyTypeOptions = () =>
+    sortOptionsByLabel([
+      { value: 'Sedan', label: t('vehicleOptions.bodyType.Sedan') },
+      { value: 'Hatchback', label: t('vehicleOptions.bodyType.Hatchback') },
+      { value: 'Wagon', label: t('vehicleOptions.bodyType.Wagon') },
+      { value: 'SUV', label: t('vehicleOptions.bodyType.SUV') },
+      { value: 'Coupe', label: t('vehicleOptions.bodyType.Coupe') },
+      { value: 'Convertible', label: t('vehicleOptions.bodyType.Convertible') },
+      { value: 'Van', label: t('vehicleOptions.bodyType.Van') },
+      { value: 'Pickup', label: t('vehicleOptions.bodyType.Pickup') },
+      { value: 'Minivan', label: t('vehicleOptions.bodyType.Minivan') },
+      { value: 'Truck', label: t('vehicleOptions.bodyType.Truck') },
+    ]);
+
+  const getDoorOptions = () =>
+    sortOptionsByLabel([
+      { value: '2', label: '2' },
+      { value: '3', label: '3' },
+      { value: '4', label: '4' },
+      { value: '5', label: '5' },
+    ]);
+
+  const COLOR_OPTIONS = sortOptionsByLabel([
+    { value: 'Црна', label: 'Црна' },
+    { value: 'Бела', label: 'Бела' },
+    { value: 'Сива', label: 'Сива' },
+    { value: 'Сребрена', label: 'Сребрена' },
+    { value: 'Сина', label: 'Сина' },
+    { value: 'Црвена', label: 'Црвена' },
+    { value: 'Зелена', label: 'Зелена' },
+    { value: 'Жолта', label: 'Жолта' },
+    { value: 'Кафена', label: 'Кафена' },
+    { value: 'Портокалова', label: 'Портокалова' },
+    { value: 'Розова', label: 'Розова' },
+    { value: 'Виолетова', label: 'Виолетова' },
+    { value: 'Бежова', label: 'Бежова' },
+  ]);
+
+  const getConditionOptions = () =>
+    sortOptionsByLabel([
+      { value: ConditionType.Undamaged, label: 'Без оштетувања' },
+      { value: ConditionType.Damaged, label: 'Со оштетувања' },
+      { value: ConditionType.ForParts, label: 'За делови' },
+    ]);
+
+  const getRegistrationTypeOptions = () =>
+    sortOptionsByLabel([
+      { value: RegistrationType.Local, label: t('searchFilters.registrationTypeOptions.Local') },
+      {
+        value: RegistrationType.Foreign,
+        label: t('searchFilters.registrationTypeOptions.Foreign'),
+      },
+      {
+        value: RegistrationType.Cleared,
+        label: t('searchFilters.registrationTypeOptions.Cleared'),
+      },
+    ]);
+
+  const CURRENCY_OPTIONS: Array<LabeledOption> = [
+    { value: '', label: t('searchFilters.allCurrencies') },
+    ...sortOptionsByLabel([
+      { value: 'EUR', label: 'EUR' },
+      { value: 'MKD', label: 'MKD' },
+    ]),
+  ];
+
+  const REGISTRATION_OPTIONS: Array<LabeledOption> = [
+    { value: '', label: t('searchFilters.all') },
+    ...sortOptionsByLabel([
+      { value: 'true', label: t('searchFilters.registered') },
+      { value: 'false', label: t('searchFilters.notRegistered') },
+    ]),
+  ];
   const [showSaveModal, setShowSaveModal] = useState(false);
   const prevUserRef = useRef<User | null>(user);
 
@@ -322,29 +337,31 @@ export function SearchFilters() {
       .sort((a, b) => a.name.localeCompare(b.name, 'mk'));
 
     const options: Array<{ value: string; label: string; category?: string }> = [
-      { value: 'all', label: 'Сите марки' },
+      { value: 'all', label: t('searchFilters.allBrands') },
     ];
 
     if (popularBrands.length > 0) {
-      options.push({ value: '__category__Популарни', label: 'Популарни', category: 'Популарни' });
+      const popularLabel = t('searchFilters.popular');
+      options.push({ value: '__category__Популарни', label: popularLabel, category: popularLabel });
       popularBrands.forEach((brand) => {
-        options.push({ value: brand.id, label: brand.name, category: 'Популарни' });
+        options.push({ value: brand.id, label: brand.name, category: popularLabel });
       });
     }
 
     if (otherBrands.length > 0) {
-      options.push({ value: '__category__Други', label: 'Други', category: 'Други' });
+      const otherLabel = t('searchFilters.other');
+      options.push({ value: '__category__Други', label: otherLabel, category: otherLabel });
       otherBrands.forEach((brand) => {
-        options.push({ value: brand.id, label: brand.name, category: 'Други' });
+        options.push({ value: brand.id, label: brand.name, category: otherLabel });
       });
     }
 
     return options;
-  }, [brands]);
+  }, [brands, t]);
 
   const getModelOptions = useCallback(() => {
     const options: Array<{ value: string; label: string; category?: string }> = [
-      { value: 'all', label: 'Сите модели' },
+      { value: 'all', label: t('searchFilters.allModels') },
     ];
 
     if (filters.brand_ids.length >= 2) {
@@ -392,7 +409,7 @@ export function SearchFilters() {
     }
 
     return options;
-  }, [models, brands, filters.brand_ids]);
+  }, [models, brands, filters.brand_ids, t]);
 
   const getCityOptions = useCallback(() => {
     const popularCities = cities
@@ -403,33 +420,35 @@ export function SearchFilters() {
       .sort((a, b) => a.name.localeCompare(b.name, 'mk'));
 
     const options: Array<{ value: string; label: string; category?: string }> = [
-      { value: 'all', label: 'Сите градови' },
+      { value: 'all', label: t('searchFilters.allCities') },
     ];
 
     if (popularCities.length > 0) {
-      options.push({ value: '__category__Популарни', label: 'Популарни', category: 'Популарни' });
+      const popularLabel = t('searchFilters.popular');
+      options.push({ value: '__category__Популарни', label: popularLabel, category: popularLabel });
       popularCities.forEach((city) => {
         options.push({
           value: city.nameEn,
           label: `${city.name} (${city.nameEn})`,
-          category: 'Популарни',
+          category: popularLabel,
         });
       });
     }
 
     if (otherCities.length > 0) {
-      options.push({ value: '__category__Други', label: 'Други', category: 'Други' });
+      const otherLabel = t('searchFilters.other');
+      options.push({ value: '__category__Други', label: otherLabel, category: otherLabel });
       otherCities.forEach((city) => {
         options.push({
           value: city.nameEn,
           label: `${city.name} (${city.nameEn})`,
-          category: 'Други',
+          category: otherLabel,
         });
       });
     }
 
     return options;
-  }, [cities]);
+  }, [cities, t]);
 
   useEffect(() => {
     brandsApi.getAll().then((res) => {
@@ -537,7 +556,7 @@ export function SearchFilters() {
     const maxYear = currentYear + 1;
 
     if (isNaN(year) || year < 1900 || year > maxYear) {
-      toast.error('Годината мора да биде помеѓу 1900 и ' + maxYear);
+      toast.error(t('searchFilters.yearRangeError', { maxYear: maxYear.toString() }));
       handleChange(key, '');
     }
   };
@@ -559,7 +578,7 @@ export function SearchFilters() {
 
     const price = parseInt(value, 10);
     if (isNaN(price) || price < 0 || price > 999999999) {
-      toast.error('Цената мора да биде помеѓу 0 и 999999999');
+      toast.error(t('searchFilters.priceRangeError'));
       handleChange(key, '');
     }
   };
@@ -569,7 +588,7 @@ export function SearchFilters() {
       const yearGte = parseInt(filters.year_gte, 10);
       const yearLte = parseInt(filters.year_lte, 10);
       if (!isNaN(yearGte) && !isNaN(yearLte) && yearGte > yearLte) {
-        toast.error('Годината "од" не може да биде поголема од годината "до"');
+        toast.error(t('searchFilters.yearFromGreaterThanTo'));
         return false;
       }
     }
@@ -578,7 +597,7 @@ export function SearchFilters() {
       const priceGte = parseInt(filters.price_gte, 10);
       const priceLte = parseInt(filters.price_lte, 10);
       if (!isNaN(priceGte) && !isNaN(priceLte) && priceGte > priceLte) {
-        toast.error('Цената "од" не може да биде поголема од цената "до"');
+        toast.error(t('searchFilters.priceFromGreaterThanTo'));
         return false;
       }
     }
@@ -587,7 +606,7 @@ export function SearchFilters() {
       const mileageGte = parseInt(filters.mileage_gte, 10);
       const mileageLte = parseInt(filters.mileage_lte, 10);
       if (!isNaN(mileageGte) && !isNaN(mileageLte) && mileageGte > mileageLte) {
-        toast.error('Поминувањето "од" не може да биде поголемо од поминувањето "до"');
+        toast.error(t('searchFilters.mileageFromGreaterThanTo'));
         return false;
       }
     }
@@ -596,7 +615,7 @@ export function SearchFilters() {
       const engineGte = parseFloat(filters.engine_displ_l_gte);
       const engineLte = parseFloat(filters.engine_displ_l_lte);
       if (!isNaN(engineGte) && !isNaN(engineLte) && engineGte > engineLte) {
-        toast.error('Запремината на моторот "од" не може да биде поголема од "до"');
+        toast.error(t('searchFilters.engineFromGreaterThanTo'));
         return false;
       }
     }
@@ -605,7 +624,7 @@ export function SearchFilters() {
       const hpGte = parseInt(filters.horsepower_gte, 10);
       const hpLte = parseInt(filters.horsepower_lte, 10);
       if (!isNaN(hpGte) && !isNaN(hpLte) && hpGte > hpLte) {
-        toast.error('Коњските сили "од" не може да бидат поголеми од "до"');
+        toast.error(t('searchFilters.horsepowerFromGreaterThanTo'));
         return false;
       }
     }
@@ -869,30 +888,34 @@ export function SearchFilters() {
   return (
     <form id="search-filters" onSubmit={handleSubmit} className="card p-4 md:p-5 mb-6">
       <h2 className="text-base md:text-lg font-bold mb-4 text-primary-400 underline">
-        Основни критерии
+        {t('searchFilters.basicCriteria')}
       </h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-5">
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-400">Марка</label>
+          <label className="block text-sm font-semibold mb-2 text-primary-400">
+            {t('searchFilters.brand')}
+          </label>
           <MultiSelectDropdown
             values={filters.brand_ids}
             onChange={(values) => handleMultiSelectChange('brand_ids', values)}
             searchable={true}
-            placeholder="Избери марки"
+            placeholder={t('searchFilters.selectBrands')}
             showActionButtons={true}
             options={getBrandOptions()}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-400">Модел</label>
+          <label className="block text-sm font-semibold mb-2 text-primary-400">
+            {t('searchFilters.model')}
+          </label>
           <MultiSelectDropdown
             values={filters.model_ids}
             onChange={(values) => handleMultiSelectChange('model_ids', values)}
             disabled={filters.brand_ids.length === 0 || loadingModels}
             searchable={true}
-            placeholder="Избери модели"
+            placeholder={t('searchFilters.selectModels')}
             showActionButtons={true}
             options={getModelOptions()}
           />
@@ -923,14 +946,14 @@ export function SearchFilters() {
                 S448,436.209,448,448S438.458,469.333,426.667,469.333z"
               />
             </svg>
-            Пренос
+            {t('searchFilters.transmission')}
           </label>
           <MultiSelectDropdown
             values={filters.transmissions}
             onChange={(values) => handleMultiSelectChange('transmissions', values)}
-            placeholder="Избери пренос"
+            placeholder={t('searchFilters.selectTransmission')}
             showActionButtons={true}
-            options={TRANSMISSION_OPTIONS}
+            options={getTransmissionOptions()}
           />
         </div>
       </div>
@@ -954,20 +977,22 @@ export function SearchFilters() {
                 strokeLinejoin="round"
               />
             </svg>
-            Град
+            {t('searchFilters.city')}
           </label>
           <MultiSelectDropdown
             values={filters.cities}
             onChange={(values) => handleMultiSelectChange('cities', values)}
             searchable={true}
-            placeholder="Избери градови"
+            placeholder={t('searchFilters.selectCities')}
             showActionButtons={true}
             options={getCityOptions()}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-400">Година од</label>
+          <label className="block text-sm font-semibold mb-2 text-primary-400">
+            {t('searchFilters.yearFrom')}
+          </label>
           <input
             type="text"
             value={filters.year_gte}
@@ -981,12 +1006,14 @@ export function SearchFilters() {
             onWheel={handleWheel}
             className="input-field"
             placeholder="2018"
-            title={`Внесете година (1900-${currentYear})`}
+            title={t('searchFilters.yearFromTitle', { currentYear })}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-400">Година до</label>
+          <label className="block text-sm font-semibold mb-2 text-primary-400">
+            {t('searchFilters.yearTo')}
+          </label>
           <input
             type="text"
             value={filters.year_lte}
@@ -1000,7 +1027,7 @@ export function SearchFilters() {
             onWheel={handleWheel}
             className="input-field"
             placeholder="2023"
-            title={`Внесете година (1900-${currentYear})`}
+            title={t('searchFilters.yearToTitle', { currentYear })}
           />
         </div>
       </div>
@@ -1061,7 +1088,7 @@ export function SearchFilters() {
                 strokeWidth="1.92"
               />
             </svg>
-            Валута
+            {t('searchFilters.currency')}
           </label>
           <Dropdown
             value={filters.currency}
@@ -1071,7 +1098,9 @@ export function SearchFilters() {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-400">Цена од</label>
+          <label className="block text-sm font-semibold mb-2 text-primary-400">
+            {t('searchFilters.priceFrom')}
+          </label>
           <input
             type="text"
             value={filters.price_gte}
@@ -1080,12 +1109,14 @@ export function SearchFilters() {
             onWheel={handleWheel}
             className="input-field"
             placeholder="0"
-            title="Внесете цена (само цели броеви, 0-999999999)"
+            title={t('searchFilters.priceFromTitle')}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-400">Цена до</label>
+          <label className="block text-sm font-semibold mb-2 text-primary-400">
+            {t('searchFilters.priceTo')}
+          </label>
           <input
             type="text"
             value={filters.price_lte}
@@ -1094,7 +1125,7 @@ export function SearchFilters() {
             onWheel={handleWheel}
             className="input-field"
             placeholder="500000"
-            title="Внесете цена (само цели броеви, 0-999999999)"
+            title={t('searchFilters.priceFromTitle')}
           />
         </div>
       </div>
@@ -1102,13 +1133,15 @@ export function SearchFilters() {
       <div className="mb-5">
         <div className="flex items-center gap-3 mb-4">
           <h2 className="text-base md:text-lg font-bold text-primary-400 underline">
-            Дополнителни критерии
+            {t('searchFilters.additionalCriteria')}
           </h2>
           <button
             type="button"
             onClick={() => setShowAdvanced(!showAdvanced)}
             className="p-1 hover:bg-primary-500/10 rounded transition-colors duration-200"
-            aria-label={showAdvanced ? 'Сокриј' : 'Прикажи'}
+            aria-label={
+              showAdvanced ? t('searchFilters.hideAdvanced') : t('searchFilters.showAdvanced')
+            }
           >
             <svg
               className={`w-5 h-5 text-primary-400 transition-transform duration-200 ${
@@ -1161,14 +1194,14 @@ export function SearchFilters() {
                       c11.782,0,21.333-9.551,21.333-21.333C192.002,244.219,182.451,234.668,170.669,234.668z"
                     />
                   </svg>
-                  Гориво
+                  {t('searchFilters.fuel')}
                 </label>
                 <MultiSelectDropdown
                   values={filters.fuels}
                   onChange={(values) => handleMultiSelectChange('fuels', values)}
-                  placeholder="Избери топливо"
+                  placeholder={t('searchFilters.selectFuel')}
                   showActionButtons={true}
-                  options={FUEL_OPTIONS}
+                  options={getFuelOptions()}
                 />
               </div>
 
@@ -1198,14 +1231,14 @@ export function SearchFilters() {
                       l-32.477-32.477L409.612,213.286z M450.57,430.083h-81.92v-20.48h81.92V430.083z"
                     />
                   </svg>
-                  Тип на погон
+                  {t('searchFilters.driveType')}
                 </label>
                 <MultiSelectDropdown
                   values={filters.drive_types}
                   onChange={(values) => handleMultiSelectChange('drive_types', values)}
-                  placeholder="Избери тип на погон"
+                  placeholder={t('searchFilters.selectDriveType')}
                   showActionButtons={true}
-                  options={DRIVE_TYPE_OPTIONS}
+                  options={getDriveTypeOptions()}
                 />
               </div>
 
@@ -1239,7 +1272,7 @@ export function SearchFilters() {
                       c11.782,0,21.333-9.551,21.333-21.333S331.782,362.671,320,362.671z"
                     />
                   </svg>
-                  Поминување од (км)
+                  {t('searchFilters.mileageFrom')}
                 </label>
                 <input
                   type="text"
@@ -1257,7 +1290,7 @@ export function SearchFilters() {
                     if (e.target.value && e.target.value.trim() !== '') {
                       const mileage = parseInt(e.target.value, 10);
                       if (isNaN(mileage) || mileage < 0 || mileage > 9999999) {
-                        toast.error('Поминувањето мора да биде помеѓу 0 и 9999999 км');
+                        toast.error(t('searchFilters.mileageRangeError'));
                         handleChange('mileage_gte', '');
                       }
                     }
@@ -1265,7 +1298,7 @@ export function SearchFilters() {
                   onWheel={handleWheel}
                   className="input-field"
                   placeholder="0"
-                  title="Внесете поминување во километри (0-9999999)"
+                  title={t('searchFilters.mileageFromTitle')}
                 />
               </div>
 
@@ -1299,7 +1332,7 @@ export function SearchFilters() {
                       c11.782,0,21.333-9.551,21.333-21.333S331.782,362.671,320,362.671z"
                     />
                   </svg>
-                  Поминување до (км)
+                  {t('searchFilters.mileageTo')}
                 </label>
                 <input
                   type="text"
@@ -1317,7 +1350,7 @@ export function SearchFilters() {
                     if (e.target.value && e.target.value.trim() !== '') {
                       const mileage = parseInt(e.target.value, 10);
                       if (isNaN(mileage) || mileage < 0 || mileage > 9999999) {
-                        toast.error('Поминувањето мора да биде помеѓу 0 и 9999999 км');
+                        toast.error(t('searchFilters.mileageRangeError'));
                         handleChange('mileage_lte', '');
                       }
                     }
@@ -1325,7 +1358,7 @@ export function SearchFilters() {
                   onWheel={handleWheel}
                   className="input-field"
                   placeholder="200000"
-                  title="Внесете поминување во километри (0-9999999)"
+                  title={t('searchFilters.mileageToTitle')}
                 />
               </div>
             </div>
@@ -1333,7 +1366,7 @@ export function SearchFilters() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-semibold mb-2 text-primary-400">
-                  Запремина на моторот од (л)
+                  {t('searchFilters.engineFrom')}
                 </label>
                 <input
                   type="text"
@@ -1357,7 +1390,7 @@ export function SearchFilters() {
                     if (e.target.value && e.target.value.trim() !== '') {
                       const value = parseFloat(e.target.value.replace(',', '.'));
                       if (isNaN(value) || value < 0 || value > 99) {
-                        toast.error('Запремината на моторот мора да биде помеѓу 0 и 99 литри');
+                        toast.error(t('searchFilters.engineRangeError'));
                         handleChange('engine_displ_l_gte', '');
                         return;
                       }
@@ -1369,13 +1402,13 @@ export function SearchFilters() {
                   onWheel={handleWheel}
                   className="input-field"
                   placeholder="1.0"
-                  title="Внесете запремина на моторот во литри (0-99, на пример: 2.0)"
+                  title={t('searchFilters.engineDisplacementFromTitle')}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-semibold mb-2 text-primary-400">
-                  Запремина на моторот до (л)
+                  {t('searchFilters.engineTo')}
                 </label>
                 <input
                   type="text"
@@ -1399,7 +1432,7 @@ export function SearchFilters() {
                     if (e.target.value && e.target.value.trim() !== '') {
                       const value = parseFloat(e.target.value.replace(',', '.'));
                       if (isNaN(value) || value < 0 || value > 99) {
-                        toast.error('Запремината на моторот мора да биде помеѓу 0 и 99 литри');
+                        toast.error(t('searchFilters.engineRangeError'));
                         handleChange('engine_displ_l_lte', '');
                         return;
                       }
@@ -1411,13 +1444,13 @@ export function SearchFilters() {
                   onWheel={handleWheel}
                   className="input-field"
                   placeholder="6.0"
-                  title="Внесете запремина на моторот во литри (0-99, на пример: 2.0)"
+                  title={t('searchFilters.engineDisplacementFromTitle')}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-semibold mb-2 text-primary-400">
-                  Коњски сили од
+                  {t('searchFilters.horsepowerFrom')}
                 </label>
                 <input
                   type="text"
@@ -1432,7 +1465,7 @@ export function SearchFilters() {
                     if (e.target.value && e.target.value.trim() !== '') {
                       const hp = parseInt(e.target.value, 10);
                       if (isNaN(hp) || hp < 1 || hp > 9999) {
-                        toast.error('Коњските сили мора да бидат помеѓу 1 и 9999');
+                        toast.error(t('searchFilters.horsepowerRangeError'));
                         handleChange('horsepower_gte', '');
                       }
                     }
@@ -1440,13 +1473,13 @@ export function SearchFilters() {
                   onWheel={handleWheel}
                   className="input-field"
                   placeholder="100"
-                  title="Внесете коњски сили (1-9999)"
+                  title={t('searchFilters.horsepowerFromTitle')}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-semibold mb-2 text-primary-400">
-                  Коњски сили до
+                  {t('searchFilters.horsepowerTo')}
                 </label>
                 <input
                   type="text"
@@ -1461,7 +1494,7 @@ export function SearchFilters() {
                     if (e.target.value && e.target.value.trim() !== '') {
                       const hp = parseInt(e.target.value, 10);
                       if (isNaN(hp) || hp < 1 || hp > 9999) {
-                        toast.error('Коњските сили мора да бидат помеѓу 1 и 9999');
+                        toast.error(t('searchFilters.horsepowerRangeError'));
                         handleChange('horsepower_lte', '');
                       }
                     }
@@ -1469,7 +1502,7 @@ export function SearchFilters() {
                   onWheel={handleWheel}
                   className="input-field"
                   placeholder="500"
-                  title="Внесете коњски сили (1-9999)"
+                  title={t('searchFilters.horsepowerToTitle')}
                 />
               </div>
             </div>
@@ -1499,68 +1532,72 @@ export function SearchFilters() {
                        M399.944,215.754v-59.128h13.142c11.879,0,22.756,6.004,29.067,16.065l27.062,43.063H399.944z"
                     />
                   </svg>
-                  Тип на каросерија
+                  {t('searchFilters.bodyType')}
                 </label>
                 <MultiSelectDropdown
                   values={filters.body_types}
                   onChange={(values) => handleMultiSelectChange('body_types', values)}
-                  placeholder="Избери тип на каросерија"
+                  placeholder={t('searchFilters.selectBodyType')}
                   showActionButtons={true}
-                  options={BODY_TYPE_OPTIONS}
+                  options={getBodyTypeOptions()}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2 text-primary-400">Боја</label>
+                <label className="block text-sm font-semibold mb-2 text-primary-400">
+                  {t('searchFilters.color')}
+                </label>
                 <MultiSelectDropdown
                   values={filters.colors}
                   onChange={(values) => handleMultiSelectChange('colors', values)}
-                  placeholder="Избери боја"
+                  placeholder={t('searchFilters.selectColor')}
                   showActionButtons={true}
                   options={COLOR_OPTIONS}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2 text-primary-400">Врати</label>
+                <label className="block text-sm font-semibold mb-2 text-primary-400">
+                  {t('searchFilters.doors')}
+                </label>
                 <MultiSelectDropdown
                   values={filters.doors}
                   onChange={(values) => handleMultiSelectChange('doors', values)}
-                  placeholder="Избери број на врати"
+                  placeholder={t('searchFilters.selectDoors')}
                   showActionButtons={true}
-                  options={DOOR_OPTIONS}
+                  options={getDoorOptions()}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-semibold mb-2 text-primary-400">
-                  Состојба
+                  {t('searchFilters.condition')}
                 </label>
                 <MultiSelectDropdown
                   values={filters.conditions}
                   onChange={(values) => handleMultiSelectChange('conditions', values)}
-                  placeholder="Избери состојба"
+                  placeholder={t('searchFilters.selectCondition')}
                   showActionButtons={true}
-                  options={CONDITION_OPTIONS}
+                  options={getConditionOptions()}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-semibold mb-2 text-primary-400">
-                  Тип на регистрација
+                  {t('searchFilters.registrationTypeLabel')}
                 </label>
                 <MultiSelectDropdown
                   values={filters.registration_types}
                   onChange={(values) => handleMultiSelectChange('registration_types', values)}
-                  placeholder="Избери тип на регистрација"
+                  placeholder={t('searchFilters.selectRegistrationType')}
                   showActionButtons={true}
-                  options={REGISTRATION_TYPE_OPTIONS}
+                  options={getRegistrationTypeOptions()}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-semibold mb-2 text-primary-400">
-                  Регистрација
+                  {t('searchFilters.registration')}
                 </label>
                 <Dropdown
                   value={
@@ -1629,7 +1666,7 @@ export function SearchFilters() {
                   }`}
                 >
                   <span>🔥</span>
-                  <span>Итно</span>
+                  <span>{t('searchFilters.urgent')}</span>
                 </label>
               </div>
 
@@ -1678,8 +1715,9 @@ export function SearchFilters() {
                       : 'text-primary-400/70 group-hover:text-primary-400'
                   }`}
                 >
+                  {/* eslint-disable-next-line no-hardcoded-text/no-hardcoded-text */}
                   <span>✨</span>
-                  <span>Ново</span>
+                  <span>{t('searchFilters.new')}</span>
                 </label>
               </div>
             </div>
@@ -1690,7 +1728,7 @@ export function SearchFilters() {
       <div className="mt-6 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <button type="submit" className="w-full sm:w-auto btn-primary">
-            Пребарај
+            {t('searchFilters.search')}
           </button>
           <button
             type="button"
@@ -1698,7 +1736,7 @@ export function SearchFilters() {
             disabled={!hasActiveFilters()}
             className="w-full sm:w-auto btn-secondary"
           >
-            Ресетирај
+            {t('searchFilters.reset')}
           </button>
           <button
             type="button"
@@ -1715,7 +1753,7 @@ export function SearchFilters() {
             }}
             disabled={!canSaveFilter()}
             className="w-full sm:w-auto btn-secondary flex items-center justify-center gap-2"
-            title={!user ? 'Најави се' : ''}
+            title={!user ? t('common.loginRequired') : ''}
           >
             <svg
               className="w-5 h-5"
@@ -1731,7 +1769,7 @@ export function SearchFilters() {
                 d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
               />
             </svg>
-            <span>{user ? 'Додади во омилени' : 'Најави се'}</span>
+            <span>{user ? t('searchFilters.addToFavorites') : t('searchFilters.login')}</span>
           </button>
         </div>
         <div className="w-full sm:w-auto">

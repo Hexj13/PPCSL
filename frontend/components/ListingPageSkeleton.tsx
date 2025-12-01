@@ -1,6 +1,12 @@
+import { useTranslation } from '@/hooks/useTranslation';
+
 export function BreadcrumbsSkeleton() {
+  const { t } = useTranslation();
   return (
-    <nav className="flex items-center space-x-2 text-sm mb-6" aria-label="Breadcrumb">
+    <nav
+      className="flex items-center space-x-2 text-sm mb-6"
+      aria-label={t('breadcrumbs.ariaLabel')}
+    >
       <div className="h-4 bg-bg-light/30 rounded w-20 animate-pulse" />
       <span className="text-gray-500">/</span>
       <div className="h-4 bg-bg-light/30 rounded w-48 animate-pulse" />

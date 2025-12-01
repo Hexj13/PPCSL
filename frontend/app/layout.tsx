@@ -9,6 +9,7 @@ import { GoogleAnalytics } from '@/components/GoogleAnalytics';
 import { GoogleAnalyticsConsent } from '@/components/GoogleAnalyticsConsent';
 import { GoogleTagManager, GoogleTagManagerNoscript } from '@/components/GoogleTagManager';
 import { Header } from '@/components/Header';
+import { I18nProvider } from '@/components/I18nProvider';
 import { OrganizationSchema } from '@/components/OrganizationSchema';
 import './globals.css';
 
@@ -112,29 +113,68 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <GoogleAnalytics />
         <OrganizationSchema />
         <CookieConsent />
-        <AuthProvider>
-          <div className="min-h-screen flex flex-col">
-            <Header />
-            <main className="flex-grow container mx-auto px-3 sm:px-4 py-6 md:py-8">
-              {children}
-            </main>
-            <Footer />
-          </div>
-          <Toaster
-            position="top-right"
-            containerStyle={{
-              top: '80px',
-            }}
-            toastOptions={{
-              style: {
-                zIndex: 40,
-                minWidth: '320px',
-                maxWidth: '400px',
-                width: '100%',
-              },
-            }}
-          />
-        </AuthProvider>
+        <I18nProvider>
+          <AuthProvider>
+            <div className="min-h-screen flex flex-col">
+              <Header />
+              <main className="flex-grow container mx-auto px-3 sm:px-4 py-6 md:py-8">
+                {children}
+              </main>
+              <Footer />
+            </div>
+            <Toaster
+              position="top-right"
+              containerStyle={{
+                top: '80px',
+              }}
+              toastOptions={{
+                style: {
+                  zIndex: 40,
+                  minWidth: '320px',
+                  maxWidth: '400px',
+                  width: '100%',
+                  background: '#2d4f47',
+                  color: '#ffffff',
+                  border: '2px solid rgba(0, 255, 136, 0.4)',
+                  borderRadius: '0.75rem',
+                  padding: '16px',
+                  boxShadow:
+                    '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
+                },
+                success: {
+                  iconTheme: {
+                    primary: '#10b981',
+                    secondary: '#ffffff',
+                  },
+                  style: {
+                    background: '#2d4f47',
+                    color: '#ffffff',
+                    border: '2px solid rgba(16, 185, 129, 0.6)',
+                    borderRadius: '0.75rem',
+                    padding: '16px',
+                    boxShadow:
+                      '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
+                  },
+                },
+                error: {
+                  iconTheme: {
+                    primary: '#ef4444',
+                    secondary: '#ffffff',
+                  },
+                  style: {
+                    background: '#2d4f47',
+                    color: '#ffffff',
+                    border: '2px solid rgba(239, 68, 68, 0.6)',
+                    borderRadius: '0.75rem',
+                    padding: '16px',
+                    boxShadow:
+                      '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
+                  },
+                },
+              }}
+            />
+          </AuthProvider>
+        </I18nProvider>
       </body>
     </html>
   );

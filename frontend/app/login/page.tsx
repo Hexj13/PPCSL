@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { authApi, favoritesApi, listingsApi, savedFiltersApi } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
@@ -19,12 +20,40 @@ const isValidPhone = (value: string): boolean => {
 export default function LoginPage() {
   const router = useRouter();
   const { setAuth, user, isInitialized } = useAuthStore();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (isInitialized && user) {
-      router.push('/');
+      const returnUrl = localStorage.getItem('returnUrl');
+      if (returnUrl) {
+        localStorage.removeItem('returnUrl');
+        router.push(returnUrl);
+      } else {
+        router.push('/');
+      }
     }
   }, [user, isInitialized, router]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const currentUrl = window.location.pathname + window.location.search;
+      const existingReturnUrl = localStorage.getItem('returnUrl');
+      if (!existingReturnUrl && currentUrl !== '/login' && currentUrl !== '/register') {
+        const referrer = document.referrer;
+        if (referrer && !referrer.includes('/login') && !referrer.includes('/register')) {
+          try {
+            const referrerUrl = new URL(referrer);
+            const referrerPath = referrerUrl.pathname + referrerUrl.search;
+            if (referrerPath !== '/login' && referrerPath !== '/register') {
+              localStorage.setItem('returnUrl', referrerPath);
+            }
+          } catch {
+            // Ignore invalid referrer URLs
+          }
+        }
+      }
+    }
+  }, []);
 
   const [formData, setFormData] = useState({
     login: '',
@@ -42,13 +71,13 @@ export default function LoginPage() {
     const newErrors: { login?: string; password?: string } = {};
 
     if (!formData.login.trim()) {
-      newErrors.login = 'Email или телефон е задолжителен';
+      newErrors.login = t('login.emailOrPhoneRequired');
     } else if (!isValidEmail(formData.login) && !isValidPhone(formData.login)) {
-      newErrors.login = 'Внесете валиден email или телефон (формат: +код држава број)';
+      newErrors.login = t('login.emailOrPhoneInvalid');
     }
 
     if (!formData.password.trim()) {
-      newErrors.password = 'Лозинката е задолжителна';
+      newErrors.password = t('login.passwordRequired');
     }
 
     setErrors(newErrors);
@@ -142,11 +171,11 @@ export default function LoginPage() {
             const year = now.getFullYear();
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
-            const filterName = `Филтер ${day}.${month}.${year} ${hours}:${minutes}`;
+            const filterName = `${t('common.filter')} ${day}.${month}.${year} ${hours}:${minutes}`;
             await savedFiltersApi.create(filterName, filters);
             localStorage.removeItem('pendingSavedFilter');
             localStorage.removeItem('returnUrl');
-            toast.success('Филтерот е успешно зачуван');
+            toast.success(t('login.filterSavedSuccess'));
             if (typeof window !== 'undefined' && window.location) {
               window.location.href = '/favorites?tab=filters';
             }
@@ -155,13 +184,14 @@ export default function LoginPage() {
             const errorMessage =
               (error && typeof error === 'object' && 'response' in error
                 ? (error.response as { data?: { message?: string } })?.data?.message
-                : null) || 'Грешка при зачувување на филтерот';
+                : null) || t('login.filterSaveError');
             toast.error(errorMessage);
             localStorage.removeItem('pendingSavedFilter');
+            const limitErrorText = t('login.filterLimitError');
             const isLimitError =
-              errorMessage ===
-                'Можете да зачувате максимум 20 филтри. Ве молиме избришете некој од постоечките филтри.' ||
-              (errorMessage.startsWith('Можете да зачувате максимум') &&
+              errorMessage === limitErrorText ||
+              (typeof errorMessage === 'string' &&
+                errorMessage.startsWith('Можете да зачувате максимум') &&
                 errorMessage.includes('филтри. Ве молиме избришете некој од постоечките филтри.'));
             if (isLimitError) {
               localStorage.removeItem('returnUrl');
@@ -219,12 +249,12 @@ export default function LoginPage() {
   return (
     <div className="max-w-md mx-auto mt-6 md:mt-12">
       <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-        Најава
+        {t('login.title')}
       </h1>
       <form onSubmit={handleSubmit} className="card p-6 md:p-8">
         <div className="mb-5">
           <label className="block text-sm font-semibold mb-2 text-primary-400">
-            Email или телефон
+            {t('login.emailOrPhone')}
           </label>
           <input
             type="text"
@@ -236,7 +266,7 @@ export default function LoginPage() {
               }
             }}
             className={`input-field ${errors.login ? 'border-red-500' : ''}`}
-            placeholder="Email или телефон"
+            placeholder={t('login.emailOrPhone')}
             autoComplete="username"
           />
           {errors.login && <p className="mt-1 text-sm text-red-400">{errors.login}</p>}
@@ -244,12 +274,14 @@ export default function LoginPage() {
 
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-semibold text-primary-400">Лозинка</label>
+            <label className="block text-sm font-semibold text-primary-400">
+              {t('login.password')}
+            </label>
             <a
               href="/reset-password"
               className="text-sm text-primary-500 font-semibold hover:text-primary-400 hover:underline transition-colors"
             >
-              Заборавена лозинка?
+              {t('login.forgotPassword')}
             </a>
           </div>
           <div className="relative">
@@ -263,7 +295,7 @@ export default function LoginPage() {
                 }
               }}
               className={`input-field pr-10 ${errors.password ? 'border-red-500' : ''}`}
-              placeholder="Внесете ја вашата лозинка"
+              placeholder={t('login.passwordPlaceholder')}
               autoComplete="current-password"
             />
             <button
@@ -319,16 +351,16 @@ export default function LoginPage() {
           disabled={loading}
           className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
         >
-          {loading ? 'Најава...' : 'Најави се'}
+          {loading ? t('login.loggingIn') : t('login.loginButton')}
         </button>
 
         <p className="mt-6 text-center text-sm text-hint">
-          Немате сметка?{' '}
+          {t('login.noAccount')}{' '}
           <a
             href="/register"
             className="text-primary-500 font-semibold hover:text-primary-400 hover:underline transition-colors"
           >
-            Регистрирај се
+            {t('login.registerLink')}
           </a>
         </p>
       </form>

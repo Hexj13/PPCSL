@@ -5,13 +5,20 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { useTranslation } from '@/hooks/useTranslation';
 import { api, listingsApi, Listing } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 
 const ListingForm = dynamic(
   () => import('@/components/ListingForm').then((mod) => ({ default: mod.ListingForm })),
   {
-    loading: () => <div className="animate-pulse">Зарежување...</div>,
+    loading: () => (
+      <div className="animate-pulse">
+        <div className="text-center py-12">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        </div>
+      </div>
+    ),
     ssr: false,
   }
 );
@@ -19,6 +26,7 @@ const ListingForm = dynamic(
 export default function EditListingPage() {
   const params = useParams();
   const router = useRouter();
+  const { t } = useTranslation();
   const listingId = params.id as string;
   const { user, isInitialized } = useAuthStore();
   const [listing, setListing] = useState<Listing | null>(null);
@@ -38,13 +46,13 @@ export default function EditListingPage() {
       const listingData = res.data;
 
       if (listingData.user?.id !== user.id) {
-        toast.error('Немате пристап до оваа објава');
+        toast.error(t('listings.noAccessToListing'));
         router.push('/my-listings');
         return;
       }
 
       if (listingData.status === 'Closed') {
-        toast.error('Не можете да уредувате затворена објава');
+        toast.error(t('listings.cannotEditClosedListing'));
         router.push('/my-listings');
         return;
       }
@@ -56,7 +64,7 @@ export default function EditListingPage() {
         sessionStorage.removeItem(`refreshListing_${listingId}`);
       }
     } catch {
-      toast.error('Грешка при вчитување на објавата');
+      toast.error(t('listings.loadListingError'));
       router.push('/my-listings');
       const shouldRefresh = sessionStorage.getItem(`refreshListing_${listingId}`) === 'true';
       if (shouldRefresh) {
@@ -105,7 +113,7 @@ export default function EditListingPage() {
         <div className="card p-4 md:p-6 lg:p-8">
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-            <p className="mt-4 text-gray-300">Вчитување...</p>
+            <p className="mt-4 text-gray-300">{t('common.loading')}</p>
           </div>
         </div>
       </div>
@@ -119,7 +127,7 @@ export default function EditListingPage() {
   return (
     <div className="max-w-4xl mx-auto mt-6 md:mt-12">
       <h1 className="text-3xl md:text-4xl font-extrabold mb-6 pl-4 md:pl-6 lg:pl-8 bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-        Уреди објава
+        {t('common.editListing')}
       </h1>
       <ListingForm
         key={`${listingId}-${formKey}`}

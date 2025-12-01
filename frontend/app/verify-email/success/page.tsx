@@ -4,7 +4,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { useTranslation } from '@/hooks/useTranslation';
+
 export default function VerifyEmailSuccessPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const [countdown, setCountdown] = useState(10);
 
@@ -35,17 +38,14 @@ export default function VerifyEmailSuccessPage() {
           </svg>
         </div>
         <h1 className="text-2xl font-bold mb-4 text-primary-400">
-          Email адресата е успешно потврдена
+          {t('verifyEmail.success.title')}
         </h1>
-        <p className="text-gray-300 mb-6">
-          Вашата email адреса е успешно потврдена. Сега можете да ги користите сите функции на
-          платформата.
-        </p>
+        <p className="text-gray-300 mb-6">{t('verifyEmail.success.description')}</p>
         <Link href="/" className="btn-primary w-full block">
-          На главна
+          {t('common.goToHome')}
         </Link>
         <p className="text-sm text-gray-400 mt-4">
-          Автоматски пренасочување за {countdown} секунди...
+          {t('verifyEmail.success.redirecting')} {countdown} {t('verifyEmail.success.seconds')}
         </p>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { useTranslation } from '@/hooks/useTranslation';
 import { authApi } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 
@@ -37,6 +38,7 @@ const handlePhoneInput = (value: string): string => {
 };
 
 export default function ChangePhonePage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { user } = useAuthStore();
   const [phone, setPhone] = useState('');
@@ -74,13 +76,13 @@ export default function ChangePhonePage() {
   return (
     <div className="max-w-md mx-auto mt-6 md:mt-12">
       <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-        Промена на телефон
+        {t('profile.changePhone.title')}
       </h1>
 
       <form onSubmit={handleSubmit} className="card p-6 md:p-8">
         <div className="mb-5">
           <label className="block text-sm font-semibold mb-2 text-primary-400">
-            Тековен телефон
+            {t('profile.changePhone.currentPhone')}
           </label>
           <input
             type="tel"
@@ -92,7 +94,7 @@ export default function ChangePhonePage() {
 
         <div className="mb-5">
           <label className="block text-sm font-semibold mb-2 text-primary-400">
-            Нов телефонски број
+            {t('profile.changePhone.newPhone')}
           </label>
           <input
             type="text"
@@ -125,7 +127,7 @@ export default function ChangePhonePage() {
             onClick={() => router.push('/profile')}
             className="text-primary-500 font-semibold hover:text-primary-400 hover:underline transition-colors"
           >
-            Назад кон профил
+            {t('profile.changePhone.backToProfile')}
           </button>
         </p>
       </form>

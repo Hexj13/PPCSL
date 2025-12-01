@@ -471,7 +471,7 @@ const privacy = {
           'The data controller for the processing of your personal data is:',
           'Kupito (non-commercial organization)',
           'Email: support@kupito.club',
-          'Platform: www.kupito.club',
+          'Platform: kupito.club',
           'Kupito is a non-commercial organization that operates on a remote basis and does not conduct business activities. The Platform is free for all users and does not generate revenue.',
           'For any questions or requests regarding the processing of your personal data, please contact us at the email address provided above. Upon establishment of a legal entity in the Republic of North Macedonia (if necessary in the future), this information will be updated with complete contact details.',
         ],
@@ -779,7 +779,7 @@ const privacy = {
         content: [
           'If you have questions, comments, or requests regarding this Privacy Policy or the processing of your personal data, please contact us at:',
           'Email: support@kupito.club',
-          'Platform: www.kupito.club',
+          'Platform: kupito.club',
           'We will respond to your request as soon as possible, no later than 30 days from receipt of your request.',
         ],
       },

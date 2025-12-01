@@ -5,6 +5,7 @@ import Link from 'next/link';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { useTranslation } from '@/hooks/useTranslation';
 import { Listing, User } from '@/lib/api';
 import {
   formatBodyType,
@@ -36,6 +37,7 @@ function UserListingsModalComponent({
   fetchListings,
   showOnlyActive = true,
 }: UserListingsModalProps) {
+  const { t } = useTranslation();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(false);
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
@@ -75,7 +77,7 @@ function UserListingsModalComponent({
       if (!abortController.signal.aborted) {
         abortController.abort();
         setLoading(false);
-        toast.error('Истече време за вчитување на објави');
+        toast.error(t('userListings.loadingTimeout'));
       }
     }, 10000);
 
@@ -108,10 +110,10 @@ function UserListingsModalComponent({
       abortController.abort();
       abortControllerRef.current = null;
     };
-  }, [isOpen, targetUserId]);
+  }, [isOpen, targetUserId, t]);
 
   const getUserDisplayName = useMemo(() => {
-    if (!user) return 'Корисник';
+    if (!user) return t('userListings.user');
 
     if (user.type === 'Business' && user.companyName) {
       return user.companyName;
@@ -149,8 +151,8 @@ function UserListingsModalComponent({
       return user.email;
     }
 
-    return 'Корисник';
-  }, [user]);
+    return t('userListings.user');
+  }, [user, t]);
 
   const displayListings = useMemo(
     () => (showOnlyActive ? listings.filter((listing) => listing.status === 'Active') : listings),
@@ -158,16 +160,21 @@ function UserListingsModalComponent({
   );
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`Објави од ${getUserDisplayName}`} size="large">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={t('userListings.title', { name: getUserDisplayName })}
+      size="large"
+    >
       {loading ? (
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-          <p className="mt-4 text-gray-300">Вчитување...</p>
+          <p className="mt-4 text-gray-300">{t('userListings.loading')}</p>
         </div>
       ) : displayListings.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-300 text-lg">
-            {showOnlyActive ? 'Нема активни објави' : 'Нема објави'}
+            {showOnlyActive ? t('userListings.noActiveListings') : t('userListings.noListings')}
           </p>
         </div>
       ) : (
@@ -242,27 +249,38 @@ function UserListingsModalComponent({
                           <div className="text-sm text-gray-300 space-y-1.5">
                             {vehicle.engine_displ_l && (
                               <div>
-                                <span className="text-primary-400 font-semibold">Мотор:</span>
+                                <span className="text-primary-400 font-semibold">
+                                  {t('userListings.engine')}:
+                                </span>
                                 <span className="ml-2">
-                                  {formatEngineVolume(vehicle.engine_displ_l)} л
+                                  {formatEngineVolume(vehicle.engine_displ_l)}{' '}
+                                  {t('listings.liters')}
                                 </span>
                               </div>
                             )}
                             {vehicle.fuel && (
                               <div>
-                                <span className="text-primary-400 font-semibold">Гориво:</span>
+                                <span className="text-primary-400 font-semibold">
+                                  {t('userListings.fuel')}:
+                                </span>
                                 <span className="ml-2">{vehicle.fuel}</span>
                               </div>
                             )}
                             {vehicle.mileage_km && (
                               <div>
-                                <span className="text-primary-400 font-semibold">Поминување:</span>
-                                <span className="ml-2">{formatMileage(vehicle.mileage_km)} км</span>
+                                <span className="text-primary-400 font-semibold">
+                                  {t('userListings.mileage')}:
+                                </span>
+                                <span className="ml-2">
+                                  {formatMileage(vehicle.mileage_km)} {t('listings.km')}
+                                </span>
                               </div>
                             )}
                             {vehicle.transmission && (
                               <div>
-                                <span className="text-primary-400 font-semibold">Пренос:</span>
+                                <span className="text-primary-400 font-semibold">
+                                  {t('userListings.transmission')}:
+                                </span>
                                 <span className="ml-2">
                                   {formatTransmission(vehicle.transmission)}
                                 </span>
@@ -271,7 +289,7 @@ function UserListingsModalComponent({
                             {vehicle.drive_type && (
                               <div>
                                 <span className="text-primary-400 font-semibold">
-                                  Тип на погон:
+                                  {t('userListings.driveType')}:
                                 </span>
                                 <span className="ml-2">{formatDriveType(vehicle.drive_type)}</span>
                               </div>
@@ -279,7 +297,7 @@ function UserListingsModalComponent({
                             {vehicle.body_type && (
                               <div>
                                 <span className="text-primary-400 font-semibold">
-                                  Тип на каросерија:
+                                  {t('userListings.bodyType')}:
                                 </span>
                                 <span className="ml-2">{formatBodyType(vehicle.body_type)}</span>
                               </div>
@@ -306,10 +324,10 @@ function UserListingsModalComponent({
                             }`}
                           >
                             {listing.status === 'Active'
-                              ? 'Активна'
+                              ? t('userListings.active')
                               : listing.status === 'Paused'
-                                ? 'Привремено застарена'
-                                : 'Затворена'}
+                                ? t('userListings.paused')
+                                : t('userListings.closed')}
                           </span>
                         )}
                       </div>
@@ -318,7 +336,9 @@ function UserListingsModalComponent({
 
                   {listing.city && (
                     <div className="text-sm border-t border-primary-500/20 pt-4">
-                      <span className="text-primary-400 font-semibold">Град:</span>
+                      <span className="text-primary-400 font-semibold">
+                        {t('userListings.city')}:
+                      </span>
                       <span className="ml-2 text-gray-300">{getCityNameMk(listing.city)}</span>
                     </div>
                   )}

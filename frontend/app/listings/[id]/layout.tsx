@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 
+import { getServerTranslations } from '@/lib/i18n';
+
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -32,10 +34,12 @@ export async function generateMetadata({
   const { id } = await params;
   const listing = await getListing(id);
 
+  const t = getServerTranslations('mk');
+
   if (!listing) {
     return {
-      title: 'Објава не е пронајдена',
-      description: 'Објавата не постои или не е достапна.',
+      title: t.metadata.listing.notFoundTitle,
+      description: t.metadata.listing.notFoundDescription,
     };
   }
 
@@ -43,11 +47,11 @@ export async function generateMetadata({
   const model = listing.vehicle?.model?.name || '';
   const year = listing.vehicle?.year || '';
   const vehicleInfo = [brand, model, year].filter(Boolean).join(' ');
-  const fullTitle = vehicleInfo || listing.title || 'Автомобил за продажба';
+  const fullTitle = vehicleInfo || listing.title || t.listings.defaultTitle;
 
   const description =
     listing.description?.replace(/<[^>]*>/g, '').substring(0, 160) ||
-    `${vehicleInfo || listing.title || 'Автомобил за продажба'}. Купете или продадете авто на Kupito! Објавете оглас бесплатно.`;
+    `${vehicleInfo || listing.title || t.listings.defaultTitle}. ${t.metadata.listing.defaultDescription}`;
 
   const imageUrl =
     listing.images && listing.images.length > 0
@@ -63,10 +67,10 @@ export async function generateMetadata({
       listing.title,
       vehicleInfo,
       listing.city,
-      'автомобили',
-      'купи автомобил',
-      'автомобили за продажба',
-      'Северна Македонија',
+      t.metadata.listing.keywords.cars,
+      t.metadata.listing.keywords.buyCar,
+      t.metadata.listing.keywords.carsForSale,
+      t.metadata.listing.keywords.northMacedonia,
     ].filter(Boolean),
     openGraph: {
       type: 'website',

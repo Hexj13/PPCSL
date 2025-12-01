@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 
+import { useTranslation } from '@/hooks/useTranslation';
+
 type FAQItem = {
   id: string;
   question: string;
@@ -276,6 +278,7 @@ const userScenarios = [
 ];
 
 export default function FAQPage() {
+  const { t } = useTranslation();
   const [openItems, setOpenItems] = useState<Set<string>>(new Set());
 
   const toggleItem = (id: string) => {
@@ -293,7 +296,7 @@ export default function FAQPage() {
   return (
     <div className="max-w-4xl mx-auto">
       <h1 className="text-4xl md:text-5xl font-extrabold mb-8 bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-        Често поставувани прашања (FAQ)
+        {t('faq.title')}
       </h1>
 
       <div className="space-y-4 mb-12">
@@ -332,10 +335,10 @@ export default function FAQPage() {
 
       <div className="surface mt-12">
         <h2 className="text-2xl md:text-3xl font-bold mb-6 text-white">
-          Потсетник: Кориснички сценарии
+          {t('faq.userScenarios.title')}
         </h2>
         <p className="text-gray-300 mb-6 text-base md:text-lg">
-          Еве краток преглед на најчестите сценарии за работа со огласи на Kupito:
+          {t('faq.userScenarios.description')}
         </p>
         <div className="space-y-6">
           {userScenarios.map((scenario) => (
@@ -358,12 +361,12 @@ export default function FAQPage() {
 
       <div className="mt-12 pt-8 border-t border-primary-500/20 text-center text-gray-400 text-sm">
         <p>
-          Ако имате дополнителни прашања кои не се опфатени овде, ве молиме контактирајте не на{' '}
+          {t('faq.contact.description')}{' '}
           <a
             href="mailto:support@kupito.club"
             className="text-primary-400 hover:text-primary-300 underline"
           >
-            support@kupito.club
+            {t('faq.contact.email')}
           </a>
         </p>
       </div>

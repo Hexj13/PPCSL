@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { authApi, favoritesApi, listingsApi, RegisterDto, savedFiltersApi } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
@@ -12,6 +13,7 @@ function VerifyPhoneContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setAuth } = useAuthStore();
+  const { t } = useTranslation();
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,7 +31,7 @@ function VerifyPhoneContent() {
       await authApi.sendSms({ phone });
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { message?: string } } };
-      toast.error(axiosError.response?.data?.message || 'Грешка при испраќање на SMS');
+      toast.error(axiosError.response?.data?.message || t('smsVerification.sendSmsError'));
     }
   };
 
@@ -44,7 +46,7 @@ function VerifyPhoneContent() {
         parsedData = JSON.parse(storedData);
         setFormData(parsedData);
       } catch {
-        toast.error('Грешка при вчитување на податоците');
+        toast.error(t('verifyPhone.loadDataError'));
         router.push('/register');
         return;
       }
@@ -67,7 +69,7 @@ function VerifyPhoneContent() {
         clearInterval(cooldownTimerRef.current);
       }
     };
-  }, [searchParams, router]);
+  }, [searchParams, router, t]);
 
   useEffect(() => {
     if (resendCooldown > 0) {
@@ -147,26 +149,26 @@ function VerifyPhoneContent() {
 
   const validateAndSubmit = async (codeToValidate: string) => {
     if (isVerificationBlocked) {
-      setError('Достигнато е максималниот број на обиди. Испратете го кодот повторно.');
+      setError(t('smsVerification.maxAttemptsReached'));
       return;
     }
 
     if (codeToValidate.length !== 6) {
-      setError('Кодот мора да содржи точно 6 цифри');
+      setError(t('smsVerification.codeRequired'));
       setCode(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
       return;
     }
 
     if (!/^\d{6}$/.test(codeToValidate)) {
-      setError('Кодот мора да содржи само цифри');
+      setError(t('smsVerification.codeDigitsOnly'));
       setCode(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
       return;
     }
 
     if (!phoneNumber) {
-      setError('Телефонскиот број не е достапен');
+      setError(t('verifyPhone.phoneNotAvailable'));
       return;
     }
 
@@ -204,7 +206,9 @@ function VerifyPhoneContent() {
           setIsVerificationBlocked(true);
           setCode(['', '', '', '', '', '']);
           setIsSubmitting(false);
-          toast.error(`IP адресата е блокирана за ${remainingMinutes} минути`);
+          toast.error(
+            t('smsVerification.ipBlocked', { remainingMinutes: remainingMinutes.toString() })
+          );
           return;
         }
       }
@@ -234,7 +238,7 @@ function VerifyPhoneContent() {
 
   const performRegistration = async () => {
     if (!formData) {
-      toast.error('Грешка при вчитување на податоците');
+      toast.error(t('verifyPhone.loadDataError'));
       router.push('/register');
       return;
     }
@@ -253,7 +257,7 @@ function VerifyPhoneContent() {
           : formData.email;
 
       if (!loginValue) {
-        toast.error('Грешка: недостасува login вредност');
+        toast.error(t('verifyPhone.missingLoginValue'));
         setIsSubmitting(false);
         return;
       }
@@ -347,7 +351,7 @@ function VerifyPhoneContent() {
               await savedFiltersApi.create(filterName, filters);
               localStorage.removeItem('pendingSavedFilter');
               localStorage.removeItem('returnUrl');
-              toast.success('Филтерот е успешно зачуван');
+              toast.success(t('login.filterSavedSuccess'));
               if (typeof window !== 'undefined' && window.location) {
                 window.location.href = '/favorites?tab=filters';
               }
@@ -356,13 +360,14 @@ function VerifyPhoneContent() {
               const errorMessage =
                 (error && typeof error === 'object' && 'response' in error
                   ? (error.response as { data?: { message?: string } })?.data?.message
-                  : null) || 'Грешка при зачувување на филтерот';
+                  : null) || t('login.filterSaveError');
               toast.error(errorMessage);
               localStorage.removeItem('pendingSavedFilter');
+              const limitErrorText = t('login.filterLimitError');
               const isLimitError =
-                errorMessage ===
-                  'Можете да зачувате максимум 20 филтри. Ве молиме избришете некој од постоечките филтри.' ||
-                (errorMessage.startsWith('Можете да зачувате максимум') &&
+                errorMessage === limitErrorText ||
+                (typeof errorMessage === 'string' &&
+                  errorMessage.startsWith('Можете да зачувате максимум') &&
                   errorMessage.includes(
                     'филтри. Ве молиме избришете некој од постоечките филтри.'
                   ));
@@ -413,7 +418,7 @@ function VerifyPhoneContent() {
           return;
         }
       } catch {
-        toast.error('Регистрацијата е успешна, но најавата не успеа. Најавете се рачно.');
+        toast.error(t('verifyPhone.registrationSuccessButLoginFailed'));
         router.push('/login');
       }
     } catch {
@@ -442,16 +447,16 @@ function VerifyPhoneContent() {
   return (
     <div className="max-w-md mx-auto mt-6 md:mt-12">
       <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-        Потврда на телефон
+        {t('verifyPhone.title')}
       </h1>
       <div className="card p-6 md:p-8">
         <div className="space-y-6">
           <div className="text-center">
             <p className="text-gray-300 mb-2">
-              Испратениот код на телефон{' '}
+              {t('verifyPhone.codeSentTo')}{' '}
               {phoneNumber && <span className="font-semibold text-white">{phoneNumber}</span>}
             </p>
-            <p className="text-sm text-gray-400">Внесете го 6-цифрениот код од СМС пораката</p>
+            <p className="text-sm text-gray-400">{t('verifyPhone.enterCode')}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -510,7 +515,7 @@ function VerifyPhoneContent() {
                 disabled={isSubmitting}
                 className="flex-1 btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Назад
+                {t('common.back')}
               </button>
               <button
                 type="submit"
@@ -533,7 +538,7 @@ function VerifyPhoneContent() {
                 }
 
                 if (!phoneNumber) {
-                  toast.error('Телефонскиот број не е достапен');
+                  toast.error(t('verifyPhone.phoneNotAvailable'));
                   return;
                 }
 
@@ -563,20 +568,23 @@ function VerifyPhoneContent() {
   );
 }
 
+function VerifyPhoneFallback() {
+  const { t } = useTranslation();
+  return (
+    <div className="max-w-md mx-auto mt-6 md:mt-12">
+      <div className="card p-6 md:p-8 text-center">
+        <div className="mb-4">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent"></div>
+        </div>
+        <h1 className="text-2xl font-bold mb-4 text-primary-400">{t('common.loading')}</h1>
+      </div>
+    </div>
+  );
+}
+
 export default function VerifyPhonePage() {
   return (
-    <Suspense
-      fallback={
-        <div className="max-w-md mx-auto mt-6 md:mt-12">
-          <div className="card p-6 md:p-8 text-center">
-            <div className="mb-4">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent"></div>
-            </div>
-            <h1 className="text-2xl font-bold mb-4 text-primary-400">Вчитување...</h1>
-          </div>
-        </div>
-      }
-    >
+    <Suspense fallback={<VerifyPhoneFallback />}>
       <VerifyPhoneContent />
     </Suspense>
   );

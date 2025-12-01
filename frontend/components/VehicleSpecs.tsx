@@ -1,3 +1,4 @@
+import { useTranslation } from '@/hooks/useTranslation';
 import { formatBodyType, formatEngineVolume, formatMileage, formatTransmission } from '@/lib/utils';
 
 interface Vehicle {
@@ -26,6 +27,7 @@ export function VehicleSpecs({
   showBrandModel = false,
   className = '',
 }: VehicleSpecsProps) {
+  const { t } = useTranslation();
   const gridCols = columns === 2 ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-3';
 
   return (
@@ -33,7 +35,7 @@ export function VehicleSpecs({
       <div className={`grid ${gridCols} gap-x-4 gap-y-2.5 text-sm`}>
         {showBrandModel && vehicle.brand && vehicle.model && (
           <div>
-            <span className="text-primary-400">Бренд/Модел:</span>
+            <span className="text-primary-400">{t('vehicleSpecs.brandModel')}</span>
             <span className="ml-2 font-medium text-gray-200">
               {vehicle.brand.name} {vehicle.model.name}
             </span>
@@ -41,13 +43,13 @@ export function VehicleSpecs({
         )}
         {vehicle.year && (
           <div>
-            <span className="text-primary-400">Година:</span>
+            <span className="text-primary-400">{t('vehicleSpecs.year')}</span>
             <span className="ml-2 font-medium text-gray-200">{vehicle.year}</span>
           </div>
         )}
         {vehicle.engine_displ_l && (
           <div>
-            <span className="text-primary-400">Мотор (л):</span>
+            <span className="text-primary-400">{t('vehicleSpecs.engine')}</span>
             <span className="ml-2 font-medium text-gray-200">
               {formatEngineVolume(vehicle.engine_displ_l)}
             </span>
@@ -55,21 +57,21 @@ export function VehicleSpecs({
         )}
         {vehicle.mileage_km && (
           <div>
-            <span className="text-primary-400">Поминување:</span>
+            <span className="text-primary-400">{t('vehicleSpecs.mileage')}</span>
             <span className="ml-2 font-medium text-gray-200">
-              {formatMileage(vehicle.mileage_km)} км
+              {formatMileage(vehicle.mileage_km)} {t('listings.km')}
             </span>
           </div>
         )}
         {vehicle.fuel && (
           <div>
-            <span className="text-primary-400">Гориво:</span>
+            <span className="text-primary-400">{t('vehicleSpecs.fuel')}</span>
             <span className="ml-2 font-medium text-gray-200">{vehicle.fuel}</span>
           </div>
         )}
         {vehicle.transmission && (
           <div>
-            <span className="text-primary-400">Пренос:</span>
+            <span className="text-primary-400">{t('vehicleSpecs.transmission')}</span>
             <span className="ml-2 font-medium text-gray-200">
               {formatTransmission(vehicle.transmission)}
             </span>
@@ -77,7 +79,9 @@ export function VehicleSpecs({
         )}
         {vehicle.body_type && (
           <div>
-            <span className="text-primary-400">Тип{showBrandModel ? ' на каросерија' : ''}:</span>
+            <span className="text-primary-400">
+              {showBrandModel ? t('vehicleSpecs.bodyType') : t('vehicleSpecs.bodyTypeShort')}
+            </span>
             <span className="ml-2 font-medium text-gray-200">
               {formatBodyType(vehicle.body_type)}
             </span>
@@ -85,13 +89,13 @@ export function VehicleSpecs({
         )}
         {vehicle.color && (
           <div>
-            <span className="text-primary-400">Боја:</span>
+            <span className="text-primary-400">{t('vehicleSpecs.color')}</span>
             <span className="ml-2 font-medium text-gray-200">{vehicle.color}</span>
           </div>
         )}
         {vehicle.doors && (
           <div>
-            <span className="text-primary-400">Врати:</span>
+            <span className="text-primary-400">{t('vehicleSpecs.doors')}</span>
             <span className="ml-2 font-medium text-gray-200">{vehicle.doors}</span>
           </div>
         )}

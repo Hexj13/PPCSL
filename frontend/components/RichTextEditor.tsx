@@ -2,6 +2,8 @@
 
 import { useRef, useEffect, useState } from 'react';
 
+import { useTranslation } from '@/hooks/useTranslation';
+
 interface RichTextEditorProps {
   value: string;
   onChange: (_value: string) => void;
@@ -54,6 +56,7 @@ export function RichTextEditor({
   maxLength = 5000,
   rows = 4,
 }: RichTextEditorProps) {
+  const { t } = useTranslation();
   const editorRef = useRef<HTMLDivElement>(null);
   const [textLength, setTextLength] = useState(0);
   const [isListButtonActive, setIsListButtonActive] = useState(false);
@@ -161,7 +164,7 @@ export function RichTextEditor({
               ? 'bg-primary-600 text-white'
               : 'bg-bg-light text-gray-300 hover:bg-primary-500/30'
           }`}
-          title="Дебел"
+          title={t('common.bold')}
         >
           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
             <path d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H7v14h7.04c2.09 0 3.71-1.7 3.71-3.79 0-1.52-.86-2.82-2.15-3.42zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z" />
@@ -175,7 +178,7 @@ export function RichTextEditor({
               ? 'bg-primary-600 text-white'
               : 'bg-bg-light text-gray-300 hover:bg-primary-500/30'
           }`}
-          title="Курзив"
+          title={t('common.italic')}
         >
           <span className="italic font-bold text-base" style={{ fontStyle: 'italic' }}>
             I
@@ -189,7 +192,7 @@ export function RichTextEditor({
               ? 'bg-primary-600 text-white'
               : 'bg-bg-light text-gray-300 hover:bg-primary-500/30'
           }`}
-          title="Подвлечен"
+          title={t('common.underline')}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -275,7 +278,7 @@ export function RichTextEditor({
               ? 'bg-primary-600 text-white'
               : 'bg-bg-light text-gray-300 hover:bg-primary-500/30'
           }`}
-          title="Список"
+          title={t('common.list')}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -291,7 +294,7 @@ export function RichTextEditor({
           type="button"
           onClick={() => execCommand('fontSize', '2')}
           className="px-3 py-1.5 rounded bg-bg-light text-gray-300 hover:bg-primary-500/30 transition-colors text-sm font-semibold"
-          title="Мал"
+          title={t('common.small')}
         >
           A
         </button>
@@ -299,7 +302,7 @@ export function RichTextEditor({
           type="button"
           onClick={() => execCommand('fontSize', '3')}
           className="px-3 py-1.5 rounded bg-bg-light text-gray-300 hover:bg-primary-500/30 transition-colors text-base font-semibold"
-          title="Нормален"
+          title={t('common.normal')}
         >
           A
         </button>
@@ -307,7 +310,7 @@ export function RichTextEditor({
           type="button"
           onClick={() => execCommand('fontSize', '5')}
           className="px-3 py-1.5 rounded bg-bg-light text-gray-300 hover:bg-primary-500/30 transition-colors text-lg font-semibold"
-          title="Голем"
+          title={t('common.large')}
         >
           A
         </button>

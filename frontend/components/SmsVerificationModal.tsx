@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+import { useTranslation } from '@/hooks/useTranslation';
+
 import { Modal } from './Modal';
 
 interface SmsVerificationModalProps {
@@ -17,6 +19,7 @@ export function SmsVerificationModal({
   onVerify,
   phoneNumber,
 }: SmsVerificationModalProps) {
+  const { t } = useTranslation();
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -93,12 +96,12 @@ export function SmsVerificationModal({
 
   const validateAndSubmit = async (codeToValidate: string) => {
     if (codeToValidate.length !== 6) {
-      setError('Кодот мора да содржи точно 6 цифри');
+      setError(t('smsVerification.codeRequired'));
       return;
     }
 
     if (!/^\d{6}$/.test(codeToValidate)) {
-      setError('Кодот мора да содржи само цифри');
+      setError(t('smsVerification.codeDigitsOnly'));
       return;
     }
 
@@ -111,7 +114,7 @@ export function SmsVerificationModal({
         setIsSubmitting(false);
       }, 500);
     } else {
-      setError('Невалиден код. Обидете се повторно.');
+      setError(t('smsVerification.codeInvalid'));
       setIsSubmitting(false);
     }
   };
@@ -122,19 +125,19 @@ export function SmsVerificationModal({
     if (trimmedCode.length === 6) {
       validateAndSubmit(trimmedCode);
     } else {
-      setError('Внесете го целосниот код');
+      setError(t('smsVerification.enterFullCode'));
     }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Потврда на телефон" size="small">
+    <Modal isOpen={isOpen} onClose={onClose} title={t('smsVerification.title')} size="small">
       <div className="space-y-6">
         <div className="text-center">
           <p className="text-gray-300 mb-2">
-            Испратениот код на телефон{' '}
+            {t('smsVerification.codeSentTo')}{' '}
             {phoneNumber && <span className="font-semibold text-white">{phoneNumber}</span>}
           </p>
-          <p className="text-sm text-gray-400">Внесете го 6-цифрениот код од СМС пораката</p>
+          <p className="text-sm text-gray-400">{t('smsVerification.enterCode')}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -176,14 +179,14 @@ export function SmsVerificationModal({
               disabled={isSubmitting}
               className="flex-1 btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Назад
+              {t('common.back')}
             </button>
             <button
               type="submit"
               disabled={isSubmitting || code.trim().length !== 6}
               className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              {isSubmitting ? 'Проверување...' : 'Потврди'}
+              {isSubmitting ? t('smsVerification.verifying') : t('smsVerification.verify')}
             </button>
           </div>
         </form>
@@ -199,7 +202,7 @@ export function SmsVerificationModal({
             disabled={isSubmitting}
             className="text-sm text-primary-400 hover:text-primary-300 transition-colors disabled:opacity-50"
           >
-            Испрати нов код
+            {t('smsVerification.resendCode')}
           </button>
         </div>
       </div>

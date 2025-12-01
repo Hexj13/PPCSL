@@ -1002,7 +1002,7 @@ describe('ListingForm', () => {
       await waitFor(
         () => {
           expect(api.uploadApi.uploadImage).toHaveBeenCalled();
-          expect(toast.success).toHaveBeenCalledWith('Фото е вчитано');
+          expect(toast.success).toHaveBeenCalledWith('Фото е успешно прикачено');
         },
         { timeout: 10000 }
       );
@@ -1019,7 +1019,7 @@ describe('ListingForm', () => {
             2
           );
           const successCalls = (toast.success as jest.Mock).mock.calls.filter(
-            (call: unknown[]) => String(call[0]) === 'Фото е вчитано'
+            (call: unknown[]) => String(call[0]) === 'Фото е успешно прикачено'
           );
           expect(successCalls.length).toBeGreaterThanOrEqual(2);
         },
@@ -1204,7 +1204,7 @@ describe('ListingForm', () => {
       await waitFor(
         () => {
           expect(api.uploadApi.uploadImage).toHaveBeenCalled();
-          expect(toast.success).toHaveBeenCalledWith('Фото е вчитано');
+          expect(toast.success).toHaveBeenCalledWith('Фото е успешно прикачено');
         },
         { timeout: 10000 }
       );
@@ -1221,7 +1221,7 @@ describe('ListingForm', () => {
             2
           );
           const successCalls = (toast.success as jest.Mock).mock.calls.filter(
-            (call: unknown[]) => String(call[0]) === 'Фото е вчитано'
+            (call: unknown[]) => String(call[0]) === 'Фото е успешно прикачено'
           );
           expect(successCalls.length).toBeGreaterThanOrEqual(2);
         },

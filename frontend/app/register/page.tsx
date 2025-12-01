@@ -5,12 +5,14 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { useTranslation } from '@/hooks/useTranslation';
 import { authApi, RegisterDto } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 
 export default function RegisterPage() {
   const router = useRouter();
   const { user, isInitialized } = useAuthStore();
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -41,16 +43,16 @@ export default function RegisterPage() {
 
   const validatePassword = (password: string): string => {
     if (password.length < 8) {
-      return 'Лозинката мора да содржи минимум 8 карактери';
+      return t('register.passwordMinLength');
     }
     if (!/[A-Z]/.test(password)) {
-      return 'Лозинката мора да содржи барем една голема буква';
+      return t('register.passwordUppercase');
     }
     if (!/[a-z]/.test(password)) {
-      return 'Лозинката мора да содржи барем една мала буква';
+      return t('register.passwordLowercase');
     }
     if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
-      return 'Лозинката мора да содржи барем еден специјален карактер';
+      return t('register.passwordSpecial');
     }
     return '';
   };
@@ -58,19 +60,19 @@ export default function RegisterPage() {
   const getPasswordValidationRules = (password: string) => {
     return [
       {
-        text: 'Минимум 8 карактери',
+        text: t('register.passwordRuleMinLength'),
         isValid: password.length >= 8,
       },
       {
-        text: 'Барем една голема буква',
+        text: t('register.passwordRuleUppercase'),
         isValid: /[A-Z]/.test(password),
       },
       {
-        text: 'Барем една мала буква',
+        text: t('register.passwordRuleLowercase'),
         isValid: /[a-z]/.test(password),
       },
       {
-        text: 'Барем еден специјален карактер',
+        text: t('register.passwordRuleSpecial'),
         isValid: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password),
       },
     ];
@@ -81,25 +83,25 @@ export default function RegisterPage() {
       return '';
     }
     if (!phone.startsWith('+')) {
-      return 'Телефонот мора да започнува со +';
+      return t('register.phoneMustStartWithPlus');
     }
     const phoneWithoutPlus = phone.substring(1);
     if (phoneWithoutPlus.length < 7 || phoneWithoutPlus.length > 19) {
-      return 'Телефонот мора да содржи 7-19 цифри (вклучувајќи го кодот на државата)';
+      return t('register.phoneLength');
     }
     if (!/^\d+$/.test(phoneWithoutPlus)) {
-      return 'Телефонот мора да содржи само цифри после +';
+      return t('register.phoneDigitsOnly');
     }
     const countryCodeMatch = phoneWithoutPlus.match(/^(\d{1,4})(\d{6,15})$/);
     if (!countryCodeMatch) {
-      return 'Телефонот мора да биде во формат +код држава (1-4 цифри) + број (6-15 цифри)';
+      return t('register.phoneFormat');
     }
     const [, countryCode, number] = countryCodeMatch;
     if (countryCode.length < 1 || countryCode.length > 4) {
-      return 'Кодот на државата мора да биде 1-4 цифри';
+      return t('register.countryCodeLength');
     }
     if (number.length < 6 || number.length > 15) {
-      return 'Бројот мора да биде 6-15 цифри';
+      return t('register.numberLength');
     }
     return '';
   };
@@ -110,7 +112,7 @@ export default function RegisterPage() {
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return 'Невалидна email адреса';
+      return t('register.emailInvalid');
     }
     return '';
   };
@@ -121,7 +123,7 @@ export default function RegisterPage() {
     }
     const nameRegex = /^[a-zA-Zа-яА-ЯёЁјЈљЉњЊќЌџЅ\s-]+$/;
     if (!nameRegex.test(name)) {
-      return 'Името може да содржи само букви, пробели, тире и дефис';
+      return t('register.firstNameInvalid');
     }
     return '';
   };
@@ -214,12 +216,12 @@ export default function RegisterPage() {
     e.preventDefault();
 
     if (!formData.termsAccepted) {
-      toast.error('Мора да ги прифатите условите за користење');
+      toast.error(t('register.termsRequired'));
       return;
     }
 
     if (!formData.password.trim()) {
-      toast.error('Лозинката е задолжителна');
+      toast.error(t('register.passwordRequired'));
       return;
     }
 
@@ -232,7 +234,7 @@ export default function RegisterPage() {
 
     if (formData.type === 'Individual') {
       if (!formData.phone.trim()) {
-        toast.error('Телефонот е задолжителен');
+        toast.error(t('register.phoneRequired'));
         return;
       }
       const phoneValidationError = validatePhone(formData.phone);
@@ -242,7 +244,7 @@ export default function RegisterPage() {
         return;
       }
       if (!formData.firstName.trim()) {
-        toast.error('Името е задолжително');
+        toast.error(t('register.firstNameRequired'));
         return;
       }
       const firstNameValidationError = validateName(formData.firstName.trim());
@@ -252,11 +254,11 @@ export default function RegisterPage() {
         return;
       }
       if (formData.firstName.trim().length < 2) {
-        toast.error('Името мора да содржи минимум 2 карактери');
+        toast.error(t('register.firstNameMinLength'));
         return;
       }
       if (formData.firstName.trim().length > 50) {
-        toast.error('Името не може да биде подолго од 50 карактери');
+        toast.error(t('register.firstNameMaxLength'));
         return;
       }
       if (formData.lastName && formData.lastName.trim()) {
@@ -267,11 +269,11 @@ export default function RegisterPage() {
           return;
         }
         if (formData.lastName.trim().length < 2) {
-          toast.error('Презимето мора да содржи минимум 2 карактери');
+          toast.error(t('register.lastNameMinLength'));
           return;
         }
         if (formData.lastName.trim().length > 50) {
-          toast.error('Презимето не може да биде подолго од 50 карактери');
+          toast.error(t('register.lastNameMaxLength'));
           return;
         }
       }
@@ -285,19 +287,19 @@ export default function RegisterPage() {
       }
     } else {
       if (!formData.companyName.trim()) {
-        toast.error('Името на компанијата е задолжително');
+        toast.error(t('register.companyNameRequired'));
         return;
       }
       if (formData.companyName.trim().length < 2) {
-        toast.error('Името на компанијата мора да содржи минимум 2 карактери');
+        toast.error(t('register.companyNameMinLength'));
         return;
       }
       if (formData.companyName.trim().length > 100) {
-        toast.error('Името на компанијата не може да биде подолго од 100 карактери');
+        toast.error(t('register.companyNameMaxLength'));
         return;
       }
       if (!formData.phone.trim()) {
-        toast.error('Телефонот е задолжителен');
+        toast.error(t('register.phoneRequired'));
         return;
       }
       const phoneValidationError = validatePhone(formData.phone);
@@ -307,7 +309,7 @@ export default function RegisterPage() {
         return;
       }
       if (!formData.email || !formData.email.trim()) {
-        toast.error('Email е задолжителен');
+        toast.error(t('register.emailRequired'));
         return;
       }
       const emailValidationError = validateEmail(formData.email);
@@ -360,7 +362,7 @@ export default function RegisterPage() {
             code?: string;
           };
 
-          let errorMessage = 'Корисник со овој телефон веќе постои';
+          let errorMessage = t('register.phoneExists');
 
           if (axiosError.response) {
             const status = axiosError.response.status;
@@ -369,45 +371,43 @@ export default function RegisterPage() {
             if (status === 400) {
               if (data?.message) {
                 if (Array.isArray(data.message)) {
-                  errorMessage = data.message[0] || 'Корисник со овој телефон веќе постои';
+                  errorMessage = data.message[0] || t('register.phoneExists');
                 } else {
                   errorMessage = data.message;
                 }
               } else {
-                errorMessage = 'Корисник со овој телефон веќе постои';
+                errorMessage = t('register.phoneExists');
               }
             } else if (status === 404) {
-              errorMessage =
-                'Сервисот не е достапен. Проверете дали backend серверот работи и е презапуштен.';
+              errorMessage = t('register.serviceUnavailable');
             } else if (status === 422) {
               if (data?.message) {
                 if (Array.isArray(data.message)) {
-                  errorMessage = data.message[0] || 'Невалиден формат на телефон';
+                  errorMessage = data.message[0] || t('register.invalidPhoneFormat');
                 } else {
                   errorMessage = data.message;
                 }
               } else {
-                errorMessage = 'Невалиден формат на телефон';
+                errorMessage = t('register.invalidPhoneFormat');
               }
             } else if (status && status >= 500) {
-              errorMessage = 'Грешка на серверот. Обидете се повторно подоцна.';
+              errorMessage = t('register.serverError');
             } else {
               errorMessage =
                 (data?.message && (Array.isArray(data.message) ? data.message[0] : data.message)) ||
-                'Грешка при проверка на телефон. Обидете се повторно.';
+                t('register.phoneCheckError');
             }
           } else if (
             axiosError.message?.includes('Network') ||
             axiosError.message?.includes('timeout') ||
             axiosError.code === 'ERR_NETWORK'
           ) {
-            errorMessage = 'Грешка во мрежата. Проверете ја вашата интернет врска.';
+            errorMessage = t('register.networkError');
           } else if (
             axiosError.message?.includes('Cannot POST') ||
             axiosError.message?.includes('404')
           ) {
-            errorMessage =
-              'Сервисот за проверка на телефон не е достапен. Проверете дали серверот работи.';
+            errorMessage = t('register.phoneServiceUnavailable');
           }
 
           toast.error(errorMessage);
@@ -417,7 +417,7 @@ export default function RegisterPage() {
         }
       }
     } catch {
-      toast.error('Грешка при подготовка на податоците');
+      toast.error(t('register.dataPreparationError'));
     } finally {
       setLoading(false);
     }
@@ -426,12 +426,12 @@ export default function RegisterPage() {
   return (
     <div className="max-w-md mx-auto mt-6 md:mt-12">
       <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-        Регистрација
+        {t('register.title')}
       </h1>
       <form onSubmit={handleSubmit} className="card p-6 md:p-8" autoComplete="off">
         <div className="mb-5">
           <label className="block text-sm font-semibold mb-2 text-primary-400">
-            Тип на корисник
+            {t('register.userType')}
           </label>
           <div className="flex bg-bg-dark rounded-lg p-1 border-2 border-primary-500/30">
             <button
@@ -443,7 +443,7 @@ export default function RegisterPage() {
                   : 'text-gray-400 hover:text-white'
               }`}
             >
-              Физичко лице
+              {t('register.individual')}
             </button>
             <button
               type="button"
@@ -454,7 +454,7 @@ export default function RegisterPage() {
                   : 'text-gray-400 hover:text-white'
               }`}
             >
-              Правно лице
+              {t('register.business')}
             </button>
           </div>
         </div>
@@ -463,7 +463,7 @@ export default function RegisterPage() {
           <>
             <div className="mb-5">
               <label className="block text-sm font-semibold mb-2 text-primary-400">
-                Телефон <span className="text-red-400">*</span>
+                {t('register.phone')} <span className="text-red-400">*</span>
               </label>
               <input
                 type="tel"
@@ -479,9 +479,10 @@ export default function RegisterPage() {
 
             <div className="mb-5">
               <label className="block text-sm font-semibold mb-2 text-primary-400">
-                Достапни месенџери{' '}
-                <span className="text-hint text-xs font-normal">(опционално)</span>
+                {t('register.messengers')}{' '}
+                <span className="text-hint text-xs font-normal">{t('register.optional')}</span>
               </label>
+              {/* eslint-disable no-hardcoded-text/no-hardcoded-text */}
               <div className="flex gap-3">
                 <div className="flex items-center gap-2 group">
                   <div className="relative">
@@ -553,11 +554,12 @@ export default function RegisterPage() {
                   </div>
                 </div>
               </div>
+              {/* eslint-enable no-hardcoded-text/no-hardcoded-text */}
             </div>
 
             <div className="mb-5">
               <label className="block text-sm font-semibold mb-2 text-primary-400">
-                Лозинка <span className="text-red-400">*</span>
+                {t('register.password')} <span className="text-red-400">*</span>
               </label>
               <div className="relative">
                 <input
@@ -566,7 +568,7 @@ export default function RegisterPage() {
                   value={formData.password}
                   onChange={handlePasswordChange}
                   className={`input-field pr-10 ${passwordError ? 'border-red-500' : ''}`}
-                  placeholder="Внесете лозинка"
+                  placeholder={t('register.passwordPlaceholder')}
                   autoComplete="new-password"
                 />
                 <button
@@ -661,7 +663,7 @@ export default function RegisterPage() {
             </div>
             <div className="mb-5">
               <label className="block text-sm font-semibold mb-2 text-primary-400">
-                Име <span className="text-red-400">*</span>
+                {t('register.firstName')} <span className="text-red-400">*</span>
               </label>
               <input
                 type="text"
@@ -669,7 +671,7 @@ export default function RegisterPage() {
                 value={formData.firstName}
                 onChange={handleFirstNameChange}
                 className={`input-field ${firstNameError ? 'border-red-500' : ''}`}
-                placeholder="Вашето име"
+                placeholder={t('register.firstName')}
                 autoComplete="off"
               />
               {firstNameError && <p className="mt-1 text-sm text-red-400">{firstNameError}</p>}
@@ -677,14 +679,15 @@ export default function RegisterPage() {
 
             <div className="mb-5">
               <label className="block text-sm font-semibold mb-2 text-primary-400">
-                Презиме <span className="text-hint text-xs">(опционално)</span>
+                {t('register.lastName')}{' '}
+                <span className="text-hint text-xs">{t('register.optional')}</span>
               </label>
               <input
                 type="text"
                 value={formData.lastName}
                 onChange={handleLastNameChange}
                 className={`input-field ${lastNameError ? 'border-red-500' : ''}`}
-                placeholder="Вашето презиме"
+                placeholder={t('register.lastName')}
                 autoComplete="off"
               />
               {lastNameError && <p className="mt-1 text-sm text-red-400">{lastNameError}</p>}
@@ -693,7 +696,8 @@ export default function RegisterPage() {
             <div className="mb-5">
               <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center justify-between">
                 <span>
-                  Email <span className="text-hint text-xs">(опционално)</span>
+                  {t('register.email')}{' '}
+                  <span className="text-hint text-xs">{t('register.optional')}</span>
                 </span>
                 <span className="group relative inline-block">
                   <svg
@@ -710,8 +714,7 @@ export default function RegisterPage() {
                     />
                   </svg>
                   <span className="absolute bottom-full right-0 mb-2 w-64 px-3 py-2 text-xs text-hint bg-bg-darker border border-primary-500/30 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10 shadow-lg">
-                    Ако е наведена и пошта, најавата може да се изврши и по број на телефон и по
-                    пошта
+                    {t('register.phoneHint')}
                   </span>
                 </span>
               </label>
@@ -720,6 +723,7 @@ export default function RegisterPage() {
                 value={formData.email}
                 onChange={handleEmailChange}
                 className={`input-field ${emailError ? 'border-red-500' : ''}`}
+                // eslint-disable-next-line no-hardcoded-text/no-hardcoded-text
                 placeholder="example@email.com"
                 autoComplete="off"
               />
@@ -775,7 +779,7 @@ export default function RegisterPage() {
                     }
                     className="text-sm text-white cursor-pointer"
                   >
-                    Примам рассулка на вести и известувања на пошта
+                    {t('register.emailNotifications')}
                   </span>
                 </div>
               </div>
@@ -785,7 +789,7 @@ export default function RegisterPage() {
           <>
             <div className="mb-5">
               <label className="block text-sm font-semibold mb-2 text-primary-400">
-                Име на компанија <span className="text-red-400">*</span>
+                {t('register.companyName')} <span className="text-red-400">*</span>
               </label>
               <input
                 type="text"
@@ -799,14 +803,14 @@ export default function RegisterPage() {
                   }
                 }}
                 className="input-field"
-                placeholder="Име на компанијата"
+                placeholder={t('register.companyName')}
                 autoComplete="off"
               />
             </div>
 
             <div className="mb-5">
               <label className="block text-sm font-semibold mb-2 text-primary-400">
-                Email <span className="text-red-400">*</span>
+                {t('register.email')} <span className="text-red-400">*</span>
               </label>
               <input
                 type="email"
@@ -814,18 +818,16 @@ export default function RegisterPage() {
                 value={formData.email}
                 onChange={handleEmailChange}
                 className={`input-field ${emailError ? 'border-red-500' : ''}`}
+                // eslint-disable-next-line no-hardcoded-text/no-hardcoded-text
                 placeholder="example@company.com"
                 autoComplete="off"
               />
               {emailError && <p className="mt-1 text-sm text-red-400">{emailError}</p>}
-              <p className="mt-1 text-xs text-hint">
-                Корпоративна пошта на која примате работни писма
-              </p>
             </div>
 
             <div className="mb-5">
               <label className="block text-sm font-semibold mb-2 text-primary-400">
-                Телефон <span className="text-red-400">*</span>
+                {t('register.phone')} <span className="text-red-400">*</span>
               </label>
               <input
                 type="tel"
@@ -837,14 +839,14 @@ export default function RegisterPage() {
                 autoComplete="off"
               />
               {phoneError && <p className="mt-1 text-sm text-red-400">{phoneError}</p>}
-              <p className="mt-1 text-xs text-hint">Работен телефон на кој работите</p>
             </div>
 
             <div className="mb-5">
               <label className="block text-sm font-semibold mb-2 text-primary-400">
-                Достапни месенџери{' '}
-                <span className="text-hint text-xs font-normal">(опционално)</span>
+                {t('register.messengers')}{' '}
+                <span className="text-hint text-xs font-normal">{t('register.optional')}</span>
               </label>
+              {/* eslint-disable no-hardcoded-text/no-hardcoded-text */}
               <div className="flex gap-3">
                 <div className="flex items-center gap-2 group">
                   <div className="relative">
@@ -916,11 +918,12 @@ export default function RegisterPage() {
                   </div>
                 </div>
               </div>
+              {/* eslint-enable no-hardcoded-text/no-hardcoded-text */}
             </div>
 
             <div className="mb-5">
               <label className="block text-sm font-semibold mb-2 text-primary-400">
-                Лозинка <span className="text-red-400">*</span>
+                {t('register.password')} <span className="text-red-400">*</span>
               </label>
               <div className="relative">
                 <input
@@ -929,7 +932,7 @@ export default function RegisterPage() {
                   value={formData.password}
                   onChange={handlePasswordChange}
                   className={`input-field pr-10 ${passwordError ? 'border-red-500' : ''}`}
-                  placeholder="Внесете лозинка"
+                  placeholder={t('register.passwordPlaceholder')}
                   autoComplete="new-password"
                 />
                 <button
@@ -1071,7 +1074,7 @@ export default function RegisterPage() {
                   }
                   className="text-sm text-white cursor-pointer"
                 >
-                  Примам рассулка на вести и известувања на пошта
+                  {t('register.emailNotifications')}
                 </span>
               </div>
             </div>
@@ -1120,14 +1123,14 @@ export default function RegisterPage() {
               onClick={() => setFormData({ ...formData, termsAccepted: !formData.termsAccepted })}
               className="text-sm text-white cursor-pointer leading-relaxed"
             >
-              Се согласувам со{' '}
+              {t('register.termsAccept')}{' '}
               <Link
                 href="/terms"
                 target="_blank"
                 onClick={(e) => e.stopPropagation()}
                 className="text-primary-400 hover:text-primary-300 underline font-semibold"
               >
-                условите за користење
+                {t('register.termsLink')}
               </Link>
               <span className="text-red-400"> *</span>
             </span>
@@ -1139,16 +1142,16 @@ export default function RegisterPage() {
           disabled={loading}
           className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
         >
-          {loading ? 'Регистрација...' : 'Регистрирај се'}
+          {loading ? t('register.registering') : t('register.registerButton')}
         </button>
 
         <p className="mt-5 text-center text-sm text-hint">
-          Веќе имате сметка?{' '}
+          {t('register.alreadyHaveAccount')}{' '}
           <a
             href="/login"
             className="text-primary-500 font-semibold hover:text-primary-400 hover:underline transition-colors"
           >
-            Најави се
+            {t('header.login')}
           </a>
         </p>
       </form>
