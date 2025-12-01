@@ -867,7 +867,7 @@ export function SearchFilters() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="card p-4 md:p-5 mb-6">
+    <form id="search-filters" onSubmit={handleSubmit} className="card p-4 md:p-5 mb-6">
       <h2 className="text-base md:text-lg font-bold mb-4 text-primary-400 underline">
         Основни критерии
       </h2>

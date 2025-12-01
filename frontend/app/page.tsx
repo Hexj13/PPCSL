@@ -3,6 +3,7 @@ import { Suspense } from 'react';
 
 import { ConversionEvent } from '@/components/ConversionEvent';
 import { ListingGrid } from '@/components/ListingGrid';
+import { ScrollToFiltersButton } from '@/components/ScrollToFiltersButton';
 import { SearchFilters } from '@/components/SearchFilters';
 import { getListings } from '@/lib/server-api';
 
@@ -109,6 +110,8 @@ export default async function Home({
       <SearchFiltersWrapper />
 
       <ListingGridWrapper searchParams={searchParams} />
+
+      <ScrollToFiltersButton />
     </div>
   );
 }

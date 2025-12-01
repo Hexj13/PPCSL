@@ -22,7 +22,8 @@ components/
 ├── Dropdown.tsx        # Single-select dropdown (optimized with Set lookups)
 ├── MultiSelectDropdown.tsx  # Multi-select dropdown with search, categories, action buttons
 ├── SortDropdown.tsx    # Sort dropdown with URL parameter synchronization
-└── SearchFilters.tsx   # Advanced search filters component
+├── SearchFilters.tsx   # Advanced search filters component
+└── ScrollToFiltersButton.tsx  # Floating button for quick scroll to search filters with return functionality
 ```
 
 ## Usage
@@ -147,6 +148,33 @@ The project includes optimized dropdown components in `components/`:
 - **SortDropdown**: Sort dropdown component with URL parameter synchronization for listing sorting
 
 These components are optimized for performance using Set-based lookups instead of Array.includes() for better scalability with large option lists.
+
+### ScrollToFiltersButton
+
+A floating action button that appears when users scroll past the search filters section. Provides quick navigation back to filters and remembers scroll position for return navigation.
+
+**Features:**
+- Appears when filters are scrolled out of view
+- Smooth scroll animation to filters
+- Remembers scroll position for return navigation
+- Responsive design (mobile and desktop)
+- Tooltip on desktop (hidden on mobile)
+- Matches primary button styling (#31a55f)
+
+**Usage:**
+
+```tsx
+import { ScrollToFiltersButton } from '@/components/ScrollToFiltersButton';
+
+// On the homepage with search filters
+<ScrollToFiltersButton />
+```
+
+**Behavior:**
+- Shows filter icon when scrolled past filters
+- Shows down arrow when at filters (allows return to previous position)
+- Automatically hides when not needed
+- Smooth scroll animations with offset for better UX
 
 ## Interactive Documentation
 
