@@ -67,6 +67,7 @@ export default function ListingPage() {
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
   const preloadedImagesRef = useRef<Set<string>>(new Set());
+  const preloadLinksRef = useRef<Map<string, HTMLLinkElement>>(new Map());
   const preloadQueueRef = useRef<Array<{ url: string; originalUrl: string; priority: number }>>([]);
   const activePreloadsRef = useRef<number>(0);
   const adjacentPreloadQueueRef = useRef<
@@ -81,6 +82,19 @@ export default function ListingPage() {
   const maxConcurrentPreloads = 3;
   const maxPreloadImages = 10;
   const preloadRadius = 5;
+
+  // Cleanup all preload <link> elements on component unmount
+  useEffect(() => {
+    const linksMap = preloadLinksRef.current;
+    return () => {
+      linksMap.forEach((link) => {
+        if (link.parentNode) {
+          link.parentNode.removeChild(link);
+        }
+      });
+      linksMap.clear();
+    };
+  }, []);
 
   const fetchListingData = useCallback(
     (forceRefresh = false) => {
@@ -451,18 +465,38 @@ export default function ListingPage() {
           continue;
         }
 
-        const img = new window.Image();
+        if (preloadLinksRef.current.has(optimizedUrl)) {
+          continue;
+        }
+
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = optimizedUrl;
+        link.crossOrigin = 'anonymous';
+
         activePreloadsRef.current++;
-        img.onload = () => {
+        preloadLinksRef.current.set(optimizedUrl, link);
+
+        link.onload = () => {
           preloadedImagesRef.current.add(optimizedUrl);
+          if (link.parentNode) {
+            link.parentNode.removeChild(link);
+          }
+          preloadLinksRef.current.delete(optimizedUrl);
           activePreloadsRef.current--;
           processPreloadQueue();
         };
-        img.onerror = () => {
+        link.onerror = () => {
+          if (link.parentNode) {
+            link.parentNode.removeChild(link);
+          }
+          preloadLinksRef.current.delete(optimizedUrl);
           activePreloadsRef.current--;
           processPreloadQueue();
         };
-        img.src = optimizedUrl;
+
+        document.head.appendChild(link);
       }
     }
   }, []);
@@ -560,18 +594,38 @@ export default function ListingPage() {
         return;
       }
 
-      const img = new window.Image();
+      if (preloadLinksRef.current.has(optimizedUrl)) {
+        return;
+      }
+
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'image';
+      link.href = optimizedUrl;
+      link.crossOrigin = 'anonymous';
+
       activePreloadsRef.current++;
-      img.onload = () => {
+      preloadLinksRef.current.set(optimizedUrl, link);
+
+      link.onload = () => {
         preloadedImagesRef.current.add(optimizedUrl);
+        if (link.parentNode) {
+          link.parentNode.removeChild(link);
+        }
+        preloadLinksRef.current.delete(optimizedUrl);
         activePreloadsRef.current--;
         processPreloadQueue();
       };
-      img.onerror = () => {
+      link.onerror = () => {
+        if (link.parentNode) {
+          link.parentNode.removeChild(link);
+        }
+        preloadLinksRef.current.delete(optimizedUrl);
         activePreloadsRef.current--;
         processPreloadQueue();
       };
-      img.src = optimizedUrl;
+
+      document.head.appendChild(link);
     },
     [listing, imageErrors, processPreloadQueue]
   );
@@ -600,20 +654,41 @@ export default function ListingPage() {
           return;
         }
 
-        const img = new window.Image();
+        if (preloadLinksRef.current.has(optimizedUrl)) {
+          resolve();
+          return;
+        }
+
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = optimizedUrl;
+        link.crossOrigin = 'anonymous';
+
         activePreloadsRef.current++;
-        img.onload = () => {
+        preloadLinksRef.current.set(optimizedUrl, link);
+
+        link.onload = () => {
           preloadedImagesRef.current.add(optimizedUrl);
+          if (link.parentNode) {
+            link.parentNode.removeChild(link);
+          }
+          preloadLinksRef.current.delete(optimizedUrl);
           activePreloadsRef.current--;
           resolve();
           processPreloadQueue();
         };
-        img.onerror = () => {
+        link.onerror = () => {
+          if (link.parentNode) {
+            link.parentNode.removeChild(link);
+          }
+          preloadLinksRef.current.delete(optimizedUrl);
           activePreloadsRef.current--;
           resolve();
           processPreloadQueue();
         };
-        img.src = optimizedUrl;
+
+        document.head.appendChild(link);
       });
     };
 
@@ -706,20 +781,41 @@ export default function ListingPage() {
           return;
         }
 
-        const img = new window.Image();
+        if (preloadLinksRef.current.has(optimizedUrl)) {
+          resolve();
+          return;
+        }
+
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = optimizedUrl;
+        link.crossOrigin = 'anonymous';
+
         modalActivePreloadsRef.current++;
-        img.onload = () => {
+        preloadLinksRef.current.set(optimizedUrl, link);
+
+        link.onload = () => {
           preloadedImagesRef.current.add(optimizedUrl);
+          if (link.parentNode) {
+            link.parentNode.removeChild(link);
+          }
+          preloadLinksRef.current.delete(optimizedUrl);
           modalActivePreloadsRef.current--;
           resolve();
           processModalPreloadQueue();
         };
-        img.onerror = () => {
+        link.onerror = () => {
+          if (link.parentNode) {
+            link.parentNode.removeChild(link);
+          }
+          preloadLinksRef.current.delete(optimizedUrl);
           modalActivePreloadsRef.current--;
           resolve();
           processModalPreloadQueue();
         };
-        img.src = optimizedUrl;
+
+        document.head.appendChild(link);
       });
     };
 
