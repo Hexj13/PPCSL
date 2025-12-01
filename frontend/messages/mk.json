@@ -581,6 +581,7 @@
     "doors": "Врати",
     "condition": "Состојба",
     "registrationType": "Тип на регистрација",
+    "registrationTypeLabel": "Тип на регистрација",
     "registration": "Регистрација",
     "urgent": "Итно",
     "new": "Ново",
