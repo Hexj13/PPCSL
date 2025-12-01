@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
-import { User } from '@/lib/api';
 import { useAuthStore, useComparisonStore } from '@/lib/store';
 
 export function Header() {
@@ -15,31 +14,6 @@ export function Header() {
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { t } = useTranslation();
-
-  const getUserDisplayName = (userParam: User | null): string => {
-    if (!userParam) return '';
-
-    if (userParam.type === 'Business' && userParam.companyName) {
-      return userParam.companyName;
-    }
-
-    if (userParam.firstName) {
-      if (userParam.lastName) {
-        return `${userParam.firstName} ${userParam.lastName}`;
-      }
-      return userParam.firstName;
-    }
-
-    if (userParam.email) {
-      return userParam.email;
-    }
-
-    if (userParam.phone) {
-      return userParam.phone;
-    }
-
-    return '';
-  };
 
   const handleLogout = () => {
     logout();
@@ -85,7 +59,7 @@ export function Header() {
               <>
                 <Link
                   href="/listings/new"
-                  className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded select-none"
+                  className="text-primary-500 font-medium text-xs md:text-sm lg:text-base hover:text-primary-400 transition-colors duration-200 whitespace-nowrap flex items-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-xl border-2 border-primary-500/20 hover:border-primary-500/40 select-none"
                 >
                   <svg
                     className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
@@ -192,7 +166,7 @@ export function Header() {
                 )}
                 <Link
                   href="/profile"
-                  className="text-gray-300 font-medium px-2 md:px-3 py-1.5 md:py-2 bg-bg-light rounded-lg border border-primary-500/20 text-xs md:text-sm lg:text-base hover:text-primary-400 hover:border-primary-500/40 transition-colors duration-200 cursor-pointer flex items-center gap-1.5 md:gap-2 select-none"
+                  className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded select-none"
                 >
                   <svg
                     className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
@@ -208,16 +182,14 @@ export function Header() {
                       d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                     />
                   </svg>
-                  <span className="truncate max-w-[100px] md:max-w-[140px] lg:max-w-[180px] xl:max-w-none">
-                    {getUserDisplayName(user)}
-                  </span>
+                  <span>{t('header.profile')}</span>
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="text-gray-300 font-medium px-2 md:px-3 py-1.5 md:py-2 bg-bg-light rounded-lg border border-primary-500/20 text-xs md:text-sm lg:text-base hover:text-primary-400 hover:border-primary-500/40 transition-colors duration-200 cursor-pointer flex items-center gap-1.5 md:gap-2 whitespace-nowrap select-none"
+                  className="text-gray-300 font-medium w-10 h-10 bg-bg-light rounded-xl border-2 border-primary-500/20 hover:text-primary-400 hover:border-primary-500/40 transition-colors duration-200 cursor-pointer flex items-center justify-center select-none"
                 >
                   <svg
-                    className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+                    className="w-5 h-5"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -230,8 +202,6 @@ export function Header() {
                       d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                     />
                   </svg>
-                  <span className="hidden xl:inline">{t('header.logout')}</span>
-                  <span className="xl:hidden">{t('header.logoutShort')}</span>
                 </button>
               </>
             ) : (
@@ -320,7 +290,7 @@ export function Header() {
                 <Link
                   href="/listings/new"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 flex items-center gap-2 select-none"
+                  className="text-primary-500 font-medium hover:text-primary-400 transition-colors duration-200 py-2.5 px-4 rounded-xl border-2 border-primary-500/20 hover:border-primary-500/40 flex items-center gap-2.5 select-none"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -335,7 +305,7 @@ export function Header() {
                 <Link
                   href="/my-listings"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 flex items-center gap-2 select-none"
+                  className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 pl-4 flex items-center gap-2 select-none"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -350,7 +320,7 @@ export function Header() {
                 <Link
                   href="/favorites"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 flex items-center gap-2 select-none"
+                  className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 pl-4 flex items-center gap-2 select-none"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -365,7 +335,7 @@ export function Header() {
                 <Link
                   href="/compare"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 flex items-center gap-2 select-none"
+                  className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 pl-4 flex items-center gap-2 select-none"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -386,7 +356,7 @@ export function Header() {
                   <Link
                     href="/admin"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 flex items-center gap-2 select-none"
+                    className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 pl-4 flex items-center gap-2 select-none"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
@@ -402,10 +372,10 @@ export function Header() {
                 <Link
                   href="/profile"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-gray-300 font-medium px-3 py-2 bg-bg-light rounded-lg border border-primary-500/20 text-sm break-all hover:text-primary-400 hover:border-primary-500/40 transition-colors duration-200 cursor-pointer flex items-center gap-2 select-none"
+                  className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 pl-4 flex items-center gap-2 select-none"
                 >
                   <svg
-                    className="w-4 h-4 flex-shrink-0"
+                    className="w-4 h-4"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -418,14 +388,14 @@ export function Header() {
                       d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                     />
                   </svg>
-                  {getUserDisplayName(user)}
+                  {t('header.profile')}
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="text-gray-300 font-medium px-3 py-2 bg-bg-light rounded-lg border border-primary-500/20 text-sm hover:text-primary-400 hover:border-primary-500/40 transition-colors duration-200 cursor-pointer w-full flex items-center gap-2 select-none"
+                  className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 pl-4 flex items-center gap-2 select-none"
                 >
                   <svg
-                    className="w-4 h-4 flex-shrink-0"
+                    className="w-4 h-4"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
