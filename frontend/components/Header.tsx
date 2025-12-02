@@ -260,7 +260,7 @@ export function Header() {
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="text-primary-400 font-medium hover:text-primary-500 transition-colors duration-200 flex items-center justify-center w-10 h-10 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 select-none"
+                  className="text-white font-medium hover:text-primary-400 transition-colors duration-200 flex items-center justify-center w-10 h-10 rounded-lg border-2 border-white/20 hover:border-primary-400/40 select-none"
                 >
                   <svg
                     className="w-5 h-5"
