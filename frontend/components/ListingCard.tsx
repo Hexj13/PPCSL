@@ -123,8 +123,15 @@ function ListingCardComponent({ listing, forceFavorite = false, onRemove }: List
     ]
   );
 
+  const handleClick = () => {
+    if (typeof window !== 'undefined' && window.location.pathname === '/') {
+      sessionStorage.setItem('homeScrollPosition', window.scrollY.toString());
+      sessionStorage.setItem('homeScrollTimestamp', Date.now().toString());
+    }
+  };
+
   return (
-    <Link href={`/listings/${listing.id}`}>
+    <Link href={`/listings/${listing.id}`} onClick={handleClick}>
       <div className="card overflow-hidden cursor-pointer h-full flex flex-col group">
         <div
           className="relative w-full bg-bg-darker flex-shrink-0 overflow-hidden"

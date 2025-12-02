@@ -95,10 +95,24 @@ function FavoritesContent() {
   }, [searchParams]);
 
   const handleTabChange = (tab: FavoritesTab) => {
+    const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
     setActiveTab(tab);
     const params = new URLSearchParams(searchParams.toString());
     params.set('tab', tab);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('scrollPreserved', 'true');
+    }
     router.replace(`/favorites?${params.toString()}`, { scroll: false });
+    if (typeof window !== 'undefined') {
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: scrollY, behavior: 'instant' });
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            sessionStorage.removeItem('scrollPreserved');
+          });
+        });
+      });
+    }
   };
 
   useEffect(() => {

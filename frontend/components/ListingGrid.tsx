@@ -44,18 +44,69 @@ interface ListingGridProps {
   initialData?: { data: Listing[]; meta: PaginationMeta };
 }
 
+const GRID_STATE_KEY = 'kupito_grid_state';
+
+const saveGridState = (listings: Listing[], page: number, meta: PaginationMeta | null) => {
+  if (typeof window !== 'undefined') {
+    try {
+      const state = { listings, page, meta, timestamp: Date.now() };
+      sessionStorage.setItem(GRID_STATE_KEY, JSON.stringify(state));
+    } catch {}
+  }
+};
+
+const loadGridState = (): {
+  listings: Listing[];
+  page: number;
+  meta: PaginationMeta | null;
+} | null => {
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = sessionStorage.getItem(GRID_STATE_KEY);
+      if (!stored) return null;
+      const state = JSON.parse(stored);
+      if (!state.timestamp) return null;
+      const savedTime = parseInt(state.timestamp, 10);
+      if (Date.now() - savedTime > 5 * 60 * 1000) {
+        sessionStorage.removeItem(GRID_STATE_KEY);
+        return null;
+      }
+      return { listings: state.listings, page: state.page, meta: state.meta };
+    } catch {
+      return null;
+    }
+  }
+  return null;
+};
+
 export function ListingGrid({ initialData }: ListingGridProps) {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
-  const [listings, setListings] = useState<Listing[]>(initialData?.data || []);
+  const savedState = useMemo(() => {
+    const hasScrollTimestamp =
+      typeof window !== 'undefined' && sessionStorage.getItem('homeScrollTimestamp');
+    if (hasScrollTimestamp) {
+      return loadGridState();
+    }
+    return null;
+  }, []);
+  const [listings, setListings] = useState<Listing[]>(
+    savedState && savedState.page > 1 ? savedState.listings : initialData?.data || []
+  );
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [meta, setMeta] = useState<PaginationMeta | null>(initialData?.meta || null);
-  const [currentPage, setCurrentPage] = useState(initialData?.meta?.page || 1);
+  const [meta, setMeta] = useState<PaginationMeta | null>(
+    savedState && savedState.page > 1 ? savedState.meta : initialData?.meta || null
+  );
+  const [currentPage, setCurrentPage] = useState(
+    savedState && savedState.page > 1 ? savedState.page : initialData?.meta?.page || 1
+  );
   const [error, setError] = useState<string | null>(null);
   const [autoLoadCount, setAutoLoadCount] = useState(0);
   const observerTarget = useRef<HTMLDivElement>(null);
-  const listingsRef = useRef<Listing[]>(initialData?.data || []);
+  const listingsRef = useRef<Listing[]>(
+    savedState && savedState.page > 1 ? savedState.listings : initialData?.data || []
+  );
   const { user } = useAuthStore();
   const { setFavorites } = useFavoritesStore();
   const prevSearchParamsString = useRef<string>('');
@@ -216,6 +267,8 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       prevSearchParamsString.current = searchParamsString;
       setCurrentPage(1);
       setAutoLoadCount(0);
+      sessionStorage.removeItem(GRID_STATE_KEY);
+      sessionStorage.removeItem('homeScrollTimestamp');
       fetchListings(1, false);
     }
   }, [fetchListings, searchParamsString]);
@@ -408,10 +461,15 @@ export function ListingGrid({ initialData }: ListingGridProps) {
         } catch {}
       }
 
+      let finalMeta: PaginationMeta;
+      let finalPage: number;
+
       if (secondRes) {
         const secondListings = secondRes.data.data;
         setListings((prev) => [...prev, ...secondListings]);
         setCurrentPage(pageAfterNext);
+        finalPage = pageAfterNext;
+        finalMeta = secondRes.data.meta;
 
         if (user && secondListings.length > 0) {
           const listingIds = secondListings.map((l) => l.id);
@@ -427,9 +485,16 @@ export function ListingGrid({ initialData }: ListingGridProps) {
         }
       } else {
         setCurrentPage(nextPage);
+        finalPage = nextPage;
+        finalMeta = firstRes.data.meta;
       }
 
-      setMeta(firstRes.data.meta);
+      setMeta(finalMeta);
+
+      setListings((currentListings) => {
+        saveGridState(currentListings, finalPage, finalMeta);
+        return currentListings;
+      });
     } catch {
     } finally {
       setLoadingMore(false);

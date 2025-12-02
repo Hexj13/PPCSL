@@ -3,7 +3,7 @@ const nextConfig = {
   reactStrictMode: true,
   compress: true,
   poweredByHeader: false,
-  
+
   experimental: {
     optimizeCss: true,
   },
@@ -16,14 +16,14 @@ const nextConfig = {
       pagesBufferLength: 0,
     },
   }),
-  
+
   // Отключаем кеширование страниц в dev режиме
   ...(process.env.NODE_ENV === 'development' && {
     generateBuildId: async () => {
       return `dev-${Date.now()}`;
     },
   }),
-  
+
   images: {
     remotePatterns: [
       {
@@ -144,7 +144,7 @@ const nextConfig = {
         ],
       },
     ];
-    
+
     if (!isDev) {
       headers.push({
         source: '/listings/:path*',
@@ -156,13 +156,12 @@ const nextConfig = {
         ],
       });
     }
-    
+
     return headers;
   },
   turbopack: {
     root: __dirname,
   },
-}
+};
 
-module.exports = nextConfig
-
+module.exports = nextConfig;

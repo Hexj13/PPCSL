@@ -781,11 +781,19 @@ export function SearchFilters() {
 
     const newUrl = `/?${urlString}`;
     const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('scrollPreserved', 'true');
+    }
     startTransition(() => {
       router.replace(newUrl, { scroll: false });
       if (typeof window !== 'undefined') {
         requestAnimationFrame(() => {
           window.scrollTo({ top: scrollY, behavior: 'instant' });
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              sessionStorage.removeItem('scrollPreserved');
+            });
+          });
         });
       }
       if (allBrandsSelected) {
@@ -867,11 +875,19 @@ export function SearchFilters() {
       sortOrder: 'DESC',
     });
     const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('scrollPreserved', 'true');
+    }
     startTransition(() => {
       router.replace('/', { scroll: false });
       if (typeof window !== 'undefined') {
         requestAnimationFrame(() => {
           window.scrollTo({ top: scrollY, behavior: 'instant' });
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              sessionStorage.removeItem('scrollPreserved');
+            });
+          });
         });
       }
     });
