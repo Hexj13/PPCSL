@@ -57,12 +57,30 @@ function FavoritesContent() {
         const { setFavorites } = useFavoritesStore.getState();
         const favoriteIds = favoritesList.map((listing: Listing) => listing.id);
         setFavorites(favoriteIds);
+
+        if ('serviceWorker' in navigator && 'caches' in window) {
+          caches.open('kupito-data-v1').then((cache) => {
+            favoriteIds.forEach((id) => {
+              cache.add(`/listings/${id}`).catch(() => {});
+            });
+          });
+        }
       })
       .catch(() => {
         if (showLoadingTimeoutRef.current) {
           clearTimeout(showLoadingTimeoutRef.current);
           showLoadingTimeoutRef.current = null;
         }
+
+        const { favorites: favoriteIds } = useFavoritesStore.getState();
+        if (favoriteIds.length > 0 && 'caches' in window) {
+          caches.open('kupito-data-v1').then((cache) => {
+            favoriteIds.forEach((id) => {
+              cache.add(`/listings/${id}`).catch(() => {});
+            });
+          });
+        }
+
         setListings([]);
         setLoading(false);
         setIsInitialLoading(false);

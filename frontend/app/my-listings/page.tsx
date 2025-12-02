@@ -95,6 +95,14 @@ export default function MyListingsPage() {
           setCurrentPage(page);
         }
         setMeta(responseMeta);
+
+        if ('caches' in window && newListings.length > 0) {
+          caches.open('kupito-data-v1').then((cache) => {
+            newListings.forEach((listing) => {
+              cache.add(`/listings/${listing.id}`).catch(() => {});
+            });
+          });
+        }
       } catch {
         if (!append) {
           setListings([]);

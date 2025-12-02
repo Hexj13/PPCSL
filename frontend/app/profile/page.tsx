@@ -62,6 +62,8 @@ export default function ProfilePage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const hasLoadedRef = useRef(false);
+  const logoutRef = useRef(logout);
+  logoutRef.current = logout;
 
   useEffect(() => {
     if (!isInitialized) {
@@ -99,43 +101,8 @@ export default function ProfilePage() {
         setFormData(formDataToSet);
         hasLoadedRef.current = true;
       } catch {
-        router.push('/login');
-      } finally {
-        setLoadingProfile(false);
-      }
-    };
-
-    loadProfile();
-  }, [isInitialized, router, setAuth, user, token]);
-
-  useEffect(() => {
-    if (!isInitialized) return;
-    if (hasLoadedRef.current) return;
-
-    const loadProfile = async () => {
-      try {
-        if (!user) {
-          setLoadingProfile(true);
-        }
-        const response = await authApi.me();
-        const profileUser = response.data;
-
-        setAuth(profileUser, useAuthStore.getState().token);
-
-        const formDataToSet = {
-          email: profileUser.email || '',
-          firstName: profileUser.firstName || '',
-          lastName: profileUser.lastName || '',
-          companyName: profileUser.companyName || '',
-          emailNotifications: convertToBoolean(profileUser.emailNotifications),
-          viber: convertToBoolean(profileUser.viber),
-          whatsapp: convertToBoolean(profileUser.whatsapp),
-          telegram: convertToBoolean(profileUser.telegram),
-        };
-
-        setFormData(formDataToSet);
         hasLoadedRef.current = true;
-      } catch {
+        logoutRef.current();
         router.push('/login');
       } finally {
         setLoadingProfile(false);
@@ -143,7 +110,7 @@ export default function ProfilePage() {
     };
 
     loadProfile();
-  }, [isInitialized, router, setAuth, user]);
+  }, [isInitialized, router, setAuth, token, user]);
 
   useEffect(() => {
     if (user && hasLoadedRef.current) {

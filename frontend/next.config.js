@@ -128,6 +128,21 @@ const nextConfig = {
           },
         ],
       },
+      {
+        source: '/sw.js',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: isDev
+              ? 'no-store, no-cache, must-revalidate'
+              : 'public, max-age=0, must-revalidate',
+          },
+          {
+            key: 'Service-Worker-Allowed',
+            value: '/',
+          },
+        ],
+      },
     ];
     
     if (!isDev) {

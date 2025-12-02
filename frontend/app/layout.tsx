@@ -10,7 +10,9 @@ import { GoogleAnalyticsConsent } from '@/components/GoogleAnalyticsConsent';
 import { GoogleTagManager, GoogleTagManagerNoscript } from '@/components/GoogleTagManager';
 import { Header } from '@/components/Header';
 import { I18nProvider } from '@/components/I18nProvider';
+import { OfflineBanner } from '@/components/OfflineBanner';
 import { OrganizationSchema } from '@/components/OrganizationSchema';
+import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] });
@@ -95,12 +97,19 @@ export const metadata: Metadata = {
     apple: [{ url: '/logo.png', sizes: '180x180', type: 'image/png' }],
   },
   manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Kupito',
+  },
 };
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
+  themeColor: '#3b82f6',
+  userScalable: true,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -115,8 +124,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <CookieConsent />
         <I18nProvider>
           <AuthProvider>
+            <ServiceWorkerRegistration />
             <div className="min-h-screen flex flex-col">
               <Header />
+              <OfflineBanner />
               <main className="flex-grow container mx-auto px-3 sm:px-4 py-6 md:py-8">
                 {children}
               </main>

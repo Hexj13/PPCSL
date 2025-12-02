@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 
 interface ModalProps {
   isOpen: boolean;
@@ -17,12 +18,15 @@ export function Modal({
   size = 'medium',
   className = '',
 }: ModalProps) {
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   useEffect(() => {
     if (!isOpen) return;
 
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose();
+        onCloseRef.current();
       }
     };
 
@@ -33,9 +37,13 @@ export function Modal({
       document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
+
+  if (typeof window === 'undefined') {
+    return null;
+  }
 
   const sizeClasses = {
     small: 'max-w-md',
@@ -44,10 +52,10 @@ export function Modal({
     full: 'max-w-full',
   };
 
-  return (
+  const modalContent = (
     <div
-      className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 sm:p-6 md:p-8"
-      onClick={onClose}
+      className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-4 sm:p-6 md:p-8"
+      onClick={() => onCloseRef.current()}
     >
       <div
         className={`bg-bg-dark rounded-lg w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto scrollbar-custom ${className}`}
@@ -59,7 +67,7 @@ export function Modal({
               {title}
             </h2>
             <button
-              onClick={onClose}
+              onClick={() => onCloseRef.current()}
               className="text-gray-400 hover:text-white text-2xl transition-colors"
             >
               ×
@@ -70,4 +78,6 @@ export function Modal({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }

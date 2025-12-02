@@ -112,7 +112,8 @@ cd frontend && npm test
 **Test Coverage:**
 - ✅ All critical backend services and controllers
 - ✅ All critical frontend components (ListingCard, SearchFilters, ListingForm, ListingGrid, AuthProvider)
-- ✅ Server-side data fetching functions
+- ✅ Server-side data fetching functions (with production/development cache settings)
 - ✅ Utility functions and API clients
+- ✅ 185 frontend tests across 12 test suites
 
 For detailed documentation, see [documentation](./docs/).

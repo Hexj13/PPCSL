@@ -109,9 +109,10 @@ export async function getListings(
   const url = `${API_URL}/api/listings${queryString ? `?${queryString}` : ''}`;
 
   try {
+    const isProduction = process.env.NODE_ENV === 'production';
     const response = await fetch(url, {
-      next: process.env.NODE_ENV === 'development' ? { revalidate: 0 } : { revalidate: 30 },
-      cache: process.env.NODE_ENV === 'development' ? 'no-store' : 'default',
+      next: { revalidate: isProduction ? 30 : 0 },
+      cache: isProduction ? 'default' : 'no-store',
     });
 
     if (!response.ok) {

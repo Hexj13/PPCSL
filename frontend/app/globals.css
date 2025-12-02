@@ -139,6 +139,73 @@ label {
     border-color: #00ff99 !important;
   }
 
+  .btn-outline-green {
+    box-sizing: border-box !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    max-height: 52px !important;
+    padding: 0 24px !important;
+    margin: 0 !important;
+    background-color: transparent !important;
+    border: 2px solid #6eeb9c !important;
+    color: #6eeb9c !important;
+    font-weight: 600 !important;
+    font-size: 16px !important;
+    border-radius: 0.5rem !important;
+    transition: all 0.2s !important;
+    user-select: none !important;
+    text-align: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+  }
+
+  .btn-outline-green:hover {
+    background-color: rgba(110, 235, 156, 0.1) !important;
+    border-color: #5dd88a !important;
+    color: #5dd88a !important;
+  }
+
+  .btn-outline-gray {
+    box-sizing: border-box !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    max-height: 52px !important;
+    padding: 0 24px !important;
+    margin: 0 !important;
+    background-color: transparent !important;
+    border: 2px solid rgba(156, 163, 175, 0.5) !important;
+    color: rgba(156, 163, 175, 1) !important;
+    font-weight: 600 !important;
+    font-size: 16px !important;
+    border-radius: 0.5rem !important;
+    transition: all 0.2s !important;
+    user-select: none !important;
+    text-align: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+  }
+
+  .btn-outline-gray:hover {
+    background-color: rgba(156, 163, 175, 0.1) !important;
+    border-color: rgba(156, 163, 175, 0.7) !important;
+    color: rgba(209, 213, 219, 1) !important;
+  }
+
+  .btn-outline-green:disabled,
+  .btn-outline-gray:disabled {
+    cursor: not-allowed !important;
+    opacity: 0.5 !important;
+  }
+
+  .btn-outline-green:disabled:hover,
+  .btn-outline-gray:disabled:hover {
+    background-color: transparent !important;
+  }
+
   .btn-yellow {
     @apply px-4 md:px-6 py-2.5 md:py-3 bg-yellow-500 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:bg-yellow-600 transition-all duration-200 select-none text-center;
   }

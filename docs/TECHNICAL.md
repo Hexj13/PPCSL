@@ -747,6 +747,14 @@ See [RENDER.md](./RENDER.md) for CloudFront CDN setup instructions (CloudFront i
 - URL parameter synchronization for search filters and sorting
 - Lazy loading for images
 - Skeleton loaders for improved UX
+- **PWA Support:** Service Worker with intelligent caching strategy
+  - Static assets cached permanently (CSS, JS, images, fonts)
+  - API responses cached with 1 hour TTL (stale-while-revalidate strategy)
+  - Page caching for specific routes (favorites, profile, my-listings, listing detail) with 1 hour TTL
+  - Automatic cache cleanup for expired entries
+  - Offline page support
+  - PWA installation support for iOS and Android with tabbed modal interface
+  - Installation instructions with keyword highlighting and browser compatibility notes
 - Optimistic UI updates for car comparison (no flickering on item removal)
 - Cached filter loading to prevent skeleton flickering on tab switches
 - Zustand stores with persist middleware for favorites and comparisons (localStorage)

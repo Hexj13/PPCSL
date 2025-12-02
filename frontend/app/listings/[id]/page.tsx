@@ -81,9 +81,9 @@ export default function ListingPage() {
   const modalActivePreloadsRef = useRef<number>(0);
   const preloadTimeoutsRef = useRef<Array<ReturnType<typeof setTimeout>>>([]);
   const modalPreloadTimeoutsRef = useRef<Array<ReturnType<typeof setTimeout>>>([]);
-  const maxConcurrentPreloads = 3;
-  const maxPreloadImages = 10;
-  const preloadRadius = 5;
+  const maxConcurrentPreloads = 2;
+  const maxPreloadImages = 5;
+  const preloadRadius = 3;
 
   // Cleanup all preload <link> elements on component unmount
   useEffect(() => {
@@ -480,7 +480,20 @@ export default function ListingPage() {
         activePreloadsRef.current++;
         preloadLinksRef.current.set(optimizedUrl, link);
 
+        const timeoutId = setTimeout(() => {
+          if (preloadLinksRef.current.has(optimizedUrl)) {
+            const unusedLink = preloadLinksRef.current.get(optimizedUrl);
+            if (unusedLink && unusedLink.parentNode) {
+              unusedLink.parentNode.removeChild(unusedLink);
+            }
+            preloadLinksRef.current.delete(optimizedUrl);
+            activePreloadsRef.current--;
+            processPreloadQueue();
+          }
+        }, 2000);
+
         link.onload = () => {
+          clearTimeout(timeoutId);
           preloadedImagesRef.current.add(optimizedUrl);
           if (link.parentNode) {
             link.parentNode.removeChild(link);
@@ -490,6 +503,7 @@ export default function ListingPage() {
           processPreloadQueue();
         };
         link.onerror = () => {
+          clearTimeout(timeoutId);
           if (link.parentNode) {
             link.parentNode.removeChild(link);
           }
@@ -609,7 +623,20 @@ export default function ListingPage() {
       activePreloadsRef.current++;
       preloadLinksRef.current.set(optimizedUrl, link);
 
+      const timeoutId = setTimeout(() => {
+        if (preloadLinksRef.current.has(optimizedUrl)) {
+          const unusedLink = preloadLinksRef.current.get(optimizedUrl);
+          if (unusedLink && unusedLink.parentNode) {
+            unusedLink.parentNode.removeChild(unusedLink);
+          }
+          preloadLinksRef.current.delete(optimizedUrl);
+          activePreloadsRef.current--;
+          processPreloadQueue();
+        }
+      }, 2000);
+
       link.onload = () => {
+        clearTimeout(timeoutId);
         preloadedImagesRef.current.add(optimizedUrl);
         if (link.parentNode) {
           link.parentNode.removeChild(link);
@@ -619,6 +646,7 @@ export default function ListingPage() {
         processPreloadQueue();
       };
       link.onerror = () => {
+        clearTimeout(timeoutId);
         if (link.parentNode) {
           link.parentNode.removeChild(link);
         }
@@ -670,23 +698,41 @@ export default function ListingPage() {
         activePreloadsRef.current++;
         preloadLinksRef.current.set(optimizedUrl, link);
 
-        link.onload = () => {
-          preloadedImagesRef.current.add(optimizedUrl);
-          if (link.parentNode) {
-            link.parentNode.removeChild(link);
-          }
-          preloadLinksRef.current.delete(optimizedUrl);
-          activePreloadsRef.current--;
+        let resolved = false;
+        const safeResolve = () => {
+          if (resolved) return;
+          resolved = true;
           resolve();
+        };
+
+        const cleanup = () => {
+          if (preloadLinksRef.current.has(optimizedUrl)) {
+            const unusedLink = preloadLinksRef.current.get(optimizedUrl);
+            if (unusedLink && unusedLink.parentNode) {
+              unusedLink.parentNode.removeChild(unusedLink);
+            }
+            preloadLinksRef.current.delete(optimizedUrl);
+            activePreloadsRef.current--;
+          }
+        };
+
+        const timeoutId = setTimeout(() => {
+          cleanup();
+          safeResolve();
+          processPreloadQueue();
+        }, 5000);
+
+        link.onload = () => {
+          clearTimeout(timeoutId);
+          preloadedImagesRef.current.add(optimizedUrl);
+          cleanup();
+          safeResolve();
           processPreloadQueue();
         };
         link.onerror = () => {
-          if (link.parentNode) {
-            link.parentNode.removeChild(link);
-          }
-          preloadLinksRef.current.delete(optimizedUrl);
-          activePreloadsRef.current--;
-          resolve();
+          clearTimeout(timeoutId);
+          cleanup();
+          safeResolve();
           processPreloadQueue();
         };
 
@@ -797,23 +843,41 @@ export default function ListingPage() {
         modalActivePreloadsRef.current++;
         preloadLinksRef.current.set(optimizedUrl, link);
 
-        link.onload = () => {
-          preloadedImagesRef.current.add(optimizedUrl);
-          if (link.parentNode) {
-            link.parentNode.removeChild(link);
-          }
-          preloadLinksRef.current.delete(optimizedUrl);
-          modalActivePreloadsRef.current--;
+        let resolved = false;
+        const safeResolve = () => {
+          if (resolved) return;
+          resolved = true;
           resolve();
+        };
+
+        const cleanup = () => {
+          if (preloadLinksRef.current.has(optimizedUrl)) {
+            const unusedLink = preloadLinksRef.current.get(optimizedUrl);
+            if (unusedLink && unusedLink.parentNode) {
+              unusedLink.parentNode.removeChild(unusedLink);
+            }
+            preloadLinksRef.current.delete(optimizedUrl);
+            modalActivePreloadsRef.current--;
+          }
+        };
+
+        const timeoutId = setTimeout(() => {
+          cleanup();
+          safeResolve();
+          processModalPreloadQueue();
+        }, 2000);
+
+        link.onload = () => {
+          clearTimeout(timeoutId);
+          preloadedImagesRef.current.add(optimizedUrl);
+          cleanup();
+          safeResolve();
           processModalPreloadQueue();
         };
         link.onerror = () => {
-          if (link.parentNode) {
-            link.parentNode.removeChild(link);
-          }
-          preloadLinksRef.current.delete(optimizedUrl);
-          modalActivePreloadsRef.current--;
-          resolve();
+          clearTimeout(timeoutId);
+          cleanup();
+          safeResolve();
           processModalPreloadQueue();
         };
 
@@ -1840,13 +1904,7 @@ export default function ListingPage() {
                     <span className="font-semibold text-primary-400">
                       {t('listingDetail.sellerType')}:
                     </span>
-                    <span
-                      className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold ml-2 ${
-                        listing.user.type === 'Business'
-                          ? 'bg-blue-500/20 text-blue-300'
-                          : 'bg-primary-500/20 text-primary-300'
-                      }`}
-                    >
+                    <span className="ml-2 text-gray-300">
                       {listing.user.type === 'Business'
                         ? t('listingDetail.business')
                         : t('listingDetail.individual')}
@@ -2049,10 +2107,8 @@ export default function ListingPage() {
                       <button
                         onClick={() => setIsUserListingsModalOpen(true)}
                         disabled={listing.status === 'Closed'}
-                        className={`w-full px-4 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
-                          listing.status === 'Closed'
-                            ? 'bg-bg-darker text-gray-500 border-2 border-primary-500/20 cursor-not-allowed opacity-50'
-                            : 'bg-bg-light border-2 border-primary-500/30 text-primary-400 hover:bg-bg-light/80 hover:border-primary-500'
+                        className={`w-full flex items-center gap-2 ${
+                          listing.status === 'Closed' ? 'btn-outline-gray' : 'btn-outline-green'
                         }`}
                         title={
                           listing.status === 'Closed' ? t('listingDetail.unavailableForClosed') : ''

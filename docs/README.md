@@ -305,7 +305,7 @@ For more details, see [Technical Documentation](TECHNICAL.md#8-testing) and [Fro
 - **[Render.com Deployment Guide](RENDER.md)** - Complete guide for deploying on Render.com
 - **[Multi-Repository Architecture](MULTI_REPOSITORY_ARCHITECTURE.md)** - Guide for multi-locale architecture with core and locale-specific repositories
 - **[Google Ads Setup Guide](GOOGLE_ADS_SETUP.md)** - Complete guide for setting up Google Ads conversion tracking
-- **[PWA Implementation Plan](PWA_IMPLEMENTATION.md)** - Complete plan for implementing Progressive Web App functionality
+- **PWA Features** - Progressive Web App fully implemented with Service Worker, offline support, and installation (see Frontend Documentation for details)
 - **[TODO List](TODO.md)** - All project tasks and todos ⚠️ **IMPORTANT**
 
 ### Backend Documentation

@@ -6,8 +6,6 @@ This directory contains frontend-specific documentation.
 
 - **[DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md)** - Design system and UI components documentation
 - **[STORYBOOK.md](./STORYBOOK.md)** - Storybook setup guide (alternative documentation tool)
-- **[TEST_REVIEW.md](./TEST_REVIEW.md)** - Test coverage review and recommendations
-- **[OPTIMIZATION_PROMPTS.md](./OPTIMIZATION_PROMPTS.md)** - Frontend optimization tasks and prompts
 
 ## Key Features
 
@@ -31,9 +29,17 @@ This directory contains frontend-specific documentation.
 
 ### Data Fetching Architecture
 - **Server Components:** Homepage (`app/page.tsx`) fetches initial listings data on the server
-- **Server API:** `lib/server-api.ts` provides server-side data fetching functions using native `fetch` with Next.js Data Cache
+- **Server API:** `lib/server-api.ts` provides server-side data fetching functions using native `fetch` with Next.js Data Cache (production: 30s revalidate, development: no-store)
 - **Client API:** `lib/api.ts` provides client-side API client (Axios) for subsequent data loads and user interactions
 - **Hybrid Approach:** Initial data loaded on server for SEO, subsequent loads handled on client for interactivity
+
+### PWA Support
+- **Service Worker** (`public/sw.js`) - Caching strategy with 1 hour TTL for API calls and pages
+- **Offline Support** - Offline page and cached content
+- **Installation** - Full PWA installation support for iOS and Android with detailed instructions
+- **Update Notifications** - Automatic service worker update detection and user notifications
+- **Install Button** - `PWAInstallButtonGray` component in footer with tabbed modal (iOS/Android instructions)
+- **Installation Modal** - Modal with tabs for iOS and Android instructions, keyword highlighting, and browser compatibility notes
 
 ### SEO & Metadata
 - **Open Graph tags** - Full OG meta tags on all pages:
