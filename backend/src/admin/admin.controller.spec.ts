@@ -54,6 +54,8 @@ describe('AdminController', () => {
     is_registered: true as boolean | null,
     registration_expires_at: null,
     last_updated_at: new Date(),
+    last_edited_at: null,
+    last_published_at: new Date(),
     closed_at: null,
     views: 0,
     created_at: new Date(),

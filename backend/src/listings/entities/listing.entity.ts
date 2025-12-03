@@ -108,6 +108,12 @@ export class Listing {
   last_updated_at: Date;
 
   @Column({ type: 'timestamp', nullable: true })
+  last_edited_at: Date | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  last_published_at: Date | null;
+
+  @Column({ type: 'timestamp', nullable: true })
   closed_at: Date | null;
 
   @Column({ type: 'integer', default: 0 })

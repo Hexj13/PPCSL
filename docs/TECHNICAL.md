@@ -32,7 +32,7 @@ Platform for selling new and used cars in Macedonia. Users can independently add
 - Individual users: maximum **100 active listings** simultaneously
 - Business users: maximum **100 active listings** simultaneously
 - Listings have three statuses: **Active**, **Paused**, **Closed**
-- Automatic closing after **5 months** (approximately 150 days) since last update
+- Automatic closing after **5 months** (approximately 150 days) since `last_updated_at` timestamp
 
 ### Technologies
 
@@ -358,6 +358,18 @@ GET /health                          # Health check (database, Redis)
 - `price`, `created_at`, `views`, `vin` (partial), `urgent` (partial)
 - `currency`, `city`, `title`
 
+**Listing Date Fields:**
+- `created_at` - Date when listing was created (automatic, never changes)
+- `last_updated_at` - Updated only when:
+  - Listing is created
+  - User clicks "Refresh dates" button (updates all active listings)
+  - Used for automatic closing after 5 months
+- `last_edited_at` - Updated when listing content is edited (price, description, images, etc.)
+- `last_published_at` - Updated when listing status changes to Active:
+  - When listing is created with Active status
+  - When listing is published via `POST /api/listings/:id/publish`
+- `updated_at` - Automatically updated by TypeORM on any listing modification
+
 **Vehicles Table:**
 - `brand_id`, `model_id`, `brand_id + model_id` (composite)
 - `year`, `fuel` (partial), `transmission` (partial)
@@ -371,10 +383,11 @@ GET /health                          # Health check (database, Redis)
 
 #### Triggers
 
-1. **Auto-update `last_updated_at`** - Updates timestamp on listing modifications
-2. **Auto-increment views counter** - Increments views when view is recorded
-3. **Cleanup listing views** - Removes view records when listing is deleted
-4. **Cleanup favorites** - Removes favorite records when listing is deleted
+1. **Auto-increment views counter** - Increments views when view is recorded
+2. **Cleanup listing views** - Removes view records when listing is deleted
+3. **Cleanup favorites** - Removes favorite records when listing is deleted
+
+**Note:** The auto-update trigger for `last_updated_at` was removed. This field is now updated manually only during listing creation and when using the "Refresh dates" feature. This allows users to control when their listings' auto-close timer resets.
 
 #### Connection Pooling
 

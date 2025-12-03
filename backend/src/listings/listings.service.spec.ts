@@ -54,6 +54,8 @@ describe('ListingsService', () => {
     created_at: new Date(),
     updated_at: new Date(),
     last_updated_at: new Date(),
+    last_edited_at: null,
+    last_published_at: new Date(),
     closed_at: null,
   } as Listing;
 
@@ -219,6 +221,8 @@ describe('ListingsService', () => {
 
       expect(result.status).toBe(ListingStatus.Active);
       expect(listingsRepository.save).toHaveBeenCalled();
+      const savedListing = listingsRepository.save.mock.calls[0][0] as Listing;
+      expect(savedListing.last_published_at).toBeInstanceOf(Date);
     });
 
     it('should throw BadRequestException when limit is exceeded', async () => {
@@ -612,6 +616,72 @@ describe('ListingsService', () => {
       expect(vehiclesRepository.save).toHaveBeenCalled();
       expect(listingsRepository.save).toHaveBeenCalled();
     });
+
+    it('should set last_published_at when creating listing with Active status', async () => {
+      const createDto = {
+        price: 10000,
+        currency: Currency.MKD,
+        city: 'Skopje',
+        status: ListingStatus.Active,
+        vehicle: {
+          brand_id: 'brand-1',
+          model_id: 'model-1',
+          year: 2020,
+        },
+      };
+
+      vehiclesRepository.create.mockReturnValue(mockVehicle as Vehicle);
+      vehiclesRepository.save.mockResolvedValue(mockVehicle);
+      brandsService.findOne.mockResolvedValue({ id: 'brand-1', name: 'Brand' } as Brand);
+      brandsService.getModelsByBrand.mockResolvedValue([
+        { id: 'model-1', name: 'Model' },
+      ] as VehicleModel[]);
+      usersService.getListingLimit.mockResolvedValue(100);
+      listingsRepository.count.mockResolvedValue(0);
+      listingsRepository.create.mockReturnValue(mockListing as Listing);
+      listingsRepository.save.mockResolvedValue(mockListing);
+
+      await service.create(createDto as Partial<CreateListingDto> as CreateListingDto, 'user-1');
+
+      expect(listingsRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: ListingStatus.Active,
+          last_published_at: expect.any(Date),
+        }),
+      );
+    });
+
+    it('should set last_published_at to null when creating listing with Paused status', async () => {
+      const createDto = {
+        price: 10000,
+        currency: Currency.MKD,
+        city: 'Skopje',
+        status: ListingStatus.Paused,
+        vehicle: {
+          brand_id: 'brand-1',
+          model_id: 'model-1',
+          year: 2020,
+        },
+      };
+
+      vehiclesRepository.create.mockReturnValue(mockVehicle as Vehicle);
+      vehiclesRepository.save.mockResolvedValue(mockVehicle);
+      brandsService.findOne.mockResolvedValue({ id: 'brand-1', name: 'Brand' } as Brand);
+      brandsService.getModelsByBrand.mockResolvedValue([
+        { id: 'model-1', name: 'Model' },
+      ] as VehicleModel[]);
+      listingsRepository.create.mockReturnValue(mockListing as Listing);
+      listingsRepository.save.mockResolvedValue(mockListing);
+
+      await service.create(createDto as Partial<CreateListingDto> as CreateListingDto, 'user-1');
+
+      expect(listingsRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: ListingStatus.Paused,
+          last_published_at: null,
+        }),
+      );
+    });
   });
 
   describe('update', () => {
@@ -671,6 +741,38 @@ describe('ListingsService', () => {
       );
 
       expect(listingsRepository.update).toHaveBeenCalled();
+    });
+
+    it('should update last_edited_at when listing is edited', async () => {
+      const updateDto = {
+        price: 15000,
+        description: 'Updated description',
+      };
+
+      const activeListing = { ...mockListing, status: ListingStatus.Active };
+      listingsRepository.findOne
+        .mockResolvedValueOnce(activeListing)
+        .mockResolvedValueOnce(activeListing);
+      vehiclesRepository.findOne.mockResolvedValue(mockVehicle);
+      brandsService.findOne.mockResolvedValue({ id: 'brand-1', name: 'Brand' } as Brand);
+      brandsService.getModelsByBrand.mockResolvedValue([
+        { id: 'model-1', name: 'Model' },
+      ] as VehicleModel[]);
+      const updateResult: UpdateResult = { affected: 1, generatedMaps: [], raw: [] };
+      listingsRepository.update.mockResolvedValue(updateResult);
+
+      await service.update(
+        'listing-1',
+        updateDto as Partial<UpdateListingDto> as UpdateListingDto,
+        'user-1',
+      );
+
+      expect(listingsRepository.update).toHaveBeenCalledWith(
+        'listing-1',
+        expect.objectContaining({
+          last_edited_at: expect.any(Date),
+        }),
+      );
     });
   });
 

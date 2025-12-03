@@ -255,6 +255,8 @@ export interface Listing {
   vehicle?: Vehicle;
   user?: User;
   last_updated_at: string;
+  last_edited_at?: string;
+  last_published_at?: string;
   closed_at?: string;
   created_at: string;
   updated_at: string;

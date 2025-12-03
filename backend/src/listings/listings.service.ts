@@ -97,6 +97,7 @@ export class ListingsService {
       vehicle_id: savedVehicle.id,
       user_id: userId,
       last_updated_at: new Date(),
+      last_published_at: status === ListingStatusEnum.Active ? new Date() : null,
       registration_expires_at: createListingDto.registration_expires_at
         ? new Date(createListingDto.registration_expires_at)
         : null,
@@ -605,7 +606,7 @@ export class ListingsService {
       description: listingFields.description
         ? sanitizeHtml(listingFields.description)
         : listingFields.description,
-      last_updated_at: new Date(),
+      last_edited_at: new Date(),
       title: await this.generateTitle(updatedVehicle),
     };
 
@@ -682,7 +683,7 @@ export class ListingsService {
     }
 
     listing.status = ListingStatusEnum.Active;
-    listing.last_updated_at = new Date();
+    listing.last_published_at = new Date();
     const publishedListing = await this.listingsRepository.save(listing);
 
     try {

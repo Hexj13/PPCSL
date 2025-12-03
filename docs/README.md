@@ -235,7 +235,8 @@ Kupito/
 <details>
 <summary><b>Implementation Features</b></summary>
 
-- Automatic listing closure after 5 months (cron job runs daily at midnight)
+- Automatic listing closure after 5 months based on `last_updated_at` timestamp (cron job runs daily at midnight)
+- Date refresh feature with 48-hour cooldown - users can refresh `last_updated_at` for all active listings to reset auto-close timer
 - Active listing limit validation on publish
 - Favorites stored in localStorage for guests and on server for authenticated users
 - **Saved filters:** Users can save up to 20 filter sets with custom names, edit and delete them, apply with one click

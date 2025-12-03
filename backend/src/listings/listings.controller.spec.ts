@@ -30,6 +30,8 @@ describe('ListingsController', () => {
     created_at: new Date(),
     updated_at: new Date(),
     last_updated_at: new Date(),
+    last_edited_at: null,
+    last_published_at: new Date(),
     closed_at: null,
   } as Listing;
 
