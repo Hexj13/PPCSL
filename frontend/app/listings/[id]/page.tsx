@@ -1141,7 +1141,7 @@ export default function ListingPage() {
                         src={optimizedUrl}
                         alt={listing.title}
                         fill
-                        sizes="(max-width: 768px) 100vw, 65vw"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 65vw"
                         className="object-cover"
                         priority
                         onError={() => {
@@ -2321,7 +2321,7 @@ export default function ListingPage() {
                     })}
                     width={1200}
                     height={900}
-                    sizes="(max-width: 768px) 100vw, 90vw"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 95vw, 90vw"
                     className="max-w-full max-h-[90vh] w-auto h-auto object-contain"
                     priority={modalImageIndex === 0}
                     onError={() => {

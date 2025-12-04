@@ -533,18 +533,18 @@ export function SearchFilters() {
     }
   }, [user, router, currentYear, searchParams]);
 
-  const handleChange = (key: string, value: string) => {
-    setFilters({ ...filters, [key]: value });
-  };
+  const handleChange = useCallback((key: string, value: string) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  }, []);
 
-  const handleMultiSelectChange = (key: string, values: string[]) => {
+  const handleMultiSelectChange = useCallback((key: string, values: string[]) => {
     const filteredValues = values.filter((v) => v !== 'all' && !v.startsWith('__category__'));
-    setFilters({ ...filters, [key]: filteredValues });
-  };
+    setFilters((prev) => ({ ...prev, [key]: filteredValues }));
+  }, []);
 
-  const handleCheckboxChange = (key: string, checked: boolean) => {
-    setFilters({ ...filters, [key]: checked });
-  };
+  const handleCheckboxChange = useCallback((key: string, checked: boolean) => {
+    setFilters((prev) => ({ ...prev, [key]: checked }));
+  }, []);
 
   const handleYearBlur = (key: string, value: string) => {
     if (value === '') {
@@ -583,7 +583,7 @@ export function SearchFilters() {
     }
   };
 
-  const validateRanges = (): boolean => {
+  const validateRanges = useCallback((): boolean => {
     if (filters.year_gte && filters.year_lte) {
       const yearGte = parseInt(filters.year_gte, 10);
       const yearLte = parseInt(filters.year_lte, 10);
@@ -630,7 +630,7 @@ export function SearchFilters() {
     }
 
     return true;
-  };
+  }, [filters, t]);
 
   const handleWheel = useCallback((e: React.WheelEvent<HTMLInputElement>) => {
     const target = e.currentTarget;
@@ -639,174 +639,182 @@ export function SearchFilters() {
     }
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
 
-    if (!validateRanges()) {
-      return;
-    }
+      if (!validateRanges()) {
+        return;
+      }
 
-    const validBrandIds = filters.brand_ids.filter(
-      (id) => id !== 'all' && id !== '' && !id.startsWith('__category__')
-    );
-    const validModelIds = filters.model_ids.filter(
-      (id) => id !== 'all' && id !== '' && !id.startsWith('__category__')
-    );
-    const validCities = filters.cities.filter(
-      (city) => city !== 'all' && city !== '' && !city.startsWith('__category__')
-    );
-    const allBrandsSelected = validBrandIds.length === brands.length && brands.length > 0;
-    const allModelsSelected = validModelIds.length === models.length && models.length > 0;
-    const allCitiesSelected = validCities.length === cities.length && cities.length > 0;
+      const validBrandIds = filters.brand_ids.filter(
+        (id) => id !== 'all' && id !== '' && !id.startsWith('__category__')
+      );
+      const validModelIds = filters.model_ids.filter(
+        (id) => id !== 'all' && id !== '' && !id.startsWith('__category__')
+      );
+      const validCities = filters.cities.filter(
+        (city) => city !== 'all' && city !== '' && !city.startsWith('__category__')
+      );
+      const allBrandsSelected = validBrandIds.length === brands.length && brands.length > 0;
+      const allModelsSelected = validModelIds.length === models.length && models.length > 0;
+      const allCitiesSelected = validCities.length === cities.length && cities.length > 0;
 
-    const params = new URLSearchParams();
-    const largeArrays: Record<string, string[]> = {};
+      const params = new URLSearchParams();
+      const largeArrays: Record<string, string[]> = {};
 
-    Object.entries(filters).forEach(([key, value]) => {
-      if (key === 'sortBy' || key === 'sortOrder') {
-        if (value !== '') {
-          params.set(key, value as string);
+      Object.entries(filters).forEach(([key, value]) => {
+        if (key === 'sortBy' || key === 'sortOrder') {
+          if (value !== '') {
+            params.set(key, value as string);
+          }
+          return;
         }
-        return;
-      }
-      if (key === 'year_lte') {
-        const urlYearLte = searchParams.get('year_lte');
-        if (value !== '' && value !== undefined && value !== currentYear && value !== urlYearLte) {
-          params.set(key, value as string);
-        } else if (urlYearLte && urlYearLte !== currentYear) {
-          params.set(key, urlYearLte);
+        if (key === 'year_lte') {
+          const urlYearLte = searchParams.get('year_lte');
+          if (
+            value !== '' &&
+            value !== undefined &&
+            value !== currentYear &&
+            value !== urlYearLte
+          ) {
+            params.set(key, value as string);
+          } else if (urlYearLte && urlYearLte !== currentYear) {
+            params.set(key, urlYearLte);
+          }
+          return;
         }
-        return;
-      }
-      if (key === 'brand_ids') {
-        if (!allBrandsSelected && validBrandIds.length > 0) {
-          largeArrays[key] = validBrandIds;
+        if (key === 'brand_ids') {
+          if (!allBrandsSelected && validBrandIds.length > 0) {
+            largeArrays[key] = validBrandIds;
+          }
+          return;
         }
-        return;
-      }
-      if (key === 'model_ids') {
-        if (!allModelsSelected && validModelIds.length > 0) {
-          largeArrays[key] = validModelIds;
+        if (key === 'model_ids') {
+          if (!allModelsSelected && validModelIds.length > 0) {
+            largeArrays[key] = validModelIds;
+          }
+          return;
         }
-        return;
-      }
-      if (key === 'cities') {
-        if (!allCitiesSelected && validCities.length > 0) {
-          largeArrays[key] = validCities;
+        if (key === 'cities') {
+          if (!allCitiesSelected && validCities.length > 0) {
+            largeArrays[key] = validCities;
+          }
+          return;
         }
-        return;
-      }
-      if (Array.isArray(value)) {
-        const filteredArray = value.filter(
-          (v) => v !== 'all' && v !== '' && !v.startsWith('__category__')
-        );
-        if (filteredArray.length > 0) {
-          const arrayParams = [
-            'fuels',
-            'transmissions',
-            'body_types',
-            'colors',
-            'doors',
-            'conditions',
-            'registration_types',
-            'drive_types',
-          ];
-          if (arrayParams.includes(key)) {
-            largeArrays[key] = filteredArray;
+        if (Array.isArray(value)) {
+          const filteredArray = value.filter(
+            (v) => v !== 'all' && v !== '' && !v.startsWith('__category__')
+          );
+          if (filteredArray.length > 0) {
+            const arrayParams = [
+              'fuels',
+              'transmissions',
+              'body_types',
+              'colors',
+              'doors',
+              'conditions',
+              'registration_types',
+              'drive_types',
+            ];
+            if (arrayParams.includes(key)) {
+              largeArrays[key] = filteredArray;
+            } else {
+              params.set(key, filteredArray.join(','));
+            }
+          }
+        } else if (value !== '' && value !== undefined) {
+          if (typeof value === 'boolean') {
+            if (value === true) {
+              params.set(key, 'true');
+            }
           } else {
-            params.set(key, filteredArray.join(','));
+            params.set(key, value as string);
           }
         }
-      } else if (value !== '' && value !== undefined) {
-        if (typeof value === 'boolean') {
-          if (value === true) {
-            params.set(key, 'true');
-          }
-        } else {
-          params.set(key, value as string);
-        }
-      }
-    });
-
-    let urlString = params.toString();
-    let needsStorage = false;
-    if (Object.keys(largeArrays).length > 0) {
-      const testParamsPlain = new URLSearchParams(params);
-      Object.entries(largeArrays).forEach(([key, values]) => {
-        testParamsPlain.set(key, values.join(','));
       });
-      const testUrlPlain = `/?${testParamsPlain.toString()}`;
 
-      if (testUrlPlain.length > MAX_URL_LENGTH) {
-        const testParamsEncoded = new URLSearchParams(params);
+      let urlString = params.toString();
+      let needsStorage = false;
+      if (Object.keys(largeArrays).length > 0) {
+        const testParamsPlain = new URLSearchParams(params);
         Object.entries(largeArrays).forEach(([key, values]) => {
-          testParamsEncoded.set(key, encodeArray(values));
+          testParamsPlain.set(key, values.join(','));
         });
-        testParamsEncoded.set('_e', '1');
-        const testUrlEncoded = `/?${testParamsEncoded.toString()}`;
+        const testUrlPlain = `/?${testParamsPlain.toString()}`;
 
-        if (testUrlEncoded.length > MAX_URL_LENGTH) {
-          needsStorage = true;
-          saveFiltersToStorage(largeArrays);
-          params.set('_f', '1');
+        if (testUrlPlain.length > MAX_URL_LENGTH) {
+          const testParamsEncoded = new URLSearchParams(params);
+          Object.entries(largeArrays).forEach(([key, values]) => {
+            testParamsEncoded.set(key, encodeArray(values));
+          });
+          testParamsEncoded.set('_e', '1');
+          const testUrlEncoded = `/?${testParamsEncoded.toString()}`;
+
+          if (testUrlEncoded.length > MAX_URL_LENGTH) {
+            needsStorage = true;
+            saveFiltersToStorage(largeArrays);
+            params.set('_f', '1');
+          } else {
+            Object.entries(largeArrays).forEach(([key, values]) => {
+              params.set(key, encodeArray(values));
+            });
+            params.set('_e', '1');
+            urlString = params.toString();
+          }
         } else {
           Object.entries(largeArrays).forEach(([key, values]) => {
-            params.set(key, encodeArray(values));
+            params.set(key, values.join(','));
           });
-          params.set('_e', '1');
           urlString = params.toString();
         }
-      } else {
-        Object.entries(largeArrays).forEach(([key, values]) => {
-          params.set(key, values.join(','));
-        });
-        urlString = params.toString();
       }
-    }
 
-    if (!needsStorage) {
-      clearFiltersFromStorage();
-    }
+      if (!needsStorage) {
+        clearFiltersFromStorage();
+      }
 
-    const searchFilters: Record<string, unknown> = {};
-    if (validBrandIds.length > 0) searchFilters.brand_ids_count = validBrandIds.length;
-    if (validModelIds.length > 0) searchFilters.model_ids_count = validModelIds.length;
-    if (validCities.length > 0) searchFilters.cities_count = validCities.length;
-    if (filters.price_gte) searchFilters.price_min = filters.price_gte;
-    if (filters.price_lte) searchFilters.price_max = filters.price_lte;
-    if (filters.year_gte) searchFilters.year_min = filters.year_gte;
-    if (filters.year_lte) searchFilters.year_max = filters.year_lte;
+      const searchFilters: Record<string, unknown> = {};
+      if (validBrandIds.length > 0) searchFilters.brand_ids_count = validBrandIds.length;
+      if (validModelIds.length > 0) searchFilters.model_ids_count = validModelIds.length;
+      if (validCities.length > 0) searchFilters.cities_count = validCities.length;
+      if (filters.price_gte) searchFilters.price_min = filters.price_gte;
+      if (filters.price_lte) searchFilters.price_max = filters.price_lte;
+      if (filters.year_gte) searchFilters.year_min = filters.year_gte;
+      if (filters.year_lte) searchFilters.year_max = filters.year_lte;
 
-    analytics.search(undefined, searchFilters);
+      analytics.search(undefined, searchFilters);
 
-    const newUrl = `/?${urlString}`;
-    const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('scrollPreserved', 'true');
-    }
-    startTransition(() => {
-      router.replace(newUrl, { scroll: false });
+      const newUrl = `/?${urlString}`;
+      const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
       if (typeof window !== 'undefined') {
-        requestAnimationFrame(() => {
-          window.scrollTo({ top: scrollY, behavior: 'instant' });
+        sessionStorage.setItem('scrollPreserved', 'true');
+      }
+      startTransition(() => {
+        router.replace(newUrl, { scroll: false });
+        if (typeof window !== 'undefined') {
           requestAnimationFrame(() => {
+            window.scrollTo({ top: scrollY, behavior: 'instant' });
             requestAnimationFrame(() => {
-              sessionStorage.removeItem('scrollPreserved');
+              requestAnimationFrame(() => {
+                sessionStorage.removeItem('scrollPreserved');
+              });
             });
           });
-        });
-      }
-      if (allBrandsSelected) {
-        setFilters((prev) => ({ ...prev, brand_ids: [] }));
-      }
-      if (allModelsSelected) {
-        setFilters((prev) => ({ ...prev, model_ids: [] }));
-      }
-      if (allCitiesSelected) {
-        setFilters((prev) => ({ ...prev, cities: [] }));
-      }
-    });
-  };
+        }
+        if (allBrandsSelected) {
+          setFilters((prev) => ({ ...prev, brand_ids: [] }));
+        }
+        if (allModelsSelected) {
+          setFilters((prev) => ({ ...prev, model_ids: [] }));
+        }
+        if (allCitiesSelected) {
+          setFilters((prev) => ({ ...prev, cities: [] }));
+        }
+      });
+    },
+    [filters, brands, models, cities, currentYear, searchParams, router, validateRanges]
+  );
 
   const hasActiveFilters = () => {
     if (

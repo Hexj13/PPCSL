@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, useDeferredValue } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { Button } from '@/ui';
@@ -35,6 +35,7 @@ function MultiSelectDropdownComponent({
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   const [tempValues, setTempValues] = useState<string[]>(values);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -92,10 +93,12 @@ function MultiSelectDropdownComponent({
 
   const filteredOptions = useMemo(
     () =>
-      searchable && searchQuery
-        ? options.filter((option) => option.label.toLowerCase().includes(searchQuery.toLowerCase()))
+      searchable && deferredSearchQuery
+        ? options.filter((option) =>
+            option.label.toLowerCase().includes(deferredSearchQuery.toLowerCase())
+          )
         : options,
-    [options, searchable, searchQuery]
+    [options, searchable, deferredSearchQuery]
   );
 
   const handleToggle = useCallback(

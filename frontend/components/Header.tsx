@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useCallback, startTransition } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAuthStore, useComparisonStore } from '@/lib/store';
@@ -15,11 +15,27 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { t } = useTranslation();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = useCallback(() => {
+    startTransition(() => {
+      logout();
+      setIsMobileMenuOpen(false);
+      router.replace('/');
+    });
+  }, [logout, router]);
+
+  const handleMobileMenuToggle = useCallback(() => {
+    setIsMobileMenuOpen((prev) => !prev);
+  }, []);
+
+  const handleMobileMenuClose = useCallback(() => {
     setIsMobileMenuOpen(false);
-    router.replace('/');
-  };
+  }, []);
+
+  const handleSetReturnUrl = useCallback((url: string) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('returnUrl', url);
+    }
+  }, []);
 
   return (
     <header className="bg-bg-dark shadow-lg border-b-2 border-primary-500/20 sticky top-0 z-50 backdrop-blur-sm bg-bg-dark/95">
@@ -75,11 +91,7 @@ export function Header() {
             ) : (
               <Link
                 href="/login"
-                onClick={() => {
-                  if (typeof window !== 'undefined') {
-                    localStorage.setItem('returnUrl', '/listings/new');
-                  }
-                }}
+                onClick={() => handleSetReturnUrl('/listings/new')}
                 className="text-primary-400 font-medium text-xs hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 px-2.5 py-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 select-none"
               >
                 <svg
@@ -99,7 +111,7 @@ export function Header() {
               </Link>
             )}
             <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              onClick={handleMobileMenuToggle}
               className="lg:hidden text-primary-500 hover:text-primary-400 transition-colors duration-200 p-2 select-none"
               aria-label={t('header.toggleMenu')}
             >
@@ -282,11 +294,7 @@ export function Header() {
               <>
                 <Link
                   href="/login"
-                  onClick={() => {
-                    if (typeof window !== 'undefined') {
-                      localStorage.setItem('returnUrl', '/listings/new');
-                    }
-                  }}
+                  onClick={() => handleSetReturnUrl('/listings/new')}
                   className="btn-outline-green flex items-center gap-2 select-none"
                 >
                   <svg
@@ -311,7 +319,7 @@ export function Header() {
                     if (typeof window !== 'undefined') {
                       const currentUrl = window.location.pathname + window.location.search;
                       if (currentUrl !== '/login' && currentUrl !== '/register') {
-                        localStorage.setItem('returnUrl', currentUrl);
+                        handleSetReturnUrl(currentUrl);
                       }
                     }
                   }}
@@ -339,7 +347,7 @@ export function Header() {
               <div className="flex flex-col gap-4">
                 <Link
                   href="/my-listings"
-                  onClick={() => setIsMobileMenuOpen(false)}
+                  onClick={handleMobileMenuClose}
                   className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 pl-4 flex items-center gap-2 select-none"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -354,7 +362,7 @@ export function Header() {
                 </Link>
                 <Link
                   href="/favorites"
-                  onClick={() => setIsMobileMenuOpen(false)}
+                  onClick={handleMobileMenuClose}
                   className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 pl-4 flex items-center gap-2 select-none"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -369,7 +377,7 @@ export function Header() {
                 </Link>
                 <Link
                   href="/compare"
-                  onClick={() => setIsMobileMenuOpen(false)}
+                  onClick={handleMobileMenuClose}
                   className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 pl-4 flex items-center gap-2 select-none"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -390,7 +398,7 @@ export function Header() {
                 {user.type === 'Admin' && (
                   <Link
                     href="/admin"
-                    onClick={() => setIsMobileMenuOpen(false)}
+                    onClick={handleMobileMenuClose}
                     className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 pl-4 flex items-center gap-2 select-none"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -406,7 +414,7 @@ export function Header() {
                 )}
                 <Link
                   href="/profile"
-                  onClick={() => setIsMobileMenuOpen(false)}
+                  onClick={handleMobileMenuClose}
                   className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 pl-4 flex items-center gap-2 select-none"
                 >
                   <svg
@@ -451,10 +459,8 @@ export function Header() {
                 <Link
                   href="/login"
                   onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    if (typeof window !== 'undefined') {
-                      localStorage.setItem('returnUrl', '/listings/new');
-                    }
+                    handleMobileMenuClose();
+                    handleSetReturnUrl('/listings/new');
                   }}
                   className="btn-outline-green flex items-center justify-center gap-2 text-center select-none"
                 >
@@ -476,11 +482,11 @@ export function Header() {
                 <Link
                   href="/login"
                   onClick={() => {
-                    setIsMobileMenuOpen(false);
+                    handleMobileMenuClose();
                     if (typeof window !== 'undefined') {
                       const currentUrl = window.location.pathname + window.location.search;
                       if (currentUrl !== '/login' && currentUrl !== '/register') {
-                        localStorage.setItem('returnUrl', currentUrl);
+                        handleSetReturnUrl(currentUrl);
                       }
                     }
                   }}
@@ -490,7 +496,7 @@ export function Header() {
                 </Link>
                 <Link
                   href="/register"
-                  onClick={() => setIsMobileMenuOpen(false)}
+                  onClick={handleMobileMenuClose}
                   className="btn-primary text-center select-none"
                 >
                   {t('header.register')}

@@ -1,7 +1,15 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import {
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+  useMemo,
+  useDeferredValue,
+  startTransition,
+} from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { favoritesApi, listingsApi, Listing, PaginationMeta } from '@/lib/api';
@@ -112,6 +120,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   const prevSearchParamsString = useRef<string>('');
 
   const searchParamsString = useMemo(() => searchParams.toString(), [searchParams]);
+  const deferredListings = useDeferredValue(listings);
 
   const fetchListings = useCallback(
     async (page: number, append: boolean = false, limit: number = 20) => {
@@ -220,21 +229,23 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       try {
         const res = await listingsApi.getAll(params);
         const newListings = res.data.data;
-        if (append) {
-          setListings((prev) => {
-            const updated = [...prev, ...newListings];
-            listingsRef.current = updated;
-            return updated;
-          });
-        } else {
-          setListings(newListings);
-          listingsRef.current = newListings;
-          setCurrentPage(1);
-          setAutoLoadCount(0);
-          setLoadingMore(false);
-          setMeta(res.data.meta);
-          setError(null);
-        }
+        startTransition(() => {
+          if (append) {
+            setListings((prev) => {
+              const updated = [...prev, ...newListings];
+              listingsRef.current = updated;
+              return updated;
+            });
+          } else {
+            setListings(newListings);
+            listingsRef.current = newListings;
+            setCurrentPage(1);
+            setAutoLoadCount(0);
+            setLoadingMore(false);
+            setMeta(res.data.meta);
+            setError(null);
+          }
+        });
 
         if (user && newListings.length > 0) {
           const listingIds = newListings.map((l) => l.id);
@@ -536,8 +547,8 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   return (
     <div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
-        {listings.map((listing) => (
-          <ListingCard key={listing.id} listing={listing} />
+        {deferredListings.map((listing, index) => (
+          <ListingCard key={listing.id} listing={listing} priority={index < 8} />
         ))}
       </div>
 

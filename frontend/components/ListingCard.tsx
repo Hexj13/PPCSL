@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, startTransition } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { useTranslation } from '@/hooks/useTranslation';
@@ -24,18 +24,26 @@ interface ListingCardProps {
   listing: Listing;
   forceFavorite?: boolean;
   onRemove?: () => void;
+  priority?: boolean;
 }
 
-function ListingCardComponent({ listing, forceFavorite = false, onRemove }: ListingCardProps) {
+function ListingCardComponent({
+  listing,
+  forceFavorite = false,
+  onRemove,
+  priority = false,
+}: ListingCardProps) {
   const { t } = useTranslation();
   const originalImageUrl = useMemo(
     () => listing.images?.[0] || '/placeholder-car.jpg',
     [listing.images]
   );
-  const imageUrl = useMemo(
-    () => getOptimizedImageUrl(originalImageUrl, 80, 1200),
-    [originalImageUrl]
-  );
+  const imageUrl = useMemo(() => {
+    if (originalImageUrl === '/placeholder-car.jpg') {
+      return originalImageUrl;
+    }
+    return getOptimizedImageUrl(originalImageUrl, 65, 800);
+  }, [originalImageUrl]);
   const isLocalhostImage = useMemo(
     () => imageUrl.startsWith('http://localhost:') || imageUrl.startsWith('http://127.0.0.1:'),
     [imageUrl]
@@ -48,6 +56,8 @@ function ListingCardComponent({ listing, forceFavorite = false, onRemove }: List
     [forceFavorite, listing.id, favorites]
   );
   const [localIsFavorite, setLocalIsFavorite] = React.useState(storeIsFavorite);
+  const [isToggling, setIsToggling] = React.useState(false);
+  const isTogglingRef = React.useRef(false);
   const isFavorite = localIsFavorite;
 
   React.useEffect(() => {
@@ -61,7 +71,7 @@ function ListingCardComponent({ listing, forceFavorite = false, onRemove }: List
   const [imageError, setImageError] = React.useState(false);
 
   const handleToggleFavorite = useCallback(
-    async (e: React.MouseEvent) => {
+    (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
 
@@ -70,44 +80,66 @@ function ListingCardComponent({ listing, forceFavorite = false, onRemove }: List
         return;
       }
 
+      if (isTogglingRef.current) {
+        return;
+      }
+
       const newFavoriteState = !isFavorite;
+      setIsToggling(true);
+      isTogglingRef.current = true;
       setLocalIsFavorite(newFavoriteState);
 
-      if (isFavorite) {
-        removeFavorite(listing.id);
-        if (onRemove) {
-          onRemove();
+      startTransition(() => {
+        if (isFavorite) {
+          removeFavorite(listing.id);
+          if (onRemove) {
+            onRemove();
+          }
+          favoritesApi
+            .remove(listing.id)
+            .then(() => {
+              analytics.removeFromWishlist(listing.id);
+              toast.success(t('listings.removeFromFavorites'));
+            })
+            .catch(() => {
+              setLocalIsFavorite(true);
+              addFavorite(listing.id);
+              toast.error(t('listings.removeFromFavoritesError'));
+            })
+            .finally(() => {
+              setIsToggling(false);
+              isTogglingRef.current = false;
+            });
+          return;
         }
-        try {
-          await favoritesApi.remove(listing.id);
-          analytics.removeFromWishlist(listing.id);
-          toast.success(t('listings.removeFromFavorites'));
-        } catch {
-          setLocalIsFavorite(true);
-          addFavorite(listing.id);
-          toast.error(t('listings.removeFromFavoritesError'));
+
+        if (isOwnListing) {
+          setLocalIsFavorite(false);
+          setIsToggling(false);
+          isTogglingRef.current = false;
+          return;
         }
-        return;
-      }
 
-      if (isOwnListing) {
-        setLocalIsFavorite(false);
-        return;
-      }
-
-      addFavorite(listing.id);
-      try {
-        await favoritesApi.add(listing.id);
-        analytics.addToWishlist(listing.id, {
-          title: listing.title,
-          price: listing.price,
-        });
-        toast.success(t('listings.addToFavorites'));
-      } catch {
-        setLocalIsFavorite(false);
-        removeFavorite(listing.id);
-        toast.error(t('listings.addToFavoritesError'));
-      }
+        addFavorite(listing.id);
+        favoritesApi
+          .add(listing.id)
+          .then(() => {
+            analytics.addToWishlist(listing.id, {
+              title: listing.title,
+              price: listing.price,
+            });
+            toast.success(t('listings.addToFavorites'));
+          })
+          .catch(() => {
+            setLocalIsFavorite(false);
+            removeFavorite(listing.id);
+            toast.error(t('listings.addToFavoritesError'));
+          })
+          .finally(() => {
+            setIsToggling(false);
+            isTogglingRef.current = false;
+          });
+      });
     },
     [
       user,
@@ -123,12 +155,14 @@ function ListingCardComponent({ listing, forceFavorite = false, onRemove }: List
     ]
   );
 
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     if (typeof window !== 'undefined' && window.location.pathname === '/') {
-      sessionStorage.setItem('homeScrollPosition', window.scrollY.toString());
-      sessionStorage.setItem('homeScrollTimestamp', Date.now().toString());
+      startTransition(() => {
+        sessionStorage.setItem('homeScrollPosition', window.scrollY.toString());
+        sessionStorage.setItem('homeScrollTimestamp', Date.now().toString());
+      });
     }
-  };
+  }, []);
 
   return (
     <Link href={`/listings/${listing.id}`} onClick={handleClick}>
@@ -142,9 +176,10 @@ function ListingCardComponent({ listing, forceFavorite = false, onRemove }: List
               src={imageUrl}
               alt={listing.title}
               fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
               className="object-cover group-hover:scale-105 transition-transform duration-300"
-              loading="lazy"
+              loading={priority ? undefined : 'lazy'}
+              priority={priority}
               onError={() => {
                 setImageError(true);
               }}
@@ -179,9 +214,9 @@ function ListingCardComponent({ listing, forceFavorite = false, onRemove }: List
           </div>
           <button
             onClick={handleToggleFavorite}
-            disabled={!isFavorite && isOwnListing}
+            disabled={(!isFavorite && isOwnListing) || isToggling}
             className={`absolute top-3 right-3 w-10 h-10 rounded-full bg-green-600 flex items-center justify-center transition-all shadow-lg z-10 ${
-              !isFavorite && isOwnListing
+              (!isFavorite && isOwnListing) || isToggling
                 ? 'opacity-30 cursor-not-allowed'
                 : isFavorite
                   ? 'opacity-100 hover:bg-green-700'
@@ -297,4 +332,4 @@ function ListingCardComponent({ listing, forceFavorite = false, onRemove }: List
   );
 }
 
-export const ListingCard = ListingCardComponent;
+export const ListingCard = React.memo(ListingCardComponent);

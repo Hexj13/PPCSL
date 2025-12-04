@@ -36,7 +36,7 @@ export function ListingManagementCard({
       ? listing.images[0]
       : '/placeholder-car.jpg';
   const hasImage = imageUrl && imageUrl !== '/placeholder-car.jpg' && !imageError;
-  const optimizedImageUrl = hasImage ? getOptimizedImageUrl(imageUrl, 75, 800) : '';
+  const optimizedImageUrl = hasImage ? getOptimizedImageUrl(imageUrl, 70, 900) : '';
 
   const isAdminMode = mode === 'admin';
 

@@ -247,7 +247,7 @@ Kupito/
 - **Health monitoring:** Health check endpoint with database and Redis connectivity checks
 - **Automated backups:** Database backup scripts with cron support for production
 - **Code quality:** TypeScript strict mode, CI/CD automation, bundle optimization
-- **Performance:** Frontend memoization, Redis cache optimization, lazy loading
+- **Performance:** Frontend memoization, React.memo, startTransition, useDeferredValue, Redis cache optimization, lazy loading, Core Web Vitals optimizations (INP, LCP)
 - **Analytics:** Google Analytics integration
 - **SEO & Metadata:**
   - Full Open Graph and Twitter Card meta tags on all pages

@@ -734,12 +734,23 @@ See [RENDER.md](./RENDER.md) for CloudFront CDN setup instructions (CloudFront i
 
 ### Frontend Optimizations
 - **Server-side data fetching:** Initial listings data loaded on server using Next.js Server Components and native `fetch` API, improving SEO and initial page load performance
-- React.memo, useMemo, useCallback for component memoization
+- **Component memoization:** React.memo, useMemo, useCallback for preventing unnecessary re-renders
+  - ListingCard wrapped in React.memo for optimal re-render performance
+  - Memoized event handlers in Header, SearchFilters, and other interactive components
+- **Non-blocking updates:** startTransition for deferring non-urgent state updates, improving INP (Interaction to Next Paint)
+  - Favorite toggle operations use startTransition to prevent blocking user interactions
+  - Navigation and filter updates wrapped in startTransition
+- **Deferred value updates:** useDeferredValue for delaying expensive computations
+  - Search query filtering in Dropdown and MultiSelectDropdown components
+  - Listing grid updates deferred to prevent blocking during data fetching
 - Next.js built-in bundle optimization (removed custom webpack splitChunks configuration)
-- Image optimization with adaptive quality and Next.js Image component
+- **Image optimization with adaptive quality and Next.js Image component:**
   - Automatic optimization for external images via `remotePatterns` configuration
   - Conditional `unoptimized` prop for localhost images in development
   - Proper `sizes` attribute for responsive image loading
+  - Optimized quality settings: 65% for thumbnails (800px width), 70% for management cards (900px), 75% for detail pages (1200px)
+  - Priority loading for first 8 visible images in grid to improve LCP
+  - Improved sizes attributes for better responsive image selection across breakpoints
 - **Image preloading on listing page:** Hybrid preloading strategy to eliminate delays when switching between images
   - **Critical preloading (P0):** Adjacent images (previous/next) are preloaded immediately when switching
   - **Priority preloading (P1):** Images ±2, ±3 from current index are preloaded with small delays (50ms, 100ms) for fast navigation
@@ -754,11 +765,14 @@ See [RENDER.md](./RENDER.md) for CloudFront CDN setup instructions (CloudFront i
     - Queue-based processing: images are preloaded in batches using a priority queue
     - Smart batching: prevents overwhelming the browser with too many simultaneous requests
     - Separate queues for main view and modal to prevent conflicts
+- **Race condition prevention:** Loading states and request guards to prevent duplicate API calls
+  - Favorite toggle button disabled during operation with visual feedback
+  - Ref-based guards to prevent concurrent requests
 - Third-party scripts optimization (Google Analytics, Google Tag Manager) using `lazyOnload` strategy to reduce Total Blocking Time (TBT)
 - Set-based lookups in MultiSelectDropdown for O(1) performance instead of O(n) with Array.includes()
 - Optimized SortDropdown with memoized sort key resolution
 - URL parameter synchronization for search filters and sorting
-- Lazy loading for images
+- Lazy loading for images with priority for above-the-fold content
 - Skeleton loaders for improved UX
 - **PWA Support:** Service Worker with intelligent caching strategy
   - Static assets cached permanently (CSS, JS, images, fonts)
@@ -829,10 +843,18 @@ Or use `npm run dev` in root - it will start both servers.
 
 ---
 
-**Last Updated:** 2025-01-27
-**Version:** 1.8
+**Last Updated:** 2025-01-29
+**Version:** 1.9
 
 ### Recent Updates
+- **Core Web Vitals & INP Optimizations (2025-01-29):**
+  - Implemented startTransition for non-blocking state updates, improving INP (Interaction to Next Paint)
+  - Added useDeferredValue for deferred search filtering and listing updates
+  - Optimized image quality and sizes: reduced thumbnail quality to 65% (800px), improved responsive sizes attributes
+  - Added priority loading for first 8 visible images in grid to improve LCP
+  - Enhanced component memoization: React.memo for ListingCard, useCallback for all event handlers
+  - Fixed race conditions in favorite toggle with loading states and request guards
+  - Optimized SearchFilters: useCallback for all handlers, functional state updates
 - **Performance Optimizations (2025-01):**
   - Migrated initial data fetching to Server Components for improved SEO and initial page load
   - Optimized third-party scripts (Google Analytics, Google Tag Manager) with `lazyOnload` strategy
