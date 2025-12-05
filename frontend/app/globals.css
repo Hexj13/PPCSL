@@ -7,7 +7,7 @@
 
 @font-face {
   font-family: 'Digital-7';
-  src: url('https://www.1001fonts.com/download/font/digital-7.regular.ttf') format('truetype');
+  src: url('/fonts/digital-7.regular.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;

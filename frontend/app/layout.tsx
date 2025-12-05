@@ -16,7 +16,7 @@ import { ScrollReset } from '@/components/ScrollReset';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 import './globals.css';
 
-const inter = Inter({ subsets: ['latin', 'cyrillic'] });
+const inter = Inter({ subsets: ['latin', 'cyrillic'], display: 'swap' });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club';
 const siteName = 'Kupito';
