@@ -6,6 +6,7 @@ import { HomeHero } from '@/components/HomeHero';
 import { ListingGrid } from '@/components/ListingGrid';
 import { ScrollToFiltersButton } from '@/components/ScrollToFiltersButton';
 import { SearchFilters } from '@/components/SearchFilters';
+import { getServerTranslations } from '@/lib/i18n';
 import { getListings } from '@/lib/server-api';
 
 export const dynamic = 'force-dynamic';
@@ -87,10 +88,18 @@ export default async function Home({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const t = getServerTranslations('mk');
+
   return (
     <div>
       <ConversionEvent />
-      <HomeHero />
+      <HomeHero
+        title={t.home.title}
+        subtitle={t.home.subtitle}
+        subtitleBold={t.home.subtitleBold}
+        subtitle2={t.home.subtitle2}
+        subtitle3={t.home.subtitle3}
+      />
 
       <SearchFiltersWrapper />
 
