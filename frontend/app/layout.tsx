@@ -12,7 +12,6 @@ import { Header } from '@/components/Header';
 import { I18nProvider } from '@/components/I18nProvider';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { OrganizationSchema } from '@/components/OrganizationSchema';
-import { ResourceHints } from '@/components/ResourceHints';
 import { ScrollReset } from '@/components/ScrollReset';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 import './globals.css';
@@ -117,8 +116,16 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="mk" suppressHydrationWarning>
+      <head>
+        <link
+          rel="preconnect"
+          href={process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}
+          crossOrigin="anonymous"
+        />
+        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+        <link rel="preconnect" href="https://www.googletagmanager.com" crossOrigin="anonymous" />
+      </head>
       <body className={inter.className} suppressHydrationWarning>
-        <ResourceHints />
         <GoogleTagManager />
         <GoogleTagManagerNoscript />
         <GoogleAnalyticsConsent />

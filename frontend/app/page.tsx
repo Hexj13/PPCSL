@@ -4,7 +4,6 @@ import { Suspense } from 'react';
 import { ConversionEvent } from '@/components/ConversionEvent';
 import { HomeHero } from '@/components/HomeHero';
 import { ListingGrid } from '@/components/ListingGrid';
-import { PreloadFirstImage } from '@/components/PreloadFirstImage';
 import { ScrollToFiltersButton } from '@/components/ScrollToFiltersButton';
 import { SearchFilters } from '@/components/SearchFilters';
 import { getListings } from '@/lib/server-api';
@@ -67,14 +66,8 @@ async function ListingGridServer({
 }) {
   const params = await searchParams;
   const initialData = await getListings(params);
-  const firstImageUrl = initialData?.data?.[0]?.images?.[0];
 
-  return (
-    <>
-      <PreloadFirstImage imageUrl={firstImageUrl} />
-      <ListingGrid initialData={initialData} />
-    </>
-  );
+  return <ListingGrid initialData={initialData} />;
 }
 
 function ListingGridWrapper({

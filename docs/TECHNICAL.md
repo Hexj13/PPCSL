@@ -744,17 +744,13 @@ See [RENDER.md](./RENDER.md) for CloudFront CDN setup instructions (CloudFront i
   - Search query filtering in Dropdown and MultiSelectDropdown components
   - Listing grid updates deferred to prevent blocking during data fetching
 - Next.js built-in bundle optimization (removed custom webpack splitChunks configuration)
-- **Image optimization with adaptive quality and Next.js Image component:**
+- **Image optimization with Next.js Image component:**
   - Automatic optimization for external images via `remotePatterns` configuration
   - Conditional `unoptimized` prop for localhost images in development
-  - Proper `sizes` attribute for responsive image loading
-  - **Adaptive optimization for mobile devices:**
-    - Mobile: width 640px, quality 60% for listing cards
-    - Desktop: width 800px, quality 65% for listing cards
-    - Management cards: 900px width, 70% quality
-    - Detail pages: 1200px width, 75% quality
+  - Proper `sizes` attribute for responsive image loading - Next.js automatically generates appropriate image sizes for mobile and desktop
+  - Optimized quality settings: 65% for listing cards (800px width), 70% for management cards (900px), 75% for detail pages (1200px)
   - Priority loading for first 8 visible images in grid to improve LCP
-  - **Preload for first image on homepage** - `PreloadFirstImage` component with `fetchpriority="high"` to optimize LCP
+  - Next.js Image component handles responsive image loading automatically via `srcSet` based on `sizes` attribute
   - Improved sizes attributes for better responsive image selection across breakpoints
 - **Image preloading on listing page:** Hybrid preloading strategy to eliminate delays when switching between images
   - **Critical preloading (P0):** Adjacent images (previous/next) are preloaded immediately when switching
@@ -775,10 +771,9 @@ See [RENDER.md](./RENDER.md) for CloudFront CDN setup instructions (CloudFront i
   - Ref-based guards to prevent concurrent requests
 - Third-party scripts optimization (Google Analytics, Google Tag Manager) using `lazyOnload` strategy to reduce Total Blocking Time (TBT)
 - **Resource hints optimization:**
-  - Preconnect to API domain for faster image loading (`ResourceHints` component)
-  - DNS-prefetch and preconnect for Google Tag Manager
-  - Automatic resource hints injection in `layout.tsx`
-- **Mobile detection hook** (`useIsMobile`) for adaptive image optimization based on device type
+  - Static preconnect to API domain in `layout.tsx` for faster image loading (server-rendered, no JS required)
+  - DNS-prefetch and preconnect for Google Tag Manager (server-rendered in `layout.tsx`)
+  - Resource hints are included in initial HTML, allowing browsers to establish connections immediately
 - Set-based lookups in MultiSelectDropdown for O(1) performance instead of O(n) with Array.includes()
 - Optimized SortDropdown with memoized sort key resolution
 - URL parameter synchronization for search filters and sorting
