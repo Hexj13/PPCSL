@@ -5,6 +5,7 @@ import Link from 'next/link';
 import React, { useCallback, useMemo, startTransition } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { Listing, favoritesApi } from '@/lib/api';
@@ -34,6 +35,7 @@ function ListingCardComponent({
   priority = false,
 }: ListingCardProps) {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
   const originalImageUrl = useMemo(
     () => listing.images?.[0] || '/placeholder-car.jpg',
     [listing.images]
@@ -42,8 +44,10 @@ function ListingCardComponent({
     if (originalImageUrl === '/placeholder-car.jpg') {
       return originalImageUrl;
     }
-    return getOptimizedImageUrl(originalImageUrl, 65, 800);
-  }, [originalImageUrl]);
+    const width = isMobile ? 640 : 800;
+    const quality = isMobile ? 60 : 65;
+    return getOptimizedImageUrl(originalImageUrl, quality, width);
+  }, [originalImageUrl, isMobile]);
   const isLocalhostImage = useMemo(
     () => imageUrl.startsWith('http://localhost:') || imageUrl.startsWith('http://127.0.0.1:'),
     [imageUrl]
@@ -180,6 +184,7 @@ function ListingCardComponent({
               className="object-cover group-hover:scale-105 transition-transform duration-300"
               loading={priority ? undefined : 'lazy'}
               priority={priority}
+              suppressHydrationWarning
               onError={() => {
                 setImageError(true);
               }}

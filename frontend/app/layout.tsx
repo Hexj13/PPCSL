@@ -12,6 +12,7 @@ import { Header } from '@/components/Header';
 import { I18nProvider } from '@/components/I18nProvider';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { OrganizationSchema } from '@/components/OrganizationSchema';
+import { ResourceHints } from '@/components/ResourceHints';
 import { ScrollReset } from '@/components/ScrollReset';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 import './globals.css';
@@ -117,6 +118,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="mk" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
+        <ResourceHints />
         <GoogleTagManager />
         <GoogleTagManagerNoscript />
         <GoogleAnalyticsConsent />
