@@ -118,7 +118,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             return null;
           }
         })
-        .filter((item): item is MetadataRoute.Sitemap[0] => item !== null);
+        .filter(
+          (item: MetadataRoute.Sitemap[0] | null): item is MetadataRoute.Sitemap[0] => item !== null
+        );
 
       return [...baseUrls, ...listingUrls];
     } finally {
