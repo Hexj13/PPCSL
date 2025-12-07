@@ -16,6 +16,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/api/', '/admin/', '/login', '/register', '/verify-email', '/verify-phone'],
       },
     ],
-    sitemap: `${siteUrl}/sitemap.xml`,
+    sitemap: [`${siteUrl}/sitemap.txt`, `${siteUrl}/sitemap.xml`],
   };
 }

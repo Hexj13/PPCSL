@@ -14,16 +14,18 @@ function ensureAbsoluteUrl(url: string): string {
 const staticPagesLastModified = new Date('2025-01-01');
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const now = new Date();
+
   const baseUrls: MetadataRoute.Sitemap = [
     {
-      url: ensureAbsoluteUrl(siteUrl),
-      lastModified: staticPagesLastModified,
+      url: siteUrl,
+      lastModified: now,
       changeFrequency: 'daily',
-      priority: 1,
+      priority: 1.0,
     },
     {
       url: ensureAbsoluteUrl('/listings'),
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: 'hourly',
       priority: 0.9,
     },
@@ -31,37 +33,44 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: ensureAbsoluteUrl('/terms'),
       lastModified: staticPagesLastModified,
       changeFrequency: 'monthly',
-      priority: 0.3,
+      priority: 0.8,
     },
     {
       url: ensureAbsoluteUrl('/privacy'),
       lastModified: staticPagesLastModified,
       changeFrequency: 'monthly',
-      priority: 0.3,
+      priority: 0.8,
     },
     {
       url: ensureAbsoluteUrl('/faq'),
       lastModified: staticPagesLastModified,
       changeFrequency: 'monthly',
-      priority: 0.5,
+      priority: 0.8,
     },
     {
       url: ensureAbsoluteUrl('/cookie-settings'),
       lastModified: staticPagesLastModified,
       changeFrequency: 'monthly',
-      priority: 0.3,
+      priority: 0.8,
     },
   ];
 
+  if (!process.env.NEXT_PUBLIC_API_URL) {
+    return baseUrls;
+  }
+
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     try {
       const response = await fetch(`${apiUrl}/api/listings?limit=10000&status=Active`, {
         next: { revalidate: 3600 },
         signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
 
       if (!response.ok) {
@@ -76,24 +85,46 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
       const listings = data.data.filter((listing: Listing) => listing?.id);
 
-      const listingUrls: MetadataRoute.Sitemap = listings.map((listing: Listing) => ({
-        url: ensureAbsoluteUrl(`/listings/${listing.id}`),
-        lastModified:
-          listing.updated_at || listing.created_at
-            ? new Date(listing.updated_at || listing.created_at)
-            : new Date(),
-        changeFrequency: 'weekly' as const,
-        priority: 0.8,
-      }));
+      const listingUrls: MetadataRoute.Sitemap = listings
+        .map((listing: Listing) => {
+          try {
+            if (!listing.id) {
+              return null;
+            }
+
+            let lastModified: Date;
+            if (listing.updated_at || listing.created_at) {
+              const dateStr = listing.updated_at || listing.created_at;
+              lastModified = new Date(dateStr);
+              if (isNaN(lastModified.getTime())) {
+                lastModified = now;
+              }
+            } else {
+              lastModified = now;
+            }
+
+            const listingUrl = ensureAbsoluteUrl(`/listings/${listing.id}`);
+            if (!listingUrl || !listingUrl.startsWith('http')) {
+              return null;
+            }
+
+            return {
+              url: listingUrl,
+              lastModified,
+              changeFrequency: 'weekly' as const,
+              priority: 0.8,
+            };
+          } catch {
+            return null;
+          }
+        })
+        .filter((item): item is MetadataRoute.Sitemap[0] => item !== null);
 
       return [...baseUrls, ...listingUrls];
     } finally {
       clearTimeout(timeoutId);
     }
-  } catch (error) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Sitemap generation error:', error);
-    }
+  } catch {
     return baseUrls;
   }
 }
