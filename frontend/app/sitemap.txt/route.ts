@@ -68,7 +68,7 @@ async function getSitemapUrls(): Promise<string[]> {
             return null;
           }
         })
-        .filter((url): url is string => url !== null);
+        .filter((url: string | null): url is string => url !== null);
 
       return [...urls, ...listingUrls];
     } finally {
