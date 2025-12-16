@@ -3,6 +3,7 @@ const nextConfig = {
   reactStrictMode: true,
   compress: true,
   poweredByHeader: false,
+  trailingSlash: false,
 
   experimental: {
     optimizeCss: true,

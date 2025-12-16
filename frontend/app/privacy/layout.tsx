@@ -30,6 +30,9 @@ export const metadata: Metadata = {
       'Дознајте како Kupito собира, користи и заштитува вашите лични податоци. Прочитајте ја нашата политика за приватност за да разберете како ги обработуваме вашите податоци во согласност со GDPR.',
     images: [`${siteUrl}/og-image.jpg`],
   },
+  alternates: {
+    canonical: `${siteUrl}/privacy`,
+  },
 };
 
 export default function PrivacyLayout({ children }: { children: React.ReactNode }) {

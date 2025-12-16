@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     type: 'website',
-    url: `${siteUrl}/`,
+    url: `${siteUrl}`,
     title: 'Kupito – огласи за продажба на автомобили во Македонија',
     description:
       'Купете или продадете авто на Kupito! Објавете оглас бесплатно. Нова платформа за купување и продавање автомобили онлајн во Македонија. Автомобили огласи Македонија - бесплатно објавување огласи за приватни лица и авто-плацови.',
@@ -49,6 +49,9 @@ export const metadata: Metadata = {
     title: 'Kupito – огласи за продажба на автомобили во Македонија',
     description: 'Нова платформа за купување и продавање автомобили во Македонија.',
     images: [`${siteUrl}/og-image.jpg`],
+  },
+  alternates: {
+    canonical: `${siteUrl}`,
   },
 };
 

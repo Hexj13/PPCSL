@@ -30,6 +30,9 @@ export const metadata: Metadata = {
       'Прочитајте ги условите за користење на Kupito. Дознајте ги правилата, одговорностите и правата при користење на платформата за објавување огласи за автомобили.',
     images: [`${siteUrl}/og-image.jpg`],
   },
+  alternates: {
+    canonical: `${siteUrl}/terms`,
+  },
 };
 
 export default function TermsLayout({ children }: { children: React.ReactNode }) {

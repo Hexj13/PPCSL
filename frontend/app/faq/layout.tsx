@@ -30,6 +30,9 @@ export const metadata: Metadata = {
       'Најдете одговори на најчестите прашања за Kupito. Дознајте како да објавите оглас, како да управувате со вашите огласи, како да пребарувате и споредувате автомобили, и многу повеќе.',
     images: [`${siteUrl}/og-image.jpg`],
   },
+  alternates: {
+    canonical: `${siteUrl}/faq`,
+  },
 };
 
 export default function FAQLayout({ children }: { children: React.ReactNode }) {

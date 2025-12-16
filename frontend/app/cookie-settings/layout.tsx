@@ -30,6 +30,9 @@ export const metadata: Metadata = {
       'Управувајте со вашите преференци за cookies на Kupito. Изберете кои cookies сакате да ги прифатите.',
     images: [`${siteUrl}/og-image.jpg`],
   },
+  alternates: {
+    canonical: `${siteUrl}/cookie-settings`,
+  },
 };
 
 export default function CookieSettingsLayout({ children }: { children: React.ReactNode }) {
