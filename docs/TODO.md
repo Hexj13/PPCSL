@@ -1,35 +1,40 @@
-# TODO - Все задачи проекта
+# TODO - All Project Tasks
 
-## 🟡 Средний приоритет
+## 🟡 Medium Priority
 
-### Улучшение внутренних ссылок
-- [ ] Создать компонент `components/SimilarListings.tsx`
-  - Показывать похожие объявления на странице листинга
-  - Фильтровать по марке/модели/городу
-  - Добавить ссылку "Погледни сите" на фильтрованный поиск
+### Internal Links Improvement
+- [ ] Create component `components/SimilarListings.tsx`
+  - Show similar listings on listing page
+  - Filter by brand/model/city
+  - Add "View all" link to filtered search
+- [ ] Add internal links to popular combinations on homepage (optional)
+  - Visible HTML links to popular brands and models (e.g., "Toyota Yaris", "BMW 3 Series")
+  - Place after Hero or before filters
+  - Use friendly URLs (`/?brand=toyota&model=yaris`)
 
-### Улучшенные Alt-теги
-- [ ] Добавить детали автомобиля в alt-теги изображений
-- [ ] Формат: `{title} - {brand} {model} {year} - Слика {index}`
-- [ ] Сделать alt-теги более описательными и ключевыми словами
+### Improved Alt Tags
+- [x] Add car details to alt tags for images
+- [x] Format: `{title} - {brand} {model} {year} - Image {index}`
+- [x] Make alt tags more descriptive with keywords
+- [x] Add OpenGraph metadata for listing detail pages
 
-## 🟢 Низкий приоритет (долгосрочно)
+## 🟢 Low Priority (Long-term)
 
-### Контент-стратегия
-- [ ] Рассмотреть добавление блога
-- [ ] Регулярные статьи об автомобилях, советы по покупке
-- [ ] Помогает с SEO и вовлеченностью пользователей
+### Content Strategy
+- [ ] Consider adding a blog
+- [ ] Regular articles about cars, buying tips
+- [ ] Helps with SEO and user engagement
 
-### Обратные ссылки
-- [ ] Построить качественные обратные ссылки с релевантных сайтов
-- [ ] Партнерство с автомобильными сайтами
-- [ ] Локальные бизнес-каталоги
+### Backlinks
+- [ ] Build quality backlinks from relevant sites
+- [ ] Partnership with automotive websites
+- [ ] Local business directories
 
-### Локальный SEO (если применимо)
-- [ ] Локальные цитаты
-- [ ] Контент, специфичный для локации
+### Local SEO (if applicable)
+- [ ] Local citations
+- [ ] Location-specific content
 
-## 🔗 Полезные ссылки
+## 🔗 Useful Links
 
 - [Google Search Console](https://search.google.com/search-console)
 - [Google Analytics](https://analytics.google.com/)

@@ -7,6 +7,7 @@ import { toast } from 'react-hot-toast';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { ListingManagementCard } from '@/components/ListingManagementCard';
 import { ListingManagementCardSkeleton } from '@/components/ListingManagementCardSkeleton';
+import { Modal } from '@/components/Modal';
 import { useTranslation } from '@/hooks/useTranslation';
 import { listingsApi, Listing, PaginationMeta } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
@@ -23,6 +24,8 @@ export default function MyListingsPage() {
   const [timeUntilRefresh, setTimeUntilRefresh] = useState<number | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'All' | 'Active' | 'Paused' | 'Closed'>('All');
+  const [isCloseConfirmOpen, setIsCloseConfirmOpen] = useState(false);
+  const [listingToClose, setListingToClose] = useState<string | null>(null);
   const loadingRef = useRef(false);
   const loadingMoreRef = useRef(false);
   const hasLoadedRef = useRef(false);
@@ -216,6 +219,12 @@ export default function MyListingsPage() {
 
   const handleAction = useCallback(
     async (id: string, action: 'publish' | 'pause' | 'close') => {
+      if (action === 'close') {
+        setListingToClose(id);
+        setIsCloseConfirmOpen(true);
+        return;
+      }
+
       try {
         switch (action) {
           case 'publish':
@@ -226,22 +235,14 @@ export default function MyListingsPage() {
             await listingsApi.pause(id);
             toast.success(t('myListings.pausedMessage'));
             break;
-          case 'close':
-            await listingsApi.close(id);
-            toast.success(t('myListings.closedMessage'));
-            break;
         }
 
         setListings((prev) => {
           const updated = prev.map((listing) => {
             if (listing.id === id) {
-              const statusMap: Record<
-                'publish' | 'pause' | 'close',
-                'Active' | 'Paused' | 'Closed'
-              > = {
+              const statusMap: Record<'publish' | 'pause', 'Active' | 'Paused'> = {
                 publish: 'Active',
                 pause: 'Paused',
-                close: 'Closed',
               };
               return { ...listing, status: statusMap[action] };
             }
@@ -256,6 +257,31 @@ export default function MyListingsPage() {
     },
     [t]
   );
+
+  const handleCloseConfirm = useCallback(async () => {
+    if (!listingToClose) return;
+
+    try {
+      await listingsApi.close(listingToClose);
+      toast.success(t('myListings.closedMessage'));
+
+      setListings((prev) => {
+        const updated = prev.map((listing) => {
+          if (listing.id === listingToClose) {
+            return { ...listing, status: 'Closed' as const };
+          }
+          return listing;
+        });
+        listingsRef.current = updated;
+        return updated;
+      });
+    } catch {
+      toast.error(t('myListings.statusUpdateError'));
+    } finally {
+      setIsCloseConfirmOpen(false);
+      setListingToClose(null);
+    }
+  }, [listingToClose, t]);
 
   const handleRefreshDates = useCallback(async () => {
     if (timeUntilRefresh !== null && timeUntilRefresh > 0) {
@@ -466,6 +492,44 @@ export default function MyListingsPage() {
           )}
         </>
       )}
+
+      <Modal
+        isOpen={isCloseConfirmOpen}
+        onClose={() => {
+          setIsCloseConfirmOpen(false);
+          setListingToClose(null);
+        }}
+        title={t('myListings.closeConfirmTitle')}
+        size="small"
+      >
+        <div className="space-y-6">
+          <div className="space-y-3">
+            <p className="text-gray-200 text-lg font-medium">
+              {t('myListings.closeConfirmQuestion')}
+            </p>
+            <p className="text-gray-400 text-base leading-relaxed">
+              {t('myListings.closeConfirmWarning')}
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3 justify-end">
+            <button
+              onClick={() => {
+                setIsCloseConfirmOpen(false);
+                setListingToClose(null);
+              }}
+              className="px-6 py-2.5 bg-bg-light border-2 border-primary-500/30 text-white hover:bg-bg-dark hover:border-primary-500/50 rounded-lg font-semibold transition-colors"
+            >
+              {t('myListings.closeConfirmCancel')}
+            </button>
+            <button
+              onClick={handleCloseConfirm}
+              className="px-6 py-2.5 bg-primary-600 text-white hover:bg-primary-700 rounded-lg font-semibold transition-colors"
+            >
+              {t('myListings.closeConfirmOk')}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

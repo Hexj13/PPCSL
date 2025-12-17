@@ -273,7 +273,8 @@ The project includes comprehensive testing:
 
 - **Unit Tests:** Jest-based tests for services and components
 - **Integration Tests:** API contract tests against Swagger specification
-- **Frontend Tests:** 185 tests across 12 test suites covering components, utilities, API clients, and server-side functions
+- **Frontend Tests:** 188 tests across 13 test suites covering components, utilities, API clients, and server-side functions
+- **Backend Tests:** 266 tests across 20 test suites
 - **CI/CD:** Automated testing in GitHub Actions
 
 ### Running Tests

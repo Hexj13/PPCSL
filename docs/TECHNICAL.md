@@ -278,6 +278,17 @@ GET    /api/listings/vin/:vin         # Find listings by VIN
 POST   /api/listings/refresh-dates    # Refresh all user's listing dates
 ```
 
+**Filter Parameters:**
+- The frontend supports **slug-based URLs** for better SEO and user-friendly URLs:
+  - `?brand=toyota` or `?brand=toyota,bmw` - Filter by brand slugs (comma-separated)
+  - `?model=yaris` or `?model=yaris,corolla` - Filter by model slugs (comma-separated, requires brand filter)
+  - These slug parameters are automatically converted to `brand_ids` and `model_ids` on the server side
+  - Other filter parameters remain unchanged (price, year, city, etc.)
+- Example URLs:
+  - `/?brand=toyota` - All Toyota listings
+  - `/?brand=toyota&model=yaris` - Toyota Yaris listings
+  - `/?brand=toyota,bmw&model=yaris,3-series` - Multiple brands and models
+
 ### Favorites
 
 ```http
@@ -652,7 +663,12 @@ All scripts are located in `backend/src/scripts/` and can be executed via npm co
 
 #### Technical SEO
 - **Robots.txt** - Proper crawling instructions
-- **Sitemap.xml** - Dynamic sitemap with all active listings (revalidated hourly)
+- **Sitemap.xml** - Dynamic sitemap with:
+  - Static pages (homepage, terms, privacy, FAQ, cookie-settings)
+  - Brand landing pages (`/?brand={slug}`) for all brands
+  - Brand-model landing pages (`/?brand={slug}&model={slug}`) for popular combinations
+  - All active listings (paginated, up to 45,000 listings, revalidated hourly)
+- **Sitemap.txt** - Text sitemap with the same URL structure for alternative submission
 - **Image optimization** - WebP format, lazy loading, proper alt text
 - **Performance** - Compression, security headers, optimized image sizes
 
@@ -848,10 +864,17 @@ Or use `npm run dev` in root - it will start both servers.
 
 ---
 
-**Last Updated:** 2025-01-29
-**Version:** 1.9
+**Last Updated:** 2025-12-17
+**Version:** 1.10
 
 ### Recent Updates
+- **Slug-based URLs & SEO Improvements (2025-12-17):**
+  - Implemented slug-based URLs for brand and model filters (`?brand=toyota&model=yaris`) for better SEO and user-friendly URLs
+  - Added utility functions `createSlug()` and `slugToName()` in `lib/utils.ts` for URL-friendly text conversion
+  - Updated sitemap to include brand landing pages (`/?brand={slug}`) and brand-model combinations (`/?brand={slug}&model={slug}`)
+  - Enhanced SavedFiltersList to use slug-based URLs when applying saved filters
+  - Improved sitemap scalability with pagination support (up to 45,000 listing URLs)
+  - Fixed scroll restoration bug on homepage that was overwriting restored scroll position
 - **Core Web Vitals & INP Optimizations (2025-01-29):**
   - Implemented startTransition for non-blocking state updates, improving INP (Interaction to Next Paint)
   - Added useDeferredValue for deferred search filtering and listing updates
@@ -870,5 +893,5 @@ Or use `npm run dev` in root - it will start both servers.
 - Added tab counters on Favorites page
 - Added breadcrumbs navigation on key pages
 - Optimized filter loading to prevent skeleton flickering
-- Comprehensive test coverage: 185 tests across 12 test suites
+- Comprehensive test coverage: 188 frontend tests across 13 test suites, 266 backend tests across 20 test suites
 

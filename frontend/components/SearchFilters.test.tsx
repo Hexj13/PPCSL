@@ -144,6 +144,10 @@ describe('SearchFilters', () => {
       writable: true,
     });
 
+    window.sessionStorage.removeItem('kupito_popular_filters_open');
+    window.sessionStorage.removeItem('kupito_advanced_filters_open');
+    window.sessionStorage.removeItem('scrollPreserved');
+
     (brandsApi.getAll as jest.Mock).mockResolvedValue({
       data: [
         { id: 'brand-1', name: 'Toyota' },

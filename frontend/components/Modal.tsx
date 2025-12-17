@@ -31,11 +31,19 @@ export function Modal({
     };
 
     document.addEventListener('keydown', handleEscape);
+
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalBodyPaddingRight = document.body.style.paddingRight;
+    const computedBodyPaddingRight = window.getComputedStyle(document.body).paddingRight;
+
     document.body.style.overflow = 'hidden';
+    document.body.style.paddingRight = `calc(${computedBodyPaddingRight} + ${scrollbarWidth}px)`;
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = originalBodyOverflow;
+      document.body.style.paddingRight = originalBodyPaddingRight;
     };
   }, [isOpen]);
 

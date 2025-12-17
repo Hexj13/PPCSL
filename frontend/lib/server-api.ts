@@ -1,6 +1,37 @@
-import { Listing, PaginationMeta } from './api';
+import { Listing, PaginationMeta, Brand, VehicleModel } from './api';
+import { createSlug } from './utils';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+
+export async function fetchBrands(): Promise<Brand[]> {
+  try {
+    const response = await fetch(`${API_URL}/api/brands`, {
+      next: { revalidate: 3600 },
+    });
+    if (!response.ok) return [];
+    return response.json();
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchModelsByBrands(
+  brandIds: string[]
+): Promise<Record<string, VehicleModel[]>> {
+  if (brandIds.length === 0) return {};
+  try {
+    const response = await fetch(`${API_URL}/api/brands/models/batch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ brandIds }),
+      next: { revalidate: 3600 },
+    });
+    if (!response.ok) return {};
+    return response.json();
+  } catch {
+    return {};
+  }
+}
 
 export async function getListings(
   searchParams: Record<string, string | string[] | undefined> = {}
@@ -41,8 +72,52 @@ export async function getListings(
     });
   }
 
+  const brandParam = typeof searchParams.brand === 'string' ? searchParams.brand : undefined;
+  const modelParam = typeof searchParams.model === 'string' ? searchParams.model : undefined;
+
+  if (brandParam || modelParam) {
+    const brands = await fetchBrands();
+    const brandSlugs = brandParam ? brandParam.split(',').map((s) => s.trim()) : [];
+    const brandIds: string[] = [];
+
+    for (const slug of brandSlugs) {
+      const brand = brands.find(
+        (b) =>
+          b.name.toLowerCase() === slug.toLowerCase() || createSlug(b.name) === slug.toLowerCase()
+      );
+      if (brand) {
+        brandIds.push(brand.id);
+      }
+    }
+
+    if (brandIds.length > 0) {
+      params.brand_ids = brandIds.join(',');
+    }
+
+    if (modelParam && brandIds.length > 0) {
+      const modelsByBrand = await fetchModelsByBrands(brandIds);
+      const allModels = Object.values(modelsByBrand).flat();
+      const modelSlugs = modelParam.split(',').map((s) => s.trim());
+      const modelIds: string[] = [];
+
+      for (const slug of modelSlugs) {
+        const model = allModels.find(
+          (m) =>
+            m.name.toLowerCase() === slug.toLowerCase() || createSlug(m.name) === slug.toLowerCase()
+        );
+        if (model && brandIds.includes(model.brand_id)) {
+          modelIds.push(model.id);
+        }
+      }
+
+      if (modelIds.length > 0) {
+        params.model_ids = modelIds.join(',');
+      }
+    }
+  }
+
   Object.entries(searchParams).forEach(([key, value]) => {
-    if (key === '_f' || key === '_e') {
+    if (key === '_f' || key === '_e' || key === 'brand' || key === 'model') {
       return;
     }
 

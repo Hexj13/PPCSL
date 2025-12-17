@@ -10,11 +10,28 @@ export function formatPrice(price: number | undefined, _currency: 'MKD' | 'EUR' 
 }
 
 export function formatDate(date: string | Date): string {
-  return new Date(date).toLocaleDateString('mk-MK', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  const d = new Date(date);
+  if (Number.isNaN(d.getTime())) return '';
+
+  const monthsMk = [
+    'јануари',
+    'февруари',
+    'март',
+    'април',
+    'мај',
+    'јуни',
+    'јули',
+    'август',
+    'септември',
+    'октомври',
+    'ноември',
+    'декември',
+  ];
+
+  const day = d.getDate();
+  const monthName = monthsMk[d.getMonth()];
+  const year = d.getFullYear();
+  return `${day} ${monthName} ${year}`;
 }
 
 export function formatDateShort(date: string | Date): string {
@@ -296,4 +313,20 @@ export function getViberUrl(phone: string | undefined): string | null {
   if (!phone) return null;
   const withCountryCode = getPhoneWithCountryCode(phone);
   return `viber://chat?number=${withCountryCode}`;
+}
+
+export function createSlug(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+export function slugToName(slug: string): string {
+  return slug
+    .split('-')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }

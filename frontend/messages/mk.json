@@ -31,7 +31,12 @@
     "subtitle": "Купете или продадете авто на",
     "subtitleBold": "Kupito!",
     "subtitle2": "Објавете оглас",
-    "subtitle3": "бесплатно."
+    "subtitle3": "бесплатно.",
+    "popularSearches": "Популарни пребарувања"
+  },
+  "listingsPage": {
+    "title": "Огласи за автомобили",
+    "description": "Пребарувајте автомобили за продажба во Македонија. Филтрирајте по марка, модел, цена, година и многу повеќе на Kupito."
   },
   "common": {
     "loading": "Вчитување...",
@@ -439,7 +444,12 @@
     "closedMessage": "Објавата е затворена",
     "statusUpdateError": "Грешка при ажурирање на статус",
     "refreshDateLimit": "Можете да ја користите оваа функција на секои 48 часа",
-    "datesUpdated": "Датите се ажурирани за {count} објави"
+    "datesUpdated": "Датите се ажурирани за {count} објави",
+    "closeConfirmTitle": "Затвори објава",
+    "closeConfirmQuestion": "Дали сте сигурни дека сакате да ја затворите објавата?",
+    "closeConfirmWarning": "По затворање, објавата не може да се повторно отвори и статусот ќе остане затворен засекогаш.",
+    "closeConfirmOk": "ОК",
+    "closeConfirmCancel": "Откажи"
   },
   "listingDetail": {
     "home": "Почетна",
@@ -512,6 +522,9 @@
   },
   "searchFilters": {
     "popular": "Популарни",
+    "popularFilters": "Популарни филтри",
+    "showPopularFilters": "Прикажи популарни филтри",
+    "hidePopularFilters": "Сокриј популарни филтри",
     "selectBrands": "Избери марки",
     "selectModels": "Избери модели",
     "selectTransmission": "Избери пренос",
@@ -704,6 +717,7 @@
     "delete": "Избриши",
     "deleteSuccess": "Филтерот е успешно избришан",
     "deleteError": "Грешка при бришење на филтерот",
+    "applyError": "Грешка при примена на филтерот. Ве молиме обидете се повторно.",
     "empty": "Немате зачувани филтри",
     "created": "Креиран"
   },

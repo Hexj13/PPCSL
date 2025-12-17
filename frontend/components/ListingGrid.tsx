@@ -12,8 +12,9 @@ import {
 } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
-import { favoritesApi, listingsApi, Listing, PaginationMeta } from '@/lib/api';
+import { brandsApi, favoritesApi, listingsApi, Listing, PaginationMeta } from '@/lib/api';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
+import { createSlug } from '@/lib/utils';
 
 import { ListingCard } from './ListingCard';
 import { ListingCardSkeleton } from './ListingCardSkeleton';
@@ -141,8 +142,58 @@ export function ListingGrid({ initialData }: ListingGridProps) {
         });
       }
 
+      const brandParam = searchParams.get('brand');
+      const modelParam = searchParams.get('model');
+
+      if (brandParam || modelParam) {
+        try {
+          const brands = await brandsApi.getAll();
+          const brandSlugs = brandParam ? brandParam.split(',').map((s) => s.trim()) : [];
+          const brandIds: string[] = [];
+
+          for (const slug of brandSlugs) {
+            const brand = brands.data.find(
+              (b) =>
+                b.name.toLowerCase() === slug.toLowerCase() ||
+                createSlug(b.name) === slug.toLowerCase()
+            );
+            if (brand) {
+              brandIds.push(brand.id);
+            }
+          }
+
+          if (brandIds.length > 0) {
+            params.brand_ids = brandIds.join(',');
+          }
+
+          if (modelParam && brandIds.length > 0) {
+            const modelsByBrand = await brandsApi.getModelsBatch(brandIds);
+            const allModels = Object.values(modelsByBrand.data).flat();
+            const modelSlugs = modelParam.split(',').map((s) => s.trim());
+            const modelIds: string[] = [];
+
+            for (const slug of modelSlugs) {
+              const model = allModels.find(
+                (m) =>
+                  m.name.toLowerCase() === slug.toLowerCase() ||
+                  createSlug(m.name) === slug.toLowerCase()
+              );
+              if (model && brandIds.includes(model.brand_id)) {
+                modelIds.push(model.id);
+              }
+            }
+
+            if (modelIds.length > 0) {
+              params.model_ids = modelIds.join(',');
+            }
+          }
+        } catch (error) {
+          console.error('Failed to convert brand/model to IDs:', error);
+        }
+      }
+
       searchParams.forEach((value, key) => {
-        if (key === '_f' || key === '_e') {
+        if (key === '_f' || key === '_e' || key === 'brand' || key === 'model') {
           return;
         }
         if (hasEncodedArrays && !storedFilters) {
@@ -370,8 +421,58 @@ export function ListingGrid({ initialData }: ListingGridProps) {
         });
       }
 
+      const brandParam = searchParams.get('brand');
+      const modelParam = searchParams.get('model');
+
+      if (brandParam || modelParam) {
+        try {
+          const brands = await brandsApi.getAll();
+          const brandSlugs = brandParam ? brandParam.split(',').map((s) => s.trim()) : [];
+          const brandIds: string[] = [];
+
+          for (const slug of brandSlugs) {
+            const brand = brands.data.find(
+              (b) =>
+                b.name.toLowerCase() === slug.toLowerCase() ||
+                createSlug(b.name) === slug.toLowerCase()
+            );
+            if (brand) {
+              brandIds.push(brand.id);
+            }
+          }
+
+          if (brandIds.length > 0) {
+            params.brand_ids = brandIds.join(',');
+          }
+
+          if (modelParam && brandIds.length > 0) {
+            const modelsByBrand = await brandsApi.getModelsBatch(brandIds);
+            const allModels = Object.values(modelsByBrand.data).flat();
+            const modelSlugs = modelParam.split(',').map((s) => s.trim());
+            const modelIds: string[] = [];
+
+            for (const slug of modelSlugs) {
+              const model = allModels.find(
+                (m) =>
+                  m.name.toLowerCase() === slug.toLowerCase() ||
+                  createSlug(m.name) === slug.toLowerCase()
+              );
+              if (model && brandIds.includes(model.brand_id)) {
+                modelIds.push(model.id);
+              }
+            }
+
+            if (modelIds.length > 0) {
+              params.model_ids = modelIds.join(',');
+            }
+          }
+        } catch (error) {
+          console.error('Failed to convert brand/model to IDs:', error);
+        }
+      }
+
       searchParams.forEach((value, key) => {
-        if (key === '_f' || key === '_e') {
+        if (key === '_f' || key === '_e' || key === 'brand' || key === 'model') {
           return;
         }
         if (hasEncodedArrays && !storedFilters) {

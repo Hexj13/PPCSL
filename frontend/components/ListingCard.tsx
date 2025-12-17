@@ -42,8 +42,6 @@ function ListingCardComponent({
     if (originalImageUrl === '/placeholder-car.jpg') {
       return originalImageUrl;
     }
-    // Возвращаем изображение с достаточным качеством для десктопа.
-    // Next.js Image сам создаст уменьшенные версии для мобильных на основе sizes.
     return getOptimizedImageUrl(originalImageUrl, 65, 800);
   }, [originalImageUrl]);
   const isLocalhostImage = useMemo(
@@ -71,6 +69,15 @@ function ListingCardComponent({
     [user, listing.user]
   );
   const [imageError, setImageError] = React.useState(false);
+  const imageAltTitle = useMemo(() => {
+    const brandName = vehicle?.brand?.name;
+    const modelName = vehicle?.model?.name;
+    const year = vehicle?.year ? String(vehicle.year) : null;
+    const city = getCityNameMk(listing.city);
+
+    const details = [brandName, modelName, year].filter(Boolean).join(' ').trim();
+    return [listing.title, details, city].filter((v) => v && v.trim() !== '').join(' - ');
+  }, [listing.title, listing.city, vehicle?.brand?.name, vehicle?.model?.name, vehicle?.year]);
 
   const handleToggleFavorite = useCallback(
     (e: React.MouseEvent) => {
@@ -176,7 +183,7 @@ function ListingCardComponent({
           {imageUrl && imageUrl !== '/placeholder-car.jpg' && !imageError ? (
             <Image
               src={imageUrl}
-              alt={listing.title}
+              alt={t('listings.imageAlt', { title: imageAltTitle, index: '1' })}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
               className="object-cover group-hover:scale-105 transition-transform duration-300"

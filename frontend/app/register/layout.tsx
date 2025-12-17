@@ -10,6 +10,17 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: t.metadata.register.title,
     description: t.metadata.register.description,
+    robots: {
+      index: false,
+      follow: false,
+      googleBot: {
+        index: false,
+        follow: false,
+      },
+    },
+    alternates: {
+      canonical: `${siteUrl}/register`,
+    },
     openGraph: {
       type: 'website',
       url: `${siteUrl}/register`,

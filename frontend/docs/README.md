@@ -30,8 +30,20 @@ This directory contains frontend-specific documentation.
 ### Data Fetching Architecture
 - **Server Components:** Homepage (`app/page.tsx`) fetches initial listings data on the server
 - **Server API:** `lib/server-api.ts` provides server-side data fetching functions using native `fetch` with Next.js Data Cache (production: 30s revalidate, development: no-store)
+  - Supports **slug-based URLs** for brands and models (`?brand=toyota&model=yaris`)
+  - Automatically converts slug parameters to `brand_ids` and `model_ids` for API calls
 - **Client API:** `lib/api.ts` provides client-side API client (Axios) for subsequent data loads and user interactions
 - **Hybrid Approach:** Initial data loaded on server for SEO, subsequent loads handled on client for interactivity
+
+### URL Parameters & Filtering
+- **Slug-based URLs:** The frontend uses SEO-friendly slug-based URLs for brand and model filters:
+  - `?brand=toyota` - Filter by brand slug
+  - `?brand=toyota&model=yaris` - Filter by brand and model slugs
+  - Multiple values: `?brand=toyota,bmw&model=yaris,3-series`
+- **Utility Functions:** `lib/utils.ts` provides:
+  - `createSlug(text: string)` - Converts text to URL-friendly slug (lowercase, normalized, hyphenated)
+  - `slugToName(slug: string)` - Converts slug back to readable name (capitalized words)
+- **Filter Conversion:** Brand/model IDs are automatically converted to slugs in URL parameters for better SEO and user experience
 
 ### PWA Support
 - **Service Worker** (`public/sw.js`) - Caching strategy with 1 hour TTL for API calls and pages

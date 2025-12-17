@@ -10,6 +10,17 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: t.metadata.login.title,
     description: t.metadata.login.description,
+    robots: {
+      index: false,
+      follow: false,
+      googleBot: {
+        index: false,
+        follow: false,
+      },
+    },
+    alternates: {
+      canonical: `${siteUrl}/login`,
+    },
     openGraph: {
       type: 'website',
       url: `${siteUrl}/login`,

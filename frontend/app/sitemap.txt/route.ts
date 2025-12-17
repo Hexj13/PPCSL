@@ -1,8 +1,15 @@
 import { NextResponse } from 'next/server';
 
 import { Listing } from '@/lib/api';
+import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/popular-brands';
+import { fetchBrands } from '@/lib/server-api';
+import { createSlug } from '@/lib/utils';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club';
+const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+const SITEMAP_TIMEOUT_MS = 10_000;
+const LISTINGS_PER_PAGE = 1_000;
+const MAX_LISTING_URLS = 45_000;
 
 function ensureAbsoluteUrl(url: string): string {
   if (url.startsWith('http://') || url.startsWith('https://')) {
@@ -21,62 +28,91 @@ async function getSitemapUrls(): Promise<string[]> {
     ensureAbsoluteUrl('/cookie-settings'),
   ];
 
-  if (!process.env.NEXT_PUBLIC_API_URL) {
-    return urls;
+  const brandModelUrls: string[] = [];
+  const addedUrls = new Set<string>();
+
+  if (apiUrl) {
+    try {
+      const allBrands = await fetchBrands();
+      allBrands.forEach((brand) => {
+        const brandSlug = createSlug(brand.name);
+        const brandUrl = `${siteUrl}/?brand=${brandSlug}`;
+        if (!addedUrls.has(brandUrl)) {
+          brandModelUrls.push(brandUrl);
+          addedUrls.add(brandUrl);
+        }
+      });
+    } catch {
+      // ignore
+    }
   }
 
-  try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  POPULAR_BRANDS.forEach((brand) => {
+    const brandSlug = createSlug(brand);
+    const brandUrl = `${siteUrl}/?brand=${brandSlug}`;
+    const models = POPULAR_MODELS_BY_BRAND[brand] || [];
+
+    if (models.length > 0 && !addedUrls.has(brandUrl)) {
+      brandModelUrls.push(brandUrl);
+      addedUrls.add(brandUrl);
+    }
+
+    models.forEach((model) => {
+      const modelSlug = createSlug(model);
+      const brandModelUrl = `${siteUrl}/?brand=${brandSlug}&model=${modelSlug}`;
+      if (!addedUrls.has(brandModelUrl)) {
+        brandModelUrls.push(brandModelUrl);
+        addedUrls.add(brandModelUrl);
+      }
+    });
+  });
+
+  if (!apiUrl) {
+    return [...urls, ...brandModelUrls];
+  }
+
+  const listingUrls: string[] = [];
+  let page = 1;
+
+  while (listingUrls.length < MAX_LISTING_URLS) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), SITEMAP_TIMEOUT_MS);
 
     try {
-      const response = await fetch(`${apiUrl}/api/listings?limit=10000&status=Active`, {
-        next: { revalidate: 3600 },
-        signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await fetch(
+        `${apiUrl}/api/listings?limit=${LISTINGS_PER_PAGE}&page=${page}&status=Active`,
+        {
+          next: { revalidate: 3600 },
+          signal: controller.signal,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
 
-      if (!response.ok) {
-        return urls;
-      }
+      if (!response.ok) break;
 
       const data = await response.json().catch(() => null);
+      if (!data || !Array.isArray(data.data)) break;
 
-      if (!data || !Array.isArray(data.data)) {
-        return urls;
+      const listings = (data.data as Listing[]).filter((listing) => listing?.id);
+      if (listings.length === 0) break;
+
+      for (const listing of listings) {
+        if (!listing?.id) continue;
+        const listingUrl = ensureAbsoluteUrl(`/listings/${listing.id}`);
+        if (!listingUrl || !listingUrl.startsWith('http')) continue;
+        listingUrls.push(listingUrl);
+        if (listingUrls.length >= MAX_LISTING_URLS) break;
       }
 
-      const listings = data.data.filter((listing: Listing) => listing?.id);
-
-      const listingUrls = listings
-        .map((listing: Listing) => {
-          try {
-            if (!listing.id) {
-              return null;
-            }
-
-            const listingUrl = ensureAbsoluteUrl(`/listings/${listing.id}`);
-            if (!listingUrl || !listingUrl.startsWith('http')) {
-              return null;
-            }
-
-            return listingUrl;
-          } catch {
-            return null;
-          }
-        })
-        .filter((url: string | null): url is string => url !== null);
-
-      return [...urls, ...listingUrls];
+      page += 1;
+    } catch {
+      break;
     } finally {
       clearTimeout(timeoutId);
     }
-  } catch {
-    return urls;
   }
+
+  return [...urls, ...brandModelUrls, ...listingUrls];
 }
 
 export async function GET() {

@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 
-import { savedFiltersApi, SavedFilter } from '@/lib/api';
+import { brandsApi, savedFiltersApi, SavedFilter } from '@/lib/api';
 
 import { SavedFiltersList, clearSavedFiltersCache } from './SavedFiltersList';
 
@@ -21,6 +21,10 @@ jest.mock('@/lib/api', () => ({
   savedFiltersApi: {
     getAll: jest.fn(),
     remove: jest.fn(),
+  },
+  brandsApi: {
+    getAll: jest.fn(),
+    getModelsBatch: jest.fn(),
   },
 }));
 
@@ -143,6 +147,12 @@ describe('SavedFiltersList', () => {
   describe('Apply filter', () => {
     it('should apply filter when clicked', async () => {
       (savedFiltersApi.getAll as jest.Mock).mockResolvedValue({ data: [mockFilters[0]] });
+      (brandsApi.getAll as jest.Mock).mockResolvedValue({
+        data: [{ id: 'brand-1', name: 'Toyota' }],
+      });
+      (brandsApi.getModelsBatch as jest.Mock).mockResolvedValue({
+        data: {},
+      });
 
       render(<SavedFiltersList />);
 
@@ -156,7 +166,7 @@ describe('SavedFiltersList', () => {
       }
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('brand_ids=brand-1'));
+        expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('brand=toyota'));
         expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('price_gte=10000'));
       });
     });

@@ -5,7 +5,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { useTranslation } from '@/hooks/useTranslation';
-import { savedFiltersApi, SavedFilter } from '@/lib/api';
+import { brandsApi, savedFiltersApi, SavedFilter } from '@/lib/api';
+import { createSlug } from '@/lib/utils';
 
 import { SaveFilterModal } from './SaveFilterModal';
 
@@ -118,10 +119,72 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
     }
   };
 
-  const handleApply = (savedFilter: SavedFilter) => {
+  const handleApply = async (savedFilter: SavedFilter): Promise<void> => {
     const filterParams = savedFilter.filters;
     const params = new URLSearchParams();
     const currentYear = new Date().getFullYear().toString();
+
+    const brandIds = Array.isArray(filterParams.brand_ids)
+      ? (filterParams.brand_ids as string[]).filter(
+          (v) => v !== 'all' && v !== '' && v !== null && v !== undefined
+        )
+      : [];
+    const modelIds = Array.isArray(filterParams.model_ids)
+      ? (filterParams.model_ids as string[]).filter(
+          (v) => v !== 'all' && v !== '' && v !== null && v !== undefined
+        )
+      : [];
+
+    if (brandIds.length > 0 || modelIds.length > 0) {
+      try {
+        const brands = await brandsApi.getAll();
+        const brandSlugs: string[] = [];
+
+        if (brandIds.length > 0) {
+          brandIds.forEach((brandId) => {
+            const brand = brands.data.find((b) => b.id === brandId);
+            if (brand) {
+              brandSlugs.push(createSlug(brand.name));
+            }
+          });
+
+          if (brandSlugs.length === 0 && brandIds.length > 0) {
+            toast.error(t('savedFiltersList.applyError'));
+            return;
+          }
+        }
+
+        if (brandSlugs.length > 0) {
+          params.set('brand', brandSlugs.join(','));
+        }
+
+        if (modelIds.length > 0 && brandIds.length > 0) {
+          const modelsByBrand = await brandsApi.getModelsBatch(brandIds);
+          const allModels = Object.values(modelsByBrand.data).flat();
+          const modelSlugs: string[] = [];
+
+          modelIds.forEach((modelId) => {
+            const model = allModels.find((m) => m.id === modelId);
+            if (model && brandIds.includes(model.brand_id)) {
+              modelSlugs.push(createSlug(model.name));
+            }
+          });
+
+          if (modelSlugs.length === 0 && modelIds.length > 0) {
+            toast.error(t('savedFiltersList.applyError'));
+            return;
+          }
+
+          if (modelSlugs.length > 0) {
+            params.set('model', modelSlugs.join(','));
+          }
+        }
+      } catch (error) {
+        console.error('Failed to convert brand/model IDs to slugs:', error);
+        toast.error(t('savedFiltersList.applyError'));
+        return;
+      }
+    }
 
     Object.entries(filterParams).forEach(([key, value]) => {
       if (key === 'sortBy' || key === 'sortOrder') {
@@ -138,14 +201,16 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
         return;
       }
 
+      if (key === 'brand_ids' || key === 'model_ids') {
+        return;
+      }
+
       if (Array.isArray(value)) {
         const filteredArray = value.filter(
           (v) => v !== 'all' && v !== '' && v !== null && v !== undefined
         );
         if (filteredArray.length > 0) {
           const arrayParams = [
-            'brand_ids',
-            'model_ids',
             'cities',
             'fuels',
             'transmissions',
@@ -214,7 +279,11 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
       {filters.map((filter, index) => (
         <div
           key={filter.id}
-          onClick={() => handleApply(filter)}
+          onClick={() => {
+            handleApply(filter).catch((error) => {
+              console.error('Failed to apply filter:', error);
+            });
+          }}
           className="card p-4 md:p-5 cursor-pointer group hover:border-primary-500 transition-colors duration-200"
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

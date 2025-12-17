@@ -190,6 +190,7 @@ function UserListingsModalComponent({
               <Link
                 key={listing.id}
                 href={`/listings/${listing.id}`}
+                onClick={onClose}
                 className="block card overflow-hidden hover:bg-bg-light transition-colors"
               >
                 <div className="p-6 space-y-4">

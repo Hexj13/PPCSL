@@ -30,7 +30,12 @@
     "subtitle": "Buy or sell a car on",
     "subtitleBold": "Kupito!",
     "subtitle2": "Post a listing",
-    "subtitle3": "for free."
+    "subtitle3": "for free.",
+    "popularSearches": "Popular searches"
+  },
+  "listingsPage": {
+    "title": "Car listings",
+    "description": "Search cars for sale in Macedonia. Filter by brand, model, price, year and more on Kupito."
   },
   "common": {
     "loading": "Loading...",
@@ -100,5 +105,46 @@
     "updateAvailable": "New version available",
     "updateNow": "Update now",
     "updateLater": "Later"
+  },
+  "savedFiltersList": {
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteSuccess": "Filter successfully deleted",
+    "deleteError": "Error deleting filter",
+    "applyError": "Error applying filter. Please try again.",
+    "empty": "You have no saved filters",
+    "created": "Created"
+  },
+  "searchFilters": {
+    "popularFilters": "Popular filters",
+    "showPopularFilters": "Show popular filters",
+    "hidePopularFilters": "Hide popular filters"
+  },
+  "myListings": {
+    "title": "My Listings",
+    "home": "Home",
+    "createListing": "Create Listing",
+    "refreshDate": "Refresh Date",
+    "refreshing": "Refreshing...",
+    "refreshDateWithTime": "Refresh Date ({time})",
+    "all": "All",
+    "active": "Active",
+    "paused": "Paused",
+    "closed": "Closed",
+    "noListingsYet": "You don't have any listings yet",
+    "noListingsWithStatus": "No listings with selected status",
+    "loadMore": "Load More",
+    "noMoreListings": "No more listings",
+    "published": "Listing published",
+    "pausedMessage": "Listing paused",
+    "closedMessage": "Listing closed",
+    "statusUpdateError": "Error updating status",
+    "refreshDateLimit": "You can use this feature every 48 hours",
+    "datesUpdated": "Dates updated for {count} listings",
+    "closeConfirmTitle": "Close Listing",
+    "closeConfirmQuestion": "Are you sure you want to close this listing?",
+    "closeConfirmWarning": "After closing, the listing cannot be reopened and the status will remain closed forever.",
+    "closeConfirmOk": "OK",
+    "closeConfirmCancel": "Cancel"
   }
 }

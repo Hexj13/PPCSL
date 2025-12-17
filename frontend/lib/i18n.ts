@@ -32,6 +32,10 @@ export interface Translations {
     subtitle2: string;
     subtitle3: string;
   };
+  listingsPage: {
+    title: string;
+    description: string;
+  };
   common: {
     loading: string;
     error: string;

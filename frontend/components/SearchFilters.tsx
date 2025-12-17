@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useState, useEffect, startTransition, useCallback, useRef } from 'react';
 import { toast } from 'react-hot-toast';
@@ -8,35 +9,96 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { brandsApi, citiesApi, Brand, VehicleModel, City, User } from '@/lib/api';
 import { ConditionType, DriveType, RegistrationType } from '@/lib/constants';
+import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/popular-brands';
 import { useAuthStore } from '@/lib/store';
+import { createSlug } from '@/lib/utils';
 
 import { Dropdown } from './Dropdown';
 import { MultiSelectDropdown } from './MultiSelectDropdown';
 import { SaveFilterModal } from './SaveFilterModal';
 import { SortDropdown } from './SortDropdown';
 
-const POPULAR_BRANDS = [
-  'Volkswagen',
-  'BMW',
-  'Mercedes-Benz',
-  'Audi',
-  'Renault',
-  'Peugeot',
-  'Opel',
-  'Ford',
-  'Toyota',
-  'Fiat',
-];
-
 const POPULAR_CITIES = ['Скопје', 'Битола', 'Куманово', 'Прилеп', 'Тетово'];
 
 const FILTERS_STORAGE_KEY = 'kupito_search_filters';
+const POPULAR_FILTERS_OPEN_KEY = 'kupito_popular_filters_open';
+const ADVANCED_FILTERS_OPEN_KEY = 'kupito_advanced_filters_open';
 const MAX_URL_LENGTH = 1800;
 
 type LabeledOption<T = string> = { value: T; label: string };
 
+const MK_ALPHABET_ORDER: Record<string, number> = {
+  а: 1,
+  б: 2,
+  в: 3,
+  г: 4,
+  д: 5,
+  ѓ: 6,
+  е: 7,
+  ж: 8,
+  з: 9,
+  ѕ: 10,
+  и: 11,
+  ј: 12,
+  к: 13,
+  л: 14,
+  љ: 15,
+  м: 16,
+  н: 17,
+  њ: 18,
+  о: 19,
+  п: 20,
+  р: 21,
+  с: 22,
+  т: 23,
+  ќ: 24,
+  у: 25,
+  ф: 26,
+  х: 27,
+  ц: 28,
+  ч: 29,
+  џ: 30,
+  ш: 31,
+};
+
+function compareMkLabels(aRaw: string, bRaw: string): number {
+  if (aRaw === bRaw) return 0;
+
+  const a = aRaw.toLowerCase().normalize('NFC');
+  const b = bRaw.toLowerCase().normalize('NFC');
+  if (a === b) return 0;
+
+  const aChars = Array.from(a);
+  const bChars = Array.from(b);
+  const len = Math.min(aChars.length, bChars.length);
+
+  for (let i = 0; i < len; i += 1) {
+    const ac = aChars[i]!;
+    const bc = bChars[i]!;
+    if (ac === bc) continue;
+
+    const ao = MK_ALPHABET_ORDER[ac];
+    const bo = MK_ALPHABET_ORDER[bc];
+
+    const aKnown = typeof ao === 'number';
+    const bKnown = typeof bo === 'number';
+
+    if (aKnown && bKnown) return ao - bo;
+    if (aKnown && !bKnown) return -1;
+    if (!aKnown && bKnown) return 1;
+
+    const aCode = ac.codePointAt(0) ?? 0;
+    const bCode = bc.codePointAt(0) ?? 0;
+    if (aCode !== bCode) return aCode - bCode;
+    if (ac < bc) return -1;
+    if (ac > bc) return 1;
+  }
+
+  return aChars.length - bChars.length;
+}
+
 const sortOptionsByLabel = <T,>(options: Array<LabeledOption<T>>) =>
-  [...options].sort((a, b) => a.label.localeCompare(b.label, 'mk'));
+  [...options].sort((a, b) => compareMkLabels(a.label, b.label));
 
 const encodeArray = (arr: string[]): string => {
   if (arr.length === 0) return '';
@@ -104,6 +166,8 @@ export function SearchFilters() {
   const searchParams = useSearchParams();
   const { user } = useAuthStore();
   const { t } = useTranslation();
+  const [isHydrated, setIsHydrated] = useState(false);
+  const userForUi = isHydrated ? user : null;
   const [brands, setBrands] = useState<Brand[]>([]);
   const [models, setModels] = useState<VehicleModel[]>([]);
   const [cities, setCities] = useState<City[]>([]);
@@ -209,6 +273,7 @@ export function SearchFilters() {
   const prevUserRef = useRef<User | null>(user);
 
   const currentYear = new Date().getFullYear().toString();
+  const [showPopularFilters, setShowPopularFilters] = useState(false);
 
   const parseArrayParam = (param: string | null, isEncoded: boolean = false): string[] => {
     if (!param) return [];
@@ -245,21 +310,114 @@ export function SearchFilters() {
 
   const [showAdvanced, setShowAdvanced] = useState(!!hasAdvancedFilters);
 
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    try {
+      const shouldShow = sessionStorage.getItem(POPULAR_FILTERS_OPEN_KEY) === '1';
+      setShowPopularFilters(shouldShow);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    if (hasAdvancedFilters) return;
+    try {
+      const shouldShow = sessionStorage.getItem(ADVANCED_FILTERS_OPEN_KEY) === '1';
+      setShowAdvanced(shouldShow);
+    } catch {
+      // ignore
+    }
+  }, [hasAdvancedFilters]);
+
+  const togglePopularFilters = () => {
+    setShowPopularFilters((prev) => {
+      const next = !prev;
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(POPULAR_FILTERS_OPEN_KEY, next ? '1' : '0');
+      }
+      return next;
+    });
+  };
+
+  const toggleAdvancedFilters = () => {
+    setShowAdvanced((prev) => {
+      const next = !prev;
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(ADVANCED_FILTERS_OPEN_KEY, next ? '1' : '0');
+      }
+      return next;
+    });
+  };
+
+  const applyPopularFilter = useCallback(
+    (brandName: string, modelName?: string) => {
+      const brandSlug = createSlug(brandName);
+      const modelSlug = modelName ? createSlug(modelName) : undefined;
+
+      const params = new URLSearchParams();
+      params.set('brand', brandSlug);
+      if (modelSlug) {
+        params.set('model', modelSlug);
+      }
+
+      const newUrl = `/?${params.toString()}`;
+      const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('scrollPreserved', 'true');
+      }
+
+      startTransition(() => {
+        router.replace(newUrl, { scroll: false });
+        if (typeof window !== 'undefined') {
+          requestAnimationFrame(() => {
+            window.scrollTo({ top: scrollY, behavior: 'instant' });
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                sessionStorage.removeItem('scrollPreserved');
+              });
+            });
+          });
+        }
+      });
+    },
+    [router]
+  );
+
   const getInitialFilters = () => {
     const storedFilters = hasStorageFlag ? loadFiltersFromStorage() : null;
+    const brandParam = searchParams.get('brand');
+    const modelParam = searchParams.get('model');
+    const hasBrandParam = !!brandParam;
+    const hasModelParam = !!modelParam;
+
+    const brandIdsFromUrl = parseArrayParam(
+      searchParams.get('brand_ids') || searchParams.get('brand_id') || null,
+      hasEncodedArrays
+    );
+    const modelIdsFromUrl = parseArrayParam(
+      searchParams.get('model_ids') || searchParams.get('model_id') || null,
+      hasEncodedArrays
+    );
+
     return {
       brand_ids: Array.isArray(storedFilters?.brand_ids)
-        ? (storedFilters?.brand_ids as string[])
-        : parseArrayParam(
-            searchParams.get('brand_ids') || searchParams.get('brand_id') || null,
-            hasEncodedArrays
-          ),
+        ? hasBrandParam
+          ? []
+          : (storedFilters?.brand_ids as string[])
+        : hasBrandParam
+          ? []
+          : brandIdsFromUrl,
       model_ids: Array.isArray(storedFilters?.model_ids)
-        ? (storedFilters?.model_ids as string[])
-        : parseArrayParam(
-            searchParams.get('model_ids') || searchParams.get('model_id') || null,
-            hasEncodedArrays
-          ),
+        ? hasBrandParam || hasModelParam
+          ? []
+          : (storedFilters?.model_ids as string[])
+        : hasBrandParam || hasModelParam
+          ? []
+          : modelIdsFromUrl,
       cities: Array.isArray(storedFilters?.cities)
         ? (storedFilters?.cities as string[])
         : parseArrayParam(
@@ -327,6 +485,88 @@ export function SearchFilters() {
   };
 
   const [filters, setFilters] = useState(getInitialFilters);
+  const processedBrandParamRef = useRef<string | null>(null);
+  const processedModelParamRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const brandParam = searchParams.get('brand');
+
+    if (!brandParam) {
+      if (processedBrandParamRef.current !== null) {
+        processedBrandParamRef.current = null;
+      }
+      return;
+    }
+
+    if (brands.length > 0 && processedBrandParamRef.current !== brandParam) {
+      const brandSlugs = brandParam.split(',').map((s) => s.trim().toLowerCase());
+      const foundBrandIds = brandSlugs
+        .map((slug) => {
+          const brand = brands.find(
+            (b) => b.name.toLowerCase() === slug || createSlug(b.name) === slug
+          );
+          return brand?.id;
+        })
+        .filter((id): id is string => id !== undefined);
+
+      if (foundBrandIds.length > 0) {
+        setFilters((prev) => {
+          const currentIds = prev.brand_ids.sort().join(',');
+          const newIds = foundBrandIds.sort().join(',');
+          if (currentIds === newIds && prev.brand_ids.length === foundBrandIds.length) {
+            return prev;
+          }
+          return {
+            ...prev,
+            brand_ids: foundBrandIds,
+          };
+        });
+      }
+      processedBrandParamRef.current = brandParam;
+    }
+  }, [brands, searchParams]);
+
+  useEffect(() => {
+    const modelParam = searchParams.get('model');
+
+    if (!modelParam) {
+      if (processedModelParamRef.current !== null) {
+        processedModelParamRef.current = null;
+      }
+      return;
+    }
+
+    if (
+      models.length > 0 &&
+      filters.brand_ids.length > 0 &&
+      processedModelParamRef.current !== modelParam
+    ) {
+      const modelSlugs = modelParam.split(',').map((s) => s.trim().toLowerCase());
+      const foundModelIds = modelSlugs
+        .map((slug) => {
+          const model = models.find(
+            (m) => m.name.toLowerCase() === slug || createSlug(m.name) === slug
+          );
+          return model && filters.brand_ids.includes(model.brand_id) ? model.id : undefined;
+        })
+        .filter((id): id is string => id !== undefined);
+
+      if (foundModelIds.length > 0) {
+        setFilters((prev) => {
+          const currentIds = prev.model_ids.sort().join(',');
+          const newIds = foundModelIds.sort().join(',');
+          if (currentIds === newIds && prev.model_ids.length === foundModelIds.length) {
+            return prev;
+          }
+          return {
+            ...prev,
+            model_ids: foundModelIds,
+          };
+        });
+      }
+      processedModelParamRef.current = modelParam;
+    }
+  }, [models, filters.brand_ids, searchParams]);
 
   const getBrandOptions = useCallback(() => {
     const popularBrands = brands
@@ -663,6 +903,11 @@ export function SearchFilters() {
       const params = new URLSearchParams();
       const largeArrays: Record<string, string[]> = {};
 
+      params.delete('brand_ids');
+      params.delete('model_ids');
+      params.delete('brand_id');
+      params.delete('model_id');
+
       Object.entries(filters).forEach(([key, value]) => {
         if (key === 'sortBy' || key === 'sortOrder') {
           if (value !== '') {
@@ -686,13 +931,31 @@ export function SearchFilters() {
         }
         if (key === 'brand_ids') {
           if (!allBrandsSelected && validBrandIds.length > 0) {
-            largeArrays[key] = validBrandIds;
+            const brandSlugs = validBrandIds
+              .map((id) => {
+                const brand = brands.find((b) => b.id === id);
+                return brand ? createSlug(brand.name) : null;
+              })
+              .filter((slug): slug is string => slug !== null);
+
+            if (brandSlugs.length > 0) {
+              params.set('brand', brandSlugs.join(','));
+            }
           }
           return;
         }
         if (key === 'model_ids') {
           if (!allModelsSelected && validModelIds.length > 0) {
-            largeArrays[key] = validModelIds;
+            const modelSlugs = validModelIds
+              .map((id) => {
+                const model = models.find((m) => m.id === id);
+                return model ? createSlug(model.name) : null;
+              })
+              .filter((slug): slug is string => slug !== null);
+
+            if (modelSlugs.length > 0) {
+              params.set('model', modelSlugs.join(','));
+            }
           }
           return;
         }
@@ -1161,7 +1424,7 @@ export function SearchFilters() {
           </h2>
           <button
             type="button"
-            onClick={() => setShowAdvanced(!showAdvanced)}
+            onClick={toggleAdvancedFilters}
             className="p-1 hover:bg-primary-500/10 rounded transition-colors duration-200"
             aria-label={
               showAdvanced ? t('searchFilters.hideAdvanced') : t('searchFilters.showAdvanced')
@@ -1749,6 +2012,81 @@ export function SearchFilters() {
         )}
       </div>
 
+      <div className="mb-5">
+        <div className="flex items-center gap-3 mb-4">
+          <h2 className="text-base md:text-lg font-bold text-primary-400 underline">
+            {t('searchFilters.popularFilters')}
+          </h2>
+          <button
+            type="button"
+            onClick={togglePopularFilters}
+            className="p-1 hover:bg-primary-500/10 rounded transition-colors duration-200"
+            aria-label={
+              showPopularFilters
+                ? t('searchFilters.hidePopularFilters')
+                : t('searchFilters.showPopularFilters')
+            }
+          >
+            <svg
+              className={`w-5 h-5 text-primary-400 transition-transform duration-200 ${
+                showPopularFilters ? 'rotate-180' : ''
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <div className={`flex flex-wrap gap-2 ${showPopularFilters ? '' : 'hidden'}`}>
+          {POPULAR_BRANDS.map((brand) => {
+            const models = (POPULAR_MODELS_BY_BRAND[brand] || []).slice(0, 4);
+            const brandHref = `/?brand=${encodeURIComponent(createSlug(brand))}`;
+            return (
+              <div key={brand} className="flex flex-wrap items-center gap-2">
+                <Link
+                  href={brandHref}
+                  scroll={false}
+                  suppressHydrationWarning
+                  onClick={(e) => {
+                    e.preventDefault();
+                    applyPopularFilter(brand);
+                  }}
+                  className="px-3 py-2 rounded-full bg-primary-500/15 hover:bg-primary-500/25 text-primary-100 border-2 border-primary-400/60 hover:border-primary-300/90 transition-colors text-sm"
+                >
+                  {brand}
+                </Link>
+                {models.map((model) => {
+                  const modelHref = `/?brand=${encodeURIComponent(createSlug(brand))}&model=${encodeURIComponent(createSlug(model))}`;
+                  return (
+                    <Link
+                      key={`${brand}-${model}`}
+                      href={modelHref}
+                      scroll={false}
+                      suppressHydrationWarning
+                      onClick={(e) => {
+                        e.preventDefault();
+                        applyPopularFilter(brand, model);
+                      }}
+                      className="px-3 py-2 rounded-full bg-primary-500/5 hover:bg-primary-500/15 text-primary-200 hover:text-primary-100 border border-primary-500/20 hover:border-primary-500/30 transition-colors text-sm"
+                    >
+                      {brand} {model}
+                    </Link>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="mt-6 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <button type="submit" className="w-full sm:w-auto btn-primary">
@@ -1765,7 +2103,7 @@ export function SearchFilters() {
           <button
             type="button"
             onClick={() => {
-              if (user) {
+              if (userForUi) {
                 setShowSaveModal(true);
               } else {
                 if (typeof window !== 'undefined') {
@@ -1777,7 +2115,7 @@ export function SearchFilters() {
             }}
             disabled={!canSaveFilter()}
             className="w-full sm:w-auto btn-secondary flex items-center justify-center gap-2"
-            title={!user ? t('common.loginRequired') : ''}
+            title={!userForUi ? t('common.loginRequired') : ''}
           >
             <svg
               className="w-5 h-5"
@@ -1793,7 +2131,7 @@ export function SearchFilters() {
                 d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
               />
             </svg>
-            <span>{user ? t('searchFilters.addToFavorites') : t('searchFilters.login')}</span>
+            <span>{userForUi ? t('searchFilters.addToFavorites') : t('searchFilters.login')}</span>
           </button>
         </div>
         <div className="w-full sm:w-auto">

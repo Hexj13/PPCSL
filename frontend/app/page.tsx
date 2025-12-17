@@ -2,86 +2,243 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 
 import { ConversionEvent } from '@/components/ConversionEvent';
+import { DynamicPageTitle } from '@/components/DynamicPageTitle';
 import { HomeHero } from '@/components/HomeHero';
 import { ListingGrid } from '@/components/ListingGrid';
 import { ScrollToFiltersButton } from '@/components/ScrollToFiltersButton';
 import { SearchFilters } from '@/components/SearchFilters';
+import { SearchStructuredData } from '@/components/SearchStructuredData';
 import { getServerTranslations } from '@/lib/i18n';
-import { getListings } from '@/lib/server-api';
+import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/popular-brands';
+import { fetchBrands, fetchModelsByBrands, getListings } from '@/lib/server-api';
+import { createSlug } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club';
 
-export const metadata: Metadata = {
-  title: 'Автомобили во Македонија',
-  description:
-    'Купете или продадете авто на Kupito! Објавете оглас бесплатно. Платформа за купување и продавање автомобили онлајн во Македонија. Автомобили огласи Македонија - бесплатно објавување огласи за приватни лица и авто-плацови.',
-  keywords: [
-    'автомобили Македонија',
-    'купување автомобили онлајн',
-    'продажба автомобили Македонија',
-    'автомобили огласи Македонија',
-    'avtomobili makedonija',
-    'kupuvanje avtomobili online',
-    'prodazba avtomobili mk',
-    'avtomobil oglasi makedonija',
-  ],
-  openGraph: {
-    type: 'website',
-    url: `${siteUrl}`,
-    title: 'Kupito – огласи за продажба на автомобили во Македонија',
-    description:
-      'Купете или продадете авто на Kupito! Објавете оглас бесплатно. Нова платформа за купување и продавање автомобили онлајн во Македонија. Автомобили огласи Македонија - бесплатно објавување огласи за приватни лица и авто-плацови.',
-    images: [
-      {
-        url: `${siteUrl}/og-image.jpg`,
-        width: 1200,
-        height: 630,
-        alt: 'Kupito',
-      },
+async function getTitleFromParams(
+  brandParam: string | string[] | undefined,
+  modelParam: string | string[] | undefined
+): Promise<string> {
+  const brand = typeof brandParam === 'string' ? brandParam : undefined;
+  const model = typeof modelParam === 'string' ? modelParam : undefined;
+
+  if (!brand && !model) {
+    return 'Автомобили во Македонија';
+  }
+
+  const brandSlugs = brand ? brand.split(',').map((s) => s.trim().toLowerCase()) : [];
+  const modelSlugs = model ? model.split(',').map((s) => s.trim().toLowerCase()) : [];
+
+  try {
+    const allBrands = await fetchBrands();
+    const foundBrands = brandSlugs
+      .map((slug) => {
+        const brand = allBrands.find(
+          (b) => b.name.toLowerCase() === slug || createSlug(b.name) === slug
+        );
+        return brand?.name;
+      })
+      .filter((name): name is string => name !== undefined);
+
+    if (foundBrands.length === 0) {
+      return 'Автомобили во Македонија';
+    }
+
+    if (modelSlugs.length > 0 && foundBrands.length > 0) {
+      const brandIds = foundBrands
+        .map((brandName) => allBrands.find((b) => b.name === brandName)?.id)
+        .filter((id): id is string => id !== undefined);
+
+      if (brandIds.length > 0) {
+        const modelsByBrand = await fetchModelsByBrands(brandIds);
+        const foundModels: string[] = [];
+
+        foundBrands.forEach((brandName) => {
+          const brandId = allBrands.find((b) => b.name === brandName)?.id;
+          if (brandId) {
+            const brandModels = modelsByBrand[brandId] || [];
+            modelSlugs.forEach((modelSlug) => {
+              const model = brandModels.find(
+                (m) => m.name.toLowerCase() === modelSlug || createSlug(m.name) === modelSlug
+              );
+              if (model) {
+                foundModels.push(`${brandName} ${model.name}`);
+              }
+            });
+          }
+        });
+
+        if (foundModels.length > 0) {
+          return foundModels.join(', ');
+        }
+      }
+    }
+
+    return foundBrands.length === 1 ? foundBrands[0] : foundBrands.join(', ');
+  } catch {
+    const popularBrands = brandSlugs
+      .map((slug) => {
+        return POPULAR_BRANDS.find((b) => b.toLowerCase() === slug || createSlug(b) === slug);
+      })
+      .filter((name): name is string => name !== undefined);
+
+    if (popularBrands.length === 0) {
+      return 'Автомобили во Македонија';
+    }
+
+    if (modelSlugs.length > 0 && popularBrands.length > 0) {
+      const foundModels: string[] = [];
+      popularBrands.forEach((brandName) => {
+        const models = POPULAR_MODELS_BY_BRAND[brandName] || [];
+        modelSlugs.forEach((modelSlug) => {
+          const model = models.find(
+            (m) => m.toLowerCase() === modelSlug || createSlug(m) === modelSlug
+          );
+          if (model) {
+            foundModels.push(`${brandName} ${model}`);
+          }
+        });
+      });
+
+      if (foundModels.length > 0) {
+        return foundModels.join(', ');
+      }
+    }
+
+    return popularBrands.length === 1 ? popularBrands[0] : popularBrands.join(', ');
+  }
+}
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  const brandParam = params.brand;
+  const modelParam = params.model;
+  const pageParam = params.page;
+  const title = await getTitleFromParams(brandParam, modelParam);
+  const fullTitle =
+    title === 'Автомобили во Македонија' ? title : `${title} | Автомобили во Македонија`;
+
+  const page =
+    typeof pageParam === 'string' && pageParam.trim() !== '' ? parseInt(pageParam, 10) : 1;
+  const safePage = Number.isFinite(page) && page > 0 ? page : 1;
+
+  const hasNonIndexableParams = Object.entries(params).some(([key, value]) => {
+    if (value === undefined) return false;
+    if (key === 'brand' || key === 'model' || key === 'page') return false;
+    return true;
+  });
+
+  const description =
+    title === 'Автомобили во Македонија'
+      ? 'Купете или продадете авто на Kupito! Објавете оглас бесплатно. Платформа за купување и продавање автомобили онлајн во Македонија. Автомобили огласи Македонија - бесплатно објавување огласи за приватни лица и авто-плацови.'
+      : `Купете ${title} на Kupito! Најдете најдобри цени и избор на ${title} автомобили во Македонија.`;
+
+  const queryParams = new URLSearchParams();
+  if (brandParam && typeof brandParam === 'string') {
+    queryParams.set('brand', brandParam);
+  }
+  if (modelParam && typeof modelParam === 'string') {
+    queryParams.set('model', modelParam);
+  }
+  if (!hasNonIndexableParams && safePage > 1) {
+    queryParams.set('page', String(safePage));
+  }
+  const queryString = queryParams.toString();
+  const urlSuffix = queryString ? `?${queryString}` : '';
+
+  const canonicalParams = new URLSearchParams();
+  if (brandParam && typeof brandParam === 'string') canonicalParams.set('brand', brandParam);
+  if (modelParam && typeof modelParam === 'string') canonicalParams.set('model', modelParam);
+  const canonicalQuery = canonicalParams.toString();
+  const canonicalUrl = `${siteUrl}${canonicalQuery ? `?${canonicalQuery}` : ''}`;
+
+  let prevUrl: string | undefined;
+  let nextUrl: string | undefined;
+
+  if (!hasNonIndexableParams && safePage > 1) {
+    const prevParams = new URLSearchParams(canonicalParams.toString());
+    if (safePage - 1 > 1) {
+      prevParams.set('page', String(safePage - 1));
+    }
+    const prevQuery = prevParams.toString();
+    prevUrl = `${siteUrl}${prevQuery ? `?${prevQuery}` : ''}`;
+  }
+
+  if (!hasNonIndexableParams) {
+    const listings = await getListings(params);
+    const totalPages = listings?.meta?.totalPages ?? 0;
+    if (typeof totalPages === 'number' && totalPages > 0 && safePage < totalPages) {
+      const nextParams = new URLSearchParams(canonicalParams.toString());
+      nextParams.set('page', String(safePage + 1));
+      const nextQuery = nextParams.toString();
+      nextUrl = `${siteUrl}${nextQuery ? `?${nextQuery}` : ''}`;
+    }
+  }
+
+  return {
+    title: fullTitle,
+    description,
+    keywords: [
+      title,
+      'автомобили Македонија',
+      'купување автомобили онлајн',
+      'продажба автомобили Македонија',
+      'автомобили огласи Македонија',
+      'avtomobili makedonija',
+      'kupuvanje avtomobili online',
+      'prodazba avtomobili mk',
+      'avtomobil oglasi makedonija',
     ],
-    siteName: 'Kupito',
-    locale: 'mk_MK',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Kupito – огласи за продажба на автомобили во Македонија',
-    description: 'Нова платформа за купување и продавање автомобили во Македонија.',
-    images: [`${siteUrl}/og-image.jpg`],
-  },
-  alternates: {
-    canonical: `${siteUrl}`,
-  },
-};
+    robots: hasNonIndexableParams
+      ? {
+          index: false,
+          follow: false,
+          googleBot: {
+            index: false,
+            follow: false,
+          },
+        }
+      : undefined,
+    openGraph: {
+      type: 'website',
+      url: `${siteUrl}${urlSuffix}`,
+      title: fullTitle,
+      description,
+      images: [
+        {
+          url: `${siteUrl}/og-image.jpg`,
+          width: 1200,
+          height: 630,
+          alt: 'Kupito',
+        },
+      ],
+      siteName: 'Kupito',
+      locale: 'mk_MK',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: fullTitle,
+      description,
+      images: [`${siteUrl}/og-image.jpg`],
+    },
+    alternates: {
+      canonical: hasNonIndexableParams ? canonicalUrl : `${siteUrl}${urlSuffix}`,
+      ...(prevUrl ? { prev: prevUrl } : {}),
+      ...(nextUrl ? { next: nextUrl } : {}),
+    },
+  };
+}
 
 function SearchFiltersWrapper() {
   return (
     <Suspense fallback={<div className="card p-4 md:p-5 mb-6 animate-pulse h-64" />}>
       <SearchFilters />
-    </Suspense>
-  );
-}
-
-async function ListingGridServer({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  const params = await searchParams;
-  const initialData = await getListings(params);
-
-  return <ListingGrid initialData={initialData} />;
-}
-
-function ListingGridWrapper({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  return (
-    <Suspense fallback={<div className="animate-pulse h-96" />}>
-      <ListingGridServer searchParams={searchParams} />
     </Suspense>
   );
 }
@@ -92,10 +249,16 @@ export default async function Home({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const t = getServerTranslations('mk');
+  const params = await searchParams;
+  const brand = typeof params.brand === 'string' ? params.brand : null;
+  const model = typeof params.model === 'string' ? params.model : null;
+  const initialData = await getListings(params);
 
   return (
     <div>
       <ConversionEvent />
+      <DynamicPageTitle />
+      <SearchStructuredData brand={brand} model={model} listings={initialData.data} />
       <HomeHero
         title={t.home.title}
         subtitle={t.home.subtitle}
@@ -106,7 +269,7 @@ export default async function Home({
 
       <SearchFiltersWrapper />
 
-      <ListingGridWrapper searchParams={searchParams} />
+      <ListingGrid initialData={initialData} />
 
       <ScrollToFiltersButton />
     </div>
