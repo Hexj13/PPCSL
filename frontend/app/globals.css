@@ -534,7 +534,7 @@ label {
     display: block !important;
     margin: 0.75rem 0 !important;
     padding-left: 2rem !important;
-    color: #d1d5db !important;
+    color: rgb(243, 243, 243) !important;
   }
 
   .listing-description ol {
@@ -543,7 +543,7 @@ label {
     display: block !important;
     margin: 0.75rem 0 !important;
     padding-left: 2rem !important;
-    color: #d1d5db !important;
+    color: rgb(243, 243, 243) !important;
   }
 
   .listing-description li {
@@ -551,7 +551,7 @@ label {
     list-style-position: outside !important;
     margin: 0.25rem 0 !important;
     padding-left: 0.5rem !important;
-    color: #d1d5db !important;
+    color: rgb(243, 243, 243) !important;
   }
 
   .listing-description ul li {

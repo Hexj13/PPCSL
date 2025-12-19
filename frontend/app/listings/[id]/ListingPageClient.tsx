@@ -1766,7 +1766,7 @@ export default function ListingPageClient({
                 />
                 <style jsx>{`
                   .listing-description {
-                    color: #f3f3f3;
+                    color: rgb(243, 243, 243);
                     line-height: 1.75;
                   }
                   .listing-description div,
@@ -1775,7 +1775,7 @@ export default function ListingPageClient({
                     margin: 0.75rem 0;
                     min-height: 1.2em;
                     line-height: 1.6;
-                    color: #f3f3f3;
+                    color: rgb(243, 243, 243);
                   }
                   .listing-description div:empty,
                   .listing-description p:empty {
@@ -1806,16 +1806,16 @@ export default function ListingPageClient({
                   .listing-description strong,
                   .listing-description b {
                     font-weight: 700 !important;
-                    color: #f3f3f3 !important;
+                    color: rgb(243, 243, 243) !important;
                   }
                   .listing-description em,
                   .listing-description i {
                     font-style: italic !important;
-                    color: #f3f3f3 !important;
+                    color: rgb(243, 243, 243) !important;
                   }
                   .listing-description u {
                     text-decoration: underline;
-                    color: #f3f3f3;
+                    color: rgb(243, 243, 243);
                   }
                   .listing-description ul {
                     list-style-type: disc !important;
@@ -1823,7 +1823,7 @@ export default function ListingPageClient({
                     display: block !important;
                     margin: 0.75rem 0 !important;
                     padding-left: 2rem !important;
-                    color: #f3f3f3 !important;
+                    color: rgb(243, 243, 243) !important;
                   }
                   .listing-description ol {
                     list-style-type: decimal !important;
@@ -1831,14 +1831,14 @@ export default function ListingPageClient({
                     display: block !important;
                     margin: 0.75rem 0 !important;
                     padding-left: 2rem !important;
-                    color: #f3f3f3 !important;
+                    color: rgb(243, 243, 243) !important;
                   }
                   .listing-description li {
                     display: list-item !important;
                     list-style-position: outside !important;
                     margin: 0.25rem 0 !important;
                     padding-left: 0.5rem !important;
-                    color: #f3f3f3 !important;
+                    color: rgb(243, 243, 243) !important;
                   }
                   .listing-description ul li {
                     list-style-type: disc !important;

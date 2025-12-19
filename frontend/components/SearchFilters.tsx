@@ -1428,19 +1428,22 @@ export function SearchFilters() {
 
       <div className="mb-5">
         <div className="flex items-center gap-3 mb-4">
-          <h2 className="text-base md:text-lg font-bold text-primary-400 underline">
+          <h2
+            onClick={toggleAdvancedFilters}
+            className="text-base md:text-lg font-bold text-primary-400 underline cursor-pointer hover:text-primary-300 transition-colors"
+          >
             {t('searchFilters.additionalCriteria')}
           </h2>
           <button
             type="button"
             onClick={toggleAdvancedFilters}
-            className="p-1 hover:bg-primary-500/10 rounded transition-colors duration-200"
-            aria-label={
-              showAdvanced ? t('searchFilters.hideAdvanced') : t('searchFilters.showAdvanced')
-            }
+            className="px-3 py-1 text-sm font-semibold text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors duration-200 flex items-center gap-1"
           >
+            <span>
+              {showAdvanced ? t('searchFilters.hideAdvanced') : t('searchFilters.showAdvanced')}
+            </span>
             <svg
-              className={`w-5 h-5 text-primary-400 transition-transform duration-200 ${
+              className={`w-4 h-4 transition-transform duration-200 ${
                 showAdvanced ? 'rotate-180' : ''
               }`}
               fill="none"
@@ -2023,21 +2026,22 @@ export function SearchFilters() {
 
       <div className="mb-5">
         <div className="flex items-center gap-3 mb-4">
-          <h2 className="text-base md:text-lg font-bold text-primary-400 underline">
+          <h2
+            onClick={togglePopularFilters}
+            className="text-base md:text-lg font-bold text-primary-400 underline cursor-pointer hover:text-primary-300 transition-colors"
+          >
             {t('searchFilters.popularFilters')}
           </h2>
           <button
             type="button"
             onClick={togglePopularFilters}
-            className="p-1 hover:bg-primary-500/10 rounded transition-colors duration-200"
-            aria-label={
-              showPopularFilters
-                ? t('searchFilters.hidePopularFilters')
-                : t('searchFilters.showPopularFilters')
-            }
+            className="px-3 py-1 text-sm font-semibold text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors duration-200 flex items-center gap-1"
           >
+            <span>
+              {showPopularFilters ? t('searchFilters.hideAdvanced') : t('searchFilters.showAdvanced')}
+            </span>
             <svg
-              className={`w-5 h-5 text-primary-400 transition-transform duration-200 ${
+              className={`w-4 h-4 transition-transform duration-200 ${
                 showPopularFilters ? 'rotate-180' : ''
               }`}
               fill="none"
