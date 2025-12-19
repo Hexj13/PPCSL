@@ -628,7 +628,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       <div className="text-center py-12">
         <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6 max-w-md mx-auto">
           <p className="text-red-400 text-lg font-semibold mb-2">{t('common.error')}</p>
-          <p className="text-gray-300">{error}</p>
+          <p style={{ color: 'rgb(243, 243, 243)' }}>{error}</p>
         </div>
       </div>
     );
@@ -637,7 +637,9 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   if (listings.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-300 text-lg">{t('listings.notFound')}</p>
+        <p className="text-lg" style={{ color: 'rgb(243, 243, 243)' }}>
+          {t('listings.notFound')}
+        </p>
       </div>
     );
   }
@@ -656,7 +658,9 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       {loadingMore && (
         <div className="text-center py-8">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-          <p className="mt-2 text-gray-300">{t('common.loading')}</p>
+          <p className="mt-2" style={{ color: 'rgb(243, 243, 243)' }}>
+            {t('common.loading')}
+          </p>
         </div>
       )}
 
@@ -670,7 +674,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
 
       {!hasMore && listings.length > 0 && (
         <div className="text-center py-8">
-          <p className="text-gray-300">{t('listings.noMoreListings')}</p>
+          <p style={{ color: 'rgb(243, 243, 243)' }}>{t('listings.noMoreListings')}</p>
         </div>
       )}
 

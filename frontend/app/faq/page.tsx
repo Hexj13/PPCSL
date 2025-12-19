@@ -331,7 +331,10 @@ export default function FAQPage() {
               </button>
               {isOpen && (
                 <div className="px-4 pb-4">
-                  <div className="space-y-2 text-gray-300 leading-relaxed">
+                  <div
+                    className="space-y-2 leading-relaxed"
+                    style={{ color: 'rgb(243, 243, 243)' }}
+                  >
                     {answerContent.map((paragraph, index) => (
                       <p key={index} className="text-base md:text-lg">
                         {paragraph}
@@ -349,14 +352,14 @@ export default function FAQPage() {
         <h2 className="text-2xl md:text-3xl font-bold mb-6 text-white">
           {t('faq.userScenarios.title')}
         </h2>
-        <p className="text-gray-300 mb-6 text-base md:text-lg">
+        <p className="mb-6 text-base md:text-lg" style={{ color: 'rgb(243, 243, 243)' }}>
           {t('faq.userScenarios.description')}
         </p>
         <div className="space-y-6">
           {userScenarios.map((scenario) => (
             <div key={scenario.id} className="border-l-4 border-primary-500 pl-4">
               <h3 className="text-xl font-semibold text-primary-300 mb-3">{scenario.title}</h3>
-              <ol className="space-y-2 text-gray-300">
+              <ol className="space-y-2" style={{ color: 'rgb(243, 243, 243)' }}>
                 {scenario.steps.map((step, index) => (
                   <li key={index} className="flex items-start">
                     <span className="font-bold text-primary-400 mr-2 flex-shrink-0">

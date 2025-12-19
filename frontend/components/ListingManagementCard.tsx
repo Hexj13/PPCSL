@@ -110,7 +110,7 @@ export function ListingManagementCard({
                     )}
                   </div>
                   {listing.user && (
-                    <div className="mb-2 text-sm text-gray-300">
+                    <div className="mb-2 text-sm" style={{ color: 'rgb(243, 243, 243)' }}>
                       <span className="text-primary-400">{t('admin.usersTab.user')}</span>{' '}
                       <span className="font-medium">
                         {[
@@ -127,13 +127,29 @@ export function ListingManagementCard({
                   )}
                 </>
               )}
-              <Link href={`/listings/${listing.id}`}>
-                <h3 className="font-bold text-base md:text-lg hover:text-primary-600 transition-colors line-clamp-2 mb-3">
-                  {listing.title}
-                </h3>
+              <Link href={`/listings/${listing.id}`} className="mb-3 block">
+                <div className="flex items-start gap-1.5">
+                  <h3 className="font-bold text-base md:text-lg hover:text-primary-600 transition-colors line-clamp-2 flex-1">
+                    {listing.title}
+                  </h3>
+                  <svg
+                    className="w-5 h-5 opacity-60 flex-shrink-0 mt-0.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                    />
+                  </svg>
+                </div>
               </Link>
               {listing.vehicle && (
-                <div className="text-sm text-gray-300 space-y-1.5 mb-3">
+                <div className="text-sm space-y-1.5 mb-3" style={{ color: 'rgb(243, 243, 243)' }}>
                   {listing.vehicle.engine_displ_l && (
                     <div>
                       {t('userListings.engine')}:{' '}

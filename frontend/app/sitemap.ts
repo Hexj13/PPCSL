@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 
 import { Listing } from '@/lib/api';
 import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/popular-brands';
-import { fetchBrands } from '@/lib/server-api';
+import { fetchBrands, fetchModelsByBrands } from '@/lib/server-api';
 import { createSlug } from '@/lib/utils';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club';
@@ -74,6 +74,7 @@ async function getBrandModelUrls(now: Date): Promise<MetadataRoute.Sitemap> {
   if (apiUrl) {
     try {
       const allBrands = await fetchBrands();
+
       allBrands.forEach((brand) => {
         const brandSlug = createSlug(brand.name);
         const brandUrl = `${siteUrl}/?brand=${brandSlug}`;
@@ -86,6 +87,28 @@ async function getBrandModelUrls(now: Date): Promise<MetadataRoute.Sitemap> {
           });
           addedUrls.add(brandUrl);
         }
+      });
+
+      const brandIds = allBrands.map((brand) => brand.id);
+      const modelsByBrand = await fetchModelsByBrands(brandIds);
+
+      allBrands.forEach((brand) => {
+        const brandSlug = createSlug(brand.name);
+        const models = modelsByBrand[brand.id] || [];
+
+        models.forEach((model) => {
+          const modelSlug = createSlug(model.name);
+          const brandModelUrl = `${siteUrl}/?brand=${brandSlug}&model=${modelSlug}`;
+          if (!addedUrls.has(brandModelUrl)) {
+            brandModelUrls.push({
+              url: brandModelUrl,
+              lastModified: now,
+              changeFrequency: 'daily' as const,
+              priority: 0.6,
+            });
+            addedUrls.add(brandModelUrl);
+          }
+        });
       });
     } catch {
       // ignore

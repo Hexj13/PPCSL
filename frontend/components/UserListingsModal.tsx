@@ -169,11 +169,13 @@ function UserListingsModalComponent({
       {loading ? (
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-          <p className="mt-4 text-gray-300">{t('userListings.loading')}</p>
+          <p className="mt-4" style={{ color: 'rgb(243, 243, 243)' }}>
+            {t('userListings.loading')}
+          </p>
         </div>
       ) : displayListings.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-300 text-lg">
+          <p className="text-lg" style={{ color: 'rgb(243, 243, 243)' }}>
             {showOnlyActive ? t('userListings.noActiveListings') : t('userListings.noListings')}
           </p>
         </div>
@@ -247,7 +249,10 @@ function UserListingsModalComponent({
                       <div className="flex-1 min-w-0">
                         <h3 className="font-bold text-lg text-white mb-3">{listing.title}</h3>
                         {vehicle && (
-                          <div className="text-sm text-gray-300 space-y-1.5">
+                          <div
+                            className="text-sm space-y-1.5"
+                            style={{ color: 'rgb(243, 243, 243)' }}
+                          >
                             {vehicle.engine_displ_l && (
                               <div>
                                 <span className="text-primary-400 font-semibold">
@@ -321,8 +326,13 @@ function UserListingsModalComponent({
                                 ? 'bg-primary-500/20 text-primary-300'
                                 : listing.status === 'Paused'
                                   ? 'bg-yellow-500/20 text-yellow-300'
-                                  : 'bg-gray-500/20 text-gray-300'
+                                  : 'bg-gray-500/20'
                             }`}
+                            style={
+                              listing.status === 'Closed'
+                                ? { color: 'rgb(243, 243, 243)' }
+                                : undefined
+                            }
                           >
                             {listing.status === 'Active'
                               ? t('userListings.active')
@@ -340,7 +350,9 @@ function UserListingsModalComponent({
                       <span className="text-primary-400 font-semibold">
                         {t('userListings.city')}:
                       </span>
-                      <span className="ml-2 text-gray-300">{getCityNameMk(listing.city)}</span>
+                      <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
+                        {getCityNameMk(listing.city)}
+                      </span>
                     </div>
                   )}
                 </div>

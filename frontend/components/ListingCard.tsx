@@ -195,7 +195,10 @@ function ListingCardComponent({
               unoptimized={isLocalhostImage && process.env.NODE_ENV === 'development'}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-300">
+            <div
+              className="w-full h-full flex items-center justify-center"
+              style={{ color: 'rgb(243, 243, 243)' }}
+            >
               <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
@@ -255,7 +258,7 @@ function ListingCardComponent({
           </button>
         </div>
         <div className="p-4 md:p-5 flex-grow flex flex-col">
-          <h3 className="font-bold text-base md:text-lg mb-3 line-clamp-2 text-white group-hover:text-primary-600 transition-colors">
+          <h3 className="font-bold text-base md:text-lg mb-3 line-clamp-2 text-[rgb(243_243_243)] group-hover:!text-primary-600 transition-colors">
             {listing.title}
           </h3>
           <div className="flex items-baseline gap-2 mb-3">
@@ -264,7 +267,10 @@ function ListingCardComponent({
                 <span className="text-xl md:text-2xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
                   {formatPrice(listing.price, listing.currency)}
                 </span>
-                <span className="text-xs md:text-sm text-gray-300 font-medium">
+                <span
+                  className="text-xs md:text-sm font-medium"
+                  style={{ color: 'rgb(243, 243, 243)' }}
+                >
                   {listing.currency}
                 </span>
               </>
@@ -274,7 +280,7 @@ function ListingCardComponent({
           </div>
           <div className="flex-grow mb-3">
             {vehicle && (
-              <div className="text-sm text-gray-300 space-y-1.5">
+              <div className="text-sm space-y-1.5" style={{ color: 'rgb(243, 243, 243)' }}>
                 {vehicle.engine_displ_l && (
                   <div>
                     {t('userListings.engine')}: {formatEngineVolume(vehicle.engine_displ_l)}{' '}
@@ -305,7 +311,10 @@ function ListingCardComponent({
               </div>
             )}
           </div>
-          <div className="flex justify-between items-center text-sm text-gray-300 font-medium mt-auto pt-3 border-t border-primary-500/20">
+          <div
+            className="flex justify-between items-center text-sm font-medium mt-auto pt-3 border-t border-primary-500/20"
+            style={{ color: 'rgb(243, 243, 243)' }}
+          >
             <span>{getCityNameMk(listing.city)}</span>
             <div className="flex items-center gap-3">
               {listing.views !== undefined && listing.views > 0 && (

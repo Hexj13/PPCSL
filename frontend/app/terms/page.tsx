@@ -553,7 +553,9 @@ export default function TermsPage() {
           {currentTerms.dictionary.terms.map((item, index) => (
             <div key={index} className="border-b border-primary-500/10 pb-4 last:border-b-0">
               <h3 className="font-semibold text-primary-300 mb-1">{item.term}</h3>
-              <p className="text-gray-300 text-sm leading-relaxed">{item.definition}</p>
+              <p className="text-sm leading-relaxed" style={{ color: 'rgb(243, 243, 243)' }}>
+                {item.definition}
+              </p>
             </div>
           ))}
         </div>
@@ -566,7 +568,7 @@ export default function TermsPage() {
             <button
               key={item.id}
               onClick={() => scrollToSection(item.id)}
-              className="block w-full text-left px-4 py-2 text-gray-300 hover:text-primary-400 hover:bg-primary-500/10 rounded-lg transition-all duration-200"
+              className="block w-full text-left px-4 py-2 text-[rgb(243_243_243)] hover:!text-primary-400 hover:bg-primary-500/10 rounded-lg transition-all duration-200"
             >
               {item.title}
             </button>
@@ -580,7 +582,11 @@ export default function TermsPage() {
             <h2 className="text-2xl md:text-3xl font-bold mb-4">{section.title}</h2>
             <div className="space-y-4">
               {section.content.map((paragraph, index) => (
-                <p key={index} className="text-gray-300 leading-relaxed text-base md:text-lg">
+                <p
+                  key={index}
+                  className="leading-relaxed text-base md:text-lg"
+                  style={{ color: 'rgb(243, 243, 243)' }}
+                >
                   {paragraph}
                 </p>
               ))}

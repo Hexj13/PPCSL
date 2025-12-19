@@ -63,7 +63,7 @@ export default function AdminPage() {
             className={`px-4 md:px-6 py-2 md:py-3 font-semibold transition-colors border-b-2 whitespace-nowrap ${
               activeTab === 'listings'
                 ? 'border-primary-500 text-primary-500'
-                : 'border-transparent text-gray-400 hover:text-gray-300'
+                : 'border-transparent text-gray-400'
             }`}
           >
             {t('admin.listingsTabLabel')}
@@ -73,7 +73,7 @@ export default function AdminPage() {
             className={`px-4 md:px-6 py-2 md:py-3 font-semibold transition-colors border-b-2 whitespace-nowrap ${
               activeTab === 'users'
                 ? 'border-primary-500 text-primary-500'
-                : 'border-transparent text-gray-400 hover:text-gray-300'
+                : 'border-transparent text-gray-400'
             }`}
           >
             {t('admin.usersTabLabel')}
@@ -357,8 +357,9 @@ function ListingsTab() {
               className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium transition-colors text-sm md:text-base ${
                 statusFilter === status
                   ? 'bg-primary-600 text-white'
-                  : 'bg-bg-light text-gray-300 hover:bg-bg-dark border border-primary-500/20'
+                  : 'bg-bg-light hover:bg-bg-dark border border-primary-500/20'
               }`}
+              style={statusFilter !== status ? { color: 'rgb(243, 243, 243)' } : undefined}
             >
               {status === 'All'
                 ? t('admin.listingsTab.all')
@@ -377,14 +378,16 @@ function ListingsTab() {
         </div>
       </div>
 
-      <div className="mb-3 md:mb-4 text-sm md:text-base text-gray-300">
+      <div className="mb-3 md:mb-4 text-sm md:text-base" style={{ color: 'rgb(243, 243, 243)' }}>
         {t('admin.listingsTab.totalListings')}:{' '}
         <span className="font-semibold text-white">{filteredListings.length}</span>
       </div>
 
       {filteredListings.length === 0 ? (
         <div className="text-center py-10 md:py-12">
-          <p className="text-gray-300 text-base md:text-lg">{t('admin.listingsTab.noListings')}</p>
+          <p className="text-base md:text-lg" style={{ color: 'rgb(243, 243, 243)' }}>
+            {t('admin.listingsTab.noListings')}
+          </p>
         </div>
       ) : (
         <>
@@ -403,7 +406,7 @@ function ListingsTab() {
           {loadingMore && (
             <div className="text-center py-6 md:py-8">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-              <p className="mt-2 text-gray-300 text-sm md:text-base">
+              <p className="mt-2 text-sm md:text-base" style={{ color: 'rgb(243, 243, 243)' }}>
                 {t('admin.listingsTab.loading')}
               </p>
             </div>
@@ -422,7 +425,7 @@ function ListingsTab() {
                 </div>
               ) : displayedCount >= filteredListings.length && filteredListings.length > 0 ? (
                 <div className="text-center py-6 md:py-8">
-                  <p className="text-gray-300 text-sm md:text-base">
+                  <p className="text-sm md:text-base" style={{ color: 'rgb(243, 243, 243)' }}>
                     {t('admin.listingsTab.noMoreListings')}
                   </p>
                 </div>
@@ -730,8 +733,9 @@ function UsersTab() {
               className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium transition-colors text-sm md:text-base ${
                 roleFilter === role
                   ? 'bg-primary-600 text-white'
-                  : 'bg-bg-light text-gray-300 hover:bg-bg-dark border border-primary-500/20'
+                  : 'bg-bg-light hover:bg-bg-dark border border-primary-500/20'
               }`}
+              style={roleFilter !== role ? { color: 'rgb(243, 243, 243)' } : undefined}
             >
               {role === 'All'
                 ? t('admin.usersTab.allRoles')
@@ -750,14 +754,16 @@ function UsersTab() {
         </div>
       </div>
 
-      <div className="mb-3 md:mb-4 text-sm md:text-base text-gray-300">
+      <div className="mb-3 md:mb-4 text-sm md:text-base" style={{ color: 'rgb(243, 243, 243)' }}>
         {t('admin.usersTab.totalUsers')}:{' '}
         <span className="font-semibold text-white">{filteredUsers.length}</span>
       </div>
 
       {filteredUsers.length === 0 ? (
         <div className="text-center py-10 md:py-12">
-          <p className="text-gray-300 text-base md:text-lg">{t('admin.usersTab.noUsers')}</p>
+          <p className="text-base md:text-lg" style={{ color: 'rgb(243, 243, 243)' }}>
+            {t('admin.usersTab.noUsers')}
+          </p>
         </div>
       ) : (
         <>
@@ -805,12 +811,18 @@ function UsersTab() {
                             t('admin.usersTab.deletedUser')}
                       </h3>
                       {user.companyName && (
-                        <p className="text-xs md:text-sm text-gray-300 mt-1 break-words">
+                        <p
+                          className="text-xs md:text-sm mt-1 break-words"
+                          style={{ color: 'rgb(243, 243, 243)' }}
+                        >
                           {user.companyName}
                         </p>
                       )}
                     </div>
-                    <div className="space-y-1 text-xs md:text-sm text-gray-300">
+                    <div
+                      className="space-y-1 text-xs md:text-sm"
+                      style={{ color: 'rgb(243, 243, 243)' }}
+                    >
                       {user.email ? (
                         <div className="break-words">
                           <span className="text-primary-400">{t('admin.usersTab.email')}</span>{' '}
@@ -901,7 +913,7 @@ function UsersTab() {
           {loadingMore && (
             <div className="text-center py-6 md:py-8">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-              <p className="mt-2 text-gray-300 text-sm md:text-base">
+              <p className="mt-2 text-sm md:text-base" style={{ color: 'rgb(243, 243, 243)' }}>
                 {t('admin.listingsTab.loading')}
               </p>
             </div>
@@ -920,7 +932,7 @@ function UsersTab() {
                 </div>
               ) : displayedCount >= filteredUsers.length && filteredUsers.length > 0 ? (
                 <div className="text-center py-6 md:py-8">
-                  <p className="text-gray-300 text-sm md:text-base">
+                  <p className="text-sm md:text-base" style={{ color: 'rgb(243, 243, 243)' }}>
                     {t('admin.usersTab.noMoreUsers')}
                   </p>
                 </div>

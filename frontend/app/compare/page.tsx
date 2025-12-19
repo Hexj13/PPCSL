@@ -130,7 +130,9 @@ export default function ComparePage() {
         />
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-          <p className="mt-4 text-gray-300">{t('common.loading')}</p>
+          <p className="mt-4" style={{ color: 'rgb(243, 243, 243)' }}>
+            {t('common.loading')}
+          </p>
         </div>
       </div>
     );
@@ -161,7 +163,9 @@ export default function ComparePage() {
             />
           </svg>
           <h2 className="text-2xl font-bold text-primary-400 mb-2">{t('compare.noVehicles')}</h2>
-          <p className="text-gray-300 mb-6">{t('compare.addVehiclesHint')}</p>
+          <p className="mb-6" style={{ color: 'rgb(243, 243, 243)' }}>
+            {t('compare.addVehiclesHint')}
+          </p>
           <div className="flex justify-center">
             <Link href="/" className="btn-primary">
               {t('compare.browseListings')}
@@ -243,9 +247,24 @@ export default function ComparePage() {
                 <td key={listing.id} className="py-4 px-4 text-center">
                   <Link
                     href={`/listings/${listing.id}`}
-                    className="text-white hover:text-primary-400 transition-colors underline font-medium"
+                    className="text-white hover:text-primary-400 transition-colors underline font-medium inline-flex items-center gap-1.5"
                   >
                     {getValue(listing.title)}
+                    <svg
+                      className="w-5 h-5 opacity-60"
+                      style={{ verticalAlign: 'middle', marginBottom: '2px' }}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                      />
+                    </svg>
                   </Link>
                 </td>
               ))}
@@ -253,7 +272,11 @@ export default function ComparePage() {
             <tr className="border-b border-primary-500/10">
               <td className="py-4 px-4 text-primary-400 font-semibold">{t('compare.brand')}</td>
               {listings.map((listing) => (
-                <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
+                <td
+                  key={listing.id}
+                  className="py-4 px-4 text-center"
+                  style={{ color: 'rgb(243, 243, 243)' }}
+                >
                   {getValue(listing.vehicle?.brand?.name)}
                 </td>
               ))}
@@ -261,7 +284,11 @@ export default function ComparePage() {
             <tr className="border-b border-primary-500/10">
               <td className="py-4 px-4 text-primary-400 font-semibold">{t('compare.model')}</td>
               {listings.map((listing) => (
-                <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
+                <td
+                  key={listing.id}
+                  className="py-4 px-4 text-center"
+                  style={{ color: 'rgb(243, 243, 243)' }}
+                >
                   {getValue(listing.vehicle?.model?.name)}
                 </td>
               ))}
@@ -269,7 +296,11 @@ export default function ComparePage() {
             <tr className="border-b border-primary-500/10">
               <td className="py-4 px-4 text-primary-400 font-semibold">{t('compare.year')}</td>
               {listings.map((listing) => (
-                <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
+                <td
+                  key={listing.id}
+                  className="py-4 px-4 text-center"
+                  style={{ color: 'rgb(243, 243, 243)' }}
+                >
                   {getValue(listing.vehicle?.year)}
                 </td>
               ))}
@@ -277,7 +308,11 @@ export default function ComparePage() {
             <tr className="border-b border-primary-500/10">
               <td className="py-4 px-4 text-primary-400 font-semibold">{t('compare.mileage')}</td>
               {listings.map((listing) => (
-                <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
+                <td
+                  key={listing.id}
+                  className="py-4 px-4 text-center"
+                  style={{ color: 'rgb(243, 243, 243)' }}
+                >
                   {listing.vehicle?.mileage_km
                     ? `${formatMileage(listing.vehicle.mileage_km)} км`
                     : t('compare.notAvailable')}
@@ -287,7 +322,11 @@ export default function ComparePage() {
             <tr className="border-b border-primary-500/10">
               <td className="py-4 px-4 text-primary-400 font-semibold">{t('compare.engine')}</td>
               {listings.map((listing) => (
-                <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
+                <td
+                  key={listing.id}
+                  className="py-4 px-4 text-center"
+                  style={{ color: 'rgb(243, 243, 243)' }}
+                >
                   {listing.vehicle?.engine_displ_l
                     ? `${formatEngineVolume(listing.vehicle.engine_displ_l)} л`
                     : t('compare.notAvailable')}
@@ -299,7 +338,11 @@ export default function ComparePage() {
                 {t('compare.horsepower')}
               </td>
               {listings.map((listing) => (
-                <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
+                <td
+                  key={listing.id}
+                  className="py-4 px-4 text-center"
+                  style={{ color: 'rgb(243, 243, 243)' }}
+                >
                   {getValue(listing.horsepower)}
                 </td>
               ))}
@@ -307,7 +350,11 @@ export default function ComparePage() {
             <tr className="border-b border-primary-500/10">
               <td className="py-4 px-4 text-primary-400 font-semibold">{t('compare.fuel')}</td>
               {listings.map((listing) => (
-                <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
+                <td
+                  key={listing.id}
+                  className="py-4 px-4 text-center"
+                  style={{ color: 'rgb(243, 243, 243)' }}
+                >
                   {getValue(listing.vehicle?.fuel)}
                 </td>
               ))}
@@ -317,7 +364,11 @@ export default function ComparePage() {
                 {t('compare.transmission')}
               </td>
               {listings.map((listing) => (
-                <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
+                <td
+                  key={listing.id}
+                  className="py-4 px-4 text-center"
+                  style={{ color: 'rgb(243, 243, 243)' }}
+                >
                   {listing.vehicle?.transmission
                     ? formatTransmission(listing.vehicle.transmission)
                     : t('compare.notAvailable')}
@@ -327,7 +378,11 @@ export default function ComparePage() {
             <tr className="border-b border-primary-500/10">
               <td className="py-4 px-4 text-primary-400 font-semibold">{t('compare.driveType')}</td>
               {listings.map((listing) => (
-                <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
+                <td
+                  key={listing.id}
+                  className="py-4 px-4 text-center"
+                  style={{ color: 'rgb(243, 243, 243)' }}
+                >
                   {listing.vehicle?.drive_type
                     ? formatDriveType(listing.vehicle.drive_type)
                     : t('compare.notAvailable')}
@@ -337,7 +392,11 @@ export default function ComparePage() {
             <tr className="border-b border-primary-500/10">
               <td className="py-4 px-4 text-primary-400 font-semibold">{t('compare.bodyType')}</td>
               {listings.map((listing) => (
-                <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
+                <td
+                  key={listing.id}
+                  className="py-4 px-4 text-center"
+                  style={{ color: 'rgb(243, 243, 243)' }}
+                >
                   {listing.vehicle?.body_type
                     ? formatBodyType(listing.vehicle.body_type)
                     : t('compare.notAvailable')}
@@ -347,7 +406,11 @@ export default function ComparePage() {
             <tr className="border-b border-primary-500/10">
               <td className="py-4 px-4 text-primary-400 font-semibold">{t('compare.color')}</td>
               {listings.map((listing) => (
-                <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
+                <td
+                  key={listing.id}
+                  className="py-4 px-4 text-center"
+                  style={{ color: 'rgb(243, 243, 243)' }}
+                >
                   {getValue(listing.vehicle?.color)}
                 </td>
               ))}
@@ -355,7 +418,11 @@ export default function ComparePage() {
             <tr className="border-b border-primary-500/10">
               <td className="py-4 px-4 text-primary-400 font-semibold">{t('compare.doors')}</td>
               {listings.map((listing) => (
-                <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
+                <td
+                  key={listing.id}
+                  className="py-4 px-4 text-center"
+                  style={{ color: 'rgb(243, 243, 243)' }}
+                >
                   {getValue(listing.vehicle?.doors)}
                 </td>
               ))}
@@ -363,7 +430,11 @@ export default function ComparePage() {
             <tr className="border-b border-primary-500/10">
               <td className="py-4 px-4 text-primary-400 font-semibold">{t('compare.condition')}</td>
               {listings.map((listing) => (
-                <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
+                <td
+                  key={listing.id}
+                  className="py-4 px-4 text-center"
+                  style={{ color: 'rgb(243, 243, 243)' }}
+                >
                   {listing.condition
                     ? formatCondition(listing.condition)
                     : t('compare.notAvailable')}
@@ -375,7 +446,11 @@ export default function ComparePage() {
                 {t('compare.registrationType')}
               </td>
               {listings.map((listing) => (
-                <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
+                <td
+                  key={listing.id}
+                  className="py-4 px-4 text-center"
+                  style={{ color: 'rgb(243, 243, 243)' }}
+                >
                   {listing.registration_type
                     ? formatRegistrationType(listing.registration_type)
                     : t('compare.notAvailable')}
@@ -387,7 +462,11 @@ export default function ComparePage() {
                 {t('compare.registration')}
               </td>
               {listings.map((listing) => (
-                <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
+                <td
+                  key={listing.id}
+                  className="py-4 px-4 text-center"
+                  style={{ color: 'rgb(243, 243, 243)' }}
+                >
                   {listing.is_registered !== undefined
                     ? listing.is_registered
                       ? t('compare.registered')
@@ -399,7 +478,11 @@ export default function ComparePage() {
             <tr className="border-b border-primary-500/10">
               <td className="py-4 px-4 text-primary-400 font-semibold">{t('compare.price')}</td>
               {listings.map((listing) => (
-                <td key={listing.id} className="py-4 px-4 text-center text-gray-300">
+                <td
+                  key={listing.id}
+                  className="py-4 px-4 text-center"
+                  style={{ color: 'rgb(243, 243, 243)' }}
+                >
                   {listing.status === 'Closed' || listing.price === undefined
                     ? t('compare.notAvailable')
                     : `${formatPrice(listing.price, listing.currency)} ${listing.currency || 'MKD'}`}

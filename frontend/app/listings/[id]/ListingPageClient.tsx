@@ -1097,7 +1097,9 @@ export default function ListingPageClient({
 
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-            <p className="mt-4 text-gray-300">{t('common.loading')}</p>
+            <p className="mt-4" style={{ color: 'rgb(243, 243, 243)' }}>
+              {t('common.loading')}
+            </p>
           </div>
         </div>
       </>
@@ -1212,7 +1214,10 @@ export default function ListingPageClient({
                     );
                   })()
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-300">
+                  <div
+                    className="w-full h-full flex items-center justify-center"
+                    style={{ color: 'rgb(243, 243, 243)' }}
+                  >
                     <svg
                       className="w-24 h-24"
                       fill="none"
@@ -1354,7 +1359,10 @@ export default function ListingPageClient({
                             );
                           })()
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-300">
+                          <div
+                            className="w-full h-full flex items-center justify-center"
+                            style={{ color: 'rgb(243, 243, 243)' }}
+                          >
                             <svg
                               className="w-8 h-8"
                               fill="none"
@@ -1380,7 +1388,10 @@ export default function ListingPageClient({
 
           <div className="space-y-6">
             <div>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-6 text-white">
+              <h1
+                className="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-6"
+                style={{ color: 'rgb(243, 243, 243)' }}
+              >
                 {h1Title}
               </h1>
               <div className="mb-6">
@@ -1397,7 +1408,10 @@ export default function ListingPageClient({
                       <span className="text-3xl sm:text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
                         {formatPrice(listing.price, listing.currency)}
                       </span>
-                      <span className="text-lg md:text-xl text-gray-300 font-medium">
+                      <span
+                        className="text-lg md:text-xl font-medium"
+                        style={{ color: 'rgb(243, 243, 243)' }}
+                      >
                         {listing.currency}
                       </span>
                     </>
@@ -1509,7 +1523,9 @@ export default function ListingPageClient({
                             <span className="text-primary-400 font-semibold">
                               {t('listingDetail.brand')}:
                             </span>
-                            <span className="ml-2 text-gray-300">{vehicle.brand.name}</span>
+                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
+                              {vehicle.brand.name}
+                            </span>
                           </div>
                         )}
                         {vehicle.model?.name && (
@@ -1517,7 +1533,9 @@ export default function ListingPageClient({
                             <span className="text-primary-400 font-semibold">
                               {t('listingDetail.model')}:
                             </span>
-                            <span className="ml-2 text-gray-300">{vehicle.model.name}</span>
+                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
+                              {vehicle.model.name}
+                            </span>
                           </div>
                         )}
                         {vehicle.year && (
@@ -1525,7 +1543,9 @@ export default function ListingPageClient({
                             <span className="text-primary-400 font-semibold">
                               {t('listingDetail.year')}:
                             </span>
-                            <span className="ml-2 text-gray-300">{vehicle.year}</span>
+                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
+                              {vehicle.year}
+                            </span>
                           </div>
                         )}
                         {listing.vin && (
@@ -1533,7 +1553,9 @@ export default function ListingPageClient({
                             <span className="text-primary-400 font-semibold">
                               {t('listingDetail.vin')}:
                             </span>
-                            <span className="ml-2 text-gray-300">{listing.vin}</span>
+                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
+                              {listing.vin}
+                            </span>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -1575,7 +1597,7 @@ export default function ListingPageClient({
                             <span className="text-primary-400 font-semibold">
                               {t('listingDetail.engine')}:
                             </span>
-                            <span className="ml-2 text-gray-300">
+                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
                               {formatEngineVolume(vehicle.engine_displ_l)} {t('listings.liters')}
                             </span>
                           </div>
@@ -1585,7 +1607,9 @@ export default function ListingPageClient({
                             <span className="text-primary-400 font-semibold">
                               {t('listingDetail.horsepower')}:
                             </span>
-                            <span className="ml-2 text-gray-300">{listing.horsepower}</span>
+                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
+                              {listing.horsepower}
+                            </span>
                           </div>
                         )}
                         {vehicle.fuel && (
@@ -1593,7 +1617,9 @@ export default function ListingPageClient({
                             <span className="text-primary-400 font-semibold">
                               {t('listingDetail.fuel')}:
                             </span>
-                            <span className="ml-2 text-gray-300">{vehicle.fuel}</span>
+                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
+                              {vehicle.fuel}
+                            </span>
                           </div>
                         )}
                         {vehicle.transmission && (
@@ -1601,7 +1627,7 @@ export default function ListingPageClient({
                             <span className="text-primary-400 font-semibold">
                               {t('listingDetail.transmission')}:
                             </span>
-                            <span className="ml-2 text-gray-300">
+                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
                               {formatTransmission(vehicle.transmission)}
                             </span>
                           </div>
@@ -1611,7 +1637,7 @@ export default function ListingPageClient({
                             <span className="text-primary-400 font-semibold">
                               {t('listingDetail.driveType')}:
                             </span>
-                            <span className="ml-2 text-gray-300">
+                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
                               {formatDriveType(vehicle.drive_type)}
                             </span>
                           </div>
@@ -1621,7 +1647,7 @@ export default function ListingPageClient({
                             <span className="text-primary-400 font-semibold">
                               {t('listingDetail.mileage')}:
                             </span>
-                            <span className="ml-2 text-gray-300">
+                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
                               {formatMileage(vehicle.mileage_km)} {t('listings.km')}
                             </span>
                           </div>
@@ -1638,7 +1664,7 @@ export default function ListingPageClient({
                             <span className="text-primary-400 font-semibold">
                               {t('listingDetail.bodyType')}:
                             </span>
-                            <span className="ml-2 text-gray-300">
+                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
                               {formatBodyType(vehicle.body_type)}
                             </span>
                           </div>
@@ -1648,7 +1674,9 @@ export default function ListingPageClient({
                             <span className="text-primary-400 font-semibold">
                               {t('listingDetail.color')}:
                             </span>
-                            <span className="ml-2 text-gray-300">{vehicle.color}</span>
+                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
+                              {vehicle.color}
+                            </span>
                           </div>
                         )}
                         {vehicle.doors && (
@@ -1656,7 +1684,9 @@ export default function ListingPageClient({
                             <span className="text-primary-400 font-semibold">
                               {t('listingDetail.doors')}:
                             </span>
-                            <span className="ml-2 text-gray-300">{vehicle.doors}</span>
+                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
+                              {vehicle.doors}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -1673,7 +1703,7 @@ export default function ListingPageClient({
                             <span className="text-primary-400 font-semibold">
                               {t('listingDetail.condition')}:
                             </span>
-                            <span className="ml-2 text-gray-300">
+                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
                               {formatCondition(listing.condition)}
                             </span>
                           </div>
@@ -1683,7 +1713,7 @@ export default function ListingPageClient({
                             <span className="text-primary-400 font-semibold">
                               {t('listingDetail.registrationType')}:
                             </span>
-                            <span className="ml-2 text-gray-300">
+                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
                               {formatRegistrationType(listing.registration_type)}
                             </span>
                           </div>
@@ -1693,7 +1723,7 @@ export default function ListingPageClient({
                             <span className="text-primary-400 font-semibold">
                               {t('listingDetail.registration')}:
                             </span>
-                            <span className="ml-2 text-gray-300">
+                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
                               {listing.is_registered
                                 ? t('listingDetail.registered')
                                 : t('listingDetail.notRegistered')}
@@ -1705,7 +1735,7 @@ export default function ListingPageClient({
                             <span className="text-primary-400 font-semibold">
                               {t('listingDetail.registeredUntil')}:
                             </span>
-                            <span className="ml-2 text-gray-300">
+                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
                               {(() => {
                                 const date = new Date(listing.registration_expires_at);
                                 const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -1728,14 +1758,15 @@ export default function ListingPageClient({
                   {t('listingDetail.description')}
                 </h2>
                 <div
-                  className="text-gray-300 leading-relaxed max-w-none listing-description whitespace-pre-wrap"
+                  className="leading-relaxed max-w-none listing-description whitespace-pre-wrap"
+                  style={{ color: 'rgb(243, 243, 243)' }}
                   dangerouslySetInnerHTML={{
                     __html: descriptionHtml || '',
                   }}
                 />
                 <style jsx>{`
                   .listing-description {
-                    color: #d1d5db;
+                    color: #f3f3f3;
                     line-height: 1.75;
                   }
                   .listing-description div,
@@ -1744,7 +1775,7 @@ export default function ListingPageClient({
                     margin: 0.75rem 0;
                     min-height: 1.2em;
                     line-height: 1.6;
-                    color: #d1d5db;
+                    color: #f3f3f3;
                   }
                   .listing-description div:empty,
                   .listing-description p:empty {
@@ -1775,16 +1806,16 @@ export default function ListingPageClient({
                   .listing-description strong,
                   .listing-description b {
                     font-weight: 700 !important;
-                    color: #d1d5db !important;
+                    color: #f3f3f3 !important;
                   }
                   .listing-description em,
                   .listing-description i {
                     font-style: italic !important;
-                    color: #d1d5db !important;
+                    color: #f3f3f3 !important;
                   }
                   .listing-description u {
                     text-decoration: underline;
-                    color: #d1d5db;
+                    color: #f3f3f3;
                   }
                   .listing-description ul {
                     list-style-type: disc !important;
@@ -1792,7 +1823,7 @@ export default function ListingPageClient({
                     display: block !important;
                     margin: 0.75rem 0 !important;
                     padding-left: 2rem !important;
-                    color: #d1d5db !important;
+                    color: #f3f3f3 !important;
                   }
                   .listing-description ol {
                     list-style-type: decimal !important;
@@ -1800,14 +1831,14 @@ export default function ListingPageClient({
                     display: block !important;
                     margin: 0.75rem 0 !important;
                     padding-left: 2rem !important;
-                    color: #d1d5db !important;
+                    color: #f3f3f3 !important;
                   }
                   .listing-description li {
                     display: list-item !important;
                     list-style-position: outside !important;
                     margin: 0.25rem 0 !important;
                     padding-left: 0.5rem !important;
-                    color: #d1d5db !important;
+                    color: #f3f3f3 !important;
                   }
                   .listing-description ul li {
                     list-style-type: disc !important;
@@ -1853,7 +1884,10 @@ export default function ListingPageClient({
                       className={`absolute right-0 bottom-full mb-2 ${showHistoryHint ? 'block' : 'hidden group-hover:block'} z-10 w-64`}
                     >
                       <div className="bg-bg-darker border-2 border-primary-500/50 rounded-lg p-3 shadow-lg">
-                        <p className="text-xs font-semibold text-gray-300 leading-relaxed">
+                        <p
+                          className="text-xs font-semibold leading-relaxed"
+                          style={{ color: 'rgb(243, 243, 243)' }}
+                        >
                           {t('listingDetail.historyHint')}
                         </p>
                       </div>
@@ -1880,7 +1914,7 @@ export default function ListingPageClient({
                     <p className="font-semibold text-primary-300 text-sm mb-1">
                       {t('listingDetail.vinNotProvided')}
                     </p>
-                    <p className="text-gray-300 text-sm">
+                    <p className="text-sm" style={{ color: 'rgb(243, 243, 243)' }}>
                       {t('listingDetail.vinNotProvidedDescription')}
                     </p>
                   </div>
@@ -1894,16 +1928,28 @@ export default function ListingPageClient({
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-primary-500/20">
-                        <th className="text-left py-2 px-2 sm:px-3 text-gray-300 font-semibold text-xs sm:text-sm">
+                        <th
+                          className="text-left py-2 px-2 sm:px-3 font-semibold text-xs sm:text-sm"
+                          style={{ color: 'rgb(243, 243, 243)' }}
+                        >
                           {t('listingDetail.title')}
                         </th>
-                        <th className="text-left py-2 px-2 sm:px-3 text-gray-300 font-semibold text-xs sm:text-sm hidden sm:table-cell">
+                        <th
+                          className="text-left py-2 px-2 sm:px-3 font-semibold text-xs sm:text-sm hidden sm:table-cell"
+                          style={{ color: 'rgb(243, 243, 243)' }}
+                        >
                           {t('listingDetail.mileage')}
                         </th>
-                        <th className="text-left py-2 px-2 sm:px-3 text-gray-300 font-semibold text-xs sm:text-sm hidden md:table-cell">
+                        <th
+                          className="text-left py-2 px-2 sm:px-3 font-semibold text-xs sm:text-sm hidden md:table-cell"
+                          style={{ color: 'rgb(243, 243, 243)' }}
+                        >
                           {t('listingDetail.closedAt')}
                         </th>
-                        <th className="text-left sm:text-right py-2 px-2 sm:px-3 text-gray-300 font-semibold text-xs sm:text-sm"></th>
+                        <th
+                          className="text-left sm:text-right py-2 px-2 sm:px-3 font-semibold text-xs sm:text-sm"
+                          style={{ color: 'rgb(243, 243, 243)' }}
+                        ></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1916,12 +1962,18 @@ export default function ListingPageClient({
                           <td className="py-3 px-2 sm:px-3 text-white text-xs sm:text-sm">
                             {prevListing.title}
                           </td>
-                          <td className="py-3 px-2 sm:px-3 font-semibold text-gray-300 text-xs sm:text-sm hidden sm:table-cell">
+                          <td
+                            className="py-3 px-2 sm:px-3 font-semibold text-xs sm:text-sm hidden sm:table-cell"
+                            style={{ color: 'rgb(243, 243, 243)' }}
+                          >
                             {prevListing.vehicle?.mileage_km
                               ? formatMileage(prevListing.vehicle.mileage_km) + ' км'
                               : '-'}
                           </td>
-                          <td className="py-3 px-2 sm:px-3 font-semibold text-gray-300 text-xs sm:text-sm hidden md:table-cell">
+                          <td
+                            className="py-3 px-2 sm:px-3 font-semibold text-xs sm:text-sm hidden md:table-cell"
+                            style={{ color: 'rgb(243, 243, 243)' }}
+                          >
                             {formatDate(prevListing.updated_at)}
                           </td>
                           <td className="py-3 px-2 sm:px-3 text-left sm:text-right">
@@ -1935,7 +1987,9 @@ export default function ListingPageClient({
                   </table>
                 </div>
               ) : (
-                <p className="text-gray-300">{t('listingDetail.noPreviousListings')}</p>
+                <p style={{ color: 'rgb(243, 243, 243)' }}>
+                  {t('listingDetail.noPreviousListings')}
+                </p>
               )}
             </div>
           </div>
@@ -1951,7 +2005,7 @@ export default function ListingPageClient({
                     <span className="font-semibold text-primary-400">
                       {t('listingDetail.sellerType')}:
                     </span>
-                    <span className="ml-2 text-gray-300">
+                    <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
                       {listing.user.type === 'Business'
                         ? t('listingDetail.business')
                         : t('listingDetail.individual')}
@@ -1965,7 +2019,9 @@ export default function ListingPageClient({
                         <span className="font-semibold text-primary-400">
                           {t('listingDetail.company')}:
                         </span>
-                        <span className="ml-2 text-gray-300">{listing.user.companyName}</span>
+                        <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
+                          {listing.user.companyName}
+                        </span>
                       </div>
                     )}
 
@@ -1977,7 +2033,7 @@ export default function ListingPageClient({
                         <span className="font-semibold text-primary-400">
                           {t('listingDetail.name')}:
                         </span>
-                        <span className="ml-2 text-gray-300">
+                        <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
                           {listing.user.firstName} {listing.user.lastName}
                         </span>
                       </div>
@@ -1987,7 +2043,9 @@ export default function ListingPageClient({
                     <span className="font-semibold text-primary-400">
                       {t('listingDetail.city')}:
                     </span>
-                    <span className="ml-2 text-gray-300">{getCityNameMk(listing.city)}</span>
+                    <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
+                      {getCityNameMk(listing.city)}
+                    </span>
                   </div>
 
                   {listing.status === 'Closed' ? (
@@ -2005,7 +2063,8 @@ export default function ListingPageClient({
                         </span>
                         <a
                           href={`mailto:${listing.user.email}`}
-                          className="ml-2 text-gray-300 hover:text-primary-300 transition-colors underline"
+                          className="ml-2 hover:text-primary-300 transition-colors underline"
+                          style={{ color: 'rgb(243, 243, 243)' }}
                         >
                           {listing.user.email}
                         </a>
@@ -2057,7 +2116,8 @@ export default function ListingPageClient({
                               price: listing.price,
                             });
                           }}
-                          className="ml-2 text-gray-300 hover:text-primary-300 transition-colors underline"
+                          className="ml-2 hover:text-primary-300 transition-colors underline"
+                          style={{ color: 'rgb(243, 243, 243)' }}
                         >
                           {listing.user.phone}
                         </a>
@@ -2208,7 +2268,7 @@ export default function ListingPageClient({
                     <span className="font-semibold text-primary-400">
                       {t('listingDetail.views')}:
                     </span>
-                    <span className="text-gray-300">{listing.views}</span>
+                    <span style={{ color: 'rgb(243, 243, 243)' }}>{listing.views}</span>
                   </div>
                 )}
                 <div className="flex items-center gap-2 text-sm">
@@ -2228,7 +2288,9 @@ export default function ListingPageClient({
                   <span className="font-semibold text-primary-400">
                     {t('listingDetail.updated')}:
                   </span>
-                  <span className="text-gray-300">{formatDate(listing.last_updated_at)}</span>
+                  <span style={{ color: 'rgb(243, 243, 243)' }}>
+                    {formatDate(listing.last_updated_at)}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <svg
@@ -2247,7 +2309,7 @@ export default function ListingPageClient({
                   <span className="font-semibold text-primary-400">
                     {t('listingDetail.willClose')}:
                   </span>
-                  <span className="text-gray-300">{formatDate(closingDate)}</span>
+                  <span style={{ color: 'rgb(243, 243, 243)' }}>{formatDate(closingDate)}</span>
                 </div>
               </div>
             </div>
@@ -2378,7 +2440,10 @@ export default function ListingPageClient({
                 );
               })()
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-300">
+              <div
+                className="w-full h-full flex items-center justify-center"
+                style={{ color: 'rgb(243, 243, 243)' }}
+              >
                 <svg className="w-48 h-48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"

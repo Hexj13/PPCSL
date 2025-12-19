@@ -417,8 +417,9 @@ export default function MyListingsPage() {
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   statusFilter === status
                     ? 'bg-primary-600 text-white'
-                    : 'bg-bg-light text-gray-300 hover:bg-bg-dark border border-primary-500/20'
+                    : 'bg-bg-light hover:bg-bg-dark border border-primary-500/20'
                 }`}
+                style={statusFilter !== status ? { color: 'rgb(243, 243, 243)' } : undefined}
               >
                 {status === 'All'
                   ? t('myListings.all')
@@ -440,13 +441,17 @@ export default function MyListingsPage() {
 
       {!listings || listings.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-300 text-lg">{t('myListings.noListingsYet')}</p>
+          <p className="text-lg" style={{ color: 'rgb(243, 243, 243)' }}>
+            {t('myListings.noListingsYet')}
+          </p>
         </div>
       ) : (
         <>
           {filteredListings.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-300 text-lg">{t('myListings.noListingsWithStatus')}</p>
+              <p className="text-lg" style={{ color: 'rgb(243, 243, 243)' }}>
+                {t('myListings.noListingsWithStatus')}
+              </p>
             </div>
           ) : (
             <>
@@ -466,7 +471,9 @@ export default function MyListingsPage() {
           {loadingMore && (
             <div className="text-center py-8">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-              <p className="mt-2 text-gray-300">{t('common.loading')}</p>
+              <p className="mt-2" style={{ color: 'rgb(243, 243, 243)' }}>
+                {t('common.loading')}
+              </p>
             </div>
           )}
 
@@ -485,7 +492,7 @@ export default function MyListingsPage() {
 
               {meta && meta.totalPages && currentPage >= meta.totalPages && listings.length > 0 && (
                 <div className="text-center py-8">
-                  <p className="text-gray-300">{t('myListings.noMoreListings')}</p>
+                  <p style={{ color: 'rgb(243, 243, 243)' }}>{t('myListings.noMoreListings')}</p>
                 </div>
               )}
             </>
