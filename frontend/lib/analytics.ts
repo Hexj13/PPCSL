@@ -180,4 +180,12 @@ export const analytics = {
       method: method || 'email',
     });
   },
+
+  quickFilter: (brand: string, model?: string) => {
+    trackEvent('quick_filter_click', {
+      filter_type: model ? 'brand_model' : 'brand',
+      brand: brand,
+      model: model,
+    });
+  },
 };

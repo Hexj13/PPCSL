@@ -362,6 +362,8 @@ export function SearchFilters() {
 
   const applyPopularFilter = useCallback(
     (brandName: string, modelName?: string) => {
+      analytics.quickFilter(brandName, modelName);
+
       const brandSlug = createSlug(brandName);
       const modelSlug = modelName ? createSlug(modelName) : undefined;
 
@@ -501,6 +503,7 @@ export function SearchFilters() {
     if (!brandParam) {
       if (processedBrandParamRef.current !== null) {
         processedBrandParamRef.current = null;
+        processedModelParamRef.current = null;
       }
       return;
     }
@@ -523,9 +526,11 @@ export function SearchFilters() {
           if (currentIds === newIds && prev.brand_ids.length === foundBrandIds.length) {
             return prev;
           }
+          processedModelParamRef.current = null;
           return {
             ...prev,
             brand_ids: foundBrandIds,
+            model_ids: [],
           };
         });
       }
@@ -539,6 +544,7 @@ export function SearchFilters() {
     if (!modelParam) {
       if (processedModelParamRef.current !== null) {
         processedModelParamRef.current = null;
+        setFilters((prev) => ({ ...prev, model_ids: [] }));
       }
       return;
     }
@@ -558,20 +564,19 @@ export function SearchFilters() {
         })
         .filter((id): id is string => id !== undefined);
 
-      if (foundModelIds.length > 0) {
-        setFilters((prev) => {
-          const currentIds = prev.model_ids.sort().join(',');
-          const newIds = foundModelIds.sort().join(',');
-          if (currentIds === newIds && prev.model_ids.length === foundModelIds.length) {
-            return prev;
-          }
-          return {
-            ...prev,
-            model_ids: foundModelIds,
-          };
-        });
-      }
-      processedModelParamRef.current = modelParam;
+      setFilters((prev) => {
+        const currentIds = prev.model_ids.sort().join(',');
+        const newIds = foundModelIds.sort().join(',');
+        if (currentIds === newIds && prev.model_ids.length === foundModelIds.length) {
+          processedModelParamRef.current = modelParam;
+          return prev;
+        }
+        processedModelParamRef.current = modelParam;
+        return {
+          ...prev,
+          model_ids: foundModelIds,
+        };
+      });
     }
   }, [models, filters.brand_ids, searchParams]);
 
@@ -723,6 +728,33 @@ export function SearchFilters() {
           );
           setModels(sorted);
           setLoadingModels(false);
+
+          const modelParam = searchParams.get('model');
+          if (modelParam) {
+            const modelSlugs = modelParam.split(',').map((s) => s.trim().toLowerCase());
+            const foundModelIds = modelSlugs
+              .map((slug) => {
+                const model = sorted.find(
+                  (m) => m.name.toLowerCase() === slug || createSlug(m.name) === slug
+                );
+                return model && filters.brand_ids.includes(model.brand_id) ? model.id : undefined;
+              })
+              .filter((id): id is string => id !== undefined);
+
+            if (foundModelIds.length > 0) {
+              setFilters((prev) => {
+                const currentIds = prev.model_ids.sort().join(',');
+                const newIds = foundModelIds.sort().join(',');
+                if (currentIds === newIds && prev.model_ids.length === foundModelIds.length) {
+                  return prev;
+                }
+                return { ...prev, model_ids: foundModelIds };
+              });
+              processedModelParamRef.current = modelParam;
+              return;
+            }
+          }
+
           setFilters((prev) => {
             const validModelIds = prev.model_ids.filter((modelId) =>
               sorted.find((m) => m.id === modelId)
@@ -737,7 +769,7 @@ export function SearchFilters() {
       setModels([]);
       setFilters((prev) => ({ ...prev, model_ids: [] }));
     }
-  }, [filters.brand_ids]);
+  }, [filters.brand_ids, searchParams]);
 
   useEffect(() => {
     const prevUser = prevUserRef.current;
@@ -1180,6 +1212,33 @@ export function SearchFilters() {
   const getFiltersForSave = () => {
     return { ...filters };
   };
+
+  const isQuickFilterActive = useCallback(
+    (brandName: string, modelName?: string) => {
+      const brandParam = searchParams.get('brand');
+      const modelParam = searchParams.get('model');
+
+      if (!brandParam) return false;
+
+      const brandSlug = createSlug(brandName);
+      const brandSlugs = brandParam.split(',').map((s) => s.trim().toLowerCase());
+
+      const brandMatches =
+        brandSlugs.includes(brandSlug) || brandSlugs.includes(brandName.toLowerCase());
+
+      if (!brandMatches) return false;
+
+      if (modelName) {
+        if (!modelParam) return false;
+        const modelSlug = createSlug(modelName);
+        const modelSlugs = modelParam.split(',').map((s) => s.trim().toLowerCase());
+        return modelSlugs.includes(modelSlug) || modelSlugs.includes(modelName.toLowerCase());
+      }
+
+      return !modelParam || modelParam === '';
+    },
+    [searchParams]
+  );
 
   return (
     <form id="search-filters" onSubmit={handleSubmit} className="card p-4 md:p-5 mb-6">
@@ -2038,7 +2097,9 @@ export function SearchFilters() {
             className="px-3 py-1 text-sm font-semibold text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors duration-200 flex items-center gap-1"
           >
             <span>
-              {showPopularFilters ? t('searchFilters.hideAdvanced') : t('searchFilters.showAdvanced')}
+              {showPopularFilters
+                ? t('searchFilters.hideAdvanced')
+                : t('searchFilters.showAdvanced')}
             </span>
             <svg
               className={`w-4 h-4 transition-transform duration-200 ${
@@ -2062,6 +2123,7 @@ export function SearchFilters() {
           {POPULAR_BRANDS.map((brand) => {
             const models = (POPULAR_MODELS_BY_BRAND[brand] || []).slice(0, 4);
             const brandHref = `/?brand=${encodeURIComponent(createSlug(brand))}`;
+            const isBrandActive = isQuickFilterActive(brand);
             return (
               <div key={brand} className="flex flex-wrap items-center gap-2">
                 <Link
@@ -2072,12 +2134,17 @@ export function SearchFilters() {
                     e.preventDefault();
                     applyPopularFilter(brand);
                   }}
-                  className="px-3 py-2 rounded-full bg-primary-500/15 hover:bg-primary-500/25 text-primary-100 border-2 border-primary-400/60 hover:border-primary-300/90 transition-colors text-sm"
+                  className={`px-3 py-2 rounded-full text-primary-100 border-2 transition-all text-sm ${
+                    isBrandActive
+                      ? 'bg-gradient-to-r from-primary-500/30 via-primary-500/40 to-primary-500/30 border-primary-400 shadow-[0_0_8px_rgba(0,255,136,0.3)]'
+                      : 'bg-primary-500/15 border-primary-400/60 hover:bg-primary-500/25 hover:border-primary-300/90'
+                  }`}
                 >
                   {brand}
                 </Link>
                 {models.map((model) => {
                   const modelHref = `/?brand=${encodeURIComponent(createSlug(brand))}&model=${encodeURIComponent(createSlug(model))}`;
+                  const isModelActive = isQuickFilterActive(brand, model);
                   return (
                     <Link
                       key={`${brand}-${model}`}
@@ -2088,7 +2155,11 @@ export function SearchFilters() {
                         e.preventDefault();
                         applyPopularFilter(brand, model);
                       }}
-                      className="px-3 py-2 rounded-full bg-primary-500/5 hover:bg-primary-500/15 text-primary-200 hover:text-primary-100 border border-primary-500/20 hover:border-primary-500/30 transition-colors text-sm"
+                      className={`px-3 py-2 rounded-full text-primary-200 border transition-all text-sm ${
+                        isModelActive
+                          ? 'bg-gradient-to-r from-primary-500/25 via-primary-500/35 to-primary-500/25 text-primary-100 border-primary-500/40 shadow-[0_0_6px_rgba(0,255,136,0.25)]'
+                          : 'bg-primary-500/5 border-primary-500/20 hover:bg-primary-500/15 hover:text-primary-100 hover:border-primary-500/30'
+                      }`}
                     >
                       {brand} {model}
                     </Link>
