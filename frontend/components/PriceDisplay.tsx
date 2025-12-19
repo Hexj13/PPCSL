@@ -37,7 +37,7 @@ export function PriceDisplay({
         <span
           className={`${sizeClasses[size]} font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent`}
         >
-          {formatPrice(price, currency as 'MKD' | 'EUR' | undefined)}
+          {formatPrice(price, currency)}
         </span>
         {showCurrency && (
           <span className={`${currencySizeClasses[size]} text-gray-400 font-medium`}>

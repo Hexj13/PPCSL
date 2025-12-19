@@ -152,6 +152,10 @@ JWT_SECRET=your-secret-key-change-in-production
 # CORS Configuration
 FRONTEND_URL=http://localhost:3000
 
+# Watermark Configuration (optional)
+WATERMARK_DOMAIN=your-domain.com
+# If not set, domain will be extracted from FRONTEND_URL
+
 # Redis Configuration (optional)
 REDIS_HOST=localhost
 REDIS_PORT=6379
@@ -177,6 +181,8 @@ NEXT_PUBLIC_API_URL=http://localhost:4000
 
 # Site Configuration
 NEXT_PUBLIC_SITE_URL=https://kupito.mk
+NEXT_PUBLIC_COUNTRY=mk
+# Country code for locale-specific configuration (mk, al, etc.)
 
 # Google Search Console Verification (optional)
 NEXT_PUBLIC_GOOGLE_VERIFICATION=your-verification-code
@@ -323,7 +329,7 @@ DELETE /api/saved-filters/:id          # Delete saved filter
 
 ```http
 POST /api/upload/image                # Upload and optimize image
-                                      # Automatically applies watermark (logo + "kupito.club" text)
+                                      # Automatically applies watermark (logo + domain text)
                                       # Images are resized, watermarked, and converted to WebP
 GET  /api/upload/image/:filename      # Get optimized image version
                                      # Query params: ?quality=X&width=Y
@@ -332,7 +338,10 @@ GET  /api/upload/image/:filename      # Get optimized image version
 **Watermark Details:**
 - Watermark is automatically applied to all uploaded images
 - Logo file location: `backend/assets/watermark/logo.png`
-- Watermark includes: logo (15% of image size) + "kupito.club" text below
+- Watermark includes: logo (15% of image size) + domain text below
+- Watermark domain is configurable via `WATERMARK_DOMAIN` environment variable
+- If `WATERMARK_DOMAIN` is not set, domain is extracted from `FRONTEND_URL` environment variable
+- Default domain: `kupito.club` (fallback)
 - Watermark opacity: 35%
 - Watermark position: bottom-right corner with 3% padding
 - Logo is centered relative to the text

@@ -7,6 +7,7 @@ import { toast } from 'react-hot-toast';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { useTranslation } from '@/hooks/useTranslation';
 import { listingsApi, Listing } from '@/lib/api';
+import { loadSiteConfigSync } from '@/lib/site-config';
 import { useComparisonStore } from '@/lib/store';
 import {
   formatPrice,
@@ -27,6 +28,9 @@ export default function ComparePage() {
   const prevComparisonsRef = useRef<string[]>([]);
   const listingsLengthRef = useRef(0);
   const hasRehydratedRef = useRef(false);
+
+  const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+  const siteConfig = loadSiteConfigSync(country);
 
   useEffect(() => {
     const rehydrateAndFetch = async () => {
@@ -485,7 +489,7 @@ export default function ComparePage() {
                 >
                   {listing.status === 'Closed' || listing.price === undefined
                     ? t('compare.notAvailable')
-                    : `${formatPrice(listing.price, listing.currency)} ${listing.currency || 'MKD'}`}
+                    : `${formatPrice(listing.price, listing.currency)} ${listing.currency || siteConfig.currency}`}
                 </td>
               ))}
             </tr>

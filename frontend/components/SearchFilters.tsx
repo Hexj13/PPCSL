@@ -10,6 +10,7 @@ import { analytics } from '@/lib/analytics';
 import { brandsApi, citiesApi, Brand, VehicleModel, City, User } from '@/lib/api';
 import { ConditionType, DriveType, RegistrationType } from '@/lib/constants';
 import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/popular-brands';
+import { loadSiteConfigSync } from '@/lib/site-config';
 import { useAuthStore } from '@/lib/store';
 import { createSlug } from '@/lib/utils';
 
@@ -24,6 +25,12 @@ const FILTERS_STORAGE_KEY = 'kupito_search_filters';
 const POPULAR_FILTERS_OPEN_KEY = 'kupito_popular_filters_open';
 const ADVANCED_FILTERS_OPEN_KEY = 'kupito_advanced_filters_open';
 const MAX_URL_LENGTH = 1800;
+
+function getLocale(): string {
+  const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+  const siteConfig = loadSiteConfigSync(country);
+  return siteConfig.locale.split('_')[0];
+}
 
 type LabeledOption<T = string> = { value: T; label: string };
 
@@ -571,10 +578,10 @@ export function SearchFilters() {
   const getBrandOptions = useCallback(() => {
     const popularBrands = brands
       .filter((brand) => POPULAR_BRANDS.includes(brand.name))
-      .sort((a, b) => a.name.localeCompare(b.name, 'mk'));
+      .sort((a, b) => a.name.localeCompare(b.name, getLocale()));
     const otherBrands = brands
       .filter((brand) => !POPULAR_BRANDS.includes(brand.name))
-      .sort((a, b) => a.name.localeCompare(b.name, 'mk'));
+      .sort((a, b) => a.name.localeCompare(b.name, getLocale()));
 
     const options: Array<{ value: string; label: string; category?: string }> = [
       { value: 'all', label: t('searchFilters.allBrands') },
@@ -619,7 +626,7 @@ export function SearchFilters() {
         const brandA = brandsMap.get(a);
         const brandB = brandsMap.get(b);
         if (!brandA || !brandB) return 0;
-        return brandA.name.localeCompare(brandB.name, 'mk');
+        return brandA.name.localeCompare(brandB.name, getLocale());
       });
 
       sortedBrandIds.forEach((brandId) => {
@@ -628,7 +635,7 @@ export function SearchFilters() {
           const brandModels = modelsByBrand.get(brandId) || [];
           if (brandModels.length > 0) {
             const sortedModels = [...brandModels].sort((a, b) =>
-              a.name.localeCompare(b.name, 'mk')
+              a.name.localeCompare(b.name, getLocale())
             );
             options.push({
               value: `__category__${brand.id}`,
@@ -642,7 +649,7 @@ export function SearchFilters() {
         }
       });
     } else {
-      const sortedModels = [...models].sort((a, b) => a.name.localeCompare(b.name, 'mk'));
+      const sortedModels = [...models].sort((a, b) => a.name.localeCompare(b.name, getLocale()));
       sortedModels.forEach((model) => {
         options.push({ value: model.id, label: model.name });
       });
@@ -654,10 +661,10 @@ export function SearchFilters() {
   const getCityOptions = useCallback(() => {
     const popularCities = cities
       .filter((city) => POPULAR_CITIES.includes(city.name))
-      .sort((a, b) => a.name.localeCompare(b.name, 'mk'));
+      .sort((a, b) => a.name.localeCompare(b.name, getLocale()));
     const otherCities = cities
       .filter((city) => !POPULAR_CITIES.includes(city.name))
-      .sort((a, b) => a.name.localeCompare(b.name, 'mk'));
+      .sort((a, b) => a.name.localeCompare(b.name, getLocale()));
 
     const options: Array<{ value: string; label: string; category?: string }> = [
       { value: 'all', label: t('searchFilters.allCities') },
@@ -692,11 +699,11 @@ export function SearchFilters() {
 
   useEffect(() => {
     brandsApi.getAll().then((res) => {
-      const sorted = [...res.data].sort((a, b) => a.name.localeCompare(b.name, 'mk'));
+      const sorted = [...res.data].sort((a, b) => a.name.localeCompare(b.name, getLocale()));
       setBrands(sorted);
     });
     citiesApi.getAll().then((res) => {
-      const sorted = [...res.data].sort((a, b) => a.name.localeCompare(b.name, 'mk'));
+      const sorted = [...res.data].sort((a, b) => a.name.localeCompare(b.name, getLocale()));
       setCities(sorted);
     });
   }, []);
@@ -711,7 +718,9 @@ export function SearchFilters() {
           const uniqueModels = Array.from(
             new Map(allModels.map((model) => [model.id, model])).values()
           );
-          const sorted = [...uniqueModels].sort((a, b) => a.name.localeCompare(b.name, 'mk'));
+          const sorted = [...uniqueModels].sort((a, b) =>
+            a.name.localeCompare(b.name, getLocale())
+          );
           setModels(sorted);
           setLoadingModels(false);
           setFilters((prev) => {

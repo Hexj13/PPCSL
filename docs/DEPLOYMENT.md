@@ -221,6 +221,10 @@ SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
 SMTP_PASSWORD=your-app-password
 SMTP_FROM=noreply@your-domain.com
+
+# Watermark Configuration (optional)
+WATERMARK_DOMAIN=your-domain.com
+# If not set, domain will be extracted from FRONTEND_URL
 ```
 
 **Generate JWT_SECRET:**

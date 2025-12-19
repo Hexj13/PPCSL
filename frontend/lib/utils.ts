@@ -1,7 +1,16 @@
-export function formatPrice(price: number | undefined, _currency: 'MKD' | 'EUR' = 'MKD'): string {
+import { loadSiteConfigSync } from './site-config';
+
+export function formatPrice(price: number | undefined, currency?: string): string {
   if (price === undefined || price === null) {
     return '';
   }
+
+  if (!currency) {
+    const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+    const siteConfig = loadSiteConfigSync(country);
+    currency = siteConfig.currency;
+  }
+
   const formattedPrice = new Intl.NumberFormat('ru-RU', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,

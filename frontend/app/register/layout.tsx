@@ -1,8 +1,11 @@
 import type { Metadata } from 'next';
 
 import { getServerTranslations } from '@/lib/i18n';
+import { loadSiteConfigSync } from '@/lib/site-config';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club';
+const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+const siteConfig = loadSiteConfigSync(country);
+const siteUrl = siteConfig.siteUrl;
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = getServerTranslations('mk');
@@ -34,8 +37,8 @@ export async function generateMetadata(): Promise<Metadata> {
           alt: t.metadata.register.ogAlt,
         },
       ],
-      siteName: 'Kupito',
-      locale: 'mk_MK',
+      siteName: siteConfig.name,
+      locale: siteConfig.locale,
     },
     twitter: {
       card: 'summary_large_image',

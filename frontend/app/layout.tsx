@@ -14,93 +14,97 @@ import { OfflineBanner } from '@/components/OfflineBanner';
 import { OrganizationSchema } from '@/components/OrganizationSchema';
 import { ScrollReset } from '@/components/ScrollReset';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
+import { loadSiteConfig } from '@/lib/site-config';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'], display: 'swap' });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club';
-const siteName = 'Kupito';
-const defaultTitle = 'Kupito - Автомобили во Македонија';
-const defaultDescription = 'Купете или продадете авто на Kupito! Објавете оглас бесплатно.';
+export async function generateMetadata(): Promise<Metadata> {
+  const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+  const siteConfig = await loadSiteConfig(country);
 
-export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
-  title: {
-    default: defaultTitle,
-    template: `%s | ${siteName}`,
-  },
-  description: defaultDescription,
-  keywords: [
-    'автомобили Македонија',
-    'купување автомобили онлајн',
-    'продажба автомобили Македонија',
-    'автомобили огласи Македонија',
-    'avtomobili makedonija',
-    'kupuvanje avtomobili online',
-    'prodazba avtomobili mk',
-    'avtomobil oglasi makedonija',
-  ],
-  authors: [{ name: siteName }],
-  creator: siteName,
-  publisher: siteName,
-  formatDetection: {
-    email: false,
-    address: false,
-    telephone: false,
-  },
-  openGraph: {
-    type: 'website',
-    locale: 'mk_MK',
-    url: siteUrl,
-    siteName,
-    title: defaultTitle,
+  const defaultTitle = `${siteConfig.name} - Автомобили во Македонија`;
+  const defaultDescription = 'Купете или продадете авто на Kupito! Објавете оглас бесплатно.';
+
+  return {
+    metadataBase: new URL(siteConfig.siteUrl),
+    title: {
+      default: defaultTitle,
+      template: `%s | ${siteConfig.name}`,
+    },
     description: defaultDescription,
-    images: [
-      {
-        url: `${siteUrl}/opengraph-image`,
-        width: 1200,
-        height: 630,
-        alt: siteName,
-      },
+    keywords: [
+      'автомобили Македонија',
+      'купување автомобили онлајн',
+      'продажба автомобили Македонија',
+      'автомобили огласи Македонија',
+      'avtomobili makedonija',
+      'kupuvanje avtomobili online',
+      'prodazba avtomobili mk',
+      'avtomobil oglasi makedonija',
     ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: defaultTitle,
-    description: defaultDescription,
-    images: [`${siteUrl}/opengraph-image`],
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
+    authors: [{ name: siteConfig.name }],
+    creator: siteConfig.name,
+    publisher: siteConfig.name,
+    formatDetection: {
+      email: false,
+      address: false,
+      telephone: false,
+    },
+    openGraph: {
+      type: 'website',
+      locale: siteConfig.locale,
+      url: siteConfig.siteUrl,
+      siteName: siteConfig.name,
+      title: defaultTitle,
+      description: defaultDescription,
+      images: [
+        {
+          url: `${siteConfig.siteUrl}/opengraph-image`,
+          width: 1200,
+          height: 630,
+          alt: siteConfig.name,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: defaultTitle,
+      description: defaultDescription,
+      images: [`${siteConfig.siteUrl}/opengraph-image`],
+    },
+    robots: {
       index: true,
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
     },
-  },
-  verification: {
-    google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION,
-  },
-  icons: {
-    icon: [
-      { url: '/favicon.ico', sizes: 'any' },
-      { url: '/favicon-64.png', sizes: '64x64', type: 'image/png' },
-      { url: '/favicon-192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
-      { url: '/favicon-512.png', sizes: '512x512', type: 'image/png' },
-    ],
-    apple: [{ url: '/logo.png', sizes: '180x180', type: 'image/png' }],
-  },
-  manifest: '/manifest.json',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'default',
-    title: 'Kupito',
-  },
-};
+    verification: {
+      google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION,
+    },
+    icons: {
+      icon: [
+        { url: '/favicon.ico', sizes: 'any' },
+        { url: '/favicon-64.png', sizes: '64x64', type: 'image/png' },
+        { url: '/favicon-192.png', sizes: '192x192', type: 'image/png' },
+        { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
+        { url: '/favicon-512.png', sizes: '512x512', type: 'image/png' },
+      ],
+      apple: [{ url: '/logo.png', sizes: '180x180', type: 'image/png' }],
+    },
+    manifest: '/manifest.json',
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'default',
+      title: siteConfig.name,
+    },
+  };
+}
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -110,9 +114,12 @@ export const viewport: Viewport = {
   userScalable: true,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+  const siteConfig = await loadSiteConfig(country);
+
   return (
-    <html lang="mk" suppressHydrationWarning>
+    <html lang={siteConfig.locale.split('_')[0]} suppressHydrationWarning>
       <head>
         <link
           rel="preconnect"

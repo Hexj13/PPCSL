@@ -204,7 +204,7 @@ Kupito/
 
 ### Upload
 - `POST /api/upload/image` - Upload image (JWT required)
-  - Automatically applies watermark (logo + "kupito.club" text)
+  - Automatically applies watermark (logo + domain text, configurable via WATERMARK_DOMAIN)
   - Images are resized, watermarked, and converted to WebP format
 - `GET /api/upload/image/:filename` - Get optimized image version (query params: `quality`, `width`)
 
@@ -305,7 +305,10 @@ For more details, see [Technical Documentation](TECHNICAL.md#8-testing) and [Fro
 - **[Technical Documentation](TECHNICAL.md)** - Complete technical documentation (architecture, API, database, security, testing, scripts, SEO)
 - **[Deployment Guide](DEPLOYMENT.md)** - Complete deployment instructions (VPS, cPanel, SSH setup, staging)
 - **[Render.com Deployment Guide](RENDER.md)** - Complete guide for deploying on Render.com
-- **[Multi-Repository Architecture](MULTI_REPOSITORY_ARCHITECTURE.md)** - Guide for multi-locale architecture with core and locale-specific repositories
+- **[PPCSL Overview](PPCSL.md)** - Core platform concept, architecture, and benefits
+- **[Multi-Repository Architecture](MULTI_REPOSITORY_ARCHITECTURE.md)** - Technical guide for implementing multi-platform architecture with PPCSL core
+- **[Pre-Migration Checklist](PRE_MIGRATION_CHECKLIST.md)** - Tasks to complete in monolith before repository split
+- **[CI/CD Configuration](CI_CD.md)** - Complete guide for setting up Continuous Integration and Continuous Deployment
 - **[Google Ads Setup Guide](GOOGLE_ADS_SETUP.md)** - Complete guide for setting up Google Ads conversion tracking
 - **PWA Features** - Progressive Web App fully implemented with Service Worker, offline support, and installation (see Frontend Documentation for details)
 - **[TODO List](TODO.md)** - All project tasks and todos ⚠️ **IMPORTANT**

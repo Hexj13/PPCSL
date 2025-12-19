@@ -1,6 +1,10 @@
 import type { Metadata } from 'next';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club';
+import { loadSiteConfigSync } from '@/lib/site-config';
+
+const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+const siteConfig = loadSiteConfigSync(country);
+const siteUrl = siteConfig.siteUrl;
 
 export const metadata: Metadata = {
   robots: {

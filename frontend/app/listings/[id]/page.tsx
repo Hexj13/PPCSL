@@ -3,11 +3,14 @@ import { notFound } from 'next/navigation';
 
 import { Listing } from '@/lib/api';
 import { getServerTranslations } from '@/lib/i18n';
+import { loadSiteConfigSync } from '@/lib/site-config';
 import { getOptimizedImageUrl } from '@/lib/utils';
 
 import ListingPageClient from './ListingPageClient';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club';
+const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+const siteConfig = loadSiteConfigSync(country);
+const siteUrl = siteConfig.siteUrl;
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 async function getListing(id: string): Promise<Listing | null> {
@@ -62,7 +65,7 @@ function buildListingJsonLd(listing: Listing): Record<string, unknown> {
       ...(listing.price !== undefined &&
         listing.price !== null && {
           price: listing.price.toString(),
-          priceCurrency: listing.currency || 'MKD',
+          priceCurrency: listing.currency || siteConfig.currency,
           priceValidUntil: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
             .toISOString()
             .split('T')[0],
@@ -109,7 +112,7 @@ function buildListingJsonLd(listing: Listing): Record<string, unknown> {
       address: {
         '@type': 'PostalAddress',
         addressLocality: listing.city,
-        addressCountry: 'MK',
+        addressCountry: siteConfig.countryCode,
       },
     },
   };

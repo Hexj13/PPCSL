@@ -1,8 +1,11 @@
 import type { Metadata } from 'next';
 
 import { getServerTranslations } from '@/lib/i18n';
+import { loadSiteConfigSync } from '@/lib/site-config';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club';
+const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+const siteConfig = loadSiteConfigSync(country);
+const siteUrl = siteConfig.siteUrl;
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 async function getListing(id: string) {
@@ -85,8 +88,8 @@ export async function generateMetadata({
           alt: fullTitle,
         },
       ],
-      siteName: 'Kupito',
-      locale: 'mk_MK',
+      siteName: siteConfig.name,
+      locale: siteConfig.locale,
     },
     twitter: {
       card: 'summary_large_image',
@@ -102,8 +105,9 @@ export async function generateMetadata({
 
 function getOptimizedImageUrl(imageUrl: string): string {
   if (!imageUrl || imageUrl === '/placeholder-car.jpg') {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club';
-    return `${siteUrl}/og-image.jpg`;
+    const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+    const siteConfig = loadSiteConfigSync(country);
+    return `${siteConfig.siteUrl}/og-image.jpg`;
   }
 
   if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {

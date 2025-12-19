@@ -802,11 +802,20 @@ export interface Translations {
   };
 }
 
+import mkTranslations from '@/messages/mk.json';
+
+import { loadSiteConfigSync } from './site-config';
+
 const STORAGE_KEY = 'kupito-locale';
-const DEFAULT_LOCALE: Locale = 'mk';
+
+function getDefaultLocale(): Locale {
+  const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+  const siteConfig = loadSiteConfigSync(country);
+  return siteConfig.locale.split('_')[0] as Locale;
+}
 
 export function getStoredLocale(): Locale {
-  return DEFAULT_LOCALE;
+  return getDefaultLocale();
 }
 
 export function setStoredLocale(locale: Locale): void {
@@ -817,16 +826,21 @@ export function setStoredLocale(locale: Locale): void {
   localStorage.setItem(STORAGE_KEY, locale);
 }
 
-import mkTranslations from '@/messages/mk.json';
+export function loadTranslations(locale?: Locale): Translations {
+  if (!locale) {
+    locale = getDefaultLocale();
+  }
 
-export function loadTranslations(locale: Locale): Translations {
   if (locale === 'mk') {
     return mkTranslations as Translations;
   }
   return mkTranslations as Translations;
 }
 
-export function getServerTranslations(locale: Locale = 'mk'): Translations {
+export function getServerTranslations(locale?: Locale): Translations {
+  if (!locale) {
+    locale = getDefaultLocale();
+  }
   return loadTranslations(locale);
 }
 

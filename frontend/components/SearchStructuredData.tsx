@@ -1,5 +1,6 @@
 import type { Listing } from '@/lib/api';
 import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/popular-brands';
+import { loadSiteConfigSync } from '@/lib/site-config';
 import { createSlug } from '@/lib/utils';
 
 export function SearchStructuredData({
@@ -13,7 +14,9 @@ export function SearchStructuredData({
   listings?: Listing[];
   maxItems?: number;
 }) {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club';
+  const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+  const siteConfig = loadSiteConfigSync(country);
+  const siteUrl = siteConfig.siteUrl;
   const brandParam = brand || null;
   const modelParam = model || null;
 
@@ -121,7 +124,7 @@ export function SearchStructuredData({
   const websiteSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'Kupito',
+    name: siteConfig.name,
     url: siteUrl,
     potentialAction: potentialActions.length > 0 ? potentialActions : undefined,
   };

@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 import { loadTranslations } from '@/lib/i18n';
 
-const translations = loadTranslations('mk');
+const translations = loadTranslations();
 
 export default function NotFound() {
   return (

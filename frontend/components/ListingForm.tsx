@@ -20,6 +20,7 @@ import {
   City,
   Listing,
 } from '@/lib/api';
+import { loadSiteConfigSync } from '@/lib/site-config';
 import {
   ConditionType,
   ConditionTypeEnum,
@@ -71,8 +72,14 @@ interface ListingFormProps {
 
 type LabeledOption<T = string> = { value: T; label: string };
 
+function getLocale(): string {
+  const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+  const siteConfig = loadSiteConfigSync(country);
+  return siteConfig.locale.split('_')[0];
+}
+
 const sortOptionsByLabel = <T,>(options: Array<LabeledOption<T>>) =>
-  [...options].sort((a, b) => a.label.localeCompare(b.label, 'mk'));
+  [...options].sort((a, b) => a.label.localeCompare(b.label, getLocale()));
 
 const CURRENCY_OPTIONS = sortOptionsByLabel([
   { value: CurrencyEnum.EUR, label: 'EUR' },
@@ -270,8 +277,12 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
   useEffect(() => {
     Promise.all([brandsApi.getAll(), citiesApi.getAll()])
       .then(([brandsRes, citiesRes]) => {
-        const sortedBrands = [...brandsRes.data].sort((a, b) => a.name.localeCompare(b.name, 'mk'));
-        const sortedCities = [...citiesRes.data].sort((a, b) => a.name.localeCompare(b.name, 'mk'));
+        const sortedBrands = [...brandsRes.data].sort((a, b) =>
+          a.name.localeCompare(b.name, getLocale())
+        );
+        const sortedCities = [...citiesRes.data].sort((a, b) =>
+          a.name.localeCompare(b.name, getLocale())
+        );
         setBrands(sortedBrands);
         setCities(sortedCities);
         setIsInitialLoading(false);
@@ -287,7 +298,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
       setFormData(newFormData);
       if (initialData.vehicle?.brand_id) {
         brandsApi.getModels(initialData.vehicle.brand_id).then((res) => {
-          const sorted = [...res.data].sort((a, b) => a.name.localeCompare(b.name, 'mk'));
+          const sorted = [...res.data].sort((a, b) => a.name.localeCompare(b.name, getLocale()));
           setModels(sorted);
         });
       }
@@ -298,7 +309,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
     if (formData.vehicle.brand_id) {
       setLoadingModels(true);
       brandsApi.getModels(formData.vehicle.brand_id).then((res) => {
-        const sorted = [...res.data].sort((a, b) => a.name.localeCompare(b.name, 'mk'));
+        const sorted = [...res.data].sort((a, b) => a.name.localeCompare(b.name, getLocale()));
         setModels(sorted);
         setLoadingModels(false);
         setFormData((prev) => {
@@ -587,7 +598,9 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
           setFormData(updatedFormData);
           if (result.data.vehicle?.brand_id) {
             brandsApi.getModels(result.data.vehicle.brand_id).then((res) => {
-              const sorted = [...res.data].sort((a, b) => a.name.localeCompare(b.name, 'mk'));
+              const sorted = [...res.data].sort((a, b) =>
+                a.name.localeCompare(b.name, getLocale())
+              );
               setModels(sorted);
             });
           }

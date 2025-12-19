@@ -1,7 +1,11 @@
 import { MetadataRoute } from 'next';
 
+import { loadSiteConfigSync } from '@/lib/site-config';
+
 export default function robots(): MetadataRoute.Robots {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club';
+  const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+  const siteConfig = loadSiteConfigSync(country);
+  const siteUrl = siteConfig.siteUrl;
 
   return {
     rules: [

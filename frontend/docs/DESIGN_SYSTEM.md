@@ -118,9 +118,11 @@ Design tokens are available through `designTokens`:
 
 ```tsx
 import { designTokens } from '@/ui';
+import { getTheme } from '@/lib/theme';
 
-const primaryColor = designTokens.colors.primary[500];
 const spacing = designTokens.spacing.md;
+const theme = getTheme();
+const primaryColor = theme.primary[500];
 ```
 
 ## Color Palette

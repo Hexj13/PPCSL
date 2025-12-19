@@ -8,8 +8,11 @@ import { SearchFilters } from '@/components/SearchFilters';
 import { SearchStructuredData } from '@/components/SearchStructuredData';
 import { getServerTranslations } from '@/lib/i18n';
 import { getListings } from '@/lib/server-api';
+import { loadSiteConfigSync } from '@/lib/site-config';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club';
+const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+const siteConfig = loadSiteConfigSync(country);
+const siteUrl = siteConfig.siteUrl;
 
 export const dynamic = 'force-dynamic';
 

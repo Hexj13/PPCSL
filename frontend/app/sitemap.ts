@@ -3,9 +3,12 @@ import { MetadataRoute } from 'next';
 import { Listing } from '@/lib/api';
 import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/popular-brands';
 import { fetchBrands, fetchModelsByBrands } from '@/lib/server-api';
+import { loadSiteConfigSync } from '@/lib/site-config';
 import { createSlug } from '@/lib/utils';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club';
+const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+const siteConfig = loadSiteConfigSync(country);
+const siteUrl = siteConfig.siteUrl;
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 const SITEMAP_TIMEOUT_MS = 10_000;
 const LISTINGS_PER_SITEMAP = 5_000;

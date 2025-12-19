@@ -2,6 +2,8 @@
 
 Complete guide for implementing multi-repository architecture with core project and locale-specific projects.
 
+**Note:** The core repository is named **PPCSL** (Platform for posting car sale listings) and uses the repository name `ppcsl`.
+
 ## Table of Contents
 
 1. [Overview](#1-overview)
@@ -20,11 +22,10 @@ Complete guide for implementing multi-repository architecture with core project 
 
 ### Concept
 
-This architecture separates the core application code from locale-specific configurations (translations, colors, site configs) using three separate repositories:
+This architecture separates the core application code from locale-specific configurations (translations, colors, site configs) using separate repositories:
 
-- **kupito-core** - Core application code (shared across all locales)
-- **kupito-mk** - Macedonia-specific project (core + MK translations + MK colors)
-- **kupito-al** - Albania-specific project (core + AL translations + AL colors)
+- **PPCSL** (Platform for posting car sale listings) - Core application code (shared across all locales)
+- **kupito.club** - Platform for Macedonia - core + MK translations + MK colors
 
 ### Benefits
 
@@ -47,26 +48,20 @@ This architecture separates the core application code from locale-specific confi
 ### Repository Relationships
 
 ```
-kupito-core (GitHub)
+ppcsl (GitHub) - PPCSL (Platform for posting car sale listings)
     │
-    ├─── kupito-mk (GitHub)
-    │    └── core/ (Git Submodule → kupito-core)
-    │    └── locales/mk.json
-    │    └── theme/colors.ts
-    │    └── config/site.ts
-    │
-    └─── kupito-al (GitHub)
-         └── core/ (Git Submodule → kupito-core)
-         └── locales/al.json
+    └─── kupito.club (GitHub) - Platform for Macedonia
+         └── core/ (Git Submodule → ppcsl)
+         └── locales/mk.json
          └── theme/colors.ts
          └── config/site.ts
 ```
 
 ### Dependency Flow
 
-1. **Development** happens in `kupito-core`
-2. **CI/CD** in `kupito-core` tests and builds
-3. **On success**, updates are pushed to locale repositories
+1. **Development** happens in `ppcsl` (PPCSL)
+2. **CI/CD** in `ppcsl` tests and builds
+3. **On success**, updates are pushed to locale repositories (e.g., kupito.club)
 4. **Locale repositories** build with their specific configurations
 5. **Deployment** happens independently for each locale
 
@@ -74,10 +69,10 @@ kupito-core (GitHub)
 
 ## 3. Repository Structure
 
-### 3.1. kupito-core Repository
+### 3.1. PPCSL Repository (ppcsl)
 
 ```
-kupito-core/
+ppcsl/
 ├── frontend/
 │   ├── app/                    # Pages and routes (no hardcoded texts)
 │   ├── components/             # Components (use t() for texts)
@@ -101,12 +96,12 @@ kupito-core/
 └── README.md
 ```
 
-### 3.2. kupito-mk Repository
+### 3.2. kupito.club Repository
 
 ```
-kupito-mk/
+kupito.club/
 ├── .gitmodules                 # Git submodule configuration
-├── core/                       # Git submodule (kupito-core)
+├── core/                       # Git submodule (ppcsl)
 │   ├── frontend/
 │   └── backend/
 ├── locales/
@@ -122,48 +117,28 @@ kupito-mk/
 └── README.md
 ```
 
-### 3.3. kupito-al Repository
-
-```
-kupito-al/
-├── .gitmodules                 # Git submodule configuration
-├── core/                       # Git submodule (kupito-core)
-│   ├── frontend/
-│   └── backend/
-├── locales/
-│   └── al.json                 # All Albanian translations
-├── theme/
-│   └── colors.ts              # Albanian color scheme
-├── config/
-│   └── site.ts                # Site configuration (domain, email, etc.)
-├── .github/
-│   └── workflows/
-│       └── ci.yml             # Build and deploy for AL
-├── package.json
-└── README.md
-```
 
 ---
 
 ## 4. Implementation Steps
 
-### Step 1: Create kupito-core Repository
+### Step 1: Create PPCSL Repository (ppcsl)
 
-1. **Create new GitHub repository** `kupito-core`
+1. **Create new GitHub repository** `ppcsl`
 2. **Initialize repository:**
    ```bash
-   mkdir kupito-core
-   cd kupito-core
+   mkdir ppcsl
+   cd ppcsl
    git init
    ```
 
 3. **Copy core files** (excluding locale-specific content):
    ```bash
    # From current project
-   cp -r frontend/ kupito-core/
-   cp -r backend/ kupito-core/
-   cp package.json kupito-core/
-   cp .gitignore kupito-core/
+   cp -r frontend/ ppcsl/
+   cp -r backend/ ppcsl/
+   cp package.json ppcsl/
+   cp .gitignore ppcsl/
    ```
 
 4. **Remove locale-specific hardcoded content** (see [Code Adaptation](#5-code-adaptation))
@@ -171,25 +146,25 @@ kupito-al/
 5. **Initial commit:**
    ```bash
    git add .
-   git commit -m "Initial core repository"
-   git remote add origin https://github.com/your-org/kupito-core.git
+   git commit -m "Initial PPCSL repository"
+   git remote add origin git@github.com:Hexj13/PPCSL.git
    git push -u origin main
    ```
 
-### Step 2: Create kupito-mk Repository
+### Step 2: Create kupito.club Repository
 
-1. **Create new GitHub repository** `kupito-mk`
+1. **Create new GitHub repository** `kupito.club`
 
 2. **Initialize repository:**
    ```bash
-   mkdir kupito-mk
-   cd kupito-mk
+   mkdir kupito.club
+   cd kupito.club
    git init
    ```
 
 3. **Add core as submodule:**
    ```bash
-   git submodule add https://github.com/your-org/kupito-core.git core
+   git submodule add git@github.com:Hexj13/PPCSL.git core
    ```
 
 4. **Create locale structure:**
@@ -201,33 +176,17 @@ kupito-al/
    ```ini
    [submodule "core"]
        path = core
-       url = https://github.com/your-org/kupito-core.git
+       url = git@github.com:Hexj13/PPCSL.git
    ```
 
 6. **Initial commit:**
    ```bash
    git add .
-   git commit -m "Initial MK repository with core submodule"
-   git remote add origin https://github.com/your-org/kupito-mk.git
+   git commit -m "Initial kupito.club repository with PPCSL core submodule"
+   git remote add origin https://github.com/your-org/kupito.club.git
    git push -u origin main
    ```
 
-### Step 3: Create kupito-al Repository
-
-Repeat Step 2 for Albania:
-
-```bash
-mkdir kupito-al
-cd kupito-al
-git init
-git submodule add https://github.com/your-org/kupito-core.git core
-mkdir -p locales theme config
-# ... create files (see below)
-git add .
-git commit -m "Initial AL repository with core submodule"
-git remote add origin https://github.com/your-org/kupito-al.git
-git push -u origin main
-```
 
 ---
 
@@ -237,7 +196,7 @@ git push -u origin main
 
 The translation system uses **synchronous static imports** to prevent "blinking" of translation keys on page load. Translations are loaded immediately when the module is initialized.
 
-#### Create `frontend/lib/i18n.ts` in kupito-core
+#### Create `frontend/lib/i18n.ts` in PPCSL (ppcsl)
 
 ```typescript
 import mkTranslations from '@/messages/mk.json';
@@ -377,7 +336,7 @@ export function MyComponent() {
 }
 ```
 
-#### Create `kupito-mk/locales/mk.json`
+#### Create `kupito.club/locales/mk.json`
 
 ```json
 {
@@ -411,43 +370,9 @@ export function MyComponent() {
 }
 ```
 
-#### Create `kupito-al/locales/al.json`
-
-```json
-{
-  "header": {
-    "addListing": "Shto njoftim",
-    "myListings": "Njoftimet e mia",
-    "favorites": "Të preferuarat",
-    "compare": "Krahasimi",
-    "login": "Hyr",
-    "register": "Regjistrohu",
-    "logout": "Dil",
-    "profile": "Profili",
-    "admin": "Admin"
-  },
-  "footer": {
-    "copyright": "Të gjitha të drejtat e rezervuara",
-    "tagline": "Bli ose shisni makinë në Kupito!",
-    "faq": "Pyetjet e shpeshta",
-    "terms": "Kushtet e përdorimit",
-    "privacy": "Politika e privatësisë"
-  },
-  "common": {
-    "loading": "Duke u ngarkuar...",
-    "error": "Gabim",
-    "success": "Sukses",
-    "save": "Ruaj",
-    "cancel": "Anulo",
-    "delete": "Fshi",
-    "edit": "Redakto"
-  }
-}
-```
-
 ### 5.2. Theme System
 
-#### Create `frontend/lib/theme.ts` in kupito-core
+#### Create `frontend/lib/theme.ts` in PPCSL (ppcsl)
 
 ```typescript
 export interface ThemeColors {
@@ -524,7 +449,7 @@ export function loadThemeSync(country: string): ThemeColors {
 }
 ```
 
-#### Create `kupito-mk/theme/colors.ts`
+#### Create `kupito.club/theme/colors.ts`
 
 ```typescript
 import { ThemeColors } from '../../core/frontend/lib/theme';
@@ -570,55 +495,9 @@ const colors: ThemeColors = {
 export default colors;
 ```
 
-#### Create `kupito-al/theme/colors.ts`
-
-```typescript
-import { ThemeColors } from '../../core/frontend/lib/theme';
-
-const colors: ThemeColors = {
-  primary: {
-    50: '#fef2f2',
-    100: '#fee2e2',
-    200: '#fecaca',
-    300: '#fca5a5',
-    400: '#f87171',
-    500: '#ef4444',  // Red (Albanian flag color)
-    600: '#dc2626',
-    700: '#b91c1c',
-    800: '#991b1b',
-    900: '#7f1d1d',
-  },
-  dark: {
-    50: '#f9fafb',
-    100: '#f3f4f6',
-    200: '#e5e7eb',
-    300: '#d1d5db',
-    400: '#9ca3af',
-    500: '#6b7280',
-    600: '#4b5563',
-    700: '#374151',
-    800: '#1f2937',
-    900: '#0d1117',
-  },
-  bg: {
-    dark: '#1a0a0a',  // Dark red tones
-    darker: '#0f0505',
-    light: '#2d1515',
-  },
-  semantic: {
-    success: '#10b981',
-    error: '#ef4444',
-    warning: '#f59e0b',
-    info: '#3b82f6',
-  },
-};
-
-export default colors;
-```
-
 ### 5.3. Site Configuration
 
-#### Create `frontend/lib/site-config.ts` in kupito-core
+#### Create `frontend/lib/site-config.ts` in PPCSL (ppcsl)
 
 ```typescript
 export interface SiteConfig {
@@ -657,7 +536,7 @@ export function getSiteConfig(): SiteConfig {
 }
 ```
 
-#### Create `kupito-mk/config/site.ts`
+#### Create `kupito.club/config/site.ts`
 
 ```typescript
 import { SiteConfig } from '../../core/frontend/lib/site-config';
@@ -665,31 +544,12 @@ import { SiteConfig } from '../../core/frontend/lib/site-config';
 const config: SiteConfig = {
   country: 'mk',
   name: 'Kupito',
-  domain: 'kupito.mk',
+  domain: 'kupito.club',
   locale: 'mk_MK',
   currency: 'MKD',
   countryCode: 'MK',
   supportEmail: 'support@kupito.club',
-  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.mk',
-};
-
-export default config;
-```
-
-#### Create `kupito-al/config/site.ts`
-
-```typescript
-import { SiteConfig } from '../../core/frontend/lib/site-config';
-
-const config: SiteConfig = {
-  country: 'al',
-  name: 'Kupito Albania',
-  domain: 'kupito.al',
-  locale: 'sq_AL',
-  currency: 'ALL',
-  countryCode: 'AL',
-  supportEmail: 'support@kupito.al',
-  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.al',
+  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club',
 };
 
 export default config;
@@ -725,7 +585,7 @@ export function Header() {
 
 ### 5.5. Update Tailwind Config
 
-#### Update `frontend/tailwind.config.js` in kupito-core
+#### Update `frontend/tailwind.config.js` in PPCSL (ppcsl)
 
 ```javascript
 const { loadThemeSync } = require('./lib/theme');
@@ -781,7 +641,7 @@ export async function generateMetadata() {
 
 In locale repositories, create a build script that copies locale files to core:
 
-**kupito-mk/package.json:**
+**kupito.club/package.json:**
 ```json
 {
   "scripts": {
@@ -796,9 +656,9 @@ In locale repositories, create a build script that copies locale files to core:
 
 ## 6. CI/CD Configuration
 
-### 6.1. kupito-core CI/CD
+### 6.1. PPCSL (ppcsl) CI/CD
 
-Create `.github/workflows/ci.yml` in kupito-core:
+Create `.github/workflows/ci.yml` in ppcsl:
 
 ```yaml
 name: CI/CD Core
@@ -978,12 +838,12 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update kupito-mk submodule
+      - name: Update kupito.club submodule
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git clone https://github.com/your-org/kupito-mk.git ../kupito-mk
-          cd ../kupito-mk
+          git clone https://github.com/your-org/kupito.club.git ../kupito.club
+          cd ../kupito.club
           git submodule update --init --recursive
           cd core
           git fetch origin
@@ -992,30 +852,14 @@ jobs:
           git add core
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore: update core to ${{ github.sha }}" || exit 0
+          git commit -m "chore: update PPCSL core to ${{ github.sha }}" || exit 0
           git push origin main
 
-      - name: Update kupito-al submodule
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git clone https://github.com/your-org/kupito-al.git ../kupito-al
-          cd ../kupito-al
-          git submodule update --init --recursive
-          cd core
-          git fetch origin
-          git checkout ${{ github.sha }}
-          cd ..
-          git add core
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore: update core to ${{ github.sha }}" || exit 0
-          git push origin main
 ```
 
-### 6.2. kupito-mk CI/CD
+### 6.2. kupito.club CI/CD
 
-Create `.github/workflows/ci.yml` in kupito-mk:
+Create `.github/workflows/ci.yml` in kupito.club:
 
 ```yaml
 name: CI/CD MK
@@ -1057,66 +901,7 @@ jobs:
         working-directory: ./core/frontend
         env:
           NEXT_PUBLIC_COUNTRY: mk
-          NEXT_PUBLIC_SITE_URL: https://kupito.mk
-          NEXT_PUBLIC_API_URL: ${{ secrets.API_URL }}
-        run: npm run build
-
-      - name: Build backend
-        working-directory: ./core/backend
-        run: npm run build
-
-      - name: Deploy
-        # Add your deployment steps here
-        run: |
-          echo "Deploy to production..."
-          # Your deployment commands
-```
-
-### 6.3. kupito-al CI/CD
-
-Create `.github/workflows/ci.yml` in kupito-al (similar to MK, but with `al` locale):
-
-```yaml
-name: CI/CD AL
-
-on:
-  push:
-    branches: [main]
-  workflow_dispatch:
-
-jobs:
-  build:
-    name: Build and Deploy AL
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Copy locale files to core
-        run: |
-          cp -r locales core/frontend/lib/
-          cp -r theme core/frontend/lib/
-          cp -r config core/frontend/lib/
-
-      - name: Install frontend dependencies
-        working-directory: ./core/frontend
-        run: npm ci
-
-      - name: Install backend dependencies
-        working-directory: ./core/backend
-        run: npm ci
-
-      - name: Build frontend
-        working-directory: ./core/frontend
-        env:
-          NEXT_PUBLIC_COUNTRY: al
-          NEXT_PUBLIC_SITE_URL: https://kupito.al
+          NEXT_PUBLIC_SITE_URL: https://kupito.club
           NEXT_PUBLIC_API_URL: ${{ secrets.API_URL }}
         run: npm run build
 
@@ -1167,7 +952,6 @@ jobs:
 1. **Find all hardcoded URLs:**
    ```bash
    grep -r "kupito.club" frontend/
-   grep -r "kupito.mk" frontend/
    grep -r "support@kupito" frontend/
    ```
 
@@ -1177,27 +961,34 @@ jobs:
 
 ### 7.4. Migration Checklist
 
-- [ ] Create kupito-core repository
+**Pre-Migration (Monolith Preparation):**
+- [x] Create PPCSL (ppcsl) repository (git@github.com:Hexj13/PPCSL.git)
 - [x] Remove all hardcoded texts from components
 - [x] Create translation system
-- [ ] Create theme system
-- [ ] Create site config system
+- [x] Create theme system
+- [x] Create site config system
 - [x] Update all components to use translations
-- [ ] Update Tailwind config
-- [ ] Create kupito-mk repository
-- [ ] Create kupito-al repository
+- [x] Update Tailwind config
+- [x] Update all layout files to use site-config
+- [x] Update all components to use site-config instead of hardcoded URLs
+- [ ] Make translation system dynamic (use site-config for locale)
+- [ ] Make PWA manifest dynamic (use site-config and translations)
+- [ ] Replace hardcoded currency values with site-config
+- [ ] Replace hardcoded locale values in components
+- [ ] Update tests to use dynamic values
+
+**Migration (Repository Split):**
+- [ ] Create kupito.club repository
 - [ ] Add submodules
 - [ ] Create locale files (MK)
-- [ ] Create locale files (AL)
 - [ ] Create theme files (MK)
-- [ ] Create theme files (AL)
 - [ ] Create config files (MK)
-- [ ] Create config files (AL)
-- [ ] Setup CI/CD in core
-- [ ] Setup CI/CD in MK
-- [ ] Setup CI/CD in AL
+- [ ] Setup CI/CD in PPCSL
+- [ ] Setup CI/CD in kupito.club
 - [ ] Test build process
 - [ ] Test deployment
+
+**Note:** See [Pre-Migration Checklist](./PRE_MIGRATION_CHECKLIST.md) for detailed pre-migration tasks.
 
 ---
 
@@ -1205,42 +996,43 @@ jobs:
 
 ### 8.1. Development Workflow
 
-1. **Make changes** in `kupito-core`
-2. **Commit and push** to `kupito-core/main`
-3. **CI/CD runs** in `kupito-core`:
+1. **Make changes** in `ppcsl` (PPCSL)
+2. **Commit and push** to `ppcsl/main`
+3. **CI/CD runs** in `ppcsl`:
    - Tests pass
    - Build succeeds
-   - Submodules updated in locale repos
+   - Submodules updated in locale repos (e.g., kupito.club)
 4. **CI/CD runs** in locale repos:
    - Core submodule updated
    - Locale files copied
    - Build with locale config
    - Deploy to production
 
-### 8.2. Adding New Locale
+### 8.2. Adding New Locale (Future)
 
-1. **Create new repository** `kupito-{country}`
-2. **Add core as submodule**
+When adding new platforms in the future:
+1. **Create new repository** for the new platform
+2. **Add PPCSL core as submodule**
 3. **Create locale files:**
    - `locales/{country}.json`
    - `theme/colors.ts`
    - `config/site.ts`
-4. **Update CI/CD** in `kupito-core` to include new locale
+4. **Update CI/CD** in `ppcsl` to include new locale
 5. **Setup CI/CD** in new locale repository
 
 ### 8.3. Updating Core
 
-1. **Make changes** in `kupito-core`
-2. **Test locally** with both locales
+1. **Make changes** in `ppcsl` (PPCSL)
+2. **Test locally** with kupito.club
 3. **Commit and push**
 4. **Automatic sync** to locale repositories
 
 ### 8.4. Updating Locale-Specific Content
 
-1. **Make changes** in locale repository (e.g., `kupito-mk`)
+1. **Make changes** in locale repository (kupito.club)
 2. **Update** `locales/mk.json`, `theme/colors.ts`, or `config/site.ts`
 3. **Commit and push**
-4. **CI/CD builds** and deploys only that locale
+4. **CI/CD builds** and deploys kupito.club platform
 
 ---
 
@@ -1252,7 +1044,7 @@ jobs:
 
 **Solution:**
 ```bash
-cd kupito-mk
+cd kupito.club
 git submodule update --init --recursive
 git submodule update --remote --merge core
 ```
@@ -1297,13 +1089,13 @@ git submodule update --remote --merge core
 
 ## 10. Best Practices
 
-1. **Always test** core changes with both locales before pushing
+1. **Always test** core changes with kupito.club before pushing
 2. **Keep translations** in sync - if you add a new key, add it to all locales
 3. **Version core** - use semantic versioning for major changes
 4. **Document changes** - update this guide when architecture changes
-5. **Monitor builds** - ensure all locale builds succeed after core updates
+5. **Monitor builds** - ensure locale builds succeed after core updates
 6. **Backup** - keep backups of locale-specific files
-7. **Code review** - review core changes carefully as they affect all locales
+7. **Code review** - review core changes carefully as they affect all platforms
 
 ---
 
@@ -1319,11 +1111,18 @@ git submodule update --remote --merge core
 
 This architecture provides:
 
-✅ **Separation of concerns** - Core code separate from locale-specific content  
-✅ **Independent deployments** - Each locale can be deployed separately  
-✅ **Easy scaling** - Add new countries by creating new repository  
-✅ **Maintainability** - Core changes automatically sync to all locales  
-✅ **Flexibility** - Each locale can have custom configurations  
+✅ **Separation of concerns** - Core code (PPCSL) separate from locale-specific content  
+✅ **Independent deployments** - Each platform can be deployed separately  
+✅ **Easy scaling** - Add new platforms by creating new repository  
+✅ **Maintainability** - Core changes automatically sync to all platforms  
+✅ **Flexibility** - Each platform can have custom configurations  
 
-The setup requires initial investment but provides long-term benefits for multi-locale applications.
+**Current Platform:**
+- **kupito.club** - Platform for Macedonia
+
+**Core Repository:**
+- **PPCSL** (ppcsl) - Platform for posting car sale listings
+- Repository: `git@github.com:Hexj13/PPCSL.git`
+
+The setup requires initial investment but provides long-term benefits for multi-platform applications.
 

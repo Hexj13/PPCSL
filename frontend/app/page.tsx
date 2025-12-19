@@ -11,11 +11,14 @@ import { SearchStructuredData } from '@/components/SearchStructuredData';
 import { getServerTranslations } from '@/lib/i18n';
 import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/popular-brands';
 import { fetchBrands, fetchModelsByBrands, getListings } from '@/lib/server-api';
+import { loadSiteConfigSync } from '@/lib/site-config';
 import { createSlug } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club';
+const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+const siteConfig = loadSiteConfigSync(country);
+const siteUrl = siteConfig.siteUrl;
 
 async function getTitleFromParams(
   brandParam: string | string[] | undefined,

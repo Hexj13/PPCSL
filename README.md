@@ -8,9 +8,12 @@ All documentation is located in the [`docs/`](./docs/) folder:
 
 ### General Documentation
 - **[README.md](./docs/README.md)** - Detailed project documentation
+- **[PPCSL.md](./docs/PPCSL.md)** - Core platform concept and architecture
 - **[TECHNICAL.md](./docs/TECHNICAL.md)** - Complete technical documentation
 - **[DEPLOYMENT.md](./docs/DEPLOYMENT.md)** - Production deployment guide (VPS, cPanel, SSH setup)
 - **[RENDER.md](./docs/RENDER.md)** - Render.com deployment guide
+- **[CI/CD Configuration](./docs/CI_CD.md)** - CI/CD setup guide for PPCSL and platform repositories
+- **[Pre-Migration Checklist](./docs/PRE_MIGRATION_CHECKLIST.md)** - Tasks to complete before repository split
 - **[TODO.md](./docs/TODO.md)** - All project tasks and TODOs
 
 ### Backend Documentation

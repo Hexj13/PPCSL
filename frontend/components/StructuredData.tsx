@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 
 import { Listing } from '@/lib/api';
+import { loadSiteConfigSync } from '@/lib/site-config';
 import { getOptimizedImageUrl } from '@/lib/utils';
 
 interface StructuredDataProps {
@@ -11,7 +12,9 @@ interface StructuredDataProps {
 
 export function StructuredData({ listing }: StructuredDataProps) {
   useEffect(() => {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club';
+    const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+    const siteConfig = loadSiteConfigSync(country);
+    const siteUrl = siteConfig.siteUrl;
 
     const vehicle = listing.vehicle;
     const brandName = vehicle?.brand?.name || '';
@@ -60,7 +63,7 @@ export function StructuredData({ listing }: StructuredDataProps) {
         '@type': 'Offer',
         ...(listing.price !== undefined && {
           price: listing.price.toString(),
-          priceCurrency: listing.currency || 'MKD',
+          priceCurrency: listing.currency || siteConfig.currency,
           priceValidUntil: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
             .toISOString()
             .split('T')[0],
@@ -107,7 +110,7 @@ export function StructuredData({ listing }: StructuredDataProps) {
         address: {
           '@type': 'PostalAddress',
           addressLocality: listing.city,
-          addressCountry: 'MK',
+          addressCountry: siteConfig.countryCode,
         },
       },
     };

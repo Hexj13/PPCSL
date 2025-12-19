@@ -23,6 +23,7 @@ export class UploadService {
   private readonly maxWidth = 1920;
   private readonly quality = 75;
   private readonly watermarkPath: string;
+  private readonly watermarkDomain: string;
 
   private readonly imageMagicNumbers: { [key: string]: Buffer[] } = {
     'image/jpeg': [
@@ -65,6 +66,20 @@ export class UploadService {
     }
 
     this.watermarkPath = path.join(process.cwd(), 'assets', 'watermark', 'logo.png');
+
+    const watermarkDomain = this.configService.get<string>('WATERMARK_DOMAIN');
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+
+    if (watermarkDomain) {
+      this.watermarkDomain = watermarkDomain;
+    } else {
+      try {
+        const url = new URL(frontendUrl);
+        this.watermarkDomain = url.hostname;
+      } catch {
+        this.watermarkDomain = 'kupito.club';
+      }
+    }
   }
 
   private validateFileSignature(buffer: Buffer, mimetype: string): boolean {
@@ -169,7 +184,7 @@ export class UploadService {
             fill="rgba(255, 255, 255, ${opacity})"
             text-anchor="middle"
             dominant-baseline="middle"
-          >kupito.club</text>
+          >${this.watermarkDomain}</text>
         </svg>
       `;
 

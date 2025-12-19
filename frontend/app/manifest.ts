@@ -1,10 +1,17 @@
 import { MetadataRoute } from 'next';
 
+import { getServerTranslations } from '@/lib/i18n';
+import { loadSiteConfigSync } from '@/lib/site-config';
+
 export default function manifest(): MetadataRoute.Manifest {
+  const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+  const siteConfig = loadSiteConfigSync(country);
+  const t = getServerTranslations();
+
   return {
-    name: 'Kupito - Автомобили во Македонија',
-    short_name: 'Kupito',
-    description: 'Купете или продадете авто на Kupito! Објавете оглас бесплатно.',
+    name: `${siteConfig.name} - ${t.home.title}`,
+    short_name: siteConfig.name,
+    description: `${t.home.subtitle} ${t.home.subtitleBold} ${t.home.subtitle2} ${t.home.subtitle3}`,
     start_url: '/',
     display: 'standalone',
     background_color: '#0f172a',
@@ -36,7 +43,7 @@ export default function manifest(): MetadataRoute.Manifest {
       },
     ],
     categories: ['automotive', 'shopping', 'marketplace'],
-    lang: 'mk',
+    lang: siteConfig.locale.split('_')[0],
     dir: 'ltr',
     orientation: 'portrait',
   };

@@ -1,5 +1,7 @@
 'use client';
 
+import { loadSiteConfigSync } from './site-config';
+
 function checkConsent(): boolean {
   if (typeof window === 'undefined') return false;
 
@@ -13,6 +15,12 @@ function checkConsent(): boolean {
   } catch {
     return false;
   }
+}
+
+function getCurrency(): string {
+  const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+  const siteConfig = loadSiteConfigSync(country);
+  return siteConfig.currency;
 }
 
 export function trackEvent(eventName: string, params?: Record<string, unknown>) {
@@ -33,7 +41,7 @@ export const analytics = {
     listing: { title?: string; price?: number; brand?: string; model?: string }
   ) => {
     trackEvent('view_item', {
-      currency: 'MKD',
+      currency: getCurrency(),
       value: listing.price,
       items: [
         {
@@ -69,7 +77,7 @@ export const analytics = {
 
   addToWishlist: (listingId: string, listing: { title?: string; price?: number }) => {
     trackEvent('add_to_wishlist', {
-      currency: 'MKD',
+      currency: getCurrency(),
       value: listing.price,
       items: [
         {
@@ -95,7 +103,7 @@ export const analytics = {
 
   addToComparison: (listingId: string, listing: { title?: string; price?: number }) => {
     trackEvent('add_to_comparison', {
-      currency: 'MKD',
+      currency: getCurrency(),
       value: listing.price,
       items: [
         {
@@ -125,7 +133,7 @@ export const analytics = {
     listing?: { title?: string; price?: number }
   ) => {
     trackEvent('contact_seller', {
-      currency: 'MKD',
+      currency: getCurrency(),
       value: listing?.price,
       contact_method: method,
       items: [
@@ -141,7 +149,7 @@ export const analytics = {
 
   createListing: (listingId: string, listing: { title?: string; price?: number }) => {
     trackEvent('create_listing', {
-      currency: 'MKD',
+      currency: getCurrency(),
       value: listing.price,
       items: [
         {
