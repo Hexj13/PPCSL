@@ -1496,6 +1496,11 @@ export function SearchFilters() {
           <button
             type="button"
             onClick={toggleAdvancedFilters}
+            aria-label={
+              showAdvanced
+                ? `${t('searchFilters.hideAdvanced')} ${t('searchFilters.additionalCriteria')}`
+                : `${t('searchFilters.showAdvanced')} ${t('searchFilters.additionalCriteria')}`
+            }
             className="px-3 py-1 text-sm font-semibold text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors duration-200 flex items-center gap-1"
           >
             <span>
@@ -2094,6 +2099,11 @@ export function SearchFilters() {
           <button
             type="button"
             onClick={togglePopularFilters}
+            aria-label={
+              showPopularFilters
+                ? `${t('searchFilters.hideAdvanced')} ${t('searchFilters.popularFilters')}`
+                : `${t('searchFilters.showAdvanced')} ${t('searchFilters.popularFilters')}`
+            }
             className="px-3 py-1 text-sm font-semibold text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors duration-200 flex items-center gap-1"
           >
             <span>

@@ -242,7 +242,7 @@ describe('SearchFilters', () => {
       expect(screen.getByText('Дополнителни критерии')).toBeInTheDocument();
     });
 
-    const toggleButton = screen.getByLabelText('Прикажи');
+    const toggleButton = screen.getByLabelText('Прикажи Дополнителни критерии');
     expect(toggleButton).toBeInTheDocument();
   });
 
@@ -250,13 +250,13 @@ describe('SearchFilters', () => {
     render(<SearchFilters />);
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Прикажи')).toBeInTheDocument();
+      expect(screen.getByLabelText('Прикажи Дополнителни критерии')).toBeInTheDocument();
     });
 
-    const toggleButton = screen.getByLabelText('Прикажи');
+    const toggleButton = screen.getByLabelText('Прикажи Дополнителни критерии');
     fireEvent.click(toggleButton);
 
-    expect(screen.getByLabelText('Сокриј')).toBeInTheDocument();
+    expect(screen.getByLabelText('Сокриј Дополнителни критерии')).toBeInTheDocument();
   });
 
   it('should handle form submission', async () => {
@@ -439,7 +439,7 @@ describe('SearchFilters', () => {
         expect(brandsApi.getAll).toHaveBeenCalled();
       });
 
-      const toggleButton = screen.getByLabelText('Прикажи');
+      const toggleButton = screen.getByLabelText('Прикажи Дополнителни критерии');
       fireEvent.click(toggleButton);
 
       await waitFor(() => {
@@ -471,7 +471,7 @@ describe('SearchFilters', () => {
         expect(brandsApi.getAll).toHaveBeenCalled();
       });
 
-      const toggleButton = screen.getByLabelText('Прикажи');
+      const toggleButton = screen.getByLabelText('Прикажи Дополнителни критерии');
       fireEvent.click(toggleButton);
 
       await waitFor(() => {
@@ -503,7 +503,7 @@ describe('SearchFilters', () => {
         expect(brandsApi.getAll).toHaveBeenCalled();
       });
 
-      const toggleButton = screen.getByLabelText('Прикажи');
+      const toggleButton = screen.getByLabelText('Прикажи Дополнителни критерии');
       fireEvent.click(toggleButton);
 
       await waitFor(() => {
