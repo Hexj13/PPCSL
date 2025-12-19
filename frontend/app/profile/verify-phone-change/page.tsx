@@ -12,7 +12,7 @@ function VerifyPhoneChangeContent() {
   const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { setAuth } = useAuthStore();
+  const { setAuth, user, isInitialized } = useAuthStore();
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,6 +22,13 @@ function VerifyPhoneChangeContent() {
   const [isVerificationBlocked, setIsVerificationBlocked] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const cooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (isInitialized && !user) {
+      router.push('/login');
+      return;
+    }
+  }, [user, isInitialized, router]);
 
   useEffect(() => {
     const phone = searchParams.get('phone');
@@ -68,6 +75,10 @@ function VerifyPhoneChangeContent() {
       }
     };
   }, [resendCooldown]);
+
+  if (!isInitialized || !user) {
+    return null;
+  }
 
   const handleCodeChange = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) {

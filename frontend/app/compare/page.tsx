@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
@@ -8,7 +9,7 @@ import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { useTranslation } from '@/hooks/useTranslation';
 import { listingsApi, Listing } from '@/lib/api';
 import { loadSiteConfigSync } from '@/lib/site-config';
-import { useComparisonStore } from '@/lib/store';
+import { useAuthStore, useComparisonStore } from '@/lib/store';
 import {
   formatPrice,
   formatMileage,
@@ -21,16 +22,24 @@ import {
 } from '@/lib/utils';
 
 export default function ComparePage() {
+  const router = useRouter();
   const { t } = useTranslation();
+  const { user, isInitialized } = useAuthStore();
   const { comparisons, remove, rehydrate } = useComparisonStore();
   const [listings, setListings] = useState<Listing[]>([]);
-  const [loading, setLoading] = useState(true);
   const prevComparisonsRef = useRef<string[]>([]);
   const listingsLengthRef = useRef(0);
   const hasRehydratedRef = useRef(false);
 
   const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
   const siteConfig = loadSiteConfigSync(country);
+
+  useEffect(() => {
+    if (isInitialized && !user) {
+      router.push('/login');
+      return;
+    }
+  }, [user, isInitialized, router]);
 
   useEffect(() => {
     const rehydrateAndFetch = async () => {
@@ -58,7 +67,6 @@ export default function ComparePage() {
 
       if (currentComparisons.length === 0) {
         setListings([]);
-        setLoading(false);
         prevComparisonsRef.current = [];
         listingsLengthRef.current = 0;
         return;
@@ -76,10 +84,6 @@ export default function ComparePage() {
         });
         prevComparisonsRef.current = comparisons;
         return;
-      }
-
-      if (listingsLengthRef.current === 0) {
-        setLoading(true);
       }
 
       try {
@@ -104,13 +108,15 @@ export default function ComparePage() {
       } catch (error) {
         console.error('Error fetching listings:', error);
         toast.error(t('compare.loadError'));
-      } finally {
-        setLoading(false);
       }
     };
 
     rehydrateAndFetch();
   }, [comparisons, rehydrate, t]);
+
+  if (!isInitialized || !user) {
+    return null;
+  }
 
   const handleRemove = (id: string) => {
     setListings((prev) => prev.filter((listing) => listing.id !== id));
@@ -125,24 +131,7 @@ export default function ComparePage() {
     return String(value);
   };
 
-  if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto">
-        <Breadcrumbs
-          items={[{ label: t('breadcrumbs.home'), href: '/' }, { label: t('compare.title') }]}
-          className="mb-6"
-        />
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-          <p className="mt-4" style={{ color: 'rgb(243, 243, 243)' }}>
-            {t('common.loading')}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (comparisons.length === 0) {
+  if (listings.length === 0) {
     return (
       <div className="max-w-7xl mx-auto">
         <Breadcrumbs

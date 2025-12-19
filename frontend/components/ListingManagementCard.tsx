@@ -127,13 +127,13 @@ export function ListingManagementCard({
                   )}
                 </>
               )}
-              <Link href={`/listings/${listing.id}`} className="mb-3 block">
+              <Link href={`/listings/${listing.id}`} className="mb-3 block group">
                 <div className="flex items-start gap-1.5">
-                  <h3 className="font-bold text-base md:text-lg hover:text-primary-600 transition-colors line-clamp-2 flex-1">
+                  <h3 className="font-bold text-base md:text-lg group-hover:text-primary-600 transition-colors line-clamp-2">
                     {listing.title}
                   </h3>
                   <svg
-                    className="w-5 h-5 opacity-60 flex-shrink-0 mt-0.5"
+                    className="w-5 h-5 opacity-60 group-hover:opacity-100 group-hover:text-primary-600 flex-shrink-0 mt-0.5 transition-all duration-200"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"

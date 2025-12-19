@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { useTranslation } from '@/hooks/useTranslation';
@@ -40,10 +40,21 @@ const handlePhoneInput = (value: string): string => {
 export default function ChangePhonePage() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, isInitialized } = useAuthStore();
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (isInitialized && !user) {
+      router.push('/login');
+      return;
+    }
+  }, [user, isInitialized, router]);
+
+  if (!isInitialized || !user) {
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
