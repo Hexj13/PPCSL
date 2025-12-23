@@ -3,7 +3,6 @@ import { Inter } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
 
 import { AuthProvider } from '@/components/AuthProvider';
-import { BackgroundDecorations } from '@/components/BackgroundDecorations';
 import { CookieConsent } from '@/components/CookieConsent';
 import { Footer } from '@/components/Footer';
 import { GoogleAnalytics } from '@/components/GoogleAnalytics';
@@ -139,7 +138,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <CookieConsent />
         <I18nProvider>
           <AuthProvider>
-            <BackgroundDecorations />
             <ServiceWorkerRegistration />
             <ScrollReset />
             <div className="min-h-screen flex flex-col">

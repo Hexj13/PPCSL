@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 
+import { BackgroundDecorations } from '@/components/BackgroundDecorations';
 import { ConversionEvent } from '@/components/ConversionEvent';
 import { DynamicPageTitle } from '@/components/DynamicPageTitle';
 import { HomeHero } from '@/components/HomeHero';
@@ -259,6 +260,7 @@ export default async function Home({
 
   return (
     <div>
+      <BackgroundDecorations />
       <ConversionEvent />
       <DynamicPageTitle />
       <SearchStructuredData brand={brand} model={model} listings={initialData.data} />
