@@ -10,7 +10,10 @@ export function Footer() {
   const { t } = useTranslation();
 
   return (
-    <footer className="bg-bg-darker text-white mt-auto border-t-2 border-primary-500/20">
+    <footer
+      className="shadow-lg text-white mt-auto border-t-2 border-primary-500/20 backdrop-blur-sm"
+      style={{ backgroundColor: '#0F1916' }}
+    >
       <div className="container mx-auto px-3 sm:px-4 py-6 md:py-8">
         <div className="text-center">
           <div suppressHydrationWarning>
