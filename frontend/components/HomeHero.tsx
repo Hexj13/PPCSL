@@ -18,7 +18,7 @@ export function HomeHero({
   ...props
 }: HomeHeroProps) {
   return (
-    <div className={`mb-8 md:mb-12 ${className || ''}`} {...props}>
+    <div className={`mb-8 ${className || ''}`} {...props}>
       <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 md:mb-6 leading-tight pl-4 md:pl-5">
         <span className="bg-gradient-to-r from-primary-400 via-primary-500 to-primary-600 bg-clip-text text-transparent drop-shadow-lg">
           {title}

@@ -15,15 +15,16 @@
 
 :root {
   --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 26, 46, 42;
-  --background-end-rgb: 21, 37, 32;
+  --background-start-rgb: 35, 55, 50;
+  --background-end-rgb: 15, 25, 22;
 }
 
 body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(
-    135deg,
+    to bottom,
     rgb(var(--background-start-rgb)) 0%,
+    rgb(var(--background-end-rgb)) 85vh,
     rgb(var(--background-end-rgb)) 100%
   );
   min-height: 100vh;
@@ -35,6 +36,17 @@ h5,
 h6,
 label {
   user-select: none;
+}
+
+.background-diamonds {
+  position: fixed !important;
+  inset: 60px 0 auto 0 !important;
+  width: 100vw !important;
+  height: 33.333vh !important;
+  z-index: -10 !important;
+  pointer-events: none !important;
+  transform: none !important;
+  will-change: auto !important;
 }
 
 @layer utilities {

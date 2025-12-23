@@ -1242,7 +1242,7 @@ export function SearchFilters() {
 
   return (
     <form id="search-filters" onSubmit={handleSubmit} className="card p-4 md:p-5 mb-6">
-      <h2 className="text-base md:text-lg font-bold mb-4 text-primary-400 underline">
+      <h2 className="text-base md:text-lg font-bold mb-6 text-primary-400 underline">
         {t('searchFilters.basicCriteria')}
       </h2>
 
@@ -1387,7 +1387,7 @@ export function SearchFilters() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
         <div>
           <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
             <svg
@@ -1486,7 +1486,7 @@ export function SearchFilters() {
       </div>
 
       <div className="mb-5">
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3 mb-6">
           <h2
             onClick={toggleAdvancedFilters}
             className="text-base md:text-lg font-bold text-primary-400 underline cursor-pointer hover:text-primary-300 transition-colors"
@@ -2089,7 +2089,7 @@ export function SearchFilters() {
       </div>
 
       <div className="mb-5">
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3 mb-6">
           <h2
             onClick={togglePopularFilters}
             className="text-base md:text-lg font-bold text-primary-400 underline cursor-pointer hover:text-primary-300 transition-colors"
