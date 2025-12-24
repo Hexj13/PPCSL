@@ -5,4 +5,4 @@ dist
 public
 package-lock.json
 *.md
-
+next-env.d.ts
