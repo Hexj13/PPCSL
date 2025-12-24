@@ -9,6 +9,7 @@ import request from 'supertest';
 import { AppModule } from '../app.module';
 import { EmailService } from '../auth/services/email.service';
 import { HttpExceptionFilter } from '../common/filters/http-exception.filter';
+import { I18nService } from '../common/i18n/i18n.service';
 
 let app: INestApplication;
 let swaggerDocument: OpenAPIObject;
@@ -27,7 +28,8 @@ export async function createTestApp(): Promise<INestApplication> {
 
   app = moduleFixture.createNestApplication();
 
-  app.useGlobalFilters(new HttpExceptionFilter());
+  const i18nService = moduleFixture.get<I18nService>(I18nService);
+  app.useGlobalFilters(new HttpExceptionFilter(i18nService));
 
   app.useGlobalPipes(
     new ValidationPipe({
