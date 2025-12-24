@@ -171,6 +171,10 @@ SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
 SMTP_PASSWORD=your-app-password
 SMTP_FROM=noreply@kupito.club
+
+# Internationalization (optional)
+DEFAULT_LOCALE=mk
+# Supported locales: mk, en
 ```
 
 ### Frontend (`frontend/.env.local`)
@@ -219,6 +223,10 @@ Kupito/
 │   │   ├── brands/   # Brands and models
 │   │   ├── admin/    # Admin panel
 │   │   ├── upload/   # File upload service (with watermark support)
+│   │   ├── common/   # Common utilities and services
+│   │   │   ├── decorators/ # Custom validation decorators (IsName, IsPhone, IsPassword)
+│   │   │   ├── i18n/  # Internationalization service (I18nService)
+│   │   │   └── utils/ # Utility functions (data-cleanup, error-handling, query-builder, validation)
 │   │   └── scripts/  # Utility scripts
 │   ├── assets/
 │   │   └── watermark/ # Watermark assets (logo.png)
@@ -390,6 +398,11 @@ GET /health                          # Health check (database, Redis)
   - When listing is published via `POST /api/listings/:id/publish`
 - `updated_at` - Automatically updated by TypeORM on any listing modification
 
+**Listings Table Fields:**
+- `price` - Integer (stored as integer, no decimal places)
+- `power_kw` - Integer, nullable (power in kilowatts)
+- `equipment` - Simple array, nullable (array of equipment keys: air_conditioning, leather_seats, sunroof, navigation, parking_sensors, rear_camera, cruise_control, heated_seats, xenon_lights, led_lights, fog_lights, alloy_wheels, electric_windows, central_locking, bluetooth, usb_port, multifunction_steering, start_stop, esp, abs)
+
 **Vehicles Table:**
 - `brand_id`, `model_id`, `brand_id + model_id` (composite)
 - `year`, `fuel` (partial), `transmission` (partial)
@@ -501,15 +514,20 @@ Backups are saved to `backend/backups/` by default with format: `kupito_backup_Y
 #### Input Validation
 - Class-validator for all DTOs
 - ValidationPipe with whitelist and transform
+- Custom validation decorators:
+  - `@IsName()` - Validates name fields (letters, spaces, hyphens, dashes only)
+  - `@IsPhone()` - Validates phone number format (+country code 1-4 digits + number 6-15 digits)
+  - `@IsPassword()` - Validates password strength (uppercase, lowercase, special character required)
 - Phone number format validation
 - Email validation
 - VIN length validation (17 characters)
 - SMS code validation (6 digits, numeric only)
 
 #### Error Handling
-- Global exception filter
+- Global exception filter with integrated I18nService for localized error messages
 - Error logging without exposing details to users
-- Unified error messages
+- Unified error messages with support for multiple locales (mk, en)
+- Locale detection from `Accept-Language` header or `DEFAULT_LOCALE` environment variable
 
 ---
 

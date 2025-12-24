@@ -111,6 +111,8 @@ npm run dev  # Runs both frontend and backend
   - Edit button available on "My Listings" page
   - All fields can be updated including vehicle specifications
   - Price validation (integers only)
+  - Equipment field for vehicle equipment selection (air conditioning, leather seats, navigation, etc.)
+  - Power in kilowatts (power_kw) field
   - Registration date format validation (MM.YYYY, month must be 2 digits)
 - Extended search and filtering with advanced filters
 - Sort functionality (by date, popularity, price, year) with URL parameter synchronization
