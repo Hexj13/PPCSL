@@ -1,0 +1,19 @@
+{
+  "validation": {
+    "name": "Field can only contain letters, spaces, hyphens and dashes",
+    "phone": "Phone number must be in format +country code (1-4 digits) + number (6-15 digits)",
+    "password": "Password must contain at least one uppercase letter, one lowercase letter and one special character"
+  },
+  "errors": {
+    "serverError": "Server error. Please try again later.",
+    "invalidRequest": "Invalid request. Please check the entered data.",
+    "unauthorized": "Unauthorized access. Please log in again.",
+    "forbidden": "You do not have permission for this action.",
+    "notFound": "Resource not found.",
+    "conflict": "Conflict. Resource already exists.",
+    "validationError": "Validation error. Please check the entered data.",
+    "tooManyRequests": "Too many requests. Please try again later.",
+    "serviceUnavailable": "Server is temporarily unavailable. Please try again later."
+  }
+}
+

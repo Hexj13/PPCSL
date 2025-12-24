@@ -26,6 +26,8 @@ describe('ListingsController', () => {
     condition: 'Undamaged',
     registration_type: 'Local',
     horsepower: 150,
+    power_kw: null,
+    equipment: null,
     views: 0,
     created_at: new Date(),
     updated_at: new Date(),
@@ -227,6 +229,38 @@ describe('ListingsController', () => {
       expect(service.create).toHaveBeenCalledWith(createDto, 'user-1');
       expect(result).toEqual(mockListing);
     });
+
+    it('should create listing with equipment', async () => {
+      const req = { user: mockUser };
+      const createDto: CreateListingDto = {
+        title: 'New Car',
+        price: 15000,
+        currency: Currency.MKD,
+        city: 'Bitola',
+        condition: 'Undamaged',
+        registration_type: 'Local',
+        horsepower: 150,
+        equipment: ['air_conditioning', 'navigation', 'parking_sensors'],
+        vehicle: {
+          brand_id: 'brand-1',
+          model_id: 'model-1',
+          year: 2021,
+          body_type: 'Sedan',
+          drive_type: DriveType.FWD,
+        },
+      };
+
+      const listingWithEquipment = {
+        ...mockListing,
+        equipment: createDto.equipment || null,
+      };
+      service.create.mockResolvedValue(listingWithEquipment);
+
+      const result = await controller.create(createDto, req);
+
+      expect(service.create).toHaveBeenCalledWith(createDto, 'user-1');
+      expect(result.equipment).toEqual(['air_conditioning', 'navigation', 'parking_sensors']);
+    });
   });
 
   describe('update', () => {
@@ -245,6 +279,25 @@ describe('ListingsController', () => {
 
       expect(service.update).toHaveBeenCalledWith(listingId, updateDto, 'user-1');
       expect(result).toEqual(updatedListing);
+    });
+
+    it('should update listing with equipment', async () => {
+      const req = { user: mockUser };
+      const listingId = 'listing-1';
+      const updateDto: UpdateListingDto = {
+        equipment: ['air_conditioning', 'navigation', 'leather_seats'],
+      };
+
+      const updatedListing = {
+        ...mockListing,
+        equipment: updateDto.equipment,
+      } as Listing;
+      service.update.mockResolvedValue(updatedListing);
+
+      const result = await controller.update(listingId, updateDto, req);
+
+      expect(service.update).toHaveBeenCalledWith(listingId, updateDto, 'user-1');
+      expect(result.equipment).toEqual(['air_conditioning', 'navigation', 'leather_seats']);
     });
   });
 

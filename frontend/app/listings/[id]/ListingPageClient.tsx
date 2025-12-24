@@ -20,6 +20,7 @@ import { UserListingsModal } from '@/components/UserListingsModal';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { api, listingsApi, Listing, favoritesApi } from '@/lib/api';
+import { getColorLabel } from '@/lib/form-options';
 import { useAuthStore, useFavoritesStore, useComparisonStore } from '@/lib/store';
 import {
   formatPrice,
@@ -29,13 +30,13 @@ import {
   formatTransmission,
   formatDriveType,
   formatBodyType,
-  formatCondition,
   formatRegistrationType,
   getOptimizedImageUrl,
   getCityNameMk,
   getTelegramUrl,
-  getWhatsAppUrl,
   getViberUrl,
+  getWhatsAppUrl,
+  horsepowerToKw,
 } from '@/lib/utils';
 
 function escapeHtml(text: string): string {
@@ -1605,10 +1606,12 @@ export default function ListingPageClient({
                         {listing.horsepower !== undefined && listing.horsepower !== null && (
                           <div>
                             <span className="text-primary-400 font-semibold">
-                              {t('listingDetail.horsepower')}:
+                              {t('listingDetail.power')}:
                             </span>
                             <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                              {listing.horsepower}
+                              {listing.horsepower} {t('listingDetail.horsepowerUnit')} /{' '}
+                              {listing.power_kw || horsepowerToKw(listing.horsepower)}{' '}
+                              {t('listingDetail.kwUnit')}
                             </span>
                           </div>
                         )}
@@ -1675,7 +1678,7 @@ export default function ListingPageClient({
                               {t('listingDetail.color')}:
                             </span>
                             <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                              {vehicle.color}
+                              {getColorLabel(vehicle.color, t)}
                             </span>
                           </div>
                         )}
@@ -1692,63 +1695,22 @@ export default function ListingPageClient({
                       </div>
                     </div>
                   )}
-
-                  {(listing.condition ||
-                    listing.registration_type ||
-                    listing.is_registered !== undefined) && (
-                    <div className="pt-4 border-t border-primary-500/30">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {listing.condition && (
-                          <div>
-                            <span className="text-primary-400 font-semibold">
-                              {t('listingDetail.condition')}:
-                            </span>
-                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                              {formatCondition(listing.condition)}
-                            </span>
-                          </div>
-                        )}
-                        {listing.registration_type && (
-                          <div>
-                            <span className="text-primary-400 font-semibold">
-                              {t('listingDetail.registrationType')}:
-                            </span>
-                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                              {formatRegistrationType(listing.registration_type)}
-                            </span>
-                          </div>
-                        )}
-                        {listing.is_registered !== undefined && (
-                          <div>
-                            <span className="text-primary-400 font-semibold">
-                              {t('listingDetail.registration')}:
-                            </span>
-                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                              {listing.is_registered
-                                ? t('listingDetail.registered')
-                                : t('listingDetail.notRegistered')}
-                            </span>
-                          </div>
-                        )}
-                        {listing.is_registered && listing.registration_expires_at && (
-                          <div>
-                            <span className="text-primary-400 font-semibold">
-                              {t('listingDetail.registeredUntil')}:
-                            </span>
-                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                              {(() => {
-                                const date = new Date(listing.registration_expires_at);
-                                const month = String(date.getMonth() + 1).padStart(2, '0');
-                                const year = date.getFullYear();
-                                return `${month}.${year}`;
-                              })()}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </div>
+              </div>
+            )}
+
+            {listing.equipment && listing.equipment.length > 0 && (
+              <div className="surface">
+                <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-400">
+                  {t('listingDetail.equipment')}
+                </h2>
+                <ul className="list-disc list-outside grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 pl-5">
+                  {listing.equipment.map((key) => (
+                    <li key={key} className="ml-0" style={{ color: 'rgb(243, 243, 243)' }}>
+                      {t(`vehicleOptions.equipment.${key}`)}
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
 
@@ -1849,6 +1811,65 @@ export default function ListingPageClient({
                     list-style-position: outside !important;
                   }
                 `}</style>
+              </div>
+            )}
+
+            {(listing.condition ||
+              listing.registration_type ||
+              listing.is_registered !== undefined) && (
+              <div className="surface">
+                <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-400">
+                  {t('listingDetail.conditionAndRegistration')}
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {listing.condition && (
+                    <div>
+                      <span className="text-primary-400 font-semibold">
+                        {t('listingDetail.condition')}:
+                      </span>
+                      <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
+                        {t(`vehicleOptions.condition.${listing.condition}`)}
+                      </span>
+                    </div>
+                  )}
+                  {listing.registration_type && (
+                    <div>
+                      <span className="text-primary-400 font-semibold">
+                        {t('listingDetail.registrationType')}:
+                      </span>
+                      <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
+                        {formatRegistrationType(listing.registration_type)}
+                      </span>
+                    </div>
+                  )}
+                  {listing.is_registered !== undefined && (
+                    <div>
+                      <span className="text-primary-400 font-semibold">
+                        {t('listingDetail.registration')}:
+                      </span>
+                      <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
+                        {listing.is_registered
+                          ? t('listingDetail.registered')
+                          : t('listingDetail.notRegistered')}
+                      </span>
+                    </div>
+                  )}
+                  {listing.is_registered && listing.registration_expires_at && (
+                    <div>
+                      <span className="text-primary-400 font-semibold">
+                        {t('listingDetail.registeredUntil')}:
+                      </span>
+                      <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
+                        {(() => {
+                          const date = new Date(listing.registration_expires_at);
+                          const month = String(date.getMonth() + 1).padStart(2, '0');
+                          const year = date.getFullYear();
+                          return `${month}.${year}`;
+                        })()}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -1967,7 +1988,7 @@ export default function ListingPageClient({
                             style={{ color: 'rgb(243, 243, 243)' }}
                           >
                             {prevListing.vehicle?.mileage_km
-                              ? formatMileage(prevListing.vehicle.mileage_km) + ' км'
+                              ? `${formatMileage(prevListing.vehicle.mileage_km)} ${t('listings.km')}`
                               : '-'}
                           </td>
                           <td

@@ -1,5 +1,29 @@
 import { loadSiteConfigSync } from './site-config';
 
+export const isBrowser = typeof window !== 'undefined';
+
+export function getLocale(): string {
+  const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+  const siteConfig = loadSiteConfigSync(country);
+  return siteConfig.locale.split('_')[0];
+}
+
+export type LabeledOption<T = string> = { value: T; label: string };
+
+const collator = new Intl.Collator('mk', { sensitivity: 'base', numeric: true });
+
+export function sortByName<T extends { name: string }>(items: T[]): T[] {
+  return [...items].sort((a, b) => collator.compare(a.name, b.name));
+}
+
+export function compareNames(a: string, b: string): number {
+  return collator.compare(a, b);
+}
+
+export function sortOptionsByLabel<T>(options: Array<LabeledOption<T>>): Array<LabeledOption<T>> {
+  return [...options].sort((a, b) => collator.compare(a.label, b.label));
+}
+
 export function formatPrice(price: number | undefined, currency?: string): string {
   if (price === undefined || price === null) {
     return '';
@@ -51,6 +75,18 @@ export function formatDateShort(date: string | Date): string {
   return `${day}.${month}.${year}`;
 }
 
+export function formatDateLong(date: string | Date): string {
+  const d = new Date(date);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('mk-MK', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 export function formatEngineVolume(volume: number): string {
   return parseFloat(volume.toString()).toFixed(1);
 }
@@ -84,20 +120,6 @@ export function formatDriveType(driveType: string | undefined): string {
       return 'Полн';
     default:
       return driveType;
-  }
-}
-
-export function formatCondition(condition: string | undefined): string {
-  if (!condition) return '';
-  switch (condition) {
-    case 'Undamaged':
-      return 'Без оштетувања';
-    case 'Damaged':
-      return 'Со оштетувања';
-    case 'ForParts':
-      return 'За делови';
-    default:
-      return condition;
   }
 }
 
@@ -147,7 +169,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 function normalizeUrl(url: string): string {
   if (url.startsWith('http://')) {
-    if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+    if (isBrowser && window.location.protocol === 'https:') {
       return url.replace('http://', 'https://');
     }
     if (process.env.NODE_ENV === 'production') {
@@ -338,4 +360,12 @@ export function slugToName(slug: string): string {
     .split('-')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
+}
+
+export function horsepowerToKw(hp: number): number {
+  return Math.round(hp * 0.73549875);
+}
+
+export function kwToHorsepower(kw: number): number {
+  return Math.round(kw / 0.73549875);
 }

@@ -20,7 +20,16 @@ import {
   generateCacheKey,
   generateCacheKeyWithHash,
 } from '../common/utils/cache.utils';
+import { removePasswordFromUser } from '../common/utils/error-handling.utils';
 import { sanitizeHtml } from '../common/utils/html-sanitizer';
+import {
+  applyBooleanFilter,
+  applyCitiesFilter,
+  applyInOrEqualFilter,
+  applyRangeFilter,
+  applyTextSearchFilter,
+} from '../common/utils/query-builder.utils';
+import { validateRegistrationDate } from '../common/utils/validation.utils';
 import { UsersService } from '../users/users.service';
 
 import { CreateListingDto } from './dto/create-listing.dto';
@@ -50,23 +59,7 @@ export class ListingsService {
   ) {}
 
   async create(createListingDto: CreateListingDto, userId: string): Promise<Listing> {
-    if (createListingDto.registration_expires_at) {
-      const registrationDate = new Date(createListingDto.registration_expires_at);
-      const currentDate = new Date();
-      const currentMonth = currentDate.getMonth();
-      const currentYear = currentDate.getFullYear();
-      const registrationMonth = registrationDate.getMonth();
-      const registrationYear = registrationDate.getFullYear();
-
-      if (
-        registrationYear < currentYear ||
-        (registrationYear === currentYear && registrationMonth < currentMonth)
-      ) {
-        throw new BadRequestException(
-          'Датата на регистрација не може да биде помала од тековниот месец и година',
-        );
-      }
-    }
+    validateRegistrationDate(createListingDto.registration_expires_at);
 
     const vehicle = this.vehiclesRepository.create(createListingDto.vehicle);
     const savedVehicle = await this.vehiclesRepository.save(vehicle);
@@ -143,119 +136,64 @@ export class ListingsService {
       .leftJoinAndSelect('listing.user', 'user')
       .where('listing.status = :status', { status: ListingStatusEnum.Active });
 
-    if (searchDto.brand_ids && searchDto.brand_ids.length > 0) {
-      queryBuilder.andWhere('vehicle.brand_id IN (:...brand_ids)', {
-        brand_ids: searchDto.brand_ids,
-      });
-    } else if (searchDto.brand_id) {
-      queryBuilder.andWhere('vehicle.brand_id = :brand_id', { brand_id: searchDto.brand_id });
-    }
+    applyInOrEqualFilter(
+      queryBuilder,
+      'vehicle',
+      'brand_id',
+      searchDto.brand_ids,
+      searchDto.brand_id,
+    );
+    applyInOrEqualFilter(
+      queryBuilder,
+      'vehicle',
+      'model_id',
+      searchDto.model_ids,
+      searchDto.model_id,
+    );
 
-    if (searchDto.model_ids && searchDto.model_ids.length > 0) {
-      queryBuilder.andWhere('vehicle.model_id IN (:...model_ids)', {
-        model_ids: searchDto.model_ids,
-      });
-    } else if (searchDto.model_id) {
-      queryBuilder.andWhere('vehicle.model_id = :model_id', { model_id: searchDto.model_id });
-    }
+    applyRangeFilter(queryBuilder, 'vehicle', 'year', searchDto.year_gte, searchDto.year_lte);
+    applyRangeFilter(queryBuilder, 'listing', 'price', searchDto.price_gte, searchDto.price_lte);
+    applyRangeFilter(
+      queryBuilder,
+      'vehicle',
+      'mileage_km',
+      searchDto.mileage_gte,
+      searchDto.mileage_lte,
+    );
+    applyRangeFilter(
+      queryBuilder,
+      'vehicle',
+      'engine_displ_l',
+      searchDto.engine_displ_l_gte,
+      searchDto.engine_displ_l_lte,
+    );
+    applyRangeFilter(
+      queryBuilder,
+      'listing',
+      'horsepower',
+      searchDto.horsepower_gte,
+      searchDto.horsepower_lte,
+    );
 
-    if (searchDto.year_gte) {
-      queryBuilder.andWhere('vehicle.year >= :year_gte', { year_gte: searchDto.year_gte });
-    }
+    applyCitiesFilter(queryBuilder, 'listing', searchDto.cities, searchDto.city);
 
-    if (searchDto.year_lte) {
-      queryBuilder.andWhere('vehicle.year <= :year_lte', { year_lte: searchDto.year_lte });
-    }
-
-    if (searchDto.price_lte) {
-      queryBuilder.andWhere('listing.price <= :price_lte', { price_lte: searchDto.price_lte });
-    }
-
-    if (searchDto.price_gte) {
-      queryBuilder.andWhere('listing.price >= :price_gte', { price_gte: searchDto.price_gte });
-    }
-
-    if (searchDto.mileage_gte) {
-      queryBuilder.andWhere('vehicle.mileage_km >= :mileage_gte', {
-        mileage_gte: searchDto.mileage_gte,
-      });
-    }
-
-    if (searchDto.mileage_lte) {
-      queryBuilder.andWhere('vehicle.mileage_km <= :mileage_lte', {
-        mileage_lte: searchDto.mileage_lte,
-      });
-    }
-
-    if (searchDto.cities && searchDto.cities.length > 0) {
-      queryBuilder.andWhere(
-        searchDto.cities.map((_, index) => `listing.city ILIKE :city_${index}`).join(' OR '),
-        searchDto.cities.reduce(
-          (acc, city, index) => {
-            acc[`city_${index}`] = `%${city}%`;
-            return acc;
-          },
-          {} as Record<string, string>,
-        ),
-      );
-    } else if (searchDto.city) {
-      queryBuilder.andWhere('listing.city ILIKE :city', { city: `%${searchDto.city}%` });
-    }
-
-    if (searchDto.fuels && searchDto.fuels.length > 0) {
-      queryBuilder.andWhere('vehicle.fuel IN (:...fuels)', { fuels: searchDto.fuels });
-    } else if (searchDto.fuel) {
-      queryBuilder.andWhere('vehicle.fuel = :fuel', { fuel: searchDto.fuel });
-    }
-
-    if (searchDto.transmissions && searchDto.transmissions.length > 0) {
-      queryBuilder.andWhere('vehicle.transmission IN (:...transmissions)', {
-        transmissions: searchDto.transmissions,
-      });
-    } else if (searchDto.transmission) {
-      queryBuilder.andWhere('vehicle.transmission = :transmission', {
-        transmission: searchDto.transmission,
-      });
-    }
-
-    if (searchDto.body_types && searchDto.body_types.length > 0) {
-      queryBuilder.andWhere('vehicle.body_type IN (:...body_types)', {
-        body_types: searchDto.body_types,
-      });
-    } else if (searchDto.body_type) {
-      queryBuilder.andWhere('vehicle.body_type = :body_type', {
-        body_type: searchDto.body_type,
-      });
-    }
-
-    if (searchDto.engine_displ_l_gte) {
-      queryBuilder.andWhere('vehicle.engine_displ_l >= :engine_displ_l_gte', {
-        engine_displ_l_gte: searchDto.engine_displ_l_gte,
-      });
-    }
-
-    if (searchDto.engine_displ_l_lte) {
-      queryBuilder.andWhere('vehicle.engine_displ_l <= :engine_displ_l_lte', {
-        engine_displ_l_lte: searchDto.engine_displ_l_lte,
-      });
-    }
-
-    if (searchDto.colors && searchDto.colors.length > 0) {
-      queryBuilder.andWhere(
-        searchDto.colors.map((_, index) => `vehicle.color ILIKE :color_${index}`).join(' OR '),
-        searchDto.colors.reduce(
-          (acc, color, index) => {
-            acc[`color_${index}`] = `%${color}%`;
-            return acc;
-          },
-          {} as Record<string, string>,
-        ),
-      );
-    } else if (searchDto.color) {
-      queryBuilder.andWhere('vehicle.color ILIKE :color', {
-        color: `%${searchDto.color}%`,
-      });
-    }
+    applyInOrEqualFilter(queryBuilder, 'vehicle', 'fuel', searchDto.fuels, searchDto.fuel);
+    applyInOrEqualFilter(
+      queryBuilder,
+      'vehicle',
+      'transmission',
+      searchDto.transmissions,
+      searchDto.transmission,
+    );
+    applyInOrEqualFilter(
+      queryBuilder,
+      'vehicle',
+      'body_type',
+      searchDto.body_types,
+      searchDto.body_type,
+    );
+    applyInOrEqualFilter(queryBuilder, 'vehicle', 'color', searchDto.colors, searchDto.color);
+    applyInOrEqualFilter(queryBuilder, 'vehicle', 'drive_type', searchDto.drive_types, undefined);
 
     if (searchDto.doors && searchDto.doors.length > 0) {
       const doorNumbers = searchDto.doors.map((d) => parseInt(d, 10)).filter((d) => !isNaN(d));
@@ -274,23 +212,11 @@ export class ListingsService {
       });
     }
 
-    if (searchDto.title) {
-      queryBuilder.andWhere('listing.title ILIKE :title', {
-        title: `%${searchDto.title}%`,
-      });
-    }
+    applyTextSearchFilter(queryBuilder, 'listing', 'title', searchDto.title);
 
-    if (searchDto.urgent !== undefined) {
-      queryBuilder.andWhere('listing.urgent = :urgent', {
-        urgent: searchDto.urgent,
-      });
-    }
-
-    if (searchDto.is_new !== undefined) {
-      queryBuilder.andWhere('listing.is_new = :is_new', {
-        is_new: searchDto.is_new,
-      });
-    }
+    applyBooleanFilter(queryBuilder, 'listing', 'urgent', searchDto.urgent);
+    applyBooleanFilter(queryBuilder, 'listing', 'is_new', searchDto.is_new);
+    applyBooleanFilter(queryBuilder, 'listing', 'is_registered', searchDto.is_registered);
 
     if (searchDto.conditions && searchDto.conditions.length > 0) {
       queryBuilder.andWhere('listing.condition IN (:...conditions)', {
@@ -301,30 +227,6 @@ export class ListingsService {
     if (searchDto.registration_types && searchDto.registration_types.length > 0) {
       queryBuilder.andWhere('listing.registration_type IN (:...registration_types)', {
         registration_types: searchDto.registration_types,
-      });
-    }
-
-    if (searchDto.horsepower_gte) {
-      queryBuilder.andWhere('listing.horsepower >= :horsepower_gte', {
-        horsepower_gte: searchDto.horsepower_gte,
-      });
-    }
-
-    if (searchDto.horsepower_lte) {
-      queryBuilder.andWhere('listing.horsepower <= :horsepower_lte', {
-        horsepower_lte: searchDto.horsepower_lte,
-      });
-    }
-
-    if (searchDto.drive_types && searchDto.drive_types.length > 0) {
-      queryBuilder.andWhere('vehicle.drive_type IN (:...drive_types)', {
-        drive_types: searchDto.drive_types,
-      });
-    }
-
-    if (searchDto.is_registered !== undefined) {
-      queryBuilder.andWhere('listing.is_registered = :is_registered', {
-        is_registered: searchDto.is_registered,
       });
     }
 
@@ -344,9 +246,7 @@ export class ListingsService {
 
     const listingsWithoutPasswords = listings.map((listing) => {
       if (listing.user) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { password, ...userWithoutPassword } = listing.user;
-        listing.user = userWithoutPassword as typeof listing.user;
+        listing.user = removePasswordFromUser(listing.user) as typeof listing.user;
 
         if (
           listing.status === ListingStatusEnum.Closed ||
@@ -405,9 +305,7 @@ export class ListingsService {
       }
 
       if (listing.user) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { password, ...userWithoutPassword } = listing.user;
-        listing.user = userWithoutPassword as typeof listing.user;
+        listing.user = removePasswordFromUser(listing.user) as typeof listing.user;
       }
 
       if (listing.status === ListingStatusEnum.Closed) {
@@ -503,38 +401,20 @@ export class ListingsService {
     if (model) titleParts.push(model.name);
     if (vehicle.year) titleParts.push(vehicle.year.toString());
 
-    const transmissionStr =
-      vehicle.transmission === 'Automatic'
-        ? 'Автоматска'
-        : vehicle.transmission === 'Manual'
-          ? 'Мануелна'
-          : vehicle.transmission === 'CVT'
-            ? 'Варијатор'
-            : '';
+    const transmissionMap: Record<string, string> = {
+      Automatic: 'Автоматска',
+      Manual: 'Мануелна',
+      CVT: 'Варијатор',
+    };
+
+    const transmissionStr = vehicle.transmission ? transmissionMap[vehicle.transmission] || '' : '';
 
     const baseTitle = titleParts.join(' ');
     return transmissionStr ? `${baseTitle} (${transmissionStr})` : baseTitle;
   }
 
   async update(id: string, updateListingDto: UpdateListingDto, userId: string): Promise<Listing> {
-    // Validate registration date
-    if (updateListingDto.registration_expires_at) {
-      const registrationDate = new Date(updateListingDto.registration_expires_at);
-      const currentDate = new Date();
-      const currentMonth = currentDate.getMonth();
-      const currentYear = currentDate.getFullYear();
-      const registrationMonth = registrationDate.getMonth();
-      const registrationYear = registrationDate.getFullYear();
-
-      if (
-        registrationYear < currentYear ||
-        (registrationYear === currentYear && registrationMonth < currentMonth)
-      ) {
-        throw new BadRequestException(
-          'Датата на регистрација не може да биде помала од тековниот месец и година',
-        );
-      }
-    }
+    validateRegistrationDate(updateListingDto.registration_expires_at);
 
     // Load current listing
     const listing = await this.listingsRepository.findOne({
@@ -657,9 +537,7 @@ export class ListingsService {
 
     // Remove sensitive user data
     if (freshListing.user) {
-      const { password, ...userWithoutPassword } = freshListing.user;
-      void password;
-      freshListing.user = userWithoutPassword as typeof freshListing.user;
+      freshListing.user = removePasswordFromUser(freshListing.user) as typeof freshListing.user;
     }
 
     return freshListing;
@@ -838,9 +716,7 @@ export class ListingsService {
       (listing as Partial<Listing>).price = undefined;
       (listing as Partial<Listing>).currency = undefined;
       if (listing.user) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { password, ...userWithoutPassword } = listing.user;
-        listing.user = userWithoutPassword as typeof listing.user;
+        listing.user = removePasswordFromUser(listing.user) as typeof listing.user;
         listing.user.phone = null;
         listing.user.email = null;
         listing.user.firstName = null;

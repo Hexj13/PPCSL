@@ -90,4 +90,73 @@ describe('listingsApi', () => {
       await expect(listingsApi.getByVin(vin)).rejects.toEqual(axiosError);
     });
   });
+
+  describe('create', () => {
+    it('should create listing with equipment', async () => {
+      const createDto = {
+        title: 'Test Car',
+        price: 10000,
+        currency: 'MKD',
+        city: 'Skopje',
+        condition: 'Undamaged',
+        registration_type: 'Local',
+        horsepower: 150,
+        equipment: ['air_conditioning', 'navigation', 'parking_sensors'],
+        vehicle: {
+          brand_id: 'brand-1',
+          model_id: 'model-1',
+          year: 2020,
+        },
+      };
+
+      const mockListing: Listing = {
+        id: 'listing-1',
+        ...createDto,
+        currency: 'MKD' as const,
+        status: 'Active',
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
+        last_updated_at: '2024-01-01T00:00:00Z',
+      };
+
+      mockAxiosInstance.post.mockResolvedValue({ data: mockListing });
+
+      const result = await listingsApi.create(createDto);
+
+      expect(mockAxiosInstance.post).toHaveBeenCalledWith('/api/listings', createDto);
+      expect(result.data.equipment).toEqual(['air_conditioning', 'navigation', 'parking_sensors']);
+    });
+  });
+
+  describe('update', () => {
+    it('should update listing with equipment', async () => {
+      const listingId = 'listing-1';
+      const updateDto = {
+        equipment: ['air_conditioning', 'navigation', 'leather_seats'],
+      };
+
+      const mockListing: Listing = {
+        id: listingId,
+        title: 'Test Car',
+        price: 10000,
+        currency: 'MKD' as const,
+        city: 'Skopje',
+        status: 'Active',
+        condition: 'Undamaged',
+        registration_type: 'Local',
+        horsepower: 150,
+        equipment: updateDto.equipment,
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
+        last_updated_at: '2024-01-01T00:00:00Z',
+      };
+
+      mockAxiosInstance.patch.mockResolvedValue({ data: mockListing });
+
+      const result = await listingsApi.update(listingId, updateDto);
+
+      expect(mockAxiosInstance.patch).toHaveBeenCalledWith(`/api/listings/${listingId}`, updateDto);
+      expect(result.data.equipment).toEqual(['air_conditioning', 'navigation', 'leather_seats']);
+    });
+  });
 });

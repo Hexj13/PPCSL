@@ -6,7 +6,7 @@ import { toast } from 'react-hot-toast';
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { brandsApi, savedFiltersApi, SavedFilter } from '@/lib/api';
-import { createSlug } from '@/lib/utils';
+import { createSlug, formatDateLong } from '@/lib/utils';
 
 import { SaveFilterModal } from './SaveFilterModal';
 
@@ -242,17 +242,6 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
     router.push(`/?${queryString}`);
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('mk-MK', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
   if (loading) {
     return (
       <div className="space-y-4">
@@ -295,7 +284,7 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
                 </h3>
               </div>
               <p className="text-sm text-gray-400">
-                {t('savedFiltersList.created')}: {formatDate(filter.created_at)}
+                {t('savedFiltersList.created')}: {formatDateLong(filter.created_at)}
               </p>
             </div>
             <div className="flex gap-2">

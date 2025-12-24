@@ -1,9 +1,13 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { QueryFailedError } from 'typeorm';
 
 import * as constants from '../common/constants';
+import { cleanUserData } from '../common/utils/data-cleanup.utils';
+import {
+  handleDuplicateKeyError,
+  removePasswordFromUser,
+} from '../common/utils/error-handling.utils';
 import { ListingsService } from '../listings/listings.service';
 import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
@@ -43,9 +47,7 @@ export class AuthService {
         : null;
 
     if (user && (await bcrypt.compare(password, user.password))) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password: _, ...result } = user;
-      return result;
+      return removePasswordFromUser(user);
     }
     return null;
   }
@@ -144,26 +146,10 @@ export class AuthService {
       cleanedUserData.phone = this.smsService.normalizePhoneNumber(cleanedUserData.phone);
     }
 
-    if (cleanedUserData.firstName === '' || cleanedUserData.firstName === null) {
-      cleanedUserData.firstName = null;
-    } else if (cleanedUserData.firstName) {
-      cleanedUserData.firstName = cleanedUserData.firstName.trim();
-    }
-
-    if (cleanedUserData.lastName === '' || cleanedUserData.lastName === null) {
-      cleanedUserData.lastName = null;
-    } else if (cleanedUserData.lastName) {
-      cleanedUserData.lastName = cleanedUserData.lastName.trim();
-    }
-
-    if (cleanedUserData.email === '' || cleanedUserData.email === null) {
-      cleanedUserData.email = null;
-    } else if (cleanedUserData.email) {
-      cleanedUserData.email = cleanedUserData.email.trim();
-    }
+    const finalUserData = cleanUserData(cleanedUserData);
 
     try {
-      const user = await this.usersService.create(cleanedUserData);
+      const user = await this.usersService.create(finalUserData);
 
       if (user.email) {
         try {
@@ -171,30 +157,17 @@ export class AuthService {
         } catch {}
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password: _, ...result } = user;
-      return result;
+      return removePasswordFromUser(user);
     } catch (error) {
-      if (error instanceof QueryFailedError) {
-        const errorMessage = (error as QueryFailedError & { message?: string }).message;
-        if (errorMessage && errorMessage.includes('duplicate key')) {
-          if (
-            errorMessage.includes('email') ||
-            errorMessage.includes('UQ_97672ac88f789774dd47f7c8be3')
-          ) {
-            throw new BadRequestException('Корисник со овој email веќе постои');
-          }
-          throw new BadRequestException('Корисник со овие податоци веќе постои');
-        }
-      }
-      throw error;
+      handleDuplicateKeyError(error, {
+        email: 'Корисник со овој email веќе постои',
+      });
     }
   }
 
   async getUserProfile(userId: string) {
     const user = await this.usersService.findOne(userId);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _, ...result } = user;
+    const result = removePasswordFromUser(user);
     return {
       id: result.id,
       email: result.email,

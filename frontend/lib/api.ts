@@ -249,9 +249,11 @@ export interface Listing {
   condition: ConditionType;
   registration_type: RegistrationType;
   horsepower: number;
+  power_kw?: number;
   is_registered?: boolean;
   registration_expires_at?: string;
   views?: number;
+  equipment?: string[];
   vehicle?: Vehicle;
   user?: User;
   last_updated_at: string;
@@ -368,8 +370,10 @@ export interface CreateListingDto {
   condition: ConditionType;
   registration_type: RegistrationType;
   horsepower: number;
+  power_kw?: number;
   is_registered?: boolean;
   registration_expires_at?: string;
+  equipment?: string[];
   vehicle: {
     brand_id: string;
     model_id: string;

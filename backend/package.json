@@ -32,6 +32,7 @@
     "copy-seed-images": "ts-node -r tsconfig-paths/register src/scripts/stage/copy-images-to-seed.ts",
     "create-test-listing": "ts-node -r tsconfig-paths/register src/scripts/stage/create-test-listing.ts",
     "seed:vin": "ts-node -r tsconfig-paths/register src/scripts/stage/seed-vin-test.ts",
+    "fix-price-nulls": "ts-node -r tsconfig-paths/register src/scripts/stage/fix-price-nulls.ts",
     "seed:vehicles": "ts-node -r tsconfig-paths/register src/scripts/stage/seed-vehicles-full.ts",
     "make-admin": "ts-node -r tsconfig-paths/register src/scripts/stage/make-admin.ts",
     "make-admin:prod": "ts-node -r tsconfig-paths/register src/scripts/production/make-admin.ts",

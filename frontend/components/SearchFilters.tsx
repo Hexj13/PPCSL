@@ -5,107 +5,42 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useState, useEffect, startTransition, useCallback, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { useBrandsAndModels } from '@/hooks/useBrandsAndModels';
+import { useCities } from '@/hooks/useCities';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
-import { brandsApi, citiesApi, Brand, VehicleModel, City, User } from '@/lib/api';
-import { ConditionType, DriveType, RegistrationType } from '@/lib/constants';
+import { brandsApi, VehicleModel, User } from '@/lib/api';
+import { ConditionType, RegistrationType } from '@/lib/constants';
+import {
+  getBodyTypeOptions,
+  getColorOptions,
+  getDoorOptions,
+  getDriveTypeOptions,
+  getFuelOptions,
+  getTransmissionOptions,
+} from '@/lib/form-options';
 import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/popular-brands';
-import { loadSiteConfigSync } from '@/lib/site-config';
 import { useAuthStore } from '@/lib/store';
-import { createSlug } from '@/lib/utils';
+import {
+  compareNames,
+  createSlug,
+  isBrowser,
+  sortByName,
+  sortOptionsByLabel,
+  type LabeledOption,
+} from '@/lib/utils';
 
 import { Dropdown } from './Dropdown';
 import { MultiSelectDropdown } from './MultiSelectDropdown';
 import { SaveFilterModal } from './SaveFilterModal';
 import { SortDropdown } from './SortDropdown';
 
-const POPULAR_CITIES = ['Скопје', 'Битола', 'Куманово', 'Прилеп', 'Тетово'];
+const POPULAR_CITY_NAMES_EN = ['Skopje', 'Bitola', 'Kumanovo', 'Prilep', 'Tetovo'];
 
 const FILTERS_STORAGE_KEY = 'kupito_search_filters';
 const POPULAR_FILTERS_OPEN_KEY = 'kupito_popular_filters_open';
 const ADVANCED_FILTERS_OPEN_KEY = 'kupito_advanced_filters_open';
 const MAX_URL_LENGTH = 1800;
-
-function getLocale(): string {
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
-  const siteConfig = loadSiteConfigSync(country);
-  return siteConfig.locale.split('_')[0];
-}
-
-type LabeledOption<T = string> = { value: T; label: string };
-
-const MK_ALPHABET_ORDER: Record<string, number> = {
-  а: 1,
-  б: 2,
-  в: 3,
-  г: 4,
-  д: 5,
-  ѓ: 6,
-  е: 7,
-  ж: 8,
-  з: 9,
-  ѕ: 10,
-  и: 11,
-  ј: 12,
-  к: 13,
-  л: 14,
-  љ: 15,
-  м: 16,
-  н: 17,
-  њ: 18,
-  о: 19,
-  п: 20,
-  р: 21,
-  с: 22,
-  т: 23,
-  ќ: 24,
-  у: 25,
-  ф: 26,
-  х: 27,
-  ц: 28,
-  ч: 29,
-  џ: 30,
-  ш: 31,
-};
-
-function compareMkLabels(aRaw: string, bRaw: string): number {
-  if (aRaw === bRaw) return 0;
-
-  const a = aRaw.toLowerCase().normalize('NFC');
-  const b = bRaw.toLowerCase().normalize('NFC');
-  if (a === b) return 0;
-
-  const aChars = Array.from(a);
-  const bChars = Array.from(b);
-  const len = Math.min(aChars.length, bChars.length);
-
-  for (let i = 0; i < len; i += 1) {
-    const ac = aChars[i]!;
-    const bc = bChars[i]!;
-    if (ac === bc) continue;
-
-    const ao = MK_ALPHABET_ORDER[ac];
-    const bo = MK_ALPHABET_ORDER[bc];
-
-    const aKnown = typeof ao === 'number';
-    const bKnown = typeof bo === 'number';
-
-    if (aKnown && bKnown) return ao - bo;
-    if (aKnown && !bKnown) return -1;
-    if (!aKnown && bKnown) return 1;
-
-    const aCode = ac.codePointAt(0) ?? 0;
-    const bCode = bc.codePointAt(0) ?? 0;
-    if (aCode !== bCode) return aCode - bCode;
-    if (ac < bc) return -1;
-    if (ac > bc) return 1;
-  }
-
-  return aChars.length - bChars.length;
-}
-
-const sortOptionsByLabel = <T,>(options: Array<LabeledOption<T>>) =>
-  [...options].sort((a, b) => compareMkLabels(a.label, b.label));
 
 const encodeArray = (arr: string[]): string => {
   if (arr.length === 0) return '';
@@ -133,7 +68,7 @@ const decodeArray = (encoded: string): string[] => {
 };
 
 const saveFiltersToStorage = (filters: Record<string, unknown>) => {
-  if (typeof window !== 'undefined') {
+  if (isBrowser) {
     try {
       sessionStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filters));
       localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filters));
@@ -144,7 +79,7 @@ const saveFiltersToStorage = (filters: Record<string, unknown>) => {
 };
 
 const loadFiltersFromStorage = (): Record<string, unknown> | null => {
-  if (typeof window !== 'undefined') {
+  if (isBrowser) {
     try {
       const stored =
         sessionStorage.getItem(FILTERS_STORAGE_KEY) || localStorage.getItem(FILTERS_STORAGE_KEY);
@@ -158,7 +93,7 @@ const loadFiltersFromStorage = (): Record<string, unknown> | null => {
 };
 
 const clearFiltersFromStorage = () => {
-  if (typeof window !== 'undefined') {
+  if (isBrowser) {
     try {
       sessionStorage.removeItem(FILTERS_STORAGE_KEY);
       localStorage.removeItem(FILTERS_STORAGE_KEY);
@@ -175,77 +110,22 @@ export function SearchFilters() {
   const { t } = useTranslation();
   const [isHydrated, setIsHydrated] = useState(false);
   const userForUi = isHydrated ? user : null;
-  const [brands, setBrands] = useState<Brand[]>([]);
-  const [models, setModels] = useState<VehicleModel[]>([]);
-  const [cities, setCities] = useState<City[]>([]);
   const [loadingModels, setLoadingModels] = useState(false);
 
-  const getFuelOptions = () =>
-    sortOptionsByLabel([
-      { value: 'Petrol', label: t('vehicleOptions.fuel.Petrol') },
-      { value: 'Diesel', label: t('vehicleOptions.fuel.Diesel') },
-      { value: 'Electric', label: t('vehicleOptions.fuel.Electric') },
-      { value: 'Hybrid', label: t('vehicleOptions.fuel.Hybrid') },
-      { value: 'LPG', label: t('vehicleOptions.fuel.LPG') },
-    ]);
+  const {
+    brands,
+    models,
+    setModels: setModelsFromHook,
+  } = useBrandsAndModels({ autoLoadModels: false });
+  const { cities } = useCities();
 
-  const getTransmissionOptions = () =>
-    sortOptionsByLabel([
-      { value: 'Manual', label: t('vehicleOptions.transmission.Manual') },
-      { value: 'Automatic', label: t('vehicleOptions.transmission.Automatic') },
-      { value: 'CVT', label: t('vehicleOptions.transmission.CVT') },
-    ]);
-
-  const getDriveTypeOptions = () =>
-    sortOptionsByLabel([
-      { value: DriveType.FWD, label: t('vehicleOptions.driveType.FWD') },
-      { value: DriveType.RWD, label: t('vehicleOptions.driveType.RWD') },
-      { value: DriveType.AWD, label: t('vehicleOptions.driveType.AWD') },
-    ]);
-
-  const getBodyTypeOptions = () =>
-    sortOptionsByLabel([
-      { value: 'Sedan', label: t('vehicleOptions.bodyType.Sedan') },
-      { value: 'Hatchback', label: t('vehicleOptions.bodyType.Hatchback') },
-      { value: 'Wagon', label: t('vehicleOptions.bodyType.Wagon') },
-      { value: 'SUV', label: t('vehicleOptions.bodyType.SUV') },
-      { value: 'Coupe', label: t('vehicleOptions.bodyType.Coupe') },
-      { value: 'Convertible', label: t('vehicleOptions.bodyType.Convertible') },
-      { value: 'Van', label: t('vehicleOptions.bodyType.Van') },
-      { value: 'Pickup', label: t('vehicleOptions.bodyType.Pickup') },
-      { value: 'Minivan', label: t('vehicleOptions.bodyType.Minivan') },
-      { value: 'Truck', label: t('vehicleOptions.bodyType.Truck') },
-    ]);
-
-  const getDoorOptions = () =>
-    sortOptionsByLabel([
-      { value: '2', label: '2' },
-      { value: '3', label: '3' },
-      { value: '4', label: '4' },
-      { value: '5', label: '5' },
-    ]);
-
-  const COLOR_OPTIONS = sortOptionsByLabel([
-    { value: 'Црна', label: 'Црна' },
-    { value: 'Бела', label: 'Бела' },
-    { value: 'Сива', label: 'Сива' },
-    { value: 'Сребрена', label: 'Сребрена' },
-    { value: 'Сина', label: 'Сина' },
-    { value: 'Црвена', label: 'Црвена' },
-    { value: 'Зелена', label: 'Зелена' },
-    { value: 'Жолта', label: 'Жолта' },
-    { value: 'Кафена', label: 'Кафена' },
-    { value: 'Портокалова', label: 'Портокалова' },
-    { value: 'Розова', label: 'Розова' },
-    { value: 'Виолетова', label: 'Виолетова' },
-    { value: 'Бежова', label: 'Бежова' },
-  ]);
+  const COLOR_OPTIONS = getColorOptions(t);
 
   const getConditionOptions = () =>
     sortOptionsByLabel([
-      { value: ConditionType.Undamaged, label: 'Без оштетувања' },
-      { value: ConditionType.Damaged, label: 'Со оштетувања' },
-      { value: ConditionType.ForParts, label: 'За делови' },
+      { value: ConditionType.Undamaged, label: t('vehicleOptions.condition.Undamaged') },
+      { value: ConditionType.Damaged, label: t('vehicleOptions.condition.Damaged') },
+      { value: ConditionType.ForParts, label: t('vehicleOptions.condition.ForParts') },
     ]);
 
   const getRegistrationTypeOptions = () =>
@@ -343,7 +223,7 @@ export function SearchFilters() {
   const togglePopularFilters = () => {
     setShowPopularFilters((prev) => {
       const next = !prev;
-      if (typeof window !== 'undefined') {
+      if (isBrowser) {
         sessionStorage.setItem(POPULAR_FILTERS_OPEN_KEY, next ? '1' : '0');
       }
       return next;
@@ -353,7 +233,7 @@ export function SearchFilters() {
   const toggleAdvancedFilters = () => {
     setShowAdvanced((prev) => {
       const next = !prev;
-      if (typeof window !== 'undefined') {
+      if (isBrowser) {
         sessionStorage.setItem(ADVANCED_FILTERS_OPEN_KEY, next ? '1' : '0');
       }
       return next;
@@ -374,14 +254,14 @@ export function SearchFilters() {
       }
 
       const newUrl = `/?${params.toString()}`;
-      const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
-      if (typeof window !== 'undefined') {
+      const scrollY = isBrowser ? window.scrollY : 0;
+      if (isBrowser) {
         sessionStorage.setItem('scrollPreserved', 'true');
       }
 
       startTransition(() => {
         router.replace(newUrl, { scroll: false });
-        if (typeof window !== 'undefined') {
+        if (isBrowser) {
           requestAnimationFrame(() => {
             window.scrollTo({ top: scrollY, behavior: 'instant' });
             requestAnimationFrame(() => {
@@ -581,12 +461,8 @@ export function SearchFilters() {
   }, [models, filters.brand_ids, searchParams]);
 
   const getBrandOptions = useCallback(() => {
-    const popularBrands = brands
-      .filter((brand) => POPULAR_BRANDS.includes(brand.name))
-      .sort((a, b) => a.name.localeCompare(b.name, getLocale()));
-    const otherBrands = brands
-      .filter((brand) => !POPULAR_BRANDS.includes(brand.name))
-      .sort((a, b) => a.name.localeCompare(b.name, getLocale()));
+    const popularBrands = sortByName(brands.filter((brand) => POPULAR_BRANDS.includes(brand.name)));
+    const otherBrands = sortByName(brands.filter((brand) => !POPULAR_BRANDS.includes(brand.name)));
 
     const options: Array<{ value: string; label: string; category?: string }> = [
       { value: 'all', label: t('searchFilters.allBrands') },
@@ -631,7 +507,7 @@ export function SearchFilters() {
         const brandA = brandsMap.get(a);
         const brandB = brandsMap.get(b);
         if (!brandA || !brandB) return 0;
-        return brandA.name.localeCompare(brandB.name, getLocale());
+        return compareNames(brandA.name, brandB.name);
       });
 
       sortedBrandIds.forEach((brandId) => {
@@ -639,9 +515,7 @@ export function SearchFilters() {
         if (brand) {
           const brandModels = modelsByBrand.get(brandId) || [];
           if (brandModels.length > 0) {
-            const sortedModels = [...brandModels].sort((a, b) =>
-              a.name.localeCompare(b.name, getLocale())
-            );
+            const sortedModels = sortByName(brandModels);
             options.push({
               value: `__category__${brand.id}`,
               label: brand.name,
@@ -654,7 +528,7 @@ export function SearchFilters() {
         }
       });
     } else {
-      const sortedModels = [...models].sort((a, b) => a.name.localeCompare(b.name, getLocale()));
+      const sortedModels = sortByName(models);
       sortedModels.forEach((model) => {
         options.push({ value: model.id, label: model.name });
       });
@@ -664,12 +538,12 @@ export function SearchFilters() {
   }, [models, brands, filters.brand_ids, t]);
 
   const getCityOptions = useCallback(() => {
-    const popularCities = cities
-      .filter((city) => POPULAR_CITIES.includes(city.name))
-      .sort((a, b) => a.name.localeCompare(b.name, getLocale()));
-    const otherCities = cities
-      .filter((city) => !POPULAR_CITIES.includes(city.name))
-      .sort((a, b) => a.name.localeCompare(b.name, getLocale()));
+    const popularCities = sortByName(
+      cities.filter((city) => POPULAR_CITY_NAMES_EN.includes(city.nameEn))
+    );
+    const otherCities = sortByName(
+      cities.filter((city) => !POPULAR_CITY_NAMES_EN.includes(city.nameEn))
+    );
 
     const options: Array<{ value: string; label: string; category?: string }> = [
       { value: 'all', label: t('searchFilters.allCities') },
@@ -703,17 +577,6 @@ export function SearchFilters() {
   }, [cities, t]);
 
   useEffect(() => {
-    brandsApi.getAll().then((res) => {
-      const sorted = [...res.data].sort((a, b) => a.name.localeCompare(b.name, getLocale()));
-      setBrands(sorted);
-    });
-    citiesApi.getAll().then((res) => {
-      const sorted = [...res.data].sort((a, b) => a.name.localeCompare(b.name, getLocale()));
-      setCities(sorted);
-    });
-  }, []);
-
-  useEffect(() => {
     if (filters.brand_ids.length > 0) {
       setLoadingModels(true);
       brandsApi
@@ -723,10 +586,8 @@ export function SearchFilters() {
           const uniqueModels = Array.from(
             new Map(allModels.map((model) => [model.id, model])).values()
           );
-          const sorted = [...uniqueModels].sort((a, b) =>
-            a.name.localeCompare(b.name, getLocale())
-          );
-          setModels(sorted);
+          const sorted = sortByName(uniqueModels);
+          setModelsFromHook(sorted);
           setLoadingModels(false);
 
           const modelParam = searchParams.get('model');
@@ -766,10 +627,10 @@ export function SearchFilters() {
           setLoadingModels(false);
         });
     } else {
-      setModels([]);
+      setModelsFromHook([]);
       setFilters((prev) => ({ ...prev, model_ids: [] }));
     }
-  }, [filters.brand_ids, searchParams]);
+  }, [filters.brand_ids, searchParams, setModelsFromHook]);
 
   useEffect(() => {
     const prevUser = prevUserRef.current;
@@ -1308,7 +1169,7 @@ export function SearchFilters() {
             onChange={(values) => handleMultiSelectChange('transmissions', values)}
             placeholder={t('searchFilters.selectTransmission')}
             showActionButtons={true}
-            options={getTransmissionOptions()}
+            options={getTransmissionOptions(t)}
           />
         </div>
       </div>
@@ -1564,7 +1425,7 @@ export function SearchFilters() {
                   onChange={(values) => handleMultiSelectChange('fuels', values)}
                   placeholder={t('searchFilters.selectFuel')}
                   showActionButtons={true}
-                  options={getFuelOptions()}
+                  options={getFuelOptions(t)}
                 />
               </div>
 
@@ -1601,7 +1462,7 @@ export function SearchFilters() {
                   onChange={(values) => handleMultiSelectChange('drive_types', values)}
                   placeholder={t('searchFilters.selectDriveType')}
                   showActionButtons={true}
-                  options={getDriveTypeOptions()}
+                  options={getDriveTypeOptions(t)}
                 />
               </div>
 
@@ -1902,7 +1763,7 @@ export function SearchFilters() {
                   onChange={(values) => handleMultiSelectChange('body_types', values)}
                   placeholder={t('searchFilters.selectBodyType')}
                   showActionButtons={true}
-                  options={getBodyTypeOptions()}
+                  options={getBodyTypeOptions(t)}
                 />
               </div>
 
@@ -1928,7 +1789,7 @@ export function SearchFilters() {
                   onChange={(values) => handleMultiSelectChange('doors', values)}
                   placeholder={t('searchFilters.selectDoors')}
                   showActionButtons={true}
-                  options={getDoorOptions()}
+                  options={getDoorOptions(t)}
                 />
               </div>
 
@@ -2200,7 +2061,7 @@ export function SearchFilters() {
               if (userForUi) {
                 setShowSaveModal(true);
               } else {
-                if (typeof window !== 'undefined') {
+                if (isBrowser) {
                   localStorage.setItem('pendingSavedFilter', JSON.stringify(getFiltersForSave()));
                   localStorage.setItem('returnUrl', '/favorites?tab=filters');
                 }

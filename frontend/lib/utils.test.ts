@@ -6,6 +6,8 @@ import {
   formatMileage,
   formatPrice,
   formatTransmission,
+  horsepowerToKw,
+  kwToHorsepower,
 } from './utils';
 
 describe('utils', () => {
@@ -133,6 +135,34 @@ describe('utils', () => {
 
     it('should return original value for unknown body type', () => {
       expect(formatBodyType('Unknown')).toBe('Unknown');
+    });
+  });
+
+  describe('horsepowerToKw', () => {
+    it('should convert horsepower to kilowatts correctly', () => {
+      expect(horsepowerToKw(100)).toBe(74);
+      expect(horsepowerToKw(150)).toBe(110);
+      expect(horsepowerToKw(200)).toBe(147);
+      expect(horsepowerToKw(300)).toBe(221);
+    });
+
+    it('should round the result', () => {
+      expect(horsepowerToKw(1)).toBe(1);
+      expect(horsepowerToKw(10)).toBe(7);
+    });
+  });
+
+  describe('kwToHorsepower', () => {
+    it('should convert kilowatts to horsepower correctly', () => {
+      expect(kwToHorsepower(74)).toBe(101);
+      expect(kwToHorsepower(110)).toBe(150);
+      expect(kwToHorsepower(147)).toBe(200);
+      expect(kwToHorsepower(221)).toBe(300);
+    });
+
+    it('should round the result', () => {
+      expect(kwToHorsepower(1)).toBe(1);
+      expect(kwToHorsepower(7)).toBe(10);
     });
   });
 });

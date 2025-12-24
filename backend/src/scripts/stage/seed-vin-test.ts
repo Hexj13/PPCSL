@@ -33,7 +33,7 @@ function formatDate(date: Date): string {
 }
 
 const cities = ['Скопје', 'Битола', 'Прилеп', 'Куманово', 'Охрид', 'Струга', 'Велес', 'Штип'];
-const colors = ['Бела', 'Црна', 'Сива', 'Сребрена', 'Сина', 'Црвена'];
+const colors = ['white', 'black', 'gray', 'silver', 'blue', 'red'];
 const descriptions = [
   'Отлично одржан автомобил, без неисправности.',
   'Прекрасен автомобил во одлично состојба.',

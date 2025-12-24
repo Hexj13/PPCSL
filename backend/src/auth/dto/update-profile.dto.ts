@@ -4,11 +4,12 @@ import {
   IsEmail,
   IsOptional,
   IsString,
-  Matches,
   MaxLength,
   MinLength,
   ValidateIf,
 } from 'class-validator';
+
+import { IsName } from '../../common/decorators/is-name.decorator';
 
 export class UpdateProfileDto {
   @ApiPropertyOptional({
@@ -28,9 +29,7 @@ export class UpdateProfileDto {
   @IsString({ message: 'Името мора да биде стринг' })
   @MinLength(2, { message: 'Името мора да содржи минимум 2 карактери' })
   @MaxLength(50, { message: 'Името не може да биде подолго од 50 карактери' })
-  @Matches(/^[a-zA-Zа-яА-ЯёЁјЈљЉњЊќЌџЅ\s\-]+$/, {
-    message: 'Името може да содржи само букви, пробели, тире и дефис',
-  })
+  @IsName()
   firstName?: string;
 
   @ApiPropertyOptional({
@@ -42,9 +41,7 @@ export class UpdateProfileDto {
   @IsString()
   @MinLength(2, { message: 'Презимето мора да содржи минимум 2 карактери' })
   @MaxLength(50, { message: 'Презимето не може да биде подолго од 50 карактери' })
-  @Matches(/^[a-zA-Zа-яА-ЯёЁјЈљЉњЊќЌџЅ\s\-]+$/, {
-    message: 'Презимето може да содржи само букви, пробели, тире и дефис',
-  })
+  @IsName()
   lastName?: string;
 
   @ApiPropertyOptional({

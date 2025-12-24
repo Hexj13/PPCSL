@@ -34,7 +34,7 @@ export class Listing {
   @Column()
   title: string;
 
-  @Column('decimal', { precision: 12, scale: 2 })
+  @Column('integer')
   price: number;
 
   @Column({
@@ -98,6 +98,9 @@ export class Listing {
   @Column('int')
   horsepower: number;
 
+  @Column({ type: 'integer', nullable: true })
+  power_kw: number | null;
+
   @Column({ type: 'boolean', nullable: true })
   is_registered: boolean | null;
 
@@ -118,6 +121,9 @@ export class Listing {
 
   @Column({ type: 'integer', default: 0 })
   views: number;
+
+  @Column('simple-array', { nullable: true })
+  equipment: string[] | null;
 
   @CreateDateColumn()
   created_at: Date;

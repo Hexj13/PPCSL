@@ -15,9 +15,9 @@
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "format": "prettier --write \"**/*.{ts,tsx,json,css,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,json,css,md}\"",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
+    "test": "NODE_OPTIONS='--max-old-space-size=16384' jest --runInBand",
+    "test:watch": "NODE_OPTIONS='--max-old-space-size=8192' jest --watch",
+    "test:coverage": "NODE_OPTIONS='--max-old-space-size=16384' jest --coverage --maxWorkers=1",
     "sort-imports": "ts-node scripts/sort-imports.ts",
     "storybook": "node scripts/storybook-with-info.js",
     "storybook:dev": "storybook dev -p 6006",
@@ -78,6 +78,12 @@
     "preset": "ts-jest",
     "testTimeout": 30000,
     "maxWorkers": 1,
+    "workerIdleMemoryLimit": "500MB",
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/.next/",
+      "/out/"
+    ],
     "setupFilesAfterEnv": [
       "<rootDir>/jest.setup.js"
     ],

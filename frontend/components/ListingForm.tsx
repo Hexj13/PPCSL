@@ -3,35 +3,37 @@
 import { AxiosError } from 'axios';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Dropdown } from '@/components/Dropdown';
 import { RichTextEditor } from '@/components/RichTextEditor';
+import { useBrandsAndModels } from '@/hooks/useBrandsAndModels';
+import { useCities } from '@/hooks/useCities';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
+import { listingsApi, uploadApi, Listing } from '@/lib/api';
 import {
-  listingsApi,
-  brandsApi,
-  citiesApi,
-  uploadApi,
-  Brand,
-  VehicleModel,
-  City,
-  Listing,
-} from '@/lib/api';
-import { loadSiteConfigSync } from '@/lib/site-config';
+  getBodyTypeOptions,
+  getColorOptions,
+  getDoorOptions,
+  getDriveTypeOptions,
+  getFuelOptions,
+  getTransmissionOptions,
+} from '@/lib/form-options';
 import {
   ConditionType,
   ConditionTypeEnum,
   Currency,
   CurrencyEnum,
-  DriveTypeEnum,
   ListingStatus,
   ListingStatusEnum,
   RegistrationType,
   RegistrationTypeEnum,
 } from '@/lib/types';
+import { horsepowerToKw, isBrowser, kwToHorsepower, sortOptionsByLabel } from '@/lib/utils';
+import { validators } from '@/lib/validators';
+import { VEHICLE_EQUIPMENT_KEYS } from '@/lib/vehicle-equipment';
 
 export interface ListingFormData {
   price: string;
@@ -46,8 +48,10 @@ export interface ListingFormData {
   condition: ConditionType;
   registration_type: RegistrationType;
   horsepower: string;
+  power_kw: string;
   is_registered: boolean;
   registration_expires_at: string;
+  equipment: string[];
   vehicle: {
     brand_id: string;
     model_id: string;
@@ -70,17 +74,6 @@ interface ListingFormProps {
   onSuccess?: (_updatedListing?: Listing) => void;
 }
 
-type LabeledOption<T = string> = { value: T; label: string };
-
-function getLocale(): string {
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
-  const siteConfig = loadSiteConfigSync(country);
-  return siteConfig.locale.split('_')[0];
-}
-
-const sortOptionsByLabel = <T,>(options: Array<LabeledOption<T>>) =>
-  [...options].sort((a, b) => a.label.localeCompare(b.label, getLocale()));
-
 const CURRENCY_OPTIONS = sortOptionsByLabel([
   { value: CurrencyEnum.EUR, label: 'EUR' },
   { value: CurrencyEnum.MKD, label: 'MKD' },
@@ -101,8 +94,10 @@ const getInitialFormData = (initialData?: Listing): ListingFormData => {
       condition: ConditionTypeEnum.Undamaged,
       registration_type: RegistrationTypeEnum.Local,
       horsepower: '',
+      power_kw: '',
       is_registered: false,
       registration_expires_at: '',
+      equipment: [],
       vehicle: {
         brand_id: '',
         model_id: '',
@@ -129,7 +124,7 @@ const getInitialFormData = (initialData?: Listing): ListingFormData => {
     : '';
 
   return {
-    price: initialData.price?.toString() || '',
+    price: initialData.price ? Math.floor(initialData.price).toString() : '',
     currency: initialData.currency || CurrencyEnum.EUR,
     city: initialData.city || '',
     description: initialData.description || '',
@@ -141,8 +136,14 @@ const getInitialFormData = (initialData?: Listing): ListingFormData => {
     condition: initialData.condition || ConditionTypeEnum.Undamaged,
     registration_type: initialData.registration_type || RegistrationTypeEnum.Local,
     horsepower: initialData.horsepower?.toString() || '',
+    power_kw: initialData.power_kw
+      ? Math.floor(initialData.power_kw).toString()
+      : initialData.horsepower
+        ? Math.round(initialData.horsepower * 0.73549875).toString()
+        : '',
     is_registered: initialData.is_registered || false,
     registration_expires_at: registrationExpiresAtFormatted,
+    equipment: initialData.equipment || [],
     vehicle: {
       brand_id: initialData.vehicle?.brand_id || '',
       model_id: initialData.vehicle?.model_id || '',
@@ -163,99 +164,26 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
   const { t } = useTranslation();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [brands, setBrands] = useState<Brand[]>([]);
-  const [models, setModels] = useState<VehicleModel[]>([]);
-  const [cities, setCities] = useState<City[]>([]);
-  const [loadingModels, setLoadingModels] = useState(false);
   const [showVinHint, setShowVinHint] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [formData, setFormData] = useState<ListingFormData>(() => getInitialFormData(initialData));
   const [errors, setErrors] = useState<Record<string, boolean>>({});
 
-  const getFuelOptions = () =>
-    sortOptionsByLabel([
-      { value: 'Petrol', label: t('vehicleOptions.fuel.Petrol') },
-      { value: 'Diesel', label: t('vehicleOptions.fuel.Diesel') },
-      { value: 'Electric', label: t('vehicleOptions.fuel.Electric') },
-      { value: 'Hybrid', label: t('vehicleOptions.fuel.Hybrid') },
-      { value: 'LPG', label: t('vehicleOptions.fuel.LPG') },
-    ]);
+  const { brands, models, loadingBrands, loadingModels, loadModels } = useBrandsAndModels({
+    brandId: formData.vehicle.brand_id,
+    autoLoadModels: true,
+  });
+  const { cities, loading: loadingCities } = useCities();
 
-  const getTransmissionOptions = () =>
-    sortOptionsByLabel([
-      { value: 'Manual', label: t('vehicleOptions.transmission.Manual') },
-      { value: 'Automatic', label: t('vehicleOptions.transmission.Automatic') },
-      { value: 'CVT', label: t('vehicleOptions.transmission.CVT') },
-    ]);
+  const isInitialLoading = loadingBrands || loadingCities;
 
-  const getDriveTypeOptions = () =>
-    sortOptionsByLabel([
-      { value: DriveTypeEnum.FWD, label: t('vehicleOptions.driveType.FWD') },
-      { value: DriveTypeEnum.RWD, label: t('vehicleOptions.driveType.RWD') },
-      { value: DriveTypeEnum.AWD, label: t('vehicleOptions.driveType.AWD') },
-    ]);
-
-  const getBodyTypeOptions = () =>
-    sortOptionsByLabel([
-      { value: 'Sedan', label: t('vehicleOptions.bodyType.Sedan') },
-      { value: 'Hatchback', label: t('vehicleOptions.bodyType.Hatchback') },
-      { value: 'Wagon', label: t('vehicleOptions.bodyType.Wagon') },
-      { value: 'SUV', label: t('vehicleOptions.bodyType.SUV') },
-      { value: 'Coupe', label: t('vehicleOptions.bodyType.Coupe') },
-      { value: 'Convertible', label: t('vehicleOptions.bodyType.Convertible') },
-      { value: 'Van', label: t('vehicleOptions.bodyType.Van') },
-      { value: 'Pickup', label: t('vehicleOptions.bodyType.Pickup') },
-      { value: 'Minivan', label: t('vehicleOptions.bodyType.Minivan') },
-      { value: 'Truck', label: t('vehicleOptions.bodyType.Truck') },
-    ]);
-
-  const getDoorOptions = () =>
-    sortOptionsByLabel([
-      { value: '2', label: t('vehicleOptions.doors.2') },
-      { value: '3', label: t('vehicleOptions.doors.3') },
-      { value: '4', label: t('vehicleOptions.doors.4') },
-      { value: '5', label: t('vehicleOptions.doors.5') },
-    ]);
-
-  const COLOR_OPTIONS = sortOptionsByLabel([
-    { value: 'Црна', label: 'Црна' },
-    { value: 'Бела', label: 'Бела' },
-    { value: 'Сива', label: 'Сива' },
-    { value: 'Сребрена', label: 'Сребрена' },
-    { value: 'Сина', label: 'Сина' },
-    { value: 'Црвена', label: 'Црвена' },
-    { value: 'Зелена', label: 'Зелена' },
-    { value: 'Жолта', label: 'Жолта' },
-    { value: 'Кафена', label: 'Кафена' },
-    { value: 'Портокалова', label: 'Портокалова' },
-    { value: 'Розова', label: 'Розова' },
-    { value: 'Виолетова', label: 'Виолетова' },
-    { value: 'Бежова', label: 'Бежова' },
-    { value: 'Златна', label: 'Златна' },
-    { value: 'Бронзена', label: 'Бронзена' },
-    { value: 'Темносина', label: 'Темносина' },
-    { value: 'Светлосина', label: 'Светлосина' },
-    { value: 'Темносива', label: 'Темносива' },
-    { value: 'Светлосива', label: 'Светлосива' },
-    { value: 'Металик црна', label: 'Металик црна' },
-    { value: 'Металик бела', label: 'Металик бела' },
-    { value: 'Металик сива', label: 'Металик сива' },
-    { value: 'Металик сребрена', label: 'Металик сребрена' },
-    { value: 'Металик сина', label: 'Металик сина' },
-    { value: 'Металик црвена', label: 'Металик црвена' },
-    { value: 'Перла', label: 'Перла' },
-    { value: 'Металик перла', label: 'Металик перла' },
-    { value: 'Матирана црна', label: 'Матирана црна' },
-    { value: 'Матирана сива', label: 'Матирана сива' },
-    { value: 'Матирана сина', label: 'Матирана сина' },
-  ]);
+  const COLOR_OPTIONS = getColorOptions(t);
 
   const getConditionOptions = () =>
     sortOptionsByLabel([
-      { value: ConditionTypeEnum.Undamaged, label: 'Без оштетувања' },
-      { value: ConditionTypeEnum.Damaged, label: 'Со оштетувања' },
-      { value: ConditionTypeEnum.ForParts, label: 'За делови' },
+      { value: ConditionTypeEnum.Undamaged, label: t('vehicleOptions.condition.Undamaged') },
+      { value: ConditionTypeEnum.Damaged, label: t('vehicleOptions.condition.Damaged') },
+      { value: ConditionTypeEnum.ForParts, label: t('vehicleOptions.condition.ForParts') },
     ]);
 
   const getRegistrationTypeOptions = () =>
@@ -274,62 +202,37 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
       },
     ]);
 
-  useEffect(() => {
-    Promise.all([brandsApi.getAll(), citiesApi.getAll()])
-      .then(([brandsRes, citiesRes]) => {
-        const sortedBrands = [...brandsRes.data].sort((a, b) =>
-          a.name.localeCompare(b.name, getLocale())
-        );
-        const sortedCities = [...citiesRes.data].sort((a, b) =>
-          a.name.localeCompare(b.name, getLocale())
-        );
-        setBrands(sortedBrands);
-        setCities(sortedCities);
-        setIsInitialLoading(false);
-      })
-      .catch(() => {
-        setIsInitialLoading(false);
-      });
-  }, []);
+  const initialDataRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
-    if (initialData) {
+    if (initialData && initialDataRef.current !== listingId) {
+      initialDataRef.current = listingId;
       const newFormData = getInitialFormData(initialData);
       setFormData(newFormData);
       if (initialData.vehicle?.brand_id) {
-        brandsApi.getModels(initialData.vehicle.brand_id).then((res) => {
-          const sorted = [...res.data].sort((a, b) => a.name.localeCompare(b.name, getLocale()));
-          setModels(sorted);
-        });
+        loadModels(initialData.vehicle.brand_id);
       }
     }
-  }, [initialData, listingId]);
+  }, [initialData, listingId, loadModels]);
 
   useEffect(() => {
-    if (formData.vehicle.brand_id) {
-      setLoadingModels(true);
-      brandsApi.getModels(formData.vehicle.brand_id).then((res) => {
-        const sorted = [...res.data].sort((a, b) => a.name.localeCompare(b.name, getLocale()));
-        setModels(sorted);
-        setLoadingModels(false);
-        setFormData((prev) => {
-          if (!res.data.find((m) => m.id === prev.vehicle.model_id)) {
-            return {
-              ...prev,
-              vehicle: { ...prev.vehicle, model_id: '' },
-            };
-          }
-          return prev;
-        });
+    if (models.length > 0 && formData.vehicle.brand_id) {
+      setFormData((prev) => {
+        if (!models.find((m) => m.id === prev.vehicle.model_id)) {
+          return {
+            ...prev,
+            vehicle: { ...prev.vehicle, model_id: '' },
+          };
+        }
+        return prev;
       });
-    } else {
-      setModels([]);
+    } else if (!formData.vehicle.brand_id) {
       setFormData((prev) => ({
         ...prev,
         vehicle: { ...prev.vehicle, model_id: '' },
       }));
     }
-  }, [formData.vehicle.brand_id]);
+  }, [models, formData.vehicle.brand_id]);
 
   const handleFileUpload = async (file: File) => {
     setUploading(true);
@@ -337,11 +240,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
       const response = await uploadApi.uploadImage(file);
       let imageUrl = response.data.url;
 
-      if (
-        typeof window !== 'undefined' &&
-        window.location.protocol === 'https:' &&
-        imageUrl.startsWith('http://')
-      ) {
+      if (isBrowser && window.location.protocol === 'https:' && imageUrl.startsWith('http://')) {
         imageUrl = imageUrl.replace('http://', 'https://');
       }
 
@@ -375,128 +274,59 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
   const validateForm = (): boolean => {
     const newErrors: Record<string, boolean> = {};
 
-    if (!formData.vehicle.brand_id) {
-      toast.error(t('listings.brandRequired'));
-      newErrors['vehicle.brand_id'] = true;
-    }
-
-    if (!formData.vehicle.model_id) {
-      toast.error(t('listings.modelRequired'));
-      newErrors['vehicle.model_id'] = true;
-    }
-
-    if (!formData.vehicle.year) {
-      toast.error(t('listings.yearRequired'));
-      newErrors['vehicle.year'] = true;
-    } else {
-      const year = parseInt(formData.vehicle.year, 10);
-      if (isNaN(year) || !Number.isInteger(year) || year <= 0) {
-        toast.error(t('listings.yearMustBePositive'));
-        newErrors['vehicle.year'] = true;
-      } else if (year < 1900) {
-        toast.error(t('listings.yearMinError'));
-        newErrors['vehicle.year'] = true;
-      } else {
-        const currentYear = new Date().getFullYear();
-        const maxYear = currentYear + 1;
-        if (year > maxYear) {
-          toast.error(t('listings.yearMaxError', { maxYear: maxYear.toString() }));
-          newErrors['vehicle.year'] = true;
-        }
+    const checkField = (
+      fieldName: string,
+      value: unknown,
+      validator: (_val: unknown) => {
+        isValid: boolean;
+        errorKey?: string;
+        errorParams?: Record<string, string | number>;
       }
-    }
-
-    if (!formData.vehicle.engine_displ_l) {
-      toast.error(t('listings.engineRequired'));
-      newErrors['vehicle.engine_displ_l'] = true;
-    }
-
-    if (!formData.vehicle.mileage_km) {
-      toast.error(t('listings.mileageRequired'));
-      newErrors['vehicle.mileage_km'] = true;
-    }
-
-    if (!formData.vehicle.fuel) {
-      toast.error(t('listings.fuelRequired'));
-      newErrors['vehicle.fuel'] = true;
-    }
-
-    if (!formData.vehicle.transmission) {
-      toast.error(t('listings.transmissionRequired'));
-      newErrors['vehicle.transmission'] = true;
-    }
-
-    if (!formData.vehicle.body_type) {
-      toast.error(t('listings.bodyTypeRequired'));
-      newErrors['vehicle.body_type'] = true;
-    }
-
-    if (!formData.vehicle.drive_type) {
-      toast.error(t('listings.driveTypeRequired'));
-      newErrors['vehicle.drive_type'] = true;
-    }
-
-    if (!formData.price || parseInt(formData.price, 10) <= 0) {
-      toast.error(t('listings.priceRequired'));
-      newErrors['price'] = true;
-    }
-
-    if (!formData.city) {
-      toast.error(t('listings.cityRequired'));
-      newErrors['city'] = true;
-    }
-
-    if (formData.images.length < 2) {
-      toast.error(t('listings.imagesMinError'));
-      newErrors['images'] = true;
-    }
-
-    if (formData.vin && formData.vin.length !== 17) {
-      toast.error(t('listings.vinLengthError'));
-      newErrors['vin'] = true;
-    } else if (formData.vin && !/^[A-HJ-NPR-Z0-9]{17}$/i.test(formData.vin)) {
-      toast.error(t('listings.vinInvalidChars'));
-      newErrors['vin'] = true;
-    }
-
-    if (!formData.condition) {
-      toast.error(t('listings.conditionRequired'));
-      newErrors['condition'] = true;
-    }
-
-    if (!formData.registration_type) {
-      toast.error(t('listings.registrationTypeRequired'));
-      newErrors['registration_type'] = true;
-    }
-
-    if (!formData.horsepower || parseFloat(formData.horsepower) <= 0) {
-      toast.error(t('listings.horsepowerRequired'));
-      newErrors['horsepower'] = true;
-    }
-
-    if (formData.is_registered && !formData.registration_expires_at) {
-      toast.error(t('listings.registrationDateRequired'));
-      newErrors['registration_expires_at'] = true;
-    } else if (
-      formData.is_registered &&
-      formData.registration_expires_at &&
-      !/^\d{2}\.\d{4}$/.test(formData.registration_expires_at)
-    ) {
-      toast.error(t('listings.registrationDateFormatError'));
-      newErrors['registration_expires_at'] = true;
-    } else if (formData.is_registered && formData.registration_expires_at) {
-      const [month, year] = formData.registration_expires_at.split('.');
-      const currentDate = new Date();
-      const currentMonth = currentDate.getMonth() + 1;
-      const currentYear = currentDate.getFullYear();
-      const inputMonth = parseInt(month, 10);
-      const inputYear = parseInt(year, 10);
-
-      if (inputYear < currentYear || (inputYear === currentYear && inputMonth < currentMonth)) {
-        toast.error(t('listings.registrationDateInvalid'));
-        newErrors['registration_expires_at'] = true;
+    ) => {
+      const result = validator(value);
+      if (!result.isValid) {
+        const errorKey = result.errorKey ? `listings.${result.errorKey}` : 'listings.required';
+        toast.error(t(errorKey, result.errorParams));
+        newErrors[fieldName] = true;
       }
-    }
+    };
+
+    checkField('vehicle.brand_id', formData.vehicle.brand_id, (val) =>
+      validators.required(val as string)
+    );
+    checkField('vehicle.model_id', formData.vehicle.model_id, (val) =>
+      validators.required(val as string)
+    );
+    checkField('vehicle.year', formData.vehicle.year, (val) => validators.year(val as string));
+    checkField('vehicle.engine_displ_l', formData.vehicle.engine_displ_l, (val) =>
+      validators.required(val as string)
+    );
+    checkField('vehicle.mileage_km', formData.vehicle.mileage_km, (val) =>
+      validators.required(val as string)
+    );
+    checkField('vehicle.fuel', formData.vehicle.fuel, (val) => validators.required(val as string));
+    checkField('vehicle.transmission', formData.vehicle.transmission, (val) =>
+      validators.required(val as string)
+    );
+    checkField('vehicle.body_type', formData.vehicle.body_type, (val) =>
+      validators.required(val as string)
+    );
+    checkField('vehicle.drive_type', formData.vehicle.drive_type, (val) =>
+      validators.required(val as string)
+    );
+    checkField('price', formData.price, (val) => validators.required(val as string));
+    checkField('city', formData.city, (val) => validators.required(val as string));
+    checkField('images', formData.images, (val) => validators.images(val as string[]));
+    checkField('vin', formData.vin, (val) => validators.vin(val as string | undefined));
+    checkField('condition', formData.condition, (val) => validators.required(val as string));
+    checkField('registration_type', formData.registration_type, (val) =>
+      validators.required(val as string)
+    );
+    checkField('horsepower', formData.horsepower, (val) => validators.required(val as string));
+    checkField('power_kw', formData.power_kw, (val) => validators.required(val as string));
+    checkField('registration_expires_at', formData.registration_expires_at, (val) =>
+      validators.registrationDate(val as string | undefined, formData.is_registered)
+    );
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -538,8 +368,10 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
         condition: formData.condition,
         registration_type: formData.registration_type,
         horsepower: parseInt(formData.horsepower),
+        power_kw: formData.power_kw ? parseInt(formData.power_kw) : undefined,
         is_registered: formData.is_registered || undefined,
         registration_expires_at: registrationExpiresAt,
+        equipment: formData.equipment.length > 0 ? formData.equipment : undefined,
         vehicle: {
           brand_id: formData.vehicle.brand_id,
           model_id: formData.vehicle.model_id,
@@ -591,18 +423,13 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
           throw new Error('Listing ID is required for edit mode');
         }
         const result = await listingsApi.update(listingId, payload);
-        toast.success('Промените се зачувани');
+        toast.success(t('listings.changesSaved'));
         sessionStorage.setItem(`refreshListing_${listingId}`, 'true');
         if (result.data) {
           const updatedFormData = getInitialFormData(result.data);
           setFormData(updatedFormData);
           if (result.data.vehicle?.brand_id) {
-            brandsApi.getModels(result.data.vehicle.brand_id).then((res) => {
-              const sorted = [...res.data].sort((a, b) =>
-                a.name.localeCompare(b.name, getLocale())
-              );
-              setModels(sorted);
-            });
+            loadModels(result.data.vehicle.brand_id);
           }
         }
         onSuccess?.(result.data);
@@ -849,31 +676,68 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400">
-              {t('listings.horsepowerLabel')}
-            </label>
-            <input
-              type="text"
-              required
-              min="1"
-              max="9999"
-              value={formData.horsepower}
-              onChange={(e) => {
-                clearError('horsepower');
-                const value = e.target.value.replace(/[^0-9]/g, '');
-                if (value === '' || (parseInt(value) >= 1 && parseInt(value) <= 9999)) {
-                  setFormData((prev) => ({
-                    ...prev,
-                    horsepower: value,
-                  }));
-                }
-              }}
-              onWheel={handleWheel}
-              className={`input-field h-[48px] ${errors['horsepower'] ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
-              placeholder="150"
-              title={t('listings.horsepowerTitle')}
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-primary-400">
+                {t('listings.powerHorsepowerLabel')}
+              </label>
+              <input
+                type="text"
+                required
+                min="1"
+                max="9999"
+                value={formData.horsepower}
+                onChange={(e) => {
+                  clearError('horsepower');
+                  clearError('power_kw');
+                  const value = e.target.value.replace(/[^0-9]/g, '');
+                  if (value === '' || (parseInt(value) >= 1 && parseInt(value) <= 9999)) {
+                    const hpValue = value === '' ? 0 : parseInt(value);
+                    const kwValue = hpValue > 0 ? horsepowerToKw(hpValue) : '';
+                    setFormData((prev) => ({
+                      ...prev,
+                      horsepower: value,
+                      power_kw: kwValue.toString(),
+                    }));
+                  }
+                }}
+                onWheel={handleWheel}
+                className={`input-field h-[48px] ${errors['horsepower'] ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                placeholder="150"
+                title={t('listings.powerHorsepowerTitle')}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-primary-400">
+                {t('listings.powerKwLabel')}
+              </label>
+              <input
+                type="text"
+                required
+                min="1"
+                max="9999"
+                value={formData.power_kw}
+                onChange={(e) => {
+                  clearError('power_kw');
+                  clearError('horsepower');
+                  const value = e.target.value.replace(/[^0-9]/g, '');
+                  if (value === '' || (parseInt(value) >= 1 && parseInt(value) <= 9999)) {
+                    const kwValue = value === '' ? 0 : parseInt(value);
+                    const hpValue = kwValue > 0 ? kwToHorsepower(kwValue) : '';
+                    setFormData((prev) => ({
+                      ...prev,
+                      power_kw: value,
+                      horsepower: hpValue.toString(),
+                    }));
+                  }
+                }}
+                onWheel={handleWheel}
+                className={`input-field h-[48px] ${errors['power_kw'] ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                placeholder="110"
+                title={t('listings.powerKwTitle')}
+              />
+            </div>
           </div>
 
           <div>
@@ -890,7 +754,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                 }));
               }}
               error={!!errors['vehicle.fuel']}
-              options={[{ value: '', label: t('listings.selectModel') }, ...getFuelOptions()]}
+              options={[{ value: '', label: t('listings.selectModel') }, ...getFuelOptions(t)]}
             />
           </div>
 
@@ -910,7 +774,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
               error={!!errors['vehicle.transmission']}
               options={[
                 { value: '', label: t('listings.selectModel') },
-                ...getTransmissionOptions(),
+                ...getTransmissionOptions(t),
               ]}
             />
           </div>
@@ -929,7 +793,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                 }));
               }}
               error={!!errors['vehicle.drive_type']}
-              options={[{ value: '', label: t('listings.selectModel') }, ...getDriveTypeOptions()]}
+              options={[{ value: '', label: t('listings.selectModel') }, ...getDriveTypeOptions(t)]}
             />
           </div>
 
@@ -973,47 +837,183 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
 
       <div className="border-t border-primary-500/20 pt-6 mb-6">
         <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
+          {t('listings.equipment')}
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {(() => {
+            const sortedKeys = sortOptionsByLabel(
+              VEHICLE_EQUIPMENT_KEYS.map((key) => ({
+                value: key,
+                label: t(`vehicleOptions.equipment.${key}`),
+              }))
+            ).map((opt) => opt.value);
+            const midPoint = Math.ceil(sortedKeys.length / 2);
+            const leftColumn = sortedKeys.slice(0, midPoint);
+            const rightColumn = sortedKeys.slice(midPoint);
+
+            return (
+              <>
+                <div className="space-y-4">
+                  {leftColumn.map((key) => {
+                    const isChecked = formData.equipment.includes(key);
+                    return (
+                      <div key={key} className="flex items-center gap-3 group">
+                        <div className="relative">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  equipment: [...prev.equipment, key],
+                                }));
+                              } else {
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  equipment: prev.equipment.filter((k) => k !== key),
+                                }));
+                              }
+                            }}
+                            className="sr-only"
+                          />
+                          <div
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (isChecked) {
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  equipment: prev.equipment.filter((k) => k !== key),
+                                }));
+                              } else {
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  equipment: [...prev.equipment, key],
+                                }));
+                              }
+                            }}
+                            className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
+                              isChecked
+                                ? 'bg-gradient-to-r from-primary-700 to-primary-800 border-primary-500'
+                                : 'border-primary-500/50 bg-bg-light group-hover:border-primary-500'
+                            }`}
+                          >
+                            {isChecked && (
+                              <svg
+                                className="w-3 h-3 text-white"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={3}
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                            )}
+                          </div>
+                        </div>
+                        <span
+                          className={`text-sm transition-colors duration-200 ${
+                            isChecked
+                              ? 'text-primary-400'
+                              : 'text-gray-400 group-hover:text-gray-300'
+                          }`}
+                        >
+                          {t(`vehicleOptions.equipment.${key}`)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="space-y-4">
+                  {rightColumn.map((key) => {
+                    const isChecked = formData.equipment.includes(key);
+                    return (
+                      <div key={key} className="flex items-center gap-3 group">
+                        <div className="relative">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  equipment: [...prev.equipment, key],
+                                }));
+                              } else {
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  equipment: prev.equipment.filter((k) => k !== key),
+                                }));
+                              }
+                            }}
+                            className="sr-only"
+                          />
+                          <div
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (isChecked) {
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  equipment: prev.equipment.filter((k) => k !== key),
+                                }));
+                              } else {
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  equipment: [...prev.equipment, key],
+                                }));
+                              }
+                            }}
+                            className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
+                              isChecked
+                                ? 'bg-gradient-to-r from-primary-700 to-primary-800 border-primary-500'
+                                : 'border-primary-500/50 bg-bg-light group-hover:border-primary-500'
+                            }`}
+                          >
+                            {isChecked && (
+                              <svg
+                                className="w-3 h-3 text-white"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={3}
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                            )}
+                          </div>
+                        </div>
+                        <span
+                          className={`text-sm transition-colors duration-200 ${
+                            isChecked
+                              ? 'text-primary-400'
+                              : 'text-gray-400 group-hover:text-gray-300'
+                          }`}
+                        >
+                          {t(`vehicleOptions.equipment.${key}`)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            );
+          })()}
+        </div>
+      </div>
+
+      <div className="border-t border-primary-500/20 pt-6 mb-6">
+        <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
           {t('listings.conditionAndRegistration')}
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-          <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400">
-              {t('listings.conditionLabel')}
-            </label>
-            <Dropdown
-              value={formData.condition}
-              onChange={(value) => {
-                clearError('condition');
-                setFormData((prev) => ({
-                  ...prev,
-                  condition: value as ConditionType,
-                }));
-              }}
-              error={!!errors['condition']}
-              options={getConditionOptions()}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400">
-              {t('listings.registrationTypeLabel')}
-            </label>
-            <Dropdown
-              value={formData.registration_type}
-              onChange={(value) => {
-                clearError('registration_type');
-                setFormData((prev) => ({
-                  ...prev,
-                  registration_type: value as RegistrationType,
-                }));
-              }}
-              error={!!errors['registration_type']}
-              options={getRegistrationTypeOptions()}
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="flex items-center gap-3 group">
             <div className="relative">
               <input
@@ -1063,93 +1063,128 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
               </div>
             </div>
             <span
-              className={`text-sm font-semibold transition-colors duration-200 ${
+              className={`text-sm transition-colors duration-200 ${
                 formData.is_registered
                   ? 'text-primary-400'
-                  : 'text-primary-400/70 group-hover:text-primary-400'
+                  : 'text-gray-400 group-hover:text-gray-300'
               }`}
             >
               {t('listings.isRegistered')}
             </span>
           </div>
 
-          {formData.is_registered && (
-            <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400">
-                {t('listings.registeredUntil')}
-              </label>
-              <input
-                type="text"
-                value={formData.registration_expires_at}
-                onChange={(e) => {
-                  clearError('registration_expires_at');
-                  let value = e.target.value.replace(/[^0-9.]/g, '');
-                  const parts = value.split('.');
-                  if (parts.length > 2) {
-                    value = parts[0] + '.' + parts[1];
-                  }
-                  if (parts[0] && parts[0].length > 2) {
-                    value = parts[0].substring(0, 2) + (parts[1] ? '.' + parts[1] : '');
-                  }
-                  if (parts[1] && parts[1].length > 4) {
-                    value = parts[0] + '.' + parts[1].substring(0, 4);
-                  }
+          <div>
+            <label className="block text-sm font-semibold mb-2 text-primary-400">
+              {t('listings.registeredUntil')}
+            </label>
+            <input
+              type="text"
+              value={formData.registration_expires_at}
+              disabled={!formData.is_registered}
+              onChange={(e) => {
+                clearError('registration_expires_at');
+                let value = e.target.value.replace(/[^0-9.]/g, '');
+                const parts = value.split('.');
+                if (parts.length > 2) {
+                  value = parts[0] + '.' + parts[1];
+                }
+                if (parts[0] && parts[0].length > 2) {
+                  value = parts[0].substring(0, 2) + (parts[1] ? '.' + parts[1] : '');
+                }
+                if (parts[1] && parts[1].length > 4) {
+                  value = parts[0] + '.' + parts[1].substring(0, 4);
+                }
 
-                  setFormData((prev) => ({
-                    ...prev,
-                    registration_expires_at: value,
-                  }));
-                }}
-                onBlur={(e) => {
-                  let value = e.target.value.trim();
-                  if (!value) {
-                    return;
-                  }
+                setFormData((prev) => ({
+                  ...prev,
+                  registration_expires_at: value,
+                }));
+              }}
+              onBlur={(e) => {
+                let value = e.target.value.trim();
+                if (!value) {
+                  return;
+                }
 
-                  const parts = value.split('.');
-                  if (parts.length === 2) {
-                    const month = parts[0];
-                    const year = parts[1];
-                    const monthNum = parseInt(month, 10);
-                    const yearNum = parseInt(year, 10);
+                const parts = value.split('.');
+                if (parts.length === 2) {
+                  const month = parts[0];
+                  const year = parts[1];
+                  const monthNum = parseInt(month, 10);
+                  const yearNum = parseInt(year, 10);
 
-                    if (!isNaN(monthNum) && monthNum >= 1 && monthNum <= 12) {
-                      const paddedMonth = monthNum.toString().padStart(2, '0');
-                      value = `${paddedMonth}.${year}`;
+                  if (!isNaN(monthNum) && monthNum >= 1 && monthNum <= 12) {
+                    const paddedMonth = monthNum.toString().padStart(2, '0');
+                    value = `${paddedMonth}.${year}`;
 
-                      if (!isNaN(yearNum) && yearNum >= 1000 && yearNum <= 9999) {
-                        const currentDate = new Date();
-                        const currentMonth = currentDate.getMonth() + 1;
-                        const currentYear = currentDate.getFullYear();
+                    if (!isNaN(yearNum) && yearNum >= 1000 && yearNum <= 9999) {
+                      const currentDate = new Date();
+                      const currentMonth = currentDate.getMonth() + 1;
+                      const currentYear = currentDate.getFullYear();
 
-                        if (
-                          yearNum < currentYear ||
-                          (yearNum === currentYear && monthNum < currentMonth)
-                        ) {
-                          toast.error(
-                            'Датата на регистрација не може да биде помала од тековниот месец и година'
-                          );
-                          setFormData((prev) => ({
-                            ...prev,
-                            registration_expires_at: '',
-                          }));
-                          return;
-                        }
+                      if (
+                        yearNum < currentYear ||
+                        (yearNum === currentYear && monthNum < currentMonth)
+                      ) {
+                        toast.error(t('listings.registrationDateInvalid'));
+                        setFormData((prev) => ({
+                          ...prev,
+                          registration_expires_at: '',
+                        }));
+                        return;
                       }
-
-                      setFormData((prev) => ({
-                        ...prev,
-                        registration_expires_at: value,
-                      }));
                     }
+
+                    setFormData((prev) => ({
+                      ...prev,
+                      registration_expires_at: value,
+                    }));
                   }
-                }}
-                className={`input-field h-[48px] ${errors['registration_expires_at'] ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
-                placeholder="12.2025"
-                title={t('listings.registrationExpiresTitle')}
-              />
-            </div>
-          )}
+                }
+              }}
+              className={`input-field h-[48px] ${errors['registration_expires_at'] ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''} ${!formData.is_registered ? 'opacity-50 cursor-not-allowed' : ''}`}
+              placeholder="12.2025"
+              title={t('listings.registrationExpiresTitle')}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-semibold mb-2 text-primary-400">
+              {t('listings.conditionLabel')}
+            </label>
+            <Dropdown
+              value={formData.condition}
+              onChange={(value) => {
+                clearError('condition');
+                setFormData((prev) => ({
+                  ...prev,
+                  condition: value as ConditionType,
+                }));
+              }}
+              error={!!errors['condition']}
+              options={getConditionOptions()}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold mb-2 text-primary-400">
+              {t('listings.registrationTypeLabel')}
+            </label>
+            <Dropdown
+              value={formData.registration_type}
+              onChange={(value) => {
+                clearError('registration_type');
+                setFormData((prev) => ({
+                  ...prev,
+                  registration_type: value as RegistrationType,
+                }));
+              }}
+              error={!!errors['registration_type']}
+              options={getRegistrationTypeOptions()}
+            />
+          </div>
         </div>
       </div>
 
@@ -1172,7 +1207,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                 }));
               }}
               error={!!errors['vehicle.body_type']}
-              options={[{ value: '', label: t('listings.selectModel') }, ...getBodyTypeOptions()]}
+              options={[{ value: '', label: t('listings.selectModel') }, ...getBodyTypeOptions(t)]}
             />
           </div>
 
@@ -1204,7 +1239,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                   vehicle: { ...prev.vehicle, doors: value },
                 }))
               }
-              options={[{ value: '', label: t('listings.selectModel') }, ...getDoorOptions()]}
+              options={[{ value: '', label: t('listings.selectModel') }, ...getDoorOptions(t)]}
             />
           </div>
         </div>
@@ -1285,20 +1320,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
         <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
           {t('listings.additionalInfo')}
         </h2>
-        <div className="mb-4">
-          <label className="block text-sm font-semibold mb-2 text-primary-400">
-            {t('listings.descriptionLabel')}
-          </label>
-          <RichTextEditor
-            value={formData.description}
-            onChange={(value) => setFormData((prev) => ({ ...prev, description: value }))}
-            placeholder={t('listings.descriptionPlaceholder')}
-            maxLength={5000}
-            rows={4}
-          />
-        </div>
-
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-6 mb-6">
           <div className="flex items-center gap-3 group">
             <div className="relative">
               <input
@@ -1336,10 +1358,8 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
               </div>
             </div>
             <span
-              className={`text-sm font-semibold transition-colors duration-200 flex items-center gap-2 ${
-                formData.urgent
-                  ? 'text-primary-400'
-                  : 'text-primary-400/70 group-hover:text-primary-400'
+              className={`text-sm transition-colors duration-200 flex items-center gap-2 ${
+                formData.urgent ? 'text-primary-400' : 'text-gray-400 group-hover:text-gray-300'
               }`}
             >
               <span>🔥</span>
@@ -1384,10 +1404,8 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
               </div>
             </div>
             <span
-              className={`text-sm font-semibold transition-colors duration-200 flex items-center gap-2 ${
-                formData.is_new
-                  ? 'text-primary-400'
-                  : 'text-primary-400/70 group-hover:text-primary-400'
+              className={`text-sm transition-colors duration-200 flex items-center gap-2 ${
+                formData.is_new ? 'text-primary-400' : 'text-gray-400 group-hover:text-gray-300'
               }`}
             >
               {/* eslint-disable-next-line no-hardcoded-text/no-hardcoded-text */}
@@ -1395,6 +1413,19 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
               <span>{t('listings.new')}</span>
             </span>
           </div>
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-sm font-semibold mb-2 text-primary-400">
+            {t('listings.descriptionLabel')}
+          </label>
+          <RichTextEditor
+            value={formData.description}
+            onChange={(value) => setFormData((prev) => ({ ...prev, description: value }))}
+            placeholder={t('listings.descriptionPlaceholder')}
+            maxLength={5000}
+            rows={4}
+          />
         </div>
       </div>
 
@@ -1593,11 +1624,11 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
       >
         {loading
           ? mode === 'create'
-            ? 'Креирање...'
-            : 'Зачувување...'
+            ? t('listings.creating')
+            : t('listings.saving')
           : mode === 'create'
-            ? 'Креирај објава'
-            : 'Зачувај промени'}
+            ? t('listings.createListing')
+            : t('listings.saveChanges')}
       </button>
     </form>
   );

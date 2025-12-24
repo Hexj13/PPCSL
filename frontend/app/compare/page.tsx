@@ -17,8 +17,8 @@ import {
   formatTransmission,
   formatDriveType,
   formatBodyType,
-  formatCondition,
   formatRegistrationType,
+  horsepowerToKw,
 } from '@/lib/utils';
 
 export default function ComparePage() {
@@ -307,7 +307,7 @@ export default function ComparePage() {
                   style={{ color: 'rgb(243, 243, 243)' }}
                 >
                   {listing.vehicle?.mileage_km
-                    ? `${formatMileage(listing.vehicle.mileage_km)} км`
+                    ? `${formatMileage(listing.vehicle.mileage_km)} ${t('listings.km')}`
                     : t('compare.notAvailable')}
                 </td>
               ))}
@@ -321,14 +321,14 @@ export default function ComparePage() {
                   style={{ color: 'rgb(243, 243, 243)' }}
                 >
                   {listing.vehicle?.engine_displ_l
-                    ? `${formatEngineVolume(listing.vehicle.engine_displ_l)} л`
+                    ? `${formatEngineVolume(listing.vehicle.engine_displ_l)} ${t('listings.liters')}`
                     : t('compare.notAvailable')}
                 </td>
               ))}
             </tr>
             <tr className="border-b border-primary-500/10">
               <td className="py-4 px-4 text-primary-400 font-semibold">
-                {t('compare.horsepower')}
+                {t('listingDetail.power')}
               </td>
               {listings.map((listing) => (
                 <td
@@ -336,7 +336,11 @@ export default function ComparePage() {
                   className="py-4 px-4 text-center"
                   style={{ color: 'rgb(243, 243, 243)' }}
                 >
-                  {getValue(listing.horsepower)}
+                  {listing.horsepower !== undefined && listing.horsepower !== null
+                    ? `${listing.horsepower} ${t('listingDetail.horsepowerUnit')} / ${
+                        listing.power_kw || horsepowerToKw(listing.horsepower)
+                      } ${t('listingDetail.kwUnit')}`
+                    : t('compare.notAvailable')}
                 </td>
               ))}
             </tr>
@@ -429,7 +433,7 @@ export default function ComparePage() {
                   style={{ color: 'rgb(243, 243, 243)' }}
                 >
                   {listing.condition
-                    ? formatCondition(listing.condition)
+                    ? t(`vehicleOptions.condition.${listing.condition}`)
                     : t('compare.notAvailable')}
                 </td>
               ))}

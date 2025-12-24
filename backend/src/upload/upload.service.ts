@@ -13,6 +13,8 @@ import { ConfigService } from '@nestjs/config';
 import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
 
+import { handleUploadError } from '../common/utils/error-handling.utils';
+
 @Injectable()
 export class UploadService {
   private readonly logger = new Logger(UploadService.name);
@@ -307,14 +309,10 @@ export class UploadService {
         return `/uploads/${fileName}`;
       }
     } catch (error) {
-      this.logger.error(
-        `Error processing image: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        error instanceof Error ? error.stack : undefined,
-      );
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
-      throw new BadRequestException(
+      handleUploadError(
+        error,
+        this.logger,
+        'Error processing image',
         `Грешка при обработка на сликата: ${error instanceof Error ? error.message : 'Непозната грешка'}. Ве молиме осигурајте се дека фајлот е валидна слика.`,
       );
     }

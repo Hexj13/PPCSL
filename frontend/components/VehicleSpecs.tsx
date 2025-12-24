@@ -1,4 +1,5 @@
 import { useTranslation } from '@/hooks/useTranslation';
+import { getColorLabel } from '@/lib/form-options';
 import { formatBodyType, formatEngineVolume, formatMileage, formatTransmission } from '@/lib/utils';
 
 interface Vehicle {
@@ -90,7 +91,9 @@ export function VehicleSpecs({
         {vehicle.color && (
           <div>
             <span className="text-primary-400">{t('vehicleSpecs.color')}</span>
-            <span className="ml-2 font-medium text-gray-200">{vehicle.color}</span>
+            <span className="ml-2 font-medium text-gray-200">
+              {getColorLabel(vehicle.color, t)}
+            </span>
           </div>
         )}
         {vehicle.doors && (

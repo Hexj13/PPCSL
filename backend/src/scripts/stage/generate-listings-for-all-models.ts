@@ -42,18 +42,18 @@ const cities = [
 ];
 
 const colors = [
-  'Бела',
-  'Црна',
-  'Сива',
-  'Сребрена',
-  'Сиња',
-  'Црвена',
-  'Жолта',
-  'Зелена',
-  'Кафена',
-  'Портокалова',
-  'Виолетова',
-  'Беж',
+  'white',
+  'black',
+  'gray',
+  'silver',
+  'blue',
+  'red',
+  'yellow',
+  'green',
+  'brown',
+  'orange',
+  'violet',
+  'beige',
 ];
 
 const descriptions = [

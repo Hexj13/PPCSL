@@ -113,7 +113,7 @@ const mockListing = {
     transmission: 'Manual',
     drive_type: 'FWD',
     body_type: 'Sedan',
-    color: 'Црна',
+    color: 'black',
     doors: 4,
     brand: { id: 'brand-1', name: 'Toyota', order: 0 },
     model: { id: 'model-1', name: 'Camry', brand_id: 'brand-1', order: 0 },
@@ -581,8 +581,12 @@ describe('ListingForm', () => {
 
       await waitFor(
         () => {
-          const colorInput = screen.getByDisplayValue('Црна');
-          expect(colorInput).toBeInTheDocument();
+          const colorSelects = screen.getAllByTestId('dropdown');
+          const colorSelect = colorSelects.find((select) => {
+            const selectElement = select as HTMLSelectElement;
+            return selectElement.value === 'black';
+          });
+          expect(colorSelect).toBeInTheDocument();
         },
         { timeout: 15000 }
       );
@@ -803,16 +807,13 @@ describe('ListingForm', () => {
 
       await waitFor(
         () => {
-          const yearLabel = screen.getByText(/Година/i);
-          expect(yearLabel).toBeInTheDocument();
+          const yearInput = screen.getByPlaceholderText('2020');
+          expect(yearInput).toBeInTheDocument();
         },
         { timeout: 10000 }
       );
 
-      const yearLabel = screen.getByText(/Година/i);
-      const yearInput = yearLabel
-        .closest('div')
-        ?.querySelector('input[type="text"]') as HTMLInputElement;
+      const yearInput = screen.getByPlaceholderText('2020') as HTMLInputElement;
       expect(yearInput).toBeInTheDocument();
 
       fireEvent.change(yearInput, { target: { value: '2020' } });
@@ -851,16 +852,13 @@ describe('ListingForm', () => {
 
       await waitFor(
         () => {
-          const yearLabel = screen.getByText(/Година/i);
-          expect(yearLabel).toBeInTheDocument();
+          const yearInput = screen.getByPlaceholderText('2020');
+          expect(yearInput).toBeInTheDocument();
         },
         { timeout: 10000 }
       );
 
-      const yearLabel = screen.getByText(/Година/i);
-      const yearInput = yearLabel
-        .closest('div')
-        ?.querySelector('input[type="text"]') as HTMLInputElement;
+      const yearInput = screen.getByPlaceholderText('2020') as HTMLInputElement;
 
       fireEvent.change(yearInput, { target: { value: invalidYear.toString() } });
       fireEvent.blur(yearInput);
@@ -923,16 +921,13 @@ describe('ListingForm', () => {
 
       await waitFor(
         () => {
-          const yearLabel = screen.getByText(/Година/i);
-          expect(yearLabel).toBeInTheDocument();
+          const yearInput = screen.getByPlaceholderText('2020');
+          expect(yearInput).toBeInTheDocument();
         },
         { timeout: 10000 }
       );
 
-      const yearLabel = screen.getByText(/Година/i);
-      const yearInput = yearLabel
-        .closest('div')
-        ?.querySelector('input[type="text"]') as HTMLInputElement;
+      const yearInput = screen.getByPlaceholderText('2020') as HTMLInputElement;
       expect(yearInput).toBeInTheDocument();
 
       fireEvent.change(yearInput, { target: { value: '1899' } });
@@ -1066,16 +1061,13 @@ describe('ListingForm', () => {
 
       await waitFor(
         () => {
-          const yearLabel = screen.getByText(/Година/i);
-          expect(yearLabel).toBeInTheDocument();
+          const yearInput = screen.getByPlaceholderText('2020');
+          expect(yearInput).toBeInTheDocument();
         },
         { timeout: 10000 }
       );
 
-      const yearLabel = screen.getByText(/Година/i);
-      const yearInput = yearLabel
-        .closest('div')
-        ?.querySelector('input[type="text"]') as HTMLInputElement;
+      const yearInput = screen.getByPlaceholderText('2020') as HTMLInputElement;
 
       fireEvent.change(yearInput, { target: { value: maxYear.toString() } });
       fireEvent.blur(yearInput);
@@ -1126,16 +1118,13 @@ describe('ListingForm', () => {
 
       await waitFor(
         () => {
-          const yearLabel = screen.getByText(/Година/i);
-          expect(yearLabel).toBeInTheDocument();
+          const yearInput = screen.getByPlaceholderText('2020');
+          expect(yearInput).toBeInTheDocument();
         },
         { timeout: 10000 }
       );
 
-      const yearLabel = screen.getByText(/Година/i);
-      const yearInput = yearLabel
-        .closest('div')
-        ?.querySelector('input[type="text"]') as HTMLInputElement;
+      const yearInput = screen.getByPlaceholderText('2020') as HTMLInputElement;
 
       fireEvent.change(yearInput, { target: { value: invalidYear.toString() } });
       fireEvent.blur(yearInput);
@@ -1397,6 +1386,97 @@ describe('ListingForm', () => {
       });
     });
 
+    it('should sync power_kw when horsepower changes', async () => {
+      const onSuccess = jest.fn();
+      render(
+        <ListingForm
+          mode="edit"
+          listingId="listing-1"
+          initialData={mockListing as Listing}
+          onSuccess={onSuccess}
+        />
+      );
+
+      await waitFor(() => {
+        const hpInput = screen.getByDisplayValue('150');
+        fireEvent.change(hpInput, { target: { value: '200' } });
+      });
+
+      await waitFor(() => {
+        const kwInput = screen.getByDisplayValue('147');
+        expect(kwInput).toBeInTheDocument();
+      });
+    });
+
+    it('should sync horsepower when power_kw changes', async () => {
+      const onSuccess = jest.fn();
+      render(
+        <ListingForm
+          mode="edit"
+          listingId="listing-1"
+          initialData={mockListing as Listing}
+          onSuccess={onSuccess}
+        />
+      );
+
+      await waitFor(() => {
+        const kwInputs = screen.getAllByPlaceholderText('110');
+        const kwInput =
+          kwInputs.find((input) => {
+            const label = input.closest('div')?.querySelector('label');
+            return label?.textContent?.includes('kW');
+          }) || kwInputs[0];
+        fireEvent.change(kwInput, { target: { value: '110' } });
+      });
+
+      await waitFor(() => {
+        const hpInput = screen.getByDisplayValue('150');
+        expect(hpInput).toBeInTheDocument();
+      });
+    });
+
+    it('should initialize power_kw from horsepower if power_kw is not provided', async () => {
+      const listingWithoutKw = {
+        ...mockListing,
+        power_kw: undefined,
+      };
+      const onSuccess = jest.fn();
+      render(
+        <ListingForm
+          mode="edit"
+          listingId="listing-1"
+          initialData={listingWithoutKw as Listing}
+          onSuccess={onSuccess}
+        />
+      );
+
+      await waitFor(() => {
+        const kwInput = screen.getByDisplayValue('110');
+        expect(kwInput).toBeInTheDocument();
+      });
+    });
+
+    it('should use provided power_kw if available', async () => {
+      const listingWithKw = {
+        ...mockListing,
+        power_kw: 120,
+      };
+      const onSuccess = jest.fn();
+      render(
+        <ListingForm
+          mode="edit"
+          listingId="listing-1"
+          initialData={listingWithKw as Listing}
+          onSuccess={onSuccess}
+        />
+      );
+
+      await waitFor(() => {
+        const kwInput = screen.getByDisplayValue('120');
+        expect(kwInput).toBeInTheDocument();
+      });
+    });
+
     it('should update VIN field', async () => {
       const onSuccess = jest.fn();
       render(
@@ -1470,6 +1550,153 @@ describe('ListingForm', () => {
       await waitFor(() => {
         const descriptionInput = screen.getByDisplayValue('Updated description');
         expect(descriptionInput).toBeInTheDocument();
+      });
+    });
+
+    it('should display equipment checkboxes and allow selection', async () => {
+      const onSuccess = jest.fn();
+      render(<ListingForm mode="create" onSuccess={onSuccess} />);
+
+      await waitFor(() => {
+        expect(api.brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      await waitFor(() => {
+        const equipmentSection = screen.getByText(/Опрема/i);
+        expect(equipmentSection).toBeInTheDocument();
+      });
+
+      let airConditioningText: HTMLElement;
+      let checkbox: HTMLInputElement;
+
+      await waitFor(() => {
+        airConditioningText = screen.getByText(/Клима уред/i);
+        expect(airConditioningText).toBeInTheDocument();
+
+        const airConditioningContainer = airConditioningText.closest('div.flex');
+        expect(airConditioningContainer).toBeInTheDocument();
+
+        checkbox = airConditioningContainer?.querySelector(
+          'input[type="checkbox"]'
+        ) as HTMLInputElement;
+        expect(checkbox).toBeInTheDocument();
+        expect(checkbox).not.toBeChecked();
+      });
+
+      fireEvent.click(checkbox!);
+
+      await waitFor(() => {
+        const updatedText = screen.getByText(/Клима уред/i);
+        const updatedCheckbox = updatedText
+          .closest('div.flex')
+          ?.querySelector('input[type="checkbox"]') as HTMLInputElement;
+        expect(updatedCheckbox).toBeChecked();
+      });
+    });
+
+    it('should pre-fill equipment checkboxes in edit mode', async () => {
+      const listingWithEquipment = {
+        ...mockListing,
+        equipment: ['air_conditioning', 'navigation', 'parking_sensors'],
+      };
+      const onSuccess = jest.fn();
+      render(
+        <ListingForm
+          mode="edit"
+          listingId="listing-1"
+          initialData={listingWithEquipment as Listing}
+          onSuccess={onSuccess}
+        />
+      );
+
+      await waitFor(() => {
+        const airConditioningText = screen.getByText(/Клима уред/i);
+        const navigationText = screen.getByText(/Навигација/i);
+        const parkingSensorsText = screen.getByText(/Паркинг сензори/i);
+
+        const airConditioningCheckbox = airConditioningText
+          .closest('div.flex')
+          ?.querySelector('input[type="checkbox"]') as HTMLInputElement;
+        const navigationCheckbox = navigationText
+          .closest('div.flex')
+          ?.querySelector('input[type="checkbox"]') as HTMLInputElement;
+        const parkingSensorsCheckbox = parkingSensorsText
+          .closest('div.flex')
+          ?.querySelector('input[type="checkbox"]') as HTMLInputElement;
+
+        expect(airConditioningCheckbox).toBeChecked();
+        expect(navigationCheckbox).toBeChecked();
+        expect(parkingSensorsCheckbox).toBeChecked();
+      });
+    });
+
+    it('should allow selecting and deselecting multiple equipment items', async () => {
+      const onSuccess = jest.fn();
+      render(<ListingForm mode="create" onSuccess={onSuccess} />);
+
+      await waitFor(() => {
+        expect(api.brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      await waitFor(() => {
+        const equipmentSection = screen.getByText(/Опрема/i);
+        expect(equipmentSection).toBeInTheDocument();
+      });
+
+      let airConditioningCheckbox: HTMLInputElement;
+      let navigationCheckbox: HTMLInputElement;
+      let parkingSensorsCheckbox: HTMLInputElement;
+
+      await waitFor(() => {
+        const airConditioningText = screen.getByText(/Клима уред/i);
+        const navigationText = screen.getByText(/Навигација/i);
+        const parkingSensorsText = screen.getByText(/Паркинг сензори/i);
+
+        airConditioningCheckbox = airConditioningText
+          .closest('div.flex')
+          ?.querySelector('input[type="checkbox"]') as HTMLInputElement;
+        navigationCheckbox = navigationText
+          .closest('div.flex')
+          ?.querySelector('input[type="checkbox"]') as HTMLInputElement;
+        parkingSensorsCheckbox = parkingSensorsText
+          .closest('div.flex')
+          ?.querySelector('input[type="checkbox"]') as HTMLInputElement;
+
+        expect(airConditioningCheckbox).toBeInTheDocument();
+        expect(navigationCheckbox).toBeInTheDocument();
+        expect(parkingSensorsCheckbox).toBeInTheDocument();
+      });
+
+      fireEvent.click(airConditioningCheckbox!);
+      fireEvent.click(navigationCheckbox!);
+      fireEvent.click(parkingSensorsCheckbox!);
+
+      await waitFor(() => {
+        const airConditioningText = screen.getByText(/Клима уред/i);
+        const navigationText = screen.getByText(/Навигација/i);
+        const parkingSensorsText = screen.getByText(/Паркинг сензори/i);
+        const updatedAirConditioningCheckbox = airConditioningText
+          .closest('div.flex')
+          ?.querySelector('input[type="checkbox"]') as HTMLInputElement;
+        const updatedNavigationCheckbox = navigationText
+          .closest('div.flex')
+          ?.querySelector('input[type="checkbox"]') as HTMLInputElement;
+        const updatedParkingSensorsCheckbox = parkingSensorsText
+          .closest('div.flex')
+          ?.querySelector('input[type="checkbox"]') as HTMLInputElement;
+        expect(updatedAirConditioningCheckbox).toBeChecked();
+        expect(updatedNavigationCheckbox).toBeChecked();
+        expect(updatedParkingSensorsCheckbox).toBeChecked();
+      });
+
+      fireEvent.click(airConditioningCheckbox!);
+
+      await waitFor(() => {
+        const airConditioningText = screen.getByText(/Клима уред/i);
+        const updatedAirConditioningCheckbox = airConditioningText
+          .closest('div.flex')
+          ?.querySelector('input[type="checkbox"]') as HTMLInputElement;
+        expect(updatedAirConditioningCheckbox).not.toBeChecked();
       });
     });
   });

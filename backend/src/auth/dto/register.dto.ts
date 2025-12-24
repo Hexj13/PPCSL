@@ -6,13 +6,15 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  Matches,
   MaxLength,
   MinLength,
   NotEquals,
   ValidateIf,
 } from 'class-validator';
 
+import { IsName } from '../../common/decorators/is-name.decorator';
+import { IsPassword } from '../../common/decorators/is-password.decorator';
+import { IsPhone } from '../../common/decorators/is-phone.decorator';
 import { UserType, UserType as UserTypeEnum } from '../../common/types';
 
 export class RegisterDto {
@@ -35,11 +37,7 @@ export class RegisterDto {
   @IsString()
   @MinLength(8, { message: 'Лозинката мора да содржи минимум 8 карактери' })
   @MaxLength(100, { message: 'Лозинката не може да биде подолга од 100 карактери' })
-  @Matches(/[A-Z]/, { message: 'Лозинката мора да содржи барем една голема буква' })
-  @Matches(/[a-z]/, { message: 'Лозинката мора да содржи барем една мала буква' })
-  @Matches(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, {
-    message: 'Лозинката мора да содржи барем еден специјален карактер',
-  })
+  @IsPassword()
   password: string;
 
   @ApiProperty({
@@ -57,9 +55,7 @@ export class RegisterDto {
   })
   @ValidateIf((o) => o.type === UserTypeEnum.Individual)
   @IsString({ message: 'Телефонот е задолжителен' })
-  @Matches(/^\+\d{1,4}\d{6,15}$/, {
-    message: 'Телефонот мора да биде во формат +код држава (1-4 цифри) + број (6-15 цифри)',
-  })
+  @IsPhone()
   phone?: string;
 
   @ApiPropertyOptional({
@@ -70,9 +66,7 @@ export class RegisterDto {
   @IsString({ message: 'Името е задолжително' })
   @MinLength(2, { message: 'Името мора да содржи минимум 2 карактери' })
   @MaxLength(50, { message: 'Името не може да биде подолго од 50 карактери' })
-  @Matches(/^[a-zA-Zа-яА-ЯёЁјЈљЉњЊќЌџЅ\s\-]+$/, {
-    message: 'Името може да содржи само букви, пробели, тире и дефис',
-  })
+  @IsName()
   firstName?: string;
 
   @ApiPropertyOptional({
@@ -84,9 +78,7 @@ export class RegisterDto {
   @IsString()
   @MinLength(2, { message: 'Презимето мора да содржи минимум 2 карактери' })
   @MaxLength(50, { message: 'Презимето не може да биде подолго од 50 карактери' })
-  @Matches(/^[a-zA-Zа-яА-ЯёЁјЈљЉњЊќЌџЅ\s\-]+$/, {
-    message: 'Презимето може да содржи само букви, пробели, тире и дефис',
-  })
+  @IsName()
   lastName?: string;
 
   @ApiPropertyOptional({

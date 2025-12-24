@@ -6,6 +6,7 @@ import {
   IsArray,
   IsBoolean,
   IsEnum,
+  IsInt,
   IsNumber,
   IsOptional,
   IsString,
@@ -39,7 +40,7 @@ export class CreateListingDto {
     minimum: 0,
     maximum: 999999999,
   })
-  @IsNumber({ maxDecimalPlaces: 2 })
+  @IsInt()
   @Min(0)
   @Max(999999999)
   price: number;
@@ -162,6 +163,18 @@ export class CreateListingDto {
   horsepower: number;
 
   @ApiPropertyOptional({
+    example: 110,
+    description: 'Power in kilowatts',
+    minimum: 1,
+    maximum: 9999,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(9999)
+  power_kw?: number;
+
+  @ApiPropertyOptional({
     example: true,
     description: 'Is vehicle registered',
   })
@@ -179,6 +192,20 @@ export class CreateListingDto {
     message: 'Датата мора да биде во формат YYYY-MM-DD',
   })
   registration_expires_at?: string;
+
+  @ApiPropertyOptional({
+    example: ['air_conditioning', 'navigation', 'parking_sensors'],
+    description: 'Array of equipment keys (max 20 items)',
+    type: [String],
+    maxItems: 20,
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @ArrayMaxSize(20, {
+    message: 'Максимум 20 опции',
+  })
+  equipment?: string[];
 
   @ApiProperty({
     type: () => CreateVehicleDto,

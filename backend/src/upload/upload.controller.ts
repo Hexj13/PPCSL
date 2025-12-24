@@ -27,6 +27,7 @@ import { Response } from 'express';
 import { memoryStorage } from 'multer';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { handleUploadError } from '../common/utils/error-handling.utils';
 
 import { UploadService } from './upload.service';
 
@@ -155,16 +156,7 @@ export class UploadController {
         path: filePath,
       };
     } catch (error) {
-      this.logger.error(
-        `Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        error instanceof Error ? error.stack : undefined,
-      );
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
-      throw new BadRequestException(
-        `Грешка при обработка на сликата: ${error instanceof Error ? error.message : 'Непозната грешка'}`,
-      );
+      handleUploadError(error, this.logger, 'Upload failed');
     }
   }
 

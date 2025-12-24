@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, Matches } from 'class-validator';
+import { IsString } from 'class-validator';
+
+import { IsPhone } from '../../common/decorators/is-phone.decorator';
 
 export class ChangePhoneRequestDto {
   @ApiProperty({
@@ -7,9 +9,7 @@ export class ChangePhoneRequestDto {
     description: 'New phone number',
   })
   @IsString({ message: 'Телефонскиот број е задолжителен' })
-  @Matches(/^\+\d{1,4}\d{6,15}$/, {
-    message: 'Телефонскиот број мора да биде во формат +код држава (1-4 цифри) + број (6-15 цифри)',
-  })
+  @IsPhone()
   phone: string;
 }
 
