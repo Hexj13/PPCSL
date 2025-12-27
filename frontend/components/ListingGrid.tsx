@@ -635,11 +635,28 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   }
 
   if (listings.length === 0) {
+    const handleViewAllListings = () => {
+      sessionStorage.removeItem(FILTERS_STORAGE_KEY);
+      localStorage.removeItem(FILTERS_STORAGE_KEY);
+      sessionStorage.removeItem(GRID_STATE_KEY);
+      sessionStorage.removeItem('homeScrollTimestamp');
+      sessionStorage.removeItem('scrollPreserved');
+      window.location.href = '/';
+    };
+
     return (
       <div className="text-center py-12">
-        <p className="text-lg" style={{ color: 'rgb(243, 243, 243)' }}>
+        <p className="text-lg mb-6" style={{ color: 'rgb(243, 243, 243)' }}>
           {t('listings.notFound')}
         </p>
+        <div className="flex justify-center">
+          <button
+            onClick={handleViewAllListings}
+            className="btn-primary px-6 py-3 text-base font-semibold"
+          >
+            {t('listings.viewAllListings')}
+          </button>
+        </div>
       </div>
     );
   }

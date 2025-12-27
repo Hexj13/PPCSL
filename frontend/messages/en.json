@@ -120,6 +120,10 @@
     "showPopularFilters": "Show popular filters",
     "hidePopularFilters": "Hide popular filters"
   },
+  "listings": {
+    "notFound": "No listings found",
+    "viewAllListings": "View all listings"
+  },
   "myListings": {
     "title": "My Listings",
     "home": "Home",
