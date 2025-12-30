@@ -33,7 +33,7 @@ export const dataSourceOptions: DataSourceOptions = {
   ],
   synchronize: process.env.DB_SYNC === 'true' || process.env.NODE_ENV !== 'production',
   logging: process.env.NODE_ENV === 'development',
-  migrations: ['dist/migrations/*.js'],
+  migrations: process.env.NODE_ENV === 'test' ? [] : ['dist/migrations/*.js'],
   extra: {
     max: parseInt(process.env.DB_POOL_MAX || '20'),
     min: parseInt(process.env.DB_POOL_MIN || '5'),

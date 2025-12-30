@@ -23,3 +23,4 @@ module.exports = {
     '^src/(.*)$': '<rootDir>/$1',
   },
 };
+
