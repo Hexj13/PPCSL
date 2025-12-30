@@ -33,14 +33,18 @@ export class CacheInterceptor implements NestInterceptor {
       if (cached !== null) {
         return of(cached);
       }
-    } catch {}
+    } catch {
+      // Ignore cache errors
+    }
 
     return next.handle().pipe(
       tap(async (data) => {
         try {
           const ttl = cacheOptions.ttl || 3600;
           await this.redisService.setJson(cacheKey, data, ttl);
-        } catch {}
+        } catch {
+          // Ignore cache errors
+        }
       }),
     );
   }

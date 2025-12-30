@@ -16,8 +16,6 @@ export function validateRegistrationDate(registrationExpiresAt: string | undefin
     registrationYear < currentYear ||
     (registrationYear === currentYear && registrationMonth < currentMonth)
   ) {
-    throw new BadRequestException(
-      'Датата на регистрација не може да биде помала од тековниот месец и година',
-    );
+    throw new BadRequestException('errors.registrationDateInvalid');
   }
 }

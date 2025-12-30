@@ -7,6 +7,7 @@ import {
   Logger,
   NotFoundException,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -21,12 +22,14 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 
 import { CreateListingDto } from './dto/create-listing.dto';
 import { SearchListingsDto } from './dto/search-listings.dto';
+import { TogglePromotionDto } from './dto/toggle-promotion.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
 import { ListingsService } from './listings.service';
 
@@ -150,6 +153,78 @@ export class ListingsController {
   @Get('vin/:vin')
   findByVin(@Param('vin') vin: string, @Query('excludeId') excludeId?: string) {
     return this.listingsService.findByVin(vin, excludeId);
+  }
+
+  @Get('promotion-history')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Get promotion history for current user' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({ status: 200, description: 'Promotion history retrieved successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized - authentication required' })
+  getPromotionHistory(
+    @Request() req,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const pageNum = page ? Math.max(1, parseInt(page, 10)) : 1;
+    const limitNum = limit ? Math.min(100, Math.max(1, parseInt(limit, 10))) : 50;
+    return this.listingsService.getPromotionHistory(req.user.id, pageNum, limitNum);
+  }
+
+  @Get('promotion-history/check')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Check if user has promotion history' })
+  @ApiResponse({ status: 200, description: 'Check result' })
+  @ApiResponse({ status: 401, description: 'Unauthorized - authentication required' })
+  async checkPromotionHistory(@Request() req) {
+    const hasHistory = await this.listingsService.hasPromotionHistory(req.user.id);
+    return { hasHistory };
+  }
+
+  @Get('promotion-access')
+  @UseGuards(OptionalJwtAuthGuard)
+  @ApiOperation({ summary: 'Get promotion access status' })
+  @ApiResponse({
+    status: 200,
+    description: 'Promotion access status',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            access: { type: 'string', enum: ['disabled', 'admin', 'all'] },
+            enabled: { type: 'boolean' },
+            isAdmin: { type: 'boolean' },
+            canPromote: { type: 'boolean' },
+          },
+        },
+      },
+    },
+  })
+  getPromotionAccess(@Request() req) {
+    const isDevelopment = process.env.NODE_ENV !== 'production';
+    const promotionAccess = process.env.PROMOTION_ACCESS || 'disabled';
+    const isAdmin = req.user?.type === 'Admin';
+
+    let canPromote = false;
+    if (promotionAccess === 'all') {
+      canPromote = true;
+    } else if (promotionAccess === 'admin') {
+      canPromote = isAdmin;
+    } else if (isDevelopment && isAdmin) {
+      canPromote = true;
+    }
+
+    return {
+      access: promotionAccess,
+      enabled: promotionAccess !== 'disabled',
+      isAdmin: isAdmin || false,
+      canPromote,
+    };
   }
 
   @ApiOperation({ summary: 'Get listing details' })
@@ -336,5 +411,40 @@ export class ListingsController {
     }
     const result = await this.listingsService.autoCloseOldListings();
     return { message: 'Old listings closed successfully', result };
+  }
+
+  @Patch(':id/promote')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Toggle listing promotion (user)' })
+  @ApiParam({
+    name: 'id',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+    description: 'Listing UUID',
+  })
+  @ApiResponse({ status: 200, description: 'Promotion toggled successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized - authentication required' })
+  @ApiResponse({ status: 403, description: 'Forbidden - promotion feature is disabled' })
+  async togglePromotion(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: TogglePromotionDto,
+    @Request() req,
+  ) {
+    const isDevelopment = process.env.NODE_ENV !== 'production';
+    const promotionAccess = process.env.PROMOTION_ACCESS || 'disabled';
+
+    const shouldSkipChecks = isDevelopment && req.user.type === 'Admin';
+    if (!shouldSkipChecks) {
+      if (promotionAccess === 'disabled') {
+        throw new ForbiddenException('errors.promotionDisabled');
+      }
+      if (promotionAccess === 'admin' && req.user.type !== 'Admin') {
+        throw new ForbiddenException('errors.promotionAdminOnly');
+      }
+    }
+
+    const days = dto.is_promoted ? (dto.days !== undefined ? dto.days : 7) : null;
+    return this.listingsService.togglePromotion(id, req.user.id, dto.is_promoted, days);
   }
 }

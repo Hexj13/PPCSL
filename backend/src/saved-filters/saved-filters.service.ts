@@ -23,9 +23,7 @@ export class SavedFiltersService {
     });
 
     if (count >= MAX_SAVED_FILTERS) {
-      throw new BadRequestException(
-        `Можете да зачувате максимум ${MAX_SAVED_FILTERS} филтри. Ве молиме избришете некој од постоечките филтри.`,
-      );
+      throw new BadRequestException(`errors.maxSavedFiltersReached|${MAX_SAVED_FILTERS}`);
     }
 
     const savedFilter = this.savedFiltersRepository.create({
@@ -50,7 +48,7 @@ export class SavedFiltersService {
     });
 
     if (!savedFilter) {
-      throw new BadRequestException('Филтерот не е пронајден');
+      throw new BadRequestException('errors.filterNotFound');
     }
 
     savedFilter.name = name;
@@ -64,7 +62,7 @@ export class SavedFiltersService {
     });
 
     if (result.affected === 0) {
-      throw new BadRequestException('Филтерот не е пронајден');
+      throw new BadRequestException('errors.filterNotFound');
     }
   }
 }

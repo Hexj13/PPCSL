@@ -260,6 +260,10 @@ export interface Listing {
   last_edited_at?: string;
   last_published_at?: string;
   closed_at?: string;
+  is_promoted?: boolean;
+  promoted_until?: string | null;
+  promoted_started_at?: string | null;
+  promoted_paused_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -415,6 +419,18 @@ export interface PaginationMeta {
   totalPages?: number;
 }
 
+export interface PromotionHistory {
+  id: string;
+  listing_id: string;
+  user_id: string;
+  listing_title: string;
+  started_at: string;
+  ended_at: string | null;
+  days: number;
+  created_at: string;
+  listing_status?: ListingStatus;
+}
+
 export interface AdminStats {
   users: {
     total: number;
@@ -468,6 +484,26 @@ export const listingsApi = {
     return api.get<{ data: Listing[]; meta: PaginationMeta }>(`/api/listings/my?${query}`);
   },
   refreshDates: () => api.post<{ updated: number }>('/api/listings/refresh-dates'),
+  togglePromotion: (id: string, isPromoted: boolean, days: number) =>
+    api.patch(`/api/listings/${id}/promote`, { is_promoted: isPromoted, days }),
+  getPromotionHistory: (page: number = 1, limit: number = 50) => {
+    const params = new URLSearchParams();
+    params.set('page', page.toString());
+    params.set('limit', limit.toString());
+    return api.get<{
+      data: PromotionHistory[];
+      meta: { total: number; page: number; limit: number; totalPages: number };
+    }>(`/api/listings/promotion-history?${params.toString()}`);
+  },
+  hasPromotionHistory: () =>
+    api.get<{ hasHistory: boolean }>('/api/listings/promotion-history/check'),
+  getPromotionAccess: () =>
+    api.get<{
+      access: 'disabled' | 'admin' | 'all';
+      enabled: boolean;
+      isAdmin: boolean;
+      canPromote: boolean;
+    }>('/api/listings/promotion-access'),
 };
 
 export const uploadApi = {
@@ -620,23 +656,79 @@ export const savedFiltersApi = {
 };
 
 export const adminApi = {
-  getAllListings: (page: number = 1, limit: number = 20) => {
+  getAllListings: (
+    page: number = 1,
+    limit: number = 20,
+    listingId?: string,
+    userId?: string,
+    status?: ListingStatus,
+    isPromoted?: boolean
+  ) => {
     const params = new URLSearchParams();
     params.set('page', page.toString());
     params.set('limit', limit.toString());
+    if (listingId) {
+      params.set('listingId', listingId);
+    }
+    if (userId) {
+      params.set('userId', userId);
+    }
+    if (status) {
+      params.set('status', status);
+    }
+    if (isPromoted !== undefined) {
+      params.set('isPromoted', isPromoted.toString());
+    }
     const query = params.toString();
     return api.get<{ data: Listing[]; meta: PaginationMeta }>(`/api/admin/listings?${query}`);
+  },
+  getListingsStatusCounts: () => {
+    return api.get<{ Active: number; Paused: number; Closed: number; Promoted: number }>(
+      '/api/admin/listings/status-counts'
+    );
   },
   updateListingStatus: (id: string, status: ListingStatus) =>
     api.patch(`/api/admin/listings/${id}/status`, { status }),
   getStats: () => api.get<AdminStats>('/api/admin/stats'),
-  getAllUsers: (page: number = 1, limit: number = 20) => {
+  getAllUsers: (page: number = 1, limit: number = 20, search?: string, userType?: string) => {
     const params = new URLSearchParams();
     params.set('page', page.toString());
     params.set('limit', limit.toString());
+    if (search) {
+      params.set('search', search);
+    }
+    if (userType) {
+      params.set('userType', userType);
+    }
     const query = params.toString();
     return api.get<{ data: User[]; meta: PaginationMeta }>(`/api/admin/users?${query}`);
   },
   getUserListings: (userId: string) => api.get<Listing[]>(`/api/admin/users/${userId}/listings`),
   toggleUserStatus: (userId: string) => api.patch(`/api/admin/users/${userId}/toggle-status`),
+  toggleListingPromotion: (id: string, isPromoted: boolean, days?: number | null) =>
+    api.patch(`/api/admin/listings/${id}/promote`, { is_promoted: isPromoted, days }),
+  getAllPromotions: (
+    page: number = 1,
+    limit: number = 50,
+    listingId?: string,
+    userId?: string,
+    fromDate?: Date
+  ) => {
+    const params = new URLSearchParams();
+    params.set('page', page.toString());
+    params.set('limit', limit.toString());
+    if (listingId) {
+      params.set('listingId', listingId);
+    }
+    if (userId) {
+      params.set('userId', userId);
+    }
+    if (fromDate) {
+      params.set('fromDate', fromDate.toISOString());
+    }
+    return api.get<{
+      data: PromotionHistory[];
+      meta: { total: number; page: number; limit: number; totalPages: number };
+    }>(`/api/admin/promotions?${params.toString()}`);
+  },
 };

@@ -106,7 +106,7 @@ export class UploadController {
       },
       fileFilter: (req, file, cb) => {
         if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
-          return cb(new BadRequestException('Поддржани се само слики'), false);
+          return cb(new BadRequestException('errors.onlyImagesSupported'), false);
         }
         cb(null, true);
       },
@@ -119,14 +119,14 @@ export class UploadController {
 
     if (!file) {
       this.logger.warn('Upload failed: No file provided');
-      throw new BadRequestException('Фајлот не е приложен');
+      throw new BadRequestException('errors.fileNotAttached');
     }
 
     if (!file.buffer || file.buffer.length === 0) {
       this.logger.warn(
         `Upload failed: Empty file buffer. Originalname: ${file.originalname}, size: ${file.size}`,
       );
-      throw new BadRequestException('Фајлот е празен');
+      throw new BadRequestException('errors.fileEmpty');
     }
 
     this.logger.debug(`File buffer size: ${file.buffer.length}, mimetype: ${file.mimetype}`);

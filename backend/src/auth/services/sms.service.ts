@@ -36,8 +36,8 @@ export class SmsService {
     const redisKey = `sms:code:${normalizedPhone}`;
     try {
       await this.redisService.set(redisKey, code, 600);
-    } catch (error) {
-      throw new BadRequestException('Грешка при зачувување на кодот. Обидете се повторно.');
+    } catch {
+      throw new BadRequestException('errors.codeSaveError');
     }
 
     if (!this.twilioClient) {
@@ -67,11 +67,10 @@ export class SmsService {
     } catch (error: unknown) {
       try {
         await this.redisService.del(redisKey);
-      } catch {}
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : 'Грешка при испраќање на SMS. Обидете се повторно.';
+      } catch {
+        // Ignore cleanup errors
+      }
+      const errorMessage = error instanceof Error ? error.message : 'errors.smsSendError';
       const nodeEnv = this.configService.get('NODE_ENV');
       if (nodeEnv === 'test' || nodeEnv === 'development' || nodeEnv === 'stage') {
         return;
@@ -87,8 +86,8 @@ export class SmsService {
     const redisKey = `sms:reset:${normalizedPhone}`;
     try {
       await this.redisService.set(redisKey, code, 600);
-    } catch (error) {
-      throw new BadRequestException('Грешка при зачувување на кодот. Обидете се повторно.');
+    } catch {
+      throw new BadRequestException('errors.codeSaveError');
     }
 
     if (!this.twilioClient) {
@@ -118,11 +117,10 @@ export class SmsService {
     } catch (error: unknown) {
       try {
         await this.redisService.del(redisKey);
-      } catch {}
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : 'Грешка при испраќање на SMS. Обидете се повторно.';
+      } catch {
+        // Ignore cleanup errors
+      }
+      const errorMessage = error instanceof Error ? error.message : 'errors.smsSendError';
       const nodeEnv = this.configService.get('NODE_ENV');
       if (nodeEnv === 'test' || nodeEnv === 'development' || nodeEnv === 'stage') {
         return;
@@ -146,7 +144,7 @@ export class SmsService {
     let storedCode: string | null;
     try {
       storedCode = await this.redisService.get(redisKey);
-    } catch (error) {
+    } catch {
       return false;
     }
 
@@ -176,7 +174,7 @@ export class SmsService {
     let storedCode: string | null;
     try {
       storedCode = await this.redisService.get(redisKey);
-    } catch (error) {
+    } catch {
       return false;
     }
 
@@ -187,7 +185,9 @@ export class SmsService {
     if (storedCode === code) {
       try {
         await this.redisService.del(redisKey);
-      } catch {}
+      } catch {
+        // Ignore cleanup errors
+      }
       return true;
     }
 
@@ -199,7 +199,9 @@ export class SmsService {
     const redisKey = `sms:reset:${normalizedPhone}`;
     try {
       await this.redisService.del(redisKey);
-    } catch {}
+    } catch {
+      // Ignore cleanup errors
+    }
   }
 
   private generateCode(): string {

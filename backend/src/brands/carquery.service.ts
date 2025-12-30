@@ -110,7 +110,7 @@ export class CarQueryService {
       }
 
       return [];
-    } catch (error) {
+    } catch {
       return [];
     }
   }

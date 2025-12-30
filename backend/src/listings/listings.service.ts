@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, LessThanOrEqual, Repository } from 'typeorm';
+import { In, IsNull, LessThan, LessThanOrEqual, Repository } from 'typeorm';
 
 import { BrandsService } from '../brands/brands.service';
 import { RedisService } from '../common/redis.service';
@@ -37,6 +37,7 @@ import { SearchListingsDto } from './dto/search-listings.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
 import { ListingView } from './entities/listing-view.entity';
 import { Listing } from './entities/listing.entity';
+import { PromotionHistory } from './entities/promotion-history.entity';
 import { Vehicle } from './entities/vehicle.entity';
 
 @Injectable()
@@ -53,6 +54,8 @@ export class ListingsService {
     private vehiclesRepository: Repository<Vehicle>,
     @InjectRepository(ListingView)
     private listingViewsRepository: Repository<ListingView>,
+    @InjectRepository(PromotionHistory)
+    private promotionHistoryRepository: Repository<PromotionHistory>,
     private usersService: UsersService,
     private brandsService: BrandsService,
     private redisService: RedisService,
@@ -73,9 +76,7 @@ export class ListingsService {
       const limit = await this.usersService.getListingLimit(userId);
 
       if (activeCount >= limit) {
-        throw new BadRequestException(
-          `Надминат е лимитот на активни објави. Максимум: ${limit}. Ве молиме изберете статус "Привремено застарена" или затворете други активни објави.`,
-        );
+        throw new BadRequestException(`errors.activeListingsLimitExceeded|${limit}`);
       }
     }
 
@@ -230,16 +231,22 @@ export class ListingsService {
       });
     }
 
+    queryBuilder.andWhere(
+      '(listing.is_promoted = false OR (listing.is_promoted = true AND (listing.promoted_until IS NULL OR listing.promoted_until > NOW())))',
+    );
+
     const validSortFields = ['created_at', 'price', 'year', 'views'];
     const sortField = validSortFields.includes(sortBy) ? sortBy : 'created_at';
     const order = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
+    queryBuilder.orderBy('listing.is_promoted', 'DESC');
+
     if (sortField === 'year') {
-      queryBuilder.orderBy('vehicle.year', order);
+      queryBuilder.addOrderBy('vehicle.year', order);
     } else if (sortField === 'views') {
-      queryBuilder.orderBy('listing.views', 'DESC');
+      queryBuilder.addOrderBy('listing.views', order);
     } else {
-      queryBuilder.orderBy(`listing.${sortField}`, order);
+      queryBuilder.addOrderBy(`listing.${sortField}`, order);
     }
 
     const [listings, total] = await queryBuilder.skip(skip).take(limit).getManyAndCount();
@@ -296,7 +303,7 @@ export class ListingsService {
         .getOne();
 
       if (!listing) {
-        throw new NotFoundException('Објавата не е пронајдена');
+        throw new NotFoundException('errors.listingNotFound');
       }
 
       if (!listing.vehicle) {
@@ -423,15 +430,15 @@ export class ListingsService {
     });
 
     if (!listing) {
-      throw new NotFoundException('Објавата не е пронајдена');
+      throw new NotFoundException('errors.listingNotFound');
     }
 
     if (listing.user_id !== userId) {
-      throw new ForbiddenException('Немате пристап до оваа објава');
+      throw new ForbiddenException('errors.listingAccessDenied');
     }
 
     if (listing.status === 'Closed') {
-      throw new BadRequestException('Не можете да уредувате затворена објава');
+      throw new BadRequestException('errors.cannotEditClosedListing');
     }
 
     const previousBrandId = listing.vehicle?.brand_id;
@@ -508,7 +515,7 @@ export class ListingsService {
     });
 
     if (!freshListing) {
-      throw new NotFoundException('Објавата не е пронајдена');
+      throw new NotFoundException('errors.listingNotFound');
     }
 
     // Clear Redis cache
@@ -546,18 +553,35 @@ export class ListingsService {
   async publish(id: string, userId: string): Promise<Listing> {
     const listing = await this.findOne(id);
     if (listing.user_id !== userId) {
-      throw new ForbiddenException('Немате пристап до оваа објава');
+      throw new ForbiddenException('errors.listingAccessDenied');
     }
 
     const activeCount = await this.getActiveListingsCount(userId);
     const limit = await this.usersService.getListingLimit(userId);
 
     if (listing.status === ListingStatusEnum.Active) {
-      throw new BadRequestException('Објавата е веќе активна');
+      throw new BadRequestException('errors.listingAlreadyActive');
     }
 
     if (activeCount >= limit) {
-      throw new BadRequestException(`Надминат е лимитот на активни објави. Максимум: ${limit}`);
+      throw new BadRequestException(`errors.activeListingsLimitExceeded|${limit}`);
+    }
+
+    if (listing.is_promoted && listing.promoted_until && listing.promoted_paused_at) {
+      const now = new Date();
+      const pausedMs = now.getTime() - listing.promoted_paused_at.getTime();
+      listing.promoted_until = new Date(listing.promoted_until.getTime() + pausedMs);
+      listing.promoted_paused_at = null;
+    }
+
+    if (listing.is_promoted && listing.promoted_until && !listing.promoted_paused_at) {
+      const now = new Date();
+      if (listing.promoted_until < now) {
+        listing.is_promoted = false;
+        listing.promoted_until = null;
+        listing.promoted_started_at = null;
+        listing.promoted_paused_at = null;
+      }
     }
 
     listing.status = ListingStatusEnum.Active;
@@ -579,7 +603,11 @@ export class ListingsService {
   async pause(id: string, userId: string): Promise<Listing> {
     const listing = await this.findOne(id);
     if (listing.user_id !== userId) {
-      throw new ForbiddenException('Немате пристап до оваа објава');
+      throw new ForbiddenException('errors.listingAccessDenied');
+    }
+
+    if (listing.is_promoted && listing.promoted_until && !listing.promoted_paused_at) {
+      listing.promoted_paused_at = new Date();
     }
 
     listing.status = ListingStatusEnum.Paused;
@@ -600,12 +628,23 @@ export class ListingsService {
   async close(id: string, userId: string): Promise<Listing> {
     const listing = await this.findOne(id);
     if (listing.user_id !== userId) {
-      throw new ForbiddenException('Немате пристап до оваа објава');
+      throw new ForbiddenException('errors.listingAccessDenied');
     }
+
+    const wasPromoted = listing.is_promoted;
 
     listing.status = ListingStatusEnum.Closed;
     listing.closed_at = new Date();
+    listing.is_promoted = false;
+    listing.promoted_until = null;
+    listing.promoted_started_at = null;
+    listing.promoted_paused_at = null;
+
     const closedListing = await this.listingsRepository.save(listing);
+
+    if (wasPromoted) {
+      await this.updatePromotionHistoryEndDate(id);
+    }
 
     try {
       await this.redisService.invalidateByPrefix(CACHE_PREFIXES.listingsSearch);
@@ -632,18 +671,41 @@ export class ListingsService {
   async autoCloseOldListings(): Promise<{ closed: number }> {
     const fiveMonthsAgo = new Date();
     fiveMonthsAgo.setMonth(fiveMonthsAgo.getMonth() - 5);
+    const now = new Date();
     const closedAt = new Date();
 
-    const result = await this.listingsRepository.update(
-      {
+    const promotedListingsWithExpiredPromo = await this.listingsRepository.find({
+      where: {
         status: ListingStatusEnum.Active,
         last_updated_at: LessThanOrEqual(fiveMonthsAgo),
+        is_promoted: true,
+        promoted_until: LessThan(now),
       },
-      {
+      select: ['id'],
+    });
+
+    for (const listing of promotedListingsWithExpiredPromo) {
+      await this.updatePromotionHistoryEndDate(listing.id);
+    }
+
+    const result = await this.listingsRepository
+      .createQueryBuilder()
+      .update(Listing)
+      .set({
         status: ListingStatusEnum.Closed,
         closed_at: closedAt,
-      },
-    );
+        is_promoted: false,
+        promoted_until: null,
+        promoted_started_at: null,
+        promoted_paused_at: null,
+      })
+      .where('status = :status', { status: ListingStatusEnum.Active })
+      .andWhere('last_updated_at <= :fiveMonthsAgo', { fiveMonthsAgo })
+      .andWhere(
+        '(is_promoted = false OR (is_promoted = true AND promoted_until IS NOT NULL AND promoted_until < :now))',
+        { now },
+      )
+      .execute();
 
     this.logger.log(`Auto-closed ${result.affected || 0} old listings`);
     return { closed: result.affected || 0 };
@@ -683,7 +745,7 @@ export class ListingsService {
     return this.listingsRepository.find({
       where: { user_id: userId, status: ListingStatusEnum.Active },
       relations: ['vehicle', 'vehicle.brand', 'vehicle.model'],
-      order: { created_at: 'DESC' },
+      order: { is_promoted: 'DESC', created_at: 'DESC' },
     });
   }
 
@@ -728,19 +790,34 @@ export class ListingsService {
   }
 
   async closeAllUserListings(userId: string): Promise<number> {
-    const listings = await this.listingsRepository.find({
+    const promotedListings = await this.listingsRepository.find({
       where: {
         user_id: userId,
         status: In([ListingStatusEnum.Active, ListingStatusEnum.Paused]),
+        is_promoted: true,
       },
+      select: ['id'],
     });
 
-    const closedAt = new Date();
-    for (const listing of listings) {
-      listing.status = ListingStatusEnum.Closed;
-      listing.closed_at = closedAt;
-      await this.listingsRepository.save(listing);
+    for (const listing of promotedListings) {
+      await this.updatePromotionHistoryEndDate(listing.id);
     }
+
+    const closedAt = new Date();
+    const result = await this.listingsRepository.update(
+      {
+        user_id: userId,
+        status: In([ListingStatusEnum.Active, ListingStatusEnum.Paused]),
+      },
+      {
+        status: ListingStatusEnum.Closed,
+        closed_at: closedAt,
+        is_promoted: false,
+        promoted_until: null,
+        promoted_started_at: null,
+        promoted_paused_at: null,
+      },
+    );
 
     try {
       await this.redisService.delPattern('cache:listings:search:*');
@@ -748,6 +825,159 @@ export class ListingsService {
       // Ignore cache errors
     }
 
-    return listings.length;
+    return result.affected || 0;
+  }
+
+  async togglePromotion(
+    id: string,
+    userId: string,
+    isPromoted: boolean,
+    days: number | null,
+  ): Promise<Listing> {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+      throw new BadRequestException('errors.invalidListingId');
+    }
+
+    const listing = await this.listingsRepository.findOne({
+      where: { id, user_id: userId },
+    });
+
+    if (!listing) {
+      throw new NotFoundException('errors.listingNotFound');
+    }
+
+    if (listing.user_id !== userId) {
+      throw new ForbiddenException('errors.listingAccessDenied');
+    }
+
+    if (isPromoted && listing.status !== ListingStatusEnum.Active) {
+      throw new BadRequestException('errors.promotionOnlyActive');
+    }
+
+    const validDays = [1, 7, 14, 30];
+    if (isPromoted && days !== null && !validDays.includes(days)) {
+      throw new BadRequestException('errors.invalidPromotionPeriod');
+    }
+
+    const wasPromoted = listing.is_promoted;
+
+    if (isPromoted && !wasPromoted) {
+      const activePromotionsCount = await this.listingsRepository.count({
+        where: { user_id: userId, is_promoted: true, status: ListingStatusEnum.Active },
+      });
+
+      const MAX_PROMOTIONS_PER_USER = parseInt(process.env.MAX_PROMOTIONS_PER_USER || '10', 10);
+      if (activePromotionsCount >= MAX_PROMOTIONS_PER_USER) {
+        throw new BadRequestException(`errors.maxPromotionsReached|${MAX_PROMOTIONS_PER_USER}`);
+      }
+    }
+    listing.is_promoted = isPromoted;
+
+    if (isPromoted) {
+      const now = new Date();
+      listing.promoted_started_at = now;
+      listing.promoted_paused_at = null;
+      if (days === null) {
+        listing.promoted_until = null;
+      } else {
+        const until = new Date();
+        until.setDate(until.getDate() + days);
+        listing.promoted_until = until;
+      }
+
+      await this.createPromotionHistory(listing.id, userId, listing.title, days);
+    } else if (wasPromoted) {
+      listing.promoted_until = null;
+      listing.promoted_started_at = null;
+      listing.promoted_paused_at = null;
+      await this.updatePromotionHistoryEndDate(listing.id);
+    } else {
+      listing.promoted_until = null;
+      listing.promoted_started_at = null;
+      listing.promoted_paused_at = null;
+    }
+
+    const savedListing = await this.listingsRepository.save(listing);
+
+    try {
+      await this.redisService.invalidateByPrefix(CACHE_PREFIXES.listingsSearch);
+      await this.redisService.del(
+        generateCacheKey({ prefix: CACHE_PREFIXES.listings, parts: [id] }),
+      );
+    } catch {
+      // Ignore cache errors
+    }
+
+    return savedListing;
+  }
+
+  async createPromotionHistory(
+    listingId: string,
+    userId: string,
+    listingTitle: string,
+    days: number | null,
+  ): Promise<void> {
+    await this.promotionHistoryRepository.save({
+      listing_id: listingId,
+      user_id: userId,
+      listing_title: listingTitle,
+      started_at: new Date(),
+      ended_at: null,
+      days,
+    });
+  }
+
+  async updatePromotionHistoryEndDate(listingId: string): Promise<void> {
+    const lastHistory = await this.promotionHistoryRepository.findOne({
+      where: { listing_id: listingId, ended_at: IsNull() },
+      order: { started_at: 'DESC' },
+    });
+
+    if (lastHistory) {
+      lastHistory.ended_at = new Date();
+      await this.promotionHistoryRepository.save(lastHistory);
+    }
+  }
+
+  async getPromotionHistory(
+    userId: string,
+    page: number = 1,
+    limit: number = 50,
+  ): Promise<{
+    data: Array<PromotionHistory & { listing_status?: ListingStatusEnum; listing_id: string }>;
+    meta: { total: number; page: number; limit: number; totalPages: number };
+  }> {
+    const skip = (page - 1) * limit;
+
+    const [history, total] = await this.promotionHistoryRepository
+      .createQueryBuilder('ph')
+      .leftJoinAndSelect('ph.listing', 'listing')
+      .where('ph.user_id = :userId', { userId })
+      .orderBy('ph.started_at', 'DESC')
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
+
+    const historyWithStatus = history.map((item) => ({
+      ...item,
+      listing_status: item.listing?.status || null,
+    }));
+
+    return {
+      data: historyWithStatus,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async hasPromotionHistory(userId: string): Promise<boolean> {
+    const count = await this.promotionHistoryRepository.count({
+      where: { user_id: userId },
+    });
+    return count > 0;
   }
 }

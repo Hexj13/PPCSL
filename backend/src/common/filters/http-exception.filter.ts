@@ -69,7 +69,22 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
   private translateMessage(message: string, locale: string): string {
     if (message.startsWith('validation.') || message.startsWith('errors.')) {
-      return this.i18nService.translate(message, locale);
+      const [key, ...params] = message.split('|');
+      let translated = this.i18nService.translate(key, locale);
+
+      if (params.length > 0) {
+        if (translated.includes('{max}')) {
+          translated = translated.replace(/{max}/g, params[0]);
+        }
+        if (translated.includes('{error}')) {
+          translated = translated.replace('{error}', params[0]);
+        }
+        if (translated.includes('{brand}')) {
+          translated = translated.replace('{brand}', params[0]);
+        }
+      }
+
+      return translated;
     }
     return message;
   }

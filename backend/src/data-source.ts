@@ -6,6 +6,7 @@ import { VehicleModel } from './brands/entities/vehicle-model.entity';
 import { Favorite } from './favorites/entities/favorite.entity';
 import { ListingView } from './listings/entities/listing-view.entity';
 import { Listing } from './listings/entities/listing.entity';
+import { PromotionHistory } from './listings/entities/promotion-history.entity';
 import { Vehicle } from './listings/entities/vehicle.entity';
 import { SavedFilter } from './saved-filters/entities/saved-filter.entity';
 import { User } from './users/entities/user.entity';
@@ -23,6 +24,7 @@ export const dataSourceOptions: DataSourceOptions = {
     Listing,
     ListingView,
     Vehicle,
+    PromotionHistory,
     Favorite,
     Brand,
     VehicleModel,

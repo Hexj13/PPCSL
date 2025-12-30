@@ -65,10 +65,11 @@ export default function ListingPageClient({
     remove: removeComparison,
     check: checkComparison,
     count: comparisonCount,
+    comparisons,
   } = useComparisonStore();
   const [listing, setListing] = useState<Listing | null>(initialListing);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [isInComparison, setIsInComparison] = useState(false);
+  const [isInComparison, setIsInComparison] = useState(() => checkComparison(id));
   const [showSkeleton, setShowSkeleton] = useState(false);
   const showLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasLoadedRef = useRef(false);
@@ -105,6 +106,10 @@ export default function ListingPageClient({
   useEffect(() => {
     setIsHydrated(true);
   }, []);
+
+  useEffect(() => {
+    setIsInComparison(checkComparison(id));
+  }, [id, checkComparison, comparisons]);
 
   const imageAltTitle = useMemo(() => {
     if (!listing) return '';
@@ -1425,15 +1430,33 @@ export default function ListingPageClient({
                       <span>{t('listingDetail.closed')}</span>
                     </span>
                   )}
+                  {listing.is_promoted && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-bg-light border-2 border-yellow-500 text-yellow-400 shadow-lg whitespace-nowrap w-fit">
+                      <svg
+                        className="w-4 h-4 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+                        />
+                      </svg>
+                      <span>{t('listingDetail.promoted')}</span>
+                    </span>
+                  )}
                   {listing.is_new && (
-                    <span className="inline-flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-semibold bg-primary-500/20 border border-primary-500/40 text-primary-300 shadow-sm">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-bg-light border-2 border-primary-500 text-primary-400 shadow-lg whitespace-nowrap w-fit">
                       {/* eslint-disable-next-line no-hardcoded-text/no-hardcoded-text */}
                       <span>✨</span>
                       <span>{t('listingDetail.new')}</span>
                     </span>
                   )}
                   {listing.urgent && (
-                    <span className="inline-flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-semibold bg-primary-500/20 border border-primary-500/40 text-primary-300 shadow-sm">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-bg-light border-2 border-primary-500 text-primary-400 shadow-lg whitespace-nowrap w-fit">
                       <span>🔥</span>
                       <span>{t('listingDetail.urgent')}</span>
                     </span>

@@ -27,7 +27,7 @@ export class UsersService {
       relations: ['listings', 'favorites'],
     });
     if (!user) {
-      throw new NotFoundException('Корисникот не е пронајден');
+      throw new NotFoundException('errors.userNotFound');
     }
     return user;
   }

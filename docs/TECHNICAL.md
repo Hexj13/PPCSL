@@ -33,6 +33,16 @@ Platform for selling new and used cars in Macedonia. Users can independently add
 - Business users: maximum **100 active listings** simultaneously
 - Listings have three statuses: **Active**, **Paused**, **Closed**
 - Automatic closing after **5 months** (approximately 150 days) since `last_updated_at` timestamp
+  - Non-promoted listings older than 5 months are closed automatically
+  - Promoted listings with active promotion are not closed automatically
+  - Promoted listings with expired promotion are closed automatically on the next cron run
+- **Paid Promotion Feature (MVP):** Users can promote their listings for higher visibility
+  - Promoted listings appear first in search results
+  - Visual highlighting with green border and "Promoted" tag
+  - Promotion periods: 1, 7, 14, or 30 days
+  - Promotion time is frozen when listing is paused
+  - Access control via `PROMOTION_ACCESS` environment variable (disabled/admin/all)
+  - See [`docs/PAID_PROMOTION.md`](./PAID_PROMOTION.md) for complete documentation
 
 ### Technologies
 
@@ -193,7 +203,23 @@ NEXT_PUBLIC_GOOGLE_VERIFICATION=your-verification-code
 
 # Google Analytics Measurement ID (optional)
 NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
+
+# Promotion Feature Configuration
+PROMOTION_ACCESS=disabled  # Options: disabled, admin, all
+MAX_PROMOTIONS_PER_USER=10  # Maximum active promotions per user
+CRON_SECRET=your-secret-key-here  # Secret for cron job authentication
 ```
+
+### Promotion Feature Variables
+
+- **`PROMOTION_ACCESS`**: Controls who can access promotion features
+  - `disabled`: Feature disabled for all users
+  - `admin`: Only administrators can promote listings
+  - `all`: All authenticated users can promote listings
+- **`MAX_PROMOTIONS_PER_USER`**: Maximum number of active promotions per user (default: 10)
+- **`CRON_SECRET`**: Secret key for authenticating cron job endpoints (minimum 32 characters)
+
+See [`docs/PAID_PROMOTION.md`](./PAID_PROMOTION.md) for complete promotion feature documentation.
 
 ### Production Notes
 
@@ -290,6 +316,10 @@ POST   /api/listings/:id/close        # Close listing
 GET    /api/listings/my               # Get user's listings
 GET    /api/listings/vin/:vin         # Find listings by VIN
 POST   /api/listings/refresh-dates    # Refresh all user's listing dates
+PATCH  /api/listings/:id/promote      # Toggle listing promotion (user)
+GET    /api/listings/promotion-history # Get user's promotion history
+GET    /api/listings/promotion-history/check # Check if user has promotion history
+GET    /api/listings/promotion-access  # Get promotion access status
 ```
 
 **Filter Parameters:**
@@ -741,13 +771,63 @@ All events are sent only after user grants analytics consent.
 
 #### Google Ads Conversion Tracking
 
-For detailed setup instructions, see [GOOGLE_ADS_SETUP.md](./GOOGLE_ADS_SETUP.md).
+**Architecture:**
+The project uses the recommended approach:
+1. **Google Analytics 4 (GA4)** - tracks all user events
+2. **Google Ads conversions** - imported from GA4 (the only recommended method)
 
-**Quick Setup:**
-1. Link GA4 property to Google Ads account
-2. Import conversions from GA4 (conversion_event_page_view, sign_up, create_listing)
-3. Configure conversion settings (optimization, attribution, value)
-4. Set up campaign goals using imported conversions
+**Data Flow:**
+```
+User → Site → GA4 (all events) → Google Ads (only conversions)
+```
+
+**Setup Steps:**
+
+1. **Create events in GA4:**
+   - Go to Google Analytics → Events → Create Event
+   - Mark events as conversions:
+     - `conversion_event_page_view` (Homepage view)
+     - `sign_up` (User registration)
+     - `create_listing` (Listing creation)
+
+2. **Link GA4 to Google Ads:**
+   - In Google Ads: Tools & Settings → Linked Accounts
+   - Find Google Analytics (GA4)
+   - Click "Link" and select your GA4 property
+   - Enable "Import conversions from Google Analytics"
+
+3. **Import conversions:**
+   - Go to Goals → Conversions
+   - Click "+" → Import
+   - Select "Google Analytics (GA4)"
+   - Select events to import:
+     - ✅ `conversion_event_page_view`
+     - ✅ `sign_up`
+     - ✅ `create_listing`
+
+4. **Configure each conversion:**
+   - **Category:** Page views / Registration
+   - **Optimization:** Main action
+   - **Value:** Use default or from GA4
+   - **Attribution:** Data-driven (Recommended)
+   - **Conversion window:** 1-90 days depending on conversion type
+
+**Main Conversions:**
+- **Homepage view** (`conversion_event_page_view`) - 1 day window, high priority
+- **User registration** (`sign_up`) - 30 days window, high priority
+- **Listing creation** (`create_listing`) - 90 days window, high priority
+
+**Verification:**
+1. Check events in GA4 real-time reports
+2. Check conversions in Google Ads (may take 24-48 hours for first data)
+3. Use Google Tag Assistant for debugging
+
+**Common Issues:**
+- **Conversions not recording:** Check events are sent correctly, verify user consent
+- **Data delay:** Normal - GA4 data updates in Google Ads every 3-24 hours
+- **Duplicate conversions:** Use only import from GA4, don't configure events directly in Google Ads
+
+For detailed setup instructions, see [Google Ads Help](https://support.google.com/google-ads/answer/1727054).
 
 ### Cloudflare Setup (Optional)
 
@@ -763,7 +843,7 @@ The backend has `trust proxy: true` configured, which correctly identifies real 
 5. Enable SSL/TLS (Full strict mode)
 6. Enable WAF and Bot Protection
 
-See [RENDER.md](./RENDER.md) for CloudFront CDN setup instructions (CloudFront is AWS's CDN service, similar to Cloudflare).
+See [DEPLOYMENT.md](./DEPLOYMENT.md#72-rendercom-deployment) for CloudFront CDN setup instructions (CloudFront is AWS's CDN service, similar to Cloudflare).
 
 ---
 
@@ -888,6 +968,197 @@ Or use `npm run dev` in root - it will start both servers.
 - **Project README:** See `README.md` in project root
 - **Deployment Guide:** See `DEPLOYMENT.md` for production deployment
 - **TODO List:** See `TODO.md` for project tasks
+
+---
+
+## 13. CI/CD Configuration
+
+Complete guide for setting up Continuous Integration and Continuous Deployment (CI/CD) for PPCSL core and platform-specific repositories.
+
+### 13.1. Overview
+
+The CI/CD system is designed to:
+- **Automatically test** code changes in PPCSL core
+- **Build and verify** core functionality
+- **Update submodules** in platform repositories when core changes
+- **Build and deploy** platform-specific applications independently
+- **Maintain separation** between core and platform-specific code
+
+### 13.2. Architecture
+
+```
+PPCSL (Core Repository)
+    │
+    ├─── On push to main:
+    │    ├── Run tests (frontend + backend)
+    │    ├── Run linters and formatters
+    │    ├── Build frontend and backend
+    │    └── Update submodules in platform repos
+    │
+    └─── Platform Repositories (e.g., kupito.club)
+         │
+         ├─── On submodule update or push:
+         │    ├── Copy locale files to core
+         │    ├── Copy theme files to core
+         │    ├── Copy config files to core
+         │    ├── Install dependencies
+         │    ├── Build frontend and backend
+         │    └── Deploy to production
+```
+
+### 13.3. PPCSL Core CI/CD
+
+**Workflow File:** `.github/workflows/ci.yml` in PPCSL repository
+
+**Jobs:**
+1. **Test Job:**
+   - Installs dependencies
+   - Runs linters (ESLint, Prettier)
+   - Runs tests (Jest)
+   - Validates code quality
+
+2. **Build Job:**
+   - Builds frontend (Next.js)
+   - Builds backend (NestJS)
+   - Verifies production builds succeed
+
+3. **Update Platforms Job:**
+   - Only runs on push to `main` branch
+   - Clones platform repositories
+   - Updates submodule reference to latest commit
+   - Commits and pushes changes
+
+**Required Secrets:** No additional secrets required. Uses `GITHUB_TOKEN` automatically provided by GitHub Actions.
+
+### 13.4. Platform-Specific CI/CD (kupito.club)
+
+**Workflow File:** `.github/workflows/ci.yml` in kupito.club repository
+
+**Steps:**
+1. **Checkout with submodules:**
+   - Clones repository with PPCSL core submodule
+   - Initializes and updates submodules recursively
+
+2. **Copy platform-specific files:**
+   - Copies `locales/mk.json` to `core/frontend/lib/messages/mk.json`
+   - Copies `theme/colors.ts` to `core/frontend/lib/theme/colors.ts`
+   - Copies `config/site.ts` to `core/frontend/lib/config/site.ts`
+
+3. **Install dependencies:**
+   - Installs frontend and backend dependencies
+
+4. **Run linters:**
+   - Validates code quality
+
+5. **Build:**
+   - Builds frontend with platform-specific configuration
+   - Builds backend
+
+6. **Deploy:**
+   - Deploys to production environment
+
+**Required Secrets:**
+- `API_URL` - Backend API URL for production builds
+
+### 13.5. Workflow Overview
+
+**Development Workflow:**
+1. Developer makes changes in PPCSL core
+2. Commits and pushes to PPCSL/main
+3. PPCSL CI/CD triggers:
+   - Tests pass
+   - Build succeeds
+   - Updates kupito.club submodule
+4. kupito.club CI/CD triggers:
+   - Copies locale/theme/config files
+   - Builds with platform config
+   - Deploys to production
+
+**Platform-Specific Changes:**
+1. Developer makes changes in kupito.club
+2. Updates locales/theme/config files
+3. Commits and pushes to kupito.club/main
+4. kupito.club CI/CD triggers:
+   - Copies files to core
+   - Builds with new config
+   - Deploys to production
+
+### 13.6. Troubleshooting
+
+**Submodule Update Fails:**
+- Ensure `GITHUB_TOKEN` has write permissions
+- Check repository settings → Actions → General → Workflow permissions
+- Set to "Read and write permissions"
+
+**Build Fails After Submodule Update:**
+- Verify copy commands in workflow are correct
+- Check file paths match repository structure
+- Ensure files exist in platform repository
+
+**Tests Fail in Platform CI/CD:**
+- Tests should run in PPCSL core CI/CD
+- Platform CI/CD should only run linters and build
+- Remove test steps from platform workflow if needed
+
+**Deployment Fails:**
+- Check deployment credentials/secrets
+- Verify deployment commands are correct
+- Check deployment target is accessible
+- Review deployment logs for specific errors
+
+### 13.7. Best Practices
+
+1. **Always test** core changes locally before pushing
+2. **Monitor builds** - ensure all platform builds succeed after core updates
+3. **Use semantic versioning** for major core changes
+4. **Document breaking changes** in core that affect platforms
+5. **Keep secrets secure** - never commit secrets to repository
+6. **Use environment-specific configurations** for different deployment targets
+7. **Set up notifications** for build failures
+8. **Review deployment logs** regularly
+9. **Test submodule updates** in staging before production
+10. **Backup** platform-specific files before major core updates
+
+For detailed implementation, see [Multi-Repository Architecture Guide](./MULTI_REPOSITORY_ARCHITECTURE.md).
+
+---
+
+## 13. Paid Promotion Feature
+
+The platform includes a paid promotion feature (MVP) that allows users to promote their listings for higher visibility in search results.
+
+### Overview
+
+- **Status:** ✅ MVP fully implemented
+- **Documentation:** See [`docs/PAID_PROMOTION.md`](./PAID_PROMOTION.md) for complete documentation
+- **Access Control:** Controlled via `PROMOTION_ACCESS` environment variable
+
+### Key Features
+
+- Promoted listings appear first in search results
+- Visual highlighting with green border and "Promoted" tag
+- Promotion periods: 1, 7, 14, or 30 days (unlimited for admins)
+- Promotion time is frozen when listing is paused
+- Promotion history tracking
+- Automatic expiration of expired promotions
+- Server-side pagination and filtering in admin panel
+
+### Testing
+
+Comprehensive test coverage for promotion features:
+
+- **P0 (Critical):** `togglePromotion`, access control, validation
+- **P1 (Important):** Promotion history, sorting, pause/resume behavior
+
+Run tests:
+```bash
+cd backend && npm run test -- listings.service.spec.ts
+```
+
+### Related Documentation
+
+- [`docs/PAID_PROMOTION.md`](./PAID_PROMOTION.md) - Complete promotion feature documentation
+- [`backend/src/listings/listings.service.spec.ts`](../backend/src/listings/listings.service.spec.ts) - Test suite
 
 ---
 

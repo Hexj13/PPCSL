@@ -98,13 +98,17 @@ export class CitiesService {
       if (cached) {
         return cached;
       }
-    } catch {}
+    } catch {
+      // Ignore cache errors
+    }
 
     const sortedCities = [...this.cities].sort((a, b) => a.name.localeCompare(b.name, 'mk'));
 
     try {
       await this.redisService.setJson(cacheKey, sortedCities, this.CACHE_TTL);
-    } catch {}
+    } catch {
+      // Ignore cache errors
+    }
 
     return sortedCities;
   }

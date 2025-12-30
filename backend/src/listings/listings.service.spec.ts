@@ -14,6 +14,7 @@ import { CreateListingDto } from './dto/create-listing.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
 import { ListingView } from './entities/listing-view.entity';
 import { Listing } from './entities/listing.entity';
+import { PromotionHistory } from './entities/promotion-history.entity';
 import { Vehicle } from './entities/vehicle.entity';
 import { ListingsService } from './listings.service';
 
@@ -24,6 +25,7 @@ describe('ListingsService', () => {
   let vehiclesRepository: jest.Mocked<Repository<Vehicle>>;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let listingViewsRepository: jest.Mocked<Repository<ListingView>>;
+  let promotionHistoryRepository: jest.Mocked<Repository<PromotionHistory>>;
   let usersService: jest.Mocked<UsersService>;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let brandsService: jest.Mocked<BrandsService>;
@@ -107,6 +109,14 @@ describe('ListingsService', () => {
       del: jest.fn().mockResolvedValue(undefined),
       getJson: jest.fn().mockResolvedValue(null),
       setJson: jest.fn().mockResolvedValue(undefined),
+      invalidateByPrefix: jest.fn().mockResolvedValue(undefined),
+    };
+
+    const mockPromotionHistoryRepository = {
+      save: jest.fn(),
+      findOne: jest.fn(),
+      count: jest.fn(),
+      createQueryBuilder: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -123,6 +133,10 @@ describe('ListingsService', () => {
         {
           provide: getRepositoryToken(ListingView),
           useValue: mockListingViewsRepository,
+        },
+        {
+          provide: getRepositoryToken(PromotionHistory),
+          useValue: mockPromotionHistoryRepository,
         },
         {
           provide: UsersService,
@@ -143,6 +157,7 @@ describe('ListingsService', () => {
     listingsRepository = module.get(getRepositoryToken(Listing));
     vehiclesRepository = module.get(getRepositoryToken(Vehicle));
     listingViewsRepository = module.get(getRepositoryToken(ListingView));
+    promotionHistoryRepository = module.get(getRepositoryToken(PromotionHistory));
     usersService = module.get(UsersService);
     brandsService = module.get(BrandsService);
     redisService = module.get(RedisService);
@@ -453,15 +468,10 @@ describe('ListingsService', () => {
     const userId = 'user-1';
 
     it('should close all active and paused listings for user and set closed_at', async () => {
-      const mockListings = [
-        { id: '1', status: ListingStatus.Active, images: ['image1.jpg', 'image2.jpg'] },
-        { id: '2', status: ListingStatus.Paused, images: ['image3.jpg'] },
-        { id: '3', status: ListingStatus.Active, images: ['image4.jpg', 'image5.jpg'] },
-        { id: '4', status: ListingStatus.Paused, images: ['image6.jpg'] },
-        { id: '5', status: ListingStatus.Active, images: ['image7.jpg'] },
-      ] as Listing[];
-      listingsRepository.find.mockResolvedValue(mockListings);
-      listingsRepository.save.mockImplementation((listing) => Promise.resolve(listing as Listing));
+      const mockPromotedListings: Listing[] = [];
+      listingsRepository.find.mockResolvedValueOnce(mockPromotedListings);
+      const updateResult: UpdateResult = { affected: 5, generatedMaps: [], raw: [] };
+      listingsRepository.update.mockResolvedValue(updateResult);
       redisService.delPattern.mockResolvedValue(undefined);
 
       const result = await service.closeAllUserListings(userId);
@@ -470,46 +480,47 @@ describe('ListingsService', () => {
         where: {
           user_id: userId,
           status: In([ListingStatus.Active, ListingStatus.Paused]),
+          is_promoted: true,
         },
+        select: ['id'],
       });
-      expect(listingsRepository.save).toHaveBeenCalledTimes(5);
+      expect(listingsRepository.update).toHaveBeenCalledWith(
+        {
+          user_id: userId,
+          status: In([ListingStatus.Active, ListingStatus.Paused]),
+        },
+        expect.objectContaining({
+          status: ListingStatus.Closed,
+          closed_at: expect.any(Date),
+          is_promoted: false,
+          promoted_until: null,
+          promoted_started_at: null,
+          promoted_paused_at: null,
+        }),
+      );
       expect(redisService.delPattern).toHaveBeenCalledWith('cache:listings:search:*');
       expect(result).toBe(5);
-
-      const savedCalls = listingsRepository.save.mock.calls;
-      const firstListing = savedCalls[0][0] as Listing;
-      const closedAt = firstListing.closed_at;
-      expect(closedAt).toBeInstanceOf(Date);
-      savedCalls.forEach((call) => {
-        const listing = call[0] as Listing;
-        expect(listing.status).toBe(ListingStatus.Closed);
-        expect(listing.closed_at).toBeInstanceOf(Date);
-        if (listing.closed_at && closedAt) {
-          expect(listing.closed_at.getTime()).toBe(closedAt.getTime());
-        }
-      });
     });
 
     it('should return 0 when no listings to close', async () => {
-      listingsRepository.find.mockResolvedValue([]);
+      const mockPromotedListings: Listing[] = [];
+      listingsRepository.find.mockResolvedValueOnce(mockPromotedListings);
+      const updateResult: UpdateResult = { affected: 0, generatedMaps: [], raw: [] };
+      listingsRepository.update.mockResolvedValue(updateResult);
       redisService.delPattern.mockResolvedValue(undefined);
 
       const result = await service.closeAllUserListings(userId);
 
-      expect(listingsRepository.find).toHaveBeenCalled();
-      expect(listingsRepository.save).not.toHaveBeenCalled();
+      expect(listingsRepository.update).toHaveBeenCalled();
       expect(result).toBe(0);
       expect(redisService.delPattern).toHaveBeenCalled();
     });
 
     it('should handle cache invalidation errors gracefully', async () => {
-      const mockListings = [
-        { id: '1', status: ListingStatus.Active, images: ['image1.jpg'] },
-        { id: '2', status: ListingStatus.Paused, images: ['image2.jpg'] },
-        { id: '3', status: ListingStatus.Active, images: ['image3.jpg'] },
-      ] as Listing[];
-      listingsRepository.find.mockResolvedValue(mockListings);
-      listingsRepository.save.mockImplementation((listing) => Promise.resolve(listing as Listing));
+      const mockPromotedListings: Listing[] = [];
+      listingsRepository.find.mockResolvedValueOnce(mockPromotedListings);
+      const updateResult: UpdateResult = { affected: 3, generatedMaps: [], raw: [] };
+      listingsRepository.update.mockResolvedValue(updateResult);
       redisService.delPattern.mockRejectedValue(new Error('Cache error'));
 
       const result = await service.closeAllUserListings(userId);
@@ -519,44 +530,39 @@ describe('ListingsService', () => {
     });
 
     it('should only close Active and Paused listings, not Closed ones', async () => {
-      const mockListings = [
-        { id: '1', status: ListingStatus.Active, images: ['image1.jpg'] },
-        { id: '2', status: ListingStatus.Paused, images: ['image2.jpg'] },
-      ] as Listing[];
-      listingsRepository.find.mockResolvedValue(mockListings);
-      listingsRepository.save.mockImplementation((listing) => Promise.resolve(listing as Listing));
+      const mockPromotedListings: Listing[] = [];
+      listingsRepository.find.mockResolvedValueOnce(mockPromotedListings);
+      const updateResult: UpdateResult = { affected: 2, generatedMaps: [], raw: [] };
+      listingsRepository.update.mockResolvedValue(updateResult);
       redisService.delPattern.mockResolvedValue(undefined);
 
       await service.closeAllUserListings(userId);
 
-      expect(listingsRepository.find).toHaveBeenCalledWith({
-        where: {
+      expect(listingsRepository.update).toHaveBeenCalledWith(
+        {
           user_id: userId,
           status: In([ListingStatus.Active, ListingStatus.Paused]),
         },
-      });
-      expect(listingsRepository.save).toHaveBeenCalledTimes(2);
+        expect.any(Object),
+      );
     });
 
     it('should preserve images when closing listings', async () => {
-      const mockListings = [
-        { id: '1', status: ListingStatus.Active, images: ['image1.jpg', 'image2.jpg'] },
-        { id: '2', status: ListingStatus.Paused, images: ['image3.jpg'] },
-      ] as Listing[];
-      listingsRepository.find.mockResolvedValue(mockListings);
-      listingsRepository.save.mockImplementation((listing) => Promise.resolve(listing as Listing));
+      const mockPromotedListings: Listing[] = [];
+      listingsRepository.find.mockResolvedValueOnce(mockPromotedListings);
+      const updateResult: UpdateResult = { affected: 2, generatedMaps: [], raw: [] };
+      listingsRepository.update.mockResolvedValue(updateResult);
       redisService.delPattern.mockResolvedValue(undefined);
 
       await service.closeAllUserListings(userId);
 
-      expect(listingsRepository.save).toHaveBeenCalledTimes(2);
-      const savedCalls = listingsRepository.save.mock.calls;
-      expect(savedCalls[0][0].images).toEqual(['image1.jpg', 'image2.jpg']);
-      expect(savedCalls[0][0].status).toBe(ListingStatus.Closed);
-      expect(savedCalls[0][0].closed_at).toBeInstanceOf(Date);
-      expect(savedCalls[1][0].images).toEqual(['image3.jpg']);
-      expect(savedCalls[1][0].status).toBe(ListingStatus.Closed);
-      expect(savedCalls[1][0].closed_at).toBeInstanceOf(Date);
+      expect(listingsRepository.update).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.objectContaining({
+          status: ListingStatus.Closed,
+          closed_at: expect.any(Date),
+        }),
+      );
     });
   });
 
@@ -911,19 +917,35 @@ describe('ListingsService', () => {
 
   describe('autoCloseOldListings', () => {
     it('should close old listings and set closed_at', async () => {
-      const updateResult: UpdateResult = { affected: 3, generatedMaps: [], raw: [] };
-      listingsRepository.update.mockResolvedValue(updateResult);
+      const mockPromotedListings = [{ id: 'listing-1' }, { id: 'listing-2' }] as Listing[];
+      listingsRepository.find.mockResolvedValue(mockPromotedListings);
+      promotionHistoryRepository.findOne.mockResolvedValue(null);
+
+      const mockQueryBuilder = {
+        update: jest.fn().mockReturnThis(),
+        set: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        execute: jest.fn().mockResolvedValue({ affected: 3 }),
+      };
+      listingsRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
 
       const result = await service.autoCloseOldListings();
 
-      expect(listingsRepository.update).toHaveBeenCalledWith(
-        {
-          status: ListingStatus.Active,
-          last_updated_at: expect.any(Object),
-        },
+      expect(listingsRepository.find).toHaveBeenCalledWith({
+        where: expect.any(Object),
+        select: ['id'],
+      });
+      expect(listingsRepository.createQueryBuilder).toHaveBeenCalled();
+      expect(mockQueryBuilder.update).toHaveBeenCalledWith(Listing);
+      expect(mockQueryBuilder.set).toHaveBeenCalledWith(
         expect.objectContaining({
           status: ListingStatus.Closed,
           closed_at: expect.any(Date),
+          is_promoted: false,
+          promoted_until: null,
+          promoted_started_at: null,
+          promoted_paused_at: null,
         }),
       );
       expect(result).toEqual({ closed: 3 });
@@ -955,6 +977,246 @@ describe('ListingsService', () => {
       const result = await service.refreshAllDates(userId);
 
       expect(result).toEqual({ updated: 0 });
+    });
+  });
+
+  describe('togglePromotion - P0: Critical Tests', () => {
+    const userId = '550e8400-e29b-41d4-a716-446655440001';
+    const listingId = '550e8400-e29b-41d4-a716-446655440002';
+
+    beforeEach(() => {
+      process.env.MAX_PROMOTIONS_PER_USER = '10';
+    });
+
+    it('should enable promotion for active listing', async () => {
+      const listing = {
+        ...mockListing,
+        id: listingId,
+        user_id: userId,
+        status: ListingStatus.Active,
+        is_promoted: false,
+        promoted_until: null,
+        promoted_started_at: null,
+      };
+
+      listingsRepository.findOne.mockResolvedValue(listing);
+      listingsRepository.count.mockResolvedValue(0);
+      const savedDate = new Date();
+      const untilDate = new Date();
+      untilDate.setDate(untilDate.getDate() + 7);
+      listingsRepository.save.mockResolvedValue({
+        ...listing,
+        is_promoted: true,
+        promoted_until: untilDate,
+        promoted_started_at: savedDate,
+      });
+      promotionHistoryRepository.save.mockResolvedValue({} as PromotionHistory);
+
+      const result = await service.togglePromotion(listingId, userId, true, 7);
+
+      expect(listingsRepository.findOne).toHaveBeenCalledWith({
+        where: { id: listingId, user_id: userId },
+      });
+      expect(listingsRepository.count).toHaveBeenCalledWith({
+        where: {
+          user_id: userId,
+          is_promoted: true,
+          status: ListingStatus.Active,
+        },
+      });
+      expect(promotionHistoryRepository.save).toHaveBeenCalled();
+      expect(result.is_promoted).toBe(true);
+      expect(result.promoted_until).toBeInstanceOf(Date);
+    });
+
+    it('should throw NotFoundException if listing not found', async () => {
+      listingsRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.togglePromotion(listingId, userId, true, 7)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should throw ForbiddenException if listing belongs to different user', async () => {
+      const listing = {
+        ...mockListing,
+        id: listingId,
+        user_id: '550e8400-e29b-41d4-a716-446655440003',
+      };
+
+      listingsRepository.findOne.mockResolvedValue(listing);
+
+      await expect(service.togglePromotion(listingId, userId, true, 7)).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('should throw BadRequestException if listing is not active when enabling promotion', async () => {
+      const listing = {
+        ...mockListing,
+        id: listingId,
+        user_id: userId,
+        status: ListingStatus.Paused,
+      };
+
+      listingsRepository.findOne.mockResolvedValue(listing);
+
+      await expect(service.togglePromotion(listingId, userId, true, 7)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw BadRequestException for invalid days', async () => {
+      const listing = {
+        ...mockListing,
+        id: listingId,
+        user_id: userId,
+        status: ListingStatus.Active,
+      };
+
+      listingsRepository.findOne.mockResolvedValue(listing);
+
+      await expect(service.togglePromotion(listingId, userId, true, 5)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw BadRequestException when max promotions limit reached', async () => {
+      const listing = {
+        ...mockListing,
+        id: listingId,
+        user_id: userId,
+        status: ListingStatus.Active,
+      };
+
+      listingsRepository.findOne.mockResolvedValue(listing);
+      listingsRepository.count.mockResolvedValue(10);
+
+      await expect(service.togglePromotion(listingId, userId, true, 7)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should disable promotion and update history', async () => {
+      const listing = {
+        ...mockListing,
+        id: listingId,
+        user_id: userId,
+        status: ListingStatus.Active,
+        is_promoted: true,
+        promoted_until: new Date(),
+        promoted_started_at: new Date(),
+      };
+
+      const historyRecord = {
+        id: '550e8400-e29b-41d4-a716-446655440004',
+        listing_id: listingId,
+        ended_at: null,
+      } as PromotionHistory;
+
+      listingsRepository.findOne.mockResolvedValue(listing);
+      promotionHistoryRepository.findOne.mockResolvedValue(historyRecord);
+      promotionHistoryRepository.save.mockResolvedValue({
+        ...historyRecord,
+        ended_at: expect.any(Date),
+      });
+      listingsRepository.save.mockResolvedValue({
+        ...listing,
+        is_promoted: false,
+        promoted_until: null,
+        promoted_started_at: null,
+      });
+
+      const result = await service.togglePromotion(listingId, userId, false, 0);
+
+      expect(promotionHistoryRepository.findOne).toHaveBeenCalled();
+      expect(promotionHistoryRepository.save).toHaveBeenCalled();
+      expect(result.is_promoted).toBe(false);
+      expect(result.promoted_until).toBeNull();
+    });
+
+    it('should throw BadRequestException for invalid UUID format', async () => {
+      await expect(service.togglePromotion('invalid-id', userId, true, 7)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+
+  describe('getPromotionHistory - P1: Important Tests', () => {
+    const userId = '550e8400-e29b-41d4-a716-446655440001';
+
+    it('should return paginated promotion history', async () => {
+      const mockHistory = [
+        {
+          id: '550e8400-e29b-41d4-a716-446655440005',
+          listing_id: '550e8400-e29b-41d4-a716-446655440002',
+          user_id: userId,
+          listing_title: 'Test Car',
+          started_at: new Date(),
+          ended_at: null,
+          days: 7,
+          listing: { status: ListingStatus.Active },
+        },
+      ] as any[];
+
+      const queryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([mockHistory, 1]),
+      };
+
+      promotionHistoryRepository.createQueryBuilder = jest.fn().mockReturnValue(queryBuilder);
+
+      const result = await service.getPromotionHistory(userId, 1, 50);
+
+      expect(result.data).toHaveLength(1);
+      expect(result.meta.total).toBe(1);
+      expect(result.meta.page).toBe(1);
+      expect(result.meta.limit).toBe(50);
+    });
+
+    it('should return empty history when user has no promotions', async () => {
+      const queryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
+      };
+
+      promotionHistoryRepository.createQueryBuilder = jest.fn().mockReturnValue(queryBuilder);
+
+      const result = await service.getPromotionHistory(userId);
+
+      expect(result.data).toHaveLength(0);
+      expect(result.meta.total).toBe(0);
+    });
+  });
+
+  describe('hasPromotionHistory - P1: Important Tests', () => {
+    const userId = '550e8400-e29b-41d4-a716-446655440001';
+
+    it('should return true when user has promotion history', async () => {
+      promotionHistoryRepository.count.mockResolvedValue(1);
+
+      const result = await service.hasPromotionHistory(userId);
+
+      expect(result).toBe(true);
+      expect(promotionHistoryRepository.count).toHaveBeenCalledWith({
+        where: { user_id: userId },
+      });
+    });
+
+    it('should return false when user has no promotion history', async () => {
+      promotionHistoryRepository.count.mockResolvedValue(0);
+
+      const result = await service.hasPromotionHistory(userId);
+
+      expect(result).toBe(false);
     });
   });
 });

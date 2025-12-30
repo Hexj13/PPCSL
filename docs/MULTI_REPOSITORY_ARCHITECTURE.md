@@ -4,6 +4,78 @@ Complete guide for implementing multi-repository architecture with core project 
 
 **Note:** The core repository is named **PPCSL** (Platform for posting car sale listings) and uses the repository name `ppcsl`.
 
+---
+
+## PPCSL Overview
+
+**PPCSL** (Platform for Posting Car Sale Listings) is a core application framework designed to create unified car marketplace platforms for different countries. It provides all the essential functionality for listing, searching, and managing car sales, while allowing each country-specific platform to have its own branding, translations, colors, and domain.
+
+### Core Concept
+
+PPCSL serves as the **foundation** for building car marketplace platforms. Instead of maintaining separate codebases for each country, PPCSL provides a single, well-tested core that can be customized for each market through configuration files.
+
+### What's in PPCSL Core
+
+**Frontend Core:**
+- All React components (Header, Footer, ListingCard, ListingForm, etc.)
+- Pages and routes (home, listings, profile, admin, etc.)
+- API client and server-side API functions
+- State management (Zustand stores)
+- Hooks and utilities
+- Design system components
+- Translation system interface (`lib/i18n.ts`)
+- Theme system interface (`lib/theme.ts`)
+- Site configuration interface (`lib/site-config.ts`)
+
+**Backend Core:**
+- Complete NestJS backend API
+- Authentication and authorization
+- User management
+- Listing management
+- Image upload and watermarking
+- Search functionality
+- Admin panel
+- Database models and migrations
+- All business logic
+
+### What PPCSL Does NOT Contain
+
+- **No hardcoded texts** - All user-facing text uses translation keys
+- **No hardcoded colors** - Colors loaded dynamically from theme files
+- **No hardcoded URLs/domains** - Site configuration loaded from config files
+- **No country-specific business logic** - All logic is generic and configurable
+
+### What's in Platform-Specific Repositories
+
+Each platform (e.g., kupito.club) contains only:
+1. **Translations** (`locales/mk.json`) - All user-facing text in local language
+2. **Theme** (`theme/colors.ts`) - Color scheme specific to the platform
+3. **Site Configuration** (`config/site.ts`) - Domain, locale, currency, support email
+4. **Build Configuration** - CI/CD workflows, deployment scripts
+
+### Benefits
+
+✅ **Single Source of Truth** - All core functionality maintained in one place  
+✅ **Independent Platform Development** - Each platform can be developed and deployed independently  
+✅ **Easy Scaling** - Add new country by creating new repository with translations, theme, and config  
+✅ **Maintenance Efficiency** - One codebase to maintain instead of multiple  
+✅ **Marketing Flexibility** - Each platform can have its own branding and domain  
+✅ **Risk Management** - Isolated deployments, independent rollbacks
+
+### Current Status
+
+**Core Repository:**
+- **PPCSL** - `git@github.com:Hexj13/PPCSL.git`
+- Contains all core functionality
+- Ready for use by platform repositories
+
+**Active Platform:**
+- **kupito.club** - Platform for Macedonia
+- Uses PPCSL core via Git submodule
+- Has Macedonian translations, theme, and configuration
+
+---
+
 ## Table of Contents
 
 1. [Overview](#1-overview)
@@ -988,7 +1060,83 @@ jobs:
 - [ ] Test build process
 - [ ] Test deployment
 
-**Note:** See [Pre-Migration Checklist](./PRE_MIGRATION_CHECKLIST.md) for detailed pre-migration tasks.
+---
+
+## 11. Pre-Migration Checklist
+
+List of tasks that need to be completed in the monolith before splitting into PPCSL and kupito.club.
+
+### ✅ Completed
+
+- [x] Translation system created (`frontend/lib/i18n.ts`)
+- [x] Theme system created (`frontend/lib/theme.ts`)
+- [x] Site configuration system created (`frontend/lib/site-config.ts`)
+- [x] All components updated to use translations
+- [x] Tailwind config updated for dynamic theme loading
+- [x] All layout files updated to use `site-config`
+- [x] All components updated to use `site-config` instead of hardcoded URLs
+- [x] CI/CD section added to technical documentation (`docs/TECHNICAL.md`)
+- [x] Configurable watermark (uses `WATERMARK_DOMAIN`)
+
+### 🔄 Remaining Tasks
+
+#### 1. Translation System (i18n)
+
+**Problem:** Translation system hardcodes `mkTranslations` import and always returns Macedonian translations.
+
+**What's needed:**
+- [x] Implement dynamic translation loading based on `NEXT_PUBLIC_COUNTRY`
+- [x] Update `loadTranslations` to use `site-config` for locale determination
+- [x] Update `getServerTranslations` to use `site-config`
+- [x] Update `app/not-found.tsx` to use dynamic locale
+
+#### 2. PWA Manifest
+
+**Problem:** `frontend/app/manifest.ts` hardcodes Macedonian text and 'mk' locale.
+
+**What's needed:**
+- [x] Use `site-config` for dynamic manifest generation
+- [x] Use translations for manifest texts
+- [x] Use `siteConfig.locale` instead of hardcoded 'mk'
+
+#### 3. Currency and Localization
+
+**Problem:** Hardcoded currency 'MKD' and locale 'mk' values in multiple places.
+
+**What's needed:**
+- [x] Use `siteConfig.currency` instead of hardcoded 'MKD'
+- [x] Use `siteConfig.locale` for `localeCompare`
+- [x] Update `formatPrice` to use `siteConfig.currency`
+- [x] Update analytics to use `siteConfig.currency`
+
+#### 4. Components with Hardcoded Values
+
+**What's needed:**
+- [x] Replace all `localeCompare(..., 'mk')` with `siteConfig.locale`
+- [x] Ensure all components use `siteConfig.currency` instead of hardcoded values
+
+#### 5. Tests
+
+**Problem:** Tests may contain hardcoded 'MKD' and 'mk' values.
+
+**What's needed:**
+- [ ] Update tests to use `site-config` or mocks
+- [ ] Ensure tests don't depend on hardcoded values
+
+### 🎯 Readiness Criteria for Split
+
+The monolith is ready for splitting when:
+
+- [x] All systems (translations, themes, configuration) load dynamically
+- [x] No hardcoded locale, currency, or domain values (except in tests and constants)
+- [x] All components use `site-config`, `theme`, and `i18n` systems
+- [x] PWA manifest is generated dynamically
+- [x] All tests pass
+- [x] Build succeeds (frontend and backend)
+- [x] Linter passes without errors
+- [x] Formatting meets standards
+
+**Note:** See detailed pre-migration tasks above.
 
 ---
 

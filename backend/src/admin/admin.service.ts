@@ -3,12 +3,16 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { RefreshTokenService } from '../auth/services/refresh-token.service';
+import { RedisService } from '../common/redis.service';
 import {
   ListingStatus,
   ListingStatus as ListingStatusEnum,
   UserType as UserTypeEnum,
 } from '../common/types';
+import { CACHE_PREFIXES, generateCacheKey } from '../common/utils/cache.utils';
 import { Listing } from '../listings/entities/listing.entity';
+import { PromotionHistory } from '../listings/entities/promotion-history.entity';
+import { ListingsService } from '../listings/listings.service';
 import { User } from '../users/entities/user.entity';
 
 @Injectable()
@@ -18,23 +22,45 @@ export class AdminService {
     private usersRepository: Repository<User>,
     @InjectRepository(Listing)
     private listingsRepository: Repository<Listing>,
+    @InjectRepository(PromotionHistory)
+    private promotionHistoryRepository: Repository<PromotionHistory>,
     private refreshTokenService: RefreshTokenService,
+    private listingsService: ListingsService,
+    private redisService: RedisService,
   ) {}
 
   async getAllUsers(
     page: number = 1,
     limit: number = 20,
+    searchQuery?: string,
+    userType?: string,
   ): Promise<{
     data: Omit<User, 'password'>[];
     meta: { total: number; page: number; limit: number; totalPages: number };
   }> {
     const skip = (page - 1) * limit;
-    const [users, total] = await this.usersRepository.findAndCount({
-      relations: ['listings'],
-      order: { created_at: 'DESC' },
-      skip,
-      take: limit,
-    });
+    const queryBuilder = this.usersRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.listings', 'listings')
+      .orderBy('user.created_at', 'DESC');
+
+    if (searchQuery) {
+      const searchLower = searchQuery.toLowerCase();
+      queryBuilder.where(
+        '(LOWER(user.id) LIKE :search OR LOWER(user.email) LIKE :search OR LOWER(user.phone) LIKE :search OR LOWER(user.firstName) LIKE :search OR LOWER(user.lastName) LIKE :search OR LOWER(user.companyName) LIKE :search)',
+        { search: `%${searchLower}%` },
+      );
+    }
+
+    if (userType && userType !== 'All') {
+      if (searchQuery) {
+        queryBuilder.andWhere('user.type = :userType', { userType });
+      } else {
+        queryBuilder.where('user.type = :userType', { userType });
+      }
+    }
+
+    const [users, total] = await queryBuilder.skip(skip).take(limit).getManyAndCount();
 
     const processedUsers = users.map((user) => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -66,7 +92,7 @@ export class AdminService {
       ],
     });
     if (!user) {
-      throw new NotFoundException('Корисникот не е пронајден');
+      throw new NotFoundException('errors.userNotFound');
     }
     return user.listings || [];
   }
@@ -76,7 +102,7 @@ export class AdminService {
       where: { id: userId },
     });
     if (!user) {
-      throw new NotFoundException('Корисникот не е пронајден');
+      throw new NotFoundException('errors.userNotFound');
     }
     const wasActive = user.active;
     user.active = !user.active;
@@ -94,17 +120,63 @@ export class AdminService {
   async getAllListings(
     page: number = 1,
     limit: number = 20,
+    listingId?: string,
+    userId?: string,
+    status?: ListingStatus,
+    isPromoted?: boolean,
   ): Promise<{
     data: Listing[];
     meta: { total: number; page: number; limit: number; totalPages: number };
   }> {
     const skip = (page - 1) * limit;
-    const [listings, total] = await this.listingsRepository.findAndCount({
-      relations: ['vehicle', 'vehicle.brand', 'vehicle.model', 'user'],
-      order: { created_at: 'DESC' },
-      skip,
-      take: limit,
-    });
+    const queryBuilder = this.listingsRepository
+      .createQueryBuilder('listing')
+      .leftJoinAndSelect('listing.vehicle', 'vehicle')
+      .leftJoinAndSelect('vehicle.brand', 'brand')
+      .leftJoinAndSelect('vehicle.model', 'model')
+      .leftJoinAndSelect('listing.user', 'user')
+      .orderBy('listing.created_at', 'DESC');
+
+    const conditions: string[] = [];
+    const params: Record<string, unknown> = {};
+
+    if (listingId && userId) {
+      conditions.push('(listing.id = :listingId OR listing.user_id = :userId)');
+      params.listingId = listingId;
+      params.userId = userId;
+    } else if (listingId) {
+      conditions.push('listing.id = :listingId');
+      params.listingId = listingId;
+    } else if (userId) {
+      conditions.push('listing.user_id = :userId');
+      params.userId = userId;
+    }
+
+    if (status) {
+      conditions.push('listing.status = :status');
+      params.status = status;
+    }
+
+    if (isPromoted !== undefined) {
+      if (isPromoted) {
+        conditions.push('listing.is_promoted = :isPromoted');
+        conditions.push('(listing.promoted_until > :now OR listing.promoted_until IS NULL)');
+        params.isPromoted = true;
+        params.now = new Date();
+      } else {
+        conditions.push(
+          '(listing.is_promoted = :isPromoted OR (listing.promoted_until <= :now AND listing.promoted_until IS NOT NULL))',
+        );
+        params.isPromoted = false;
+        params.now = new Date();
+      }
+    }
+
+    if (conditions.length > 0) {
+      queryBuilder.where(conditions.join(' AND '), params);
+    }
+
+    const [listings, total] = await queryBuilder.skip(skip).take(limit).getManyAndCount();
 
     const processedListings = listings.map((listing) => {
       if (listing.user) {
@@ -139,12 +211,39 @@ export class AdminService {
     };
   }
 
+  async getListingsStatusCounts(): Promise<{
+    Active: number;
+    Paused: number;
+    Closed: number;
+    Promoted: number;
+  }> {
+    const [active, paused, closed, promoted] = await Promise.all([
+      this.listingsRepository.count({ where: { status: ListingStatusEnum.Active } }),
+      this.listingsRepository.count({ where: { status: ListingStatusEnum.Paused } }),
+      this.listingsRepository.count({ where: { status: ListingStatusEnum.Closed } }),
+      this.listingsRepository
+        .createQueryBuilder('listing')
+        .where('listing.is_promoted = :isPromoted', { isPromoted: true })
+        .andWhere('(listing.promoted_until IS NULL OR listing.promoted_until > :now)', {
+          now: new Date(),
+        })
+        .getCount(),
+    ]);
+
+    return {
+      Active: active,
+      Paused: paused,
+      Closed: closed,
+      Promoted: promoted,
+    };
+  }
+
   async updateListingStatus(listingId: string, status: ListingStatus) {
     const listing = await this.listingsRepository.findOne({
       where: { id: listingId },
     });
     if (!listing) {
-      throw new NotFoundException('Објавата не е пронајдена');
+      throw new NotFoundException('errors.listingNotFound');
     }
     listing.status = status;
     return this.listingsRepository.save(listing);
@@ -187,6 +286,125 @@ export class AdminService {
       active,
       paused,
       closed,
+    };
+  }
+
+  async toggleListingPromotion(
+    id: string,
+    isPromoted: boolean,
+    days?: number | null,
+  ): Promise<Listing> {
+    const listing = await this.listingsRepository.findOne({ where: { id } });
+    if (!listing) {
+      throw new NotFoundException('errors.listingNotFound');
+    }
+
+    const wasPromoted = listing.is_promoted;
+    listing.is_promoted = isPromoted;
+
+    if (isPromoted) {
+      const now = new Date();
+      listing.promoted_started_at = now;
+      listing.promoted_paused_at = null;
+
+      if (days === null) {
+        listing.promoted_until = null;
+      } else if (days && days > 0) {
+        const until = new Date();
+        until.setDate(until.getDate() + days);
+        listing.promoted_until = until;
+      } else {
+        const until = new Date();
+        until.setDate(until.getDate() + 7);
+        listing.promoted_until = until;
+      }
+
+      if (!wasPromoted && listing.user_id) {
+        await this.listingsService.createPromotionHistory(
+          listing.id,
+          listing.user_id,
+          listing.title,
+          days ?? null,
+        );
+      }
+    } else {
+      listing.promoted_until = null;
+      listing.promoted_started_at = null;
+      listing.promoted_paused_at = null;
+
+      if (wasPromoted) {
+        await this.listingsService.updatePromotionHistoryEndDate(listing.id);
+      }
+    }
+
+    try {
+      await this.redisService.invalidateByPrefix(CACHE_PREFIXES.listingsSearch);
+      await this.redisService.del(
+        generateCacheKey({ prefix: CACHE_PREFIXES.listings, parts: [id] }),
+      );
+    } catch {
+      // Ignore cache errors
+    }
+
+    return await this.listingsRepository.save(listing);
+  }
+
+  async getAllPromotions(
+    page: number = 1,
+    limit: number = 50,
+    listingId?: string,
+    userId?: string,
+    fromDate?: Date,
+  ): Promise<{
+    data: Array<PromotionHistory & { listing_status?: ListingStatusEnum; listing_id: string }>;
+    meta: { total: number; page: number; limit: number; totalPages: number };
+  }> {
+    const skip = (page - 1) * limit;
+
+    const queryBuilder = this.promotionHistoryRepository
+      .createQueryBuilder('ph')
+      .leftJoinAndSelect('ph.listing', 'listing')
+      .orderBy('ph.started_at', 'DESC');
+
+    const conditions: string[] = [];
+    const params: Record<string, unknown> = {};
+
+    if (listingId && userId) {
+      conditions.push('(ph.listing_id = :listingId OR ph.user_id = :userId)');
+      params.listingId = listingId;
+      params.userId = userId;
+    } else if (listingId) {
+      conditions.push('ph.listing_id = :listingId');
+      params.listingId = listingId;
+    } else if (userId) {
+      conditions.push('ph.user_id = :userId');
+      params.userId = userId;
+    }
+
+    if (fromDate) {
+      conditions.push('ph.started_at >= :fromDate');
+      params.fromDate = fromDate;
+    }
+
+    if (conditions.length > 0) {
+      queryBuilder.where(conditions.join(' AND '), params);
+    }
+
+    const [history, total] = await queryBuilder.skip(skip).take(limit).getManyAndCount();
+
+    const historyWithStatus = history.map((item) => ({
+      ...item,
+      listing_status: item.listing?.status || null,
+    }));
+
+    return {
+      data: historyWithStatus,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
     };
   }
 }

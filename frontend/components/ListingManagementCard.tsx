@@ -20,6 +20,7 @@ interface ListingManagementCardProps {
   mode: 'admin' | 'my-listings';
   onAction?: (_id: string, _action: 'publish' | 'pause' | 'close') => void;
   onCopyId?: (_id: string) => void;
+  onPromoteClick?: (_id: string) => void;
 }
 
 export function ListingManagementCard({
@@ -27,6 +28,7 @@ export function ListingManagementCard({
   mode,
   onAction,
   onCopyId,
+  onPromoteClick,
 }: ListingManagementCardProps) {
   const { t } = useTranslation();
   const [imageError, setImageError] = useState(false);
@@ -41,7 +43,10 @@ export function ListingManagementCard({
   const isAdminMode = mode === 'admin';
 
   return (
-    <div className="card overflow-visible">
+    <div
+      className={`card overflow-visible ${listing.is_promoted ? 'border-2' : ''}`}
+      style={listing.is_promoted ? { borderColor: '#6eeb9c87' } : undefined}
+    >
       <div className="grid grid-cols-1 lg:grid-cols-[450px_1fr] gap-0 lg:gap-6 lg:items-stretch">
         <Link href={`/listings/${listing.id}`} className="flex-shrink-0">
           <div className="relative w-full h-[200px] sm:h-[250px] lg:h-full lg:min-h-[250px] bg-bg-darker overflow-hidden rounded-t-xl lg:rounded-tl-xl lg:rounded-bl-xl lg:rounded-tr-none lg:rounded-br-none">
@@ -78,55 +83,6 @@ export function ListingManagementCard({
         <div className="flex-1 p-4 sm:p-5 flex flex-col min-w-0">
           <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 lg:gap-6">
             <div className="flex-1 min-w-0">
-              {isAdminMode && (
-                <>
-                  <div className="mb-1 flex items-center gap-2">
-                    <span className="text-xs text-gray-400 font-mono">
-                      {t('listings.id')} {listing.id}
-                    </span>
-                    {onCopyId && (
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          onCopyId(listing.id);
-                        }}
-                        className="p-1 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors"
-                        title={t('common.copyId')}
-                      >
-                        <svg
-                          className="w-3.5 h-3.5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                          />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                  {listing.user && (
-                    <div className="mb-2 text-sm" style={{ color: 'rgb(243, 243, 243)' }}>
-                      <span className="text-primary-400">{t('admin.usersTab.user')}</span>{' '}
-                      <span className="font-medium">
-                        {[
-                          listing.user.firstName,
-                          listing.user.lastName,
-                          listing.user.companyName,
-                          listing.user.email,
-                          listing.user.phone,
-                        ]
-                          .filter(Boolean)
-                          .join(' ') || t('admin.usersTab.deletedUser')}
-                      </span>
-                    </div>
-                  )}
-                </>
-              )}
               <Link href={`/listings/${listing.id}`} className="mb-3 block group">
                 <div className="flex items-start gap-1.5">
                   <h3 className="font-bold text-base md:text-lg group-hover:text-primary-600 transition-colors line-clamp-2">
@@ -179,6 +135,70 @@ export function ListingManagementCard({
                   )}
                 </div>
               )}
+              {isAdminMode && (
+                <div className="text-sm space-y-1.5 mb-3" style={{ color: 'rgb(243, 243, 243)' }}>
+                  <div className="flex items-center gap-2">
+                    {/* eslint-disable-next-line no-hardcoded-text/no-hardcoded-text */}
+                    <span className="text-gray-400 font-mono">LISTING ID: {listing.id}</span>
+                    {onCopyId && (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          onCopyId(listing.id);
+                        }}
+                        className="p-1 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors"
+                        title={t('common.copyId')}
+                      >
+                        <svg
+                          className="w-3.5 h-3.5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                          />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                  {listing.user && listing.user.id && (
+                    <div className="flex items-center gap-2">
+                      {/* eslint-disable-next-line no-hardcoded-text/no-hardcoded-text */}
+                      <span className="text-gray-400 font-mono">USER ID: {listing.user.id}</span>
+                      {onCopyId && (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (listing.user?.id) {
+                              onCopyId(listing.user.id);
+                            }
+                          }}
+                          className="p-1 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors"
+                          title={t('common.copyId')}
+                        >
+                          <svg
+                            className="w-3.5 h-3.5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                            />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <div className="flex flex-col items-start text-left w-full lg:items-end lg:text-right lg:min-w-[140px] lg:w-auto mb-3">
               {listing.price !== undefined ? (
@@ -191,15 +211,33 @@ export function ListingManagementCard({
                 </span>
               )}
               <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-start md:justify-end">
+                {listing.is_promoted && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-bg-light border-2 border-yellow-500 text-yellow-400 shadow-lg whitespace-nowrap w-fit">
+                    <svg
+                      className="w-4 h-4 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+                      />
+                    </svg>
+                    <span>{t('listings.promoted')}</span>
+                  </span>
+                )}
                 {listing.is_new && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-primary-500/20 border border-primary-500/40 text-primary-300 shadow-sm">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-bg-light border-2 border-primary-500 text-primary-400 shadow-lg whitespace-nowrap w-fit">
                     {/* eslint-disable-next-line no-hardcoded-text/no-hardcoded-text */}
                     <span>✨</span>
                     <span>{t('listings.new')}</span>
                   </span>
                 )}
                 {listing.urgent && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-primary-500/20 border border-primary-500/40 text-primary-300 shadow-sm">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-bg-light border-2 border-primary-500 text-primary-400 shadow-lg whitespace-nowrap w-fit">
                     <span>🔥</span>
                     <span>{t('listings.urgent')}</span>
                   </span>
@@ -218,7 +256,7 @@ export function ListingManagementCard({
                     listing.status === 'Active'
                       ? 'text-primary-400 font-bold text-xs sm:text-sm'
                       : listing.status === 'Paused'
-                        ? 'text-yellow-400 font-bold text-xs sm:text-sm'
+                        ? 'text-blue-400 font-bold text-xs sm:text-sm'
                         : 'text-gray-200 font-bold text-xs sm:text-sm'
                   }
                 >
@@ -232,6 +270,58 @@ export function ListingManagementCard({
               <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 w-full lg:w-auto min-h-[48px] lg:min-h-[52px]">
                 {onAction && (
                   <>
+                    {mode === 'my-listings' &&
+                      listing.status === 'Active' &&
+                      !listing.is_promoted &&
+                      onPromoteClick && (
+                        <button
+                          onClick={() => onPromoteClick(listing.id)}
+                          className="px-3 md:px-4 py-2.5 sm:py-2 text-xs sm:text-sm bg-yellow-500/20 border-2 border-yellow-500/40 text-yellow-300 hover:bg-yellow-500/30 hover:border-yellow-500/60 rounded-lg font-semibold transition-colors h-12 lg:h-[52px] flex items-center justify-center gap-2 w-full lg:w-auto"
+                        >
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+                            />
+                          </svg>
+                          <span>{t('listings.promote')}</span>
+                        </button>
+                      )}
+                    {mode === 'admin' && listing.status !== 'Closed' && onPromoteClick && (
+                      <button
+                        onClick={() => onPromoteClick(listing.id)}
+                        className={`px-3 md:px-4 py-2.5 sm:py-2 text-xs sm:text-sm border-2 rounded-lg font-semibold transition-colors h-12 lg:h-[52px] flex items-center justify-center gap-2 w-full lg:w-auto ${
+                          listing.is_promoted
+                            ? 'bg-[#f069be33] border-[#f069be]/40 hover:bg-[#f069be44] hover:border-[#f069be]/60'
+                            : 'bg-yellow-500/20 border-yellow-500/40 text-yellow-300 hover:bg-yellow-500/30 hover:border-yellow-500/60'
+                        }`}
+                        style={listing.is_promoted ? { color: 'rgb(255 99 198)' } : undefined}
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+                          />
+                        </svg>
+                        <span>
+                          {listing.is_promoted ? t('listings.unpromote') : t('listings.promote')}
+                        </span>
+                      </button>
+                    )}
                     {listing.status === 'Paused' && (
                       <button
                         onClick={() => onAction(listing.id, 'publish')}
@@ -243,7 +333,7 @@ export function ListingManagementCard({
                     {listing.status === 'Active' && (
                       <button
                         onClick={() => onAction(listing.id, 'pause')}
-                        className="px-3 md:px-4 py-2.5 sm:py-2 text-xs sm:text-sm bg-yellow-500/20 border-2 border-yellow-500/40 text-yellow-300 hover:bg-yellow-500/30 hover:border-yellow-500/60 rounded-lg font-semibold transition-colors h-12 lg:h-[52px] flex items-center justify-center w-full lg:w-auto"
+                        className="px-3 md:px-4 py-2.5 sm:py-2 text-xs sm:text-sm bg-blue-500/20 border-2 border-blue-500/40 text-blue-300 hover:bg-blue-500/30 hover:border-blue-500/60 rounded-lg font-semibold transition-colors h-12 lg:h-[52px] flex items-center justify-center w-full lg:w-auto"
                       >
                         {t('listings.pauseAction')}
                       </button>
@@ -251,7 +341,7 @@ export function ListingManagementCard({
                     {listing.status !== 'Closed' && (
                       <button
                         onClick={() => onAction(listing.id, 'close')}
-                        className="px-3 md:px-4 py-2.5 sm:py-2 text-xs sm:text-sm bg-bg-light border-2 border-primary-500/30 text-white hover:bg-bg-dark hover:border-primary-500/50 rounded-lg font-semibold transition-colors h-12 lg:h-[52px] flex items-center justify-center w-full lg:w-auto"
+                        className="px-3 md:px-4 py-2.5 sm:py-2 text-xs sm:text-sm bg-gray-500/20 border-2 border-gray-500/40 text-gray-300 hover:bg-gray-500/30 hover:border-gray-500/60 rounded-lg font-semibold transition-colors h-12 lg:h-[52px] flex items-center justify-center w-full lg:w-auto"
                       >
                         {t('common.close')}
                       </button>

@@ -175,7 +175,12 @@ function ListingCardComponent({
 
   return (
     <Link href={`/listings/${listing.id}`} onClick={handleClick}>
-      <div className="card overflow-hidden cursor-pointer h-full flex flex-col group">
+      <div
+        className={`card overflow-hidden cursor-pointer h-full flex flex-col group ${
+          listing.is_promoted ? 'border-2' : ''
+        }`}
+        style={listing.is_promoted ? { borderColor: '#6eeb9c87' } : undefined}
+      >
         <div
           className="relative w-full bg-bg-darker flex-shrink-0 overflow-hidden"
           style={{ aspectRatio: '16/9', minHeight: '240px' }}
@@ -210,17 +215,63 @@ function ListingCardComponent({
             </div>
           )}
           <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
+            {listing.is_promoted && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-bg-light border-2 border-yellow-500 text-yellow-400 shadow-lg whitespace-nowrap w-fit">
+                <svg
+                  className="w-4 h-4 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+                  />
+                </svg>
+                <span>{t('listings.promoted')}</span>
+              </span>
+            )}
             {listing.is_new && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-bg-light border-2 border-primary-500 text-primary-400 shadow-lg">
+              <span
+                className={`inline-flex items-center overflow-hidden rounded-lg text-xs md:text-sm font-semibold bg-bg-light border-2 border-primary-500 text-primary-400 shadow-lg whitespace-nowrap transition-all duration-300 w-fit ${
+                  listing.is_promoted && listing.is_new && listing.urgent
+                    ? 'px-3 py-1.5 gap-1.5 lg:px-1.5 lg:py-1.5 lg:gap-0 lg:group-hover:px-3 lg:group-hover:gap-1.5'
+                    : 'px-3 py-1.5 gap-1.5'
+                }`}
+              >
                 {/* eslint-disable-next-line no-hardcoded-text/no-hardcoded-text */}
-                <span>✨</span>
-                <span>{t('listings.new')}</span>
+                <span className="flex-shrink-0">✨</span>
+                <span
+                  className={`transition-all duration-300 ${
+                    listing.is_promoted && listing.is_new && listing.urgent
+                      ? 'w-auto opacity-100 lg:w-0 lg:opacity-0 lg:overflow-hidden lg:group-hover:w-auto lg:group-hover:opacity-100'
+                      : 'w-auto opacity-100'
+                  }`}
+                >
+                  {t('listings.new')}
+                </span>
               </span>
             )}
             {listing.urgent && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-bg-light border-2 border-primary-500 text-primary-400 shadow-lg">
-                <span>🔥</span>
-                <span>{t('listings.urgent')}</span>
+              <span
+                className={`inline-flex items-center overflow-hidden rounded-lg text-xs md:text-sm font-semibold bg-bg-light border-2 border-primary-500 text-primary-400 shadow-lg whitespace-nowrap transition-all duration-300 w-fit ${
+                  listing.is_promoted && listing.is_new && listing.urgent
+                    ? 'px-3 py-1.5 gap-1.5 lg:px-1.5 lg:py-1.5 lg:gap-0 lg:group-hover:px-3 lg:group-hover:gap-1.5'
+                    : 'px-3 py-1.5 gap-1.5'
+                }`}
+              >
+                <span className="flex-shrink-0">🔥</span>
+                <span
+                  className={`transition-all duration-300 ${
+                    listing.is_promoted && listing.is_new && listing.urgent
+                      ? 'w-auto opacity-100 lg:w-0 lg:opacity-0 lg:overflow-hidden lg:group-hover:w-auto lg:group-hover:opacity-100'
+                      : 'w-auto opacity-100'
+                  }`}
+                >
+                  {t('listings.urgent')}
+                </span>
               </span>
             )}
           </div>

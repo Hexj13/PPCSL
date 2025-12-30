@@ -87,7 +87,7 @@ describe('JwtStrategy', () => {
       usersService.findOne.mockResolvedValue(mockUser as User);
 
       await expect(strategy.validate(payload)).rejects.toThrow(UnauthorizedException);
-      await expect(strategy.validate(payload)).rejects.toThrow('Корисникот е деактивиран');
+      await expect(strategy.validate(payload)).rejects.toThrow('errors.userDeactivated');
       expect(usersService.findOne).toHaveBeenCalledWith('user-1');
     });
 

@@ -58,6 +58,10 @@ describe('FavoritesController', () => {
     last_published_at: new Date(),
     closed_at: null,
     views: 0,
+    is_promoted: false,
+    promoted_until: null,
+    promoted_started_at: null,
+    promoted_paused_at: null,
     created_at: new Date(),
     updated_at: new Date(),
   };

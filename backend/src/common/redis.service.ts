@@ -29,7 +29,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
     try {
       await this.client.connect();
-    } catch {}
+    } catch {
+      // Ignore connection errors
+    }
   }
 
   async onModuleDestroy() {
@@ -86,7 +88,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       } else {
         await this.client.set(key, jsonValue);
       }
-    } catch {}
+    } catch {
+      // Ignore serialization errors
+    }
   }
 
   async getJson<T>(key: string): Promise<T | null> {
@@ -123,7 +127,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       if (keys.length > 0) {
         await this.client.del(keys);
       }
-    } catch {}
+    } catch {
+      // Ignore deletion errors
+    }
   }
 
   async invalidateByPrefix(prefix: string): Promise<number> {
@@ -202,7 +208,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     try {
       const result = await this.client.ping();
       return result === 'PONG';
-    } catch (error) {
+    } catch {
       return false;
     }
   }

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 
@@ -169,7 +169,7 @@ export class BrandsService {
     const brand = await this.findByName(brandName);
 
     if (!brand) {
-      throw new Error(`Бренд "${brandName}" не е пронајден`);
+      throw new BadRequestException(`errors.brandNotFound|${brandName}`);
     }
 
     const existingModels = await this.modelsRepository.find({

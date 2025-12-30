@@ -472,7 +472,7 @@ export class AuthController {
     const existingUser = await this.usersService.findByPhone(normalizedPhone);
 
     if (existingUser) {
-      throw new BadRequestException('Корисник со овој телефон веќе постои');
+      throw new BadRequestException('errors.phoneAlreadyExists');
     }
 
     return { available: true };
@@ -518,7 +518,7 @@ export class AuthController {
     const existingUser = await this.usersService.findByPhone(normalizedPhone);
 
     if (existingUser) {
-      throw new BadRequestException('Корисник со овој телефон веќе постои');
+      throw new BadRequestException('errors.phoneAlreadyExists');
     }
 
     await this.smsService.sendVerificationCode(sendSmsDto.phone);
@@ -564,7 +564,7 @@ export class AuthController {
     const ip = this.ipBlockService.getClientIp(req);
 
     if (!verifySmsDto.phone) {
-      throw new BadRequestException('Телефонскиот број е задолжителен');
+      throw new BadRequestException('errors.phoneRequired');
     }
 
     const isVerified = await this.smsService.verifyCode(verifySmsDto.phone, verifySmsDto.code);
@@ -575,7 +575,7 @@ export class AuthController {
     }
 
     this.ipBlockService.recordFailedAttempt(ip);
-    throw new BadRequestException('Невалиден код. Обидете се повторно.');
+    throw new BadRequestException('errors.invalidCode');
   }
 
   @ApiOperation({ summary: 'Verify email address' })
@@ -722,7 +722,7 @@ export class AuthController {
     const ip = this.ipBlockService.getClientIp(req);
 
     if (!verifyResetCodeDto.phone) {
-      throw new BadRequestException('Телефонскиот број е задолжителен');
+      throw new BadRequestException('errors.phoneRequired');
     }
 
     const result = await this.authService.verifyResetCode(verifyResetCodeDto);
@@ -733,7 +733,7 @@ export class AuthController {
     }
 
     this.ipBlockService.recordFailedAttempt(ip);
-    throw new BadRequestException('Невалиден код. Обидете се повторно.');
+    throw new BadRequestException('errors.invalidCode');
   }
 
   @ApiOperation({ summary: 'Reset password' })
@@ -776,15 +776,15 @@ export class AuthController {
     const ip = this.ipBlockService.getClientIp(req);
 
     if (!resetPasswordDto.phone) {
-      throw new BadRequestException('Телефонскиот број е задолжителен');
+      throw new BadRequestException('errors.phoneRequired');
     }
 
     if (!resetPasswordDto.code) {
-      throw new BadRequestException('Кодот е задолжителен');
+      throw new BadRequestException('errors.codeRequired');
     }
 
     if (!resetPasswordDto.newPassword) {
-      throw new BadRequestException('Новата лозинка е задолжителна');
+      throw new BadRequestException('errors.newPasswordRequired');
     }
 
     try {

@@ -33,8 +33,6 @@ import { LocalStrategy } from './strategies/local.strategy';
           if (nodeEnv === 'production') {
             throw new Error('JWT_SECRET must be set in production environment');
           }
-          if (nodeEnv !== 'test' && nodeEnv !== undefined) {
-          }
         }
 
         return {

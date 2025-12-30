@@ -122,12 +122,18 @@ npm run dev  # Runs both frontend and backend
 - **Car comparison:** Compare up to 3 cars simultaneously with detailed side-by-side comparison table
 - Listing limits (100 for Individuals, 100 for Business)
 - Listing statuses (Active, Paused, Closed)
-- Automatic listing closure after 5 months
+- Automatic listing closure after 5 months (non-promoted listings only; promoted listings close automatically after promotion expires)
 - Custom 404 and error pages
 - Favorites (for authenticated users and guests) with tab counters
 - **My Listings page:** Status filters with counters (All, Active, Paused, Closed) for easy management
 - VIN search functionality
 - Image upload with automatic WebP conversion and adaptive quality optimization (75% default quality)
+- **Paid Promotion Feature (MVP):** Promote listings for higher visibility
+  - Promoted listings appear first in search results with visual highlighting
+  - Promotion periods: 1, 7, 14, or 30 days
+  - Promotion history tracking
+  - Access control via environment variable
+  - See [`docs/PAID_PROMOTION.md`](./PAID_PROMOTION.md) for details
 - Admin panel for management
 
 </details>
@@ -238,6 +244,9 @@ Kupito/
 <summary><b>Implementation Features</b></summary>
 
 - Automatic listing closure after 5 months based on `last_updated_at` timestamp (cron job runs daily at midnight)
+  - Non-promoted listings older than 5 months are closed automatically
+  - Promoted listings with active promotion are not closed automatically
+  - Promoted listings with expired promotion are closed automatically on the next cron run
 - Date refresh feature with 48-hour cooldown - users can refresh `last_updated_at` for all active listings to reset auto-close timer
 - Active listing limit validation on publish
 - Favorites stored in localStorage for guests and on server for authenticated users
@@ -304,14 +313,10 @@ For more details, see [Technical Documentation](TECHNICAL.md#8-testing) and [Fro
 
 ### General Documentation
 
-- **[Technical Documentation](TECHNICAL.md)** - Complete technical documentation (architecture, API, database, security, testing, scripts, SEO)
-- **[Deployment Guide](DEPLOYMENT.md)** - Complete deployment instructions (VPS, cPanel, SSH setup, staging)
-- **[Render.com Deployment Guide](RENDER.md)** - Complete guide for deploying on Render.com
-- **[PPCSL Overview](PPCSL.md)** - Core platform concept, architecture, and benefits
-- **[Multi-Repository Architecture](MULTI_REPOSITORY_ARCHITECTURE.md)** - Technical guide for implementing multi-platform architecture with PPCSL core
-- **[Pre-Migration Checklist](PRE_MIGRATION_CHECKLIST.md)** - Tasks to complete in monolith before repository split
-- **[CI/CD Configuration](CI_CD.md)** - Complete guide for setting up Continuous Integration and Continuous Deployment
-- **[Google Ads Setup Guide](GOOGLE_ADS_SETUP.md)** - Complete guide for setting up Google Ads conversion tracking
+- **[Technical Documentation](TECHNICAL.md)** - Complete technical documentation (architecture, API, database, security, testing, scripts, SEO, CI/CD, Google Ads setup)
+- **[Deployment Guide](DEPLOYMENT.md)** - Complete deployment instructions (VPS, cPanel, Render.com, SSH setup, staging)
+- **[Multi-Repository Architecture](MULTI_REPOSITORY_ARCHITECTURE.md)** - Multi-repository architecture guide (includes PPCSL overview and pre-migration checklist)
+- **[SEO Audit](SEO_AUDIT.md)** - SEO audit and Google Search Console issues & fixes
 - **PWA Features** - Progressive Web App fully implemented with Service Worker, offline support, and installation (see Frontend Documentation for details)
 - **[TODO List](TODO.md)** - All project tasks and todos ⚠️ **IMPORTANT**
 

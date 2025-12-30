@@ -25,8 +25,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       if (nodeEnv === 'production') {
         throw new Error('JWT_SECRET must be set in production environment');
       }
-      if (nodeEnv !== 'test' && nodeEnv !== undefined) {
-      }
     }
 
     super({
@@ -39,7 +37,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: JwtPayload) {
     const user = await this.usersService.findOne(payload.sub);
     if (!user.active) {
-      throw new UnauthorizedException('Корисникот е деактивиран');
+      throw new UnauthorizedException('errors.userDeactivated');
     }
     return { id: payload.sub, email: user.email, type: user.type };
   }

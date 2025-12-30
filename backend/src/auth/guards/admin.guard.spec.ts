@@ -52,7 +52,7 @@ describe('AdminGuard', () => {
       } as ExecutionContext;
 
       expect(() => guard.canActivate(mockContext)).toThrow(ForbiddenException);
-      expect(() => guard.canActivate(mockContext)).toThrow('Потребна е авторизација');
+      expect(() => guard.canActivate(mockContext)).toThrow('errors.authorizationRequired');
     });
 
     it('should throw ForbiddenException when user is not admin', () => {
@@ -70,9 +70,7 @@ describe('AdminGuard', () => {
       } as ExecutionContext;
 
       expect(() => guard.canActivate(mockContext)).toThrow(ForbiddenException);
-      expect(() => guard.canActivate(mockContext)).toThrow(
-        'Достап е забранет. Потребни се администраторски права',
-      );
+      expect(() => guard.canActivate(mockContext)).toThrow('errors.accessDenied');
     });
 
     it('should throw ForbiddenException for business user', () => {

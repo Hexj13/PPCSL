@@ -229,9 +229,7 @@ export class UploadService {
       this.logger.warn(
         `File signature validation failed. Buffer size: ${file.buffer.length}, mimetype: ${file.mimetype}`,
       );
-      throw new BadRequestException(
-        'Невалиден тип на датотека. Фајлот не е валидна слика или типот на датотеката е подменет.',
-      );
+      throw new BadRequestException('errors.invalidFileType');
     }
 
     this.logger.debug('File signature validation passed');
@@ -248,15 +246,11 @@ export class UploadService {
       );
 
       if (!metadata || !metadata.width || !metadata.height) {
-        throw new BadRequestException(
-          'Невалидна слика. Не може да се прочита метадатата на сликата.',
-        );
+        throw new BadRequestException('errors.invalidImage');
       }
 
       if (metadata.width > 10000 || metadata.height > 10000) {
-        throw new BadRequestException(
-          'Сликата е премногу голема. Максимална димензија: 10000x10000 пиксели.',
-        );
+        throw new BadRequestException('errors.fileTooLargePixels|10000');
       }
 
       let processedImage = image;
@@ -313,7 +307,7 @@ export class UploadService {
         error,
         this.logger,
         'Error processing image',
-        `Грешка при обработка на сликата: ${error instanceof Error ? error.message : 'Непозната грешка'}. Ве молиме осигурајте се дека фајлот е валидна слика.`,
+        `errors.imageProcessingError|${error instanceof Error ? error.message : 'Непозната грешка'}`,
       );
     }
   }
@@ -368,7 +362,7 @@ export class UploadService {
         }
 
         imageBuffer = Buffer.concat(chunks);
-      } catch (error) {
+      } catch {
         throw new Error('File not found');
       }
     } else {

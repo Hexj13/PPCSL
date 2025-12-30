@@ -15,6 +15,13 @@ Complete deployment guide for the Kupito platform on different hosting environme
 
 ## 1. Quick Start
 
+### Deployment Options
+
+This guide covers deployment on:
+- **VPS (Ubuntu/Debian)** - Full control, recommended for production
+- **cPanel (Shared Hosting)** - Easy setup, good for small projects
+- **Render.com** - Cloud platform, good for automatic deployments
+
 ### For cPanel (mkhost.com)
 
 ```bash
@@ -843,6 +850,239 @@ npm run migration:revert
 - [ ] Site opens in browser
 - [ ] Health check endpoint works (`/health`)
 - [ ] Database backups configured
+
+---
+
+## 7. Render.com Deployment
+
+Complete guide for deploying Kupito backend on Render.com.
+
+### 7.1. Prerequisites
+
+- Render.com account
+- GitHub repository with Kupito code
+- PostgreSQL database (can be created on Render.com)
+
+### 7.2. Database Setup
+
+#### Create PostgreSQL Database on Render.com
+
+1. Go to Render Dashboard → **New** → **PostgreSQL**
+2. Configure:
+   - **Name:** `kupito-db` (or your preferred name)
+   - **Database:** `kupito` (or your preferred name)
+   - **User:** Auto-generated (or custom)
+   - **Region:** Choose closest to your backend service
+   - **PostgreSQL Version:** 14+ (recommended)
+3. Click **Create Database**
+4. **⚠️ Important:** Save the connection string and credentials shown after creation
+
+#### Database Connection Details
+
+After creation, Render will show:
+- **Internal Database URL** (for services in same region)
+- **External Database URL** (for external connections)
+- **Host, Port, Database name, Username, Password**
+
+**Note:** Use **Internal Database URL** if backend service is in the same region.
+
+### 7.3. Backend Service Setup
+
+#### Create Web Service
+
+1. Go to Render Dashboard → **New** → **Web Service**
+2. Connect your GitHub repository
+3. Select repository: `Hexj13/Kupito` (or your fork)
+4. Configure service:
+
+**Basic Settings:**
+- **Name:** `kupito-backend`
+- **Region:** Same as database (recommended)
+- **Branch:** `main`
+- **Root Directory:** `backend`
+- **Runtime:** `Node`
+- **Build Command:** `npm ci && npm run build`
+- **Start Command:** `npm run start:prod`
+
+**Advanced Settings:**
+- **Auto-Deploy:** `Yes` (deploys on every push to main)
+- **Health Check Path:** `/health` (optional)
+
+### 7.4. Environment Variables
+
+#### Required Variables
+
+Add these in Render Dashboard → Your Service → **Environment**:
+
+**Database Configuration:**
+```env
+DB_HOST=<your-database-host>
+DB_PORT=5432
+DB_USERNAME=<your-database-username>
+DB_NAME=<your-database-name>
+DB_PASSWORD=<your-database-password>
+```
+
+**Application Configuration:**
+```env
+NODE_ENV=production
+PORT=10000
+```
+
+**Note:** Render automatically sets `PORT` environment variable. Your app should use `process.env.PORT || 4000`.
+
+**Authentication (REQUIRED):**
+```env
+JWT_SECRET=<generate-secure-random-key>
+```
+
+**Generate JWT_SECRET:**
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+**CORS Configuration:**
+```env
+FRONTEND_URL=https://your-frontend-domain.com
+API_URL=https://your-backend-domain.onrender.com
+```
+
+#### AWS S3 Configuration (REQUIRED for production)
+
+**⚠️ Important:** On Render.com, the file system is ephemeral. Files saved to disk are lost on restart or redeploy. You **must** use S3 for file storage in production.
+
+**Required variables:**
+```env
+AWS_ACCESS_KEY_ID=<your-aws-access-key-id>
+AWS_SECRET_ACCESS_KEY=<your-aws-secret-access-key>
+AWS_S3_BUCKET_NAME=kupito-uploads
+AWS_REGION=eu-north-1
+```
+
+**Optional (if using CloudFront CDN):**
+```env
+AWS_CLOUDFRONT_URL=https://cdn.kupito.club
+```
+
+**Setup instructions:**
+1. Create S3 bucket in AWS Console
+2. Configure CORS for S3 bucket
+3. Configure Bucket Policy for public read access
+4. Create IAM user for S3 access
+5. Create Access Key and save credentials
+6. (Optional) Setup CloudFront CDN for faster delivery
+
+### 7.5. Build Configuration
+
+**Build Settings:**
+1. **Root Directory:** Set to `backend` in service settings
+2. **Build Command:** `npm ci && npm run build`
+3. **Start Command:** `npm run start:prod`
+
+### 7.6. Database Migrations
+
+After first deployment, run migrations:
+
+1. Go to Render Dashboard → Your Service → **Shell**
+2. Run:
+```bash
+npm run migration:run
+```
+
+### 7.7. Loading Brands and Models (REQUIRED)
+
+After migrations, you need to load brands and models into the database.
+
+1. Go to Render Dashboard → Your Service → **Shell**
+2. Run:
+```bash
+npm run seed:all-brands
+```
+
+This will load all brands and models and automatically clear the Redis cache.
+
+### 7.8. Create Admin User
+
+**IMPORTANT:** Create an admin user to access the admin panel.
+
+1. In Render Shell, run:
+```bash
+npm run make-admin:prod -- --email your-email@example.com --password your-secure-password
+```
+
+### 7.9. Setting Up Cron Jobs
+
+The application has a built-in cron job that automatically closes listings older than 5 months (non-promoted listings only; promoted listings close automatically after promotion expires). However, on Render's free tier, services can sleep after inactivity.
+
+**Solution: Use Render Cron Job Service**
+
+1. **Set Environment Variable in Backend Service:**
+   - Add: `CRON_SECRET=<generate-secure-random-key>`
+
+2. **Create Cron Job in Render Dashboard:**
+   - Go to Render Dashboard → Your Project → **"CREATE NEW"** → **Cron Job**
+   - Configure:
+     - **Name:** `close-old-listings`
+     - **Schedule:** `0 0 * * *` (runs daily at midnight UTC)
+     - **Command:** 
+       ```bash
+       curl -X POST https://your-backend.onrender.com/api/listings/cron/close-old -H "x-cron-secret: $CRON_SECRET"
+       ```
+     - **Environment:** Same environment as your backend service
+
+### 7.10. Frontend Service Setup (if deployed separately)
+
+If you deploy the frontend as a separate service on Render.com:
+
+1. Go to Render Dashboard → **New** → **Static Site** (recommended for Next.js) or **Web Service**
+2. Connect your GitHub repository
+3. Configure:
+   - **Name:** `kupito-frontend`
+   - **Root Directory:** `frontend`
+   - **Build Command:** `npm ci && npm run build`
+   - **Publish Directory:** `.next` (for Static Site)
+
+**Environment Variables:**
+```env
+NEXT_PUBLIC_API_URL=https://your-backend.onrender.com
+NEXT_PUBLIC_SITE_URL=https://your-frontend-domain.com
+```
+
+### 7.11. Troubleshooting
+
+**Application Not Starting:**
+- Check logs in Render Dashboard → Your Service → **Logs**
+- Check environment variables are set correctly
+- Verify database is running and accessible
+
+**502 Bad Gateway:**
+- Check application is running
+- Check ports are open
+- Check Nginx/proxy configuration
+
+**Database Connection Failed:**
+- Check PostgreSQL is running
+- Verify password in environment variables
+- Use Internal Database URL if services are in same region
+
+**Environment Variables Not Applied:**
+- Verify in Dashboard → Environment tab
+- Redeploy after adding/changing variables
+- Check variable names match exactly (case-sensitive)
+
+### 7.12. Post-Deployment Checklist
+
+After deployment:
+- [ ] Service status is "Live" in Render Dashboard
+- [ ] Database is running and accessible
+- [ ] Migrations executed successfully
+- [ ] Brands and models loaded
+- [ ] Admin user created
+- [ ] Health check endpoint works (`/health`)
+- [ ] API endpoints respond correctly
+- [ ] CORS is configured for frontend URL
+- [ ] S3 is configured and working
+- [ ] No critical errors in logs
 
 ---
 

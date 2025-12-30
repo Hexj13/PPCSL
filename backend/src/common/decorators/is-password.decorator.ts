@@ -15,7 +15,7 @@ export class IsPasswordConstraint implements ValidatorConstraintInterface {
     return (
       /[A-Z]/.test(value) &&
       /[a-z]/.test(value) &&
-      /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(value)
+      /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value)
     );
   }
 

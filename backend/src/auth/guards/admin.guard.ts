@@ -9,11 +9,11 @@ export class AdminGuard implements CanActivate {
     const user = request.user;
 
     if (!user) {
-      throw new ForbiddenException('Потребна е авторизација');
+      throw new ForbiddenException('errors.authorizationRequired');
     }
 
     if (user.type !== UserTypeEnum.Admin) {
-      throw new ForbiddenException('Достап е забранет. Потребни се администраторски права');
+      throw new ForbiddenException('errors.accessDenied');
     }
 
     return true;

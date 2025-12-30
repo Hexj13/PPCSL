@@ -55,7 +55,7 @@ export class AuthService {
   async login(loginDto: LoginDto, ip?: string) {
     const user = await this.validateUser(loginDto.login, loginDto.password);
     if (!user) {
-      throw new UnauthorizedException('Погрешни најавни податоци');
+      throw new UnauthorizedException('errors.invalidLoginCredentials');
     }
 
     if (ip) {
@@ -88,7 +88,7 @@ export class AuthService {
 
     const user = await this.usersService.findOne(refreshToken.user_id);
     if (!user || !user.active) {
-      throw new UnauthorizedException('Корисникот не е активен');
+      throw new UnauthorizedException('errors.userNotActive');
     }
 
     const payload = { email: user.email || '', sub: user.id, type: user.type };
@@ -114,21 +114,21 @@ export class AuthService {
 
   async register(registerDto: RegisterDto, ip?: string) {
     if (!registerDto.termsAccepted) {
-      throw new BadRequestException('Мора да ги прифатите условите за користење');
+      throw new BadRequestException('errors.termsNotAccepted');
     }
 
     if (registerDto.type === constants.UserType.Individual && registerDto.phone) {
       const normalizedPhone = this.smsService.normalizePhoneNumber(registerDto.phone);
       const existingUserByPhone = await this.usersService.findByPhone(normalizedPhone);
       if (existingUserByPhone) {
-        throw new BadRequestException('Корисник со овој телефон веќе постои');
+        throw new BadRequestException('errors.phoneAlreadyExists');
       }
     }
 
     if (registerDto.email && registerDto.email.trim()) {
       const existingUserByEmail = await this.usersService.findByEmail(registerDto.email.trim());
       if (existingUserByEmail) {
-        throw new BadRequestException('Корисник со овој email веќе постои');
+        throw new BadRequestException('errors.emailAlreadyExists');
       }
     }
 
@@ -154,13 +154,15 @@ export class AuthService {
       if (user.email) {
         try {
           await this.emailService.sendVerificationEmail(user.id, user.email);
-        } catch {}
+        } catch {
+          // Ignore email sending errors
+        }
       }
 
       return removePasswordFromUser(user);
     } catch (error) {
       handleDuplicateKeyError(error, {
-        email: 'Корисник со овој email веќе постои',
+        email: 'errors.emailAlreadyExists',
       });
     }
   }
@@ -198,7 +200,7 @@ export class AuthService {
       } else if (cleanedData.email !== currentUser.email) {
         const existingUser = await this.usersService.findByEmail(cleanedData.email);
         if (existingUser && existingUser.id !== userId) {
-          throw new BadRequestException('Корисник со овој email веќе постои');
+          throw new BadRequestException('errors.emailAlreadyExists');
         }
       } else {
         delete cleanedData.email;
@@ -237,20 +239,20 @@ export class AuthService {
   async verifyEmail(token: string): Promise<UserWithoutPassword> {
     const verificationData = await this.emailService.verifyToken(token);
     if (!verificationData) {
-      throw new BadRequestException('Невалиден или истекнат токен за потврда');
+      throw new BadRequestException('errors.invalidOrExpiredToken');
     }
 
     const user = await this.usersService.findOne(verificationData.userId);
     if (!user) {
-      throw new BadRequestException('Корисникот не е пронајден');
+      throw new BadRequestException('errors.userNotFound');
     }
 
     if (user.email !== verificationData.email) {
-      throw new BadRequestException('Email адресата не се совпаѓа');
+      throw new BadRequestException('errors.emailMismatch');
     }
 
     if (user.emailVerified) {
-      throw new BadRequestException('Email адресата е веќе потврдена');
+      throw new BadRequestException('errors.emailAlreadyVerified');
     }
 
     const updatedUser = await this.usersService.update(verificationData.userId, {
@@ -266,7 +268,7 @@ export class AuthService {
     const user = await this.usersService.findByPhone(normalizedPhone);
 
     if (!user) {
-      throw new BadRequestException('Корисник со овој телефон не е пронајден');
+      throw new BadRequestException('errors.userWithPhoneNotFound');
     }
 
     await this.smsService.sendPasswordResetCode(normalizedPhone);
@@ -277,7 +279,7 @@ export class AuthService {
     const user = await this.usersService.findByPhone(normalizedPhone);
 
     if (!user) {
-      throw new BadRequestException('Корисник со овој телефон не е пронајден');
+      throw new BadRequestException('errors.userWithPhoneNotFound');
     }
 
     const isValid = await this.smsService.verifyPasswordResetCode(
@@ -286,7 +288,7 @@ export class AuthService {
     );
 
     if (!isValid) {
-      throw new BadRequestException('Невалиден код. Обидете се повторно.');
+      throw new BadRequestException('errors.invalidCode');
     }
 
     return { success: true };
@@ -297,7 +299,7 @@ export class AuthService {
     const user = await this.usersService.findByPhone(normalizedPhone);
 
     if (!user) {
-      throw new BadRequestException('Корисник со овој телефон не е пронајден');
+      throw new BadRequestException('errors.userWithPhoneNotFound');
     }
 
     const isValid = await this.smsService.verifyPasswordResetCode(
@@ -306,7 +308,7 @@ export class AuthService {
     );
 
     if (!isValid) {
-      throw new BadRequestException('Невалиден код. Обидете се повторно.');
+      throw new BadRequestException('errors.invalidCode');
     }
 
     const hashedPassword = await bcrypt.hash(resetPasswordDto.newPassword, 10);
@@ -329,12 +331,12 @@ export class AuthService {
 
     const existingUser = await this.usersService.findByPhone(normalizedNewPhone);
     if (existingUser && existingUser.id !== userId) {
-      throw new BadRequestException('Корисник со овој телефон веќе постои');
+      throw new BadRequestException('errors.phoneAlreadyExists');
     }
 
     const user = await this.usersService.findOne(userId);
     if (user.phone === normalizedNewPhone) {
-      throw new BadRequestException('Новиот телефон е ист како тековниот');
+      throw new BadRequestException('errors.phoneSameAsCurrent');
     }
 
     await this.smsService.sendVerificationCode(changePhoneRequestDto.phone);
@@ -348,7 +350,7 @@ export class AuthService {
 
     const existingUser = await this.usersService.findByPhone(normalizedNewPhone);
     if (existingUser && existingUser.id !== userId) {
-      throw new BadRequestException('Корисник со овој телефон веќе постои');
+      throw new BadRequestException('errors.phoneAlreadyExists');
     }
 
     const isValid = await this.smsService.verifyCode(
@@ -357,7 +359,7 @@ export class AuthService {
     );
 
     if (!isValid) {
-      throw new BadRequestException('Невалиден код. Обидете се повторно.');
+      throw new BadRequestException('errors.invalidCode');
     }
 
     const updatedUser = await this.usersService.update(userId, {
@@ -374,7 +376,7 @@ export class AuthService {
     const user = await this.usersService.findOne(userId);
 
     if (!user.active) {
-      throw new BadRequestException('Аккаунтот е веќе избришан или деактивиран');
+      throw new BadRequestException('errors.userDeactivated');
     }
 
     await this.listingsService.closeAllUserListings(userId);

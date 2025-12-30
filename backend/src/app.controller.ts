@@ -80,7 +80,7 @@ export class AppController {
       } else {
         health.services.database = 'disconnected';
       }
-    } catch (error) {
+    } catch {
       health.services.database = 'disconnected';
       health.status = 'degraded';
     }
@@ -91,7 +91,7 @@ export class AppController {
       if (!redisConnected) {
         health.status = 'degraded';
       }
-    } catch (error) {
+    } catch {
       health.services.redis = 'disconnected';
       health.status = 'degraded';
     }

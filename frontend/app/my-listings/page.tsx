@@ -8,8 +8,10 @@ import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { ListingManagementCard } from '@/components/ListingManagementCard';
 import { ListingManagementCardSkeleton } from '@/components/ListingManagementCardSkeleton';
 import { Modal } from '@/components/Modal';
+import { PromotionHistoryModal } from '@/components/PromotionHistoryModal';
+import { PromotionModal } from '@/components/PromotionModal';
 import { useTranslation } from '@/hooks/useTranslation';
-import { listingsApi, Listing, PaginationMeta } from '@/lib/api';
+import { listingsApi, Listing, PaginationMeta, PromotionHistory } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 
 export default function MyListingsPage() {
@@ -24,8 +26,23 @@ export default function MyListingsPage() {
   const [timeUntilRefresh, setTimeUntilRefresh] = useState<number | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'All' | 'Active' | 'Paused' | 'Closed'>('All');
+  const [promotedFilter, setPromotedFilter] = useState<'All' | 'Promoted' | 'NotPromoted'>('All');
   const [isCloseConfirmOpen, setIsCloseConfirmOpen] = useState(false);
   const [listingToClose, setListingToClose] = useState<string | null>(null);
+  const [promotionModalOpen, setPromotionModalOpen] = useState(false);
+  const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
+  const [promotionHistoryModalOpen, setPromotionHistoryModalOpen] = useState(false);
+  const [hasPromotionHistory, setHasPromotionHistory] = useState(false);
+  const [promotionHistory, setPromotionHistory] = useState<PromotionHistory[]>([]);
+  const [promotionHistoryPage, setPromotionHistoryPage] = useState(1);
+  const [promotionHistoryMeta, setPromotionHistoryMeta] = useState<{
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  } | null>(null);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [canPromote, setCanPromote] = useState(false);
   const loadingRef = useRef(false);
   const loadingMoreRef = useRef(false);
   const hasLoadedRef = useRef(false);
@@ -268,7 +285,12 @@ export default function MyListingsPage() {
       setListings((prev) => {
         const updated = prev.map((listing) => {
           if (listing.id === listingToClose) {
-            return { ...listing, status: 'Closed' as const };
+            return {
+              ...listing,
+              status: 'Closed' as const,
+              is_promoted: false,
+              promoted_until: null,
+            };
           }
           return listing;
         });
@@ -305,6 +327,84 @@ export default function MyListingsPage() {
     }
   }, [timeUntilRefresh, user?.id, fetchListings, t]);
 
+  const checkPromotionHistory = useCallback(async () => {
+    try {
+      const res = await listingsApi.hasPromotionHistory();
+      setHasPromotionHistory(res.data.hasHistory);
+    } catch {
+      setHasPromotionHistory(false);
+    }
+  }, []);
+
+  const loadPromotionHistory = useCallback(
+    async (page: number = 1) => {
+      setLoadingHistory(true);
+      try {
+        const res = await listingsApi.getPromotionHistory(page, 50);
+        setPromotionHistory(res.data.data);
+        setPromotionHistoryMeta(res.data.meta);
+        setPromotionHistoryPage(page);
+      } catch {
+        toast.error(t('promotion.history.loadError'));
+      } finally {
+        setLoadingHistory(false);
+      }
+    },
+    [t]
+  );
+
+  useEffect(() => {
+    if (user) {
+      checkPromotionHistory();
+    }
+  }, [user, checkPromotionHistory]);
+
+  useEffect(() => {
+    const checkPromotionAccess = async () => {
+      try {
+        const res = await listingsApi.getPromotionAccess();
+        setCanPromote(res.data.canPromote);
+      } catch {
+        setCanPromote(false);
+      }
+    };
+    checkPromotionAccess();
+  }, []);
+
+  const handlePromoteClick = useCallback((id: string) => {
+    setSelectedListingId(id);
+    setPromotionModalOpen(true);
+  }, []);
+
+  const handlePromotionSelect = useCallback(
+    async (days: number | null) => {
+      if (!selectedListingId) return;
+      if (days === null) {
+        toast.error(t('listings.promotionNotAvailable'));
+        return;
+      }
+
+      try {
+        await listingsApi.togglePromotion(selectedListingId, true, days);
+        toast.success(t('listings.promotionEnabled'));
+        fetchListings(1, false);
+      } catch (error: unknown) {
+        const axiosError = error as { response?: { status?: number } };
+        if (axiosError.response?.status === 403) {
+          toast.error(t('listings.promotionNotAvailable'));
+        } else if (axiosError.response?.status === 400) {
+          toast.error(t('listings.promotionOnlyActive'));
+        } else {
+          toast.error(t('listings.promotionError'));
+        }
+      } finally {
+        setPromotionModalOpen(false);
+        setSelectedListingId(null);
+      }
+    },
+    [selectedListingId, fetchListings, t]
+  );
+
   const formatTimeRemaining = useCallback((ms: number): string => {
     const hours = Math.floor(ms / (1000 * 60 * 60));
     const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
@@ -322,11 +422,20 @@ export default function MyListingsPage() {
   }, [listings]);
 
   const filteredListings = useMemo(() => {
-    if (statusFilter === 'All') {
-      return listings;
+    let filtered = listings;
+
+    if (statusFilter !== 'All') {
+      filtered = filtered.filter((l) => l.status === statusFilter);
     }
-    return listings.filter((listing) => listing.status === statusFilter);
-  }, [listings, statusFilter]);
+
+    if (promotedFilter === 'Promoted') {
+      filtered = filtered.filter((l) => l.is_promoted === true);
+    } else if (promotedFilter === 'NotPromoted') {
+      filtered = filtered.filter((l) => l.is_promoted !== true);
+    }
+
+    return filtered;
+  }, [listings, statusFilter, promotedFilter]);
 
   const statusCounts = useMemo(() => {
     return {
@@ -396,6 +505,22 @@ export default function MyListingsPage() {
               t('myListings.refreshDate')
             )}
           </button>
+          {listings && listings.length > 0 && canPromote && (
+            <button
+              onClick={() => {
+                setPromotionHistoryModalOpen(true);
+                loadPromotionHistory(1);
+              }}
+              disabled={!hasPromotionHistory}
+              className={`w-full sm:w-auto px-4 py-2 rounded-lg text-base font-semibold transition-colors ${
+                hasPromotionHistory
+                  ? 'bg-primary-500/20 border-2 border-primary-500/40 text-primary-300 hover:bg-primary-500/30 hover:border-primary-500/60'
+                  : 'bg-bg-light border-2 border-primary-500/20 text-gray-500 cursor-not-allowed opacity-50'
+              }`}
+            >
+              {t('myListings.promotionHistory')}
+            </button>
+          )}
           {(!listings || listings.length === 0) && (
             <a
               href="/listings/new"
@@ -413,11 +538,16 @@ export default function MyListingsPage() {
             {(['All', 'Active', 'Paused', 'Closed'] as const).map((status) => (
               <button
                 key={status}
-                onClick={() => setStatusFilter(status)}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                onClick={() => {
+                  setStatusFilter(status);
+                  if (promotedFilter !== 'All') {
+                    setPromotedFilter('All');
+                  }
+                }}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors bg-bg-light hover:bg-bg-dark border ${
                   statusFilter === status
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-bg-light hover:bg-bg-dark border border-primary-500/20'
+                    ? 'border-primary-500 text-white'
+                    : 'border-primary-500/20'
                 }`}
                 style={statusFilter !== status ? { color: 'rgb(243, 243, 243)' } : undefined}
               >
@@ -435,6 +565,28 @@ export default function MyListingsPage() {
                 )}
               </button>
             ))}
+            {canPromote && (
+              <button
+                onClick={() => {
+                  const newPromotedFilter = promotedFilter === 'Promoted' ? 'All' : 'Promoted';
+                  setPromotedFilter(newPromotedFilter);
+                  if (newPromotedFilter === 'Promoted') {
+                    setStatusFilter('All');
+                  }
+                }}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors bg-bg-light hover:bg-bg-dark border ${
+                  promotedFilter === 'Promoted'
+                    ? 'border-primary-500 text-white'
+                    : 'border-primary-500/20'
+                }`}
+                style={promotedFilter !== 'Promoted' ? { color: 'rgb(243, 243, 243)' } : undefined}
+              >
+                {t('myListings.promoted')}
+                <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-xs">
+                  {listings.filter((l) => l.is_promoted === true).length}
+                </span>
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -462,6 +614,7 @@ export default function MyListingsPage() {
                     listing={listing}
                     mode="my-listings"
                     onAction={handleAction}
+                    onPromoteClick={canPromote ? handlePromoteClick : undefined}
                   />
                 ))}
               </div>
@@ -507,16 +660,25 @@ export default function MyListingsPage() {
           setListingToClose(null);
         }}
         title={t('myListings.closeConfirmTitle')}
-        size="small"
+        size="medium"
       >
         <div className="space-y-6">
           <div className="space-y-3">
-            <p className="text-gray-200 text-lg font-medium">
+            <p className="text-base leading-relaxed" style={{ color: 'rgb(243, 243, 243)' }}>
               {t('myListings.closeConfirmQuestion')}
             </p>
-            <p className="text-gray-400 text-base leading-relaxed">
-              {t('myListings.closeConfirmWarning')}
-            </p>
+            <ol
+              className="list-decimal list-inside space-y-2 text-base leading-relaxed"
+              style={{ color: 'rgb(243, 243, 243)' }}
+            >
+              <li>{t('myListings.closeConfirmWarning1')}</li>
+              {listingToClose && listings.find((l) => l.id === listingToClose)?.is_promoted && (
+                <>
+                  <li>{t('myListings.closeConfirmWarning2')}</li>
+                  <li>{t('myListings.closeConfirmWarning3')}</li>
+                </>
+              )}
+            </ol>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 justify-end">
             <button
@@ -537,6 +699,26 @@ export default function MyListingsPage() {
           </div>
         </div>
       </Modal>
+
+      <PromotionModal
+        isOpen={promotionModalOpen}
+        onClose={() => {
+          setPromotionModalOpen(false);
+          setSelectedListingId(null);
+        }}
+        onSelect={handlePromotionSelect}
+        isAdmin={false}
+      />
+
+      <PromotionHistoryModal
+        isOpen={promotionHistoryModalOpen}
+        onClose={() => setPromotionHistoryModalOpen(false)}
+        history={promotionHistory}
+        meta={promotionHistoryMeta}
+        currentPage={promotionHistoryPage}
+        loading={loadingHistory}
+        onPageChange={loadPromotionHistory}
+      />
     </div>
   );
 }

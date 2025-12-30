@@ -18,7 +18,7 @@ export function handleDuplicateKeyError(
           }
         }
       }
-      throw new BadRequestException('Корисник со овие податоци веќе постои');
+      throw new BadRequestException('errors.userAlreadyExists');
     }
   }
   throw error;
@@ -45,8 +45,6 @@ export function handleUploadError(
   if (error instanceof BadRequestException) {
     throw error;
   }
-  throw new BadRequestException(
-    userMessage ||
-      `Грешка при обработка на сликата: ${error instanceof Error ? error.message : 'Непозната грешка'}`,
-  );
+  const errorMessage = error instanceof Error ? error.message : 'Непозната грешка';
+  throw new BadRequestException(userMessage || `errors.imageProcessingError|${errorMessage}`);
 }

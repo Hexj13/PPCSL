@@ -36,15 +36,15 @@ export class RefreshTokenService {
     });
 
     if (!refreshToken) {
-      throw new UnauthorizedException('Невалиден refresh токен');
+      throw new UnauthorizedException('errors.invalidRefreshToken');
     }
 
     if (refreshToken.revoked) {
-      throw new UnauthorizedException('Refresh токенот е отповикан');
+      throw new UnauthorizedException('errors.refreshTokenRevoked');
     }
 
     if (refreshToken.expires_at < new Date()) {
-      throw new UnauthorizedException('Refresh токенот е истечен');
+      throw new UnauthorizedException('errors.refreshTokenExpired');
     }
 
     return refreshToken;

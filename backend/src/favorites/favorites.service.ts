@@ -22,11 +22,11 @@ export class FavoritesService {
     });
 
     if (!listing) {
-      throw new NotFoundException('Објавата не е пронајдена');
+      throw new NotFoundException('errors.listingNotFound');
     }
 
     if (listing.user_id === userId) {
-      throw new BadRequestException('Не можете да додадете своја објава во омилени');
+      throw new BadRequestException('errors.cannotAddOwnListingToFavorites');
     }
 
     const existing = await this.favoritesRepository.findOne({
@@ -52,7 +52,7 @@ export class FavoritesService {
     });
 
     if (result.affected === 0) {
-      throw new NotFoundException('Омилената објава не е пронајдена');
+      throw new NotFoundException('errors.favoriteNotFound');
     }
   }
 
@@ -90,24 +90,20 @@ export class FavoritesService {
       return {};
     }
 
-    try {
-      const favorites = await this.favoritesRepository
-        .createQueryBuilder('favorite')
-        .where('favorite.user_id = :userId', { userId })
-        .andWhere('favorite.listing_id IN (:...listingIds)', { listingIds })
-        .select(['favorite.listing_id'])
-        .getMany();
+    const favorites = await this.favoritesRepository
+      .createQueryBuilder('favorite')
+      .where('favorite.user_id = :userId', { userId })
+      .andWhere('favorite.listing_id IN (:...listingIds)', { listingIds })
+      .select(['favorite.listing_id'])
+      .getMany();
 
-      const favoriteIds = new Set(favorites.map((f) => f.listing_id));
-      const result: Record<string, boolean> = {};
+    const favoriteIds = new Set(favorites.map((f) => f.listing_id));
+    const result: Record<string, boolean> = {};
 
-      for (const listingId of listingIds) {
-        result[listingId] = favoriteIds.has(listingId);
-      }
-
-      return result;
-    } catch (error) {
-      throw error;
+    for (const listingId of listingIds) {
+      result[listingId] = favoriteIds.has(listingId);
     }
+
+    return result;
   }
 }

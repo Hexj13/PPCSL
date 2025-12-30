@@ -125,6 +125,21 @@ export class Listing {
   @Column('simple-array', { nullable: true })
   equipment: string[] | null;
 
+  @Column({ type: 'boolean', default: false })
+  is_promoted: boolean;
+
+  @Column({ type: 'timestamp', nullable: true })
+  promoted_until: Date | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  promoted_started_at: Date | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  promoted_paused_at: Date | null;
+
+  @Index(['is_promoted'], { where: '"is_promoted" = true' })
+  @Index(['promoted_until'], { where: '"promoted_until" IS NOT NULL' })
+  @Index(['status', 'is_promoted', 'created_at'], { where: '"status" = \'Active\'' })
   @CreateDateColumn()
   created_at: Date;
 

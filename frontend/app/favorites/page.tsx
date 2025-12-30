@@ -51,7 +51,16 @@ function FavoritesContent() {
         const favoritesList = Array.isArray(res.data)
           ? res.data.map((f: { listing: Listing }) => f.listing).filter(Boolean)
           : [];
-        setListings(favoritesList);
+
+        const sortedList = [...favoritesList].sort((a, b) => {
+          if (a.is_promoted && !b.is_promoted) return -1;
+          if (!a.is_promoted && b.is_promoted) return 1;
+          const dateA = new Date(a.updated_at).getTime();
+          const dateB = new Date(b.updated_at).getTime();
+          return dateB - dateA;
+        });
+
+        setListings(sortedList);
         setLoading(false);
         setIsInitialLoading(false);
         const { setFavorites } = useFavoritesStore.getState();
