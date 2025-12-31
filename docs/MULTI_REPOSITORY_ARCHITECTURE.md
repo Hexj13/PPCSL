@@ -916,6 +916,13 @@ jobs:
           echo "https://x-access-token:${PAT_TOKEN}@github.com" > "$CREDENTIAL_FILE"
           git config --global credential.helper "store --file=$CREDENTIAL_FILE"
           
+          # Setup cleanup trap to ensure cleanup runs even if script exits early
+          cleanup() {
+            rm -f "$CREDENTIAL_FILE"
+            git config --global --unset credential.helper 2>/dev/null || true
+          }
+          trap cleanup EXIT
+          
           # Clone repository (token provided via credential helper, not in URL)
           git clone https://github.com/Hexj13/kupito.club.git ../kupito.club || exit 0
           cd ../kupito.club
@@ -930,9 +937,8 @@ jobs:
           git commit -m "chore: update PPCSL core to ${{ github.sha }}" || exit 0
           git push origin main || exit 0
           
-          # Cleanup: remove credential file and unset credential helper
-          rm -f "$CREDENTIAL_FILE"
-          git config --global --unset credential.helper
+          # Cleanup will be handled by trap, but we can also call it explicitly
+          cleanup
 
 ```
 
@@ -1199,6 +1205,13 @@ When adding new platforms in the future:
        echo "https://x-access-token:${PAT_TOKEN}@github.com" > "$CREDENTIAL_FILE"
        git config --global credential.helper "store --file=$CREDENTIAL_FILE"
        
+       # Setup cleanup trap to ensure cleanup runs even if script exits early
+       cleanup() {
+         rm -f "$CREDENTIAL_FILE"
+         git config --global --unset credential.helper 2>/dev/null || true
+       }
+       trap cleanup EXIT
+       
        # Clone repository (token provided via credential helper, not in URL)
        git clone https://github.com/Hexj13/example.com.git ../example.com || exit 0
        cd ../example.com
@@ -1213,9 +1226,8 @@ When adding new platforms in the future:
        git commit -m "chore: update PPCSL core to ${{ github.sha }}" || exit 0
        git push origin main || exit 0
        
-       # Cleanup: remove credential file and unset credential helper
-       rm -f "$CREDENTIAL_FILE"
-       git config --global --unset credential.helper
+       # Cleanup will be handled by trap, but we can also call it explicitly
+       cleanup
    ```
 
 5. **Setup CI/CD in new locale repository:**

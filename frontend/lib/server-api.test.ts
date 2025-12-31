@@ -19,7 +19,7 @@ describe('server-api', () => {
         configurable: true,
       });
     } else {
-      delete (process.env as any).NODE_ENV;
+      Reflect.deleteProperty(process.env, 'NODE_ENV');
     }
     delete process.env.NEXT_PUBLIC_API_URL;
   });
