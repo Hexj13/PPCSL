@@ -892,21 +892,23 @@ After creation, Render will show:
 
 1. Go to Render Dashboard → **New** → **Web Service**
 2. Connect your GitHub repository
-3. Select repository: `Hexj13/Kupito` (or your fork)
+3. Select repository: `Hexj13/kupito.club` (platform repository with submodule)
 4. Configure service:
 
 **Basic Settings:**
 - **Name:** `kupito-backend`
 - **Region:** Same as database (recommended)
 - **Branch:** `main`
-- **Root Directory:** `backend`
+- **Root Directory:** (leave empty)
 - **Runtime:** `Node`
-- **Build Command:** `npm ci && npm run build`
-- **Start Command:** `npm run start:prod`
+- **Build Command:** `git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && git submodule update --init --recursive && cd core/backend && npm ci && npm run build`
+- **Start Command:** `cd core/backend && npm run start:prod`
 
 **Advanced Settings:**
 - **Auto-Deploy:** `Yes` (deploys on every push to main)
 - **Health Check Path:** `/health` (optional)
+
+**Important:** You must add `GITHUB_PAT` environment variable with a Personal Access Token that has `repo` scope to access the private PPCSL submodule.
 
 ### 7.4. Environment Variables
 

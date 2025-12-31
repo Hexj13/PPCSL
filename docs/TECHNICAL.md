@@ -1096,6 +1096,62 @@ cd core/frontend && npm start
 3. Copy platform-specific files (locales, theme, config) to `core/frontend/lib/`
 4. Install dependencies and build the application
 
+### 13.4.2. Render.com Backend Deployment Configuration
+
+For deploying kupito.club backend on Render.com, configure the following:
+
+**Root Directory:** (leave empty)
+
+**Environment Variables:**
+- `GITHUB_PAT` - Personal Access Token with `repo` scope for accessing private PPCSL submodule
+- `NODE_ENV` - Set to `production`
+- `PORT` - Automatically set by Render (use `process.env.PORT || 4000` in code)
+- `DB_HOST` - PostgreSQL database host
+- `DB_PORT` - PostgreSQL port (usually `5432`)
+- `DB_USERNAME` - Database username
+- `DB_PASSWORD` - Database password
+- `DB_NAME` - Database name
+- `JWT_SECRET` - Secure random key for JWT tokens
+- `FRONTEND_URL` - Frontend URL (e.g., `https://kupito.club`)
+- `API_URL` - Backend API URL (e.g., `https://kupito-backend.onrender.com`)
+- `AWS_ACCESS_KEY_ID` - AWS S3 access key (required for file storage)
+- `AWS_SECRET_ACCESS_KEY` - AWS S3 secret key (required for file storage)
+- `AWS_S3_BUCKET_NAME` - S3 bucket name
+- `AWS_REGION` - AWS region (e.g., `eu-north-1`)
+- `REDIS_HOST` - Redis host (if using external Redis)
+- `REDIS_PORT` - Redis port (if using external Redis)
+
+**Build Command:**
+```bash
+git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && git submodule update --init --recursive && cd core/backend && npm ci && npm run build
+```
+
+**Start Command:**
+```bash
+cd core/backend && npm run start:prod
+```
+
+**Important:** The Build Command must:
+1. Configure git credentials for accessing private submodule
+2. Initialize and update the submodule
+3. Install dependencies and build the backend application
+
+**After First Deployment:**
+1. Run database migrations via Render Shell:
+   ```bash
+   cd core/backend && npm run migration:run
+   ```
+
+2. Load brands and models:
+   ```bash
+   cd core/backend && npm run seed:all-brands
+   ```
+
+3. Create admin user:
+   ```bash
+   cd core/backend && npm run make-admin:prod -- --email your-email@example.com --password your-secure-password
+   ```
+
 ### 13.5. Workflow Overview
 
 **Development Workflow:**
