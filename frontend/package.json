@@ -88,7 +88,9 @@
       "<rootDir>/jest.setup.js"
     ],
     "moduleNameMapper": {
-      "^@/(.*)$": "<rootDir>/$1"
+      "^@/(.*)$": "<rootDir>/$1",
+      "\\./locales/mk\\.json$": "<rootDir>/lib/__mocks__/mk.json",
+      "\\./config/site$": "<rootDir>/lib/__mocks__/site.ts"
     },
     "testMatch": [
       "**/__tests__/**/*.[jt]s?(x)",

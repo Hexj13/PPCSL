@@ -1,0 +1,14 @@
+import { SiteConfig } from '../site-config';
+
+const config: SiteConfig = {
+  country: 'mk',
+  name: 'Test',
+  domain: 'test.com',
+  locale: 'mk_MK',
+  currency: 'MKD',
+  countryCode: 'MK',
+  supportEmail: 'support@test.com',
+  siteUrl: 'https://test.com',
+};
+
+export default config;
