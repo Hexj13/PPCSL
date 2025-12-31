@@ -41,12 +41,7 @@ export function formatPrice(price: number | undefined, currency?: string): strin
     currency = siteConfig.currency;
   }
 
-  const locale = getLocale();
-  const formattedPrice = new Intl.NumberFormat(locale, {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(price);
-  return formattedPrice;
+  return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 }
 
 export function formatDate(date: string | Date): string {

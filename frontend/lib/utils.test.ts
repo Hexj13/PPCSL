@@ -21,18 +21,14 @@ jest.mock('./site-config', () => ({
 describe('utils', () => {
   describe('formatPrice', () => {
     it('should format price correctly', () => {
-      const result1 = formatPrice(10000);
-      const result2 = formatPrice(1234567);
-      const result3 = formatPrice(0);
-
-      expect(result1).toMatch(/10[\s.,]?000/);
-      expect(result2).toMatch(/1[\s.,]?234[\s.,]?567/);
-      expect(result3).toBe('0');
+      expect(formatPrice(10000)).toBe('10 000');
+      expect(formatPrice(1234567)).toBe('1 234 567');
+      expect(formatPrice(0)).toBe('0');
+      expect(formatPrice(100)).toBe('100');
     });
 
     it('should format price with EUR currency', () => {
-      const result = formatPrice(1000, 'EUR');
-      expect(result).toMatch(/1[\s.,]?000/);
+      expect(formatPrice(1000, 'EUR')).toBe('1 000');
     });
   });
 
