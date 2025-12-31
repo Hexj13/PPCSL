@@ -72,6 +72,7 @@ export default tseslint.config(
     ignores: [
       '.eslintrc.js',
       'eslint.config.js',
+      'eslint.config.mjs',
       '**/*.spec.ts',
       '**/*.test.ts',
       '**/*.integration.ts',
