@@ -1,6 +1,7 @@
 import {
   formatBodyType,
   formatDate,
+  formatDateLong,
   formatDateShort,
   formatEngineVolume,
   formatMileage,
@@ -9,6 +10,13 @@ import {
   horsepowerToKw,
   kwToHorsepower,
 } from './utils';
+
+jest.mock('./site-config', () => ({
+  loadSiteConfigSync: jest.fn(() => ({
+    locale: 'en-US',
+    currency: 'MKD',
+  })),
+}));
 
 describe('utils', () => {
   describe('formatPrice', () => {
@@ -51,6 +59,20 @@ describe('utils', () => {
     it('should pad single digit day and month', () => {
       const date = new Date('2024-01-05');
       expect(formatDateShort(date)).toBe('05.01.2024');
+    });
+  });
+
+  describe('formatDateLong', () => {
+    it('should format date in long format', () => {
+      const date = new Date('2024-01-15T14:30:00');
+      const result = formatDateLong(date);
+      expect(result).toBeTruthy();
+      expect(result.length).toBeGreaterThan(0);
+    });
+
+    it('should return empty string for invalid date', () => {
+      const invalidDate = new Date('invalid');
+      expect(formatDateLong(invalidDate)).toBe('');
     });
   });
 
