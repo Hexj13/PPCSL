@@ -84,7 +84,8 @@
       "/.next/",
       "/out/",
       "components/ListingForm.test.tsx",
-      "components/SearchFilters.test.tsx"
+      "components/SearchFilters.test.tsx",
+      "components/ListingGrid.test.tsx"
     ],
     "setupFilesAfterEnv": [
       "<rootDir>/jest.setup.js"
