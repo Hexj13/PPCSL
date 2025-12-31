@@ -909,7 +909,15 @@ jobs:
             echo "To enable automatic submodule updates, add a Personal Access Token (PAT) with repo scope to repository secrets as PAT_TOKEN"
             exit 0
           fi
-          git clone https://${PAT_TOKEN}@github.com/Hexj13/kupito.club.git ../kupito.club || exit 0
+          
+          # Setup git credential helper to avoid storing token in .git/config
+          # Use temporary credential file that will be cleaned up
+          CREDENTIAL_FILE=$(mktemp)
+          echo "https://x-access-token:${PAT_TOKEN}@github.com" > "$CREDENTIAL_FILE"
+          git config --global credential.helper "store --file=$CREDENTIAL_FILE"
+          
+          # Clone repository (token provided via credential helper, not in URL)
+          git clone https://github.com/Hexj13/kupito.club.git ../kupito.club || exit 0
           cd ../kupito.club
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -920,7 +928,11 @@ jobs:
           cd ..
           git add core
           git commit -m "chore: update PPCSL core to ${{ github.sha }}" || exit 0
-          git push https://${PAT_TOKEN}@github.com/Hexj13/kupito.club.git main || exit 0
+          git push origin main || exit 0
+          
+          # Cleanup: remove credential file and unset credential helper
+          rm -f "$CREDENTIAL_FILE"
+          git config --global --unset credential.helper
 
 ```
 
@@ -1180,7 +1192,15 @@ When adding new platforms in the future:
          echo "⚠️ PAT_TOKEN secret not set. Skipping submodule update."
          exit 0
        fi
-       git clone https://${PAT_TOKEN}@github.com/Hexj13/example.com.git ../example.com || exit 0
+       
+       # Setup git credential helper to avoid storing token in .git/config
+       # Use temporary credential file that will be cleaned up
+       CREDENTIAL_FILE=$(mktemp)
+       echo "https://x-access-token:${PAT_TOKEN}@github.com" > "$CREDENTIAL_FILE"
+       git config --global credential.helper "store --file=$CREDENTIAL_FILE"
+       
+       # Clone repository (token provided via credential helper, not in URL)
+       git clone https://github.com/Hexj13/example.com.git ../example.com || exit 0
        cd ../example.com
        git config user.name "github-actions[bot]"
        git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -1191,7 +1211,11 @@ When adding new platforms in the future:
        cd ..
        git add core
        git commit -m "chore: update PPCSL core to ${{ github.sha }}" || exit 0
-       git push https://${PAT_TOKEN}@github.com/Hexj13/example.com.git main || exit 0
+       git push origin main || exit 0
+       
+       # Cleanup: remove credential file and unset credential helper
+       rm -f "$CREDENTIAL_FILE"
+       git config --global --unset credential.helper
    ```
 
 5. **Setup CI/CD in new locale repository:**

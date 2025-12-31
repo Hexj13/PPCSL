@@ -12,7 +12,15 @@ describe('server-api', () => {
 
   afterEach(() => {
     global.fetch = originalFetch;
-    process.env.NODE_ENV = originalEnv;
+    if (originalEnv !== undefined) {
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: originalEnv,
+        writable: true,
+        configurable: true,
+      });
+    } else {
+      delete (process.env as any).NODE_ENV;
+    }
     delete process.env.NEXT_PUBLIC_API_URL;
   });
 
@@ -183,7 +191,11 @@ describe('server-api', () => {
     });
 
     it('should return empty data on ECONNREFUSED error in development', async () => {
-      process.env.NODE_ENV = 'development';
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'development',
+        writable: true,
+        configurable: true,
+      });
 
       const connectionError = new Error('ECONNREFUSED');
 
@@ -198,7 +210,11 @@ describe('server-api', () => {
     });
 
     it('should return empty data on fetch failed error in development', async () => {
-      process.env.NODE_ENV = 'development';
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'development',
+        writable: true,
+        configurable: true,
+      });
 
       const fetchError = new Error('fetch failed');
 
@@ -213,7 +229,11 @@ describe('server-api', () => {
     });
 
     it('should return empty data on network error in development', async () => {
-      process.env.NODE_ENV = 'development';
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'development',
+        writable: true,
+        configurable: true,
+      });
 
       const networkError = new Error('network error');
 
@@ -242,7 +262,11 @@ describe('server-api', () => {
     });
 
     it('should use correct cache settings in development', async () => {
-      process.env.NODE_ENV = 'development';
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'development',
+        writable: true,
+        configurable: true,
+      });
       const mockResponse = {
         data: [],
         meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
@@ -265,7 +289,11 @@ describe('server-api', () => {
     });
 
     it('should use correct cache settings in production', async () => {
-      process.env.NODE_ENV = 'production';
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'production',
+        writable: true,
+        configurable: true,
+      });
       const mockResponse = {
         data: [],
         meta: { page: 1, limit: 20, total: 0, totalPages: 0 },

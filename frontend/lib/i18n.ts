@@ -809,12 +809,12 @@ const STORAGE_KEY = 'kupito-locale';
 let mkTranslations: Translations | null = null;
 
 function createEmptyTranslations(): Translations {
-  const handler: ProxyHandler<unknown> = {
+  const handler: ProxyHandler<object> = {
     get: (_target, _prop) => {
       return new Proxy({}, handler);
     },
   };
-  return new Proxy({} as Translations, handler);
+  return new Proxy({} as object, handler) as Translations;
 }
 
 function loadMkTranslations(): Translations {

@@ -25,7 +25,7 @@ jest.mock('@/lib/store', () => {
     favorites: [],
     setFavorites: mockSetFavorites,
   }));
-  mockStore.getState = mockGetState;
+  (mockStore as any).getState = mockGetState;
   return {
     useAuthStore: jest.fn(),
     useFavoritesStore: mockStore,

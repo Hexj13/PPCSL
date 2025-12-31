@@ -97,10 +97,10 @@ describe('listingsApi', () => {
       const createDto = {
         title: 'Test Car',
         price: 10000,
-        currency: 'MKD',
+        currency: 'MKD' as const,
         city: 'Skopje',
-        condition: 'Undamaged',
-        registration_type: 'Local',
+        condition: 'Undamaged' as const,
+        registration_type: 'Local' as const,
         horsepower: 150,
         equipment: ['air_conditioning', 'navigation', 'parking_sensors'],
         vehicle: {
@@ -113,11 +113,19 @@ describe('listingsApi', () => {
       const mockListing: Listing = {
         id: 'listing-1',
         ...createDto,
-        currency: Currency.MKD as const,
+        currency: Currency.MKD,
         status: 'Active',
         created_at: '2024-01-01T00:00:00Z',
         updated_at: '2024-01-01T00:00:00Z',
         last_updated_at: '2024-01-01T00:00:00Z',
+        vehicle: {
+          id: 'vehicle-1',
+          brand_id: 'brand-1',
+          model_id: 'model-1',
+          year: 2020,
+          drive_type: 'FWD',
+          body_type: 'Sedan',
+        },
       };
 
       mockAxiosInstance.post.mockResolvedValue({ data: mockListing });
@@ -140,7 +148,7 @@ describe('listingsApi', () => {
         id: listingId,
         title: 'Test Car',
         price: 10000,
-        currency: Currency.MKD as const,
+        currency: Currency.MKD,
         city: 'Skopje',
         status: 'Active',
         condition: 'Undamaged',
