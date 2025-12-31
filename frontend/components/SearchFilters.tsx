@@ -466,10 +466,7 @@ export function SearchFilters() {
     const currentSortBy = urlSortBy || 'created_at';
     const currentSortOrder = urlSortOrder || 'DESC';
 
-    if (
-      filters.sortBy !== currentSortBy ||
-      filters.sortOrder !== currentSortOrder
-    ) {
+    if (filters.sortBy !== currentSortBy || filters.sortOrder !== currentSortOrder) {
       setFilters((prev) => ({
         ...prev,
         sortBy: currentSortBy,
