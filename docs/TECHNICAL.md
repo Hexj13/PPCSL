@@ -1026,7 +1026,11 @@ PPCSL (Core Repository)
    - Updates submodule reference to latest commit
    - Commits and pushes changes
 
-**Required Secrets:** No additional secrets required. Uses `GITHUB_TOKEN` automatically provided by GitHub Actions.
+**Required Secrets:**
+- `PAT_TOKEN` (optional) - Personal Access Token with `repo` scope for pushing to platform repositories
+  - If not set, submodule updates will be skipped with a warning
+  - To create: GitHub Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token
+  - Required scopes: `repo` (full control of private repositories)
 
 ### 13.4. Platform-Specific CI/CD (kupito.club)
 
@@ -1085,9 +1089,10 @@ PPCSL (Core Repository)
 ### 13.6. Troubleshooting
 
 **Submodule Update Fails:**
-- Ensure `GITHUB_TOKEN` has write permissions
-- Check repository settings → Actions → General → Workflow permissions
-- Set to "Read and write permissions"
+- Ensure `PAT_TOKEN` secret is set in repository settings
+- PAT must have `repo` scope to push to other repositories
+- To create PAT: GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
+- Add secret: Repository Settings → Secrets and variables → Actions → New repository secret → Name: `PAT_TOKEN`
 
 **Build Fails After Submodule Update:**
 - Verify copy commands in workflow are correct

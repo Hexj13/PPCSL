@@ -902,20 +902,25 @@ jobs:
 
       - name: Update kupito.club submodule
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          git clone https://github.com/your-org/kupito.club.git ../kupito.club
+          if [ -z "$PAT_TOKEN" ]; then
+            echo "⚠️ PAT_TOKEN secret not set. Skipping submodule update."
+            echo "To enable automatic submodule updates, add a Personal Access Token (PAT) with repo scope to repository secrets as PAT_TOKEN"
+            exit 0
+          fi
+          git clone https://${PAT_TOKEN}@github.com/Hexj13/kupito.club.git ../kupito.club || exit 0
           cd ../kupito.club
-          git submodule update --init --recursive
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git submodule update --init --recursive || exit 0
           cd core
           git fetch origin
           git checkout ${{ github.sha }}
           cd ..
           git add core
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
           git commit -m "chore: update PPCSL core to ${{ github.sha }}" || exit 0
-          git push origin main
+          git push https://${PAT_TOKEN}@github.com/Hexj13/kupito.club.git main || exit 0
 
 ```
 
@@ -1169,20 +1174,24 @@ When adding new platforms in the future:
    ```yaml
    - name: Update example.com submodule
      env:
-       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+       PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
      run: |
-       git clone https://github.com/Hexj13/example.com.git ../example.com || exit 0
+       if [ -z "$PAT_TOKEN" ]; then
+         echo "⚠️ PAT_TOKEN secret not set. Skipping submodule update."
+         exit 0
+       fi
+       git clone https://${PAT_TOKEN}@github.com/Hexj13/example.com.git ../example.com || exit 0
        cd ../example.com
+       git config user.name "github-actions[bot]"
+       git config user.email "github-actions[bot]@users.noreply.github.com"
        git submodule update --init --recursive || exit 0
        cd core
        git fetch origin
        git checkout ${{ github.sha }}
        cd ..
        git add core
-       git config user.name "github-actions[bot]"
-       git config user.email "github-actions[bot]@users.noreply.github.com"
        git commit -m "chore: update PPCSL core to ${{ github.sha }}" || exit 0
-       git push origin main || exit 0
+       git push https://${PAT_TOKEN}@github.com/Hexj13/example.com.git main || exit 0
    ```
 
 5. **Setup CI/CD in new locale repository:**

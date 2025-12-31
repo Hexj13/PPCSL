@@ -27,7 +27,9 @@ export async function loadSiteConfig(country: string): Promise<SiteConfig> {
     }
     throw new Error('Module not found');
   } catch {
-    console.warn(`Site config file not found for ${country}, using default config. This is expected in core repository.`);
+    console.warn(
+      `Site config file not found for ${country}, using default config. This is expected in core repository.`
+    );
     config = defaultConfig;
     return defaultConfig;
   }
@@ -56,7 +58,9 @@ export function loadSiteConfigSync(country: string): SiteConfig {
     const configModule = require(`./config/site`);
     return configModule.default;
   } catch {
-    console.warn(`Site config file not found for ${country}, using default config. This is expected in core repository.`);
+    console.warn(
+      `Site config file not found for ${country}, using default config. This is expected in core repository.`
+    );
     return defaultConfig;
   }
 }

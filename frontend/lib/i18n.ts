@@ -821,13 +821,15 @@ function loadMkTranslations(): Translations {
   if (mkTranslations) {
     return mkTranslations;
   }
-  
+
   try {
     const translations = require('./locales/mk.json');
     mkTranslations = translations as unknown as Translations;
     return mkTranslations;
   } catch {
-    console.warn('Translations file not found, using empty translations. This is expected in core repository.');
+    console.warn(
+      'Translations file not found, using empty translations. This is expected in core repository.'
+    );
     mkTranslations = createEmptyTranslations();
     return mkTranslations;
   }
