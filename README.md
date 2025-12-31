@@ -26,13 +26,30 @@ All documentation is located in the [`docs/`](./docs/) folder:
 
 ## 🚀 Quick Start
 
+### Option 1: Run Both Servers Together (Recommended)
+
 ```bash
-# Backend
+# Install all dependencies (root, frontend, backend)
+npm run install:all
+
+# Start Docker containers (PostgreSQL + Redis)
+docker-compose up -d
+
+# Run both frontend and backend together
+npm run dev
+```
+
+**Frontend:** http://localhost:3000 | **Backend:** http://localhost:4000
+
+### Option 2: Run Servers Separately
+
+```bash
+# Terminal 1 - Backend
 cd backend
 npm install
 npm run start:dev
 
-# Frontend
+# Terminal 2 - Frontend
 cd frontend
 npm install
 npm run dev

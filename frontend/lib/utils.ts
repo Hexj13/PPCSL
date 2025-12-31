@@ -41,7 +41,8 @@ export function formatPrice(price: number | undefined, currency?: string): strin
     currency = siteConfig.currency;
   }
 
-  return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  const integerPrice = Math.floor(price);
+  return integerPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 }
 
 export function formatDate(date: string | Date): string {
