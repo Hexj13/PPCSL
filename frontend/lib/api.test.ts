@@ -1,6 +1,5 @@
-import { Currency } from './constants';
-
 import { Listing } from './api';
+import { Currency } from './constants';
 
 const mockAxiosInstance = {
   get: jest.fn(),

@@ -803,7 +803,6 @@ export interface Translations {
 }
 
 import mkTranslations from './locales/mk.json';
-
 import { loadSiteConfigSync } from './site-config';
 
 const STORAGE_KEY = 'kupito-locale';
