@@ -52,7 +52,7 @@ export async function loadTheme(country: string): Promise<ThemeColors> {
       return theme!;
     }
     throw new Error('Module not found');
-  } catch (error) {
+  } catch {
     console.warn(`Theme file not found for ${country}, using default theme. This is expected in core repository.`);
     return defaultTheme;
   }
@@ -105,10 +105,9 @@ const defaultTheme: ThemeColors = {
 
 export function loadThemeSync(country: string): ThemeColors {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const themeModule = require(`./theme/colors`);
     return themeModule.default;
-  } catch (error) {
+  } catch {
     console.warn(`Theme file not found for ${country}, using default theme. This is expected in core repository.`);
     return defaultTheme;
   }

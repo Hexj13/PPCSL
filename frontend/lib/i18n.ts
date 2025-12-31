@@ -823,11 +823,10 @@ function loadMkTranslations(): Translations {
   }
   
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const translations = require('./locales/mk.json');
     mkTranslations = translations as unknown as Translations;
     return mkTranslations;
-  } catch (error) {
+  } catch {
     console.warn('Translations file not found, using empty translations. This is expected in core repository.');
     mkTranslations = createEmptyTranslations();
     return mkTranslations;
@@ -839,7 +838,7 @@ export function getDefaultLocale(): Locale {
   try {
     const siteConfig = loadSiteConfigSync(country);
     return siteConfig.locale.split('_')[0] as Locale;
-  } catch (error) {
+  } catch {
     return 'mk';
   }
 }

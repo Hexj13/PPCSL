@@ -26,7 +26,7 @@ export async function loadSiteConfig(country: string): Promise<SiteConfig> {
       return loadedConfig;
     }
     throw new Error('Module not found');
-  } catch (error) {
+  } catch {
     console.warn(`Site config file not found for ${country}, using default config. This is expected in core repository.`);
     config = defaultConfig;
     return defaultConfig;
@@ -53,10 +53,9 @@ const defaultConfig: SiteConfig = {
 
 export function loadSiteConfigSync(country: string): SiteConfig {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const configModule = require(`./config/site`);
     return configModule.default;
-  } catch (error) {
+  } catch {
     console.warn(`Site config file not found for ${country}, using default config. This is expected in core repository.`);
     return defaultConfig;
   }
