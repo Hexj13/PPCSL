@@ -4,6 +4,7 @@ import React from 'react';
 
 import { Listing, PaginationMeta } from '@/lib/api';
 import { favoritesApi } from '@/lib/api';
+import { Currency } from '@/lib/constants';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
 
 import { ListingGrid } from './ListingGrid';
@@ -62,7 +63,7 @@ const mockListing1: Listing = {
   id: 'listing-1',
   title: 'Test Car 1',
   price: 10000,
-  currency: 'MKD',
+  currency: Currency.MKD,
   city: 'Skopje',
   status: 'Active',
   condition: 'Undamaged',

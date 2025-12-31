@@ -21,7 +21,7 @@ export async function generateMetadata({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }): Promise<Metadata> {
-  const t = getServerTranslations('mk');
+  const t = getServerTranslations();
   const params = await searchParams;
   const brand = typeof params.brand === 'string' ? params.brand : null;
   const model = typeof params.model === 'string' ? params.model : null;
@@ -119,7 +119,7 @@ export default async function ListingsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const t = getServerTranslations('mk');
+  const t = getServerTranslations();
   const params = await searchParams;
   const brand = typeof params.brand === 'string' ? params.brand : null;
   const model = typeof params.model === 'string' ? params.model : null;

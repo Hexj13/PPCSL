@@ -10,7 +10,7 @@ import { useCities } from '@/hooks/useCities';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { brandsApi, VehicleModel, User } from '@/lib/api';
-import { ConditionType, RegistrationType } from '@/lib/constants';
+import { ConditionType, Currency, RegistrationType } from '@/lib/constants';
 import {
   getBodyTypeOptions,
   getColorOptions,
@@ -144,8 +144,8 @@ export function SearchFilters() {
   const CURRENCY_OPTIONS: Array<LabeledOption> = [
     { value: '', label: t('searchFilters.allCurrencies') },
     ...sortOptionsByLabel([
-      { value: 'EUR', label: 'EUR' },
-      { value: 'MKD', label: 'MKD' },
+      { value: Currency.EUR, label: Currency.EUR },
+      { value: Currency.MKD, label: Currency.MKD },
     ]),
   ];
 

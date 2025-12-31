@@ -160,7 +160,7 @@ export async function generateMetadata({
 }: {
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
-  const t = getServerTranslations('mk');
+  const t = getServerTranslations();
   const { id } = await params;
 
   const listing = await getListing(id);
@@ -236,7 +236,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
     notFound();
   }
 
-  const t = getServerTranslations('mk');
+  const t = getServerTranslations();
   const breadcrumbJsonLd = buildListingBreadcrumbJsonLd(listing, t.listingDetail.home);
   const listingJsonLd = buildListingJsonLd(listing);
 

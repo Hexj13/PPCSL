@@ -8,7 +8,7 @@ const siteConfig = loadSiteConfigSync(country);
 const siteUrl = siteConfig.siteUrl;
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = getServerTranslations('mk');
+  const t = getServerTranslations();
 
   return {
     title: t.metadata.login.title,

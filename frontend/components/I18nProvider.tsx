@@ -2,7 +2,7 @@
 
 import { createContext, useContext, ReactNode } from 'react';
 
-import { loadTranslations, type Locale, type Translations } from '@/lib/i18n';
+import { getDefaultLocale, loadTranslations, type Locale, type Translations } from '@/lib/i18n';
 
 interface I18nContextType {
   locale: Locale;
@@ -10,7 +10,7 @@ interface I18nContextType {
   isLoading: boolean;
 }
 
-const locale: Locale = 'mk';
+const locale: Locale = getDefaultLocale();
 const translations = loadTranslations(locale);
 
 const I18nContext = createContext<I18nContextType>({

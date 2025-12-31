@@ -1043,11 +1043,11 @@ jobs:
 - [x] Update Tailwind config
 - [x] Update all layout files to use site-config
 - [x] Update all components to use site-config instead of hardcoded URLs
-- [ ] Make translation system dynamic (use site-config for locale)
-- [ ] Make PWA manifest dynamic (use site-config and translations)
-- [ ] Replace hardcoded currency values with site-config
-- [ ] Replace hardcoded locale values in components
-- [ ] Update tests to use dynamic values
+- [x] Make translation system dynamic (use site-config for locale)
+- [x] Make PWA manifest dynamic (use site-config and translations)
+- [x] Replace hardcoded currency values with site-config
+- [x] Replace hardcoded locale values in components
+- [x] Update tests to use dynamic values
 
 **Migration (Repository Split):**
 - [ ] Create kupito.club repository
@@ -1120,8 +1120,8 @@ List of tasks that need to be completed in the monolith before splitting into PP
 **Problem:** Tests may contain hardcoded 'MKD' and 'mk' values.
 
 **What's needed:**
-- [ ] Update tests to use `site-config` or mocks
-- [ ] Ensure tests don't depend on hardcoded values
+- [x] Update tests to use `site-config` or mocks
+- [x] Ensure tests don't depend on hardcoded values
 
 ### 🎯 Readiness Criteria for Split
 

@@ -1,3 +1,5 @@
+import { Currency } from './constants';
+
 import { Listing } from './api';
 
 const mockAxiosInstance = {
@@ -33,7 +35,7 @@ describe('listingsApi', () => {
           id: 'listing-1',
           title: 'Test Car 1',
           price: 10000,
-          currency: 'MKD',
+          currency: Currency.MKD,
           city: 'Skopje',
           status: 'Closed',
           condition: 'Undamaged',
@@ -112,7 +114,7 @@ describe('listingsApi', () => {
       const mockListing: Listing = {
         id: 'listing-1',
         ...createDto,
-        currency: 'MKD' as const,
+        currency: Currency.MKD as const,
         status: 'Active',
         created_at: '2024-01-01T00:00:00Z',
         updated_at: '2024-01-01T00:00:00Z',
@@ -139,7 +141,7 @@ describe('listingsApi', () => {
         id: listingId,
         title: 'Test Car',
         price: 10000,
-        currency: 'MKD' as const,
+        currency: Currency.MKD as const,
         city: 'Skopje',
         status: 'Active',
         condition: 'Undamaged',

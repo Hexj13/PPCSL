@@ -10,17 +10,23 @@ export function getLocale(): string {
 
 export type LabeledOption<T = string> = { value: T; label: string };
 
-const collator = new Intl.Collator('mk', { sensitivity: 'base', numeric: true });
+function getCollator(): Intl.Collator {
+  const locale = getLocale();
+  return new Intl.Collator(locale, { sensitivity: 'base', numeric: true });
+}
 
 export function sortByName<T extends { name: string }>(items: T[]): T[] {
+  const collator = getCollator();
   return [...items].sort((a, b) => collator.compare(a.name, b.name));
 }
 
 export function compareNames(a: string, b: string): number {
+  const collator = getCollator();
   return collator.compare(a, b);
 }
 
 export function sortOptionsByLabel<T>(options: Array<LabeledOption<T>>): Array<LabeledOption<T>> {
+  const collator = getCollator();
   return [...options].sort((a, b) => collator.compare(a.label, b.label));
 }
 
@@ -35,7 +41,8 @@ export function formatPrice(price: number | undefined, currency?: string): strin
     currency = siteConfig.currency;
   }
 
-  const formattedPrice = new Intl.NumberFormat('ru-RU', {
+  const locale = getLocale();
+  const formattedPrice = new Intl.NumberFormat(locale, {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(price);
@@ -78,7 +85,9 @@ export function formatDateShort(date: string | Date): string {
 export function formatDateLong(date: string | Date): string {
   const d = new Date(date);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleDateString('mk-MK', {
+  const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+  const siteConfig = loadSiteConfigSync(country);
+  return d.toLocaleDateString(siteConfig.locale, {
     year: 'numeric',
     month: 'long',
     day: 'numeric',

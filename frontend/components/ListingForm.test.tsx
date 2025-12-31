@@ -3,6 +3,7 @@ import React from 'react';
 
 import type { Brand, City, Listing, VehicleModel } from '@/lib/api';
 import * as api from '@/lib/api';
+import { Currency } from '@/lib/constants';
 import { useAuthStore } from '@/lib/store';
 
 import { ListingForm } from './ListingForm';
@@ -86,7 +87,7 @@ const mockListing = {
   id: 'listing-1',
   title: 'Test Car',
   price: 10000,
-  currency: 'MKD',
+  currency: Currency.MKD,
   city: 'Skopje',
   description: 'Test description',
   status: 'Active',

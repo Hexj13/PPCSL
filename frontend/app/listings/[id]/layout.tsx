@@ -37,7 +37,7 @@ export async function generateMetadata({
   const { id } = await params;
   const listing = await getListing(id);
 
-  const t = getServerTranslations('mk');
+  const t = getServerTranslations();
 
   if (!listing) {
     return {
