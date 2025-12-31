@@ -46,7 +46,7 @@ export async function loadTheme(country: string): Promise<ThemeColors> {
   try {
     const module = await import(`./theme/colors`);
     theme = module.default;
-    return theme;
+    return theme!;
   } catch (error) {
     console.error(`Failed to load theme for ${country}:`, error);
     throw new Error(`Theme for ${country} not found`);

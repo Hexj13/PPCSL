@@ -802,13 +802,13 @@ export interface Translations {
   };
 }
 
-import mkTranslations from '@/messages/mk.json';
+import mkTranslations from './locales/mk.json';
 
 import { loadSiteConfigSync } from './site-config';
 
 const STORAGE_KEY = 'kupito-locale';
 
-function getDefaultLocale(): Locale {
+export function getDefaultLocale(): Locale {
   const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
   const siteConfig = loadSiteConfigSync(country);
   return siteConfig.locale.split('_')[0] as Locale;
