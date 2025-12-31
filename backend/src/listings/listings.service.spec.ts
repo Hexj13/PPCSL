@@ -570,7 +570,8 @@ describe('ListingsService', () => {
     it('should throw BadRequestException when registration_expires_at is in the past', async () => {
       const currentDate = new Date();
       const pastDate = new Date(currentDate);
-      pastDate.setMonth(pastDate.getMonth() - 1);
+      pastDate.setMonth(pastDate.getMonth() - 2);
+      const pastDateString = pastDate.toISOString().split('T')[0];
 
       const createDto = {
         price: 10000,
@@ -581,7 +582,7 @@ describe('ListingsService', () => {
           model_id: 'model-1',
           year: 2020,
         },
-        registration_expires_at: pastDate.toISOString(),
+        registration_expires_at: pastDateString,
       };
 
       await expect(
@@ -761,21 +762,16 @@ describe('ListingsService', () => {
     it('should throw BadRequestException when registration_expires_at is in the past', async () => {
       const currentDate = new Date();
       const pastDate = new Date(currentDate);
-      pastDate.setMonth(pastDate.getMonth() - 1);
+      pastDate.setMonth(pastDate.getMonth() - 2);
+      const pastDateString = pastDate.toISOString().split('T')[0];
 
       const updateDto = {
-        registration_expires_at: pastDate.toISOString(),
+        registration_expires_at: pastDateString,
       };
 
       const activeListing = { ...mockListing, status: ListingStatus.Active };
-      listingsRepository.findOne
-        .mockResolvedValueOnce(activeListing)
-        .mockResolvedValueOnce(activeListing);
+      listingsRepository.findOne.mockResolvedValue(activeListing);
       vehiclesRepository.findOne.mockResolvedValue(mockVehicle);
-      brandsService.findOne.mockResolvedValue({ id: 'brand-1', name: 'Brand' } as Brand);
-      brandsService.getModelsByBrand.mockResolvedValue([
-        { id: 'model-1', name: 'Model' },
-      ] as VehicleModel[]);
 
       await expect(
         service.update(

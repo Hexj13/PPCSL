@@ -16,6 +16,7 @@ import {
   TitleSkeleton,
   BadgesSkeleton,
 } from '@/components/ListingPageSkeleton';
+import { PromotionModal } from '@/components/PromotionModal';
 import { UserListingsModal } from '@/components/UserListingsModal';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
@@ -68,8 +69,18 @@ export default function ListingPageClient({
     comparisons,
   } = useComparisonStore();
   const [listing, setListing] = useState<Listing | null>(initialListing);
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(() => check(id));
   const [isInComparison, setIsInComparison] = useState(() => checkComparison(id));
+  const isOwnListing = useMemo(() => {
+    const currentListing = listing || initialListing;
+    if (!currentListing?.user) {
+      return false;
+    }
+    if (!user) {
+      return false;
+    }
+    return user.id === currentListing.user.id;
+  }, [user, listing, initialListing]);
   const [showSkeleton, setShowSkeleton] = useState(false);
   const showLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasLoadedRef = useRef(false);
@@ -84,6 +95,8 @@ export default function ListingPageClient({
   const [loadingPrevious, setLoadingPrevious] = useState(false);
   const [showHistoryHint, setShowHistoryHint] = useState(false);
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
+  const [promotionModalOpen, setPromotionModalOpen] = useState(false);
+  const [canPromote, setCanPromote] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
   const preloadedImagesRef = useRef<Set<string>>(new Set());
@@ -337,6 +350,18 @@ export default function ListingPageClient({
     };
   }, [id, fetchListingData]);
 
+  useEffect(() => {
+    const checkPromotionAccess = async () => {
+      try {
+        const res = await listingsApi.getPromotionAccess();
+        setCanPromote(res.data.canPromote);
+      } catch {
+        setCanPromote(false);
+      }
+    };
+    checkPromotionAccess();
+  }, []);
+
   const handleToggleFavorite = async () => {
     if (!user) {
       if (typeof window !== 'undefined') {
@@ -425,6 +450,40 @@ export default function ListingPageClient({
       toast.error(t('listingDetail.alreadyInComparisonError'));
     }
   };
+
+  const handlePromoteClick = useCallback(() => {
+    setPromotionModalOpen(true);
+  }, []);
+
+  const handlePromotionSelect = useCallback(
+    async (days: number | null) => {
+      if (!listing || days === null) {
+        toast.error(t('listings.promotionNotAvailable'));
+        return;
+      }
+
+      try {
+        await listingsApi.togglePromotion(listing.id, true, days);
+        toast.success(t('listings.promotionEnabled'));
+
+        const updatedListing = await listingsApi.getOne(listing.id);
+        setListing(updatedListing.data);
+        listingRef.current = updatedListing.data;
+      } catch (error: unknown) {
+        const axiosError = error as { response?: { status?: number } };
+        if (axiosError.response?.status === 403) {
+          toast.error(t('listings.promotionNotAvailable'));
+        } else if (axiosError.response?.status === 400) {
+          toast.error(t('listings.promotionOnlyActive'));
+        } else {
+          toast.error(t('listings.promotionError'));
+        }
+      } finally {
+        setPromotionModalOpen(false);
+      }
+    },
+    [listing, t]
+  );
 
   const openImageModal = (index: number) => {
     setModalImageIndex(index);
@@ -1465,41 +1524,6 @@ export default function ListingPageClient({
               </div>
 
               <div className="flex flex-col gap-3">
-                <button
-                  onClick={handleToggleFavorite}
-                  disabled={!!(user && listing.user && user.id === listing.user.id)}
-                  className={`w-full sm:w-auto sm:max-w-fit px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center gap-2 ${
-                    user && listing.user && user.id === listing.user.id
-                      ? 'bg-primary-500/10 text-primary-300 border border-primary-500/30 cursor-not-allowed'
-                      : isFavorite
-                        ? 'bg-bg-light text-white border-2 border-primary-500/30 hover:bg-primary-500/10 hover:border-primary-500'
-                        : 'btn-secondary'
-                  }`}
-                  title={
-                    user && listing.user && user.id === listing.user.id
-                      ? t('listingDetail.cannotAddOwnListing')
-                      : ''
-                  }
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill={isFavorite ? 'currentColor' : 'none'}
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                    />
-                  </svg>
-                  {user && listing.user && user.id === listing.user.id
-                    ? t('listingDetail.yourListing')
-                    : isFavorite
-                      ? t('listingDetail.removeFromFavorites')
-                      : t('listingDetail.addToFavorites')}
-                </button>
                 {listing.status !== 'Closed' && (
                   <button
                     onClick={handleToggleComparison}
@@ -1524,6 +1548,63 @@ export default function ListingPageClient({
                       : t('listingDetail.compare')}
                   </button>
                 )}
+                <button
+                  onClick={handleToggleFavorite}
+                  disabled={isOwnListing}
+                  className={`w-full sm:w-auto sm:max-w-fit px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center gap-2 ${
+                    isOwnListing
+                      ? 'bg-primary-500/10 text-primary-300 border border-primary-500/30 cursor-not-allowed'
+                      : isFavorite
+                        ? 'bg-bg-light text-white border-2 border-primary-500/30 hover:bg-primary-500/10 hover:border-primary-500'
+                        : 'btn-secondary'
+                  }`}
+                  title={isOwnListing ? t('listingDetail.cannotAddOwnListing') : ''}
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill={isFavorite ? 'currentColor' : 'none'}
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                    />
+                  </svg>
+                  {isOwnListing
+                    ? t('listingDetail.yourListing')
+                    : isFavorite
+                      ? t('listingDetail.removeFromFavorites')
+                      : t('listingDetail.addToFavorites')}
+                </button>
+                {canPromote &&
+                  user &&
+                  listing.user &&
+                  user.id === listing.user.id &&
+                  listing.status === 'Active' &&
+                  !listing.is_promoted && (
+                    <button
+                      onClick={handlePromoteClick}
+                      className="w-full sm:w-auto sm:max-w-fit px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center gap-2 bg-yellow-500/20 border-2 border-yellow-500/40 text-yellow-300 hover:bg-yellow-500/30 hover:border-yellow-500/60"
+                    >
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+                        />
+                      </svg>
+                      {t('listings.promote')}
+                    </button>
+                  )}
               </div>
             </div>
           </div>
@@ -2519,6 +2600,13 @@ export default function ListingPageClient({
           }}
         />
       )}
+
+      <PromotionModal
+        isOpen={promotionModalOpen}
+        onClose={() => setPromotionModalOpen(false)}
+        onSelect={handlePromotionSelect}
+        isAdmin={false}
+      />
     </>
   );
 }

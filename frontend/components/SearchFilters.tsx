@@ -460,6 +460,24 @@ export function SearchFilters() {
     }
   }, [models, filters.brand_ids, searchParams]);
 
+  useEffect(() => {
+    const urlSortBy = searchParams.get('sortBy');
+    const urlSortOrder = searchParams.get('sortOrder');
+    const currentSortBy = urlSortBy || 'created_at';
+    const currentSortOrder = urlSortOrder || 'DESC';
+
+    if (
+      filters.sortBy !== currentSortBy ||
+      filters.sortOrder !== currentSortOrder
+    ) {
+      setFilters((prev) => ({
+        ...prev,
+        sortBy: currentSortBy,
+        sortOrder: currentSortOrder as 'ASC' | 'DESC',
+      }));
+    }
+  }, [searchParams, filters.sortBy, filters.sortOrder]);
+
   const getBrandOptions = useCallback(() => {
     const popularBrands = sortByName(brands.filter((brand) => POPULAR_BRANDS.includes(brand.name)));
     const otherBrands = sortByName(brands.filter((brand) => !POPULAR_BRANDS.includes(brand.name)));
@@ -810,11 +828,16 @@ export function SearchFilters() {
       params.delete('brand_id');
       params.delete('model_id');
 
+      if (
+        (filters.sortBy && filters.sortBy !== 'created_at') ||
+        (filters.sortOrder && filters.sortOrder !== 'DESC')
+      ) {
+        params.set('sortBy', filters.sortBy || 'created_at');
+        params.set('sortOrder', filters.sortOrder || 'DESC');
+      }
+
       Object.entries(filters).forEach(([key, value]) => {
         if (key === 'sortBy' || key === 'sortOrder') {
-          if (value !== '') {
-            params.set(key, value as string);
-          }
           return;
         }
         if (key === 'year_lte') {
