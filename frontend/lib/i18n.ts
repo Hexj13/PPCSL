@@ -831,9 +831,9 @@ export function loadTranslations(locale?: Locale): Translations {
   }
 
   if (locale === 'mk') {
-    return mkTranslations as Translations;
+    return mkTranslations as unknown as Translations;
   }
-  return mkTranslations as Translations;
+  return mkTranslations as unknown as Translations;
 }
 
 export function getServerTranslations(locale?: Locale): Translations {
