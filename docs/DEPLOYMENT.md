@@ -1,6 +1,6 @@
 # Deployment Guide
 
-Complete deployment guide for the Kupito platform on different hosting environments.
+Complete deployment guide for the PPCSL platform on different hosting environments.
 
 ## Table of Contents
 
@@ -33,8 +33,8 @@ https://luna.mk-host.mk/cpanel
 
 # 3. Clone project
 cd ~/public_html
-git clone https://github.com/your-username/kupito.git
-cd kupito
+git clone https://github.com/your-username/ppcsl.git
+cd ppcsl
 
 # 4. Configure .env files
 # backend/.env
@@ -56,8 +56,8 @@ cd backend && npm install --production && npm run build && npm run migration:run
 cd ../frontend && npm install --production && npm run build
 
 # 6. Setup Node.js apps in cPanel
-# Backend: Root=~/public_html/kupito/backend, URL=/api, Startup=dist/main.js
-# Frontend: Root=~/public_html/kupito/frontend, URL=/, Startup=node_modules/next/dist/bin/next, Args=start
+# Backend: Root=~/public_html/ppcsl/backend, URL=/api, Startup=dist/main.js
+# Frontend: Root=~/public_html/ppcsl/frontend, URL=/, Startup=node_modules/next/dist/bin/next, Args=start
 
 # 7. SSL: cPanel → SSL/TLS Status → Run AutoSSL
 ```
@@ -148,9 +148,9 @@ sudo -u postgres psql
 In PostgreSQL console:
 
 ```sql
-CREATE USER kupito WITH PASSWORD 'your_secure_password';
-CREATE DATABASE kupito OWNER kupito;
-GRANT ALL PRIVILEGES ON DATABASE kupito TO kupito;
+CREATE USER ppcsl WITH PASSWORD 'your_secure_password';
+CREATE DATABASE ppcsl OWNER ppcsl;
+GRANT ALL PRIVILEGES ON DATABASE ppcsl TO ppcsl;
 \q
 ```
 
@@ -169,8 +169,8 @@ cd /var/www
 #### Clone Repository
 
 ```bash
-git clone https://github.com/your-username/kupito.git
-cd kupito
+git clone https://github.com/your-username/ppcsl.git
+cd ppcsl
 ```
 
 #### Install Dependencies
@@ -185,7 +185,7 @@ cd ../frontend && npm install
 #### Backend `.env`
 
 ```bash
-cd /var/www/kupito/backend
+cd /var/www/ppcsl/backend
 nano .env
 ```
 
@@ -197,9 +197,9 @@ NODE_ENV=production
 # Database Configuration
 DB_HOST=localhost
 DB_PORT=5432
-DB_USERNAME=kupito
+DB_USERNAME=ppcsl
 DB_PASSWORD=your_secure_password_from_step_3
-DB_NAME=kupito
+DB_NAME=ppcsl
 
 # Database Connection Pooling
 DB_POOL_MAX=20
@@ -243,7 +243,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 #### Frontend `.env.local`
 
 ```bash
-cd /var/www/kupito/frontend
+cd /var/www/ppcsl/frontend
 nano .env.local
 ```
 
@@ -257,8 +257,8 @@ NEXT_PUBLIC_SITE_URL=https://your-domain.com
 #### Set Permissions
 
 ```bash
-chmod 600 /var/www/kupito/backend/.env
-chmod 600 /var/www/kupito/frontend/.env.local
+chmod 600 /var/www/ppcsl/backend/.env
+chmod 600 /var/www/ppcsl/frontend/.env.local
 ```
 
 ### Step 6: Build Application
@@ -266,7 +266,7 @@ chmod 600 /var/www/kupito/frontend/.env.local
 #### Build Backend
 
 ```bash
-cd /var/www/kupito/backend
+cd /var/www/ppcsl/backend
 npm run build
 npm run migration:run
 ```
@@ -274,24 +274,24 @@ npm run migration:run
 #### Build Frontend
 
 ```bash
-cd /var/www/kupito/frontend
+cd /var/www/ppcsl/frontend
 npm run build
 ```
 
 #### Create Uploads Directory
 
 ```bash
-mkdir -p /var/www/kupito/backend/uploads
-chmod 755 /var/www/kupito/backend/uploads
+mkdir -p /var/www/ppcsl/backend/uploads
+chmod 755 /var/www/ppcsl/backend/uploads
 ```
 
 #### Create Watermark Assets Directory
 
 ```bash
-mkdir -p /var/www/kupito/backend/assets/watermark
-chmod 755 /var/www/kupito/backend/assets/watermark
+mkdir -p /var/www/ppcsl/backend/assets/watermark
+chmod 755 /var/www/ppcsl/backend/assets/watermark
 # Copy logo.png from frontend/public/logo.png to backend/assets/watermark/logo.png
-cp /var/www/kupito/frontend/public/logo.png /var/www/kupito/backend/assets/watermark/logo.png
+cp /var/www/ppcsl/frontend/public/logo.png /var/www/ppcsl/backend/assets/watermark/logo.png
 ```
 
 **Note:** The watermark logo file is required for automatic watermarking of uploaded images. If the file is missing, images will be uploaded without watermark (with a warning in logs).
@@ -301,7 +301,7 @@ cp /var/www/kupito/frontend/public/logo.png /var/www/kupito/backend/assets/water
 #### Backend API Configuration
 
 ```bash
-sudo nano /etc/nginx/sites-available/kupito-api
+sudo nano /etc/nginx/sites-available/ppcsl-api
 ```
 
 ```nginx
@@ -309,8 +309,8 @@ server {
     listen 80;
     server_name api.your-domain.com;
 
-    access_log /var/log/nginx/kupito-api-access.log;
-    error_log /var/log/nginx/kupito-api-error.log;
+    access_log /var/log/nginx/ppcsl-api-access.log;
+    error_log /var/log/nginx/ppcsl-api-error.log;
     client_max_body_size 50M;
 
     location / {
@@ -326,7 +326,7 @@ server {
     }
 
     location /uploads/ {
-        alias /var/www/kupito/backend/uploads/;
+        alias /var/www/ppcsl/backend/uploads/;
         expires 30d;
         add_header Cache-Control "public, immutable";
     }
@@ -336,7 +336,7 @@ server {
 #### Frontend Configuration
 
 ```bash
-sudo nano /etc/nginx/sites-available/kupito-frontend
+sudo nano /etc/nginx/sites-available/ppcsl-frontend
 ```
 
 ```nginx
@@ -344,8 +344,8 @@ server {
     listen 80;
     server_name your-domain.com www.your-domain.com;
 
-    access_log /var/log/nginx/kupito-frontend-access.log;
-    error_log /var/log/nginx/kupito-frontend-error.log;
+    access_log /var/log/nginx/ppcsl-frontend-access.log;
+    error_log /var/log/nginx/ppcsl-frontend-error.log;
     client_max_body_size 50M;
 
     location / {
@@ -365,8 +365,8 @@ server {
 #### Enable Configurations
 
 ```bash
-sudo ln -s /etc/nginx/sites-available/kupito-api /etc/nginx/sites-enabled/
-sudo ln -s /etc/nginx/sites-available/kupito-frontend /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/ppcsl-api /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/ppcsl-frontend /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
 ```
@@ -385,7 +385,7 @@ sudo certbot renew --dry-run
 #### Backend PM2 Config
 
 ```bash
-cd /var/www/kupito/backend
+cd /var/www/ppcsl/backend
 nano ecosystem.config.js
 ```
 
@@ -393,16 +393,16 @@ nano ecosystem.config.js
 module.exports = {
   apps: [
     {
-      name: 'kupito-backend',
+      name: 'ppcsl-backend',
       script: 'dist/main.js',
-      cwd: '/var/www/kupito/backend',
+      cwd: '/var/www/ppcsl/backend',
       instances: 1,
       exec_mode: 'fork',
       env: {
         NODE_ENV: 'production',
       },
-      error_file: '/var/log/pm2/kupito-backend-error.log',
-      out_file: '/var/log/pm2/kupito-backend-out.log',
+      error_file: '/var/log/pm2/ppcsl-backend-error.log',
+      out_file: '/var/log/pm2/ppcsl-backend-out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       merge_logs: true,
       autorestart: true,
@@ -415,7 +415,7 @@ module.exports = {
 #### Frontend PM2 Config
 
 ```bash
-cd /var/www/kupito/frontend
+cd /var/www/ppcsl/frontend
 nano ecosystem.config.js
 ```
 
@@ -423,17 +423,17 @@ nano ecosystem.config.js
 module.exports = {
   apps: [
     {
-      name: 'kupito-frontend',
+      name: 'ppcsl-frontend',
       script: 'node_modules/next/dist/bin/next',
       args: 'start',
-      cwd: '/var/www/kupito/frontend',
+      cwd: '/var/www/ppcsl/frontend',
       instances: 1,
       exec_mode: 'fork',
       env: {
         NODE_ENV: 'production',
       },
-      error_file: '/var/log/pm2/kupito-frontend-error.log',
-      out_file: '/var/log/pm2/kupito-frontend-out.log',
+      error_file: '/var/log/pm2/ppcsl-frontend-error.log',
+      out_file: '/var/log/pm2/ppcsl-frontend-out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       merge_logs: true,
       autorestart: true,
@@ -449,10 +449,10 @@ module.exports = {
 sudo mkdir -p /var/log/pm2
 sudo chown -R $USER:$USER /var/log/pm2
 
-cd /var/www/kupito/backend
+cd /var/www/ppcsl/backend
 pm2 start ecosystem.config.js
 
-cd /var/www/kupito/frontend
+cd /var/www/ppcsl/frontend
 pm2 start ecosystem.config.js
 
 pm2 save
@@ -481,7 +481,7 @@ See [TECHNICAL.md](./TECHNICAL.md#database) section for backup setup.
 ### Step 2: Create Database
 
 1. In cPanel find **"MySQL Databases"** or **"PostgreSQL Databases"**
-2. Create database: `kupito`
+2. Create database: `ppcsl` (or your preferred name)
 3. Create user with secure password
 4. **⚠️ Important:** Record full names with prefix:
    - Database: `kupitomk_kupito`
@@ -496,8 +496,8 @@ If SSH is available:
 
 ```bash
 cd ~/public_html
-git clone https://github.com/your-username/kupito.git
-cd kupito
+git clone https://github.com/your-username/ppcsl.git
+cd ppcsl
 ```
 
 #### Option B: Via File Manager
@@ -515,7 +515,7 @@ Use FTP client (FileZilla, WinSCP) with cPanel credentials.
 #### Backend `.env`
 
 ```bash
-cd ~/public_html/kupito/backend
+cd ~/public_html/ppcsl/backend
 nano .env
 ```
 
@@ -542,19 +542,19 @@ NEXT_PUBLIC_SITE_URL=https://kupito.mk
 
 ```bash
 # Backend
-cd ~/public_html/kupito/backend
+cd ~/public_html/ppcsl/backend
 npm install --production
 npm run build
 npm run migration:run
 
 # Frontend
-cd ~/public_html/kupito/frontend
+cd ~/public_html/ppcsl/frontend
 npm install --production
 npm run build
 
 # Create uploads directory
-mkdir -p ~/public_html/kupito/backend/uploads
-chmod 755 ~/public_html/kupito/backend/uploads
+mkdir -p ~/public_html/ppcsl/backend/uploads
+chmod 755 ~/public_html/ppcsl/backend/uploads
 
 # Create watermark assets directory
 mkdir -p ~/public_html/kupito/backend/assets/watermark
@@ -572,7 +572,7 @@ cp ~/public_html/kupito/frontend/public/logo.png ~/public_html/kupito/backend/as
 3. Configure:
    - **Node.js version:** 20.x or higher
    - **Application mode:** Production
-   - **Application root:** `/home/kupitomk/public_html/kupito/backend`
+   - **Application root:** `/home/yourusername/public_html/ppcsl/backend`
    - **Application URL:** `/api`
    - **Application startup file:** `dist/main.js`
 4. Add environment variables from `.env` file
@@ -582,7 +582,7 @@ cp ~/public_html/kupito/frontend/public/logo.png ~/public_html/kupito/backend/as
 
 1. Create another Node.js application
 2. Configure:
-   - **Application root:** `/home/kupitomk/public_html/kupito/frontend`
+   - **Application root:** `/home/yourusername/public_html/ppcsl/frontend`
    - **Application URL:** `/` (root domain)
    - **Application startup file:** `node_modules/next/dist/bin/next`
    - **Application arguments:** `start`
@@ -615,8 +615,8 @@ cp ~/public_html/kupito/frontend/public/logo.png ~/public_html/kupito/backend/as
 ### Generate SSH Key (Local Mac)
 
 ```bash
-ssh-keygen -t rsa -b 2048 -f ~/.ssh/kupito_key
-cat ~/.ssh/kupito_key.pub
+ssh-keygen -t rsa -b 2048 -f ~/.ssh/ppcsl_key
+cat ~/.ssh/ppcsl_key.pub
 ```
 
 ### Add Key to cPanel
@@ -624,13 +624,13 @@ cat ~/.ssh/kupito_key.pub
 1. In cPanel → **"SSH Access"** → **"Manage SSH Keys"**
 2. Click **"Import Key"**
 3. Paste public key content
-4. Name: `kupito_key`
+4. Name: `ppcsl_key`
 5. Click **"Import"** then **"Authorize"**
 
 ### Connect to Server
 
 ```bash
-ssh -i ~/.ssh/kupito_key kupitomk@luna.mk-host.mk
+ssh -i ~/.ssh/ppcsl_key yourusername@your-server.com
 ```
 
 ### SSH Config (Optional)
@@ -653,8 +653,8 @@ Now connect with: `ssh kupito`
 If port 22 doesn't work, try:
 
 ```bash
-ssh -i ~/.ssh/kupito_key -p 2222 kupitomk@luna.mk-host.mk
-ssh -i ~/.ssh/kupito_key -p 2200 kupitomk@luna.mk-host.mk
+ssh -i ~/.ssh/ppcsl_key -p 2222 yourusername@your-server.com
+ssh -i ~/.ssh/ppcsl_key -p 2200 yourusername@your-server.com
 ```
 
 ---
@@ -707,8 +707,8 @@ Before deploying to production:
 
 1. Check logs:
 ```bash
-pm2 logs kupito-backend --err
-pm2 logs kupito-frontend --err
+pm2 logs ppcsl-backend --err
+pm2 logs ppcsl-frontend --err
 ```
 
 2. Check environment variables:
@@ -736,7 +736,7 @@ sudo netstat -tlnp | grep :3000
 
 3. Check Nginx logs:
 ```bash
-sudo tail -f /var/log/nginx/kupito-api-error.log
+sudo tail -f /var/log/nginx/ppcsl-api-error.log
 ```
 
 ### Database Connection Failed
@@ -748,7 +748,7 @@ sudo systemctl status postgresql
 
 2. Test connection:
 ```bash
-sudo -u postgres psql -d kupito -U kupito
+sudo -u postgres psql -d ppcsl -U ppcsl
 ```
 
 3. Verify password in `.env` file
@@ -790,10 +790,10 @@ sudo systemctl reload nginx
 
 ```bash
 pm2 list
-pm2 logs kupito-backend
-pm2 restart kupito-backend
-pm2 stop kupito-backend
-pm2 delete kupito-backend
+pm2 logs ppcsl-backend
+pm2 restart ppcsl-backend
+pm2 stop ppcsl-backend
+pm2 delete ppcsl-backend
 pm2 monit
 ```
 
@@ -802,7 +802,7 @@ pm2 monit
 ```bash
 sudo systemctl restart nginx
 sudo nginx -t
-sudo tail -f /var/log/nginx/kupito-api-error.log
+sudo tail -f /var/log/nginx/ppcsl-api-error.log
 ```
 
 ### Update Code
@@ -817,7 +817,7 @@ cd ../frontend && npm install && npm run build && pm2 restart kupito-frontend
 ### Database Migrations
 
 ```bash
-cd /var/www/kupito/backend
+cd /var/www/ppcsl/backend
 npm run migration:run
 npm run migration:revert
 ```
@@ -869,8 +869,8 @@ Complete guide for deploying Kupito backend on Render.com.
 
 1. Go to Render Dashboard → **New** → **PostgreSQL**
 2. Configure:
-   - **Name:** `kupito-db` (or your preferred name)
-   - **Database:** `kupito` (or your preferred name)
+   - **Name:** `ppcsl-db` (or your preferred name)
+   - **Database:** `ppcsl` (or your preferred name)
    - **User:** Auto-generated (or custom)
    - **Region:** Choose closest to your backend service
    - **PostgreSQL Version:** 14+ (recommended)
@@ -896,7 +896,7 @@ After creation, Render will show:
 4. Configure service:
 
 **Basic Settings:**
-- **Name:** `kupito-backend`
+- **Name:** `ppcsl-backend`
 - **Region:** Same as database (recommended)
 - **Branch:** `main`
 - **Root Directory:** (leave empty)
@@ -957,7 +957,7 @@ API_URL=https://your-backend-domain.onrender.com
 ```env
 AWS_ACCESS_KEY_ID=<your-aws-access-key-id>
 AWS_SECRET_ACCESS_KEY=<your-aws-secret-access-key>
-AWS_S3_BUCKET_NAME=kupito-uploads
+AWS_S3_BUCKET_NAME=ppcsl-uploads
 AWS_REGION=eu-north-1
 ```
 

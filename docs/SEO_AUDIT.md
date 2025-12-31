@@ -1,4 +1,4 @@
-# SEO & Indexation Audit (Google Search) — Kupito
+# SEO & Indexation Audit (Google Search) — PPCSL
 
 **Date:** 2025-12-17
 

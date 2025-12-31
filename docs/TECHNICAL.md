@@ -1,6 +1,6 @@
 # Technical Documentation
 
-Complete technical documentation for the Kupito platform.
+Complete technical documentation for the PPCSL platform.
 
 ## Table of Contents
 
@@ -23,7 +23,7 @@ Complete technical documentation for the Kupito platform.
 
 ### Purpose
 
-Platform for selling new and used cars in Macedonia. Users can independently add, edit, pause, and close their listings.
+Core application framework for creating car marketplace platforms for different countries. Users can independently add, edit, pause, and close their listings.
 
 ### Core Principles
 
@@ -98,15 +98,15 @@ If you see `Cannot connect to the Docker daemon`:
 ```bash
 brew install postgresql@15
 brew services start postgresql@15
-createdb kupito
+createdb ppcsl
 psql postgres
 ```
 
 In psql:
 ```sql
-CREATE USER kupito WITH PASSWORD 'kupito123';
-ALTER DATABASE kupito OWNER TO kupito;
-GRANT ALL PRIVILEGES ON DATABASE kupito TO kupito;
+CREATE USER ppcsl WITH PASSWORD 'ppcsl123';
+ALTER DATABASE ppcsl OWNER TO ppcsl;
+GRANT ALL PRIVILEGES ON DATABASE ppcsl TO ppcsl;
 \q
 ```
 
@@ -146,9 +146,9 @@ NODE_ENV=development
 # Database Configuration
 DB_HOST=localhost
 DB_PORT=5432
-DB_USERNAME=kupito
-DB_PASSWORD=kupito123
-DB_NAME=kupito
+DB_USERNAME=ppcsl
+DB_PASSWORD=ppcsl123
+DB_NAME=ppcsl
 
 # Database Connection Pooling (optional)
 DB_POOL_MAX=20
@@ -180,7 +180,7 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
 SMTP_PASSWORD=your-app-password
-SMTP_FROM=noreply@kupito.club
+SMTP_FROM=noreply@your-domain.com
 
 # Internationalization (optional)
 DEFAULT_LOCALE=mk
@@ -194,7 +194,7 @@ DEFAULT_LOCALE=mk
 NEXT_PUBLIC_API_URL=http://localhost:4000
 
 # Site Configuration
-NEXT_PUBLIC_SITE_URL=https://kupito.mk
+NEXT_PUBLIC_SITE_URL=https://your-domain.com
 NEXT_PUBLIC_COUNTRY=mk
 # Country code for locale-specific configuration (mk, al, etc.)
 
@@ -232,7 +232,7 @@ See [`docs/PAID_PROMOTION.md`](./PAID_PROMOTION.md) for complete promotion featu
 ### Project Structure
 
 ```
-Kupito/
+PPCSL/
 ├── frontend/          # Next.js application
 │   ├── app/          # Pages and routes (Server Components)
 │   ├── components/   # React components (Client/Server)
@@ -379,7 +379,7 @@ GET  /api/upload/image/:filename      # Get optimized image version
 - Watermark includes: logo (15% of image size) + domain text below
 - Watermark domain is configurable via `WATERMARK_DOMAIN` environment variable
 - If `WATERMARK_DOMAIN` is not set, domain is extracted from `FRONTEND_URL` environment variable
-- Default domain: `kupito.club` (fallback)
+- Default domain: extracted from `FRONTEND_URL` (fallback)
 - Watermark opacity: 35%
 - Watermark position: bottom-right corner with 3% padding
 - Logo is centered relative to the text
@@ -475,10 +475,10 @@ npm run backup -- --keep-days 60
 ```bash
 export DB_HOST=localhost
 export DB_PORT=5432
-export DB_USERNAME=kupito
+export DB_USERNAME=ppcsl
 export DB_PASSWORD=your_password
-export DB_NAME=kupito
-export BACKUP_DIR=/var/backups/kupito
+export DB_NAME=ppcsl
+export BACKUP_DIR=/var/backups/ppcsl
 export KEEP_DAYS=30
 
 ./backend/scripts/backup-database.sh
@@ -488,10 +488,10 @@ export KEEP_DAYS=30
 
 ```bash
 # Daily backup at 2 AM
-0 2 * * * source /etc/kupito/backup.env && /path/to/kupito/backend/scripts/backup-database.sh >> /var/log/kupito-backup.log 2>&1
+0 2 * * * source /etc/ppcsl/backup.env && /path/to/ppcsl/backend/scripts/backup-database.sh >> /var/log/ppcsl-backup.log 2>&1
 ```
 
-Backups are saved to `backend/backups/` by default with format: `kupito_backup_YYYY-MM-DD_HH-MM-SS.sql.gz`
+Backups are saved to `backend/backups/` by default with format: `ppcsl_backup_YYYY-MM-DD_HH-MM-SS.sql.gz`
 
 ---
 
@@ -701,7 +701,7 @@ All scripts are located in `backend/src/scripts/` and can be executed via npm co
   - Title generated from vehicle info (brand + model + year)
   - Description from listing content (first 160 characters, HTML stripped)
   - Image from listing's main photo or fallback to default OG image
-  - URL: `https://kupito.club/listings/{id}`
+  - URL: `https://your-domain.com/listings/{id}`
 - **Static meta tags for key pages**:
   - Homepage (`/`): Static OG tags with platform description
   - Auth pages (`/login`, `/register`, `/reset-password`): Page-specific descriptions
@@ -741,8 +741,8 @@ All scripts are located in `backend/src/scripts/` and can be executed via npm co
 ### Google Analytics Setup
 
 1. Go to https://analytics.google.com/
-2. Create account: "Kupito"
-3. Create property: "Kupito Website"
+2. Create account: "Your Platform Name"
+3. Create property: "Your Platform Website"
 4. Create data stream: Web → `https://kupito.mk`
 5. Copy Measurement ID (format: `G-XXXXXXXXXX`)
 6. Add to `NEXT_PUBLIC_GA_ID` in `.env.local` (or production environment variables)
@@ -958,7 +958,7 @@ Or use `npm run dev` in root - it will start both servers.
 
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:4000
-- API check: http://localhost:4000 (should show "Kupito API v1.0")
+- API check: http://localhost:4000 (should show "PPCSL API v1.0")
 
 ---
 

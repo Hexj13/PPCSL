@@ -42,9 +42,9 @@ npm run test:integration -- src/test/auth.integration.ts
 - Test database should be configured via environment variables:
   - `DB_HOST` (default: localhost)
   - `DB_PORT` (default: 5432)
-  - `DB_USERNAME` (default: kupito)
-  - `DB_PASSWORD` (default: kupito123)
-  - `DB_NAME` (default: kupito)
+  - `DB_USERNAME` (default: ppcsl)
+  - `DB_PASSWORD` (default: ppcsl123)
+  - `DB_NAME` (default: ppcsl)
 
 ## Writing New Tests
 

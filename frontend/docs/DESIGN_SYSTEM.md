@@ -1,6 +1,6 @@
-# Kupito Design System
+# PPCSL Design System
 
-Centralized UI component library for the Kupito project.
+Centralized UI component library for the PPCSL platform.
 
 ## Structure
 

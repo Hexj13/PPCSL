@@ -1,6 +1,6 @@
-# Kupito
+# PPCSL
 
-Car marketplace platform.
+Platform for Posting Car Sale Listings - core application framework for car marketplace platforms.
 
 ## 📚 Documentation
 
@@ -58,7 +58,7 @@ npm run dev
 ## 📁 Project Structure
 
 ```
-Kupito/
+PPCSL/
 ├── backend/          # NestJS backend API
 │   ├── src/
 │   │   ├── scripts/  # Utility scripts (brands, seeding, management)

@@ -1,6 +1,6 @@
-# Kupito - Car Marketplace for Macedonia
+# PPCSL - Platform for Posting Car Sale Listings
 
-Platform for selling new and used cars in Macedonia.
+Core application framework for creating car marketplace platforms for different countries.
 
 ## Documentation Structure
 
@@ -41,9 +41,9 @@ Create `backend/.env` (see environment variables section in [TECHNICAL.md](./TEC
 PORT=4000
 DB_HOST=localhost
 DB_PORT=5432
-DB_USERNAME=kupito
-DB_PASSWORD=kupito123
-DB_NAME=kupito
+DB_USERNAME=ppcsl
+DB_PASSWORD=ppcsl123
+DB_NAME=ppcsl
 JWT_SECRET=your-secret-key-change-in-production
 FRONTEND_URL=http://localhost:3000
 NODE_ENV=development
@@ -142,7 +142,7 @@ npm run dev  # Runs both frontend and backend
 <summary><b>Project Structure</b></summary>
 
 ```
-Kupito/
+PPCSL/
 ├── frontend/          # Next.js application
 │   ├── app/          # Pages and routes
 │   ├── components/   # React components
