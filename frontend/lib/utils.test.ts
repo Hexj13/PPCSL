@@ -16,7 +16,7 @@ describe('utils', () => {
       const result1 = formatPrice(10000);
       const result2 = formatPrice(1234567);
       const result3 = formatPrice(0);
-      
+
       expect(result1).toMatch(/10[\s.,]?000/);
       expect(result2).toMatch(/1[\s.,]?234[\s.,]?567/);
       expect(result3).toBe('0');
