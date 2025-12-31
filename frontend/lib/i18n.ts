@@ -808,6 +808,15 @@ const STORAGE_KEY = 'kupito-locale';
 
 let mkTranslations: Translations | null = null;
 
+function createEmptyTranslations(): Translations {
+  const handler: ProxyHandler<unknown> = {
+    get: (_target, _prop) => {
+      return new Proxy({}, handler);
+    },
+  };
+  return new Proxy({} as Translations, handler);
+}
+
 function loadMkTranslations(): Translations {
   if (mkTranslations) {
     return mkTranslations;
@@ -820,7 +829,8 @@ function loadMkTranslations(): Translations {
     return mkTranslations;
   } catch (error) {
     console.warn('Translations file not found, using empty translations. This is expected in core repository.');
-    return {} as unknown as Translations;
+    mkTranslations = createEmptyTranslations();
+    return mkTranslations;
   }
 }
 

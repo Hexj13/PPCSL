@@ -730,6 +730,14 @@ In locale repositories, create a build script that copies locale files to core:
 
 ### 6.1. PPCSL (ppcsl) CI/CD
 
+**Important:** PPCSL core CI/CD does NOT include build steps. Build requires locale-specific files (translations, theme, config) that don't exist in core. Build is done in platform repositories (e.g., kupito.club) where locale files are available.
+
+**Why no build in core:**
+- Build requires locale-specific files (translations, theme, config) that don't exist in core
+- Build in core would use default values, not reflecting real production builds
+- Build is done in platform repositories where locale files are available
+- TypeScript type checking (`tsc --noEmit`) is sufficient to verify code compiles correctly
+
 Create `.github/workflows/ci.yml` in ppcsl:
 
 ```yaml
@@ -853,8 +861,8 @@ jobs:
         working-directory: ./frontend
         run: npm test -- --passWithNoTests
 
-  frontend-build:
-    name: Frontend Build
+  typecheck:
+    name: TypeScript Type Check
     runs-on: ubuntu-latest
     needs: [backend-test, frontend-test]
     steps:
@@ -865,45 +873,27 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
 
-      - name: Install dependencies
+      - name: Install frontend dependencies
         working-directory: ./frontend
         run: npm ci
 
-      - name: Build (test with default locale)
-        working-directory: ./frontend
-        env:
-          NEXT_PUBLIC_API_URL: http://localhost:4000
-          NEXT_PUBLIC_COUNTRY: mk
-        run: npm run build
-
-  backend-build:
-    name: Backend Build
-    runs-on: ubuntu-latest
-    needs: [backend-test, frontend-test]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
-
-      - name: Install dependencies
+      - name: Install backend dependencies
         working-directory: ./backend
         run: npm ci
 
-      - name: Build
+      - name: TypeScript type check (frontend)
+        working-directory: ./frontend
+        run: npx tsc --noEmit
+
+      - name: TypeScript type check (backend)
         working-directory: ./backend
-        run: npm run build
+        run: npx tsc --noEmit
 
   sync-to-locales:
     name: Sync to Locale Repositories
     runs-on: ubuntu-latest
-    needs: [frontend-build, backend-build]
+    needs: [typecheck]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
@@ -1148,7 +1138,8 @@ The monolith is ready for splitting when:
 2. **Commit and push** to `ppcsl/main`
 3. **CI/CD runs** in `ppcsl`:
    - Tests pass
-   - Build succeeds
+   - Linters and formatters pass
+   - TypeScript type checking passes
    - Submodules updated in locale repos (e.g., kupito.club)
 4. **CI/CD runs** in locale repos:
    - Core submodule updated

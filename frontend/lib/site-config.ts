@@ -21,12 +21,14 @@ export async function loadSiteConfig(country: string): Promise<SiteConfig> {
     // @ts-ignore - File may not exist in core, will be provided by platform repository
     const module = await import(`./config/site`).catch(() => null);
     if (module?.default) {
-      config = module.default;
-      return config;
+      const loadedConfig = module.default as SiteConfig;
+      config = loadedConfig;
+      return loadedConfig;
     }
     throw new Error('Module not found');
   } catch (error) {
     console.warn(`Site config file not found for ${country}, using default config. This is expected in core repository.`);
+    config = defaultConfig;
     return defaultConfig;
   }
 }

@@ -992,7 +992,7 @@ PPCSL (Core Repository)
     ├─── On push to main:
     │    ├── Run tests (frontend + backend)
     │    ├── Run linters and formatters
-    │    ├── Build frontend and backend
+    │    ├── TypeScript type checking
     │    └── Update submodules in platform repos
     │
     └─── Platform Repositories (e.g., kupito.club)
@@ -1011,16 +1011,14 @@ PPCSL (Core Repository)
 **Workflow File:** `.github/workflows/ci.yml` in PPCSL repository
 
 **Jobs:**
-1. **Test Job:**
-   - Installs dependencies
-   - Runs linters (ESLint, Prettier)
-   - Runs tests (Jest)
+1. **Test Jobs:**
+   - Backend: Installs dependencies, runs linters, runs unit and integration tests
+   - Frontend: Installs dependencies, runs linters, checks formatting, runs tests
    - Validates code quality
 
-2. **Build Job:**
-   - Builds frontend (Next.js)
-   - Builds backend (NestJS)
-   - Verifies production builds succeed
+2. **Type Check Job:**
+   - Runs TypeScript type checking (`tsc --noEmit`) for both frontend and backend
+   - Verifies code compiles without errors (without creating build artifacts)
 
 3. **Update Platforms Job:**
    - Only runs on push to `main` branch
@@ -1067,7 +1065,8 @@ PPCSL (Core Repository)
 2. Commits and pushes to PPCSL/main
 3. PPCSL CI/CD triggers:
    - Tests pass
-   - Build succeeds
+   - Linters and formatters pass
+   - TypeScript type checking passes
    - Updates kupito.club submodule
 4. kupito.club CI/CD triggers:
    - Copies locale/theme/config files
@@ -1096,9 +1095,15 @@ PPCSL (Core Repository)
 - Ensure files exist in platform repository
 
 **Tests Fail in Platform CI/CD:**
-- Tests should run in PPCSL core CI/CD
-- Platform CI/CD should only run linters and build
+- Tests should run in PPCSL core CI/CD only
+- Platform CI/CD should only run build and deployment
 - Remove test steps from platform workflow if needed
+
+**Why No Build in PPCSL Core:**
+- Build requires locale-specific files (translations, theme, config) that don't exist in core
+- Build in core would use default values, not reflecting real production builds
+- Build is done in platform repositories (kupito.club) where locale files are available
+- TypeScript type checking (`tsc --noEmit`) is sufficient to verify code compiles correctly
 
 **Deployment Fails:**
 - Check deployment credentials/secrets
