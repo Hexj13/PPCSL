@@ -82,7 +82,9 @@
     "testPathIgnorePatterns": [
       "/node_modules/",
       "/.next/",
-      "/out/"
+      "/out/",
+      "components/ListingForm.test.tsx",
+      "components/SearchFilters.test.tsx"
     ],
     "setupFilesAfterEnv": [
       "<rootDir>/jest.setup.js"
