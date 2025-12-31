@@ -802,15 +802,36 @@ export interface Translations {
   };
 }
 
-import mkTranslations from './locales/mk.json';
 import { loadSiteConfigSync } from './site-config';
 
 const STORAGE_KEY = 'kupito-locale';
 
+let mkTranslations: Translations | null = null;
+
+function loadMkTranslations(): Translations {
+  if (mkTranslations) {
+    return mkTranslations;
+  }
+  
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const translations = require('./locales/mk.json');
+    mkTranslations = translations as unknown as Translations;
+    return mkTranslations;
+  } catch (error) {
+    console.warn('Translations file not found, using empty translations. This is expected in core repository.');
+    return {} as unknown as Translations;
+  }
+}
+
 export function getDefaultLocale(): Locale {
   const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
-  const siteConfig = loadSiteConfigSync(country);
-  return siteConfig.locale.split('_')[0] as Locale;
+  try {
+    const siteConfig = loadSiteConfigSync(country);
+    return siteConfig.locale.split('_')[0] as Locale;
+  } catch (error) {
+    return 'mk';
+  }
 }
 
 export function getStoredLocale(): Locale {
@@ -830,10 +851,7 @@ export function loadTranslations(locale?: Locale): Translations {
     locale = getDefaultLocale();
   }
 
-  if (locale === 'mk') {
-    return mkTranslations as unknown as Translations;
-  }
-  return mkTranslations as unknown as Translations;
+  return loadMkTranslations();
 }
 
 export function getServerTranslations(locale?: Locale): Translations {
