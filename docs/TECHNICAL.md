@@ -1060,7 +1060,13 @@ PPCSL (Core Repository)
    - Deploys to production environment
 
 **Required Secrets:**
-- `API_URL` - Backend API URL for production builds
+- `PAT_TOKEN` (required) - Personal Access Token with `repo` scope for accessing private PPCSL submodule
+  - If not set, submodule checkout will fail with "Repository not found" error
+  - To create: GitHub Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token
+  - Required scopes: `repo` (full control of private repositories)
+- `API_URL` (required) - Backend API URL for production builds
+
+**Note:** The `actions/checkout@v4` action must be configured with `token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}` to access private submodules. The default `GITHUB_TOKEN` may not have sufficient permissions for private submodules.
 
 ### 13.5. Workflow Overview
 
@@ -1092,6 +1098,13 @@ PPCSL (Core Repository)
 - Ensure `PAT_TOKEN` secret is set in repository settings
 - PAT must have `repo` scope to push to other repositories
 - To create PAT: GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
+
+**Submodule Checkout Fails in kupito.club (Repository not found):**
+- Ensure `PAT_TOKEN` secret is set in kupito.club repository settings
+- The `actions/checkout@v4` action must be configured with `token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}`
+- `GITHUB_TOKEN` may not have sufficient permissions to access private submodules
+- PAT must have `repo` scope to access private repositories
+- Verify that the submodule URL in `.gitmodules` is correct and points to the right repository
 - Add secret: Repository Settings → Secrets and variables → Actions → New repository secret → Name: `PAT_TOKEN`
 
 **Build Fails After Submodule Update:**

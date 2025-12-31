@@ -962,6 +962,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+          token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -1000,6 +1001,15 @@ jobs:
           echo "Deploy to production..."
           # Your deployment commands
 ```
+
+**Required Secrets:**
+- `PAT_TOKEN` (required) - Personal Access Token with `repo` scope for accessing private PPCSL submodule
+  - If not set, submodule checkout will fail with "Repository not found" error
+  - To create: GitHub Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token
+  - Required scopes: `repo` (full control of private repositories)
+- `API_URL` (required) - Backend API URL for production builds
+
+**Note:** The `token` parameter in `actions/checkout@v4` uses `PAT_TOKEN` if available, otherwise falls back to `GITHUB_TOKEN`. However, `GITHUB_TOKEN` may not have access to private submodules, so `PAT_TOKEN` is recommended.
 
 ---
 
