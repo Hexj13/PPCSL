@@ -132,7 +132,7 @@ ppcsl (GitHub) - PPCSL (Platform for posting car sale listings)
 ### Dependency Flow
 
 1. **Development** happens in `ppcsl` (PPCSL)
-2. **CI/CD** in `ppcsl` tests and builds
+2. **CI/CD** in `ppcsl` runs tests, linters, and TypeScript type checking
 3. **On success**, updates are pushed to locale repositories (e.g., kupito.club)
 4. **Locale repositories** build with their specific configurations
 5. **Deployment** happens independently for each locale
@@ -1150,14 +1150,45 @@ The monolith is ready for splitting when:
 ### 8.2. Adding New Locale (Future)
 
 When adding new platforms in the future:
-1. **Create new repository** for the new platform
-2. **Add PPCSL core as submodule**
+
+1. **Create new repository** for the new platform (e.g., `example.com`)
+
+2. **Add PPCSL core as submodule:**
+   ```bash
+   cd example.com
+   git submodule add git@github.com:Hexj13/PPCSL.git core
+   ```
+
 3. **Create locale files:**
-   - `locales/{country}.json`
-   - `theme/colors.ts`
-   - `config/site.ts`
-4. **Update CI/CD** in `ppcsl` to include new locale
-5. **Setup CI/CD** in new locale repository
+   - `locales/{country}.json` - All translations
+   - `theme/colors.ts` - Color scheme
+   - `config/site.ts` - Site configuration (domain, locale, currency, etc.)
+
+4. **Update CI/CD in PPCSL** (`.github/workflows/ci.yml`):
+   Add a new step in `sync-to-locales` job:
+   ```yaml
+   - name: Update example.com submodule
+     env:
+       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+     run: |
+       git clone https://github.com/Hexj13/example.com.git ../example.com || exit 0
+       cd ../example.com
+       git submodule update --init --recursive || exit 0
+       cd core
+       git fetch origin
+       git checkout ${{ github.sha }}
+       cd ..
+       git add core
+       git config user.name "github-actions[bot]"
+       git config user.email "github-actions[bot]@users.noreply.github.com"
+       git commit -m "chore: update PPCSL core to ${{ github.sha }}" || exit 0
+       git push origin main || exit 0
+   ```
+
+5. **Setup CI/CD in new locale repository:**
+   Create `.github/workflows/ci.yml` in the new repository (copy from kupito.club and adjust country/locale settings)
+
+**Result:** When you push changes to PPCSL, all platforms (kupito.club, example.com, etc.) will automatically update their submodules and trigger builds.
 
 ### 8.3. Updating Core
 

@@ -979,7 +979,7 @@ Complete guide for setting up Continuous Integration and Continuous Deployment (
 
 The CI/CD system is designed to:
 - **Automatically test** code changes in PPCSL core
-- **Build and verify** core functionality
+- **Verify code quality** (linting, formatting, TypeScript type checking)
 - **Update submodules** in platform repositories when core changes
 - **Build and deploy** platform-specific applications independently
 - **Maintain separation** between core and platform-specific code
