@@ -1068,6 +1068,34 @@ PPCSL (Core Repository)
 
 **Note:** The `actions/checkout@v4` action must be configured with `token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}` to access private submodules. The default `GITHUB_TOKEN` may not have sufficient permissions for private submodules.
 
+### 13.4.1. Render.com Deployment Configuration
+
+For deploying kupito.club on Render.com, configure the following:
+
+**Root Directory:** (leave empty)
+
+**Environment Variables:**
+- `GITHUB_PAT` - Personal Access Token with `repo` scope for accessing private PPCSL submodule
+- `NEXT_PUBLIC_COUNTRY` - Set to `mk`
+- `NEXT_PUBLIC_SITE_URL` - Set to `https://kupito.club`
+- `NEXT_PUBLIC_API_URL` - Backend API URL
+
+**Build Command:**
+```bash
+git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && git submodule update --init --recursive && cp -r locales core/frontend/lib/ && cp -r theme core/frontend/lib/ && cp -r config core/frontend/lib/ && cd core/frontend && npm ci && npm run build
+```
+
+**Start Command:**
+```bash
+cd core/frontend && npm start
+```
+
+**Important:** The Build Command must:
+1. Configure git credentials for accessing private submodule
+2. Initialize and update the submodule
+3. Copy platform-specific files (locales, theme, config) to `core/frontend/lib/`
+4. Install dependencies and build the application
+
 ### 13.5. Workflow Overview
 
 **Development Workflow:**
