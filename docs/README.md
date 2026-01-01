@@ -13,81 +13,15 @@ This directory contains **general project documentation**. For component-specifi
 ```bash
 npm run install:all          # Install dependencies
 docker-compose up -d         # Start database
-cd backend && npm run start:dev  # Start backend (in one terminal)
-cd frontend && npm run dev   # Start frontend (in another terminal)
+npm run dev                  # Start both frontend and backend
 ```
 
 **Frontend:** http://localhost:3000 | **Backend:** http://localhost:4000
 
-<details>
-<summary><b>Installation Guide</b></summary>
-
-### Requirements
-- Node.js 18+
-- Docker and Docker Compose
-- npm or yarn
-
-### Steps
-
-1. **Clone and install dependencies:**
-```bash
-npm run install:all
-```
-
-2. **Configure environment variables:**
-
-Create `backend/.env` (see environment variables section in [TECHNICAL.md](./TECHNICAL.md#3-environment-variables)):
-```env
-PORT=4000
-DB_HOST=localhost
-DB_PORT=5432
-DB_USERNAME=ppcsl
-DB_PASSWORD=ppcsl123
-DB_NAME=ppcsl
-JWT_SECRET=your-secret-key-change-in-production
-FRONTEND_URL=http://localhost:3000
-NODE_ENV=development
-
-# Twilio SMS Configuration (required for SMS verification)
-TWILIO_ACCOUNT_SID=your-twilio-account-sid
-TWILIO_AUTH_TOKEN=your-twilio-auth-token
-TWILIO_MESSAGING_SERVICE_SID=your-twilio-messaging-service-sid
-
-# Redis Configuration (optional, defaults to localhost:6379)
-REDIS_HOST=localhost
-REDIS_PORT=6379
-```
-
-Create `frontend/.env.local`:
-```env
-NEXT_PUBLIC_API_URL=http://localhost:4000
-```
-
-3. **Start database:**
-```bash
-docker-compose up -d
-```
-
-4. **Setup database tables:**
-```bash
-cd backend
-npm run build
-npm run migration:run
-```
-
-**Important:** The latest migration includes database optimizations (indexes, triggers). Always run migrations in production.
-
-Or use TypeORM sync (development only):
-```bash
-cd backend && npm run start:dev
-```
-
-5. **Start development servers:**
-```bash
-npm run dev  # Runs both frontend and backend
-```
-
-</details>
+**For detailed setup instructions, see:**
+- **[Local Development Guide](LOCAL_DEVELOPMENT.md)** - Complete local development setup
+- **[Technical Documentation](TECHNICAL.md#2-development-setup)** - Development setup details
+- **[Environment Variables](TECHNICAL.md#3-environment-variables)** - Complete environment variables reference
 
 <details>
 <summary><b>Technologies</b></summary>
@@ -313,8 +247,9 @@ For more details, see [Technical Documentation](TECHNICAL.md#8-testing) and [Fro
 
 ### General Documentation
 
+- **[Platform Setup Guide](PLATFORM_GUIDE.md)** - ⭐ **Complete guide for creating new platforms and where to make code changes**
 - **[Technical Documentation](TECHNICAL.md)** - Complete technical documentation (architecture, API, database, security, testing, scripts, SEO, CI/CD, Google Ads setup)
-- **[Deployment Guide](DEPLOYMENT.md)** - Complete deployment instructions (VPS, cPanel, Render.com, SSH setup, staging)
+- **[Deployment Guide](DEPLOYMENT.md)** - Complete deployment instructions (VPS, Render.com, Namecheap, SSH setup, staging)
 - **[Multi-Repository Architecture](MULTI_REPOSITORY_ARCHITECTURE.md)** - Multi-repository architecture guide (includes PPCSL overview and pre-migration checklist)
 - **[SEO Audit](SEO_AUDIT.md)** - SEO audit and Google Search Console issues & fixes
 - **PWA Features** - Progressive Web App fully implemented with Service Worker, offline support, and installation (see Frontend Documentation for details)

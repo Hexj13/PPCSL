@@ -6,10 +6,13 @@ Complete deployment guide for the PPCSL platform on different hosting environmen
 
 1. [Quick Start](#1-quick-start)
 2. [VPS Deployment (Ubuntu/Debian)](#2-vps-deployment-ubuntudebian)
-3. [cPanel Deployment (Shared Hosting)](#3-cpanel-deployment-shared-hosting)
-4. [SSH Setup](#4-ssh-setup)
-5. [Staging Environment](#5-staging-environment)
-6. [Troubleshooting](#6-troubleshooting)
+3. [Render.com Deployment](#3-rendercom-deployment)
+4. [Namecheap Domain Setup](#4-namecheap-domain-setup)
+5. [SSH Setup](#5-ssh-setup)
+6. [Staging Environment](#6-staging-environment)
+7. [Troubleshooting](#7-troubleshooting)
+
+**Note:** For CI/CD workflows and automated deployment pipelines, see [TECHNICAL.md](./TECHNICAL.md#13-cicd-configuration) section 13.
 
 ---
 
@@ -19,50 +22,7 @@ Complete deployment guide for the PPCSL platform on different hosting environmen
 
 This guide covers deployment on:
 - **VPS (Ubuntu/Debian)** - Full control, recommended for production
-- **cPanel (Shared Hosting)** - Easy setup, good for small projects
 - **Render.com** - Cloud platform, good for automatic deployments
-
-### For cPanel (mkhost.com)
-
-```bash
-# 1. Access cPanel
-https://luna.mk-host.mk/cpanel
-
-# 2. Create database in cPanel → MySQL Databases
-#    Record full names with prefix (e.g., kupitomk_kupito)
-
-# 3. Clone project
-cd ~/public_html
-git clone https://github.com/your-username/ppcsl.git
-cd ppcsl
-
-# 4. Configure .env files
-# backend/.env
-NODE_ENV=production
-PORT=4000
-DB_HOST=localhost
-DB_USERNAME=kupitomk_user
-DB_PASSWORD=your_password
-DB_NAME=kupitomk_kupito
-JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
-FRONTEND_URL=https://kupito.mk
-
-# frontend/.env.local
-NEXT_PUBLIC_API_URL=https://kupito.mk/api
-NEXT_PUBLIC_SITE_URL=https://kupito.mk
-
-# 5. Build and deploy
-cd backend && npm install --production && npm run build && npm run migration:run
-cd ../frontend && npm install --production && npm run build
-
-# 6. Setup Node.js apps in cPanel
-# Backend: Root=~/public_html/ppcsl/backend, URL=/api, Startup=dist/main.js
-# Frontend: Root=~/public_html/ppcsl/frontend, URL=/, Startup=node_modules/next/dist/bin/next, Args=start
-
-# 7. SSL: cPanel → SSL/TLS Status → Run AutoSSL
-```
-
-**Full instructions:** See [cPanel Deployment](#3-cpanel-deployment-shared-hosting) section below.
 
 ---
 
@@ -465,152 +425,305 @@ See [TECHNICAL.md](./TECHNICAL.md#database) section for backup setup.
 
 ---
 
-## 3. cPanel Deployment (Shared Hosting)
+## 3. Render.com Deployment
 
-### Prerequisites
+Complete guide for deploying PPCSL backend on Render.com.
 
-- cPanel access (e.g., mkhost.com)
-- Domain configured
-- Node.js 20+ available in cPanel
+### 3.1. Prerequisites
 
-### Step 1: Access cPanel
+- Render.com account
+- GitHub repository with PPCSL code
+- PostgreSQL database (can be created on Render.com)
 
-1. Open: **https://luna.mk-host.mk/cpanel** or **https://kupito.mk/cpanel**
-2. Login with credentials from hosting provider
+### 3.2. Database Setup
 
-### Step 2: Create Database
+#### Create PostgreSQL Database on Render.com
 
-1. In cPanel find **"MySQL Databases"** or **"PostgreSQL Databases"**
-2. Create database: `ppcsl` (or your preferred name)
-3. Create user with secure password
-4. **⚠️ Important:** Record full names with prefix:
-   - Database: `kupitomk_kupito`
-   - User: `kupitomk_user`
-   - Password: (your password)
+1. Go to Render Dashboard → **New** → **PostgreSQL**
+2. Configure:
+   - **Name:** `ppcsl-db` (or your preferred name)
+   - **Database:** `ppcsl` (or your preferred name)
+   - **User:** Auto-generated (or custom)
+   - **Region:** Choose closest to your backend service
+   - **PostgreSQL Version:** 14+ (recommended)
+3. Click **Create Database**
+4. **⚠️ Important:** Save the connection string and credentials shown after creation
 
-### Step 3: Upload Project
+#### Database Connection Details
 
-#### Option A: Via Git (Recommended)
+After creation, Render will show:
+- **Internal Database URL** (for services in same region)
+- **External Database URL** (for external connections)
+- **Host, Port, Database name, Username, Password**
 
-If SSH is available:
+**Note:** Use **Internal Database URL** if backend service is in the same region.
 
-```bash
-cd ~/public_html
-git clone https://github.com/your-username/ppcsl.git
-cd ppcsl
+### 3.3. Backend Service Setup
+
+#### Create Web Service
+
+1. Go to Render Dashboard → **New** → **Web Service**
+2. Connect your GitHub repository
+3. Select repository: `Hexj13/kupito.club` (platform repository with submodule)
+4. Configure service:
+
+**Basic Settings:**
+- **Name:** `ppcsl-backend`
+- **Region:** Same as database (recommended)
+- **Branch:** `main`
+- **Root Directory:** (leave empty)
+- **Runtime:** `Node`
+- **Build Command:** `git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && git submodule update --init --recursive && cd core/backend && npm ci && npm run build`
+- **Start Command:** `cd core/backend && npm run start:prod`
+
+**Advanced Settings:**
+- **Auto-Deploy:** `Yes` (deploys on every push to main)
+- **Health Check Path:** `/health` (optional)
+
+**Important:** You must add `GITHUB_PAT` environment variable with a Personal Access Token that has `repo` scope to access the private PPCSL submodule.
+
+### 3.4. Environment Variables
+
+#### Required Variables
+
+Add these in Render Dashboard → Your Service → **Environment**:
+
+**Database Configuration:**
+```env
+DB_HOST=<your-database-host>
+DB_PORT=5432
+DB_USERNAME=<your-database-username>
+DB_NAME=<your-database-name>
+DB_PASSWORD=<your-database-password>
 ```
 
-#### Option B: Via File Manager
-
-1. In cPanel open **"File Manager"**
-2. Go to `public_html` directory
-3. Upload ZIP archive and extract
-
-#### Option C: Via SFTP
-
-Use FTP client (FileZilla, WinSCP) with cPanel credentials.
-
-### Step 4: Environment Variables
-
-#### Backend `.env`
-
-```bash
-cd ~/public_html/ppcsl/backend
-nano .env
-```
-
+**Application Configuration:**
 ```env
 NODE_ENV=production
-PORT=4000
-DB_HOST=localhost
-DB_PORT=5432
-DB_USERNAME=kupitomk_user
-DB_PASSWORD=your_password_from_step_2
-DB_NAME=kupitomk_kupito
-JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
-FRONTEND_URL=https://kupito.mk
+PORT=10000
 ```
 
-#### Frontend `.env.local`
+**Note:** Render automatically sets `PORT` environment variable. Your app should use `process.env.PORT || 4000`.
 
+**Authentication (REQUIRED):**
 ```env
-NEXT_PUBLIC_API_URL=https://kupito.mk/api
-NEXT_PUBLIC_SITE_URL=https://kupito.mk
+JWT_SECRET=<generate-secure-random-key>
 ```
 
-### Step 5: Build Project
-
+**Generate JWT_SECRET:**
 ```bash
-# Backend
-cd ~/public_html/ppcsl/backend
-npm install --production
-npm run build
-npm run migration:run
-
-# Frontend
-cd ~/public_html/ppcsl/frontend
-npm install --production
-npm run build
-
-# Create uploads directory
-mkdir -p ~/public_html/ppcsl/backend/uploads
-chmod 755 ~/public_html/ppcsl/backend/uploads
-
-# Create watermark assets directory
-mkdir -p ~/public_html/kupito/backend/assets/watermark
-chmod 755 ~/public_html/kupito/backend/assets/watermark
-# Copy logo.png from frontend/public/logo.png to backend/assets/watermark/logo.png
-cp ~/public_html/kupito/frontend/public/logo.png ~/public_html/kupito/backend/assets/watermark/logo.png
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-### Step 6: Configure Node.js Apps in cPanel
+**CORS Configuration:**
+```env
+FRONTEND_URL=https://your-frontend-domain.com
+API_URL=https://your-backend-domain.onrender.com
+```
 
-#### Backend Application
+#### AWS S3 Configuration (REQUIRED for production)
 
-1. In cPanel find **"Node.js"** or **"Setup Node.js App"**
-2. Click **"Create Application"**
+**⚠️ Important:** On Render.com, the file system is ephemeral. Files saved to disk are lost on restart or redeploy. You **must** use S3 for file storage in production.
+
+**Required variables:**
+```env
+AWS_ACCESS_KEY_ID=<your-aws-access-key-id>
+AWS_SECRET_ACCESS_KEY=<your-aws-secret-access-key>
+AWS_S3_BUCKET_NAME=ppcsl-uploads
+AWS_REGION=eu-north-1
+```
+
+**Optional (if using CloudFront CDN):**
+```env
+AWS_CLOUDFRONT_URL=https://cdn.kupito.club
+```
+
+**Setup instructions:**
+1. Create S3 bucket in AWS Console
+2. Configure CORS for S3 bucket
+3. Configure Bucket Policy for public read access
+4. Create IAM user for S3 access
+5. Create Access Key and save credentials
+6. (Optional) Setup CloudFront CDN for faster delivery
+
+### 3.5. Build Configuration
+
+**Build Settings:**
+1. **Root Directory:** Set to `backend` in service settings
+2. **Build Command:** `npm ci && npm run build`
+3. **Start Command:** `npm run start:prod`
+
+### 3.6. Database Migrations
+
+After first deployment, run migrations:
+
+1. Go to Render Dashboard → Your Service → **Shell**
+2. Run:
+```bash
+npm run migration:run
+```
+
+### 3.7. Loading Brands and Models (REQUIRED)
+
+After migrations, you need to load brands and models into the database.
+
+1. Go to Render Dashboard → Your Service → **Shell**
+2. Run:
+```bash
+npm run seed:all-brands
+```
+
+This will load all brands and models and automatically clear the Redis cache.
+
+### 3.8. Create Admin User
+
+**IMPORTANT:** Create an admin user to access the admin panel.
+
+1. In Render Shell, run:
+```bash
+npm run make-admin:prod -- --email your-email@example.com --password your-secure-password
+```
+
+### 3.9. Setting Up Cron Jobs
+
+The application has a built-in cron job that automatically closes listings older than 5 months (non-promoted listings only; promoted listings close automatically after promotion expires). However, on Render's free tier, services can sleep after inactivity.
+
+**Solution: Use Render Cron Job Service**
+
+1. **Set Environment Variable in Backend Service:**
+   - Add: `CRON_SECRET=<generate-secure-random-key>`
+
+2. **Create Cron Job in Render Dashboard:**
+   - Go to Render Dashboard → Your Project → **"CREATE NEW"** → **Cron Job**
+   - Configure:
+     - **Name:** `close-old-listings`
+     - **Schedule:** `0 0 * * *` (runs daily at midnight UTC)
+     - **Command:** 
+       ```bash
+       curl -X POST https://your-backend.onrender.com/api/listings/cron/close-old -H "x-cron-secret: $CRON_SECRET"
+       ```
+     - **Environment:** Same environment as your backend service
+
+### 3.10. Frontend Service Setup (if deployed separately)
+
+If you deploy the frontend as a separate service on Render.com:
+
+1. Go to Render Dashboard → **New** → **Static Site** (recommended for Next.js) or **Web Service**
+2. Connect your GitHub repository
 3. Configure:
-   - **Node.js version:** 20.x or higher
-   - **Application mode:** Production
-   - **Application root:** `/home/yourusername/public_html/ppcsl/backend`
-   - **Application URL:** `/api`
-   - **Application startup file:** `dist/main.js`
-4. Add environment variables from `.env` file
-5. Click **"Create"**
+   - **Name:** `kupito-frontend`
+   - **Root Directory:** `frontend`
+   - **Build Command:** `npm ci && npm run build`
+   - **Publish Directory:** `.next` (for Static Site)
 
-#### Frontend Application
+**Environment Variables:**
+```env
+NEXT_PUBLIC_API_URL=https://your-backend.onrender.com
+NEXT_PUBLIC_SITE_URL=https://your-frontend-domain.com
+```
 
-1. Create another Node.js application
-2. Configure:
-   - **Application root:** `/home/yourusername/public_html/ppcsl/frontend`
-   - **Application URL:** `/` (root domain)
-   - **Application startup file:** `node_modules/next/dist/bin/next`
-   - **Application arguments:** `start`
-3. Add environment variables from `.env.local`
-4. Click **"Create"**
+### 3.11. Troubleshooting
 
-### Step 7: SSL Certificate
+**Application Not Starting:**
+- Check logs in Render Dashboard → Your Service → **Logs**
+- Check environment variables are set correctly
+- Verify database is running and accessible
 
-1. In cPanel find **"SSL/TLS Status"**
-2. Click **"Run AutoSSL"**
-3. Wait a few minutes for certificate installation
+**502 Bad Gateway:**
+- Check application is running
+- Check ports are open
+- Check Nginx/proxy configuration
 
-### Step 8: Verify Deployment
+**Database Connection Failed:**
+- Check PostgreSQL is running
+- Verify password in environment variables
+- Use Internal Database URL if services are in same region
 
-- Frontend: https://kupito.mk
-- Backend API: https://kupito.mk/api
-- Health check: https://kupito.mk/api/health
+**Environment Variables Not Applied:**
+- Verify in Dashboard → Environment tab
+- Redeploy after adding/changing variables
+- Check variable names match exactly (case-sensitive)
+
+### 3.12. Post-Deployment Checklist
+
+After deployment:
+- [ ] Service status is "Live" in Render Dashboard
+- [ ] Database is running and accessible
+- [ ] Migrations executed successfully
+- [ ] Brands and models loaded
+- [ ] Admin user created
+- [ ] Health check endpoint works (`/health`)
+- [ ] API endpoints respond correctly
+- [ ] CORS is configured for frontend URL
+- [ ] S3 is configured and working
+- [ ] No critical errors in logs
 
 ---
 
-## 4. SSH Setup
+## 4. Namecheap Domain Setup
 
-### Enable SSH Access in cPanel
+### Prerequisites
 
-1. Login to cPanel: https://luna.mk-host.mk/cpanel
-2. Find **"SSH Access"** section (in Security or Advanced)
-3. Click **"Enable SSH Access"** or **"Manage SSH Access"**
-4. Follow instructions (may require email confirmation)
+- Namecheap account
+- Domain registered with Namecheap
+- Render.com service deployed
+
+### Step 1: Configure DNS Records
+
+1. Login to Namecheap account
+2. Go to **Domain List** → Select your domain → **Manage**
+3. Go to **Advanced DNS** tab
+4. Add/Update DNS records:
+
+#### For Backend API (if using subdomain)
+
+Add A Record or CNAME:
+- **Type:** A Record (or CNAME if using subdomain)
+- **Host:** `api` (or your preferred subdomain)
+- **Value:** Render.com service IP or hostname
+- **TTL:** Automatic (or 30 min)
+
+#### For Frontend
+
+Add A Record or CNAME:
+- **Type:** A Record (or CNAME)
+- **Host:** `@` (for root domain) or `www` (for www subdomain)
+- **Value:** Render.com service IP or hostname
+- **TTL:** Automatic (or 30 min)
+
+### Step 2: SSL Certificate
+
+Render.com automatically provisions SSL certificates via Let's Encrypt when you:
+1. Add custom domain in Render Dashboard
+2. Configure DNS records correctly
+3. Wait for DNS propagation (can take up to 48 hours)
+
+### Step 3: Verify Domain
+
+1. In Render Dashboard → Your Service → **Settings** → **Custom Domains**
+2. Add your domain (e.g., `your-domain.com`)
+3. Render will show DNS configuration instructions
+4. Update DNS records in Namecheap as shown
+5. Wait for SSL certificate to be issued automatically
+
+### Step 4: Update Environment Variables
+
+After domain is configured, update environment variables:
+
+**Backend:**
+```env
+FRONTEND_URL=https://your-domain.com
+```
+
+**Frontend:**
+```env
+NEXT_PUBLIC_API_URL=https://api.your-domain.com
+NEXT_PUBLIC_SITE_URL=https://your-domain.com
+```
+
+---
+
+## 5. SSH Setup
 
 ### Generate SSH Key (Local Mac)
 
@@ -619,13 +732,21 @@ ssh-keygen -t rsa -b 2048 -f ~/.ssh/ppcsl_key
 cat ~/.ssh/ppcsl_key.pub
 ```
 
-### Add Key to cPanel
+### Add Key to Server
 
-1. In cPanel → **"SSH Access"** → **"Manage SSH Keys"**
-2. Click **"Import Key"**
-3. Paste public key content
-4. Name: `ppcsl_key`
-5. Click **"Import"** then **"Authorize"**
+1. Copy your public key:
+```bash
+cat ~/.ssh/ppcsl_key.pub
+```
+
+2. Add the public key to your server's `~/.ssh/authorized_keys` file:
+```bash
+# On the server
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+echo "your-public-key-content" >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+```
 
 ### Connect to Server
 
@@ -640,13 +761,13 @@ nano ~/.ssh/config
 ```
 
 ```
-Host kupito
-    HostName luna.mk-host.mk
-    User kupitomk
-    IdentityFile ~/.ssh/kupito_key
+Host your-server
+    HostName your-server-ip-or-domain
+    User your-username
+    IdentityFile ~/.ssh/ppcsl_key
 ```
 
-Now connect with: `ssh kupito`
+Now connect with: `ssh your-server`
 
 ### Alternative Ports
 
@@ -659,7 +780,7 @@ ssh -i ~/.ssh/ppcsl_key -p 2200 yourusername@your-server.com
 
 ---
 
-## 5. Staging Environment
+## 6. Staging Environment
 
 ### Staging-Specific Features
 
@@ -701,7 +822,7 @@ Before deploying to production:
 
 ---
 
-## 6. Troubleshooting
+## 7. Troubleshooting
 
 ### Application Not Starting
 
@@ -766,21 +887,28 @@ sudo certbot renew
 sudo systemctl reload nginx
 ```
 
-### cPanel Specific Issues
+### Render.com Specific Issues
 
-#### Node.js App Not Starting
+#### Application Not Starting
 
-1. Check logs in cPanel → Node.js → View Logs
+1. Check logs in Render Dashboard → Your Service → **Logs**
 2. Verify Node.js version is 20+
-3. Check `dist/main.js` exists
-4. Verify environment variables
+3. Check build command completed successfully
+4. Verify environment variables are set correctly
 
 #### Database Connection Issues
 
-1. Verify database and user names include prefix
+1. Verify database credentials in environment variables
 2. Check password is correct
-3. Ensure user has privileges on database
-4. Verify database exists in cPanel
+3. Use Internal Database URL if services are in same region
+4. Verify database is running in Render Dashboard
+
+#### Custom Domain Issues
+
+1. Verify DNS records are configured correctly in Namecheap
+2. Wait for DNS propagation (can take up to 48 hours)
+3. Check SSL certificate status in Render Dashboard
+4. Verify domain is added in Render Dashboard → Settings → Custom Domains
 
 ---
 
@@ -845,246 +973,11 @@ npm run migration:revert
 - [ ] Nginx configurations created and enabled
 - [ ] DNS records configured
 - [ ] SSL certificates installed
-- [ ] Applications started via PM2 (or cPanel)
+- [ ] Applications started via PM2 (or Render.com)
 - [ ] PM2 saved (`pm2 save`)
 - [ ] Site opens in browser
 - [ ] Health check endpoint works (`/health`)
 - [ ] Database backups configured
-
----
-
-## 7. Render.com Deployment
-
-Complete guide for deploying Kupito backend on Render.com.
-
-### 7.1. Prerequisites
-
-- Render.com account
-- GitHub repository with Kupito code
-- PostgreSQL database (can be created on Render.com)
-
-### 7.2. Database Setup
-
-#### Create PostgreSQL Database on Render.com
-
-1. Go to Render Dashboard → **New** → **PostgreSQL**
-2. Configure:
-   - **Name:** `ppcsl-db` (or your preferred name)
-   - **Database:** `ppcsl` (or your preferred name)
-   - **User:** Auto-generated (or custom)
-   - **Region:** Choose closest to your backend service
-   - **PostgreSQL Version:** 14+ (recommended)
-3. Click **Create Database**
-4. **⚠️ Important:** Save the connection string and credentials shown after creation
-
-#### Database Connection Details
-
-After creation, Render will show:
-- **Internal Database URL** (for services in same region)
-- **External Database URL** (for external connections)
-- **Host, Port, Database name, Username, Password**
-
-**Note:** Use **Internal Database URL** if backend service is in the same region.
-
-### 7.3. Backend Service Setup
-
-#### Create Web Service
-
-1. Go to Render Dashboard → **New** → **Web Service**
-2. Connect your GitHub repository
-3. Select repository: `Hexj13/kupito.club` (platform repository with submodule)
-4. Configure service:
-
-**Basic Settings:**
-- **Name:** `ppcsl-backend`
-- **Region:** Same as database (recommended)
-- **Branch:** `main`
-- **Root Directory:** (leave empty)
-- **Runtime:** `Node`
-- **Build Command:** `git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && git submodule update --init --recursive && cd core/backend && npm ci && npm run build`
-- **Start Command:** `cd core/backend && npm run start:prod`
-
-**Advanced Settings:**
-- **Auto-Deploy:** `Yes` (deploys on every push to main)
-- **Health Check Path:** `/health` (optional)
-
-**Important:** You must add `GITHUB_PAT` environment variable with a Personal Access Token that has `repo` scope to access the private PPCSL submodule.
-
-### 7.4. Environment Variables
-
-#### Required Variables
-
-Add these in Render Dashboard → Your Service → **Environment**:
-
-**Database Configuration:**
-```env
-DB_HOST=<your-database-host>
-DB_PORT=5432
-DB_USERNAME=<your-database-username>
-DB_NAME=<your-database-name>
-DB_PASSWORD=<your-database-password>
-```
-
-**Application Configuration:**
-```env
-NODE_ENV=production
-PORT=10000
-```
-
-**Note:** Render automatically sets `PORT` environment variable. Your app should use `process.env.PORT || 4000`.
-
-**Authentication (REQUIRED):**
-```env
-JWT_SECRET=<generate-secure-random-key>
-```
-
-**Generate JWT_SECRET:**
-```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-```
-
-**CORS Configuration:**
-```env
-FRONTEND_URL=https://your-frontend-domain.com
-API_URL=https://your-backend-domain.onrender.com
-```
-
-#### AWS S3 Configuration (REQUIRED for production)
-
-**⚠️ Important:** On Render.com, the file system is ephemeral. Files saved to disk are lost on restart or redeploy. You **must** use S3 for file storage in production.
-
-**Required variables:**
-```env
-AWS_ACCESS_KEY_ID=<your-aws-access-key-id>
-AWS_SECRET_ACCESS_KEY=<your-aws-secret-access-key>
-AWS_S3_BUCKET_NAME=ppcsl-uploads
-AWS_REGION=eu-north-1
-```
-
-**Optional (if using CloudFront CDN):**
-```env
-AWS_CLOUDFRONT_URL=https://cdn.kupito.club
-```
-
-**Setup instructions:**
-1. Create S3 bucket in AWS Console
-2. Configure CORS for S3 bucket
-3. Configure Bucket Policy for public read access
-4. Create IAM user for S3 access
-5. Create Access Key and save credentials
-6. (Optional) Setup CloudFront CDN for faster delivery
-
-### 7.5. Build Configuration
-
-**Build Settings:**
-1. **Root Directory:** Set to `backend` in service settings
-2. **Build Command:** `npm ci && npm run build`
-3. **Start Command:** `npm run start:prod`
-
-### 7.6. Database Migrations
-
-After first deployment, run migrations:
-
-1. Go to Render Dashboard → Your Service → **Shell**
-2. Run:
-```bash
-npm run migration:run
-```
-
-### 7.7. Loading Brands and Models (REQUIRED)
-
-After migrations, you need to load brands and models into the database.
-
-1. Go to Render Dashboard → Your Service → **Shell**
-2. Run:
-```bash
-npm run seed:all-brands
-```
-
-This will load all brands and models and automatically clear the Redis cache.
-
-### 7.8. Create Admin User
-
-**IMPORTANT:** Create an admin user to access the admin panel.
-
-1. In Render Shell, run:
-```bash
-npm run make-admin:prod -- --email your-email@example.com --password your-secure-password
-```
-
-### 7.9. Setting Up Cron Jobs
-
-The application has a built-in cron job that automatically closes listings older than 5 months (non-promoted listings only; promoted listings close automatically after promotion expires). However, on Render's free tier, services can sleep after inactivity.
-
-**Solution: Use Render Cron Job Service**
-
-1. **Set Environment Variable in Backend Service:**
-   - Add: `CRON_SECRET=<generate-secure-random-key>`
-
-2. **Create Cron Job in Render Dashboard:**
-   - Go to Render Dashboard → Your Project → **"CREATE NEW"** → **Cron Job**
-   - Configure:
-     - **Name:** `close-old-listings`
-     - **Schedule:** `0 0 * * *` (runs daily at midnight UTC)
-     - **Command:** 
-       ```bash
-       curl -X POST https://your-backend.onrender.com/api/listings/cron/close-old -H "x-cron-secret: $CRON_SECRET"
-       ```
-     - **Environment:** Same environment as your backend service
-
-### 7.10. Frontend Service Setup (if deployed separately)
-
-If you deploy the frontend as a separate service on Render.com:
-
-1. Go to Render Dashboard → **New** → **Static Site** (recommended for Next.js) or **Web Service**
-2. Connect your GitHub repository
-3. Configure:
-   - **Name:** `kupito-frontend`
-   - **Root Directory:** `frontend`
-   - **Build Command:** `npm ci && npm run build`
-   - **Publish Directory:** `.next` (for Static Site)
-
-**Environment Variables:**
-```env
-NEXT_PUBLIC_API_URL=https://your-backend.onrender.com
-NEXT_PUBLIC_SITE_URL=https://your-frontend-domain.com
-```
-
-### 7.11. Troubleshooting
-
-**Application Not Starting:**
-- Check logs in Render Dashboard → Your Service → **Logs**
-- Check environment variables are set correctly
-- Verify database is running and accessible
-
-**502 Bad Gateway:**
-- Check application is running
-- Check ports are open
-- Check Nginx/proxy configuration
-
-**Database Connection Failed:**
-- Check PostgreSQL is running
-- Verify password in environment variables
-- Use Internal Database URL if services are in same region
-
-**Environment Variables Not Applied:**
-- Verify in Dashboard → Environment tab
-- Redeploy after adding/changing variables
-- Check variable names match exactly (case-sensitive)
-
-### 7.12. Post-Deployment Checklist
-
-After deployment:
-- [ ] Service status is "Live" in Render Dashboard
-- [ ] Database is running and accessible
-- [ ] Migrations executed successfully
-- [ ] Brands and models loaded
-- [ ] Admin user created
-- [ ] Health check endpoint works (`/health`)
-- [ ] API endpoints respond correctly
-- [ ] CORS is configured for frontend URL
-- [ ] S3 is configured and working
-- [ ] No critical errors in logs
 
 ---
 

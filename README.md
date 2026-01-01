@@ -8,8 +8,9 @@ All documentation is located in the [`docs/`](./docs/) folder:
 
 ### General Documentation
 - **[README.md](./docs/README.md)** - Detailed project documentation
+- **[PLATFORM_GUIDE.md](./docs/PLATFORM_GUIDE.md)** - ⭐ **Complete guide for creating new platforms and where to make code changes**
 - **[TECHNICAL.md](./docs/TECHNICAL.md)** - Complete technical documentation (includes CI/CD, Google Ads setup)
-- **[DEPLOYMENT.md](./docs/DEPLOYMENT.md)** - Production deployment guide (VPS, cPanel, Render.com, SSH setup)
+- **[DEPLOYMENT.md](./docs/DEPLOYMENT.md)** - Production deployment guide (VPS, Render.com, Namecheap, SSH setup)
 - **[MULTI_REPOSITORY_ARCHITECTURE.md](./docs/MULTI_REPOSITORY_ARCHITECTURE.md)** - Multi-repository architecture guide (includes PPCSL overview and pre-migration checklist)
 - **[LOCAL_DEVELOPMENT.md](./docs/LOCAL_DEVELOPMENT.md)** - Local development guide for working with multi-repository architecture
 - **[SEO_AUDIT.md](./docs/SEO_AUDIT.md)** - SEO audit and Google Search Console issues

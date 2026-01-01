@@ -200,100 +200,62 @@ return <h1>{t('header.addListing')}</h1>;
 
 ## CI/CD
 
-### PPCSL (ppcsl)
+For complete CI/CD documentation, see **[Technical Documentation - CI/CD Configuration](TECHNICAL.md#13-cicd-configuration)**.
 
-CI/CD in PPCSL **does NOT include** build steps, as build requires locale-specific files that don't exist in core. Build happens in platform repositories.
+### Quick Overview
 
-**What PPCSL CI/CD does:**
-- Runs tests (backend and frontend)
-- Checks linters and formatting
-- Checks TypeScript types (`tsc --noEmit`)
-- On success, updates submodules in platform repositories
+**PPCSL (core):**
+- Runs tests, linters, type checking
+- Updates submodules in platform repositories on success
 
-### kupito.club
-
-**What kupito.club CI/CD does:**
-- Clones repository with submodules
+**Platform repositories:**
 - Copies locale files to core
-- Installs dependencies
-- Builds frontend and backend
-- Deploys to production
+- Builds and deploys with platform-specific configuration
 
 ---
 
 ## Workflow
 
-### Development
+For detailed workflow documentation, see:
+- **[Platform Guide - Development Workflows](PLATFORM_GUIDE.md#3-development-workflows)** - Complete workflow guide with examples
+- **[Local Development Guide - Common Workflows](LOCAL_DEVELOPMENT.md#common-workflows)** - Daily development workflows
 
-1. **Changes** are made in `ppcsl` (PPCSL)
-2. **Commit and push** to `ppcsl/main`
-3. **CI/CD runs** in `ppcsl`:
-   - Tests pass
-   - Linters and formatters pass
-   - TypeScript type checking passes
-   - Submodules updated in platform repositories
-4. **CI/CD runs** in platform repositories:
-   - Core submodule updated
-   - Locale files copied
-   - Build with locale configuration
-   - Deploy to production
+### Quick Overview
 
-### Adding New Platform
-
-1. Create new repository for the platform
-2. Add PPCSL core as submodule
-3. Create locale files:
-   - `locales/{country}.json` - Translations
-   - `theme/colors.ts` - Color scheme
-   - `config/site.ts` - Site configuration
-4. Setup CI/CD in new repository
-5. Add submodule update step in PPCSL CI/CD
-
-### Updating Platform Content
-
-1. Make changes in platform repository (kupito.club)
-2. Update `locales/mk.json`, `theme/colors.ts`, or `config/site.ts`
-3. Commit and push
-4. CI/CD builds and deploys the platform
+1. **Core changes** → Made in PPCSL → CI/CD updates platform submodules automatically
+2. **Platform changes** → Made in platform repository → CI/CD builds and deploys
+3. **New platform** → See [Platform Guide - Creating a New Platform](PLATFORM_GUIDE.md#2-creating-a-new-platform)
 
 ---
 
 ## Troubleshooting
 
-### Submodule Not Updating
+For detailed troubleshooting guides, see:
+- **[Platform Guide - Troubleshooting](PLATFORM_GUIDE.md#5-troubleshooting)** - Platform setup issues
+- **[Local Development Guide - Troubleshooting](LOCAL_DEVELOPMENT.md#troubleshooting)** - Local development issues
+- **[Deployment Guide - Troubleshooting](DEPLOYMENT.md#7-troubleshooting)** - Deployment issues
 
+### Quick Fixes
+
+**Submodule not updating:**
 ```bash
-cd kupito.club
 git submodule update --init --recursive
 git submodule update --remote --merge core
 ```
 
-### Build Can't Find Translations
-
+**Build can't find translations:**
 - Ensure locale files are copied before build
-- Check paths in build script
-- Verify `NEXT_PUBLIC_COUNTRY` environment variable
-
-### Theme Not Loading
-
-- Ensure theme files are copied before build
-- Check path resolution in Tailwind config
-- Verify theme file exports default
-
-### Import Errors
-
-- Use dynamic imports: `await import(\`./locales/${country}.json\`)`
-- Ensure files are copied to correct location
+- Check paths in CI/CD workflow
 
 ---
 
 ## Best Practices
 
-1. **Always test** core changes with kupito.club before pushing
-2. **Keep translations in sync** - if you add a new key, add it to all locales
-3. **Version core** - use semantic versioning for major changes
-4. **Monitor builds** - ensure platform builds succeed after core updates
-5. **Code review** - carefully review core changes as they affect all platforms
+1. **Always test** core changes with platform files before pushing
+2. **Keep translations in sync** - if you add a new key, add it to all platform locales
+3. **Monitor builds** - ensure platform builds succeed after core updates
+4. **Code review** - carefully review core changes as they affect all platforms
+5. **Use feature branches** for core changes (see [Platform Guide](PLATFORM_GUIDE.md#workflow-1-making-core-changes))
 
 ---
 
