@@ -52,6 +52,8 @@ backend/swagger.json
 *.db
 
 # Uploads (local)
+# But keep seed-images for all platforms to use
+!backend/uploads/seed-images/
 uploads/
 public/uploads/
 
