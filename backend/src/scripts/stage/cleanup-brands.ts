@@ -6,6 +6,9 @@ import { Favorite } from '../../favorites/entities/favorite.entity';
 import { ListingView } from '../../listings/entities/listing-view.entity';
 import { Listing } from '../../listings/entities/listing.entity';
 import { Vehicle } from '../../listings/entities/vehicle.entity';
+import { checkEnvironment } from '../script-guard';
+
+checkEnvironment(['stage', 'development', 'test']);
 
 const TARGET_BRANDS = {
   Volkswagen: [

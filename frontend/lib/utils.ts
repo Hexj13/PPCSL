@@ -78,6 +78,33 @@ export function formatDateShort(date: string | Date): string {
   return `${day}.${month}.${year}`;
 }
 
+export function formatDateRelative(
+  date: string | Date,
+  t: (_key: string, _params?: Record<string, string | number>) => string
+): string {
+  const d = new Date(date);
+  if (Number.isNaN(d.getTime())) return '';
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const dateOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+  // Разница в днях
+  const diffTime = today.getTime() - dateOnly.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) {
+    // Сегодня
+    return t('common.today');
+  } else if (diffDays > 0 && diffDays <= 7) {
+    // 1-7 дней назад
+    return t('common.daysAgo', { days: diffDays });
+  } else {
+    // Старше 7 дней - обычная дата
+    return formatDateShort(date);
+  }
+}
+
 export function formatDateLong(date: string | Date): string {
   const d = new Date(date);
   if (Number.isNaN(d.getTime())) return '';

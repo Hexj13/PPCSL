@@ -4,6 +4,9 @@ import { ConfigService } from '@nestjs/config';
 import { RedisService } from '../../common/redis.service';
 import { CACHE_PREFIXES } from '../../common/utils/cache.utils';
 import { AppDataSource } from '../../data-source';
+import { checkEnvironment } from '../script-guard';
+
+checkEnvironment(['stage', 'development', 'test']);
 
 async function clearBrandsCache() {
   console.log('🚀 Започнување на чистење на кеш за марки и модели...\n');

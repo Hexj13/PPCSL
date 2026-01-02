@@ -226,7 +226,7 @@ async function generateListingsForAllModels() {
     let images: string[];
     if (seedImages.length > 0) {
       const selectedImages = getRandomElements(seedImages, Math.min(imageCount, seedImages.length));
-      images = selectedImages.map((img) => `${baseUrl}/uploads/seed-images/${img}`);
+      images = selectedImages.map((img) => `${baseUrl}/api/upload/image/seed-images%2F${encodeURIComponent(img)}`);
     } else {
       images = [`${baseUrl}/placeholder-car.jpg`];
     }

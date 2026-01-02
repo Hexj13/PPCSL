@@ -8,6 +8,9 @@ import { VehicleModel } from '../../brands/entities/vehicle-model.entity';
 import { RedisService } from '../../common/redis.service';
 import { CACHE_PREFIXES } from '../../common/utils/cache.utils';
 import { AppDataSource } from '../../data-source';
+import { checkEnvironment } from '../script-guard';
+
+checkEnvironment(['stage', 'development', 'test']);
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));

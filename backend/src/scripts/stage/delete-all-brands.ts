@@ -6,6 +6,9 @@ import { Favorite } from '../../favorites/entities/favorite.entity';
 import { ListingView } from '../../listings/entities/listing-view.entity';
 import { Listing } from '../../listings/entities/listing.entity';
 import { Vehicle } from '../../listings/entities/vehicle.entity';
+import { checkEnvironment } from '../script-guard';
+
+checkEnvironment(['stage', 'development', 'test']);
 
 async function deleteAllBrands() {
   console.log('🚀 Започнување на бришење на сите марки...\n');

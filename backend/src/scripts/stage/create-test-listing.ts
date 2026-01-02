@@ -89,7 +89,7 @@ async function createTestListing() {
 
     const images =
       seedImages.length > 0
-        ? seedImages.map((img) => `${baseUrl}/uploads/seed-images/${img}`)
+        ? seedImages.map((img) => `${baseUrl}/api/upload/image/seed-images%2F${encodeURIComponent(img)}`)
         : [`${baseUrl}/placeholder-car.jpg`];
 
     const vin = generateVin();

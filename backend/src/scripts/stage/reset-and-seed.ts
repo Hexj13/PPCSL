@@ -7,6 +7,9 @@ import { ListingView } from '../../listings/entities/listing-view.entity';
 import { Listing } from '../../listings/entities/listing.entity';
 import { Vehicle } from '../../listings/entities/vehicle.entity';
 import { User } from '../../users/entities/user.entity';
+import { checkEnvironment } from '../script-guard';
+
+checkEnvironment(['stage', 'development', 'test']);
 
 async function clearDatabase() {
   console.log('🚀 Започнување на чистење на базата на податоци...\n');

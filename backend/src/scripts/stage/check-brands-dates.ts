@@ -2,6 +2,9 @@ import 'reflect-metadata';
 import { Brand } from '../../brands/entities/brand.entity';
 import { AppDataSource } from '../../data-source';
 
+import { checkEnvironment } from '../script-guard';
+
+checkEnvironment(['stage', 'development', 'test']);
 async function checkBrandsDates() {
   await AppDataSource.initialize();
   console.log('✅ Поврзано со базата на податоци\n');

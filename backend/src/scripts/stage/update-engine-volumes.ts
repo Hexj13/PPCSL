@@ -1,6 +1,9 @@
 import 'reflect-metadata';
 import { AppDataSource } from '../../data-source';
 import { Vehicle } from '../../listings/entities/vehicle.entity';
+import { checkEnvironment } from '../script-guard';
+
+checkEnvironment(['stage', 'development', 'test']);
 
 async function updateEngineVolumes() {
   try {

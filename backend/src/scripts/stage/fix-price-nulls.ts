@@ -1,4 +1,7 @@
 import { DataSource } from 'typeorm';
+import { checkEnvironment } from '../script-guard';
+
+checkEnvironment(['stage', 'development', 'test']);
 
 async function fixPriceNulls() {
   const dataSource = new DataSource({

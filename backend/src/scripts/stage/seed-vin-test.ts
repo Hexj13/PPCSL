@@ -11,6 +11,9 @@ import { AppDataSource } from '../../data-source';
 import { Listing } from '../../listings/entities/listing.entity';
 import { Vehicle } from '../../listings/entities/vehicle.entity';
 import { User } from '../../users/entities/user.entity';
+import { checkEnvironment } from '../script-guard';
+
+checkEnvironment(['stage', 'development', 'test']);
 
 function getRandomElement<T>(array: T[]): T {
   return array[Math.floor(Math.random() * array.length)];

@@ -16,6 +16,7 @@ import {
   formatDriveType,
   formatBodyType,
   formatDateShort,
+  formatDateRelative,
   getOptimizedImageUrl,
   getCityNameMk,
 } from '@/lib/utils';
@@ -57,12 +58,17 @@ function ListingCardComponent({
   );
   const [localIsFavorite, setLocalIsFavorite] = React.useState(storeIsFavorite);
   const [isToggling, setIsToggling] = React.useState(false);
+  const [isHydrated, setIsHydrated] = React.useState(false);
   const isTogglingRef = React.useRef(false);
   const isFavorite = localIsFavorite;
 
   React.useEffect(() => {
     setLocalIsFavorite(storeIsFavorite);
   }, [storeIsFavorite]);
+
+  React.useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   const isOwnListing = useMemo(
     () => !!(user && listing.user && user.id === listing.user.id),
@@ -392,7 +398,11 @@ function ListingCardComponent({
                   {listing.views}
                 </span>
               )}
-              <span>{formatDateShort(listing.last_updated_at)}</span>
+              <span>
+                {isHydrated
+                  ? formatDateRelative(listing.last_updated_at, t)
+                  : formatDateShort(listing.last_updated_at)}
+              </span>
             </div>
           </div>
         </div>

@@ -7,6 +7,9 @@ import { Favorite } from '../../favorites/entities/favorite.entity';
 import { Listing } from '../../listings/entities/listing.entity';
 import { Vehicle } from '../../listings/entities/vehicle.entity';
 import { User } from '../../users/entities/user.entity';
+import { checkEnvironment } from '../script-guard';
+
+checkEnvironment(['stage', 'development', 'test']);
 
 async function resetUsers() {
   try {
