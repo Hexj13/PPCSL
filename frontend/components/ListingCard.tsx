@@ -375,7 +375,7 @@ function ListingCardComponent({
             <span>{getCityNameMk(listing.city)}</span>
             <div className="flex items-center gap-3">
               {listing.views !== undefined && listing.views > 0 && (
-                <span className="flex items-center gap-1 text-xs">
+                <span className="flex items-center gap-1 text-sm">
                   <svg
                     className="w-3.5 h-3.5"
                     fill="none"
