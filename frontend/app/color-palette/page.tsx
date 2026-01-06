@@ -41,33 +41,17 @@ function ColorSwatch({
   value: string;
   className?: string;
 }) {
-  const isLight = (() => {
-    const hex = value.replace('#', '');
-    const normalizedHex =
-      hex.length === 3
-        ? hex
-            .split('')
-            .map((char) => char + char)
-            .join('')
-        : hex;
-    const r = parseInt(normalizedHex.slice(0, 2), 16);
-    const g = parseInt(normalizedHex.slice(2, 4), 16);
-    const b = parseInt(normalizedHex.slice(4, 6), 16);
-    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-    return brightness > 128;
-  })();
-
   return (
     <div className={`flex flex-col ${className}`}>
       <div
-        className="w-full h-24 rounded-lg border-2 border-gray-700 shadow-lg"
+        className="w-full h-32 rounded-lg border-2 border-primary-500/20 shadow-lg relative overflow-hidden"
         style={{ backgroundColor: value }}
-      />
-      <div className="mt-2">
-        <div className="font-semibold text-sm text-gray-300">{name}</div>
-        <div className={`text-xs font-mono ${isLight ? 'text-gray-800' : 'text-gray-300'}`}>
-          {value}
-        </div>
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10" />
+      </div>
+      <div className="mt-3 p-2 bg-bg-light rounded-lg border border-primary-500/20">
+        <div className="font-semibold text-sm text-white mb-1">{name}</div>
+        <div className="text-xs font-mono text-primary-400 font-medium">{value}</div>
       </div>
     </div>
   );
@@ -84,7 +68,9 @@ function ColorGroup({
 }) {
   return (
     <div className={`mb-8 ${className}`}>
-      <h2 className="text-2xl font-bold text-white mb-4">{title}</h2>
+      <h2 className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent mb-6">
+        {title}
+      </h2>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-10 gap-4">
         {Object.entries(colors).map(([key, value]) => (
           <ColorSwatch key={key} name={key} value={value} />
@@ -103,11 +89,13 @@ export default function ColorPalettePage() {
   const theme = loadThemeSync(country);
 
   return (
-    <div className="min-h-screen bg-gray-900 py-8 px-4">
+    <div className="min-h-screen py-8 px-4">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Color Palette</h1>
-          <p className="text-gray-400">Текущая палитра цветов проекта</p>
+        <div className="mb-10 card p-6 md:p-8">
+          <h1 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent mb-3">
+            Color Palette
+          </h1>
+          <p className="text-gray-300 text-lg">Current project color palette</p>
         </div>
 
         <ColorGroup title="Primary Colors" colors={theme.primary} />
@@ -115,8 +103,10 @@ export default function ColorPalettePage() {
         <ColorGroup title="Background Colors" colors={theme.bg} />
         <ColorGroup title="Semantic Colors" colors={theme.semantic} />
 
-        <div className="mt-12 p-6 bg-gray-800 rounded-lg border border-gray-700">
-          <h3 className="text-2xl font-bold text-white mb-6">Color Usage Reference</h3>
+        <div className="mt-12 card p-6 md:p-8">
+          <h3 className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent mb-6">
+            Color Usage Reference
+          </h3>
 
           <div className="space-y-6">
             <div>
@@ -277,9 +267,11 @@ export default function ColorPalettePage() {
           </div>
         </div>
 
-        <div className="mt-12 p-6 bg-gray-800 rounded-lg border border-gray-700">
-          <h3 className="text-xl font-bold text-white mb-4">JSON Export</h3>
-          <pre className="text-xs text-gray-300 overflow-x-auto bg-gray-900 p-4 rounded border border-gray-700 rounded-lg">
+        <div className="mt-12 card p-6 md:p-8">
+          <h3 className="text-xl font-bold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent mb-4">
+            JSON Export
+          </h3>
+          <pre className="text-xs text-primary-300 overflow-x-auto bg-bg-darker p-4 rounded-lg border border-primary-500/20 font-mono">
             {JSON.stringify(theme, null, 2)}
           </pre>
         </div>
