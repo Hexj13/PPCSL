@@ -36,6 +36,7 @@
     "seed:vehicles": "ts-node -r tsconfig-paths/register src/scripts/stage/seed-vehicles-full.ts",
     "make-admin": "ts-node -r tsconfig-paths/register src/scripts/stage/make-admin.ts",
     "make-admin:prod": "ts-node -r tsconfig-paths/register src/scripts/production/make-admin.ts",
+    "remove-admin:prod": "ts-node -r tsconfig-paths/register src/scripts/production/remove-admin.ts",
     "reset-users": "ts-node -r tsconfig-paths/register src/scripts/stage/reset-users.ts",
     "update-titles": "ts-node -r tsconfig-paths/register src/scripts/production/update-listing-titles.ts",
     "update-engine-volumes": "ts-node -r tsconfig-paths/register src/scripts/stage/update-engine-volumes.ts",

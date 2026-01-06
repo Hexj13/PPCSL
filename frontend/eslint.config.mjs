@@ -40,6 +40,7 @@ export default [
       'vitest.config.ts',
       'scripts/**',
       '**/design-system/**',
+      '**/color-palette/**',
     ],
     languageOptions: {
       parser: typescriptParser,

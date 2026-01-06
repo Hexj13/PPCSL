@@ -67,6 +67,7 @@ These scripts are **blocked from running in production** and can only be execute
 These scripts can be run in production, but should still be used with caution:
 
 - `make-admin.ts` - Create or promote user to admin (production-safe)
+- `remove-admin.ts` - Remove admin role from user (production-safe)
 - `update-listing-titles.ts` - Update listing titles based on vehicle data
 - `backup-database.ts` - Create database backup (uses pg_dump)
 
@@ -133,6 +134,7 @@ SCRIPT_DELAY_MS=10000 npm run seed:all-brands -- --skip-duplicates --skip-heavy
 ```bash
 # On any environment (including production)
 npm run make-admin:prod
+npm run remove-admin:prod
 npm run update-titles
 npm run backup
 ```
@@ -162,6 +164,25 @@ npm run make-admin:prod -- --email existing@example.com --password new-password 
 - `--last-name` - Last name (default: User)
 - `--phone` - Phone number (default: +38970111111)
 - `--update-password` - Update password for existing user
+
+#### Removing Admin Role in Production
+
+To remove admin role from a user in production:
+
+```bash
+# Remove admin role (user becomes Individual by default)
+npm run remove-admin:prod -- --email user@example.com
+
+# Remove admin role and set user type to Business
+npm run remove-admin:prod -- --email user@example.com --type Business
+
+# Remove admin role and set user type to Individual (explicit)
+npm run remove-admin:prod -- --email user@example.com --type Individual
+```
+
+**Options:**
+- `--email` - Email address (required)
+- `--type` - New user type: `Individual` or `Business` (default: `Individual`)
 
 ## Migration Scripts
 
