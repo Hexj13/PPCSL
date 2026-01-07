@@ -223,7 +223,7 @@ export async function generateMetadata({
         },
       ],
       siteName: 'Kupito',
-      locale: 'mk_MK',
+      locale: 'mk-MK',
     },
     twitter: {
       card: 'summary_large_image',

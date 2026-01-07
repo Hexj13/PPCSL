@@ -42,7 +42,10 @@ function ErrorContent({
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <button onClick={reset} className="btn-primary px-6 py-2.5 text-base font-semibold">
+          <button
+            onClick={reset}
+            className="text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-6 py-2.5 text-base rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20"
+          >
             {t('error.tryAgain')}
           </button>
           <Link href="/" className="btn-outline px-6 py-2.5 text-base font-semibold">

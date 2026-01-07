@@ -840,7 +840,7 @@ export function getDefaultLocale(): Locale {
   const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
   try {
     const siteConfig = loadSiteConfigSync(country);
-    return siteConfig.locale.split('_')[0] as Locale;
+    return siteConfig.locale.split('-')[0] as Locale;
   } catch {
     return 'mk';
   }

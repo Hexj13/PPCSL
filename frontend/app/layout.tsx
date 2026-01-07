@@ -119,7 +119,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const siteConfig = await loadSiteConfig(country);
 
   return (
-    <html lang={siteConfig.locale.split('_')[0]} suppressHydrationWarning>
+    <html lang={siteConfig.locale.split('-')[0]} suppressHydrationWarning>
       <head>
         <link
           rel="preconnect"

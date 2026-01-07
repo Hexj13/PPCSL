@@ -74,7 +74,10 @@ function VerifyEmailContent() {
             </div>
             <h1 className="text-2xl font-bold mb-4 text-red-400">{t('common.error')}</h1>
             <p className="text-gray-300 mb-6">{error}</p>
-            <button onClick={() => router.push('/')} className="btn-primary w-full">
+            <button
+              onClick={() => router.push('/')}
+              className="w-full text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20"
+            >
               {t('common.goToHome')}
             </button>
           </>

@@ -1198,17 +1198,17 @@ function UsersTab({ onViewUserListings }: UsersTabProps) {
                     {(user.listings?.length || 0) > 0 && (
                       <button
                         onClick={() => handleViewListings(user)}
-                        className="px-3 md:px-4 h-10 text-xs md:text-sm rounded-lg font-medium transition-colors bg-primary-700 hover:bg-primary-800 text-white text-center flex-1 lg:flex-none lg:w-auto flex items-center justify-center"
+                        className="text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 select-none flex-1 lg:flex-none lg:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
                       >
                         {t('admin.usersTab.viewListings', { count: user.listings?.length || 0 })}
                       </button>
                     )}
                     <button
                       onClick={() => handleToggleStatus(user.id)}
-                      className={`px-3 md:px-4 h-10 text-xs md:text-sm rounded-lg font-medium transition-colors text-center flex-1 lg:flex-none lg:w-auto flex items-center justify-center ${
+                      className={`font-medium text-xs md:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 select-none flex-1 lg:flex-none lg:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px] ${
                         user.active !== false
-                          ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/30'
-                          : 'bg-primary-500/20 text-primary-300 hover:bg-primary-500/30 border border-primary-500/30'
+                          ? 'text-red-300 hover:text-red-200 border-red-500/40 hover:border-red-500/60 bg-red-500/20 hover:bg-red-500/30'
+                          : 'text-primary-300 hover:text-primary-200 border-primary-500/40 hover:border-primary-500/60 bg-primary-500/20 hover:bg-primary-500/30'
                       }`}
                     >
                       {user.active !== false

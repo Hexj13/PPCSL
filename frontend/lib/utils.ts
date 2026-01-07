@@ -5,7 +5,7 @@ export const isBrowser = typeof window !== 'undefined';
 export function getLocale(): string {
   const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
   const siteConfig = loadSiteConfigSync(country);
-  return siteConfig.locale.split('_')[0];
+  return siteConfig.locale.split('-')[0];
 }
 
 export type LabeledOption<T = string> = { value: T; label: string };

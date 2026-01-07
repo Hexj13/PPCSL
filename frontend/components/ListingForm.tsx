@@ -1477,10 +1477,10 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
           />
           <label
             htmlFor="image-upload"
-            className={`inline-flex items-center justify-center px-4 py-2 rounded-lg font-semibold text-sm transition-all cursor-pointer ${
+            className={`inline-flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 font-medium text-xs md:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap select-none ${
               uploading || formData.images.length >= 20
-                ? 'bg-primary-500/50 text-primary-400/50 cursor-not-allowed'
-                : 'bg-gradient-to-r from-primary-700 to-primary-800 text-white hover:from-primary-600 hover:to-primary-700'
+                ? 'text-primary-400/50 border-primary-400/20 bg-primary-500/10 cursor-not-allowed'
+                : 'text-primary-400 hover:text-primary-500 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 cursor-pointer'
             }`}
           >
             {uploading ? t('common.loading') : t('listings.addPhotos')}
@@ -1620,7 +1620,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
       <button
         type="submit"
         disabled={loading}
-        className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+        className="w-full text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-500/10 disabled:hover:border-primary-400/20"
       >
         {loading
           ? mode === 'create'

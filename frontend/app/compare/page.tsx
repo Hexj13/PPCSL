@@ -162,7 +162,10 @@ export default function ComparePage() {
             {t('compare.addVehiclesHint')}
           </p>
           <div className="flex justify-center">
-            <Link href="/" className="btn-primary">
+            <Link
+              href="/"
+              className="text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 select-none"
+            >
               {t('compare.browseListings')}
             </Link>
           </div>
@@ -189,7 +192,7 @@ export default function ComparePage() {
             }
             toast.success(t('compare.allRemoved'));
           }}
-          className="h-[52px] px-6 py-3 rounded-lg font-semibold transition-all duration-200 btn-secondary"
+          className="text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 select-none"
         >
           {t('compare.clearAll')}
         </button>

@@ -41,7 +41,10 @@ export default function VerifyEmailSuccessPage() {
           {t('verifyEmail.success.title')}
         </h1>
         <p className="text-gray-300 mb-6">{t('verifyEmail.success.description')}</p>
-        <Link href="/" className="btn-primary w-full block">
+        <Link
+          href="/"
+          className="w-full text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 block"
+        >
           {t('common.goToHome')}
         </Link>
         <p className="text-sm text-gray-400 mt-4">

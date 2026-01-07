@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useState, useCallback, startTransition } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
@@ -12,8 +12,11 @@ export function Header() {
   const { user, logout, isInitialized } = useAuthStore();
   const comparisonCount = useComparisonStore((state) => state.count());
   const router = useRouter();
+  const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { t } = useTranslation();
+
+  const isAuthPage = ['/login', '/register', '/verify-phone', '/reset-password'].includes(pathname);
 
   const handleLogout = useCallback(() => {
     startTransition(() => {
@@ -65,81 +68,83 @@ export function Header() {
             />
           </Link>
 
-          <div className="flex items-center lg:hidden gap-3">
-            {!isInitialized ? (
-              <div className="h-9 w-20 bg-bg-light/30 rounded animate-pulse" />
-            ) : (
-              !isMobileMenuOpen && (
-                <>
-                  {user ? (
-                    <Link
-                      href="/listings/new"
-                      className="text-primary-400 font-medium text-xs hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 px-2.5 py-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 select-none"
-                    >
-                      <svg
-                        className="w-4 h-4 flex-shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+          {!isAuthPage && (
+            <div className="flex items-center lg:hidden gap-3">
+              {!isInitialized ? (
+                <div className="h-9 w-20 bg-bg-light/30 rounded animate-pulse" />
+              ) : (
+                !isMobileMenuOpen && (
+                  <>
+                    {user ? (
+                      <Link
+                        href="/listings/new"
+                        className="text-primary-400 font-medium text-xs hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 px-2.5 py-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 select-none"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 4v16m8-8H4"
-                        />
-                      </svg>
-                      <span>{t('header.addListing')}</span>
-                    </Link>
+                        <svg
+                          className="w-4 h-4 flex-shrink-0"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 4v16m8-8H4"
+                          />
+                        </svg>
+                        <span>{t('header.addListing')}</span>
+                      </Link>
+                    ) : (
+                      <Link
+                        href="/login"
+                        onClick={() => handleSetReturnUrl('/listings/new')}
+                        className="text-primary-400 font-medium text-xs hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 px-2.5 py-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 select-none"
+                      >
+                        <svg
+                          className="w-4 h-4 flex-shrink-0"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 4v16m8-8H4"
+                          />
+                        </svg>
+                        <span>{t('header.createListing')}</span>
+                      </Link>
+                    )}
+                  </>
+                )
+              )}
+              <button
+                onClick={handleMobileMenuToggle}
+                className="lg:hidden text-primary-500 hover:text-primary-400 transition-colors duration-200 p-2 select-none"
+                aria-label={t('header.toggleMenu')}
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {isMobileMenuOpen ? (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   ) : (
-                    <Link
-                      href="/login"
-                      onClick={() => handleSetReturnUrl('/listings/new')}
-                      className="text-primary-400 font-medium text-xs hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 px-2.5 py-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 select-none"
-                    >
-                      <svg
-                        className="w-4 h-4 flex-shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 4v16m8-8H4"
-                        />
-                      </svg>
-                      <span>{t('header.createListing')}</span>
-                    </Link>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6h16M4 12h16M4 18h16"
+                    />
                   )}
-                </>
-              )
-            )}
-            <button
-              onClick={handleMobileMenuToggle}
-              className="lg:hidden text-primary-500 hover:text-primary-400 transition-colors duration-200 p-2 select-none"
-              aria-label={t('header.toggleMenu')}
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                {isMobileMenuOpen ? (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                ) : (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                )}
-              </svg>
-            </button>
-          </div>
+                </svg>
+              </button>
+            </div>
+          )}
 
           <nav className="hidden lg:flex gap-3 lg:gap-6 items-center">
             {!isInitialized ? (
@@ -298,27 +303,29 @@ export function Header() {
               </>
             ) : (
               <>
-                <Link
-                  href="/login"
-                  onClick={() => handleSetReturnUrl('/listings/new')}
-                  className="text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 select-none"
-                >
-                  <svg
-                    className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                {!isAuthPage && (
+                  <Link
+                    href="/login"
+                    onClick={() => handleSetReturnUrl('/listings/new')}
+                    className="text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 select-none"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
-                  <span className="hidden xl:inline">{t('header.createListing')}</span>
-                  <span className="xl:hidden">{t('header.createListingShort')}</span>
-                </Link>
+                    <svg
+                      className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                    <span className="hidden xl:inline">{t('header.createListing')}</span>
+                    <span className="xl:hidden">{t('header.createListingShort')}</span>
+                  </Link>
+                )}
                 <Link
                   href="/login"
                   onClick={() => {
@@ -345,7 +352,7 @@ export function Header() {
           </nav>
         </div>
 
-        {isMobileMenuOpen && (
+        {isMobileMenuOpen && !isAuthPage && (
           <nav className="lg:hidden mt-4 pb-4 border-t border-primary-500/20 pt-4">
             {!isInitialized ? (
               <div className="flex flex-col gap-3">
@@ -471,7 +478,7 @@ export function Header() {
                     handleMobileMenuClose();
                     handleSetReturnUrl('/listings/new');
                   }}
-                  className="text-primary-400 font-medium text-xs hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 px-2.5 py-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 select-none"
+                  className="text-primary-400 font-medium text-xs hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 select-none"
                 >
                   <svg
                     className="w-4 h-4 flex-shrink-0"
@@ -499,14 +506,14 @@ export function Header() {
                       }
                     }
                   }}
-                  className="text-primary-400 font-medium text-xs hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 px-2.5 py-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 select-none"
+                  className="text-primary-400 font-medium text-xs hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 select-none"
                 >
                   {t('header.login')}
                 </Link>
                 <Link
                   href="/register"
                   onClick={handleMobileMenuClose}
-                  className="text-primary-400 font-medium text-xs hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 px-2.5 py-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 select-none"
+                  className="text-primary-400 font-medium text-xs hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 select-none"
                 >
                   {t('header.register')}
                 </Link>

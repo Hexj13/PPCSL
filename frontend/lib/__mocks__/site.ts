@@ -4,7 +4,7 @@ const config: SiteConfig = {
   country: 'mk',
   name: 'Test',
   domain: 'test.com',
-  locale: 'mk_MK',
+  locale: 'mk-MK',
   currency: 'MKD',
   countryCode: 'MK',
   supportEmail: 'support@test.com',

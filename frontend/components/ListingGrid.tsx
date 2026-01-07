@@ -656,7 +656,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
         <div className="flex justify-center">
           <button
             onClick={handleViewAllListings}
-            className="btn-primary px-6 py-3 text-base font-semibold"
+            className="text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-6 py-3 text-base rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20"
           >
             {t('listings.viewAllListings')}
           </button>
@@ -687,7 +687,10 @@ export function ListingGrid({ initialData }: ListingGridProps) {
 
       {showLoadMoreButton && !loadingMore && (
         <div className="flex justify-center pt-8 pb-0">
-          <button onClick={handleLoadMore} className="btn-primary px-8 py-3 text-lg font-semibold">
+          <button
+            onClick={handleLoadMore}
+            className="text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20"
+          >
             {t('listings.loadMore')}
           </button>
         </div>

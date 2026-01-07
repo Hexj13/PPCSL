@@ -43,7 +43,7 @@ export default function manifest(): MetadataRoute.Manifest {
       },
     ],
     categories: ['automotive', 'shopping', 'marketplace'],
-    lang: siteConfig.locale.split('_')[0],
+    lang: siteConfig.locale.split('-')[0],
     dir: 'ltr',
     orientation: 'portrait',
   };

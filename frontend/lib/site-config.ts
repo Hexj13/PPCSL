@@ -46,7 +46,7 @@ const defaultConfig: SiteConfig = {
   country: 'mk',
   name: 'PPCSL',
   domain: 'ppcsl.com',
-  locale: 'mk_MK',
+  locale: 'mk-MK',
   currency: 'MKD',
   countryCode: 'MK',
   supportEmail: 'support@ppcsl.com',

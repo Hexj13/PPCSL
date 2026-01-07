@@ -569,17 +569,34 @@ export default function MyListingsPage() {
               (timeUntilRefresh !== null && timeUntilRefresh > 0) ||
               !hasActiveListings
             }
-            className="w-full sm:w-auto btn-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
+            className="w-full sm:w-auto text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-500/10 disabled:hover:border-primary-400/20"
           >
             {isRefreshing ? (
               <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-3.5 h-3.5 md:w-4 md:h-4 border-2 border-primary-400 border-t-transparent rounded-full animate-spin flex-shrink-0"></div>
                 {t('myListings.refreshing')}
               </>
-            ) : formattedTime ? (
-              <>{t('myListings.refreshDateWithTime', { time: formattedTime })}</>
             ) : (
-              t('myListings.refreshDate')
+              <>
+                <svg
+                  className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+                {formattedTime ? (
+                  <>{t('myListings.refreshDateWithTime', { time: formattedTime })}</>
+                ) : (
+                  t('myListings.refreshDate')
+                )}
+              </>
             )}
           </button>
           {listings && listings.length > 0 && canPromote && (
@@ -589,19 +606,28 @@ export default function MyListingsPage() {
                 loadPromotionHistory(1);
               }}
               disabled={!hasPromotionHistory}
-              className={`w-full sm:w-auto h-[52px] min-h-[52px] px-4 rounded-lg text-base font-semibold transition-colors flex items-center justify-center ${
-                hasPromotionHistory
-                  ? 'bg-primary-500/20 border-2 border-primary-500/40 text-primary-300 hover:bg-primary-500/30 hover:border-primary-500/60'
-                  : 'bg-bg-light border-2 border-primary-500/20 text-gray-500 cursor-not-allowed opacity-50'
-              }`}
+              className="w-full sm:w-auto text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-primary-400/20"
             >
+              <svg
+                className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
               {t('myListings.promotionHistory')}
             </button>
           )}
           {(!listings || listings.length === 0) && (
             <a
               href="/listings/new"
-              className="w-full sm:w-auto btn-primary inline-block text-center"
+              className="w-full sm:w-auto text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 inline-block text-center"
             >
               {t('myListings.createListing')}
             </a>
@@ -621,7 +647,7 @@ export default function MyListingsPage() {
                     setPromotedFilter('All');
                   }
                 }}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors bg-bg-light hover:bg-bg-dark border ${
+                className={`px-3 md:px-4 py-2 md:py-2.5 rounded-lg font-medium text-xs md:text-sm lg:text-base transition-colors bg-bg-light hover:bg-bg-dark border ${
                   statusFilter === status
                     ? 'border-primary-500 text-white'
                     : 'border-primary-500/20'
@@ -651,7 +677,7 @@ export default function MyListingsPage() {
                     setStatusFilter('All');
                   }
                 }}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors bg-bg-light hover:bg-bg-dark border ${
+                className={`px-3 md:px-4 py-2 md:py-2.5 rounded-lg font-medium text-xs md:text-sm lg:text-base transition-colors bg-bg-light hover:bg-bg-dark border ${
                   promotedFilter === 'Promoted'
                     ? 'border-primary-500 text-white'
                     : 'border-primary-500/20'
@@ -727,7 +753,7 @@ export default function MyListingsPage() {
                     <div className="flex justify-center pt-8 pb-0">
                       <button
                         onClick={handleLoadMore}
-                        className="btn-primary px-8 py-3 text-lg font-semibold"
+                        className="text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20"
                       >
                         {t('myListings.loadMore')}
                       </button>

@@ -29,7 +29,10 @@ export default function NotFound() {
         </div>
 
         <div className="flex justify-center">
-          <Link href="/" className="btn-primary px-6 py-2.5 text-base font-semibold">
+          <Link
+            href="/"
+            className="text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-6 py-2.5 text-base rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20"
+          >
             {translations.notFound.backToHome}
           </Link>
         </div>

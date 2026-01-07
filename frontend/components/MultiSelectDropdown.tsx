@@ -3,7 +3,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState, useDeferredValue } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
-import { Button } from '@/ui';
 
 interface MultiSelectOption {
   value: string;
@@ -306,21 +305,21 @@ function MultiSelectDropdownComponent({
                   setIsOpen(false);
                   setSearchQuery('');
                 }}
-                className="px-3 py-1.5 text-sm text-white hover:text-primary-400 transition-colors duration-150"
+                className="px-3 py-1.5 text-sm text-white font-medium hover:text-white transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40"
               >
                 {t('common.reset')}
               </button>
-              <Button
-                variant="primary"
-                size="xs"
+              <button
+                type="button"
                 onClick={() => {
                   onChange(tempValues);
                   setIsOpen(false);
                   setSearchQuery('');
                 }}
+                className="px-3 py-1.5 text-sm text-white font-medium hover:text-white transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20"
               >
                 {t('common.ok')}
-              </Button>
+              </button>
             </div>
           )}
         </div>

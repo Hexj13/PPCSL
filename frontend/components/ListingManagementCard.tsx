@@ -276,10 +276,10 @@ export function ListingManagementCard({
                       onPromoteClick && (
                         <button
                           onClick={() => onPromoteClick(listing.id)}
-                          className="px-3 md:px-4 lg:px-2.5 xl:px-4 py-2.5 sm:py-2 lg:py-1.5 xl:py-2 text-xs sm:text-sm lg:text-xs xl:text-sm bg-yellow-500/20 border-2 border-yellow-500/40 text-yellow-300 hover:bg-yellow-500/30 hover:border-yellow-500/60 rounded-lg font-semibold transition-colors h-12 lg:h-10 xl:h-[52px] flex items-center justify-center gap-2 lg:gap-1.5 xl:gap-2 w-full xl:w-auto"
+                          className="text-yellow-300 font-medium text-xs md:text-sm lg:text-base hover:text-yellow-200 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-yellow-500/40 hover:border-yellow-500/60 bg-yellow-500/20 hover:bg-yellow-500/30 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
                         >
                           <svg
-                            className="w-4 h-4 lg:w-3.5 lg:h-3.5 xl:w-4 xl:h-4"
+                            className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -297,15 +297,14 @@ export function ListingManagementCard({
                     {mode === 'admin' && listing.status !== 'Closed' && onPromoteClick && (
                       <button
                         onClick={() => onPromoteClick(listing.id)}
-                        className={`px-3 md:px-4 lg:px-2.5 xl:px-4 py-2.5 sm:py-2 lg:py-1.5 xl:py-2 text-xs sm:text-sm lg:text-xs xl:text-sm border-2 rounded-lg font-semibold transition-colors h-12 lg:h-10 xl:h-[52px] flex items-center justify-center gap-2 lg:gap-1.5 xl:gap-2 w-full xl:w-auto ${
+                        className={`font-medium text-xs md:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px] ${
                           listing.is_promoted
-                            ? 'bg-[#f069be33] border-[#f069be]/40 hover:bg-[#f069be44] hover:border-[#f069be]/60'
-                            : 'bg-yellow-500/20 border-yellow-500/40 text-yellow-300 hover:bg-yellow-500/30 hover:border-yellow-500/60'
+                            ? 'bg-[#f069be33] border-[#f069be]/40 hover:bg-[#f069be44] hover:border-[#f069be]/60 text-[#ff63c6] hover:text-[#ff7dd0]'
+                            : 'bg-yellow-500/20 border-yellow-500/40 text-yellow-300 hover:bg-yellow-500/30 hover:border-yellow-500/60 hover:text-yellow-200'
                         }`}
-                        style={listing.is_promoted ? { color: 'rgb(255 99 198)' } : undefined}
                       >
                         <svg
-                          className="w-4 h-4"
+                          className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -325,7 +324,7 @@ export function ListingManagementCard({
                     {listing.status === 'Paused' && (
                       <button
                         onClick={() => onAction(listing.id, 'publish')}
-                        className="px-3 md:px-4 lg:px-2.5 xl:px-4 py-2.5 sm:py-2 lg:py-1.5 xl:py-2 text-xs sm:text-sm lg:text-xs xl:text-sm bg-primary-500/20 border-2 border-primary-500/40 text-primary-300 hover:bg-primary-500/30 hover:border-primary-500/60 rounded-lg font-semibold transition-colors h-12 lg:h-10 xl:h-[52px] flex items-center justify-center w-full xl:w-auto"
+                        className="text-primary-300 font-medium text-xs md:text-sm lg:text-base hover:text-primary-200 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-500/40 hover:border-primary-500/60 bg-primary-500/20 hover:bg-primary-500/30 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
                       >
                         {t('listings.publishAction')}
                       </button>
@@ -333,7 +332,7 @@ export function ListingManagementCard({
                     {listing.status === 'Active' && (
                       <button
                         onClick={() => onAction(listing.id, 'pause')}
-                        className="px-3 md:px-4 lg:px-2.5 xl:px-4 py-2.5 sm:py-2 lg:py-1.5 xl:py-2 text-xs sm:text-sm lg:text-xs xl:text-sm bg-blue-500/20 border-2 border-blue-500/40 text-blue-300 hover:bg-blue-500/30 hover:border-blue-500/60 rounded-lg font-semibold transition-colors h-12 lg:h-10 xl:h-[52px] flex items-center justify-center w-full xl:w-auto"
+                        className="text-blue-300 font-medium text-xs md:text-sm lg:text-base hover:text-blue-200 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-blue-500/40 hover:border-blue-500/60 bg-blue-500/20 hover:bg-blue-500/30 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
                       >
                         {t('listings.pauseAction')}
                       </button>
@@ -341,7 +340,7 @@ export function ListingManagementCard({
                     {listing.status !== 'Closed' && (
                       <button
                         onClick={() => onAction(listing.id, 'close')}
-                        className="px-3 md:px-4 lg:px-2.5 xl:px-4 py-2.5 sm:py-2 lg:py-1.5 xl:py-2 text-xs sm:text-sm lg:text-xs xl:text-sm bg-gray-500/20 border-2 border-gray-500/40 text-gray-300 hover:bg-gray-500/30 hover:border-gray-500/60 rounded-lg font-semibold transition-colors h-12 lg:h-10 xl:h-[52px] flex items-center justify-center w-full xl:w-auto"
+                        className="text-gray-300 font-medium text-xs md:text-sm lg:text-base hover:text-gray-200 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-gray-500/40 hover:border-gray-500/60 bg-gray-500/20 hover:bg-gray-500/30 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
                       >
                         {t('common.close')}
                       </button>
@@ -351,12 +350,12 @@ export function ListingManagementCard({
                 {mode === 'my-listings' && listing.status !== 'Closed' && (
                   <Link
                     href={`/listings/${listing.id}/edit`}
-                    className="bg-bg-dark/95 backdrop-blur-sm px-3 md:px-4 lg:px-2.5 xl:px-4 py-2.5 sm:py-2 lg:py-1.5 xl:py-2 text-xs sm:text-sm lg:text-xs xl:text-sm rounded-lg border-2 border-primary-500/30 text-primary-400 hover:text-primary-300 hover:border-primary-500/50 transition-colors duration-200 inline-flex items-center justify-center h-12 lg:h-10 xl:h-[52px] w-full xl:w-auto"
+                    className="text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-300 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-500/30 hover:border-primary-500/50 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
                     title={t('common.editListing')}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <svg
-                      className="w-4 h-4 sm:w-5 sm:h-5 lg:w-3.5 lg:h-3.5 xl:w-5 xl:h-5"
+                      className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -368,7 +367,7 @@ export function ListingManagementCard({
                         d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                       />
                     </svg>
-                    <span className="ml-1.5 sm:hidden">{t('common.editListing')}</span>
+                    <span className="sm:hidden">{t('common.editListing')}</span>
                   </Link>
                 )}
               </div>
