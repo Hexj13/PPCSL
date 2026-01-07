@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -8,6 +9,7 @@ import { toast } from 'react-hot-toast';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { useTranslation } from '@/hooks/useTranslation';
 import { listingsApi, Listing } from '@/lib/api';
+import { getColorLabel } from '@/lib/form-options';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { useAuthStore, useComparisonStore } from '@/lib/store';
 import {
@@ -233,6 +235,60 @@ export default function ComparePage() {
           </thead>
           <tbody>
             <tr className="border-b border-primary-500/10">
+              <td className="py-4 px-4 text-primary-400 font-semibold">{t('compare.photo')}</td>
+              {listings.map((listing) => {
+                const imageUrl = listing.images?.[0] || '/placeholder-car.jpg';
+                const isPlaceholder = imageUrl === '/placeholder-car.jpg';
+                const isExternal =
+                  imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
+
+                return (
+                  <td key={listing.id} className="py-4 px-4 text-center">
+                    <div className="flex justify-center">
+                      <Link
+                        href={`/listings/${listing.id}`}
+                        className="relative w-24 h-16 bg-bg-darker rounded-lg overflow-hidden block"
+                      >
+                        {isPlaceholder ? (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            <svg
+                              className="w-8 h-8"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={1.5}
+                                d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"
+                              />
+                            </svg>
+                          </div>
+                        ) : isExternal ? (
+                          <img
+                            src={imageUrl}
+                            alt={listing.title}
+                            className="w-full h-full object-cover"
+                            crossOrigin="anonymous"
+                          />
+                        ) : (
+                          <Image
+                            src={imageUrl}
+                            alt={listing.title}
+                            fill
+                            sizes="96px"
+                            className="object-cover"
+                            unoptimized={process.env.NODE_ENV === 'development'}
+                          />
+                        )}
+                      </Link>
+                    </div>
+                  </td>
+                );
+              })}
+            </tr>
+            <tr className="border-b border-primary-500/10">
               <td className="py-4 px-4 text-primary-400 font-semibold">
                 {t('compare.titleColumn')}
               </td>
@@ -408,7 +464,9 @@ export default function ComparePage() {
                   className="py-4 px-4 text-center"
                   style={{ color: 'rgb(243, 243, 243)' }}
                 >
-                  {getValue(listing.vehicle?.color)}
+                  {listing.vehicle?.color
+                    ? getColorLabel(listing.vehicle.color, t)
+                    : t('compare.notAvailable')}
                 </td>
               ))}
             </tr>

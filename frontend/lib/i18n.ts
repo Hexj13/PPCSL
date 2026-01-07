@@ -638,6 +638,7 @@ export interface Translations {
     clearAll: string;
     allRemoved: string;
     parameter: string;
+    photo: string;
     titleColumn: string;
     brand: string;
     model: string;

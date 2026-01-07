@@ -287,7 +287,8 @@ If you need to make changes to core while working in kupito.club:
 #### Making Changes to Platform-Specific Files
 
 1. **Edit platform files:**
-   - `locales/mk.json` - Translations
+   - `locales/mk.json` - Macedonian translations
+   - `locales/en.json` - English translations
    - `theme/colors.ts` - Color scheme
    - `config/site.ts` - Site configuration
 
@@ -454,7 +455,7 @@ cp -r theme core/frontend/lib/
 cp -r config core/frontend/lib/
 
 # 4. Make changes
-# Edit locales/mk.json, theme/colors.ts, or config/site.ts
+# Edit locales/mk.json, locales/en.json, theme/colors.ts, or config/site.ts
 
 # 5. Copy files again and test
 cp -r locales core/frontend/lib/

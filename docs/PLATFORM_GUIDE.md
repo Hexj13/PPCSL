@@ -126,7 +126,7 @@ Create `locales/{country-code}.json` (e.g., `locales/en.json`, `locales/de.json`
 }
 ```
 
-**Important:** Copy all translation keys from `core/frontend/lib/messages/mk.json` (or another existing platform) and translate them to your language.
+**Important:** Copy all translation keys from `core/frontend/lib/locales/mk.json` or `core/frontend/lib/locales/en.json` (or another existing platform) and translate them to your language.
 
 ### Step 5: Create Theme File
 

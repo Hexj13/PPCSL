@@ -40,7 +40,7 @@ This architecture separates the core application code from locale-specific confi
 ### What's in Platform-Specific Repositories
 
 Each platform (e.g., kupito.club) contains only:
-1. **Translations** (`locales/mk.json`) - All user-facing text in local language
+1. **Translations** (`locales/mk.json`, `locales/en.json`, etc.) - All user-facing text in supported languages
 2. **Theme** (`theme/colors.ts`) - Color scheme specific to the platform
 3. **Site Configuration** (`config/site.ts`) - Domain, locale, currency, support email
 4. **Build Configuration** - CI/CD workflows, deployment scripts
@@ -77,7 +77,8 @@ ppcsl (GitHub) - PPCSL (Platform for posting car sale listings)
     │
     └─── kupito.club (GitHub) - Platform for Macedonia
          └── core/ (Git Submodule → ppcsl)
-         └── locales/mk.json
+         ├── locales/mk.json
+         └── locales/en.json
          └── theme/colors.ts
          └── config/site.ts
 ```
@@ -130,7 +131,8 @@ kupito.club/
 │   ├── frontend/
 │   └── backend/
 ├── locales/
-│   └── mk.json                 # All Macedonian translations
+│   ├── mk.json                 # Macedonian translations
+│   └── en.json                 # English translations
 ├── theme/
 │   └── colors.ts              # Macedonian color scheme
 ├── config/
@@ -154,7 +156,7 @@ kupito.club/
 - `frontend/hooks/useTranslation.ts` - Hook for using translations
 
 **In platform repositories:**
-- `locales/{country}.json` - Translation files
+- `locales/{country}.json` - Translation files (e.g., `locales/mk.json`, `locales/en.json`)
 
 **Usage:**
 ```typescript
@@ -252,7 +254,7 @@ git submodule update --remote --merge core
 ## Best Practices
 
 1. **Always test** core changes with platform files before pushing
-2. **Keep translations in sync** - if you add a new key, add it to all platform locales
+2. **Keep translations in sync** - if you add a new key, add it to all platform locales (e.g., `locales/mk.json`, `locales/en.json`)
 3. **Monitor builds** - ensure platform builds succeed after core updates
 4. **Code review** - carefully review core changes as they affect all platforms
 5. **Use feature branches** for core changes (see [Platform Guide](PLATFORM_GUIDE.md#workflow-1-making-core-changes))

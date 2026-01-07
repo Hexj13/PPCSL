@@ -1044,7 +1044,7 @@ PPCSL (Core Repository)
    - Initializes and updates submodules recursively
 
 2. **Copy platform-specific files:**
-   - Copies `locales/mk.json` to `core/frontend/lib/messages/mk.json`
+   - Copies `locales/mk.json` and `locales/en.json` to `core/frontend/lib/locales/`
    - Copies `theme/colors.ts` to `core/frontend/lib/theme/colors.ts`
    - Copies `config/site.ts` to `core/frontend/lib/config/site.ts`
 
