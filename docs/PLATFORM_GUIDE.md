@@ -126,7 +126,7 @@ Create `locales/{country-code}.json` (e.g., `locales/en.json`, `locales/de.json`
 }
 ```
 
-**Important:** Copy all translation keys from `core/frontend/lib/locales/mk.json` or `core/frontend/lib/locales/en.json` (or another existing platform) and translate them to your language.
+**Important:** Copy all translation keys from `locales/mk.json` or `locales/en.json` in the root directory (or from another existing platform) and translate them to your language. Translation files are loaded directly from the root `locales/` directory.
 
 ### Step 5: Create Theme File
 
@@ -224,11 +224,11 @@ jobs:
           submodules: recursive
           token: ${{ secrets.PAT_TOKEN }}
 
-      - name: Copy locale files
+      - name: Copy platform files
         run: |
-          cp -r locales core/frontend/lib/
-          cp -r theme core/frontend/lib/
-          cp -r config core/frontend/lib/
+          cp -r locales core/frontend/lib/  # Optional: translations load from root
+          cp -r theme core/frontend/lib/    # Required
+          cp -r config core/frontend/lib/   # Required
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

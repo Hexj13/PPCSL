@@ -244,9 +244,15 @@ docker logs kupito-postgres
 
 ### Файлы локализации не загружаются (для kupito.club)
 
-Убедитесь, что файлы скопированы:
+Убедитесь, что файлы переводов существуют в корневой директории:
 ```bash
-ls core/frontend/lib/locales/
+ls locales/mk.json
+ls locales/en.json
+```
+Файлы переводов загружаются напрямую из корневой директории.
+
+Убедитесь, что файлы темы и конфигурации скопированы:
+```bash
 ls core/frontend/lib/theme/
 ls core/frontend/lib/config/
 ```

@@ -145,12 +145,13 @@ Use this approach when:
    git submodule update --init --recursive
    ```
 
-3. **Copy locale files to core:**
+3. **Copy platform files to core:**
    ```bash
-   # This makes locale files available to core during development
-   cp -r locales core/frontend/lib/
-   cp -r theme core/frontend/lib/
-   cp -r config core/frontend/lib/
+   # Translations are loaded directly from root, but copying provides fallback
+   # Theme and config files must be copied as they are TypeScript modules
+   cp -r locales core/frontend/lib/  # Optional for translations
+   cp -r theme core/frontend/lib/   # Required
+   cp -r config core/frontend/lib/  # Required
    ```
 
 4. **Install dependencies:**
@@ -294,10 +295,12 @@ If you need to make changes to core while working in kupito.club:
 
 2. **Copy files to core for testing:**
    ```bash
-   cp -r locales core/frontend/lib/
+   cp -r locales core/frontend/lib/  # Optional for translations (loaded from root)
    cp -r theme core/frontend/lib/
    cp -r config core/frontend/lib/
    ```
+   
+   **Note:** Translation files are loaded directly from the root `locales/` directory. Copying them to core is optional and only used as a fallback.
 
 3. **Test locally**
 
@@ -320,11 +323,11 @@ Create a helper script to simplify the workflow:
 ```bash
 #!/bin/bash
 
-# Copy locale files to core
-echo "Copying locale files to core..."
-cp -r locales core/frontend/lib/
-cp -r theme core/frontend/lib/
-cp -r config core/frontend/lib/
+# Copy platform files to core
+echo "Copying platform files to core..."
+cp -r locales core/frontend/lib/  # Optional: translations load from root
+cp -r theme core/frontend/lib/    # Required
+cp -r config core/frontend/lib/   # Required
 
 # Start development servers
 cd core
@@ -449,10 +452,10 @@ cd core
 git pull origin main
 cd ..
 
-# 3. Copy locale files
-cp -r locales core/frontend/lib/
-cp -r theme core/frontend/lib/
-cp -r config core/frontend/lib/
+# 3. Copy platform files
+cp -r locales core/frontend/lib/  # Optional: translations load from root
+cp -r theme core/frontend/lib/   # Required
+cp -r config core/frontend/lib/   # Required
 
 # 4. Make changes
 # Edit locales/mk.json, locales/en.json, theme/colors.ts, or config/site.ts
@@ -496,11 +499,11 @@ git push origin main
    git checkout feature/your-feature
    cd ..
    ```
-4. **Copy locale files and test:**
+4. **Copy platform files and test:**
    ```bash
-   cp -r locales core/frontend/lib/
-   cp -r theme core/frontend/lib/
-   cp -r config core/frontend/lib/
+   cp -r locales core/frontend/lib/  # Optional for translations
+   cp -r theme core/frontend/lib/    # Required
+   cp -r config core/frontend/lib/   # Required
    cd core
    npm run dev
    ```
@@ -526,9 +529,15 @@ git status  # Check what's modified
 **Problem:** Translations, theme, or config not loading
 
 **Solution:**
-1. Ensure files are copied to `core/frontend/lib/`:
+1. Check that translation files exist in root `locales/` directory:
    ```bash
-   ls core/frontend/lib/locales/
+   ls locales/mk.json
+   ls locales/en.json
+   ```
+   Translation files are loaded directly from the root directory.
+
+2. Ensure theme and config files are copied to `core/frontend/lib/`:
+   ```bash
    ls core/frontend/lib/theme/
    ls core/frontend/lib/config/
    ```
@@ -581,7 +590,7 @@ lsof -ti:4000 | xargs kill -9
 1. **Always test locally** before pushing changes
 2. **Keep core and platform repos in sync** - update submodules regularly
 3. **Use feature branches** for core changes
-4. **Copy locale files** after updating core submodule
+4. **Copy platform files** after updating core submodule (translations load from root, but copying provides fallback)
 5. **Commit core changes to PPCSL**, not to platform repositories
 6. **Commit platform changes to platform repos**, not to core
 7. **Test with real locale files** when possible (use kupito.club workflow)
@@ -594,5 +603,6 @@ lsof -ti:4000 | xargs kill -9
 - **PPCSL (core)**: For core development, uses default values
 - **kupito.club**: For platform development, uses real locale files
 - **Sync changes**: Core → Platform (automatic via CI/CD or manual), Platform → Core (push from core directory)
-- **Always copy locale files** to core when working in kupito.club
+- **Translation files**: Loaded directly from root `locales/` directory (copying to core is optional for fallback)
+- **Theme/Config files**: Must be copied to core as they are TypeScript modules
 - **Test locally** before pushing to remote repositories

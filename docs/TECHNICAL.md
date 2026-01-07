@@ -1000,9 +1000,9 @@ PPCSL (Core Repository)
     └─── Platform Repositories (e.g., kupito.club)
          │
          ├─── On submodule update or push:
-         │    ├── Copy locale files to core
-         │    ├── Copy theme files to core
-         │    ├── Copy config files to core
+         │    ├── Copy locale files to core (optional: translations load from root)
+         │    ├── Copy theme files to core (required: TypeScript modules)
+         │    ├── Copy config files to core (required: TypeScript modules)
          │    ├── Install dependencies
          │    ├── Build frontend and backend
          │    └── Deploy to production
@@ -1044,9 +1044,11 @@ PPCSL (Core Repository)
    - Initializes and updates submodules recursively
 
 2. **Copy platform-specific files:**
-   - Copies `locales/mk.json` and `locales/en.json` to `core/frontend/lib/locales/`
+   - Copies `locales/` to `core/frontend/lib/locales/` (for fallback, translations are loaded directly from root)
    - Copies `theme/colors.ts` to `core/frontend/lib/theme/colors.ts`
    - Copies `config/site.ts` to `core/frontend/lib/config/site.ts`
+
+   **Note:** Translation files are loaded directly from the root `locales/` directory. The copy to core is kept for backward compatibility.
 
 3. **Install dependencies:**
    - Installs frontend and backend dependencies

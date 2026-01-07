@@ -95,7 +95,7 @@
     "loading": "Loading...",
     "title": "Cookie Settings",
     "description": "Here you can manage your cookie preferences. Cookies are small files stored on your device that help us improve your user experience, analyze website usage and provide relevant content.",
-    "preferencesSaved": "✓ Your preferences have been saved successfully",
+    "preferencesSaved": "Your preferences have been saved successfully",
     "necessary": {
       "title": "Necessary Cookies",
       "description": "These cookies are necessary for the website to function and cannot be disabled. They include session, security and basic platform functionality cookies."

@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { toast } from 'react-hot-toast';
 
 import { useCookieConsent } from '@/hooks/useCookieConsent';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -10,14 +11,6 @@ export default function CookieSettingsPage() {
   const { t } = useTranslation();
   const { consent, isLoading, grantConsent, denyConsent } = useCookieConsent();
   const [isSaving, setIsSaving] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-
-  useEffect(() => {
-    if (showSuccess) {
-      const timer = setTimeout(() => setShowSuccess(false), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [showSuccess]);
 
   const handleSave = (newConsent: 'granted' | 'denied') => {
     setIsSaving(true);
@@ -28,7 +21,7 @@ export default function CookieSettingsPage() {
     }
     setTimeout(() => {
       setIsSaving(false);
-      setShowSuccess(true);
+      toast.success(t('cookieSettings.preferencesSaved'));
     }, 300);
   };
 
@@ -52,12 +45,6 @@ export default function CookieSettingsPage() {
           {t('cookieSettings.description')}
         </p>
       </div>
-
-      {showSuccess && (
-        <div className="surface border-2 border-[#31A55F] bg-[#31A55F]/10 p-4 mb-6 rounded-lg">
-          <p className="text-[#31A55F] font-medium">{t('cookieSettings.preferencesSaved')}</p>
-        </div>
-      )}
 
       <div className="surface mb-6">
         <h2 className="text-2xl font-bold mb-4">{t('cookieSettings.necessary.title')}</h2>

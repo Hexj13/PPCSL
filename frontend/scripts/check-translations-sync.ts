@@ -84,7 +84,7 @@ function checkTranslationsSync() {
   const frontendFiles = findLocaleFiles(localesDir);
   const rootFiles = findLocaleFiles(rootLocalesDir);
 
-  const allFiles: TranslationFile[] = [...frontendFiles, ...rootFiles];
+  const allFiles: TranslationFile[] = [...rootFiles, ...frontendFiles];
 
   if (allFiles.length === 0) {
     console.error('❌ No translation files found!');
@@ -109,37 +109,38 @@ function checkTranslationsSync() {
 
     for (const locale of locales) {
       const files = allFiles.filter((f) => f.locale === locale);
-      const frontendFile = files.find((f) => f.path.startsWith(localesDir));
       const rootFile = files.find((f) => f.path.startsWith(rootLocalesDir));
+      const frontendFile = files.find((f) => f.path.startsWith(localesDir));
 
       let found = false;
       let filePath = '';
 
-      if (frontendFile) {
-        const value = getValueByPath(frontendFile.translations, key);
-        if (value !== undefined) {
-          found = true;
-        } else {
-          filePath = frontendFile.path;
-        }
-      }
-
-      if (!found && rootFile) {
+      if (rootFile) {
         const value = getValueByPath(rootFile.translations, key);
         if (value !== undefined) {
           found = true;
-        } else if (!filePath) {
+        } else {
           filePath = rootFile.path;
+        }
+      }
+
+      if (!found && frontendFile) {
+        const value = getValueByPath(frontendFile.translations, key);
+        if (value !== undefined) {
+          found = true;
+        } else if (!filePath) {
+          filePath = frontendFile.path;
         }
       }
 
       if (found) {
         presentInLocales.push(locale);
       } else {
-        const targetFile = frontendFile || rootFile;
+        const targetFile = rootFile || frontendFile;
         missingInLocales.push({
           locale,
-          filePath: filePath || (targetFile ? targetFile.path : `${locale}.json`),
+          filePath:
+            filePath || (targetFile ? targetFile.path : join(rootLocalesDir, `${locale}.json`)),
         });
       }
     }
