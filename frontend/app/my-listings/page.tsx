@@ -19,6 +19,7 @@ export default function MyListingsPage() {
   const { user, isInitialized } = useAuthStore();
   const { t } = useTranslation();
   const [listings, setListings] = useState<Listing[]>([]);
+  const [allListingsForCount, setAllListingsForCount] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
@@ -163,6 +164,20 @@ export default function MyListingsPage() {
         hasLoadedRef.current = true;
         fetchListings(1, false);
 
+        listingsApi
+          .getMy(1, 1000)
+          .then((res) => {
+            const responseData = res.data;
+            let allListings: Listing[] = [];
+            if (Array.isArray(responseData)) {
+              allListings = responseData;
+            } else if (responseData && typeof responseData === 'object') {
+              allListings = responseData.data || [];
+            }
+            setAllListingsForCount(allListings);
+          })
+          .catch(() => {});
+
         const lastRefreshKey = `lastRefreshDate_${user.id}`;
         const lastRefreshStr = localStorage.getItem(lastRefreshKey);
         if (lastRefreshStr) {
@@ -266,6 +281,36 @@ export default function MyListingsPage() {
             return listing;
           });
           listingsRef.current = updated;
+          setAllListingsForCount((prevAll) => {
+            const found = prevAll.find((listing) => listing.id === id);
+            if (found) {
+              const statusMap: Record<'publish' | 'pause', 'Active' | 'Paused'> = {
+                publish: 'Active',
+                pause: 'Paused',
+              };
+              return prevAll.map((listing) => {
+                if (listing.id === id) {
+                  return { ...listing, status: statusMap[action] };
+                }
+                return listing;
+              });
+            } else {
+              listingsApi
+                .getMy(1, 1000)
+                .then((res) => {
+                  const responseData = res.data;
+                  let allListings: Listing[] = [];
+                  if (Array.isArray(responseData)) {
+                    allListings = responseData;
+                  } else if (responseData && typeof responseData === 'object') {
+                    allListings = responseData.data || [];
+                  }
+                  setAllListingsForCount(allListings);
+                })
+                .catch(() => {});
+              return prevAll;
+            }
+          });
           return updated;
         });
       } catch {
@@ -295,6 +340,37 @@ export default function MyListingsPage() {
           return listing;
         });
         listingsRef.current = updated;
+        setAllListingsForCount((prevAll) => {
+          const found = prevAll.find((listing) => listing.id === listingToClose);
+          if (found) {
+            return prevAll.map((listing) => {
+              if (listing.id === listingToClose) {
+                return {
+                  ...listing,
+                  status: 'Closed' as const,
+                  is_promoted: false,
+                  promoted_until: null,
+                };
+              }
+              return listing;
+            });
+          } else {
+            listingsApi
+              .getMy(1, 1000)
+              .then((res) => {
+                const responseData = res.data;
+                let allListings: Listing[] = [];
+                if (Array.isArray(responseData)) {
+                  allListings = responseData;
+                } else if (responseData && typeof responseData === 'object') {
+                  allListings = responseData.data || [];
+                }
+                setAllListingsForCount(allListings);
+              })
+              .catch(() => {});
+            return prevAll;
+          }
+        });
         return updated;
       });
     } catch {
@@ -438,12 +514,13 @@ export default function MyListingsPage() {
   }, [listings, statusFilter, promotedFilter]);
 
   const statusCounts = useMemo(() => {
+    const sourceListings = allListingsForCount.length > 0 ? allListingsForCount : listings;
     return {
-      Active: listings.filter((l) => l.status === 'Active').length,
-      Paused: listings.filter((l) => l.status === 'Paused').length,
-      Closed: listings.filter((l) => l.status === 'Closed').length,
+      Active: sourceListings.filter((l) => l.status === 'Active').length,
+      Paused: sourceListings.filter((l) => l.status === 'Paused').length,
+      Closed: sourceListings.filter((l) => l.status === 'Closed').length,
     };
-  }, [listings]);
+  }, [listings, allListingsForCount]);
 
   if (!isInitialized && !user) {
     return null;
@@ -512,7 +589,7 @@ export default function MyListingsPage() {
                 loadPromotionHistory(1);
               }}
               disabled={!hasPromotionHistory}
-              className={`w-full sm:w-auto px-4 py-2 rounded-lg text-base font-semibold transition-colors ${
+              className={`w-full sm:w-auto h-[52px] min-h-[52px] px-4 rounded-lg text-base font-semibold transition-colors flex items-center justify-center ${
                 hasPromotionHistory
                   ? 'bg-primary-500/20 border-2 border-primary-500/40 text-primary-300 hover:bg-primary-500/30 hover:border-primary-500/60'
                   : 'bg-bg-light border-2 border-primary-500/20 text-gray-500 cursor-not-allowed opacity-50'
@@ -583,7 +660,11 @@ export default function MyListingsPage() {
               >
                 {t('myListings.promoted')}
                 <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-xs">
-                  {listings.filter((l) => l.is_promoted === true).length}
+                  {
+                    (allListingsForCount.length > 0 ? allListingsForCount : listings).filter(
+                      (l) => l.is_promoted === true
+                    ).length
+                  }
                 </span>
               </button>
             )}
@@ -632,16 +713,28 @@ export default function MyListingsPage() {
 
           {filteredListings.length > 0 && (
             <>
-              {meta && meta.totalPages && currentPage < meta.totalPages && !loadingMore && (
-                <div className="flex justify-center py-8">
-                  <button
-                    onClick={handleLoadMore}
-                    className="btn-primary px-8 py-3 text-lg font-semibold"
-                  >
-                    {t('myListings.loadMore')}
-                  </button>
-                </div>
-              )}
+              {(() => {
+                const noFilters = statusFilter === 'All' && promotedFilter === 'All';
+                const allFilteredMatch = filteredListings.length === listings.length;
+                const shouldShow = noFilters || allFilteredMatch;
+
+                return (
+                  meta &&
+                  meta.totalPages &&
+                  currentPage < meta.totalPages &&
+                  !loadingMore &&
+                  shouldShow && (
+                    <div className="flex justify-center py-8">
+                      <button
+                        onClick={handleLoadMore}
+                        className="btn-primary px-8 py-3 text-lg font-semibold"
+                      >
+                        {t('myListings.loadMore')}
+                      </button>
+                    </div>
+                  )
+                );
+              })()}
 
               {meta && meta.totalPages && currentPage >= meta.totalPages && listings.length > 0 && (
                 <div className="text-center py-8">

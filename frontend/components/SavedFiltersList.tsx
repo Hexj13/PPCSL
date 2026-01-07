@@ -273,13 +273,13 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
               console.error('Failed to apply filter:', error);
             });
           }}
-          className="card p-4 md:p-5 cursor-pointer group hover:border-primary-500 transition-colors duration-200"
+          className="card p-4 md:p-5 cursor-pointer group lg:hover:border-primary-500 transition-colors duration-200"
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
                 <span className="text-sm font-semibold text-primary-400">#{index + 1}</span>
-                <h3 className="text-lg font-bold text-white group-hover:text-primary-600 transition-colors duration-200">
+                <h3 className="text-lg font-bold text-white lg:group-hover:text-primary-600 transition-colors duration-200">
                   {filter.name}
                 </h3>
               </div>

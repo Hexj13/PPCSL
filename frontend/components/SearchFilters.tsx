@@ -106,10 +106,10 @@ const clearFiltersFromStorage = () => {
 export function SearchFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuthStore();
+  const { user, isInitialized } = useAuthStore();
   const { t } = useTranslation();
   const [isHydrated, setIsHydrated] = useState(false);
-  const userForUi = isHydrated ? user : null;
+  const userForUi = isHydrated && isInitialized ? user : null;
   const [loadingModels, setLoadingModels] = useState(false);
 
   const {
@@ -2075,39 +2075,52 @@ export function SearchFilters() {
           >
             {t('searchFilters.reset')}
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              if (userForUi) {
-                setShowSaveModal(true);
-              } else {
-                if (isBrowser) {
-                  localStorage.setItem('pendingSavedFilter', JSON.stringify(getFiltersForSave()));
-                  localStorage.setItem('returnUrl', '/favorites?tab=filters');
-                }
-                router.push('/login');
-              }
-            }}
-            disabled={!canSaveFilter()}
-            className="w-full sm:w-auto btn-secondary flex items-center justify-center gap-2"
-            title={!userForUi ? t('common.loginRequired') : ''}
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
+          {!isInitialized ? (
+            <button
+              type="button"
+              disabled
+              className="w-full sm:w-auto btn-secondary flex items-center justify-center gap-2 opacity-50"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-              />
-            </svg>
-            <span>{userForUi ? t('searchFilters.addToFavorites') : t('searchFilters.login')}</span>
-          </button>
+              <div className="w-5 h-5 border-2 border-primary-300 border-t-transparent rounded-full animate-spin"></div>
+              <span>{t('common.loading')}</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                if (userForUi) {
+                  setShowSaveModal(true);
+                } else {
+                  if (isBrowser) {
+                    localStorage.setItem('pendingSavedFilter', JSON.stringify(getFiltersForSave()));
+                    localStorage.setItem('returnUrl', '/favorites?tab=filters');
+                  }
+                  router.push('/login');
+                }
+              }}
+              disabled={!canSaveFilter()}
+              className="w-full sm:w-auto btn-secondary flex items-center justify-center gap-2"
+              title={!userForUi ? t('common.loginRequired') : ''}
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                />
+              </svg>
+              <span>
+                {userForUi ? t('searchFilters.addToFavorites') : t('searchFilters.login')}
+              </span>
+            </button>
+          )}
         </div>
         <div className="w-full sm:w-auto">
           <SortDropdown />

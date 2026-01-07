@@ -131,6 +131,10 @@ PPCSL/
 - `GET /api/listings/vin/:vin` - Find listings by VIN (with optional excludeId query param)
 - `POST /api/listings/refresh-dates` - Refresh all user's listing dates
 - `POST /api/listings/cron/close-old` - Close old listings (cron job endpoint, requires x-cron-secret header)
+- `PATCH /api/listings/:id/promote` - Toggle listing promotion (user, JWT required)
+- `GET /api/listings/promotion-history` - Get user's promotion history (JWT required)
+- `GET /api/listings/promotion-history/check` - Check if user has promotion history (JWT required)
+- `GET /api/listings/promotion-access` - Get promotion access status (no auth required)
 
 ### Favorites
 - `GET /api/favorites` - Favorites list
@@ -218,8 +222,8 @@ The project includes comprehensive testing:
 
 - **Unit Tests:** Jest-based tests for services and components
 - **Integration Tests:** API contract tests against Swagger specification
-- **Frontend Tests:** 188 tests across 13 test suites covering components, utilities, API clients, and server-side functions
-- **Backend Tests:** 266 tests across 20 test suites
+- **Frontend Tests:** 52 tests across 4 test suites covering components, utilities, API clients, and server-side functions
+- **Backend Tests:** 195 tests across 14 test suites
 - **CI/CD:** Automated testing in GitHub Actions
 
 ### Running Tests
@@ -237,7 +241,7 @@ cd frontend && npm test
 
 **Test Coverage Highlights:**
 - ✅ All critical backend services, controllers, and guards
-- ✅ All critical frontend components (ListingCard, SearchFilters, ListingForm, ListingGrid, AuthProvider)
+- ✅ All critical frontend components (AuthProvider)
 - ✅ Server-side data fetching functions (`lib/server-api.ts`)
 - ✅ Client-side API functions and utilities
 

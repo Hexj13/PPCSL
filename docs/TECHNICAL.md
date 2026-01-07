@@ -316,10 +316,11 @@ POST   /api/listings/:id/close        # Close listing
 GET    /api/listings/my               # Get user's listings
 GET    /api/listings/vin/:vin         # Find listings by VIN
 POST   /api/listings/refresh-dates    # Refresh all user's listing dates
-PATCH  /api/listings/:id/promote      # Toggle listing promotion (user)
-GET    /api/listings/promotion-history # Get user's promotion history
-GET    /api/listings/promotion-history/check # Check if user has promotion history
-GET    /api/listings/promotion-access  # Get promotion access status
+POST   /api/listings/cron/close-old   # Close old listings (cron job, requires x-cron-secret header)
+PATCH  /api/listings/:id/promote      # Toggle listing promotion (user, JWT required)
+GET    /api/listings/promotion-history # Get user's promotion history (JWT required)
+GET    /api/listings/promotion-history/check # Check if user has promotion history (JWT required)
+GET    /api/listings/promotion-access  # Get promotion access status (no auth required)
 ```
 
 **Filter Parameters:**
@@ -592,14 +593,15 @@ cd frontend && npm test
 **Backend Services:** ✅ All critical services have unit tests
 **Controllers:** ✅ All controllers have comprehensive unit tests
 **Guards:** ✅ JwtAuthGuard, AdminGuard, IpBlockGuard tested
-**Frontend Components:** ✅ Core components tested (ListingCard, SearchFilters, ListingForm, AuthProvider, ListingGrid)
+**Frontend Components:** ✅ Core components tested (AuthProvider)
 **Frontend Server API:** ✅ Server-side data fetching functions tested (`lib/server-api.test.ts`)
-**Frontend Integration:** ✅ Server Components integration tested (ListingGrid with initialData)
+**Frontend API:** ✅ Client-side API functions tested (`lib/api.test.ts`)
+**Frontend Utilities:** ✅ Utility functions tested (`lib/utils.test.ts`)
 
 **Test Statistics:**
-- **Total Tests:** 185 tests across 12 test suites
-- **Backend:** Unit and integration tests
-- **Frontend:** Component tests, utility tests, API tests, server API tests
+- **Total Tests:** 247 tests across 18 test suites
+- **Backend:** 195 tests across 14 test suites (unit and integration tests)
+- **Frontend:** 52 tests across 4 test suites (component tests, utility tests, API tests, server API tests)
 
 ### CI/CD
 
@@ -1298,5 +1300,5 @@ cd backend && npm run test -- listings.service.spec.ts
 - Added tab counters on Favorites page
 - Added breadcrumbs navigation on key pages
 - Optimized filter loading to prevent skeleton flickering
-- Comprehensive test coverage: 188 frontend tests across 13 test suites, 266 backend tests across 20 test suites
+- Comprehensive test coverage: 52 frontend tests across 4 test suites, 195 backend tests across 14 test suites
 

@@ -429,7 +429,13 @@ label {
   }
 
   .card {
-    @apply bg-bg-light rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-primary-500/20;
+    @apply bg-bg-light rounded-xl shadow-lg transition-shadow duration-300 border border-primary-500/20;
+  }
+
+  @media (hover: hover) {
+    .card {
+      @apply hover:shadow-xl;
+    }
   }
 
   .surface {

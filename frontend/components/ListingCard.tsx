@@ -197,7 +197,7 @@ function ListingCardComponent({
               alt={t('listings.imageAlt', { title: imageAltTitle, index: '1' })}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-              className="object-cover group-hover:scale-105 transition-transform duration-300"
+              className="object-cover lg:group-hover:scale-105 transition-transform duration-300"
               loading={priority ? undefined : 'lazy'}
               priority={priority}
               onError={() => {
@@ -315,7 +315,7 @@ function ListingCardComponent({
           </button>
         </div>
         <div className="p-4 md:p-5 flex-grow flex flex-col">
-          <h3 className="font-bold text-base md:text-lg mb-3 line-clamp-2 text-[rgb(243_243_243)] group-hover:!text-primary-600 transition-colors">
+          <h3 className="font-bold text-base md:text-lg mb-3 line-clamp-2 text-[rgb(243_243_243)] lg:group-hover:!text-primary-600 transition-colors">
             {listing.title}
           </h3>
           <div className="flex items-baseline gap-2 mb-3">

@@ -58,7 +58,7 @@ export default function ListingPageClient({
 }) {
   const router = useRouter();
   const id = listingId;
-  const { user } = useAuthStore();
+  const { user, isInitialized } = useAuthStore();
   const { add: addFavorite, remove: removeFavorite, check } = useFavoritesStore();
   const { t } = useTranslation();
   const {
@@ -1460,7 +1460,9 @@ export default function ListingPageClient({
                 {h1Title}
               </h1>
               <div className="mb-6">
-                <div className="flex items-baseline gap-3 flex-wrap mb-6">
+                <div
+                  className={`flex items-baseline gap-3 flex-wrap ${listing.status === 'Closed' || listing.is_promoted || listing.is_new || listing.urgent ? 'mb-6' : ''}`}
+                >
                   {listing.status === 'Closed' || listing.price === undefined ? (
                     <>
                       <span className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-primary-400">
@@ -1548,37 +1550,47 @@ export default function ListingPageClient({
                       : t('listingDetail.compare')}
                   </button>
                 )}
-                <button
-                  onClick={handleToggleFavorite}
-                  disabled={isOwnListing}
-                  className={`w-full sm:w-auto sm:max-w-fit px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center gap-2 ${
-                    isOwnListing
-                      ? 'bg-primary-500/10 text-primary-300 border border-primary-500/30 cursor-not-allowed'
-                      : isFavorite
-                        ? 'bg-bg-light text-white border-2 border-primary-500/30 hover:bg-primary-500/10 hover:border-primary-500'
-                        : 'btn-secondary'
-                  }`}
-                  title={isOwnListing ? t('listingDetail.cannotAddOwnListing') : ''}
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill={isFavorite ? 'currentColor' : 'none'}
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                {!isInitialized && initialListing?.user ? (
+                  <button
+                    disabled
+                    className="w-full sm:w-auto sm:max-w-fit px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 bg-primary-500/10 text-primary-300 border border-primary-500/30 cursor-not-allowed opacity-50"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                    />
-                  </svg>
-                  {isOwnListing
-                    ? t('listingDetail.yourListing')
-                    : isFavorite
-                      ? t('listingDetail.removeFromFavorites')
-                      : t('listingDetail.addToFavorites')}
-                </button>
+                    <div className="w-5 h-5 border-2 border-primary-300 border-t-transparent rounded-full animate-spin"></div>
+                    <span>{t('common.loading')}</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleToggleFavorite}
+                    disabled={isOwnListing}
+                    className={`w-full sm:w-auto sm:max-w-fit px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
+                      isOwnListing
+                        ? 'bg-primary-500/10 text-primary-300 border border-primary-500/30 cursor-not-allowed'
+                        : isFavorite
+                          ? 'bg-bg-light text-white border-2 border-primary-500/30 hover:bg-primary-500/10 hover:border-primary-500'
+                          : 'btn-secondary'
+                    }`}
+                    title={isOwnListing ? t('listingDetail.cannotAddOwnListing') : ''}
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill={isFavorite ? 'currentColor' : 'none'}
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                      />
+                    </svg>
+                    {isOwnListing
+                      ? t('listingDetail.yourListing')
+                      : isFavorite
+                        ? t('listingDetail.removeFromFavorites')
+                        : t('listingDetail.addToFavorites')}
+                  </button>
+                )}
                 {canPromote &&
                   user &&
                   listing.user &&
@@ -2370,7 +2382,7 @@ export default function ListingPageClient({
             <div className="surface">
               <div className="space-y-3">
                 {listing.views !== undefined && listing.views > 0 && (
-                  <div className="flex items-center gap-2 text-sm">
+                  <div className="flex items-center gap-2 text-base">
                     <svg
                       className="w-4 h-4 text-primary-400"
                       fill="none"
@@ -2396,7 +2408,7 @@ export default function ListingPageClient({
                     <span style={{ color: 'rgb(243, 243, 243)' }}>{listing.views}</span>
                   </div>
                 )}
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-2 text-base">
                   <svg
                     className="w-4 h-4 text-primary-400"
                     fill="none"
@@ -2417,7 +2429,7 @@ export default function ListingPageClient({
                     {formatDate(listing.last_updated_at)}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-2 text-base">
                   <svg
                     className="w-4 h-4 text-primary-400"
                     fill="none"

@@ -112,6 +112,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   );
   const [error, setError] = useState<string | null>(null);
   const [autoLoadCount, setAutoLoadCount] = useState(0);
+  const [hasLoadedWithFilters, setHasLoadedWithFilters] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
   const listingsRef = useRef<Listing[]>(
     savedState && savedState.page > 1 ? savedState.listings : initialData?.data || []
@@ -295,6 +296,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
             setLoadingMore(false);
             setMeta(res.data.meta);
             setError(null);
+            setHasLoadedWithFilters(true);
           }
         });
 
@@ -314,6 +316,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
         if (!append) {
           setListings([]);
           setError(t('listings.loadError'));
+          setHasLoadedWithFilters(true);
         }
       } finally {
         setLoadingMore(false);
@@ -329,6 +332,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       prevSearchParamsString.current = searchParamsString;
       setCurrentPage(1);
       setAutoLoadCount(0);
+      setHasLoadedWithFilters(false);
       sessionStorage.removeItem(GRID_STATE_KEY);
       sessionStorage.removeItem('homeScrollTimestamp');
       fetchListings(1, false);
@@ -634,7 +638,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
     );
   }
 
-  if (listings.length === 0) {
+  if (listings.length === 0 && !loading && hasLoadedWithFilters) {
     const handleViewAllListings = () => {
       sessionStorage.removeItem(FILTERS_STORAGE_KEY);
       localStorage.removeItem(FILTERS_STORAGE_KEY);
@@ -682,7 +686,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       )}
 
       {showLoadMoreButton && !loadingMore && (
-        <div className="flex justify-center py-8">
+        <div className="flex justify-center pt-8 pb-0">
           <button onClick={handleLoadMore} className="btn-primary px-8 py-3 text-lg font-semibold">
             {t('listings.loadMore')}
           </button>
@@ -690,7 +694,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       )}
 
       {!hasMore && listings.length > 0 && (
-        <div className="text-center py-8">
+        <div className="text-center pt-8 pb-0">
           <p style={{ color: 'rgb(243, 243, 243)' }}>{t('listings.noMoreListings')}</p>
         </div>
       )}
