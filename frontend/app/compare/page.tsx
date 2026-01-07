@@ -270,7 +270,10 @@ export default function ComparePage() {
                             src={imageUrl}
                             alt={listing.title}
                             className="w-full h-full object-cover"
-                            crossOrigin="anonymous"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                            }}
                           />
                         ) : (
                           <Image

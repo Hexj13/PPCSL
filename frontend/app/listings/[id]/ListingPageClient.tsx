@@ -1255,7 +1255,6 @@ export default function ListingPageClient({
                           total: images.length.toString(),
                         })}
                         className="w-full h-full object-cover"
-                        crossOrigin="anonymous"
                         onError={() => {
                           setImageErrors((prev) => new Set(prev).add(currentImageIndex));
                         }}
@@ -1370,7 +1369,6 @@ export default function ListingPageClient({
                                     })}
                                     className="w-full h-full object-cover"
                                     loading="lazy"
-                                    crossOrigin="anonymous"
                                     onError={() => {
                                       setImageErrors((prev) => new Set(prev).add(index));
                                     }}
@@ -2552,7 +2550,6 @@ export default function ListingPageClient({
                       total: images.length.toString(),
                     })}
                     className="max-w-full max-h-[90vh] w-auto h-auto object-contain"
-                    crossOrigin="anonymous"
                     onError={() => {
                       setImageErrors((prev) => new Set(prev).add(modalImageIndex));
                     }}

@@ -1,6 +1,6 @@
-const CACHE_NAME = 'kupito-v1';
-const STATIC_CACHE_NAME = 'kupito-static-v1';
-const DATA_CACHE_NAME = 'kupito-data-v1';
+const CACHE_NAME = 'kupito-v2';
+const STATIC_CACHE_NAME = 'kupito-static-v2';
+const DATA_CACHE_NAME = 'kupito-data-v2';
 const CACHE_EXPIRY = 60 * 60 * 1000;
 const MAX_CACHE_SIZE = 2 * 1024 * 1024;
 
@@ -310,6 +310,15 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  try {
+    const url = new URL(request.url);
+    if (url.origin !== location.origin) {
+      return;
+    }
+  } catch {
+    return;
+  }
   event.respondWith(fetchHandler(event));
 });
 

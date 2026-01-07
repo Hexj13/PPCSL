@@ -207,7 +207,6 @@ function UserListingsModalComponent({
                               src={imageUrl}
                               alt={listing.title}
                               className="w-full h-full object-cover rounded-xl"
-                              crossOrigin="anonymous"
                               onError={() => {
                                 setImageErrors((prev) => new Set(prev).add(listing.id));
                               }}
