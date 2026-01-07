@@ -246,8 +246,8 @@ export function ListingManagementCard({
             </div>
           </div>
           <div className="mt-auto pt-3 border-t border-primary-500/20">
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-2 lg:gap-3">
-              <div className="inline-flex items-center gap-1 sm:gap-1.5">
+            <div className="flex flex-col xl:flex-row xl:justify-between items-start xl:items-center gap-2 lg:gap-3 min-w-0 max-w-full">
+              <div className="inline-flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
                 <div className="text-xs sm:text-sm font-semibold text-gray-200">
                   {t('listings.status')}
                 </div>
@@ -267,7 +267,7 @@ export function ListingManagementCard({
                       : t('userListings.closed')}
                 </div>
               </div>
-              <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 w-full lg:w-auto min-h-[48px] lg:min-h-[52px]">
+              <div className="flex flex-col lg:flex-col xl:flex-row xl:flex-wrap xl:justify-end items-stretch xl:items-center gap-2 w-full lg:w-full lg:flex-shrink-0 lg:max-w-full xl:flex-1 xl:flex-shrink xl:min-w-0 xl:max-w-full min-h-[48px] lg:min-h-[40px] xl:min-h-[52px]">
                 {onAction && (
                   <>
                     {mode === 'my-listings' &&
@@ -276,10 +276,10 @@ export function ListingManagementCard({
                       onPromoteClick && (
                         <button
                           onClick={() => onPromoteClick(listing.id)}
-                          className="px-3 md:px-4 py-2.5 sm:py-2 text-xs sm:text-sm bg-yellow-500/20 border-2 border-yellow-500/40 text-yellow-300 hover:bg-yellow-500/30 hover:border-yellow-500/60 rounded-lg font-semibold transition-colors h-12 lg:h-[52px] flex items-center justify-center gap-2 w-full lg:w-auto"
+                          className="px-3 md:px-4 lg:px-2.5 xl:px-4 py-2.5 sm:py-2 lg:py-1.5 xl:py-2 text-xs sm:text-sm lg:text-xs xl:text-sm bg-yellow-500/20 border-2 border-yellow-500/40 text-yellow-300 hover:bg-yellow-500/30 hover:border-yellow-500/60 rounded-lg font-semibold transition-colors h-12 lg:h-10 xl:h-[52px] flex items-center justify-center gap-2 lg:gap-1.5 xl:gap-2 w-full xl:w-auto"
                         >
                           <svg
-                            className="w-4 h-4"
+                            className="w-4 h-4 lg:w-3.5 lg:h-3.5 xl:w-4 xl:h-4"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -297,7 +297,7 @@ export function ListingManagementCard({
                     {mode === 'admin' && listing.status !== 'Closed' && onPromoteClick && (
                       <button
                         onClick={() => onPromoteClick(listing.id)}
-                        className={`px-3 md:px-4 py-2.5 sm:py-2 text-xs sm:text-sm border-2 rounded-lg font-semibold transition-colors h-12 lg:h-[52px] flex items-center justify-center gap-2 w-full lg:w-auto ${
+                        className={`px-3 md:px-4 lg:px-2.5 xl:px-4 py-2.5 sm:py-2 lg:py-1.5 xl:py-2 text-xs sm:text-sm lg:text-xs xl:text-sm border-2 rounded-lg font-semibold transition-colors h-12 lg:h-10 xl:h-[52px] flex items-center justify-center gap-2 lg:gap-1.5 xl:gap-2 w-full xl:w-auto ${
                           listing.is_promoted
                             ? 'bg-[#f069be33] border-[#f069be]/40 hover:bg-[#f069be44] hover:border-[#f069be]/60'
                             : 'bg-yellow-500/20 border-yellow-500/40 text-yellow-300 hover:bg-yellow-500/30 hover:border-yellow-500/60'
@@ -325,7 +325,7 @@ export function ListingManagementCard({
                     {listing.status === 'Paused' && (
                       <button
                         onClick={() => onAction(listing.id, 'publish')}
-                        className="px-3 md:px-4 py-2.5 sm:py-2 text-xs sm:text-sm bg-primary-500/20 border-2 border-primary-500/40 text-primary-300 hover:bg-primary-500/30 hover:border-primary-500/60 rounded-lg font-semibold transition-colors h-12 lg:h-[52px] flex items-center justify-center w-full lg:w-auto"
+                        className="px-3 md:px-4 lg:px-2.5 xl:px-4 py-2.5 sm:py-2 lg:py-1.5 xl:py-2 text-xs sm:text-sm lg:text-xs xl:text-sm bg-primary-500/20 border-2 border-primary-500/40 text-primary-300 hover:bg-primary-500/30 hover:border-primary-500/60 rounded-lg font-semibold transition-colors h-12 lg:h-10 xl:h-[52px] flex items-center justify-center w-full xl:w-auto"
                       >
                         {t('listings.publishAction')}
                       </button>
@@ -333,7 +333,7 @@ export function ListingManagementCard({
                     {listing.status === 'Active' && (
                       <button
                         onClick={() => onAction(listing.id, 'pause')}
-                        className="px-3 md:px-4 py-2.5 sm:py-2 text-xs sm:text-sm bg-blue-500/20 border-2 border-blue-500/40 text-blue-300 hover:bg-blue-500/30 hover:border-blue-500/60 rounded-lg font-semibold transition-colors h-12 lg:h-[52px] flex items-center justify-center w-full lg:w-auto"
+                        className="px-3 md:px-4 lg:px-2.5 xl:px-4 py-2.5 sm:py-2 lg:py-1.5 xl:py-2 text-xs sm:text-sm lg:text-xs xl:text-sm bg-blue-500/20 border-2 border-blue-500/40 text-blue-300 hover:bg-blue-500/30 hover:border-blue-500/60 rounded-lg font-semibold transition-colors h-12 lg:h-10 xl:h-[52px] flex items-center justify-center w-full xl:w-auto"
                       >
                         {t('listings.pauseAction')}
                       </button>
@@ -341,7 +341,7 @@ export function ListingManagementCard({
                     {listing.status !== 'Closed' && (
                       <button
                         onClick={() => onAction(listing.id, 'close')}
-                        className="px-3 md:px-4 py-2.5 sm:py-2 text-xs sm:text-sm bg-gray-500/20 border-2 border-gray-500/40 text-gray-300 hover:bg-gray-500/30 hover:border-gray-500/60 rounded-lg font-semibold transition-colors h-12 lg:h-[52px] flex items-center justify-center w-full lg:w-auto"
+                        className="px-3 md:px-4 lg:px-2.5 xl:px-4 py-2.5 sm:py-2 lg:py-1.5 xl:py-2 text-xs sm:text-sm lg:text-xs xl:text-sm bg-gray-500/20 border-2 border-gray-500/40 text-gray-300 hover:bg-gray-500/30 hover:border-gray-500/60 rounded-lg font-semibold transition-colors h-12 lg:h-10 xl:h-[52px] flex items-center justify-center w-full xl:w-auto"
                       >
                         {t('common.close')}
                       </button>
@@ -351,12 +351,12 @@ export function ListingManagementCard({
                 {mode === 'my-listings' && listing.status !== 'Closed' && (
                   <Link
                     href={`/listings/${listing.id}/edit`}
-                    className="bg-bg-dark/95 backdrop-blur-sm px-3 md:px-4 py-2.5 sm:py-2 rounded-lg border-2 border-primary-500/30 text-primary-400 hover:text-primary-300 hover:border-primary-500/50 transition-colors duration-200 inline-flex items-center justify-center h-12 lg:h-[52px] w-full lg:w-auto"
+                    className="bg-bg-dark/95 backdrop-blur-sm px-3 md:px-4 lg:px-2.5 xl:px-4 py-2.5 sm:py-2 lg:py-1.5 xl:py-2 text-xs sm:text-sm lg:text-xs xl:text-sm rounded-lg border-2 border-primary-500/30 text-primary-400 hover:text-primary-300 hover:border-primary-500/50 transition-colors duration-200 inline-flex items-center justify-center h-12 lg:h-10 xl:h-[52px] w-full xl:w-auto"
                     title={t('common.editListing')}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <svg
-                      className="w-4 h-4 sm:w-5 sm:h-5"
+                      className="w-4 h-4 sm:w-5 sm:h-5 lg:w-3.5 lg:h-3.5 xl:w-5 xl:h-5"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
