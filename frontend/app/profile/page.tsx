@@ -531,7 +531,7 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {user.type === 'Individual' && (
+        {(user.type === 'Individual' || user.type === 'Admin') && (
           <div className="card p-4 md:p-6 lg:p-8">
             <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
               {t('profile.personalData')}

@@ -68,47 +68,53 @@ export function Header() {
           <div className="flex items-center lg:hidden gap-3">
             {!isInitialized ? (
               <div className="h-9 w-20 bg-bg-light/30 rounded animate-pulse" />
-            ) : user ? (
-              <Link
-                href="/listings/new"
-                className="text-primary-400 font-medium text-xs hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 px-2.5 py-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 select-none"
-              >
-                <svg
-                  className="w-4 h-4 flex-shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                <span>{t('header.addListing')}</span>
-              </Link>
             ) : (
-              <Link
-                href="/login"
-                onClick={() => handleSetReturnUrl('/listings/new')}
-                className="text-primary-400 font-medium text-xs hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 px-2.5 py-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 select-none"
-              >
-                <svg
-                  className="w-4 h-4 flex-shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                <span>{t('header.createListing')}</span>
-              </Link>
+              !isMobileMenuOpen && (
+                <>
+                  {user ? (
+                    <Link
+                      href="/listings/new"
+                      className="text-primary-400 font-medium text-xs hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 px-2.5 py-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 select-none"
+                    >
+                      <svg
+                        className="w-4 h-4 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 4v16m8-8H4"
+                        />
+                      </svg>
+                      <span>{t('header.addListing')}</span>
+                    </Link>
+                  ) : (
+                    <Link
+                      href="/login"
+                      onClick={() => handleSetReturnUrl('/listings/new')}
+                      className="text-primary-400 font-medium text-xs hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 px-2.5 py-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 select-none"
+                    >
+                      <svg
+                        className="w-4 h-4 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 4v16m8-8H4"
+                        />
+                      </svg>
+                      <span>{t('header.createListing')}</span>
+                    </Link>
+                  )}
+                </>
+              )
             )}
             <button
               onClick={handleMobileMenuToggle}
@@ -295,10 +301,10 @@ export function Header() {
                 <Link
                   href="/login"
                   onClick={() => handleSetReturnUrl('/listings/new')}
-                  className="btn-outline-green flex items-center gap-2 select-none"
+                  className="text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 select-none"
                 >
                   <svg
-                    className="w-4 h-4 flex-shrink-0"
+                    className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -323,12 +329,15 @@ export function Header() {
                       }
                     }
                   }}
-                  className="btn-outline-green select-none"
+                  className="text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 select-none"
                 >
                   <span className="hidden xl:inline">{t('header.login')}</span>
                   <span className="xl:hidden">{t('header.loginShort')}</span>
                 </Link>
-                <Link href="/register" className="btn-primary select-none">
+                <Link
+                  href="/register"
+                  className="text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 select-none"
+                >
                   {t('header.register')}
                 </Link>
               </>
@@ -462,7 +471,7 @@ export function Header() {
                     handleMobileMenuClose();
                     handleSetReturnUrl('/listings/new');
                   }}
-                  className="btn-outline-green flex items-center justify-center gap-2 text-center select-none"
+                  className="text-primary-400 font-medium text-xs hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 px-2.5 py-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 select-none"
                 >
                   <svg
                     className="w-4 h-4 flex-shrink-0"
@@ -490,14 +499,14 @@ export function Header() {
                       }
                     }
                   }}
-                  className="btn-outline-green text-center select-none"
+                  className="text-primary-400 font-medium text-xs hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 px-2.5 py-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 select-none"
                 >
                   {t('header.login')}
                 </Link>
                 <Link
                   href="/register"
                   onClick={handleMobileMenuClose}
-                  className="btn-primary text-center select-none"
+                  className="text-primary-400 font-medium text-xs hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 px-2.5 py-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 select-none"
                 >
                   {t('header.register')}
                 </Link>

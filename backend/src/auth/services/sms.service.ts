@@ -130,7 +130,7 @@ export class SmsService {
   }
 
   async verifyPasswordResetCode(phoneNumber: string, code: string): Promise<boolean> {
-    const nodeEnv = this.configService.get('NODE_ENV');
+    const nodeEnv = this.configService.get('NODE_ENV') || process.env.NODE_ENV || 'development';
     const isStageOrDev = nodeEnv === 'stage' || nodeEnv === 'development';
     const isTest = nodeEnv === 'test';
 
@@ -160,7 +160,7 @@ export class SmsService {
   }
 
   async verifyCode(phoneNumber: string, code: string): Promise<boolean> {
-    const nodeEnv = this.configService.get('NODE_ENV');
+    const nodeEnv = this.configService.get('NODE_ENV') || process.env.NODE_ENV || 'development';
     const isStageOrDev = nodeEnv === 'stage' || nodeEnv === 'development';
     const isTest = nodeEnv === 'test';
 
