@@ -70,7 +70,7 @@ export default function ListingPageClient({
   } = useComparisonStore();
   const [listing, setListing] = useState<Listing | null>(initialListing);
   const [isFavorite, setIsFavorite] = useState(() => check(id));
-  const [isInComparison, setIsInComparison] = useState(() => checkComparison(id));
+  const [isInComparison, setIsInComparison] = useState(false);
   const isOwnListing = useMemo(() => {
     const currentListing = listing || initialListing;
     if (!currentListing?.user) {
@@ -97,6 +97,7 @@ export default function ListingPageClient({
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
   const [promotionModalOpen, setPromotionModalOpen] = useState(false);
   const [canPromote, setCanPromote] = useState(false);
+  const [activeListingsCount, setActiveListingsCount] = useState<number>(0);
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
   const preloadedImagesRef = useRef<Set<string>>(new Set());
@@ -121,8 +122,23 @@ export default function ListingPageClient({
   }, []);
 
   useEffect(() => {
-    setIsInComparison(checkComparison(id));
-  }, [id, checkComparison, comparisons]);
+    if (isHydrated) {
+      setIsInComparison(checkComparison(id));
+    }
+  }, [id, checkComparison, comparisons, isHydrated]);
+
+  useEffect(() => {
+    if (initialListing?.user?.id) {
+      listingsApi
+        .getUserActiveListings(initialListing.user.id)
+        .then((res) => {
+          setActiveListingsCount(res.data.length);
+        })
+        .catch(() => {
+          setActiveListingsCount(0);
+        });
+    }
+  }, [initialListing?.user?.id]);
 
   const imageAltTitle = useMemo(() => {
     if (!listing) return '';
@@ -229,6 +245,23 @@ export default function ListingPageClient({
           setIsInComparison(comparisonValue);
           setShowSkeleton(false);
           hasInitialListingRef.current = false;
+
+          if (listingRes.data.user?.id) {
+            listingsApi
+              .getUserActiveListings(listingRes.data.user.id)
+              .then((res) => {
+                if (currentId === id) {
+                  setActiveListingsCount(res.data.length);
+                }
+              })
+              .catch(() => {
+                if (currentId === id) {
+                  setActiveListingsCount(0);
+                }
+              });
+          } else {
+            setActiveListingsCount(0);
+          }
 
           analytics.viewItem(currentId, {
             title: listingRes.data.title,
@@ -1525,28 +1558,45 @@ export default function ListingPageClient({
 
               <div className="flex flex-col gap-3">
                 {listing.status !== 'Closed' && (
-                  <button
-                    onClick={handleToggleComparison}
-                    disabled={isInComparison}
-                    className={`w-full sm:w-auto sm:max-w-fit px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center gap-2 ${
-                      isInComparison
-                        ? 'bg-primary-500/10 text-primary-300 border border-primary-500/30 cursor-not-allowed'
-                        : 'btn-secondary'
-                    }`}
-                    title={isInComparison ? t('listingDetail.alreadyInComparisonError') : ''}
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"
-                      />
-                    </svg>
-                    {isInComparison
-                      ? t('listingDetail.alreadyInComparison')
-                      : t('listingDetail.compare')}
-                  </button>
+                  <>
+                    {!isInitialized && initialListing?.user ? (
+                      <button
+                        disabled
+                        className="w-full sm:w-auto sm:max-w-fit px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 bg-primary-500/10 text-primary-300 border border-primary-500/30 cursor-not-allowed opacity-50"
+                      >
+                        <div className="w-5 h-5 border-2 border-primary-300 border-t-transparent rounded-full animate-spin"></div>
+                        <span>{t('common.loading')}</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleToggleComparison}
+                        disabled={isInComparison}
+                        className={`w-full sm:w-auto sm:max-w-fit px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
+                          isInComparison
+                            ? 'bg-primary-500/10 text-primary-300 border border-primary-500/30 cursor-not-allowed'
+                            : 'btn-secondary'
+                        }`}
+                        title={isInComparison ? t('listingDetail.alreadyInComparisonError') : ''}
+                      >
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"
+                          />
+                        </svg>
+                        {isInComparison
+                          ? t('listingDetail.alreadyInComparison')
+                          : t('listingDetail.compare')}
+                      </button>
+                    )}
+                  </>
                 )}
                 {!isInitialized && initialListing?.user ? (
                   <button
@@ -1597,7 +1647,7 @@ export default function ListingPageClient({
                   !listing.is_promoted && (
                     <button
                       onClick={handlePromoteClick}
-                      className="w-full sm:w-auto sm:max-w-fit px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center gap-2 bg-yellow-500/20 border-2 border-yellow-500/40 text-yellow-300 hover:bg-yellow-500/30 hover:border-yellow-500/60"
+                      className="w-full sm:w-auto sm:max-w-fit px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 bg-yellow-500/20 border-2 border-yellow-500/40 text-yellow-300 hover:bg-yellow-500/30 hover:border-yellow-500/60"
                     >
                       <svg
                         className="w-5 h-5"
@@ -2383,7 +2433,7 @@ export default function ListingPageClient({
                       </div>
                     )}
 
-                  {listing.user && (
+                  {listing.user && activeListingsCount > 1 && (
                     <div className="pt-4 border-t border-primary-500/20">
                       <button
                         onClick={() => setIsUserListingsModalOpen(true)}
