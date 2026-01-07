@@ -479,7 +479,7 @@ function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
           </div>
 
           {meta && meta.totalPages > 1 && (
-            <div className="flex justify-center items-center gap-4 mt-6 md:mt-8">
+            <div className="flex justify-center items-center gap-4 mt-6 md:mt-8 mb-0">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
@@ -1222,7 +1222,7 @@ function UsersTab({ onViewUserListings }: UsersTabProps) {
           </div>
 
           {meta && meta.totalPages > 1 && (
-            <div className="flex justify-center items-center gap-4 mt-6 md:mt-8">
+            <div className="flex justify-center items-center gap-4 mt-6 md:mt-8 mb-0">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}

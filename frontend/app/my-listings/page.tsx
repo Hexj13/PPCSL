@@ -724,7 +724,7 @@ export default function MyListingsPage() {
                   currentPage < meta.totalPages &&
                   !loadingMore &&
                   shouldShow && (
-                    <div className="flex justify-center py-8">
+                    <div className="flex justify-center pt-8 pb-0">
                       <button
                         onClick={handleLoadMore}
                         className="btn-primary px-8 py-3 text-lg font-semibold"
@@ -737,7 +737,7 @@ export default function MyListingsPage() {
               })()}
 
               {meta && meta.totalPages && currentPage >= meta.totalPages && listings.length > 0 && (
-                <div className="text-center py-8">
+                <div className="text-center pt-8 pb-0">
                   <p style={{ color: 'rgb(243, 243, 243)' }}>{t('myListings.noMoreListings')}</p>
                 </div>
               )}
