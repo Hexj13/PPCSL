@@ -2147,6 +2147,17 @@ export default function ListingPageClient({
                     </span>
                   </div>
 
+                  {listing.user.firstName && (
+                    <div>
+                      <span className="font-semibold text-primary-400">
+                        {t('listingDetail.name')}:
+                      </span>
+                      <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
+                        {listing.user.firstName}
+                      </span>
+                    </div>
+                  )}
+
                   {listing.status !== 'Closed' &&
                     listing.user.type === 'Business' &&
                     listing.user.companyName && (
@@ -2156,20 +2167,6 @@ export default function ListingPageClient({
                         </span>
                         <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
                           {listing.user.companyName}
-                        </span>
-                      </div>
-                    )}
-
-                  {listing.status !== 'Closed' &&
-                    listing.user.type === 'Individual' &&
-                    listing.user.firstName &&
-                    listing.user.lastName && (
-                      <div>
-                        <span className="font-semibold text-primary-400">
-                          {t('listingDetail.name')}:
-                        </span>
-                        <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                          {listing.user.firstName} {listing.user.lastName}
                         </span>
                       </div>
                     )}
@@ -2302,9 +2299,23 @@ export default function ListingPageClient({
                               }}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 hover:border-purple-500/50 transition-colors cursor-pointer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 hover:border-purple-500/50 transition-colors cursor-pointer"
                             >
                               Viber
+                              <svg
+                                className="w-3.5 h-3.5 opacity-70"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                />
+                              </svg>
                             </a>
                           )}
                           {listing.user.whatsapp && listing.user.phone && (
@@ -2318,9 +2329,23 @@ export default function ListingPageClient({
                               }}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-primary-500/20 text-primary-300 border border-primary-500/30 hover:bg-primary-500/30 hover:border-primary-500/50 transition-colors cursor-pointer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-primary-500/20 text-primary-300 border border-primary-500/30 hover:bg-primary-500/30 hover:border-primary-500/50 transition-colors cursor-pointer"
                             >
                               WhatsApp
+                              <svg
+                                className="w-3.5 h-3.5 opacity-70"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                />
+                              </svg>
                             </a>
                           )}
                           {listing.user.telegram && listing.user.phone && (
@@ -2334,9 +2359,23 @@ export default function ListingPageClient({
                               }}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30 hover:border-blue-500/50 transition-colors cursor-pointer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30 hover:border-blue-500/50 transition-colors cursor-pointer"
                             >
                               Telegram
+                              <svg
+                                className="w-3.5 h-3.5 opacity-70"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                />
+                              </svg>
                             </a>
                           )}
                           {/* eslint-enable no-hardcoded-text/no-hardcoded-text */}

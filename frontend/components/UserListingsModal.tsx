@@ -120,14 +120,8 @@ function UserListingsModalComponent({
     }
 
     if (user.type === 'Individual') {
-      if (user.firstName && user.lastName) {
-        return `${user.firstName} ${user.lastName}`;
-      }
       if (user.firstName) {
         return user.firstName;
-      }
-      if (user.lastName) {
-        return user.lastName;
       }
     }
 
@@ -135,16 +129,8 @@ function UserListingsModalComponent({
       return user.companyName;
     }
 
-    if (user.firstName && user.lastName) {
-      return `${user.firstName} ${user.lastName}`;
-    }
-
     if (user.firstName) {
       return user.firstName;
-    }
-
-    if (user.lastName) {
-      return user.lastName;
     }
 
     if (user.email) {
