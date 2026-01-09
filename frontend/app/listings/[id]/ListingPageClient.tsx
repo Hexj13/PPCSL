@@ -1067,33 +1067,10 @@ export default function ListingPageClient({
     }
 
     setMainImageLoading(true);
-
-    const checkImageLoaded = () => {
-      const imgElement = mainImageElementRef.current;
-      if (imgElement && (imgElement.complete || imgElement.naturalWidth > 0)) {
-        handleMainImageLoad(currentImageIndex);
-        return;
-      }
-
-      const container = mainImageContainerRef.current;
-      if (container) {
-        const imgInContainer = container.querySelector('img');
-        if (imgInContainer && (imgInContainer.complete || imgInContainer.naturalWidth > 0)) {
-          handleMainImageLoad(currentImageIndex);
-        }
-      }
-    };
-
-    const timeoutId = setTimeout(checkImageLoaded, 100);
-
-    return () => {
-      clearTimeout(timeoutId);
-    };
-  }, [currentImageIndex, listing, imageErrors, handleMainImageLoad]);
+  }, [currentImageIndex, listing, imageErrors]);
 
   const { visible: showMainImageLoader } = useLoadingState({
     isLoading: mainImageLoading,
-    showDelay: 100,
     minDisplayTime: 1000,
   });
 
@@ -1353,7 +1330,7 @@ export default function ListingPageClient({
                       >
                         {img !== '/placeholder-car.jpg' && !imageErrors.has(index) ? (
                           (() => {
-                            const optimizedUrl = getOptimizedImageUrl(img, 70, 400);
+                            const optimizedUrl = getOptimizedImageUrl(img, 75, 1200);
                             const isExternal =
                               optimizedUrl.startsWith('http://') ||
                               optimizedUrl.startsWith('https://');
@@ -1369,6 +1346,10 @@ export default function ListingPageClient({
                                     })}
                                     className="w-full h-full object-cover"
                                     loading="lazy"
+                                    onLoad={() => {
+                                      preloadedImagesRef.current.add(optimizedUrl);
+                                      mainImageLoadedRef.current.add(index);
+                                    }}
                                     onError={() => {
                                       setImageErrors((prev) => new Set(prev).add(index));
                                     }}
@@ -1385,6 +1366,10 @@ export default function ListingPageClient({
                                     sizes="(max-width: 640px) 33vw, 25vw"
                                     className="object-cover"
                                     loading="lazy"
+                                    onLoad={() => {
+                                      preloadedImagesRef.current.add(optimizedUrl);
+                                      mainImageLoadedRef.current.add(index);
+                                    }}
                                     onError={() => {
                                       setImageErrors((prev) => new Set(prev).add(index));
                                     }}
