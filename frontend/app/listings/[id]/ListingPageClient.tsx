@@ -121,12 +121,7 @@ export default function ListingPageClient({
   const adjacentPreloadQueueRef = useRef<
     Array<{ url: string; originalUrl: string; priority: number }>
   >([]);
-  const modalPreloadQueueRef = useRef<
-    Array<{ url: string; originalUrl: string; priority: number }>
-  >([]);
-  const modalActivePreloadsRef = useRef<number>(0);
   const preloadTimeoutsRef = useRef<Array<ReturnType<typeof setTimeout>>>([]);
-  const modalPreloadTimeoutsRef = useRef<Array<ReturnType<typeof setTimeout>>>([]);
   const maxConcurrentPreloads = 2;
   const maxPreloadImages = 5;
   const preloadRadius = 3;
@@ -942,124 +937,26 @@ export default function ListingPageClient({
     const images =
       listing.images && listing.images.length > 0 ? listing.images : ['/placeholder-car.jpg'];
 
-    const preloadModalImage = (imageUrl: string, _priority: number = 0): Promise<void> => {
-      return new Promise((resolve, _reject) => {
-        if (!imageUrl || imageUrl === '/placeholder-car.jpg') {
-          resolve();
-          return;
-        }
+    if (images.length <= 1) return;
 
-        const optimizedUrl = getOptimizedImageUrl(imageUrl, 85, 1920);
-        if (preloadedImagesRef.current.has(optimizedUrl)) {
-          resolve();
-          return;
-        }
+    const nextIndex = (modalImageIndex + 1) % images.length;
+    const nextImageUrl = images[nextIndex];
 
-        if (preloadLinksRef.current.has(optimizedUrl)) {
-          resolve();
-          return;
-        }
+    if (!nextImageUrl || nextImageUrl === '/placeholder-car.jpg' || imageErrors.has(nextIndex)) {
+      return;
+    }
 
-        const link = document.createElement('link');
-        link.rel = 'preload';
-        link.as = 'image';
-        link.href = optimizedUrl;
-        link.crossOrigin = 'anonymous';
+    const optimizedUrl = getOptimizedImageUrl(nextImageUrl, 85, 1920);
 
-        modalActivePreloadsRef.current++;
-        preloadLinksRef.current.set(optimizedUrl, link);
+    if (preloadedImagesRef.current.has(optimizedUrl)) {
+      return;
+    }
 
-        let resolved = false;
-        const safeResolve = () => {
-          if (resolved) return;
-          resolved = true;
-          resolve();
-        };
-
-        const cleanup = () => {
-          if (preloadLinksRef.current.has(optimizedUrl)) {
-            const unusedLink = preloadLinksRef.current.get(optimizedUrl);
-            if (unusedLink && unusedLink.parentNode) {
-              unusedLink.parentNode.removeChild(unusedLink);
-            }
-            preloadLinksRef.current.delete(optimizedUrl);
-            modalActivePreloadsRef.current--;
-          }
-        };
-
-        const timeoutId = setTimeout(() => {
-          cleanup();
-          safeResolve();
-          processModalPreloadQueue();
-        }, 2000);
-
-        link.onload = () => {
-          clearTimeout(timeoutId);
-          preloadedImagesRef.current.add(optimizedUrl);
-          cleanup();
-          safeResolve();
-          processModalPreloadQueue();
-        };
-        link.onerror = () => {
-          clearTimeout(timeoutId);
-          cleanup();
-          safeResolve();
-          processModalPreloadQueue();
-        };
-
-        document.head.appendChild(link);
-      });
+    const img = new window.Image();
+    img.onload = () => {
+      preloadedImagesRef.current.add(optimizedUrl);
     };
-
-    const processModalPreloadQueue = () => {
-      while (
-        modalActivePreloadsRef.current < maxConcurrentPreloads &&
-        modalPreloadQueueRef.current.length > 0
-      ) {
-        const item = modalPreloadQueueRef.current.shift();
-        if (item) {
-          preloadModalImage(item.originalUrl, item.priority).catch(() => {
-            modalActivePreloadsRef.current--;
-            processModalPreloadQueue();
-          });
-        }
-      }
-    };
-
-    const preloadModalAdjacentImages = () => {
-      if (images.length <= 1) return;
-
-      modalPreloadTimeoutsRef.current.forEach((timeout) => clearTimeout(timeout));
-      modalPreloadTimeoutsRef.current = [];
-      modalPreloadQueueRef.current = [];
-
-      const nextIndex = (modalImageIndex + 1) % images.length;
-
-      if (images[nextIndex] && !imageErrors.has(nextIndex)) {
-        const imageUrl = images[nextIndex];
-        const optimizedUrl = getOptimizedImageUrl(imageUrl, 85, 1920);
-        if (!preloadedImagesRef.current.has(optimizedUrl)) {
-          if (modalActivePreloadsRef.current < maxConcurrentPreloads) {
-            preloadModalImage(imageUrl, 0);
-          } else {
-            modalPreloadQueueRef.current.unshift({
-              url: optimizedUrl,
-              originalUrl: imageUrl,
-              priority: 0,
-            });
-            processModalPreloadQueue();
-          }
-        }
-      }
-    };
-
-    preloadModalAdjacentImages();
-
-    return () => {
-      modalPreloadTimeoutsRef.current.forEach((timeout) => clearTimeout(timeout));
-      modalPreloadTimeoutsRef.current = [];
-      modalPreloadQueueRef.current = [];
-    };
+    img.src = optimizedUrl;
   }, [modalImageIndex, isImageModalOpen, listing, imageErrors]);
 
   const handleMainImageLoad = useCallback(
@@ -1200,11 +1097,7 @@ export default function ListingPageClient({
     minDisplayTime: 1000,
   });
 
-  const { visible: showModalImageLoader } = useLoadingState({
-    isLoading: modalImageLoading,
-    showDelay: 200,
-    minDisplayTime: 1000,
-  });
+  const showModalImageLoader = modalImageLoading;
 
   if (!listing && !showSkeleton) {
     return null;
