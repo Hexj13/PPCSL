@@ -96,10 +96,14 @@ export default function ListingPageClient({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [mainImageLoading, setMainImageLoading] = useState(false);
   const mainImageLoadedRef = useRef<Set<number>>(new Set());
+  const mainImageElementRef = useRef<HTMLImageElement | null>(null);
+  const mainImageContainerRef = useRef<HTMLDivElement | null>(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [modalImageIndex, setModalImageIndex] = useState(0);
   const [modalImageLoading, setModalImageLoading] = useState(false);
   const modalImageLoadedRef = useRef<Set<number>>(new Set());
+  const modalImageElementRef = useRef<HTMLImageElement | null>(null);
+  const modalImageContainerRef = useRef<HTMLDivElement | null>(null);
   const [isUserListingsModalOpen, setIsUserListingsModalOpen] = useState(false);
   const [previousListings, setPreviousListings] = useState<Listing[]>([]);
   const [loadingPrevious, setLoadingPrevious] = useState(false);
@@ -1058,6 +1062,32 @@ export default function ListingPageClient({
     };
   }, [modalImageIndex, isImageModalOpen, listing, imageErrors]);
 
+  const handleMainImageLoad = useCallback(
+    (loadedIndex: number) => {
+      if (mainImageLoadedRef.current.has(loadedIndex)) {
+        return;
+      }
+      mainImageLoadedRef.current.add(loadedIndex);
+      if (loadedIndex === currentImageIndex) {
+        setMainImageLoading(false);
+      }
+    },
+    [currentImageIndex]
+  );
+
+  const handleModalImageLoad = useCallback(
+    (loadedIndex: number) => {
+      if (modalImageLoadedRef.current.has(loadedIndex)) {
+        return;
+      }
+      modalImageLoadedRef.current.add(loadedIndex);
+      if (loadedIndex === modalImageIndex) {
+        setModalImageLoading(false);
+      }
+    },
+    [modalImageIndex]
+  );
+
   useEffect(() => {
     if (!isImageModalOpen || !listing) {
       setModalImageLoading(false);
@@ -1087,7 +1117,29 @@ export default function ListingPageClient({
     }
 
     setModalImageLoading(true);
-  }, [modalImageIndex, isImageModalOpen, listing, imageErrors]);
+
+    const checkImageLoaded = () => {
+      const imgElement = modalImageElementRef.current;
+      if (imgElement && (imgElement.complete || imgElement.naturalWidth > 0)) {
+        handleModalImageLoad(modalImageIndex);
+        return;
+      }
+
+      const container = modalImageContainerRef.current;
+      if (container) {
+        const imgInContainer = container.querySelector('img');
+        if (imgInContainer && (imgInContainer.complete || imgInContainer.naturalWidth > 0)) {
+          handleModalImageLoad(modalImageIndex);
+        }
+      }
+    };
+
+    const timeoutId = setTimeout(checkImageLoaded, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [modalImageIndex, isImageModalOpen, listing, imageErrors, handleModalImageLoad]);
 
   useEffect(() => {
     if (!listing) {
@@ -1118,33 +1170,29 @@ export default function ListingPageClient({
     }
 
     setMainImageLoading(true);
-  }, [currentImageIndex, listing, imageErrors]);
 
-  const handleMainImageLoad = useCallback(
-    (loadedIndex: number) => {
-      if (mainImageLoadedRef.current.has(loadedIndex)) {
+    const checkImageLoaded = () => {
+      const imgElement = mainImageElementRef.current;
+      if (imgElement && (imgElement.complete || imgElement.naturalWidth > 0)) {
+        handleMainImageLoad(currentImageIndex);
         return;
       }
-      mainImageLoadedRef.current.add(loadedIndex);
-      if (loadedIndex === currentImageIndex) {
-        setMainImageLoading(false);
-      }
-    },
-    [currentImageIndex]
-  );
 
-  const handleModalImageLoad = useCallback(
-    (loadedIndex: number) => {
-      if (modalImageLoadedRef.current.has(loadedIndex)) {
-        return;
+      const container = mainImageContainerRef.current;
+      if (container) {
+        const imgInContainer = container.querySelector('img');
+        if (imgInContainer && (imgInContainer.complete || imgInContainer.naturalWidth > 0)) {
+          handleMainImageLoad(currentImageIndex);
+        }
       }
-      modalImageLoadedRef.current.add(loadedIndex);
-      if (loadedIndex === modalImageIndex) {
-        setModalImageLoading(false);
-      }
-    },
-    [modalImageIndex]
-  );
+    };
+
+    const timeoutId = setTimeout(checkImageLoaded, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [currentImageIndex, listing, imageErrors, handleMainImageLoad]);
 
   const { visible: showMainImageLoader } = useLoadingState({
     isLoading: mainImageLoading,
@@ -1265,6 +1313,7 @@ export default function ListingPageClient({
           <div className="space-y-6">
             <div>
               <div
+                ref={mainImageContainerRef}
                 onClick={() => openImageModal(currentImageIndex)}
                 className="relative h-64 sm:h-80 md:h-96 bg-bg-darker rounded-xl overflow-hidden mb-4 w-full cursor-pointer border border-transparent hover:border-primary-500/50 transition-colors"
               >
@@ -1283,6 +1332,7 @@ export default function ListingPageClient({
                       optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://');
                     return isExternal ? (
                       <img
+                        ref={mainImageElementRef}
                         src={optimizedUrl}
                         alt={t('listings.imageAltWithTotal', {
                           title: imageAltTitle,
@@ -1290,9 +1340,12 @@ export default function ListingPageClient({
                           total: images.length.toString(),
                         })}
                         className={`w-full h-full object-cover ${showMainImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
-                        onLoad={() => {
+                        onLoad={(e) => {
                           const loadedIndex = currentImageIndex;
-                          handleMainImageLoad(loadedIndex);
+                          const imgElement = e.currentTarget;
+                          if (imgElement.complete || imgElement.naturalWidth > 0) {
+                            handleMainImageLoad(loadedIndex);
+                          }
                         }}
                         onError={() => {
                           const erroredIndex = currentImageIndex;
@@ -1314,9 +1367,12 @@ export default function ListingPageClient({
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 65vw"
                         className={`object-cover ${showMainImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
                         priority
-                        onLoad={() => {
+                        onLoad={(e) => {
                           const loadedIndex = currentImageIndex;
-                          handleMainImageLoad(loadedIndex);
+                          const imgElement = e.currentTarget as HTMLImageElement;
+                          if (imgElement.complete || imgElement.naturalWidth > 0) {
+                            handleMainImageLoad(loadedIndex);
+                          }
                         }}
                         onError={() => {
                           const erroredIndex = currentImageIndex;
@@ -2635,6 +2691,7 @@ export default function ListingPageClient({
           )}
 
           <div
+            ref={modalImageContainerRef}
             className="relative max-w-7xl w-full h-full flex items-center justify-center p-4"
             onClick={(e) => e.stopPropagation()}
             onTouchStart={onTouchStart}
@@ -2656,6 +2713,7 @@ export default function ListingPageClient({
                   optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://');
                 return isExternal ? (
                   <img
+                    ref={modalImageElementRef}
                     src={optimizedUrl}
                     alt={t('listings.imageAltWithTotal', {
                       title: imageAltTitle,
@@ -2663,9 +2721,12 @@ export default function ListingPageClient({
                       total: images.length.toString(),
                     })}
                     className={`max-w-full max-h-[90vh] w-auto h-auto object-contain ${showModalImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
-                    onLoad={() => {
+                    onLoad={(e) => {
                       const loadedIndex = modalImageIndex;
-                      handleModalImageLoad(loadedIndex);
+                      const imgElement = e.currentTarget;
+                      if (imgElement.complete || imgElement.naturalWidth > 0) {
+                        handleModalImageLoad(loadedIndex);
+                      }
                     }}
                     onError={() => {
                       const erroredIndex = modalImageIndex;
@@ -2688,9 +2749,12 @@ export default function ListingPageClient({
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 95vw, 90vw"
                     className={`max-w-full max-h-[90vh] w-auto h-auto object-contain ${showModalImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
                     priority={modalImageIndex === 0}
-                    onLoad={() => {
+                    onLoad={(e) => {
                       const loadedIndex = modalImageIndex;
-                      handleModalImageLoad(loadedIndex);
+                      const imgElement = e.currentTarget as HTMLImageElement;
+                      if (imgElement.complete || imgElement.naturalWidth > 0) {
+                        handleModalImageLoad(loadedIndex);
+                      }
                     }}
                     onError={() => {
                       const erroredIndex = modalImageIndex;
