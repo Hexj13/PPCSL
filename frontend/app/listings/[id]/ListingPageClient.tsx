@@ -680,47 +680,19 @@ export default function ListingPageClient({
       preloadTimeoutsRef.current = [];
       adjacentPreloadQueueRef.current = [];
 
-      const prevIndex = (currentImageIndex - 1 + images.length) % images.length;
       const nextIndex = (currentImageIndex + 1) % images.length;
-      const prev2Index = (currentImageIndex - 2 + images.length) % images.length;
-      const next2Index = (currentImageIndex + 2) % images.length;
-      const prev3Index = (currentImageIndex - 3 + images.length) % images.length;
-      const next3Index = (currentImageIndex + 3) % images.length;
 
-      const indicesToPreload = [
-        { index: prevIndex, priority: 0 },
-        { index: nextIndex, priority: 0 },
-        { index: prev2Index, priority: 1 },
-        { index: next2Index, priority: 1 },
-        { index: prev3Index, priority: 2 },
-        { index: next3Index, priority: 2 },
-      ]
-        .filter((item) => images[item.index] && !imageErrors.has(item.index))
-        .sort((a, b) => a.priority - b.priority);
-
-      indicesToPreload.forEach(({ index, priority }) => {
-        const imageUrl = images[index];
+      if (images[nextIndex] && !imageErrors.has(nextIndex)) {
+        const imageUrl = images[nextIndex];
         const optimizedUrl = getOptimizedImageUrl(imageUrl, 75, 1200);
         if (!preloadedImagesRef.current.has(optimizedUrl)) {
-          if (priority === 0) {
-            adjacentPreloadQueueRef.current.push({
-              url: optimizedUrl,
-              originalUrl: imageUrl,
-              priority,
-            });
-          } else {
-            const timeout = setTimeout(() => {
-              adjacentPreloadQueueRef.current.push({
-                url: optimizedUrl,
-                originalUrl: imageUrl,
-                priority,
-              });
-              processPreloadQueue();
-            }, priority * 50);
-            preloadTimeoutsRef.current.push(timeout);
-          }
+          adjacentPreloadQueueRef.current.push({
+            url: optimizedUrl,
+            originalUrl: imageUrl,
+            priority: 0,
+          });
         }
-      });
+      }
 
       processPreloadQueue();
     };
@@ -1058,102 +1030,32 @@ export default function ListingPageClient({
 
       const prevIndex = (modalImageIndex - 1 + images.length) % images.length;
       const nextIndex = (modalImageIndex + 1) % images.length;
-      const prev2Index = (modalImageIndex - 2 + images.length) % images.length;
-      const next2Index = (modalImageIndex + 2) % images.length;
-      const prev3Index = (modalImageIndex - 3 + images.length) % images.length;
-      const next3Index = (modalImageIndex + 3) % images.length;
 
-      const indicesToPreload = [
-        { index: prevIndex, priority: 0 },
-        { index: nextIndex, priority: 0 },
-        { index: prev2Index, priority: 1 },
-        { index: next2Index, priority: 1 },
-        { index: prev3Index, priority: 2 },
-        { index: next3Index, priority: 2 },
-      ];
+      const indicesToPreload = [nextIndex, prevIndex];
 
-      indicesToPreload.forEach(({ index, priority }) => {
+      indicesToPreload.forEach((index) => {
         if (images[index] && !imageErrors.has(index)) {
           const imageUrl = images[index];
           const optimizedUrl = getOptimizedImageUrl(imageUrl, 85, 1920);
           if (!preloadedImagesRef.current.has(optimizedUrl)) {
-            if (priority === 0) {
-              if (modalActivePreloadsRef.current < maxConcurrentPreloads) {
-                preloadModalImage(imageUrl, priority);
-              } else {
-                modalPreloadQueueRef.current.unshift({
-                  url: optimizedUrl,
-                  originalUrl: imageUrl,
-                  priority,
-                });
-              }
+            if (modalActivePreloadsRef.current < maxConcurrentPreloads) {
+              preloadModalImage(imageUrl, 0);
             } else {
-              const timeout = setTimeout(() => {
-                if (modalActivePreloadsRef.current < maxConcurrentPreloads) {
-                  preloadModalImage(imageUrl, priority);
-                } else {
-                  modalPreloadQueueRef.current.push({
-                    url: optimizedUrl,
-                    originalUrl: imageUrl,
-                    priority,
-                  });
-                  processModalPreloadQueue();
-                }
-              }, priority * 50);
-              modalPreloadTimeoutsRef.current.push(timeout);
+              modalPreloadQueueRef.current.unshift({
+                url: optimizedUrl,
+                originalUrl: imageUrl,
+                priority: 0,
+              });
+              processModalPreloadQueue();
             }
           }
         }
       });
     };
 
-    const preloadAllModalImages = () => {
-      const currentIndex = modalImageIndex;
-      const imagesLength = images.length;
-
-      const getDistance = (index: number) => {
-        const direct = Math.abs(index - currentIndex);
-        const wrapped = imagesLength - direct;
-        return Math.min(direct, wrapped);
-      };
-
-      const validImages = images
-        .map((imageUrl, index) => ({
-          url: imageUrl,
-          index,
-          distance: getDistance(index),
-        }))
-        .filter(
-          (item) =>
-            item.url &&
-            item.url !== '/placeholder-car.jpg' &&
-            !imageErrors.has(item.index) &&
-            item.distance <= preloadRadius &&
-            item.index !== currentIndex
-        )
-        .sort((a, b) => {
-          if (a.distance !== b.distance) return a.distance - b.distance;
-          return a.index - b.index;
-        })
-        .slice(0, maxPreloadImages);
-
-      modalPreloadQueueRef.current = validImages.map((item) => ({
-        url: getOptimizedImageUrl(item.url, 85, 1920),
-        originalUrl: item.url,
-        priority: item.distance,
-      }));
-
-      processModalPreloadQueue();
-    };
-
     preloadModalAdjacentImages();
 
-    const timeoutId = setTimeout(() => {
-      preloadAllModalImages();
-    }, 200);
-
     return () => {
-      clearTimeout(timeoutId);
       modalPreloadTimeoutsRef.current.forEach((timeout) => clearTimeout(timeout));
       modalPreloadTimeoutsRef.current = [];
       modalPreloadQueueRef.current = [];
@@ -1180,14 +1082,15 @@ export default function ListingPageClient({
     }
 
     const optimizedUrl = getOptimizedImageUrl(currentImage, 85, 1920);
-    const isPreloaded = preloadedImagesRef.current.has(optimizedUrl);
     const isAlreadyLoaded = modalImageLoadedRef.current.has(modalImageIndex);
+    const isPreloaded = preloadedImagesRef.current.has(optimizedUrl);
 
-    if (isPreloaded || isAlreadyLoaded) {
+    if (isAlreadyLoaded || isPreloaded) {
       setModalImageLoading(false);
-    } else {
-      setModalImageLoading(true);
+      return;
     }
+
+    setModalImageLoading(true);
   }, [modalImageIndex, isImageModalOpen, listing, imageErrors]);
 
   useEffect(() => {
@@ -1210,35 +1113,46 @@ export default function ListingPageClient({
     }
 
     const optimizedUrl = getOptimizedImageUrl(currentImage, 75, 1200);
-    const isPreloaded = preloadedImagesRef.current.has(optimizedUrl);
     const isAlreadyLoaded = mainImageLoadedRef.current.has(currentImageIndex);
+    const isPreloaded = preloadedImagesRef.current.has(optimizedUrl);
 
-    if (isPreloaded || isAlreadyLoaded) {
+    if (isAlreadyLoaded || isPreloaded) {
       setMainImageLoading(false);
-    } else {
-      setMainImageLoading(true);
+      return;
     }
+
+    setMainImageLoading(true);
   }, [currentImageIndex, listing, imageErrors]);
 
-  const handleMainImageLoad = useCallback(() => {
-    if (mainImageLoadedRef.current.has(currentImageIndex)) {
-      return;
-    }
-    mainImageLoadedRef.current.add(currentImageIndex);
-    setMainImageLoading(false);
-  }, [currentImageIndex]);
+  const handleMainImageLoad = useCallback(
+    (loadedIndex: number) => {
+      if (mainImageLoadedRef.current.has(loadedIndex)) {
+        return;
+      }
+      mainImageLoadedRef.current.add(loadedIndex);
+      if (loadedIndex === currentImageIndex) {
+        setMainImageLoading(false);
+      }
+    },
+    [currentImageIndex]
+  );
 
-  const handleModalImageLoad = useCallback(() => {
-    if (modalImageLoadedRef.current.has(modalImageIndex)) {
-      return;
-    }
-    modalImageLoadedRef.current.add(modalImageIndex);
-    setModalImageLoading(false);
-  }, [modalImageIndex]);
+  const handleModalImageLoad = useCallback(
+    (loadedIndex: number) => {
+      if (modalImageLoadedRef.current.has(loadedIndex)) {
+        return;
+      }
+      modalImageLoadedRef.current.add(loadedIndex);
+      if (loadedIndex === modalImageIndex) {
+        setModalImageLoading(false);
+      }
+    },
+    [modalImageIndex]
+  );
 
   const { visible: showMainImageLoader } = useLoadingState({
     isLoading: mainImageLoading,
-    showDelay: 200,
+    showDelay: 100,
     minDisplayTime: 1000,
   });
 
@@ -1380,10 +1294,16 @@ export default function ListingPageClient({
                           total: images.length.toString(),
                         })}
                         className={`w-full h-full object-cover ${showMainImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
-                        onLoad={handleMainImageLoad}
+                        onLoad={() => {
+                          const loadedIndex = currentImageIndex;
+                          handleMainImageLoad(loadedIndex);
+                        }}
                         onError={() => {
-                          setImageErrors((prev) => new Set(prev).add(currentImageIndex));
-                          setMainImageLoading(false);
+                          const erroredIndex = currentImageIndex;
+                          setImageErrors((prev) => new Set(prev).add(erroredIndex));
+                          if (erroredIndex === currentImageIndex) {
+                            setMainImageLoading(false);
+                          }
                         }}
                       />
                     ) : (
@@ -1398,10 +1318,16 @@ export default function ListingPageClient({
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 65vw"
                         className={`object-cover ${showMainImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
                         priority
-                        onLoad={handleMainImageLoad}
+                        onLoad={() => {
+                          const loadedIndex = currentImageIndex;
+                          handleMainImageLoad(loadedIndex);
+                        }}
                         onError={() => {
-                          setImageErrors((prev) => new Set(prev).add(currentImageIndex));
-                          setMainImageLoading(false);
+                          const erroredIndex = currentImageIndex;
+                          setImageErrors((prev) => new Set(prev).add(erroredIndex));
+                          if (erroredIndex === currentImageIndex) {
+                            setMainImageLoading(false);
+                          }
                         }}
                       />
                     );
@@ -2741,10 +2667,16 @@ export default function ListingPageClient({
                       total: images.length.toString(),
                     })}
                     className={`max-w-full max-h-[90vh] w-auto h-auto object-contain ${showModalImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
-                    onLoad={handleModalImageLoad}
+                    onLoad={() => {
+                      const loadedIndex = modalImageIndex;
+                      handleModalImageLoad(loadedIndex);
+                    }}
                     onError={() => {
-                      setImageErrors((prev) => new Set(prev).add(modalImageIndex));
-                      setModalImageLoading(false);
+                      const erroredIndex = modalImageIndex;
+                      setImageErrors((prev) => new Set(prev).add(erroredIndex));
+                      if (erroredIndex === modalImageIndex) {
+                        setModalImageLoading(false);
+                      }
                     }}
                   />
                 ) : (
@@ -2760,10 +2692,16 @@ export default function ListingPageClient({
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 95vw, 90vw"
                     className={`max-w-full max-h-[90vh] w-auto h-auto object-contain ${showModalImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
                     priority={modalImageIndex === 0}
-                    onLoad={handleModalImageLoad}
+                    onLoad={() => {
+                      const loadedIndex = modalImageIndex;
+                      handleModalImageLoad(loadedIndex);
+                    }}
                     onError={() => {
-                      setImageErrors((prev) => new Set(prev).add(modalImageIndex));
-                      setModalImageLoading(false);
+                      const erroredIndex = modalImageIndex;
+                      setImageErrors((prev) => new Set(prev).add(erroredIndex));
+                      if (erroredIndex === modalImageIndex) {
+                        setModalImageLoading(false);
+                      }
                     }}
                   />
                 );
