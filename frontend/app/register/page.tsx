@@ -8,6 +8,7 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from '@/hooks/useTranslation';
 import { authApi, RegisterDto } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
+import { LoadingButton } from '@/ui';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -1137,13 +1138,14 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        <button
+        <LoadingButton
           type="submit"
-          disabled={loading}
-          className="w-full text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-primary-400 disabled:hover:border-primary-400/20 disabled:hover:bg-primary-500/10"
+          loading={loading}
+          loadingText={t('register.registering')}
+          className="w-full text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 disabled:hover:text-primary-400 disabled:hover:border-primary-400/20 disabled:hover:bg-primary-500/10"
         >
-          {loading ? t('register.registering') : t('register.registerButton')}
-        </button>
+          {t('register.registerButton')}
+        </LoadingButton>
 
         <p className="mt-5 text-center text-sm text-hint">
           {t('register.alreadyHaveAccount')}{' '}

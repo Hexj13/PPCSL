@@ -37,6 +37,7 @@ const noHardcodedTextRule = {
     ],
     messages: {
       hardcodedText: 'Hardcoded text "{{text}}" found in {{element}}. Use {{function}}() for translations instead.',
+      hardcodedTextInFunction: 'Hardcoded text "{{text}}" found in {{functionName}}() call. Use {{translationFunction}}() for translations instead.',
     },
   },
   create(context) {
@@ -80,6 +81,8 @@ const noHardcodedTextRule = {
 
       if (trimmed.match(/^[0-9\s.,\-+()]+$/)) return true;
 
+      if (trimmed.match(/^#[0-9]/)) return true;
+
       if (trimmed.match(/^[a-z]+:\/\/|^www\.|^mailto:/i)) return true;
 
       if (trimmed.match(/^[:;|•\-\s/×]+$/)) return true;
@@ -87,6 +90,7 @@ const noHardcodedTextRule = {
       if (trimmed.length === 1) {
         if (/^[:\-;|•/×·]$/.test(trimmed)) return true;
         if (/^[A-Z]$/.test(trimmed)) return true;
+        if (/^#$/.test(trimmed)) return true;
       }
 
       if (trimmed.length <= 2 && /^[×·/|:\-;]+$/.test(trimmed)) return true;
@@ -96,6 +100,118 @@ const noHardcodedTextRule = {
       if (ignorePatterns.some((pattern) => pattern.test(text))) return true;
 
       return false;
+    }
+
+    function isFunctionCallWithString(node, functionNames) {
+      if (!node || node.type !== 'CallExpression') return false;
+
+      const callee = node.callee;
+      let functionName = null;
+
+      if (callee.type === 'Identifier') {
+        functionName = callee.name;
+      } else if (callee.type === 'MemberExpression') {
+        const property = callee.property;
+        if (property && property.type === 'Identifier') {
+          functionName = property.name;
+        }
+      }
+
+      if (!functionName || !functionNames.includes(functionName)) return false;
+
+      const args = node.arguments || [];
+      if (args.length === 0) return false;
+
+      const firstArg = args[0];
+      if (firstArg.type === 'Literal' && typeof firstArg.value === 'string') {
+        if (firstArg.value.trim().length > 0) {
+          return { functionName, text: firstArg.value };
+        }
+        return false;
+      }
+
+      if (firstArg.type === 'TemplateLiteral') {
+        const hasExpressions = firstArg.expressions && firstArg.expressions.length > 0;
+        if (hasExpressions) {
+          const text = firstArg.quasis.map((q) => q.value.cooked || q.value.raw).join('');
+          if (text.trim().length > 0) {
+            return { functionName, text };
+          }
+        }
+      }
+
+      return false;
+    }
+
+    function checkFunctionCall(node) {
+      const functionNames = ['setError', 'setMessage', 'setText'];
+      const toastMethods = ['success', 'error', 'info', 'warning'];
+
+      const result = isFunctionCallWithString(node, functionNames);
+      if (result) {
+        const { functionName, text } = result;
+        if (!shouldIgnoreText(text)) {
+          context.report({
+            node: node.arguments[0],
+            messageId: 'hardcodedTextInFunction',
+            data: {
+              text: text.trim().substring(0, 50) + (text.trim().length > 50 ? '...' : ''),
+              functionName,
+              translationFunction,
+            },
+          });
+        }
+        return;
+      }
+
+      if (node.callee && node.callee.type === 'MemberExpression') {
+        const object = node.callee.object;
+        const property = node.callee.property;
+
+        if (
+          object &&
+          object.type === 'Identifier' &&
+          object.name === 'toast' &&
+          property &&
+          property.type === 'Identifier' &&
+          toastMethods.includes(property.name)
+        ) {
+          const args = node.arguments || [];
+          if (args.length > 0) {
+            const firstArg = args[0];
+            if (firstArg.type === 'Literal' && typeof firstArg.value === 'string') {
+              const text = firstArg.value;
+              if (!shouldIgnoreText(text) && !isTranslationCall(firstArg)) {
+                context.report({
+                  node: firstArg,
+                  messageId: 'hardcodedTextInFunction',
+                  data: {
+                    text: text.trim().substring(0, 50) + (text.trim().length > 50 ? '...' : ''),
+                    functionName: `toast.${property.name}`,
+                    translationFunction,
+                  },
+                });
+              }
+            } else if (firstArg.type === 'TemplateLiteral') {
+              const hasExpressions = firstArg.expressions && firstArg.expressions.length > 0;
+              if (hasExpressions) {
+                const text = firstArg.quasis.map((q) => q.value.cooked || q.value.raw).join('');
+                if (text.trim().length > 0 && !shouldIgnoreText(text)) {
+                  context.report({
+                    node: firstArg,
+                    messageId: 'hardcodedTextInFunction',
+                    data: {
+                      text: text.trim().substring(0, 50) + (text.trim().length > 50 ? '...' : ''),
+                      functionName: `toast.${property.name}`,
+                      translationFunction,
+                    },
+                  });
+                }
+              }
+            }
+          }
+        }
+      }
     }
 
     function checkTextNode(node, parent) {
@@ -246,6 +362,7 @@ const noHardcodedTextRule = {
       },
       JSXExpressionContainer: checkJSXExpressionContainer,
       JSXAttribute: checkJSXAttribute,
+      CallExpression: checkFunctionCall,
     };
   },
 };

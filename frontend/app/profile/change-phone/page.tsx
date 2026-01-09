@@ -60,12 +60,12 @@ export default function ChangePhonePage() {
     e.preventDefault();
 
     if (!phone.trim()) {
-      setError('Телефонскиот број е задолжителен');
+      setError(t('profile.changePhone.phoneRequired'));
       return;
     }
 
     if (!isValidPhone(phone)) {
-      setError('Внесете валиден телефон (формат: +код држава број)');
+      setError(t('profile.changePhone.phoneInvalid'));
       return;
     }
 
@@ -74,11 +74,11 @@ export default function ChangePhonePage() {
 
     try {
       await authApi.changePhoneRequest({ phone });
-      toast.success('SMS кодот е испратен');
+      toast.success(t('profile.changePhone.codeSent'));
       router.push(`/profile/verify-phone-change?phone=${encodeURIComponent(phone)}`);
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { message?: string } } };
-      setError(axiosError.response?.data?.message || 'Грешка при испраќање на SMS');
+      setError(axiosError.response?.data?.message || t('profile.changePhone.sendCodeError'));
     } finally {
       setLoading(false);
     }
@@ -129,7 +129,7 @@ export default function ChangePhonePage() {
           disabled={loading}
           className="w-full text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-primary-400 disabled:hover:border-primary-400/20 disabled:hover:bg-primary-500/10"
         >
-          {loading ? 'Испраќање...' : 'Испрати код'}
+          {loading ? t('profile.changePhone.sending') : t('profile.changePhone.sendCode')}
         </button>
 
         <p className="mt-6 text-center text-sm text-gray-300">

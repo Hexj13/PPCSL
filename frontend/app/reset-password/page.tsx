@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast';
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { authApi } from '@/lib/api';
+import { LoadingButton } from '@/ui';
 
 type Step = 'phone' | 'code' | 'password';
 
@@ -405,13 +406,14 @@ export default function ResetPasswordPage() {
             {errors.phone && <p className="mt-1 text-sm text-red-400">{errors.phone}</p>}
           </div>
 
-          <button
+          <LoadingButton
             type="submit"
-            disabled={loading}
-            className="w-full text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-primary-400 disabled:hover:border-primary-400/20 disabled:hover:bg-primary-500/10"
+            loading={loading}
+            loadingText={t('resetPassword.sending')}
+            className="w-full text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 disabled:hover:text-primary-400 disabled:hover:border-primary-400/20 disabled:hover:bg-primary-500/10"
           >
-            {loading ? t('resetPassword.sending') : t('resetPassword.sendCode')}
-          </button>
+            {t('resetPassword.sendCode')}
+          </LoadingButton>
 
           <p className="mt-6 text-center text-sm text-gray-300">
             <a
@@ -493,17 +495,15 @@ export default function ResetPasswordPage() {
                 >
                   {t('common.back')}
                 </button>
-                <button
+                <LoadingButton
                   type="submit"
-                  disabled={loading || code.join('').trim().length !== 6 || isVerificationBlocked}
-                  className="flex-1 text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-primary-400 disabled:hover:border-primary-400/20 disabled:hover:bg-primary-500/10"
+                  loading={loading}
+                  loadingText={t('resetPassword.verifying')}
+                  disabled={code.join('').trim().length !== 6 || isVerificationBlocked}
+                  className="flex-1 text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 disabled:hover:text-primary-400 disabled:hover:border-primary-400/20 disabled:hover:bg-primary-500/10"
                 >
-                  {loading
-                    ? t('resetPassword.verifying')
-                    : isVerificationBlocked
-                      ? t('resetPassword.blocked')
-                      : t('resetPassword.verify')}
-                </button>
+                  {isVerificationBlocked ? t('resetPassword.blocked') : t('resetPassword.verify')}
+                </LoadingButton>
               </div>
             </form>
 
@@ -711,13 +711,15 @@ export default function ResetPasswordPage() {
             >
               {t('common.back')}
             </button>
-            <button
+            <LoadingButton
               type="submit"
-              disabled={loading || !isFormValid}
-              className="flex-1 text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-primary-400 disabled:hover:border-primary-400/20 disabled:hover:bg-primary-500/10"
+              loading={loading}
+              loadingText={t('common.loading')}
+              disabled={!isFormValid}
+              className="flex-1 text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 disabled:hover:text-primary-400 disabled:hover:border-primary-400/20 disabled:hover:bg-primary-500/10"
             >
-              {loading ? t('common.loading') : t('resetPassword.resetButton')}
-            </button>
+              {t('resetPassword.resetButton')}
+            </LoadingButton>
           </div>
         </form>
       )}

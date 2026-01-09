@@ -18,6 +18,7 @@ import { createSlug } from '@/lib/utils';
 
 import { ListingCard } from './ListingCard';
 import { ListingCardSkeleton } from './ListingCardSkeleton';
+import { SkeletonContainer } from './SkeletonContainer';
 
 const FILTERS_STORAGE_KEY = 'kupito_search_filters';
 
@@ -617,92 +618,100 @@ export function ListingGrid({ initialData }: ListingGridProps) {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
-        {Array.from({ length: 8 }).map((_, index) => (
-          <ListingCardSkeleton key={`skeleton-${index}`} />
-        ))}
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-12">
-        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6 max-w-md mx-auto">
-          <p className="text-red-400 text-lg font-semibold mb-2">{t('common.error')}</p>
-          <p style={{ color: 'rgb(243, 243, 243)' }}>{error}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (listings.length === 0 && !loading && hasLoadedWithFilters) {
-    const handleViewAllListings = () => {
-      sessionStorage.removeItem(FILTERS_STORAGE_KEY);
-      localStorage.removeItem(FILTERS_STORAGE_KEY);
-      sessionStorage.removeItem(GRID_STATE_KEY);
-      sessionStorage.removeItem('homeScrollTimestamp');
-      sessionStorage.removeItem('scrollPreserved');
-      window.location.href = '/';
-    };
-
-    return (
-      <div className="text-center py-12">
-        <p className="text-lg mb-6" style={{ color: 'rgb(243, 243, 243)' }}>
-          {t('listings.notFound')}
-        </p>
-        <div className="flex justify-center">
-          <button
-            onClick={handleViewAllListings}
-            className="text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-6 py-3 text-base rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20"
-          >
-            {t('listings.viewAllListings')}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const hasMore = meta && meta.totalPages && currentPage < meta.totalPages;
-  const showLoadMoreButton = autoLoadCount >= 3 && hasMore;
-
   return (
-    <div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
-        {deferredListings.map((listing, index) => (
-          <ListingCard key={listing.id} listing={listing} priority={index < 8} />
-        ))}
-      </div>
-
-      {loadingMore && (
-        <div className="text-center py-8">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-          <p className="mt-2" style={{ color: 'rgb(243, 243, 243)' }}>
-            {t('common.loading')}
-          </p>
+    <>
+      <SkeletonContainer isLoading={loading}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <ListingCardSkeleton key={`skeleton-${index}`} />
+          ))}
         </div>
-      )}
+      </SkeletonContainer>
 
-      {showLoadMoreButton && !loadingMore && (
-        <div className="flex justify-center pt-8 pb-0">
-          <button
-            onClick={handleLoadMore}
-            className="text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20"
-          >
-            {t('listings.loadMore')}
-          </button>
-        </div>
-      )}
+      {!loading && (
+        <>
+          {error && (
+            <div className="text-center py-12">
+              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6 max-w-md mx-auto">
+                <p className="text-red-400 text-lg font-semibold mb-2">{t('common.error')}</p>
+                <p style={{ color: 'rgb(243, 243, 243)' }}>{error}</p>
+              </div>
+            </div>
+          )}
 
-      {!hasMore && listings.length > 0 && (
-        <div className="text-center pt-8 pb-0">
-          <p style={{ color: 'rgb(243, 243, 243)' }}>{t('listings.noMoreListings')}</p>
-        </div>
-      )}
+          {!error && listings.length === 0 && hasLoadedWithFilters && (
+            <div className="text-center py-12">
+              <p className="text-lg mb-6" style={{ color: 'rgb(243, 243, 243)' }}>
+                {t('listings.notFound')}
+              </p>
+              <div className="flex justify-center">
+                <button
+                  onClick={() => {
+                    sessionStorage.removeItem(FILTERS_STORAGE_KEY);
+                    localStorage.removeItem(FILTERS_STORAGE_KEY);
+                    sessionStorage.removeItem(GRID_STATE_KEY);
+                    sessionStorage.removeItem('homeScrollTimestamp');
+                    sessionStorage.removeItem('scrollPreserved');
+                    window.location.href = '/';
+                  }}
+                  className="text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-6 py-3 text-base rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20"
+                >
+                  {t('listings.viewAllListings')}
+                </button>
+              </div>
+            </div>
+          )}
 
-      {autoLoadCount < 3 && <div ref={observerTarget} style={{ height: '1px' }} />}
-    </div>
+          {!error && listings.length > 0 && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
+                {deferredListings.map((listing, index) => (
+                  <ListingCard key={listing.id} listing={listing} priority={index < 8} />
+                ))}
+              </div>
+
+              {loadingMore && (
+                <div className="text-center py-8">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                  <p className="mt-2" style={{ color: 'rgb(243, 243, 243)' }}>
+                    {t('common.loading')}
+                  </p>
+                </div>
+              )}
+
+              {(() => {
+                const hasMore = meta && meta.totalPages && currentPage < meta.totalPages;
+                const showLoadMoreButton = autoLoadCount >= 3 && hasMore;
+
+                return (
+                  <>
+                    {showLoadMoreButton && !loadingMore && (
+                      <div className="flex justify-center pt-8 pb-0">
+                        <button
+                          onClick={handleLoadMore}
+                          className="text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20"
+                        >
+                          {t('listings.loadMore')}
+                        </button>
+                      </div>
+                    )}
+
+                    {!hasMore && listings.length > 0 && (
+                      <div className="text-center pt-8 pb-0">
+                        <p style={{ color: 'rgb(243, 243, 243)' }}>
+                          {t('listings.noMoreListings')}
+                        </p>
+                      </div>
+                    )}
+
+                    {autoLoadCount < 3 && <div ref={observerTarget} style={{ height: '1px' }} />}
+                  </>
+                );
+              })()}
+            </>
+          )}
+        </>
+      )}
+    </>
   );
 }

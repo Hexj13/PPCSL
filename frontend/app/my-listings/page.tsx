@@ -10,6 +10,7 @@ import { ListingManagementCardSkeleton } from '@/components/ListingManagementCar
 import { Modal } from '@/components/Modal';
 import { PromotionHistoryModal } from '@/components/PromotionHistoryModal';
 import { PromotionModal } from '@/components/PromotionModal';
+import { SkeletonContainer } from '@/components/SkeletonContainer';
 import { useTranslation } from '@/hooks/useTranslation';
 import { listingsApi, Listing, PaginationMeta, PromotionHistory } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
@@ -530,314 +531,323 @@ export default function MyListingsPage() {
     return null;
   }
 
-  if (loading || !hasLoadedRef.current) {
-    return (
-      <div>
-        <Breadcrumbs
-          items={[{ label: t('myListings.home'), href: '/' }, { label: t('myListings.title') }]}
-          className="mb-6"
-        />
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
-          <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-            {t('myListings.title')}
-          </h1>
-        </div>
-        <div className="space-y-4">
-          {[...Array(3)].map((_, i) => (
-            <ListingManagementCardSkeleton key={i} />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div>
-      <Breadcrumbs
-        items={[{ label: t('myListings.home'), href: '/' }, { label: t('myListings.title') }]}
-        className="mb-6"
-      />
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
-        <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-          {t('myListings.title')}
-        </h1>
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <button
-            onClick={handleRefreshDates}
-            disabled={
-              isRefreshing ||
-              (timeUntilRefresh !== null && timeUntilRefresh > 0) ||
-              !hasActiveListings
-            }
-            className="w-full sm:w-auto text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-500/10 disabled:hover:border-primary-400/20"
-          >
-            {isRefreshing ? (
-              <>
-                <div className="w-3.5 h-3.5 md:w-4 md:h-4 border-2 border-primary-400 border-t-transparent rounded-full animate-spin flex-shrink-0"></div>
-                {t('myListings.refreshing')}
-              </>
-            ) : (
-              <>
-                <svg
-                  className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                  />
-                </svg>
-                {formattedTime ? (
-                  <>{t('myListings.refreshDateWithTime', { time: formattedTime })}</>
-                ) : (
-                  t('myListings.refreshDate')
-                )}
-              </>
-            )}
-          </button>
-          {listings && listings.length > 0 && canPromote && (
-            <button
-              onClick={() => {
-                setPromotionHistoryModalOpen(true);
-                loadPromotionHistory(1);
-              }}
-              disabled={!hasPromotionHistory}
-              className="w-full sm:w-auto text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-primary-400/20"
-            >
-              <svg
-                className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              {t('myListings.promotionHistory')}
-            </button>
-          )}
-          {(!listings || listings.length === 0) && (
-            <a
-              href="/listings/new"
-              className="w-full sm:w-auto text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 inline-block text-center"
-            >
-              {t('myListings.createListing')}
-            </a>
-          )}
-        </div>
-      </div>
-
-      {listings && listings.length > 0 && (
-        <div className="mb-6">
-          <div className="flex flex-wrap gap-3">
-            {(['All', 'Active', 'Paused', 'Closed'] as const).map((status) => (
-              <button
-                key={status}
-                onClick={() => {
-                  setStatusFilter(status);
-                  if (promotedFilter !== 'All') {
-                    setPromotedFilter('All');
-                  }
-                }}
-                className={`px-3 md:px-4 py-2 md:py-2.5 rounded-lg font-medium text-xs md:text-sm lg:text-base transition-colors bg-bg-light hover:bg-bg-dark border ${
-                  statusFilter === status
-                    ? 'border-primary-500 text-white'
-                    : 'border-primary-500/20'
-                }`}
-                style={statusFilter !== status ? { color: 'rgb(243, 243, 243)' } : undefined}
-              >
-                {status === 'All'
-                  ? t('myListings.all')
-                  : status === 'Active'
-                    ? t('myListings.active')
-                    : status === 'Paused'
-                      ? t('myListings.paused')
-                      : t('myListings.closed')}
-                {status !== 'All' && (
-                  <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-xs">
-                    {statusCounts[status]}
-                  </span>
-                )}
-              </button>
+    <>
+      <SkeletonContainer isLoading={loading || !hasLoadedRef.current}>
+        <div>
+          <Breadcrumbs
+            items={[{ label: t('myListings.home'), href: '/' }, { label: t('myListings.title') }]}
+            className="mb-6"
+          />
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
+            <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+              {t('myListings.title')}
+            </h1>
+          </div>
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <ListingManagementCardSkeleton key={i} />
             ))}
-            {canPromote && (
-              <button
-                onClick={() => {
-                  const newPromotedFilter = promotedFilter === 'Promoted' ? 'All' : 'Promoted';
-                  setPromotedFilter(newPromotedFilter);
-                  if (newPromotedFilter === 'Promoted') {
-                    setStatusFilter('All');
-                  }
-                }}
-                className={`px-3 md:px-4 py-2 md:py-2.5 rounded-lg font-medium text-xs md:text-sm lg:text-base transition-colors bg-bg-light hover:bg-bg-dark border ${
-                  promotedFilter === 'Promoted'
-                    ? 'border-primary-500 text-white'
-                    : 'border-primary-500/20'
-                }`}
-                style={promotedFilter !== 'Promoted' ? { color: 'rgb(243, 243, 243)' } : undefined}
-              >
-                {t('myListings.promoted')}
-                <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-xs">
-                  {
-                    (allListingsForCount.length > 0 ? allListingsForCount : listings).filter(
-                      (l) => l.is_promoted === true
-                    ).length
-                  }
-                </span>
-              </button>
-            )}
           </div>
         </div>
-      )}
+      </SkeletonContainer>
 
-      {!listings || listings.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-lg" style={{ color: 'rgb(243, 243, 243)' }}>
-            {t('myListings.noListingsYet')}
-          </p>
-        </div>
-      ) : (
-        <>
-          {filteredListings.length === 0 ? (
+      {!loading && hasLoadedRef.current && (
+        <div>
+          <Breadcrumbs
+            items={[{ label: t('myListings.home'), href: '/' }, { label: t('myListings.title') }]}
+            className="mb-6"
+          />
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
+            <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+              {t('myListings.title')}
+            </h1>
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              <button
+                onClick={handleRefreshDates}
+                disabled={
+                  isRefreshing ||
+                  (timeUntilRefresh !== null && timeUntilRefresh > 0) ||
+                  !hasActiveListings
+                }
+                className="w-full sm:w-auto text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-500/10 disabled:hover:border-primary-400/20"
+              >
+                {isRefreshing ? (
+                  <>
+                    <div className="w-3.5 h-3.5 md:w-4 md:h-4 border-2 border-primary-400 border-t-transparent rounded-full animate-spin flex-shrink-0"></div>
+                    {t('myListings.refreshing')}
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                      />
+                    </svg>
+                    {formattedTime ? (
+                      <>{t('myListings.refreshDateWithTime', { time: formattedTime })}</>
+                    ) : (
+                      t('myListings.refreshDate')
+                    )}
+                  </>
+                )}
+              </button>
+              {listings && listings.length > 0 && canPromote && (
+                <button
+                  onClick={() => {
+                    setPromotionHistoryModalOpen(true);
+                    loadPromotionHistory(1);
+                  }}
+                  disabled={!hasPromotionHistory}
+                  className="w-full sm:w-auto text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-primary-400/20"
+                >
+                  <svg
+                    className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  {t('myListings.promotionHistory')}
+                </button>
+              )}
+              {(!listings || listings.length === 0) && (
+                <a
+                  href="/listings/new"
+                  className="w-full sm:w-auto text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 inline-block text-center"
+                >
+                  {t('myListings.createListing')}
+                </a>
+              )}
+            </div>
+          </div>
+
+          {listings && listings.length > 0 && (
+            <div className="mb-6">
+              <div className="flex flex-wrap gap-3">
+                {(['All', 'Active', 'Paused', 'Closed'] as const).map((status) => (
+                  <button
+                    key={status}
+                    onClick={() => {
+                      setStatusFilter(status);
+                      if (promotedFilter !== 'All') {
+                        setPromotedFilter('All');
+                      }
+                    }}
+                    className={`px-3 md:px-4 py-2 md:py-2.5 rounded-lg font-medium text-xs md:text-sm lg:text-base transition-colors bg-bg-light hover:bg-bg-dark border ${
+                      statusFilter === status
+                        ? 'border-primary-500 text-white'
+                        : 'border-primary-500/20'
+                    }`}
+                    style={statusFilter !== status ? { color: 'rgb(243, 243, 243)' } : undefined}
+                  >
+                    {status === 'All'
+                      ? t('myListings.all')
+                      : status === 'Active'
+                        ? t('myListings.active')
+                        : status === 'Paused'
+                          ? t('myListings.paused')
+                          : t('myListings.closed')}
+                    {status !== 'All' && (
+                      <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-xs">
+                        {statusCounts[status]}
+                      </span>
+                    )}
+                  </button>
+                ))}
+                {canPromote && (
+                  <button
+                    onClick={() => {
+                      const newPromotedFilter = promotedFilter === 'Promoted' ? 'All' : 'Promoted';
+                      setPromotedFilter(newPromotedFilter);
+                      if (newPromotedFilter === 'Promoted') {
+                        setStatusFilter('All');
+                      }
+                    }}
+                    className={`px-3 md:px-4 py-2 md:py-2.5 rounded-lg font-medium text-xs md:text-sm lg:text-base transition-colors bg-bg-light hover:bg-bg-dark border ${
+                      promotedFilter === 'Promoted'
+                        ? 'border-primary-500 text-white'
+                        : 'border-primary-500/20'
+                    }`}
+                    style={
+                      promotedFilter !== 'Promoted' ? { color: 'rgb(243, 243, 243)' } : undefined
+                    }
+                  >
+                    {t('myListings.promoted')}
+                    <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-xs">
+                      {
+                        (allListingsForCount.length > 0 ? allListingsForCount : listings).filter(
+                          (l) => l.is_promoted === true
+                        ).length
+                      }
+                    </span>
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {!listings || listings.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-lg" style={{ color: 'rgb(243, 243, 243)' }}>
-                {t('myListings.noListingsWithStatus')}
+                {t('myListings.noListingsYet')}
               </p>
             </div>
           ) : (
             <>
-              <div className="space-y-4">
-                {filteredListings.map((listing) => (
-                  <ListingManagementCard
-                    key={listing.id}
-                    listing={listing}
-                    mode="my-listings"
-                    onAction={handleAction}
-                    onPromoteClick={canPromote ? handlePromoteClick : undefined}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-
-          {loadingMore && (
-            <div className="text-center py-8">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-              <p className="mt-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                {t('common.loading')}
-              </p>
-            </div>
-          )}
-
-          {filteredListings.length > 0 && (
-            <>
-              {(() => {
-                const noFilters = statusFilter === 'All' && promotedFilter === 'All';
-                const allFilteredMatch = filteredListings.length === listings.length;
-                const shouldShow = noFilters || allFilteredMatch;
-
-                return (
-                  meta &&
-                  meta.totalPages &&
-                  currentPage < meta.totalPages &&
-                  !loadingMore &&
-                  shouldShow && (
-                    <div className="flex justify-center pt-8 pb-0">
-                      <button
-                        onClick={handleLoadMore}
-                        className="text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20"
-                      >
-                        {t('myListings.loadMore')}
-                      </button>
-                    </div>
-                  )
-                );
-              })()}
-
-              {meta && meta.totalPages && currentPage >= meta.totalPages && listings.length > 0 && (
-                <div className="text-center pt-8 pb-0">
-                  <p style={{ color: 'rgb(243, 243, 243)' }}>{t('myListings.noMoreListings')}</p>
+              {filteredListings.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-lg" style={{ color: 'rgb(243, 243, 243)' }}>
+                    {t('myListings.noListingsWithStatus')}
+                  </p>
                 </div>
-              )}
-            </>
-          )}
-        </>
-      )}
-
-      <Modal
-        isOpen={isCloseConfirmOpen}
-        onClose={() => {
-          setIsCloseConfirmOpen(false);
-          setListingToClose(null);
-        }}
-        title={t('myListings.closeConfirmTitle')}
-        size="medium"
-      >
-        <div className="space-y-6">
-          <div className="space-y-3">
-            <p className="text-base leading-relaxed" style={{ color: 'rgb(243, 243, 243)' }}>
-              {t('myListings.closeConfirmQuestion')}
-            </p>
-            <ol
-              className="list-decimal list-inside space-y-2 text-base leading-relaxed"
-              style={{ color: 'rgb(243, 243, 243)' }}
-            >
-              <li>{t('myListings.closeConfirmWarning1')}</li>
-              {listingToClose && listings.find((l) => l.id === listingToClose)?.is_promoted && (
+              ) : (
                 <>
-                  <li>{t('myListings.closeConfirmWarning2')}</li>
-                  <li>{t('myListings.closeConfirmWarning3')}</li>
+                  <div className="space-y-4">
+                    {filteredListings.map((listing) => (
+                      <ListingManagementCard
+                        key={listing.id}
+                        listing={listing}
+                        mode="my-listings"
+                        onAction={handleAction}
+                        onPromoteClick={canPromote ? handlePromoteClick : undefined}
+                      />
+                    ))}
+                  </div>
                 </>
               )}
-            </ol>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3 justify-end">
-            <button
-              onClick={() => {
-                setIsCloseConfirmOpen(false);
-                setListingToClose(null);
-              }}
-              className="px-6 py-2.5 bg-bg-light border-2 border-primary-500/30 text-white hover:bg-bg-dark hover:border-primary-500/50 rounded-lg font-semibold transition-colors"
-            >
-              {t('myListings.closeConfirmCancel')}
-            </button>
-            <button
-              onClick={handleCloseConfirm}
-              className="px-6 py-2.5 bg-primary-600 text-white hover:bg-primary-700 rounded-lg font-semibold transition-colors"
-            >
-              {t('myListings.closeConfirmOk')}
-            </button>
-          </div>
+
+              {loadingMore && (
+                <div className="text-center py-8">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                  <p className="mt-2" style={{ color: 'rgb(243, 243, 243)' }}>
+                    {t('common.loading')}
+                  </p>
+                </div>
+              )}
+
+              {filteredListings.length > 0 && (
+                <>
+                  {(() => {
+                    const noFilters = statusFilter === 'All' && promotedFilter === 'All';
+                    const allFilteredMatch = filteredListings.length === listings.length;
+                    const shouldShow = noFilters || allFilteredMatch;
+
+                    return (
+                      meta &&
+                      meta.totalPages &&
+                      currentPage < meta.totalPages &&
+                      !loadingMore &&
+                      shouldShow && (
+                        <div className="flex justify-center pt-8 pb-0">
+                          <button
+                            onClick={handleLoadMore}
+                            className="text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20"
+                          >
+                            {t('myListings.loadMore')}
+                          </button>
+                        </div>
+                      )
+                    );
+                  })()}
+
+                  {meta &&
+                    meta.totalPages &&
+                    currentPage >= meta.totalPages &&
+                    listings.length > 0 && (
+                      <div className="text-center pt-8 pb-0">
+                        <p style={{ color: 'rgb(243, 243, 243)' }}>
+                          {t('myListings.noMoreListings')}
+                        </p>
+                      </div>
+                    )}
+                </>
+              )}
+            </>
+          )}
+
+          <Modal
+            isOpen={isCloseConfirmOpen}
+            onClose={() => {
+              setIsCloseConfirmOpen(false);
+              setListingToClose(null);
+            }}
+            title={t('myListings.closeConfirmTitle')}
+            size="medium"
+          >
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <p className="text-base leading-relaxed" style={{ color: 'rgb(243, 243, 243)' }}>
+                  {t('myListings.closeConfirmQuestion')}
+                </p>
+                <ol
+                  className="list-decimal list-inside space-y-2 text-base leading-relaxed"
+                  style={{ color: 'rgb(243, 243, 243)' }}
+                >
+                  <li>{t('myListings.closeConfirmWarning1')}</li>
+                  {listingToClose && listings.find((l) => l.id === listingToClose)?.is_promoted && (
+                    <>
+                      <li>{t('myListings.closeConfirmWarning2')}</li>
+                      <li>{t('myListings.closeConfirmWarning3')}</li>
+                    </>
+                  )}
+                </ol>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3 justify-end">
+                <button
+                  onClick={() => {
+                    setIsCloseConfirmOpen(false);
+                    setListingToClose(null);
+                  }}
+                  className="px-6 py-2.5 bg-bg-light border-2 border-primary-500/30 text-white hover:bg-bg-dark hover:border-primary-500/50 rounded-lg font-semibold transition-colors"
+                >
+                  {t('myListings.closeConfirmCancel')}
+                </button>
+                <button
+                  onClick={handleCloseConfirm}
+                  className="px-6 py-2.5 bg-primary-600 text-white hover:bg-primary-700 rounded-lg font-semibold transition-colors"
+                >
+                  {t('myListings.closeConfirmOk')}
+                </button>
+              </div>
+            </div>
+          </Modal>
+
+          <PromotionModal
+            isOpen={promotionModalOpen}
+            onClose={() => {
+              setPromotionModalOpen(false);
+              setSelectedListingId(null);
+            }}
+            onSelect={handlePromotionSelect}
+            isAdmin={false}
+          />
+
+          <PromotionHistoryModal
+            isOpen={promotionHistoryModalOpen}
+            onClose={() => setPromotionHistoryModalOpen(false)}
+            history={promotionHistory}
+            meta={promotionHistoryMeta}
+            currentPage={promotionHistoryPage}
+            loading={loadingHistory}
+            onPageChange={loadPromotionHistory}
+          />
         </div>
-      </Modal>
-
-      <PromotionModal
-        isOpen={promotionModalOpen}
-        onClose={() => {
-          setPromotionModalOpen(false);
-          setSelectedListingId(null);
-        }}
-        onSelect={handlePromotionSelect}
-        isAdmin={false}
-      />
-
-      <PromotionHistoryModal
-        isOpen={promotionHistoryModalOpen}
-        onClose={() => setPromotionHistoryModalOpen(false)}
-        history={promotionHistory}
-        meta={promotionHistoryMeta}
-        currentPage={promotionHistoryPage}
-        loading={loadingHistory}
-        onPageChange={loadPromotionHistory}
-      />
-    </div>
+      )}
+    </>
   );
 }

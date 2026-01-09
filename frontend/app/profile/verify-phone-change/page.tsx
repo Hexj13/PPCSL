@@ -7,6 +7,7 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from '@/hooks/useTranslation';
 import { authApi } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
+import { LoadingButton } from '@/ui';
 
 function VerifyPhoneChangeContent() {
   const { t } = useTranslation();
@@ -134,18 +135,18 @@ function VerifyPhoneChangeContent() {
     e.preventDefault();
 
     if (isVerificationBlocked) {
-      setError('Достигнато е максималниот број на обиди. Испратете го кодот повторно.');
+      setError(t('verifyPhoneChange.maxAttemptsReached'));
       return;
     }
 
     const fullCode = code.join('').trim();
     if (fullCode.length !== 6) {
-      setError('Кодот мора да содржи точно 6 цифри');
+      setError(t('verifyPhoneChange.codeRequired'));
       return;
     }
 
     if (!/^\d{6}$/.test(fullCode)) {
-      setError('Кодот мора да содржи само цифри');
+      setError(t('verifyPhoneChange.codeDigitsOnly'));
       return;
     }
 
@@ -158,7 +159,7 @@ function VerifyPhoneChangeContent() {
         code: fullCode,
       });
       setAuth(response.data, useAuthStore.getState().token);
-      toast.success('Телефонот е успешно променет');
+      toast.success(t('verifyPhoneChange.phoneChangedSuccess'));
       router.push('/profile');
     } catch (err: unknown) {
       const axiosError = err as {
@@ -175,12 +176,14 @@ function VerifyPhoneChangeContent() {
           const now = new Date();
           const remainingMinutes = Math.ceil((blockedDate.getTime() - now.getTime()) / (1000 * 60));
           setError(
-            `Достигнато е максималниот број на обиди. Обидете се повторно за ${remainingMinutes} минути`
+            t('verifyPhoneChange.maxAttemptsReachedWithMinutes', {
+              minutes: remainingMinutes.toString(),
+            })
           );
           setIsVerificationBlocked(true);
           setCode(['', '', '', '', '', '']);
           setLoading(false);
-          toast.error(`IP адресата е блокирана за ${remainingMinutes} минути`);
+          toast.error(t('verifyPhoneChange.ipBlocked', { minutes: remainingMinutes.toString() }));
           return;
         }
       }
@@ -190,13 +193,10 @@ function VerifyPhoneChangeContent() {
 
       if (newAttempts >= 10) {
         setIsVerificationBlocked(true);
-        setError(
-          'Достигнато е максималниот број на обиди (10). Испратете го кодот повторно за да продолжите.'
-        );
+        setError(t('verifyPhoneChange.maxAttempts'));
       } else {
         setError(
-          axiosError.response?.data?.message ||
-            `Невалиден код. Обидете се повторно. (${newAttempts}/10)`
+          t('verifyPhoneChange.invalidCodeWithAttempts', { attempts: newAttempts.toString() })
         );
       }
 
@@ -222,10 +222,10 @@ function VerifyPhoneChangeContent() {
 
     try {
       await authApi.changePhoneRequest({ phone: phoneNumber });
-      toast.success('Кодот е испратен повторно');
+      toast.success(t('verifyPhoneChange.codeResent'));
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { message?: string } } };
-      toast.error(axiosError.response?.data?.message || 'Грешка при испраќање на SMS');
+      toast.error(axiosError.response?.data?.message || t('verifyPhoneChange.resendCodeError'));
     }
   };
 
@@ -306,13 +306,16 @@ function VerifyPhoneChangeContent() {
               >
                 {t('common.back')}
               </button>
-              <button
+              <LoadingButton
                 type="submit"
-                disabled={loading || code.join('').trim().length !== 6 || isVerificationBlocked}
-                className="flex-1 text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-primary-400 disabled:hover:border-primary-400/20 disabled:hover:bg-primary-500/10"
+                loading={loading}
+                disabled={code.join('').trim().length !== 6 || isVerificationBlocked}
+                className="flex-1 text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 disabled:hover:text-primary-400 disabled:hover:border-primary-400/20 disabled:hover:bg-primary-500/10"
               >
-                {loading ? 'Проверување...' : isVerificationBlocked ? 'Блокирано' : 'Потврди'}
-              </button>
+                {isVerificationBlocked
+                  ? t('verifyPhoneChange.blocked')
+                  : t('verifyPhoneChange.verify')}
+              </LoadingButton>
             </div>
           </form>
 
@@ -323,7 +326,11 @@ function VerifyPhoneChangeContent() {
               disabled={loading || resendCooldown > 0}
               className="text-sm text-primary-400 hover:text-primary-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {resendCooldown > 0 ? `Испрати нов код (${resendCooldown}с)` : 'Испрати нов код'}
+              {resendCooldown > 0
+                ? t('verifyPhoneChange.resendCodeWithCooldown', {
+                    cooldown: resendCooldown.toString(),
+                  })
+                : t('verifyPhoneChange.resendCode')}
             </button>
           </div>
         </div>

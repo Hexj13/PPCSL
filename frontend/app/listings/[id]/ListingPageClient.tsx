@@ -18,6 +18,7 @@ import {
 } from '@/components/ListingPageSkeleton';
 import { PromotionModal } from '@/components/PromotionModal';
 import { UserListingsModal } from '@/components/UserListingsModal';
+import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { api, listingsApi, Listing, favoritesApi } from '@/lib/api';
@@ -39,6 +40,7 @@ import {
   getWhatsAppUrl,
   horsepowerToKw,
 } from '@/lib/utils';
+import { Spinner } from '@/ui';
 
 function escapeHtml(text: string): string {
   return text
@@ -81,15 +83,23 @@ export default function ListingPageClient({
     }
     return user.id === currentListing.user.id;
   }, [user, listing, initialListing]);
-  const [showSkeleton, setShowSkeleton] = useState(false);
-  const showLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasLoadedRef = useRef(false);
   const hasInitialListingRef = useRef<boolean>(!!initialListing);
+  const isLoadingListing = listing === null && !hasInitialListingRef.current;
+  const { visible: showSkeleton } = useLoadingState({
+    isLoading: isLoadingListing,
+    immediate: true,
+    minDisplayTime: 1000,
+  });
   const [isHydrated, setIsHydrated] = useState(false);
   const listingRef = useRef<Listing | null>(initialListing);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [mainImageLoading, setMainImageLoading] = useState(false);
+  const mainImageLoadedRef = useRef<Set<number>>(new Set());
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [modalImageIndex, setModalImageIndex] = useState(0);
+  const [modalImageLoading, setModalImageLoading] = useState(false);
+  const modalImageLoadedRef = useRef<Set<number>>(new Set());
   const [isUserListingsModalOpen, setIsUserListingsModalOpen] = useState(false);
   const [previousListings, setPreviousListings] = useState<Listing[]>([]);
   const [loadingPrevious, setLoadingPrevious] = useState(false);
@@ -120,6 +130,16 @@ export default function ListingPageClient({
   useEffect(() => {
     setIsHydrated(true);
   }, []);
+
+  useEffect(() => {
+    if (isHydrated && listing) {
+      const toastMessage = sessionStorage.getItem('listingCreatedToast');
+      if (toastMessage) {
+        sessionStorage.removeItem('listingCreatedToast');
+        toast.success(toastMessage);
+      }
+    }
+  }, [isHydrated, listing]);
 
   useEffect(() => {
     if (isHydrated) {
@@ -196,13 +216,6 @@ export default function ListingPageClient({
         setListing(null);
         setPreviousListings([]);
         setLoadingPrevious(false);
-        setShowSkeleton(false);
-
-        showLoadingTimeoutRef.current = setTimeout(() => {
-          if (hasLoadedRef.current && currentId === id) {
-            setShowSkeleton(true);
-          }
-        }, 500);
       }
 
       const listingPromise = needsRefresh
@@ -228,11 +241,6 @@ export default function ListingPageClient({
             return;
           }
 
-          if (showLoadingTimeoutRef.current) {
-            clearTimeout(showLoadingTimeoutRef.current);
-            showLoadingTimeoutRef.current = null;
-          }
-
           if (!listingRes?.data) {
             console.error('No listing data received');
             throw new Error('No listing data received');
@@ -243,7 +251,6 @@ export default function ListingPageClient({
           setListing(listingRes.data);
           setIsFavorite(favoriteValue);
           setIsInComparison(comparisonValue);
-          setShowSkeleton(false);
           hasInitialListingRef.current = false;
 
           if (listingRes.data.user?.id) {
@@ -306,11 +313,6 @@ export default function ListingPageClient({
             return;
           }
 
-          if (showLoadingTimeoutRef.current) {
-            clearTimeout(showLoadingTimeoutRef.current);
-            showLoadingTimeoutRef.current = null;
-          }
-
           // If refresh failed, try without refresh flag
           if (needsRefresh && !forceRefresh && error?.code !== 'ECONNABORTED') {
             // Refresh failed, trying without refresh flag
@@ -330,7 +332,6 @@ export default function ListingPageClient({
           setListing(null);
           setIsFavorite(favoriteValue);
           setIsInComparison(comparisonValue);
-          setShowSkeleton(false);
 
           if (needsRefresh) {
             sessionStorage.removeItem(`refreshListing_${currentId}`);
@@ -347,10 +348,6 @@ export default function ListingPageClient({
 
     return () => {
       hasLoadedRef.current = false;
-      if (showLoadingTimeoutRef.current) {
-        clearTimeout(showLoadingTimeoutRef.current);
-        showLoadingTimeoutRef.current = null;
-      }
     };
   }, [fetchListingData, id]);
 
@@ -525,6 +522,7 @@ export default function ListingPageClient({
 
   const closeImageModal = () => {
     setIsImageModalOpen(false);
+    setModalImageLoading(false);
   };
 
   const getClosingDate = (lastUpdatedAt: string): Date => {
@@ -1162,6 +1160,94 @@ export default function ListingPageClient({
     };
   }, [modalImageIndex, isImageModalOpen, listing, imageErrors]);
 
+  useEffect(() => {
+    if (!isImageModalOpen || !listing) {
+      setModalImageLoading(false);
+      modalImageLoadedRef.current.clear();
+      return;
+    }
+
+    const imagesList =
+      listing.images && listing.images.length > 0 ? listing.images : ['/placeholder-car.jpg'];
+    const currentImage = imagesList[modalImageIndex];
+    if (
+      !currentImage ||
+      currentImage === '/placeholder-car.jpg' ||
+      imageErrors.has(modalImageIndex)
+    ) {
+      setModalImageLoading(false);
+      return;
+    }
+
+    const optimizedUrl = getOptimizedImageUrl(currentImage, 85, 1920);
+    const isPreloaded = preloadedImagesRef.current.has(optimizedUrl);
+    const isAlreadyLoaded = modalImageLoadedRef.current.has(modalImageIndex);
+
+    if (isPreloaded || isAlreadyLoaded) {
+      setModalImageLoading(false);
+    } else {
+      setModalImageLoading(true);
+    }
+  }, [modalImageIndex, isImageModalOpen, listing, imageErrors]);
+
+  useEffect(() => {
+    if (!listing) {
+      setMainImageLoading(false);
+      mainImageLoadedRef.current.clear();
+      return;
+    }
+
+    const imagesList =
+      listing.images && listing.images.length > 0 ? listing.images : ['/placeholder-car.jpg'];
+    const currentImage = imagesList[currentImageIndex];
+    if (
+      !currentImage ||
+      currentImage === '/placeholder-car.jpg' ||
+      imageErrors.has(currentImageIndex)
+    ) {
+      setMainImageLoading(false);
+      return;
+    }
+
+    const optimizedUrl = getOptimizedImageUrl(currentImage, 75, 1200);
+    const isPreloaded = preloadedImagesRef.current.has(optimizedUrl);
+    const isAlreadyLoaded = mainImageLoadedRef.current.has(currentImageIndex);
+
+    if (isPreloaded || isAlreadyLoaded) {
+      setMainImageLoading(false);
+    } else {
+      setMainImageLoading(true);
+    }
+  }, [currentImageIndex, listing, imageErrors]);
+
+  const handleMainImageLoad = useCallback(() => {
+    if (mainImageLoadedRef.current.has(currentImageIndex)) {
+      return;
+    }
+    mainImageLoadedRef.current.add(currentImageIndex);
+    setMainImageLoading(false);
+  }, [currentImageIndex]);
+
+  const handleModalImageLoad = useCallback(() => {
+    if (modalImageLoadedRef.current.has(modalImageIndex)) {
+      return;
+    }
+    modalImageLoadedRef.current.add(modalImageIndex);
+    setModalImageLoading(false);
+  }, [modalImageIndex]);
+
+  const { visible: showMainImageLoader } = useLoadingState({
+    isLoading: mainImageLoading,
+    showDelay: 200,
+    minDisplayTime: 1000,
+  });
+
+  const { visible: showModalImageLoader } = useLoadingState({
+    isLoading: modalImageLoading,
+    showDelay: 200,
+    minDisplayTime: 1000,
+  });
+
   if (!listing && !showSkeleton) {
     return null;
   }
@@ -1272,6 +1358,12 @@ export default function ListingPageClient({
                 onClick={() => openImageModal(currentImageIndex)}
                 className="relative h-64 sm:h-80 md:h-96 bg-bg-darker rounded-xl overflow-hidden mb-4 w-full cursor-pointer border border-transparent hover:border-primary-500/50 transition-colors"
               >
+                {showMainImageLoader && (
+                  <div className="absolute inset-0 flex items-center justify-center z-10">
+                    <Spinner size="lg" />
+                  </div>
+                )}
+
                 {images[currentImageIndex] &&
                 images[currentImageIndex] !== '/placeholder-car.jpg' &&
                 !imageErrors.has(currentImageIndex) ? (
@@ -1287,9 +1379,11 @@ export default function ListingPageClient({
                           index: (currentImageIndex + 1).toString(),
                           total: images.length.toString(),
                         })}
-                        className="w-full h-full object-cover"
+                        className={`w-full h-full object-cover ${showMainImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
+                        onLoad={handleMainImageLoad}
                         onError={() => {
                           setImageErrors((prev) => new Set(prev).add(currentImageIndex));
+                          setMainImageLoading(false);
                         }}
                       />
                     ) : (
@@ -1302,10 +1396,12 @@ export default function ListingPageClient({
                         })}
                         fill
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 65vw"
-                        className="object-cover"
+                        className={`object-cover ${showMainImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
                         priority
+                        onLoad={handleMainImageLoad}
                         onError={() => {
                           setImageErrors((prev) => new Set(prev).add(currentImageIndex));
+                          setMainImageLoading(false);
                         }}
                       />
                     );
@@ -2623,6 +2719,12 @@ export default function ListingPageClient({
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
           >
+            {showModalImageLoader && (
+              <div className="absolute inset-0 flex items-center justify-center z-10">
+                <Spinner size="lg" />
+              </div>
+            )}
+
             {images[modalImageIndex] &&
             images[modalImageIndex] !== '/placeholder-car.jpg' &&
             !imageErrors.has(modalImageIndex) ? (
@@ -2638,9 +2740,11 @@ export default function ListingPageClient({
                       index: (modalImageIndex + 1).toString(),
                       total: images.length.toString(),
                     })}
-                    className="max-w-full max-h-[90vh] w-auto h-auto object-contain"
+                    className={`max-w-full max-h-[90vh] w-auto h-auto object-contain ${showModalImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
+                    onLoad={handleModalImageLoad}
                     onError={() => {
                       setImageErrors((prev) => new Set(prev).add(modalImageIndex));
+                      setModalImageLoading(false);
                     }}
                   />
                 ) : (
@@ -2654,10 +2758,12 @@ export default function ListingPageClient({
                     width={1200}
                     height={900}
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 95vw, 90vw"
-                    className="max-w-full max-h-[90vh] w-auto h-auto object-contain"
+                    className={`max-w-full max-h-[90vh] w-auto h-auto object-contain ${showModalImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
                     priority={modalImageIndex === 0}
+                    onLoad={handleModalImageLoad}
                     onError={() => {
                       setImageErrors((prev) => new Set(prev).add(modalImageIndex));
+                      setModalImageLoading(false);
                     }}
                   />
                 );

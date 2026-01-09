@@ -8,6 +8,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { authApi, favoritesApi, listingsApi, RegisterDto, savedFiltersApi } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
+import { LoadingButton } from '@/ui';
 
 function VerifyPhoneContent() {
   const router = useRouter();
@@ -201,7 +202,9 @@ function VerifyPhoneContent() {
           const now = new Date();
           const remainingMinutes = Math.ceil((blockedDate.getTime() - now.getTime()) / (1000 * 60));
           setError(
-            `Достигнато е максималниот број на обиди (40). Обидете се повторно за ${remainingMinutes} минути.`
+            t('smsVerification.maxAttemptsReachedWithMinutes', {
+              minutes: remainingMinutes.toString(),
+            })
           );
           setIsVerificationBlocked(true);
           setCode(['', '', '', '', '', '']);
@@ -218,13 +221,10 @@ function VerifyPhoneContent() {
 
       if (newAttempts >= 10) {
         setIsVerificationBlocked(true);
-        setError(
-          'Достигнато е максималниот број на обиди (10). Испратете го кодот повторно за да продолжите.'
-        );
+        setError(t('smsVerification.maxAttemptsReached'));
       } else {
         setError(
-          axiosError.response?.data?.message ||
-            `Невалиден код. Обидете се повторно. (${newAttempts}/10)`
+          t('smsVerification.invalidCodeWithAttempts', { attempts: newAttempts.toString() })
         );
       }
 
@@ -433,7 +433,7 @@ function VerifyPhoneContent() {
     if (fullCode.length === 6) {
       validateAndSubmit(fullCode);
     } else {
-      setError('Внесете го целосниот код');
+      setError(t('smsVerification.enterFullCode'));
     }
   };
 
@@ -517,15 +517,14 @@ function VerifyPhoneContent() {
               >
                 {t('common.back')}
               </button>
-              <button
+              <LoadingButton
                 type="submit"
-                disabled={
-                  isSubmitting || code.join('').trim().length !== 6 || isVerificationBlocked
-                }
-                className="flex-1 text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-primary-400 disabled:hover:border-primary-400/20 disabled:hover:bg-primary-500/10"
+                loading={isSubmitting}
+                disabled={code.join('').trim().length !== 6 || isVerificationBlocked}
+                className="flex-1 text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 disabled:hover:text-primary-400 disabled:hover:border-primary-400/20 disabled:hover:bg-primary-500/10"
               >
-                {isSubmitting ? 'Проверување...' : isVerificationBlocked ? 'Блокирано' : 'Потврди'}
-              </button>
+                {isVerificationBlocked ? t('smsVerification.blocked') : t('smsVerification.verify')}
+              </LoadingButton>
             </div>
           </form>
 
@@ -550,16 +549,18 @@ function VerifyPhoneContent() {
                 setIsVerificationBlocked(false);
                 inputRefs.current[0]?.focus();
                 await sendSmsCode(phoneNumber);
-                toast.success('Кодот е испратен повторно');
+                toast.success(t('smsVerification.codeResent'));
               }}
               disabled={isSubmitting || resendCooldown > 0 || resendAttempts >= 3}
               className="text-sm text-primary-400 hover:text-primary-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {resendAttempts >= 3
-                ? 'Максимален број на обиди'
+                ? t('smsVerification.maxResendAttempts')
                 : resendCooldown > 0
-                  ? `Испрати нов код (${resendCooldown}с)`
-                  : 'Испрати нов код'}
+                  ? t('smsVerification.resendCodeWithCooldown', {
+                      cooldown: resendCooldown.toString(),
+                    })
+                  : t('smsVerification.resendCode')}
             </button>
           </div>
         </div>

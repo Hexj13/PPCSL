@@ -8,6 +8,7 @@ import { toast } from 'react-hot-toast';
 import { ListingManagementCard } from '@/components/ListingManagementCard';
 import { ListingManagementCardSkeleton } from '@/components/ListingManagementCardSkeleton';
 import { PromotionModal } from '@/components/PromotionModal';
+import { SkeletonContainer } from '@/components/SkeletonContainer';
 import { useTranslation } from '@/hooks/useTranslation';
 import { adminApi, Listing, PromotionHistory, User } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
@@ -358,160 +359,164 @@ function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
     [selectedListingId, t, loadListings, loadStatusCounts]
   );
 
-  if (loading) {
-    return (
-      <div>
-        <div className="mb-4 md:mb-6">
-          <div className="w-full h-[48px] md:h-[52px] bg-bg-light/30 rounded-lg animate-pulse" />
-        </div>
-        <div className="mb-4 md:mb-6">
-          <div className="flex flex-wrap gap-2 md:gap-3">
-            {[...Array(4)].map((_, i) => (
-              <div
-                key={i}
-                className="h-9 md:h-10 w-20 md:w-24 bg-bg-light/30 rounded-lg animate-pulse"
-              />
-            ))}
-          </div>
-        </div>
-        <div className="mb-3 md:mb-4 h-4 md:h-5 bg-bg-light/30 rounded w-40 md:w-48 animate-pulse" />
-        <div className="space-y-3 md:space-y-4">
-          {[...Array(3)].map((_, i) => (
-            <ListingManagementCardSkeleton key={i} />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div>
-      <div className="mb-4 md:mb-6">
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder={t('admin.listingsTab.searchByIdPlaceholder')}
-          className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-light border-2 border-primary-500/30 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
-        />
-      </div>
-
-      <div className="mb-4 md:mb-6">
-        <div className="flex flex-wrap gap-2 md:gap-3">
-          {(['All', 'Active', 'Paused', 'Closed'] as const).map((status) => (
-            <button
-              key={status}
-              onClick={() => {
-                setStatusFilter(status);
-                if (promotedFilter !== 'All') {
-                  setPromotedFilter('All');
-                }
-              }}
-              className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium transition-colors text-sm md:text-base bg-bg-light hover:bg-bg-dark border ${
-                statusFilter === status ? 'border-primary-500 text-white' : 'border-primary-500/20'
-              }`}
-              style={statusFilter !== status ? { color: 'rgb(243, 243, 243)' } : undefined}
-            >
-              {status === 'All'
-                ? t('admin.listingsTab.all')
-                : status === 'Active'
-                  ? t('admin.listingsTab.active')
-                  : status === 'Paused'
-                    ? t('admin.listingsTab.paused')
-                    : t('admin.listingsTab.closed')}
-              {status !== 'All' && (
-                <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-xs">
-                  {statusCounts[status]}
-                </span>
-              )}
-            </button>
-          ))}
-          <button
-            onClick={() => {
-              const newPromotedFilter = promotedFilter === 'Promoted' ? 'All' : 'Promoted';
-              setPromotedFilter(newPromotedFilter);
-              if (newPromotedFilter === 'Promoted') {
-                setStatusFilter('All');
-              }
-            }}
-            className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium transition-colors text-sm md:text-base bg-bg-light hover:bg-bg-dark border ${
-              promotedFilter === 'Promoted'
-                ? 'border-primary-500 text-white'
-                : 'border-primary-500/20'
-            }`}
-            style={promotedFilter !== 'Promoted' ? { color: 'rgb(243, 243, 243)' } : undefined}
-          >
-            {t('myListings.promoted')}
-            <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-xs">
-              {statusCounts.Promoted}
-            </span>
-          </button>
-        </div>
-      </div>
-
-      {listings.length === 0 ? (
-        <div className="text-center py-10 md:py-12">
-          <p className="text-base md:text-lg" style={{ color: 'rgb(243, 243, 243)' }}>
-            {t('admin.listingsTab.noListings')}
-          </p>
-        </div>
-      ) : (
-        <>
-          <div
-            className="mb-3 md:mb-4 text-sm md:text-base"
-            style={{ color: 'rgb(243, 243, 243)' }}
-          >
-            {t('admin.listingsTab.totalListings')}:{' '}
-            <span className="font-semibold text-white">{meta?.total || 0}</span>
+    <>
+      <SkeletonContainer isLoading={loading}>
+        <div>
+          <div className="mb-4 md:mb-6">
+            <div className="w-full h-[48px] md:h-[52px] bg-bg-light/30 rounded-lg animate-pulse" />
           </div>
-
+          <div className="mb-4 md:mb-6">
+            <div className="flex flex-wrap gap-2 md:gap-3">
+              {[...Array(4)].map((_, i) => (
+                <div
+                  key={i}
+                  className="h-9 md:h-10 w-20 md:w-24 bg-bg-light/30 rounded-lg animate-pulse"
+                />
+              ))}
+            </div>
+          </div>
+          <div className="mb-3 md:mb-4 h-4 md:h-5 bg-bg-light/30 rounded w-40 md:w-48 animate-pulse" />
           <div className="space-y-3 md:space-y-4">
-            {listings.map((listing) => (
-              <ListingManagementCard
-                key={listing.id}
-                listing={listing}
-                mode="admin"
-                onAction={handleAction}
-                onCopyId={(id) => handleCopy(id, 'ID')}
-                onPromoteClick={handlePromoteClick}
-              />
+            {[...Array(3)].map((_, i) => (
+              <ListingManagementCardSkeleton key={i} />
             ))}
           </div>
+        </div>
+      </SkeletonContainer>
 
-          {meta && meta.totalPages > 1 && (
-            <div className="flex justify-center items-center gap-4 mt-6 md:mt-8 mb-0">
+      {!loading && (
+        <div>
+          <div className="mb-4 md:mb-6">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t('admin.listingsTab.searchByIdPlaceholder')}
+              className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-light border-2 border-primary-500/30 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
+            />
+          </div>
+
+          <div className="mb-4 md:mb-6">
+            <div className="flex flex-wrap gap-2 md:gap-3">
+              {(['All', 'Active', 'Paused', 'Closed'] as const).map((status) => (
+                <button
+                  key={status}
+                  onClick={() => {
+                    setStatusFilter(status);
+                    if (promotedFilter !== 'All') {
+                      setPromotedFilter('All');
+                    }
+                  }}
+                  className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium transition-colors text-sm md:text-base bg-bg-light hover:bg-bg-dark border ${
+                    statusFilter === status
+                      ? 'border-primary-500 text-white'
+                      : 'border-primary-500/20'
+                  }`}
+                  style={statusFilter !== status ? { color: 'rgb(243, 243, 243)' } : undefined}
+                >
+                  {status === 'All'
+                    ? t('admin.listingsTab.all')
+                    : status === 'Active'
+                      ? t('admin.listingsTab.active')
+                      : status === 'Paused'
+                        ? t('admin.listingsTab.paused')
+                        : t('admin.listingsTab.closed')}
+                  {status !== 'All' && (
+                    <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-xs">
+                      {statusCounts[status]}
+                    </span>
+                  )}
+                </button>
+              ))}
               <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="px-4 py-2 rounded-lg bg-bg-light border border-primary-500/30 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-bg-dark transition-colors"
+                onClick={() => {
+                  const newPromotedFilter = promotedFilter === 'Promoted' ? 'All' : 'Promoted';
+                  setPromotedFilter(newPromotedFilter);
+                  if (newPromotedFilter === 'Promoted') {
+                    setStatusFilter('All');
+                  }
+                }}
+                className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium transition-colors text-sm md:text-base bg-bg-light hover:bg-bg-dark border ${
+                  promotedFilter === 'Promoted'
+                    ? 'border-primary-500 text-white'
+                    : 'border-primary-500/20'
+                }`}
+                style={promotedFilter !== 'Promoted' ? { color: 'rgb(243, 243, 243)' } : undefined}
               >
-                {t('common.previous')}
-              </button>
-              <span className="text-sm md:text-base" style={{ color: 'rgb(243, 243, 243)' }}>
-                {t('common.pageOf', { page, totalPages: meta.totalPages })}
-              </span>
-              <button
-                onClick={() => setPage((p) => Math.min(meta.totalPages, p + 1))}
-                disabled={page === meta.totalPages}
-                className="px-4 py-2 rounded-lg bg-bg-light border border-primary-500/30 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-bg-dark transition-colors"
-              >
-                {t('common.next')}
+                {t('myListings.promoted')}
+                <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-xs">
+                  {statusCounts.Promoted}
+                </span>
               </button>
             </div>
-          )}
-        </>
-      )}
+          </div>
 
-      <PromotionModal
-        isOpen={promotionModalOpen}
-        onClose={() => {
-          setPromotionModalOpen(false);
-          setSelectedListingId(null);
-        }}
-        onSelect={handlePromotionSelect}
-        isAdmin={true}
-      />
-    </div>
+          {listings.length === 0 ? (
+            <div className="text-center py-10 md:py-12">
+              <p className="text-base md:text-lg" style={{ color: 'rgb(243, 243, 243)' }}>
+                {t('admin.listingsTab.noListings')}
+              </p>
+            </div>
+          ) : (
+            <>
+              <div
+                className="mb-3 md:mb-4 text-sm md:text-base"
+                style={{ color: 'rgb(243, 243, 243)' }}
+              >
+                {t('admin.listingsTab.totalListings')}:{' '}
+                <span className="font-semibold text-white">{meta?.total || 0}</span>
+              </div>
+
+              <div className="space-y-3 md:space-y-4">
+                {listings.map((listing) => (
+                  <ListingManagementCard
+                    key={listing.id}
+                    listing={listing}
+                    mode="admin"
+                    onAction={handleAction}
+                    onCopyId={(id) => handleCopy(id, 'ID')}
+                    onPromoteClick={handlePromoteClick}
+                  />
+                ))}
+              </div>
+
+              {meta && meta.totalPages > 1 && (
+                <div className="flex justify-center items-center gap-4 mt-6 md:mt-8 mb-0">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="px-4 py-2 rounded-lg bg-bg-light border border-primary-500/30 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-bg-dark transition-colors"
+                  >
+                    {t('common.previous')}
+                  </button>
+                  <span className="text-sm md:text-base" style={{ color: 'rgb(243, 243, 243)' }}>
+                    {t('common.pageOf', { page, totalPages: meta.totalPages })}
+                  </span>
+                  <button
+                    onClick={() => setPage((p) => Math.min(meta.totalPages, p + 1))}
+                    disabled={page === meta.totalPages}
+                    className="px-4 py-2 rounded-lg bg-bg-light border border-primary-500/30 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-bg-dark transition-colors"
+                  >
+                    {t('common.next')}
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+
+          <PromotionModal
+            isOpen={promotionModalOpen}
+            onClose={() => {
+              setPromotionModalOpen(false);
+              setSelectedListingId(null);
+            }}
+            onSelect={handlePromotionSelect}
+            isAdmin={true}
+          />
+        </div>
+      )}
+    </>
   );
 }
 

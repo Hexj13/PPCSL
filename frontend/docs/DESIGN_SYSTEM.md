@@ -16,6 +16,7 @@ ui/
 ├── Typography.tsx      # Typography component
 ├── Heading.tsx         # Heading component
 ├── Spinner.tsx         # Loading spinner component
+├── LoadingButton.tsx   # Button with loading state management
 └── index.ts            # Export all components
 
 components/
@@ -23,7 +24,8 @@ components/
 ├── MultiSelectDropdown.tsx  # Multi-select dropdown with search, categories, action buttons
 ├── SortDropdown.tsx    # Sort dropdown with URL parameter synchronization
 ├── SearchFilters.tsx   # Advanced search filters component
-└── ScrollToFiltersButton.tsx  # Floating button for quick scroll to search filters with return functionality
+├── ScrollToFiltersButton.tsx  # Floating button for quick scroll to search filters with return functionality
+└── SkeletonContainer.tsx  # Container for skeleton loaders with minimum display time
 ```
 
 ## Usage
@@ -54,6 +56,36 @@ import { Button, Input, Card, Badge } from '@/ui';
 
 Variants: `primary`, `secondary`, `outline`, `yellow`, `green-dark`
 Sizes: `sm`, `md`, `lg`
+
+#### LoadingButton
+
+Button component with built-in loading state management. Automatically handles delay (200ms) and minimum display time (1000ms) to prevent flickering.
+
+```tsx
+import { LoadingButton } from '@/ui';
+
+<LoadingButton
+  loading={isSubmitting}
+  loadingText="Saving..."
+  type="submit"
+>
+  Save Changes
+</LoadingButton>
+```
+
+**Features:**
+- Automatic delay before showing loader (200ms)
+- Minimum display time (1000ms) to prevent flickering
+- Built-in spinner (can be hidden with `showSpinner={false}`)
+- Automatic disabled state during loading
+- Prevents double-clicks during loading
+
+**Props:**
+- `loading?: boolean` - Loading state
+- `loadingText?: string` - Text to show during loading (replaces children)
+- `showSpinner?: boolean` - Show/hide spinner (default: `true`)
+- `spinnerSize?: 'sm' | 'md' | 'lg'` - Spinner size (default: `'sm'`)
+- All standard button props are supported
 
 #### Input
 
@@ -177,6 +209,78 @@ import { ScrollToFiltersButton } from '@/components/ScrollToFiltersButton';
 - Shows down arrow when at filters (allows return to previous position)
 - Automatically hides when not needed
 - Smooth scroll animations with offset for better UX
+
+### SkeletonContainer
+
+Container component for skeleton loaders that ensures minimum display time to prevent flickering. Uses `useLoadingState` hook internally with `immediate: true` for instant display.
+
+**Usage:**
+
+```tsx
+import { SkeletonContainer } from '@/components/SkeletonContainer';
+import { ListingCardSkeleton } from '@/components/ListingCardSkeleton';
+
+{loading ? (
+  <SkeletonContainer isLoading={loading}>
+    <ListingCardSkeleton />
+    <ListingCardSkeleton />
+    <ListingCardSkeleton />
+  </SkeletonContainer>
+) : (
+  <ListingGrid listings={listings} />
+)}
+```
+
+**Features:**
+- Immediate display (no delay)
+- Minimum display time (default: 1000ms, configurable)
+- Prevents skeleton flickering on fast API responses
+- Automatically handles cleanup
+
+**Props:**
+- `isLoading: boolean` - Loading state
+- `minDisplayTime?: number` - Minimum display time in ms (default: `1000`)
+
+### Loading State Management
+
+The project uses a unified loading state management system with the `useLoadingState` hook.
+
+**Hook: `useLoadingState`**
+
+Universal hook for managing loading states with configurable delay and minimum display time.
+
+```tsx
+import { useLoadingState } from '@/hooks/useLoadingState';
+
+const { visible, afterHidden } = useLoadingState({
+  isLoading: loading,
+  showDelay: 200,        // Delay before showing (default: 200ms)
+  minDisplayTime: 1000,  // Minimum display time (default: 1000ms)
+  immediate: false,       // Show immediately (default: false)
+});
+
+// Use visible to control UI
+{visible && <Spinner />}
+
+// Coordinate side effects (e.g., toast notifications)
+afterHidden(() => {
+  toast.success('Operation completed');
+});
+```
+
+**Features:**
+- Prevents flickering with configurable delay
+- Ensures minimum display time for smooth UX
+- Supports immediate display for skeletons
+- Provides `afterHidden` callback for coordinating side effects
+- Automatic cleanup on unmount
+
+**Use Cases:**
+- Button loaders: Use `LoadingButton` component (wraps `useLoadingState`)
+- Skeleton loaders: Use `SkeletonContainer` component (wraps `useLoadingState` with `immediate: true`)
+- Custom loaders: Use `useLoadingState` hook directly
+
+For detailed requirements and best practices, see [`LOADING_STATES_REQUIREMENTS.md`](../../docs/LOADING_STATES_REQUIREMENTS.md).
 
 ## Interactive Documentation
 

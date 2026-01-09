@@ -7,6 +7,7 @@ import { toast } from 'react-hot-toast';
 
 import { useBrandsAndModels } from '@/hooks/useBrandsAndModels';
 import { useCities } from '@/hooks/useCities';
+import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { brandsApi, VehicleModel, User } from '@/lib/api';
@@ -29,6 +30,7 @@ import {
   sortOptionsByLabel,
   type LabeledOption,
 } from '@/lib/utils';
+import { LoadingButton } from '@/ui';
 
 import { Dropdown } from './Dropdown';
 import { MultiSelectDropdown } from './MultiSelectDropdown';
@@ -111,6 +113,8 @@ export function SearchFilters() {
   const [isHydrated, setIsHydrated] = useState(false);
   const userForUi = isHydrated && isInitialized ? user : null;
   const [loadingModels, setLoadingModels] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const prevSearchParamsRef = useRef<string>('');
 
   const {
     brands,
@@ -118,6 +122,10 @@ export function SearchFilters() {
     setModels: setModelsFromHook,
   } = useBrandsAndModels({ autoLoadModels: false });
   const { cities } = useCities();
+
+  const { visible: showSearchLoader } = useLoadingState({
+    isLoading: isSearching,
+  });
 
   const COLOR_OPTIONS = getColorOptions(t);
 
@@ -200,6 +208,14 @@ export function SearchFilters() {
   useEffect(() => {
     setIsHydrated(true);
   }, []);
+
+  useEffect(() => {
+    const currentParams = searchParams.toString();
+    if (isSearching && currentParams !== prevSearchParamsRef.current) {
+      setIsSearching(false);
+    }
+    prevSearchParamsRef.current = currentParams;
+  }, [searchParams, isSearching]);
 
   useEffect(() => {
     try {
@@ -803,6 +819,8 @@ export function SearchFilters() {
       if (!validateRanges()) {
         return;
       }
+
+      setIsSearching(true);
 
       const validBrandIds = filters.brand_ids.filter(
         (id) => id !== 'all' && id !== '' && !id.startsWith('__category__')
@@ -2064,25 +2082,29 @@ export function SearchFilters() {
 
       <div className="mt-6 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <button
+          <LoadingButton
             type="submit"
-            className="w-full sm:w-auto text-white font-medium text-sm md:text-base hover:text-white transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20"
+            loading={showSearchLoader}
+            loadingText={t('searchFilters.searching')}
+            className="w-full sm:w-auto text-white font-medium text-sm md:text-base hover:text-white transition-colors duration-200 whitespace-nowrap px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20"
           >
-            <svg
-              className="w-4 h-4 flex-shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-            {t('searchFilters.search')}
-          </button>
+            <span className="inline-flex items-center gap-2">
+              <svg
+                className="w-4 h-4 flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              {t('searchFilters.search')}
+            </span>
+          </LoadingButton>
           <button
             type="button"
             onClick={handleReset}

@@ -9,6 +9,7 @@ import { Modal } from '@/components/Modal';
 import { useTranslation } from '@/hooks/useTranslation';
 import { authApi, UpdateProfileDto, User } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
+import { LoadingButton } from '@/ui';
 
 const convertToBoolean = (value: unknown): boolean => {
   if (value === true || value === 'true' || value === 1 || value === '1') {
@@ -579,13 +580,14 @@ export default function ProfilePage() {
         )}
 
         <div className="card p-4 md:p-6 lg:p-8">
-          <button
+          <LoadingButton
             type="submit"
-            disabled={loading}
-            className="w-full text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-primary-400 disabled:hover:border-primary-400/20 disabled:hover:bg-primary-500/10"
+            loading={loading}
+            loadingText={t('profile.saving')}
+            className="w-full text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 disabled:hover:text-primary-400 disabled:hover:border-primary-400/20 disabled:hover:bg-primary-500/10"
           >
-            {loading ? t('profile.saving') : t('profile.saveChanges')}
-          </button>
+            {t('profile.saveChanges')}
+          </LoadingButton>
         </div>
 
         <div className="card p-4 md:p-6 lg:p-8 border-red-500/30">

@@ -121,6 +121,7 @@ export default [
             '^www\\.',
             '^mailto:',
             '^#',
+            '^#[0-9]',
             '^[:;|•\\-\\s\\/×·]+$',
             '^[×·\\/|:\\-;]+$',
             '^[A-Z]$',
@@ -140,6 +141,15 @@ export default [
     },
     rules: {
       'no-hardcoded-text/no-hardcoded-text': 'off',
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "CallExpression[callee.name='it'] > Literal[value=/[а-яА-ЯёЁ]/], CallExpression[callee.name='describe'] > Literal[value=/[а-яА-ЯёЁ]/], CallExpression[callee.name='test'] > Literal[value=/[а-яА-ЯёЁ]/]",
+          message:
+            'Test descriptions must be in English. Cyrillic characters are not allowed in test names.',
+        },
+      ],
     },
   },
   {

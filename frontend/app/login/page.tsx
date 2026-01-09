@@ -8,6 +8,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { authApi, favoritesApi, listingsApi, savedFiltersApi } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
+import { LoadingButton } from '@/ui';
 
 const isValidEmail = (value: string): boolean => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -21,9 +22,10 @@ export default function LoginPage() {
   const router = useRouter();
   const { setAuth, user, isInitialized } = useAuthStore();
   const { t } = useTranslation();
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
-    if (isInitialized && user) {
+    if (isInitialized && user && !isRedirecting) {
       const returnUrl = localStorage.getItem('returnUrl');
       if (returnUrl) {
         localStorage.removeItem('returnUrl');
@@ -32,23 +34,30 @@ export default function LoginPage() {
         router.push('/');
       }
     }
-  }, [user, isInitialized, router]);
+  }, [user, isInitialized, router, isRedirecting]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const currentUrl = window.location.pathname + window.location.search;
       const existingReturnUrl = localStorage.getItem('returnUrl');
-      if (!existingReturnUrl && currentUrl !== '/login' && currentUrl !== '/register') {
-        const referrer = document.referrer;
-        if (referrer && !referrer.includes('/login') && !referrer.includes('/register')) {
-          try {
-            const referrerUrl = new URL(referrer);
-            const referrerPath = referrerUrl.pathname + referrerUrl.search;
-            if (referrerPath !== '/login' && referrerPath !== '/register') {
-              localStorage.setItem('returnUrl', referrerPath);
+      if (!existingReturnUrl) {
+        const currentUrl = window.location.pathname + window.location.search;
+        if (currentUrl !== '/login' && currentUrl !== '/register') {
+          const referrer = document.referrer;
+          if (referrer && !referrer.includes('/login') && !referrer.includes('/register')) {
+            try {
+              const referrerUrl = new URL(referrer);
+              const referrerPath = referrerUrl.pathname + referrerUrl.search;
+              if (
+                referrerPath !== '/login' &&
+                referrerPath !== '/register' &&
+                referrerPath !== '/' &&
+                referrerPath !== ''
+              ) {
+                localStorage.setItem('returnUrl', referrerPath);
+              }
+            } catch {
+              // Ignore invalid referrer URLs
             }
-          } catch {
-            // Ignore invalid referrer URLs
           }
         }
       }
@@ -97,6 +106,11 @@ export default function LoginPage() {
       const res = await authApi.login(formData);
       const loginMethod = isValidEmail(formData.login) ? 'email' : 'phone';
       analytics.login(loginMethod);
+
+      const savedReturnUrl =
+        typeof window !== 'undefined' ? localStorage.getItem('returnUrl') : null;
+
+      setIsRedirecting(true);
       setAuth(res.data.user, res.data.access_token, res.data.refresh_token);
 
       if (typeof window !== 'undefined') {
@@ -200,7 +214,7 @@ export default function LoginPage() {
               }
               return;
             } else {
-              const returnUrl = localStorage.getItem('returnUrl');
+              const returnUrl = savedReturnUrl || localStorage.getItem('returnUrl');
               if (returnUrl) {
                 localStorage.removeItem('returnUrl');
                 if (typeof window !== 'undefined' && window.location) {
@@ -216,7 +230,7 @@ export default function LoginPage() {
             }
           }
         } else {
-          const returnUrl = localStorage.getItem('returnUrl');
+          const returnUrl = savedReturnUrl || localStorage.getItem('returnUrl');
           if (returnUrl) {
             localStorage.removeItem('returnUrl');
             if (typeof window !== 'undefined' && window.location) {
@@ -346,13 +360,14 @@ export default function LoginPage() {
           {errors.password && <p className="mt-1 text-sm text-red-400">{errors.password}</p>}
         </div>
 
-        <button
+        <LoadingButton
           type="submit"
-          disabled={loading}
-          className="w-full text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-primary-400 disabled:hover:border-primary-400/20 disabled:hover:bg-primary-500/10"
+          loading={loading}
+          loadingText={t('login.loggingIn')}
+          className="w-full text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 disabled:hover:text-primary-400 disabled:hover:border-primary-400/20 disabled:hover:bg-primary-500/10"
         >
-          {loading ? t('login.loggingIn') : t('login.loginButton')}
-        </button>
+          {t('login.loginButton')}
+        </LoadingButton>
 
         <p className="mt-6 text-center text-sm text-hint">
           {t('login.noAccount')}{' '}

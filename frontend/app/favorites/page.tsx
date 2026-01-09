@@ -7,6 +7,7 @@ import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { ListingCard } from '@/components/ListingCard';
 import { ListingCardSkeleton } from '@/components/ListingCardSkeleton';
 import { SavedFiltersList, updateSavedFiltersCache } from '@/components/SavedFiltersList';
+import { SkeletonContainer } from '@/components/SkeletonContainer';
 import { useTranslation } from '@/hooks/useTranslation';
 import { favoritesApi, Listing, savedFiltersApi } from '@/lib/api';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
@@ -205,29 +206,35 @@ function FavoritesContent() {
 
       {activeTab === 'listings' && (
         <>
-          {isInitialLoading || loading ? (
+          <SkeletonContainer isLoading={isInitialLoading || loading}>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
               {[...Array(8)].map((_, i) => (
                 <ListingCardSkeleton key={i} />
               ))}
             </div>
-          ) : listings.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-300 text-lg">{t('favorites.empty')}</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
-              {listings.map((listing) => (
-                <ListingCard
-                  key={listing.id}
-                  listing={listing}
-                  forceFavorite={true}
-                  onRemove={() => {
-                    setListings((prev) => prev.filter((l) => l.id !== listing.id));
-                  }}
-                />
-              ))}
-            </div>
+          </SkeletonContainer>
+
+          {!isInitialLoading && !loading && (
+            <>
+              {listings.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-300 text-lg">{t('favorites.empty')}</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
+                  {listings.map((listing) => (
+                    <ListingCard
+                      key={listing.id}
+                      listing={listing}
+                      forceFavorite={true}
+                      onRemove={() => {
+                        setListings((prev) => prev.filter((l) => l.id !== listing.id));
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </>
       )}

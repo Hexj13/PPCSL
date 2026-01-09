@@ -245,12 +245,18 @@
     "codeDigitsOnly": "Code must contain only digits",
     "sendSmsError": "Error sending SMS",
     "maxAttemptsReached": "Maximum number of attempts reached. Resend the code.",
+    "maxAttemptsReachedWithMinutes": "Maximum number of attempts reached (40). Please try again in {minutes} minutes.",
     "ipBlocked": "IP address blocked for {remainingMinutes} minutes",
     "codeInvalid": "Invalid code. Please try again.",
+    "invalidCodeWithAttempts": "Invalid code. Please try again. ({attempts}/10)",
     "enterFullCode": "Enter the full code",
     "verifying": "Verifying...",
     "verify": "Verify",
-    "resendCode": "Resend Code"
+    "blocked": "Blocked",
+    "resendCode": "Resend Code",
+    "resendCodeWithCooldown": "Resend Code ({cooldown}s)",
+    "codeResent": "Code has been resent",
+    "maxResendAttempts": "Maximum number of attempts"
   },
   "saveFilter": {
     "editTitle": "Edit Filter",
@@ -637,6 +643,7 @@
     "urgent": "Urgent",
     "new": "New",
     "search": "Search",
+    "searching": "Searching...",
     "reset": "Reset",
     "addToFavorites": "Add to favorites",
     "login": "Login",
@@ -682,12 +689,32 @@
       "title": "Change Phone",
       "currentPhone": "Current Phone",
       "newPhone": "New Phone Number",
-      "backToProfile": "Back to Profile"
+      "backToProfile": "Back to Profile",
+      "phoneRequired": "Phone number is required",
+      "phoneInvalid": "Enter a valid phone (format: +country code number)",
+      "codeSent": "SMS code has been sent",
+      "sendCodeError": "Error sending SMS",
+      "sending": "Sending...",
+      "sendCode": "Send Code"
     },
     "verifyPhoneChange": {
       "title": "Verify New Phone",
       "codeSent": "Code sent to phone",
-      "enterCode": "Enter the 6-digit code from the SMS message"
+      "enterCode": "Enter the 6-digit code from the SMS message",
+      "verify": "Verify",
+      "blocked": "Blocked",
+      "invalidCodeWithAttempts": "Invalid code. Please try again. ({attempts}/10)",
+      "maxAttemptsReached": "Maximum number of attempts reached. Resend the code.",
+      "maxAttemptsReachedWithMinutes": "Maximum number of attempts reached. Please try again in {minutes} minutes",
+      "maxAttempts": "Maximum number of attempts reached (10). Resend the code to continue.",
+      "codeRequired": "Code must contain exactly 6 digits",
+      "codeDigitsOnly": "Code must contain only digits",
+      "phoneChangedSuccess": "Phone has been successfully changed",
+      "ipBlocked": "IP address blocked for {minutes} minutes",
+      "codeResent": "Code has been resent",
+      "resendCodeError": "Error sending SMS",
+      "resendCode": "Resend Code",
+      "resendCodeWithCooldown": "Resend Code ({cooldown}s)"
     }
   },
   "admin": {
@@ -949,6 +976,8 @@
   "verifyEmail": {
     "title": "Email Verification",
     "pleaseWait": "Please wait...",
+    "invalidLink": "Invalid verification link",
+    "verificationError": "Error verifying email address",
     "success": {
       "title": "Email address successfully verified",
       "description": "Your email address has been successfully verified. You can now use all platform features.",

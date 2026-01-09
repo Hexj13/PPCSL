@@ -10,6 +10,7 @@ import { Dropdown } from '@/components/Dropdown';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { useBrandsAndModels } from '@/hooks/useBrandsAndModels';
 import { useCities } from '@/hooks/useCities';
+import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { listingsApi, uploadApi, Listing } from '@/lib/api';
@@ -34,6 +35,7 @@ import {
 import { horsepowerToKw, isBrowser, kwToHorsepower, sortOptionsByLabel } from '@/lib/utils';
 import { validators } from '@/lib/validators';
 import { VEHICLE_EQUIPMENT_KEYS } from '@/lib/vehicle-equipment';
+import { LoadingButton } from '@/ui';
 
 export interface ListingFormData {
   price: string;
@@ -164,6 +166,11 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
   const { t } = useTranslation();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const { afterHidden } = useLoadingState({
+    isLoading: loading,
+    showDelay: 200,
+    minDisplayTime: 1000,
+  });
   const [showVinHint, setShowVinHint] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState<ListingFormData>(() => getInitialFormData(initialData));
@@ -416,14 +423,14 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
           title: res.data.title,
           price: res.data.price,
         });
-        toast.success(t('listings.createSuccess'));
+        setLoading(false);
+        sessionStorage.setItem('listingCreatedToast', t('listings.createSuccess'));
         router.push(`/listings/${res.data.id}`);
       } else {
         if (!listingId) {
           throw new Error('Listing ID is required for edit mode');
         }
         const result = await listingsApi.update(listingId, payload);
-        toast.success(t('listings.changesSaved'));
         sessionStorage.setItem(`refreshListing_${listingId}`, 'true');
         if (result.data) {
           const updatedFormData = getInitialFormData(result.data);
@@ -432,20 +439,25 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
             loadModels(result.data.vehicle.brand_id);
           }
         }
+        setLoading(false);
+        afterHidden(() => {
+          toast.success(t('listings.changesSaved'));
+        });
         onSuccess?.(result.data);
       }
     } catch (error: unknown) {
-      if (mode === 'create') {
-        toast.error(t('listings.createError'));
-      } else {
-        const errorMessage =
-          error instanceof AxiosError && error.response?.data?.message
-            ? error.response.data.message
-            : t('listings.updateError');
-        toast.error(typeof errorMessage === 'string' ? errorMessage : t('listings.updateError'));
-      }
-    } finally {
       setLoading(false);
+      afterHidden(() => {
+        if (mode === 'create') {
+          toast.error(t('listings.createError'));
+        } else {
+          const errorMessage =
+            error instanceof AxiosError && error.response?.data?.message
+              ? error.response.data.message
+              : t('listings.updateError');
+          toast.error(typeof errorMessage === 'string' ? errorMessage : t('listings.updateError'));
+        }
+      });
     }
   };
 
@@ -1617,19 +1629,14 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
         </div>
       )}
 
-      <button
+      <LoadingButton
         type="submit"
-        disabled={loading}
-        className="w-full text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-500/10 disabled:hover:border-primary-400/20"
+        loading={loading}
+        loadingText={mode === 'create' ? t('listings.creating') : t('listings.saving')}
+        className="w-full text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 select-none disabled:hover:bg-primary-500/10 disabled:hover:border-primary-400/20"
       >
-        {loading
-          ? mode === 'create'
-            ? t('listings.creating')
-            : t('listings.saving')
-          : mode === 'create'
-            ? t('listings.createListing')
-            : t('listings.saveChanges')}
-      </button>
+        {mode === 'create' ? t('listings.createListing') : t('listings.saveChanges')}
+      </LoadingButton>
     </form>
   );
 }

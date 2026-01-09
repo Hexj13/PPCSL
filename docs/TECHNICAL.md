@@ -925,6 +925,11 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md#72-rendercom-deployment) for CloudFront CDN 
 - TypeScript strict mode enabled in backend
 - CI/CD automation
 - Automated bundle analysis
+- **ESLint with custom rules:**
+  - `no-hardcoded-text` - Enforces use of translation keys instead of hardcoded text
+  - `import/order` - Ensures consistent import ordering
+  - TypeScript and React rules for code quality
+  - See [`frontend/docs/LINTING.md`](../frontend/docs/LINTING.md) for complete linting guide
 
 ---
 

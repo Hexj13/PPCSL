@@ -1,4 +1,5 @@
 export { Button, type ButtonProps } from './Button';
+export { LoadingButton, type LoadingButtonProps } from './LoadingButton';
 export { Input, type InputProps } from './Input';
 export { Textarea, type TextareaProps } from './Textarea';
 export { Select, type SelectProps } from './Select';

@@ -16,7 +16,7 @@ function VerifyEmailContent() {
   useEffect(() => {
     const token = searchParams.get('token');
     if (!token) {
-      setError('Невалиден линк за потврда');
+      setError(t('verifyEmail.invalidLink'));
       return;
     }
 
@@ -33,7 +33,7 @@ function VerifyEmailContent() {
         const errorMessage =
           axiosError.response?.data?.message ||
           axiosError.message ||
-          'Грешка при потврда на email адресата';
+          t('verifyEmail.verificationError');
         setError(errorMessage);
         // toast.error is already handled by API interceptor
       } finally {
@@ -42,7 +42,7 @@ function VerifyEmailContent() {
     };
 
     verifyEmail();
-  }, [searchParams, router]);
+  }, [searchParams, router, t]);
 
   return (
     <div className="max-w-md mx-auto mt-6 md:mt-12">
