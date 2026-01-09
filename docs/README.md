@@ -253,6 +253,7 @@ For more details, see [Technical Documentation](TECHNICAL.md#8-testing) and [Fro
 
 - **[Platform Setup Guide](PLATFORM_GUIDE.md)** - ⭐ **Complete guide for creating new platforms and where to make code changes**
 - **[Technical Documentation](TECHNICAL.md)** - Complete technical documentation (architecture, API, database, security, testing, scripts, SEO, CI/CD, Google Ads setup)
+- **[Image Preview System](IMAGE_PREVIEW_SYSTEM.md)** - Complete documentation for image preview and photo viewer system (thumbnail switching, modal viewer, loading states)
 - **[Deployment Guide](DEPLOYMENT.md)** - Complete deployment instructions (VPS, Render.com, Namecheap, SSH setup, staging)
 - **[Multi-Repository Architecture](MULTI_REPOSITORY_ARCHITECTURE.md)** - Multi-repository architecture guide (includes PPCSL overview and pre-migration checklist)
 - **[SEO Audit](SEO_AUDIT.md)** - SEO audit and Google Search Console issues & fixes

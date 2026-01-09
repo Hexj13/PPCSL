@@ -877,20 +877,13 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md#72-rendercom-deployment) for CloudFront CDN 
   - Priority loading for first 8 visible images in grid to improve LCP
   - Next.js Image component handles responsive image loading automatically via `srcSet` based on `sizes` attribute
   - Improved sizes attributes for better responsive image selection across breakpoints
-- **Image preloading on listing page:** Hybrid preloading strategy to eliminate delays when switching between images
-  - **Critical preloading (P0):** Adjacent images (previous/next) are preloaded immediately when switching
-  - **Priority preloading (P1):** Images ±2, ±3 from current index are preloaded with small delays (50ms, 100ms) for fast navigation
-  - **Radius-based preloading:** Only images within ±5 radius from current index are preloaded (max 10 images)
-  - **Hover preloading:** Images are preloaded when hovering over thumbnails (desktop) or touching thumbnails (mobile)
-  - **Modal preloading:** High-resolution images (1920px, quality 85) are preloaded immediately when opening full-size modal
-  - Preloaded images are cached in browser memory, ensuring instant switching without loading delays
-  - **Optimized for large image sets:**
-    - Priority-based preloading: images closer to current index are preloaded first
-    - Concurrent request limiting: maximum 3 simultaneous preload requests to avoid browser connection limits
-    - Maximum preload limit: only 10 images are preloaded to prevent excessive bandwidth usage
-    - Queue-based processing: images are preloaded in batches using a priority queue
-    - Smart batching: prevents overwhelming the browser with too many simultaneous requests
-    - Separate queues for main view and modal to prevent conflicts
+- **Image preview system:** Simplified, efficient image preview and photo viewer system
+  - **Thumbnail switching:** Instant switching when images are in browser cache (thumbnails and preview use same URL)
+  - **Simple preloading:** Next image preloaded using `new window.Image()` - browser manages caching automatically
+  - **Loading states:** Loader only shown when image is actually loading, with 1s minimum display time to prevent flicker
+  - **Modal viewer:** Full-screen photo viewer with keyboard navigation and swipe gestures
+  - **Performance:** 80% code reduction, instant cache switching, no artificial delays
+  - See [`docs/IMAGE_PREVIEW_SYSTEM.md`](./IMAGE_PREVIEW_SYSTEM.md) for complete documentation
 - **Race condition prevention:** Loading states and request guards to prevent duplicate API calls
   - Favorite toggle button disabled during operation with visual feedback
   - Ref-based guards to prevent concurrent requests
