@@ -40,7 +40,8 @@ describe('LoadingButton', () => {
   it('should not change dimensions when toggling loading state', () => {
     const { container, rerender } = render(<LoadingButton loading={false}>Click me</LoadingButton>);
 
-    const initialHeight = container.firstChild?.getBoundingClientRect().height;
+    const firstChild = container.firstChild as HTMLElement;
+    const initialHeight = firstChild?.getBoundingClientRect().height;
 
     rerender(<LoadingButton loading={true}>Click me</LoadingButton>);
 
@@ -48,7 +49,8 @@ describe('LoadingButton', () => {
       jest.advanceTimersByTime(200);
     });
 
-    const loadingHeight = container.firstChild?.getBoundingClientRect().height;
+    const loadingFirstChild = container.firstChild as HTMLElement;
+    const loadingHeight = loadingFirstChild?.getBoundingClientRect().height;
 
     expect(loadingHeight).toBe(initialHeight);
   });
