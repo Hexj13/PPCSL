@@ -5,6 +5,7 @@ import Link from 'next/link';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Listing, User } from '@/lib/api';
 import {
@@ -44,6 +45,12 @@ function UserListingsModalComponent({
   const targetUserId = useMemo(() => userId || user?.id, [userId, user?.id]);
   const fetchListingsRef = useRef(fetchListings);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  const { visible: showLoading } = useLoadingState({
+    isLoading: loading,
+    showDelay: 200,
+    minDisplayTime: 1000,
+  });
 
   useEffect(() => {
     fetchListingsRef.current = fetchListings;
@@ -152,7 +159,7 @@ function UserListingsModalComponent({
       title={t('userListings.title', { name: getUserDisplayName })}
       size="large"
     >
-      {loading ? (
+      {showLoading ? (
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
           <p className="mt-4" style={{ color: 'rgb(243, 243, 243)' }}>
