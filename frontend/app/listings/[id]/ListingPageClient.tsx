@@ -1027,30 +1027,26 @@ export default function ListingPageClient({
 
       modalPreloadTimeoutsRef.current.forEach((timeout) => clearTimeout(timeout));
       modalPreloadTimeoutsRef.current = [];
+      modalPreloadQueueRef.current = [];
 
-      const prevIndex = (modalImageIndex - 1 + images.length) % images.length;
       const nextIndex = (modalImageIndex + 1) % images.length;
 
-      const indicesToPreload = [nextIndex, prevIndex];
-
-      indicesToPreload.forEach((index) => {
-        if (images[index] && !imageErrors.has(index)) {
-          const imageUrl = images[index];
-          const optimizedUrl = getOptimizedImageUrl(imageUrl, 85, 1920);
-          if (!preloadedImagesRef.current.has(optimizedUrl)) {
-            if (modalActivePreloadsRef.current < maxConcurrentPreloads) {
-              preloadModalImage(imageUrl, 0);
-            } else {
-              modalPreloadQueueRef.current.unshift({
-                url: optimizedUrl,
-                originalUrl: imageUrl,
-                priority: 0,
-              });
-              processModalPreloadQueue();
-            }
+      if (images[nextIndex] && !imageErrors.has(nextIndex)) {
+        const imageUrl = images[nextIndex];
+        const optimizedUrl = getOptimizedImageUrl(imageUrl, 85, 1920);
+        if (!preloadedImagesRef.current.has(optimizedUrl)) {
+          if (modalActivePreloadsRef.current < maxConcurrentPreloads) {
+            preloadModalImage(imageUrl, 0);
+          } else {
+            modalPreloadQueueRef.current.unshift({
+              url: optimizedUrl,
+              originalUrl: imageUrl,
+              priority: 0,
+            });
+            processModalPreloadQueue();
           }
         }
-      });
+      }
     };
 
     preloadModalAdjacentImages();
