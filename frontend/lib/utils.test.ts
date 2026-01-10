@@ -24,6 +24,7 @@ const mockT = (key: string): string => {
     'vehicleOptions.transmission.Manual': 'Мануелна',
     'vehicleOptions.transmission.Automatic': 'Автоматска',
     'vehicleOptions.transmission.CVT': 'Варијатор',
+    'vehicleOptions.transmission.Robot': 'Робот',
     'vehicleOptions.driveType.FWD': 'Преден',
     'vehicleOptions.driveType.RWD': 'Заден',
     'vehicleOptions.driveType.AWD': 'Полн',
@@ -128,6 +129,10 @@ describe('utils', () => {
 
     it('should format CVT transmission', () => {
       expect(formatTransmission('CVT', mockT)).toBe('Варијатор');
+    });
+
+    it('should format Robot transmission', () => {
+      expect(formatTransmission('Robot', mockT)).toBe('Робот');
     });
 
     it('should return empty string for undefined', () => {

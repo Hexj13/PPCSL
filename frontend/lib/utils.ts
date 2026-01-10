@@ -139,6 +139,8 @@ export function formatTransmission(
       return t('vehicleOptions.transmission.Automatic');
     case 'CVT':
       return t('vehicleOptions.transmission.CVT');
+    case 'Robot':
+      return t('vehicleOptions.transmission.Robot');
     default:
       return transmission;
   }

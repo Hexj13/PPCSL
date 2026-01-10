@@ -872,7 +872,8 @@
     "transmission": {
       "Manual": "Manual",
       "Automatic": "Automatic",
-      "CVT": "CVT"
+      "CVT": "CVT",
+      "Robot": "Robot"
     },
     "driveType": {
       "FWD": "Front Wheel Drive",

@@ -6,7 +6,7 @@ export const currencies = ['MKD', 'EUR'] as const;
 
 export const fuelTypes = ['Petrol', 'Diesel', 'Electric', 'Hybrid', 'LPG'] as const;
 
-export const transmissionTypes = ['Manual', 'Automatic', 'CVT'] as const;
+export const transmissionTypes = ['Manual', 'Automatic', 'CVT', 'Robot'] as const;
 
 export const driveTypes = ['FWD', 'RWD', 'AWD'] as const;
 
@@ -56,6 +56,7 @@ export const TransmissionType = {
   Manual: transmissionTypes[0],
   Automatic: transmissionTypes[1],
   CVT: transmissionTypes[2],
+  Robot: transmissionTypes[3],
 } as const;
 
 export const DriveType = {

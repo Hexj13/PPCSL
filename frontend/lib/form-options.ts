@@ -16,6 +16,7 @@ export function getTransmissionOptions(t: (_key: string) => string): Array<Label
     { value: 'Manual', label: t('vehicleOptions.transmission.Manual') },
     { value: 'Automatic', label: t('vehicleOptions.transmission.Automatic') },
     { value: 'CVT', label: t('vehicleOptions.transmission.CVT') },
+    { value: 'Robot', label: t('vehicleOptions.transmission.Robot') },
   ]);
 }
 
