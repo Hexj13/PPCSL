@@ -47,6 +47,7 @@ export function ListingImage({
         sizes={sizes}
         className={fill ? `object-cover ${className}` : className}
         onClick={onClick}
+        draggable={false}
         unoptimized={
           unoptimized || (imageUrl.startsWith('http://') && process.env.NODE_ENV !== 'production')
         }
@@ -62,6 +63,7 @@ export function ListingImage({
       height={600}
       className={className}
       onClick={onClick}
+      draggable={false}
       unoptimized={
         unoptimized || (imageUrl.startsWith('http://') && process.env.NODE_ENV !== 'production')
       }

@@ -15,6 +15,7 @@ import {
   formatMileage,
   formatDriveType,
   formatBodyType,
+  formatFuel,
   formatDateShort,
   formatDateRelative,
   getOptimizedImageUrl,
@@ -200,6 +201,7 @@ function ListingCardComponent({
               className="object-cover lg:group-hover:scale-105 transition-transform duration-300"
               loading={priority ? undefined : 'lazy'}
               priority={priority}
+              draggable={false}
               onError={() => {
                 setImageError(true);
               }}
@@ -346,7 +348,7 @@ function ListingCardComponent({
                 )}
                 {vehicle.fuel && (
                   <div>
-                    {t('userListings.fuel')}: {vehicle.fuel}
+                    {t('userListings.fuel')}: {formatFuel(vehicle.fuel, t)}
                   </div>
                 )}
                 {vehicle.mileage_km && (
@@ -357,12 +359,12 @@ function ListingCardComponent({
                 )}
                 {vehicle.drive_type && (
                   <div>
-                    {t('userListings.driveType')}: {formatDriveType(vehicle.drive_type)}
+                    {t('userListings.driveType')}: {formatDriveType(vehicle.drive_type, t)}
                   </div>
                 )}
                 {vehicle.body_type && (
                   <div>
-                    {t('userListings.bodyType')}: {formatBodyType(vehicle.body_type)}
+                    {t('userListings.bodyType')}: {formatBodyType(vehicle.body_type, t)}
                   </div>
                 )}
               </div>

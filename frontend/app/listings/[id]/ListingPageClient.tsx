@@ -32,6 +32,7 @@ import {
   formatTransmission,
   formatDriveType,
   formatBodyType,
+  formatFuel,
   formatRegistrationType,
   getOptimizedImageUrl,
   getCityNameMk,
@@ -864,6 +865,7 @@ export default function ListingPageClient({
                           total: images.length.toString(),
                         })}
                         className={`w-full h-full object-cover ${showMainImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
+                        draggable={false}
                         onLoad={(e) => {
                           const imgIndex = parseInt(e.currentTarget.dataset.index || '0', 10);
                           mainImageLoadedRef.current.add(imgIndex);
@@ -892,6 +894,7 @@ export default function ListingPageClient({
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 65vw"
                         className={`object-cover ${showMainImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
                         priority
+                        draggable={false}
                         onLoad={(e) => {
                           const imgIndex = parseInt(e.currentTarget.dataset.index || '0', 10);
                           mainImageLoadedRef.current.add(imgIndex);
@@ -996,6 +999,7 @@ export default function ListingPageClient({
                                     })}
                                     className="w-full h-full object-cover"
                                     loading="lazy"
+                                    draggable={false}
                                     onLoad={() => {
                                       mainImageLoadedRef.current.add(index);
                                     }}
@@ -1015,6 +1019,7 @@ export default function ListingPageClient({
                                     sizes="(max-width: 640px) 33vw, 25vw"
                                     className="object-cover"
                                     loading="lazy"
+                                    draggable={false}
                                     onLoad={() => {
                                       mainImageLoadedRef.current.add(index);
                                     }}
@@ -1385,7 +1390,7 @@ export default function ListingPageClient({
                               {t('listingDetail.fuel')}:
                             </span>
                             <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                              {vehicle.fuel}
+                              {formatFuel(vehicle.fuel, t)}
                             </span>
                           </div>
                         )}
@@ -1395,7 +1400,7 @@ export default function ListingPageClient({
                               {t('listingDetail.transmission')}:
                             </span>
                             <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                              {formatTransmission(vehicle.transmission)}
+                              {formatTransmission(vehicle.transmission, t)}
                             </span>
                           </div>
                         )}
@@ -1405,7 +1410,7 @@ export default function ListingPageClient({
                               {t('listingDetail.driveType')}:
                             </span>
                             <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                              {formatDriveType(vehicle.drive_type)}
+                              {formatDriveType(vehicle.drive_type, t)}
                             </span>
                           </div>
                         )}
@@ -1432,7 +1437,7 @@ export default function ListingPageClient({
                               {t('listingDetail.bodyType')}:
                             </span>
                             <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                              {formatBodyType(vehicle.body_type)}
+                              {formatBodyType(vehicle.body_type, t)}
                             </span>
                           </div>
                         )}
@@ -1602,7 +1607,7 @@ export default function ListingPageClient({
                         {t('listingDetail.registrationType')}:
                       </span>
                       <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                        {formatRegistrationType(listing.registration_type)}
+                        {formatRegistrationType(listing.registration_type, t)}
                       </span>
                     </div>
                   )}
@@ -2245,6 +2250,7 @@ export default function ListingPageClient({
                       total: images.length.toString(),
                     })}
                     className={`max-w-full max-h-[90vh] w-auto h-auto object-contain ${showModalImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
+                    draggable={false}
                     onLoad={(e) => {
                       const imgIndex = parseInt(e.currentTarget.dataset.index || '0', 10);
                       modalImageLoadedRef.current.add(imgIndex);
@@ -2274,6 +2280,7 @@ export default function ListingPageClient({
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 95vw, 90vw"
                     className={`max-w-full max-h-[90vh] w-auto h-auto object-contain ${showModalImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
                     priority={modalImageIndex === 0}
+                    draggable={false}
                     onLoad={(e) => {
                       const imgIndex = parseInt(e.currentTarget.dataset.index || '0', 10);
                       modalImageLoadedRef.current.add(imgIndex);

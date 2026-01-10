@@ -4,6 +4,7 @@ import {
   formatDateLong,
   formatDateShort,
   formatEngineVolume,
+  formatFuel,
   formatMileage,
   formatPrice,
   formatTransmission,
@@ -17,6 +18,33 @@ jest.mock('./site-config', () => ({
     currency: 'MKD',
   })),
 }));
+
+const mockT = (key: string): string => {
+  const translations: Record<string, string> = {
+    'vehicleOptions.transmission.Manual': 'Мануелна',
+    'vehicleOptions.transmission.Automatic': 'Автоматска',
+    'vehicleOptions.transmission.CVT': 'Варијатор',
+    'vehicleOptions.driveType.FWD': 'Преден',
+    'vehicleOptions.driveType.RWD': 'Заден',
+    'vehicleOptions.driveType.AWD': 'Полн',
+    'vehicleOptions.bodyType.Sedan': 'Седан',
+    'vehicleOptions.bodyType.Hatchback': 'Хечбек',
+    'vehicleOptions.bodyType.Wagon': 'Караван',
+    'vehicleOptions.bodyType.SUV': 'SUV',
+    'vehicleOptions.bodyType.Coupe': 'Купе',
+    'vehicleOptions.bodyType.Convertible': 'Кабриолет',
+    'vehicleOptions.bodyType.Van': 'Фургон',
+    'vehicleOptions.bodyType.Pickup': 'Пикап',
+    'vehicleOptions.bodyType.Minivan': 'Миниван',
+    'vehicleOptions.bodyType.Truck': 'Камион',
+    'vehicleOptions.fuel.Petrol': 'Бензин',
+    'vehicleOptions.fuel.Diesel': 'Дизел',
+    'vehicleOptions.fuel.Electric': 'Електричен',
+    'vehicleOptions.fuel.Hybrid': 'Хибриден',
+    'vehicleOptions.fuel.LPG': 'LPG',
+  };
+  return translations[key] || key;
+};
 
 describe('utils', () => {
   describe('formatPrice', () => {
@@ -91,73 +119,103 @@ describe('utils', () => {
 
   describe('formatTransmission', () => {
     it('should format Manual transmission', () => {
-      expect(formatTransmission('Manual')).toBe('Мануелна');
+      expect(formatTransmission('Manual', mockT)).toBe('Мануелна');
     });
 
     it('should format Automatic transmission', () => {
-      expect(formatTransmission('Automatic')).toBe('Автоматска');
+      expect(formatTransmission('Automatic', mockT)).toBe('Автоматска');
     });
 
     it('should format CVT transmission', () => {
-      expect(formatTransmission('CVT')).toBe('Варијатор');
+      expect(formatTransmission('CVT', mockT)).toBe('Варијатор');
     });
 
     it('should return empty string for undefined', () => {
-      expect(formatTransmission(undefined)).toBe('');
+      expect(formatTransmission(undefined, mockT)).toBe('');
     });
 
     it('should return original value for unknown transmission', () => {
-      expect(formatTransmission('Unknown')).toBe('Unknown');
+      expect(formatTransmission('Unknown', mockT)).toBe('Unknown');
     });
   });
 
   describe('formatBodyType', () => {
     it('should format Sedan', () => {
-      expect(formatBodyType('Sedan')).toBe('Седан');
+      expect(formatBodyType('Sedan', mockT)).toBe('Седан');
     });
 
     it('should format Hatchback', () => {
-      expect(formatBodyType('Hatchback')).toBe('Хечбек');
+      expect(formatBodyType('Hatchback', mockT)).toBe('Хечбек');
     });
 
     it('should format Wagon', () => {
-      expect(formatBodyType('Wagon')).toBe('Караван');
+      expect(formatBodyType('Wagon', mockT)).toBe('Караван');
     });
 
     it('should format SUV', () => {
-      expect(formatBodyType('SUV')).toBe('SUV');
+      expect(formatBodyType('SUV', mockT)).toBe('SUV');
     });
 
     it('should format Coupe', () => {
-      expect(formatBodyType('Coupe')).toBe('Купе');
+      expect(formatBodyType('Coupe', mockT)).toBe('Купе');
     });
 
     it('should format Convertible', () => {
-      expect(formatBodyType('Convertible')).toBe('Кабриолет');
+      expect(formatBodyType('Convertible', mockT)).toBe('Кабриолет');
     });
 
     it('should format Van', () => {
-      expect(formatBodyType('Van')).toBe('Фургон');
+      expect(formatBodyType('Van', mockT)).toBe('Фургон');
     });
 
     it('should format Pickup', () => {
-      expect(formatBodyType('Pickup')).toBe('Пикап');
+      expect(formatBodyType('Pickup', mockT)).toBe('Пикап');
     });
 
     it('should format Minivan', () => {
-      expect(formatBodyType('Minivan')).toBe('Миниван');
+      expect(formatBodyType('Minivan', mockT)).toBe('Миниван');
     });
 
     it('should format Truck', () => {
-      expect(formatBodyType('Truck')).toBe('Камион');
+      expect(formatBodyType('Truck', mockT)).toBe('Камион');
     });
 
     it('should return empty string for undefined', () => {
-      expect(formatBodyType(undefined)).toBe('');
+      expect(formatBodyType(undefined, mockT)).toBe('');
     });
 
     it('should return original value for unknown body type', () => {
-      expect(formatBodyType('Unknown')).toBe('Unknown');
+      expect(formatBodyType('Unknown', mockT)).toBe('Unknown');
+    });
+  });
+
+  describe('formatFuel', () => {
+    it('should format Petrol', () => {
+      expect(formatFuel('Petrol', mockT)).toBe('Бензин');
+    });
+
+    it('should format Diesel', () => {
+      expect(formatFuel('Diesel', mockT)).toBe('Дизел');
+    });
+
+    it('should format Electric', () => {
+      expect(formatFuel('Electric', mockT)).toBe('Електричен');
+    });
+
+    it('should format Hybrid', () => {
+      expect(formatFuel('Hybrid', mockT)).toBe('Хибриден');
+    });
+
+    it('should format LPG', () => {
+      expect(formatFuel('LPG', mockT)).toBe('LPG');
+    });
+
+    it('should return empty string for undefined', () => {
+      expect(formatFuel(undefined, mockT)).toBe('');
+    });
+
+    it('should return original value for unknown fuel type', () => {
+      expect(formatFuel('Unknown', mockT)).toBe('Unknown');
     });
   });
 

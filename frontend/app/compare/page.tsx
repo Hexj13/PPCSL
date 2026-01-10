@@ -19,6 +19,7 @@ import {
   formatTransmission,
   formatDriveType,
   formatBodyType,
+  formatFuel,
   formatRegistrationType,
   horsepowerToKw,
 } from '@/lib/utils';
@@ -273,6 +274,7 @@ export default function ComparePage() {
                             src={imageUrl}
                             alt={listing.title}
                             className="w-full h-full object-cover"
+                            draggable={false}
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
                               target.style.display = 'none';
@@ -285,6 +287,7 @@ export default function ComparePage() {
                             fill
                             sizes="96px"
                             className="object-cover"
+                            draggable={false}
                             unoptimized={process.env.NODE_ENV === 'development'}
                           />
                         )}
@@ -414,7 +417,9 @@ export default function ComparePage() {
                   className="py-4 px-4 text-center"
                   style={{ color: 'rgb(243, 243, 243)' }}
                 >
-                  {getValue(listing.vehicle?.fuel)}
+                  {listing.vehicle?.fuel
+                    ? formatFuel(listing.vehicle.fuel, t)
+                    : t('compare.notAvailable')}
                 </td>
               ))}
             </tr>
@@ -429,7 +434,7 @@ export default function ComparePage() {
                   style={{ color: 'rgb(243, 243, 243)' }}
                 >
                   {listing.vehicle?.transmission
-                    ? formatTransmission(listing.vehicle.transmission)
+                    ? formatTransmission(listing.vehicle.transmission, t)
                     : t('compare.notAvailable')}
                 </td>
               ))}
@@ -443,7 +448,7 @@ export default function ComparePage() {
                   style={{ color: 'rgb(243, 243, 243)' }}
                 >
                   {listing.vehicle?.drive_type
-                    ? formatDriveType(listing.vehicle.drive_type)
+                    ? formatDriveType(listing.vehicle.drive_type, t)
                     : t('compare.notAvailable')}
                 </td>
               ))}
@@ -457,7 +462,7 @@ export default function ComparePage() {
                   style={{ color: 'rgb(243, 243, 243)' }}
                 >
                   {listing.vehicle?.body_type
-                    ? formatBodyType(listing.vehicle.body_type)
+                    ? formatBodyType(listing.vehicle.body_type, t)
                     : t('compare.notAvailable')}
                 </td>
               ))}
@@ -513,7 +518,7 @@ export default function ComparePage() {
                   style={{ color: 'rgb(243, 243, 243)' }}
                 >
                   {listing.registration_type
-                    ? formatRegistrationType(listing.registration_type)
+                    ? formatRegistrationType(listing.registration_type, t)
                     : t('compare.notAvailable')}
                 </td>
               ))}

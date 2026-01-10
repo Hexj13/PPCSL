@@ -127,73 +127,100 @@ export function formatMileage(mileage: number): string {
   return mileage.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 }
 
-export function formatTransmission(transmission: string | undefined): string {
+export function formatTransmission(
+  transmission: string | undefined,
+  t: (_key: string) => string
+): string {
   if (!transmission) return '';
   switch (transmission) {
     case 'Manual':
-      return 'Мануелна';
+      return t('vehicleOptions.transmission.Manual');
     case 'Automatic':
-      return 'Автоматска';
+      return t('vehicleOptions.transmission.Automatic');
     case 'CVT':
-      return 'Варијатор';
+      return t('vehicleOptions.transmission.CVT');
     default:
       return transmission;
   }
 }
 
-export function formatDriveType(driveType: string | undefined): string {
+export function formatDriveType(
+  driveType: string | undefined,
+  t: (_key: string) => string
+): string {
   if (!driveType) return '';
   switch (driveType) {
     case 'FWD':
-      return 'Преден';
+      return t('vehicleOptions.driveType.FWD');
     case 'RWD':
-      return 'Заден';
+      return t('vehicleOptions.driveType.RWD');
     case 'AWD':
-      return 'Полн';
+      return t('vehicleOptions.driveType.AWD');
     default:
       return driveType;
   }
 }
 
-export function formatRegistrationType(registrationType: string | undefined): string {
+export function formatRegistrationType(
+  registrationType: string | undefined,
+  t: (_key: string) => string
+): string {
   if (!registrationType) return '';
   switch (registrationType) {
     case 'Local':
-      return 'Местна';
+      return t('searchFilters.registrationTypeOptions.Local');
     case 'Foreign':
-      return 'Странска';
+      return t('searchFilters.registrationTypeOptions.Foreign');
     case 'Cleared':
-      return 'Цариниран (на име на купувачот)';
+      return t('searchFilters.registrationTypeOptions.Cleared');
     default:
       return registrationType;
   }
 }
 
-export function formatBodyType(bodyType: string | undefined): string {
+export function formatBodyType(bodyType: string | undefined, t: (_key: string) => string): string {
   if (!bodyType) return '';
   switch (bodyType) {
     case 'Sedan':
-      return 'Седан';
+      return t('vehicleOptions.bodyType.Sedan');
     case 'Hatchback':
-      return 'Хечбек';
+      return t('vehicleOptions.bodyType.Hatchback');
     case 'Wagon':
-      return 'Караван';
+      return t('vehicleOptions.bodyType.Wagon');
     case 'SUV':
-      return 'SUV';
+      return t('vehicleOptions.bodyType.SUV');
     case 'Coupe':
-      return 'Купе';
+      return t('vehicleOptions.bodyType.Coupe');
     case 'Convertible':
-      return 'Кабриолет';
+      return t('vehicleOptions.bodyType.Convertible');
     case 'Van':
-      return 'Фургон';
+      return t('vehicleOptions.bodyType.Van');
     case 'Pickup':
-      return 'Пикап';
+      return t('vehicleOptions.bodyType.Pickup');
     case 'Minivan':
-      return 'Миниван';
+      return t('vehicleOptions.bodyType.Minivan');
     case 'Truck':
-      return 'Камион';
+      return t('vehicleOptions.bodyType.Truck');
     default:
       return bodyType;
+  }
+}
+
+export function formatFuel(fuel: string | undefined, t: (_key: string) => string): string {
+  if (!fuel) return '';
+  switch (fuel) {
+    case 'Petrol':
+      return t('vehicleOptions.fuel.Petrol');
+    case 'Diesel':
+      return t('vehicleOptions.fuel.Diesel');
+    case 'Electric':
+      return t('vehicleOptions.fuel.Electric');
+    case 'Hybrid':
+      return t('vehicleOptions.fuel.Hybrid');
+    case 'LPG':
+      return t('vehicleOptions.fuel.LPG');
+    default:
+      return fuel;
   }
 }
 

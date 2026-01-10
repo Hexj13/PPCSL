@@ -10,6 +10,7 @@ import {
   formatBodyType,
   formatDriveType,
   formatEngineVolume,
+  formatFuel,
   formatMileage,
   formatPrice,
   getOptimizedImageUrl,
@@ -58,6 +59,7 @@ export function ListingManagementCard({
                 className="object-cover rounded-t-xl lg:rounded-tl-xl lg:rounded-bl-xl lg:rounded-tr-none lg:rounded-br-none"
                 sizes="(max-width: 1024px) 100vw, 450px"
                 loading="lazy"
+                draggable={false}
                 unoptimized={
                   optimizedImageUrl.startsWith('http://') ||
                   optimizedImageUrl.startsWith('https://')
@@ -114,7 +116,7 @@ export function ListingManagementCard({
                   )}
                   {listing.vehicle.fuel && (
                     <div>
-                      {t('userListings.fuel')}: {listing.vehicle.fuel}
+                      {t('userListings.fuel')}: {formatFuel(listing.vehicle.fuel, t)}
                     </div>
                   )}
                   {listing.vehicle.mileage_km && (
@@ -125,12 +127,13 @@ export function ListingManagementCard({
                   )}
                   {listing.vehicle.drive_type && (
                     <div>
-                      {t('userListings.driveType')}: {formatDriveType(listing.vehicle.drive_type)}
+                      {t('userListings.driveType')}:{' '}
+                      {formatDriveType(listing.vehicle.drive_type, t)}
                     </div>
                   )}
                   {listing.vehicle.body_type && (
                     <div>
-                      {t('userListings.bodyType')}: {formatBodyType(listing.vehicle.body_type)}
+                      {t('userListings.bodyType')}: {formatBodyType(listing.vehicle.body_type, t)}
                     </div>
                   )}
                 </div>

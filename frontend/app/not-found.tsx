@@ -7,7 +7,7 @@ const translations = loadTranslations();
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-bg-dark to-bg-darker flex items-center justify-center px-4">
+    <div className="fixed inset-0 bg-bg-dark flex items-center justify-center px-4 z-50">
       <div className="text-center max-w-2xl w-full">
         <div className="mb-8">
           <div className="mb-1 flex justify-center">
@@ -17,6 +17,7 @@ export default function NotFound() {
               width={64}
               height={64}
               className="w-16 h-16"
+              draggable={false}
             />
           </div>
           <h1 className="text-6xl md:text-7xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent mb-4">

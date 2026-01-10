@@ -12,6 +12,7 @@ import {
   formatBodyType,
   formatDriveType,
   formatEngineVolume,
+  formatFuel,
   formatMileage,
   formatPrice,
   formatTransmission,
@@ -200,6 +201,7 @@ function UserListingsModalComponent({
                               src={imageUrl}
                               alt={listing.title}
                               className="w-full h-full object-cover rounded-xl"
+                              draggable={false}
                               onError={() => {
                                 setImageErrors((prev) => new Set(prev).add(listing.id));
                               }}
@@ -212,6 +214,7 @@ function UserListingsModalComponent({
                                 fill
                                 sizes="(max-width: 768px) 100vw, 160px"
                                 className="object-cover rounded-xl"
+                                draggable={false}
                                 onError={() => {
                                   setImageErrors((prev) => new Set(prev).add(listing.id));
                                 }}
@@ -261,7 +264,7 @@ function UserListingsModalComponent({
                                 <span className="text-primary-400 font-semibold">
                                   {t('userListings.fuel')}:
                                 </span>
-                                <span className="ml-2">{vehicle.fuel}</span>
+                                <span className="ml-2">{formatFuel(vehicle.fuel, t)}</span>
                               </div>
                             )}
                             {vehicle.mileage_km && (
@@ -280,7 +283,7 @@ function UserListingsModalComponent({
                                   {t('userListings.transmission')}:
                                 </span>
                                 <span className="ml-2">
-                                  {formatTransmission(vehicle.transmission)}
+                                  {formatTransmission(vehicle.transmission, t)}
                                 </span>
                               </div>
                             )}
@@ -289,7 +292,9 @@ function UserListingsModalComponent({
                                 <span className="text-primary-400 font-semibold">
                                   {t('userListings.driveType')}:
                                 </span>
-                                <span className="ml-2">{formatDriveType(vehicle.drive_type)}</span>
+                                <span className="ml-2">
+                                  {formatDriveType(vehicle.drive_type, t)}
+                                </span>
                               </div>
                             )}
                             {vehicle.body_type && (
@@ -297,7 +302,7 @@ function UserListingsModalComponent({
                                 <span className="text-primary-400 font-semibold">
                                   {t('userListings.bodyType')}:
                                 </span>
-                                <span className="ml-2">{formatBodyType(vehicle.body_type)}</span>
+                                <span className="ml-2">{formatBodyType(vehicle.body_type, t)}</span>
                               </div>
                             )}
                           </div>

@@ -1,6 +1,12 @@
 import { useTranslation } from '@/hooks/useTranslation';
 import { getColorLabel } from '@/lib/form-options';
-import { formatBodyType, formatEngineVolume, formatMileage, formatTransmission } from '@/lib/utils';
+import {
+  formatBodyType,
+  formatEngineVolume,
+  formatFuel,
+  formatMileage,
+  formatTransmission,
+} from '@/lib/utils';
 
 interface Vehicle {
   brand?: { name: string } | null;
@@ -67,14 +73,14 @@ export function VehicleSpecs({
         {vehicle.fuel && (
           <div>
             <span className="text-primary-400">{t('vehicleSpecs.fuel')}</span>
-            <span className="ml-2 font-medium text-gray-200">{vehicle.fuel}</span>
+            <span className="ml-2 font-medium text-gray-200">{formatFuel(vehicle.fuel, t)}</span>
           </div>
         )}
         {vehicle.transmission && (
           <div>
             <span className="text-primary-400">{t('vehicleSpecs.transmission')}</span>
             <span className="ml-2 font-medium text-gray-200">
-              {formatTransmission(vehicle.transmission)}
+              {formatTransmission(vehicle.transmission, t)}
             </span>
           </div>
         )}
@@ -84,7 +90,7 @@ export function VehicleSpecs({
               {showBrandModel ? t('vehicleSpecs.bodyType') : t('vehicleSpecs.bodyTypeShort')}
             </span>
             <span className="ml-2 font-medium text-gray-200">
-              {formatBodyType(vehicle.body_type)}
+              {formatBodyType(vehicle.body_type, t)}
             </span>
           </div>
         )}

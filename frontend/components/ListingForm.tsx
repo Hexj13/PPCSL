@@ -1509,6 +1509,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                     width={200}
                     height={96}
                     className="w-full h-24 object-cover rounded"
+                    draggable={false}
                     unoptimized
                   />
                   <div className="absolute inset-0 bg-black/40 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity rounded flex items-center justify-center gap-1">

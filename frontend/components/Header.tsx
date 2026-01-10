@@ -56,6 +56,7 @@ export function Header() {
               className="block md:hidden h-auto w-auto"
               style={{ width: '98px', height: 'auto' }}
               priority
+              draggable={false}
             />
             <Image
               src="/logo-desktop.png"
@@ -65,6 +66,7 @@ export function Header() {
               className="hidden md:block h-auto w-auto"
               style={{ width: '147px', height: 'auto' }}
               priority
+              draggable={false}
             />
           </Link>
 
