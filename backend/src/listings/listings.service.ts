@@ -131,10 +131,51 @@ export class ListingsService {
 
     const queryBuilder = this.listingsRepository
       .createQueryBuilder('listing')
-      .leftJoinAndSelect('listing.vehicle', 'vehicle')
-      .leftJoinAndSelect('vehicle.brand', 'brand')
-      .leftJoinAndSelect('vehicle.model', 'model')
-      .leftJoinAndSelect('listing.user', 'user')
+      .select([
+        'listing.id',
+        'listing.title',
+        'listing.price',
+        'listing.currency',
+        'listing.city',
+        'listing.status',
+        'listing.images',
+        'listing.urgent',
+        'listing.is_new',
+        'listing.is_promoted',
+        'listing.promoted_until',
+        'listing.views',
+        'listing.condition',
+        'listing.registration_type',
+        'listing.is_registered',
+        'listing.created_at',
+        'listing.last_updated_at',
+      ])
+      .leftJoin('listing.vehicle', 'vehicle')
+      .addSelect([
+        'vehicle.id',
+        'vehicle.year',
+        'vehicle.fuel',
+        'vehicle.transmission',
+        'vehicle.mileage_km',
+        'vehicle.body_type',
+        'vehicle.engine_displ_l',
+        'vehicle.color',
+        'vehicle.doors',
+        'vehicle.drive_type',
+      ])
+      .leftJoin('vehicle.brand', 'brand')
+      .addSelect(['brand.id', 'brand.name', 'brand.logoUrl'])
+      .leftJoin('vehicle.model', 'model')
+      .addSelect(['model.id', 'model.name'])
+      .leftJoin('listing.user', 'user')
+      .addSelect([
+        'user.id',
+        'user.type',
+        'user.phone',
+        'user.firstName',
+        'user.lastName',
+        'user.companyName',
+      ])
       .where('listing.status = :status', { status: ListingStatusEnum.Active });
 
     applyInOrEqualFilter(

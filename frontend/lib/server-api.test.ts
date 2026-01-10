@@ -90,10 +90,15 @@ describe('server-api', () => {
         meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
       };
 
-      (global.fetch as jest.Mock).mockResolvedValue({
-        ok: true,
-        json: async () => mockResponse,
-      });
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [],
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockResponse,
+        });
 
       await getListings({
         year_gte: '2020',
@@ -108,12 +113,23 @@ describe('server-api', () => {
         engine_displ_l_lte: '3.0',
       });
 
-      const callUrl = (global.fetch as jest.Mock).mock.calls[0][0];
-      const url = new URL(callUrl);
+      const calls = (global.fetch as jest.Mock).mock.calls;
+      const listingsCall = calls.find(
+        (call: [string | Request, RequestInit?]) =>
+          typeof call[0] === 'string' && call[0].includes('/api/listings')
+      );
+      expect(listingsCall).toBeDefined();
+      const url = new URL(listingsCall[0]);
       expect(url.searchParams.get('year_gte')).toBe('2020');
       expect(url.searchParams.get('year_lte')).toBe('2025');
       expect(url.searchParams.get('price_gte')).toBe('10000');
       expect(url.searchParams.get('price_lte')).toBe('50000');
+      expect(url.searchParams.get('mileage_gte')).toBe('0');
+      expect(url.searchParams.get('mileage_lte')).toBe('100000');
+      expect(url.searchParams.get('horsepower_gte')).toBe('100');
+      expect(url.searchParams.get('horsepower_lte')).toBe('200');
+      expect(url.searchParams.get('engine_displ_l_gte')).toBe('1.5');
+      expect(url.searchParams.get('engine_displ_l_lte')).toBe('3');
     });
 
     it('should handle boolean params', async () => {
@@ -122,10 +138,15 @@ describe('server-api', () => {
         meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
       };
 
-      (global.fetch as jest.Mock).mockResolvedValue({
-        ok: true,
-        json: async () => mockResponse,
-      });
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [],
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockResponse,
+        });
 
       await getListings({
         urgent: 'true',
@@ -133,8 +154,13 @@ describe('server-api', () => {
         is_registered: 'false',
       });
 
-      const callUrl = (global.fetch as jest.Mock).mock.calls[0][0];
-      const url = new URL(callUrl);
+      const calls = (global.fetch as jest.Mock).mock.calls;
+      const listingsCall = calls.find(
+        (call: [string | Request, RequestInit?]) =>
+          typeof call[0] === 'string' && call[0].includes('/api/listings')
+      );
+      expect(listingsCall).toBeDefined();
+      const url = new URL(listingsCall[0]);
       expect(url.searchParams.get('urgent')).toBe('true');
       expect(url.searchParams.get('is_new')).toBe('true');
       expect(url.searchParams.get('is_registered')).toBe('false');
@@ -146,18 +172,28 @@ describe('server-api', () => {
         meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
       };
 
-      (global.fetch as jest.Mock).mockResolvedValue({
-        ok: true,
-        json: async () => mockResponse,
-      });
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [],
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockResponse,
+        });
 
       await getListings({
         brand_ids: ['brand-1', 'brand-2'],
         cities: ['Skopje', 'Bitola'],
       });
 
-      const callUrl = (global.fetch as jest.Mock).mock.calls[0][0];
-      const url = new URL(callUrl);
+      const calls = (global.fetch as jest.Mock).mock.calls;
+      const listingsCall = calls.find(
+        (call: [string | Request, RequestInit?]) =>
+          typeof call[0] === 'string' && call[0].includes('/api/listings')
+      );
+      expect(listingsCall).toBeDefined();
+      const url = new URL(listingsCall[0]);
       expect(url.searchParams.get('brand_ids')).toBe('brand-1,brand-2');
       expect(url.searchParams.get('cities')).toBe('Skopje,Bitola');
     });
@@ -168,10 +204,15 @@ describe('server-api', () => {
         meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
       };
 
-      (global.fetch as jest.Mock).mockResolvedValue({
-        ok: true,
-        json: async () => mockResponse,
-      });
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [],
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockResponse,
+        });
 
       const encoded = Buffer.from(JSON.stringify(['brand-1', 'brand-2']))
         .toString('base64')
@@ -184,10 +225,15 @@ describe('server-api', () => {
         brand_ids: encoded,
       });
 
-      const callUrl = (global.fetch as jest.Mock).mock.calls[0][0];
-      const url = new URL(callUrl);
-      const decoded = url.searchParams.get('brand_ids');
-      expect(decoded).toBe('brand-1,brand-2');
+      const calls = (global.fetch as jest.Mock).mock.calls;
+      const listingsCall = calls.find(
+        (call: [string | Request, RequestInit?]) =>
+          typeof call[0] === 'string' && call[0].includes('/api/listings')
+      );
+      expect(listingsCall).toBeDefined();
+      const url = new URL(listingsCall[0]);
+      const brandIdsParam = url.searchParams.get('brand_ids');
+      expect(brandIdsParam).toBe('brand-1,brand-2');
     });
 
     it('should return empty data on ECONNREFUSED error in development', async () => {

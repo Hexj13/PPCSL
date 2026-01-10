@@ -13,42 +13,14 @@ import {
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { brandsApi, favoritesApi, listingsApi, Listing, PaginationMeta } from '@/lib/api';
+import { createBrandResolver, createModelResolver, parseSearchParams } from '@/lib/search-params';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
-import { createSlug } from '@/lib/utils';
 
 import { ListingCard } from './ListingCard';
 import { ListingCardSkeleton } from './ListingCardSkeleton';
 import { SkeletonContainer } from './SkeletonContainer';
 
 const FILTERS_STORAGE_KEY = 'kupito_search_filters';
-
-const decodeArray = (encoded: string): string[] => {
-  if (!encoded) return [];
-  try {
-    let base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
-    while (base64.length % 4) {
-      base64 += '=';
-    }
-    const json = atob(base64);
-    return JSON.parse(json);
-  } catch {
-    return encoded.split(',').filter((v) => v.trim() !== '');
-  }
-};
-
-const loadFiltersFromStorage = (): Record<string, string[]> | null => {
-  if (typeof window !== 'undefined') {
-    try {
-      const stored =
-        sessionStorage.getItem(FILTERS_STORAGE_KEY) || localStorage.getItem(FILTERS_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : null;
-    } catch (e) {
-      console.error('Failed to load filters from storage:', e);
-      return null;
-    }
-  }
-  return null;
-};
 
 interface ListingGridProps {
   initialData?: { data: Listing[]; meta: PaginationMeta };
@@ -125,150 +97,49 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   const searchParamsString = useMemo(() => searchParams.toString(), [searchParams]);
   const deferredListings = useDeferredValue(listings);
 
+  const checkFavorites = useCallback(
+    async (listingIds: string[]) => {
+      if (!user || listingIds.length === 0) return;
+      try {
+        const favoritesRes = await favoritesApi.checkBatch(listingIds);
+        const favoriteIds = Object.entries(favoritesRes)
+          .filter(([, isFavorite]) => isFavorite)
+          .map(([listingId]) => listingId);
+        const currentFavorites = useFavoritesStore.getState().favorites;
+        const updatedFavorites = new Set([...currentFavorites, ...favoriteIds]);
+        setFavorites(Array.from(updatedFavorites));
+      } catch {}
+    },
+    [user, setFavorites]
+  );
+
   const fetchListings = useCallback(
-    async (page: number, append: boolean = false, limit: number = 20) => {
-      const params: Record<string, string | number | boolean> = {
-        page,
-        limit,
-      };
+    async (
+      page: number,
+      append: boolean = false,
+      limit: number = 20,
+      loadTwoPages: boolean = false
+    ) => {
+      let parsedParams;
+      try {
+        const brands = await brandsApi.getAll();
+        const brandResolver = createBrandResolver(brands.data);
 
-      const hasStorageFlag = searchParams.get('_f') === '1';
-      const hasEncodedArrays = searchParams.get('_e') === '1';
-      const storedFilters = hasStorageFlag ? loadFiltersFromStorage() : null;
-
-      if (storedFilters) {
-        Object.entries(storedFilters).forEach(([key, values]) => {
-          if (Array.isArray(values) && values.length > 0) {
-            params[key] = values.join(',');
-          }
-        });
-      }
-
-      const brandParam = searchParams.get('brand');
-      const modelParam = searchParams.get('model');
-
-      if (brandParam || modelParam) {
-        try {
-          const brands = await brandsApi.getAll();
-          const brandSlugs = brandParam ? brandParam.split(',').map((s) => s.trim()) : [];
-          const brandIds: string[] = [];
-
-          for (const slug of brandSlugs) {
-            const brand = brands.data.find(
-              (b) =>
-                b.name.toLowerCase() === slug.toLowerCase() ||
-                createSlug(b.name) === slug.toLowerCase()
-            );
-            if (brand) {
-              brandIds.push(brand.id);
-            }
-          }
-
-          if (brandIds.length > 0) {
-            params.brand_ids = brandIds.join(',');
-          }
-
-          if (modelParam && brandIds.length > 0) {
+        const currentSearchParams = new URLSearchParams(searchParamsString);
+        parsedParams = await parseSearchParams(currentSearchParams, {
+          brandResolver: async (slugs) => {
+            return brandResolver(slugs);
+          },
+          modelResolver: async (brandIds, slugs) => {
             const modelsByBrand = await brandsApi.getModelsBatch(brandIds);
-            const allModels = Object.values(modelsByBrand.data).flat();
-            const modelSlugs = modelParam.split(',').map((s) => s.trim());
-            const modelIds: string[] = [];
-
-            for (const slug of modelSlugs) {
-              const model = allModels.find(
-                (m) =>
-                  m.name.toLowerCase() === slug.toLowerCase() ||
-                  createSlug(m.name) === slug.toLowerCase()
-              );
-              if (model && brandIds.includes(model.brand_id)) {
-                modelIds.push(model.id);
-              }
-            }
-
-            if (modelIds.length > 0) {
-              params.model_ids = modelIds.join(',');
-            }
-          }
-        } catch (error) {
-          console.error('Failed to convert brand/model to IDs:', error);
-        }
+            const modelResolver = createModelResolver(modelsByBrand.data);
+            return modelResolver(brandIds, slugs);
+          },
+        });
+      } catch (error) {
+        console.error('Failed to parse search params:', error);
+        parsedParams = { page: 1, limit: 20 };
       }
-
-      searchParams.forEach((value, key) => {
-        if (key === '_f' || key === '_e' || key === 'brand' || key === 'model') {
-          return;
-        }
-        if (hasEncodedArrays && !storedFilters) {
-          const arrayParams = [
-            'brand_ids',
-            'model_ids',
-            'cities',
-            'fuels',
-            'transmissions',
-            'body_types',
-            'colors',
-            'doors',
-            'conditions',
-            'registration_types',
-            'drive_types',
-          ];
-          if (arrayParams.includes(key)) {
-            const decoded = decodeArray(value);
-            if (decoded.length > 0) {
-              params[key] = decoded.join(',');
-            }
-            return;
-          }
-        }
-        if (key === 'engine_displ_l_gte' || key === 'engine_displ_l_lte') {
-          params[key] = parseFloat(value);
-        } else if (
-          key === 'year_gte' ||
-          key === 'year_lte' ||
-          key === 'price_gte' ||
-          key === 'price_lte' ||
-          key === 'mileage_gte' ||
-          key === 'mileage_lte' ||
-          key === 'horsepower_gte' ||
-          key === 'horsepower_lte' ||
-          key === 'doors_single'
-        ) {
-          params[key] = parseInt(value);
-        } else if (key === 'urgent' || key === 'is_new' || key === 'is_registered') {
-          params[key] = value === 'true';
-        } else if (
-          key === 'brand_ids' ||
-          key === 'model_ids' ||
-          key === 'cities' ||
-          key === 'fuels' ||
-          key === 'transmissions' ||
-          key === 'body_types' ||
-          key === 'colors' ||
-          key === 'doors' ||
-          key === 'conditions' ||
-          key === 'registration_types' ||
-          key === 'drive_types'
-        ) {
-          params[key] = value;
-        } else if (
-          key === 'brand_id' ||
-          key === 'model_id' ||
-          key === 'city' ||
-          key === 'fuel' ||
-          key === 'transmission' ||
-          key === 'body_type' ||
-          key === 'color' ||
-          key === 'title'
-        ) {
-          params[key] = value;
-        } else if (key === 'currency') {
-          if (value && value.trim() !== '') {
-            params[key] = value;
-          }
-        } else if (key !== 'page') {
-          params[key] = value;
-        }
-      });
 
       if (append) {
         setLoadingMore(true);
@@ -280,39 +151,70 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       }
 
       try {
-        const res = await listingsApi.getAll(params);
-        const newListings = res.data.data;
+        const params: Record<string, string | number | boolean> = {
+          ...parsedParams,
+          page,
+          limit,
+        };
+
+        const requests: Array<
+          Promise<{ data: { data: Listing[]; meta: PaginationMeta } }> | Promise<null>
+        > = [listingsApi.getAll(params)];
+
+        if (loadTwoPages && meta && page + 1 <= meta.totalPages) {
+          const secondParams: Record<string, string | number | boolean> = {
+            ...parsedParams,
+            page: page + 1,
+            limit,
+          };
+          requests.push(listingsApi.getAll(secondParams));
+        } else {
+          requests.push(Promise.resolve(null));
+        }
+
+        const [firstRes, secondRes] = await Promise.all(requests);
+
+        const firstListings = firstRes.data.data;
+        const secondListings =
+          secondRes && secondRes !== null && 'data' in secondRes ? secondRes.data.data : null;
+        const allNewListings = secondListings
+          ? [...firstListings, ...secondListings]
+          : firstListings;
+
+        const finalMeta =
+          secondRes && secondRes !== null && 'data' in secondRes && secondRes.data?.meta
+            ? secondRes.data.meta
+            : firstRes.data.meta;
+        const finalPage =
+          secondRes && secondRes !== null && 'data' in secondRes && secondRes.data?.meta
+            ? page + 1
+            : page;
+
         startTransition(() => {
           if (append) {
             setListings((prev) => {
-              const updated = [...prev, ...newListings];
+              const updated = [...prev, ...allNewListings];
               listingsRef.current = updated;
+              setCurrentPage(finalPage);
+              setMeta(finalMeta);
+              if (loadTwoPages) {
+                saveGridState(updated, finalPage, finalMeta);
+              }
               return updated;
             });
           } else {
-            setListings(newListings);
-            listingsRef.current = newListings;
+            setListings(allNewListings);
+            listingsRef.current = allNewListings;
             setCurrentPage(1);
             setAutoLoadCount(0);
             setLoadingMore(false);
-            setMeta(res.data.meta);
+            setMeta(finalMeta);
             setError(null);
             setHasLoadedWithFilters(true);
           }
         });
 
-        if (user && newListings.length > 0) {
-          const listingIds = newListings.map((l) => l.id);
-          try {
-            const favoritesRes = await favoritesApi.checkBatch(listingIds);
-            const favoriteIds = Object.entries(favoritesRes)
-              .filter(([, isFavorite]) => isFavorite)
-              .map(([listingId]) => listingId);
-            const currentFavorites = useFavoritesStore.getState().favorites;
-            const updatedFavorites = new Set([...currentFavorites, ...favoriteIds]);
-            setFavorites(Array.from(updatedFavorites));
-          } catch {}
-        }
+        await checkFavorites(allNewListings.map((l) => l.id));
       } catch {
         if (!append) {
           setListings([]);
@@ -325,7 +227,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [searchParamsString, setFavorites, user, t]
+    [searchParamsString, setFavorites, user, t, checkFavorites, meta]
   );
 
   useEffect(() => {
@@ -399,224 +301,12 @@ export function ListingGrid({ initialData }: ListingGridProps) {
     }
   }, [loadingMore, loading, meta, currentPage, fetchListings, autoLoadCount]);
 
-  const handleLoadMore = async () => {
+  const handleLoadMore = useCallback(async () => {
     if (loadingMore || !meta || !meta.totalPages || currentPage >= meta.totalPages) {
       return;
     }
-
-    setLoadingMore(true);
-    try {
-      const nextPage = currentPage + 1;
-      const pageAfterNext = nextPage + 1;
-
-      const params: Record<string, string | number | boolean> = {
-        page: nextPage,
-        limit: 20,
-      };
-
-      const hasStorageFlag = searchParams.get('_f') === '1';
-      const hasEncodedArrays = searchParams.get('_e') === '1';
-      const storedFilters = hasStorageFlag ? loadFiltersFromStorage() : null;
-
-      if (storedFilters) {
-        Object.entries(storedFilters).forEach(([key, values]) => {
-          if (Array.isArray(values) && values.length > 0) {
-            params[key] = values.join(',');
-          }
-        });
-      }
-
-      const brandParam = searchParams.get('brand');
-      const modelParam = searchParams.get('model');
-
-      if (brandParam || modelParam) {
-        try {
-          const brands = await brandsApi.getAll();
-          const brandSlugs = brandParam ? brandParam.split(',').map((s) => s.trim()) : [];
-          const brandIds: string[] = [];
-
-          for (const slug of brandSlugs) {
-            const brand = brands.data.find(
-              (b) =>
-                b.name.toLowerCase() === slug.toLowerCase() ||
-                createSlug(b.name) === slug.toLowerCase()
-            );
-            if (brand) {
-              brandIds.push(brand.id);
-            }
-          }
-
-          if (brandIds.length > 0) {
-            params.brand_ids = brandIds.join(',');
-          }
-
-          if (modelParam && brandIds.length > 0) {
-            const modelsByBrand = await brandsApi.getModelsBatch(brandIds);
-            const allModels = Object.values(modelsByBrand.data).flat();
-            const modelSlugs = modelParam.split(',').map((s) => s.trim());
-            const modelIds: string[] = [];
-
-            for (const slug of modelSlugs) {
-              const model = allModels.find(
-                (m) =>
-                  m.name.toLowerCase() === slug.toLowerCase() ||
-                  createSlug(m.name) === slug.toLowerCase()
-              );
-              if (model && brandIds.includes(model.brand_id)) {
-                modelIds.push(model.id);
-              }
-            }
-
-            if (modelIds.length > 0) {
-              params.model_ids = modelIds.join(',');
-            }
-          }
-        } catch (error) {
-          console.error('Failed to convert brand/model to IDs:', error);
-        }
-      }
-
-      searchParams.forEach((value, key) => {
-        if (key === '_f' || key === '_e' || key === 'brand' || key === 'model') {
-          return;
-        }
-        if (hasEncodedArrays && !storedFilters) {
-          const arrayParams = [
-            'brand_ids',
-            'model_ids',
-            'cities',
-            'fuels',
-            'transmissions',
-            'body_types',
-            'colors',
-            'doors',
-            'conditions',
-            'registration_types',
-            'drive_types',
-          ];
-          if (arrayParams.includes(key)) {
-            const decoded = decodeArray(value);
-            if (decoded.length > 0) {
-              params[key] = decoded.join(',');
-            }
-            return;
-          }
-        }
-        if (key === 'engine_displ_l_gte' || key === 'engine_displ_l_lte') {
-          params[key] = parseFloat(value);
-        } else if (
-          key === 'year_gte' ||
-          key === 'year_lte' ||
-          key === 'price_gte' ||
-          key === 'price_lte' ||
-          key === 'mileage_gte' ||
-          key === 'mileage_lte' ||
-          key === 'horsepower_gte' ||
-          key === 'horsepower_lte' ||
-          key === 'doors_single'
-        ) {
-          params[key] = parseInt(value);
-        } else if (key === 'urgent' || key === 'is_new' || key === 'is_registered') {
-          params[key] = value === 'true';
-        } else if (
-          key === 'brand_ids' ||
-          key === 'model_ids' ||
-          key === 'cities' ||
-          key === 'fuels' ||
-          key === 'transmissions' ||
-          key === 'body_types' ||
-          key === 'colors' ||
-          key === 'doors' ||
-          key === 'conditions' ||
-          key === 'registration_types' ||
-          key === 'drive_types'
-        ) {
-          params[key] = value;
-        } else if (
-          key === 'brand_id' ||
-          key === 'model_id' ||
-          key === 'city' ||
-          key === 'fuel' ||
-          key === 'transmission' ||
-          key === 'body_type' ||
-          key === 'color' ||
-          key === 'title'
-        ) {
-          params[key] = value;
-        } else if (key === 'currency') {
-          if (value && value.trim() !== '') {
-            params[key] = value;
-          }
-        } else if (key !== 'page') {
-          params[key] = value;
-        }
-      });
-
-      const secondParams: Record<string, string | number | boolean> = {
-        ...params,
-        page: pageAfterNext,
-      };
-
-      const [firstRes, secondRes] = await Promise.all([
-        listingsApi.getAll(params),
-        pageAfterNext <= meta.totalPages ? listingsApi.getAll(secondParams) : null,
-      ]);
-
-      const firstListings = firstRes.data.data;
-      setListings((prev) => [...prev, ...firstListings]);
-
-      if (user && firstListings.length > 0) {
-        const listingIds = firstListings.map((l) => l.id);
-        try {
-          const favoritesRes = await favoritesApi.checkBatch(listingIds);
-          const favoriteIds = Object.entries(favoritesRes)
-            .filter(([, isFavorite]) => isFavorite)
-            .map(([listingId]) => listingId);
-          const currentFavorites = useFavoritesStore.getState().favorites;
-          const updatedFavorites = new Set([...currentFavorites, ...favoriteIds]);
-          setFavorites(Array.from(updatedFavorites));
-        } catch {}
-      }
-
-      let finalMeta: PaginationMeta;
-      let finalPage: number;
-
-      if (secondRes) {
-        const secondListings = secondRes.data.data;
-        setListings((prev) => [...prev, ...secondListings]);
-        setCurrentPage(pageAfterNext);
-        finalPage = pageAfterNext;
-        finalMeta = secondRes.data.meta;
-
-        if (user && secondListings.length > 0) {
-          const listingIds = secondListings.map((l) => l.id);
-          try {
-            const favoritesRes = await favoritesApi.checkBatch(listingIds);
-            const favoriteIds = Object.entries(favoritesRes)
-              .filter(([, isFavorite]) => isFavorite)
-              .map(([listingId]) => listingId);
-            const currentFavorites = useFavoritesStore.getState().favorites;
-            const updatedFavorites = new Set([...currentFavorites, ...favoriteIds]);
-            setFavorites(Array.from(updatedFavorites));
-          } catch {}
-        }
-      } else {
-        setCurrentPage(nextPage);
-        finalPage = nextPage;
-        finalMeta = firstRes.data.meta;
-      }
-
-      setMeta(finalMeta);
-
-      setListings((currentListings) => {
-        saveGridState(currentListings, finalPage, finalMeta);
-        return currentListings;
-      });
-    } catch {
-    } finally {
-      setLoadingMore(false);
-    }
-  };
+    await fetchListings(currentPage + 1, true, 20, true);
+  }, [loadingMore, meta, currentPage, fetchListings]);
 
   return (
     <>
