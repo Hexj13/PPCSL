@@ -135,18 +135,18 @@ function VerifyPhoneChangeContent() {
     e.preventDefault();
 
     if (isVerificationBlocked) {
-      setError(t('verifyPhoneChange.maxAttemptsReached'));
+      setError(t('profile.verifyPhoneChange.maxAttemptsReached'));
       return;
     }
 
     const fullCode = code.join('').trim();
     if (fullCode.length !== 6) {
-      setError(t('verifyPhoneChange.codeRequired'));
+      setError(t('profile.verifyPhoneChange.codeRequired'));
       return;
     }
 
     if (!/^\d{6}$/.test(fullCode)) {
-      setError(t('verifyPhoneChange.codeDigitsOnly'));
+      setError(t('profile.verifyPhoneChange.codeDigitsOnly'));
       return;
     }
 
@@ -159,7 +159,7 @@ function VerifyPhoneChangeContent() {
         code: fullCode,
       });
       setAuth(response.data, useAuthStore.getState().token);
-      toast.success(t('verifyPhoneChange.phoneChangedSuccess'));
+      toast.success(t('profile.verifyPhoneChange.phoneChangedSuccess'));
       router.push('/profile');
     } catch (err: unknown) {
       const axiosError = err as {
@@ -176,14 +176,16 @@ function VerifyPhoneChangeContent() {
           const now = new Date();
           const remainingMinutes = Math.ceil((blockedDate.getTime() - now.getTime()) / (1000 * 60));
           setError(
-            t('verifyPhoneChange.maxAttemptsReachedWithMinutes', {
+            t('profile.verifyPhoneChange.maxAttemptsReachedWithMinutes', {
               minutes: remainingMinutes.toString(),
             })
           );
           setIsVerificationBlocked(true);
           setCode(['', '', '', '', '', '']);
           setLoading(false);
-          toast.error(t('verifyPhoneChange.ipBlocked', { minutes: remainingMinutes.toString() }));
+          toast.error(
+            t('profile.verifyPhoneChange.ipBlocked', { minutes: remainingMinutes.toString() })
+          );
           return;
         }
       }
@@ -193,10 +195,12 @@ function VerifyPhoneChangeContent() {
 
       if (newAttempts >= 10) {
         setIsVerificationBlocked(true);
-        setError(t('verifyPhoneChange.maxAttempts'));
+        setError(t('profile.verifyPhoneChange.maxAttempts'));
       } else {
         setError(
-          t('verifyPhoneChange.invalidCodeWithAttempts', { attempts: newAttempts.toString() })
+          t('profile.verifyPhoneChange.invalidCodeWithAttempts', {
+            attempts: newAttempts.toString(),
+          })
         );
       }
 
@@ -222,10 +226,12 @@ function VerifyPhoneChangeContent() {
 
     try {
       await authApi.changePhoneRequest({ phone: phoneNumber });
-      toast.success(t('verifyPhoneChange.codeResent'));
+      toast.success(t('profile.verifyPhoneChange.codeResent'));
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { message?: string } } };
-      toast.error(axiosError.response?.data?.message || t('verifyPhoneChange.resendCodeError'));
+      toast.error(
+        axiosError.response?.data?.message || t('profile.verifyPhoneChange.resendCodeError')
+      );
     }
   };
 
@@ -313,8 +319,8 @@ function VerifyPhoneChangeContent() {
                 className="flex-1 text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 disabled:hover:text-primary-400 disabled:hover:border-primary-400/20 disabled:hover:bg-primary-500/10"
               >
                 {isVerificationBlocked
-                  ? t('verifyPhoneChange.blocked')
-                  : t('verifyPhoneChange.verify')}
+                  ? t('profile.verifyPhoneChange.blocked')
+                  : t('profile.verifyPhoneChange.verify')}
               </LoadingButton>
             </div>
           </form>
@@ -327,10 +333,10 @@ function VerifyPhoneChangeContent() {
               className="text-sm text-primary-400 hover:text-primary-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {resendCooldown > 0
-                ? t('verifyPhoneChange.resendCodeWithCooldown', {
+                ? t('profile.verifyPhoneChange.resendCodeWithCooldown', {
                     cooldown: resendCooldown.toString(),
                   })
-                : t('verifyPhoneChange.resendCode')}
+                : t('profile.verifyPhoneChange.resendCode')}
             </button>
           </div>
         </div>

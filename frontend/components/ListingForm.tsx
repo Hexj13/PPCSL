@@ -7,6 +7,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Dropdown } from '@/components/Dropdown';
+import { BasicInfoSection } from '@/components/ListingForm/BasicInfoSection';
+import { EquipmentSection } from '@/components/ListingForm/EquipmentSection';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { useBrandsAndModels } from '@/hooks/useBrandsAndModels';
 import { useCities } from '@/hooks/useCities';
@@ -22,6 +24,7 @@ import {
   getFuelOptions,
   getTransmissionOptions,
 } from '@/lib/form-options';
+import { loadSiteConfigSync } from '@/lib/site-config';
 import {
   ConditionType,
   ConditionTypeEnum,
@@ -34,7 +37,6 @@ import {
 } from '@/lib/types';
 import { horsepowerToKw, isBrowser, kwToHorsepower, sortOptionsByLabel } from '@/lib/utils';
 import { validators } from '@/lib/validators';
-import { VEHICLE_EQUIPMENT_KEYS } from '@/lib/vehicle-equipment';
 import { LoadingButton } from '@/ui';
 
 export interface ListingFormData {
@@ -469,160 +471,28 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
     );
   }
 
+  const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+  const siteConfig = loadSiteConfigSync(country);
+
+  const sectionProps = {
+    formData,
+    setFormData,
+    errors,
+    clearError,
+    t,
+    brands,
+    models,
+    loadingModels,
+    cities,
+    showVinHint,
+    setShowVinHint,
+    handleWheel,
+    siteConfig,
+  };
+
   return (
     <form onSubmit={handleSubmit} className="card p-4 md:p-6 lg:p-8">
-      <div className="mb-6">
-        <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
-          {t('listings.basicInfo')}
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-          <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400">
-              {t('listings.brandLabel')}
-            </label>
-            <Dropdown
-              value={formData.vehicle.brand_id}
-              onChange={(value) => {
-                clearError('vehicle.brand_id');
-                setFormData((prev) => ({
-                  ...prev,
-                  vehicle: { ...prev.vehicle, brand_id: value },
-                }));
-              }}
-              searchable={true}
-              placeholder={t('listings.selectBrand')}
-              error={!!errors['vehicle.brand_id']}
-              options={[
-                { value: '', label: t('listings.selectBrand') },
-                ...brands.map((brand) => ({ value: brand.id, label: brand.name })),
-              ]}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400">
-              {t('listings.modelLabel')}
-            </label>
-            <Dropdown
-              value={formData.vehicle.model_id}
-              onChange={(value) => {
-                clearError('vehicle.model_id');
-                setFormData((prev) => ({
-                  ...prev,
-                  vehicle: { ...prev.vehicle, model_id: value },
-                }));
-              }}
-              disabled={!formData.vehicle.brand_id || loadingModels}
-              searchable={true}
-              placeholder={loadingModels ? t('common.loading') : t('listings.selectModel')}
-              error={!!errors['vehicle.model_id']}
-              options={[
-                { value: '', label: t('listings.selectModel') },
-                ...models.map((model) => ({ value: model.id, label: model.name })),
-              ]}
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400">
-              {t('listings.yearLabel')}
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.vehicle.year}
-              onChange={(e) => {
-                clearError('vehicle.year');
-                const value = e.target.value.replace(/[^0-9]/g, '');
-                if (value.length <= 4) {
-                  setFormData((prev) => ({
-                    ...prev,
-                    vehicle: { ...prev.vehicle, year: value },
-                  }));
-                }
-              }}
-              onBlur={(e) => {
-                const value = e.target.value.trim();
-                if (value) {
-                  const year = parseInt(value, 10);
-                  const currentYear = new Date().getFullYear();
-                  const maxYear = currentYear + 1;
-
-                  if (isNaN(year) || year < 1900 || year > maxYear) {
-                    toast.error(t('listings.yearRangeErrorForm', { maxYear: maxYear.toString() }));
-                    setFormData((prev) => ({
-                      ...prev,
-                      vehicle: { ...prev.vehicle, year: '' },
-                    }));
-                  }
-                }
-              }}
-              onWheel={handleWheel}
-              className={`input-field h-[48px] ${errors['vehicle.year'] ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
-              placeholder="2020"
-              title={t('listings.yearTitle')}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center justify-between">
-              <span>{t('listings.vinLabel')}</span>
-              <div className="relative group">
-                <button
-                  type="button"
-                  onClick={() => setShowVinHint(!showVinHint)}
-                  className="focus:outline-none"
-                >
-                  <svg
-                    className="w-4 h-4 text-primary-400 hover:text-primary-300 cursor-help transition-colors"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </button>
-                <div
-                  className={`absolute right-0 bottom-full mb-2 ${showVinHint ? 'block' : 'hidden group-hover:block'} z-10 w-64`}
-                >
-                  <div className="bg-bg-darker border-2 border-primary-500/50 rounded-lg p-3 shadow-lg">
-                    <p className="text-xs text-hint leading-relaxed">{t('listings.vinHint')}</p>
-                    <div className="absolute right-4 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-primary-500/50"></div>
-                  </div>
-                </div>
-              </div>
-            </label>
-            <input
-              type="text"
-              maxLength={17}
-              value={formData.vin}
-              onChange={(e) => {
-                clearError('vin');
-                const value = e.target.value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, '');
-                setFormData((prev) => ({ ...prev, vin: value }));
-              }}
-              className={`input-field h-[48px] ${errors['vin'] ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
-              placeholder={t('listings.vinPlaceholder')}
-              title={t('listings.vinTitle')}
-            />
-            {formData.vin && formData.vin.length > 0 && formData.vin.length < 17 && (
-              <p className="mt-1 text-sm text-gray-400">
-                {t('listings.remainingCharacters', { count: 17 - formData.vin.length })}
-              </p>
-            )}
-            {formData.vin && formData.vin.length === 17 && (
-              <p className="mt-1 text-sm text-primary-400">{t('listings.vinValid')}</p>
-            )}
-          </div>
-        </div>
-      </div>
+      <BasicInfoSection {...sectionProps} />
 
       <div className="border-t border-primary-500/20 pt-6 mb-6">
         <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
@@ -951,179 +821,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
         </div>
       </div>
 
-      <div className="border-t border-primary-500/20 pt-6 mb-6">
-        <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
-          {t('listings.equipment')}
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {(() => {
-            const sortedKeys = sortOptionsByLabel(
-              VEHICLE_EQUIPMENT_KEYS.map((key) => ({
-                value: key,
-                label: t(`vehicleOptions.equipment.${key}`),
-              }))
-            ).map((opt) => opt.value);
-            const midPoint = Math.ceil(sortedKeys.length / 2);
-            const leftColumn = sortedKeys.slice(0, midPoint);
-            const rightColumn = sortedKeys.slice(midPoint);
-
-            return (
-              <>
-                <div className="space-y-4">
-                  {leftColumn.map((key) => {
-                    const isChecked = formData.equipment.includes(key);
-                    return (
-                      <div key={key} className="flex items-center gap-3 group">
-                        <div className="relative">
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  equipment: [...prev.equipment, key],
-                                }));
-                              } else {
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  equipment: prev.equipment.filter((k) => k !== key),
-                                }));
-                              }
-                            }}
-                            className="sr-only"
-                          />
-                          <div
-                            onClick={(e) => {
-                              e.preventDefault();
-                              if (isChecked) {
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  equipment: prev.equipment.filter((k) => k !== key),
-                                }));
-                              } else {
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  equipment: [...prev.equipment, key],
-                                }));
-                              }
-                            }}
-                            className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
-                              isChecked
-                                ? 'bg-gradient-to-r from-primary-700 to-primary-800 border-primary-500'
-                                : 'border-primary-500/50 bg-bg-light group-hover:border-primary-500'
-                            }`}
-                          >
-                            {isChecked && (
-                              <svg
-                                className="w-3 h-3 text-white"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={3}
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
-                            )}
-                          </div>
-                        </div>
-                        <span
-                          className={`text-sm transition-colors duration-200 ${
-                            isChecked
-                              ? 'text-primary-400'
-                              : 'text-gray-400 group-hover:text-gray-300'
-                          }`}
-                        >
-                          {t(`vehicleOptions.equipment.${key}`)}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="space-y-4">
-                  {rightColumn.map((key) => {
-                    const isChecked = formData.equipment.includes(key);
-                    return (
-                      <div key={key} className="flex items-center gap-3 group">
-                        <div className="relative">
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  equipment: [...prev.equipment, key],
-                                }));
-                              } else {
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  equipment: prev.equipment.filter((k) => k !== key),
-                                }));
-                              }
-                            }}
-                            className="sr-only"
-                          />
-                          <div
-                            onClick={(e) => {
-                              e.preventDefault();
-                              if (isChecked) {
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  equipment: prev.equipment.filter((k) => k !== key),
-                                }));
-                              } else {
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  equipment: [...prev.equipment, key],
-                                }));
-                              }
-                            }}
-                            className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
-                              isChecked
-                                ? 'bg-gradient-to-r from-primary-700 to-primary-800 border-primary-500'
-                                : 'border-primary-500/50 bg-bg-light group-hover:border-primary-500'
-                            }`}
-                          >
-                            {isChecked && (
-                              <svg
-                                className="w-3 h-3 text-white"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={3}
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
-                            )}
-                          </div>
-                        </div>
-                        <span
-                          className={`text-sm transition-colors duration-200 ${
-                            isChecked
-                              ? 'text-primary-400'
-                              : 'text-gray-400 group-hover:text-gray-300'
-                          }`}
-                        >
-                          {t(`vehicleOptions.equipment.${key}`)}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </>
-            );
-          })()}
-        </div>
-      </div>
+      <EquipmentSection {...sectionProps} />
 
       <div className="border-t border-primary-500/20 pt-6 mb-6">
         <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">

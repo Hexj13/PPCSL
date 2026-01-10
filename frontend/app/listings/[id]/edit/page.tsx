@@ -5,9 +5,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 import { api, listingsApi, Listing } from '@/lib/api';
-import { useAuthStore } from '@/lib/store';
 
 const ListingForm = dynamic(
   () => import('@/components/ListingForm').then((mod) => ({ default: mod.ListingForm })),
@@ -28,7 +28,7 @@ export default function EditListingPage() {
   const router = useRouter();
   const { t } = useTranslation();
   const listingId = params.id as string;
-  const { user, isInitialized } = useAuthStore();
+  const { user, isLoading, isAuthorized } = useRequireAuth();
   const [listing, setListing] = useState<Listing | null>(null);
   const [loadingListing, setLoadingListing] = useState(true);
   const [formKey, setFormKey] = useState(0);
@@ -76,34 +76,19 @@ export default function EditListingPage() {
   };
 
   useEffect(() => {
-    if (!isInitialized && !user) {
+    if (!isAuthorized || !user) {
       return;
     }
 
-    if (isInitialized && !user) {
-      router.push('/login');
-      return;
-    }
-
-    if (user) {
-      const shouldRefresh = sessionStorage.getItem(`refreshListing_${listingId}`) === 'true';
-      setListing(null);
-      setLoadingListing(true);
-      setFormKey(0);
-      fetchListing(shouldRefresh);
-    }
+    const shouldRefresh = sessionStorage.getItem(`refreshListing_${listingId}`) === 'true';
+    setListing(null);
+    setLoadingListing(true);
+    setFormKey(0);
+    fetchListing(shouldRefresh);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, isInitialized, router, listingId]);
+  }, [user, isAuthorized, listingId]);
 
-  if (!isInitialized && !user) {
-    return null;
-  }
-
-  if (isInitialized && !user) {
-    return null;
-  }
-
-  if (!user) {
+  if (isLoading || !isAuthorized) {
     return null;
   }
 

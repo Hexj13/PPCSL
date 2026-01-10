@@ -17,6 +17,7 @@
   --foreground-rgb: 255, 255, 255;
   --background-start-rgb: 35, 55, 50;
   --background-end-rgb: 15, 25, 22;
+  --text-secondary-rgb: 243, 243, 243;
 }
 
 body {

@@ -163,13 +163,13 @@ function UserListingsModalComponent({
       {showLoading ? (
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-          <p className="mt-4" style={{ color: 'rgb(243, 243, 243)' }}>
+          <p className="mt-4" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
             {t('userListings.loading')}
           </p>
         </div>
       ) : displayListings.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-lg" style={{ color: 'rgb(243, 243, 243)' }}>
+          <p className="text-lg" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
             {showOnlyActive ? t('userListings.noActiveListings') : t('userListings.noListings')}
           </p>
         </div>
@@ -246,7 +246,7 @@ function UserListingsModalComponent({
                         {vehicle && (
                           <div
                             className="text-sm space-y-1.5"
-                            style={{ color: 'rgb(243, 243, 243)' }}
+                            style={{ color: 'rgb(var(--text-secondary-rgb))' }}
                           >
                             {vehicle.engine_displ_l && (
                               <div>
@@ -327,7 +327,7 @@ function UserListingsModalComponent({
                             }`}
                             style={
                               listing.status === 'Closed'
-                                ? { color: 'rgb(243, 243, 243)' }
+                                ? { color: 'rgb(var(--text-secondary-rgb))' }
                                 : undefined
                             }
                           >
@@ -347,7 +347,7 @@ function UserListingsModalComponent({
                       <span className="text-primary-400 font-semibold">
                         {t('userListings.city')}:
                       </span>
-                      <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
+                      <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
                         {getCityNameMk(listing.city)}
                       </span>
                     </div>

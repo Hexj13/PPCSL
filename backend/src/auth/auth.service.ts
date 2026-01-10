@@ -47,6 +47,9 @@ export class AuthService {
         : null;
 
     if (user && (await bcrypt.compare(password, user.password))) {
+      if (!user.active) {
+        return null;
+      }
       return removePasswordFromUser(user);
     }
     return null;
@@ -55,6 +58,17 @@ export class AuthService {
   async login(loginDto: LoginDto, ip?: string) {
     const user = await this.validateUser(loginDto.login, loginDto.password);
     if (!user) {
+      const isEmail = loginDto.login.includes('@');
+      const normalizedPhone = isEmail ? null : this.smsService.normalizePhoneNumber(loginDto.login);
+      const foundUser = isEmail
+        ? await this.usersService.findByEmail(loginDto.login)
+        : normalizedPhone
+          ? await this.usersService.findByPhone(normalizedPhone)
+          : null;
+
+      if (foundUser && !foundUser.active) {
+        throw new UnauthorizedException('errors.userDeactivated');
+      }
       throw new UnauthorizedException('errors.invalidLoginCredentials');
     }
 

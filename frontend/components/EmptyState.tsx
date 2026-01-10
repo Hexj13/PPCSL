@@ -1,8 +1,14 @@
+'use client';
+
+import Link from 'next/link';
+import { ReactNode } from 'react';
+
 interface EmptyStateProps {
-  message: string;
+  message: string | ReactNode;
   actionLabel?: string;
   actionHref?: string;
   actionOnClick?: () => void;
+  icon?: ReactNode;
   className?: string;
 }
 
@@ -11,20 +17,24 @@ export function EmptyState({
   actionLabel,
   actionHref,
   actionOnClick,
+  icon,
   className = '',
 }: EmptyStateProps) {
   return (
     <div className={`text-center py-12 ${className}`}>
-      <p className="text-gray-300 text-lg mb-4">{message}</p>
+      {icon && <div className="mb-4 flex justify-center">{icon}</div>}
+      <p className="text-lg mb-6" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
+        {message}
+      </p>
       {actionLabel && (
         <>
           {actionHref ? (
-            <a
+            <Link
               href={actionHref}
               className="text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 inline-block"
             >
               {actionLabel}
-            </a>
+            </Link>
           ) : actionOnClick ? (
             <button
               onClick={actionOnClick}

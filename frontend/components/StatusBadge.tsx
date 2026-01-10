@@ -1,35 +1,30 @@
+'use client';
+
 import { useTranslation } from '@/hooks/useTranslation';
+import { getStatusConfig } from '@/lib/status-utils';
+import { ListingStatus } from '@/lib/types';
 
 interface StatusBadgeProps {
-  status: 'Active' | 'Paused' | 'Closed';
+  status: ListingStatus;
   showLabel?: boolean;
   className?: string;
+  size?: 'sm' | 'md' | 'lg';
 }
 
-export function StatusBadge({ status, showLabel = true, className = '' }: StatusBadgeProps) {
+export function StatusBadge({
+  status,
+  showLabel = true,
+  className = '',
+  size = 'md',
+}: StatusBadgeProps) {
   const { t } = useTranslation();
-  const statusConfig = {
-    Active: {
-      text: t('statusBadge.active'),
-      textColor: 'text-primary-400',
-      bgColor: 'bg-primary-500/20',
-      borderColor: 'border-primary-500/40',
-    },
-    Paused: {
-      text: t('statusBadge.paused'),
-      textColor: 'text-yellow-400',
-      bgColor: 'bg-yellow-500/20',
-      borderColor: 'border-yellow-500/40',
-    },
-    Closed: {
-      text: t('statusBadge.closed'),
-      textColor: 'text-gray-200',
-      bgColor: 'bg-gray-500/20',
-      borderColor: 'border-gray-500/40',
-    },
-  };
+  const config = getStatusConfig(status);
 
-  const config = statusConfig[status];
+  const sizeClasses = {
+    sm: 'text-xs px-2 py-1',
+    md: 'text-sm px-2 py-1.5',
+    lg: 'text-base px-3 py-2',
+  };
 
   return (
     <div
@@ -38,7 +33,9 @@ export function StatusBadge({ status, showLabel = true, className = '' }: Status
       {showLabel && (
         <div className="text-xs font-semibold text-gray-200">{t('statusBadge.status')}</div>
       )}
-      <div className={`${config.textColor} font-bold text-sm`}>{config.text}</div>
+      <div className={`${config.textColor} font-bold ${sizeClasses[size]}`}>
+        {t(config.labelKey)}
+      </div>
     </div>
   );
 }

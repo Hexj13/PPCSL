@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -104,6 +104,14 @@ export class AdminService {
     if (!user) {
       throw new NotFoundException('errors.userNotFound');
     }
+
+    const isDeletedUser =
+      !user.firstName && !user.lastName && !user.companyName && !user.email && !user.phone;
+
+    if (isDeletedUser && !user.active) {
+      throw new BadRequestException('errors.cannotActivateDeletedUser');
+    }
+
     const wasActive = user.active;
     user.active = !user.active;
     const savedUser = await this.usersRepository.save(user);

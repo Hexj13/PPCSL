@@ -328,14 +328,14 @@ export function ListingGrid({ initialData }: ListingGridProps) {
             <div className="text-center py-12">
               <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6 max-w-md mx-auto">
                 <p className="text-red-400 text-lg font-semibold mb-2">{t('common.error')}</p>
-                <p style={{ color: 'rgb(243, 243, 243)' }}>{error}</p>
+                <p style={{ color: 'rgb(var(--text-secondary-rgb))' }}>{error}</p>
               </div>
             </div>
           )}
 
           {!error && listings.length === 0 && hasLoadedWithFilters && (
             <div className="text-center py-12">
-              <p className="text-lg mb-6" style={{ color: 'rgb(243, 243, 243)' }}>
+              <p className="text-lg mb-6" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
                 {t('listings.notFound')}
               </p>
               <div className="flex justify-center">
@@ -367,7 +367,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
               {loadingMore && (
                 <div className="text-center py-8">
                   <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-                  <p className="mt-2" style={{ color: 'rgb(243, 243, 243)' }}>
+                  <p className="mt-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
                     {t('common.loading')}
                   </p>
                 </div>
@@ -392,7 +392,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
 
                     {!hasMore && listings.length > 0 && (
                       <div className="text-center pt-8 pb-0">
-                        <p style={{ color: 'rgb(243, 243, 243)' }}>
+                        <p style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
                           {t('listings.noMoreListings')}
                         </p>
                       </div>

@@ -94,19 +94,19 @@ export function PromotionHistoryModal({
                   </td>
                   <td
                     className="py-3 px-4 text-sm text-center"
-                    style={{ color: 'rgb(243, 243, 243)' }}
+                    style={{ color: 'rgb(var(--text-secondary-rgb))' }}
                   >
                     {item.days}
                   </td>
                   <td
                     className="py-3 px-4 text-sm text-center"
-                    style={{ color: 'rgb(243, 243, 243)' }}
+                    style={{ color: 'rgb(var(--text-secondary-rgb))' }}
                   >
                     {formatDateShort(item.started_at)}
                   </td>
                   <td
                     className="py-3 px-4 text-sm text-center"
-                    style={{ color: 'rgb(243, 243, 243)' }}
+                    style={{ color: 'rgb(var(--text-secondary-rgb))' }}
                   >
                     {item.ended_at ? formatDateShort(item.ended_at) : '—'}
                   </td>
@@ -126,7 +126,7 @@ export function PromotionHistoryModal({
           >
             {t('common.previous')}
           </button>
-          <span className="text-sm" style={{ color: 'rgb(243, 243, 243)' }}>
+          <span className="text-sm" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
             {t('common.page')} {currentPage} {t('common.of')} {meta.totalPages}
           </span>
           <button

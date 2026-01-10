@@ -96,6 +96,23 @@ export default [
       ],
       'no-empty': ['error', { allowEmptyCatch: true }],
       'no-useless-escape': 'warn',
+      'max-lines': [
+        'warn',
+        {
+          max: 1500,
+          skipBlankLines: true,
+          skipComments: true,
+        },
+      ],
+      'max-lines-per-function': [
+        'warn',
+        {
+          max: 1500,
+          skipBlankLines: true,
+          skipComments: true,
+        },
+      ],
+      'complexity': ['warn', { max: 75 }],
       'sort-imports': 'off',
       'import/order': [
         'error',

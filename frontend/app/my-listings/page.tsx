@@ -1,23 +1,24 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { EmptyState } from '@/components/EmptyState';
 import { ListingManagementCard } from '@/components/ListingManagementCard';
 import { ListingManagementCardSkeleton } from '@/components/ListingManagementCardSkeleton';
 import { Modal } from '@/components/Modal';
 import { PromotionHistoryModal } from '@/components/PromotionHistoryModal';
 import { PromotionModal } from '@/components/PromotionModal';
 import { SkeletonContainer } from '@/components/SkeletonContainer';
+import { StatusFilterButtons } from '@/components/StatusFilterButtons';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 import { listingsApi, Listing, PaginationMeta, PromotionHistory } from '@/lib/api';
-import { useAuthStore } from '@/lib/store';
+import { normalizeListingResponse } from '@/lib/api-utils';
 
 export default function MyListingsPage() {
-  const router = useRouter();
-  const { user, isInitialized } = useAuthStore();
+  const { user, isLoading, isAuthorized } = useRequireAuth();
   const { t } = useTranslation();
   const [listings, setListings] = useState<Listing[]>([]);
   const [allListingsForCount, setAllListingsForCount] = useState<Listing[]>([]);
@@ -80,27 +81,9 @@ export default function MyListingsPage() {
         const res = await listingsApi.getMy(page, limit);
         const responseData = res.data;
 
-        let newListings: Listing[] = [];
-        let responseMeta: PaginationMeta | null = null;
-
-        if (Array.isArray(responseData)) {
-          newListings = responseData.slice((page - 1) * limit, page * limit);
-          const total = responseData.length;
-          const totalPages = Math.ceil(total / limit);
-          responseMeta = {
-            total,
-            page,
-            limit,
-            totalPages,
-          };
-        } else if (responseData && typeof responseData === 'object') {
-          newListings = responseData.data || [];
-          responseMeta = responseData.meta || null;
-        }
-
-        if (newListings.length > limit) {
-          newListings = newListings.slice(0, limit);
-        }
+        const normalized = normalizeListingResponse(responseData, page, limit);
+        const newListings = normalized.data;
+        const responseMeta = normalized.meta;
 
         if (append) {
           setListings((prev) => {
@@ -145,12 +128,7 @@ export default function MyListingsPage() {
   );
 
   useEffect(() => {
-    if (!isInitialized && !user) {
-      return;
-    }
-
-    if (isInitialized && !user) {
-      router.push('/login');
+    if (!isAuthorized || !user) {
       return;
     }
 
@@ -194,7 +172,7 @@ export default function MyListingsPage() {
         }
       }
     }
-  }, [user, isInitialized, router, fetchListings]);
+  }, [user, isAuthorized, fetchListings]);
 
   useEffect(() => {
     const checkAndRefresh = () => {
@@ -523,11 +501,7 @@ export default function MyListingsPage() {
     };
   }, [listings, allListingsForCount]);
 
-  if (!isInitialized && !user) {
-    return null;
-  }
-
-  if (!user) {
+  if (isLoading || !isAuthorized) {
     return null;
   }
 
@@ -638,83 +612,40 @@ export default function MyListingsPage() {
 
           {listings && listings.length > 0 && (
             <div className="mb-6">
-              <div className="flex flex-wrap gap-3">
-                {(['All', 'Active', 'Paused', 'Closed'] as const).map((status) => (
-                  <button
-                    key={status}
-                    onClick={() => {
-                      setStatusFilter(status);
-                      if (promotedFilter !== 'All') {
-                        setPromotedFilter('All');
-                      }
-                    }}
-                    className={`px-3 md:px-4 py-2 md:py-2.5 rounded-lg font-medium text-xs md:text-sm lg:text-base transition-colors bg-bg-light hover:bg-bg-dark border ${
-                      statusFilter === status
-                        ? 'border-primary-500 text-white'
-                        : 'border-primary-500/20'
-                    }`}
-                    style={statusFilter !== status ? { color: 'rgb(243, 243, 243)' } : undefined}
-                  >
-                    {status === 'All'
-                      ? t('myListings.all')
-                      : status === 'Active'
-                        ? t('myListings.active')
-                        : status === 'Paused'
-                          ? t('myListings.paused')
-                          : t('myListings.closed')}
-                    {status !== 'All' && (
-                      <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-xs">
-                        {statusCounts[status]}
-                      </span>
-                    )}
-                  </button>
-                ))}
-                {canPromote && (
-                  <button
-                    onClick={() => {
-                      const newPromotedFilter = promotedFilter === 'Promoted' ? 'All' : 'Promoted';
-                      setPromotedFilter(newPromotedFilter);
-                      if (newPromotedFilter === 'Promoted') {
-                        setStatusFilter('All');
-                      }
-                    }}
-                    className={`px-3 md:px-4 py-2 md:py-2.5 rounded-lg font-medium text-xs md:text-sm lg:text-base transition-colors bg-bg-light hover:bg-bg-dark border ${
-                      promotedFilter === 'Promoted'
-                        ? 'border-primary-500 text-white'
-                        : 'border-primary-500/20'
-                    }`}
-                    style={
-                      promotedFilter !== 'Promoted' ? { color: 'rgb(243, 243, 243)' } : undefined
-                    }
-                  >
-                    {t('myListings.promoted')}
-                    <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-xs">
-                      {
-                        (allListingsForCount.length > 0 ? allListingsForCount : listings).filter(
-                          (l) => l.is_promoted === true
-                        ).length
-                      }
-                    </span>
-                  </button>
-                )}
-              </div>
+              <StatusFilterButtons
+                currentFilter={statusFilter}
+                onFilterChange={(status) => {
+                  setStatusFilter(status);
+                  if (promotedFilter !== 'All') {
+                    setPromotedFilter('All');
+                  }
+                }}
+                counts={statusCounts}
+                showPromoted={canPromote}
+                promotedCount={
+                  (allListingsForCount.length > 0 ? allListingsForCount : listings).filter(
+                    (l) => l.is_promoted === true
+                  ).length
+                }
+                promotedActive={promotedFilter === 'Promoted'}
+                onPromotedClick={() => {
+                  const newPromotedFilter = promotedFilter === 'Promoted' ? 'All' : 'Promoted';
+                  setPromotedFilter(newPromotedFilter);
+                  if (newPromotedFilter === 'Promoted') {
+                    setStatusFilter('All');
+                  }
+                }}
+                translationPrefix="myListings"
+              />
             </div>
           )}
 
           {!listings || listings.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-lg" style={{ color: 'rgb(243, 243, 243)' }}>
-                {t('myListings.noListingsYet')}
-              </p>
-            </div>
+            <EmptyState message={t('myListings.noListingsYet')} />
           ) : (
             <>
               {filteredListings.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-lg" style={{ color: 'rgb(243, 243, 243)' }}>
-                    {t('myListings.noListingsWithStatus')}
-                  </p>
-                </div>
+                <EmptyState message={t('myListings.noListingsWithStatus')} />
               ) : (
                 <>
                   <div className="space-y-4">
@@ -734,7 +665,7 @@ export default function MyListingsPage() {
               {loadingMore && (
                 <div className="text-center py-8">
                   <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-                  <p className="mt-2" style={{ color: 'rgb(243, 243, 243)' }}>
+                  <p className="mt-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
                     {t('common.loading')}
                   </p>
                 </div>
@@ -770,7 +701,7 @@ export default function MyListingsPage() {
                     currentPage >= meta.totalPages &&
                     listings.length > 0 && (
                       <div className="text-center pt-8 pb-0">
-                        <p style={{ color: 'rgb(243, 243, 243)' }}>
+                        <p style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
                           {t('myListings.noMoreListings')}
                         </p>
                       </div>
@@ -791,12 +722,15 @@ export default function MyListingsPage() {
           >
             <div className="space-y-6">
               <div className="space-y-3">
-                <p className="text-base leading-relaxed" style={{ color: 'rgb(243, 243, 243)' }}>
+                <p
+                  className="text-base leading-relaxed"
+                  style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+                >
                   {t('myListings.closeConfirmQuestion')}
                 </p>
                 <ol
                   className="list-decimal list-inside space-y-2 text-base leading-relaxed"
-                  style={{ color: 'rgb(243, 243, 243)' }}
+                  style={{ color: 'rgb(var(--text-secondary-rgb))' }}
                 >
                   <li>{t('myListings.closeConfirmWarning1')}</li>
                   {listingToClose && listings.find((l) => l.id === listingToClose)?.is_promoted && (

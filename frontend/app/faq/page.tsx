@@ -333,7 +333,7 @@ export default function FAQPage() {
                 <div className="px-4 pb-4">
                   <div
                     className="space-y-2 leading-relaxed"
-                    style={{ color: 'rgb(243, 243, 243)' }}
+                    style={{ color: 'rgb(var(--text-secondary-rgb))' }}
                   >
                     {answerContent.map((paragraph, index) => (
                       <p key={index} className="text-base md:text-lg">
@@ -352,14 +352,17 @@ export default function FAQPage() {
         <h2 className="text-2xl md:text-3xl font-bold mb-6 text-white">
           {t('faq.userScenarios.title')}
         </h2>
-        <p className="mb-6 text-base md:text-lg" style={{ color: 'rgb(243, 243, 243)' }}>
+        <p
+          className="mb-6 text-base md:text-lg"
+          style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+        >
           {t('faq.userScenarios.description')}
         </p>
         <div className="space-y-6">
           {userScenarios.map((scenario) => (
             <div key={scenario.id} className="border-l-4 border-primary-500 pl-4">
               <h3 className="text-xl font-semibold text-primary-300 mb-3">{scenario.title}</h3>
-              <ol className="space-y-2" style={{ color: 'rgb(243, 243, 243)' }}>
+              <ol className="space-y-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
                 {scenario.steps.map((step, index) => (
                   <li key={index} className="flex items-start">
                     <span className="font-bold text-primary-400 mr-2 flex-shrink-0">

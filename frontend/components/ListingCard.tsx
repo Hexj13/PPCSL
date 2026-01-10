@@ -210,7 +210,7 @@ function ListingCardComponent({
           ) : (
             <div
               className="w-full h-full flex items-center justify-center"
-              style={{ color: 'rgb(243, 243, 243)' }}
+              style={{ color: 'rgb(var(--text-secondary-rgb))' }}
             >
               <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -328,7 +328,7 @@ function ListingCardComponent({
                 </span>
                 <span
                   className="text-xs md:text-sm font-medium"
-                  style={{ color: 'rgb(243, 243, 243)' }}
+                  style={{ color: 'rgb(var(--text-secondary-rgb))' }}
                 >
                   {listing.currency}
                 </span>
@@ -339,7 +339,10 @@ function ListingCardComponent({
           </div>
           <div className="flex-grow mb-3">
             {vehicle && (
-              <div className="text-sm space-y-1.5" style={{ color: 'rgb(243, 243, 243)' }}>
+              <div
+                className="text-sm space-y-1.5"
+                style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+              >
                 {vehicle.engine_displ_l && (
                   <div>
                     {t('userListings.engine')}: {formatEngineVolume(vehicle.engine_displ_l)}{' '}
@@ -372,7 +375,7 @@ function ListingCardComponent({
           </div>
           <div
             className="flex justify-between items-center text-sm font-medium mt-auto pt-3 border-t border-primary-500/20"
-            style={{ color: 'rgb(243, 243, 243)' }}
+            style={{ color: 'rgb(var(--text-secondary-rgb))' }}
           >
             <span>{getCityNameMk(listing.city)}</span>
             <div className="flex items-center gap-3">

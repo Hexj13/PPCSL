@@ -45,6 +45,7 @@
     "invalidRefreshToken": "Invalid refresh token",
     "authorizationRequired": "Authorization required",
     "userDeactivated": "User is deactivated",
+    "cannotActivateDeletedUser": "Cannot activate a deleted user",
     "registrationDateInvalid": "Registration date cannot be earlier than user creation date",
     "phoneSameAsCurrent": "New phone number is the same as current",
     "favoriteNotFound": "Favorite listing not found",

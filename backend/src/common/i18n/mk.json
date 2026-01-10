@@ -45,6 +45,7 @@
     "invalidRefreshToken": "Невалиден refresh токен",
     "authorizationRequired": "Потребна е авторизација",
     "userDeactivated": "Корисникот е деактивиран",
+    "cannotActivateDeletedUser": "Не можете да активирате избришан корисник",
     "registrationDateInvalid": "Датата на регистрација не може да биде помала од датата на создавање на корисникот",
     "phoneSameAsCurrent": "Новиот телефон е ист како тековниот",
     "favoriteNotFound": "Омилената објава не е пронајдена",

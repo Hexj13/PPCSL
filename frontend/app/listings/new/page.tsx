@@ -2,10 +2,9 @@
 
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTranslation } from '@/hooks/useTranslation';
-import { useAuthStore } from '@/lib/store';
 
 const ListingForm = dynamic(
   () => import('@/components/ListingForm').then((mod) => ({ default: mod.ListingForm })),
@@ -17,15 +16,9 @@ const ListingForm = dynamic(
 export default function NewListingPage() {
   const router = useRouter();
   const { t } = useTranslation();
-  const { user, isInitialized } = useAuthStore();
+  const { isLoading, isAuthorized } = useRequireAuth();
 
-  useEffect(() => {
-    if (isInitialized && !user) {
-      router.push('/login');
-    }
-  }, [user, isInitialized, router]);
-
-  if (!isInitialized || !user) {
+  if (isLoading || !isAuthorized) {
     return null;
   }
 

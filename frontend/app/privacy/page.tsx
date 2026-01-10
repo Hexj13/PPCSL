@@ -844,7 +844,10 @@ export default function PrivacyPage() {
           {currentPrivacy.dictionary.terms.map((item, index) => (
             <div key={index} className="border-b border-primary-500/10 pb-4 last:border-b-0">
               <h3 className="font-semibold text-primary-300 mb-1">{item.term}</h3>
-              <p className="text-sm leading-relaxed" style={{ color: 'rgb(243, 243, 243)' }}>
+              <p
+                className="text-sm leading-relaxed"
+                style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+              >
                 {item.definition}
               </p>
             </div>
@@ -876,7 +879,7 @@ export default function PrivacyPage() {
                 <p
                   key={index}
                   className="leading-relaxed text-base md:text-lg"
-                  style={{ color: 'rgb(243, 243, 243)' }}
+                  style={{ color: 'rgb(var(--text-secondary-rgb))' }}
                 >
                   {paragraph}
                 </p>

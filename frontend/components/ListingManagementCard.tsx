@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 
+import { CopyButton } from '@/components/CopyButton';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Listing } from '@/lib/api';
 import {
@@ -107,7 +108,10 @@ export function ListingManagementCard({
                 </div>
               </Link>
               {listing.vehicle && (
-                <div className="text-sm space-y-1.5 mb-3" style={{ color: 'rgb(243, 243, 243)' }}>
+                <div
+                  className="text-sm space-y-1.5 mb-3"
+                  style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+                >
                   {listing.vehicle.engine_displ_l && (
                     <div>
                       {t('userListings.engine')}:{' '}
@@ -139,64 +143,21 @@ export function ListingManagementCard({
                 </div>
               )}
               {isAdminMode && (
-                <div className="text-sm space-y-1.5 mb-3" style={{ color: 'rgb(243, 243, 243)' }}>
+                <div
+                  className="text-sm space-y-1.5 mb-3"
+                  style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+                >
                   <div className="flex items-center gap-2">
                     {/* eslint-disable-next-line no-hardcoded-text/no-hardcoded-text */}
                     <span className="text-gray-400 font-mono">LISTING ID: {listing.id}</span>
-                    {onCopyId && (
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          onCopyId(listing.id);
-                        }}
-                        className="p-1 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors"
-                        title={t('common.copyId')}
-                      >
-                        <svg
-                          className="w-3.5 h-3.5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                          />
-                        </svg>
-                      </button>
-                    )}
+                    {onCopyId && <CopyButton text={listing.id} iconClassName="w-3.5 h-3.5" />}
                   </div>
                   {listing.user && listing.user.id && (
                     <div className="flex items-center gap-2">
                       {/* eslint-disable-next-line no-hardcoded-text/no-hardcoded-text */}
                       <span className="text-gray-400 font-mono">USER ID: {listing.user.id}</span>
-                      {onCopyId && (
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            if (listing.user?.id) {
-                              onCopyId(listing.user.id);
-                            }
-                          }}
-                          className="p-1 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors"
-                          title={t('common.copyId')}
-                        >
-                          <svg
-                            className="w-3.5 h-3.5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                            />
-                          </svg>
-                        </button>
+                      {onCopyId && listing.user?.id && (
+                        <CopyButton text={listing.user.id} iconClassName="w-3.5 h-3.5" />
                       )}
                     </div>
                   )}

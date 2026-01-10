@@ -1,12 +1,18 @@
 'use client';
 
 import createDOMPurify from 'dompurify';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { ListingPageActions } from '@/components/ListingPage/ListingPageActions';
+import { ListingPageCharacteristics } from '@/components/ListingPage/ListingPageCharacteristics';
+import { ListingPageDescription } from '@/components/ListingPage/ListingPageDescription';
+import { ListingPageHeader } from '@/components/ListingPage/ListingPageHeader';
+import { ListingPageImageModal } from '@/components/ListingPage/ListingPageImageModal';
+import { ListingPageImages } from '@/components/ListingPage/ListingPageImages';
+import { ListingPageSeller } from '@/components/ListingPage/ListingPageSeller';
 import {
   BreadcrumbsSkeleton,
   MainImageSkeleton,
@@ -18,30 +24,20 @@ import {
 } from '@/components/ListingPageSkeleton';
 import { PromotionModal } from '@/components/PromotionModal';
 import { UserListingsModal } from '@/components/UserListingsModal';
+import { useListingData } from '@/hooks/useListingData';
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
-import { api, listingsApi, Listing, favoritesApi } from '@/lib/api';
-import { getColorLabel } from '@/lib/form-options';
+import { listingsApi, Listing, favoritesApi } from '@/lib/api';
 import { useAuthStore, useFavoritesStore, useComparisonStore } from '@/lib/store';
 import {
-  formatPrice,
   formatDate,
   formatMileage,
-  formatEngineVolume,
-  formatTransmission,
-  formatDriveType,
-  formatBodyType,
-  formatFuel,
   formatRegistrationType,
-  getOptimizedImageUrl,
   getCityNameMk,
-  getTelegramUrl,
-  getViberUrl,
-  getWhatsAppUrl,
-  horsepowerToKw,
+  getOptimizedImageUrl,
 } from '@/lib/utils';
-import { Spinner } from '@/ui';
+import { LoadingSpinner, Spinner } from '@/ui';
 
 function escapeHtml(text: string): string {
   return text
@@ -62,18 +58,34 @@ export default function ListingPageClient({
   const router = useRouter();
   const id = listingId;
   const { user, isInitialized } = useAuthStore();
-  const { add: addFavorite, remove: removeFavorite, check } = useFavoritesStore();
+  const { add: addFavorite, remove: removeFavorite } = useFavoritesStore();
   const { t } = useTranslation();
   const {
     add: addComparison,
     remove: removeComparison,
-    check: checkComparison,
     count: comparisonCount,
-    comparisons,
   } = useComparisonStore();
-  const [listing, setListing] = useState<Listing | null>(initialListing);
-  const [isFavorite, setIsFavorite] = useState(() => check(id));
-  const [isInComparison, setIsInComparison] = useState(false);
+
+  const {
+    listing,
+    setListing,
+    isFavorite,
+    setIsFavorite,
+    isInComparison,
+    setIsInComparison,
+    previousListings,
+    loadingPrevious,
+    activeListingsCount,
+    listingRef,
+  } = useListingData({
+    listingId: id,
+    initialListing,
+    onListingUpdate: () => {
+      setCurrentImageIndex(0);
+      setImageErrors(new Set());
+    },
+  });
+
   const isOwnListing = useMemo(() => {
     const currentListing = listing || initialListing;
     if (!currentListing?.user) {
@@ -84,33 +96,22 @@ export default function ListingPageClient({
     }
     return user.id === currentListing.user.id;
   }, [user, listing, initialListing]);
-  const hasLoadedRef = useRef(false);
-  const hasInitialListingRef = useRef<boolean>(!!initialListing);
-  const isLoadingListing = listing === null && !hasInitialListingRef.current;
+
+  const isLoadingListing = listing === null && !initialListing;
   const { visible: showSkeleton } = useLoadingState({
     isLoading: isLoadingListing,
     immediate: true,
     minDisplayTime: 1000,
   });
   const [isHydrated, setIsHydrated] = useState(false);
-  const listingRef = useRef<Listing | null>(initialListing);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [mainImageLoading, setMainImageLoading] = useState(false);
-  const mainImageLoadedRef = useRef<Set<number>>(new Set());
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [modalImageIndex, setModalImageIndex] = useState(0);
-  const [modalImageLoading, setModalImageLoading] = useState(false);
-  const modalImageLoadedRef = useRef<Set<number>>(new Set());
   const [isUserListingsModalOpen, setIsUserListingsModalOpen] = useState(false);
-  const [previousListings, setPreviousListings] = useState<Listing[]>([]);
-  const [loadingPrevious, setLoadingPrevious] = useState(false);
   const [showHistoryHint, setShowHistoryHint] = useState(false);
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
   const [promotionModalOpen, setPromotionModalOpen] = useState(false);
   const [canPromote, setCanPromote] = useState(false);
-  const [activeListingsCount, setActiveListingsCount] = useState<number>(0);
-  const touchStartX = useRef<number | null>(null);
-  const touchEndX = useRef<number | null>(null);
 
   useEffect(() => {
     setIsHydrated(true);
@@ -125,25 +126,6 @@ export default function ListingPageClient({
       }
     }
   }, [isHydrated, listing]);
-
-  useEffect(() => {
-    if (isHydrated) {
-      setIsInComparison(checkComparison(id));
-    }
-  }, [id, checkComparison, comparisons, isHydrated]);
-
-  useEffect(() => {
-    if (initialListing?.user?.id) {
-      listingsApi
-        .getUserActiveListings(initialListing.user.id)
-        .then((res) => {
-          setActiveListingsCount(res.data.length);
-        })
-        .catch(() => {
-          setActiveListingsCount(0);
-        });
-    }
-  }, [initialListing?.user?.id]);
 
   const imageAltTitle = useMemo(() => {
     if (!listing) return '';
@@ -169,188 +151,6 @@ export default function ListingPageClient({
       ALLOWED_ATTR: ['size'],
     });
   }, [isHydrated, listing?.description]);
-
-  const fetchListingData = useCallback(
-    (forceRefresh = false) => {
-      const currentId = id;
-
-      // Check if we should refresh before clearing state
-      const shouldRefresh = sessionStorage.getItem(`refreshListing_${currentId}`) === 'true';
-      const needsRefresh = forceRefresh || shouldRefresh;
-
-      setImageErrors(new Set());
-      const preserveExisting =
-        !needsRefresh && hasInitialListingRef.current && listingRef.current !== null;
-
-      if (!preserveExisting) {
-        setCurrentImageIndex(0);
-        listingRef.current = null;
-        setListing(null);
-        setPreviousListings([]);
-        setLoadingPrevious(false);
-      }
-
-      const listingPromise = needsRefresh
-        ? api.get<Listing>(`/api/listings/${currentId}`, {
-            params: { _t: Date.now() },
-            headers: { 'X-Skip-Error-Handling': 'true' },
-          })
-        : listingsApi.getOne(currentId);
-
-      const favoritePromise = user
-        ? favoritesApi
-            .check(currentId)
-            .then((res) => res.data.isFavorite)
-            .catch(() => check(currentId))
-        : Promise.resolve(check(currentId));
-
-      const comparisonValue = checkComparison(currentId);
-
-      Promise.all([listingPromise, favoritePromise])
-        .then(([listingRes, favoriteValue]) => {
-          // Check if component is still mounted and id hasn't changed
-          if (currentId !== id) {
-            return;
-          }
-
-          if (!listingRes?.data) {
-            console.error('No listing data received');
-            throw new Error('No listing data received');
-          }
-
-          const hasVin = listingRes.data.vin;
-          listingRef.current = listingRes.data;
-          setListing(listingRes.data);
-          setIsFavorite(favoriteValue);
-          setIsInComparison(comparisonValue);
-          hasInitialListingRef.current = false;
-
-          if (listingRes.data.user?.id) {
-            listingsApi
-              .getUserActiveListings(listingRes.data.user.id)
-              .then((res) => {
-                if (currentId === id) {
-                  setActiveListingsCount(res.data.length);
-                }
-              })
-              .catch(() => {
-                if (currentId === id) {
-                  setActiveListingsCount(0);
-                }
-              });
-          } else {
-            setActiveListingsCount(0);
-          }
-
-          analytics.viewItem(currentId, {
-            title: listingRes.data.title,
-            price: listingRes.data.price,
-            brand: listingRes.data.vehicle?.brand?.name,
-            model: listingRes.data.vehicle?.model?.name,
-          });
-
-          if (hasVin) {
-            setLoadingPrevious(true);
-          }
-
-          if (hasVin && listingRes.data.vin) {
-            listingsApi
-              .getByVin(listingRes.data.vin, currentId)
-              .then((vinRes) => {
-                if (hasLoadedRef.current && currentId === id) {
-                  setPreviousListings(vinRes.data);
-                }
-              })
-              .catch(() => {
-                if (hasLoadedRef.current && currentId === id) {
-                  setPreviousListings([]);
-                }
-              })
-              .finally(() => {
-                if (hasLoadedRef.current && currentId === id) {
-                  setLoadingPrevious(false);
-                }
-              });
-          }
-
-          if (needsRefresh) {
-            sessionStorage.removeItem(`refreshListing_${currentId}`);
-          }
-        })
-        .catch((error) => {
-          console.error('Error loading listing:', error);
-
-          // Check if component is still mounted and id hasn't changed
-          if (currentId !== id) {
-            return;
-          }
-
-          // If refresh failed, try without refresh flag
-          if (needsRefresh && !forceRefresh && error?.code !== 'ECONNABORTED') {
-            // Refresh failed, trying without refresh flag
-            sessionStorage.removeItem(`refreshListing_${currentId}`);
-            // Use setTimeout to avoid infinite loop
-            setTimeout(() => {
-              if (currentId === id) {
-                fetchListingData(false);
-              }
-            }, 500);
-            return;
-          }
-
-          const favoriteValue = check(currentId);
-          const comparisonValue = checkComparison(currentId);
-          listingRef.current = null;
-          setListing(null);
-          setIsFavorite(favoriteValue);
-          setIsInComparison(comparisonValue);
-
-          if (needsRefresh) {
-            sessionStorage.removeItem(`refreshListing_${currentId}`);
-          }
-        });
-    },
-    [id, user, check, checkComparison]
-  );
-
-  useEffect(() => {
-    const shouldRefresh = sessionStorage.getItem(`refreshListing_${id}`) === 'true';
-    hasLoadedRef.current = true;
-    fetchListingData(shouldRefresh);
-
-    return () => {
-      hasLoadedRef.current = false;
-    };
-  }, [fetchListingData, id]);
-
-  useEffect(() => {
-    const checkAndRefresh = () => {
-      const shouldRefresh = sessionStorage.getItem(`refreshListing_${id}`) === 'true';
-      if (shouldRefresh && hasLoadedRef.current) {
-        fetchListingData(true);
-      }
-    };
-
-    // Don't call immediately on mount - let the first useEffect handle initial load
-    // Only set up listeners for visibility/focus changes
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        checkAndRefresh();
-      }
-    };
-
-    const handleFocus = () => {
-      checkAndRefresh();
-    };
-
-    window.addEventListener('focus', handleFocus);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [id, fetchListingData]);
 
   useEffect(() => {
     const checkPromotionAccess = async () => {
@@ -484,7 +284,7 @@ export default function ListingPageClient({
         setPromotionModalOpen(false);
       }
     },
-    [listing, t]
+    [listing, t, setListing, listingRef]
   );
 
   const openImageModal = (index: number) => {
@@ -494,7 +294,6 @@ export default function ListingPageClient({
 
   const closeImageModal = () => {
     setIsImageModalOpen(false);
-    setModalImageLoading(false);
   };
 
   const getClosingDate = (lastUpdatedAt: string): Date => {
@@ -609,130 +408,6 @@ export default function ListingPageClient({
     img.src = optimizedUrl;
   }, [modalImageIndex, isImageModalOpen, listing, imageErrors]);
 
-  useEffect(() => {
-    if (!isImageModalOpen || !listing) {
-      setModalImageLoading(false);
-      modalImageLoadedRef.current.clear();
-      return;
-    }
-
-    const imagesList =
-      listing.images && listing.images.length > 0 ? listing.images : ['/placeholder-car.jpg'];
-    const currentImage = imagesList[modalImageIndex];
-
-    if (
-      !currentImage ||
-      currentImage === '/placeholder-car.jpg' ||
-      imageErrors.has(modalImageIndex)
-    ) {
-      setModalImageLoading(false);
-      return;
-    }
-
-    if (modalImageLoadedRef.current.has(modalImageIndex)) {
-      setModalImageLoading(false);
-      return;
-    }
-
-    const optimizedUrl = getOptimizedImageUrl(currentImage, 85, 1920);
-    const testImg = new window.Image();
-    testImg.src = optimizedUrl;
-    const imgIndex = modalImageIndex;
-
-    if (testImg.complete && testImg.naturalWidth > 0) {
-      modalImageLoadedRef.current.add(imgIndex);
-      setModalImageLoading(false);
-      return;
-    }
-
-    setModalImageLoading(true);
-
-    testImg.onload = () => {
-      modalImageLoadedRef.current.add(imgIndex);
-      if (imgIndex === modalImageIndex) {
-        setModalImageLoading(false);
-      }
-    };
-
-    testImg.onerror = () => {
-      if (imgIndex === modalImageIndex) {
-        setModalImageLoading(false);
-      }
-    };
-
-    return () => {
-      testImg.onload = null;
-      testImg.onerror = null;
-    };
-  }, [modalImageIndex, isImageModalOpen, listing, imageErrors]);
-
-  useEffect(() => {
-    if (!listing) {
-      setMainImageLoading(false);
-      mainImageLoadedRef.current.clear();
-      return;
-    }
-
-    const imagesList =
-      listing.images && listing.images.length > 0 ? listing.images : ['/placeholder-car.jpg'];
-    const currentImage = imagesList[currentImageIndex];
-
-    if (
-      !currentImage ||
-      currentImage === '/placeholder-car.jpg' ||
-      imageErrors.has(currentImageIndex)
-    ) {
-      setMainImageLoading(false);
-      return;
-    }
-
-    if (mainImageLoadedRef.current.has(currentImageIndex)) {
-      setMainImageLoading(false);
-      return;
-    }
-
-    const optimizedUrl = getOptimizedImageUrl(currentImage, 75, 1200);
-    const testImg = new window.Image();
-    testImg.src = optimizedUrl;
-    const imgIndex = currentImageIndex;
-
-    if (testImg.complete && testImg.naturalWidth > 0) {
-      mainImageLoadedRef.current.add(imgIndex);
-      setMainImageLoading(false);
-      return;
-    }
-
-    setMainImageLoading(true);
-
-    testImg.onload = () => {
-      mainImageLoadedRef.current.add(imgIndex);
-      if (imgIndex === currentImageIndex) {
-        setMainImageLoading(false);
-      }
-    };
-
-    testImg.onerror = () => {
-      if (imgIndex === currentImageIndex) {
-        setMainImageLoading(false);
-      }
-    };
-
-    return () => {
-      testImg.onload = null;
-      testImg.onerror = null;
-    };
-  }, [currentImageIndex, listing, imageErrors]);
-
-  const { visible: showMainImageLoader } = useLoadingState({
-    isLoading: mainImageLoading,
-    minDisplayTime: 1000,
-  });
-
-  const { visible: showModalImageLoader } = useLoadingState({
-    isLoading: modalImageLoading,
-    minDisplayTime: 1000,
-  });
-
   if (!listing && !showSkeleton) {
     return null;
   }
@@ -764,12 +439,7 @@ export default function ListingPageClient({
 
           <div className="border-t border-primary-500/20 my-8"></div>
 
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-            <p className="mt-4" style={{ color: 'rgb(243, 243, 243)' }}>
-              {t('common.loading')}
-            </p>
-          </div>
+          <Spinner size="md" text={t('common.loading')} />
         </div>
       </>
     );
@@ -794,41 +464,6 @@ export default function ListingPageClient({
     setModalImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
-  const minSwipeDistance = 50;
-
-  const onTouchStart = (e: React.TouchEvent) => {
-    touchEndX.current = null;
-    touchStartX.current = e.targetTouches[0].clientX;
-  };
-
-  const onTouchMove = (e: React.TouchEvent) => {
-    e.preventDefault();
-    touchEndX.current = e.targetTouches[0].clientX;
-  };
-
-  const onTouchEnd = () => {
-    if (!touchStartX.current || !touchEndX.current) return;
-    const distance = touchStartX.current - touchEndX.current;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
-
-    if (isLeftSwipe && images.length > 1) {
-      nextImage();
-    }
-    if (isRightSwipe && images.length > 1) {
-      prevImage();
-    }
-  };
-
-  const handleCopy = async (text: string, label: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success(t('listingDetail.copied', { label }));
-    } catch {
-      toast.error(t('listingDetail.copyError'));
-    }
-  };
-
   return (
     <>
       <div className="max-w-6xl mx-auto">
@@ -838,440 +473,41 @@ export default function ListingPageClient({
         />
         <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-6 md:gap-8">
           <div className="space-y-6">
-            <div>
-              <div
-                onClick={() => openImageModal(currentImageIndex)}
-                className="relative h-64 sm:h-80 md:h-96 bg-bg-darker rounded-xl overflow-hidden mb-4 w-full cursor-pointer border border-transparent hover:border-primary-500/50 transition-colors"
-              >
-                {showMainImageLoader && (
-                  <div className="absolute inset-0 flex items-center justify-center z-10">
-                    <Spinner size="lg" />
-                  </div>
-                )}
-
-                {images[currentImageIndex] &&
-                images[currentImageIndex] !== '/placeholder-car.jpg' &&
-                !imageErrors.has(currentImageIndex) ? (
-                  (() => {
-                    const optimizedUrl = getOptimizedImageUrl(images[currentImageIndex], 75, 1200);
-                    const isExternal =
-                      optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://');
-                    return isExternal ? (
-                      <img
-                        src={optimizedUrl}
-                        alt={t('listings.imageAltWithTotal', {
-                          title: imageAltTitle,
-                          index: (currentImageIndex + 1).toString(),
-                          total: images.length.toString(),
-                        })}
-                        className={`w-full h-full object-cover ${showMainImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
-                        draggable={false}
-                        onLoad={(e) => {
-                          const imgIndex = parseInt(e.currentTarget.dataset.index || '0', 10);
-                          mainImageLoadedRef.current.add(imgIndex);
-                          if (imgIndex === currentImageIndex) {
-                            setMainImageLoading(false);
-                          }
-                        }}
-                        onError={(e) => {
-                          const imgIndex = parseInt(e.currentTarget.dataset.index || '0', 10);
-                          setImageErrors((prev) => new Set(prev).add(imgIndex));
-                          if (imgIndex === currentImageIndex) {
-                            setMainImageLoading(false);
-                          }
-                        }}
-                        data-index={currentImageIndex}
-                      />
-                    ) : (
-                      <Image
-                        src={optimizedUrl}
-                        alt={t('listings.imageAltWithTotal', {
-                          title: imageAltTitle,
-                          index: (currentImageIndex + 1).toString(),
-                          total: images.length.toString(),
-                        })}
-                        fill
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 65vw"
-                        className={`object-cover ${showMainImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
-                        priority
-                        draggable={false}
-                        onLoad={(e) => {
-                          const imgIndex = parseInt(e.currentTarget.dataset.index || '0', 10);
-                          mainImageLoadedRef.current.add(imgIndex);
-                          if (imgIndex === currentImageIndex) {
-                            setMainImageLoading(false);
-                          }
-                        }}
-                        onError={(e) => {
-                          const imgIndex = parseInt(e.currentTarget.dataset.index || '0', 10);
-                          setImageErrors((prev) => new Set(prev).add(imgIndex));
-                          if (imgIndex === currentImageIndex) {
-                            setMainImageLoading(false);
-                          }
-                        }}
-                        data-index={currentImageIndex}
-                      />
-                    );
-                  })()
-                ) : (
-                  <div
-                    className="w-full h-full flex items-center justify-center"
-                    style={{ color: 'rgb(243, 243, 243)' }}
-                  >
-                    <svg
-                      className="w-24 h-24"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"
-                      />
-                    </svg>
-                  </div>
-                )}
-                {/* <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openImageModal(currentImageIndex);
-                  }}
-                  className="absolute top-2 right-2 sm:top-3 sm:right-3 z-10 p-2 sm:p-2.5 bg-black hover:bg-gray-900 rounded-lg transition-all text-primary-400 hover:text-primary-300 border-2 border-primary-500 hover:border-primary-400"
-                  title={t('listingDetail.openFullSize')}
-                >
-                  <svg
-                    className="w-5 h-5 sm:w-6 sm:h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
-                    />
-                  </svg>
-                </button> */}
-              </div>
-
-              {images.length > 1 && (
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                  {images.slice(0, 4).map((img, index) => {
-                    const isLastThumbnailMobile = index === 2;
-                    const isLastThumbnailDesktop = index === 3;
-                    const hasMoreImagesMobile = images.length > 3;
-                    const hasMoreImagesDesktop = images.length > 4;
-                    const remainingCountMobile = images.length - 3;
-                    const remainingCountDesktop = images.length - 4;
-
-                    return (
-                      <div
-                        key={index}
-                        onClick={() => {
-                          setCurrentImageIndex(index);
-                        }}
-                        className={`relative h-28 sm:h-32 bg-bg-darker rounded-lg overflow-hidden transition-all cursor-pointer ${
-                          index === 3 ? 'hidden sm:block' : ''
-                        } ${
-                          currentImageIndex === index
-                            ? 'ring-2 ring-primary-500 shadow-md'
-                            : 'hover:ring-2 hover:ring-primary-300'
-                        }`}
-                      >
-                        {img !== '/placeholder-car.jpg' && !imageErrors.has(index) ? (
-                          (() => {
-                            const optimizedUrl = getOptimizedImageUrl(img, 75, 1200);
-                            const isExternal =
-                              optimizedUrl.startsWith('http://') ||
-                              optimizedUrl.startsWith('https://');
-                            return (
-                              <>
-                                {isExternal ? (
-                                  <img
-                                    src={optimizedUrl}
-                                    alt={t('listings.imageAltWithTotal', {
-                                      title: imageAltTitle,
-                                      index: (index + 1).toString(),
-                                      total: images.length.toString(),
-                                    })}
-                                    className="w-full h-full object-cover"
-                                    loading="lazy"
-                                    draggable={false}
-                                    onLoad={() => {
-                                      mainImageLoadedRef.current.add(index);
-                                    }}
-                                    onError={() => {
-                                      setImageErrors((prev) => new Set(prev).add(index));
-                                    }}
-                                  />
-                                ) : (
-                                  <Image
-                                    src={optimizedUrl}
-                                    alt={t('listings.imageAltWithTotal', {
-                                      title: imageAltTitle,
-                                      index: (index + 1).toString(),
-                                      total: images.length.toString(),
-                                    })}
-                                    fill
-                                    sizes="(max-width: 640px) 33vw, 25vw"
-                                    className="object-cover"
-                                    loading="lazy"
-                                    draggable={false}
-                                    onLoad={() => {
-                                      mainImageLoadedRef.current.add(index);
-                                    }}
-                                    onError={() => {
-                                      setImageErrors((prev) => new Set(prev).add(index));
-                                    }}
-                                  />
-                                )}
-                                {isLastThumbnailMobile && hasMoreImagesMobile && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setCurrentImageIndex(index);
-                                      openImageModal(index);
-                                    }}
-                                    className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center sm:hidden cursor-pointer hover:bg-opacity-70 transition-opacity"
-                                  >
-                                    <span className="text-white text-lg font-bold">
-                                      +{remainingCountMobile}
-                                    </span>
-                                  </button>
-                                )}
-                                {isLastThumbnailDesktop && hasMoreImagesDesktop && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setCurrentImageIndex(index);
-                                      openImageModal(index);
-                                    }}
-                                    className="absolute inset-0 bg-black bg-opacity-60 hidden sm:flex items-center justify-center cursor-pointer hover:bg-opacity-70 transition-opacity"
-                                  >
-                                    <span className="text-white text-lg sm:text-xl font-bold">
-                                      +{remainingCountDesktop}
-                                    </span>
-                                  </button>
-                                )}
-                              </>
-                            );
-                          })()
-                        ) : (
-                          <div
-                            className="w-full h-full flex items-center justify-center"
-                            style={{ color: 'rgb(243, 243, 243)' }}
-                          >
-                            <svg
-                              className="w-8 h-8"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={1.5}
-                                d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"
-                              />
-                            </svg>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+            <ListingPageImages
+              images={images}
+              imageAltTitle={imageAltTitle}
+              currentImageIndex={currentImageIndex}
+              setCurrentImageIndex={setCurrentImageIndex}
+              imageErrors={imageErrors}
+              onImageError={(index) => {
+                setImageErrors((prev) => new Set(prev).add(index));
+              }}
+              onImageClick={openImageModal}
+            />
           </div>
 
           <div className="space-y-6">
-            <div>
-              <h1
-                className="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-6"
-                style={{ color: 'rgb(243, 243, 243)' }}
-              >
-                {h1Title}
-              </h1>
-              <div className="mb-6">
-                <div
-                  className={`flex items-baseline gap-3 flex-wrap ${listing.status === 'Closed' || listing.is_promoted || listing.is_new || listing.urgent ? 'mb-6' : ''}`}
-                >
-                  {listing.status === 'Closed' || listing.price === undefined ? (
-                    <>
-                      <span className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-primary-400">
-                        ••••
-                      </span>
-                      <span className="text-lg md:text-xl text-primary-400 font-medium">••</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-3xl sm:text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-                        {formatPrice(listing.price, listing.currency)}
-                      </span>
-                      <span
-                        className="text-lg md:text-xl font-medium"
-                        style={{ color: 'rgb(243, 243, 243)' }}
-                      >
-                        {listing.currency}
-                      </span>
-                    </>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  {listing.status === 'Closed' && (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold bg-red-500/20 border border-red-500/40 text-red-300 shadow-sm">
-                      <span>🔒</span>
-                      <span>{t('listingDetail.closed')}</span>
-                    </span>
-                  )}
-                  {listing.is_promoted && (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-bg-light border-2 border-yellow-500 text-yellow-400 shadow-lg whitespace-nowrap w-fit">
-                      <svg
-                        className="w-4 h-4 flex-shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
-                        />
-                      </svg>
-                      <span>{t('listingDetail.promoted')}</span>
-                    </span>
-                  )}
-                  {listing.is_new && (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-bg-light border-2 border-primary-500 text-primary-400 shadow-lg whitespace-nowrap w-fit">
-                      {/* eslint-disable-next-line no-hardcoded-text/no-hardcoded-text */}
-                      <span>✨</span>
-                      <span>{t('listingDetail.new')}</span>
-                    </span>
-                  )}
-                  {listing.urgent && (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-bg-light border-2 border-primary-500 text-primary-400 shadow-lg whitespace-nowrap w-fit">
-                      <span>🔥</span>
-                      <span>{t('listingDetail.urgent')}</span>
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-3">
-                {listing.status !== 'Closed' && (
-                  <>
-                    {!isInitialized && initialListing?.user ? (
-                      <button
-                        disabled
-                        className="w-full sm:w-auto sm:max-w-fit px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 bg-primary-500/10 text-primary-300 border border-primary-500/30 cursor-not-allowed opacity-50"
-                      >
-                        <div className="w-5 h-5 border-2 border-primary-300 border-t-transparent rounded-full animate-spin"></div>
-                        <span>{t('common.loading')}</span>
-                      </button>
-                    ) : (
-                      <button
-                        onClick={handleToggleComparison}
-                        disabled={isInComparison}
-                        className={`w-full sm:w-auto sm:max-w-fit px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
-                          isInComparison
-                            ? 'bg-primary-500/10 text-primary-300 border border-primary-500/30 cursor-not-allowed'
-                            : 'btn-secondary'
-                        }`}
-                        title={isInComparison ? t('listingDetail.alreadyInComparisonError') : ''}
-                      >
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"
-                          />
-                        </svg>
-                        {isInComparison
-                          ? t('listingDetail.alreadyInComparison')
-                          : t('listingDetail.compare')}
-                      </button>
-                    )}
-                  </>
-                )}
-                {!isInitialized && initialListing?.user ? (
-                  <button
-                    disabled
-                    className="w-full sm:w-auto sm:max-w-fit px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 bg-primary-500/10 text-primary-300 border border-primary-500/30 cursor-not-allowed opacity-50"
-                  >
-                    <div className="w-5 h-5 border-2 border-primary-300 border-t-transparent rounded-full animate-spin"></div>
-                    <span>{t('common.loading')}</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleToggleFavorite}
-                    disabled={isOwnListing}
-                    className={`w-full sm:w-auto sm:max-w-fit px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
-                      isOwnListing
-                        ? 'bg-primary-500/10 text-primary-300 border border-primary-500/30 cursor-not-allowed'
-                        : isFavorite
-                          ? 'bg-bg-light text-white border-2 border-primary-500/30 hover:bg-primary-500/10 hover:border-primary-500'
-                          : 'btn-secondary'
-                    }`}
-                    title={isOwnListing ? t('listingDetail.cannotAddOwnListing') : ''}
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill={isFavorite ? 'currentColor' : 'none'}
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                      />
-                    </svg>
-                    {isOwnListing
-                      ? t('listingDetail.yourListing')
-                      : isFavorite
-                        ? t('listingDetail.removeFromFavorites')
-                        : t('listingDetail.addToFavorites')}
-                  </button>
-                )}
-                {canPromote &&
+            <ListingPageHeader listing={listing} title={h1Title} />
+            <ListingPageActions
+              listing={listing}
+              isInitialized={isInitialized}
+              isInComparison={isInComparison}
+              isFavorite={isFavorite}
+              isOwnListing={isOwnListing}
+              canPromote={canPromote}
+              showPromoteButton={
+                !!(
                   user &&
                   listing.user &&
                   user.id === listing.user.id &&
                   listing.status === 'Active' &&
-                  !listing.is_promoted && (
-                    <button
-                      onClick={handlePromoteClick}
-                      className="w-full sm:w-auto sm:max-w-fit px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 bg-yellow-500/20 border-2 border-yellow-500/40 text-yellow-300 hover:bg-yellow-500/30 hover:border-yellow-500/60"
-                    >
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
-                        />
-                      </svg>
-                      {t('listings.promote')}
-                    </button>
-                  )}
-              </div>
-            </div>
+                  !listing.is_promoted
+                )
+              }
+              onToggleComparison={handleToggleComparison}
+              onToggleFavorite={handleToggleFavorite}
+              onPromoteClick={handlePromoteClick}
+            />
           </div>
         </div>
 
@@ -1279,194 +515,7 @@ export default function ListingPageClient({
 
         <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-6 md:gap-8">
           <div className="space-y-6">
-            {vehicle && (
-              <div className="surface">
-                <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-400">
-                  {t('listingDetail.characteristics')}
-                </h2>
-                <div className="space-y-4">
-                  {(vehicle.brand?.name || vehicle.model?.name || vehicle.year || listing.vin) && (
-                    <div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {vehicle.brand?.name && (
-                          <div>
-                            <span className="text-primary-400 font-semibold">
-                              {t('listingDetail.brand')}:
-                            </span>
-                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                              {vehicle.brand.name}
-                            </span>
-                          </div>
-                        )}
-                        {vehicle.model?.name && (
-                          <div>
-                            <span className="text-primary-400 font-semibold">
-                              {t('listingDetail.model')}:
-                            </span>
-                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                              {vehicle.model.name}
-                            </span>
-                          </div>
-                        )}
-                        {vehicle.year && (
-                          <div>
-                            <span className="text-primary-400 font-semibold">
-                              {t('listingDetail.year')}:
-                            </span>
-                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                              {vehicle.year}
-                            </span>
-                          </div>
-                        )}
-                        {listing.vin && (
-                          <div className="flex items-center">
-                            <span className="text-primary-400 font-semibold">
-                              {t('listingDetail.vin')}:
-                            </span>
-                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                              {listing.vin}
-                            </span>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleCopy(listing.vin!, t('listingDetail.vin'));
-                              }}
-                              className="ml-2 p-1.5 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors"
-                              title={t('listingDetail.copyVin')}
-                            >
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                                />
-                              </svg>
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {(vehicle.engine_displ_l ||
-                    listing.horsepower !== undefined ||
-                    vehicle.fuel ||
-                    vehicle.transmission ||
-                    vehicle.drive_type ||
-                    vehicle.mileage_km) && (
-                    <div className="pt-4 border-t border-primary-500/30">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {vehicle.engine_displ_l && (
-                          <div>
-                            <span className="text-primary-400 font-semibold">
-                              {t('listingDetail.engine')}:
-                            </span>
-                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                              {formatEngineVolume(vehicle.engine_displ_l)} {t('listings.liters')}
-                            </span>
-                          </div>
-                        )}
-                        {listing.horsepower !== undefined && listing.horsepower !== null && (
-                          <div>
-                            <span className="text-primary-400 font-semibold">
-                              {t('listingDetail.power')}:
-                            </span>
-                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                              {listing.horsepower} {t('listingDetail.horsepowerUnit')} /{' '}
-                              {listing.power_kw || horsepowerToKw(listing.horsepower)}{' '}
-                              {t('listingDetail.kwUnit')}
-                            </span>
-                          </div>
-                        )}
-                        {vehicle.fuel && (
-                          <div>
-                            <span className="text-primary-400 font-semibold">
-                              {t('listingDetail.fuel')}:
-                            </span>
-                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                              {formatFuel(vehicle.fuel, t)}
-                            </span>
-                          </div>
-                        )}
-                        {vehicle.transmission && (
-                          <div>
-                            <span className="text-primary-400 font-semibold">
-                              {t('listingDetail.transmission')}:
-                            </span>
-                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                              {formatTransmission(vehicle.transmission, t)}
-                            </span>
-                          </div>
-                        )}
-                        {vehicle.drive_type && (
-                          <div>
-                            <span className="text-primary-400 font-semibold">
-                              {t('listingDetail.driveType')}:
-                            </span>
-                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                              {formatDriveType(vehicle.drive_type, t)}
-                            </span>
-                          </div>
-                        )}
-                        {vehicle.mileage_km && (
-                          <div>
-                            <span className="text-primary-400 font-semibold">
-                              {t('listingDetail.mileage')}:
-                            </span>
-                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                              {formatMileage(vehicle.mileage_km)} {t('listings.km')}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {(vehicle.body_type || vehicle.color || vehicle.doors) && (
-                    <div className="pt-4 border-t border-primary-500/30">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {vehicle.body_type && (
-                          <div>
-                            <span className="text-primary-400 font-semibold">
-                              {t('listingDetail.bodyType')}:
-                            </span>
-                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                              {formatBodyType(vehicle.body_type, t)}
-                            </span>
-                          </div>
-                        )}
-                        {vehicle.color && (
-                          <div>
-                            <span className="text-primary-400 font-semibold">
-                              {t('listingDetail.color')}:
-                            </span>
-                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                              {getColorLabel(vehicle.color, t)}
-                            </span>
-                          </div>
-                        )}
-                        {vehicle.doors && (
-                          <div>
-                            <span className="text-primary-400 font-semibold">
-                              {t('listingDetail.doors')}:
-                            </span>
-                            <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                              {vehicle.doors}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+            {vehicle && <ListingPageCharacteristics listing={listing} />}
 
             {listing.equipment && listing.equipment.length > 0 && (
               <div className="surface">
@@ -1475,7 +524,11 @@ export default function ListingPageClient({
                 </h2>
                 <ul className="list-disc list-outside grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 pl-5">
                   {listing.equipment.map((key) => (
-                    <li key={key} className="ml-0" style={{ color: 'rgb(243, 243, 243)' }}>
+                    <li
+                      key={key}
+                      className="ml-0"
+                      style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+                    >
                       {t(`vehicleOptions.equipment.${key}`)}
                     </li>
                   ))}
@@ -1483,105 +536,7 @@ export default function ListingPageClient({
               </div>
             )}
 
-            {listing.description && (
-              <div className="surface">
-                <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-400">
-                  {t('listingDetail.description')}
-                </h2>
-                <div
-                  className="leading-relaxed max-w-none listing-description whitespace-pre-wrap"
-                  style={{ color: 'rgb(243, 243, 243)' }}
-                  dangerouslySetInnerHTML={{
-                    __html: descriptionHtml || '',
-                  }}
-                />
-                <style jsx>{`
-                  .listing-description {
-                    color: rgb(243, 243, 243);
-                    line-height: 1.75;
-                  }
-                  .listing-description div,
-                  .listing-description p {
-                    display: block;
-                    margin: 0.75rem 0;
-                    min-height: 1.2em;
-                    line-height: 1.6;
-                    color: rgb(243, 243, 243);
-                  }
-                  .listing-description div:empty,
-                  .listing-description p:empty {
-                    min-height: 1.5rem;
-                    margin: 0.5rem 0;
-                  }
-                  .listing-description div:first-child,
-                  .listing-description p:first-child {
-                    margin-top: 0;
-                  }
-                  .listing-description div:last-child,
-                  .listing-description p:last-child {
-                    margin-bottom: 0;
-                  }
-                  .listing-description p:has(br:only-child) {
-                    min-height: 1.5rem;
-                    margin: 0.5rem 0;
-                  }
-                  .listing-description font[size='2'] {
-                    font-size: 0.875rem !important;
-                  }
-                  .listing-description font[size='3'] {
-                    font-size: 1rem !important;
-                  }
-                  .listing-description font[size='5'] {
-                    font-size: 1.125rem !important;
-                  }
-                  .listing-description strong,
-                  .listing-description b {
-                    font-weight: 700 !important;
-                    color: rgb(243, 243, 243) !important;
-                  }
-                  .listing-description em,
-                  .listing-description i {
-                    font-style: italic !important;
-                    color: rgb(243, 243, 243) !important;
-                  }
-                  .listing-description u {
-                    text-decoration: underline;
-                    color: rgb(243, 243, 243);
-                  }
-                  .listing-description ul {
-                    list-style-type: disc !important;
-                    list-style-position: outside !important;
-                    display: block !important;
-                    margin: 0.75rem 0 !important;
-                    padding-left: 2rem !important;
-                    color: rgb(243, 243, 243) !important;
-                  }
-                  .listing-description ol {
-                    list-style-type: decimal !important;
-                    list-style-position: outside !important;
-                    display: block !important;
-                    margin: 0.75rem 0 !important;
-                    padding-left: 2rem !important;
-                    color: rgb(243, 243, 243) !important;
-                  }
-                  .listing-description li {
-                    display: list-item !important;
-                    list-style-position: outside !important;
-                    margin: 0.25rem 0 !important;
-                    padding-left: 0.5rem !important;
-                    color: rgb(243, 243, 243) !important;
-                  }
-                  .listing-description ul li {
-                    list-style-type: disc !important;
-                    list-style-position: outside !important;
-                  }
-                  .listing-description ol li {
-                    list-style-type: decimal !important;
-                    list-style-position: outside !important;
-                  }
-                `}</style>
-              </div>
-            )}
+            {listing.description && <ListingPageDescription descriptionHtml={descriptionHtml} />}
 
             {(listing.condition ||
               listing.registration_type ||
@@ -1596,7 +551,7 @@ export default function ListingPageClient({
                       <span className="text-primary-400 font-semibold">
                         {t('listingDetail.condition')}:
                       </span>
-                      <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
+                      <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
                         {t(`vehicleOptions.condition.${listing.condition}`)}
                       </span>
                     </div>
@@ -1606,7 +561,7 @@ export default function ListingPageClient({
                       <span className="text-primary-400 font-semibold">
                         {t('listingDetail.registrationType')}:
                       </span>
-                      <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
+                      <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
                         {formatRegistrationType(listing.registration_type, t)}
                       </span>
                     </div>
@@ -1616,7 +571,7 @@ export default function ListingPageClient({
                       <span className="text-primary-400 font-semibold">
                         {t('listingDetail.registration')}:
                       </span>
-                      <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
+                      <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
                         {listing.is_registered
                           ? t('listingDetail.registered')
                           : t('listingDetail.notRegistered')}
@@ -1628,7 +583,7 @@ export default function ListingPageClient({
                       <span className="text-primary-400 font-semibold">
                         {t('listingDetail.registeredUntil')}:
                       </span>
-                      <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
+                      <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
                         {(() => {
                           const date = new Date(listing.registration_expires_at);
                           const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -1676,7 +631,7 @@ export default function ListingPageClient({
                       <div className="bg-bg-darker border-2 border-primary-500/50 rounded-lg p-3 shadow-lg">
                         <p
                           className="text-xs font-semibold leading-relaxed"
-                          style={{ color: 'rgb(243, 243, 243)' }}
+                          style={{ color: 'rgb(var(--text-secondary-rgb))' }}
                         >
                           {t('listingDetail.historyHint')}
                         </p>
@@ -1704,14 +659,14 @@ export default function ListingPageClient({
                     <p className="font-semibold text-primary-300 text-sm mb-1">
                       {t('listingDetail.vinNotProvided')}
                     </p>
-                    <p className="text-sm" style={{ color: 'rgb(243, 243, 243)' }}>
+                    <p className="text-sm" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
                       {t('listingDetail.vinNotProvidedDescription')}
                     </p>
                   </div>
                 </div>
               ) : loadingPrevious ? (
                 <div className="text-center py-4">
-                  <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+                  <LoadingSpinner size="sm" />
                 </div>
               ) : previousListings.length > 0 ? (
                 <div className="overflow-x-auto">
@@ -1720,25 +675,25 @@ export default function ListingPageClient({
                       <tr className="border-b border-primary-500/20">
                         <th
                           className="text-left py-2 px-2 sm:px-3 font-semibold text-xs sm:text-sm"
-                          style={{ color: 'rgb(243, 243, 243)' }}
+                          style={{ color: 'rgb(var(--text-secondary-rgb))' }}
                         >
                           {t('listingDetail.title')}
                         </th>
                         <th
                           className="text-left py-2 px-2 sm:px-3 font-semibold text-xs sm:text-sm hidden sm:table-cell"
-                          style={{ color: 'rgb(243, 243, 243)' }}
+                          style={{ color: 'rgb(var(--text-secondary-rgb))' }}
                         >
                           {t('listingDetail.mileage')}
                         </th>
                         <th
                           className="text-left py-2 px-2 sm:px-3 font-semibold text-xs sm:text-sm hidden md:table-cell"
-                          style={{ color: 'rgb(243, 243, 243)' }}
+                          style={{ color: 'rgb(var(--text-secondary-rgb))' }}
                         >
                           {t('listingDetail.closedAt')}
                         </th>
                         <th
                           className="text-left sm:text-right py-2 px-2 sm:px-3 font-semibold text-xs sm:text-sm"
-                          style={{ color: 'rgb(243, 243, 243)' }}
+                          style={{ color: 'rgb(var(--text-secondary-rgb))' }}
                         ></th>
                       </tr>
                     </thead>
@@ -1754,7 +709,7 @@ export default function ListingPageClient({
                           </td>
                           <td
                             className="py-3 px-2 sm:px-3 font-semibold text-xs sm:text-sm hidden sm:table-cell"
-                            style={{ color: 'rgb(243, 243, 243)' }}
+                            style={{ color: 'rgb(var(--text-secondary-rgb))' }}
                           >
                             {prevListing.vehicle?.mileage_km
                               ? `${formatMileage(prevListing.vehicle.mileage_km)} ${t('listings.km')}`
@@ -1762,7 +717,7 @@ export default function ListingPageClient({
                           </td>
                           <td
                             className="py-3 px-2 sm:px-3 font-semibold text-xs sm:text-sm hidden md:table-cell"
-                            style={{ color: 'rgb(243, 243, 243)' }}
+                            style={{ color: 'rgb(var(--text-secondary-rgb))' }}
                           >
                             {formatDate(prevListing.updated_at)}
                           </td>
@@ -1777,7 +732,7 @@ export default function ListingPageClient({
                   </table>
                 </div>
               ) : (
-                <p style={{ color: 'rgb(243, 243, 243)' }}>
+                <p style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
                   {t('listingDetail.noPreviousListings')}
                 </p>
               )}
@@ -1785,291 +740,12 @@ export default function ListingPageClient({
           </div>
 
           <div className="space-y-6">
-            <div className="surface">
-              <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-400">
-                {t('listingDetail.contactInfo')}
-              </h2>
-              {listing.user && (
-                <div className="space-y-4">
-                  <div>
-                    <span className="font-semibold text-primary-400">
-                      {t('listingDetail.sellerType')}:
-                    </span>
-                    <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                      {listing.user.type === 'Business'
-                        ? t('listingDetail.business')
-                        : t('listingDetail.individual')}
-                    </span>
-                  </div>
-
-                  {listing.user.firstName && (
-                    <div>
-                      <span className="font-semibold text-primary-400">
-                        {t('listingDetail.name')}:
-                      </span>
-                      <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                        {listing.user.firstName}
-                      </span>
-                    </div>
-                  )}
-
-                  {listing.status !== 'Closed' &&
-                    listing.user.type === 'Business' &&
-                    listing.user.companyName && (
-                      <div>
-                        <span className="font-semibold text-primary-400">
-                          {t('listingDetail.company')}:
-                        </span>
-                        <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                          {listing.user.companyName}
-                        </span>
-                      </div>
-                    )}
-
-                  <div>
-                    <span className="font-semibold text-primary-400">
-                      {t('listingDetail.city')}:
-                    </span>
-                    <span className="ml-2" style={{ color: 'rgb(243, 243, 243)' }}>
-                      {getCityNameMk(listing.city)}
-                    </span>
-                  </div>
-
-                  {listing.status === 'Closed' ? (
-                    <div>
-                      <span className="font-semibold text-primary-400">
-                        {t('listingDetail.email')}:
-                      </span>
-                      <span className="ml-2 text-primary-400">••••••••</span>
-                    </div>
-                  ) : (
-                    listing.user.email && (
-                      <div className="flex items-center">
-                        <span className="font-semibold text-primary-400">
-                          {t('listingDetail.email')}:
-                        </span>
-                        <a
-                          href={`mailto:${listing.user.email}`}
-                          className="ml-2 hover:text-primary-300 transition-colors underline"
-                          style={{ color: 'rgb(243, 243, 243)' }}
-                        >
-                          {listing.user.email}
-                        </a>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleCopy(listing.user!.email!, t('listingDetail.email'));
-                          }}
-                          className="ml-2 p-1.5 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors"
-                          title={t('listingDetail.copyEmail')}
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                    )
-                  )}
-
-                  {listing.status === 'Closed' ? (
-                    <div>
-                      <span className="font-semibold text-primary-400">
-                        {t('listingDetail.phone')}:
-                      </span>
-                      <span className="ml-2 text-primary-400">••••••••</span>
-                    </div>
-                  ) : (
-                    listing.user.phone && (
-                      <div className="flex items-center">
-                        <span className="font-semibold text-primary-400">
-                          {t('listingDetail.phone')}:
-                        </span>
-                        <a
-                          href={`tel:${listing.user.phone}`}
-                          onClick={() => {
-                            analytics.contactSeller(id, 'phone', {
-                              title: listing.title,
-                              price: listing.price,
-                            });
-                          }}
-                          className="ml-2 hover:text-primary-300 transition-colors underline"
-                          style={{ color: 'rgb(243, 243, 243)' }}
-                        >
-                          {listing.user.phone}
-                        </a>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleCopy(listing.user!.phone!, t('listingDetail.phone'));
-                          }}
-                          className="ml-2 p-1.5 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors"
-                          title={t('listingDetail.copyPhone')}
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                    )
-                  )}
-
-                  {listing.status !== 'Closed' &&
-                    (listing.user.viber || listing.user.whatsapp || listing.user.telegram) && (
-                      <div>
-                        <span className="font-semibold text-primary-400 mb-2 block">
-                          {t('listingDetail.availableMessengers')}:
-                        </span>
-                        <div className="flex flex-wrap gap-2">
-                          {/* eslint-disable no-hardcoded-text/no-hardcoded-text */}
-                          {listing.user.viber && listing.user.phone && (
-                            <a
-                              href={getViberUrl(listing.user.phone) || '#'}
-                              onClick={() => {
-                                analytics.contactSeller(id, 'viber', {
-                                  title: listing.title,
-                                  price: listing.price,
-                                });
-                              }}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 hover:border-purple-500/50 transition-colors cursor-pointer"
-                            >
-                              Viber
-                              <svg
-                                className="w-3.5 h-3.5 opacity-70"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                                aria-hidden="true"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                                />
-                              </svg>
-                            </a>
-                          )}
-                          {listing.user.whatsapp && listing.user.phone && (
-                            <a
-                              href={getWhatsAppUrl(listing.user.phone) || '#'}
-                              onClick={() => {
-                                analytics.contactSeller(id, 'whatsapp', {
-                                  title: listing.title,
-                                  price: listing.price,
-                                });
-                              }}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-primary-500/20 text-primary-300 border border-primary-500/30 hover:bg-primary-500/30 hover:border-primary-500/50 transition-colors cursor-pointer"
-                            >
-                              WhatsApp
-                              <svg
-                                className="w-3.5 h-3.5 opacity-70"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                                aria-hidden="true"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                                />
-                              </svg>
-                            </a>
-                          )}
-                          {listing.user.telegram && listing.user.phone && (
-                            <a
-                              href={getTelegramUrl(listing.user.phone) || '#'}
-                              onClick={() => {
-                                analytics.contactSeller(id, 'telegram', {
-                                  title: listing.title,
-                                  price: listing.price,
-                                });
-                              }}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30 hover:border-blue-500/50 transition-colors cursor-pointer"
-                            >
-                              Telegram
-                              <svg
-                                className="w-3.5 h-3.5 opacity-70"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                                aria-hidden="true"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                                />
-                              </svg>
-                            </a>
-                          )}
-                          {/* eslint-enable no-hardcoded-text/no-hardcoded-text */}
-                        </div>
-                      </div>
-                    )}
-
-                  {listing.user && activeListingsCount > 1 && (
-                    <div className="pt-4 border-t border-primary-500/20">
-                      <button
-                        onClick={() => setIsUserListingsModalOpen(true)}
-                        disabled={listing.status === 'Closed'}
-                        className={`w-full flex items-center gap-2 ${
-                          listing.status === 'Closed' ? 'btn-outline-gray' : 'btn-outline-green'
-                        }`}
-                        title={
-                          listing.status === 'Closed' ? t('listingDetail.unavailableForClosed') : ''
-                        }
-                      >
-                        <svg
-                          className="w-5 h-5 flex-shrink-0"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                          />
-                        </svg>
-                        <span>{t('listingDetail.allListingsFromSeller')}</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+            <ListingPageSeller
+              listing={listing}
+              listingId={id}
+              activeListingsCount={activeListingsCount}
+              onOpenUserListings={() => setIsUserListingsModalOpen(true)}
+            />
 
             <div className="surface">
               <div className="space-y-3">
@@ -2097,7 +773,7 @@ export default function ListingPageClient({
                     <span className="font-semibold text-primary-400">
                       {t('listingDetail.views')}:
                     </span>
-                    <span style={{ color: 'rgb(243, 243, 243)' }}>{listing.views}</span>
+                    <span style={{ color: 'rgb(var(--text-secondary-rgb))' }}>{listing.views}</span>
                   </div>
                 )}
                 <div className="flex items-center gap-2 text-base">
@@ -2117,7 +793,7 @@ export default function ListingPageClient({
                   <span className="font-semibold text-primary-400">
                     {t('listingDetail.updated')}:
                   </span>
-                  <span style={{ color: 'rgb(243, 243, 243)' }}>
+                  <span style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
                     {formatDate(listing.last_updated_at)}
                   </span>
                 </div>
@@ -2138,7 +814,9 @@ export default function ListingPageClient({
                   <span className="font-semibold text-primary-400">
                     {t('listingDetail.willClose')}:
                   </span>
-                  <span style={{ color: 'rgb(243, 243, 243)' }}>{formatDate(closingDate)}</span>
+                  <span style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
+                    {formatDate(closingDate)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -2146,183 +824,17 @@ export default function ListingPageClient({
         </div>
       </div>
 
-      {isImageModalOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
-          onClick={closeImageModal}
-        >
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              closeImageModal();
-            }}
-            className="absolute top-2 right-2 sm:top-4 sm:right-4 text-primary-400 hover:text-primary-300 transition-colors z-10 p-2"
-          >
-            <svg
-              className="w-6 h-6 sm:w-8 sm:h-8"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-
-          {images.length > 1 && (
-            <>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  prevImage();
-                }}
-                className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 text-primary-400 hover:text-primary-300 transition-all z-10 bg-black/70 hover:bg-black/90 rounded-full p-3 sm:p-4 border-2 border-primary-500/50 hover:border-primary-400 shadow-lg hidden sm:block"
-              >
-                <svg
-                  className="w-8 h-8 sm:w-10 sm:h-10"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-              </button>
-
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  nextImage();
-                }}
-                className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 text-primary-400 hover:text-primary-300 transition-all z-10 bg-black/70 hover:bg-black/90 rounded-full p-3 sm:p-4 border-2 border-primary-500/50 hover:border-primary-400 shadow-lg hidden sm:block"
-              >
-                <svg
-                  className="w-8 h-8 sm:w-10 sm:h-10"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </button>
-            </>
-          )}
-
-          <div
-            className="relative max-w-7xl w-full h-full flex items-center justify-center p-4"
-            onClick={(e) => e.stopPropagation()}
-            onTouchStart={onTouchStart}
-            onTouchMove={onTouchMove}
-            onTouchEnd={onTouchEnd}
-          >
-            {showModalImageLoader && (
-              <div className="absolute inset-0 flex items-center justify-center z-10">
-                <Spinner size="lg" />
-              </div>
-            )}
-
-            {images[modalImageIndex] &&
-            images[modalImageIndex] !== '/placeholder-car.jpg' &&
-            !imageErrors.has(modalImageIndex) ? (
-              (() => {
-                const optimizedUrl = getOptimizedImageUrl(images[modalImageIndex], 85, 1920);
-                const isExternal =
-                  optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://');
-                return isExternal ? (
-                  <img
-                    src={optimizedUrl}
-                    alt={t('listings.imageAltWithTotal', {
-                      title: imageAltTitle,
-                      index: (modalImageIndex + 1).toString(),
-                      total: images.length.toString(),
-                    })}
-                    className={`max-w-full max-h-[90vh] w-auto h-auto object-contain ${showModalImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
-                    draggable={false}
-                    onLoad={(e) => {
-                      const imgIndex = parseInt(e.currentTarget.dataset.index || '0', 10);
-                      modalImageLoadedRef.current.add(imgIndex);
-                      if (imgIndex === modalImageIndex) {
-                        setModalImageLoading(false);
-                      }
-                    }}
-                    onError={(e) => {
-                      const imgIndex = parseInt(e.currentTarget.dataset.index || '0', 10);
-                      setImageErrors((prev) => new Set(prev).add(imgIndex));
-                      if (imgIndex === modalImageIndex) {
-                        setModalImageLoading(false);
-                      }
-                    }}
-                    data-index={modalImageIndex}
-                  />
-                ) : (
-                  <Image
-                    src={optimizedUrl}
-                    alt={t('listings.imageAltWithTotal', {
-                      title: imageAltTitle,
-                      index: (modalImageIndex + 1).toString(),
-                      total: images.length.toString(),
-                    })}
-                    width={1200}
-                    height={900}
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 95vw, 90vw"
-                    className={`max-w-full max-h-[90vh] w-auto h-auto object-contain ${showModalImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
-                    priority={modalImageIndex === 0}
-                    draggable={false}
-                    onLoad={(e) => {
-                      const imgIndex = parseInt(e.currentTarget.dataset.index || '0', 10);
-                      modalImageLoadedRef.current.add(imgIndex);
-                      if (imgIndex === modalImageIndex) {
-                        setModalImageLoading(false);
-                      }
-                    }}
-                    onError={(e) => {
-                      const imgIndex = parseInt(e.currentTarget.dataset.index || '0', 10);
-                      setImageErrors((prev) => new Set(prev).add(imgIndex));
-                      if (imgIndex === modalImageIndex) {
-                        setModalImageLoading(false);
-                      }
-                    }}
-                    data-index={modalImageIndex}
-                  />
-                );
-              })()
-            ) : (
-              <div
-                className="w-full h-full flex items-center justify-center"
-                style={{ color: 'rgb(243, 243, 243)' }}
-              >
-                <svg className="w-48 h-48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"
-                  />
-                </svg>
-              </div>
-            )}
-
-            {images.length > 1 && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-primary-400 text-lg sm:text-xl font-semibold bg-black bg-opacity-50 px-4 py-2 rounded-full">
-                {modalImageIndex + 1} / {images.length}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      <ListingPageImageModal
+        isOpen={isImageModalOpen}
+        images={images}
+        currentIndex={modalImageIndex}
+        imageAltTitle={imageAltTitle}
+        imageErrors={imageErrors}
+        onClose={closeImageModal}
+        onNext={nextImage}
+        onPrev={prevImage}
+        onIndexChange={setModalImageIndex}
+      />
 
       {listing?.user && (
         <UserListingsModal

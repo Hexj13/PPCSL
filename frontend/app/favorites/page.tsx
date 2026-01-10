@@ -8,16 +8,17 @@ import { ListingCard } from '@/components/ListingCard';
 import { ListingCardSkeleton } from '@/components/ListingCardSkeleton';
 import { SavedFiltersList, updateSavedFiltersCache } from '@/components/SavedFiltersList';
 import { SkeletonContainer } from '@/components/SkeletonContainer';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 import { favoritesApi, Listing, savedFiltersApi } from '@/lib/api';
-import { useAuthStore, useFavoritesStore } from '@/lib/store';
+import { useFavoritesStore } from '@/lib/store';
 
 type FavoritesTab = 'listings' | 'filters';
 
 function FavoritesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, isInitialized } = useAuthStore();
+  const { user, isLoading, isAuthorized } = useRequireAuth();
   const { t } = useTranslation();
   const getInitialTab = (): FavoritesTab => {
     const tabParam = searchParams.get('tab');
@@ -126,28 +127,25 @@ function FavoritesContent() {
   };
 
   useEffect(() => {
-    if (isInitialized && !user) {
-      router.push('/login');
+    if (!isAuthorized || !user) {
       return;
     }
 
-    if (user) {
-      loadFavorites();
-      savedFiltersApi
-        .getAll()
-        .then((res) => {
-          const filtersList = Array.isArray(res.data) ? res.data : [];
-          setFiltersCount(filtersList.length);
-          updateSavedFiltersCache(filtersList);
-        })
-        .catch(() => {
-          setFiltersCount(0);
-          updateSavedFiltersCache([]);
-        });
-    }
-  }, [user, isInitialized, router, loadFavorites]);
+    loadFavorites();
+    savedFiltersApi
+      .getAll()
+      .then((res) => {
+        const filtersList = Array.isArray(res.data) ? res.data : [];
+        setFiltersCount(filtersList.length);
+        updateSavedFiltersCache(filtersList);
+      })
+      .catch(() => {
+        setFiltersCount(0);
+        updateSavedFiltersCache([]);
+      });
+  }, [user, isAuthorized, loadFavorites]);
 
-  if (!isInitialized || !user) {
+  if (isLoading || !isAuthorized) {
     return null;
   }
 
