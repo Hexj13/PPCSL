@@ -99,9 +99,11 @@ export function usePaginatedData<T, F>(
 
         if (append) {
           setData((prev) => {
-            const existingIds = new Set(prev.map((item: { id: string }) => item.id));
+            const existingIds = new Set(
+              prev.map((item) => (item as { id?: string }).id).filter((id): id is string => !!id)
+            );
             const uniqueNewItems = transformedData.filter(
-              (item: { id: string }) => !existingIds.has(item.id)
+              (item) => !existingIds.has((item as { id?: string }).id as string)
             );
             return [...prev, ...uniqueNewItems];
           });
@@ -152,8 +154,8 @@ export function usePaginatedData<T, F>(
     const shouldDebounce =
       debounceFilters &&
       debounceFilters.some((key) => {
-        const filterValue = (filters as Record<string, unknown>)[key];
-        const debouncedValue = (debouncedFilters as Record<string, unknown>)[key];
+        const filterValue = (filters as Record<string, unknown>)[key as string];
+        const debouncedValue = (debouncedFilters as Record<string, unknown>)[key as string];
         return filterValue !== debouncedValue;
       });
 

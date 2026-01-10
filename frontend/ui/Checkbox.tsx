@@ -4,7 +4,7 @@ import { ReactNode } from 'react';
 
 import { CheckIcon } from './icons';
 
-interface CheckboxProps {
+export interface CheckboxProps {
   checked: boolean;
   onChange: (_checked: boolean) => void;
   label?: ReactNode;

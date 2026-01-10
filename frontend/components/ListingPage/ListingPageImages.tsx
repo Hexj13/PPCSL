@@ -55,10 +55,10 @@ export function ListingPageImages({
     const isRightSwipe = distance < -minSwipeDistance;
 
     if (isLeftSwipe && images.length > 1) {
-      setCurrentImageIndex((prev) => (prev + 1) % images.length);
+      setCurrentImageIndex((currentImageIndex + 1) % images.length);
     }
     if (isRightSwipe && images.length > 1) {
-      setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+      setCurrentImageIndex((currentImageIndex - 1 + images.length) % images.length);
     }
   };
 

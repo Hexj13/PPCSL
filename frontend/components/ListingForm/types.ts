@@ -1,4 +1,4 @@
-import { Brand, Model } from '@/lib/api';
+import { Brand, City, VehicleModel } from '@/lib/api';
 
 import { ListingFormData } from '../ListingForm';
 
@@ -9,9 +9,9 @@ export interface ListingFormSectionProps {
   clearError: (_field: string) => void;
   t: (_key: string, _params?: Record<string, string | number>) => string;
   brands?: Brand[];
-  models?: Model[];
+  models?: VehicleModel[];
   loadingModels?: boolean;
-  cities?: Array<{ id: string; name: string }>;
+  cities?: City[];
   showVinHint?: boolean;
   setShowVinHint?: (_show: boolean) => void;
   handleWheel?: (_e: React.WheelEvent<HTMLInputElement>) => void;
