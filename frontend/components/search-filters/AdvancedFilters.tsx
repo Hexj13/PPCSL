@@ -431,6 +431,7 @@ export function AdvancedFilters({
               <MultiSelectDropdown
                 values={filters.body_types}
                 onChange={(values) => onMultiSelectChange('body_types', values)}
+                searchable={true}
                 placeholder={t('searchFilters.selectBodyType')}
                 showActionButtons={true}
                 options={getBodyTypeOptions(t)}
@@ -444,6 +445,7 @@ export function AdvancedFilters({
               <MultiSelectDropdown
                 values={filters.colors}
                 onChange={(values) => onMultiSelectChange('colors', values)}
+                searchable={true}
                 placeholder={t('searchFilters.selectColor')}
                 showActionButtons={true}
                 options={colorOptions}
