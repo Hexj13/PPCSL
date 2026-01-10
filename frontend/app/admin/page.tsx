@@ -219,8 +219,9 @@ function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
         totalPages: response.data.meta.totalPages || 1,
       });
       hasDataRef.current = true;
-    } catch {
-      toast.error(t('admin.listingsTab.loadError'));
+    } catch (error) {
+      // Error toast is handled by API interceptor
+      console.error('Error loading listings:', error);
     } finally {
       if (showLoadingTimeoutRef.current) {
         clearTimeout(showLoadingTimeoutRef.current);
@@ -229,7 +230,8 @@ function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
       setLoading(false);
       loadingRef.current = false;
     }
-  }, [page, limit, statusFilter, promotedFilter, searchQuery, t]);
+     
+  }, [page, limit, statusFilter, promotedFilter, searchQuery]);
 
   const loadStatusCounts = useCallback(async () => {
     try {
@@ -596,8 +598,9 @@ function PromotionsTab() {
       setPromotions(response.data.data);
       setMeta(response.data.meta);
       hasDataRef.current = true;
-    } catch {
-      toast.error(t('admin.promotionsTab.loadError'));
+    } catch (error) {
+      // Error toast is handled by API interceptor
+      console.error('Error loading promotions:', error);
     } finally {
       if (showLoadingTimeoutRef.current) {
         clearTimeout(showLoadingTimeoutRef.current);
@@ -606,7 +609,8 @@ function PromotionsTab() {
       setLoading(false);
       loadingRef.current = false;
     }
-  }, [page, searchQuery, timeFilter, getFromDate, t]);
+     
+  }, [page, searchQuery, timeFilter, getFromDate]);
 
   useEffect(() => {
     if (!hasInitializedRef.current) {
@@ -898,8 +902,9 @@ function UsersTab({ onViewUserListings }: UsersTabProps) {
         totalPages: response.data.meta.totalPages || 1,
       });
       hasDataRef.current = true;
-    } catch {
-      toast.error(t('admin.usersTab.loadError'));
+    } catch (error) {
+      // Error toast is handled by API interceptor
+      console.error('Error loading users:', error);
     } finally {
       if (showLoadingTimeoutRef.current) {
         clearTimeout(showLoadingTimeoutRef.current);
@@ -908,7 +913,8 @@ function UsersTab({ onViewUserListings }: UsersTabProps) {
       setLoading(false);
       loadingRef.current = false;
     }
-  }, [page, limit, roleFilter, searchQuery, t]);
+     
+  }, [page, limit, roleFilter, searchQuery]);
 
   const loadRoleCounts = useCallback(async () => {
     try {

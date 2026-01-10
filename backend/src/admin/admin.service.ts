@@ -47,7 +47,7 @@ export class AdminService {
     if (searchQuery) {
       const searchLower = searchQuery.toLowerCase();
       queryBuilder.where(
-        '(LOWER(user.id) LIKE :search OR LOWER(user.email) LIKE :search OR LOWER(user.phone) LIKE :search OR LOWER(user.firstName) LIKE :search OR LOWER(user.lastName) LIKE :search OR LOWER(user.companyName) LIKE :search)',
+        '(LOWER(CAST(user.id AS TEXT)) LIKE :search OR LOWER(user.email) LIKE :search OR LOWER(user.phone) LIKE :search OR LOWER(user.firstName) LIKE :search OR LOWER(user.lastName) LIKE :search OR LOWER(user.companyName) LIKE :search)',
         { search: `%${searchLower}%` },
       );
     }
