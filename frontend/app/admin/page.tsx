@@ -8,7 +8,7 @@ import { toast } from 'react-hot-toast';
 import { ListingManagementCard } from '@/components/ListingManagementCard';
 import { ListingManagementCardSkeleton } from '@/components/ListingManagementCardSkeleton';
 import { PromotionModal } from '@/components/PromotionModal';
-import { SkeletonContainer } from '@/components/SkeletonContainer';
+import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
 import { adminApi, Listing, PromotionHistory, User } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
@@ -856,6 +856,13 @@ function UsersTab({ onViewUserListings }: UsersTabProps) {
   const hasDataRef = useRef(false);
   const showLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const { visible: showSkeleton } = useLoadingState({
+    isLoading: loading,
+    immediate: true,
+    showDelay: 0,
+    minDisplayTime: 1000,
+  });
+
   const loadUsers = useCallback(async () => {
     if (loadingRef.current) {
       return;
@@ -995,260 +1002,270 @@ function UsersTab({ onViewUserListings }: UsersTabProps) {
     [onViewUserListings]
   );
 
-  if (loading) {
-    return (
-      <div>
-        <div className="mb-4 md:mb-6 flex flex-col gap-3 md:gap-4">
-          <div className="flex-1 h-[48px] md:h-[52px] bg-bg-light/30 rounded-lg animate-pulse" />
-          <div className="flex flex-wrap gap-2 md:gap-3">
-            {[...Array(4)].map((_, i) => (
-              <div
-                key={i}
-                className="h-9 md:h-10 w-24 md:w-28 bg-bg-light/30 rounded-lg animate-pulse"
-              />
+  return (
+    <>
+      {showSkeleton && (
+        <div>
+          <div className="mb-4 md:mb-6 flex flex-col gap-3 md:gap-4">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1 h-[48px] md:h-[52px] bg-bg-light/30 rounded-lg animate-pulse" />
+            </div>
+            <div className="flex flex-wrap gap-2 md:gap-3">
+              {[...Array(4)].map((_, i) => (
+                <div
+                  key={i}
+                  className="h-9 md:h-10 w-24 md:w-28 bg-bg-light/30 rounded-lg animate-pulse"
+                />
+              ))}
+            </div>
+          </div>
+          <div className="mb-3 md:mb-4 h-4 md:h-5 bg-bg-light/30 rounded w-40 md:w-48 animate-pulse" />
+          <div className="space-y-3 md:space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="card p-4 md:p-5">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 md:gap-4">
+                  <div className="flex-1 space-y-2 md:space-y-3">
+                    <div className="h-3 md:h-4 bg-bg-light/30 rounded w-28 md:w-32 animate-pulse" />
+                    <div className="h-5 md:h-6 bg-bg-light/40 rounded w-3/4 animate-pulse" />
+                    <div className="space-y-2">
+                      <div className="h-3 md:h-4 bg-bg-light/30 rounded w-full animate-pulse" />
+                      <div className="h-3 md:h-4 bg-bg-light/30 rounded w-5/6 animate-pulse" />
+                      <div className="h-3 md:h-4 bg-bg-light/30 rounded w-4/6 animate-pulse" />
+                    </div>
+                  </div>
+                  <div className="flex flex-row lg:flex-col gap-2">
+                    <div className="h-8 md:h-10 bg-bg-light/30 rounded flex-1 lg:flex-none lg:w-32 animate-pulse" />
+                    <div className="h-8 md:h-10 bg-bg-light/30 rounded flex-1 lg:flex-none lg:w-28 animate-pulse" />
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         </div>
-        <div className="mb-3 md:mb-4 h-4 md:h-5 bg-bg-light/30 rounded w-40 md:w-48 animate-pulse" />
-        <div className="space-y-3 md:space-y-4">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="card p-4 md:p-5">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 md:gap-4">
-                <div className="flex-1 space-y-2 md:space-y-3">
-                  <div className="h-3 md:h-4 bg-bg-light/30 rounded w-28 md:w-32 animate-pulse" />
-                  <div className="h-5 md:h-6 bg-bg-light/40 rounded w-3/4 animate-pulse" />
-                  <div className="space-y-2">
-                    <div className="h-3 md:h-4 bg-bg-light/30 rounded w-full animate-pulse" />
-                    <div className="h-3 md:h-4 bg-bg-light/30 rounded w-5/6 animate-pulse" />
-                    <div className="h-3 md:h-4 bg-bg-light/30 rounded w-4/6 animate-pulse" />
-                  </div>
-                </div>
-                <div className="flex flex-row lg:flex-col gap-2">
-                  <div className="h-8 md:h-10 bg-bg-light/30 rounded flex-1 lg:flex-none lg:w-32 animate-pulse" />
-                  <div className="h-8 md:h-10 bg-bg-light/30 rounded flex-1 lg:flex-none lg:w-28 animate-pulse" />
-                </div>
-              </div>
+      )}
+
+      {!showSkeleton && (
+        <div>
+          <div className="mb-4 md:mb-6 flex flex-col gap-3 md:gap-4">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t('admin.usersTab.searchPlaceholder')}
+                className="flex-1 px-4 py-2.5 md:py-3 rounded-lg bg-bg-light border-2 border-primary-500/30 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
+              />
             </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
 
-  return (
-    <div>
-      <div className="mb-4 md:mb-6 flex flex-col gap-3 md:gap-4">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={t('admin.usersTab.searchPlaceholder')}
-            className="flex-1 px-4 py-2.5 md:py-3 rounded-lg bg-bg-light border-2 border-primary-500/30 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
-          />
-        </div>
+            <div className="flex flex-wrap gap-2 md:gap-3">
+              {(['All', 'Individual', 'Business', 'Admin'] as const).map((role) => (
+                <button
+                  key={role}
+                  onClick={() => setRoleFilter(role)}
+                  className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium transition-colors text-sm md:text-base bg-bg-light hover:bg-bg-dark border ${
+                    roleFilter === role ? 'border-primary-500 text-white' : 'border-primary-500/20'
+                  }`}
+                  style={roleFilter !== role ? { color: 'rgb(243, 243, 243)' } : undefined}
+                >
+                  {role === 'All'
+                    ? t('admin.usersTab.allRoles')
+                    : role === 'Individual'
+                      ? t('admin.usersTab.individual')
+                      : role === 'Business'
+                        ? t('admin.usersTab.business')
+                        : t('admin.usersTab.admin')}
+                  {role !== 'All' && (
+                    <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-xs">
+                      {roleCounts[role]}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
 
-        <div className="flex flex-wrap gap-2 md:gap-3">
-          {(['All', 'Individual', 'Business', 'Admin'] as const).map((role) => (
-            <button
-              key={role}
-              onClick={() => setRoleFilter(role)}
-              className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium transition-colors text-sm md:text-base bg-bg-light hover:bg-bg-dark border ${
-                roleFilter === role ? 'border-primary-500 text-white' : 'border-primary-500/20'
-              }`}
-              style={roleFilter !== role ? { color: 'rgb(243, 243, 243)' } : undefined}
-            >
-              {role === 'All'
-                ? t('admin.usersTab.allRoles')
-                : role === 'Individual'
-                  ? t('admin.usersTab.individual')
-                  : role === 'Business'
-                    ? t('admin.usersTab.business')
-                    : t('admin.usersTab.admin')}
-              {role !== 'All' && (
-                <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-xs">
-                  {roleCounts[role]}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {users.length === 0 ? (
-        <div className="text-center py-10 md:py-12">
-          <p className="text-base md:text-lg" style={{ color: 'rgb(243, 243, 243)' }}>
-            {t('admin.usersTab.noUsers')}
-          </p>
-        </div>
-      ) : (
-        <>
-          <div className="space-y-3 md:space-y-4">
-            {users.map((user) => (
-              <div key={user.id} className="card p-4 md:p-5">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 md:gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="mb-2">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className="text-sm md:text-base text-gray-400 font-mono break-all">
-                          {t('admin.usersTab.id')} {user.id}
-                        </span>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handleCopy(user.id, 'ID');
-                          }}
-                          className="p-1 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors flex-shrink-0"
-                          title={t('common.copyId')}
-                        >
-                          <svg
-                            className="w-3.5 h-3.5 md:w-4 md:h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                      <h3 className="text-sm md:text-base font-bold text-white break-words">
-                        {user.firstName
-                          ? user.lastName
-                            ? `${user.firstName} ${user.lastName}`
-                            : user.firstName
-                          : user.companyName ||
-                            user.email ||
-                            user.phone ||
-                            t('admin.usersTab.deletedUser')}
-                      </h3>
-                      {user.companyName && (
-                        <p
-                          className="text-sm md:text-base mt-1 break-words"
+          {users.length === 0 ? (
+            <div className="text-center py-10 md:py-12">
+              <p className="text-base md:text-lg" style={{ color: 'rgb(243, 243, 243)' }}>
+                {t('admin.usersTab.noUsers')}
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-3 md:space-y-4">
+                {users.map((user) => (
+                  <div key={user.id} className="card p-4 md:p-5">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 md:gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="mb-2">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <span className="text-sm md:text-base text-gray-400 font-mono break-all">
+                              {t('admin.usersTab.id')} {user.id}
+                            </span>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleCopy(user.id, 'ID');
+                              }}
+                              className="p-1 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors flex-shrink-0"
+                              title={t('common.copyId')}
+                            >
+                              <svg
+                                className="w-3.5 h-3.5 md:w-4 md:h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                          <h3 className="text-sm md:text-base font-bold text-white break-words">
+                            {user.firstName
+                              ? user.lastName
+                                ? `${user.firstName} ${user.lastName}`
+                                : user.firstName
+                              : user.companyName ||
+                                user.email ||
+                                user.phone ||
+                                t('admin.usersTab.deletedUser')}
+                          </h3>
+                          {user.companyName && (
+                            <p
+                              className="text-sm md:text-base mt-1 break-words"
+                              style={{ color: 'rgb(243, 243, 243)' }}
+                            >
+                              {user.companyName}
+                            </p>
+                          )}
+                        </div>
+                        <div
+                          className="space-y-1 text-sm md:text-base"
                           style={{ color: 'rgb(243, 243, 243)' }}
                         >
-                          {user.companyName}
-                        </p>
-                      )}
-                    </div>
-                    <div
-                      className="space-y-1 text-sm md:text-base"
-                      style={{ color: 'rgb(243, 243, 243)' }}
-                    >
-                      {user.email ? (
-                        <div className="break-words">
-                          <span className="text-primary-400">{t('admin.usersTab.email')}</span>{' '}
-                          {user.email}
+                          {user.email ? (
+                            <div className="break-words">
+                              <span className="text-primary-400">{t('admin.usersTab.email')}</span>{' '}
+                              {user.email}
+                            </div>
+                          ) : (
+                            <div>
+                              <span className="text-primary-400">{t('admin.usersTab.email')}</span>{' '}
+                              <span className="text-gray-500">
+                                {t('admin.usersTab.unavailable')}
+                              </span>
+                            </div>
+                          )}
+                          {user.phone ? (
+                            <div>
+                              <span className="text-primary-400">{t('admin.usersTab.phone')}</span>{' '}
+                              {user.phone}
+                            </div>
+                          ) : (
+                            <div>
+                              <span className="text-primary-400">{t('admin.usersTab.phone')}</span>{' '}
+                              <span className="text-gray-500">
+                                {t('admin.usersTab.unavailable')}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-primary-400">{t('admin.usersTab.type')}</span>
+                            <span
+                              className={`px-2 py-1 rounded text-sm md:text-base font-semibold ${
+                                user.type === 'Admin'
+                                  ? 'bg-purple-500/20 text-purple-300'
+                                  : user.type === 'Business'
+                                    ? 'bg-blue-500/20 text-blue-300'
+                                    : 'bg-primary-500/20 text-primary-300'
+                              }`}
+                            >
+                              {user.type === 'Admin'
+                                ? t('admin.usersTab.admin')
+                                : user.type === 'Business'
+                                  ? t('admin.usersTab.business')
+                                  : t('admin.usersTab.individual')}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-primary-400">{t('admin.usersTab.status')}</span>
+                            <span
+                              className={`px-2 py-1 rounded text-sm md:text-base font-semibold ${
+                                user.active !== false
+                                  ? 'bg-green-500/20 text-green-300'
+                                  : 'bg-red-500/20 text-red-300'
+                              }`}
+                            >
+                              {user.active !== false
+                                ? t('admin.usersTab.active')
+                                : t('admin.usersTab.inactive')}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-primary-400">{t('admin.usersTab.listings')}</span>{' '}
+                            {user.listings?.length || 0}
+                          </div>
                         </div>
-                      ) : (
-                        <div>
-                          <span className="text-primary-400">{t('admin.usersTab.email')}</span>{' '}
-                          <span className="text-gray-500">{t('admin.usersTab.unavailable')}</span>
-                        </div>
-                      )}
-                      {user.phone ? (
-                        <div>
-                          <span className="text-primary-400">{t('admin.usersTab.phone')}</span>{' '}
-                          {user.phone}
-                        </div>
-                      ) : (
-                        <div>
-                          <span className="text-primary-400">{t('admin.usersTab.phone')}</span>{' '}
-                          <span className="text-gray-500">{t('admin.usersTab.unavailable')}</span>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-primary-400">{t('admin.usersTab.type')}</span>
-                        <span
-                          className={`px-2 py-1 rounded text-sm md:text-base font-semibold ${
-                            user.type === 'Admin'
-                              ? 'bg-purple-500/20 text-purple-300'
-                              : user.type === 'Business'
-                                ? 'bg-blue-500/20 text-blue-300'
-                                : 'bg-primary-500/20 text-primary-300'
-                          }`}
-                        >
-                          {user.type === 'Admin'
-                            ? t('admin.usersTab.admin')
-                            : user.type === 'Business'
-                              ? t('admin.usersTab.business')
-                              : t('admin.usersTab.individual')}
-                        </span>
                       </div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-primary-400">{t('admin.usersTab.status')}</span>
-                        <span
-                          className={`px-2 py-1 rounded text-sm md:text-base font-semibold ${
+                      <div className="flex flex-row lg:flex-col gap-2 flex-shrink-0">
+                        {(user.listings?.length || 0) > 0 && (
+                          <button
+                            onClick={() => handleViewListings(user)}
+                            className="text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 select-none flex-1 lg:flex-none lg:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
+                          >
+                            {t('admin.usersTab.viewListings', {
+                              count: user.listings?.length || 0,
+                            })}
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleToggleStatus(user.id)}
+                          className={`font-medium text-xs md:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 select-none flex-1 lg:flex-none lg:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px] ${
                             user.active !== false
-                              ? 'bg-green-500/20 text-green-300'
-                              : 'bg-red-500/20 text-red-300'
+                              ? 'text-red-300 hover:text-red-200 border-red-500/40 hover:border-red-500/60 bg-red-500/20 hover:bg-red-500/30'
+                              : 'text-primary-300 hover:text-primary-200 border-primary-500/40 hover:border-primary-500/60 bg-primary-500/20 hover:bg-primary-500/30'
                           }`}
                         >
                           {user.active !== false
-                            ? t('admin.usersTab.active')
-                            : t('admin.usersTab.inactive')}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-primary-400">{t('admin.usersTab.listings')}</span>{' '}
-                        {user.listings?.length || 0}
+                            ? t('admin.usersTab.deactivate')
+                            : t('admin.usersTab.activate')}
+                        </button>
                       </div>
                     </div>
                   </div>
-                  <div className="flex flex-row lg:flex-col gap-2 flex-shrink-0">
-                    {(user.listings?.length || 0) > 0 && (
-                      <button
-                        onClick={() => handleViewListings(user)}
-                        className="text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 select-none flex-1 lg:flex-none lg:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
-                      >
-                        {t('admin.usersTab.viewListings', { count: user.listings?.length || 0 })}
-                      </button>
-                    )}
-                    <button
-                      onClick={() => handleToggleStatus(user.id)}
-                      className={`font-medium text-xs md:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 select-none flex-1 lg:flex-none lg:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px] ${
-                        user.active !== false
-                          ? 'text-red-300 hover:text-red-200 border-red-500/40 hover:border-red-500/60 bg-red-500/20 hover:bg-red-500/30'
-                          : 'text-primary-300 hover:text-primary-200 border-primary-500/40 hover:border-primary-500/60 bg-primary-500/20 hover:bg-primary-500/30'
-                      }`}
-                    >
-                      {user.active !== false
-                        ? t('admin.usersTab.deactivate')
-                        : t('admin.usersTab.activate')}
-                    </button>
-                  </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          {meta && meta.totalPages > 1 && (
-            <div className="flex justify-center items-center gap-4 mt-6 md:mt-8 mb-0">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="px-4 py-2 rounded-lg bg-bg-light border border-primary-500/30 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-bg-dark transition-colors"
-              >
-                {t('common.previous')}
-              </button>
-              <span className="text-sm md:text-base" style={{ color: 'rgb(243, 243, 243)' }}>
-                {t('common.pageOf', { page, totalPages: meta.totalPages })}
-              </span>
-              <button
-                onClick={() => setPage((p) => Math.min(meta.totalPages, p + 1))}
-                disabled={page === meta.totalPages}
-                className="px-4 py-2 rounded-lg bg-bg-light border border-primary-500/30 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-bg-dark transition-colors"
-              >
-                {t('common.next')}
-              </button>
-            </div>
+              {meta && meta.totalPages > 1 && (
+                <div className="flex justify-center items-center gap-4 mt-6 md:mt-8 mb-0">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="px-4 py-2 rounded-lg bg-bg-light border border-primary-500/30 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-bg-dark transition-colors"
+                  >
+                    {t('common.previous')}
+                  </button>
+                  <span className="text-sm md:text-base" style={{ color: 'rgb(243, 243, 243)' }}>
+                    {t('common.pageOf', { page, totalPages: meta.totalPages })}
+                  </span>
+                  <button
+                    onClick={() => setPage((p) => Math.min(meta.totalPages, p + 1))}
+                    disabled={page === meta.totalPages}
+                    className="px-4 py-2 rounded-lg bg-bg-light border border-primary-500/30 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-bg-dark transition-colors"
+                  >
+                    {t('common.next')}
+                  </button>
+                </div>
+              )}
+            </>
           )}
-        </>
+        </div>
       )}
-    </div>
+    </>
   );
 }
