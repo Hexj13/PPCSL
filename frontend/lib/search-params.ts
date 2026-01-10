@@ -126,7 +126,7 @@ export async function parseSearchParams(
       if (Array.isArray(values) && values.length > 0) {
         const joined = values.join(',');
         if (key in params) {
-          (params as Record<string, string | number | boolean>)[key] = joined;
+          (params as unknown as Record<string, string>)[key] = joined;
         }
       }
     });
@@ -183,14 +183,14 @@ export async function parseSearchParams(
       if (typeof val === 'string') {
         value = val;
       } else if (typeof val === 'number') {
-        params[key] = val;
+        (params as unknown as Record<string, number>)[key] = val;
         continue;
       }
     }
     if (value) {
       const num = parseInt(value, 10);
       if (!isNaN(num)) {
-        params[key] = num;
+        (params as unknown as Record<string, number>)[key] = num;
       }
     }
   }
@@ -297,15 +297,15 @@ export async function parseSearchParams(
           key === 'body_type' ||
           key === 'color'
         ) {
-          (params as Record<string, string | number | boolean>)[key] = value;
+          (params as unknown as Record<string, string>)[key] = value;
         }
       } else if (Array.isArray(value)) {
-        (params as Record<string, string | number | boolean>)[key] = value.join(',');
+        (params as unknown as Record<string, string>)[key] = value.join(',');
       }
     });
   }
 
-  return params;
+  return params as ParsedSearchParams;
 }
 
 export function createBrandResolver(brands: Brand[]): (_slugs: string[]) => Promise<string[]> {

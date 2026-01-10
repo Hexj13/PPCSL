@@ -620,7 +620,7 @@ export function SearchFilters() {
 
     if (isNaN(year) || year < 1900 || year > maxYear) {
       toast.error(t('searchFilters.yearRangeError', { maxYear: maxYear.toString() }));
-      handleChange(key, '');
+      handleChange(key as keyof typeof filters, '');
     }
   };
 
@@ -630,7 +630,7 @@ export function SearchFilters() {
       numericValue === '' ||
       (parseInt(numericValue, 10) >= 0 && parseInt(numericValue, 10) <= 999999999)
     ) {
-      handleChange(key, numericValue);
+      handleChange(key as keyof typeof filters, numericValue);
     }
   };
 
@@ -642,7 +642,7 @@ export function SearchFilters() {
     const price = parseInt(value, 10);
     if (isNaN(price) || price < 0 || price > 999999999) {
       toast.error(t('searchFilters.priceRangeError'));
-      handleChange(key, '');
+      handleChange(key as keyof typeof filters, '');
     }
   };
 

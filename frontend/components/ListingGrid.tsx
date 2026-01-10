@@ -161,7 +161,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
           Promise<{ data: { data: Listing[]; meta: PaginationMeta } }> | Promise<null>
         > = [listingsApi.getAll(params)];
 
-        if (loadTwoPages && meta && page + 1 <= meta.totalPages) {
+        if (loadTwoPages && meta && meta.totalPages && page + 1 <= meta.totalPages) {
           const secondParams: Record<string, string | number | boolean> = {
             ...parsedParams,
             page: page + 1,
@@ -173,6 +173,10 @@ export function ListingGrid({ initialData }: ListingGridProps) {
         }
 
         const [firstRes, secondRes] = await Promise.all(requests);
+
+        if (!firstRes) {
+          throw new Error('Failed to fetch listings');
+        }
 
         const firstListings = firstRes.data.data;
         const secondListings =
