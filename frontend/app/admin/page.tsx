@@ -164,6 +164,13 @@ function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
   const hasDataRef = useRef(false);
   const showLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const { visible: showSkeleton } = useLoadingState({
+    isLoading: loading,
+    immediate: true,
+    showDelay: 0,
+    minDisplayTime: 1000,
+  });
+
   const loadListings = useCallback(async () => {
     if (loadingRef.current) {
       return;
@@ -361,7 +368,7 @@ function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
 
   return (
     <>
-      <SkeletonContainer isLoading={loading}>
+      {showSkeleton && (
         <div>
           <div className="mb-4 md:mb-6">
             <div className="w-full h-[48px] md:h-[52px] bg-bg-light/30 rounded-lg animate-pulse" />
@@ -383,9 +390,9 @@ function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
             ))}
           </div>
         </div>
-      </SkeletonContainer>
+      )}
 
-      {!loading && (
+      {!showSkeleton && (
         <div>
           <div className="mb-4 md:mb-6">
             <input
