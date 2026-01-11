@@ -61,7 +61,7 @@ function SimilarListingCard({
   }, [listing.id, position, onCardClick]);
 
   return (
-    <div ref={cardRef} className="[&_.card]:bg-bg-darker">
+    <div ref={cardRef} className="[&_.card]:bg-bg-darker h-full">
       <ListingCard listing={listing} />
     </div>
   );
@@ -302,7 +302,7 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
           <div
             ref={containerRef}
             role="list"
-            className="flex overflow-x-auto gap-4 scroll-smooth [&::-webkit-scrollbar]:hidden px-4 md:px-6"
+            className="flex items-stretch overflow-x-auto gap-4 scroll-smooth [&::-webkit-scrollbar]:hidden px-4 md:px-6"
             style={{
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
@@ -316,9 +316,11 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
                     <div
                       key={`skeleton-${i}`}
                       role="listitem"
-                      className="flex-shrink-0 w-[250px] md:w-[260px]"
+                      className="flex-shrink-0 w-[250px] md:w-[260px] flex"
                     >
-                      <ListingCardSkeleton />
+                      <div className="w-full h-full">
+                        <ListingCardSkeleton />
+                      </div>
                     </div>
                   ))}
               </SkeletonContainer>
@@ -327,14 +329,16 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
                 <div
                   key={listing.id}
                   role="listitem"
-                  className="flex-shrink-0 w-[250px] md:w-[260px]"
+                  className="flex-shrink-0 w-[250px] md:w-[260px] flex"
                 >
-                  <SimilarListingCard
-                    listing={listing}
-                    position={i + 1}
-                    listingId={listingId}
-                    onCardClick={handleCardClick}
-                  />
+                  <div className="w-full h-full">
+                    <SimilarListingCard
+                      listing={listing}
+                      position={i + 1}
+                      listingId={listingId}
+                      onCardClick={handleCardClick}
+                    />
+                  </div>
                 </div>
               ))
             )}
