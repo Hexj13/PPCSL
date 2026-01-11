@@ -93,6 +93,7 @@ GET /api/listings/:id/similar?limit=4&offset=4
 
 6. **Fallback: all other active listings**
    - All remaining Active listings that don't match buckets 1-5
+   - Includes listings without vehicle data (year, body_type)
    - ✅ Only Active listings (filter applied globally)
 
 ### Sorting Within Buckets
@@ -110,28 +111,29 @@ This means:
 
 ### Seller Diversification
 
-- **Rule**: Maximum 2 listings per seller in final results
+- **Rule**: Maximum 2 listings per seller in final results (adaptive)
+- If there are 3+ unique sellers: max 2 per seller
+- If there are 1-2 unique sellers: no limit (show up to 8 from same seller)
 - Applied globally across all 8 results
-- If more than 2 from same seller, extras are skipped
-- System continues fetching from next buckets until 8 results or exhausted
+- This ensures the block shows results even when most listings are from one seller
 
 ### Data Filters
 
 **Global SQL Query Filters** (applied before bucket assignment):
 - ✅ **Only Active listings** (`status = Active`) - applied globally for all buckets
-- ✅ Must have `vehicle.year` and `vehicle.body_type`
-- ✅ Valid promoted listings (not expired: `is_promoted = false OR (is_promoted = true AND promoted_until > NOW())`)
 - ✅ Excludes current listing (`listing.id != :currentId`)
 
+**Note**: 
+- Promotion status does NOT affect filtering — all Active listings are included. Promotion status only affects sorting within buckets (actively promoted listings rank higher).
+- Vehicle data (year, body_type) is NOT required — listings without this data will fall into bucket 6 (fallback).
+
 **Included**:
-- Only Active listings (filtered at SQL level)
-- Must have `vehicle.year` and `vehicle.body_type`
-- Valid promoted listings (not expired)
+- All Active listings (filtered at SQL level)
+- Listings with or without vehicle data
 
 **Excluded**:
 - Current listing (the one being viewed)
 - Paused/Closed listings (filtered out by `status = Active`)
-- Listings missing required vehicle data
 
 ### Caching
 

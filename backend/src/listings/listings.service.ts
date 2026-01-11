@@ -1037,10 +1037,6 @@ export class ListingsService {
       return [];
     }
 
-    if (!current.vehicle || !current.vehicle.year || !current.vehicle.body_type) {
-      return [];
-    }
-
     const cacheKey = generateCacheKey({
       prefix: CACHE_PREFIXES.listingsSimilar,
       parts: [listingId],
@@ -1056,7 +1052,9 @@ export class ListingsService {
     }
 
     const candidates = await this.fetchSimilarCandidates(current);
-    const diversified = this.applySellerDiversification(candidates, 2);
+    const uniqueSellers = new Set(candidates.map((l) => l.user_id)).size;
+    const maxPerSeller = uniqueSellers <= 2 ? 8 : 2;
+    const diversified = this.applySellerDiversification(candidates, maxPerSeller);
     const result = diversified.slice(0, 8);
 
     try {
@@ -1070,15 +1068,15 @@ export class ListingsService {
 
   private async fetchSimilarCandidates(current: Listing): Promise<Listing[]> {
     const { vehicle } = current;
-    if (!vehicle) {
-      return [];
-    }
-
-    const { year, body_type, brand_id, model_id } = vehicle;
     const { price, city, id: currentId } = current;
 
-    const yearMin = year - 5;
-    const yearMax = year + 5;
+    const year = vehicle?.year;
+    const body_type = vehicle?.body_type;
+    const brand_id = vehicle?.brand_id;
+    const model_id = vehicle?.model_id;
+
+    const yearMin = year ? year - 5 : null;
+    const yearMax = year ? year + 5 : null;
     const priceMin = price ? price * 0.5 : null;
     const priceMax = price ? price * 1.5 : null;
 
@@ -1090,33 +1088,40 @@ export class ListingsService {
       .leftJoinAndSelect('listing.user', 'user')
       .where('listing.status = :status', { status: ListingStatusEnum.Active })
       .andWhere('listing.id != :currentId', { currentId })
-      .andWhere('vehicle.year IS NOT NULL')
-      .andWhere('vehicle.body_type IS NOT NULL')
-      .andWhere(
-        '(listing.is_promoted = false OR (listing.is_promoted = true AND (listing.promoted_until IS NULL OR listing.promoted_until > NOW())))',
-      )
       .limit(50);
 
     const listings = await queryBuilder.getMany();
 
     const currentCityNormalized = city ? city.trim().toLowerCase() : '';
 
-    const listingsWithMetadata = listings.map((listing): ListingWithSimilarityMetadata | null => {
-      if (!listing.vehicle) {
-        return null;
-      }
-
+    const listingsWithMetadata = listings.map((listing): ListingWithSimilarityMetadata => {
       const v = listing.vehicle;
       let bucketPriority = 6;
 
-      if (v.brand_id === brand_id && v.model_id === model_id) {
-        if (v.year >= yearMin && v.year <= yearMax) {
+      if (v && brand_id && model_id && v.brand_id === brand_id && v.model_id === model_id) {
+        if (
+          yearMin !== null &&
+          yearMax !== null &&
+          v.year &&
+          v.year >= yearMin &&
+          v.year <= yearMax
+        ) {
           bucketPriority = 1;
         }
       }
 
-      if (bucketPriority === 6 && v.brand_id === brand_id && v.body_type === body_type) {
+      if (
+        bucketPriority === 6 &&
+        v &&
+        brand_id &&
+        body_type &&
+        v.brand_id === brand_id &&
+        v.body_type === body_type
+      ) {
         if (
+          yearMin !== null &&
+          yearMax !== null &&
+          v.year &&
           v.year >= yearMin &&
           v.year <= yearMax &&
           priceMin !== null &&
@@ -1128,8 +1133,11 @@ export class ListingsService {
         }
       }
 
-      if (bucketPriority === 6 && v.body_type === body_type) {
+      if (bucketPriority === 6 && v && body_type && v.body_type === body_type) {
         if (
+          yearMin !== null &&
+          yearMax !== null &&
+          v.year &&
           v.year >= yearMin &&
           v.year <= yearMax &&
           priceMin !== null &&
@@ -1150,6 +1158,10 @@ export class ListingsService {
 
       if (
         bucketPriority === 6 &&
+        v &&
+        yearMin !== null &&
+        yearMax !== null &&
+        v.year &&
         v.year >= yearMin &&
         v.year <= yearMax &&
         priceMin !== null &&
@@ -1172,19 +1184,20 @@ export class ListingsService {
       return listingWithMetadata;
     });
 
-    const validListings = listingsWithMetadata.filter(
-      (l): l is ListingWithSimilarityMetadata => l !== null,
-    );
-
-    validListings.sort((a, b) => {
+    const now = new Date();
+    listingsWithMetadata.sort((a, b) => {
       const priorityA = a.__bucket_priority ?? 999;
       const priorityB = b.__bucket_priority ?? 999;
       if (priorityA !== priorityB) {
         return priorityA - priorityB;
       }
 
-      const promotedA = a.is_promoted ? 1 : 0;
-      const promotedB = b.is_promoted ? 1 : 0;
+      const isActivelyPromotedA =
+        a.is_promoted && (!a.promoted_until || new Date(a.promoted_until) > now);
+      const isActivelyPromotedB =
+        b.is_promoted && (!b.promoted_until || new Date(b.promoted_until) > now);
+      const promotedA = isActivelyPromotedA ? 1 : 0;
+      const promotedB = isActivelyPromotedB ? 1 : 0;
       if (promotedA !== promotedB) {
         return promotedB - promotedA;
       }
@@ -1198,7 +1211,7 @@ export class ListingsService {
       return new Date(b.last_updated_at).getTime() - new Date(a.last_updated_at).getTime();
     });
 
-    return validListings.map(({ __bucket_priority, __same_city, ...listing }) => listing);
+    return listingsWithMetadata.map(({ __bucket_priority, __same_city, ...listing }) => listing);
   }
 
   private applySellerDiversification(listings: Listing[], maxPerSeller: number): Listing[] {
