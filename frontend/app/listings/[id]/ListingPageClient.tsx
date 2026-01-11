@@ -835,7 +835,7 @@ export default function ListingPageClient({
           </div>
         </div>
 
-        {listing && <SimilarListings listingId={listing.id} currentCity={listing.city} />}
+        {listing && <SimilarListings listingId={listing.id} />}
       </div>
 
       <ListingPageImageModal
