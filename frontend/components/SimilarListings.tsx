@@ -12,7 +12,6 @@ import { useFavoritesStore } from '@/lib/store';
 
 interface SimilarListingsProps {
   listingId: string;
-  currentCity?: string;
 }
 
 interface SimilarListingCardProps {
@@ -59,7 +58,7 @@ function SimilarListingCard({
     return () => {
       cardElement.removeEventListener('click', handleClick);
     };
-  }, [listing.id, position, listingId, onCardClick]);
+  }, [listing.id, position, onCardClick]);
 
   return (
     <div ref={cardRef} className="[&_.card]:bg-bg-darker">
@@ -70,10 +69,8 @@ function SimilarListingCard({
 
 export function SimilarListings({ listingId }: SimilarListingsProps) {
   const { t } = useTranslation();
-  const [loadedListings, setLoadedListings] = useState<Listing[]>([]);
+  const [listings, setListings] = useState<Listing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [hasLoadedFirst, setHasLoadedFirst] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const sectionRef = useRef<HTMLElement>(null);
   const hasTrackedImpression = useRef(false);
@@ -82,20 +79,13 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
       listingsApi
-        .getSimilar(listingId, 5, 0)
+        .getSimilar(listingId, 8, 0)
         .then((response) => {
           if (!controller.signal.aborted) {
-            const data = response.data || [];
-            setLoadedListings(data);
-            setMaxLoaded(Math.max(data.length, 8));
-            setHasLoadedFirst(true);
+            setListings(response.data || []);
           }
         })
-        .catch(() => {
-          if (!controller.signal.aborted) {
-            setHasLoadedFirst(true);
-          }
-        })
+        .catch(() => {})
         .finally(() => {
           if (!controller.signal.aborted) {
             setIsLoading(false);
@@ -110,14 +100,14 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
   }, [listingId]);
 
   useEffect(() => {
-    if (!sectionRef.current || hasTrackedImpression.current) return;
+    if (!sectionRef.current || hasTrackedImpression.current || listings.length === 0) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting && !hasTrackedImpression.current) {
             hasTrackedImpression.current = true;
-            analytics.similarBlockImpression(listingId, loadedListings.length);
+            analytics.similarBlockImpression(listingId, listings.length);
             observer.disconnect();
           }
         });
@@ -130,44 +120,20 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
     return () => {
       observer.disconnect();
     };
-  }, [listingId, loadedListings.length]);
-
-  const loadNextListing = useCallback(() => {
-    if (isLoadingMore) return;
-
-    const currentCount = loadedListings.length;
-    setIsLoadingMore(true);
-    listingsApi
-      .getSimilar(listingId, 1, currentCount)
-      .then((response) => {
-        if (response.data && response.data.length > 0) {
-          setLoadedListings((prev) => [...prev, ...response.data]);
-          setMaxLoaded((prev) => prev + 1);
-        }
-      })
-      .catch(() => {})
-      .finally(() => {
-        setIsLoadingMore(false);
-      });
-  }, [listingId, loadedListings.length, isLoadingMore]);
+  }, [listingId, listings.length]);
 
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
   const [currentPosition, setCurrentPosition] = useState(1);
-  const [maxLoaded, setMaxLoaded] = useState(5);
 
   const updateScrollButtons = useCallback(() => {
     const container = containerRef.current;
     if (!container) return;
 
     const { scrollLeft, scrollWidth, clientWidth } = container;
-    const isAtStart = scrollLeft <= 1;
-    const isAtEnd = scrollLeft + clientWidth >= scrollWidth - 1;
-    const hasMoreToLoad = loadedListings.length < maxLoaded && !isLoadingMore;
-
-    setCanScrollLeft(!isAtStart);
-    setCanScrollRight(!isAtEnd || hasMoreToLoad);
-  }, [loadedListings.length, maxLoaded, isLoadingMore]);
+    setCanScrollLeft(scrollLeft > 1);
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 1);
+  }, []);
 
   const handleScrollLeft = useCallback(() => {
     const container = containerRef.current;
@@ -185,10 +151,7 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
     });
 
     setCurrentPosition((prev) => Math.max(1, prev - 1));
-
-    setTimeout(() => {
-      updateScrollButtons();
-    }, 600);
+    setTimeout(updateScrollButtons, 400);
   }, [canScrollLeft, updateScrollButtons]);
 
   const handleScrollRight = useCallback(() => {
@@ -201,61 +164,20 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
     const cardWidth = cards[0].offsetWidth;
     const gap = 16;
 
-    const currentScroll = container.scrollLeft;
-    const maxScroll = container.scrollWidth - container.clientWidth;
-    const willReachEnd = currentScroll + cardWidth + gap >= maxScroll - 50;
+    container.scrollBy({
+      left: cardWidth + gap,
+      behavior: 'smooth',
+    });
 
-    if (willReachEnd && !isLoadingMore && loadedListings.length < maxLoaded) {
-      loadNextListing();
-      analytics.similarScroll(listingId);
-
-      setTimeout(() => {
-        container.scrollBy({
-          left: cardWidth + gap,
-          behavior: 'smooth',
-        });
-        setCurrentPosition((prev) => Math.min(prev + 1, 4));
-        updateScrollButtons();
-      }, 100);
-    } else {
-      container.scrollBy({
-        left: cardWidth + gap,
-        behavior: 'smooth',
-      });
-
-      setCurrentPosition((prev) => Math.min(prev + 1, 4));
-
-      setTimeout(() => {
-        updateScrollButtons();
-      }, 600);
-    }
-  }, [
-    canScrollRight,
-    isLoadingMore,
-    loadNextListing,
-    listingId,
-    updateScrollButtons,
-    loadedListings.length,
-    maxLoaded,
-  ]);
+    setCurrentPosition((prev) => Math.min(prev + 1, Math.min(4, listings.length)));
+    setTimeout(updateScrollButtons, 400);
+  }, [canScrollRight, updateScrollButtons, listings.length]);
 
   const handleCardClick = useCallback(
     (clickedListingId: string, position: number) => {
       analytics.similarCardClick(listingId, clickedListingId, position);
     },
     [listingId]
-  );
-
-  const handleScrollEvent = useCallback(
-    (e: React.UIEvent<HTMLDivElement>) => {
-      const { scrollLeft, scrollWidth, clientWidth } = e.currentTarget;
-      const scrollPercentage = (scrollLeft + clientWidth) / scrollWidth;
-
-      if (scrollPercentage > 0.8 && !isLoadingMore) {
-        loadNextListing();
-      }
-    },
-    [isLoadingMore, loadNextListing]
   );
 
   useEffect(() => {
@@ -283,10 +205,10 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
   }, [isLoading, updateScrollButtons]);
 
   useEffect(() => {
-    if (!isLoading && loadedListings.length > 0) {
+    if (!isLoading && listings.length > 0) {
       setTimeout(updateScrollButtons, 200);
     }
-  }, [isLoading, loadedListings.length, updateScrollButtons]);
+  }, [isLoading, listings.length, updateScrollButtons]);
 
   const [isTouchDevice, setIsTouchDevice] = useState(false);
 
@@ -307,10 +229,10 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
     };
   }, []);
 
-  const totalPositions = Math.min(4, maxLoaded);
-  const showButton = loadedListings.length > 0 && !isTouchDevice;
+  const totalPositions = Math.min(4, listings.length);
+  const showNavigation = listings.length > 1 && !isTouchDevice;
 
-  if (hasLoadedFirst && !isLoading && loadedListings.length === 0) {
+  if (!isLoading && listings.length === 0) {
     return null;
   }
 
@@ -326,7 +248,7 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
           <h2 className="text-xl md:text-2xl font-bold text-primary-400">
             {t('similarListings.title')}
           </h2>
-          {showButton && (
+          {showNavigation && (
             <div className="flex items-center gap-2 ml-auto">
               <button
                 type="button"
@@ -381,7 +303,6 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
             ref={containerRef}
             role="list"
             className="flex overflow-x-auto gap-4 scroll-smooth [&::-webkit-scrollbar]:hidden px-4 md:px-6"
-            onScroll={handleScrollEvent}
             style={{
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
@@ -389,7 +310,7 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
           >
             {isLoading ? (
               <SkeletonContainer isLoading={true} immediate={true} showDelay={0}>
-                {Array(5)
+                {Array(4)
                   .fill(null)
                   .map((_, i) => (
                     <div
@@ -402,27 +323,20 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
                   ))}
               </SkeletonContainer>
             ) : (
-              <>
-                {loadedListings.map((listing, i) => (
-                  <div
-                    key={listing.id}
-                    role="listitem"
-                    className="flex-shrink-0 w-[250px] md:w-[260px]"
-                  >
-                    <SimilarListingCard
-                      listing={listing}
-                      position={i + 1}
-                      listingId={listingId}
-                      onCardClick={handleCardClick}
-                    />
-                  </div>
-                ))}
-                {isLoadingMore && (
-                  <div role="listitem" className="flex-shrink-0 w-[250px] md:w-[260px]">
-                    <ListingCardSkeleton />
-                  </div>
-                )}
-              </>
+              listings.map((listing, i) => (
+                <div
+                  key={listing.id}
+                  role="listitem"
+                  className="flex-shrink-0 w-[250px] md:w-[260px]"
+                >
+                  <SimilarListingCard
+                    listing={listing}
+                    position={i + 1}
+                    listingId={listingId}
+                    onCardClick={handleCardClick}
+                  />
+                </div>
+              ))
             )}
           </div>
         </div>

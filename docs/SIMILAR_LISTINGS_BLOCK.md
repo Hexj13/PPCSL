@@ -19,18 +19,13 @@ The Similar Listings block is displayed at the bottom of the listing detail page
 - **Cards**: Reuses `ListingCard` component - identical to homepage listings
 - **Loading States**: Skeleton loaders with 200ms delay + 1s minimum display time
 
-### Loading Strategy (4 + 4)
+### Loading Strategy
 
-**Initial Load**:
-- Loads **4 listings** on component mount
+**Single Request**:
+- Loads **all 8 listings** on component mount in one request
 - Request starts after 100ms delay (non-blocking priority)
-- Shows skeleton loaders while fetching
-
-**Lazy Load**:
-- Loads **4 additional listings** when user scrolls to ~80% of container width
-- OR when user clicks navigation arrows near the end
-- Triggered automatically by scroll event or button interaction
-- Total maximum: 8 listings
+- Shows 4 skeleton loaders while fetching
+- No lazy loading — all data loaded upfront for simplicity and reliability
 
 ### Navigation
 
@@ -161,11 +156,8 @@ SimilarListings
 ### State Management
 
 ```typescript
-- firstBatch: Listing[]        // Initial 4 listings
-- secondBatch: Listing[]       // Lazy-loaded 4 listings
-- isLoadingFirst: boolean      // Loading state for first batch
-- isLoadingSecond: boolean     // Loading state for second batch
-- hasLoadedSecond: boolean     // Whether second batch was loaded
+- listings: Listing[]          // All loaded listings (up to 8)
+- isLoading: boolean           // Loading state
 - currentPosition: number      // Current scroll position (1-4)
 - canScrollLeft: boolean       // Whether left button is enabled
 - canScrollRight: boolean      // Whether right button is enabled
@@ -182,7 +174,6 @@ SimilarListings
 
 **Touch/Manual Scroll**:
 - Natural browser scrolling with 16px gap
-- When 80% scrolled: triggers second batch load
 - No forced snap points (removed for smoother UX)
 
 ### Loading States
@@ -191,12 +182,7 @@ SimilarListings
 - Shows 4 `ListingCardSkeleton` components
 - Request delayed by 100ms (non-blocking)
 - Skeletons follow 200ms + 1s pattern via `SkeletonContainer`
-
-**Second Batch Load**:
-- Triggers at 80% scroll or near-end button click
-- Shows 4 additional skeletons
-- Fetches `offset=4, limit=4`
-- Replaces skeletons with cards when loaded
+- All listings loaded in single request
 
 ### Error Handling
 
@@ -220,12 +206,7 @@ SimilarListings
    - Params: `listingId`, `clickedListingId`, `position` (1-8)
    - Tracks which similar listing was clicked
 
-3. **`similar_scroll`**
-   - Fires when second batch is loaded
-   - Params: `listingId`
-   - Indicates user engagement with scrolling
-
-4. **`similar_favorite_toggle`**
+3. **`similar_favorite_toggle`**
    - Fires when user toggles favorite on a card
    - Params: `listingId`, `targetListingId`, `action` (add/remove)
    - Tracks favorite interactions within block
@@ -259,10 +240,7 @@ SimilarListings
 ### Constants
 
 ```typescript
-FIRST_BATCH_SIZE = 4
-SECOND_BATCH_SIZE = 4
 TOTAL_MAX_RESULTS = 8
-SCROLL_TRIGGER_THRESHOLD = 0.8  // 80%
 LOAD_DELAY = 100  // ms
 CARD_GAP = 16  // px
 ```

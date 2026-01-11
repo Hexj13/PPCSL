@@ -7,7 +7,6 @@ jest.mock('@/lib/analytics', () => ({
   analytics: {
     similarBlockImpression: jest.fn(),
     similarCardClick: jest.fn(),
-    similarScroll: jest.fn(),
     similarFavoriteToggle: jest.fn(),
   },
 }));
@@ -81,7 +80,7 @@ const mockListing = (id: string, title: string) => ({
   last_updated_at: new Date().toISOString(),
 });
 
-describe('SimilarListings - P0 (Critical)', () => {
+describe('SimilarListings', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
@@ -116,8 +115,8 @@ describe('SimilarListings - P0 (Critical)', () => {
     expect(screen.getByText('Слични огласи')).toBeInTheDocument();
   });
 
-  it('should load first 5 listings on mount', async () => {
-    const listings = Array.from({ length: 5 }, (_, i) =>
+  it('should load all 8 listings on mount', async () => {
+    const listings = Array.from({ length: 8 }, (_, i) =>
       mockListing(`id-${i}`, `Listing ${i + 1}`)
     );
 
@@ -132,7 +131,7 @@ describe('SimilarListings - P0 (Critical)', () => {
     });
 
     await waitFor(() => {
-      expect(mockListingsApi.getSimilar).toHaveBeenCalledWith('test-id', 5, 0);
+      expect(mockListingsApi.getSimilar).toHaveBeenCalledWith('test-id', 8, 0);
     });
 
     await waitFor(() => {
@@ -142,88 +141,29 @@ describe('SimilarListings - P0 (Critical)', () => {
     });
   });
 
-  it('should load next listing when scrolling right at the end', async () => {
-    const initialListings = Array.from({ length: 5 }, (_, i) =>
-      mockListing(`id-${i}`, `Listing ${i + 1}`)
+  it('should show 4 skeletons while loading', async () => {
+    mockListingsApi.getSimilar.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({ data: [mockListing('1', 'Listing 1')] });
+          }, 200);
+        })
     );
-    const nextListing = mockListing('id-5', 'Listing 6');
 
-    mockListingsApi.getSimilar
-      .mockResolvedValueOnce({ data: initialListings })
-      .mockResolvedValueOnce({ data: [nextListing] });
-
-    const { container } = render(<SimilarListings listingId="test-id" />);
+    render(<SimilarListings listingId="test-id" />);
 
     await act(async () => {
-      jest.advanceTimersByTime(100);
+      jest.advanceTimersByTime(50);
     });
 
-    await waitFor(() => {
-      expect(screen.getByTestId('listing-card-id-0')).toBeInTheDocument();
-    });
-
-    await act(async () => {
-      jest.advanceTimersByTime(200);
-    });
-
-    await act(async () => {
-      jest.advanceTimersByTime(200);
-    });
-
-    const scrollContainer = container.querySelector('[role="list"]') as HTMLElement;
-    if (!scrollContainer) {
-      throw new Error('Scroll container not found');
-    }
-
-    const cardWidth = 260;
-    const gap = 16;
-    const scrollWidth = 2000;
-    const clientWidth = 1000;
-    const maxScroll = scrollWidth - clientWidth;
-    const scrollLeft = maxScroll - cardWidth - gap - 10;
-
-    Object.defineProperty(scrollContainer, 'scrollLeft', {
-      get: () => scrollLeft,
-      configurable: true,
-    });
-    Object.defineProperty(scrollContainer, 'scrollWidth', {
-      get: () => scrollWidth,
-      configurable: true,
-    });
-    Object.defineProperty(scrollContainer, 'clientWidth', {
-      get: () => clientWidth,
-      configurable: true,
-    });
-    scrollContainer.scrollBy = jest.fn();
-    scrollContainer.scrollTo = jest.fn();
-
-    await act(async () => {
-      fireEvent.scroll(scrollContainer);
-      jest.advanceTimersByTime(100);
-    });
-
-    const rightButton = screen.getByLabelText('Scroll right');
-
-    await act(async () => {
-      fireEvent.click(rightButton);
-      jest.advanceTimersByTime(100);
-    });
-
-    await waitFor(
-      () => {
-        expect(mockListingsApi.getSimilar).toHaveBeenCalledWith('test-id', 1, 5);
-      },
-      { timeout: 3000 }
-    );
+    expect(screen.getByTestId('skeleton-container')).toBeInTheDocument();
+    expect(screen.getAllByTestId('listing-card-skeleton')).toHaveLength(4);
   });
 
-  it('should not load when scrolling left', async () => {
-    const listings = Array.from({ length: 5 }, (_, i) =>
-      mockListing(`id-${i}`, `Listing ${i + 1}`)
-    );
-
+  it('should not render if no listings returned', async () => {
     mockListingsApi.getSimilar.mockResolvedValue({
-      data: listings,
+      data: [],
     });
 
     const { container } = render(<SimilarListings listingId="test-id" />);
@@ -233,53 +173,26 @@ describe('SimilarListings - P0 (Critical)', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId('listing-card-id-0')).toBeInTheDocument();
-    });
-
-    await act(async () => {
-      jest.advanceTimersByTime(200);
-    });
-
-    const scrollContainer = container.querySelector('[role="list"]') as HTMLElement;
-    if (!scrollContainer) {
-      throw new Error('Scroll container not found');
-    }
-
-    Object.defineProperty(scrollContainer, 'scrollLeft', {
-      get: () => 500,
-      configurable: true,
-    });
-    Object.defineProperty(scrollContainer, 'scrollWidth', {
-      get: () => 2000,
-      configurable: true,
-    });
-    Object.defineProperty(scrollContainer, 'clientWidth', {
-      get: () => 1000,
-      configurable: true,
-    });
-    scrollContainer.scrollBy = jest.fn();
-    scrollContainer.scrollTo = jest.fn();
-
-    await act(async () => {
-      fireEvent.scroll(scrollContainer);
-      jest.advanceTimersByTime(100);
-    });
-
-    const leftButton = screen.getByLabelText('Scroll left');
-    expect(leftButton).not.toBeDisabled();
-
-    await act(async () => {
-      fireEvent.click(leftButton);
-      jest.advanceTimersByTime(600);
-    });
-
-    await waitFor(() => {
-      expect(mockListingsApi.getSimilar).toHaveBeenCalledTimes(1);
+      expect(container.firstChild).toBeNull();
     });
   });
 
-  it('should update position counter when scrolling', async () => {
-    const listings = Array.from({ length: 5 }, (_, i) =>
+  it('should handle API errors gracefully', async () => {
+    mockListingsApi.getSimilar.mockRejectedValue(new Error('API Error'));
+
+    const { container } = render(<SimilarListings listingId="test-id" />);
+
+    await act(async () => {
+      jest.advanceTimersByTime(100);
+    });
+
+    await waitFor(() => {
+      expect(container.firstChild).toBeNull();
+    });
+  });
+
+  it('should update position counter when scrolling right', async () => {
+    const listings = Array.from({ length: 4 }, (_, i) =>
       mockListing(`id-${i}`, `Listing ${i + 1}`)
     );
 
@@ -315,7 +228,6 @@ describe('SimilarListings - P0 (Critical)', () => {
       configurable: true,
     });
     scrollContainer.scrollBy = jest.fn();
-    scrollContainer.scrollTo = jest.fn();
 
     await act(async () => {
       jest.advanceTimersByTime(200);
@@ -325,11 +237,7 @@ describe('SimilarListings - P0 (Critical)', () => {
 
     await act(async () => {
       fireEvent.click(rightButton);
-      jest.advanceTimersByTime(600);
-    });
-
-    await act(async () => {
-      jest.advanceTimersByTime(600);
+      jest.advanceTimersByTime(400);
     });
 
     await waitFor(() => {
@@ -337,40 +245,9 @@ describe('SimilarListings - P0 (Critical)', () => {
       expect(counter).toBeInTheDocument();
     });
   });
-});
-
-describe('SimilarListings - P1 (Important)', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers();
-    global.IntersectionObserver = jest.fn().mockImplementation((_callback) => {
-      const mockEntry = {
-        isIntersecting: true,
-        target: document.createElement('div'),
-      };
-      setTimeout(() => _callback([mockEntry]), 0);
-      return {
-        observe: jest.fn(),
-        disconnect: jest.fn(),
-        unobserve: jest.fn(),
-      };
-    });
-    global.ResizeObserver = jest.fn().mockImplementation(() => {
-      return {
-        observe: jest.fn(),
-        disconnect: jest.fn(),
-        unobserve: jest.fn(),
-      };
-    });
-  });
-
-  afterEach(() => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
-  });
 
   it('should send analytics impression when block is visible', async () => {
-    const listings = Array.from({ length: 5 }, (_, i) =>
+    const listings = Array.from({ length: 4 }, (_, i) =>
       mockListing(`id-${i}`, `Listing ${i + 1}`)
     );
 
@@ -411,73 +288,18 @@ describe('SimilarListings - P1 (Important)', () => {
     });
 
     await waitFor(() => {
-      expect(mockAnalytics.similarBlockImpression).toHaveBeenCalledWith('test-id', 5);
+      expect(mockAnalytics.similarBlockImpression).toHaveBeenCalledWith('test-id', 4);
     });
   });
 
-  it('should show skeletons while loading', async () => {
-    mockListingsApi.getSimilar.mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          setTimeout(() => {
-            resolve({ data: [mockListing('1', 'Listing 1')] });
-          }, 200);
-        })
-    );
-
-    render(<SimilarListings listingId="test-id" />);
-
-    await act(async () => {
-      jest.advanceTimersByTime(50);
-    });
-
-    expect(screen.getByTestId('skeleton-container')).toBeInTheDocument();
-    expect(screen.getAllByTestId('listing-card-skeleton')).toHaveLength(5);
-  });
-
-  it('should not render if no listings returned', async () => {
-    mockListingsApi.getSimilar.mockResolvedValue({
-      data: [],
-    });
-
-    const { container } = render(<SimilarListings listingId="test-id" />);
-
-    await act(async () => {
-      jest.advanceTimersByTime(100);
-    });
-
-    await waitFor(() => {
-      expect(container.firstChild).toBeNull();
-    });
-  });
-
-  it('should handle API errors gracefully', async () => {
-    mockListingsApi.getSimilar.mockRejectedValue(new Error('API Error'));
-
-    const { container } = render(<SimilarListings listingId="test-id" />);
-
-    await act(async () => {
-      jest.advanceTimersByTime(100);
-    });
-
-    await waitFor(() => {
-      expect(container.firstChild).toBeNull();
-    });
-  });
-
-  it('should show loading skeleton for next listing when loading more', async () => {
-    const initialListings = Array.from({ length: 5 }, (_, i) =>
+  it('should scroll left when left button is clicked', async () => {
+    const listings = Array.from({ length: 4 }, (_, i) =>
       mockListing(`id-${i}`, `Listing ${i + 1}`)
     );
 
-    mockListingsApi.getSimilar.mockResolvedValueOnce({ data: initialListings }).mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          setTimeout(() => {
-            resolve({ data: [mockListing('id-5', 'Listing 6')] });
-          }, 200);
-        })
-    );
+    mockListingsApi.getSimilar.mockResolvedValue({
+      data: listings,
+    });
 
     const { container } = render(<SimilarListings listingId="test-id" />);
 
@@ -489,8 +311,58 @@ describe('SimilarListings - P1 (Important)', () => {
       expect(screen.getByTestId('listing-card-id-0')).toBeInTheDocument();
     });
 
+    const scrollContainer = container.querySelector('[role="list"]') as HTMLElement;
+    if (!scrollContainer) {
+      throw new Error('Scroll container not found');
+    }
+
+    Object.defineProperty(scrollContainer, 'scrollLeft', {
+      get: () => 500,
+      configurable: true,
+    });
+    Object.defineProperty(scrollContainer, 'scrollWidth', {
+      get: () => 2000,
+      configurable: true,
+    });
+    Object.defineProperty(scrollContainer, 'clientWidth', {
+      get: () => 1000,
+      configurable: true,
+    });
+    scrollContainer.scrollBy = jest.fn();
+
     await act(async () => {
-      jest.advanceTimersByTime(200);
+      fireEvent.scroll(scrollContainer);
+      jest.advanceTimersByTime(100);
+    });
+
+    const leftButton = screen.getByLabelText('Scroll left');
+    expect(leftButton).not.toBeDisabled();
+
+    await act(async () => {
+      fireEvent.click(leftButton);
+      jest.advanceTimersByTime(400);
+    });
+
+    expect(scrollContainer.scrollBy).toHaveBeenCalled();
+  });
+
+  it('should only call API once (no lazy loading)', async () => {
+    const listings = Array.from({ length: 8 }, (_, i) =>
+      mockListing(`id-${i}`, `Listing ${i + 1}`)
+    );
+
+    mockListingsApi.getSimilar.mockResolvedValue({
+      data: listings,
+    });
+
+    const { container } = render(<SimilarListings listingId="test-id" />);
+
+    await act(async () => {
+      jest.advanceTimersByTime(100);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('listing-card-id-0')).toBeInTheDocument();
     });
 
     const scrollContainer = container.querySelector('[role="list"]') as HTMLElement;
@@ -498,42 +370,24 @@ describe('SimilarListings - P1 (Important)', () => {
       throw new Error('Scroll container not found');
     }
 
-    const cardWidth = 260;
-    const gap = 16;
-    const scrollWidth = 2000;
-    const clientWidth = 1000;
-    const maxScroll = scrollWidth - clientWidth;
-    const scrollLeft = maxScroll - cardWidth - gap - 10;
-
     Object.defineProperty(scrollContainer, 'scrollLeft', {
-      get: () => scrollLeft,
+      get: () => 900,
       configurable: true,
     });
     Object.defineProperty(scrollContainer, 'scrollWidth', {
-      get: () => scrollWidth,
+      get: () => 1000,
       configurable: true,
     });
     Object.defineProperty(scrollContainer, 'clientWidth', {
-      get: () => clientWidth,
+      get: () => 100,
       configurable: true,
     });
-    scrollContainer.scrollBy = jest.fn();
-    scrollContainer.scrollTo = jest.fn();
 
     await act(async () => {
       fireEvent.scroll(scrollContainer);
-      jest.advanceTimersByTime(100);
+      jest.advanceTimersByTime(500);
     });
 
-    const rightButton = screen.getByLabelText('Scroll right');
-
-    await act(async () => {
-      fireEvent.click(rightButton);
-      jest.advanceTimersByTime(50);
-    });
-
-    await waitFor(() => {
-      expect(mockListingsApi.getSimilar).toHaveBeenCalledTimes(2);
-    });
+    expect(mockListingsApi.getSimilar).toHaveBeenCalledTimes(1);
   });
 });
