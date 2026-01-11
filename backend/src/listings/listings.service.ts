@@ -46,6 +46,7 @@ export class ListingsService {
   private readonly CACHE_TTL_SEARCH = CACHE_TTL.listings.search;
   private readonly CACHE_TTL_SINGLE = CACHE_TTL.listings.single;
   private readonly CACHE_TTL_USER = CACHE_TTL.listings.userListings;
+  private readonly CACHE_TTL_SIMILAR = CACHE_TTL.listings.similar;
 
   constructor(
     @InjectRepository(Listing)
@@ -1020,5 +1021,194 @@ export class ListingsService {
       where: { user_id: userId },
     });
     return count > 0;
+  }
+
+  async findSimilar(listingId: string, limit: number = 4, offset: number = 0): Promise<Listing[]> {
+    const normalizedLimit = Math.min(Math.max(1, limit || 4), 8);
+    const normalizedOffset = Math.max(0, offset || 0);
+
+    const current = await this.findOne(listingId);
+    if (!current || current.status !== ListingStatusEnum.Active) {
+      return [];
+    }
+
+    if (!current.vehicle || !current.vehicle.year || !current.vehicle.body_type) {
+      return [];
+    }
+
+    const cacheKey = generateCacheKey({
+      prefix: CACHE_PREFIXES.listingsSimilar,
+      parts: [listingId],
+    });
+
+    try {
+      const cached = await this.redisService.getJson<Listing[]>(cacheKey);
+      if (cached) {
+        return cached.slice(normalizedOffset, normalizedOffset + normalizedLimit);
+      }
+    } catch {
+      // Ignore cache errors
+    }
+
+    const candidates = await this.fetchSimilarCandidates(current);
+    const diversified = this.applySellerDiversification(candidates, 2);
+    const result = diversified.slice(0, 8);
+
+    try {
+      await this.redisService.setJson(cacheKey, result, this.CACHE_TTL_SIMILAR);
+    } catch {
+      // Ignore cache errors
+    }
+
+    return result.slice(normalizedOffset, normalizedOffset + normalizedLimit);
+  }
+
+  private async fetchSimilarCandidates(current: Listing): Promise<Listing[]> {
+    const { vehicle } = current;
+    if (!vehicle) {
+      return [];
+    }
+
+    const { year, body_type, brand_id, model_id } = vehicle;
+    const { price, city, id: currentId } = current;
+
+    const yearMin = year - 5;
+    const yearMax = year + 5;
+    const priceMin = price ? price * 0.5 : null;
+    const priceMax = price ? price * 1.5 : null;
+
+    const queryBuilder = this.listingsRepository
+      .createQueryBuilder('listing')
+      .leftJoinAndSelect('listing.vehicle', 'vehicle')
+      .leftJoinAndSelect('vehicle.brand', 'brand')
+      .leftJoinAndSelect('vehicle.model', 'model')
+      .leftJoinAndSelect('listing.user', 'user')
+      .where('listing.status = :status', { status: ListingStatusEnum.Active })
+      .andWhere('listing.id != :currentId', { currentId })
+      .andWhere('vehicle.year IS NOT NULL')
+      .andWhere('vehicle.body_type IS NOT NULL')
+      .andWhere(
+        '(listing.is_promoted = false OR (listing.is_promoted = true AND (listing.promoted_until IS NULL OR listing.promoted_until > NOW())))',
+      )
+      .limit(50);
+
+    const listings = await queryBuilder.getMany();
+
+    const currentCityNormalized = city ? city.trim().toLowerCase() : '';
+
+    const listingsWithMetadata = listings.map((listing) => {
+      if (!listing.vehicle) {
+        return null;
+      }
+
+      const v = listing.vehicle;
+      let bucketPriority = 6;
+
+      if (v.brand_id === brand_id && v.model_id === model_id) {
+        if (v.year >= yearMin && v.year <= yearMax) {
+          bucketPriority = 1;
+        }
+      }
+
+      if (bucketPriority === 6 && v.brand_id === brand_id && v.body_type === body_type) {
+        if (
+          v.year >= yearMin &&
+          v.year <= yearMax &&
+          priceMin !== null &&
+          priceMax !== null &&
+          listing.price >= priceMin &&
+          listing.price <= priceMax
+        ) {
+          bucketPriority = 2;
+        }
+      }
+
+      if (bucketPriority === 6 && v.body_type === body_type) {
+        if (
+          v.year >= yearMin &&
+          v.year <= yearMax &&
+          priceMin !== null &&
+          priceMax !== null &&
+          listing.price >= priceMin &&
+          listing.price <= priceMax
+        ) {
+          bucketPriority = 3;
+        } else if (
+          priceMin !== null &&
+          priceMax !== null &&
+          listing.price >= priceMin &&
+          listing.price <= priceMax
+        ) {
+          bucketPriority = 4;
+        }
+      }
+
+      if (
+        bucketPriority === 6 &&
+        v.year >= yearMin &&
+        v.year <= yearMax &&
+        priceMin !== null &&
+        priceMax !== null &&
+        listing.price >= priceMin &&
+        listing.price <= priceMax
+      ) {
+        bucketPriority = 5;
+      }
+
+      const listingCityNormalized = listing.city ? listing.city.trim().toLowerCase() : '';
+      const sameCity = listingCityNormalized === currentCityNormalized ? 1 : 0;
+
+      (listing as any).__bucket_priority = bucketPriority;
+      (listing as any).__same_city = sameCity;
+
+      return listing;
+    });
+
+    const validListings = listingsWithMetadata.filter((l): l is Listing => l !== null);
+
+    validListings.sort((a, b) => {
+      const priorityA = (a as any).__bucket_priority || 999;
+      const priorityB = (b as any).__bucket_priority || 999;
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+
+      const promotedA = a.is_promoted ? 1 : 0;
+      const promotedB = b.is_promoted ? 1 : 0;
+      if (promotedA !== promotedB) {
+        return promotedB - promotedA;
+      }
+
+      const sameCityA = (a as any).__same_city || 0;
+      const sameCityB = (b as any).__same_city || 0;
+      if (sameCityA !== sameCityB) {
+        return sameCityB - sameCityA;
+      }
+
+      return new Date(b.last_updated_at).getTime() - new Date(a.last_updated_at).getTime();
+    });
+
+    return validListings;
+  }
+
+  private applySellerDiversification(listings: Listing[], maxPerSeller: number): Listing[] {
+    const sellerCount = new Map<string, number>();
+    const result: Listing[] = [];
+
+    for (const listing of listings) {
+      const sellerId = listing.user_id;
+      const count = sellerCount.get(sellerId) || 0;
+
+      if (count < maxPerSeller) {
+        result.push(listing);
+        sellerCount.set(sellerId, count + 1);
+      }
+
+      if (result.length >= 8) {
+        break;
+      }
+    }
+
+    return result;
   }
 }

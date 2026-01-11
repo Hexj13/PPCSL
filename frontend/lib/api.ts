@@ -504,6 +504,16 @@ export const listingsApi = {
       isAdmin: boolean;
       canPromote: boolean;
     }>('/api/listings/promotion-access'),
+  getSimilar: (id: string, limit: number = 4, offset: number = 0) => {
+    const params = new URLSearchParams();
+    params.set('limit', limit.toString());
+    params.set('offset', offset.toString());
+    return api.get<Listing[]>(`/api/listings/${id}/similar?${params.toString()}`, {
+      headers: {
+        'X-Skip-Error-Handling': 'true',
+      },
+    });
+  },
 };
 
 export const uploadApi = {

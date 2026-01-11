@@ -23,6 +23,7 @@ import {
   BadgesSkeleton,
 } from '@/components/ListingPageSkeleton';
 import { PromotionModal } from '@/components/PromotionModal';
+import { SimilarListings } from '@/components/SimilarListings';
 import { UserListingsModal } from '@/components/UserListingsModal';
 import { useListingData } from '@/hooks/useListingData';
 import { useLoadingState } from '@/hooks/useLoadingState';
@@ -471,8 +472,8 @@ export default function ListingPageClient({
           items={[{ label: t('listingDetail.home'), href: '/' }, { label: listing.title }]}
           className="mb-6"
         />
-        <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-6 md:gap-8">
-          <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.86fr_1fr] gap-6">
+          <div className="space-y-6 min-w-0">
             <ListingPageImages
               images={images}
               imageAltTitle={imageAltTitle}
@@ -486,7 +487,7 @@ export default function ListingPageClient({
             />
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-6 min-w-0">
             <ListingPageHeader listing={listing} title={h1Title} />
             <ListingPageActions
               listing={listing}
@@ -513,12 +514,12 @@ export default function ListingPageClient({
 
         <div className="border-t border-primary-500/20 my-8"></div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-6 md:gap-8">
-          <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.86fr_1fr] gap-6">
+          <div className="space-y-6 min-w-0">
             {vehicle && <ListingPageCharacteristics listing={listing} />}
 
             {listing.equipment && listing.equipment.length > 0 && (
-              <div className="surface">
+              <div className="surface overflow-hidden">
                 <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-400">
                   {t('listingDetail.equipment')}
                 </h2>
@@ -541,7 +542,7 @@ export default function ListingPageClient({
             {(listing.condition ||
               listing.registration_type ||
               listing.is_registered !== undefined) && (
-              <div className="surface">
+              <div className="surface overflow-hidden">
                 <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-400">
                   {t('listingDetail.conditionAndRegistration')}
                 </h2>
@@ -597,9 +598,9 @@ export default function ListingPageClient({
               </div>
             )}
 
-            <div className="surface">
-              <div className="flex items-center gap-2 mb-4">
-                <h2 className="text-xl md:text-2xl font-bold text-primary-400">
+            <div className="surface overflow-hidden">
+              <div className="flex items-center gap-2 mb-4 min-w-0">
+                <h2 className="text-xl md:text-2xl font-bold text-primary-400 min-w-0 break-words">
                   {listing.vin
                     ? t('listingDetail.previousListings')
                     : t('listingDetail.vehicleHistory')}
@@ -739,7 +740,7 @@ export default function ListingPageClient({
             </div>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-6 min-w-0">
             <ListingPageSeller
               listing={listing}
               listingId={id}
@@ -747,12 +748,12 @@ export default function ListingPageClient({
               onOpenUserListings={() => setIsUserListingsModalOpen(true)}
             />
 
-            <div className="surface">
-              <div className="space-y-3">
+            <div className="surface overflow-hidden">
+              <div className="space-y-3 break-words">
                 {listing.views !== undefined && listing.views > 0 && (
-                  <div className="flex items-center gap-2 text-base">
+                  <div className="flex items-center gap-2 text-base min-w-0">
                     <svg
-                      className="w-4 h-4 text-primary-400"
+                      className="w-4 h-4 text-primary-400 flex-shrink-0"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -770,15 +771,20 @@ export default function ListingPageClient({
                         d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                       />
                     </svg>
-                    <span className="font-semibold text-primary-400">
+                    <span className="font-semibold text-primary-400 flex-shrink-0">
                       {t('listingDetail.views')}:
                     </span>
-                    <span style={{ color: 'rgb(var(--text-secondary-rgb))' }}>{listing.views}</span>
+                    <span
+                      className="min-w-0 break-words"
+                      style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+                    >
+                      {listing.views}
+                    </span>
                   </div>
                 )}
-                <div className="flex items-center gap-2 text-base">
+                <div className="flex items-center gap-2 text-base min-w-0">
                   <svg
-                    className="w-4 h-4 text-primary-400"
+                    className="w-4 h-4 text-primary-400 flex-shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -790,16 +796,19 @@ export default function ListingPageClient({
                       d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  <span className="font-semibold text-primary-400">
+                  <span className="font-semibold text-primary-400 flex-shrink-0">
                     {t('listingDetail.updated')}:
                   </span>
-                  <span style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
+                  <span
+                    className="min-w-0 break-words"
+                    style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+                  >
                     {formatDate(listing.last_updated_at)}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 text-base">
+                <div className="flex items-center gap-2 text-base min-w-0">
                   <svg
-                    className="w-4 h-4 text-primary-400"
+                    className="w-4 h-4 text-primary-400 flex-shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -811,10 +820,13 @@ export default function ListingPageClient({
                       d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                     />
                   </svg>
-                  <span className="font-semibold text-primary-400">
+                  <span className="font-semibold text-primary-400 flex-shrink-0">
                     {t('listingDetail.willClose')}:
                   </span>
-                  <span style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
+                  <span
+                    className="min-w-0 break-words"
+                    style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+                  >
                     {formatDate(closingDate)}
                   </span>
                 </div>
@@ -822,6 +834,8 @@ export default function ListingPageClient({
             </div>
           </div>
         </div>
+
+        {listing && <SimilarListings listingId={listing.id} currentCity={listing.city} />}
       </div>
 
       <ListingPageImageModal

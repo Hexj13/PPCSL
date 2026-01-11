@@ -29,6 +29,7 @@ import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 
 import { CreateListingDto } from './dto/create-listing.dto';
 import { SearchListingsDto } from './dto/search-listings.dto';
+import { SimilarListingsQueryDto } from './dto/similar-listings.dto';
 import { TogglePromotionDto } from './dto/toggle-promotion.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
 import { ListingsService } from './listings.service';
@@ -225,6 +226,48 @@ export class ListingsController {
       isAdmin: isAdmin || false,
       canPromote,
     };
+  }
+
+  @ApiOperation({ summary: 'Get similar listings' })
+  @ApiParam({
+    name: 'id',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+    description: 'Listing UUID',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Number of listings to return (1-8)',
+    example: 4,
+  })
+  @ApiQuery({
+    name: 'offset',
+    required: false,
+    type: Number,
+    description: 'Offset for pagination',
+    example: 0,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of similar listings',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'array',
+          items: { type: 'object' },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid parameters' })
+  @ApiResponse({ status: 404, description: 'Listing not found' })
+  @Get(':id/similar')
+  async findSimilar(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: SimilarListingsQueryDto,
+  ) {
+    return this.listingsService.findSimilar(id, query.limit, query.offset);
   }
 
   @ApiOperation({ summary: 'Get listing details' })

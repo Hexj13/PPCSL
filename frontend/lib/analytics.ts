@@ -188,4 +188,33 @@ export const analytics = {
       model: model,
     });
   },
+
+  similarBlockImpression: (listingId: string, similarCount: number) => {
+    trackEvent('similar_block_impression', {
+      listing_id: listingId,
+      similar_count: similarCount,
+    });
+  },
+
+  similarCardClick: (listingId: string, clickedListingId: string, position: number) => {
+    trackEvent('similar_card_click', {
+      listing_id: listingId,
+      clicked_listing_id: clickedListingId,
+      position,
+    });
+  },
+
+  similarScroll: (listingId: string) => {
+    trackEvent('similar_scroll', {
+      listing_id: listingId,
+    });
+  },
+
+  similarFavoriteToggle: (listingId: string, targetListingId: string, action: 'add' | 'remove') => {
+    trackEvent('similar_favorite_toggle', {
+      listing_id: listingId,
+      target_listing_id: targetListingId,
+      action,
+    });
+  },
 };

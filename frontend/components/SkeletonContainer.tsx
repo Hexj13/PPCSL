@@ -6,17 +6,21 @@ interface SkeletonContainerProps {
   isLoading: boolean;
   children: ReactNode;
   minDisplayTime?: number;
+  immediate?: boolean;
+  showDelay?: number;
 }
 
 export function SkeletonContainer({
   isLoading,
   children,
   minDisplayTime = 1000,
+  immediate = false,
+  showDelay = 200,
 }: SkeletonContainerProps) {
   const { visible: showSkeleton } = useLoadingState({
     isLoading,
-    immediate: true,
-    showDelay: 0,
+    immediate,
+    showDelay,
     minDisplayTime,
   });
 

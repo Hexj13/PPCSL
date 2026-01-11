@@ -563,6 +563,11 @@
     "imageAltOf": "{title} - Image {index} of {total}",
     "openFullSize": "Open full size"
   },
+  "similarListings": {
+    "title": "Similar listings",
+    "scrollLeft": "Scroll left",
+    "scrollRight": "Scroll right"
+  },
   "searchFilters": {
     "popular": "Popular",
     "popularFilters": "Popular Filters",

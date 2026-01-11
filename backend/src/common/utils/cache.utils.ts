@@ -33,6 +33,7 @@ export interface CacheTTL {
     search: number;
     single: number;
     userListings: number;
+    similar: number;
   };
   brands: {
     all: number;
@@ -48,6 +49,7 @@ export const CACHE_TTL: CacheTTL = {
     search: 300,
     single: 120,
     userListings: 180,
+    similar: 120,
   },
   brands: {
     all: 86400,
@@ -62,6 +64,7 @@ export const CACHE_PREFIXES = {
   listings: 'cache:listings',
   listingsSearch: 'cache:listings:search',
   listingsUser: 'cache:listings:user',
+  listingsSimilar: 'cache:listings:similar',
   brands: 'cache:brands',
   brandsModels: 'cache:brands:models',
   cities: 'cache:cities',

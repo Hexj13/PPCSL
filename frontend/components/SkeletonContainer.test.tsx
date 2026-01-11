@@ -15,9 +15,25 @@ describe('SkeletonContainer', () => {
     });
   });
 
-  it('should show children immediately when isLoading=true', () => {
+  it('should show children after delay when isLoading=true (default behavior)', () => {
     render(
       <SkeletonContainer isLoading={true}>
+        <div data-testid="skeleton">Skeleton content</div>
+      </SkeletonContainer>
+    );
+
+    expect(screen.queryByTestId('skeleton')).not.toBeInTheDocument();
+
+    act(() => {
+      jest.advanceTimersByTime(200);
+    });
+
+    expect(screen.getByTestId('skeleton')).toBeInTheDocument();
+  });
+
+  it('should show children immediately when immediate=true', () => {
+    render(
+      <SkeletonContainer isLoading={true} immediate={true} showDelay={0}>
         <div data-testid="skeleton">Skeleton content</div>
       </SkeletonContainer>
     );
@@ -27,7 +43,7 @@ describe('SkeletonContainer', () => {
 
   it('should hide children when isLoading=false after minDisplayTime', () => {
     const { rerender } = render(
-      <SkeletonContainer isLoading={true} minDisplayTime={1000}>
+      <SkeletonContainer isLoading={true} minDisplayTime={1000} immediate={true} showDelay={0}>
         <div data-testid="skeleton">Skeleton content</div>
       </SkeletonContainer>
     );

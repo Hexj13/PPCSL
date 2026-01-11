@@ -441,6 +441,8 @@ label {
 
   .surface {
     @apply bg-bg-light rounded-xl border border-primary-500/20 p-4 md:p-6;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .prose ul,

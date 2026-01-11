@@ -27,7 +27,7 @@ export function ListingPageCharacteristics({ listing }: ListingPageCharacteristi
   }
 
   return (
-    <div className="surface">
+    <div className="surface overflow-hidden">
       <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-400">
         {t('listingDetail.characteristics')}
       </h2>

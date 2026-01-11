@@ -26,11 +26,11 @@ export function ListingPageSeller({
   }
 
   return (
-    <div className="surface">
+    <div className="surface overflow-hidden">
       <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-400">
         {t('listingDetail.contactInfo')}
       </h2>
-      <div className="space-y-4">
+      <div className="space-y-4 break-words">
         <div>
           <span className="font-semibold text-primary-400">{t('listingDetail.sellerType')}:</span>
           <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
@@ -74,11 +74,13 @@ export function ListingPageSeller({
           </div>
         ) : (
           listing.user.email && (
-            <div className="flex items-center">
-              <span className="font-semibold text-primary-400">{t('listingDetail.email')}:</span>
+            <div className="flex items-center min-w-0">
+              <span className="font-semibold text-primary-400 flex-shrink-0">
+                {t('listingDetail.email')}:
+              </span>
               <a
                 href={`mailto:${listing.user.email}`}
-                className="ml-2 hover:text-primary-300 transition-colors underline"
+                className="ml-2 hover:text-primary-300 transition-colors underline break-all min-w-0"
                 style={{ color: 'rgb(var(--text-secondary-rgb))' }}
               >
                 {listing.user.email}
@@ -103,8 +105,10 @@ export function ListingPageSeller({
           </div>
         ) : (
           listing.user.phone && (
-            <div className="flex items-center">
-              <span className="font-semibold text-primary-400">{t('listingDetail.phone')}:</span>
+            <div className="flex items-center min-w-0">
+              <span className="font-semibold text-primary-400 flex-shrink-0">
+                {t('listingDetail.phone')}:
+              </span>
               <a
                 href={`tel:${listing.user.phone}`}
                 onClick={() => {
@@ -113,7 +117,7 @@ export function ListingPageSeller({
                     price: listing.price,
                   });
                 }}
-                className="ml-2 hover:text-primary-300 transition-colors underline"
+                className="ml-2 hover:text-primary-300 transition-colors underline break-all min-w-0"
                 style={{ color: 'rgb(var(--text-secondary-rgb))' }}
               >
                 {listing.user.phone}
