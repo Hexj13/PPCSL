@@ -295,7 +295,7 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
       setIsTouchDevice(
         'ontouchstart' in window ||
           navigator.maxTouchPoints > 0 ||
-          (navigator as Navigator & { msMaxTouchPoints?: number }).msMaxTouchPoints > 0
+          ((navigator as Navigator & { msMaxTouchPoints?: number }).msMaxTouchPoints ?? 0) > 0
       );
     };
 
