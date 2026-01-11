@@ -65,32 +65,40 @@ GET /api/listings/:id/similar?limit=4&offset=4
 
 **6-Tier Bucket System** (priority 1 = most relevant):
 
+**Important**: All buckets work only with **Active listings**. The `status = Active` filter is applied globally at the SQL query level before bucket assignment, ensuring that all 6 buckets process only active listings.
+
 1. **Same brand + model, year ±5**
    - `brand_id` matches
    - `model_id` matches
    - `year` within ±5 years
+   - ✅ Only Active listings
 
 2. **Same brand + body type, year ±5, price ±50%**
    - `brand_id` matches
    - `body_type` matches
    - `year` within ±5 years
    - `price` within 50-150% range
+   - ✅ Only Active listings
 
 3. **Same body type, year ±5, price ±50%**
    - `body_type` matches
    - `year` within ±5 years
    - `price` within 50-150% range
+   - ✅ Only Active listings
 
 4. **Same body type, price ±50%**
    - `body_type` matches
    - `price` within 50-150% range
+   - ✅ Only Active listings
 
 5. **Year ±5, price ±50%**
    - `year` within ±5 years
    - `price` within 50-150% range
+   - ✅ Only Active listings
 
 6. **Fallback: all other active listings**
-   - Only status = Active filter
+   - All remaining Active listings that don't match buckets 1-5
+   - ✅ Only Active listings (filter applied globally)
 
 ### Sorting Within Buckets
 
@@ -114,14 +122,20 @@ This means:
 
 ### Data Filters
 
+**Global SQL Query Filters** (applied before bucket assignment):
+- ✅ **Only Active listings** (`status = Active`) - applied globally for all buckets
+- ✅ Must have `vehicle.year` and `vehicle.body_type`
+- ✅ Valid promoted listings (not expired: `is_promoted = false OR (is_promoted = true AND promoted_until > NOW())`)
+- ✅ Excludes current listing (`listing.id != :currentId`)
+
 **Included**:
-- Only Active listings
+- Only Active listings (filtered at SQL level)
 - Must have `vehicle.year` and `vehicle.body_type`
 - Valid promoted listings (not expired)
 
 **Excluded**:
 - Current listing (the one being viewed)
-- Paused/Closed listings
+- Paused/Closed listings (filtered out by `status = Active`)
 - Listings missing required vehicle data
 
 ### Caching

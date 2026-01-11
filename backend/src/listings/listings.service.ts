@@ -40,6 +40,11 @@ import { Listing } from './entities/listing.entity';
 import { PromotionHistory } from './entities/promotion-history.entity';
 import { Vehicle } from './entities/vehicle.entity';
 
+interface ListingWithSimilarityMetadata extends Listing {
+  __bucket_priority?: number;
+  __same_city?: number;
+}
+
 @Injectable()
 export class ListingsService {
   private readonly logger = new Logger(ListingsService.name);
@@ -1096,7 +1101,7 @@ export class ListingsService {
 
     const currentCityNormalized = city ? city.trim().toLowerCase() : '';
 
-    const listingsWithMetadata = listings.map((listing) => {
+    const listingsWithMetadata = listings.map((listing): ListingWithSimilarityMetadata | null => {
       if (!listing.vehicle) {
         return null;
       }
@@ -1158,17 +1163,22 @@ export class ListingsService {
       const listingCityNormalized = listing.city ? listing.city.trim().toLowerCase() : '';
       const sameCity = listingCityNormalized === currentCityNormalized ? 1 : 0;
 
-      (listing as any).__bucket_priority = bucketPriority;
-      (listing as any).__same_city = sameCity;
+      const listingWithMetadata: ListingWithSimilarityMetadata = {
+        ...listing,
+        __bucket_priority: bucketPriority,
+        __same_city: sameCity,
+      };
 
-      return listing;
+      return listingWithMetadata;
     });
 
-    const validListings = listingsWithMetadata.filter((l): l is Listing => l !== null);
+    const validListings = listingsWithMetadata.filter(
+      (l): l is ListingWithSimilarityMetadata => l !== null,
+    );
 
     validListings.sort((a, b) => {
-      const priorityA = (a as any).__bucket_priority || 999;
-      const priorityB = (b as any).__bucket_priority || 999;
+      const priorityA = a.__bucket_priority ?? 999;
+      const priorityB = b.__bucket_priority ?? 999;
       if (priorityA !== priorityB) {
         return priorityA - priorityB;
       }
@@ -1179,8 +1189,8 @@ export class ListingsService {
         return promotedB - promotedA;
       }
 
-      const sameCityA = (a as any).__same_city || 0;
-      const sameCityB = (b as any).__same_city || 0;
+      const sameCityA = a.__same_city ?? 0;
+      const sameCityB = b.__same_city ?? 0;
       if (sameCityA !== sameCityB) {
         return sameCityB - sameCityA;
       }
@@ -1188,7 +1198,7 @@ export class ListingsService {
       return new Date(b.last_updated_at).getTime() - new Date(a.last_updated_at).getTime();
     });
 
-    return validListings;
+    return validListings.map(({ __bucket_priority, __same_city, ...listing }) => listing);
   }
 
   private applySellerDiversification(listings: Listing[], maxPerSeller: number): Listing[] {
