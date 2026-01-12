@@ -264,7 +264,12 @@ describe('SimilarListings', () => {
     }) as unknown as typeof scrollContainer.scrollBy;
     scrollContainer.scrollTo = jest.fn(
       (options?: { left?: number; top?: number } | number, _y?: number) => {
-        if (typeof options === 'object' && options && 'left' in options && options.left !== undefined) {
+        if (
+          typeof options === 'object' &&
+          options &&
+          'left' in options &&
+          options.left !== undefined
+        ) {
           scrollLeftValue = options.left;
         }
       }
@@ -411,7 +416,12 @@ describe('SimilarListings', () => {
     }) as unknown as typeof scrollContainer.scrollBy;
     scrollContainer.scrollTo = jest.fn(
       (options?: { left?: number; top?: number } | number, _y?: number) => {
-        if (typeof options === 'object' && options && 'left' in options && options.left !== undefined) {
+        if (
+          typeof options === 'object' &&
+          options &&
+          'left' in options &&
+          options.left !== undefined
+        ) {
           scrollLeftValue = options.left;
         }
       }
