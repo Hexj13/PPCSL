@@ -6,6 +6,7 @@ const config: SiteConfig = {
   domain: 'test.com',
   locale: 'mk-MK',
   currency: 'MKD',
+  currencies: ['MKD', 'EUR'] as const,
   countryCode: 'MK',
   supportEmail: 'support@test.com',
   siteUrl: 'https://test.com',
