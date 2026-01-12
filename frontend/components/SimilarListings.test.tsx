@@ -257,16 +257,18 @@ describe('SimilarListings', () => {
       });
     });
 
-    scrollContainer.scrollBy = jest.fn((options) => {
+    scrollContainer.scrollBy = jest.fn((options?: { left?: number; top?: number }) => {
       if (options?.left) {
         scrollLeftValue += options.left;
       }
-    });
-    scrollContainer.scrollTo = jest.fn((options) => {
-      if (options?.left !== undefined) {
-        scrollLeftValue = options.left;
+    }) as unknown as typeof scrollContainer.scrollBy;
+    scrollContainer.scrollTo = jest.fn(
+      (options?: { left?: number; top?: number } | number, y?: number) => {
+        if (typeof options === 'object' && options && 'left' in options && options.left !== undefined) {
+          scrollLeftValue = options.left;
+        }
       }
-    });
+    ) as unknown as typeof scrollContainer.scrollTo;
 
     await act(async () => {
       jest.advanceTimersByTime(200);
@@ -402,16 +404,18 @@ describe('SimilarListings', () => {
       });
     });
 
-    scrollContainer.scrollBy = jest.fn((options) => {
+    scrollContainer.scrollBy = jest.fn((options?: { left?: number; top?: number }) => {
       if (options?.left) {
         scrollLeftValue += options.left;
       }
-    });
-    scrollContainer.scrollTo = jest.fn((options) => {
-      if (options?.left !== undefined) {
-        scrollLeftValue = options.left;
+    }) as unknown as typeof scrollContainer.scrollBy;
+    scrollContainer.scrollTo = jest.fn(
+      (options?: { left?: number; top?: number } | number, y?: number) => {
+        if (typeof options === 'object' && options && 'left' in options && options.left !== undefined) {
+          scrollLeftValue = options.left;
+        }
       }
-    });
+    ) as unknown as typeof scrollContainer.scrollTo;
 
     await act(async () => {
       fireEvent.scroll(scrollContainer);
