@@ -916,6 +916,14 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md#72-rendercom-deployment) for CloudFront CDN 
 - Optimistic UI updates for car comparison (no flickering on item removal)
 - Cached filter loading to prevent skeleton flickering on tab switches
 - Zustand stores with persist middleware for favorites and comparisons (localStorage)
+- **Collapsible description block:** Long listing descriptions are automatically collapsed to 400px (including padding, title, text, and button) with expand/collapse functionality
+  - Smooth animation (0.4s ease-in-out) between collapsed (400px) and expanded (full height) states
+  - Gradient overlay at bottom when collapsed to indicate more content
+  - Button positioned absolutely at bottom with z-index above gradient
+  - Auto-scroll to block start (with 110px offset for header) when collapsing
+  - Skeleton loader reserves 400px height during initial load to prevent CLS
+  - Height measurement after content hydration (100ms delay) to account for formatted text
+  - Component: `components/ListingPage/ListingPageDescription.tsx`
 
 ### Redis Optimizations
 - SCAN instead of KEYS for better performance

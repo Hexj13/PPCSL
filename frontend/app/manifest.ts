@@ -2,10 +2,12 @@ import { MetadataRoute } from 'next';
 
 import { getServerTranslations } from '@/lib/i18n';
 import { loadSiteConfigSync } from '@/lib/site-config';
+import { loadThemeSync } from '@/lib/theme';
 
 export default function manifest(): MetadataRoute.Manifest {
   const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
   const siteConfig = loadSiteConfigSync(country);
+  const theme = loadThemeSync(country);
   const t = getServerTranslations();
 
   return {
@@ -14,8 +16,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: `${t.home.subtitle} ${t.home.subtitleBold} ${t.home.subtitle2} ${t.home.subtitle3}`,
     start_url: '/',
     display: 'standalone',
-    background_color: '#0f172a',
-    theme_color: '#3b82f6',
+    background_color: theme.pwa?.backgroundColor || '#0f172a',
+    theme_color: theme.pwa?.themeColor || '#3b82f6',
     icons: [
       {
         src: '/pwa192.png',

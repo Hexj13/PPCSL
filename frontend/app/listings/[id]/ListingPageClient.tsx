@@ -40,15 +40,6 @@ import {
 } from '@/lib/utils';
 import { LoadingSpinner, Spinner } from '@/ui';
 
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
 export default function ListingPageClient({
   listingId,
   initialListing,
@@ -139,12 +130,7 @@ export default function ListingPageClient({
   }, [listing]);
 
   const descriptionHtml = useMemo(() => {
-    if (!listing?.description) return null;
-
-    if (!isHydrated) {
-      const text = listing.description.replace(/<[^>]*>/g, '').trim();
-      return escapeHtml(text).replace(/\n/g, '<br/>');
-    }
+    if (!listing?.description || !isHydrated) return null;
 
     const DOMPurify = createDOMPurify(window);
     return DOMPurify.sanitize(listing.description, {

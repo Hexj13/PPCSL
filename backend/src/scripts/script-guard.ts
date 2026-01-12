@@ -14,3 +14,36 @@ export function checkEnvironment(allowedEnvironments: string[]): void {
     console.warn(`   Current environment: ${nodeEnv}`);
   }
 }
+
+export type Platform = 'mk' | 'al' | 'common';
+
+export function checkPlatform(allowedPlatforms: Platform[]): void {
+  const currentPlatform = (process.env.COUNTRY ||
+    process.env.NEXT_PUBLIC_COUNTRY ||
+    'mk') as Platform;
+
+  if (allowedPlatforms.includes('common')) {
+    return;
+  }
+
+  if (!allowedPlatforms.includes(currentPlatform)) {
+    console.error('');
+    console.error('╔═══════════════════════════════════════════════════════════════╗');
+    console.error('║  ❌ PLATFORM MISMATCH - Script not allowed for this platform  ║');
+    console.error('╠═══════════════════════════════════════════════════════════════╣');
+    console.error(`║  Current platform:  ${currentPlatform.padEnd(42)}║`);
+    console.error(`║  Allowed platforms: ${allowedPlatforms.join(', ').padEnd(42)}║`);
+    console.error('╠═══════════════════════════════════════════════════════════════╣');
+    console.error('║  Set COUNTRY env variable to change platform:                 ║');
+    console.error('║  COUNTRY=al npx ts-node script.ts                             ║');
+    console.error('╚═══════════════════════════════════════════════════════════════╝');
+    console.error('');
+    process.exit(1);
+  }
+
+  console.log(`🌍 Platform: ${currentPlatform.toUpperCase()}`);
+}
+
+export function getPlatform(): Platform {
+  return (process.env.COUNTRY || process.env.NEXT_PUBLIC_COUNTRY || 'mk') as Platform;
+}

@@ -4,6 +4,7 @@ export interface SiteConfig {
   domain: string;
   locale: string;
   currency: string;
+  currencies: readonly string[];
   countryCode: string;
   supportEmail: string;
   siteUrl: string;
@@ -48,6 +49,7 @@ const defaultConfig: SiteConfig = {
   domain: 'ppcsl.com',
   locale: 'mk-MK',
   currency: 'MKD',
+  currencies: ['MKD', 'EUR'] as const,
   countryCode: 'MK',
   supportEmail: 'support@ppcsl.com',
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://ppcsl.com',

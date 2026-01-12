@@ -13,44 +13,44 @@ checkEnvironment(['stage', 'development', 'test']);
 
 async function resetUsers() {
   try {
-    console.log('🔌 Поврзување со базата на податоци...');
+    console.log('🔌 Connecting to database...');
     await AppDataSource.initialize();
-    console.log('✅ Поврзано со базата на податоци');
+    console.log('✅ Connected to database');
 
     const userRepo = AppDataSource.getRepository(User);
     const listingRepo = AppDataSource.getRepository(Listing);
     const favoriteRepo = AppDataSource.getRepository(Favorite);
     const vehicleRepo = AppDataSource.getRepository(Vehicle);
 
-    console.log('🗑️  Бришење на сите корисници...');
+    console.log('🗑️  Deleting all users...');
 
-    console.log('   Бришење на сите омилени...');
+    console.log('   Deleting all favorites...');
     const favorites = await favoriteRepo.find();
     if (favorites.length > 0) {
       await favoriteRepo.remove(favorites);
     }
 
-    console.log('   Бришење на сите објави...');
+    console.log('   Deleting all listings...');
     const listings = await listingRepo.find();
     if (listings.length > 0) {
       await listingRepo.remove(listings);
     }
 
-    console.log('   Бришење на сите возила...');
+    console.log('   Deleting all vehicles...');
     const vehicles = await vehicleRepo.find();
     if (vehicles.length > 0) {
       await vehicleRepo.remove(vehicles);
     }
 
-    console.log('   Бришење на сите корисници...');
+    console.log('   Deleting all users...');
     const users = await userRepo.find();
     if (users.length > 0) {
       await userRepo.remove(users);
     }
 
-    console.log('✅ Сите корисници се избришани');
+    console.log('✅ All users deleted');
 
-    console.log('👑 Креирање нов админ корисник...');
+    console.log('👑 Creating new admin user...');
     const hashedPassword = await bcrypt.hash('admin123', 10);
     const admin = userRepo.create({
       email: 'admin@admin.com',
@@ -61,19 +61,19 @@ async function resetUsers() {
       type: UserTypeEnum.Admin,
     });
     await userRepo.save(admin);
-    console.log('✅ Креиран нов админ корисник');
+    console.log('✅ Created new admin user');
     console.log(`   Email: admin@admin.com`);
-    console.log(`   Парола: admin123`);
-    console.log(`   Тип: Admin`);
+    console.log(`   Password: admin123`);
+    console.log(`   Type: Admin`);
 
-    console.log('🎉 Завршено!');
+    console.log('🎉 Done!');
   } catch (error) {
-    console.error('❌ Грешка:', error);
+    console.error('❌ Error:', error);
     throw error;
   } finally {
     if (AppDataSource.isInitialized) {
       await AppDataSource.destroy();
-      console.log('🔌 Врската со базата на податоци е затворена');
+      console.log('🔌 Database connection closed');
     }
   }
 }

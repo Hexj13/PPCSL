@@ -17,9 +17,13 @@ import { AppDataSource } from '../../data-source';
 import { Listing } from '../../listings/entities/listing.entity';
 import { Vehicle } from '../../listings/entities/vehicle.entity';
 import { User } from '../../users/entities/user.entity';
-import { checkEnvironment } from '../script-guard';
+import { getPlatformConfig } from '../platforms';
+import { checkEnvironment, checkPlatform } from '../script-guard';
 
 checkEnvironment(['stage', 'development', 'test']);
+checkPlatform(['mk', 'al']);
+
+const platformConfig = getPlatformConfig();
 
 function generateVin(): string {
   const chars = 'ABCDEFGHJKLMNPRSTUVWXYZ0123456789';
@@ -106,7 +110,7 @@ async function createTestListing() {
       transmission: TransmissionType.Automatic,
       drive_type: DriveType.FWD,
       body_type: BodyType.Sedan,
-      color: 'Синя',
+      color: 'blue',
       doors: 4,
     });
 
@@ -116,12 +120,12 @@ async function createTestListing() {
     registrationExpiresAt.setMonth(registrationExpiresAt.getMonth() + 12);
 
     const listing = listingRepo.create({
-      title: `${brand.name} ${model.name} ${currentYear - 2} - Тест со многу слики`,
+      title: `${brand.name} ${model.name} ${currentYear - 2} - Test with many images`,
       price: 25000,
       currency: Currency.EUR,
-      city: 'Скопје',
+      city: platformConfig.cities[0],
       status: ListingStatusEnum.Active,
-      description: `Тестово објавување со максимален број на слики (${images.length} слики) за проверка на перформанси и приказ на страницата за објавување.`,
+      description: `Test listing with maximum number of images (${images.length} images) for performance and display testing.`,
       user_id: user.id,
       vehicle_id: savedVehicle.id,
       images,

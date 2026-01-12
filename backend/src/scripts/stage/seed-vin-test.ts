@@ -11,9 +11,13 @@ import { AppDataSource } from '../../data-source';
 import { Listing } from '../../listings/entities/listing.entity';
 import { Vehicle } from '../../listings/entities/vehicle.entity';
 import { User } from '../../users/entities/user.entity';
-import { checkEnvironment } from '../script-guard';
+import { getPlatformConfig } from '../platforms';
+import { checkEnvironment, checkPlatform } from '../script-guard';
 
 checkEnvironment(['stage', 'development', 'test']);
+checkPlatform(['mk', 'al']);
+
+const platformConfig = getPlatformConfig();
 
 function getRandomElement<T>(array: T[]): T {
   return array[Math.floor(Math.random() * array.length)];
@@ -28,21 +32,16 @@ function getRandomFloat(min: number, max: number, decimals: number = 2): number 
 }
 
 function formatDate(date: Date): string {
-  return date.toLocaleDateString('mk-MK', {
+  return date.toLocaleDateString('en-US', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
   });
 }
 
-const cities = ['Скопје', 'Битола', 'Прилеп', 'Куманово', 'Охрид', 'Струга', 'Велес', 'Штип'];
+const cities = platformConfig.cities.slice(0, 8);
 const colors = ['white', 'black', 'gray', 'silver', 'blue', 'red'];
-const descriptions = [
-  'Отлично одржан автомобил, без неисправности.',
-  'Прекрасен автомобил во одлично состојба.',
-  'Автомобил во перфектна состојба, како нов.',
-  'Добро одржан автомобил со цела историја на сервисирање.',
-];
+const descriptions = platformConfig.descriptions.slice(0, 4);
 
 const existingImages = [
   '51cdb605-1b5f-429d-a29d-65919195341b.jpg',
@@ -52,7 +51,7 @@ const existingImages = [
 ];
 
 async function seedVinTestData() {
-  console.log('🔧 Креирање тест податоци со VIN...');
+  console.log('🔧 Creating test data with VIN...');
 
   await AppDataSource.initialize();
 
@@ -63,14 +62,14 @@ async function seedVinTestData() {
 
   const user = await userRepo.findOne({ where: { email: 'user@test.com' } });
   if (!user) {
-    console.log('❌ Тест корисникот не постои. Ве молиме прво извршете го основниот seed скрипт.');
+    console.log('❌ Test user does not exist. Please run the main seed script first.');
     return;
   }
 
   const brands = await brandRepo.find({ relations: ['models'] });
   const validBrands = brands.filter((b) => b.models && b.models.length > 0);
   if (validBrands.length === 0) {
-    console.log('❌ Нема достапни брендови. Ве молиме прво извршете го основниот seed скрипт.');
+    console.log('❌ No brands available. Please run the main seed script first.');
     return;
   }
 
@@ -94,7 +93,7 @@ async function seedVinTestData() {
     const brand = getRandomElement(validBrands);
     const model = getRandomElement(brand.models);
 
-    console.log(`\n📦 Креирање ${count} објави со VIN: ${vin}`);
+    console.log(`\n📦 Creating ${count} listings with VIN: ${vin}`);
 
     for (let i = 0; i < count; i++) {
       listingNumber++;
@@ -133,10 +132,10 @@ async function seedVinTestData() {
 
       const transmissionStr =
         transmission === 'Automatic'
-          ? 'Автоматска'
+          ? platformConfig.transmissionLabels.automatic
           : transmission === 'Manual'
-            ? 'Мануелна'
-            : 'Варијатор';
+            ? platformConfig.transmissionLabels.manual
+            : platformConfig.transmissionLabels.cvt;
       const title = `${brand.name} ${model.name} ${year} ${transmissionStr}`;
 
       const now = new Date();
@@ -171,28 +170,28 @@ async function seedVinTestData() {
       await listingRepo.save(listing);
 
       console.log(
-        `   ${listingNumber}. ${title} - ${status === ListingStatusEnum.Closed ? 'Затворено' : 'Активно'} - ${formatDate(updatedDate)}`,
+        `   ${listingNumber}. ${title} - ${status === ListingStatusEnum.Closed ? 'Closed' : 'Active'} - ${formatDate(updatedDate)}`,
       );
     }
   }
 
-  console.log(`\n✅ Создадени ${listingNumber} тест објави со VIN!\n`);
-  console.log('📋 Резюме:');
-  console.log('   - 1HGBH41JXMN109186: 4 објави (1 активна, 3 затворени)');
-  console.log('   - WBAWL73529P123456: 3 објави (1 активна, 2 затворени)');
-  console.log('   - JM7TB1824J0123456: 3 објави (1 активна, 2 затворени)');
+  console.log(`\n✅ Created ${listingNumber} test listings with VIN!\n`);
+  console.log('📋 Summary:');
+  console.log('   - 1HGBH41JXMN109186: 4 listings (1 active, 3 closed)');
+  console.log('   - WBAWL73529P123456: 3 listings (1 active, 2 closed)');
+  console.log('   - JM7TB1824J0123456: 3 listings (1 active, 2 closed)');
   console.log(
-    '\n💡 За да тестирате, отворете некоја активна објава и проверете дали се прикажуваат претходните затворени објави.',
+    '\n💡 To test, open an active listing and check if previous closed listings are displayed.',
   );
 }
 
 seedVinTestData()
   .then(() => {
-    console.log('✅ Скриптот заврши успешно');
+    console.log('✅ Script completed successfully');
     process.exit(0);
   })
   .catch((error) => {
-    console.error('❌ Грешка:', error);
+    console.error('❌ Error:', error);
     process.exit(1);
   })
   .finally(async () => {

@@ -768,6 +768,32 @@ export interface Translations {
     phoneNotAvailable: string;
   };
   metadata: {
+    site: {
+      defaultTitle: string;
+      defaultDescription: string;
+      keywords: string[];
+    };
+    faq: {
+      title: string;
+      description: string;
+      ogTitle: string;
+      ogDescription: string;
+      ogAlt: string;
+    };
+    terms: {
+      title: string;
+      description: string;
+      ogTitle: string;
+      ogDescription: string;
+      ogAlt: string;
+    };
+    privacy: {
+      title: string;
+      description: string;
+      ogTitle: string;
+      ogDescription: string;
+      ogAlt: string;
+    };
     login: {
       title: string;
       description: string;

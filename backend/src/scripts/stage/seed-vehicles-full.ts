@@ -1319,7 +1319,7 @@ const COLORS = [
 ];
 
 async function seedFullVehiclesDatabase() {
-  console.log('🌱 Започнување со полно сеење на базата на автомобили...');
+  console.log('🌱 Starting full vehicle database seeding...');
 
   await AppDataSource.initialize();
 
@@ -1335,11 +1335,11 @@ async function seedFullVehiclesDatabase() {
     if (!brand) {
       brand = brandRepo.create({ name: brandName, order });
       brand = await brandRepo.save(brand);
-      console.log(`✅ Креиран бренд: ${brandName}`);
+      console.log(`✅ Created brand: ${brandName}`);
     } else {
       brand.order = order;
       brand = await brandRepo.save(brand);
-      console.log(`♻️  Ажуриран бренд: ${brandName}`);
+      console.log(`♻️  Updated brand: ${brandName}`);
     }
 
     for (let i = 0; i < models.length; i++) {
@@ -1362,15 +1362,15 @@ async function seedFullVehiclesDatabase() {
       }
     }
 
-    console.log(`  ✓ ${models.length} модели за ${brandName}`);
+    console.log(`  ✓ ${models.length} models for ${brandName}`);
     order++;
   }
 
-  console.log(`\n✅ Завршено!`);
-  console.log(`   - Брендови: ${Object.keys(BRANDS_AND_MODELS).length}`);
-  console.log(`   - Вкупно модели: ${Object.values(BRANDS_AND_MODELS).flat().length}`);
-  console.log(`   - Нови модели: ${totalModels}`);
-  console.log(`\n🎨 Стандардни бои (${COLORS.length}):`);
+  console.log(`\n✅ Complete!`);
+  console.log(`   - Brands: ${Object.keys(BRANDS_AND_MODELS).length}`);
+  console.log(`   - Total models: ${Object.values(BRANDS_AND_MODELS).flat().length}`);
+  console.log(`   - New models: ${totalModels}`);
+  console.log(`\n🎨 Standard colors (${COLORS.length}):`);
   COLORS.forEach((color, index) => {
     if (index < COLORS.length - 1) {
       process.stdout.write(`${color}, `);
@@ -1384,10 +1384,10 @@ async function seedFullVehiclesDatabase() {
 
 seedFullVehiclesDatabase()
   .then(() => {
-    console.log('\n✨ Скриптот заврши успешно!');
+    console.log('\n✨ Script completed successfully!');
     process.exit(0);
   })
   .catch((error) => {
-    console.error('❌ Грешка:', error);
+    console.error('❌ Error:', error);
     process.exit(1);
   });

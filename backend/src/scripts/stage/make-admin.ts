@@ -10,9 +10,9 @@ checkEnvironment(['stage', 'development', 'test']);
 
 async function makeAdmin() {
   try {
-    console.log('🔌 Поврзување со базата на податоци...');
+    console.log('🔌 Connecting to database...');
     await AppDataSource.initialize();
-    console.log('✅ Поврзано со базата на податоци');
+    console.log('✅ Connected to database');
 
     const userRepo = AppDataSource.getRepository(User);
     const email = 'admin@admin.com';
@@ -20,7 +20,7 @@ async function makeAdmin() {
     let admin = await userRepo.findOne({ where: { email } });
 
     if (!admin) {
-      console.log(`👤 Креирање нов корисник ${email}...`);
+      console.log(`👤 Creating new user ${email}...`);
       const hashedPassword = await bcrypt.hash('admin123', 10);
       admin = userRepo.create({
         email,
@@ -31,34 +31,34 @@ async function makeAdmin() {
         type: UserTypeEnum.Admin,
       });
       admin = await userRepo.save(admin);
-      console.log('✅ Креиран нов админ корисник');
+      console.log('✅ Created new admin user');
       console.log(`   Email: ${email}`);
-      console.log(`   Парола: admin123`);
-      console.log(`   Тип: Admin`);
+      console.log(`   Password: admin123`);
+      console.log(`   Type: Admin`);
     } else {
-      console.log(`👤 Пронајден корисник ${email}`);
+      console.log(`👤 Found user ${email}`);
       const wasAdmin = admin.type === UserTypeEnum.Admin;
 
       admin.type = UserTypeEnum.Admin;
       admin = await userRepo.save(admin);
 
       if (wasAdmin) {
-        console.log('✅ Корисникот веќе е админ');
+        console.log('✅ User is already an admin');
       } else {
-        console.log('✅ Корисникот е успешно направен админ');
+        console.log('✅ User successfully promoted to admin');
       }
       console.log(`   Email: ${email}`);
-      console.log(`   Тип: Admin`);
+      console.log(`   Type: Admin`);
     }
 
-    console.log('🎉 Завршено!');
+    console.log('🎉 Done!');
   } catch (error) {
-    console.error('❌ Грешка:', error);
+    console.error('❌ Error:', error);
     throw error;
   } finally {
     if (AppDataSource.isInitialized) {
       await AppDataSource.destroy();
-      console.log('🔌 Врската со базата на податоци е затворена');
+      console.log('🔌 Database connection closed');
     }
   }
 }

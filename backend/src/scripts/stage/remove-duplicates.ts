@@ -7,15 +7,15 @@ import { checkEnvironment } from '../script-guard';
 checkEnvironment(['stage', 'development', 'test']);
 
 async function removeDuplicates() {
-  console.log('🗑️  Бришење на дубликати од базата на податоци...\n');
+  console.log('🗑️  Removing duplicates from database...\n');
 
   await AppDataSource.initialize();
-  console.log('✅ Поврзано со базата на податоци\n');
+  console.log('✅ Connected to database\n');
 
   const brandRepo = AppDataSource.getRepository(Brand);
   const modelRepo = AppDataSource.getRepository(VehicleModel);
 
-  console.log('📊 Бришење на дубликати на марки...\n');
+  console.log('📊 Removing duplicate brands...\n');
 
   const allBrandsForCheck = await brandRepo.find({
     relations: ['models'],
@@ -35,7 +35,7 @@ async function removeDuplicates() {
   for (const [, brands] of brandNames.entries()) {
     if (brands.length > 1) {
       console.log(
-        `⚠️  Дубликат марка: "${brands[0].name}" (${brands.length} записи), бришење дубликати...`,
+        `⚠️  Duplicate brand: "${brands[0].name}" (${brands.length} records), removing duplicates...`,
       );
 
       const sortedBrands = brands.sort((a, b) => {
@@ -65,20 +65,20 @@ async function removeDuplicates() {
         await brandRepo.remove(brandToRemove);
         brandsRemoved++;
         console.log(
-          `   ✅ Избришан дубликат: ID ${brandToRemove.id}, преместени ${modelsToMove.length} модели`,
+          `   ✅ Deleted duplicate: ID ${brandToRemove.id}, moved ${modelsToMove.length} models`,
         );
       }
-      console.log(`   ✅ Зачувана марка: ID ${keepBrand.id}, Order: ${keepBrand.order}\n`);
+      console.log(`   ✅ Kept brand: ID ${keepBrand.id}, Order: ${keepBrand.order}\n`);
     }
   }
 
   if (brandsRemoved === 0) {
-    console.log('✅ Нема дубликати на марки\n');
+    console.log('✅ No duplicate brands found\n');
   } else {
-    console.log(`\n✅ Избришани ${brandsRemoved} дубликати на марки\n`);
+    console.log(`\n✅ Deleted ${brandsRemoved} duplicate brands\n`);
   }
 
-  console.log('📊 Бришење на дубликати на модели во рамки на иста марка...\n');
+  console.log('📊 Removing duplicate models within same brand...\n');
 
   const allBrands = await brandRepo.find();
   let totalRemoved = 0;
@@ -102,7 +102,7 @@ async function removeDuplicates() {
     for (const [, modelList] of modelMap.entries()) {
       if (modelList.length > 1) {
         console.log(
-          `⚠️  "${brand.name}" - "${modelList[0].name}": ${modelList.length} записи, бришење дубликати...`,
+          `⚠️  "${brand.name}" - "${modelList[0].name}": ${modelList.length} records, removing duplicates...`,
         );
 
         const sortedModels = modelList.sort((a, b) => {
@@ -119,26 +119,26 @@ async function removeDuplicates() {
           const modelId = modelToRemove.id;
           await modelRepo.remove(modelToRemove);
           totalRemoved++;
-          console.log(`   ✅ Избришан дубликат: ID ${modelId}`);
+          console.log(`   ✅ Deleted duplicate: ID ${modelId}`);
         }
-        console.log(`   ✅ Зачуван модел: ID ${keepModel.id}, Order: ${keepModel.order}\n`);
+        console.log(`   ✅ Kept model: ID ${keepModel.id}, Order: ${keepModel.order}\n`);
       }
     }
   }
 
-  console.log(`\n✅ Завршено!`);
-  console.log(`   - Вкупно избришани дубликати: ${totalRemoved}\n`);
+  console.log(`\n✅ Complete!`);
+  console.log(`   - Total duplicates removed: ${totalRemoved}\n`);
 
   await AppDataSource.destroy();
-  console.log('🔌 Врската со базата на податоци е затворена');
+  console.log('🔌 Database connection closed');
 }
 
 removeDuplicates()
   .then(() => {
-    console.log('✅ Скриптот заврши успешно');
+    console.log('✅ Script completed successfully');
     process.exit(0);
   })
   .catch((error) => {
-    console.error('❌ Грешка:', error);
+    console.error('❌ Error:', error);
     process.exit(1);
   });

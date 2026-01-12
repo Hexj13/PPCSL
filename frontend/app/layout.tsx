@@ -14,6 +14,7 @@ import { OfflineBanner } from '@/components/OfflineBanner';
 import { OrganizationSchema } from '@/components/OrganizationSchema';
 import { ScrollReset } from '@/components/ScrollReset';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
+import { getServerTranslations } from '@/lib/i18n';
 import { loadSiteConfig } from '@/lib/site-config';
 import './globals.css';
 
@@ -22,9 +23,10 @@ const inter = Inter({ subsets: ['latin', 'cyrillic'], display: 'swap' });
 export async function generateMetadata(): Promise<Metadata> {
   const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
   const siteConfig = await loadSiteConfig(country);
+  const t = getServerTranslations();
 
-  const defaultTitle = `${siteConfig.name} - Автомобили во Македонија`;
-  const defaultDescription = 'Купете или продадете авто на Kupito! Објавете оглас бесплатно.';
+  const defaultTitle = `${siteConfig.name} - ${t.metadata.site.defaultTitle}`;
+  const defaultDescription = t.metadata.site.defaultDescription;
 
   return {
     metadataBase: new URL(siteConfig.siteUrl),
@@ -33,16 +35,7 @@ export async function generateMetadata(): Promise<Metadata> {
       template: `%s | ${siteConfig.name}`,
     },
     description: defaultDescription,
-    keywords: [
-      'автомобили Македонија',
-      'купување автомобили онлајн',
-      'продажба автомобили Македонија',
-      'автомобили огласи Македонија',
-      'avtomobili makedonija',
-      'kupuvanje avtomobili online',
-      'prodazba avtomobili mk',
-      'avtomobil oglasi makedonija',
-    ],
+    keywords: t.metadata.site.keywords,
     authors: [{ name: siteConfig.name }],
     creator: siteConfig.name,
     publisher: siteConfig.name,

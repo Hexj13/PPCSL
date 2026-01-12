@@ -1016,7 +1016,7 @@ async function addBrandsAndModels() {
   }
 
   console.log(
-    `📦 Основни брендови: обработени ${totalBrands}, нови брендови ${newBrands}, модели ${newModels + updatedModels} (нови ${newModels}, ажурирани ${updatedModels})`,
+    `📦 Brands: processed ${totalBrands}, new brands ${newBrands}, models ${newModels + updatedModels} (new ${newModels}, updated ${updatedModels})`,
   );
 
   const summary = {
@@ -1039,7 +1039,7 @@ if (require.main === module) {
       process.exit(0);
     })
     .catch((error) => {
-      console.error('❌ Грешка:', error.message);
+      console.error('❌ Error:', error.message);
       process.exit(1);
     });
 }

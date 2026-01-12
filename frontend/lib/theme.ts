@@ -34,6 +34,10 @@ export interface ThemeColors {
     warning: string;
     info: string;
   };
+  pwa?: {
+    backgroundColor: string;
+    themeColor: string;
+  };
 }
 
 let theme: ThemeColors | null = null;
@@ -102,6 +106,10 @@ const defaultTheme: ThemeColors = {
     error: '#ef4444',
     warning: '#f59e0b',
     info: '#3b82f6',
+  },
+  pwa: {
+    backgroundColor: '#0f172a',
+    themeColor: '#3b82f6',
   },
 };
 

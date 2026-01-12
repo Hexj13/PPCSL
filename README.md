@@ -1,141 +1,109 @@
-# PPCSL
+# PPCSL Core
 
-Platform for Posting Car Sale Listings - core application framework for car marketplace platforms.
+**Platform-Portable Car Sales Logic** - универсальное ядро для создания автомобильных маркетплейсов.
+
+## 🎯 Концепция
+
+**Один Core** → **Множество платформ** (Македония, Албания, ...)
+
+- **Core** = бизнес-логика, компоненты, API (универсальные)
+- **Platform-repo** = локализация (язык, валюта, дизайн, города)
+
+---
 
 ## 📚 Documentation
 
-All documentation is located in the [`docs/`](./docs/) folder:
+Вся документация в папке **[`docs/`](./docs/)**:
 
-### General Documentation
-- **[README.md](./docs/README.md)** - Detailed project documentation
-- **[PLATFORM_GUIDE.md](./docs/PLATFORM_GUIDE.md)** - ⭐ **Complete guide for creating new platforms and where to make code changes**
-- **[TECHNICAL.md](./docs/TECHNICAL.md)** - Complete technical documentation (includes CI/CD, Google Ads setup)
-- **[DEPLOYMENT.md](./docs/DEPLOYMENT.md)** - Production deployment guide (VPS, Render.com, Namecheap, SSH setup)
-- **[MULTI_REPOSITORY_ARCHITECTURE.md](./docs/MULTI_REPOSITORY_ARCHITECTURE.md)** - Multi-repository architecture guide (includes PPCSL overview and pre-migration checklist)
-- **[LOCAL_DEVELOPMENT.md](./docs/LOCAL_DEVELOPMENT.md)** - Local development guide for working with multi-repository architecture
-- **[SEO_AUDIT.md](./docs/SEO_AUDIT.md)** - SEO audit and Google Search Console issues
-- **[TODO.md](./docs/TODO.md)** - All project tasks and TODOs
+### ⭐ Точки входа:
 
-### Backend Documentation
-- **[Backend README](./backend/docs/README.md)** - Backend-specific documentation
-- **[Scripts Guide](./backend/docs/SCRIPTS.md)** - Backend utility scripts documentation
-- **[Testing Guide](./backend/docs/TESTING.md)** - Integration testing documentation
+- **[docs/README.md](./docs/README.md)** - Главный entry point
+- **[docs/guides/PLATFORM_CHECKLIST.md](./docs/guides/PLATFORM_CHECKLIST.md)** - Чеклист для новых платформ
+- **[docs/architecture/README_ARCHITECTURE.md](./docs/architecture/README_ARCHITECTURE.md)** - Обзор архитектуры
 
-### Frontend Documentation
-- **[Frontend README](./frontend/docs/README.md)** - Frontend-specific documentation
-- **[Design System](./frontend/docs/DESIGN_SYSTEM.md)** - Design system and UI components
-- **[Storybook Guide](./frontend/docs/STORYBOOK.md)** - Storybook setup guide
+### 📂 Категории:
+
+- **[architecture/](./docs/architecture/)** - Архитектура системы
+- **[guides/](./docs/guides/)** - Руководства для разработчиков
+- **[platform-plans/](./docs/platform-plans/)** - Планы конкретных платформ
+- **[features/](./docs/features/)** - Документация фич
+
+---
 
 ## 🚀 Quick Start
 
-### Option 1: Run Both Servers Together (Recommended)
-
 ```bash
-# Install all dependencies (root, frontend, backend)
+# Install dependencies
 npm run install:all
 
-# Start Docker containers (PostgreSQL + Redis)
+# Start Docker (PostgreSQL + Redis)
 docker-compose up -d
 
-# Run both frontend and backend together
+# Run both frontend and backend
 npm run dev
 ```
 
-**Frontend:** http://localhost:3000 | **Backend:** http://localhost:4000
+**Frontend:** http://localhost:3000  
+**Backend:** http://localhost:4000
 
-### Option 2: Run Servers Separately
+**Детальная документация:** [docs/guides/LOCAL_DEVELOPMENT.md](./docs/guides/LOCAL_DEVELOPMENT.md)
 
-```bash
-# Terminal 1 - Backend
-cd backend
-npm install
-npm run start:dev
+---
 
-# Terminal 2 - Frontend
-cd frontend
-npm install
-npm run dev
-```
-
-## 📁 Project Structure
+## 📁 Structure
 
 ```
 PPCSL/
-├── backend/          # NestJS backend API
+├── backend/          # NestJS API
 │   ├── src/
-│   │   ├── scripts/  # Utility scripts (brands, seeding, management)
-│   │   ├── brands/   # Brands and models
-│   │   ├── upload/   # File upload service (with watermark support)
+│   │   ├── scripts/common/  # Универсальные скрипты
+│   │   ├── brands/          # Бренды и модели
 │   │   └── ...
-│   ├── assets/
-│   │   └── watermark/ # Watermark assets (logo.png)
-│   └── docs/         # Backend-specific documentation
+│   └── docs/         # Backend-specific docs
 ├── frontend/         # Next.js frontend
-│   ├── ui/           # Design system components
-│   └── docs/         # Frontend-specific documentation
-├── docs/             # General project documentation
+│   ├── ui/           # Design system
+│   └── docs/         # Frontend-specific docs
+├── docs/             # 📚 Основная документация
 └── docker-compose.yml
 ```
 
-## 🛠️ Utility Scripts
+---
 
-For working with brands and models (run from `backend/` directory):
+## 🛠️ Для разработчиков
 
-```bash
-cd backend
+### Backend:
+- **[backend/docs/README.md](./backend/docs/README.md)** - Backend документация
+- **[backend/docs/SCRIPTS.md](./backend/docs/SCRIPTS.md)** - Скрипты
 
-# Add brands and models
-npm run add-brands
-npm run add-historical  # Historical models
-npm run add-grand       # Grand versions
-npm run add-models      # Add models to existing brand
-npm run add-french-models   # French brands
-npm run add-german-models   # German brands
-npm run add-italian-models  # Italian brands
-npm run add-japanese-models # Japanese brands
-npm run add-american-models # American brands
-npm run add-commercial-models # Commercial vehicles
+### Frontend:
+- **[frontend/docs/README.md](./frontend/docs/README.md)** - Frontend документация
+- **[frontend/docs/DESIGN_SYSTEM.md](./frontend/docs/DESIGN_SYSTEM.md)** - Design system
 
-# Check
-npm run check-brands    # Brand count
-npm run check-models    # Models statistics
-npm run check-citroen   # Check Citroen models
-npm run check-duplicates # Check for duplicates
+### Создание платформ:
+- **[docs/guides/PLATFORM_GUIDE.md](./docs/guides/PLATFORM_GUIDE.md)** - Полное руководство
 
-# Management
-npm run cleanup-brands # Cleanup and synchronization
-npm run seed:all-brands # Seed all brands and models (optimized)
-```
-
-For more information about scripts, see [backend/docs/SCRIPTS.md](./backend/docs/SCRIPTS.md).
+---
 
 ## 🧪 Testing
 
-The project includes comprehensive testing:
-
-- **Unit Tests:** Jest-based tests for services and components
-- **Integration Tests:** API contract tests against Swagger specification
-- **Frontend Tests:** 52 tests across 4 test suites (components, utilities, API, server API)
-- **Backend Tests:** 195 tests across 14 test suites
-- **CI/CD:** Automated testing in GitHub Actions
-
 ```bash
-# Backend unit tests
+# Backend tests (195 tests)
 cd backend && npm test
 
-# Backend integration tests (requires database)
-cd backend && npm run test:integration
-
-# Frontend tests
+# Frontend tests (52 tests)
 cd frontend && npm test
 ```
 
-**Test Coverage:**
-- ✅ All critical backend services and controllers
-- ✅ All critical frontend components (AuthProvider)
-- ✅ Server-side data fetching functions (with production/development cache settings)
-- ✅ Utility functions and API clients
-- ✅ 52 frontend tests across 4 test suites
-- ✅ 195 backend tests across 14 test suites
+**Документация:** [backend/docs/TESTING.md](./backend/docs/TESTING.md)
 
-For detailed documentation, see [documentation](./docs/).
+---
+
+## 🚨 Важно
+
+⚠️ **Перед созданием новых платформ** прочитайте:
+- [docs/architecture/SCRIPTS_ARCHITECTURE.md](./docs/architecture/SCRIPTS_ARCHITECTURE.md) 🔴 **КРИТИЧНО**
+- [docs/architecture/ARCHITECTURE_IMPROVEMENTS_NEEDED.md](./docs/architecture/ARCHITECTURE_IMPROVEMENTS_NEEDED.md)
+
+---
+
+**Stack:** Next.js 15, React 19, NestJS, PostgreSQL, Redis, TypeORM, TailwindCSS, Zustand

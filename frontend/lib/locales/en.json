@@ -533,6 +533,8 @@
     "notRegistered": "Not Registered",
     "registeredUntil": "Registered Until",
     "description": "Description",
+    "expand": "Expand",
+    "collapse": "Collapse",
     "previousListings": "Previous listings for this vehicle",
     "vehicleHistory": "Vehicle History",
     "historyHint": "We show previous listings for this vehicle with the same VIN. For privacy protection, price and personal data of authors are hidden for closed listings.",
@@ -1030,6 +1032,20 @@
     "updateLater": "Later"
   },
   "metadata": {
+    "site": {
+      "defaultTitle": "Cars in Macedonia",
+      "defaultDescription": "Buy or sell a car on Kupito! Post your ad for free.",
+      "keywords": [
+        "cars Macedonia",
+        "buy cars online",
+        "sell cars Macedonia",
+        "car ads Macedonia",
+        "avtomobili makedonija",
+        "kupuvanje avtomobili online",
+        "prodazba avtomobili mk",
+        "avtomobil oglasi makedonija"
+      ]
+    },
     "login": {
       "title": "Login",
       "description": "Log in to your Kupito profile to manage your listings, view favorite cars and saved filters. Access your profile with email or phone.",
@@ -1050,6 +1066,27 @@
       "ogTitle": "Reset Password - Kupito",
       "ogDescription": "Reset your Kupito password. Enter your phone number and follow the steps to reset your password via SMS verification.",
       "ogAlt": "Kupito - Reset Password"
+    },
+    "faq": {
+      "title": "Frequently Asked Questions (FAQ)",
+      "description": "Find answers to the most common questions about Kupito. Learn how to post a listing, manage your listings, search and compare cars.",
+      "ogTitle": "Frequently Asked Questions (FAQ) - Kupito",
+      "ogDescription": "Find answers to the most common questions about Kupito. Learn how to post a listing, manage your listings, search and compare cars, and more.",
+      "ogAlt": "Kupito - FAQ"
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "description": "Read Kupito Terms of Service. Learn the rules, responsibilities and rights when using the car listings platform.",
+      "ogTitle": "Terms of Service - Kupito",
+      "ogDescription": "Read Kupito Terms of Service. Learn the rules, responsibilities and rights when using the car listings platform.",
+      "ogAlt": "Kupito - Terms of Service"
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "description": "Learn how Kupito collects, uses and protects your personal data. Read our Privacy Policy.",
+      "ogTitle": "Privacy Policy - Kupito",
+      "ogDescription": "Learn how Kupito collects, uses and protects your personal data. Read our Privacy Policy to understand how we process your data.",
+      "ogAlt": "Kupito - Privacy Policy"
     },
     "listing": {
       "notFoundTitle": "Listing not found",

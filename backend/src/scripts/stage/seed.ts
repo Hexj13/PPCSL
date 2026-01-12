@@ -22,26 +22,14 @@ import { AppDataSource } from '../../data-source';
 import { Listing } from '../../listings/entities/listing.entity';
 import { Vehicle } from '../../listings/entities/vehicle.entity';
 import { User } from '../../users/entities/user.entity';
-import { checkEnvironment } from '../script-guard';
+import { getPlatformConfig } from '../platforms';
+import { checkEnvironment, checkPlatform } from '../script-guard';
 
 checkEnvironment(['stage', 'development', 'test']);
+checkPlatform(['mk', 'al']);
 
-const cities = [
-  'Скопје',
-  'Битола',
-  'Прилеп',
-  'Куманово',
-  'Охрид',
-  'Струга',
-  'Велес',
-  'Штип',
-  'Кавадарци',
-  'Гостивар',
-  'Тетово',
-  'Кичево',
-  'Дебар',
-  'Струмица',
-];
+const platformConfig = getPlatformConfig();
+const { cities, descriptions } = platformConfig;
 
 const colors = [
   'black',
@@ -74,19 +62,6 @@ const colors = [
   'matte_black',
   'matte_gray',
   'matte_blue',
-];
-
-const descriptions = [
-  'Отлично одржан автомобил, без неисправности. Регуларно сервисиран.',
-  'Прекрасен автомобил во одлично состојба. Нова гуми, ново масло.',
-  'Автомобил во перфектна состојба, како нов. Одлична можност.',
-  'Добро одржан автомобил со цела историја на сервисирање.',
-  'Висококвалитетен автомобил, идеален за семејство.',
-  'Спортски автомобил во одлично состојба. Одлични перформанси.',
-  'Економичен и сигурен автомобил. Перфектен за град.',
-  'Луксозен автомобил со сите опции. Премиум квалитет.',
-  'Надежен автомобил за долги патувања. Одлична состојба.',
-  'Модерен автомобил со најнови технологии. Одлична вредност.',
 ];
 
 function getSeedImages(): string[] {
@@ -150,11 +125,11 @@ async function createUsers(count: number = 3): Promise<User[]> {
       user = userRepo.create({
         email,
         password: hashedPassword,
-        firstName: `Тест${i}`,
-        lastName: 'Корисник',
-        phone: `+3897012345${i}`,
+        firstName: `${platformConfig.testUserFirstName}${i}`,
+        lastName: platformConfig.testUserLastName,
+        phone: `${platformConfig.phonePrefix}7012345${i}`,
         type: isBusiness ? UserTypeEnum.Business : UserTypeEnum.Individual,
-        companyName: isBusiness ? `Тест Компанија ${i}` : null,
+        companyName: isBusiness ? `${platformConfig.testCompanyName} ${i}` : null,
         viber: i % 2 === 0,
         whatsapp: i % 2 === 1,
         telegram: i % 3 === 0,
@@ -314,11 +289,11 @@ async function seedListings(
 
     const transmissionStr =
       transmission === 'Automatic'
-        ? 'Автоматска'
+        ? platformConfig.transmissionLabels.automatic
         : transmission === 'Manual'
-          ? 'Мануелна'
+          ? platformConfig.transmissionLabels.manual
           : transmission === 'CVT'
-            ? 'Варијатор'
+            ? platformConfig.transmissionLabels.cvt
             : '';
     const baseTitle = `${brand.name} ${model.name} ${year}`;
     const title = transmissionStr ? `${baseTitle} (${transmissionStr})` : baseTitle;
@@ -469,11 +444,11 @@ async function createVinHistory(
 
     const transmissionStr =
       transmission === 'Automatic'
-        ? 'Автоматска'
+        ? platformConfig.transmissionLabels.automatic
         : transmission === 'Manual'
-          ? 'Мануелна'
+          ? platformConfig.transmissionLabels.manual
           : transmission === 'CVT'
-            ? 'Варијатор'
+            ? platformConfig.transmissionLabels.cvt
             : '';
     const baseTitle = `${brand.name} ${model.name} ${historyYear}`;
     const title = transmissionStr ? `${baseTitle} (${transmissionStr})` : baseTitle;

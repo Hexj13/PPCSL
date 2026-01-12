@@ -9,46 +9,46 @@ import { checkEnvironment } from '../script-guard';
 checkEnvironment(['stage', 'development', 'test']);
 
 async function clearCache() {
-  console.log('🚀 Започнување на чистење на кеш...\n');
+  console.log('🚀 Starting cache cleanup...\n');
 
   await AppDataSource.initialize();
-  console.log('✅ Поврзано со базата на податоци\n');
+  console.log('✅ Connected to database\n');
 
   const configService = new ConfigService();
   const redisService = new RedisService(configService);
   await redisService.onModuleInit();
 
-  console.log('🗑️  Бришење на кеш за објави...');
+  console.log('🗑️  Deleting listing cache...');
   const deletedSearch = await redisService.invalidateByPrefix(CACHE_PREFIXES.listingsSearch);
-  console.log(`   ✅ Избришани ${deletedSearch} кешови за пребарување\n`);
+  console.log(`   ✅ Deleted ${deletedSearch} search caches\n`);
 
   const deletedListings = await redisService.invalidateByPrefix(CACHE_PREFIXES.listings);
-  console.log(`   ✅ Избришани ${deletedListings} кешови за објави\n`);
+  console.log(`   ✅ Deleted ${deletedListings} listing caches\n`);
 
   const deletedUser = await redisService.invalidateByPrefix(CACHE_PREFIXES.listingsUser);
-  console.log(`   ✅ Избришани ${deletedUser} кешови за кориснички објави\n`);
+  console.log(`   ✅ Deleted ${deletedUser} user listing caches\n`);
 
   const deletedBrands = await redisService.invalidateByPrefix(CACHE_PREFIXES.brands);
-  console.log(`   ✅ Избришани ${deletedBrands} кешови за марки\n`);
+  console.log(`   ✅ Deleted ${deletedBrands} brand caches\n`);
 
   const deletedBrandsModels = await redisService.invalidateByPrefix(CACHE_PREFIXES.brandsModels);
-  console.log(`   ✅ Избришани ${deletedBrandsModels} кешови за модели\n`);
+  console.log(`   ✅ Deleted ${deletedBrandsModels} model caches\n`);
 
   const deletedCities = await redisService.invalidateByPrefix(CACHE_PREFIXES.cities);
-  console.log(`   ✅ Избришани ${deletedCities} кешови за градови\n`);
+  console.log(`   ✅ Deleted ${deletedCities} city caches\n`);
 
   await redisService.onModuleDestroy();
   await AppDataSource.destroy();
 
-  console.log('✅ Кешот е целосно исчистен!\n');
+  console.log('✅ Cache cleanup complete!\n');
 }
 
 clearCache()
   .then(() => {
-    console.log('✅ Скриптот заврши успешно');
+    console.log('✅ Script completed successfully');
     process.exit(0);
   })
   .catch((error) => {
-    console.error('❌ Грешка:', error);
+    console.error('❌ Error:', error);
     process.exit(1);
   });

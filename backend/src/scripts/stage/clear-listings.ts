@@ -10,10 +10,10 @@ import { checkEnvironment } from '../script-guard';
 checkEnvironment(['stage', 'development', 'test']);
 
 async function clearListings() {
-  console.log('🚀 Начинаю удаление всех объявлений...\n');
+  console.log('🚀 Starting deletion of all listings...\n');
 
   await AppDataSource.initialize();
-  console.log('✅ Подключено к базе данных\n');
+  console.log('✅ Connected to database\n');
 
   const listingRepo = AppDataSource.getRepository(Listing);
   const listingViewRepo = AppDataSource.getRepository(ListingView);
@@ -21,62 +21,59 @@ async function clearListings() {
   const vehicleRepo = AppDataSource.getRepository(Vehicle);
   const promotionHistoryRepo = AppDataSource.getRepository(PromotionHistory);
 
-  console.log('🗑️  Удаление истории продвижений...');
+  console.log('🗑️  Deleting promotion history...');
   const allPromotionHistory = await promotionHistoryRepo.find();
-  console.log(`   Найдено ${allPromotionHistory.length} записей истории продвижений`);
+  console.log(`   Found ${allPromotionHistory.length} promotion history records`);
   for (const history of allPromotionHistory) {
     await promotionHistoryRepo.remove(history);
   }
-  console.log(`   ✅ Удалено ${allPromotionHistory.length} записей истории продвижений\n`);
+  console.log(`   ✅ Deleted ${allPromotionHistory.length} promotion history records\n`);
 
-  console.log('🗑️  Удаление объявлений...');
+  console.log('🗑️  Deleting listings...');
   const allListings = await listingRepo.find();
-  console.log(`   Найдено ${allListings.length} объявлений`);
+  console.log(`   Found ${allListings.length} listings`);
 
   let deletedListings = 0;
   for (const listing of allListings) {
-    // Удаляем просмотры
     const views = await listingViewRepo.find({ where: { listing_id: listing.id } });
     for (const view of views) {
       await listingViewRepo.remove(view);
     }
 
-    // Удаляем из избранного
     const favorites = await favoriteRepo.find({ where: { listing_id: listing.id } });
     for (const favorite of favorites) {
       await favoriteRepo.remove(favorite);
     }
 
-    // Удаляем объявление
     await listingRepo.remove(listing);
     deletedListings++;
   }
-  console.log(`   ✅ Удалено ${deletedListings} объявлений\n`);
+  console.log(`   ✅ Deleted ${deletedListings} listings\n`);
 
-  console.log('🗑️  Удаление связанных транспортных средств...');
+  console.log('🗑️  Deleting related vehicles...');
   const allVehicles = await vehicleRepo.find();
-  console.log(`   Найдено ${allVehicles.length} транспортных средств`);
+  console.log(`   Found ${allVehicles.length} vehicles`);
 
   let deletedVehicles = 0;
   for (const vehicle of allVehicles) {
     await vehicleRepo.remove(vehicle);
     deletedVehicles++;
   }
-  console.log(`   ✅ Удалено ${deletedVehicles} транспортных средств\n`);
+  console.log(`   ✅ Deleted ${deletedVehicles} vehicles\n`);
 
   const finalListings = await listingRepo.find();
   const finalVehicles = await vehicleRepo.find();
 
-  console.log('✅ Все объявления удалены!');
-  console.log(`\n📊 Статистика:`);
-  console.log(`   - Удалено объявлений: ${deletedListings}`);
-  console.log(`   - Удалено транспортных средств: ${deletedVehicles}`);
-  console.log(`\n📊 Финальная проверка:`);
-  console.log(`   - Осталось объявлений: ${finalListings.length}`);
-  console.log(`   - Осталось транспортных средств: ${finalVehicles.length}`);
+  console.log('✅ All listings deleted!');
+  console.log(`\n📊 Statistics:`);
+  console.log(`   - Deleted listings: ${deletedListings}`);
+  console.log(`   - Deleted vehicles: ${deletedVehicles}`);
+  console.log(`\n📊 Final check:`);
+  console.log(`   - Remaining listings: ${finalListings.length}`);
+  console.log(`   - Remaining vehicles: ${finalVehicles.length}`);
 
   await AppDataSource.destroy();
-  console.log('\n✅ Готово!');
+  console.log('\n✅ Done!');
 }
 
 clearListings()
@@ -84,6 +81,6 @@ clearListings()
     process.exit(0);
   })
   .catch((error) => {
-    console.error('❌ Ошибка:', error);
+    console.error('❌ Error:', error);
     process.exit(1);
   });

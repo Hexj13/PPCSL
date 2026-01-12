@@ -3,8 +3,14 @@ import { join } from 'path';
 
 import { ImageResponse } from 'next/og';
 
+import { getServerTranslations } from '@/lib/i18n';
+import { loadSiteConfigSync } from '@/lib/site-config';
+
+const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+const siteConfig = loadSiteConfigSync(country);
+
 export const runtime = 'nodejs';
-export const alt = 'Kupito - Автомобили во Македонија';
+export const alt = `${siteConfig.name} - ${getServerTranslations().metadata.site.defaultTitle}`;
 export const size = {
   width: 1200,
   height: 630,
@@ -12,6 +18,8 @@ export const size = {
 export const contentType = 'image/png';
 
 export default async function Image() {
+  const t = getServerTranslations();
+
   try {
     const imagePath = join(process.cwd(), 'public', 'opengraph-image.png');
     const imageBuffer = await readFile(imagePath);
@@ -60,7 +68,6 @@ export default async function Image() {
             fontFamily: 'system-ui',
           }}
         >
-          {/* eslint-disable no-hardcoded-text/no-hardcoded-text */}
           <div
             style={{
               fontSize: 72,
@@ -68,7 +75,7 @@ export default async function Image() {
               marginBottom: 32,
             }}
           >
-            Kupito
+            {siteConfig.name}
           </div>
           <div
             style={{
@@ -77,9 +84,8 @@ export default async function Image() {
               padding: '0 40px',
             }}
           >
-            Купете или продадете авто на Kupito! Објавете оглас бесплатно.
+            {t.metadata.site.defaultDescription}
           </div>
-          {/* eslint-enable no-hardcoded-text/no-hardcoded-text */}
         </div>
       ),
       {

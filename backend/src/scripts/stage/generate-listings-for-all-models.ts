@@ -20,26 +20,14 @@ import { AppDataSource } from '../../data-source';
 import { Listing } from '../../listings/entities/listing.entity';
 import { Vehicle } from '../../listings/entities/vehicle.entity';
 import { User } from '../../users/entities/user.entity';
-import { checkEnvironment } from '../script-guard';
+import { getPlatformConfig } from '../platforms';
+import { checkEnvironment, checkPlatform } from '../script-guard';
 
 checkEnvironment(['stage', 'development', 'test']);
+checkPlatform(['mk', 'al']);
 
-const cities = [
-  'Скопје',
-  'Битола',
-  'Прилеп',
-  'Куманово',
-  'Охрид',
-  'Струга',
-  'Велес',
-  'Штип',
-  'Кавадарци',
-  'Гостивар',
-  'Тетово',
-  'Кичево',
-  'Дебар',
-  'Струмица',
-];
+const platformConfig = getPlatformConfig();
+const { cities, descriptions } = platformConfig;
 
 const colors = [
   'white',
@@ -54,19 +42,6 @@ const colors = [
   'orange',
   'violet',
   'beige',
-];
-
-const descriptions = [
-  'Отлично одржан автомобил, без неисправности. Регуларно сервисиран.',
-  'Прекрасен автомобил во одлично состојба. Нова гуми, ново масло.',
-  'Автомобил во перфектна состојба, како нов. Одлична можност.',
-  'Добро одржан автомобил со цела историја на сервисирање.',
-  'Висококвалитетен автомобил, идеален за семејство.',
-  'Спортски автомобил во одлично состојба. Одлични перформанси.',
-  'Економичен и сигурен автомобил. Перфектен за град.',
-  'Луксозен автомобил со сите опции. Премиум квалитет.',
-  'Надежен автомобил за долги патувања. Одлична состојба.',
-  'Модерен автомобил со најнови технологии. Одлична вредност.',
 ];
 
 function getSeedImages(): string[] {
@@ -115,7 +90,7 @@ function generateVin(): string {
 }
 
 async function generateListingsForAllModels() {
-  console.log('🚗 Генерирање на објави за сите модели...');
+  console.log('🚗 Generating listings for all models...');
 
   await AppDataSource.initialize();
 
@@ -129,7 +104,7 @@ async function generateListingsForAllModels() {
   });
 
   if (users.length === 0) {
-    console.log('❌ Нема корисници. Ве молиме прво извршете го основниот seed скрипт.');
+    console.log('❌ No users found. Please run the main seed script first.');
     return;
   }
 
@@ -140,7 +115,7 @@ async function generateListingsForAllModels() {
   const validBrands = brandsWithModels.filter((b) => b.models && b.models.length > 0);
 
   if (validBrands.length === 0) {
-    console.log('❌ Нема достапни брендови со модели.');
+    console.log('❌ No brands with models available.');
     return;
   }
 
@@ -151,7 +126,7 @@ async function generateListingsForAllModels() {
     }
   }
 
-  console.log(`📊 Најдени се ${allModels.length} модели за генерирање објави`);
+  console.log(`📊 Found ${allModels.length} models for listing generation`);
 
   const fuelTypes = Object.values(FuelType);
   const transmissionTypes = Object.values(TransmissionType);
@@ -166,9 +141,9 @@ async function generateListingsForAllModels() {
   const baseUrl = process.env.API_URL || 'http://localhost:4000';
 
   if (seedImages.length === 0) {
-    console.warn('⚠️  Нема слики во seed-images/. Користи се placeholder.');
+    console.warn('⚠️  No images in seed-images/. Using placeholder.');
   } else {
-    console.log(`   📸 Најдени се ${seedImages.length} слики`);
+    console.log(`   📸 Found ${seedImages.length} images`);
   }
 
   let createdCount = 0;
@@ -189,7 +164,7 @@ async function generateListingsForAllModels() {
     if (existingListing) {
       skippedCount++;
       if ((i + 1) % 50 === 0) {
-        console.log(`   Проверено ${i + 1}/${allModels.length} модели...`);
+        console.log(`   Checked ${i + 1}/${allModels.length} models...`);
       }
       continue;
     }

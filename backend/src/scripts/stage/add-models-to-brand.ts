@@ -18,10 +18,10 @@ const ADDITIONAL_MODELS: Record<string, string[]> = {
 };
 
 async function addModelsToBrands() {
-  console.log('🚀 Започнување на додавање на модели...\n');
+  console.log('🚀 Starting model addition...\n');
 
   await AppDataSource.initialize();
-  console.log('✅ Поврзано со базата на податоци\n');
+  console.log('✅ Connected to database\n');
 
   const brandRepo = AppDataSource.getRepository(Brand);
   const modelRepo = AppDataSource.getRepository(VehicleModel);
@@ -33,7 +33,7 @@ async function addModelsToBrands() {
     const brand = await brandRepo.findOne({ where: { name: brandName } });
 
     if (!brand) {
-      console.log(`⚠️  Бренд "${brandName}" не е пронајден, прескокнување...\n`);
+      console.log(`⚠️  Brand "${brandName}" not found, skipping...\n`);
       continue;
     }
 
@@ -61,12 +61,12 @@ async function addModelsToBrands() {
         });
         await modelRepo.save(model);
         added++;
-        console.log(`  ✅ Додаден модел: ${modelName}`);
+        console.log(`  ✅ Added model: ${modelName}`);
       } else {
         existingModel.order = maxOrder + i + 1;
         await modelRepo.save(existingModel);
         updated++;
-        console.log(`  ♻️  Ажуриран модел: ${modelName}`);
+        console.log(`  ♻️  Updated model: ${modelName}`);
       }
     }
 
@@ -74,25 +74,25 @@ async function addModelsToBrands() {
     totalUpdated += updated;
 
     console.log(`\n📊 ${brandName}:`);
-    console.log(`   - Додадени модели: ${added}`);
-    console.log(`   - Ажурирани модели: ${updated}`);
-    console.log(`   - Вкупно модели: ${existingModels.length + added}\n`);
+    console.log(`   - Added models: ${added}`);
+    console.log(`   - Updated models: ${updated}`);
+    console.log(`   - Total models: ${existingModels.length + added}\n`);
   }
 
-  console.log(`\n✅ Завршено!`);
-  console.log(`   - Вкупно додадени модели: ${totalAdded}`);
-  console.log(`   - Вкупно ажурирани модели: ${totalUpdated}\n`);
+  console.log(`\n✅ Complete!`);
+  console.log(`   - Total added models: ${totalAdded}`);
+  console.log(`   - Total updated models: ${totalUpdated}\n`);
 
   await AppDataSource.destroy();
-  console.log('🔌 Врската со базата на податоци е затворена');
+  console.log('🔌 Database connection closed');
 }
 
 addModelsToBrands()
   .then(() => {
-    console.log('✅ Скриптот заврши успешно');
+    console.log('✅ Script completed successfully');
     process.exit(0);
   })
   .catch((error) => {
-    console.error('❌ Грешка:', error);
+    console.error('❌ Error:', error);
     process.exit(1);
   });

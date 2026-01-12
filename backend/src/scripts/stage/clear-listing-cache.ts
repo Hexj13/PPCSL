@@ -9,49 +9,49 @@ import { checkEnvironment } from '../script-guard';
 checkEnvironment(['stage', 'development', 'test']);
 
 async function clearListingCache(listingId?: string) {
-  console.log('🚀 Започнување на чистење на кеш за објави...\n');
+  console.log('🚀 Starting listing cache cleanup...\n');
 
   await AppDataSource.initialize();
-  console.log('✅ Поврзано со базата на податоци\n');
+  console.log('✅ Connected to database\n');
 
   const configService = new ConfigService();
   const redisService = new RedisService(configService);
   await redisService.onModuleInit();
 
   if (listingId) {
-    console.log(`🗑️  Бришење на кеш за објава ${listingId}...`);
+    console.log(`🗑️  Deleting cache for listing ${listingId}...`);
     await redisService.del(
       generateCacheKey({ prefix: CACHE_PREFIXES.listings, parts: [listingId] }),
     );
-    console.log(`   ✅ Избришан кеш за објава ${listingId}\n`);
+    console.log(`   ✅ Deleted cache for listing ${listingId}\n`);
   } else {
-    console.log('🗑️  Бришење на кеш за пребарување на објави...');
+    console.log('🗑️  Deleting search cache...');
     const deletedSearch = await redisService.invalidateByPrefix(CACHE_PREFIXES.listingsSearch);
-    console.log(`   ✅ Избришани ${deletedSearch} кешови за пребарување\n`);
+    console.log(`   ✅ Deleted ${deletedSearch} search caches\n`);
 
-    console.log('🗑️  Бришење на кеш за објави...');
+    console.log('🗑️  Deleting listing cache...');
     const deletedListings = await redisService.invalidateByPrefix(CACHE_PREFIXES.listings);
-    console.log(`   ✅ Избришани ${deletedListings} кешови за објави\n`);
+    console.log(`   ✅ Deleted ${deletedListings} listing caches\n`);
 
-    console.log('🗑️  Бришење на кеш за кориснички објави...');
+    console.log('🗑️  Deleting user listing cache...');
     const deletedUser = await redisService.invalidateByPrefix(CACHE_PREFIXES.listingsUser);
-    console.log(`   ✅ Избришани ${deletedUser} кешови за кориснички објави\n`);
+    console.log(`   ✅ Deleted ${deletedUser} user listing caches\n`);
   }
 
   await redisService.onModuleDestroy();
   await AppDataSource.destroy();
 
-  console.log('✅ Кешот за објави е исчистен!\n');
+  console.log('✅ Listing cache cleanup complete!\n');
 }
 
 const listingId = process.argv[2];
 
 clearListingCache(listingId)
   .then(() => {
-    console.log('✅ Скриптот заврши успешно');
+    console.log('✅ Script completed successfully');
     process.exit(0);
   })
   .catch((error) => {
-    console.error('❌ Грешка:', error);
+    console.error('❌ Error:', error);
     process.exit(1);
   });

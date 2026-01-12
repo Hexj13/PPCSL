@@ -1,5 +1,7 @@
 'use client';
 
+import { useState, useRef, useEffect } from 'react';
+
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface ListingPageDescriptionProps {
@@ -8,23 +10,114 @@ interface ListingPageDescriptionProps {
 
 export function ListingPageDescription({ descriptionHtml }: ListingPageDescriptionProps) {
   const { t } = useTranslation();
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [needsExpansion, setNeedsExpansion] = useState(true);
+  const [fullHeight, setFullHeight] = useState<number>(400);
+  const surfaceRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!surfaceRef.current || !descriptionHtml) return;
+
+    const checkHeight = () => {
+      if (surfaceRef.current) {
+        const currentMaxHeight = surfaceRef.current.style.maxHeight;
+        const currentTransition = surfaceRef.current.style.transition;
+
+        surfaceRef.current.style.maxHeight = 'none';
+        surfaceRef.current.style.transition = 'none';
+
+        const height = surfaceRef.current.scrollHeight;
+
+        surfaceRef.current.style.maxHeight = currentMaxHeight;
+        surfaceRef.current.style.transition = currentTransition;
+
+        const isLong = height > 400;
+        setNeedsExpansion(isLong);
+        setFullHeight(height);
+      }
+    };
+
+    setTimeout(checkHeight, 100);
+  }, [descriptionHtml, isExpanded]);
+
+  const handleToggle = () => {
+    if (isExpanded && surfaceRef.current) {
+      setTimeout(() => {
+        const element = surfaceRef.current;
+        if (element) {
+          const elementPosition = element.getBoundingClientRect().top;
+          const offsetPosition = elementPosition + window.pageYOffset - 110;
+
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth',
+          });
+        }
+      }, 50);
+    }
+    setIsExpanded(!isExpanded);
+  };
 
   if (!descriptionHtml) {
-    return null;
+    return (
+      <div className="surface" style={{ height: '400px' }}>
+        <div className="h-10 bg-primary-500/10 rounded mb-4 animate-pulse w-32" />
+        <div className="space-y-3">
+          <div className="h-4 bg-primary-500/10 rounded animate-pulse" />
+          <div className="h-4 bg-primary-500/10 rounded animate-pulse w-5/6" />
+          <div className="h-4 bg-primary-500/10 rounded animate-pulse" />
+          <div className="h-4 bg-primary-500/10 rounded animate-pulse w-4/5" />
+          <div className="h-4 bg-primary-500/10 rounded animate-pulse" />
+          <div className="h-4 bg-primary-500/10 rounded animate-pulse w-11/12" />
+          <div className="h-4 bg-primary-500/10 rounded animate-pulse" />
+          <div className="h-4 bg-primary-500/10 rounded animate-pulse w-3/4" />
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="surface overflow-hidden">
+    <div
+      ref={surfaceRef}
+      className="surface overflow-hidden relative"
+      style={{
+        maxHeight: isExpanded ? `${fullHeight}px` : '400px',
+        transition: 'max-height 0.4s ease-in-out',
+      }}
+    >
       <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-400">
         {t('listingDetail.description')}
       </h2>
       <div
         className="leading-relaxed max-w-none listing-description whitespace-pre-wrap"
-        style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+        style={{
+          color: 'rgb(var(--text-secondary-rgb))',
+          paddingBottom: needsExpansion ? '60px' : '0',
+        }}
         dangerouslySetInnerHTML={{
           __html: descriptionHtml,
         }}
       />
+      {!isExpanded && needsExpansion && (
+        <div
+          className="absolute left-0 right-0 bottom-0 pointer-events-none"
+          style={{
+            height: '100px',
+            background:
+              'linear-gradient(to top, rgb(var(--bg-light-rgb, 35, 61, 55)) 0%, rgb(var(--bg-light-rgb, 35, 61, 55)) 40px, transparent 100%)',
+          }}
+        />
+      )}
+      {needsExpansion && (
+        <div className="absolute left-0 right-0 bottom-4 flex justify-center z-10">
+          <button
+            onClick={handleToggle}
+            className="px-4 py-2 text-primary-400 hover:text-primary-300 transition-colors duration-200 text-sm font-medium border border-primary-500/30 rounded-lg hover:border-primary-500/50 bg-bg-light"
+          >
+            {isExpanded ? t('listingDetail.collapse') : t('listingDetail.expand')}
+          </button>
+        </div>
+      )}
       <style jsx>{`
         .listing-description {
           color: rgb(var(--text-secondary-rgb));

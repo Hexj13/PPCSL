@@ -23,13 +23,14 @@ const siteUrl = siteConfig.siteUrl;
 
 async function getTitleFromParams(
   brandParam: string | string[] | undefined,
-  modelParam: string | string[] | undefined
+  modelParam: string | string[] | undefined,
+  defaultTitle: string
 ): Promise<string> {
   const brand = typeof brandParam === 'string' ? brandParam : undefined;
   const model = typeof modelParam === 'string' ? modelParam : undefined;
 
   if (!brand && !model) {
-    return 'Автомобили во Македонија';
+    return defaultTitle;
   }
 
   const brandSlugs = brand ? brand.split(',').map((s) => s.trim().toLowerCase()) : [];
@@ -47,7 +48,7 @@ async function getTitleFromParams(
       .filter((name): name is string => name !== undefined);
 
     if (foundBrands.length === 0) {
-      return 'Автомобили во Македонија';
+      return defaultTitle;
     }
 
     if (modelSlugs.length > 0 && foundBrands.length > 0) {
@@ -89,7 +90,7 @@ async function getTitleFromParams(
       .filter((name): name is string => name !== undefined);
 
     if (popularBrands.length === 0) {
-      return 'Автомобили во Македонија';
+      return defaultTitle;
     }
 
     if (modelSlugs.length > 0 && popularBrands.length > 0) {
@@ -120,13 +121,14 @@ export async function generateMetadata({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }): Promise<Metadata> {
+  const t = getServerTranslations();
   const params = await searchParams;
   const brandParam = params.brand;
   const modelParam = params.model;
   const pageParam = params.page;
-  const title = await getTitleFromParams(brandParam, modelParam);
-  const fullTitle =
-    title === 'Автомобили во Македонија' ? title : `${title} | Автомобили во Македонија`;
+  const baseTitle = t.metadata.site.defaultTitle;
+  const title = await getTitleFromParams(brandParam, modelParam, baseTitle);
+  const fullTitle = title === baseTitle ? title : `${title} | ${baseTitle}`;
 
   const page =
     typeof pageParam === 'string' && pageParam.trim() !== '' ? parseInt(pageParam, 10) : 1;
@@ -188,17 +190,7 @@ export async function generateMetadata({
   return {
     title: fullTitle,
     description,
-    keywords: [
-      title,
-      'автомобили Македонија',
-      'купување автомобили онлајн',
-      'продажба автомобили Македонија',
-      'автомобили огласи Македонија',
-      'avtomobili makedonija',
-      'kupuvanje avtomobili online',
-      'prodazba avtomobili mk',
-      'avtomobil oglasi makedonija',
-    ],
+    keywords: [title, ...t.metadata.site.keywords],
     robots: hasNonIndexableParams
       ? {
           index: false,
@@ -219,11 +211,11 @@ export async function generateMetadata({
           url: `${siteUrl}/og-image.jpg`,
           width: 1200,
           height: 630,
-          alt: 'Kupito',
+          alt: siteConfig.name,
         },
       ],
-      siteName: 'Kupito',
-      locale: 'mk-MK',
+      siteName: siteConfig.name,
+      locale: siteConfig.locale,
     },
     twitter: {
       card: 'summary_large_image',

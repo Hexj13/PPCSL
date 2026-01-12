@@ -219,23 +219,23 @@ async function seedAllBrands() {
   const skipHeavyScripts = process.argv.includes('--skip-heavy');
   const delayBetweenScripts = parseInt(process.env.SCRIPT_DELAY_MS || '8000', 10);
 
-  console.log('🌱 Сеење на марки и модели...\n');
+  console.log('🌱 Seeding brands and models...\n');
   if (skipHeavyScripts) {
-    console.log('⚠️  Тешки скриптови се прескокнуваат\n');
+    console.log('⚠️  Heavy scripts are skipped\n');
   }
 
   await AppDataSource.initialize();
 
   const allScripts = [
-    { name: 'Основни марки и модели', script: 'add-brands', heavy: false },
-    { name: 'Италијански марки', script: 'add-italian-models', heavy: false },
-    { name: 'Американски марки', script: 'add-american-models', heavy: true },
-    { name: 'Германски марки', script: 'add-german-models', heavy: false },
-    { name: 'Јапонски марки', script: 'add-japanese-models', heavy: true },
-    { name: 'Француски марки', script: 'add-french-models', heavy: false },
-    { name: 'Комерцијални модели', script: 'add-commercial-models', heavy: true },
-    { name: 'Grand верзии', script: 'add-grand', heavy: false },
-    { name: 'Историски и ретки модели', script: 'add-historical', heavy: true },
+    { name: 'Base brands and models', script: 'add-brands', heavy: false },
+    { name: 'Italian brands', script: 'add-italian-models', heavy: false },
+    { name: 'American brands', script: 'add-american-models', heavy: true },
+    { name: 'German brands', script: 'add-german-models', heavy: false },
+    { name: 'Japanese brands', script: 'add-japanese-models', heavy: true },
+    { name: 'French brands', script: 'add-french-models', heavy: false },
+    { name: 'Commercial models', script: 'add-commercial-models', heavy: true },
+    { name: 'Grand versions', script: 'add-grand', heavy: false },
+    { name: 'Historical and rare models', script: 'add-historical', heavy: true },
   ];
 
   const scripts = skipHeavyScripts ? allScripts.filter((s) => !s.heavy) : allScripts;
@@ -257,7 +257,7 @@ async function seedAllBrands() {
   }
 
   if (scriptErrors.length > 0) {
-    console.warn('\n⚠️  Грешки при извршување на дочерни скрипти:');
+    console.warn('\n⚠️  Errors during child script execution:');
     for (const errorMessage of scriptErrors) {
       console.warn(`   - ${errorMessage}`);
     }
@@ -271,7 +271,7 @@ async function seedAllBrands() {
   const brands = await brandRepo.find({ select: ['id'] });
   const totalModels = await modelRepo.count();
 
-  console.log(`\n📊 Резултати: ${brands.length} марки, ${totalModels} модели`);
+  console.log(`\n📊 Results: ${brands.length} brands, ${totalModels} models`);
 
   await safeDelay(1000);
 
@@ -279,9 +279,9 @@ async function seedAllBrands() {
 
   if (duplicates.brandDuplicates > 0 || duplicates.modelDuplicates > 0) {
     console.log(
-      `\n⚠️  Најдени дубликати: ${duplicates.brandDuplicates} марки, ${duplicates.modelDuplicates} модели`,
+      `\n⚠️  Duplicates found: ${duplicates.brandDuplicates} brands, ${duplicates.modelDuplicates} models`,
     );
-    console.log('   Извршете: npm run remove-duplicates');
+    console.log('   Run: npm run remove-duplicates');
   }
 
   await safeDelay(1000);
@@ -296,7 +296,7 @@ async function seedAllBrands() {
 
     await redisService.onModuleDestroy();
   } catch (error) {
-    console.warn('\n⚠️  Кешот не може да се исчисти (Redis не е достапен)');
+    console.warn('\n⚠️  Cache cannot be cleared (Redis not available)');
   }
 
   await AppDataSource.destroy();
@@ -304,10 +304,10 @@ async function seedAllBrands() {
 
 seedAllBrands()
   .then(() => {
-    console.log('\n✅ Завршено');
+    console.log('\n✅ Complete');
     process.exit(0);
   })
   .catch((error) => {
-    console.error('\n❌ Грешка:', error.message);
+    console.error('\n❌ Error:', error.message);
     process.exit(1);
   });

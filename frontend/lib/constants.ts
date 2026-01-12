@@ -4,6 +4,17 @@ export const listingStatuses = ['Active', 'Paused', 'Closed'] as const;
 
 export const currencies = ['MKD', 'EUR'] as const;
 
+export function getPlatformCurrencies(): readonly string[] {
+  try {
+    const { loadSiteConfigSync } = require('./site-config');
+    const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+    const config = loadSiteConfigSync(country);
+    return config.currencies || currencies;
+  } catch {
+    return currencies;
+  }
+}
+
 export const fuelTypes = ['Petrol', 'Diesel', 'Electric', 'Hybrid', 'LPG'] as const;
 
 export const transmissionTypes = ['Manual', 'Automatic', 'CVT', 'Robot'] as const;

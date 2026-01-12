@@ -12,10 +12,10 @@ import { checkEnvironment } from '../script-guard';
 checkEnvironment(['stage', 'development', 'test']);
 
 async function clearDatabase() {
-  console.log('🚀 Започнување на чистење на базата на податоци...\n');
+  console.log('🚀 Starting database cleanup...\n');
 
   await AppDataSource.initialize();
-  console.log('✅ Поврзано со базата на податоци\n');
+  console.log('✅ Connected to database\n');
 
   const listingRepo = AppDataSource.getRepository(Listing);
   const listingViewRepo = AppDataSource.getRepository(ListingView);
@@ -25,9 +25,9 @@ async function clearDatabase() {
   const brandRepo = AppDataSource.getRepository(Brand);
   const userRepo = AppDataSource.getRepository(User);
 
-  console.log('🗑️  Бришење на објави...');
+  console.log('🗑️  Deleting listings...');
   const allListings = await listingRepo.find();
-  console.log(`   Најдени ${allListings.length} објави`);
+  console.log(`   Found ${allListings.length} listings`);
 
   let deletedListings = 0;
   for (const listing of allListings) {
@@ -44,19 +44,19 @@ async function clearDatabase() {
     await listingRepo.remove(listing);
     deletedListings++;
   }
-  console.log(`   ✅ Избришани ${deletedListings} објави\n`);
+  console.log(`   ✅ Deleted ${deletedListings} listings\n`);
 
-  console.log('🗑️  Бришење на возила...');
+  console.log('🗑️  Deleting vehicles...');
   const allVehicles = await vehicleRepo.find();
-  console.log(`   Најдени ${allVehicles.length} возила`);
+  console.log(`   Found ${allVehicles.length} vehicles`);
   for (const vehicle of allVehicles) {
     await vehicleRepo.remove(vehicle);
   }
-  console.log(`   ✅ Избришани ${allVehicles.length} возила\n`);
+  console.log(`   ✅ Deleted ${allVehicles.length} vehicles\n`);
 
-  console.log('🗑️  Бришење на модели...');
+  console.log('🗑️  Deleting models...');
   let allModels = await modelRepo.find();
-  console.log(`   Најдени ${allModels.length} модели`);
+  console.log(`   Found ${allModels.length} models`);
   let deletedModels = 0;
   for (const model of allModels) {
     await modelRepo.remove(model);
@@ -65,17 +65,17 @@ async function clearDatabase() {
 
   allModels = await modelRepo.find();
   if (allModels.length > 0) {
-    console.log(`   ⚠️  Остануваат ${allModels.length} модели, бришење...`);
+    console.log(`   ⚠️  ${allModels.length} models remaining, deleting...`);
     for (const model of allModels) {
       await modelRepo.remove(model);
       deletedModels++;
     }
   }
-  console.log(`   ✅ Избришани ${deletedModels} модели\n`);
+  console.log(`   ✅ Deleted ${deletedModels} models\n`);
 
-  console.log('🗑️  Бришење на марки...');
+  console.log('🗑️  Deleting brands...');
   let allBrands = await brandRepo.find();
-  console.log(`   Најдени ${allBrands.length} марки`);
+  console.log(`   Found ${allBrands.length} brands`);
   let deletedBrands = 0;
   for (const brand of allBrands) {
     const remainingModels = await modelRepo.find({ where: { brand_id: brand.id } });
@@ -90,7 +90,7 @@ async function clearDatabase() {
 
   allBrands = await brandRepo.find();
   if (allBrands.length > 0) {
-    console.log(`   ⚠️  Остануваат ${allBrands.length} марки, бришење...`);
+    console.log(`   ⚠️  ${allBrands.length} brands remaining, deleting...`);
     for (const brand of allBrands) {
       const remainingModels = await modelRepo.find({ where: { brand_id: brand.id } });
       if (remainingModels.length > 0) {
@@ -102,14 +102,14 @@ async function clearDatabase() {
       deletedBrands++;
     }
   }
-  console.log(`   ✅ Избришани ${deletedBrands} марки\n`);
+  console.log(`   ✅ Deleted ${deletedBrands} brands\n`);
 
-  console.log('🗑️  Бришење на корисници...');
+  console.log('🗑️  Deleting users...');
   const allUsers = await userRepo.find();
-  console.log(`   Најдени ${allUsers.length} корисници`);
+  console.log(`   Found ${allUsers.length} users`);
 
   await AppDataSource.query('DELETE FROM phone_verification_codes');
-  console.log('   ✅ Избришани кодове за верификација на телефон\n');
+  console.log('   ✅ Deleted phone verification codes\n');
 
   for (const user of allUsers) {
     const favorites = await favoriteRepo.find({ where: { user_id: user.id } });
@@ -119,7 +119,7 @@ async function clearDatabase() {
 
     await userRepo.remove(user);
   }
-  console.log(`   ✅ Избришани ${allUsers.length} корисници\n`);
+  console.log(`   ✅ Deleted ${allUsers.length} users\n`);
 
   const finalBrands = await brandRepo.find();
   const finalModels = await modelRepo.find();
@@ -127,30 +127,30 @@ async function clearDatabase() {
   const finalListings = await listingRepo.find();
   const finalUsers = await userRepo.find();
 
-  console.log('✅ Базата на податоци е целосно исчистена!');
-  console.log(`\n📊 Статистика:`);
-  console.log(`   - Избришани објави: ${deletedListings}`);
-  console.log(`   - Избришани возила: ${allVehicles.length}`);
-  console.log(`   - Избришани модели: ${deletedModels}`);
-  console.log(`   - Избришани марки: ${deletedBrands}`);
-  console.log(`   - Избришани корисници: ${allUsers.length}`);
-  console.log(`\n📊 Финална проверка:`);
-  console.log(`   - Остануваат објави: ${finalListings.length}`);
-  console.log(`   - Остануваат возила: ${finalVehicles.length}`);
-  console.log(`   - Остануваат модели: ${finalModels.length}`);
-  console.log(`   - Остануваат марки: ${finalBrands.length}`);
-  console.log(`   - Остануваат корисници: ${finalUsers.length}\n`);
+  console.log('✅ Database cleanup complete!');
+  console.log(`\n📊 Statistics:`);
+  console.log(`   - Deleted listings: ${deletedListings}`);
+  console.log(`   - Deleted vehicles: ${allVehicles.length}`);
+  console.log(`   - Deleted models: ${deletedModels}`);
+  console.log(`   - Deleted brands: ${deletedBrands}`);
+  console.log(`   - Deleted users: ${allUsers.length}`);
+  console.log(`\n📊 Final check:`);
+  console.log(`   - Remaining listings: ${finalListings.length}`);
+  console.log(`   - Remaining vehicles: ${finalVehicles.length}`);
+  console.log(`   - Remaining models: ${finalModels.length}`);
+  console.log(`   - Remaining brands: ${finalBrands.length}`);
+  console.log(`   - Remaining users: ${finalUsers.length}\n`);
 }
 
 async function main() {
   try {
     await clearDatabase();
     await AppDataSource.destroy();
-    console.log('🔌 Врската со базата на податоци е затворена\n');
+    console.log('🔌 Database connection closed\n');
 
-    console.log('🌱 Започнување на генерирање на нови податоци...\n');
+    console.log('🌱 Starting data generation...\n');
 
-    console.log('📦 Додавање на марки и модели...\n');
+    console.log('📦 Adding brands and models...\n');
     const { addBrandsAndModels } = await import('./add-brands');
     await addBrandsAndModels();
     console.log('');
@@ -162,10 +162,10 @@ async function main() {
       await AppDataSource.destroy();
       console.log('🔌 Database connection closed');
     }
-    console.log('✅ Скриптот заврши успешно');
+    console.log('✅ Script completed successfully');
     process.exit(0);
   } catch (error) {
-    console.error('❌ Грешка:', error);
+    console.error('❌ Error:', error);
     if (AppDataSource.isInitialized) {
       await AppDataSource.destroy();
     }
