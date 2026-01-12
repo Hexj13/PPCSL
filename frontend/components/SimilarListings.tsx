@@ -188,7 +188,7 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
     }
 
     setTimeout(updateScrollButtons, 400);
-  }, [canScrollLeft, updateScrollButtons, currentPosition, listings.length]);
+  }, [canScrollLeft, updateScrollButtons, currentPosition]);
 
   const handleScrollRight = useCallback(() => {
     const container = containerRef.current;
