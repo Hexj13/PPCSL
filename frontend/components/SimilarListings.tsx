@@ -133,7 +133,36 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
     const { scrollLeft, scrollWidth, clientWidth } = container;
     setCanScrollLeft(scrollLeft > 1);
     setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 1);
-  }, []);
+
+    const cards = Array.from(container.querySelectorAll('[role="listitem"]')) as HTMLElement[];
+    if (cards.length === 0) return;
+
+    const cardWidth = cards[0].offsetWidth;
+    const gap = 16;
+    const cardWithGap = cardWidth + gap;
+    const visibleCards = Math.floor(clientWidth / cardWithGap);
+    const maxPositions = Math.max(1, listings.length - visibleCards + 1);
+    setTotalPositions(maxPositions);
+
+    const containerCenter = scrollLeft + clientWidth / 2;
+    let closestCardIndex = 0;
+    let minDistance = Infinity;
+
+    cards.forEach((card, index) => {
+      const cardLeft = card.offsetLeft;
+      const cardRight = cardLeft + card.offsetWidth;
+      const cardCenter = (cardLeft + cardRight) / 2;
+      const distance = Math.abs(containerCenter - cardCenter);
+
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestCardIndex = index;
+      }
+    });
+
+    const newPosition = Math.max(1, Math.min(closestCardIndex + 1, maxPositions));
+    setCurrentPosition(newPosition);
+  }, [listings.length]);
 
   const handleScrollLeft = useCallback(() => {
     const container = containerRef.current;
@@ -144,15 +173,22 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
 
     const cardWidth = cards[0].offsetWidth;
     const gap = 16;
+    const targetPosition = Math.max(1, currentPosition - 1);
 
-    container.scrollBy({
-      left: -(cardWidth + gap),
-      behavior: 'smooth',
-    });
+    if (targetPosition === 1) {
+      container.scrollTo({
+        left: 0,
+        behavior: 'smooth',
+      });
+    } else {
+      container.scrollBy({
+        left: -(cardWidth + gap),
+        behavior: 'smooth',
+      });
+    }
 
-    setCurrentPosition((prev) => Math.max(1, prev - 1));
     setTimeout(updateScrollButtons, 400);
-  }, [canScrollLeft, updateScrollButtons]);
+  }, [canScrollLeft, updateScrollButtons, currentPosition, listings.length]);
 
   const handleScrollRight = useCallback(() => {
     const container = containerRef.current;
@@ -163,15 +199,26 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
 
     const cardWidth = cards[0].offsetWidth;
     const gap = 16;
+    const cardWithGap = cardWidth + gap;
+    const visibleCards = Math.floor(container.clientWidth / cardWithGap);
+    const maxPositions = Math.max(1, listings.length - visibleCards + 1);
+    const targetPosition = Math.min(maxPositions, currentPosition + 1);
 
-    container.scrollBy({
-      left: cardWidth + gap,
-      behavior: 'smooth',
-    });
+    if (targetPosition === maxPositions) {
+      const maxScrollLeft = container.scrollWidth - container.clientWidth;
+      container.scrollTo({
+        left: maxScrollLeft,
+        behavior: 'smooth',
+      });
+    } else {
+      container.scrollBy({
+        left: cardWidth + gap,
+        behavior: 'smooth',
+      });
+    }
 
-    setCurrentPosition((prev) => Math.min(prev + 1, Math.min(4, listings.length)));
     setTimeout(updateScrollButtons, 400);
-  }, [canScrollRight, updateScrollButtons, listings.length]);
+  }, [canScrollRight, updateScrollButtons, currentPosition, listings.length]);
 
   const handleCardClick = useCallback(
     (clickedListingId: string, position: number) => {
@@ -195,7 +242,9 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
     updateScrollButtons();
     container.addEventListener('scroll', updateScrollButtons);
 
-    const resizeObserver = new ResizeObserver(updateScrollButtons);
+    const resizeObserver = new ResizeObserver(() => {
+      updateScrollButtons();
+    });
     resizeObserver.observe(container);
 
     return () => {
@@ -229,7 +278,8 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
     };
   }, []);
 
-  const totalPositions = Math.min(4, listings.length);
+  const [totalPositions, setTotalPositions] = useState(1);
+
   const showNavigation = listings.length > 1 && !isTouchDevice;
 
   if (!isLoading && listings.length === 0) {
