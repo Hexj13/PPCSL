@@ -240,7 +240,9 @@ describe('SimilarListings', () => {
       configurable: true,
     });
 
-    const cards = Array.from(scrollContainer.querySelectorAll('[role="listitem"]')) as HTMLElement[];
+    const cards = Array.from(
+      scrollContainer.querySelectorAll('[role="listitem"]')
+    ) as HTMLElement[];
     cards.forEach((card) => {
       Object.defineProperty(card, 'offsetWidth', {
         get: () => cardWidth,
@@ -383,7 +385,9 @@ describe('SimilarListings', () => {
       configurable: true,
     });
 
-    const cards = Array.from(scrollContainer.querySelectorAll('[role="listitem"]')) as HTMLElement[];
+    const cards = Array.from(
+      scrollContainer.querySelectorAll('[role="listitem"]')
+    ) as HTMLElement[];
     cards.forEach((card) => {
       Object.defineProperty(card, 'offsetWidth', {
         get: () => cardWidth,
