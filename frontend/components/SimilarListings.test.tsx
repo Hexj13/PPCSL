@@ -100,8 +100,10 @@ describe('SimilarListings', () => {
     });
   });
 
-  afterEach(() => {
-    jest.runOnlyPendingTimers();
+  afterEach(async () => {
+    await act(async () => {
+      jest.runOnlyPendingTimers();
+    });
     jest.useRealTimers();
   });
 
@@ -207,7 +209,7 @@ describe('SimilarListings', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('1/4')).toBeInTheDocument();
+      expect(screen.getByTestId('listing-card-id-0')).toBeInTheDocument();
     });
 
     const scrollContainer = container.querySelector('[role="list"]') as HTMLElement;
@@ -215,23 +217,66 @@ describe('SimilarListings', () => {
       throw new Error('Scroll container not found');
     }
 
+    const cardWidth = 250;
+    const gap = 16;
+    const cardWithGap = cardWidth + gap;
+    const clientWidth = cardWithGap * 2;
+    const scrollWidth = cardWithGap * 4;
+
+    let scrollLeftValue = 0;
     Object.defineProperty(scrollContainer, 'scrollLeft', {
-      get: () => 0,
+      get: () => scrollLeftValue,
+      set: (value) => {
+        scrollLeftValue = value;
+      },
       configurable: true,
     });
     Object.defineProperty(scrollContainer, 'scrollWidth', {
-      get: () => 2000,
+      get: () => scrollWidth,
       configurable: true,
     });
     Object.defineProperty(scrollContainer, 'clientWidth', {
-      get: () => 1000,
+      get: () => clientWidth,
       configurable: true,
     });
-    scrollContainer.scrollBy = jest.fn();
+
+    const cards = Array.from(scrollContainer.querySelectorAll('[role="listitem"]')) as HTMLElement[];
+    cards.forEach((card) => {
+      Object.defineProperty(card, 'offsetWidth', {
+        get: () => cardWidth,
+        configurable: true,
+      });
+      Object.defineProperty(card, 'offsetLeft', {
+        get: () => {
+          const index = cards.indexOf(card);
+          return index * cardWithGap;
+        },
+        configurable: true,
+      });
+    });
+
+    scrollContainer.scrollBy = jest.fn((options) => {
+      if (options?.left) {
+        scrollLeftValue += options.left;
+      }
+    });
+    scrollContainer.scrollTo = jest.fn((options) => {
+      if (options?.left !== undefined) {
+        scrollLeftValue = options.left;
+      }
+    });
 
     await act(async () => {
       jest.advanceTimersByTime(200);
     });
+
+    await waitFor(() => {
+      const counter = screen.getByText(/\d+\/\d+/);
+      expect(counter).toBeInTheDocument();
+    });
+
+    const initialCounter = screen.getByText(/\d+\/\d+/);
+    const initialText = initialCounter.textContent || '';
 
     const rightButton = screen.getByLabelText('Scroll right');
 
@@ -241,8 +286,9 @@ describe('SimilarListings', () => {
     });
 
     await waitFor(() => {
-      const counter = screen.getByText(/\/4/);
+      const counter = screen.getByText(/\d+\/\d+/);
       expect(counter).toBeInTheDocument();
+      expect(counter.textContent).not.toBe(initialText);
     });
   });
 
@@ -316,27 +362,64 @@ describe('SimilarListings', () => {
       throw new Error('Scroll container not found');
     }
 
+    const cardWidth = 250;
+    const gap = 16;
+    const cardWithGap = cardWidth + gap;
+    let scrollLeftValue = cardWithGap;
+
     Object.defineProperty(scrollContainer, 'scrollLeft', {
-      get: () => 500,
+      get: () => scrollLeftValue,
+      set: (value) => {
+        scrollLeftValue = value;
+      },
       configurable: true,
     });
     Object.defineProperty(scrollContainer, 'scrollWidth', {
-      get: () => 2000,
+      get: () => cardWithGap * 4,
       configurable: true,
     });
     Object.defineProperty(scrollContainer, 'clientWidth', {
-      get: () => 1000,
+      get: () => cardWithGap * 2,
       configurable: true,
     });
-    scrollContainer.scrollBy = jest.fn();
+
+    const cards = Array.from(scrollContainer.querySelectorAll('[role="listitem"]')) as HTMLElement[];
+    cards.forEach((card) => {
+      Object.defineProperty(card, 'offsetWidth', {
+        get: () => cardWidth,
+        configurable: true,
+      });
+      Object.defineProperty(card, 'offsetLeft', {
+        get: () => {
+          const index = cards.indexOf(card);
+          return index * cardWithGap;
+        },
+        configurable: true,
+      });
+    });
+
+    scrollContainer.scrollBy = jest.fn((options) => {
+      if (options?.left) {
+        scrollLeftValue += options.left;
+      }
+    });
+    scrollContainer.scrollTo = jest.fn((options) => {
+      if (options?.left !== undefined) {
+        scrollLeftValue = options.left;
+      }
+    });
 
     await act(async () => {
       fireEvent.scroll(scrollContainer);
       jest.advanceTimersByTime(100);
     });
 
+    await waitFor(() => {
+      const leftButton = screen.getByLabelText('Scroll left');
+      expect(leftButton).not.toBeDisabled();
+    });
+
     const leftButton = screen.getByLabelText('Scroll left');
-    expect(leftButton).not.toBeDisabled();
 
     await act(async () => {
       fireEvent.click(leftButton);
