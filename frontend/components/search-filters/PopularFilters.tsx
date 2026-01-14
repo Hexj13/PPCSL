@@ -22,9 +22,6 @@ export function PopularFilters({
   const { t } = useTranslation();
 
   const sortedBrands = [...POPULAR_BRANDS].sort((a, b) => compareNames(a, b));
-  const midPoint = Math.ceil(sortedBrands.length / 2);
-  const firstColumnBrands = sortedBrands.slice(0, midPoint);
-  const secondColumnBrands = sortedBrands.slice(midPoint);
 
   const renderBrand = (brand: string) => {
     const models = POPULAR_MODELS_BY_BRAND[brand] || [];
@@ -114,11 +111,8 @@ export function PopularFilters({
         </button>
       </div>
 
-      <div
-        className={`grid grid-cols-2 gap-x-3 gap-y-3 items-start ${showPopularFilters ? '' : 'hidden'}`}
-      >
-        <div className="flex flex-col gap-3">{firstColumnBrands.map(renderBrand)}</div>
-        <div className="flex flex-col gap-3">{secondColumnBrands.map(renderBrand)}</div>
+      <div className={`flex flex-wrap gap-3 ${showPopularFilters ? '' : 'hidden'}`}>
+        {sortedBrands.map(renderBrand)}
       </div>
     </div>
   );
