@@ -9,7 +9,7 @@ import { ListingGrid } from '@/components/ListingGrid';
 import { ScrollToFiltersButton } from '@/components/ScrollToFiltersButton';
 import { SearchFilters } from '@/components/SearchFilters';
 import { SearchStructuredData } from '@/components/SearchStructuredData';
-import { getServerTranslations } from '@/lib/i18n';
+import { getServerTranslations, type Translations } from '@/lib/i18n';
 import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/popular-brands';
 import { fetchBrands, fetchModelsByBrands, getListings } from '@/lib/server-api';
 import { loadSiteConfigSync } from '@/lib/site-config';
@@ -21,12 +21,31 @@ const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
 const siteConfig = loadSiteConfigSync(country);
 const siteUrl = siteConfig.siteUrl;
 
+function getTranslationValue(translations: Translations, key: string): string {
+  const keys = key.split('.');
+  let value: unknown = translations;
+
+  for (const k of keys) {
+    if (value && typeof value === 'object' && k in value) {
+      value = (value as Record<string, unknown>)[k];
+    } else {
+      return key;
+    }
+  }
+
+  if (typeof value !== 'string') {
+    return key;
+  }
+
+  return value;
+}
+
 async function getTitleFromParams(
   brandParam: string | string[] | undefined,
   modelParam: string | string[] | undefined,
   bodyTypesParam: string | string[] | undefined,
   defaultTitle: string,
-  t: (_key: string) => string
+  translations: Translations
 ): Promise<string> {
   const brand = typeof brandParam === 'string' ? brandParam : undefined;
   const model = typeof modelParam === 'string' ? modelParam : undefined;
@@ -45,7 +64,7 @@ async function getTitleFromParams(
       const bodyTypeLabels = bodyTypeValues
         .map((bt) => {
           try {
-            return t(`vehicleOptions.bodyType.${bt}`);
+            return getTranslationValue(translations, `vehicleOptions.bodyType.${bt}`);
           } catch {
             return null;
           }
