@@ -123,6 +123,42 @@ jest.mock('./MultiSelectDropdown', () => ({
   },
 }));
 
+interface PopularBodyTypesFilterProps {
+  selectedBodyTypes: string[];
+  onSelectionChange: (_bodyTypes: string[]) => void;
+}
+
+jest.mock('./search-filters/PopularBodyTypesFilter', () => ({
+  PopularBodyTypesFilter: ({
+    selectedBodyTypes,
+    onSelectionChange,
+  }: PopularBodyTypesFilterProps) => {
+    const bodyTypes = ['SUV', 'Hatchback', 'Wagon', 'Minivan', 'Sedan', 'Convertible'];
+    return (
+      <div data-testid="popular-body-types-filter">
+        <h3>Популарни типови на каросерии</h3>
+        {bodyTypes.map((type) => (
+          <button
+            key={type}
+            data-testid={`body-type-${type}`}
+            onClick={() => {
+              const isSelected = selectedBodyTypes.includes(type);
+              if (isSelected) {
+                onSelectionChange(selectedBodyTypes.filter((bt) => bt !== type));
+              } else {
+                onSelectionChange([...selectedBodyTypes, type]);
+              }
+            }}
+            aria-pressed={selectedBodyTypes.includes(type)}
+          >
+            {type}
+          </button>
+        ))}
+      </div>
+    );
+  },
+}));
+
 describe('SearchFilters', () => {
   const mockPush = jest.fn();
   const mockReplace = jest.fn();
@@ -571,6 +607,124 @@ describe('SearchFilters', () => {
 
       await waitFor(() => {
         expect(priceInput).toHaveValue('10000');
+      });
+    });
+
+    it('should format price with spaces for thousands', async () => {
+      render(<SearchFilters />);
+
+      await waitFor(() => {
+        expect(brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const priceInputs = screen.getAllByTitle(/Внесете цена.*0-999999999/i);
+      const priceFromInput = priceInputs[0] as HTMLInputElement;
+
+      fireEvent.change(priceFromInput, { target: { value: '500000' } });
+
+      await waitFor(() => {
+        const formattedValue = priceFromInput.value.replace(/\s/g, '');
+        expect(parseInt(formattedValue, 10)).toBe(500000);
+      });
+    });
+  });
+
+  describe('Popular Body Types Filter', () => {
+    it('should render popular body types filter', async () => {
+      render(<SearchFilters />);
+
+      await waitFor(() => {
+        expect(brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('popular-body-types-filter')).toBeInTheDocument();
+        expect(screen.getByText('Популарни типови на каросерии')).toBeInTheDocument();
+      });
+    });
+
+    it('should handle body type selection', async () => {
+      render(<SearchFilters />);
+
+      await waitFor(() => {
+        expect(brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const suvButton = screen.getByTestId('body-type-SUV');
+      fireEvent.click(suvButton);
+
+      await waitFor(() => {
+        expect(suvButton).toHaveAttribute('aria-pressed', 'true');
+      });
+    });
+
+    it('should handle multiple body type selections', async () => {
+      render(<SearchFilters />);
+
+      await waitFor(() => {
+        expect(brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const suvButton = screen.getByTestId('body-type-SUV');
+      const sedanButton = screen.getByTestId('body-type-Sedan');
+
+      fireEvent.click(suvButton);
+      fireEvent.click(sedanButton);
+
+      await waitFor(() => {
+        expect(suvButton).toHaveAttribute('aria-pressed', 'true');
+        expect(sedanButton).toHaveAttribute('aria-pressed', 'true');
+      });
+    });
+
+    it('should use Minivan instead of Van', async () => {
+      render(<SearchFilters />);
+
+      await waitFor(() => {
+        expect(brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      expect(screen.getByTestId('body-type-Minivan')).toBeInTheDocument();
+      expect(screen.queryByTestId('body-type-Van')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Filter comparison logic', () => {
+    it('should detect filter changes regardless of array order', async () => {
+      render(<SearchFilters />);
+
+      await waitFor(() => {
+        expect(brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const suvButton = screen.getByTestId('body-type-SUV');
+      const sedanButton = screen.getByTestId('body-type-Sedan');
+      const minivanButton = screen.getByTestId('body-type-Minivan');
+
+      fireEvent.click(suvButton);
+      fireEvent.click(sedanButton);
+      fireEvent.click(minivanButton);
+
+      await waitFor(() => {
+        const searchButton = screen.getByText(/Пребарај|Search/i).closest('button');
+        expect(searchButton).not.toBeDisabled();
+      });
+
+      const form = screen.getByText('Основни критерии').closest('form');
+      if (form) {
+        fireEvent.submit(form);
+      }
+
+      await waitFor(() => {
+        expect(mockReplace).toHaveBeenCalled();
+      });
+
+      fireEvent.click(suvButton);
+      fireEvent.click(suvButton);
+
+      await waitFor(() => {
+        const searchButton = screen.getByText(/Пребарај|Search/i).closest('button');
+        expect(searchButton).toBeDisabled();
       });
     });
   });

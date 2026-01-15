@@ -14,6 +14,33 @@ const SITEMAP_TIMEOUT_MS = 10_000;
 const LISTINGS_PER_PAGE = 1_000;
 const MAX_LISTING_URLS = 45_000;
 
+const POPULAR_BODY_TYPES = [
+  'SUV',
+  'Hatchback',
+  'Wagon',
+  'Minivan',
+  'Sedan',
+  'Convertible',
+] as const;
+
+function generateBodyTypeCombinations(siteUrl: string): string[] {
+  const urls: string[] = [];
+  const n = POPULAR_BODY_TYPES.length;
+
+  for (let mask = 1; mask < 1 << n; mask++) {
+    const combination: string[] = [];
+    for (let i = 0; i < n; i++) {
+      if (mask & (1 << i)) {
+        combination.push(POPULAR_BODY_TYPES[i]);
+      }
+    }
+    combination.sort();
+    urls.push(`${siteUrl}/?body_types=${combination.join(',')}`);
+  }
+
+  return urls;
+}
+
 function ensureAbsoluteUrl(url: string): string {
   if (url.startsWith('http://') || url.startsWith('https://')) {
     return url;
@@ -88,8 +115,10 @@ async function getSitemapUrls(): Promise<string[]> {
     });
   });
 
+  const bodyTypeUrls = generateBodyTypeCombinations(siteUrl);
+
   if (!apiUrl) {
-    return [...urls, ...brandModelUrls];
+    return [...urls, ...brandModelUrls, ...bodyTypeUrls];
   }
 
   const listingUrls: string[] = [];
@@ -133,7 +162,7 @@ async function getSitemapUrls(): Promise<string[]> {
     }
   }
 
-  return [...urls, ...brandModelUrls, ...listingUrls];
+  return [...urls, ...brandModelUrls, ...bodyTypeUrls, ...listingUrls];
 }
 
 export async function GET() {

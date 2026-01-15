@@ -1,5 +1,7 @@
 'use client';
 
+import { useMemo } from 'react';
+
 import { FilterState } from '@/hooks/useSearchFilters';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Currency } from '@/lib/constants';
@@ -8,6 +10,15 @@ import { sortOptionsByLabel, type LabeledOption } from '@/lib/utils';
 
 import { Dropdown } from '../Dropdown';
 import { MultiSelectDropdown } from '../MultiSelectDropdown';
+
+import { PopularBodyTypesFilter } from './PopularBodyTypesFilter';
+
+const formatPriceWithSpaces = (value: string): string => {
+  if (!value || value === '') return '';
+  const numericValue = value.replace(/\s/g, '');
+  if (!numericValue) return '';
+  return numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+};
 
 interface BasicFiltersProps {
   filters: FilterState;
@@ -39,6 +50,15 @@ export function BasicFilters({
   currentYear,
 }: BasicFiltersProps) {
   const { t } = useTranslation();
+
+  const formattedPriceGte = useMemo(
+    () => formatPriceWithSpaces(filters.price_gte),
+    [filters.price_gte]
+  );
+  const formattedPriceLte = useMemo(
+    () => formatPriceWithSpaces(filters.price_lte),
+    [filters.price_lte]
+  );
 
   const CURRENCY_OPTIONS: Array<LabeledOption> = [
     { value: '', label: t('searchFilters.allCurrencies') },
@@ -266,9 +286,9 @@ export function BasicFilters({
           </label>
           <input
             type="text"
-            value={filters.price_gte}
+            value={formattedPriceGte}
             onChange={(e) => onPriceChange('price_gte', e.target.value)}
-            onBlur={(e) => onPriceBlur('price_gte', e.target.value)}
+            onBlur={(e) => onPriceBlur('price_gte', e.target.value.replace(/\s/g, ''))}
             onWheel={onWheel}
             className="input-field"
             placeholder="0"
@@ -282,16 +302,21 @@ export function BasicFilters({
           </label>
           <input
             type="text"
-            value={filters.price_lte}
+            value={formattedPriceLte}
             onChange={(e) => onPriceChange('price_lte', e.target.value)}
-            onBlur={(e) => onPriceBlur('price_lte', e.target.value)}
+            onBlur={(e) => onPriceBlur('price_lte', e.target.value.replace(/\s/g, ''))}
             onWheel={onWheel}
             className="input-field"
-            placeholder="500000"
+            placeholder="500 000"
             title={t('searchFilters.priceFromTitle')}
           />
         </div>
       </div>
+
+      <PopularBodyTypesFilter
+        selectedBodyTypes={filters.body_types}
+        onSelectionChange={(bodyTypes) => onMultiSelectChange('body_types', bodyTypes)}
+      />
     </>
   );
 }

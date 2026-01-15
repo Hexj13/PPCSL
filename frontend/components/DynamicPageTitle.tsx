@@ -3,19 +3,67 @@
 import { useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 
+import { useTranslation } from '@/hooks/useTranslation';
 import { brandsApi } from '@/lib/api';
 import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/popular-brands';
 import { createSlug } from '@/lib/utils';
 
+const decodeArray = (encoded: string): string[] => {
+  if (!encoded) return [];
+  try {
+    let base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4) {
+      base64 += '=';
+    }
+    const decoded = atob(base64);
+    return JSON.parse(decoded);
+  } catch {
+    return [];
+  }
+};
+
 export function DynamicPageTitle() {
   const searchParams = useSearchParams();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const brandParam = searchParams.get('brand');
     const modelParam = searchParams.get('model');
+    const bodyTypesParam = searchParams.get('body_types');
+    const hasEncodedArrays = searchParams.get('_e') === '1';
+
+    // Приоритет: brand/model → body_types → default
+    if (brandParam || modelParam) {
+      // Используем существующую логику для brand/model, body_types игнорируется
+    } else if (bodyTypesParam) {
+      // Используем body_types только если нет brand/model
+      const bodyTypes = hasEncodedArrays
+        ? decodeArray(bodyTypesParam)
+        : bodyTypesParam
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean);
+
+      if (bodyTypes.length > 0) {
+        const bodyTypeLabels = bodyTypes
+          .map((bt) => {
+            try {
+              return t(`vehicleOptions.bodyType.${bt}`);
+            } catch {
+              return null;
+            }
+          })
+          .filter((label): label is string => Boolean(label));
+
+        if (bodyTypeLabels.length > 0) {
+          document.title = `${bodyTypeLabels.join(', ')} | ${t('metadata.site.defaultTitle')}`;
+          return;
+        }
+      }
+    }
 
     if (!brandParam && !modelParam) {
-      document.title = 'Автомобили во Македонија';
+      document.title = t('metadata.site.defaultTitle');
       return;
     }
 
@@ -56,7 +104,7 @@ export function DynamicPageTitle() {
     })();
 
     if (quickTitle) {
-      document.title = `${quickTitle} | Автомобили во Македонија`;
+      document.title = `${quickTitle} | ${t('metadata.site.defaultTitle')}`;
     }
 
     const updateTitle = async () => {
@@ -75,7 +123,7 @@ export function DynamicPageTitle() {
           .filter((name): name is string => name !== undefined);
 
         if (foundBrands.length === 0) {
-          document.title = 'Автомобили во Македонија';
+          document.title = t('metadata.site.defaultTitle');
           return;
         }
 
@@ -135,18 +183,18 @@ export function DynamicPageTitle() {
         }
 
         if (newTitle) {
-          document.title = `${newTitle} | Автомобили во Македонија`;
+          document.title = `${newTitle} | ${t('metadata.site.defaultTitle')}`;
         } else {
-          document.title = 'Автомобили во Македонија';
+          document.title = t('metadata.site.defaultTitle');
         }
       } catch (error) {
         console.error('Failed to update page title:', error);
-        document.title = 'Автомобили во Македонија';
+        document.title = t('metadata.site.defaultTitle');
       }
     };
 
     updateTitle();
-  }, [searchParams]);
+  }, [searchParams, t]);
 
   return null;
 }

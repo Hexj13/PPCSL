@@ -41,9 +41,9 @@ export function Header() {
   }, []);
 
   return (
-    <header className="bg-bg-dark shadow-lg border-b-2 border-primary-500/20 sticky top-0 z-50 backdrop-blur-sm bg-bg-dark/95">
-      <div className="container mx-auto px-3 sm:px-4 py-3 md:py-4">
-        <div className="flex justify-between items-center">
+    <header className="bg-bg-dark shadow-lg border-b-2 border-primary-500/20 sticky top-0 z-50 backdrop-blur-sm bg-bg-dark/95 h-[72px]">
+      <div className="container mx-auto px-3 sm:px-4 h-full">
+        <div className="flex justify-between items-center h-full">
           <Link
             href="/"
             className="flex items-center hover:opacity-80 transition-opacity duration-200 select-none"

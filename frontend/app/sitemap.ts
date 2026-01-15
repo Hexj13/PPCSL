@@ -13,6 +13,15 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 const SITEMAP_TIMEOUT_MS = 10_000;
 const LISTINGS_PER_SITEMAP = 5_000;
 
+const POPULAR_BODY_TYPES = [
+  'SUV',
+  'Hatchback',
+  'Wagon',
+  'Minivan',
+  'Sedan',
+  'Convertible',
+] as const;
+
 type ListingsApiResponse = {
   data: Listing[];
   meta?: {
@@ -151,6 +160,30 @@ async function getBrandModelUrls(now: Date): Promise<MetadataRoute.Sitemap> {
   return brandModelUrls;
 }
 
+function getBodyTypeUrls(now: Date): MetadataRoute.Sitemap {
+  const urls: MetadataRoute.Sitemap = [];
+  const n = POPULAR_BODY_TYPES.length;
+
+  for (let mask = 1; mask < 1 << n; mask++) {
+    const combination: string[] = [];
+    for (let i = 0; i < n; i++) {
+      if (mask & (1 << i)) {
+        combination.push(POPULAR_BODY_TYPES[i]);
+      }
+    }
+    combination.sort();
+
+    urls.push({
+      url: `${siteUrl}/?body_types=${combination.join(',')}`,
+      lastModified: now,
+      changeFrequency: 'daily' as const,
+      priority: 0.6,
+    });
+  }
+
+  return urls;
+}
+
 async function fetchListingsPage(page: number, limit: number): Promise<ListingsApiResponse | null> {
   if (!apiUrl) return null;
   const controller = new AbortController();
@@ -201,7 +234,8 @@ export default async function sitemap({ id }: { id: number }): Promise<MetadataR
   if (id === 0) {
     const baseUrls = getBaseUrls(now);
     const brandModelUrls = await getBrandModelUrls(now);
-    return [...baseUrls, ...brandModelUrls];
+    const bodyTypeUrls = getBodyTypeUrls(now);
+    return [...baseUrls, ...brandModelUrls, ...bodyTypeUrls];
   }
 
   const pageData = await fetchListingsPage(id, LISTINGS_PER_SITEMAP);

@@ -1,13 +1,13 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import React, { useState, useEffect, startTransition, useCallback, useRef } from 'react';
+import { useState, useEffect, startTransition, useCallback, useRef, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { useBrandsAndModels } from '@/hooks/useBrandsAndModels';
 import { useCities } from '@/hooks/useCities';
 import { useLoadingState } from '@/hooks/useLoadingState';
-import { useSearchFilters } from '@/hooks/useSearchFilters';
+import { useSearchFilters, type FilterState } from '@/hooks/useSearchFilters';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { brandsApi, VehicleModel, User } from '@/lib/api';
@@ -81,6 +81,7 @@ export function SearchFilters() {
   const [loadingModels, setLoadingModels] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const prevSearchParamsRef = useRef<string>('');
+  const [lastAppliedFilters, setLastAppliedFilters] = useState<FilterState | null>(null);
 
   const {
     brands,
@@ -133,7 +134,6 @@ export function SearchFilters() {
     searchParams.get('mileage_lte') ||
     searchParams.get('fuels') ||
     searchParams.get('transmissions') ||
-    searchParams.get('body_types') ||
     searchParams.get('engine_displ_l_gte') ||
     searchParams.get('engine_displ_l_lte') ||
     searchParams.get('colors') ||
@@ -639,7 +639,8 @@ export function SearchFilters() {
       return;
     }
 
-    const price = parseInt(value, 10);
+    const numericValue = value.replace(/\s/g, '');
+    const price = parseInt(numericValue, 10);
     if (isNaN(price) || price < 0 || price > 999999999) {
       toast.error(t('searchFilters.priceRangeError'));
       handleChange(key as keyof typeof filters, '');
@@ -706,11 +707,16 @@ export function SearchFilters() {
     (e: React.FormEvent) => {
       e.preventDefault();
 
+      if (isSearching) {
+        return;
+      }
+
       if (!validateRanges()) {
         return;
       }
 
       setIsSearching(true);
+      setLastAppliedFilters({ ...filters });
 
       const validBrandIds = filters.brand_ids.filter(
         (id) => id !== 'all' && id !== '' && !id.startsWith('__category__')
@@ -906,12 +912,24 @@ export function SearchFilters() {
         }
       });
     },
-    [filters, brands, models, cities, currentYear, searchParams, router, validateRanges, setFilters]
+    [
+      filters,
+      brands,
+      models,
+      cities,
+      currentYear,
+      searchParams,
+      router,
+      validateRanges,
+      setFilters,
+      isSearching,
+    ]
   );
 
   const handleReset = () => {
     clearFiltersFromStorage();
     resetFilters();
+    setLastAppliedFilters(null);
     const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('scrollPreserved', 'true');
@@ -930,6 +948,42 @@ export function SearchFilters() {
       }
     });
   };
+
+  const hasFiltersChanged = useMemo(() => {
+    if (!lastAppliedFilters) {
+      return hasActiveFilters;
+    }
+
+    const normalizeFilters = (f: typeof filters) => {
+      const normalized = { ...f };
+      const arrayKeys: (keyof typeof filters)[] = [
+        'brand_ids',
+        'model_ids',
+        'cities',
+        'transmissions',
+        'fuels',
+        'drive_types',
+        'body_types',
+        'colors',
+        'doors',
+        'conditions',
+      ];
+
+      arrayKeys.forEach((key) => {
+        if (Array.isArray(normalized[key])) {
+          const sortedArray = [...(normalized[key] as string[])].sort();
+          (normalized as Record<string, unknown>)[key] = sortedArray;
+        }
+      });
+
+      return normalized;
+    };
+
+    const normalizedFilters = normalizeFilters(filters);
+    const normalizedLastFilters = normalizeFilters(lastAppliedFilters);
+
+    return JSON.stringify(normalizedFilters) !== JSON.stringify(normalizedLastFilters);
+  }, [filters, lastAppliedFilters, hasActiveFilters]);
 
   const canSaveFilter = () => {
     return hasActiveFilters;
@@ -967,7 +1021,11 @@ export function SearchFilters() {
   );
 
   return (
-    <form id="search-filters" onSubmit={handleSubmit} className="card p-4 md:p-5 mb-6">
+    <form
+      id="search-filters"
+      onSubmit={handleSubmit}
+      className="card p-4 md:p-5 mb-6 overflow-visible"
+    >
       <BasicFilters
         filters={filters}
         onFilterChange={handleChange}
@@ -1010,7 +1068,8 @@ export function SearchFilters() {
             type="submit"
             loading={showSearchLoader}
             loadingText={t('searchFilters.searching')}
-            className="w-full sm:w-auto text-white font-medium text-sm md:text-base hover:text-white transition-colors duration-200 whitespace-nowrap px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20"
+            disabled={!hasFiltersChanged}
+            className="w-full sm:w-auto h-[52px] min-h-[52px] max-h-[52px] text-white font-medium text-base hover:text-white transition-colors duration-200 whitespace-nowrap px-4 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20"
           >
             <span className="inline-flex items-center gap-2">
               <svg
@@ -1097,7 +1156,7 @@ export function SearchFilters() {
             </button>
           )}
         </div>
-        <div className="w-full sm:w-auto">
+        <div className="w-full sm:w-auto border-t border-primary-500/20 pt-3 sm:border-t-0 sm:pt-0">
           <SortDropdown />
         </div>
       </div>

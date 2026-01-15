@@ -24,10 +24,39 @@ const siteUrl = siteConfig.siteUrl;
 async function getTitleFromParams(
   brandParam: string | string[] | undefined,
   modelParam: string | string[] | undefined,
-  defaultTitle: string
+  bodyTypesParam: string | string[] | undefined,
+  defaultTitle: string,
+  t: (_key: string) => string
 ): Promise<string> {
   const brand = typeof brandParam === 'string' ? brandParam : undefined;
   const model = typeof modelParam === 'string' ? modelParam : undefined;
+  const bodyTypes = typeof bodyTypesParam === 'string' ? bodyTypesParam : undefined;
+
+  // Приоритет: brand/model → body_types → default
+  if (brand || model) {
+    // Существующая логика для brand/model, body_types игнорируется
+  } else if (bodyTypes && !brand && !model) {
+    // Используем body_types только если нет brand/model
+    const bodyTypeValues = bodyTypes
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (bodyTypeValues.length > 0) {
+      const bodyTypeLabels = bodyTypeValues
+        .map((bt) => {
+          try {
+            return t(`vehicleOptions.bodyType.${bt}`);
+          } catch {
+            return null;
+          }
+        })
+        .filter((label): label is string => Boolean(label));
+
+      if (bodyTypeLabels.length > 0) {
+        return bodyTypeLabels.join(', ');
+      }
+    }
+  }
 
   if (!brand && !model) {
     return defaultTitle;
@@ -125,9 +154,10 @@ export async function generateMetadata({
   const params = await searchParams;
   const brandParam = params.brand;
   const modelParam = params.model;
+  const bodyTypesParam = params.body_types;
   const pageParam = params.page;
   const baseTitle = t.metadata.site.defaultTitle;
-  const title = await getTitleFromParams(brandParam, modelParam, baseTitle);
+  const title = await getTitleFromParams(brandParam, modelParam, bodyTypesParam, baseTitle, t);
   const fullTitle = title === baseTitle ? title : `${title} | ${baseTitle}`;
 
   const page =
@@ -141,7 +171,7 @@ export async function generateMetadata({
   });
 
   const description =
-    title === 'Автомобили во Македонија'
+    title === baseTitle
       ? 'Купете или продадете авто на Kupito! Објавете оглас бесплатно. Платформа за купување и продавање автомобили онлајн во Македонија. Автомобили огласи Македонија - бесплатно објавување огласи за приватни лица и авто-плацови.'
       : `Купете ${title} на Kupito! Најдете најдобри цени и избор на ${title} автомобили во Македонија.`;
 
