@@ -72,7 +72,7 @@ export function BasicFilters({
     <>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-5">
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-400">
+          <label className="block text-sm font-semibold mb-2 text-text-secondary">
             {t('searchFilters.brand')}
           </label>
           <MultiSelectDropdown
@@ -86,7 +86,7 @@ export function BasicFilters({
         </div>
 
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-400">
+          <label className="block text-sm font-semibold mb-2 text-text-secondary">
             {t('searchFilters.model')}
           </label>
           <MultiSelectDropdown
@@ -100,7 +100,7 @@ export function BasicFilters({
           />
         </div>
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
+          <label className="block text-sm font-semibold mb-2 text-text-secondary flex items-center gap-2">
             <svg
               width="16"
               height="16"
@@ -139,7 +139,7 @@ export function BasicFilters({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-5">
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
+          <label className="block text-sm font-semibold mb-2 text-text-secondary flex items-center gap-2">
             <svg
               width="16"
               height="16"
@@ -169,7 +169,7 @@ export function BasicFilters({
         </div>
 
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
+          <label className="block text-sm font-semibold mb-2 text-text-secondary flex items-center gap-2">
             <svg
               width="16"
               height="16"
@@ -206,7 +206,7 @@ export function BasicFilters({
         </div>
 
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
+          <label className="block text-sm font-semibold mb-2 text-text-secondary flex items-center gap-2">
             <svg
               width="16"
               height="16"
@@ -245,7 +245,7 @@ export function BasicFilters({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
+          <label className="block text-sm font-semibold mb-2 text-text-secondary flex items-center gap-2">
             <svg
               width="16"
               height="16"
@@ -309,7 +309,7 @@ export function BasicFilters({
         </div>
 
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
+          <label className="block text-sm font-semibold mb-2 text-text-secondary flex items-center gap-2">
             <svg
               width="16"
               height="16"
@@ -335,7 +335,7 @@ export function BasicFilters({
         </div>
 
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
+          <label className="block text-sm font-semibold mb-2 text-text-secondary flex items-center gap-2">
             <svg
               width="16"
               height="16"

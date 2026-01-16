@@ -72,7 +72,7 @@ export default function DesignSystemPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-bg-dark to-bg-darker">
-      <div className="sticky top-0 z-50 bg-bg-dark/95 backdrop-blur-sm border-b border-primary-500/20">
+      <div className="sticky top-0 z-50 bg-bg-base/95 backdrop-blur-sm border-b border-primary-500/20">
         <div className="container mx-auto px-4 py-4 max-w-7xl">
           <div className="flex items-center justify-between">
             <Link
@@ -448,11 +448,11 @@ export default function DesignSystemPage() {
                 </Typography>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="text-center">
-                    <div className="h-16 rounded-lg mb-2 bg-bg-dark border border-primary-500/20" />
+                    <div className="h-16 rounded-lg mb-2 bg-bg-base border border-primary-500/20" />
                     <Typography variant="caption">bg-dark</Typography>
                   </div>
                   <div className="text-center">
-                    <div className="h-16 rounded-lg mb-2 bg-bg-light border border-primary-500/20" />
+                    <div className="h-16 rounded-lg mb-2 bg-bg-secondary border border-primary-500/20" />
                     <Typography variant="caption">bg-light</Typography>
                   </div>
                   <div className="text-center">

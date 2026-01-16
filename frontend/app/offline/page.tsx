@@ -8,7 +8,7 @@ export default function OfflinePage() {
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg-dark">
+    <div className="min-h-screen flex items-center justify-center bg-bg-base">
       <div className="text-center px-4">
         <h1 className="text-4xl font-bold text-white mb-4">{t('pwa.offline')}</h1>
         <p className="text-gray-400 mb-6">{t('pwa.offlineMessage')}</p>

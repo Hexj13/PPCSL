@@ -552,7 +552,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                   }
                 }
               }}
-              className={`input-field h-[48px] ${errors['vehicle.engine_displ_l'] ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+              className={`input-field h-[48px] ${errors['vehicle.engine_displ_l'] ? 'border-red-500 focus:border-red-500 ' : ''}`}
               placeholder="2.0"
               title={t('listings.engineDisplacementTitle')}
             />
@@ -584,7 +584,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                   }
                 }}
                 onWheel={handleWheel}
-                className={`input-field h-[48px] ${errors['horsepower'] ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                className={`input-field h-[48px] ${errors['horsepower'] ? 'border-red-500 focus:border-red-500 ' : ''}`}
                 placeholder="150"
                 title={t('listings.powerHorsepowerTitle')}
               />
@@ -615,7 +615,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                   }
                 }}
                 onWheel={handleWheel}
-                className={`input-field h-[48px] ${errors['power_kw'] ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                className={`input-field h-[48px] ${errors['power_kw'] ? 'border-red-500 focus:border-red-500 ' : ''}`}
                 placeholder="110"
                 title={t('listings.powerKwTitle')}
               />
@@ -813,7 +813,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                 }
               }}
               onWheel={handleWheel}
-              className={`input-field h-[48px] ${errors['vehicle.mileage_km'] ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+              className={`input-field h-[48px] ${errors['vehicle.mileage_km'] ? 'border-red-500 focus:border-red-500 ' : ''}`}
               placeholder="50000"
               title={t('listings.mileageTitle')}
             />
@@ -856,7 +856,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                 className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
                   formData.is_registered
                     ? 'bg-gradient-to-r from-primary-700 to-primary-800 border-primary-500'
-                    : 'border-primary-500/50 bg-bg-light group-hover:border-primary-500'
+                    : 'border-primary-500/50 bg-bg-secondary group-hover:border-primary-500'
                 }`}
               >
                 {formData.is_registered && (
@@ -956,7 +956,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                   }
                 }
               }}
-              className={`input-field h-[48px] ${errors['registration_expires_at'] ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''} ${!formData.is_registered ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`input-field h-[48px] ${errors['registration_expires_at'] ? 'border-red-500 focus:border-red-500 ' : ''} ${!formData.is_registered ? 'opacity-50 cursor-not-allowed' : ''}`}
               placeholder="12.2025"
               title={t('listings.registrationExpiresTitle')}
             />
@@ -1167,7 +1167,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                   }
                 }}
                 onWheel={handleWheel}
-                className={`input-field flex-1 h-[48px] ${errors['price'] ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                className={`input-field flex-1 h-[48px] ${errors['price'] ? 'border-red-500 focus:border-red-500 ' : ''}`}
                 placeholder="0"
                 title={t('listings.priceTitle')}
               />
@@ -1244,7 +1244,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                 className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
                   formData.urgent
                     ? 'bg-gradient-to-r from-primary-700 to-primary-800 border-primary-500'
-                    : 'border-primary-500/50 bg-bg-light group-hover:border-primary-500'
+                    : 'border-primary-500/50 bg-bg-secondary group-hover:border-primary-500'
                 }`}
               >
                 {formData.urgent && (
@@ -1290,7 +1290,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                 className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
                   formData.is_new
                     ? 'bg-gradient-to-r from-primary-700 to-primary-800 border-primary-500'
-                    : 'border-primary-500/50 bg-bg-light group-hover:border-primary-500'
+                    : 'border-primary-500/50 bg-bg-secondary group-hover:border-primary-500'
                 }`}
               >
                 {formData.is_new && (
@@ -1387,7 +1387,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
             className={`inline-flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 font-medium text-xs md:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap select-none ${
               uploading || formData.images.length >= 20
                 ? 'text-primary-400/50 border-primary-400/20 bg-primary-500/10 cursor-not-allowed'
-                : 'text-primary-400 hover:text-primary-500 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 cursor-pointer'
+                : 'text-primary-400 hover:text-primary-500 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 cursor-pointer'
             }`}
           >
             {uploading ? t('common.loading') : t('listings.addPhotos')}
@@ -1423,7 +1423,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                         }
                       }}
                       disabled={index === 0}
-                      className="bg-primary-600 hover:bg-primary-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded p-1.5 transition-colors"
+                      className="bg-primary-600 hover:text-primary-100 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded p-1.5 transition-colors"
                       title={t('listings.moveUp')}
                     >
                       <svg
@@ -1455,7 +1455,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
                         }
                       }}
                       disabled={index === formData.images.length - 1}
-                      className="bg-primary-600 hover:bg-primary-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded p-1.5 transition-colors"
+                      className="bg-primary-600 hover:text-primary-100 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded p-1.5 transition-colors"
                       title={t('listings.moveDown')}
                     >
                       <svg
@@ -1529,7 +1529,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
         type="submit"
         loading={loading}
         loadingText={mode === 'create' ? t('listings.creating') : t('listings.saving')}
-        className="w-full text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 select-none disabled:hover:bg-primary-500/10 disabled:hover:border-primary-400/20"
+        className="w-full text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 select-none disabled:hover:border-primary-400/20"
       >
         {mode === 'create' ? t('listings.createListing') : t('listings.saveChanges')}
       </LoadingButton>

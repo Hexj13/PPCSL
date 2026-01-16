@@ -28,7 +28,7 @@ export function ListingPageCharacteristics({ listing }: ListingPageCharacteristi
 
   return (
     <div className="surface overflow-hidden">
-      <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-400">
+      <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-700">
         {t('listingDetail.characteristics')}
       </h2>
       <div className="space-y-4">
@@ -37,7 +37,7 @@ export function ListingPageCharacteristics({ listing }: ListingPageCharacteristi
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {vehicle.brand?.name && (
                 <div>
-                  <span className="text-primary-400 font-semibold">
+                  <span className="text-primary-500 font-semibold">
                     {t('listingDetail.brand')}:
                   </span>
                   <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
@@ -47,7 +47,7 @@ export function ListingPageCharacteristics({ listing }: ListingPageCharacteristi
               )}
               {vehicle.model?.name && (
                 <div>
-                  <span className="text-primary-400 font-semibold">
+                  <span className="text-primary-500 font-semibold">
                     {t('listingDetail.model')}:
                   </span>
                   <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
@@ -57,7 +57,7 @@ export function ListingPageCharacteristics({ listing }: ListingPageCharacteristi
               )}
               {vehicle.year && (
                 <div>
-                  <span className="text-primary-400 font-semibold">{t('listingDetail.year')}:</span>
+                  <span className="text-primary-500 font-semibold">{t('listingDetail.year')}:</span>
                   <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
                     {vehicle.year}
                   </span>
@@ -65,7 +65,7 @@ export function ListingPageCharacteristics({ listing }: ListingPageCharacteristi
               )}
               {listing.vin && (
                 <div className="flex items-center">
-                  <span className="text-primary-400 font-semibold">{t('listingDetail.vin')}:</span>
+                  <span className="text-primary-500 font-semibold">{t('listingDetail.vin')}:</span>
                   <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
                     {listing.vin}
                   </span>
@@ -94,7 +94,7 @@ export function ListingPageCharacteristics({ listing }: ListingPageCharacteristi
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {vehicle.engine_displ_l && (
                 <div>
-                  <span className="text-primary-400 font-semibold">
+                  <span className="text-primary-500 font-semibold">
                     {t('listingDetail.engine')}:
                   </span>
                   <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
@@ -104,7 +104,7 @@ export function ListingPageCharacteristics({ listing }: ListingPageCharacteristi
               )}
               {listing.horsepower !== undefined && listing.horsepower !== null && (
                 <div>
-                  <span className="text-primary-400 font-semibold">
+                  <span className="text-primary-500 font-semibold">
                     {t('listingDetail.power')}:
                   </span>
                   <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
@@ -116,7 +116,7 @@ export function ListingPageCharacteristics({ listing }: ListingPageCharacteristi
               )}
               {vehicle.fuel && (
                 <div>
-                  <span className="text-primary-400 font-semibold">{t('listingDetail.fuel')}:</span>
+                  <span className="text-primary-500 font-semibold">{t('listingDetail.fuel')}:</span>
                   <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
                     {formatFuel(vehicle.fuel, t)}
                   </span>
@@ -124,7 +124,7 @@ export function ListingPageCharacteristics({ listing }: ListingPageCharacteristi
               )}
               {vehicle.transmission && (
                 <div>
-                  <span className="text-primary-400 font-semibold">
+                  <span className="text-primary-500 font-semibold">
                     {t('listingDetail.transmission')}:
                   </span>
                   <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
@@ -134,7 +134,7 @@ export function ListingPageCharacteristics({ listing }: ListingPageCharacteristi
               )}
               {vehicle.drive_type && (
                 <div>
-                  <span className="text-primary-400 font-semibold">
+                  <span className="text-primary-500 font-semibold">
                     {t('listingDetail.driveType')}:
                   </span>
                   <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
@@ -144,7 +144,7 @@ export function ListingPageCharacteristics({ listing }: ListingPageCharacteristi
               )}
               {vehicle.mileage_km && (
                 <div>
-                  <span className="text-primary-400 font-semibold">
+                  <span className="text-primary-500 font-semibold">
                     {t('listingDetail.mileage')}:
                   </span>
                   <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
@@ -161,7 +161,7 @@ export function ListingPageCharacteristics({ listing }: ListingPageCharacteristi
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {vehicle.body_type && (
                 <div>
-                  <span className="text-primary-400 font-semibold">
+                  <span className="text-primary-500 font-semibold">
                     {t('listingDetail.bodyType')}:
                   </span>
                   <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
@@ -171,7 +171,7 @@ export function ListingPageCharacteristics({ listing }: ListingPageCharacteristi
               )}
               {vehicle.color && (
                 <div>
-                  <span className="text-primary-400 font-semibold">
+                  <span className="text-primary-500 font-semibold">
                     {t('listingDetail.color')}:
                   </span>
                   <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
@@ -181,7 +181,7 @@ export function ListingPageCharacteristics({ listing }: ListingPageCharacteristi
               )}
               {vehicle.doors && (
                 <div>
-                  <span className="text-primary-400 font-semibold">
+                  <span className="text-primary-500 font-semibold">
                     {t('listingDetail.doors')}:
                   </span>
                   <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>

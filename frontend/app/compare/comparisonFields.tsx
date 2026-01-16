@@ -52,7 +52,7 @@ export const comparisonFields: ComparisonField[] = [
               className="relative w-24 h-16 bg-bg-darker rounded-lg overflow-hidden block"
             >
               {isPlaceholder ? (
-                <div className="w-full h-full flex items-center justify-center text-gray-400">
+                <div className="w-full h-full flex items-center justify-center text-text-secondary">
                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
@@ -97,7 +97,7 @@ export const comparisonFields: ComparisonField[] = [
       <td key={listing.id} className="py-4 px-4 text-center">
         <Link
           href={`/listings/${listing.id}`}
-          className="text-white hover:text-primary-400 transition-colors underline font-medium inline-flex items-center gap-1.5"
+          className="text-text-primary hover:text-primary-500 transition-colors underline font-medium inline-flex items-center gap-1.5"
         >
           {getValue(listing.title, t)}
           <svg

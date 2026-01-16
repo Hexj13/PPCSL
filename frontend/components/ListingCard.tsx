@@ -182,12 +182,7 @@ function ListingCardComponent({
 
   return (
     <Link href={`/listings/${listing.id}`} onClick={handleClick}>
-      <div
-        className={`card overflow-hidden cursor-pointer h-full flex flex-col group ${
-          listing.is_promoted ? 'border-2' : ''
-        }`}
-        style={listing.is_promoted ? { borderColor: '#6eeb9c87' } : undefined}
-      >
+      <div className="card overflow-hidden cursor-pointer h-full flex flex-col group">
         <div
           className="relative w-full bg-bg-darker flex-shrink-0 overflow-hidden"
           style={{ aspectRatio: '16/9', minHeight: '240px' }}
@@ -224,9 +219,9 @@ function ListingCardComponent({
           )}
           <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
             {listing.is_promoted && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-bg-light border-2 border-yellow-500 text-yellow-400 shadow-lg whitespace-nowrap w-fit">
+              <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-accent text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-accent/10 before:pointer-events-none">
                 <svg
-                  className="w-4 h-4 flex-shrink-0"
+                  className="relative z-10 w-4 h-4 flex-shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -238,21 +233,26 @@ function ListingCardComponent({
                     d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
                   />
                 </svg>
-                <span>{t('listings.promoted')}</span>
+                <span className="relative z-10">{t('listings.promoted')}</span>
               </span>
             )}
             {listing.is_new && (
               <span
-                className={`inline-flex items-center overflow-hidden rounded-lg text-xs md:text-sm font-semibold bg-bg-light border-2 border-primary-500 text-primary-400 shadow-lg whitespace-nowrap transition-all duration-300 w-fit ${
+                className={`relative inline-flex items-center overflow-hidden rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-primary-500 text-text-secondary shadow-lg whitespace-nowrap transition-all duration-300 w-fit before:absolute before:inset-0 before:rounded-lg before:bg-primary-500/10 before:pointer-events-none ${
                   listing.is_promoted && listing.is_new && listing.urgent
                     ? 'px-3 py-1.5 gap-1.5 lg:px-1.5 lg:py-1.5 lg:gap-0 lg:group-hover:px-3 lg:group-hover:gap-1.5'
                     : 'px-3 py-1.5 gap-1.5'
                 }`}
               >
                 {/* eslint-disable-next-line no-hardcoded-text/no-hardcoded-text */}
-                <span className="flex-shrink-0">✨</span>
                 <span
-                  className={`transition-all duration-300 ${
+                  className="relative z-10 flex-shrink-0 text-text-secondary"
+                  style={{ filter: 'grayscale(1) brightness(0.5)' }}
+                >
+                  ✨
+                </span>
+                <span
+                  className={`relative z-10 transition-all duration-300 ${
                     listing.is_promoted && listing.is_new && listing.urgent
                       ? 'w-auto opacity-100 lg:w-0 lg:opacity-0 lg:overflow-hidden lg:group-hover:w-auto lg:group-hover:opacity-100'
                       : 'w-auto opacity-100'
@@ -264,15 +264,20 @@ function ListingCardComponent({
             )}
             {listing.urgent && (
               <span
-                className={`inline-flex items-center overflow-hidden rounded-lg text-xs md:text-sm font-semibold bg-bg-light border-2 border-primary-500 text-primary-400 shadow-lg whitespace-nowrap transition-all duration-300 w-fit ${
+                className={`relative inline-flex items-center overflow-hidden rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-accentSecondary text-text-secondary shadow-lg whitespace-nowrap transition-all duration-300 w-fit before:absolute before:inset-0 before:rounded-lg before:bg-accentSecondary/10 before:pointer-events-none ${
                   listing.is_promoted && listing.is_new && listing.urgent
                     ? 'px-3 py-1.5 gap-1.5 lg:px-1.5 lg:py-1.5 lg:gap-0 lg:group-hover:px-3 lg:group-hover:gap-1.5'
                     : 'px-3 py-1.5 gap-1.5'
                 }`}
               >
-                <span className="flex-shrink-0">🔥</span>
                 <span
-                  className={`transition-all duration-300 ${
+                  className="relative z-10 flex-shrink-0 text-text-secondary"
+                  style={{ filter: 'grayscale(1) brightness(0.5)' }}
+                >
+                  🔥
+                </span>
+                <span
+                  className={`relative z-10 transition-all duration-300 ${
                     listing.is_promoted && listing.is_new && listing.urgent
                       ? 'w-auto opacity-100 lg:w-0 lg:opacity-0 lg:overflow-hidden lg:group-hover:w-auto lg:group-hover:opacity-100'
                       : 'w-auto opacity-100'
@@ -286,12 +291,12 @@ function ListingCardComponent({
           <button
             onClick={handleToggleFavorite}
             disabled={(!isFavorite && isOwnListing) || isToggling}
-            className={`absolute top-3 right-3 w-10 h-10 rounded-full bg-green-600 flex items-center justify-center transition-all shadow-lg z-10 ${
+            className={`absolute top-3 right-3 w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center transition-all shadow-lg z-10 ${
               (!isFavorite && isOwnListing) || isToggling
                 ? 'opacity-30 cursor-not-allowed'
                 : isFavorite
-                  ? 'opacity-100 hover:bg-green-700'
-                  : 'opacity-60 hover:opacity-100 hover:bg-green-700'
+                  ? 'opacity-100 hover:border-primary-400'
+                  : 'opacity-60 hover:opacity-100 hover:border-primary-400'
             }`}
             aria-label={
               !isFavorite && isOwnListing
@@ -317,13 +322,13 @@ function ListingCardComponent({
           </button>
         </div>
         <div className="p-4 md:p-5 flex-grow flex flex-col">
-          <h3 className="font-bold text-base md:text-lg mb-3 line-clamp-2 text-[rgb(243_243_243)] lg:group-hover:!text-primary-600 transition-colors">
+          <h3 className="font-bold text-base md:text-lg mb-3 line-clamp-2 text-primary-500 group-hover:text-primary-700 transition-colors">
             {listing.title}
           </h3>
           <div className="flex items-baseline gap-2 mb-3">
             {listing.price !== undefined ? (
               <>
-                <span className="text-xl md:text-2xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+                <span className="text-xl md:text-2xl font-extrabold text-primary-500 group-hover:text-primary-700 transition-colors">
                   {formatPrice(listing.price, listing.currency)}
                 </span>
                 <span

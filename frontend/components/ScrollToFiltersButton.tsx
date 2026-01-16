@@ -164,16 +164,16 @@ export function ScrollToFiltersButton() {
         onClick={showBackButton ? scrollBack : scrollToFilters}
         className="group relative flex items-center justify-center w-14 h-14 md:w-16 md:h-16 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95 touch-manipulation p-0 m-0"
         style={{
-          backgroundColor: '#31a55f',
+          backgroundColor: '#40916B',
           boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = '#2a8c51';
+          e.currentTarget.style.backgroundColor = '#2E6F51';
           e.currentTarget.style.boxShadow =
             '0 15px 20px -5px rgba(0, 0, 0, 0.1), 0 6px 8px -2px rgba(0, 0, 0, 0.05)';
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = '#31a55f';
+          e.currentTarget.style.backgroundColor = '#40916B';
           e.currentTarget.style.boxShadow =
             '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
         }}
@@ -212,7 +212,7 @@ export function ScrollToFiltersButton() {
             />
           </svg>
         )}
-        <span className="hidden md:block absolute -top-12 right-0 bg-bg-dark text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap border border-primary-500/20">
+        <span className="hidden md:block absolute -top-12 right-0 bg-bg-base text-primary-500 text-xs font-semibold px-3 py-1.5 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap border border-primary-500/20">
           {showBackButton ? 'Врати се назад' : 'До филтри'}
         </span>
       </button>

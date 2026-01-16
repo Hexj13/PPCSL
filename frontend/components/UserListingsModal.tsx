@@ -187,7 +187,7 @@ function UserListingsModalComponent({
                 key={listing.id}
                 href={`/listings/${listing.id}`}
                 onClick={onClose}
-                className="block card overflow-hidden hover:bg-bg-light transition-colors"
+                className="block card overflow-hidden hover:border-primary-500 transition-colors"
               >
                 <div className="p-6 space-y-4">
                   <div className="flex flex-col md:flex-row gap-4 items-start">
@@ -223,7 +223,7 @@ function UserListingsModalComponent({
                           );
                         })()
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-500">
+                        <div className="w-full h-full flex items-center justify-center text-text-secondary">
                           <svg
                             className="w-12 h-12"
                             fill="none"
@@ -242,7 +242,7 @@ function UserListingsModalComponent({
                     </div>
                     <div className="flex-1 min-w-0 w-full md:w-auto grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 md:gap-6">
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-lg text-white mb-3">{listing.title}</h3>
+                        <h3 className="font-bold text-lg text-primary-700 mb-3">{listing.title}</h3>
                         {vehicle && (
                           <div
                             className="text-sm space-y-1.5"
@@ -250,7 +250,7 @@ function UserListingsModalComponent({
                           >
                             {vehicle.engine_displ_l && (
                               <div>
-                                <span className="text-primary-400 font-semibold">
+                                <span className="text-primary-500 font-semibold">
                                   {t('userListings.engine')}:
                                 </span>
                                 <span className="ml-2">
@@ -261,7 +261,7 @@ function UserListingsModalComponent({
                             )}
                             {vehicle.fuel && (
                               <div>
-                                <span className="text-primary-400 font-semibold">
+                                <span className="text-primary-500 font-semibold">
                                   {t('userListings.fuel')}:
                                 </span>
                                 <span className="ml-2">{formatFuel(vehicle.fuel, t)}</span>
@@ -269,7 +269,7 @@ function UserListingsModalComponent({
                             )}
                             {vehicle.mileage_km && (
                               <div>
-                                <span className="text-primary-400 font-semibold">
+                                <span className="text-primary-500 font-semibold">
                                   {t('userListings.mileage')}:
                                 </span>
                                 <span className="ml-2">
@@ -279,7 +279,7 @@ function UserListingsModalComponent({
                             )}
                             {vehicle.transmission && (
                               <div>
-                                <span className="text-primary-400 font-semibold">
+                                <span className="text-primary-500 font-semibold">
                                   {t('userListings.transmission')}:
                                 </span>
                                 <span className="ml-2">
@@ -289,7 +289,7 @@ function UserListingsModalComponent({
                             )}
                             {vehicle.drive_type && (
                               <div>
-                                <span className="text-primary-400 font-semibold">
+                                <span className="text-primary-500 font-semibold">
                                   {t('userListings.driveType')}:
                                 </span>
                                 <span className="ml-2">
@@ -299,7 +299,7 @@ function UserListingsModalComponent({
                             )}
                             {vehicle.body_type && (
                               <div>
-                                <span className="text-primary-400 font-semibold">
+                                <span className="text-primary-500 font-semibold">
                                   {t('userListings.bodyType')}:
                                 </span>
                                 <span className="ml-2">{formatBodyType(vehicle.body_type, t)}</span>
@@ -310,41 +310,79 @@ function UserListingsModalComponent({
                       </div>
                       <div className="flex flex-col items-start text-left w-full md:items-end md:text-right md:min-w-[140px] md:w-auto">
                         {listing.price !== undefined ? (
-                          <span className="text-xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent whitespace-nowrap mb-3">
+                          <span className="text-xl font-extrabold text-primary-700 whitespace-nowrap mb-3">
                             {formatPrice(listing.price, listing.currency)} {listing.currency}
                           </span>
                         ) : (
-                          <span className="text-xl font-extrabold text-primary-400 mb-3">••••</span>
-                        )}
-                        {!showOnlyActive && (
-                          <span
-                            className={`px-2 py-1 rounded text-xs font-semibold ${
-                              listing.status === 'Active'
-                                ? 'bg-primary-500/20 text-primary-300'
-                                : listing.status === 'Paused'
-                                  ? 'bg-yellow-500/20 text-yellow-300'
-                                  : 'bg-gray-500/20'
-                            }`}
-                            style={
-                              listing.status === 'Closed'
-                                ? { color: 'rgb(var(--text-secondary-rgb))' }
-                                : undefined
-                            }
-                          >
-                            {listing.status === 'Active'
-                              ? t('userListings.active')
-                              : listing.status === 'Paused'
-                                ? t('userListings.paused')
-                                : t('userListings.closed')}
+                          <span className="text-xl font-extrabold text-text-secondary mb-3">
+                            ••••
                           </span>
                         )}
+                        <div className="flex flex-col gap-2 items-start md:items-end">
+                          {listing.is_promoted && (
+                            <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/90 border-2 border-accent text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-accent/10 before:pointer-events-none">
+                              <svg
+                                className="relative z-10 w-4 h-4 flex-shrink-0"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+                                />
+                              </svg>
+                              <span className="relative z-10">{t('listings.promoted')}</span>
+                            </span>
+                          )}
+                          {listing.is_new && (
+                            <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/90 border-2 border-primary-500 text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-primary-500/10 before:pointer-events-none">
+                              <span className="relative z-10">{t('listings.new')}</span>
+                            </span>
+                          )}
+                          {listing.urgent && (
+                            <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/90 border-2 border-accentSecondary text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-accentSecondary/10 before:pointer-events-none">
+                              <span
+                                className="relative z-10 flex-shrink-0 text-text-secondary"
+                                style={{ filter: 'grayscale(1) brightness(0.5)' }}
+                              >
+                                🔥
+                              </span>
+                              <span className="relative z-10">{t('listings.urgent')}</span>
+                            </span>
+                          )}
+                          {!showOnlyActive && (
+                            <span
+                              className={`px-2 py-1 rounded text-xs font-semibold ${
+                                listing.status === 'Active'
+                                  ? 'bg-primary-500/20 text-primary-700'
+                                  : listing.status === 'Paused'
+                                    ? 'bg-accent/20 text-accent'
+                                    : 'bg-gray-500/20'
+                              }`}
+                              style={
+                                listing.status === 'Closed'
+                                  ? { color: 'rgb(var(--text-secondary-rgb))' }
+                                  : undefined
+                              }
+                            >
+                              {listing.status === 'Active'
+                                ? t('userListings.active')
+                                : listing.status === 'Paused'
+                                  ? t('userListings.paused')
+                                  : t('userListings.closed')}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
 
                   {listing.city && (
                     <div className="text-sm border-t border-primary-500/20 pt-4">
-                      <span className="text-primary-400 font-semibold">
+                      <span className="text-primary-500 font-semibold">
                         {t('userListings.city')}:
                       </span>
                       <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>

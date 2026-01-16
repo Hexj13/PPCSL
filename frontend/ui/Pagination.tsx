@@ -26,7 +26,7 @@ export function Pagination({
       <button
         onClick={() => onPageChange(Math.max(1, currentPage - 1))}
         disabled={currentPage === 1 || disabled}
-        className="px-4 py-2 rounded-lg bg-bg-light border border-primary-500/30 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-bg-dark transition-colors"
+        className="px-4 py-2 rounded-lg bg-bg-secondary border border-primary-500/30 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-bg-base transition-colors"
       >
         {t('common.previous')}
       </button>
@@ -36,7 +36,7 @@ export function Pagination({
       <button
         onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
         disabled={currentPage === totalPages || disabled}
-        className="px-4 py-2 rounded-lg bg-bg-light border border-primary-500/30 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-bg-dark transition-colors"
+        className="px-4 py-2 rounded-lg bg-bg-secondary border border-primary-500/30 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-bg-base transition-colors"
       >
         {t('common.next')}
       </button>

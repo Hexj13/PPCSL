@@ -29,7 +29,7 @@ export function Breadcrumbs({ items, className = '' }: BreadcrumbsProps) {
           if (index > 0) {
             elements.push(
               <li key={`separator-${index}`} className="flex items-center">
-                <span className="text-gray-500" aria-hidden="true">
+                <span className="text-text-secondary" aria-hidden="true">
                   /
                 </span>
               </li>
@@ -39,18 +39,18 @@ export function Breadcrumbs({ items, className = '' }: BreadcrumbsProps) {
           elements.push(
             <li key={index} className="flex items-center">
               {isLast ? (
-                <span className="text-gray-300 font-medium" aria-current="page">
+                <span className="text-primary-500 font-medium" aria-current="page">
                   {item.label}
                 </span>
               ) : item.href ? (
                 <Link
                   href={item.href}
-                  className="text-gray-400 hover:text-primary-400 transition-colors duration-200"
+                  className="text-text-secondary hover:text-primary-400 transition-colors duration-200"
                 >
                   {item.label}
                 </Link>
               ) : (
-                <span className="text-gray-400">{item.label}</span>
+                <span className="text-text-secondary">{item.label}</span>
               )}
             </li>
           );

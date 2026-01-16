@@ -14,20 +14,15 @@
 }
 
 :root {
-  --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 35, 55, 50;
-  --background-end-rgb: 15, 25, 22;
-  --text-secondary-rgb: 243, 243, 243;
+  --foreground-rgb: 27, 27, 27;
+  --background-start-rgb: 245, 245, 245;
+  --background-end-rgb: 245, 245, 245;
+  --text-secondary-rgb: 74, 74, 74;
 }
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-    to bottom,
-    rgb(var(--background-start-rgb)) 0%,
-    rgb(var(--background-end-rgb)) 85vh,
-    rgb(var(--background-end-rgb)) 100%
-  );
+  background: rgb(var(--background-start-rgb));
   min-height: 100vh;
 }
 
@@ -63,7 +58,7 @@ label {
     height: 52px;
     padding: 0 24px;
     margin: 0 !important;
-    background-color: #31a55f !important;
+    background-color: #40916b !important;
     color: white !important;
     font-weight: 600 !important;
     font-size: 16px;
@@ -82,7 +77,7 @@ label {
   }
 
   .btn-primary:hover {
-    background-color: #2a8c51 !important;
+    color: #e8f5e9 !important;
     box-shadow:
       0 20px 25px -5px rgba(0, 0, 0, 0.1),
       0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
@@ -95,9 +90,9 @@ label {
     max-height: 52px !important;
     padding: 0 24px !important;
     margin: 0 !important;
-    background-color: rgb(35, 61, 55) !important;
-    border: 2px solid rgba(0, 255, 136, 0.3) !important;
-    color: white !important;
+    background-color: #f4f4f4 !important;
+    border: 2px solid #dadada !important;
+    color: #1b1b1b !important;
     font-weight: 600 !important;
     font-size: 16px !important;
     border-radius: 0.5rem !important;
@@ -111,8 +106,8 @@ label {
   }
 
   .btn-secondary:hover:not(:disabled) {
-    background-color: rgba(35, 61, 55, 0.8) !important;
-    border-color: rgb(0, 255, 136) !important;
+    border-color: #40916b !important;
+    color: #40916b !important;
   }
 
   .btn-secondary:disabled {
@@ -121,8 +116,8 @@ label {
   }
 
   .btn-secondary:disabled:hover {
-    background-color: rgb(35, 61, 55) !important;
-    border-color: rgba(0, 255, 136, 0.3) !important;
+    border-color: #dadada !important;
+    color: #1b1b1b !important;
   }
 
   .btn-outline {
@@ -133,8 +128,8 @@ label {
     padding: 0 24px !important;
     margin: 0 !important;
     background-color: transparent !important;
-    border: 2px solid #00ff88 !important;
-    color: #00ff88 !important;
+    border: 2px solid #40916b !important;
+    color: #40916b !important;
     font-weight: 600 !important;
     font-size: 16px !important;
     border-radius: 0.5rem !important;
@@ -148,8 +143,8 @@ label {
   }
 
   .btn-outline:hover {
-    background-color: rgba(0, 255, 136, 0.1) !important;
-    border-color: #00ff99 !important;
+    border-color: #75c9a5 !important;
+    color: #75c9a5 !important;
   }
 
   .btn-outline-green {
@@ -160,8 +155,8 @@ label {
     padding: 0 24px !important;
     margin: 0 !important;
     background-color: transparent !important;
-    border: 2px solid #6eeb9c !important;
-    color: #6eeb9c !important;
+    border: 2px solid #40916b !important;
+    color: #40916b !important;
     font-weight: 600 !important;
     font-size: 16px !important;
     border-radius: 0.5rem !important;
@@ -175,9 +170,8 @@ label {
   }
 
   .btn-outline-green:hover {
-    background-color: rgba(110, 235, 156, 0.1) !important;
-    border-color: #5dd88a !important;
-    color: #5dd88a !important;
+    border-color: #75c9a5 !important;
+    color: #75c9a5 !important;
   }
 
   .btn-outline-gray {
@@ -203,7 +197,6 @@ label {
   }
 
   .btn-outline-gray:hover {
-    background-color: rgba(156, 163, 175, 0.1) !important;
     border-color: rgba(156, 163, 175, 0.7) !important;
     color: rgba(209, 213, 219, 1) !important;
   }
@@ -216,15 +209,20 @@ label {
 
   .btn-outline-green:disabled:hover,
   .btn-outline-gray:disabled:hover {
-    background-color: transparent !important;
+    border-color: inherit !important;
+    color: inherit !important;
   }
 
   .btn-yellow {
-    @apply px-4 md:px-6 py-2.5 md:py-3 bg-yellow-500 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:bg-yellow-600 transition-all duration-200 select-none text-center;
+    @apply px-4 md:px-6 py-2.5 md:py-3 bg-accent text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:text-accent/90 transition-all duration-200 select-none text-center;
   }
 
   .btn-green-dark {
-    @apply px-4 md:px-6 py-2.5 md:py-3 bg-primary-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:bg-primary-900 transition-all duration-200 select-none text-center;
+    @apply px-4 md:px-6 py-2.5 md:py-3 bg-primary-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:text-primary-200 transition-all duration-200 select-none text-center;
+  }
+
+  .text-accent-100 {
+    color: #f9d9a8;
   }
 
   /* Unified field style - 48px height total */
@@ -236,10 +234,10 @@ label {
     width: 100% !important;
     padding: 4px 16px !important;
     margin: 0 !important;
-    border: 2px solid rgba(0, 255, 136, 0.3) !important;
+    border: 2px solid #dadada !important;
     border-radius: 0.5rem !important;
-    background-color: rgb(35, 61, 55) !important;
-    color: white !important;
+    background-color: #f4f4f4 !important;
+    color: #1b1b1b !important;
     font-size: 1rem !important;
     line-height: 44px !important; /* 48px - 4px borders */
     transition: all 0.2s !important;
@@ -249,23 +247,21 @@ label {
   }
 
   .input-field:focus {
-    border-color: rgb(0, 255, 136) !important;
-    box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.2) !important;
+    border-color: #40916b !important;
   }
 
   .input-field.input-field-error,
   .input-field.border-red-500 {
-    border-color: rgb(239, 68, 68) !important;
+    border-color: #dc3545 !important;
   }
 
   .input-field.input-field-error:focus,
   .input-field.border-red-500:focus {
-    border-color: rgb(239, 68, 68) !important;
-    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+    border-color: #dc3545 !important;
   }
 
   .input-field:disabled {
-    background-color: rgb(26, 46, 42) !important;
+    background-color: #e8e8e8 !important;
     cursor: not-allowed !important;
     opacity: 0.6 !important;
   }
@@ -289,8 +285,8 @@ label {
   }
 
   .input-field[type='password'] {
-    @apply bg-bg-light text-white;
-    -webkit-text-fill-color: white;
+    @apply bg-bg-secondary text-text-primary;
+    -webkit-text-fill-color: #1b1b1b;
   }
 
   .input-field[type='password']::placeholder {
@@ -307,26 +303,26 @@ label {
   .input-field[type='password']:-webkit-autofill:hover,
   .input-field[type='password']:-webkit-autofill:focus,
   .input-field[type='password']:-webkit-autofill:active {
-    @apply bg-bg-light text-white;
-    -webkit-text-fill-color: white !important;
-    -webkit-box-shadow: 0 0 0px 1000px #233d37 inset !important;
-    box-shadow: 0 0 0px 1000px #233d37 inset !important;
+    @apply bg-bg-secondary text-text-primary;
+    -webkit-text-fill-color: #1b1b1b !important;
+    -webkit-box-shadow: 0 0 0px 1000px #f4f4f4 inset !important;
+    box-shadow: 0 0 0px 1000px #f4f4f4 inset !important;
     transition: background-color 5000s ease-in-out 0s !important;
   }
 
   .input-field[type='email'] {
-    @apply bg-bg-light text-white;
-    -webkit-text-fill-color: white;
+    @apply bg-bg-secondary text-text-primary;
+    -webkit-text-fill-color: #1b1b1b;
   }
 
   .input-field[type='email']:-webkit-autofill,
   .input-field[type='email']:-webkit-autofill:hover,
   .input-field[type='email']:-webkit-autofill:focus,
   .input-field[type='email']:-webkit-autofill:active {
-    @apply bg-bg-light text-white;
-    -webkit-text-fill-color: white !important;
-    -webkit-box-shadow: 0 0 0px 1000px #233d37 inset !important;
-    box-shadow: 0 0 0px 1000px #233d37 inset !important;
+    @apply bg-bg-secondary text-text-primary;
+    -webkit-text-fill-color: #1b1b1b !important;
+    -webkit-box-shadow: 0 0 0px 1000px #f4f4f4 inset !important;
+    box-shadow: 0 0 0px 1000px #f4f4f4 inset !important;
     transition: background-color 5000s ease-in-out 0s !important;
   }
 
@@ -342,19 +338,19 @@ label {
   .input-field:-webkit-autofill:hover,
   .input-field:-webkit-autofill:focus,
   .input-field:-webkit-autofill:active {
-    @apply bg-bg-light text-white;
-    -webkit-text-fill-color: white !important;
-    -webkit-box-shadow: 0 0 0px 1000px #233d37 inset !important;
-    box-shadow: 0 0 0px 1000px #233d37 inset !important;
+    @apply bg-bg-secondary text-text-primary;
+    -webkit-text-fill-color: #1b1b1b !important;
+    -webkit-box-shadow: 0 0 0px 1000px #f4f4f4 inset !important;
+    box-shadow: 0 0 0px 1000px #f4f4f4 inset !important;
     transition: background-color 5000s ease-in-out 0s !important;
   }
 
   .input-field[type='text']:autofill,
   .input-field[type='tel']:autofill,
   .input-field:autofill {
-    @apply bg-bg-light text-white;
-    -webkit-text-fill-color: white !important;
-    box-shadow: 0 0 0px 1000px #233d37 inset !important;
+    @apply bg-bg-secondary text-text-primary;
+    -webkit-text-fill-color: #1b1b1b !important;
+    box-shadow: 0 0 0px 1000px #f4f4f4 inset !important;
   }
 
   .input-field[type='number'] {
@@ -394,18 +390,17 @@ label {
 
   .input-field.dropdown-button.border-red-500,
   .input-field.dropdown-button.input-field-error {
-    border-color: rgb(239, 68, 68) !important;
+    border-color: #dc3545 !important;
   }
 
   .input-field.dropdown-button.border-red-500:focus,
   .input-field.dropdown-button.input-field-error:focus {
-    border-color: rgb(239, 68, 68) !important;
-    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+    border-color: #dc3545 !important;
   }
 
   .select-field {
-    @apply w-full px-4 py-3 border-2 border-primary-500/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-bg-light text-white appearance-none cursor-pointer;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2300ff88'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    @apply w-full px-4 py-3 border-2 border-divider rounded-lg focus:outline-none focus:border-primary-500 transition-all duration-200 bg-bg-secondary text-text-primary appearance-none cursor-pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2340916B'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 0.75rem center;
     background-size: 1.25em 1.25em;
@@ -417,7 +412,7 @@ label {
   }
 
   .select-field option {
-    @apply bg-bg-light text-white;
+    @apply bg-bg-secondary text-text-primary;
     padding: 0.75rem;
   }
 
@@ -430,7 +425,7 @@ label {
   }
 
   .card {
-    @apply bg-bg-light rounded-xl shadow-lg transition-shadow duration-300 border border-primary-500/20;
+    @apply bg-white rounded-xl shadow-lg transition-shadow duration-300 border border-divider/50;
   }
 
   @media (hover: hover) {
@@ -440,7 +435,7 @@ label {
   }
 
   .surface {
-    @apply bg-bg-light rounded-xl border border-primary-500/20 p-4 md:p-6;
+    @apply bg-white rounded-xl border border-divider/50 p-4 md:p-6;
     max-width: 100%;
     box-sizing: border-box;
   }
@@ -459,7 +454,7 @@ label {
   }
 
   .prose li {
-    @apply my-1 text-gray-300;
+    @apply my-1 text-text-secondary;
   }
 
   .prose ul li,
@@ -529,7 +524,7 @@ label {
   }
 
   .scrollbar-custom::-webkit-scrollbar-track {
-    @apply bg-bg-light rounded;
+    @apply bg-bg-secondary rounded;
   }
 
   .scrollbar-custom::-webkit-scrollbar-thumb {
@@ -542,7 +537,7 @@ label {
 
   .scrollbar-custom {
     scrollbar-width: thin;
-    scrollbar-color: #6b7280 #233d37;
+    scrollbar-color: #6b7280 #f4f4f4;
   }
 
   .text-hint {
@@ -555,7 +550,7 @@ label {
     display: block !important;
     margin: 0.75rem 0 !important;
     padding-left: 2rem !important;
-    color: rgb(243, 243, 243) !important;
+    color: #1b1b1b !important;
   }
 
   .listing-description ol {
@@ -564,7 +559,7 @@ label {
     display: block !important;
     margin: 0.75rem 0 !important;
     padding-left: 2rem !important;
-    color: rgb(243, 243, 243) !important;
+    color: #1b1b1b !important;
   }
 
   .listing-description li {
@@ -572,7 +567,7 @@ label {
     list-style-position: outside !important;
     margin: 0.25rem 0 !important;
     padding-left: 0.5rem !important;
-    color: rgb(243, 243, 243) !important;
+    color: #1b1b1b !important;
   }
 
   .listing-description ul li {

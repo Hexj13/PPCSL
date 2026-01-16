@@ -93,7 +93,7 @@ export function PopularBodyTypesFilter({
 
   return (
     <div className="mt-6 mb-6 select-none">
-      <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
+      <label className="block text-sm font-semibold mb-2 text-text-secondary flex items-center gap-2">
         <svg
           width="16"
           height="16"
@@ -124,11 +124,11 @@ export function PopularBodyTypesFilter({
           <button
             type="button"
             onClick={scrollLeft}
-            className="hidden lg:flex absolute left-0 top-[55px] -translate-y-1/2 -translate-x-4 z-10 w-10 h-10 items-center justify-center bg-bg-light border-2 border-primary-500/50 rounded-full hover:bg-primary-500/10 hover:border-primary-500 transition-colors duration-200 shadow-lg"
+            className="hidden lg:flex absolute left-0 top-[55px] -translate-y-1/2 -translate-x-4 z-10 w-10 h-10 items-center justify-center bg-bg-secondary border-2 border-primary-500/50 rounded-full hover:bg-primary-500/10 hover:border-primary-500 transition-colors duration-200 shadow-lg"
             aria-label={t('common.scrollLeft')}
           >
             <svg
-              className="w-5 h-5 text-primary-400"
+              className="w-5 h-5 text-text-secondary"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -146,11 +146,11 @@ export function PopularBodyTypesFilter({
           <button
             type="button"
             onClick={scrollRight}
-            className="hidden lg:flex absolute right-0 top-[55px] -translate-y-1/2 translate-x-4 z-10 w-10 h-10 items-center justify-center bg-bg-light border-2 border-primary-500/50 rounded-full hover:bg-primary-500/10 hover:border-primary-500 transition-colors duration-200 shadow-lg"
+            className="hidden lg:flex absolute right-0 top-[55px] -translate-y-1/2 translate-x-4 z-10 w-10 h-10 items-center justify-center bg-bg-secondary border-2 border-primary-500/50 rounded-full hover:bg-primary-500/10 hover:border-primary-500 transition-colors duration-200 shadow-lg"
             aria-label={t('common.scrollRight')}
           >
             <svg
-              className="w-5 h-5 text-primary-400"
+              className="w-5 h-5 text-text-secondary"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -179,7 +179,7 @@ export function PopularBodyTypesFilter({
                   outline-none select-none
                   ${
                     isSelected
-                      ? 'border-[3px] border-primary-500/50'
+                      ? 'border border-primary-500'
                       : 'border border-primary-500/30 hover:border-primary-500/50 transition-colors duration-200'
                   }
                 `}
@@ -188,9 +188,7 @@ export function PopularBodyTypesFilter({
                     e.currentTarget.blur();
                   }}
                   style={{
-                    background: isSelected
-                      ? 'linear-gradient(to top, rgba(15, 25, 22, 1) 0%, rgba(15, 25, 22, 0.6) 3%, rgba(35, 61, 55, 0.4) 100%)'
-                      : 'linear-gradient(to top, rgba(15, 25, 22, 0.8) 0%, rgba(15, 25, 22, 0.4) 3%, rgba(35, 61, 55, 0.2) 100%)',
+                    background: isSelected ? '#F4F4F4' : '#F4F4F4',
                   }}
                   aria-pressed={isSelected}
                   aria-label={`${t(`vehicleOptions.bodyType.${value}`)}${isSelected ? ', selected' : ''}`}
@@ -212,7 +210,7 @@ export function PopularBodyTypesFilter({
                         const parent = target.parentElement;
                         if (parent) {
                           parent.innerHTML = `
-                          <svg class="w-full h-full text-primary-400/50" viewBox="0 0 24 24" fill="currentColor">
+                          <svg class="w-full h-full text-text-secondary/50" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
                           </svg>
                         `;
@@ -226,10 +224,10 @@ export function PopularBodyTypesFilter({
                       style={{
                         borderRadius: 'inherit',
                         background:
-                          'radial-gradient(circle, rgba(0, 255, 136, 0.08) 0%, rgba(0, 255, 136, 0.05) 40%, rgba(0, 255, 136, 0) 100%)',
+                          'radial-gradient(circle, rgba(64, 145, 107, 0.25) 0%, rgba(64, 145, 107, 0.15) 40%, rgba(64, 145, 107, 0.05) 100%)',
                       }}
                     >
-                      <div className="w-8 h-8 md:w-10 md:h-10 bg-primary-500/50 rounded-full flex items-center justify-center shadow-lg">
+                      <div className="w-8 h-8 md:w-10 md:h-10 bg-primary-500 rounded-full flex items-center justify-center shadow-lg">
                         <svg
                           className="w-5 h-5 md:w-6 md:h-6 text-white"
                           fill="none"
@@ -247,7 +245,7 @@ export function PopularBodyTypesFilter({
                     </div>
                   )}
                 </button>
-                <span className="text-xs md:text-sm font-medium text-primary-400 text-center select-none">
+                <span className="text-xs md:text-sm font-medium text-text-secondary text-center select-none">
                   {t(`vehicleOptions.bodyType.${value}`)}
                 </span>
               </div>
@@ -255,7 +253,7 @@ export function PopularBodyTypesFilter({
           })}
         </div>
         {showFade && (
-          <div className="lg:hidden absolute -right-1 top-0 bottom-0 w-24 pointer-events-none bg-gradient-to-l from-bg-light via-bg-light/60 to-transparent" />
+          <div className="lg:hidden absolute -right-1 top-0 bottom-0 w-24 pointer-events-none bg-gradient-to-l from-bg-secondary via-bg-secondary/60 to-transparent" />
         )}
       </div>
     </div>

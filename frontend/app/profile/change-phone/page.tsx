@@ -99,7 +99,7 @@ export default function ChangePhonePage() {
             type="tel"
             value={user?.phone || ''}
             disabled
-            className="input-field bg-bg-light/50 cursor-not-allowed opacity-70"
+            className="input-field bg-bg-secondary/50 cursor-not-allowed opacity-70"
           />
         </div>
 

@@ -267,7 +267,7 @@ export default function LoginPage() {
       </h1>
       <form onSubmit={handleSubmit} className="card p-6 md:p-8">
         <div className="mb-5">
-          <label className="block text-sm font-semibold mb-2 text-primary-400">
+          <label className="block text-sm font-semibold mb-2 text-primary-500">
             {t('login.emailOrPhone')}
           </label>
           <input
@@ -288,12 +288,12 @@ export default function LoginPage() {
 
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-semibold text-primary-400">
+            <label className="block text-sm font-semibold text-primary-500">
               {t('login.password')}
             </label>
             <a
               href="/reset-password"
-              className="text-sm text-primary-500 font-semibold hover:text-primary-400 hover:underline transition-colors"
+              className="text-sm text-primary-500 font-semibold hover:text-primary-700 underline transition-colors"
             >
               {t('login.forgotPassword')}
             </a>
@@ -364,7 +364,7 @@ export default function LoginPage() {
           type="submit"
           loading={loading}
           loadingText={t('login.loggingIn')}
-          className="w-full text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 disabled:hover:text-primary-400 disabled:hover:border-primary-400/20 disabled:hover:bg-primary-500/10"
+          className="w-full text-primary-500 font-medium text-sm md:text-base hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-500 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {t('login.loginButton')}
         </LoadingButton>
@@ -373,7 +373,7 @@ export default function LoginPage() {
           {t('login.noAccount')}{' '}
           <a
             href="/register"
-            className="text-primary-500 font-semibold hover:text-primary-400 hover:underline transition-colors"
+            className="text-primary-500 font-semibold hover:text-primary-700 underline transition-colors"
           >
             {t('login.registerLink')}
           </a>

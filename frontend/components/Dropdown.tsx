@@ -138,12 +138,13 @@ function DropdownComponent({
             disabled={disabled}
             placeholder={isOpen ? '' : placeholder}
             className={`input-field ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
-            style={{ paddingRight: '44px' }}
+            style={{ paddingRight: '52px' }}
           />
           <svg
-            className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-400 transition-transform duration-200 cursor-pointer ${
+            className={`absolute top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-400 transition-transform duration-200 cursor-pointer ${
               isOpen ? 'rotate-180' : ''
             }`}
+            style={{ right: '16px' }}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -179,9 +180,10 @@ function DropdownComponent({
           }}
           disabled={disabled}
           className={`input-field dropdown-button text-left cursor-pointer relative ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+          style={{ paddingRight: '52px' }}
         >
           <span
-            className={`flex-1 truncate min-w-0 pr-2 ${value ? 'text-white' : 'text-gray-400'}`}
+            className={`flex-1 truncate min-w-0 ${value ? 'text-text-primary' : 'text-text-secondary'}`}
           >
             {displayText}
           </span>
@@ -192,6 +194,7 @@ function DropdownComponent({
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
+            style={{ right: '16px' }}
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
@@ -199,7 +202,7 @@ function DropdownComponent({
       )}
 
       {isOpen && !disabled && (
-        <div className="absolute z-[100] w-full mt-1 top-full bg-bg-light border-2 border-primary-500/30 rounded-lg shadow-xl">
+        <div className="absolute z-[100] w-full mt-1 top-full bg-white border-2 border-primary-500/30 rounded-lg shadow-xl">
           <div className="max-h-96 overflow-auto scrollbar-custom">
             {filteredOptions.length > 0 ? (
               filteredOptions.map((option) => {
@@ -211,8 +214,8 @@ function DropdownComponent({
                     key={option.value}
                     type="button"
                     onClick={() => handleSelect(option.value)}
-                    className={`w-full px-4 py-3 text-left text-white hover:bg-primary-500/30 transition-colors duration-150 flex items-center justify-between ${
-                      isSelected ? 'bg-primary-800' : ''
+                    className={`w-full px-4 py-3 text-left text-text-primary hover:bg-primary-500/10 transition-colors duration-150 flex items-center justify-between ${
+                      isSelected ? 'bg-primary-500/20' : ''
                     } ${isSelected ? 'font-semibold' : ''}`}
                   >
                     <span>{option.label}</span>
@@ -233,13 +236,13 @@ function DropdownComponent({
                 );
               })
             ) : (
-              <div className="px-4 py-3 text-gray-400 text-center">
+              <div className="px-4 py-3 text-text-secondary text-center">
                 {t('searchFilters.noResults')}
               </div>
             )}
           </div>
           {showActionButtons && (
-            <div className="border-t border-primary-500/30 px-2 py-1.5 flex justify-end gap-1.5 bg-bg-dark">
+            <div className="border-t border-divider px-2 py-1.5 flex justify-end gap-1.5 bg-white">
               <button
                 type="button"
                 onClick={() => {
@@ -249,7 +252,7 @@ function DropdownComponent({
                   setIsOpen(false);
                   setSearchQuery('');
                 }}
-                className="px-3 py-1.5 text-sm text-white hover:text-primary-400 transition-colors duration-150"
+                className="px-3 py-1.5 text-sm text-text-primary hover:text-primary-500 transition-colors duration-150"
               >
                 {t('common.reset')}
               </button>

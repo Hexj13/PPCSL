@@ -140,7 +140,7 @@ export function PWAInstallButtonGray({ fullWidth = false }: PWAInstallButtonGray
         <div className={fullWidth ? 'w-full' : 'flex justify-center items-center'}>
           <button
             onClick={handleInstall}
-            className={`btn-outline-gray flex items-center gap-2 hover:!border-primary-400 hover:!text-primary-400 hover:!bg-primary-400/10 ${fullWidth ? 'w-full justify-center' : ''}`}
+            className={`text-white font-medium text-sm md:text-base hover:text-primary-100 active:text-primary-500 transition-all duration-200 whitespace-nowrap flex items-center gap-2 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none ${fullWidth ? 'w-full justify-center' : ''}`}
             aria-label={t('pwa.mobileApp')}
           >
             <svg
@@ -154,7 +154,7 @@ export function PWAInstallButtonGray({ fullWidth = false }: PWAInstallButtonGray
                 d="M13.148 5.488q.244 0 .832.08.59.08 1.288.457.71.366 1.288 1.224-.033.033-.322.251a4 4 0 0 0-.644.617 3.7 3.7 0 0 0-.622 1.03q-.266.617-.266 1.474 0 .984.333 1.67.345.686.788 1.109.455.411.8.606.354.195.377.205-.011.047-.289.812-.265.766-.888 1.704-.544.811-1.177 1.498-.622.686-1.498.686-.59 0-.966-.172-.378-.183-.778-.354-.4-.183-1.076-.183-.656 0-1.1.183-.433.183-.832.366-.39.183-.922.182-.81 0-1.42-.663a15 15 0 0 1-1.255-1.589q-.744-1.098-1.277-2.675A10.2 10.2 0 0 1 3 10.804q0-1.726.633-2.892.633-1.177 1.62-1.773 1-.606 2.066-.606.566 0 1.066.195.5.183.932.377.444.195.8.195.343-.001.799-.206.455-.205 1.021-.4.567-.207 1.21-.206m-.611-1.452q-.434.537-1.088.903-.655.354-1.244.354-.122 0-.233-.022a1.615 1.615 0 0 1-.033-.32q0-.687.289-1.327a4.3 4.3 0 0 1 .655-1.075q.466-.57 1.177-.949.71-.377 1.354-.4.033.149.033.355 0 .686-.255 1.337-.256.64-.655 1.144"
               />
             </svg>
-            <span className="text-white/50">|</span>
+            <span className="text-white">|</span>
             <svg
               className="w-5 h-5"
               fill="none"
@@ -179,7 +179,7 @@ export function PWAInstallButtonGray({ fullWidth = false }: PWAInstallButtonGray
           title={t('pwa.installInstructions')}
           size="medium"
         >
-          <div className="space-y-4 text-white text-left">
+          <div className="space-y-4 text-left" style={{ color: 'rgb(var(--text-primary-rgb))' }}>
             <p>{t('pwa.installDescription')}</p>
             <div className="border-b border-primary-500/20">
               <div className="flex gap-4">
@@ -188,7 +188,7 @@ export function PWAInstallButtonGray({ fullWidth = false }: PWAInstallButtonGray
                   className={`px-4 py-2 font-medium transition-colors duration-200 border-b-2 ${
                     activeTab === 'ios'
                       ? 'text-primary-400 border-primary-400'
-                      : 'text-gray-400 border-transparent hover:text-gray-300'
+                      : 'text-text-secondary border-transparent hover:text-text-secondary'
                   }`}
                 >
                   {t('pwa.iosTab')}
@@ -198,7 +198,7 @@ export function PWAInstallButtonGray({ fullWidth = false }: PWAInstallButtonGray
                   className={`px-4 py-2 font-medium transition-colors duration-200 border-b-2 ${
                     activeTab === 'android'
                       ? 'text-primary-400 border-primary-400'
-                      : 'text-gray-400 border-transparent hover:text-gray-300'
+                      : 'text-text-secondary border-transparent hover:text-text-secondary'
                   }`}
                 >
                   {t('pwa.androidTab')}
@@ -220,7 +220,10 @@ export function PWAInstallButtonGray({ fullWidth = false }: PWAInstallButtonGray
                   <li className="pl-2">{highlightKeywords(t('pwa.androidStep2'))}</li>
                   <li className="pl-2">{highlightKeywords(t('pwa.androidStep3'))}</li>
                 </ol>
-                <p className="text-sm text-gray-400 mt-4 pt-4 border-t border-primary-500/20">
+                <p
+                  className="text-sm mt-4 pt-4 border-t border-primary-500/20"
+                  style={{ color: 'rgb(var(--text-primary-rgb))' }}
+                >
                   {t('pwa.browserNote')}
                 </p>
               </>

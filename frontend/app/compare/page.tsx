@@ -1,10 +1,10 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { LoadMoreButton } from '@/components/LoadMoreButton';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 import { listingsApi, Listing } from '@/lib/api';
@@ -120,7 +120,7 @@ export default function ComparePage() {
         </h1>
         <div className="surface text-center py-12">
           <svg
-            className="w-24 h-24 mx-auto text-gray-400 mb-4"
+            className="w-24 h-24 mx-auto text-text-secondary mb-4"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -132,17 +132,21 @@ export default function ComparePage() {
               d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"
             />
           </svg>
-          <h2 className="text-2xl font-bold text-primary-400 mb-2">{t('compare.noVehicles')}</h2>
+          <h2 className="text-2xl font-bold text-primary-500 mb-2">{t('compare.noVehicles')}</h2>
           <p className="mb-6" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
             {t('compare.addVehiclesHint')}
           </p>
           <div className="flex justify-center">
-            <Link
-              href="/"
-              className="text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 select-none"
+            <LoadMoreButton
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.location.href = '/';
+                }
+              }}
+              variant="inline"
             >
               {t('compare.browseListings')}
-            </Link>
+            </LoadMoreButton>
           </div>
         </div>
       </div>
@@ -167,7 +171,7 @@ export default function ComparePage() {
             }
             toast.success(t('compare.allRemoved'));
           }}
-          className="text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 select-none"
+          className="px-8 py-2 md:py-2.5 text-xs md:text-sm lg:text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-500 hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 border-2 border-primary-500 bg-primary-500/10 select-none"
         >
           {t('compare.clearAll')}
         </button>
@@ -177,18 +181,18 @@ export default function ComparePage() {
         <table className="w-full min-w-[800px]">
           <thead>
             <tr className="border-b border-primary-500/20">
-              <th className="text-left py-4 px-4 text-primary-400 font-semibold">
+              <th className="text-left py-4 px-4 text-primary-500 font-semibold">
                 {t('compare.parameter')}
               </th>
               {listings.map((listing) => (
                 <th
                   key={listing.id}
-                  className="text-center py-4 px-4 text-primary-400 font-semibold min-w-[200px]"
+                  className="text-center py-4 px-4 text-primary-500 font-semibold min-w-[200px]"
                 >
                   <div className="flex justify-center items-center">
                     <button
                       onClick={() => handleRemove(listing.id)}
-                      className="p-2 text-gray-400 hover:text-red-400 transition-colors"
+                      className="p-2 text-text-secondary hover:text-red-400 transition-colors"
                       title={t('common.removeFromComparison')}
                     >
                       <svg
@@ -214,7 +218,7 @@ export default function ComparePage() {
           <tbody>
             {comparisonFields.map((field) => (
               <tr key={field.key} className="border-b border-primary-500/10">
-                <td className="py-4 px-4 text-primary-400 font-semibold">{t(field.labelKey)}</td>
+                <td className="py-4 px-4 text-primary-500 font-semibold">{t(field.labelKey)}</td>
                 {listings.map((listing) => field.renderCell(listing, t, siteConfig))}
               </tr>
             ))}

@@ -258,7 +258,7 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
   if (filters.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-300 text-lg">{t('savedFiltersList.empty')}</p>
+        <p className="text-text-secondary text-lg">{t('savedFiltersList.empty')}</p>
       </div>
     );
   }
@@ -279,11 +279,11 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
                 <span className="text-sm font-semibold text-primary-400">#{index + 1}</span>
-                <h3 className="text-lg font-bold text-white lg:group-hover:text-primary-600 transition-colors duration-200">
+                <h3 className="text-lg font-bold text-text-primary lg:group-hover:text-primary-600 transition-colors duration-200">
                   {filter.name}
                 </h3>
               </div>
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-text-secondary">
                 {t('savedFiltersList.created')}: {formatDateLong(filter.created_at)}
               </p>
             </div>
@@ -294,7 +294,7 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
                   setEditingFilterId(filter.id);
                   setShowEditModal(true);
                 }}
-                className="flex-shrink-0 p-2 text-gray-400 hover:text-primary-400 transition-colors duration-200"
+                className="flex-shrink-0 p-2 text-text-secondary hover:text-primary-400 transition-colors duration-200"
                 title={t('common.edit')}
               >
                 <svg
@@ -318,7 +318,7 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
                   handleDelete(filter.id);
                 }}
                 disabled={deletingIds.has(filter.id)}
-                className="flex-shrink-0 p-2 text-gray-400 hover:text-red-400 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-shrink-0 p-2 text-text-secondary hover:text-red-400 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 title={t('common.delete')}
               >
                 {deletingIds.has(filter.id) ? (

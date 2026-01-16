@@ -162,7 +162,7 @@ export function RichTextEditor({
           className={`px-2 sm:px-3 py-1.5 rounded transition-colors ${
             isActive('bold')
               ? 'bg-primary-600 text-white'
-              : 'bg-bg-light text-gray-300 hover:bg-primary-500/30'
+              : 'bg-bg-secondary text-gray-300 hover:bg-primary-500/30'
           }`}
           title={t('common.bold')}
         >
@@ -176,7 +176,7 @@ export function RichTextEditor({
           className={`px-3 py-1.5 rounded transition-colors ${
             isActive('italic')
               ? 'bg-primary-600 text-white'
-              : 'bg-bg-light text-gray-300 hover:bg-primary-500/30'
+              : 'bg-bg-secondary text-gray-300 hover:bg-primary-500/30'
           }`}
           title={t('common.italic')}
         >
@@ -190,7 +190,7 @@ export function RichTextEditor({
           className={`px-3 py-1.5 rounded transition-colors ${
             isActive('underline')
               ? 'bg-primary-600 text-white'
-              : 'bg-bg-light text-gray-300 hover:bg-primary-500/30'
+              : 'bg-bg-secondary text-gray-300 hover:bg-primary-500/30'
           }`}
           title={t('common.underline')}
         >
@@ -276,7 +276,7 @@ export function RichTextEditor({
           className={`px-3 py-1.5 rounded transition-colors ${
             isListButtonActive
               ? 'bg-primary-600 text-white'
-              : 'bg-bg-light text-gray-300 hover:bg-primary-500/30'
+              : 'bg-bg-secondary text-gray-300 hover:bg-primary-500/30'
           }`}
           title={t('common.list')}
         >
@@ -293,7 +293,7 @@ export function RichTextEditor({
         <button
           type="button"
           onClick={() => execCommand('fontSize', '2')}
-          className="px-3 py-1.5 rounded bg-bg-light text-gray-300 hover:bg-primary-500/30 transition-colors text-sm font-semibold"
+          className="px-3 py-1.5 rounded bg-bg-secondary text-gray-300 hover:bg-primary-500/30 transition-colors text-sm font-semibold"
           title={t('common.small')}
         >
           A
@@ -301,7 +301,7 @@ export function RichTextEditor({
         <button
           type="button"
           onClick={() => execCommand('fontSize', '3')}
-          className="px-3 py-1.5 rounded bg-bg-light text-gray-300 hover:bg-primary-500/30 transition-colors text-base font-semibold"
+          className="px-3 py-1.5 rounded bg-bg-secondary text-gray-300 hover:bg-primary-500/30 transition-colors text-base font-semibold"
           title={t('common.normal')}
         >
           A
@@ -309,7 +309,7 @@ export function RichTextEditor({
         <button
           type="button"
           onClick={() => execCommand('fontSize', '5')}
-          className="px-3 py-1.5 rounded bg-bg-light text-gray-300 hover:bg-primary-500/30 transition-colors text-lg font-semibold"
+          className="px-3 py-1.5 rounded bg-bg-secondary text-gray-300 hover:bg-primary-500/30 transition-colors text-lg font-semibold"
           title={t('common.large')}
         >
           A

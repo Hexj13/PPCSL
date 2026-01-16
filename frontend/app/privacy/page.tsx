@@ -53,12 +53,12 @@ export default function PrivacyPage() {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+        <h1 className="text-4xl md:text-5xl font-extrabold text-primary-700">
           {normalizeText(currentPrivacy.title)}
         </h1>
         <button
           onClick={toggleLanguage}
-          className="px-4 py-2 bg-bg-light border-2 border-primary-500/30 rounded-lg hover:bg-bg-light/80 hover:border-primary-500 transition-all duration-200 text-white font-medium"
+          className="px-4 py-2 bg-bg-secondary border-2 border-primary-500/30 rounded-lg hover:bg-bg-secondary/80 hover:border-primary-500 transition-all duration-200 text-text-primary font-medium"
         >
           {(
             languages[(languages.indexOf(language) + 1) % Math.max(languages.length, 1)] || language
@@ -66,16 +66,18 @@ export default function PrivacyPage() {
         </button>
       </div>
 
-      <p className="text-gray-400 mb-8 text-sm">{normalizeText(currentPrivacy.lastUpdated)}</p>
+      <p className="text-text-secondary mb-8 text-sm">
+        {normalizeText(currentPrivacy.lastUpdated)}
+      </p>
 
       <div className="surface mb-8">
-        <h2 className="text-2xl font-bold mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-primary-500">
           {normalizeText(currentPrivacy.dictionary.title)}
         </h2>
         <div className="space-y-4">
           {currentPrivacy.dictionary.terms.map((item, index) => (
             <div key={index} className="border-b border-primary-500/10 pb-4 last:border-b-0">
-              <h3 className="font-semibold text-primary-300 mb-1">{normalizeText(item.term)}</h3>
+              <h3 className="font-semibold text-primary-500 mb-1">{normalizeText(item.term)}</h3>
               <p
                 className="text-sm leading-relaxed"
                 style={{ color: 'rgb(var(--text-secondary-rgb))' }}
@@ -88,13 +90,15 @@ export default function PrivacyPage() {
       </div>
 
       <div className="surface mb-8">
-        <h2 className="text-2xl font-bold mb-4">{normalizeText(currentPrivacy.toc.title)}</h2>
+        <h2 className="text-2xl font-bold mb-4 text-primary-500">
+          {normalizeText(currentPrivacy.toc.title)}
+        </h2>
         <nav className="space-y-2">
           {currentPrivacy.toc.items.map((item) => (
             <button
               key={item.id}
               onClick={() => scrollToSection(item.id)}
-              className="block w-full text-left px-4 py-2 text-[rgb(243_243_243)] hover:!text-primary-400 hover:bg-primary-500/10 rounded-lg transition-all duration-200"
+              className="block w-full text-left px-4 py-2 text-text-primary hover:text-primary-500 hover:bg-primary-500/10 rounded-lg transition-all duration-200"
             >
               {normalizeText(item.title)}
             </button>
@@ -105,7 +109,9 @@ export default function PrivacyPage() {
       <div className="space-y-8">
         {currentPrivacy.sections.map((section) => (
           <section key={section.id} id={section.id} className="surface scroll-mt-20">
-            <h2 className="text-2xl md:text-3xl font-bold mb-4">{normalizeText(section.title)}</h2>
+            <h2 className="text-2xl md:text-3xl font-bold mb-4 text-primary-500">
+              {normalizeText(section.title)}
+            </h2>
             <div className="space-y-4">
               {section.content.map((paragraph, index) => (
                 <p

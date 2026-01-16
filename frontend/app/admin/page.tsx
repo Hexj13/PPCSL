@@ -37,9 +37,7 @@ export default function AdminPage() {
   return (
     <div>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
-        <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-          {t('admin.title')}
-        </h1>
+        <h1 className="text-3xl md:text-4xl font-extrabold text-primary-700">{t('admin.title')}</h1>
       </div>
 
       <div className="mb-4 md:mb-6">
@@ -49,7 +47,7 @@ export default function AdminPage() {
             className={`px-4 md:px-6 py-2 md:py-3 font-semibold transition-colors border-b-2 whitespace-nowrap ${
               activeTab === 'listings'
                 ? 'border-primary-500 text-primary-500'
-                : 'border-transparent text-gray-400'
+                : 'border-transparent text-text-secondary'
             }`}
           >
             {t('admin.listingsTabLabel')}
@@ -59,7 +57,7 @@ export default function AdminPage() {
             className={`px-4 md:px-6 py-2 md:py-3 font-semibold transition-colors border-b-2 whitespace-nowrap ${
               activeTab === 'users'
                 ? 'border-primary-500 text-primary-500'
-                : 'border-transparent text-gray-400'
+                : 'border-transparent text-text-secondary'
             }`}
           >
             {t('admin.usersTabLabel')}
@@ -69,7 +67,7 @@ export default function AdminPage() {
             className={`px-4 md:px-6 py-2 md:py-3 font-semibold transition-colors border-b-2 whitespace-nowrap ${
               activeTab === 'promotions'
                 ? 'border-primary-500 text-primary-500'
-                : 'border-transparent text-gray-400'
+                : 'border-transparent text-text-secondary'
             }`}
           >
             {t('admin.promotionsTabLabel')}

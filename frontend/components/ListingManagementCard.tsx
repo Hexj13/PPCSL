@@ -45,10 +45,7 @@ export function ListingManagementCard({
   const isAdminMode = mode === 'admin';
 
   return (
-    <div
-      className={`card overflow-visible ${listing.is_promoted ? 'border-2' : ''}`}
-      style={listing.is_promoted ? { borderColor: '#6eeb9c87' } : undefined}
-    >
+    <div className="card overflow-visible group">
       <div className="grid grid-cols-1 lg:grid-cols-[450px_1fr] gap-0 lg:gap-6 lg:items-stretch">
         <Link href={`/listings/${listing.id}`} className="flex-shrink-0">
           <div className="relative w-full h-[200px] sm:h-[250px] lg:h-full lg:min-h-[250px] bg-bg-darker overflow-hidden rounded-t-xl lg:rounded-tl-xl lg:rounded-bl-xl lg:rounded-tr-none lg:rounded-br-none">
@@ -88,7 +85,7 @@ export function ListingManagementCard({
             <div className="flex-1 min-w-0">
               <Link href={`/listings/${listing.id}`} className="mb-3 block group">
                 <div className="flex items-start gap-1.5">
-                  <h3 className="font-bold text-base md:text-lg lg:group-hover:text-primary-600 transition-colors line-clamp-2">
+                  <h3 className="font-bold text-base md:text-lg text-primary-500 lg:group-hover:text-primary-700 transition-colors line-clamp-2">
                     {listing.title}
                   </h3>
                   <svg
@@ -166,7 +163,7 @@ export function ListingManagementCard({
             </div>
             <div className="flex flex-col items-start text-left w-full lg:items-end lg:text-right lg:min-w-[140px] lg:w-auto mb-3">
               {listing.price !== undefined ? (
-                <span className="text-lg sm:text-xl md:text-2xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent leading-snug whitespace-nowrap mb-3">
+                <span className="text-lg sm:text-xl md:text-2xl font-extrabold text-primary-500 lg:group-hover:text-primary-700 transition-colors leading-snug whitespace-nowrap mb-3">
                   {formatPrice(listing.price, listing.currency)} {listing.currency}
                 </span>
               ) : (
@@ -176,9 +173,9 @@ export function ListingManagementCard({
               )}
               <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-start md:justify-end">
                 {listing.is_promoted && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-bg-light border-2 border-yellow-500 text-yellow-400 shadow-lg whitespace-nowrap w-fit">
+                  <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-accent text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-accent/10 before:pointer-events-none">
                     <svg
-                      className="w-4 h-4 flex-shrink-0"
+                      className="relative z-10 w-4 h-4 flex-shrink-0"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -190,20 +187,30 @@ export function ListingManagementCard({
                         d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
                       />
                     </svg>
-                    <span>{t('listings.promoted')}</span>
+                    <span className="relative z-10">{t('listings.promoted')}</span>
                   </span>
                 )}
                 {listing.is_new && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-bg-light border-2 border-primary-500 text-primary-400 shadow-lg whitespace-nowrap w-fit">
+                  <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-primary-500 text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-primary-500/10 before:pointer-events-none">
                     {/* eslint-disable-next-line no-hardcoded-text/no-hardcoded-text */}
-                    <span>✨</span>
-                    <span>{t('listings.new')}</span>
+                    <span
+                      className="relative z-10 text-text-secondary"
+                      style={{ filter: 'grayscale(1) brightness(0.5)' }}
+                    >
+                      ✨
+                    </span>
+                    <span className="relative z-10">{t('listings.new')}</span>
                   </span>
                 )}
                 {listing.urgent && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-bg-light border-2 border-primary-500 text-primary-400 shadow-lg whitespace-nowrap w-fit">
-                    <span>🔥</span>
-                    <span>{t('listings.urgent')}</span>
+                  <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-accentSecondary text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-accentSecondary/10 before:pointer-events-none">
+                    <span
+                      className="relative z-10 text-text-secondary"
+                      style={{ filter: 'grayscale(1) brightness(0.5)' }}
+                    >
+                      🔥
+                    </span>
+                    <span className="relative z-10">{t('listings.urgent')}</span>
                   </span>
                 )}
               </div>
@@ -212,7 +219,7 @@ export function ListingManagementCard({
           <div className="mt-auto pt-3 border-t border-primary-500/20">
             <div className="flex flex-col xl:flex-row xl:justify-between items-start xl:items-center gap-2 lg:gap-3 min-w-0 max-w-full">
               <div className="inline-flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
-                <div className="text-xs sm:text-sm font-semibold text-gray-200">
+                <div className="text-xs sm:text-sm font-semibold text-text-primary">
                   {t('listings.status')}
                 </div>
                 <div
@@ -221,7 +228,7 @@ export function ListingManagementCard({
                       ? 'text-primary-400 font-bold text-xs sm:text-sm'
                       : listing.status === 'Paused'
                         ? 'text-blue-400 font-bold text-xs sm:text-sm'
-                        : 'text-gray-200 font-bold text-xs sm:text-sm'
+                        : 'text-text-secondary font-bold text-xs sm:text-sm'
                   }
                 >
                   {listing.status === 'Active'
@@ -240,7 +247,7 @@ export function ListingManagementCard({
                       onPromoteClick && (
                         <button
                           onClick={() => onPromoteClick(listing.id)}
-                          className="text-yellow-300 font-medium text-xs md:text-sm lg:text-base hover:text-yellow-200 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-yellow-500/40 hover:border-yellow-500/60 bg-yellow-500/20 hover:bg-yellow-500/30 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
+                          className="text-text-secondary font-medium text-xs md:text-sm lg:text-base hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-accent/40 hover:border-accent/60 bg-accent/20 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
                         >
                           <svg
                             className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
@@ -261,10 +268,10 @@ export function ListingManagementCard({
                     {mode === 'admin' && listing.status !== 'Closed' && onPromoteClick && (
                       <button
                         onClick={() => onPromoteClick(listing.id)}
-                        className={`font-medium text-xs md:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px] ${
+                        className={`font-medium text-xs md:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px] text-text-secondary hover:text-text-primary ${
                           listing.is_promoted
-                            ? 'bg-[#f069be33] border-[#f069be]/40 hover:bg-[#f069be44] hover:border-[#f069be]/60 text-[#ff63c6] hover:text-[#ff7dd0]'
-                            : 'bg-yellow-500/20 border-yellow-500/40 text-yellow-300 hover:bg-yellow-500/30 hover:border-yellow-500/60 hover:text-yellow-200'
+                            ? 'bg-[#f069be33] border-[#f069be]/40 hover:border-[#f069be]/60'
+                            : 'bg-accent/20 border-accent/40 hover:border-accent/60'
                         }`}
                       >
                         <svg
@@ -288,7 +295,7 @@ export function ListingManagementCard({
                     {listing.status === 'Paused' && (
                       <button
                         onClick={() => onAction(listing.id, 'publish')}
-                        className="text-primary-300 font-medium text-xs md:text-sm lg:text-base hover:text-primary-200 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-500/40 hover:border-primary-500/60 bg-primary-500/20 hover:bg-primary-500/30 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
+                        className="text-text-secondary font-medium text-xs md:text-sm lg:text-base hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-500/40 hover:border-primary-500/60 bg-primary-500/20 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
                       >
                         {t('listings.publishAction')}
                       </button>
@@ -296,7 +303,7 @@ export function ListingManagementCard({
                     {listing.status === 'Active' && (
                       <button
                         onClick={() => onAction(listing.id, 'pause')}
-                        className="text-blue-300 font-medium text-xs md:text-sm lg:text-base hover:text-blue-200 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-blue-500/40 hover:border-blue-500/60 bg-blue-500/20 hover:bg-blue-500/30 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
+                        className="text-text-secondary font-medium text-xs md:text-sm lg:text-base hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-blue-500/40 hover:border-blue-500/60 bg-blue-500/20 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
                       >
                         {t('listings.pauseAction')}
                       </button>
@@ -304,7 +311,7 @@ export function ListingManagementCard({
                     {listing.status !== 'Closed' && (
                       <button
                         onClick={() => onAction(listing.id, 'close')}
-                        className="text-gray-300 font-medium text-xs md:text-sm lg:text-base hover:text-gray-200 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-gray-500/40 hover:border-gray-500/60 bg-gray-500/20 hover:bg-gray-500/30 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
+                        className="text-text-secondary font-medium text-xs md:text-sm lg:text-base hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-gray-500/40 hover:border-gray-500/60 bg-gray-500/20 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
                       >
                         {t('common.close')}
                       </button>
@@ -314,12 +321,12 @@ export function ListingManagementCard({
                 {mode === 'my-listings' && listing.status !== 'Closed' && (
                   <Link
                     href={`/listings/${listing.id}/edit`}
-                    className="text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-300 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-500/30 hover:border-primary-500/50 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
+                    className="text-text-secondary font-medium text-xs md:text-sm lg:text-base hover:text-text-primary transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-700 hover:border-primary-700 bg-transparent hover:bg-primary-700/10 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
                     title={t('common.editListing')}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <svg
-                      className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+                      className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0 text-primary-700"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"

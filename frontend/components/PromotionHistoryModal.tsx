@@ -34,19 +34,19 @@ export function PromotionHistoryModal({
         <table className="w-full">
           <thead>
             <tr className="border-b border-primary-500/30">
-              <th className="text-left py-3 px-4 text-sm font-semibold text-primary-300">
+              <th className="text-left py-3 px-4 text-sm font-semibold text-text-secondary">
                 {t('promotion.history.listingTitle')}
               </th>
-              <th className="text-center py-3 px-4 text-sm font-semibold text-primary-300">
+              <th className="text-center py-3 px-4 text-sm font-semibold text-text-secondary">
                 {t('promotion.history.status')}
               </th>
-              <th className="text-center py-3 px-4 text-sm font-semibold text-primary-300">
+              <th className="text-center py-3 px-4 text-sm font-semibold text-text-secondary">
                 {t('promotion.history.days')}
               </th>
-              <th className="text-center py-3 px-4 text-sm font-semibold text-primary-300">
+              <th className="text-center py-3 px-4 text-sm font-semibold text-text-secondary">
                 {t('promotion.history.startDate')}
               </th>
-              <th className="text-center py-3 px-4 text-sm font-semibold text-primary-300">
+              <th className="text-center py-3 px-4 text-sm font-semibold text-text-secondary">
                 {t('promotion.history.endDate')}
               </th>
             </tr>
@@ -54,13 +54,13 @@ export function PromotionHistoryModal({
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={5} className="py-8 text-center text-gray-400">
+                <td colSpan={5} className="py-8 text-center text-text-secondary">
                   {t('common.loading')}
                 </td>
               </tr>
             ) : history.length === 0 ? (
               <tr>
-                <td colSpan={5} className="py-8 text-center text-gray-400">
+                <td colSpan={5} className="py-8 text-center text-text-secondary">
                   {t('promotion.history.empty')}
                 </td>
               </tr>
@@ -70,7 +70,7 @@ export function PromotionHistoryModal({
                   <td className="py-3 px-4 text-sm">
                     <Link
                       href={`/listings/${item.listing_id}`}
-                      className="text-primary-400 hover:text-primary-300 hover:underline transition-colors"
+                      className="text-primary-500 hover:text-primary-700 hover:underline transition-colors"
                     >
                       {item.listing_title}
                     </Link>
@@ -79,10 +79,10 @@ export function PromotionHistoryModal({
                     <span
                       className={
                         item.listing_status === 'Active'
-                          ? 'text-primary-400 font-semibold'
+                          ? 'text-primary-700 font-semibold'
                           : item.listing_status === 'Paused'
-                            ? 'text-blue-400 font-semibold'
-                            : 'text-gray-400 font-semibold'
+                            ? 'text-blue-500 font-semibold'
+                            : 'text-text-secondary font-semibold'
                       }
                     >
                       {item.listing_status === 'Active'
@@ -122,7 +122,7 @@ export function PromotionHistoryModal({
           <button
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage === 1 || loading}
-            className="px-4 py-2 rounded-lg text-sm font-semibold bg-primary-500/20 border-2 border-primary-500/40 text-primary-300 hover:bg-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 rounded-lg text-sm font-semibold bg-primary-500/20 border-2 border-primary-500/40 text-primary-500 hover:text-primary-700 hover:border-primary-500/60 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('common.previous')}
           </button>
@@ -132,7 +132,7 @@ export function PromotionHistoryModal({
           <button
             onClick={() => onPageChange(currentPage + 1)}
             disabled={currentPage >= meta.totalPages || loading}
-            className="px-4 py-2 rounded-lg text-sm font-semibold bg-primary-500/20 border-2 border-primary-500/40 text-primary-300 hover:bg-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 rounded-lg text-sm font-semibold bg-primary-500/20 border-2 border-primary-500/40 text-primary-500 hover:text-primary-700 hover:border-primary-500/60 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('common.next')}
           </button>

@@ -29,13 +29,39 @@ export function PopularFilters({ isQuickFilterActive, onApplyFilter }: PopularFi
               onApplyFilter(brand);
             }
           }}
-          className={`px-3 py-2 rounded-full text-primary-100 border-2 transition-all text-sm ${
+          className={`relative px-3 py-2 rounded-full text-text-secondary border-2 transition-all text-sm ${
             isBrandActive
-              ? 'bg-gradient-to-r from-primary-500/30 via-primary-500/40 to-primary-500/30 border-primary-400 shadow-[0_0_8px_rgba(0,255,136,0.3)]'
+              ? 'bg-primary-500/5 border-primary-500'
               : 'bg-primary-500/15 border-primary-400/60 hover:bg-primary-500/25 hover:border-primary-300/90'
           }`}
         >
           {brand}
+          {isBrandActive && (
+            <div
+              className="absolute inset-0 flex items-center justify-center rounded-full pointer-events-none"
+              style={{
+                borderRadius: 'inherit',
+                background:
+                  'radial-gradient(circle, rgba(64, 145, 107, 0.25) 0%, rgba(64, 145, 107, 0.15) 40%, rgba(64, 145, 107, 0.05) 100%)',
+              }}
+            >
+              <div className="w-5 h-5 bg-primary-500/50 rounded-full flex items-center justify-center shadow-lg">
+                <svg
+                  className="w-3 h-3 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={3}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+            </div>
+          )}
         </Link>
         {models.map((model) => {
           const modelHref = `/?brand=${encodeURIComponent(createSlug(brand))}&model=${encodeURIComponent(createSlug(model))}`;
@@ -52,13 +78,39 @@ export function PopularFilters({ isQuickFilterActive, onApplyFilter }: PopularFi
                   onApplyFilter(brand, model);
                 }
               }}
-              className={`px-3 py-2 rounded-full text-primary-200 border transition-all text-sm ${
+              className={`relative px-3 py-2 rounded-full text-text-secondary border transition-all text-sm ${
                 isModelActive
-                  ? 'bg-gradient-to-r from-primary-500/25 via-primary-500/35 to-primary-500/25 text-primary-100 border-primary-500/40 shadow-[0_0_6px_rgba(0,255,136,0.25)]'
-                  : 'bg-primary-500/5 border-primary-500/20 hover:bg-primary-500/15 hover:text-primary-100 hover:border-primary-500/30'
+                  ? 'bg-primary-500/5 border-primary-500'
+                  : 'bg-primary-500/5 border-primary-500/20 hover:bg-primary-500/15 hover:border-primary-500/30'
               }`}
             >
               {brand} {model}
+              {isModelActive && (
+                <div
+                  className="absolute inset-0 flex items-center justify-center rounded-full pointer-events-none"
+                  style={{
+                    borderRadius: 'inherit',
+                    background:
+                      'radial-gradient(circle, rgba(64, 145, 107, 0.25) 0%, rgba(64, 145, 107, 0.15) 40%, rgba(64, 145, 107, 0.05) 100%)',
+                  }}
+                >
+                  <div className="w-5 h-5 bg-primary-500/50 rounded-full flex items-center justify-center shadow-lg">
+                    <svg
+                      className="w-3 h-3 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={3}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              )}
             </Link>
           );
         })}

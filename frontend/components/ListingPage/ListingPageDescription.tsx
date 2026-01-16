@@ -85,7 +85,7 @@ export function ListingPageDescription({ descriptionHtml }: ListingPageDescripti
         transition: 'max-height 0.4s ease-in-out',
       }}
     >
-      <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-400">
+      <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-700">
         {t('listingDetail.description')}
       </h2>
       <div
@@ -104,7 +104,7 @@ export function ListingPageDescription({ descriptionHtml }: ListingPageDescripti
           style={{
             height: '100px',
             background:
-              'linear-gradient(to top, rgb(var(--bg-light-rgb, 35, 61, 55)) 0%, rgb(var(--bg-light-rgb, 35, 61, 55)) 40px, transparent 100%)',
+              'linear-gradient(to top, rgb(var(--bg-secondary-rgb, 244, 244, 244)) 0%, rgb(var(--bg-secondary-rgb, 244, 244, 244)) 40px, transparent 100%)',
           }}
         />
       )}
@@ -112,7 +112,7 @@ export function ListingPageDescription({ descriptionHtml }: ListingPageDescripti
         <div className="absolute left-0 right-0 bottom-4 flex justify-center z-10">
           <button
             onClick={handleToggle}
-            className="px-4 py-2 text-primary-400 hover:text-primary-300 transition-colors duration-200 text-sm font-medium border border-primary-500/30 rounded-lg hover:border-primary-500/50 bg-bg-light"
+            className="px-4 py-2 text-primary-400 hover:text-primary-300 transition-colors duration-200 text-sm font-medium border border-primary-500/30 rounded-lg hover:border-primary-500/50 bg-bg-secondary"
           >
             {isExpanded ? t('listingDetail.collapse') : t('listingDetail.expand')}
           </button>

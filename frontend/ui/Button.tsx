@@ -21,15 +21,15 @@ export function Button({
 
   const variantClasses = {
     primary:
-      'text-white font-semibold rounded-lg transition-all duration-200 select-none text-center border-none cursor-pointer',
+      'text-white font-semibold rounded-lg transition-all duration-200 select-none text-center border-none cursor-pointer hover:text-primary-100',
     secondary:
-      'bg-bg-light border-2 border-primary-500/30 text-white hover:bg-bg-light/80 hover:border-primary-500',
+      'bg-bg-secondary border-2 border-primary-500/30 text-white hover:border-primary-500 hover:text-primary-100',
     outline:
-      'bg-transparent border-2 border-primary-500 text-primary-500 hover:bg-primary-500/10 hover:border-primary-400',
+      'bg-transparent border-2 border-primary-500 text-primary-500 hover:border-primary-400 hover:text-primary-400',
     yellow:
-      'bg-gradient-to-r from-yellow-500 to-yellow-600 text-white shadow-lg hover:shadow-xl hover:from-yellow-600 hover:to-yellow-700 transform hover:-translate-y-0.5',
+      'bg-gradient-to-r from-accent to-accent text-white shadow-lg hover:shadow-xl hover:text-accent/90',
     'green-dark':
-      'bg-gradient-to-r from-primary-700 to-primary-800 text-white shadow-lg hover:shadow-xl hover:from-primary-800 hover:to-primary-900 transform hover:-translate-y-0.5',
+      'bg-gradient-to-r from-primary-700 to-primary-800 text-white shadow-lg hover:shadow-xl hover:text-primary-200',
   };
 
   const sizeClasses = {
@@ -44,7 +44,7 @@ export function Button({
   const primaryStyle =
     variant === 'primary'
       ? {
-          backgroundColor: '#31A55F',
+          backgroundColor: '#40916B',
           boxShadow:
             size === 'md' || size === 'lg'
               ? '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
@@ -64,12 +64,9 @@ export function Button({
   const handleMouseEnter =
     variant === 'primary'
       ? (e: React.MouseEvent<HTMLButtonElement>) => {
-          if (!disabled) {
-            e.currentTarget.style.backgroundColor = '#2A8C51';
-            if (size === 'md' || size === 'lg') {
-              e.currentTarget.style.boxShadow =
-                '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)';
-            }
+          if (!disabled && (size === 'md' || size === 'lg')) {
+            e.currentTarget.style.boxShadow =
+              '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)';
           }
         }
       : undefined;
@@ -77,12 +74,9 @@ export function Button({
   const handleMouseLeave =
     variant === 'primary'
       ? (e: React.MouseEvent<HTMLButtonElement>) => {
-          if (!disabled) {
-            e.currentTarget.style.backgroundColor = '#31A55F';
-            if (size === 'md' || size === 'lg') {
-              e.currentTarget.style.boxShadow =
-                '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
-            }
+          if (!disabled && (size === 'md' || size === 'lg')) {
+            e.currentTarget.style.boxShadow =
+              '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
           }
         }
       : undefined;
