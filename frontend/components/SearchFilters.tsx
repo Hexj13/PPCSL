@@ -23,7 +23,7 @@ import {
   sortOptionsByLabel,
   type LabeledOption,
 } from '@/lib/utils';
-import { LoadingButton } from '@/ui';
+import { LoadingButton, CarIcon, MotoIcon, TruckIcon } from '@/ui';
 
 import { SaveFilterModal } from './SaveFilterModal';
 import { SortDropdown } from './SortDropdown';
@@ -167,6 +167,7 @@ export function SearchFilters() {
   const [activeTab, setActiveTab] = useState<'basic' | 'advanced' | 'popular'>(() =>
     getInitialTab()
   );
+  const [vehicleType, setVehicleType] = useState<'car' | 'moto' | 'truck'>('car');
   const basicTabRef = useRef<HTMLButtonElement>(null);
   const advancedTabRef = useRef<HTMLButtonElement>(null);
   const popularTabRef = useRef<HTMLButtonElement>(null);
@@ -176,6 +177,12 @@ export function SearchFilters() {
   const [showFade, setShowFade] = useState(true);
   const buttonsContainerRef = useRef<HTMLDivElement>(null);
   const [showFadeButtons, setShowFadeButtons] = useState(true);
+  const carRef = useRef<HTMLButtonElement>(null);
+  const truckRef = useRef<HTMLButtonElement>(null);
+  const motoRef = useRef<HTMLButtonElement>(null);
+  const vehicleIconsContainerRef = useRef<HTMLDivElement>(null);
+  const [vehicleIndicatorStyle, setVehicleIndicatorStyle] = useState({ left: 0, width: 0 });
+  const [showVehicleFade, setShowVehicleFade] = useState(false);
 
   useEffect(() => {
     setIsHydrated(true);
@@ -281,6 +288,61 @@ export function SearchFilters() {
 
     return undefined;
   }, [isInitialized, userForUi]);
+
+  useEffect(() => {
+    const updateVehicleIndicator = () => {
+      const activeRef =
+        vehicleType === 'car' ? carRef : vehicleType === 'truck' ? truckRef : motoRef;
+
+      if (activeRef.current && vehicleIconsContainerRef.current) {
+        const rect = activeRef.current.getBoundingClientRect();
+        const container = vehicleIconsContainerRef.current;
+        const containerRect = container.getBoundingClientRect();
+        const scrollLeft = container.scrollLeft || 0;
+
+        setVehicleIndicatorStyle({
+          left: rect.left - containerRect.left + scrollLeft,
+          width: rect.width,
+        });
+      }
+    };
+
+    const checkScrollability = () => {
+      if (!vehicleIconsContainerRef.current) return;
+      const { scrollLeft, scrollWidth, clientWidth } = vehicleIconsContainerRef.current;
+      const isAtEnd = scrollLeft >= scrollWidth - clientWidth - 1;
+      setShowVehicleFade(!isAtEnd);
+    };
+
+    const handleResize = () => {
+      updateVehicleIndicator();
+      checkScrollability();
+    };
+
+    const handleScroll = () => {
+      updateVehicleIndicator();
+      checkScrollability();
+    };
+
+    updateVehicleIndicator();
+    checkScrollability();
+
+    const container = vehicleIconsContainerRef.current;
+    if (container) {
+      container.addEventListener('scroll', handleScroll);
+      window.addEventListener('resize', handleResize);
+      const resizeObserver = new ResizeObserver(handleResize);
+      resizeObserver.observe(container);
+
+      return () => {
+        container.removeEventListener('scroll', handleScroll);
+        window.removeEventListener('resize', handleResize);
+        resizeObserver.disconnect();
+      };
+    }
+
+    return undefined;
+  }, [vehicleType]);
 
   const applyPopularFilter = useCallback(
     (brandName: string, modelName?: string) => {
@@ -1228,6 +1290,57 @@ export function SearchFilters() {
     >
       <div className="mb-6 border-b border-primary-500/20 -mx-4 md:-mx-5 px-4 md:px-5 relative">
         <div className="relative overflow-visible">
+          <div
+            ref={vehicleIconsContainerRef}
+            className="flex justify-start lg:justify-end gap-1 overflow-x-auto overflow-y-visible scrollbar-hide relative mb-3 lg:mb-0 lg:absolute lg:right-4 lg:top-0 lg:bottom-0 lg:items-center"
+          >
+            <button
+              ref={carRef}
+              type="button"
+              onClick={() => setVehicleType('car')}
+              className={`h-12 px-2 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap flex items-center justify-center ${
+                vehicleType === 'car'
+                  ? 'text-white bg-primary-500/5 rounded-t-lg'
+                  : 'text-gray-400 hover:bg-primary-500/5 hover:rounded-t-lg'
+              }`}
+            >
+              <CarIcon className="w-12 h-12 transition-colors duration-300 scale-x-[-1]" />
+            </button>
+            <button
+              ref={truckRef}
+              type="button"
+              onClick={() => setVehicleType('truck')}
+              className={`h-12 px-2 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap flex items-center justify-center ${
+                vehicleType === 'truck'
+                  ? 'text-white bg-primary-500/5 rounded-t-lg'
+                  : 'text-gray-400 hover:bg-primary-500/5 hover:rounded-t-lg'
+              }`}
+            >
+              <TruckIcon className="w-12 h-12 transition-colors duration-300 scale-x-[-1]" />
+            </button>
+            <button
+              ref={motoRef}
+              type="button"
+              onClick={() => setVehicleType('moto')}
+              className={`h-12 px-2 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap flex items-center justify-center ${
+                vehicleType === 'moto'
+                  ? 'text-white bg-primary-500/5 rounded-t-lg'
+                  : 'text-gray-400 hover:bg-primary-500/5 hover:rounded-t-lg'
+              }`}
+            >
+              <MotoIcon className="w-12 h-12 transition-colors duration-300 scale-x-[-1]" />
+            </button>
+            <div
+              className="absolute bottom-0 lg:bottom-0 h-0.5 bg-primary-400 transition-all duration-300 ease-in-out"
+              style={{
+                left: `${vehicleIndicatorStyle.left}px`,
+                width: `${vehicleIndicatorStyle.width}px`,
+              }}
+            />
+            {showVehicleFade && (
+              <div className="lg:hidden absolute right-0 top-0 bottom-0 w-24 pointer-events-none bg-gradient-to-l from-bg-light via-bg-light/60 to-transparent z-20" />
+            )}
+          </div>
           <div
             ref={tabsContainerRef}
             className="relative flex gap-1 overflow-x-auto scrollbar-hide"

@@ -11,5 +11,15 @@ export { Heading, type HeadingProps } from './Heading';
 export { Spinner, type SpinnerProps } from './Spinner';
 export { LoadingSpinner } from './LoadingSpinner';
 export { Pagination } from './Pagination';
-export { CopyIcon, CheckIcon, EditIcon, TrashIcon, ChevronDownIcon, StarIcon } from './icons';
+export {
+  CopyIcon,
+  CheckIcon,
+  EditIcon,
+  TrashIcon,
+  ChevronDownIcon,
+  StarIcon,
+  CarIcon,
+  MotoIcon,
+  TruckIcon,
+} from './icons';
 export { designTokens, type DesignTokens } from './design-tokens';
