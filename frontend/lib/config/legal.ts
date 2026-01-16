@@ -4,7 +4,7 @@ const legal: LegalConfig = {
   terms: {
     mk: {
       title: 'Услови за користење',
-      lastUpdated: 'Последна ажурирање: ',
+      lastUpdated: 'Последна ажурирање: 12 јануари 2026',
       languageToggle: 'Префрли јазик',
       dictionary: {
         title: 'Речник на поими',
@@ -259,7 +259,7 @@ const legal: LegalConfig = {
     },
     en: {
       title: 'Terms and Conditions',
-      lastUpdated: 'Last updated: ',
+      lastUpdated: 'Last updated: January 12, 2026',
       languageToggle: 'Switch language',
       dictionary: {
         title: 'Glossary of Terms',
@@ -513,7 +513,7 @@ const legal: LegalConfig = {
   privacy: {
     mk: {
       title: 'Политика за приватност',
-      lastUpdated: 'Последна ажурирање: ',
+      lastUpdated: 'Последна ажурирање: 12 јануари 2026',
       languageToggle: 'Префрли јазик',
       dictionary: {
         title: 'Речник на поими',
@@ -911,7 +911,7 @@ const legal: LegalConfig = {
     },
     en: {
       title: 'Privacy Policy',
-      lastUpdated: 'Last updated: ',
+      lastUpdated: 'Last updated: January 12, 2026',
       languageToggle: 'Switch language',
       dictionary: {
         title: 'Glossary of Terms',

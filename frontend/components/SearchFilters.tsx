@@ -34,8 +34,6 @@ import { PopularFilters } from './search-filters/PopularFilters';
 const POPULAR_CITY_NAMES_EN = ['Skopje', 'Bitola', 'Kumanovo', 'Prilep', 'Tetovo'];
 
 const FILTERS_STORAGE_KEY = 'kupito_search_filters';
-const POPULAR_FILTERS_OPEN_KEY = 'kupito_popular_filters_open';
-const ADVANCED_FILTERS_OPEN_KEY = 'kupito_advanced_filters_open';
 const MAX_URL_LENGTH = 1800;
 
 const encodeArray = (arr: string[]): string => {
@@ -82,6 +80,7 @@ export function SearchFilters() {
   const [isSearching, setIsSearching] = useState(false);
   const prevSearchParamsRef = useRef<string>('');
   const [lastAppliedFilters, setLastAppliedFilters] = useState<FilterState | null>(null);
+  const isApplyingQuickFilterRef = useRef(false);
 
   const {
     brands,
@@ -127,31 +126,54 @@ export function SearchFilters() {
   const prevUserRef = useRef<User | null>(user);
 
   const currentYear = new Date().getFullYear().toString();
-  const [showPopularFilters, setShowPopularFilters] = useState(false);
 
-  const hasAdvancedFilters =
-    searchParams.get('mileage_gte') ||
-    searchParams.get('mileage_lte') ||
-    searchParams.get('fuels') ||
-    searchParams.get('transmissions') ||
-    searchParams.get('engine_displ_l_gte') ||
-    searchParams.get('engine_displ_l_lte') ||
-    searchParams.get('colors') ||
-    searchParams.get('doors') ||
-    searchParams.get('urgent') ||
-    searchParams.get('is_new') ||
-    searchParams.get('fuel') ||
-    searchParams.get('transmission') ||
-    searchParams.get('body_type') ||
-    searchParams.get('color') ||
-    searchParams.get('conditions') ||
-    searchParams.get('registration_types') ||
-    searchParams.get('horsepower_gte') ||
-    searchParams.get('horsepower_lte') ||
-    searchParams.get('drive_types') ||
-    searchParams.get('is_registered');
+  const getInitialTab = (): 'basic' | 'advanced' | 'popular' => {
+    const hasBasicParams =
+      searchParams.get('brand') ||
+      searchParams.get('model') ||
+      searchParams.get('cities') ||
+      searchParams.get('year_gte') ||
+      searchParams.get('year_lte') ||
+      searchParams.get('price_gte') ||
+      searchParams.get('price_lte') ||
+      searchParams.get('transmissions') ||
+      searchParams.get('currency') ||
+      searchParams.get('body_types');
 
-  const [showAdvanced, setShowAdvanced] = useState(!!hasAdvancedFilters);
+    if (hasBasicParams) {
+      return 'basic';
+    }
+
+    const hasAdvancedParams =
+      searchParams.get('fuels') ||
+      searchParams.get('drive_types') ||
+      searchParams.get('mileage_gte') ||
+      searchParams.get('mileage_lte') ||
+      searchParams.get('engine_displ_l_gte') ||
+      searchParams.get('engine_displ_l_lte') ||
+      searchParams.get('horsepower_gte') ||
+      searchParams.get('horsepower_lte') ||
+      searchParams.get('colors') ||
+      searchParams.get('doors') ||
+      searchParams.get('conditions') ||
+      searchParams.get('registration_types') ||
+      searchParams.get('is_registered') ||
+      searchParams.get('urgent') ||
+      searchParams.get('is_new');
+
+    return hasAdvancedParams ? 'advanced' : 'basic';
+  };
+
+  const [activeTab, setActiveTab] = useState<'basic' | 'advanced' | 'popular'>(() =>
+    getInitialTab()
+  );
+  const basicTabRef = useRef<HTMLButtonElement>(null);
+  const advancedTabRef = useRef<HTMLButtonElement>(null);
+  const popularTabRef = useRef<HTMLButtonElement>(null);
+  const indicatorRef = useRef<HTMLDivElement>(null);
+  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
+  const [showFade, setShowFade] = useState(true);
 
   useEffect(() => {
     setIsHydrated(true);
@@ -166,43 +188,58 @@ export function SearchFilters() {
   }, [searchParams, isSearching]);
 
   useEffect(() => {
-    try {
-      const shouldShow = sessionStorage.getItem(POPULAR_FILTERS_OPEN_KEY) === '1';
-      setShowPopularFilters(shouldShow);
-    } catch {
-      // ignore
-    }
-  }, []);
+    const updateIndicator = () => {
+      const activeRef =
+        activeTab === 'basic'
+          ? basicTabRef
+          : activeTab === 'advanced'
+            ? advancedTabRef
+            : popularTabRef;
 
-  useEffect(() => {
-    if (hasAdvancedFilters) return;
-    try {
-      const shouldShow = sessionStorage.getItem(ADVANCED_FILTERS_OPEN_KEY) === '1';
-      setShowAdvanced(shouldShow);
-    } catch {
-      // ignore
-    }
-  }, [hasAdvancedFilters]);
-
-  const togglePopularFilters = () => {
-    setShowPopularFilters((prev) => {
-      const next = !prev;
-      if (isBrowser) {
-        sessionStorage.setItem(POPULAR_FILTERS_OPEN_KEY, next ? '1' : '0');
+      if (activeRef.current) {
+        const rect = activeRef.current.getBoundingClientRect();
+        const container = activeRef.current.parentElement;
+        if (container) {
+          const containerRect = container.getBoundingClientRect();
+          setIndicatorStyle({
+            left: rect.left - containerRect.left,
+            width: rect.width,
+          });
+        }
       }
-      return next;
-    });
-  };
+    };
 
-  const toggleAdvancedFilters = () => {
-    setShowAdvanced((prev) => {
-      const next = !prev;
-      if (isBrowser) {
-        sessionStorage.setItem(ADVANCED_FILTERS_OPEN_KEY, next ? '1' : '0');
-      }
-      return next;
-    });
-  };
+    const checkScrollability = () => {
+      if (!tabsContainerRef.current) return;
+      const { scrollLeft, scrollWidth, clientWidth } = tabsContainerRef.current;
+      const isAtEnd = scrollLeft >= scrollWidth - clientWidth - 1;
+      setShowFade(!isAtEnd);
+    };
+
+    const handleResize = () => {
+      updateIndicator();
+      checkScrollability();
+    };
+
+    updateIndicator();
+    checkScrollability();
+
+    const container = tabsContainerRef.current;
+    if (container) {
+      container.addEventListener('scroll', checkScrollability);
+      const resizeObserver = new ResizeObserver(handleResize);
+      resizeObserver.observe(container);
+      window.addEventListener('resize', handleResize);
+
+      return () => {
+        container.removeEventListener('scroll', checkScrollability);
+        resizeObserver.disconnect();
+        window.removeEventListener('resize', handleResize);
+      };
+    }
+
+    return undefined;
+  }, [activeTab]);
 
   const applyPopularFilter = useCallback(
     (brandName: string, modelName?: string) => {
@@ -216,6 +253,8 @@ export function SearchFilters() {
       if (modelSlug) {
         params.set('model', modelSlug);
       }
+
+      isApplyingQuickFilterRef.current = true;
 
       const newUrl = `/?${params.toString()}`;
       const scrollY = isBrowser ? window.scrollY : 0;
@@ -250,6 +289,42 @@ export function SearchFilters() {
   const processedBrandParamRef = useRef<string | null>(null);
   const processedModelParamRef = useRef<string | null>(null);
 
+  const hasBasicFilters = useMemo(() => {
+    return (
+      filters.brand_ids.length > 0 ||
+      filters.model_ids.length > 0 ||
+      filters.cities.length > 0 ||
+      filters.year_gte !== '' ||
+      filters.year_lte !== currentYear ||
+      filters.price_gte !== '' ||
+      filters.price_lte !== '' ||
+      filters.transmissions.length > 0 ||
+      filters.currency !== '' ||
+      filters.body_types.length > 0
+    );
+  }, [filters, currentYear]);
+
+  const hasAdvancedFiltersActive = useMemo(() => {
+    return (
+      filters.fuels.length > 0 ||
+      filters.drive_types.length > 0 ||
+      filters.mileage_gte !== '' ||
+      filters.mileage_lte !== '' ||
+      filters.engine_displ_l_gte !== '' ||
+      filters.engine_displ_l_lte !== '' ||
+      filters.horsepower_gte !== '' ||
+      filters.horsepower_lte !== '' ||
+      filters.body_types.length > 0 ||
+      filters.colors.length > 0 ||
+      filters.doors.length > 0 ||
+      filters.conditions.length > 0 ||
+      filters.registration_types.length > 0 ||
+      filters.is_registered !== undefined ||
+      filters.urgent === true ||
+      filters.is_new === true
+    );
+  }, [filters]);
+
   useEffect(() => {
     const brandParam = searchParams.get('brand');
 
@@ -280,11 +355,15 @@ export function SearchFilters() {
             return prev;
           }
           processedModelParamRef.current = null;
-          return {
+          const newFilters = {
             ...prev,
             brand_ids: foundBrandIds,
             model_ids: [],
           };
+          if (isApplyingQuickFilterRef.current) {
+            setLastAppliedFilters({ ...newFilters });
+          }
+          return newFilters;
         });
       }
       processedBrandParamRef.current = brandParam;
@@ -497,7 +576,11 @@ export function SearchFilters() {
                 if (currentIds === newIds && prev.model_ids.length === foundModelIds.length) {
                   return prev;
                 }
-                return { ...prev, model_ids: foundModelIds };
+                const newFilters = { ...prev, model_ids: foundModelIds };
+                if (isApplyingQuickFilterRef.current) {
+                  setLastAppliedFilters({ ...newFilters });
+                }
+                return newFilters;
               });
               processedModelParamRef.current = modelParam;
               return;
@@ -519,6 +602,55 @@ export function SearchFilters() {
       setFilters((prev) => ({ ...prev, model_ids: [] }));
     }
   }, [filters.brand_ids, searchParams, setModelsFromHook, setFilters]);
+
+  useEffect(() => {
+    if (!isApplyingQuickFilterRef.current) {
+      return;
+    }
+
+    const brandParam = searchParams.get('brand');
+    const hasOnlyQuickFilterParams =
+      brandParam &&
+      !searchParams.get('year_gte') &&
+      !searchParams.get('year_lte') &&
+      !searchParams.get('price_gte') &&
+      !searchParams.get('price_lte') &&
+      !searchParams.get('cities') &&
+      !searchParams.get('transmissions') &&
+      !searchParams.get('fuels') &&
+      !searchParams.get('colors') &&
+      !searchParams.get('doors') &&
+      !searchParams.get('conditions') &&
+      !searchParams.get('registration_types') &&
+      !searchParams.get('mileage_gte') &&
+      !searchParams.get('mileage_lte') &&
+      !searchParams.get('engine_displ_l_gte') &&
+      !searchParams.get('engine_displ_l_lte') &&
+      !searchParams.get('horsepower_gte') &&
+      !searchParams.get('horsepower_lte') &&
+      !searchParams.get('drive_types') &&
+      !searchParams.get('body_types') &&
+      !searchParams.get('urgent') &&
+      !searchParams.get('is_new') &&
+      !searchParams.get('is_registered') &&
+      !searchParams.get('sortBy') &&
+      searchParams.get('sortOrder') !== 'ASC';
+
+    if (hasOnlyQuickFilterParams && brands.length > 0 && filters.brand_ids.length > 0) {
+      const timeoutId = setTimeout(() => {
+        setLastAppliedFilters({ ...filters });
+        isApplyingQuickFilterRef.current = false;
+      }, 300);
+
+      return () => clearTimeout(timeoutId);
+    }
+
+    if (!hasOnlyQuickFilterParams) {
+      isApplyingQuickFilterRef.current = false;
+    }
+
+    return undefined;
+  }, [searchParams, filters, brands]);
 
   useEffect(() => {
     const prevUser = prevUserRef.current;
@@ -1026,41 +1158,101 @@ export function SearchFilters() {
       onSubmit={handleSubmit}
       className="card p-4 md:p-5 mb-6 overflow-visible"
     >
-      <BasicFilters
-        filters={filters}
-        onFilterChange={handleChange}
-        onMultiSelectChange={handleMultiSelectChange}
-        onYearBlur={handleYearBlur}
-        onPriceChange={handlePriceChange}
-        onPriceBlur={handlePriceBlur}
-        onWheel={handleWheel}
-        brandOptions={getBrandOptions()}
-        modelOptions={getModelOptions()}
-        cityOptions={getCityOptions()}
-        loadingModels={loadingModels}
-        currentYear={currentYear}
-      />
+      <div className="mb-6 border-b border-primary-500/20 -mx-4 md:-mx-5 px-4 md:px-5 relative">
+        <div ref={tabsContainerRef} className="relative flex gap-1 overflow-x-auto scrollbar-hide">
+          <button
+            ref={basicTabRef}
+            type="button"
+            onClick={() => setActiveTab('basic')}
+            className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap ${
+              activeTab === 'basic'
+                ? 'text-[#F3F3F3] bg-primary-500/5'
+                : 'text-[#F3F3F3] hover:bg-primary-500/5'
+            }`}
+          >
+            {t('searchFilters.basicCriteria')}
+            {hasBasicFilters && (
+              <span className="absolute right-2 top-2 w-2 h-2 rounded-full bg-yellow-500" />
+            )}
+          </button>
+          <button
+            ref={advancedTabRef}
+            type="button"
+            onClick={() => setActiveTab('advanced')}
+            className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap ${
+              activeTab === 'advanced'
+                ? 'text-[#F3F3F3] bg-primary-500/5'
+                : 'text-[#F3F3F3] hover:bg-primary-500/5'
+            }`}
+          >
+            {t('searchFilters.additionalCriteria')}
+            {hasAdvancedFiltersActive && (
+              <span className="absolute right-2 top-2 w-2 h-2 rounded-full bg-yellow-500" />
+            )}
+          </button>
+          <button
+            ref={popularTabRef}
+            type="button"
+            onClick={() => setActiveTab('popular')}
+            className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap ${
+              activeTab === 'popular'
+                ? 'text-[#F3F3F3] bg-primary-500/5'
+                : 'text-[#F3F3F3] hover:bg-primary-500/5'
+            }`}
+          >
+            {t('searchFilters.popularFilters')}
+          </button>
+          <div
+            ref={indicatorRef}
+            className="absolute bottom-0 h-0.5 bg-primary-400 transition-all duration-300 ease-in-out"
+            style={{
+              left: `${indicatorStyle.left}px`,
+              width: `${indicatorStyle.width}px`,
+            }}
+          />
+        </div>
+        {showFade && (
+          <div className="lg:hidden absolute right-0 top-0 bottom-0 w-24 pointer-events-none bg-gradient-to-l from-bg-light via-bg-light/60 to-transparent z-20" />
+        )}
+      </div>
 
-      <AdvancedFilters
-        filters={filters}
-        showAdvanced={showAdvanced}
-        onToggle={toggleAdvancedFilters}
-        onFilterChange={handleChange}
-        onMultiSelectChange={handleMultiSelectChange}
-        onCheckboxChange={handleCheckboxChange}
-        onWheel={handleWheel}
-        colorOptions={COLOR_OPTIONS}
-        getConditionOptions={getConditionOptions}
-        getRegistrationTypeOptions={getRegistrationTypeOptions}
-        registrationOptions={REGISTRATION_OPTIONS}
-      />
+      {activeTab === 'basic' && (
+        <BasicFilters
+          filters={filters}
+          onFilterChange={handleChange}
+          onMultiSelectChange={handleMultiSelectChange}
+          onYearBlur={handleYearBlur}
+          onPriceChange={handlePriceChange}
+          onPriceBlur={handlePriceBlur}
+          onWheel={handleWheel}
+          brandOptions={getBrandOptions()}
+          modelOptions={getModelOptions()}
+          cityOptions={getCityOptions()}
+          loadingModels={loadingModels}
+          currentYear={currentYear}
+        />
+      )}
 
-      <PopularFilters
-        showPopularFilters={showPopularFilters}
-        onToggle={togglePopularFilters}
-        isQuickFilterActive={isQuickFilterActive}
-        onApplyFilter={applyPopularFilter}
-      />
+      {activeTab === 'advanced' && (
+        <AdvancedFilters
+          filters={filters}
+          onFilterChange={handleChange}
+          onMultiSelectChange={handleMultiSelectChange}
+          onCheckboxChange={handleCheckboxChange}
+          onWheel={handleWheel}
+          colorOptions={COLOR_OPTIONS}
+          getConditionOptions={getConditionOptions}
+          getRegistrationTypeOptions={getRegistrationTypeOptions}
+          registrationOptions={REGISTRATION_OPTIONS}
+        />
+      )}
+
+      {activeTab === 'popular' && (
+        <PopularFilters
+          isQuickFilterActive={isQuickFilterActive}
+          onApplyFilter={applyPopularFilter}
+        />
+      )}
 
       <div className="mt-6 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">

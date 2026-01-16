@@ -26,11 +26,6 @@ export default function PrivacyPage() {
   });
 
   const currentPrivacy = privacyData[language] || privacyData[languages[0]]!;
-  const currentDate = new Date().toLocaleDateString(language, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
 
   const normalizeText = (text: string) => {
     return text
@@ -71,10 +66,7 @@ export default function PrivacyPage() {
         </button>
       </div>
 
-      <p className="text-gray-400 mb-8 text-sm">
-        {normalizeText(currentPrivacy.lastUpdated)}
-        {currentDate}
-      </p>
+      <p className="text-gray-400 mb-8 text-sm">{normalizeText(currentPrivacy.lastUpdated)}</p>
 
       <div className="surface mb-8">
         <h2 className="text-2xl font-bold mb-4">

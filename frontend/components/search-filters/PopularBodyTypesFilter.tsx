@@ -92,7 +92,7 @@ export function PopularBodyTypesFilter({
   };
 
   return (
-    <div className="mt-6 mb-6">
+    <div className="mt-6 mb-6 select-none">
       <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
         <svg
           width="16"
@@ -176,7 +176,7 @@ export function PopularBodyTypesFilter({
                   onClick={() => handleTileClick(value)}
                   className={`
                   relative w-full h-[110px] flex items-center justify-center p-2 rounded-lg
-                  outline-none
+                  outline-none select-none
                   ${
                     isSelected
                       ? 'border-[3px] border-primary-500/50'
@@ -201,10 +201,11 @@ export function PopularBodyTypesFilter({
                       alt={t(`vehicleOptions.bodyType.${value}`)}
                       width={180}
                       height={180}
-                      className={`object-contain ${value === 'Wagon' ? 'object-top -mt-4' : ''}`}
+                      className={`object-contain select-none ${value === 'Wagon' ? 'object-top -mt-4' : ''}`}
                       sizes="(max-width: 768px) 180px, (max-width: 1024px) 200px, 220px"
                       loading="eager"
                       priority
+                      draggable={false}
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.style.display = 'none';
@@ -246,7 +247,7 @@ export function PopularBodyTypesFilter({
                     </div>
                   )}
                 </button>
-                <span className="text-xs md:text-sm font-medium text-primary-400 text-center">
+                <span className="text-xs md:text-sm font-medium text-primary-400 text-center select-none">
                   {t(`vehicleOptions.bodyType.${value}`)}
                 </span>
               </div>
