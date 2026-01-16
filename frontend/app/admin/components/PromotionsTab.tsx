@@ -80,7 +80,7 @@ export function PromotionsTab() {
             }))
           }
           placeholder={t('admin.promotionsTab.searchPlaceholder')}
-          className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-light border-2 border-primary-500/30 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
+          className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-secondary border-2 border-primary-500/30 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-primary-500 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
         />
       </div>
 
@@ -95,9 +95,9 @@ export function PromotionsTab() {
                   timeFilter: filter,
                 }))
               }
-              className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium transition-colors text-sm md:text-base bg-bg-light hover:bg-bg-dark border ${
+              className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium transition-colors text-sm md:text-base bg-bg-secondary hover:bg-bg-base border ${
                 filters.timeFilter === filter
-                  ? 'border-primary-500 text-white'
+                  ? 'border-primary-500 text-text-primary'
                   : 'border-primary-500/20'
               }`}
               style={
@@ -119,9 +119,9 @@ export function PromotionsTab() {
       </div>
 
       {loading ? (
-        <div className="text-center py-8 text-gray-400">{t('common.loading')}</div>
+        <div className="text-center py-8 text-text-secondary">{t('common.loading')}</div>
       ) : promotions.length === 0 ? (
-        <div className="text-center py-8 text-gray-400">
+        <div className="text-center py-8 text-text-secondary">
           {filters.searchQuery
             ? t('admin.promotionsTab.noResults')
             : t('admin.promotionsTab.noPromotions')}
@@ -133,31 +133,31 @@ export function PromotionsTab() {
             style={{ color: 'rgb(var(--text-secondary-rgb))' }}
           >
             {t('admin.promotionsTab.totalPromotions')}:{' '}
-            <span className="font-semibold text-white">{meta?.total || 0}</span>
+            <span className="font-semibold text-text-primary">{meta?.total || 0}</span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b border-primary-500/30">
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-primary-300">
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-primary-500">
                     {t('admin.promotionsTab.listingTitle')}
                   </th>
-                  <th className="text-center py-3 px-4 text-sm font-semibold text-primary-300">
+                  <th className="text-center py-3 px-4 text-sm font-semibold text-primary-500">
                     {t('admin.promotionsTab.status')}
                   </th>
-                  <th className="text-center py-3 px-4 text-sm font-semibold text-primary-300">
+                  <th className="text-center py-3 px-4 text-sm font-semibold text-primary-500">
                     {t('admin.promotionsTab.days')}
                   </th>
-                  <th className="text-center py-3 px-4 text-sm font-semibold text-primary-300">
+                  <th className="text-center py-3 px-4 text-sm font-semibold text-primary-500">
                     {t('admin.promotionsTab.startDate')}
                   </th>
-                  <th className="text-center py-3 px-4 text-sm font-semibold text-primary-300">
+                  <th className="text-center py-3 px-4 text-sm font-semibold text-primary-500">
                     {t('admin.promotionsTab.endDate')}
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-primary-300">
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-primary-500">
                     {t('admin.promotionsTab.userId')}
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-primary-300">
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-primary-500">
                     {t('admin.promotionsTab.listingId')}
                   </th>
                 </tr>
@@ -168,7 +168,7 @@ export function PromotionsTab() {
                     <td className="py-3 px-4 text-sm">
                       <Link
                         href={`/listings/${promotion.listing_id}`}
-                        className="text-primary-400 hover:text-primary-300 hover:underline transition-colors"
+                        className="text-primary-500 hover:text-primary-700 hover:underline transition-colors"
                       >
                         {promotion.listing_title}
                       </Link>
@@ -177,10 +177,10 @@ export function PromotionsTab() {
                       <span
                         className={
                           promotion.listing_status === 'Active'
-                            ? 'text-primary-400 font-semibold'
+                            ? 'text-primary-500 font-semibold'
                             : promotion.listing_status === 'Paused'
-                              ? 'text-blue-400 font-semibold'
-                              : 'text-gray-400 font-semibold'
+                              ? 'text-blue-500 font-semibold'
+                              : 'text-text-secondary font-semibold'
                         }
                       >
                         {promotion.listing_status === 'Active'
@@ -210,7 +210,7 @@ export function PromotionsTab() {
                     </td>
                     <td className="py-3 px-4 text-sm">
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-400 font-mono text-xs break-all">
+                        <span className="text-text-secondary font-mono text-xs break-all">
                           {promotion.user_id}
                         </span>
                         <CopyButton
@@ -221,7 +221,7 @@ export function PromotionsTab() {
                     </td>
                     <td className="py-3 px-4 text-sm">
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-400 font-mono text-xs break-all">
+                        <span className="text-text-secondary font-mono text-xs break-all">
                           {promotion.listing_id}
                         </span>
                         <CopyButton

@@ -166,12 +166,13 @@ function MultiSelectDropdownComponent({
             disabled={disabled}
             placeholder={isOpen ? '' : placeholder}
             className="input-field"
-            style={{ paddingRight: '44px' }}
+            style={{ paddingRight: '52px' }}
           />
           <svg
-            className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-400 transition-transform duration-200 cursor-pointer ${
+            className={`absolute top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-400 transition-transform duration-200 cursor-pointer ${
               isOpen ? 'rotate-180' : ''
             }`}
+            style={{ right: '16px' }}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -207,18 +208,21 @@ function MultiSelectDropdownComponent({
           }}
           disabled={disabled}
           className="input-field text-left cursor-pointer relative"
-          style={{ paddingRight: '44px' }}
+          style={{ paddingRight: '52px' }}
         >
-          <span className={`flex-1 truncate ${values.length > 0 ? 'text-white' : 'text-hint'}`}>
+          <span
+            className={`flex-1 truncate ${values.length > 0 ? 'text-text-primary' : 'text-hint'}`}
+          >
             {displayText}
           </span>
           <svg
-            className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-400 transition-transform duration-200 flex-shrink-0 ${
+            className={`absolute top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-400 transition-transform duration-200 flex-shrink-0 ${
               isOpen ? 'rotate-180' : ''
             }`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
+            style={{ right: '16px' }}
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
@@ -226,7 +230,7 @@ function MultiSelectDropdownComponent({
       )}
 
       {isOpen && !disabled && (
-        <div className="absolute z-[100] w-full mt-1 top-full bg-bg-light border-2 border-primary-500/30 rounded-lg shadow-xl overflow-hidden">
+        <div className="absolute z-[100] w-full mt-1 top-full bg-white border-2 border-primary-500/30 rounded-lg shadow-xl overflow-hidden">
           <div className="max-h-96 overflow-auto scrollbar-custom">
             {filteredOptions.length > 0 ? (
               filteredOptions.map((option, index) => {
@@ -244,7 +248,7 @@ function MultiSelectDropdownComponent({
                   return (
                     <div
                       key={`category-${option.category}-${index}`}
-                      className={`px-4 py-2 text-primary-400 font-semibold text-sm sticky top-0 bg-bg-light z-10 border-b border-primary-500/20 pointer-events-none ${
+                      className={`px-4 py-2 text-primary-500 font-semibold text-sm sticky top-0 bg-white z-10 border-b border-primary-500/20 pointer-events-none ${
                         isFirstCategory ? 'rounded-t-lg' : ''
                       }`}
                     >
@@ -257,7 +261,7 @@ function MultiSelectDropdownComponent({
                   <React.Fragment key={option.value || `option-${index}`}>
                     {showCategoryHeader && (
                       <div
-                        className={`px-4 py-2 text-primary-400 font-semibold text-sm sticky top-0 bg-bg-light z-10 border-b border-primary-500/20 pointer-events-none ${
+                        className={`px-4 py-2 text-primary-500 font-semibold text-sm sticky top-0 bg-white z-10 border-b border-primary-500/20 pointer-events-none ${
                           isFirstCategory ? 'rounded-t-lg' : ''
                         }`}
                       >
@@ -267,8 +271,8 @@ function MultiSelectDropdownComponent({
                     <button
                       type="button"
                       onClick={() => handleToggle(option.value)}
-                      className={`w-full px-4 py-3 text-left text-white hover:bg-primary-500/30 transition-colors duration-150 flex items-center justify-between ${
-                        isSelected ? 'bg-primary-800' : ''
+                      className={`w-full px-4 py-3 text-left text-text-primary hover:bg-primary-500/10 transition-colors duration-150 flex items-center justify-between ${
+                        isSelected ? 'bg-primary-500/20' : ''
                       } ${isSelected ? 'font-semibold' : ''} ${option.category ? 'pl-8' : ''}`}
                     >
                       <span>{option.label}</span>
@@ -290,13 +294,13 @@ function MultiSelectDropdownComponent({
                 );
               })
             ) : (
-              <div className="px-4 py-3 text-gray-400 text-center">
+              <div className="px-4 py-3 text-text-secondary text-center">
                 {t('searchFilters.noResults')}
               </div>
             )}
           </div>
           {showActionButtons && (
-            <div className="border-t border-primary-500/30 px-2 py-1.5 flex justify-end gap-1.5 bg-bg-dark">
+            <div className="border-t border-divider px-2 py-1.5 flex justify-end gap-1.5 bg-white">
               <button
                 type="button"
                 onClick={() => {
@@ -305,7 +309,7 @@ function MultiSelectDropdownComponent({
                   setIsOpen(false);
                   setSearchQuery('');
                 }}
-                className="px-3 py-1.5 text-sm text-white font-medium hover:text-white transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40"
+                className="px-3 py-1.5 text-sm text-text-primary font-medium hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40"
               >
                 {t('common.reset')}
               </button>
@@ -316,7 +320,7 @@ function MultiSelectDropdownComponent({
                   setIsOpen(false);
                   setSearchQuery('');
                 }}
-                className="px-3 py-1.5 text-sm text-white font-medium hover:text-white transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20"
+                className="px-3 py-1.5 text-sm text-text-primary font-medium hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20"
               >
                 {t('common.ok')}
               </button>

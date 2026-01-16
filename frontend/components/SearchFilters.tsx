@@ -1171,13 +1171,13 @@ export function SearchFilters() {
             onClick={() => setActiveTab('basic')}
             className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap ${
               activeTab === 'basic'
-                ? 'text-[#F3F3F3] bg-primary-500/5 rounded-t-lg'
-                : 'text-[#F3F3F3] hover:bg-primary-500/5'
+                ? 'text-text-primary bg-primary-500/5 rounded-t-lg'
+                : 'text-text-primary hover:bg-primary-500/5'
             }`}
           >
             {t('searchFilters.basicCriteria')}
             {hasBasicFilters && (
-              <span className="absolute right-2 top-2 w-2 h-2 rounded-full bg-yellow-500" />
+              <span className="absolute right-2 top-2 w-2 h-2 rounded-full bg-accent" />
             )}
           </button>
           <button
@@ -1186,13 +1186,13 @@ export function SearchFilters() {
             onClick={() => setActiveTab('advanced')}
             className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap ${
               activeTab === 'advanced'
-                ? 'text-[#F3F3F3] bg-primary-500/5 rounded-t-lg'
-                : 'text-[#F3F3F3] hover:bg-primary-500/5'
+                ? 'text-text-primary bg-primary-500/5 rounded-t-lg'
+                : 'text-text-primary hover:bg-primary-500/5'
             }`}
           >
             {t('searchFilters.additionalCriteria')}
             {hasAdvancedFiltersActive && (
-              <span className="absolute right-2 top-2 w-2 h-2 rounded-full bg-yellow-500" />
+              <span className="absolute right-2 top-2 w-2 h-2 rounded-full bg-accent" />
             )}
           </button>
           <button
@@ -1201,8 +1201,8 @@ export function SearchFilters() {
             onClick={() => setActiveTab('popular')}
             className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap ${
               activeTab === 'popular'
-                ? 'text-[#F3F3F3] bg-primary-500/5 rounded-t-lg'
-                : 'text-[#F3F3F3] hover:bg-primary-500/5'
+                ? 'text-text-primary bg-primary-500/5 rounded-t-lg'
+                : 'text-text-primary hover:bg-primary-500/5'
             }`}
           >
             {t('searchFilters.popularFilters')}
@@ -1217,7 +1217,7 @@ export function SearchFilters() {
           />
         </div>
         {showFade && (
-          <div className="lg:hidden absolute right-0 top-0 bottom-0 w-24 pointer-events-none bg-gradient-to-l from-bg-light via-bg-light/60 to-transparent z-20" />
+          <div className="lg:hidden absolute right-0 top-0 bottom-0 w-24 pointer-events-none bg-gradient-to-l from-bg-secondary via-bg-secondary/60 to-transparent z-20" />
         )}
       </div>
 
@@ -1266,7 +1266,9 @@ export function SearchFilters() {
             loading={showSearchLoader}
             loadingText={t('searchFilters.searching')}
             disabled={!hasFiltersChanged}
-            className="w-full sm:w-auto h-[52px] min-h-[52px] max-h-[52px] text-white font-medium text-base hover:text-white transition-colors duration-200 whitespace-nowrap px-4 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20"
+            className={`w-full sm:w-auto btn-secondary flex items-center justify-center gap-2 ${
+              !hasFiltersChanged ? '' : '!border-primary-500'
+            }`}
           >
             <span className="inline-flex items-center gap-2">
               <svg

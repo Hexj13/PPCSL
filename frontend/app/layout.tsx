@@ -103,7 +103,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
-  themeColor: '#3b82f6',
+  themeColor: '#40916B',
   userScalable: true,
 };
 
@@ -152,23 +152,22 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   minWidth: '320px',
                   maxWidth: '400px',
                   width: '100%',
-                  background: '#2d4f47',
-                  color: '#ffffff',
-                  border: '2px solid rgba(0, 255, 136, 0.4)',
+                  background: '#F5F5F5',
+                  color: '#1B1B1B',
+                  border: '2px solid rgba(74, 154, 126, 0.4)',
                   borderRadius: '0.75rem',
                   padding: '16px',
-                  boxShadow:
-                    '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
+                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
                 },
                 success: {
                   iconTheme: {
-                    primary: '#10b981',
+                    primary: '#28A745',
                     secondary: '#ffffff',
                   },
                   style: {
-                    background: '#2d4f47',
-                    color: '#ffffff',
-                    border: '2px solid rgba(16, 185, 129, 0.6)',
+                    background: '#F5F5F5',
+                    color: '#1B1B1B',
+                    border: '2px solid rgba(40, 167, 69, 0.6)',
                     borderRadius: '0.75rem',
                     padding: '16px',
                     boxShadow:
@@ -177,13 +176,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 },
                 error: {
                   iconTheme: {
-                    primary: '#ef4444',
+                    primary: '#DC3545',
                     secondary: '#ffffff',
                   },
                   style: {
-                    background: '#2d4f47',
-                    color: '#ffffff',
-                    border: '2px solid rgba(239, 68, 68, 0.6)',
+                    background: '#F5F5F5',
+                    color: '#1B1B1B',
+                    border: '2px solid rgba(220, 53, 69, 0.6)',
                     borderRadius: '0.75rem',
                     padding: '16px',
                     boxShadow:

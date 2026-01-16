@@ -8,6 +8,8 @@ import { useState, useCallback, startTransition } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAuthStore, useComparisonStore } from '@/lib/store';
 
+import { CreateListingButton } from './CreateListingButton';
+
 export function Header() {
   const { user, logout, isInitialized } = useAuthStore();
   const comparisonCount = useComparisonStore((state) => state.count());
@@ -40,91 +42,48 @@ export function Header() {
     }
   }, []);
 
+  const navLinkClasses =
+    'text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded select-none';
+
+  const mobileNavLinkClasses =
+    'text-white font-medium hover:text-primary-100 active:text-primary-300 transition-colors duration-200 py-2 pl-4 flex items-center gap-2 select-none';
+
   return (
-    <header className="bg-bg-dark shadow-lg border-b-2 border-primary-500/20 sticky top-0 z-50 backdrop-blur-sm bg-bg-dark/95 h-[72px]">
+    <header className="bg-primary-700 shadow-lg border-b-2 border-primary-500/20 sticky top-0 z-50 backdrop-blur-sm h-[72px]">
       <div className="container mx-auto px-3 sm:px-4 h-full">
         <div className="flex justify-between items-center h-full">
           <Link
             href="/"
-            className="flex items-center hover:opacity-80 transition-opacity duration-200 select-none"
+            className="flex items-center hover:opacity-90 transition-opacity duration-200 select-none"
           >
             <Image
-              src="/logo-mobile.png"
+              src="/logo-desktop.svg"
               alt={t('header.brandName')}
-              width={260}
-              height={112}
-              className="block md:hidden h-auto w-auto"
-              style={{ width: '98px', height: 'auto' }}
+              width={200}
+              height={65}
+              className="hidden lg:block h-8 md:h-10 w-auto"
               priority
-              draggable={false}
             />
             <Image
-              src="/logo-desktop.png"
+              src="/logo-mobile.svg"
               alt={t('header.brandName')}
-              width={392}
-              height={144}
-              className="hidden md:block h-auto w-auto"
-              style={{ width: '147px', height: 'auto' }}
+              width={150}
+              height={48}
+              className="lg:hidden h-8 w-auto"
               priority
-              draggable={false}
             />
           </Link>
 
           {!isAuthPage && (
             <div className="flex items-center lg:hidden gap-3">
               {!isInitialized ? (
-                <div className="h-9 w-20 bg-bg-light/30 rounded animate-pulse" />
+                <div className="h-9 w-20 bg-white/20 rounded animate-pulse" />
               ) : (
-                !isMobileMenuOpen && (
-                  <>
-                    {user ? (
-                      <Link
-                        href="/listings/new"
-                        className="text-primary-400 font-medium text-xs hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 px-2.5 py-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 select-none"
-                      >
-                        <svg
-                          className="w-4 h-4 flex-shrink-0"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 4v16m8-8H4"
-                          />
-                        </svg>
-                        <span>{t('header.addListing')}</span>
-                      </Link>
-                    ) : (
-                      <Link
-                        href="/login"
-                        onClick={() => handleSetReturnUrl('/listings/new')}
-                        className="text-primary-400 font-medium text-xs hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 px-2.5 py-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 select-none"
-                      >
-                        <svg
-                          className="w-4 h-4 flex-shrink-0"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 4v16m8-8H4"
-                          />
-                        </svg>
-                        <span>{t('header.createListing')}</span>
-                      </Link>
-                    )}
-                  </>
-                )
+                !isMobileMenuOpen && <CreateListingButton variant="mobile" />
               )}
               <button
                 onClick={handleMobileMenuToggle}
-                className="lg:hidden text-primary-500 hover:text-primary-400 transition-colors duration-200 p-2 select-none"
+                className="lg:hidden text-primary-300  transition-colors duration-200 p-2 select-none"
                 aria-label={t('header.toggleMenu')}
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -151,35 +110,13 @@ export function Header() {
           <nav className="hidden lg:flex gap-3 lg:gap-6 items-center">
             {!isInitialized ? (
               <div className="flex gap-4 items-center">
-                <div className="h-9 w-24 bg-bg-light/30 rounded animate-pulse" />
-                <div className="h-9 w-32 bg-bg-light/30 rounded animate-pulse" />
+                <div className="h-9 w-24 bg-white/20 rounded animate-pulse" />
+                <div className="h-9 w-32 bg-white/20 rounded animate-pulse" />
               </div>
             ) : user ? (
               <>
-                <Link
-                  href="/listings/new"
-                  className="text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 select-none"
-                >
-                  <svg
-                    className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
-                  <span className="hidden xl:inline">{t('header.addListing')}</span>
-                  <span className="xl:hidden">{t('header.addListingShort')}</span>
-                </Link>
-                <Link
-                  href="/my-listings"
-                  className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded select-none"
-                >
+                <CreateListingButton variant="desktop" />
+                <Link href="/my-listings" className={navLinkClasses}>
                   <svg
                     className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
                     fill="none"
@@ -196,10 +133,7 @@ export function Header() {
                   <span className="hidden xl:inline">{t('header.myListings')}</span>
                   <span className="xl:hidden">{t('header.myListingsShort')}</span>
                 </Link>
-                <Link
-                  href="/favorites"
-                  className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded select-none"
-                >
+                <Link href="/favorites" className={navLinkClasses}>
                   <svg
                     className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
                     fill="none"
@@ -216,10 +150,7 @@ export function Header() {
                   <span className="hidden lg:inline">{t('header.favorites')}</span>
                   <span className="lg:hidden">{t('header.favorites')}</span>
                 </Link>
-                <Link
-                  href="/compare"
-                  className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded select-none"
-                >
+                <Link href="/compare" className={navLinkClasses}>
                   <svg
                     className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
                     fill="none"
@@ -236,16 +167,13 @@ export function Header() {
                   <span className="hidden lg:inline">{t('header.compare')}</span>
                   <span className="lg:hidden">{t('header.compare')}</span>
                   {comparisonCount > 0 && (
-                    <span className="bg-bg-light border border-primary-500/20 text-gray-300 text-[10px] md:text-xs font-bold rounded-[4px] w-4 h-4 md:w-5 md:h-5 flex items-center justify-center ml-1">
+                    <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500 border border-primary-300 text-white text-xs">
                       {comparisonCount}
                     </span>
                   )}
                 </Link>
                 {user.type === 'Admin' && (
-                  <Link
-                    href="/admin"
-                    className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded select-none"
-                  >
+                  <Link href="/admin" className={navLinkClasses}>
                     <svg
                       className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
                       fill="none"
@@ -263,10 +191,7 @@ export function Header() {
                     <span className="lg:hidden">{t('header.admin')}</span>
                   </Link>
                 )}
-                <Link
-                  href="/profile"
-                  className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded select-none"
-                >
+                <Link href="/profile" className={navLinkClasses}>
                   <svg
                     className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
                     fill="none"
@@ -283,12 +208,9 @@ export function Header() {
                   </svg>
                   <span>{t('header.profile')}</span>
                 </Link>
-                <button
-                  onClick={handleLogout}
-                  className="text-gray-400 font-medium hover:text-primary-400 transition-colors duration-200 flex items-center justify-center w-10 h-10 rounded-lg border-2 border-gray-400/20 hover:border-primary-400/40 select-none"
-                >
+                <button onClick={handleLogout} className={navLinkClasses}>
                   <svg
-                    className="w-5 h-5"
+                    className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -301,54 +223,38 @@ export function Header() {
                       d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                     />
                   </svg>
+                  <span className="hidden xl:inline">{t('header.logout')}</span>
+                  <span className="xl:hidden">{t('header.logoutShort')}</span>
                 </button>
               </>
             ) : (
               <>
+                {!isAuthPage && <CreateListingButton variant="desktop" />}
                 {!isAuthPage && (
-                  <Link
-                    href="/login"
-                    onClick={() => handleSetReturnUrl('/listings/new')}
-                    className="text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 select-none"
-                  >
-                    <svg
-                      className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                  <>
+                    <Link
+                      href="/login"
+                      onClick={() => {
+                        if (typeof window !== 'undefined') {
+                          const currentUrl = window.location.pathname + window.location.search;
+                          if (currentUrl !== '/login' && currentUrl !== '/register') {
+                            handleSetReturnUrl(currentUrl);
+                          }
+                        }
+                      }}
+                      className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 4v16m8-8H4"
-                      />
-                    </svg>
-                    <span className="hidden xl:inline">{t('header.createListing')}</span>
-                    <span className="xl:hidden">{t('header.createListingShort')}</span>
-                  </Link>
+                      <span className="hidden xl:inline">{t('header.login')}</span>
+                      <span className="xl:hidden">{t('header.loginShort')}</span>
+                    </Link>
+                    <Link
+                      href="/register"
+                      className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none"
+                    >
+                      {t('header.register')}
+                    </Link>
+                  </>
                 )}
-                <Link
-                  href="/login"
-                  onClick={() => {
-                    if (typeof window !== 'undefined') {
-                      const currentUrl = window.location.pathname + window.location.search;
-                      if (currentUrl !== '/login' && currentUrl !== '/register') {
-                        handleSetReturnUrl(currentUrl);
-                      }
-                    }
-                  }}
-                  className="text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 select-none"
-                >
-                  <span className="hidden xl:inline">{t('header.login')}</span>
-                  <span className="xl:hidden">{t('header.loginShort')}</span>
-                </Link>
-                <Link
-                  href="/register"
-                  className="text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 select-none"
-                >
-                  {t('header.register')}
-                </Link>
               </>
             )}
           </nav>
@@ -358,15 +264,15 @@ export function Header() {
           <nav className="lg:hidden mt-4 pb-4 border-t border-primary-500/20 pt-4">
             {!isInitialized ? (
               <div className="flex flex-col gap-3">
-                <div className="h-10 bg-bg-light/30 rounded animate-pulse" />
-                <div className="h-10 bg-bg-light/30 rounded animate-pulse" />
+                <div className="h-10 bg-white/20 rounded animate-pulse" />
+                <div className="h-10 bg-white/20 rounded animate-pulse" />
               </div>
             ) : user ? (
               <div className="flex flex-col gap-4">
                 <Link
                   href="/my-listings"
                   onClick={handleMobileMenuClose}
-                  className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 pl-4 flex items-center gap-2 select-none"
+                  className={mobileNavLinkClasses}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -381,7 +287,7 @@ export function Header() {
                 <Link
                   href="/favorites"
                   onClick={handleMobileMenuClose}
-                  className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 pl-4 flex items-center gap-2 select-none"
+                  className={mobileNavLinkClasses}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -396,7 +302,7 @@ export function Header() {
                 <Link
                   href="/compare"
                   onClick={handleMobileMenuClose}
-                  className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 pl-4 flex items-center gap-2 select-none"
+                  className={mobileNavLinkClasses}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -408,7 +314,7 @@ export function Header() {
                   </svg>
                   {t('header.compare')}
                   {comparisonCount > 0 && (
-                    <span className="bg-bg-light border border-primary-500/20 text-gray-300 text-xs font-bold rounded-[4px] w-5 h-5 flex items-center justify-center">
+                    <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500 border border-primary-300 text-white text-xs">
                       {comparisonCount}
                     </span>
                   )}
@@ -417,7 +323,7 @@ export function Header() {
                   <Link
                     href="/admin"
                     onClick={handleMobileMenuClose}
-                    className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 pl-4 flex items-center gap-2 select-none"
+                    className={mobileNavLinkClasses}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
@@ -433,7 +339,7 @@ export function Header() {
                 <Link
                   href="/profile"
                   onClick={handleMobileMenuClose}
-                  className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 pl-4 flex items-center gap-2 select-none"
+                  className={mobileNavLinkClasses}
                 >
                   <svg
                     className="w-4 h-4"
@@ -451,10 +357,7 @@ export function Header() {
                   </svg>
                   {t('header.profile')}
                 </Link>
-                <button
-                  onClick={handleLogout}
-                  className="text-white font-medium hover:text-primary-500 transition-colors duration-200 py-2 pl-4 flex items-center gap-2 select-none"
-                >
+                <button onClick={handleLogout} className={mobileNavLinkClasses}>
                   <svg
                     className="w-4 h-4"
                     fill="none"
@@ -474,29 +377,7 @@ export function Header() {
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                <Link
-                  href="/login"
-                  onClick={() => {
-                    handleMobileMenuClose();
-                    handleSetReturnUrl('/listings/new');
-                  }}
-                  className="text-primary-400 font-medium text-xs hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 select-none"
-                >
-                  <svg
-                    className="w-4 h-4 flex-shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
-                  {t('header.createListing')}
-                </Link>
+                <CreateListingButton variant="mobile" onClick={handleMobileMenuClose} />
                 <Link
                   href="/login"
                   onClick={() => {
@@ -508,14 +389,14 @@ export function Header() {
                       }
                     }
                   }}
-                  className="text-primary-400 font-medium text-xs hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 select-none"
+                  className="text-white font-medium text-xs hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none"
                 >
                   {t('header.login')}
                 </Link>
                 <Link
                   href="/register"
                   onClick={handleMobileMenuClose}
-                  className="text-primary-400 font-medium text-xs hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 select-none"
+                  className="text-white font-medium text-xs hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none"
                 >
                   {t('header.register')}
                 </Link>

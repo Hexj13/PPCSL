@@ -7,7 +7,7 @@ const translations = loadTranslations();
 
 export default function NotFound() {
   return (
-    <div className="fixed inset-0 bg-bg-dark flex items-center justify-center px-4 z-50">
+    <div className="fixed inset-0 bg-bg-base flex items-center justify-center px-4 z-50">
       <div className="text-center max-w-2xl w-full">
         <div className="mb-8">
           <div className="mb-1 flex justify-center">

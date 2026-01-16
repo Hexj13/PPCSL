@@ -66,17 +66,15 @@ export function Modal({
       onClick={() => onCloseRef.current()}
     >
       <div
-        className={`bg-bg-dark rounded-lg w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto scrollbar-custom ${className}`}
+        className={`bg-bg-base rounded-lg w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto scrollbar-custom ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {title && (
-          <div className="sticky top-0 z-10 bg-bg-dark border-b border-primary-500/20 p-5 sm:p-6 flex justify-between items-center">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-              {title}
-            </h2>
+          <div className="sticky top-0 z-10 bg-bg-base border-b border-primary-500/20 p-5 sm:p-6 flex justify-between items-center">
+            <h2 className="text-2xl font-bold text-primary-700">{title}</h2>
             <button
               onClick={() => onCloseRef.current()}
-              className="text-gray-400 hover:text-white text-2xl transition-colors"
+              className="text-primary-500 hover:text-primary-700 text-4xl transition-colors"
             >
               ×
             </button>

@@ -32,8 +32,8 @@ export function BackgroundDecorations() {
         opacity: isVisible ? 1 : 0,
         transition: 'opacity 0.3s ease-out',
         backgroundImage: `
-          repeating-linear-gradient(45deg, transparent, transparent 19px, rgba(110, 235, 157, 0.072) 20px, rgba(110, 235, 157, 0.018) 21px, transparent 22px),
-          repeating-linear-gradient(-45deg, transparent, transparent 19px, rgba(110, 235, 157, 0.072) 20px, rgba(110, 235, 157, 0.018) 21px, transparent 22px)
+          repeating-linear-gradient(45deg, transparent, transparent 19px, rgba(0, 0, 0, 0.072) 20px, rgba(0, 0, 0, 0.018) 21px, transparent 22px),
+          repeating-linear-gradient(-45deg, transparent, transparent 19px, rgba(0, 0, 0, 0.072) 20px, rgba(0, 0, 0, 0.018) 21px, transparent 22px)
         `,
         backgroundSize: '40px 40px',
         maskImage: `

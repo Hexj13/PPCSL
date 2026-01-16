@@ -186,7 +186,7 @@ export function ListingPageImageModal({
           e.stopPropagation();
           onClose();
         }}
-        className="absolute top-2 right-2 sm:top-4 sm:right-4 text-primary-400 hover:text-primary-300 transition-colors z-10 p-2"
+        className="absolute top-2 right-2 sm:top-4 sm:right-4 text-primary-500 hover:text-primary-500 transition-colors z-10 p-2"
       >
         <svg
           className="w-6 h-6 sm:w-8 sm:h-8"
@@ -210,7 +210,7 @@ export function ListingPageImageModal({
               e.stopPropagation();
               onPrev();
             }}
-            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 text-primary-400 hover:text-primary-300 transition-all z-10 bg-black/70 hover:bg-black/90 rounded-full p-3 sm:p-4 border-2 border-primary-500/50 hover:border-primary-400 shadow-lg hidden sm:block"
+            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 text-primary-500 hover:text-primary-500 transition-all z-10 bg-[#4A4A4A] hover:bg-[#3A3A3A] rounded-full p-3 sm:p-4 border-2 border-primary-500/50 hover:border-primary-500 shadow-lg hidden sm:block"
           >
             <svg
               className="w-8 h-8 sm:w-10 sm:h-10"
@@ -232,7 +232,7 @@ export function ListingPageImageModal({
               e.stopPropagation();
               onNext();
             }}
-            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 text-primary-400 hover:text-primary-300 transition-all z-10 bg-black/70 hover:bg-black/90 rounded-full p-3 sm:p-4 border-2 border-primary-500/50 hover:border-primary-400 shadow-lg hidden sm:block"
+            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 text-primary-500 hover:text-primary-500 transition-all z-10 bg-[#4A4A4A] hover:bg-[#3A3A3A] rounded-full p-3 sm:p-4 border-2 border-primary-500/50 hover:border-primary-500 shadow-lg hidden sm:block"
           >
             <svg
               className="w-8 h-8 sm:w-10 sm:h-10"
@@ -332,7 +332,7 @@ export function ListingPageImageModal({
         )}
 
         {images.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-primary-400 text-lg sm:text-xl font-semibold bg-black bg-opacity-50 px-4 py-2 rounded-full">
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-primary-500 text-lg sm:text-xl font-semibold bg-black bg-opacity-50 px-4 py-2 rounded-full">
             {currentIndex + 1} / {images.length}
           </div>
         )}

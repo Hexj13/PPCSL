@@ -220,7 +220,7 @@ export default function ProfilePage() {
     return (
       <div className="text-center py-12">
         <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-        <p className="mt-4 text-gray-300">{t('common.loading')}</p>
+        <p className="mt-4 text-text-secondary">{t('common.loading')}</p>
       </div>
     );
   }
@@ -231,16 +231,16 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto mt-6 md:mt-12">
-      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 pl-4 md:pl-6 lg:pl-8 bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 pl-4 md:pl-6 lg:pl-8 text-primary-700">
         {t('profile.title')}
       </h1>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="card p-4 md:p-6 lg:p-8">
-          <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
+          <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-500">
             {t('profile.contactInfo')}
           </h2>
           <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400">
+            <label className="block text-sm font-semibold mb-2 text-primary-500">
               {t('profile.phone')}
             </label>
             <div className="relative">
@@ -248,11 +248,11 @@ export default function ProfilePage() {
                 type="tel"
                 value={user.phone || ''}
                 disabled
-                className="input-field bg-bg-light/50 cursor-not-allowed opacity-70 pr-12"
+                className="input-field bg-bg-secondary/50 cursor-not-allowed opacity-70 pr-12"
               />
               <Link
                 href="/profile/change-phone"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-primary-400 hover:text-primary-300 transition-colors duration-200 p-1"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-primary-500 hover:text-primary-700 transition-colors duration-200 p-1"
                 title={t('common.changePhone')}
               >
                 <svg
@@ -287,8 +287,8 @@ export default function ProfilePage() {
                     }}
                     className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
                       formData.viber === true
-                        ? 'bg-gradient-to-r from-primary-700 to-primary-800 border-primary-500'
-                        : 'border-primary-500/50 bg-bg-light group-hover:border-primary-500'
+                        ? 'bg-primary-500 border-primary-700'
+                        : 'border-primary-500/50 bg-bg-secondary group-hover:border-primary-500'
                     }`}
                   >
                     {formData.viber === true && (
@@ -311,7 +311,7 @@ export default function ProfilePage() {
                 {/* eslint-disable no-hardcoded-text/no-hardcoded-text */}
                 <span
                   onClick={() => handleChange('viber', !formData.viber)}
-                  className="text-sm text-white cursor-pointer"
+                  className="text-sm text-text-primary cursor-pointer"
                 >
                   Viber
                 </span>
@@ -331,8 +331,8 @@ export default function ProfilePage() {
                     }}
                     className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
                       formData.whatsapp === true
-                        ? 'bg-gradient-to-r from-primary-700 to-primary-800 border-primary-500'
-                        : 'border-primary-500/50 bg-bg-light group-hover:border-primary-500'
+                        ? 'bg-primary-500 border-primary-700'
+                        : 'border-primary-500/50 bg-bg-secondary group-hover:border-primary-500'
                     }`}
                   >
                     {formData.whatsapp === true && (
@@ -354,7 +354,7 @@ export default function ProfilePage() {
                 </div>
                 <span
                   onClick={() => handleChange('whatsapp', !formData.whatsapp)}
-                  className="text-sm text-white cursor-pointer"
+                  className="text-sm text-text-primary cursor-pointer"
                 >
                   WhatsApp
                 </span>
@@ -374,8 +374,8 @@ export default function ProfilePage() {
                     }}
                     className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
                       formData.telegram === true
-                        ? 'bg-gradient-to-r from-primary-700 to-primary-800 border-primary-500'
-                        : 'border-primary-500/50 bg-bg-light group-hover:border-primary-500'
+                        ? 'bg-primary-500 border-primary-700'
+                        : 'border-primary-500/50 bg-bg-secondary group-hover:border-primary-500'
                     }`}
                   >
                     {formData.telegram === true && (
@@ -397,7 +397,7 @@ export default function ProfilePage() {
                 </div>
                 <span
                   onClick={() => handleChange('telegram', !formData.telegram)}
-                  className="text-sm text-white cursor-pointer"
+                  className="text-sm text-text-primary cursor-pointer"
                 >
                   Telegram
                 </span>
@@ -408,11 +408,11 @@ export default function ProfilePage() {
         </div>
 
         <div className="card p-4 md:p-6 lg:p-8">
-          <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
+          <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-500">
             {t('profile.emailAndNotifications')}
           </h2>
           <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400">
+            <label className="block text-sm font-semibold mb-2 text-primary-500">
               {t('profile.email')}
             </label>
             <input
@@ -421,13 +421,15 @@ export default function ProfilePage() {
               onChange={(e) => handleChange('email', e.target.value)}
               disabled={!!user.email}
               className={`input-field ${emailError ? 'border-red-500' : ''} ${
-                user.email ? 'bg-bg-light/50 cursor-not-allowed opacity-70' : ''
+                user.email ? 'bg-bg-secondary/50 cursor-not-allowed opacity-70' : ''
               }`}
               placeholder={t('profile.emailPlaceholder')}
             />
             {emailError && <p className="mt-1 text-sm text-red-400">{emailError}</p>}
             {user.email && (
-              <p className="mt-1 text-xs text-gray-400">{t('profile.emailCannotBeChanged')}</p>
+              <p className="mt-1 text-xs text-text-secondary">
+                {t('profile.emailCannotBeChanged')}
+              </p>
             )}
             <div className="mt-4">
               <div className="flex items-center gap-3 group">
@@ -460,8 +462,8 @@ export default function ProfilePage() {
                       (formData.email && !validateEmail(formData.email))
                         ? 'border-primary-500/30 bg-bg-darker opacity-50 cursor-not-allowed'
                         : formData.emailNotifications === true
-                          ? 'bg-gradient-to-r from-primary-700 to-primary-800 border-primary-500 cursor-pointer'
-                          : 'border-primary-500/50 bg-bg-light group-hover:border-primary-500 cursor-pointer'
+                          ? 'bg-primary-500 border-primary-700 cursor-pointer'
+                          : 'border-primary-500/50 bg-bg-secondary group-hover:border-primary-500 cursor-pointer'
                     }`}
                   >
                     {formData.emailNotifications === true && (formData.email || user.email) && (
@@ -490,15 +492,15 @@ export default function ProfilePage() {
                   className={`text-sm ${
                     (!formData.email && !user.email) ||
                     (formData.email && !validateEmail(formData.email))
-                      ? 'text-gray-500 cursor-not-allowed'
-                      : 'text-white cursor-pointer'
+                      ? 'text-text-secondary cursor-not-allowed'
+                      : 'text-text-primary cursor-pointer'
                   }`}
                 >
                   {t('profile.receiveEmailNotifications')}
                 </span>
               </div>
               {!formData.email && !user.email && (
-                <p className="mt-2 text-xs text-gray-400">
+                <p className="mt-2 text-xs text-text-secondary">
                   {t('profile.enterEmailForNotifications')}
                 </p>
               )}
@@ -508,11 +510,11 @@ export default function ProfilePage() {
 
         {user.type === 'Business' && (
           <div className="card p-4 md:p-6 lg:p-8">
-            <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
+            <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-500">
               {t('profile.companyInfo')}
             </h2>
             <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400">
+              <label className="block text-sm font-semibold mb-2 text-primary-500">
                 {t('profile.companyName')}
               </label>
               <input
@@ -534,12 +536,12 @@ export default function ProfilePage() {
 
         {(user.type === 'Individual' || user.type === 'Admin') && (
           <div className="card p-4 md:p-6 lg:p-8">
-            <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
+            <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-500">
               {t('profile.personalData')}
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold mb-2 text-primary-400">
+                <label className="block text-sm font-semibold mb-2 text-primary-500">
                   {t('profile.firstName')}
                 </label>
                 <input
@@ -558,7 +560,7 @@ export default function ProfilePage() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2 text-primary-400">
+                <label className="block text-sm font-semibold mb-2 text-primary-500">
                   {t('profile.lastName')}
                 </label>
                 <input
@@ -584,17 +586,17 @@ export default function ProfilePage() {
             type="submit"
             loading={loading}
             loadingText={t('profile.saving')}
-            className="w-full text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 disabled:hover:text-primary-400 disabled:hover:border-primary-400/20 disabled:hover:bg-primary-500/10"
+            className="w-full px-8 py-2 md:py-2.5 text-xs md:text-sm lg:text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-500 hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 border-2 border-primary-500 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('profile.saveChanges')}
           </LoadingButton>
         </div>
 
         <div className="card p-4 md:p-6 lg:p-8 border-red-500/30">
-          <h2 className="text-xl md:text-2xl font-bold mb-5 text-red-400">
+          <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-500">
             {t('profile.dangerZone')}
           </h2>
-          <p className="text-sm text-gray-400 mb-4">{t('profile.dangerZoneDescription')}</p>
+          <p className="text-sm text-text-secondary mb-4">{t('profile.dangerZoneDescription')}</p>
           <button
             type="button"
             onClick={() => setShowDeleteModal(true)}
@@ -614,10 +616,10 @@ export default function ProfilePage() {
         <div className="space-y-4">
           <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
             <p className="text-lg text-red-400 font-semibold mb-2">{t('profile.deleteWarning')}</p>
-            <p className="text-gray-300 text-sm leading-relaxed">
+            <p className="text-text-secondary text-sm leading-relaxed">
               {t('profile.deleteWarningDescription')}
             </p>
-            <ul className="list-disc list-inside text-gray-300 text-sm mt-2 space-y-1 ml-2">
+            <ul className="list-disc list-inside text-text-secondary text-sm mt-2 space-y-1 ml-2">
               <li>{t('profile.deleteWarningPoint1')}</li>
               <li>{t('profile.deleteWarningPoint2')}</li>
               <li>{t('profile.deleteWarningPoint3')}</li>
@@ -625,7 +627,7 @@ export default function ProfilePage() {
             </ul>
           </div>
 
-          <p className="text-gray-300 text-sm">{t('profile.deleteConfirm')}</p>
+          <p className="text-text-secondary text-sm">{t('profile.deleteConfirm')}</p>
 
           <div className="flex gap-3 pt-4">
             <button

@@ -52,10 +52,11 @@ export function StatusFilterButtons({
         <button
           key={status}
           onClick={() => onFilterChange(status)}
-          className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-xs md:text-sm lg:text-base transition-colors bg-bg-light hover:bg-bg-dark border ${
-            currentFilter === status ? 'border-primary-500 text-white' : 'border-primary-500/20'
+          className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-xs md:text-sm lg:text-base transition-colors bg-bg-secondary hover:bg-bg-base border ${
+            currentFilter === status
+              ? 'border-primary-500 text-primary-500'
+              : 'border-gray-400 text-text-secondary'
           }`}
-          style={currentFilter !== status ? { color: 'rgb(var(--text-secondary-rgb))' } : undefined}
         >
           {getLabel(status)}
           {status !== 'All' && (
@@ -69,10 +70,11 @@ export function StatusFilterButtons({
       {showPromoted && onPromotedClick && (
         <button
           onClick={onPromotedClick}
-          className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-xs md:text-sm lg:text-base transition-colors bg-bg-light hover:bg-bg-dark border ${
-            promotedActive ? 'border-primary-500 text-white' : 'border-primary-500/20'
+          className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-xs md:text-sm lg:text-base transition-colors bg-bg-secondary hover:bg-bg-base border ${
+            promotedActive
+              ? 'border-primary-500 text-primary-500'
+              : 'border-gray-400 text-text-secondary'
           }`}
-          style={!promotedActive ? { color: 'rgb(var(--text-secondary-rgb))' } : undefined}
         >
           {t('myListings.promoted')}
           <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-xs">

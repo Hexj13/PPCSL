@@ -54,7 +54,7 @@ export function Checkbox({
           } ${
             checked
               ? 'bg-gradient-to-r from-primary-700 to-primary-800 border-primary-500'
-              : 'border-primary-500/50 bg-bg-light group-hover:border-primary-500'
+              : 'border-divider bg-bg-secondary group-hover:border-primary-500'
           }`}
         >
           {checked && <CheckIcon className="w-3 h-3 text-white" />}
@@ -64,7 +64,7 @@ export function Checkbox({
         <label
           htmlFor={checkboxId}
           className={`text-sm transition-colors duration-200 cursor-pointer ${
-            checked ? 'text-primary-400' : 'text-gray-400 group-hover:text-gray-300'
+            checked ? 'text-primary-400' : 'text-text-secondary group-hover:text-text-secondary'
           } ${labelClassName}`}
         >
           {label}

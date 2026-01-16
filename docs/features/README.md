@@ -27,6 +27,21 @@
 
 ---
 
+### 🔘 [BUTTON_VISUAL_REQUIREMENTS.md](./BUTTON_VISUAL_REQUIREMENTS.md)
+Требования к визуалу кнопок в проекте.
+
+Содержит:
+- Варианты кнопок (primary, secondary, outline, yellow, green-dark)
+- Размеры (xs, sm, md, lg)
+- Состояния (default, hover, active, disabled, loading)
+- Типографика и стилизация
+- Анимации и переходы
+- Адаптивность
+- Доступность (accessibility)
+- Примеры использования
+
+---
+
 ### 💰 [PAID_PROMOTION.md](./PAID_PROMOTION.md)
 Система платного продвижения объявлений.
 

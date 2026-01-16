@@ -200,19 +200,19 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
       {showSkeleton && (
         <div>
           <div className="mb-4 md:mb-6">
-            <div className="w-full h-[48px] md:h-[52px] bg-bg-light/30 rounded-lg animate-pulse" />
+            <div className="w-full h-[48px] md:h-[52px] bg-bg-secondary/30 rounded-lg animate-pulse" />
           </div>
           <div className="mb-4 md:mb-6">
             <div className="flex flex-wrap gap-2 md:gap-3">
               {[...Array(4)].map((_, i) => (
                 <div
                   key={i}
-                  className="h-9 md:h-10 w-20 md:w-24 bg-bg-light/30 rounded-lg animate-pulse"
+                  className="h-9 md:h-10 w-20 md:w-24 bg-bg-secondary/30 rounded-lg animate-pulse"
                 />
               ))}
             </div>
           </div>
-          <div className="mb-3 md:mb-4 h-4 md:h-5 bg-bg-light/30 rounded w-40 md:w-48 animate-pulse" />
+          <div className="mb-3 md:mb-4 h-4 md:h-5 bg-bg-secondary/30 rounded w-40 md:w-48 animate-pulse" />
           <div className="space-y-3 md:space-y-4">
             {[...Array(3)].map((_, i) => (
               <ListingManagementCardSkeleton key={i} />
@@ -234,7 +234,7 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
                 }))
               }
               placeholder={t('admin.listingsTab.searchByIdPlaceholder')}
-              className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-light border-2 border-primary-500/30 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
+              className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-secondary border-2 border-primary-500/30 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-primary-500 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
             />
           </div>
 
@@ -275,7 +275,7 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
                 style={{ color: 'rgb(var(--text-secondary-rgb))' }}
               >
                 {t('admin.listingsTab.totalListings')}:{' '}
-                <span className="font-semibold text-white">{meta?.total || 0}</span>
+                <span className="font-semibold text-text-primary">{meta?.total || 0}</span>
               </div>
 
               <div className="space-y-3 md:space-y-4">

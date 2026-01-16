@@ -295,7 +295,7 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
     >
       <div className="surface">
         <div className="flex items-center gap-4 mb-6">
-          <h2 className="text-xl md:text-2xl font-bold text-primary-400">
+          <h2 className="text-xl md:text-2xl font-bold text-primary-700">
             {t('similarListings.title')}
           </h2>
           {showNavigation && (

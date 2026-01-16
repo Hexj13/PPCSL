@@ -7,6 +7,7 @@ import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { EmptyState } from '@/components/EmptyState';
 import { ListingManagementCard } from '@/components/ListingManagementCard';
 import { ListingManagementCardSkeleton } from '@/components/ListingManagementCardSkeleton';
+import { LoadMoreButton } from '@/components/LoadMoreButton';
 import { Modal } from '@/components/Modal';
 import { PromotionHistoryModal } from '@/components/PromotionHistoryModal';
 import { PromotionModal } from '@/components/PromotionModal';
@@ -537,18 +538,19 @@ export default function MyListingsPage() {
               {t('myListings.title')}
             </h1>
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-              <button
+              <LoadMoreButton
                 onClick={handleRefreshDates}
                 disabled={
                   isRefreshing ||
                   (timeUntilRefresh !== null && timeUntilRefresh > 0) ||
                   !hasActiveListings
                 }
-                className="w-full sm:w-auto text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-500/10 disabled:hover:border-primary-400/20"
+                variant="inline"
+                className="w-full sm:w-auto"
               >
                 {isRefreshing ? (
                   <>
-                    <div className="w-3.5 h-3.5 md:w-4 md:h-4 border-2 border-primary-400 border-t-transparent rounded-full animate-spin flex-shrink-0"></div>
+                    <div className="w-3.5 h-3.5 md:w-4 md:h-4 border-2 border-primary-500 border-t-transparent rounded-full animate-spin flex-shrink-0"></div>
                     {t('myListings.refreshing')}
                   </>
                 ) : (
@@ -573,15 +575,16 @@ export default function MyListingsPage() {
                     )}
                   </>
                 )}
-              </button>
+              </LoadMoreButton>
               {listings && listings.length > 0 && canPromote && (
-                <button
+                <LoadMoreButton
                   onClick={() => {
                     setPromotionHistoryModalOpen(true);
                     loadPromotionHistory(1);
                   }}
                   disabled={!hasPromotionHistory}
-                  className="w-full sm:w-auto text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-primary-400/20"
+                  variant="inline"
+                  className="w-full sm:w-auto"
                 >
                   <svg
                     className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
@@ -597,7 +600,7 @@ export default function MyListingsPage() {
                     />
                   </svg>
                   {t('myListings.promotionHistory')}
-                </button>
+                </LoadMoreButton>
               )}
               {(!listings || listings.length === 0) && (
                 <a
@@ -683,16 +686,7 @@ export default function MyListingsPage() {
                       meta.totalPages &&
                       currentPage < meta.totalPages &&
                       !loadingMore &&
-                      shouldShow && (
-                        <div className="flex justify-center pt-8 pb-0">
-                          <button
-                            onClick={handleLoadMore}
-                            className="text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20"
-                          >
-                            {t('myListings.loadMore')}
-                          </button>
-                        </div>
-                      )
+                      shouldShow && <LoadMoreButton onClick={handleLoadMore} />
                     );
                   })()}
 
@@ -747,7 +741,7 @@ export default function MyListingsPage() {
                     setIsCloseConfirmOpen(false);
                     setListingToClose(null);
                   }}
-                  className="px-6 py-2.5 bg-bg-light border-2 border-primary-500/30 text-white hover:bg-bg-dark hover:border-primary-500/50 rounded-lg font-semibold transition-colors"
+                  className="px-6 py-2.5 bg-bg-secondary border-2 border-primary-500/30 text-white hover:bg-bg-base hover:border-primary-500/50 rounded-lg font-semibold transition-colors"
                 >
                   {t('myListings.closeConfirmCancel')}
                 </button>

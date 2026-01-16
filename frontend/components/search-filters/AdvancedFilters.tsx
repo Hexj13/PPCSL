@@ -78,7 +78,7 @@ export function AdvancedFilters({
     <div className="mb-5">
       <div className="space-y-5">
         <div>
-          <h3 className="text-sm font-semibold mb-3 text-primary-400">
+          <h3 className="text-sm font-semibold mb-3 text-text-secondary">
             {t('searchFilters.labels')}
           </h3>
           <div className="flex flex-wrap gap-4">
@@ -114,7 +114,7 @@ export function AdvancedFilters({
         <div className="border-t border-primary-500/20 pt-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
+              <label className="block text-sm font-semibold mb-2 text-text-secondary flex items-center gap-2">
                 <svg
                   width="16"
                   height="16"
@@ -155,7 +155,7 @@ export function AdvancedFilters({
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
+              <label className="block text-sm font-semibold mb-2 text-text-secondary flex items-center gap-2">
                 <svg
                   width="16"
                   height="16"
@@ -192,7 +192,7 @@ export function AdvancedFilters({
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
+              <label className="block text-sm font-semibold mb-2 text-text-secondary flex items-center gap-2">
                 <svg
                   width="16"
                   height="16"
@@ -244,7 +244,7 @@ export function AdvancedFilters({
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
+              <label className="block text-sm font-semibold mb-2 text-text-secondary flex items-center gap-2">
                 <svg
                   width="16"
                   height="16"
@@ -298,7 +298,7 @@ export function AdvancedFilters({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
             <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400">
+              <label className="block text-sm font-semibold mb-2 text-text-secondary">
                 {t('searchFilters.engineFrom')}
               </label>
               <input
@@ -328,7 +328,7 @@ export function AdvancedFilters({
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400">
+              <label className="block text-sm font-semibold mb-2 text-text-secondary">
                 {t('searchFilters.engineTo')}
               </label>
               <input
@@ -358,7 +358,7 @@ export function AdvancedFilters({
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400">
+              <label className="block text-sm font-semibold mb-2 text-text-secondary">
                 {t('searchFilters.horsepowerFrom')}
               </label>
               <input
@@ -379,7 +379,7 @@ export function AdvancedFilters({
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400">
+              <label className="block text-sm font-semibold mb-2 text-text-secondary">
                 {t('searchFilters.horsepowerTo')}
               </label>
               <input
@@ -404,7 +404,7 @@ export function AdvancedFilters({
         <div className="border-t border-primary-500/20 pt-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
+              <label className="block text-sm font-semibold mb-2 text-text-secondary flex items-center gap-2">
                 <svg
                   width="16"
                   height="16"
@@ -440,7 +440,7 @@ export function AdvancedFilters({
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400">
+              <label className="block text-sm font-semibold mb-2 text-text-secondary">
                 {t('searchFilters.color')}
               </label>
               <MultiSelectDropdown
@@ -454,7 +454,7 @@ export function AdvancedFilters({
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400">
+              <label className="block text-sm font-semibold mb-2 text-text-secondary">
                 {t('searchFilters.doors')}
               </label>
               <MultiSelectDropdown
@@ -467,7 +467,7 @@ export function AdvancedFilters({
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400">
+              <label className="block text-sm font-semibold mb-2 text-text-secondary">
                 {t('searchFilters.condition')}
               </label>
               <MultiSelectDropdown
@@ -480,7 +480,7 @@ export function AdvancedFilters({
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400">
+              <label className="block text-sm font-semibold mb-2 text-text-secondary">
                 {t('searchFilters.registrationTypeLabel')}
               </label>
               <MultiSelectDropdown
@@ -493,7 +493,7 @@ export function AdvancedFilters({
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400">
+              <label className="block text-sm font-semibold mb-2 text-text-secondary">
                 {t('searchFilters.registration')}
               </label>
               <Dropdown

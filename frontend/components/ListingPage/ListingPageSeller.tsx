@@ -27,12 +27,12 @@ export function ListingPageSeller({
 
   return (
     <div className="surface overflow-hidden">
-      <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-400">
+      <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-700">
         {t('listingDetail.contactInfo')}
       </h2>
       <div className="space-y-4 break-words">
         <div>
-          <span className="font-semibold text-primary-400">{t('listingDetail.sellerType')}:</span>
+          <span className="font-semibold text-primary-500">{t('listingDetail.sellerType')}:</span>
           <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
             {listing.user.type === 'Business'
               ? t('listingDetail.business')
@@ -42,7 +42,7 @@ export function ListingPageSeller({
 
         {listing.user.firstName && (
           <div>
-            <span className="font-semibold text-primary-400">{t('listingDetail.name')}:</span>
+            <span className="font-semibold text-primary-500">{t('listingDetail.name')}:</span>
             <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
               {listing.user.firstName}
             </span>
@@ -53,7 +53,7 @@ export function ListingPageSeller({
           listing.user.type === 'Business' &&
           listing.user.companyName && (
             <div>
-              <span className="font-semibold text-primary-400">{t('listingDetail.company')}:</span>
+              <span className="font-semibold text-primary-500">{t('listingDetail.company')}:</span>
               <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
                 {listing.user.companyName}
               </span>
@@ -61,7 +61,7 @@ export function ListingPageSeller({
           )}
 
         <div>
-          <span className="font-semibold text-primary-400">{t('listingDetail.city')}:</span>
+          <span className="font-semibold text-primary-500">{t('listingDetail.city')}:</span>
           <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
             {getCityNameMk(listing.city)}
           </span>
@@ -69,13 +69,13 @@ export function ListingPageSeller({
 
         {listing.status === 'Closed' ? (
           <div>
-            <span className="font-semibold text-primary-400">{t('listingDetail.email')}:</span>
-            <span className="ml-2 text-primary-400">••••••••</span>
+            <span className="font-semibold text-primary-500">{t('listingDetail.email')}:</span>
+            <span className="ml-2 text-text-secondary">••••••••</span>
           </div>
         ) : (
           listing.user.email && (
             <div className="flex items-center min-w-0">
-              <span className="font-semibold text-primary-400 flex-shrink-0">
+              <span className="font-semibold text-primary-500 flex-shrink-0">
                 {t('listingDetail.email')}:
               </span>
               <a
@@ -100,13 +100,13 @@ export function ListingPageSeller({
 
         {listing.status === 'Closed' ? (
           <div>
-            <span className="font-semibold text-primary-400">{t('listingDetail.phone')}:</span>
-            <span className="ml-2 text-primary-400">••••••••</span>
+            <span className="font-semibold text-primary-500">{t('listingDetail.phone')}:</span>
+            <span className="ml-2 text-text-secondary">••••••••</span>
           </div>
         ) : (
           listing.user.phone && (
             <div className="flex items-center min-w-0">
-              <span className="font-semibold text-primary-400 flex-shrink-0">
+              <span className="font-semibold text-primary-500 flex-shrink-0">
                 {t('listingDetail.phone')}:
               </span>
               <a
@@ -153,7 +153,7 @@ export function ListingPageSeller({
                     }}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 hover:border-purple-500/50 transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-purple-500/20 text-purple-700 border border-purple-500/30 hover:bg-purple-500/30 hover:border-purple-500/50 transition-colors cursor-pointer"
                   >
                     {/* eslint-disable-next-line no-hardcoded-text/no-hardcoded-text */}
                     <span>Viber</span>
@@ -184,7 +184,7 @@ export function ListingPageSeller({
                     }}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-primary-500/20 text-primary-300 border border-primary-500/30 hover:bg-primary-500/30 hover:border-primary-500/50 transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-primary-500/20 text-primary-700 border border-primary-500/30 hover:bg-primary-500/30 hover:border-primary-500/50 transition-colors cursor-pointer"
                   >
                     {/* eslint-disable-next-line no-hardcoded-text/no-hardcoded-text */}
                     <span>WhatsApp</span>
@@ -215,7 +215,7 @@ export function ListingPageSeller({
                     }}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30 hover:border-blue-500/50 transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-500/20 text-blue-700 border border-blue-500/30 hover:bg-blue-500/30 hover:border-blue-500/50 transition-colors cursor-pointer"
                   >
                     {/* eslint-disable-next-line no-hardcoded-text/no-hardcoded-text */}
                     <span>Telegram</span>
@@ -244,13 +244,15 @@ export function ListingPageSeller({
             <button
               onClick={onOpenUserListings}
               disabled={listing.status === 'Closed'}
-              className={`w-full flex items-center gap-2 ${
-                listing.status === 'Closed' ? 'btn-outline-gray' : 'btn-outline-green'
+              className={`w-full px-8 py-2 md:py-2.5 text-xs md:text-sm lg:text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
+                listing.status === 'Closed'
+                  ? 'bg-bg-darker text-text-secondary border-2 border-divider cursor-not-allowed opacity-50'
+                  : 'text-primary-500 hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 border-2 border-primary-500 bg-primary-500/10 select-none'
               }`}
               title={listing.status === 'Closed' ? t('listingDetail.unavailableForClosed') : ''}
             >
               <svg
-                className="w-5 h-5 flex-shrink-0"
+                className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"

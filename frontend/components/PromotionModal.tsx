@@ -59,10 +59,10 @@ export function PromotionModal({
               className={`aspect-square px-4 py-3 rounded-lg border-2 transition-colors flex items-center justify-center ${
                 selectedDays === option.days
                   ? 'bg-primary-500/20 border-primary-500'
-                  : 'bg-bg-light border-primary-500/30 hover:border-primary-500/60 hover:bg-primary-500/10'
+                  : 'bg-bg-secondary border-primary-500/30 hover:border-primary-500/60'
               }`}
             >
-              <div className="font-semibold text-primary-300 text-center">{option.label}</div>
+              <div className="font-semibold text-text-secondary text-center">{option.label}</div>
             </button>
           ))}
 
@@ -72,10 +72,10 @@ export function PromotionModal({
               className={`aspect-square px-4 py-3 rounded-lg border-2 transition-colors flex items-center justify-center ${
                 selectedDays === null && hasSelection
                   ? 'bg-primary-500/20 border-primary-500'
-                  : 'bg-bg-light border-primary-500/30 hover:border-primary-500/60 hover:bg-primary-500/10'
+                  : 'bg-bg-secondary border-primary-500/30 hover:border-primary-500/60'
               }`}
             >
-              <div className="font-semibold text-primary-300 text-center">
+              <div className="font-semibold text-text-secondary text-center">
                 {t('promotion.unlimited')}
               </div>
             </button>
@@ -86,7 +86,7 @@ export function PromotionModal({
           <button
             onClick={handleConfirm}
             disabled={!hasSelection}
-            className="px-4 py-2.5 bg-primary-500/20 border-2 border-primary-500/40 text-primary-300 rounded-lg font-semibold transition-colors hover:bg-primary-500/30 hover:border-primary-500/60 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-8 py-2 md:py-2.5 text-xs md:text-sm lg:text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-500 hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 border-2 border-primary-500 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('common.confirm')}
           </button>

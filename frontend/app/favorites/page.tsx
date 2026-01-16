@@ -163,7 +163,7 @@ function FavoritesContent() {
         ]}
         className="mb-6"
       />
-      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 md:mb-8 bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 md:mb-8 text-primary-700">
         {t('favorites.title')}
       </h1>
 
@@ -174,12 +174,12 @@ function FavoritesContent() {
             className={`px-6 py-3 font-semibold transition-colors border-b-2 flex items-center gap-2 ${
               activeTab === 'listings'
                 ? 'border-primary-500 text-primary-500'
-                : 'border-transparent text-gray-400 hover:text-gray-300'
+                : 'border-transparent text-text-secondary hover:text-text-primary'
             }`}
           >
             {t('favorites.listings')}
             {listings.length > 0 && (
-              <span className="bg-bg-light border border-primary-500/20 text-gray-300 text-xs font-bold rounded-[4px] px-1.5 py-0.5 min-w-[20px] flex items-center justify-center">
+              <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-xs">
                 {listings.length}
               </span>
             )}
@@ -189,12 +189,12 @@ function FavoritesContent() {
             className={`px-6 py-3 font-semibold transition-colors border-b-2 flex items-center gap-2 ${
               activeTab === 'filters'
                 ? 'border-primary-500 text-primary-500'
-                : 'border-transparent text-gray-400 hover:text-gray-300'
+                : 'border-transparent text-text-secondary hover:text-text-primary'
             }`}
           >
             {t('favorites.filters')}
             {filtersCount > 0 && (
-              <span className="bg-bg-light border border-primary-500/20 text-gray-300 text-xs font-bold rounded-[4px] px-1.5 py-0.5 min-w-[20px] flex items-center justify-center">
+              <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-xs">
                 {filtersCount}
               </span>
             )}

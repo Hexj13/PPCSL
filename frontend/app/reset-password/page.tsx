@@ -410,7 +410,7 @@ export default function ResetPasswordPage() {
             type="submit"
             loading={loading}
             loadingText={t('resetPassword.sending')}
-            className="w-full text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 disabled:hover:text-primary-400 disabled:hover:border-primary-400/20 disabled:hover:bg-primary-500/10"
+            className="w-full text-primary-500 font-medium text-sm md:text-base hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-500 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('resetPassword.sendCode')}
           </LoadingButton>
@@ -430,11 +430,11 @@ export default function ResetPasswordPage() {
         <div className="card p-6 md:p-8">
           <div className="space-y-6">
             <div className="text-center">
-              <p className="text-gray-300 mb-2">
+              <p className="mb-2">
                 {t('resetPassword.codeSentTo')}{' '}
-                {phone && <span className="font-semibold text-white">{phone}</span>}
+                {phone && <span className="font-semibold text-primary-500">{phone}</span>}
               </p>
-              <p className="text-sm text-gray-400">{t('resetPassword.enterCode')}</p>
+              <p className="text-sm">{t('resetPassword.enterCode')}</p>
             </div>
 
             <form onSubmit={handleVerifyCode} className="space-y-4">
@@ -453,11 +453,11 @@ export default function ResetPasswordPage() {
                       onKeyDown={(e) => handleKeyDown(index, e)}
                       onPaste={index === 0 ? handlePaste : undefined}
                       disabled={loading}
-                      className={`w-12 h-14 md:w-14 md:h-16 text-center text-2xl md:text-3xl font-bold bg-bg-light border-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+                      className={`w-12 h-14 md:w-14 md:h-16 text-center text-2xl md:text-3xl font-bold bg-bg-secondary border-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
                         errors.code
                           ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
                           : 'border-primary-500/30 focus:border-primary-500'
-                      } ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-text'} text-white`}
+                      } ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-text'} text-primary-500`}
                       style={{
                         caretColor: 'transparent',
                         fontFamily: "'Digital-7', monospace",
@@ -500,7 +500,7 @@ export default function ResetPasswordPage() {
                   loading={loading}
                   loadingText={t('resetPassword.verifying')}
                   disabled={code.join('').trim().length !== 6 || isVerificationBlocked}
-                  className="flex-1 text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 disabled:hover:text-primary-400 disabled:hover:border-primary-400/20 disabled:hover:bg-primary-500/10"
+                  className="flex-1 text-primary-500 font-medium text-sm md:text-base hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-500 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isVerificationBlocked ? t('resetPassword.blocked') : t('resetPassword.verify')}
                 </LoadingButton>
@@ -512,7 +512,7 @@ export default function ResetPasswordPage() {
                 type="button"
                 onClick={handleResendCode}
                 disabled={loading || resendCooldown > 0}
-                className="text-sm text-primary-400 hover:text-primary-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="text-sm text-primary-500 hover:text-primary-500 active:text-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {resendCooldown > 0
                   ? `${t('resetPassword.resendCode')} (${resendCooldown}с)`
@@ -716,7 +716,7 @@ export default function ResetPasswordPage() {
               loading={loading}
               loadingText={t('common.loading')}
               disabled={!isFormValid}
-              className="flex-1 text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 disabled:hover:text-primary-400 disabled:hover:border-primary-400/20 disabled:hover:bg-primary-500/10"
+              className="flex-1 text-primary-500 font-medium text-sm md:text-base hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-500 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {t('resetPassword.resetButton')}
             </LoadingButton>

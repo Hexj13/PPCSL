@@ -90,7 +90,7 @@ export function SaveFilterModal({
     >
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-400">
+          <label className="block text-sm font-semibold mb-2 text-text-secondary">
             {t('saveFilter.name')}
           </label>
           <input
@@ -107,7 +107,7 @@ export function SaveFilterModal({
             placeholder={t('saveFilter.nameRequired')}
             autoFocus
           />
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-text-secondary mt-1">
             {name.length}
             {t('saveFilter.maxLength')}
           </p>
@@ -118,7 +118,7 @@ export function SaveFilterModal({
             type="button"
             onClick={handleSave}
             disabled={saving || !name.trim()}
-            className="flex-1 text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-500/10 disabled:hover:border-primary-400/20"
+            className="flex-1 text-primary-500 font-medium text-xs md:text-sm lg:text-base hover:text-primary-700 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-500/20 hover:border-primary-500/40 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-primary-500/20"
           >
             {saving ? t('saveFilter.saving') : t('saveFilter.save')}
           </button>
@@ -126,7 +126,7 @@ export function SaveFilterModal({
             type="button"
             onClick={handleClose}
             disabled={saving}
-            className="flex-1 text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-primary-400/20"
+            className="flex-1 text-primary-500 font-medium text-xs md:text-sm lg:text-base hover:text-primary-700 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-500/20 hover:border-primary-500/40 select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-primary-500/20"
           >
             {t('common.cancel')}
           </button>

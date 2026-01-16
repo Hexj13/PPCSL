@@ -18,6 +18,7 @@ import { useAuthStore, useFavoritesStore } from '@/lib/store';
 
 import { ListingCard } from './ListingCard';
 import { ListingCardSkeleton } from './ListingCardSkeleton';
+import { LoadMoreButton } from './LoadMoreButton';
 import { SkeletonContainer } from './SkeletonContainer';
 
 const FILTERS_STORAGE_KEY = 'kupito_search_filters';
@@ -380,14 +381,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
                 return (
                   <>
                     {showLoadMoreButton && !loadingMore && (
-                      <div className="flex justify-center pt-8 pb-0">
-                        <button
-                          onClick={handleLoadMore}
-                          className="text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20"
-                        >
-                          {t('listings.loadMore')}
-                        </button>
-                      </div>
+                      <LoadMoreButton onClick={handleLoadMore} />
                     )}
 
                     {!hasMore && listings.length > 0 && (

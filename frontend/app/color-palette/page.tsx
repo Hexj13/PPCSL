@@ -49,7 +49,7 @@ function ColorSwatch({
       >
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10" />
       </div>
-      <div className="mt-3 p-2 bg-bg-light rounded-lg border border-primary-500/20">
+      <div className="mt-3 p-2 bg-bg-secondary rounded-lg border border-primary-500/20">
         <div className="font-semibold text-sm text-white mb-1">{name}</div>
         <div className="text-xs font-mono text-primary-400 font-medium">{value}</div>
       </div>
@@ -101,7 +101,17 @@ export default function ColorPalettePage() {
         <ColorGroup title="Primary Colors" colors={theme.primary} />
         <ColorGroup title="Dark/Gray Colors" colors={theme.dark} />
         <ColorGroup title="Background Colors" colors={theme.bg} />
+        <ColorGroup title="Text Colors" colors={theme.text} />
         <ColorGroup title="Semantic Colors" colors={theme.semantic} />
+        <ColorGroup
+          title="Accent Colors"
+          colors={{
+            accent: theme.accent,
+            accentSecondary: theme.accentSecondary,
+            divider: theme.divider,
+          }}
+        />
+        {theme.pwa && <ColorGroup title="PWA Colors" colors={theme.pwa} />}
 
         <div className="mt-12 card p-6 md:p-8">
           <h3 className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent mb-6">

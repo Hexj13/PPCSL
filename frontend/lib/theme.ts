@@ -24,13 +24,21 @@ export interface ThemeColors {
     900: string;
   };
   bg: {
-    dark: string;
+    base: string;
+    secondary: string;
     darker: string;
-    light: string;
   };
+  text: {
+    primary: string;
+    secondary: string;
+  };
+  divider: string;
+  accent: string;
+  accentSecondary: string;
   semantic: {
     success: string;
     error: string;
+    danger: string;
     warning: string;
     info: string;
   };
@@ -73,16 +81,16 @@ export function getTheme(): ThemeColors {
 
 const defaultTheme: ThemeColors = {
   primary: {
-    50: '#f0fdf7',
-    100: '#d4fae8',
-    200: '#aaf5d1',
-    300: '#7ef0ba',
-    400: '#6eeb9c',
-    500: '#6eeb9c',
-    600: '#3bc973',
-    700: '#2da55f',
-    800: '#1f814b',
-    900: '#115d37',
+    50: '#f0f9f6',
+    100: '#d4ede4',
+    200: '#a9dbc9',
+    300: '#75C9A5',
+    400: '#5fa88a',
+    500: '#40916B',
+    600: '#40916B',
+    700: '#2E6F51',
+    800: '#245a45',
+    900: '#1a4534',
   },
   dark: {
     50: '#f9fafb',
@@ -97,19 +105,27 @@ const defaultTheme: ThemeColors = {
     900: '#0d1117',
   },
   bg: {
-    dark: '#1a2e2a',
-    darker: '#152520',
-    light: '#233d37',
+    base: '#F5F5F5',
+    secondary: '#F4F4F4',
+    darker: '#E8E8E8',
   },
+  text: {
+    primary: '#1B1B1B',
+    secondary: '#4A4A4A',
+  },
+  divider: '#DADADA',
+  accent: '#F2AE3E',
+  accentSecondary: '#FF5A5F',
   semantic: {
-    success: '#10b981',
-    error: '#ef4444',
-    warning: '#f59e0b',
-    info: '#3b82f6',
+    success: '#28A745',
+    error: '#DC3545',
+    danger: '#FFC107',
+    warning: '#FFC107',
+    info: '#0D6EFD',
   },
   pwa: {
-    backgroundColor: '#0f172a',
-    themeColor: '#3b82f6',
+    backgroundColor: '#F5F5F5',
+    themeColor: '#40916B',
   },
 };
 

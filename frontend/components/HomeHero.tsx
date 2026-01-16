@@ -19,21 +19,14 @@ export function HomeHero({
 }: HomeHeroProps) {
   return (
     <div className={`mb-8 ${className || ''}`} {...props}>
-      <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold mb-4 md:mb-6 leading-tight pl-4 md:pl-5">
-        <span className="bg-gradient-to-r from-primary-400 via-primary-500 to-primary-600 bg-clip-text text-transparent drop-shadow-lg">
-          {title}
-        </span>
+      <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold mb-4 md:mb-6 leading-tight text-text-secondary">
+        {title}
       </h1>
-      <p className="text-xl md:text-2xl font-medium leading-relaxed tracking-wide pl-4 md:pl-5">
-        <span className="text-white">{subtitle} </span>
+      <p className="text-xl md:text-2xl font-medium leading-relaxed tracking-wide text-text-secondary">
+        <span>{subtitle} </span>
         <span className="text-primary-500 font-bold">{subtitleBold}</span>
-        <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-          {' '}
-          {subtitle2}{' '}
-        </span>
-        <span className="bg-gradient-to-r from-primary-400 to-[#3ECA74] bg-clip-text text-transparent">
-          {subtitle3}
-        </span>
+        <span> {subtitle2} </span>
+        <span className="text-primary-700">{subtitle3}</span>
       </p>
     </div>
   );

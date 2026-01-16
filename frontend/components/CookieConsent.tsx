@@ -34,7 +34,7 @@ export function CookieConsent() {
 
   return (
     <div
-      className={`fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-full sm:max-w-sm z-50 bg-bg-light rounded-xl shadow-2xl border border-primary-500/20 p-3 sm:p-4 md:p-5 transition-all duration-300 ${
+      className={`fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-full sm:max-w-sm z-50 bg-bg-secondary rounded-xl shadow-2xl border border-primary-500/20 p-3 sm:p-4 md:p-5 transition-all duration-300 ${
         isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}
       role="dialog"
@@ -42,7 +42,7 @@ export function CookieConsent() {
     >
       <button
         onClick={handleClose}
-        className="absolute top-2 right-2 sm:top-3 sm:right-3 text-gray-400 hover:text-white transition-colors p-1 touch-manipulation"
+        className="absolute top-2 right-2 sm:top-3 sm:right-3 text-primary-500 hover:text-primary-700 transition-colors p-1 touch-manipulation"
         aria-label={t('common.closeCookies')}
       >
         <svg
@@ -62,18 +62,18 @@ export function CookieConsent() {
 
       <div className="flex flex-col items-center text-center mb-3 sm:mb-4">
         <div className="text-3xl sm:text-4xl mb-2 sm:mb-3">🍪</div>
-        <p className="text-xs sm:text-sm text-gray-300 leading-relaxed px-1">
+        <p className="text-xs sm:text-sm text-text-secondary leading-relaxed px-1">
           {t('common.cookieConsentMessage')}{' '}
           <Link
             href="/cookie-settings"
-            className="text-primary-400 hover:text-primary-300 underline transition-colors"
+            className="text-primary-700 hover:text-primary-600 underline transition-colors"
           >
             {t('common.cookieConsentSettings')}
           </Link>
           {' · '}
           <Link
             href="/privacy"
-            className="text-primary-400 hover:text-primary-300 underline transition-colors"
+            className="text-primary-700 hover:text-primary-600 underline transition-colors"
           >
             {t('common.cookieConsentMoreInfo')}
           </Link>
@@ -82,7 +82,7 @@ export function CookieConsent() {
 
       <button
         onClick={handleAccept}
-        className="w-full px-4 py-2 sm:py-2.5 bg-[#31A55F] hover:bg-[#2a8c51] active:bg-[#247a47] text-white font-semibold text-sm sm:text-base rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl touch-manipulation"
+        className="w-full px-4 py-2 sm:py-2.5 bg-[#40916B] hover:text-primary-100 text-white font-semibold text-sm sm:text-base rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl touch-manipulation"
       >
         {t('common.cookieConsentAccept')}
       </button>

@@ -133,11 +133,13 @@ export function SmsVerificationModal({
     <Modal isOpen={isOpen} onClose={onClose} title={t('smsVerification.title')} size="small">
       <div className="space-y-6">
         <div className="text-center">
-          <p className="text-gray-300 mb-2">
+          <p className="text-text-secondary mb-2">
             {t('smsVerification.codeSentTo')}{' '}
-            {phoneNumber && <span className="font-semibold text-white">{phoneNumber}</span>}
+            {phoneNumber && (
+              <span className="font-semibold text-text-secondary">{phoneNumber}</span>
+            )}
           </p>
-          <p className="text-sm text-gray-400">{t('smsVerification.enterCode')}</p>
+          <p className="text-sm text-text-secondary">{t('smsVerification.enterCode')}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -156,10 +158,10 @@ export function SmsVerificationModal({
                 onKeyDown={(e) => handleKeyDown(index, e)}
                 onPaste={index === 0 ? handlePaste : undefined}
                 disabled={isSubmitting}
-                className={`w-12 h-14 md:w-14 md:h-16 text-center text-2xl md:text-3xl font-bold bg-bg-light border-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+                className={`w-12 h-14 md:w-14 md:h-16 text-center text-2xl md:text-3xl font-bold bg-bg-secondary border-2 rounded-lg transition-all duration-200 focus:outline-none focus:border-primary-500 ${
                   error
-                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                    : 'border-primary-500/30 focus:border-primary-500'
+                    ? 'border-red-500 focus:border-red-500'
+                    : 'border-divider focus:border-primary-500'
                 } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-text'} text-white`}
                 autoComplete="off"
               />
@@ -184,7 +186,7 @@ export function SmsVerificationModal({
             <button
               type="submit"
               disabled={isSubmitting || code.trim().length !== 6}
-              className="flex-1 text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-primary-400 disabled:hover:border-primary-400/20 disabled:hover:bg-primary-500/10"
+              className="flex-1 text-primary-500 font-medium text-sm md:text-base hover:text-primary-700 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-500/20 hover:border-primary-500/40 bg-primary-500/10 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-primary-500 disabled:hover:border-primary-500/20"
             >
               {isSubmitting ? t('smsVerification.verifying') : t('smsVerification.verify')}
             </button>
@@ -200,7 +202,7 @@ export function SmsVerificationModal({
               inputRefs.current[0]?.focus();
             }}
             disabled={isSubmitting}
-            className="text-sm text-primary-400 hover:text-primary-300 transition-colors disabled:opacity-50"
+            className="text-sm text-primary-700 hover:text-primary-600 transition-colors disabled:opacity-50"
           >
             {t('smsVerification.resendCode')}
           </button>
