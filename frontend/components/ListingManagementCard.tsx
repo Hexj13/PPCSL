@@ -192,10 +192,12 @@ export function ListingManagementCard({
                 )}
                 {listing.is_new && (
                   <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-primary-500 text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-primary-500/10 before:pointer-events-none">
+                    {}
                     {/* eslint-disable-next-line no-hardcoded-text/no-hardcoded-text */}
                     <span
                       className="relative z-10 text-text-secondary"
                       style={{ filter: 'grayscale(1) brightness(0.5)' }}
+                      aria-label={t('listings.new')}
                     >
                       ✨
                     </span>

@@ -244,10 +244,12 @@ function ListingCardComponent({
                     : 'px-3 py-1.5 gap-1.5'
                 }`}
               >
+                {}
                 {/* eslint-disable-next-line no-hardcoded-text/no-hardcoded-text */}
                 <span
                   className="relative z-10 flex-shrink-0 text-text-secondary"
                   style={{ filter: 'grayscale(1) brightness(0.5)' }}
+                  aria-label={t('listings.new')}
                 >
                   ✨
                 </span>
