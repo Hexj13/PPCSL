@@ -1166,7 +1166,7 @@ export function SearchFilters() {
             onClick={() => setActiveTab('basic')}
             className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap ${
               activeTab === 'basic'
-                ? 'text-[#F3F3F3] bg-primary-500/5'
+                ? 'text-[#F3F3F3] bg-primary-500/5 rounded-t-lg'
                 : 'text-[#F3F3F3] hover:bg-primary-500/5'
             }`}
           >
@@ -1181,7 +1181,7 @@ export function SearchFilters() {
             onClick={() => setActiveTab('advanced')}
             className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap ${
               activeTab === 'advanced'
-                ? 'text-[#F3F3F3] bg-primary-500/5'
+                ? 'text-[#F3F3F3] bg-primary-500/5 rounded-t-lg'
                 : 'text-[#F3F3F3] hover:bg-primary-500/5'
             }`}
           >
@@ -1196,7 +1196,7 @@ export function SearchFilters() {
             onClick={() => setActiveTab('popular')}
             className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap ${
               activeTab === 'popular'
-                ? 'text-[#F3F3F3] bg-primary-500/5'
+                ? 'text-[#F3F3F3] bg-primary-500/5 rounded-t-lg'
                 : 'text-[#F3F3F3] hover:bg-primary-500/5'
             }`}
           >
