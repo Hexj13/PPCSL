@@ -196,16 +196,16 @@ export function SearchFilters() {
             ? advancedTabRef
             : popularTabRef;
 
-      if (activeRef.current) {
+      if (activeRef.current && tabsContainerRef.current) {
         const rect = activeRef.current.getBoundingClientRect();
-        const container = activeRef.current.parentElement;
-        if (container) {
-          const containerRect = container.getBoundingClientRect();
-          setIndicatorStyle({
-            left: rect.left - containerRect.left,
-            width: rect.width,
-          });
-        }
+        const container = tabsContainerRef.current;
+        const containerRect = container.getBoundingClientRect();
+        const scrollLeft = container.scrollLeft;
+
+        setIndicatorStyle({
+          left: rect.left - containerRect.left + scrollLeft,
+          width: rect.width,
+        });
       }
     };
 
@@ -221,18 +221,23 @@ export function SearchFilters() {
       checkScrollability();
     };
 
+    const handleScroll = () => {
+      updateIndicator();
+      checkScrollability();
+    };
+
     updateIndicator();
     checkScrollability();
 
     const container = tabsContainerRef.current;
     if (container) {
-      container.addEventListener('scroll', checkScrollability);
+      container.addEventListener('scroll', handleScroll);
       const resizeObserver = new ResizeObserver(handleResize);
       resizeObserver.observe(container);
       window.addEventListener('resize', handleResize);
 
       return () => {
-        container.removeEventListener('scroll', checkScrollability);
+        container.removeEventListener('scroll', handleScroll);
         resizeObserver.disconnect();
         window.removeEventListener('resize', handleResize);
       };
