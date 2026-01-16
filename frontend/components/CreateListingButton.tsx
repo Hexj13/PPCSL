@@ -37,10 +37,10 @@ export function CreateListingButton({
   const isMobile = variant === 'mobile';
 
   const baseClasses =
-    'text-white font-medium transition-all duration-200 whitespace-nowrap flex items-center border-2 border-accent select-none hover:text-accent-100 active:text-accent-100';
+    'text-white font-medium transition-all duration-200 whitespace-nowrap flex items-center justify-center border-2 border-accent select-none hover:text-accent-100 active:text-accent-100';
 
   const variantClasses = isMobile
-    ? 'text-xs gap-1.5 px-2.5 py-2 rounded-lg'
+    ? 'text-xs gap-1.5 px-2.5 py-2 rounded-lg w-full'
     : 'text-xs md:text-sm lg:text-base gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg';
 
   const iconSize = isMobile ? 'w-4 h-4' : 'w-3.5 h-3.5 md:w-4 md:h-4';

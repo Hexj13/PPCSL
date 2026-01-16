@@ -261,7 +261,7 @@ export function Header() {
         </div>
 
         {isMobileMenuOpen && !isAuthPage && (
-          <nav className="lg:hidden mt-4 pb-4 border-t border-primary-500/20 pt-4">
+          <nav className="lg:hidden pb-4 pt-4 bg-primary-700 -mx-3 sm:-mx-4 px-3 sm:px-4">
             {!isInitialized ? (
               <div className="flex flex-col gap-3">
                 <div className="h-10 bg-white/20 rounded animate-pulse" />
