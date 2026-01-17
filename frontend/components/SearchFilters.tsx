@@ -1328,7 +1328,7 @@ export function SearchFilters() {
           </LoadingButton>
           <button
             type="button"
-            onClick={handleReset}
+            onClick={() => handleReset(false)}
             disabled={!hasActiveFilters}
             className="w-full sm:w-auto btn-secondary flex items-center justify-center gap-2"
           >
