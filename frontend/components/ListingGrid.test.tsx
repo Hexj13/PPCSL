@@ -1,5 +1,5 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import React from 'react';
 
 import { Listing, PaginationMeta } from '@/lib/api';
@@ -12,6 +12,7 @@ import { ListingGrid } from './ListingGrid';
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
   useSearchParams: jest.fn(),
+  usePathname: jest.fn(),
 }));
 
 const mockGetState = jest.fn().mockReturnValue({
@@ -141,6 +142,7 @@ describe('ListingGrid', () => {
       replace: mockReplace,
     });
     (useSearchParams as jest.Mock).mockReturnValue(mockSearchParams);
+    (usePathname as jest.Mock).mockReturnValue('/');
     (useAuthStore as unknown as jest.Mock).mockReturnValue({
       user: null,
     });
@@ -308,22 +310,52 @@ describe('ListingGrid', () => {
       expect(screen.getByText('Погледни ги сите објави')).toBeInTheDocument();
     });
 
-    it('should clear filters and redirect to home when "View all listings" button is clicked', () => {
+    it('should dispatch reset event when on home page', () => {
       const initialData = {
         data: [],
         meta: { ...mockMeta, total: 0 },
       };
 
+      (usePathname as jest.Mock).mockReturnValue('/');
       const removeItemSpy = jest.fn();
+      const dispatchEventSpy = jest.fn();
       window.sessionStorage.removeItem = removeItemSpy;
-      window.localStorage.removeItem = removeItemSpy;
+      window.dispatchEvent = dispatchEventSpy;
 
       render(<ListingGrid initialData={initialData} />);
 
       const button = screen.getByText('Погледни ги сите објави');
       fireEvent.click(button);
 
-      expect(removeItemSpy).toHaveBeenCalledWith('kupito_search_filters');
+      expect(removeItemSpy).toHaveBeenCalledWith('kupito_grid_state');
+      expect(removeItemSpy).toHaveBeenCalledWith('homeScrollTimestamp');
+      expect(removeItemSpy).toHaveBeenCalledWith('scrollPreserved');
+      expect(dispatchEventSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'resetFiltersFromListingGrid',
+        })
+      );
+    });
+
+    it('should redirect to home when not on home page', () => {
+      const initialData = {
+        data: [],
+        meta: { ...mockMeta, total: 0 },
+      };
+
+      (usePathname as jest.Mock).mockReturnValue('/listings');
+      const removeItemSpy = jest.fn();
+      window.sessionStorage.removeItem = removeItemSpy;
+      Object.defineProperty(window, 'location', {
+        value: { href: '' },
+        writable: true,
+      });
+
+      render(<ListingGrid initialData={initialData} />);
+
+      const button = screen.getByText('Погледни ги сите објави');
+      fireEvent.click(button);
+
       expect(removeItemSpy).toHaveBeenCalledWith('kupito_grid_state');
       expect(removeItemSpy).toHaveBeenCalledWith('homeScrollTimestamp');
       expect(removeItemSpy).toHaveBeenCalledWith('scrollPreserved');

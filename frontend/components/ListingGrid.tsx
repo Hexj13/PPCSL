@@ -1,6 +1,6 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, usePathname } from 'next/navigation';
 import {
   useEffect,
   useState,
@@ -20,8 +20,6 @@ import { ListingCard } from './ListingCard';
 import { ListingCardSkeleton } from './ListingCardSkeleton';
 import { LoadMoreButton } from './LoadMoreButton';
 import { SkeletonContainer } from './SkeletonContainer';
-
-const FILTERS_STORAGE_KEY = 'kupito_search_filters';
 
 interface ListingGridProps {
   initialData?: { data: Listing[]; meta: PaginationMeta };
@@ -65,6 +63,7 @@ const loadGridState = (): {
 export function ListingGrid({ initialData }: ListingGridProps) {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const savedState = useMemo(() => {
     const hasScrollTimestamp =
       typeof window !== 'undefined' && sessionStorage.getItem('homeScrollTimestamp');
@@ -342,12 +341,17 @@ export function ListingGrid({ initialData }: ListingGridProps) {
               <div className="flex justify-center">
                 <button
                   onClick={() => {
-                    sessionStorage.removeItem(FILTERS_STORAGE_KEY);
-                    localStorage.removeItem(FILTERS_STORAGE_KEY);
                     sessionStorage.removeItem(GRID_STATE_KEY);
                     sessionStorage.removeItem('homeScrollTimestamp');
                     sessionStorage.removeItem('scrollPreserved');
-                    window.location.href = '/';
+
+                    if (pathname === '/') {
+                      if (typeof window !== 'undefined') {
+                        window.dispatchEvent(new CustomEvent('resetFiltersFromListingGrid'));
+                      }
+                    } else {
+                      window.location.href = '/';
+                    }
                   }}
                   className="text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-6 py-3 text-base rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20"
                 >

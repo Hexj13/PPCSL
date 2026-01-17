@@ -22,6 +22,8 @@ import {
   getCityNameMk,
 } from '@/lib/utils';
 
+const SPARKLES_EMOJI = '\u2728';
+
 interface ListingCardProps {
   listing: Listing;
   forceFavorite?: boolean;
@@ -245,13 +247,13 @@ function ListingCardComponent({
                 }`}
               >
                 {}
-                {/* eslint-disable-next-line no-hardcoded-text/no-hardcoded-text */}
+                {}
                 <span
                   className="relative z-10 flex-shrink-0 text-text-secondary"
                   style={{ filter: 'grayscale(1) brightness(0.5)' }}
                   aria-label={t('listings.new')}
                 >
-                  ✨
+                  {SPARKLES_EMOJI}
                 </span>
                 <span
                   className={`relative z-10 transition-all duration-300 ${

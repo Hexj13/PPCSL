@@ -700,6 +700,29 @@ export function SearchFilters() {
     }
   }, [user, router, currentYear, searchParams, setFilters]);
 
+  useEffect(() => {
+    const handleResetEvent = () => {
+      clearFiltersFromStorage();
+      resetFilters();
+      setLastAppliedFilters(null);
+      startTransition(() => {
+        router.replace('/', { scroll: false });
+        if (typeof window !== 'undefined') {
+          requestAnimationFrame(() => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          });
+        }
+      });
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resetFiltersFromListingGrid', handleResetEvent);
+      return () => {
+        window.removeEventListener('resetFiltersFromListingGrid', handleResetEvent);
+      };
+    }
+  }, [router, resetFilters]);
+
   const handleChange = useCallback(
     (key: keyof typeof filters, value: string) => {
       if (key === 'is_registered') {
@@ -1063,24 +1086,28 @@ export function SearchFilters() {
     ]
   );
 
-  const handleReset = () => {
+  const handleReset = (scrollToTop: boolean = false) => {
     clearFiltersFromStorage();
     resetFilters();
     setLastAppliedFilters(null);
     const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !scrollToTop) {
       sessionStorage.setItem('scrollPreserved', 'true');
     }
     startTransition(() => {
       router.replace('/', { scroll: false });
       if (typeof window !== 'undefined') {
         requestAnimationFrame(() => {
-          window.scrollTo({ top: scrollY, behavior: 'instant' });
-          requestAnimationFrame(() => {
+          if (scrollToTop) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          } else {
+            window.scrollTo({ top: scrollY, behavior: 'instant' });
             requestAnimationFrame(() => {
-              sessionStorage.removeItem('scrollPreserved');
+              requestAnimationFrame(() => {
+                sessionStorage.removeItem('scrollPreserved');
+              });
             });
-          });
+          }
         });
       }
     });
