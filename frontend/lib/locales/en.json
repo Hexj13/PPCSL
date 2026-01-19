@@ -343,6 +343,12 @@
     "selectBrand": "Select brand",
     "selectCity": "Select city",
     "descriptionPlaceholder": "Add car description...",
+    "vehicleTypeLabel": "Vehicle Type",
+    "vehicleType": {
+      "car": "Car",
+      "truck": "Truck",
+      "moto": "Motorcycle"
+    },
     "brandRequired": "Brand selection is required",
     "modelRequired": "Model selection is required",
     "yearRequired": "Year is required",
@@ -626,6 +632,7 @@
     "horsepowerRangeError": "Horsepower must be between 1 and 9999",
     "basicCriteria": "Basic Criteria",
     "popularBodyTypes": "Popular Body Types",
+    "categoryLabel": "Category:",
     "brand": "Brand",
     "model": "Model",
     "transmission": "Transmission",
@@ -902,7 +909,19 @@
       "Van": "Van",
       "Pickup": "Pickup",
       "Minivan": "Minivan",
-      "Truck": "Truck"
+      "Truck": "Truck",
+      "Bus": "Bus",
+      "SemiTruck": "Semi-truck",
+      "Tractor": "Tractor",
+      "SpecialEquipment": "Special Equipment",
+      "Naked": "Naked",
+      "Sport": "Sport",
+      "Touring": "Touring",
+      "Cruiser": "Cruiser",
+      "Adventure": "Adventure",
+      "Scooter": "Scooter",
+      "Enduro": "Enduro",
+      "Cross": "Cross"
     },
     "doors": {
       "2": "2 doors",
@@ -968,7 +987,20 @@
       "multifunction_steering": "Multifunction Steering Wheel",
       "start_stop": "Start-Stop System",
       "esp": "ESP System",
-      "abs": "ABS System"
+      "abs": "ABS System",
+      "hydraulic_lift": "Hydraulic Lift",
+      "winch": "Winch",
+      "tachograph": "Tachograph",
+      "refrigerator": "Refrigerator",
+      "adblue_system": "AdBlue System",
+      "parking_brake": "Parking Brake",
+      "alarm_system": "Alarm System",
+      "luggage_rack": "Luggage Rack",
+      "windshield": "Windshield",
+      "heated_grips": "Heated Grips",
+      "quick_shifter": "Quick Shifter",
+      "traction_control": "Traction Control",
+      "riding_modes": "Riding Modes"
     }
   },
   "breadcrumbs": {

@@ -11,10 +11,10 @@ import { checkEnvironment } from '../script-guard';
 checkEnvironment(['stage', 'development', 'test']);
 
 async function deleteAllBrands() {
-  console.log('🚀 Започнување на бришење на сите марки...\n');
+  console.log('🚀 Starting deletion of all brands...\n');
 
   await AppDataSource.initialize();
-  console.log('✅ Поврзано со базата на податоци\n');
+  console.log('✅ Connected to database\n');
 
   const brandRepo = AppDataSource.getRepository(Brand);
   const modelRepo = AppDataSource.getRepository(VehicleModel);
@@ -41,7 +41,7 @@ async function deleteAllBrands() {
       break;
     }
 
-    console.log(`📊 Итерација ${iterations}: Најдени ${allBrands.length} марки за бришење\n`);
+    console.log(`📊 Iteration ${iterations}: Found ${allBrands.length} brands to delete\n`);
 
     for (const brand of allBrands) {
       const vehicles = await vehicleRepo.find({ where: { brand_id: brand.id } });
@@ -76,30 +76,30 @@ async function deleteAllBrands() {
 
       await brandRepo.remove(brand);
       deletedBrands++;
-      console.log(`  ❌ Избришан: ${brand.name}`);
+      console.log(`  ❌ Deleted: ${brand.name}`);
     }
   }
 
   const remainingBrands = await brandRepo.find();
   if (remainingBrands.length > 0) {
-    console.log(`\n⚠️  Се уште остануваат ${remainingBrands.length} марки. Бришење директно...\n`);
+    console.log(`\n⚠️  Still ${remainingBrands.length} brands remaining. Deleting directly...\n`);
     await brandRepo.delete({});
     await modelRepo.delete({});
     deletedBrands += remainingBrands.length;
   }
 
-  console.log(`\n✅ Бришењето е завршено!`);
-  console.log(`\n📊 Статистика:`);
-  console.log(`   - Избришани марки: ${deletedBrands}`);
-  console.log(`   - Избришани модели: ${deletedModels}`);
-  console.log(`   - Избришани возила: ${deletedVehicles}`);
-  console.log(`   - Избришани објави: ${deletedListings}\n`);
+  console.log(`\n✅ Deletion completed!`);
+  console.log(`\n📊 Statistics:`);
+  console.log(`   - Deleted brands: ${deletedBrands}`);
+  console.log(`   - Deleted models: ${deletedModels}`);
+  console.log(`   - Deleted vehicles: ${deletedVehicles}`);
+  console.log(`   - Deleted listings: ${deletedListings}\n`);
 
   const finalBrands = await brandRepo.find();
-  console.log(`📊 Финална проверка: Остануваат ${finalBrands.length} марки\n`);
+  console.log(`📊 Final check: ${finalBrands.length} brands remaining\n`);
 
   await AppDataSource.destroy();
-  console.log('🔌 Врската со базата на податоци е затворена');
+  console.log('🔌 Database connection closed');
 }
 
 deleteAllBrands()

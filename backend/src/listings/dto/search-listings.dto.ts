@@ -79,6 +79,15 @@ export class SearchListingsDto {
   model_ids?: string[];
 
   @ApiPropertyOptional({
+    example: 'car',
+    enum: ['car', 'truck', 'moto'],
+    description: 'Vehicle type filter',
+  })
+  @IsOptional()
+  @IsEnum(['car', 'truck', 'moto'], { message: 'vehicleType must be car, truck, or moto' })
+  vehicleType?: 'car' | 'truck' | 'moto';
+
+  @ApiPropertyOptional({
     example: 2018,
     description: 'Minimum year',
     minimum: 1900,
@@ -243,6 +252,18 @@ export class SearchListingsDto {
       'Pickup',
       'Minivan',
       'Truck',
+      'Bus',
+      'SemiTruck',
+      'Tractor',
+      'SpecialEquipment',
+      'Naked',
+      'Sport',
+      'Touring',
+      'Cruiser',
+      'Adventure',
+      'Scooter',
+      'Enduro',
+      'Cross',
     ],
     description: 'Body type',
   })
@@ -263,6 +284,18 @@ export class SearchListingsDto {
       'Pickup',
       'Minivan',
       'Truck',
+      'Bus',
+      'SemiTruck',
+      'Tractor',
+      'SpecialEquipment',
+      'Naked',
+      'Sport',
+      'Touring',
+      'Cruiser',
+      'Adventure',
+      'Scooter',
+      'Enduro',
+      'Cross',
     ],
     description: 'Body types (comma-separated or array)',
     type: [String],

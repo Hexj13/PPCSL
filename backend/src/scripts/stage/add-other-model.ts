@@ -7,7 +7,7 @@ async function addOtherModel() {
   console.log('➕ Додавање на модел "Друго" за секоја марка...\n');
 
   await AppDataSource.initialize();
-  console.log('✅ Поврзано со базата на податоци\n');
+  console.log('✅ Connected to database\n');
 
   const brandRepo = AppDataSource.getRepository(Brand);
   const modelRepo = AppDataSource.getRepository(VehicleModel);
@@ -59,6 +59,7 @@ async function addOtherModel() {
         name: 'Друго',
         brand_id: brand.id,
         order: maxOrder + 1,
+        vehicle_type: 'car',
       });
 
       await modelRepo.save(otherModel);
@@ -68,14 +69,14 @@ async function addOtherModel() {
   }
 
   console.log(`\n✅ Завршено!`);
-  console.log(`   - Вкупно марки: ${allBrands.length}`);
+  console.log(`   - Total brands: ${allBrands.length}`);
   console.log(`   - Додадени модели: ${added}`);
   console.log(`   - Преименувани модели: ${renamed}`);
   console.log(`   - Ажурирани модели: ${updated}`);
   console.log(`   - Прескокнати модели: ${skipped}\n`);
 
   await AppDataSource.destroy();
-  console.log('🔌 Врската со базата на податоци е затворена');
+  console.log('🔌 Database connection closed');
 }
 
 addOtherModel()

@@ -10,7 +10,7 @@ async function checkUser() {
   try {
     console.log('🔌 Поврзување со базата на податоци...');
     await AppDataSource.initialize();
-    console.log('✅ Поврзано со базата на податоци');
+    console.log('✅ Connected to database');
 
     const userRepo = AppDataSource.getRepository(User);
     const phone = '+38267419050';
@@ -46,7 +46,7 @@ async function checkUser() {
   } finally {
     if (AppDataSource.isInitialized) {
       await AppDataSource.destroy();
-      console.log('🔌 Врската со базата на податоци е затворена');
+      console.log('🔌 Database connection closed');
     }
   }
 }

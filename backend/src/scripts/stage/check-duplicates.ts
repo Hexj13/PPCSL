@@ -7,7 +7,7 @@ async function checkDuplicates() {
   console.log('🔍 Проверка на дубликати во базата на податоци...\n');
 
   await AppDataSource.initialize();
-  console.log('✅ Поврзано со базата на податоци\n');
+  console.log('✅ Connected to database\n');
 
   const brandRepo = AppDataSource.getRepository(Brand);
   const modelRepo = AppDataSource.getRepository(VehicleModel);
@@ -133,14 +133,14 @@ async function checkDuplicates() {
   }
 
   console.log('📊 Статистика:');
-  console.log(`   - Вкупно марки: ${allBrands.length}`);
-  console.log(`   - Вкупно модели: ${allModels.length}`);
+  console.log(`   - Total brands: ${allBrands.length}`);
+  console.log(`   - Total models: ${allModels.length}`);
   console.log(`   - Дубликати на марки: ${brandDuplicates}`);
   console.log(`   - Дубликати на модели во рамки на иста марка: ${duplicatesInBrand}`);
   console.log(`   - Дубликати на модели меѓу различни марки: ${duplicatesAcrossBrands}\n`);
 
   await AppDataSource.destroy();
-  console.log('🔌 Врската со базата на податоци е затворена');
+  console.log('🔌 Database connection closed');
 }
 
 checkDuplicates()

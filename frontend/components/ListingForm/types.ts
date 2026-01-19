@@ -16,4 +16,5 @@ export interface ListingFormSectionProps {
   setShowVinHint?: (_show: boolean) => void;
   handleWheel?: (_e: React.WheelEvent<HTMLInputElement>) => void;
   siteConfig?: { currency: string };
+  vehicleType?: 'car' | 'truck' | 'moto';
 }

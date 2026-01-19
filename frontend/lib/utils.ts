@@ -182,29 +182,10 @@ export function formatRegistrationType(
 
 export function formatBodyType(bodyType: string | undefined, t: (_key: string) => string): string {
   if (!bodyType) return '';
-  switch (bodyType) {
-    case 'Sedan':
-      return t('vehicleOptions.bodyType.Sedan');
-    case 'Hatchback':
-      return t('vehicleOptions.bodyType.Hatchback');
-    case 'Wagon':
-      return t('vehicleOptions.bodyType.Wagon');
-    case 'SUV':
-      return t('vehicleOptions.bodyType.SUV');
-    case 'Coupe':
-      return t('vehicleOptions.bodyType.Coupe');
-    case 'Convertible':
-      return t('vehicleOptions.bodyType.Convertible');
-    case 'Van':
-      return t('vehicleOptions.bodyType.Van');
-    case 'Pickup':
-      return t('vehicleOptions.bodyType.Pickup');
-    case 'Minivan':
-      return t('vehicleOptions.bodyType.Minivan');
-    case 'Truck':
-      return t('vehicleOptions.bodyType.Truck');
-    default:
-      return bodyType;
+  try {
+    return t(`vehicleOptions.bodyType.${bodyType}`);
+  } catch {
+    return bodyType;
   }
 }
 

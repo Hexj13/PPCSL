@@ -189,8 +189,8 @@ describe('utils', () => {
       expect(formatBodyType(undefined, mockT)).toBe('');
     });
 
-    it('should return original value for unknown body type', () => {
-      expect(formatBodyType('Unknown', mockT)).toBe('Unknown');
+    it('should return translation key for unknown body type', () => {
+      expect(formatBodyType('Unknown', mockT)).toBe('vehicleOptions.bodyType.Unknown');
     });
   });
 

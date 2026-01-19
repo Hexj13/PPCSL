@@ -6,6 +6,7 @@ import { Favorite } from '../../favorites/entities/favorite.entity';
 import { ListingView } from '../../listings/entities/listing-view.entity';
 import { Listing } from '../../listings/entities/listing.entity';
 import { Vehicle } from '../../listings/entities/vehicle.entity';
+import { determineVehicleType } from '../data/vehicle-classification';
 import { checkEnvironment } from '../script-guard';
 
 checkEnvironment(['stage', 'development', 'test']);
@@ -160,10 +161,10 @@ function normalizeBrandName(name: string): string {
 }
 
 async function cleanupAndSyncBrands() {
-  console.log('🚀 Започнување на чистење и синхронизација на марки...\n');
+  console.log('🚀 Starting brands cleanup and synchronization...\n');
 
   await AppDataSource.initialize();
-  console.log('✅ Поврзано со базата на податоци\n');
+  console.log('✅ Connected to database\n');
 
   const brandRepo = AppDataSource.getRepository(Brand);
   const modelRepo = AppDataSource.getRepository(VehicleModel);
@@ -173,7 +174,7 @@ async function cleanupAndSyncBrands() {
   const favoriteRepo = AppDataSource.getRepository(Favorite);
 
   const allBrands = await brandRepo.find({ relations: ['models'] });
-  console.log(`📊 Најдени ${allBrands.length} марки во базата\n`);
+  console.log(`📊 Found ${allBrands.length} brands in database\n`);
 
   const targetBrandNames = new Set(Object.keys(TARGET_BRANDS));
   const normalizedTargetBrands = new Map<string, string>();
@@ -226,12 +227,12 @@ async function cleanupAndSyncBrands() {
         await vehicleRepo.update(vehicle.id, { brand_id: targetBrand.id });
       }
       await brandRepo.remove(brandToMerge);
-      console.log(`  ♻️  Объединен: ${brandToMerge.name} -> ${targetBrand.name}`);
+      console.log(`  ♻️  Merged: ${brandToMerge.name} -> ${targetBrand.name}`);
     }
   }
 
-  console.log(`✅ Марки за задржување: ${brandsToKeep.length}`);
-  console.log(`❌ Марки за бришење: ${brandsToDelete.length}\n`);
+  console.log(`✅ Brands to keep: ${brandsToKeep.length}`);
+  console.log(`❌ Brands to delete: ${brandsToDelete.length}\n`);
 
   let deletedListings = 0;
   let deletedVehicles = 0;
@@ -263,12 +264,12 @@ async function cleanupAndSyncBrands() {
     }
 
     await brandRepo.remove(brand);
-    console.log(`  ❌ Избришан: ${brand.name}`);
+    console.log(`  ❌ Deleted: ${brand.name}`);
   }
 
-  console.log(`\n📊 Бришење завршено:`);
-  console.log(`   - Избришани објави: ${deletedListings}`);
-  console.log(`   - Избришани возила: ${deletedVehicles}\n`);
+  console.log(`\n📊 Deletion completed:`);
+  console.log(`   - Deleted listings: ${deletedListings}`);
+  console.log(`   - Deleted vehicles: ${deletedVehicles}\n`);
 
   let order = 1;
   const targetBrandNamesArray = Object.keys(TARGET_BRANDS);
@@ -301,9 +302,13 @@ async function cleanupAndSyncBrands() {
         brand = existingBrandWithTargetName;
         console.log(`♻️  Користен постоечки бренд: ${normalizedTargetName}`);
       } else {
+        const models = TARGET_BRANDS[targetBrandName] || [];
+        const initialVehicleType =
+          models.length > 0 ? determineVehicleType(models[0], normalizedTargetName) : 'car';
         brand = brandRepo.create({
           name: normalizedTargetName,
           order: order++,
+          vehicle_types: [initialVehicleType],
         });
         brand = await brandRepo.save(brand);
         console.log(`✅ Креиран нов бренд: ${normalizedTargetName}`);
@@ -412,10 +417,12 @@ async function cleanupAndSyncBrands() {
         existingModel.order = i + 1;
         await modelRepo.save(existingModel);
       } else {
+        const vehicleType = determineVehicleType(modelName, brand.name);
         const model = modelRepo.create({
           name: modelName,
           brand_id: brand.id,
           order: i + 1,
+          vehicle_type: vehicleType,
         });
         await modelRepo.save(model);
       }
@@ -433,6 +440,27 @@ async function cleanupAndSyncBrands() {
       } else {
         seenNames.add(lowerName);
       }
+    }
+
+    const allModelsForBrand = await modelRepo.find({
+      where: { brand_id: brand.id },
+      select: ['vehicle_type'],
+    });
+    const vehicleTypes = new Set<'car' | 'truck' | 'moto'>();
+    for (const model of allModelsForBrand) {
+      if (model.vehicle_type) {
+        vehicleTypes.add(model.vehicle_type);
+      }
+    }
+    if (vehicleTypes.size > 0) {
+      brand.vehicle_types = Array.from(vehicleTypes).sort();
+      await brandRepo.save(brand);
+    } else if (!brand.vehicle_types || brand.vehicle_types.length === 0) {
+      const models = TARGET_BRANDS[targetBrandName] || [];
+      const initialVehicleType =
+        models.length > 0 ? determineVehicleType(models[0], normalizedTargetName) : 'car';
+      brand.vehicle_types = [initialVehicleType];
+      await brandRepo.save(brand);
     }
 
     console.log(`  ✓ ${targetModels.length} модели за ${targetBrandName}`);
@@ -519,15 +547,15 @@ async function cleanupAndSyncBrands() {
   }
 
   const finalBrands = await brandRepo.find({ order: { order: 'ASC' } });
-  console.log(`\n✅ Синхронизацијата е завршена!`);
-  console.log(`   📊 Вкупно марки: ${finalBrands.length}`);
-  console.log(`   📊 Очекувано марки: ${targetBrandNamesArray.length}`);
-  console.log(`   📊 Вкупно модели: ${Object.values(TARGET_BRANDS).flat().length}`);
-  console.log(`   🗑️  Избришани објави: ${deletedListings}`);
-  console.log(`   🗑️  Избришани возила: ${deletedVehicles}\n`);
+  console.log(`\n✅ Synchronization completed!`);
+  console.log(`   📊 Total brands: ${finalBrands.length}`);
+  console.log(`   📊 Expected brands: ${targetBrandNamesArray.length}`);
+  console.log(`   📊 Total models: ${Object.values(TARGET_BRANDS).flat().length}`);
+  console.log(`   🗑️  Deleted listings: ${deletedListings}`);
+  console.log(`   🗑️  Deleted vehicles: ${deletedVehicles}\n`);
 
   await AppDataSource.destroy();
-  console.log('🔌 Врската со базата на податоци е затворена');
+  console.log('🔌 Database connection closed');
 }
 
 cleanupAndSyncBrands()

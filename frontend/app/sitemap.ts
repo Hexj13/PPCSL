@@ -1,7 +1,12 @@
 import { MetadataRoute } from 'next';
 
 import { Listing } from '@/lib/api';
-import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/popular-brands';
+import {
+  POPULAR_BRANDS,
+  POPULAR_MODELS_BY_BRAND,
+  getPopularBrands,
+  getPopularModelsByBrand,
+} from '@/lib/popular-brands';
 import { fetchBrands, fetchModelsByBrands } from '@/lib/server-api';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { createSlug } from '@/lib/utils';
@@ -20,6 +25,25 @@ const POPULAR_BODY_TYPES = [
   'Minivan',
   'Sedan',
   'Convertible',
+] as const;
+
+const POPULAR_TRUCK_BODY_TYPES = [
+  'Truck',
+  'Bus',
+  'SemiTruck',
+  'Tractor',
+  'SpecialEquipment',
+] as const;
+
+const POPULAR_MOTO_BODY_TYPES = [
+  'Naked',
+  'Sport',
+  'Touring',
+  'Cruiser',
+  'Adventure',
+  'Scooter',
+  'Enduro',
+  'Cross',
 ] as const;
 
 type ListingsApiResponse = {
@@ -157,18 +181,53 @@ async function getBrandModelUrls(now: Date): Promise<MetadataRoute.Sitemap> {
     });
   });
 
+  const allPopularBrands = [...getPopularBrands('truck'), ...getPopularBrands('moto')];
+  const truckModelsByBrand = getPopularModelsByBrand('truck');
+  const motoModelsByBrand = getPopularModelsByBrand('moto');
+  const allPopularModelsByBrand = { ...truckModelsByBrand, ...motoModelsByBrand };
+
+  allPopularBrands.forEach((brand) => {
+    const brandSlug = createSlug(brand);
+    const brandUrl = `${siteUrl}/?brand=${brandSlug}`;
+    const models = allPopularModelsByBrand[brand] || [];
+
+    if (!addedUrls.has(brandUrl)) {
+      brandModelUrls.push({
+        url: brandUrl,
+        lastModified: now,
+        changeFrequency: 'daily' as const,
+        priority: 0.7,
+      });
+      addedUrls.add(brandUrl);
+    }
+
+    models.forEach((model) => {
+      const modelSlug = createSlug(model);
+      const brandModelUrl = `${siteUrl}/?brand=${brandSlug}&model=${modelSlug}`;
+      if (!addedUrls.has(brandModelUrl)) {
+        brandModelUrls.push({
+          url: brandModelUrl,
+          lastModified: now,
+          changeFrequency: 'daily' as const,
+          priority: 0.6,
+        });
+        addedUrls.add(brandModelUrl);
+      }
+    });
+  });
+
   return brandModelUrls;
 }
 
-function getBodyTypeUrls(now: Date): MetadataRoute.Sitemap {
+function getBodyTypeUrls(now: Date, bodyTypes: readonly string[]): MetadataRoute.Sitemap {
   const urls: MetadataRoute.Sitemap = [];
-  const n = POPULAR_BODY_TYPES.length;
+  const n = bodyTypes.length;
 
   for (let mask = 1; mask < 1 << n; mask++) {
     const combination: string[] = [];
     for (let i = 0; i < n; i++) {
       if (mask & (1 << i)) {
-        combination.push(POPULAR_BODY_TYPES[i]);
+        combination.push(bodyTypes[i]);
       }
     }
     combination.sort();
@@ -234,8 +293,16 @@ export default async function sitemap({ id }: { id: number }): Promise<MetadataR
   if (id === 0) {
     const baseUrls = getBaseUrls(now);
     const brandModelUrls = await getBrandModelUrls(now);
-    const bodyTypeUrls = getBodyTypeUrls(now);
-    return [...baseUrls, ...brandModelUrls, ...bodyTypeUrls];
+    const bodyTypeUrls = getBodyTypeUrls(now, POPULAR_BODY_TYPES);
+    const truckBodyTypeUrls = getBodyTypeUrls(now, POPULAR_TRUCK_BODY_TYPES);
+    const motoBodyTypeUrls = getBodyTypeUrls(now, POPULAR_MOTO_BODY_TYPES);
+    return [
+      ...baseUrls,
+      ...brandModelUrls,
+      ...bodyTypeUrls,
+      ...truckBodyTypeUrls,
+      ...motoBodyTypeUrls,
+    ];
   }
 
   const pageData = await fetchListingsPage(id, LISTINGS_PER_SITEMAP);

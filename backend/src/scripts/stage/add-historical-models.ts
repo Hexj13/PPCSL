@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { Brand } from '../../brands/entities/brand.entity';
 import { VehicleModel } from '../../brands/entities/vehicle-model.entity';
 import { AppDataSource } from '../../data-source';
+import { determineVehicleType } from '../data/vehicle-classification';
 
 const HISTORICAL_AND_RARE_MODELS: Record<string, string[]> = {
   Volkswagen: [
@@ -351,7 +352,7 @@ const HISTORICAL_AND_RARE_MODELS: Record<string, string[]> = {
     'Arosa',
     'Marbella',
   ],
-  Cupra: ['Formentor', 'Born', 'Ateca', 'Leon', 'Tavascan', 'Terra'],
+  Cupra: ['Formentor', 'Born', 'Ateca', 'Leon', 'Tavascan', 'Terramar'],
   'DS Automobiles': ['DS 3', 'DS 4', 'DS 5', 'DS 7', 'DS 9'],
   Honda: [
     'Civic',
@@ -393,8 +394,6 @@ const HISTORICAL_AND_RARE_MODELS: Record<string, string[]> = {
     'X-Trail',
     'Ariya',
     'Leaf',
-    'Leaf Plus',
-    'Ariya e-4ORCE',
     '350Z',
     '370Z',
     'GT-R',
@@ -437,8 +436,6 @@ const HISTORICAL_AND_RARE_MODELS: Record<string, string[]> = {
     'Sorento',
     'EV6',
     'EV9',
-    'EV9 GT',
-    'Sportage Hybrid',
     'Optima',
     'Stinger',
     'Soul',
@@ -453,7 +450,6 @@ const HISTORICAL_AND_RARE_MODELS: Record<string, string[]> = {
     'Ioniq 5',
     'Ioniq 6',
     'Ioniq 7',
-    'N Vision 74',
     'Elantra',
     'Sonata',
     'Genesis',
@@ -478,9 +474,9 @@ const HISTORICAL_AND_RARE_MODELS: Record<string, string[]> = {
   ],
   McLaren: ['Artura', '750S', 'GT', '765LT', '720S', '570S', '650S', 'MP4-12C', 'F1', 'P1'],
   Smart: ['#1', '#3', 'EQ fortwo', 'Forfour', 'Roadster', 'Crossblade'],
-  MG: ['MG3', 'ZS', 'HS', 'MG4', 'MG5', 'Marvel R', 'TF', 'ZR', 'ZS', 'ZS EV'],
+  MG: ['MG3', 'ZS', 'HS', 'MG4', 'MG5', 'Marvel R', 'TF', 'ZR', 'ZS EV'],
   BYD: ['Dolphin', 'Atto 3', 'Seal', 'Han', 'Tang', 'Song', 'Yuan'],
-  Chery: ['Omoda 5', 'Tiggo 7', 'Tiggo 8', 'Jaecoo 7', 'QQ', 'A1', 'A3'],
+  Chery: ['Omoda 5', 'Tiggo 7', 'Tiggo 8', 'Jaecoo 7', 'QQ'],
   Geely: ['Coolray', 'Geometry C', 'Emgrand', 'Atlas', 'Monjaro', 'Tugella'],
   'Great Wall': ['Haval Jolion', 'Haval H6', 'Tank 300', 'Haval H9', 'Wingle'],
   Abarth: ['595', '695', '500e', '124 Spider', 'Punto Evo'],
@@ -550,15 +546,20 @@ async function addHistoricalModels() {
       const existingModel = existingModelsMap.get(modelNameLower);
 
       if (!existingModel) {
+        const vehicleType = determineVehicleType(modelName, brandName);
         const model = modelRepo.create({
           name: modelName,
           brand_id: brand.id,
           order: maxOrder + i + 1,
+          vehicle_type: vehicleType,
         });
         modelsToCreate.push(model);
         totalAdded++;
       } else {
         existingModel.order = maxOrder + i + 1;
+        if (!existingModel.vehicle_type) {
+          existingModel.vehicle_type = determineVehicleType(modelName, brandName);
+        }
         modelsToUpdate.push(existingModel);
         totalUpdated++;
       }

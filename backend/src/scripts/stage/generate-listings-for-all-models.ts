@@ -226,16 +226,20 @@ async function generateListingsForAllModels() {
 
     const savedVehicle = await vehicleRepo.save(vehicle);
 
-    const transmissionStr =
-      transmission === 'Automatic'
-        ? 'Автоматска'
-        : transmission === 'Manual'
-          ? 'Мануелна'
-          : transmission === 'CVT'
-            ? 'Варијатор'
-            : '';
     const baseTitle = `${brand.name} ${model.name} ${year}`;
-    const title = transmissionStr ? `${baseTitle} (${transmissionStr})` : baseTitle;
+    let title = baseTitle;
+
+    if (model.vehicle_type !== 'moto') {
+      const transmissionStr =
+        transmission === 'Automatic'
+          ? 'Автоматска'
+          : transmission === 'Manual'
+            ? 'Мануелна'
+            : transmission === 'CVT'
+              ? 'Варијатор'
+              : '';
+      title = transmissionStr ? `${baseTitle} (${transmissionStr})` : baseTitle;
+    }
 
     const listing = listingRepo.create({
       title,
@@ -267,10 +271,10 @@ async function generateListingsForAllModels() {
     }
   }
 
-  console.log(`\n✅ Генерирањето е завршено!`);
-  console.log(`   📊 Вкупно модели: ${allModels.length}`);
-  console.log(`   ✅ Создадени нови објави: ${createdCount}`);
-  console.log(`   ⏭️  Прескокнати (веќе постојат): ${skippedCount}`);
+  console.log(`\n✅ Generation completed!`);
+  console.log(`   📊 Total models: ${allModels.length}`);
+  console.log(`   ✅ Created new listings: ${createdCount}`);
+  console.log(`   ⏭️  Skipped (already exist): ${skippedCount}`);
 }
 
 if (require.main === module) {
@@ -278,9 +282,9 @@ if (require.main === module) {
     .then(() => {
       if (AppDataSource.isInitialized) {
         AppDataSource.destroy();
-        console.log('🔌 Врската со базата е затворена');
+        console.log('🔌 Database connection closed');
       }
-      console.log('✅ Скриптот е успешно завршен');
+      console.log('✅ Script completed successfully');
       process.exit(0);
     })
     .catch((error) => {

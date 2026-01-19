@@ -12,6 +12,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, LessThan, LessThanOrEqual, Repository } from 'typeorm';
 
 import { BrandsService } from '../brands/brands.service';
+import { BODY_TYPES_BY_VEHICLE_TYPE } from '../common/constants';
 import { RedisService } from '../common/redis.service';
 import { Currency as CurrencyEnum, ListingStatus as ListingStatusEnum } from '../common/types';
 import {
@@ -172,7 +173,7 @@ export class ListingsService {
       .leftJoin('vehicle.brand', 'brand')
       .addSelect(['brand.id', 'brand.name', 'brand.logoUrl'])
       .leftJoin('vehicle.model', 'model')
-      .addSelect(['model.id', 'model.name'])
+      .addSelect(['model.id', 'model.name', 'model.vehicle_type'])
       .leftJoin('listing.user', 'user')
       .addSelect([
         'user.id',
@@ -198,6 +199,16 @@ export class ListingsService {
       searchDto.model_ids,
       searchDto.model_id,
     );
+
+    if (searchDto.vehicleType) {
+      queryBuilder.andWhere(
+        '(model.vehicle_type = :vehicleType OR (model.vehicle_type IS NULL AND vehicle.body_type IN (:...bodyTypes)))',
+        {
+          vehicleType: searchDto.vehicleType,
+          bodyTypes: BODY_TYPES_BY_VEHICLE_TYPE[searchDto.vehicleType],
+        },
+      );
+    }
 
     applyRangeFilter(queryBuilder, 'vehicle', 'year', searchDto.year_gte, searchDto.year_lte);
     applyRangeFilter(queryBuilder, 'listing', 'price', searchDto.price_gte, searchDto.price_lte);
@@ -233,25 +244,30 @@ export class ListingsService {
       searchDto.transmissions,
       searchDto.transmission,
     );
-    applyInOrEqualFilter(
-      queryBuilder,
-      'vehicle',
-      'body_type',
-      searchDto.body_types,
-      searchDto.body_type,
-    );
-    applyInOrEqualFilter(queryBuilder, 'vehicle', 'color', searchDto.colors, searchDto.color);
-    applyInOrEqualFilter(queryBuilder, 'vehicle', 'drive_type', searchDto.drive_types, undefined);
-
-    if (searchDto.doors && searchDto.doors.length > 0) {
-      const doorNumbers = searchDto.doors.map((d) => parseInt(d, 10)).filter((d) => !isNaN(d));
-      if (doorNumbers.length > 0) {
-        queryBuilder.andWhere('vehicle.doors IN (:...doors)', { doors: doorNumbers });
-      }
-    } else if (searchDto.doors_single) {
-      queryBuilder.andWhere('vehicle.doors = :doors', {
-        doors: searchDto.doors_single,
+    if (searchDto.body_types && searchDto.body_types.length > 0) {
+      queryBuilder.andWhere('vehicle.body_type IN (:...bodyTypes)', {
+        bodyTypes: searchDto.body_types,
       });
+    } else if (searchDto.body_type) {
+      queryBuilder.andWhere('vehicle.body_type = :bodyType', {
+        bodyType: searchDto.body_type,
+      });
+    }
+    applyInOrEqualFilter(queryBuilder, 'vehicle', 'color', searchDto.colors, searchDto.color);
+
+    if (searchDto.vehicleType !== 'moto') {
+      applyInOrEqualFilter(queryBuilder, 'vehicle', 'drive_type', searchDto.drive_types, undefined);
+
+      if (searchDto.doors && searchDto.doors.length > 0) {
+        const doorNumbers = searchDto.doors.map((d) => parseInt(d, 10)).filter((d) => !isNaN(d));
+        if (doorNumbers.length > 0) {
+          queryBuilder.andWhere('vehicle.doors IN (:...doors)', { doors: doorNumbers });
+        }
+      } else if (searchDto.doors_single) {
+        queryBuilder.andWhere('vehicle.doors = :doors', {
+          doors: searchDto.doors_single,
+        });
+      }
     }
 
     if (searchDto.currency) {
@@ -455,6 +471,12 @@ export class ListingsService {
     if (model) titleParts.push(model.name);
     if (vehicle.year) titleParts.push(vehicle.year.toString());
 
+    const baseTitle = titleParts.join(' ');
+
+    if (model?.vehicle_type === 'moto') {
+      return baseTitle;
+    }
+
     const transmissionMap: Record<string, string> = {
       Automatic: 'Автоматска',
       Manual: 'Мануелна',
@@ -462,8 +484,6 @@ export class ListingsService {
     };
 
     const transmissionStr = vehicle.transmission ? transmissionMap[vehicle.transmission] || '' : '';
-
-    const baseTitle = titleParts.join(' ');
     return transmissionStr ? `${baseTitle} (${transmissionStr})` : baseTitle;
   }
 
@@ -1066,6 +1086,21 @@ export class ListingsService {
     return result.slice(normalizedOffset, normalizedOffset + normalizedLimit);
   }
 
+  private getVehicleTypeFromBodyType(
+    bodyType: string | null,
+  ): 'car' | 'truck' | 'moto' | undefined {
+    if (!bodyType) {
+      return undefined;
+    }
+
+    for (const [vehicleType, bodyTypes] of Object.entries(BODY_TYPES_BY_VEHICLE_TYPE)) {
+      if ((bodyTypes as readonly string[]).includes(bodyType)) {
+        return vehicleType as 'car' | 'truck' | 'moto';
+      }
+    }
+    return undefined;
+  }
+
   private async fetchSimilarCandidates(current: Listing): Promise<Listing[]> {
     const { vehicle } = current;
     const { price, city, id: currentId } = current;
@@ -1074,6 +1109,11 @@ export class ListingsService {
     const body_type = vehicle?.body_type;
     const brand_id = vehicle?.brand_id;
     const model_id = vehicle?.model_id;
+    let vehicle_type = vehicle?.model?.vehicle_type;
+
+    if (!vehicle_type && body_type) {
+      vehicle_type = this.getVehicleTypeFromBodyType(body_type);
+    }
 
     const yearMin = year ? year - 5 : null;
     const yearMax = year ? year + 5 : null;
@@ -1087,8 +1127,19 @@ export class ListingsService {
       .leftJoinAndSelect('vehicle.model', 'model')
       .leftJoinAndSelect('listing.user', 'user')
       .where('listing.status = :status', { status: ListingStatusEnum.Active })
-      .andWhere('listing.id != :currentId', { currentId })
-      .limit(50);
+      .andWhere('listing.id != :currentId', { currentId });
+
+    if (vehicle_type) {
+      queryBuilder.andWhere(
+        '(model.vehicle_type = :vehicle_type OR (model.vehicle_type IS NULL AND vehicle.body_type IN (:...bodyTypes)))',
+        {
+          vehicle_type,
+          bodyTypes: BODY_TYPES_BY_VEHICLE_TYPE[vehicle_type],
+        },
+      );
+    }
+
+    queryBuilder.limit(50);
 
     const listings = await queryBuilder.getMany();
 

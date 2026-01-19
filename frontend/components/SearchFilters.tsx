@@ -13,7 +13,7 @@ import { analytics } from '@/lib/analytics';
 import { brandsApi, VehicleModel, User } from '@/lib/api';
 import { ConditionType, RegistrationType } from '@/lib/constants';
 import { getColorOptions } from '@/lib/form-options';
-import { POPULAR_BRANDS } from '@/lib/popular-brands';
+import { getPopularBrands } from '@/lib/popular-brands';
 import { useAuthStore } from '@/lib/store';
 import {
   compareNames,
@@ -82,11 +82,23 @@ export function SearchFilters() {
   const [lastAppliedFilters, setLastAppliedFilters] = useState<FilterState | null>(null);
   const isApplyingQuickFilterRef = useRef(false);
 
+  const getInitialVehicleType = (): 'car' | 'moto' | 'truck' => {
+    const vehicleTypeParam = searchParams.get('vehicleType');
+    if (vehicleTypeParam && ['car', 'truck', 'moto'].includes(vehicleTypeParam)) {
+      return vehicleTypeParam as 'car' | 'truck' | 'moto';
+    }
+    return 'car';
+  };
+
+  const [vehicleType, setVehicleType] = useState<'car' | 'moto' | 'truck'>(() =>
+    getInitialVehicleType()
+  );
+
   const {
     brands,
     models,
     setModels: setModelsFromHook,
-  } = useBrandsAndModels({ autoLoadModels: false });
+  } = useBrandsAndModels({ autoLoadModels: false, vehicleType });
   const { cities } = useCities();
 
   const { visible: showSearchLoader } = useLoadingState({
@@ -167,7 +179,6 @@ export function SearchFilters() {
   const [activeTab, setActiveTab] = useState<'basic' | 'advanced' | 'popular'>(() =>
     getInitialTab()
   );
-  const [vehicleType, setVehicleType] = useState<'car' | 'moto' | 'truck'>('car');
   const basicTabRef = useRef<HTMLButtonElement>(null);
   const advancedTabRef = useRef<HTMLButtonElement>(null);
   const popularTabRef = useRef<HTMLButtonElement>(null);
@@ -187,6 +198,17 @@ export function SearchFilters() {
   useEffect(() => {
     setIsHydrated(true);
   }, []);
+
+  useEffect(() => {
+    const vehicleTypeParam = searchParams.get('vehicleType');
+    const newVehicleType =
+      vehicleTypeParam && ['car', 'truck', 'moto'].includes(vehicleTypeParam)
+        ? (vehicleTypeParam as 'car' | 'truck' | 'moto')
+        : 'car';
+    if (newVehicleType !== vehicleType) {
+      setVehicleType(newVehicleType);
+    }
+  }, [searchParams, vehicleType]);
 
   useEffect(() => {
     const currentParams = searchParams.toString();
@@ -352,6 +374,9 @@ export function SearchFilters() {
       const modelSlug = modelName ? createSlug(modelName) : undefined;
 
       const params = new URLSearchParams();
+      if (vehicleType !== 'car') {
+        params.set('vehicleType', vehicleType);
+      }
       params.set('brand', brandSlug);
       if (modelSlug) {
         params.set('model', modelSlug);
@@ -379,7 +404,7 @@ export function SearchFilters() {
         }
       });
     },
-    [router]
+    [router, vehicleType]
   );
 
   const {
@@ -389,6 +414,27 @@ export function SearchFilters() {
     hasActiveFilters,
     setFilters,
   } = useSearchFilters();
+
+  const handleVehicleTypeChange = useCallback(
+    (type: 'car' | 'truck' | 'moto') => {
+      const params = new URLSearchParams();
+      if (type !== 'car') {
+        params.set('vehicleType', type);
+      }
+
+      isApplyingQuickFilterRef.current = false;
+
+      startTransition(() => {
+        setVehicleType(type);
+        resetFilters();
+        setLastAppliedFilters(null);
+        setActiveTab('basic');
+        router.replace(`/?${params.toString()}`, { scroll: false });
+      });
+    },
+    [router, resetFilters]
+  );
+
   const processedBrandParamRef = useRef<string | null>(null);
   const processedModelParamRef = useRef<string | null>(null);
 
@@ -531,8 +577,13 @@ export function SearchFilters() {
   }, [searchParams, filters.sortBy, filters.sortOrder, setFilters]);
 
   const getBrandOptions = useCallback(() => {
-    const popularBrands = sortByName(brands.filter((brand) => POPULAR_BRANDS.includes(brand.name)));
-    const otherBrands = sortByName(brands.filter((brand) => !POPULAR_BRANDS.includes(brand.name)));
+    const popularBrandsList = getPopularBrands(vehicleType);
+    const popularBrands = sortByName(
+      brands.filter((brand) => popularBrandsList.includes(brand.name))
+    );
+    const otherBrands = sortByName(
+      brands.filter((brand) => !popularBrandsList.includes(brand.name))
+    );
 
     const options: Array<{ value: string; label: string; category?: string }> = [
       { value: 'all', label: t('searchFilters.allBrands') },
@@ -555,7 +606,7 @@ export function SearchFilters() {
     }
 
     return options;
-  }, [brands, t]);
+  }, [brands, vehicleType, t]);
 
   const getModelOptions = useCallback(() => {
     const options: Array<{ value: string; label: string; category?: string }> = [
@@ -650,7 +701,7 @@ export function SearchFilters() {
     if (filters.brand_ids.length > 0) {
       setLoadingModels(true);
       brandsApi
-        .getModelsBatch(filters.brand_ids)
+        .getModelsBatch(filters.brand_ids, vehicleType)
         .then((response) => {
           const allModels = Object.values(response.data).flat();
           const uniqueModels = Array.from(
@@ -704,7 +755,7 @@ export function SearchFilters() {
       setModelsFromHook([]);
       setFilters((prev) => ({ ...prev, model_ids: [] }));
     }
-  }, [filters.brand_ids, searchParams, setModelsFromHook, setFilters]);
+  }, [filters.brand_ids, searchParams, setModelsFromHook, setFilters, vehicleType]);
 
   useEffect(() => {
     if (!isApplyingQuickFilterRef.current) {
@@ -997,6 +1048,10 @@ export function SearchFilters() {
       params.delete('brand_id');
       params.delete('model_id');
 
+      if (vehicleType !== 'car') {
+        params.set('vehicleType', vehicleType);
+      }
+
       if (
         (filters.sortBy && filters.sortBy !== 'created_at') ||
         (filters.sortOrder && filters.sortOrder !== 'DESC')
@@ -1181,6 +1236,7 @@ export function SearchFilters() {
       validateRanges,
       setFilters,
       isSearching,
+      vehicleType,
     ]
   );
 
@@ -1193,7 +1249,11 @@ export function SearchFilters() {
       sessionStorage.setItem('scrollPreserved', 'true');
     }
     startTransition(() => {
-      router.replace('/', { scroll: false });
+      const params = new URLSearchParams();
+      if (vehicleType !== 'car') {
+        params.set('vehicleType', vehicleType);
+      }
+      router.replace(`/?${params.toString()}`, { scroll: false });
       if (typeof window !== 'undefined') {
         requestAnimationFrame(() => {
           if (scrollToTop) {
@@ -1294,41 +1354,44 @@ export function SearchFilters() {
             ref={vehicleIconsContainerRef}
             className="flex justify-start lg:justify-end gap-1 overflow-x-auto overflow-y-visible scrollbar-hide relative mb-3 lg:mb-0 lg:absolute lg:right-4 lg:top-0 lg:bottom-0 lg:items-center"
           >
+            <span className="hidden lg:inline text-base font-bold text-primary-700 flex-shrink-0 flex items-center mr-2 lg:mr-2">
+              {t('searchFilters.categoryLabel')}
+            </span>
             <button
               ref={carRef}
               type="button"
-              onClick={() => setVehicleType('car')}
+              onClick={() => handleVehicleTypeChange('car')}
               className={`h-12 px-2 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap flex items-center justify-center ${
                 vehicleType === 'car'
-                  ? 'text-white bg-primary-500/5 rounded-t-lg'
-                  : 'text-gray-400 hover:bg-primary-500/5 hover:rounded-t-lg'
+                  ? 'bg-primary-500/5 rounded-t-lg'
+                  : 'hover:bg-primary-500/5 hover:rounded-t-lg'
               }`}
             >
-              <CarIcon className="w-12 h-12 transition-colors duration-300 scale-x-[-1]" />
+              <CarIcon className="w-12 h-12 transition-colors duration-300 scale-x-[-1] text-black" />
             </button>
             <button
               ref={truckRef}
               type="button"
-              onClick={() => setVehicleType('truck')}
+              onClick={() => handleVehicleTypeChange('truck')}
               className={`h-12 px-2 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap flex items-center justify-center ${
                 vehicleType === 'truck'
-                  ? 'text-white bg-primary-500/5 rounded-t-lg'
-                  : 'text-gray-400 hover:bg-primary-500/5 hover:rounded-t-lg'
+                  ? 'bg-primary-500/5 rounded-t-lg'
+                  : 'hover:bg-primary-500/5 hover:rounded-t-lg'
               }`}
             >
-              <TruckIcon className="w-12 h-12 transition-colors duration-300 scale-x-[-1]" />
+              <TruckIcon className="w-12 h-12 transition-colors duration-300 scale-x-[-1] text-black" />
             </button>
             <button
               ref={motoRef}
               type="button"
-              onClick={() => setVehicleType('moto')}
+              onClick={() => handleVehicleTypeChange('moto')}
               className={`h-12 px-2 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap flex items-center justify-center ${
                 vehicleType === 'moto'
-                  ? 'text-white bg-primary-500/5 rounded-t-lg'
-                  : 'text-gray-400 hover:bg-primary-500/5 hover:rounded-t-lg'
+                  ? 'bg-primary-500/5 rounded-t-lg'
+                  : 'hover:bg-primary-500/5 hover:rounded-t-lg'
               }`}
             >
-              <MotoIcon className="w-12 h-12 transition-colors duration-300 scale-x-[-1]" />
+              <MotoIcon className="w-12 h-12 transition-colors duration-300 scale-x-[-1] text-black" />
             </button>
             <div
               className="absolute bottom-0 lg:bottom-0 h-0.5 bg-primary-400 transition-all duration-300 ease-in-out"
@@ -1423,6 +1486,7 @@ export function SearchFilters() {
           cityOptions={getCityOptions()}
           loadingModels={loadingModels}
           currentYear={currentYear}
+          vehicleType={vehicleType}
         />
       )}
 
@@ -1437,6 +1501,7 @@ export function SearchFilters() {
           getConditionOptions={getConditionOptions}
           getRegistrationTypeOptions={getRegistrationTypeOptions}
           registrationOptions={REGISTRATION_OPTIONS}
+          vehicleType={vehicleType}
         />
       )}
 
@@ -1444,6 +1509,7 @@ export function SearchFilters() {
         <PopularFilters
           isQuickFilterActive={isQuickFilterActive}
           onApplyFilter={applyPopularFilter}
+          vehicleType={vehicleType}
         />
       )}
 

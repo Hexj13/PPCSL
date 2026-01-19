@@ -25,6 +25,7 @@ interface AdvancedFiltersProps {
   getConditionOptions: () => Array<{ value: string; label: string }>;
   getRegistrationTypeOptions: () => Array<{ value: string; label: string }>;
   registrationOptions: Array<{ value: string; label: string }>;
+  vehicleType?: 'car' | 'truck' | 'moto';
 }
 
 export function AdvancedFilters({
@@ -37,6 +38,7 @@ export function AdvancedFilters({
   getConditionOptions,
   getRegistrationTypeOptions,
   registrationOptions,
+  vehicleType = 'car',
 }: AdvancedFiltersProps) {
   const { t } = useTranslation();
 
@@ -154,42 +156,44 @@ export function AdvancedFilters({
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold mb-2 text-text-secondary flex items-center gap-2">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 491.532 491.532"
-                  fill="currentColor"
-                  className="flex-shrink-0"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M471.05,368.643h-40.958v-52.957l55.442-55.442c7.998-7.998,7.998-20.965,0-28.963l-55.442-55.442v-52.957h40.958
-                      c11.311,0,20.48-9.169,20.48-20.48v-61.44c0-11.311-9.169-20.48-20.48-20.48H348.17c-11.311,0-20.48,9.169-20.48,20.48v61.44
-                      c0,11.311,9.169,20.48,20.48,20.48h40.962v52.957l-49.443,49.443H151.855l-49.443-49.443v-43.701l24.939,9.808
-                      c10.526,4.14,22.415-1.038,26.554-11.564l22.487-57.18c4.14-10.526-1.038-22.415-11.564-26.554L50.468,1.673
-                      c-10.526-4.14-22.415,1.038-26.554,11.564L1.426,70.417c-4.14,10.526,1.038,22.415,11.564,26.554l48.461,19.058v59.81
-                      L6.01,231.281c-7.998,7.998-7.998,20.965,0,28.963l55.442,55.442v38.219l-10.984-4.32c-10.526-4.14-22.415,1.038-26.554,11.564
-                      L1.426,418.33c-4.14,10.526,1.038,22.415,11.564,26.554l114.36,44.974c10.526,4.14,22.415-1.038,26.554-11.564l22.487-57.18
-                      c4.14-10.526-1.038-22.415-11.564-26.554l-62.417-24.546v-54.328l49.443-49.443h187.834l49.443,49.443v52.957H348.17
-                      c-11.311,0-20.48,9.169-20.48,20.48v61.44c0,11.311,9.169,20.48,20.48,20.48h122.88c11.311,0,20.48-9.169,20.48-20.48v-61.44
-                      C491.53,377.812,482.36,368.643,471.05,368.643z M368.65,61.443h81.92v20.48h-81.92V61.443z M54.536,47.287l76.242,29.983
-                      l-7.496,19.062L47.04,66.349L54.536,47.287z M123.282,444.245L47.04,414.261l7.496-19.062l76.242,29.984L123.282,444.245z
-                       M81.932,278.24l-32.477-32.477l32.477-32.477l32.477,32.477L81.932,278.24z M409.612,213.286l32.477,32.477l-32.477,32.477
-                      l-32.477-32.477L409.612,213.286z M450.57,430.083h-81.92v-20.48h81.92V430.083z"
-                  />
-                </svg>
-                {t('searchFilters.driveType')}
-              </label>
-              <MultiSelectDropdown
-                values={filters.drive_types}
-                onChange={(values) => onMultiSelectChange('drive_types', values)}
-                placeholder={t('searchFilters.selectDriveType')}
-                showActionButtons={true}
-                options={getDriveTypeOptions(t)}
-              />
-            </div>
+            {vehicleType !== 'moto' && (
+              <div>
+                <label className="block text-sm font-semibold mb-2 text-text-secondary flex items-center gap-2">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 491.532 491.532"
+                    fill="currentColor"
+                    className="flex-shrink-0"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M471.05,368.643h-40.958v-52.957l55.442-55.442c7.998-7.998,7.998-20.965,0-28.963l-55.442-55.442v-52.957h40.958
+                        c11.311,0,20.48-9.169,20.48-20.48v-61.44c0-11.311-9.169-20.48-20.48-20.48H348.17c-11.311,0-20.48,9.169-20.48,20.48v61.44
+                        c0,11.311,9.169,20.48,20.48,20.48h40.962v52.957l-49.443,49.443H151.855l-49.443-49.443v-43.701l24.939,9.808
+                        c10.526,4.14,22.415-1.038,26.554-11.564l22.487-57.18c4.14-10.526-1.038-22.415-11.564-26.554L50.468,1.673
+                        c-10.526-4.14-22.415,1.038-26.554,11.564L1.426,70.417c-4.14,10.526,1.038,22.415,11.564,26.554l48.461,19.058v59.81
+                        L6.01,231.281c-7.998,7.998-7.998,20.965,0,28.963l55.442,55.442v38.219l-10.984-4.32c-10.526-4.14-22.415,1.038-26.554,11.564
+                        L1.426,418.33c-4.14,10.526,1.038,22.415,11.564,26.554l114.36,44.974c10.526,4.14,22.415-1.038,26.554-11.564l22.487-57.18
+                        c4.14-10.526-1.038-22.415-11.564-26.554l-62.417-24.546v-54.328l49.443-49.443h187.834l49.443,49.443v52.957H348.17
+                        c-11.311,0-20.48,9.169-20.48,20.48v61.44c0,11.311,9.169,20.48,20.48,20.48h122.88c11.311,0,20.48-9.169,20.48-20.48v-61.44
+                        C491.53,377.812,482.36,368.643,471.05,368.643z M368.65,61.443h81.92v20.48h-81.92V61.443z M54.536,47.287l76.242,29.983
+                        l-7.496,19.062L47.04,66.349L54.536,47.287z M123.282,444.245L47.04,414.261l7.496-19.062l76.242,29.984L123.282,444.245z
+                         M81.932,278.24l-32.477-32.477l32.477-32.477l32.477,32.477L81.932,278.24z M409.612,213.286l32.477,32.477l-32.477,32.477
+                        l-32.477-32.477L409.612,213.286z M450.57,430.083h-81.92v-20.48h81.92V430.083z"
+                    />
+                  </svg>
+                  {t('searchFilters.driveType')}
+                </label>
+                <MultiSelectDropdown
+                  values={filters.drive_types}
+                  onChange={(values) => onMultiSelectChange('drive_types', values)}
+                  placeholder={t('searchFilters.selectDriveType')}
+                  showActionButtons={true}
+                  options={getDriveTypeOptions(t)}
+                />
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-semibold mb-2 text-text-secondary flex items-center gap-2">
@@ -435,7 +439,7 @@ export function AdvancedFilters({
                 searchable={true}
                 placeholder={t('searchFilters.selectBodyType')}
                 showActionButtons={true}
-                options={getBodyTypeOptions(t)}
+                options={getBodyTypeOptions(t, vehicleType)}
               />
             </div>
 
@@ -453,18 +457,20 @@ export function AdvancedFilters({
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold mb-2 text-text-secondary">
-                {t('searchFilters.doors')}
-              </label>
-              <MultiSelectDropdown
-                values={filters.doors}
-                onChange={(values) => onMultiSelectChange('doors', values)}
-                placeholder={t('searchFilters.selectDoors')}
-                showActionButtons={true}
-                options={getDoorOptions(t)}
-              />
-            </div>
+            {vehicleType !== 'moto' && (
+              <div>
+                <label className="block text-sm font-semibold mb-2 text-text-secondary">
+                  {t('searchFilters.doors')}
+                </label>
+                <MultiSelectDropdown
+                  values={filters.doors}
+                  onChange={(values) => onMultiSelectChange('doors', values)}
+                  placeholder={t('searchFilters.selectDoors')}
+                  showActionButtons={true}
+                  options={getDoorOptions(t)}
+                />
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-semibold mb-2 text-text-secondary">

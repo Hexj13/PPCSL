@@ -59,8 +59,9 @@ export class Vehicle {
   @Column({
     type: 'enum',
     enum: constants.driveTypes,
+    nullable: true,
   })
-  drive_type: DriveType;
+  drive_type: DriveType | null;
 
   @Column({
     type: 'enum',

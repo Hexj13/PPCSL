@@ -47,6 +47,8 @@
     "clear-database": "ts-node -r tsconfig-paths/register src/scripts/stage/clear-database.ts",
     "clear-listings": "ts-node -r tsconfig-paths/register src/scripts/stage/clear-listings.ts",
     "add-brands": "ts-node -r tsconfig-paths/register src/scripts/stage/add-brands.ts",
+    "add-truck-brands": "ts-node -r tsconfig-paths/register src/scripts/stage/add-truck-brands-models.ts",
+    "add-moto-brands": "ts-node -r tsconfig-paths/register src/scripts/stage/add-motorcycle-brands-models.ts",
     "seed:all-brands": "ts-node -r tsconfig-paths/register src/scripts/stage/seed-all-brands.ts",
     "add-models": "ts-node -r tsconfig-paths/register src/scripts/stage/add-models-to-brand.ts",
     "add-historical": "ts-node -r tsconfig-paths/register src/scripts/stage/add-historical-models.ts",

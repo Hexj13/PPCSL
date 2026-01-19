@@ -8,7 +8,7 @@ checkEnvironment(['stage', 'development', 'test']);
 
 async function checkModelsStats() {
   await AppDataSource.initialize();
-  console.log('✅ Поврзано со базата на податоци\n');
+  console.log('✅ Connected to database\n');
 
   const brandRepo = AppDataSource.getRepository(Brand);
   const modelRepo = AppDataSource.getRepository(VehicleModel);
@@ -17,7 +17,7 @@ async function checkModelsStats() {
     order: { order: 'ASC' },
   });
 
-  console.log(`📊 Вкупно марки: ${brands.length}\n`);
+  console.log(`📊 Total brands: ${brands.length}\n`);
 
   let totalModels = 0;
   const brandsWithModels: Array<{ brand: string; count: number }> = [];
@@ -34,7 +34,7 @@ async function checkModelsStats() {
     }
   }
 
-  console.log(`📊 Вкупно модели: ${totalModels}\n`);
+  console.log(`📊 Total models: ${totalModels}\n`);
   console.log('📊 Марки со број на модели:');
   brandsWithModels
     .sort((a, b) => b.count - a.count)
@@ -48,7 +48,7 @@ async function checkModelsStats() {
   }
 
   await AppDataSource.destroy();
-  console.log('\n🔌 Врската со базата на податоци е затворена');
+  console.log('\n🔌 Database connection closed');
 }
 
 checkModelsStats()

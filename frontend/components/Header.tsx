@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { useState, useCallback, startTransition } from 'react';
+import { useState, useCallback, startTransition, useEffect } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAuthStore, useComparisonStore } from '@/lib/store';
@@ -19,6 +19,11 @@ export function Header() {
   const { t } = useTranslation();
 
   const isAuthPage = ['/login', '/register', '/verify-phone', '/reset-password'].includes(pathname);
+  const [isErrorPage, setIsErrorPage] = useState(false);
+
+  useEffect(() => {
+    setIsErrorPage(document.querySelector('[data-error-page="true"]') !== null);
+  }, []);
 
   const handleLogout = useCallback(() => {
     startTransition(() => {
@@ -74,7 +79,7 @@ export function Header() {
             />
           </Link>
 
-          {!isAuthPage && (
+          {!isAuthPage && !isErrorPage && (
             <div className="flex items-center lg:hidden gap-3">
               {!isInitialized ? (
                 <div className="h-9 w-20 bg-white/20 rounded animate-pulse" />
@@ -229,8 +234,8 @@ export function Header() {
               </>
             ) : (
               <>
-                {!isAuthPage && <CreateListingButton variant="desktop" />}
-                {!isAuthPage && (
+                {!isAuthPage && !isErrorPage && <CreateListingButton variant="desktop" />}
+                {!isAuthPage && !isErrorPage && (
                   <>
                     <Link
                       href="/login"
@@ -261,7 +266,7 @@ export function Header() {
         </div>
       </div>
 
-      {isMobileMenuOpen && !isAuthPage && (
+      {isMobileMenuOpen && !isAuthPage && !isErrorPage && (
         <nav className="lg:hidden pb-4 pt-4 bg-primary-700 w-full">
           <div className="container mx-auto px-3 sm:px-4">
             {!isInitialized ? (
@@ -378,35 +383,37 @@ export function Header() {
                 </button>
               </div>
             ) : (
-              <div className="flex flex-col gap-3">
-                <CreateListingButton
-                  variant="mobile"
-                  onClick={handleMobileMenuClose}
-                  className="!py-3.5"
-                />
-                <Link
-                  href="/login"
-                  onClick={() => {
-                    handleMobileMenuClose();
-                    if (typeof window !== 'undefined') {
-                      const currentUrl = window.location.pathname + window.location.search;
-                      if (currentUrl !== '/login' && currentUrl !== '/register') {
-                        handleSetReturnUrl(currentUrl);
+              !isErrorPage && (
+                <div className="flex flex-col gap-3">
+                  <CreateListingButton
+                    variant="mobile"
+                    onClick={handleMobileMenuClose}
+                    className="!py-3.5"
+                  />
+                  <Link
+                    href="/login"
+                    onClick={() => {
+                      handleMobileMenuClose();
+                      if (typeof window !== 'undefined') {
+                        const currentUrl = window.location.pathname + window.location.search;
+                        if (currentUrl !== '/login' && currentUrl !== '/register') {
+                          handleSetReturnUrl(currentUrl);
+                        }
                       }
-                    }
-                  }}
-                  className="text-white font-medium text-xs hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-3.5 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none"
-                >
-                  {t('header.login')}
-                </Link>
-                <Link
-                  href="/register"
-                  onClick={handleMobileMenuClose}
-                  className="text-white font-medium text-xs hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-3.5 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none"
-                >
-                  {t('header.register')}
-                </Link>
-              </div>
+                    }}
+                    className="text-white font-medium text-xs hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-3.5 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none"
+                  >
+                    {t('header.login')}
+                  </Link>
+                  <Link
+                    href="/register"
+                    onClick={handleMobileMenuClose}
+                    className="text-white font-medium text-xs hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-3.5 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none"
+                  >
+                    {t('header.register')}
+                  </Link>
+                </div>
+              )
             )}
           </div>
         </nav>

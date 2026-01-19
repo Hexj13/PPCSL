@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { Brand } from '../../brands/entities/brand.entity';
 import { VehicleModel } from '../../brands/entities/vehicle-model.entity';
 import { AppDataSource } from '../../data-source';
+import { determineVehicleType } from '../data/vehicle-classification';
 
 const BRANDS_AND_MODELS = {
   Volkswagen: [
@@ -15,7 +16,7 @@ const BRANDS_AND_MODELS = {
     'ID.3',
     'ID.4',
     'ID.7',
-    'ID.Buzz',
+    'ID. Buzz',
     'Up!',
     'e-Up!',
     'Arteon',
@@ -155,10 +156,6 @@ const BRANDS_AND_MODELS = {
     'Koleos',
     'Rafale',
     'Zoe',
-    'T',
-    'C',
-    'K',
-    'D',
     'Master',
   ],
   Peugeot: [
@@ -194,8 +191,6 @@ const BRANDS_AND_MODELS = {
     'ë-C4',
     'Berlingo',
     'Berlingo VP',
-    'Cactus',
-    'Picasso',
     'Ami',
     'Jumper',
     'SpaceTourer',
@@ -327,7 +322,6 @@ const BRANDS_AND_MODELS = {
     'FH',
     'FM',
     'FMX',
-    'FM Low',
     'VNR',
     'VNL',
     'VHD',
@@ -946,9 +940,12 @@ async function addBrandsAndModels() {
     let brand = await brandRepo.findOne({ where: { name: brandName } });
 
     if (!brand) {
+      const initialVehicleType =
+        models.length > 0 ? determineVehicleType(models[0], brandName) : 'car';
       brand = brandRepo.create({
         name: brandName,
         order: order++,
+        vehicle_types: [initialVehicleType],
       });
       brand = await brandRepo.save(brand);
       newBrands++;
@@ -977,15 +974,20 @@ async function addBrandsAndModels() {
       const existingModel = existingModelsMap.get(modelNameLower);
 
       if (!existingModel) {
+        const vehicleType = determineVehicleType(modelName, brandName);
         const model = modelRepo.create({
           name: modelName,
           brand_id: brand.id,
           order: i + 1,
+          vehicle_type: vehicleType,
         });
         modelsToCreate.push(model);
         newModels++;
       } else {
         existingModel.order = i + 1;
+        if (!existingModel.vehicle_type) {
+          existingModel.vehicle_type = determineVehicleType(modelName, brandName);
+        }
         modelsToUpdate.push(existingModel);
         updatedModels++;
       }
@@ -1005,6 +1007,26 @@ async function addBrandsAndModels() {
         await modelRepo.save(batch);
         await delay(50);
       }
+    }
+
+    const allModelsForBrand = await modelRepo.find({
+      where: { brand_id: brand.id },
+      select: ['vehicle_type'],
+    });
+    const vehicleTypes = new Set<'car' | 'truck' | 'moto'>();
+    for (const model of allModelsForBrand) {
+      if (model.vehicle_type) {
+        vehicleTypes.add(model.vehicle_type);
+      }
+    }
+    if (vehicleTypes.size > 0) {
+      brand.vehicle_types = Array.from(vehicleTypes).sort();
+      await brandRepo.save(brand);
+    } else if (!brand.vehicle_types || brand.vehicle_types.length === 0) {
+      const initialVehicleType =
+        models.length > 0 ? determineVehicleType(models[0], brandName) : 'car';
+      brand.vehicle_types = [initialVehicleType];
+      await brandRepo.save(brand);
     }
 
     if (idx < brandsEntries.length - 1) {

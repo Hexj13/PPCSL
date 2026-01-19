@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { Brand } from '../../brands/entities/brand.entity';
 import { VehicleModel } from '../../brands/entities/vehicle-model.entity';
 import { AppDataSource } from '../../data-source';
+import { determineVehicleType } from '../data/vehicle-classification';
 
 const JAPANESE_BRANDS_TO_ADD = [
   { name: 'Lexus', order: 100 },
@@ -47,7 +48,8 @@ const JAPANESE_BRANDS_MODELS: Record<string, string[]> = {
     'Sienna',
     'Venza',
     'Crown',
-    'Marks',
+    'Mark II',
+    'Mark X',
     'Soarer',
     'Chaser',
     'Cresta',
@@ -71,13 +73,10 @@ const JAPANESE_BRANDS_MODELS: Record<string, string[]> = {
     'Aygo',
     'Aygo X',
     'iQ',
-    'IQ',
     'Starlet',
     'Tercel',
     'Echo',
     'Matrix',
-    'Scion xB',
-    'Scion tC',
   ],
   Honda: [
     'Civic',
@@ -574,7 +573,7 @@ const JAPANESE_BRANDS_MODELS: Record<string, string[]> = {
     'Profia',
     'Poncho',
     'Liesse',
-    "S'elega",
+    'Selega',
     'Blue Ribbon',
     'Contessa',
     'Briska',
@@ -655,7 +654,14 @@ async function addJapaneseBrandsModels() {
         .getRawOne();
       const newOrder = (maxOrder?.max || 0) + 1;
 
-      brand = brandRepo.create({ name: brandData.name, order: newOrder });
+      const models = JAPANESE_BRANDS_MODELS[brandData.name] || [];
+      const initialVehicleType =
+        models.length > 0 ? determineVehicleType(models[0], brandData.name) : 'car';
+      brand = brandRepo.create({
+        name: brandData.name,
+        order: newOrder,
+        vehicle_types: [initialVehicleType],
+      });
       brand = await brandRepo.save(brand);
       brandsAdded++;
     }
@@ -698,15 +704,20 @@ async function addJapaneseBrandsModels() {
       const existingModel = existingModelsMap.get(modelNameLower);
 
       if (!existingModel) {
+        const vehicleType = determineVehicleType(modelName, brandName);
         const model = modelRepo.create({
           name: modelName,
           brand_id: brand.id,
           order: maxOrder + i + 1,
+          vehicle_type: vehicleType,
         });
         modelsToCreate.push(model);
         totalAdded++;
       } else {
         existingModel.order = maxOrder + i + 1;
+        if (!existingModel.vehicle_type) {
+          existingModel.vehicle_type = determineVehicleType(modelName, brandName);
+        }
         modelsToUpdate.push(existingModel);
         totalUpdated++;
       }
@@ -726,6 +737,26 @@ async function addJapaneseBrandsModels() {
         await modelRepo.save(batch);
         await delay(50);
       }
+    }
+
+    const allModelsForBrand = await modelRepo.find({
+      where: { brand_id: brand.id },
+      select: ['vehicle_type'],
+    });
+    const vehicleTypes = new Set<'car' | 'truck' | 'moto'>();
+    for (const model of allModelsForBrand) {
+      if (model.vehicle_type) {
+        vehicleTypes.add(model.vehicle_type);
+      }
+    }
+    if (vehicleTypes.size > 0) {
+      brand.vehicle_types = Array.from(vehicleTypes).sort();
+      await brandRepo.save(brand);
+    } else if (!brand.vehicle_types || brand.vehicle_types.length === 0) {
+      const initialVehicleType =
+        models.length > 0 ? determineVehicleType(models[0], brandName) : 'car';
+      brand.vehicle_types = [initialVehicleType];
+      await brandRepo.save(brand);
     }
 
     if (idx < entries.length - 1) {

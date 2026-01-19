@@ -295,7 +295,7 @@ async function seedAllBrands() {
     await redisService.invalidateByPrefix(CACHE_PREFIXES.brandsModels);
 
     await redisService.onModuleDestroy();
-  } catch (error) {
+  } catch {
     console.warn('\n⚠️  Cache cannot be cleared (Redis not available)');
   }
 

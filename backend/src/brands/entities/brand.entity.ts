@@ -11,6 +11,7 @@ import { VehicleModel } from './vehicle-model.entity';
 
 @Entity('brands')
 @Index(['order'])
+@Index(['vehicle_types'])
 export class Brand {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -23,6 +24,9 @@ export class Brand {
 
   @Column({ default: 0 })
   order: number;
+
+  @Column('simple-array', { nullable: true })
+  vehicle_types: ('car' | 'truck' | 'moto')[];
 
   @CreateDateColumn()
   created_at: Date;

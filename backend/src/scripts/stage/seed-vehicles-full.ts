@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { Brand } from '../../brands/entities/brand.entity';
 import { VehicleModel } from '../../brands/entities/vehicle-model.entity';
 import { AppDataSource } from '../../data-source';
+import { determineVehicleType } from '../data/vehicle-classification';
 import { checkEnvironment } from '../script-guard';
 
 checkEnvironment(['stage', 'development', 'test']);
@@ -1333,7 +1334,13 @@ async function seedFullVehiclesDatabase() {
     let brand = await brandRepo.findOne({ where: { name: brandName } });
 
     if (!brand) {
-      brand = brandRepo.create({ name: brandName, order });
+      const initialVehicleType =
+        models.length > 0 ? determineVehicleType(models[0], brandName) : 'car';
+      brand = brandRepo.create({
+        name: brandName,
+        order,
+        vehicle_types: [initialVehicleType],
+      });
       brand = await brandRepo.save(brand);
       console.log(`✅ Created brand: ${brandName}`);
     } else {
@@ -1349,10 +1356,12 @@ async function seedFullVehiclesDatabase() {
       });
 
       if (!model) {
+        const vehicleType = determineVehicleType(modelName, brandName);
         model = modelRepo.create({
           name: modelName,
           brand_id: brand.id,
           order: i + 1,
+          vehicle_type: vehicleType,
         });
         await modelRepo.save(model);
         totalModels++;
@@ -1360,6 +1369,26 @@ async function seedFullVehiclesDatabase() {
         model.order = i + 1;
         await modelRepo.save(model);
       }
+    }
+
+    const allModelsForBrand = await modelRepo.find({
+      where: { brand_id: brand.id },
+      select: ['vehicle_type'],
+    });
+    const vehicleTypes = new Set<'car' | 'truck' | 'moto'>();
+    for (const model of allModelsForBrand) {
+      if (model.vehicle_type) {
+        vehicleTypes.add(model.vehicle_type);
+      }
+    }
+    if (vehicleTypes.size > 0) {
+      brand.vehicle_types = Array.from(vehicleTypes).sort();
+      await brandRepo.save(brand);
+    } else if (!brand.vehicle_types || brand.vehicle_types.length === 0) {
+      const initialVehicleType =
+        models.length > 0 ? determineVehicleType(models[0], brandName) : 'car';
+      brand.vehicle_types = [initialVehicleType];
+      await brandRepo.save(brand);
     }
 
     console.log(`  ✓ ${models.length} models for ${brandName}`);

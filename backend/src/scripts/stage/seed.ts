@@ -17,6 +17,7 @@ import {
   RegistrationType,
   TransmissionType,
   UserType as UserTypeEnum,
+  BODY_TYPES_BY_VEHICLE_TYPE,
 } from '../../common/types';
 import { AppDataSource } from '../../data-source';
 import { Listing } from '../../listings/entities/listing.entity';
@@ -194,7 +195,10 @@ async function seedListings(
     relations: ['models'],
   });
 
-  const validBrands = brandsWithModels.filter((b) => b.models && b.models.length > 0);
+  const validBrands = brandsWithModels.filter((b) => {
+    if (!b.models || b.models.length === 0) return false;
+    return b.models.some((m) => m.vehicle_type === 'car');
+  });
 
   if (validBrands.length === 0) {
     throw new Error('No brands with models available!');
@@ -205,7 +209,7 @@ async function seedListings(
   const driveTypes = Object.values(DriveType);
   const currencies = Object.values(Currency);
   const currentYear = new Date().getFullYear();
-  const bodyTypes = Object.values(BodyType);
+  const bodyTypes = [...BODY_TYPES_BY_VEHICLE_TYPE.car] as BodyType[];
   const conditionTypes = Object.values(ConditionType);
   const registrationTypes = Object.values(RegistrationType);
 
@@ -229,7 +233,12 @@ async function seedListings(
   for (let i = 0; i < activeCount; i++) {
     const user = getRandomElement(users);
     const brand = getRandomElement(validBrands);
-    const model = getRandomElement(brand.models);
+    const carModels = brand.models.filter((m) => m.vehicle_type === 'car');
+    if (carModels.length === 0) {
+      console.warn(`⚠️  Brand ${brand.name} has no car models, skipping...`);
+      continue;
+    }
+    const model = getRandomElement(carModels);
 
     const year = getRandomInt(2010, currentYear);
     const mileage = getRandomInt(0, 9999999);
@@ -372,7 +381,7 @@ async function createVinHistory(
   const transmissionTypes = Object.values(TransmissionType);
   const driveTypes = Object.values(DriveType);
   const currencies = Object.values(Currency);
-  const bodyTypes = Object.values(BodyType);
+  const bodyTypes = [...BODY_TYPES_BY_VEHICLE_TYPE.car] as BodyType[];
   const conditionTypes = Object.values(ConditionType);
   const registrationTypes = Object.values(RegistrationType);
 

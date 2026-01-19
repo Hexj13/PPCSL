@@ -31,4 +31,5 @@ export {
   ConditionType,
   RegistrationType,
   SortOrder,
+  BODY_TYPES_BY_VEHICLE_TYPE,
 } from './constants';

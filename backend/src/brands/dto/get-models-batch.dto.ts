@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsUUID } from 'class-validator';
+import { IsArray, IsEnum, IsOptional, IsUUID } from 'class-validator';
 
 export class GetModelsBatchDto {
   @ApiProperty({
@@ -10,4 +10,13 @@ export class GetModelsBatchDto {
   @IsArray({ message: 'brandIds мора да биде низа' })
   @IsUUID(4, { each: true, message: 'Секој brandId мора да биде валиден UUID' })
   brandIds: string[];
+
+  @ApiProperty({
+    enum: ['car', 'truck', 'moto'],
+    required: false,
+    description: 'Filter models by vehicle type',
+  })
+  @IsOptional()
+  @IsEnum(['car', 'truck', 'moto'], { message: 'vehicleType мора да биде car, truck или moto' })
+  vehicleType?: 'car' | 'truck' | 'moto';
 }

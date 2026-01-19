@@ -8,11 +8,13 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 
 import { BrandsService } from './brands.service';
+import { GetBrandsQueryDto } from './dto/get-brands-query.dto';
 import { GetModelsBatchDto } from './dto/get-models-batch.dto';
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -42,8 +44,8 @@ export class BrandsController {
   })
   @Throttle(getThrottleLimit(500, 10000))
   @Get()
-  findAll() {
-    return this.brandsService.findAll();
+  findAll(@Query() query: GetBrandsQueryDto) {
+    return this.brandsService.findAll(query.vehicleType);
   }
 
   @ApiOperation({ summary: 'Get models by brand ID' })
@@ -85,12 +87,12 @@ export class BrandsController {
   })
   @Throttle(getThrottleLimit(500, 10000))
   @Get(':id/models')
-  async getModels(@Param('id', ParseUUIDPipe) id: string) {
+  async getModels(@Param('id', ParseUUIDPipe) id: string, @Query() query: GetBrandsQueryDto) {
     const brand = await this.brandsService.findOne(id);
     if (!brand) {
       throw new NotFoundException('Brand not found');
     }
-    return this.brandsService.getModelsByBrand(id);
+    return this.brandsService.getModelsByBrand(id, query.vehicleType);
   }
 
   @ApiOperation({ summary: 'Get models for multiple brands' })
@@ -118,7 +120,7 @@ export class BrandsController {
   @Throttle(getThrottleLimit(100, 10000))
   @Post('models/batch')
   async getModelsBatch(@Body() body: GetModelsBatchDto) {
-    return this.brandsService.getModelsByBrands(body.brandIds);
+    return this.brandsService.getModelsByBrands(body.brandIds, body.vehicleType);
   }
 
   @Throttle(getThrottleLimit(500, 10000))

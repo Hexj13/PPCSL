@@ -1,3 +1,4 @@
+import { BODY_TYPES_BY_VEHICLE_TYPE } from './constants';
 import { DriveTypeEnum } from './types';
 import { sortOptionsByLabel, type LabeledOption } from './utils';
 
@@ -11,13 +12,24 @@ export function getFuelOptions(t: (_key: string) => string): Array<LabeledOption
   ]);
 }
 
-export function getTransmissionOptions(t: (_key: string) => string): Array<LabeledOption<string>> {
-  return sortOptionsByLabel([
+export function getTransmissionOptions(
+  t: (_key: string) => string,
+  vehicleType?: 'car' | 'truck' | 'moto'
+): Array<LabeledOption<string>> {
+  const allOptions = [
     { value: 'Manual', label: t('vehicleOptions.transmission.Manual') },
     { value: 'Automatic', label: t('vehicleOptions.transmission.Automatic') },
     { value: 'CVT', label: t('vehicleOptions.transmission.CVT') },
     { value: 'Robot', label: t('vehicleOptions.transmission.Robot') },
-  ]);
+  ];
+
+  if (vehicleType === 'moto') {
+    return sortOptionsByLabel(
+      allOptions.filter((opt) => opt.value !== 'CVT' && opt.value !== 'Robot')
+    );
+  }
+
+  return sortOptionsByLabel(allOptions);
 }
 
 export function getDriveTypeOptions(t: (_key: string) => string): Array<LabeledOption<string>> {
@@ -28,8 +40,11 @@ export function getDriveTypeOptions(t: (_key: string) => string): Array<LabeledO
   ]);
 }
 
-export function getBodyTypeOptions(t: (_key: string) => string): Array<LabeledOption<string>> {
-  return sortOptionsByLabel([
+export function getBodyTypeOptions(
+  t: (_key: string) => string,
+  vehicleType?: 'car' | 'truck' | 'moto'
+): Array<LabeledOption<string>> {
+  const allBodyTypes = [
     { value: 'Sedan', label: t('vehicleOptions.bodyType.Sedan') },
     { value: 'Hatchback', label: t('vehicleOptions.bodyType.Hatchback') },
     { value: 'Wagon', label: t('vehicleOptions.bodyType.Wagon') },
@@ -40,7 +55,30 @@ export function getBodyTypeOptions(t: (_key: string) => string): Array<LabeledOp
     { value: 'Pickup', label: t('vehicleOptions.bodyType.Pickup') },
     { value: 'Minivan', label: t('vehicleOptions.bodyType.Minivan') },
     { value: 'Truck', label: t('vehicleOptions.bodyType.Truck') },
-  ]);
+    { value: 'Bus', label: t('vehicleOptions.bodyType.Bus') },
+    { value: 'SemiTruck', label: t('vehicleOptions.bodyType.SemiTruck') },
+    { value: 'Tractor', label: t('vehicleOptions.bodyType.Tractor') },
+    { value: 'SpecialEquipment', label: t('vehicleOptions.bodyType.SpecialEquipment') },
+    { value: 'Naked', label: t('vehicleOptions.bodyType.Naked') },
+    { value: 'Sport', label: t('vehicleOptions.bodyType.Sport') },
+    { value: 'Touring', label: t('vehicleOptions.bodyType.Touring') },
+    { value: 'Cruiser', label: t('vehicleOptions.bodyType.Cruiser') },
+    { value: 'Adventure', label: t('vehicleOptions.bodyType.Adventure') },
+    { value: 'Scooter', label: t('vehicleOptions.bodyType.Scooter') },
+    { value: 'Enduro', label: t('vehicleOptions.bodyType.Enduro') },
+    { value: 'Cross', label: t('vehicleOptions.bodyType.Cross') },
+  ];
+
+  if (vehicleType) {
+    const allowedTypes = BODY_TYPES_BY_VEHICLE_TYPE[vehicleType];
+    return sortOptionsByLabel(
+      allBodyTypes.filter((opt) =>
+        allowedTypes.includes(opt.value as (typeof allowedTypes)[number])
+      )
+    );
+  }
+
+  return sortOptionsByLabel(allBodyTypes);
 }
 
 export function getDoorOptions(t: (_key: string) => string): Array<LabeledOption<string>> {

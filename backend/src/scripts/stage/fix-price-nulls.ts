@@ -1,4 +1,5 @@
 import { DataSource } from 'typeorm';
+
 import { checkEnvironment } from '../script-guard';
 
 checkEnvironment(['stage', 'development', 'test']);
