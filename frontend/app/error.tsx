@@ -15,12 +15,15 @@ function ErrorContent({
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-bg-dark to-bg-darker flex items-center justify-center px-4">
+    <div
+      className="min-h-screen bg-bg-base flex items-center justify-center px-4"
+      data-error-page="true"
+    >
       <div className="text-center max-w-2xl w-full">
         <div className="mb-8">
           <div className="mb-6">
             <svg
-              className="w-16 h-16 md:w-20 md:h-20 mx-auto text-red-500"
+              className="w-16 h-16 md:w-20 md:h-20 mx-auto text-semantic-error"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -34,17 +37,17 @@ function ErrorContent({
               />
             </svg>
           </div>
-          <h1 className="text-3xl md:text-4xl font-extrabold text-gray-300 mb-4">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-text-primary mb-4">
             {t('error.heading')}
           </h1>
-          <p className="text-gray-400 text-base mb-2">{t('error.description')}</p>
-          <p className="text-gray-400 text-sm mb-8">{t('error.description2')}</p>
+          <p className="text-text-secondary text-base mb-2">{t('error.description')}</p>
+          <p className="text-text-secondary text-sm mb-8">{t('error.description2')}</p>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
           <button
             onClick={reset}
-            className="text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-6 py-2.5 text-base rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20"
+            className="text-primary-600 font-medium text-sm md:text-base hover:text-primary-700 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-6 py-2.5 text-base rounded-lg border-2 border-primary-500 hover:border-primary-600 bg-primary-50 hover:bg-primary-100"
           >
             {t('error.tryAgain')}
           </button>

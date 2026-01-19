@@ -11,7 +11,7 @@ import { sortOptionsByLabel, type LabeledOption } from '@/lib/utils';
 import { Dropdown } from '../Dropdown';
 import { MultiSelectDropdown } from '../MultiSelectDropdown';
 
-import { PopularBodyTypesFilter } from './PopularBodyTypesFilter';
+import PopularBodyTypesFilter from './PopularBodyTypesFilter';
 
 const formatPriceWithSpaces = (value: string): string => {
   if (!value || value === '') return '';
@@ -33,6 +33,7 @@ interface BasicFiltersProps {
   cityOptions: Array<{ value: string; label: string; category?: string }>;
   loadingModels: boolean;
   currentYear: string;
+  vehicleType?: 'car' | 'truck' | 'moto';
 }
 
 export function BasicFilters({
@@ -48,6 +49,7 @@ export function BasicFilters({
   cityOptions,
   loadingModels,
   currentYear,
+  vehicleType = 'car',
 }: BasicFiltersProps) {
   const { t } = useTranslation();
 
@@ -132,7 +134,7 @@ export function BasicFilters({
             onChange={(values) => onMultiSelectChange('transmissions', values)}
             placeholder={t('searchFilters.selectTransmission')}
             showActionButtons={true}
-            options={getTransmissionOptions(t)}
+            options={getTransmissionOptions(t, vehicleType)}
           />
         </div>
       </div>
@@ -364,6 +366,7 @@ export function BasicFilters({
       <PopularBodyTypesFilter
         selectedBodyTypes={filters.body_types}
         onSelectionChange={(bodyTypes) => onMultiSelectChange('body_types', bodyTypes)}
+        vehicleType={vehicleType}
       />
     </>
   );

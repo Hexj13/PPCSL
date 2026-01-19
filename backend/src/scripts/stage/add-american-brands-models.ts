@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { Brand } from '../../brands/entities/brand.entity';
 import { VehicleModel } from '../../brands/entities/vehicle-model.entity';
 import { AppDataSource } from '../../data-source';
+import { determineVehicleType } from '../data/vehicle-classification';
 
 const AMERICAN_BRANDS_TO_ADD = [
   { name: 'Ford', order: 195 },
@@ -683,7 +684,14 @@ async function addAmericanBrandsModels() {
         .getRawOne();
       const newOrder = (maxOrder?.max || 0) + 1;
 
-      brand = brandRepo.create({ name: brandData.name, order: newOrder });
+      const models = AMERICAN_BRANDS_MODELS[brandData.name] || [];
+      const initialVehicleType =
+        models.length > 0 ? determineVehicleType(models[0], brandData.name) : 'car';
+      brand = brandRepo.create({
+        name: brandData.name,
+        order: newOrder,
+        vehicle_types: [initialVehicleType],
+      });
       brand = await brandRepo.save(brand);
       brandsAdded++;
     }
@@ -726,15 +734,20 @@ async function addAmericanBrandsModels() {
       const existingModel = existingModelsMap.get(modelNameLower);
 
       if (!existingModel) {
+        const vehicleType = determineVehicleType(modelName, brandName);
         const model = modelRepo.create({
           name: modelName,
           brand_id: brand.id,
           order: maxOrder + i + 1,
+          vehicle_type: vehicleType,
         });
         modelsToCreate.push(model);
         totalAdded++;
       } else {
         existingModel.order = maxOrder + i + 1;
+        if (!existingModel.vehicle_type) {
+          existingModel.vehicle_type = determineVehicleType(modelName, brandName);
+        }
         modelsToUpdate.push(existingModel);
         totalUpdated++;
       }
@@ -754,6 +767,26 @@ async function addAmericanBrandsModels() {
         await modelRepo.save(batch);
         await delay(50);
       }
+    }
+
+    const allModelsForBrand = await modelRepo.find({
+      where: { brand_id: brand.id },
+      select: ['vehicle_type'],
+    });
+    const vehicleTypes = new Set<'car' | 'truck' | 'moto'>();
+    for (const model of allModelsForBrand) {
+      if (model.vehicle_type) {
+        vehicleTypes.add(model.vehicle_type);
+      }
+    }
+    if (vehicleTypes.size > 0) {
+      brand.vehicle_types = Array.from(vehicleTypes).sort();
+      await brandRepo.save(brand);
+    } else if (!brand.vehicle_types || brand.vehicle_types.length === 0) {
+      const initialVehicleType =
+        models.length > 0 ? determineVehicleType(models[0], brandName) : 'car';
+      brand.vehicle_types = [initialVehicleType];
+      await brandRepo.save(brand);
     }
 
     if (idx < entries.length - 1) {

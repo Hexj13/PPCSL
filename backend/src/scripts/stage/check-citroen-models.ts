@@ -8,7 +8,7 @@ checkEnvironment(['stage', 'development', 'test']);
 
 async function checkCitroenModels() {
   await AppDataSource.initialize();
-  console.log('✅ Поврзано со базата на податоци\n');
+  console.log('✅ Connected to database\n');
 
   const brandRepo = AppDataSource.getRepository(Brand);
   const modelRepo = AppDataSource.getRepository(VehicleModel);
@@ -52,7 +52,7 @@ async function checkCitroenModels() {
   });
 
   await AppDataSource.destroy();
-  console.log('\n🔌 Врската со базата на податоци е затворена');
+  console.log('\n🔌 Database connection closed');
 }
 
 checkCitroenModels()

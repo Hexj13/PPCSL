@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import * as fs from 'fs';
 import * as path from 'path';
+
 import { checkEnvironment } from '../script-guard';
 
 checkEnvironment(['stage', 'development', 'test']);

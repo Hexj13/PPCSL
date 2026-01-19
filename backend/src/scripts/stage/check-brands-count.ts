@@ -7,13 +7,13 @@ checkEnvironment(['stage', 'development', 'test']);
 
 async function checkBrandsCount() {
   await AppDataSource.initialize();
-  console.log('✅ Поврзано со базата на податоци\n');
+  console.log('✅ Connected to database\n');
 
   const brandRepo = AppDataSource.getRepository(Brand);
   const brands = await brandRepo.find();
   const count = brands.length;
 
-  console.log(`📊 Вкупно марки во базата: ${count}\n`);
+  console.log(`📊 Total brands in database: ${count}\n`);
 
   if (count > 0) {
     console.log('Марки:');
@@ -23,7 +23,7 @@ async function checkBrandsCount() {
   }
 
   await AppDataSource.destroy();
-  console.log('\n🔌 Врската со базата на податоци е затворена');
+  console.log('\n🔌 Database connection closed');
 }
 
 checkBrandsCount()

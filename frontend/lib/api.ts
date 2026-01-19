@@ -280,6 +280,7 @@ export interface VehicleModel {
   name: string;
   brand_id: string;
   order: number;
+  vehicle_type?: 'car' | 'truck' | 'moto';
   brand?: Brand;
 }
 
@@ -386,7 +387,7 @@ export interface CreateListingDto {
     mileage_km?: number;
     fuel?: FuelType;
     transmission?: TransmissionType;
-    drive_type: DriveType;
+    drive_type?: DriveType;
     body_type: BodyType;
     color?: string;
     doors?: number;
@@ -630,10 +631,19 @@ export const favoritesApi = {
 };
 
 export const brandsApi = {
-  getAll: () => api.get<Brand[]>('/api/brands'),
-  getModels: (brandId: string) => api.get<VehicleModel[]>(`/api/brands/${brandId}/models`),
-  getModelsBatch: (brandIds: string[]) =>
-    api.post<Record<string, VehicleModel[]>>('/api/brands/models/batch', { brandIds }),
+  getAll: (vehicleType?: 'car' | 'truck' | 'moto') => {
+    const params = vehicleType ? { vehicleType } : {};
+    return api.get<Brand[]>('/api/brands', { params });
+  },
+  getModels: (brandId: string, vehicleType?: 'car' | 'truck' | 'moto') => {
+    const params = vehicleType ? { vehicleType } : {};
+    return api.get<VehicleModel[]>(`/api/brands/${brandId}/models`, { params });
+  },
+  getModelsBatch: (brandIds: string[], vehicleType?: 'car' | 'truck' | 'moto') =>
+    api.post<Record<string, VehicleModel[]>>('/api/brands/models/batch', {
+      brandIds,
+      vehicleType,
+    }),
   getModelsByName: (brandName: string) =>
     api.get<VehicleModel[]>(`/api/brands/name/${brandName}/models`),
   seed: () => api.post('/api/brands/seed'),

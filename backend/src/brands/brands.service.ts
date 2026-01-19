@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
 import { RedisService } from '../common/redis.service';
 import { CACHE_PREFIXES, CACHE_TTL, generateCacheKey } from '../common/utils/cache.utils';
@@ -34,8 +34,11 @@ export class BrandsService {
     private redisService: RedisService,
   ) {}
 
-  async findAll(): Promise<Brand[]> {
-    const cacheKey = generateCacheKey({ prefix: CACHE_PREFIXES.brands, parts: ['all'] });
+  async findAll(vehicleType?: 'car' | 'truck' | 'moto'): Promise<Brand[]> {
+    const cacheKey = generateCacheKey({
+      prefix: CACHE_PREFIXES.brands,
+      parts: vehicleType ? ['all', vehicleType] : ['all'],
+    });
     try {
       const cached = await this.redisService.getJson<Brand[]>(cacheKey);
       if (cached) {
@@ -45,9 +48,21 @@ export class BrandsService {
       this.logger.warn('Failed to get brands from cache', error);
     }
 
-    const brands = await this.brandsRepository.find({
-      order: { name: 'ASC' },
-    });
+    const queryBuilder = this.brandsRepository.createQueryBuilder('brand');
+
+    if (vehicleType) {
+      queryBuilder.where(
+        `(brand.vehicle_types IS NOT NULL AND (brand.vehicle_types::text LIKE :pattern1 OR brand.vehicle_types::text LIKE :pattern2 OR brand.vehicle_types::text LIKE :pattern3 OR brand.vehicle_types::text = :vehicleType)) OR EXISTS (SELECT 1 FROM vehicle_models WHERE vehicle_models.brand_id = brand.id AND vehicle_models.vehicle_type::text = :vehicleType)`,
+        {
+          vehicleType,
+          pattern1: `%,${vehicleType},%`,
+          pattern2: `${vehicleType},%`,
+          pattern3: `%,${vehicleType}`,
+        },
+      );
+    }
+
+    const brands = await queryBuilder.orderBy('brand.name', 'ASC').getMany();
 
     try {
       await this.redisService.setJson(cacheKey, brands, this.CACHE_TTL);
@@ -71,8 +86,14 @@ export class BrandsService {
     });
   }
 
-  async getModelsByBrand(brandId: string): Promise<VehicleModel[]> {
-    const cacheKey = generateCacheKey({ prefix: CACHE_PREFIXES.brandsModels, parts: [brandId] });
+  async getModelsByBrand(
+    brandId: string,
+    vehicleType?: 'car' | 'truck' | 'moto',
+  ): Promise<VehicleModel[]> {
+    const cacheKey = generateCacheKey({
+      prefix: CACHE_PREFIXES.brandsModels,
+      parts: vehicleType ? [brandId, vehicleType] : [brandId],
+    });
     try {
       const cached = await this.redisService.getJson<VehicleModel[]>(cacheKey);
       if (cached) {
@@ -82,11 +103,19 @@ export class BrandsService {
       this.logger.warn(`Failed to get models from cache for brand ${brandId}`, error);
     }
 
-    const models = await this.modelsRepository.find({
-      where: { brand_id: brandId },
-      order: { order: 'ASC', name: 'ASC' },
-      relations: ['brand'],
-    });
+    const queryBuilder = this.modelsRepository
+      .createQueryBuilder('model')
+      .where('model.brand_id = :brandId', { brandId })
+      .leftJoinAndSelect('model.brand', 'brand');
+
+    if (vehicleType) {
+      queryBuilder.andWhere('model.vehicle_type = :vehicleType', { vehicleType });
+    }
+
+    const models = await queryBuilder
+      .orderBy('model.order', 'ASC')
+      .addOrderBy('model.name', 'ASC')
+      .getMany();
 
     try {
       await this.redisService.setJson(cacheKey, models, this.CACHE_TTL_MODELS);
@@ -97,7 +126,10 @@ export class BrandsService {
     return models;
   }
 
-  async getModelsByBrands(brandIds: string[]): Promise<Record<string, VehicleModel[]>> {
+  async getModelsByBrands(
+    brandIds: string[],
+    vehicleType?: 'car' | 'truck' | 'moto',
+  ): Promise<Record<string, VehicleModel[]>> {
     if (brandIds.length === 0) {
       return {};
     }
@@ -106,7 +138,10 @@ export class BrandsService {
     const uncachedBrandIds: string[] = [];
 
     for (const brandId of brandIds) {
-      const cacheKey = generateCacheKey({ prefix: CACHE_PREFIXES.brandsModels, parts: [brandId] });
+      const cacheKey = generateCacheKey({
+        prefix: CACHE_PREFIXES.brandsModels,
+        parts: vehicleType ? [brandId, vehicleType] : [brandId],
+      });
       try {
         const cached = await this.redisService.getJson<VehicleModel[]>(cacheKey);
         if (cached) {
@@ -121,11 +156,19 @@ export class BrandsService {
     }
 
     if (uncachedBrandIds.length > 0) {
-      const models = await this.modelsRepository.find({
-        where: { brand_id: In(uncachedBrandIds) },
-        order: { order: 'ASC', name: 'ASC' },
-        relations: ['brand'],
-      });
+      const queryBuilder = this.modelsRepository
+        .createQueryBuilder('model')
+        .where('model.brand_id IN (:...brandIds)', { brandIds: uncachedBrandIds })
+        .leftJoinAndSelect('model.brand', 'brand');
+
+      if (vehicleType) {
+        queryBuilder.andWhere('model.vehicle_type = :vehicleType', { vehicleType });
+      }
+
+      const models = await queryBuilder
+        .orderBy('model.order', 'ASC')
+        .addOrderBy('model.name', 'ASC')
+        .getMany();
 
       const modelsByBrand = new Map<string, VehicleModel[]>();
       for (const model of models) {
@@ -141,7 +184,7 @@ export class BrandsService {
 
         const cacheKey = generateCacheKey({
           prefix: CACHE_PREFIXES.brandsModels,
-          parts: [brandId],
+          parts: vehicleType ? [brandId, vehicleType] : [brandId],
         });
         try {
           await this.redisService.setJson(cacheKey, brandModels, this.CACHE_TTL_MODELS);

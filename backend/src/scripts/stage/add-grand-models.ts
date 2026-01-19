@@ -2,65 +2,21 @@ import 'reflect-metadata';
 import { Brand } from '../../brands/entities/brand.entity';
 import { VehicleModel } from '../../brands/entities/vehicle-model.entity';
 import { AppDataSource } from '../../data-source';
+import { determineVehicleType } from '../data/vehicle-classification';
 
 const GRAND_AND_EXTENDED_MODELS: Record<string, string[]> = {
-  Citroën: [
-    'C4 Grand Picasso',
-    'C4 Picasso',
-    'C3 Picasso',
-    'Grand C4 Picasso',
-    'C5 Grand Tourer',
-    'C8 Grand',
-    'Berlingo Grand',
-  ],
-  Peugeot: [
-    '5008 Grand',
-    '3008 Grand',
-    'Partner Grand',
-    'Expert Grand',
-    'Rifter Grand',
-    'Traveller Grand',
-  ],
-  Renault: [
-    'Grand Scenic',
-    'Scenic Grand',
-    'Espace Grand',
-    'Grand Espace',
-    'Kangoo Grand',
-    'Trafic Grand',
-  ],
-  Opel: [
-    'Grandland X',
-    'Corsa Grand',
-    'Astra Grand',
-    'Insignia Grand Sport',
-    'Combo Grand',
-    'Vivaro Grand',
-  ],
-  Volkswagen: ['Touran Grand', 'Sharan Grand', 'Caravelle Grand', 'Multivan Grand'],
-  'Mercedes-Benz': ['V-Class Grand', 'Vito Grand', 'Sprinter Grand'],
-  Fiat: ['500L Grand', 'Doblo Grand', 'Scudo Grand', 'Talento Grand'],
-  Ford: ['Grand C-MAX', 'S-MAX Grand', 'Galaxy Grand', 'Tourneo Grand'],
-  Nissan: ['Grand Livina', 'Grand Murano', 'Pathfinder Grand'],
-  Toyota: ['Grand Highlander', 'Land Cruiser Grand', 'Sienna Grand'],
-  Honda: ['Pilot Grand', 'Odyssey Grand'],
-  Kia: ['Grand Carnival', 'Grand Sedona', 'Sorento Grand'],
-  Hyundai: ['Grand Starex', 'Grand Santa Fe', 'H-1 Grand'],
-  Mazda: ['CX-9 Grand', 'MPV Grand', 'CX-8 Grand'],
-  Suzuki: ['Grand Vitara', 'Grand Escudo', 'XL-7 Grand'],
-  Mitsubishi: ['Grand Lancer', 'Grandis', 'Outlander Grand'],
-  Dacia: ['Duster Grand', 'Lodgy Grand', 'Jogger Grand'],
-  SEAT: ['Alhambra Grand', 'Tarraco Grand'],
-  Škoda: ['Superb Grand', 'Octavia Grand', 'Kodiaq Grand'],
-  Volvo: ['XC90 Grand', 'XC70 Grand', 'V90 Grand'],
-  'Land Rover': ['Range Rover Grand', 'Discovery Grand', 'Defender Grand'],
-  Jaguar: ['XF Grand', 'XJ Grand'],
-  'Aston Martin': ['Rapide Grand', 'Lagonda Grand'],
-  'Rolls-Royce': ['Phantom Grand', 'Ghost Grand'],
-  Bentley: ['Continental Grand', 'Flying Spur Grand'],
-  Chrysler: ['Voyager Grand', 'Pacifica Grand', 'Town & Country Grand'],
-  Dodge: ['Grand Caravan', 'Journey Grand', 'Durango Grand'],
-  Jeep: ['Grand Cherokee', 'Grand Wagoneer', 'Commander Grand'],
+  Citroën: ['Grand C4 Picasso', 'C4 Grand Picasso'],
+  Renault: ['Grand Scenic'],
+  Ford: ['Grand C-MAX'],
+  Nissan: ['Grand Livina'],
+  Toyota: ['Grand Highlander'],
+  Chrysler: ['Grand Voyager'],
+  Dodge: ['Grand Caravan'],
+  Jeep: ['Grand Cherokee', 'Grand Wagoneer'],
+  Hyundai: ['Grand Starex', 'Grand Santa Fe'],
+  Kia: ['Grand Carnival'],
+  Mitsubishi: ['Grandis'],
+  Suzuki: ['Grand Vitara'],
 };
 
 function delay(ms: number): Promise<void> {
@@ -123,15 +79,20 @@ async function addGrandModels() {
       const existingModel = existingModelsMap.get(modelNameLower);
 
       if (!existingModel) {
+        const vehicleType = determineVehicleType(modelName, brandName);
         const model = modelRepo.create({
           name: modelName,
           brand_id: brand.id,
           order: maxOrder + i + 1,
+          vehicle_type: vehicleType,
         });
         modelsToCreate.push(model);
         totalAdded++;
       } else {
         existingModel.order = maxOrder + i + 1;
+        if (!existingModel.vehicle_type) {
+          existingModel.vehicle_type = determineVehicleType(modelName, brandName);
+        }
         modelsToUpdate.push(existingModel);
         totalUpdated++;
       }

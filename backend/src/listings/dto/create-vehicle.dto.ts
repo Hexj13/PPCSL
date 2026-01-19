@@ -71,13 +71,14 @@ export class CreateVehicleDto {
   @IsEnum(TransmissionType)
   transmission?: TransmissionType;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'FWD',
     enum: ['FWD', 'RWD', 'AWD'],
-    description: 'Drive type',
+    description: 'Drive type (not applicable for motorcycles)',
   })
+  @IsOptional()
   @IsEnum(DriveType, { message: 'Типот на погон мора да биде Преден, Заден или Полн' })
-  drive_type: DriveType;
+  drive_type?: DriveType;
 
   @ApiProperty({
     example: 'Sedan',

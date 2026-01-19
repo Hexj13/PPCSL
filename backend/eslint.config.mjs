@@ -10,6 +10,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const require = createRequire(import.meta.url);
 const noHardcodedTextPlugin = require('./eslint-plugin-no-hardcoded-text.cjs');
+const requireVehicleTypePlugin = require('./eslint-plugin-require-vehicle-type.cjs');
 
 export default tseslint.config(
   js.configs.recommended,
@@ -20,6 +21,7 @@ export default tseslint.config(
       '@typescript-eslint': tseslint.plugin,
       'import': importPlugin,
       'no-hardcoded-text': noHardcodedTextPlugin,
+      'require-vehicle-type': requireVehicleTypePlugin,
     },
     languageOptions: {
       parser: tseslint.parser,
@@ -66,6 +68,12 @@ export default tseslint.config(
           ],
         },
       ],
+      'require-vehicle-type/require-vehicle-type': [
+        'error',
+        {
+          checkScripts: true,
+        },
+      ],
     },
   },
   {
@@ -77,7 +85,6 @@ export default tseslint.config(
       '**/*.test.ts',
       '**/*.integration.ts',
       'src/test/**',
-      'src/scripts/**',
       'dist/**',
       'node_modules/**',
     ],

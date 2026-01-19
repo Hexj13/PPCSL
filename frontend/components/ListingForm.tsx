@@ -1,9 +1,11 @@
+/* eslint-disable max-lines */
 'use client';
 
 import { AxiosError } from 'axios';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import { toast } from 'react-hot-toast';
 
 import { Dropdown } from '@/components/Dropdown';
@@ -37,7 +39,8 @@ import {
 } from '@/lib/types';
 import { horsepowerToKw, isBrowser, kwToHorsepower, sortOptionsByLabel } from '@/lib/utils';
 import { validators } from '@/lib/validators';
-import { LoadingButton } from '@/ui';
+import { getEquipmentKeysByVehicleType, VehicleEquipmentKey } from '@/lib/vehicle-equipment';
+import { LoadingButton, CarIcon, MotoIcon, TruckIcon } from '@/ui';
 
 export interface ListingFormData {
   price: string;
@@ -177,14 +180,34 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState<ListingFormData>(() => getInitialFormData(initialData));
   const [errors, setErrors] = useState<Record<string, boolean>>({});
+  const [vehicleType, setVehicleType] = useState<'car' | 'truck' | 'moto'>('car');
+  const [isChangingType, setIsChangingType] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
-  const { brands, models, loadingBrands, loadingModels, loadModels } = useBrandsAndModels({
+  const {
+    brands: rawBrands,
+    models,
+    loadingBrands,
+    loadingModels,
+    loadModels,
+  } = useBrandsAndModels({
     brandId: formData.vehicle.brand_id,
     autoLoadModels: true,
+    vehicleType,
   });
   const { cities, loading: loadingCities } = useCities();
 
+  const brands = isChangingType ? [] : rawBrands;
+
   const isInitialLoading = loadingBrands || loadingCities;
+  const [showSkeleton, setShowSkeleton] = useState(true);
+
+  useEffect(() => {
+    if (!isInitialLoading && isMounted) {
+      const timer = setTimeout(() => setShowSkeleton(false), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isInitialLoading, isMounted]);
 
   const COLOR_OPTIONS = getColorOptions(t);
 
@@ -212,6 +235,46 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
     ]);
 
   const initialDataRef = useRef<string | undefined>(undefined);
+  const formRef = useRef<HTMLFormElement>(null);
+  const changeTypeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleVehicleTypeChange = useCallback(
+    (type: 'car' | 'truck' | 'moto') => {
+      if (mode === 'edit') return;
+      if (type === vehicleType) return;
+
+      if (changeTypeTimeoutRef.current) {
+        clearTimeout(changeTypeTimeoutRef.current);
+      }
+
+      flushSync(() => {
+        setIsChangingType(true);
+      });
+
+      setVehicleType(type);
+      setFormData((prev) => ({
+        ...prev,
+        vehicle: {
+          ...prev.vehicle,
+          brand_id: '',
+          model_id: '',
+          doors: '',
+          drive_type: '',
+          body_type: '',
+        },
+      }));
+
+      changeTypeTimeoutRef.current = setTimeout(() => {
+        setIsChangingType(false);
+      }, 400);
+    },
+    [vehicleType, mode]
+  );
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsMounted(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (initialData && initialDataRef.current !== listingId) {
@@ -223,6 +286,15 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
       }
     }
   }, [initialData, listingId, loadModels]);
+
+  useEffect(() => {
+    if (mode === 'edit' && models.length > 0 && formData.vehicle.model_id) {
+      const selectedModel = models.find((m) => m.id === formData.vehicle.model_id);
+      if (selectedModel?.vehicle_type && selectedModel.vehicle_type !== vehicleType) {
+        setVehicleType(selectedModel.vehicle_type);
+      }
+    }
+  }, [models, formData.vehicle.model_id, mode, vehicleType]);
 
   useEffect(() => {
     if (models.length > 0 && formData.vehicle.brand_id) {
@@ -242,6 +314,14 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
       }));
     }
   }, [models, formData.vehicle.brand_id]);
+
+  useEffect(() => {
+    const availableKeys = getEquipmentKeysByVehicleType(vehicleType);
+    setFormData((prev) => ({
+      ...prev,
+      equipment: prev.equipment.filter((key) => availableKeys.includes(key as VehicleEquipmentKey)),
+    }));
+  }, [vehicleType]);
 
   const handleFileUpload = async (file: File) => {
     setUploading(true);
@@ -320,9 +400,11 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
     checkField('vehicle.body_type', formData.vehicle.body_type, (val) =>
       validators.required(val as string)
     );
-    checkField('vehicle.drive_type', formData.vehicle.drive_type, (val) =>
-      validators.required(val as string)
-    );
+    if (vehicleType !== 'moto') {
+      checkField('vehicle.drive_type', formData.vehicle.drive_type, (val) =>
+        validators.required(val as string)
+      );
+    }
     checkField('price', formData.price, (val) => validators.required(val as string));
     checkField('city', formData.city, (val) => validators.required(val as string));
     checkField('images', formData.images, (val) => validators.images(val as string[]));
@@ -403,7 +485,9 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
             | 'Automatic'
             | 'CVT'
             | undefined,
-          drive_type: formData.vehicle.drive_type as 'FWD' | 'RWD' | 'AWD',
+          ...(vehicleType !== 'moto' && formData.vehicle.drive_type
+            ? { drive_type: formData.vehicle.drive_type as 'FWD' | 'RWD' | 'AWD' }
+            : {}),
           body_type: formData.vehicle.body_type as
             | 'Sedan'
             | 'Hatchback'
@@ -415,7 +499,10 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
             | 'Pickup'
             | 'Minivan',
           color: formData.vehicle.color || undefined,
-          doors: formData.vehicle.doors ? parseInt(formData.vehicle.doors) : undefined,
+          doors:
+            vehicleType !== 'moto' && formData.vehicle.doors
+              ? parseInt(formData.vehicle.doors)
+              : undefined,
         },
       };
 
@@ -480,6 +567,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
     errors,
     clearError,
     t,
+    vehicleType,
     brands,
     models,
     loadingModels,
@@ -491,7 +579,94 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
   };
 
   return (
-    <form onSubmit={handleSubmit} className="card p-4 md:p-6 lg:p-8">
+    <form
+      ref={formRef}
+      onSubmit={handleSubmit}
+      className="card p-4 md:p-6 lg:p-8 relative min-h-[800px]"
+    >
+      {showSkeleton && (
+        <div
+          className={`absolute inset-0 bg-white z-40 p-4 md:p-6 lg:p-8 rounded-xl transition-opacity duration-300 ${
+            !isInitialLoading && isMounted ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          }`}
+        >
+          <div className="animate-pulse">
+            <div className="mb-6 border-b border-gray-200 pb-4">
+              <div className="h-8 bg-gray-200 rounded w-48 mb-4" />
+              <div className="flex gap-2">
+                <div className="h-14 flex-1 bg-gray-200 rounded-lg" />
+                <div className="h-14 flex-1 bg-gray-200 rounded-lg" />
+                <div className="h-14 flex-1 bg-gray-200 rounded-lg" />
+              </div>
+            </div>
+            <div className="space-y-6">
+              <div className="h-8 bg-gray-200 rounded w-56 mb-4" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="h-12 bg-gray-200 rounded" />
+                <div className="h-12 bg-gray-200 rounded" />
+                <div className="h-12 bg-gray-200 rounded" />
+                <div className="h-12 bg-gray-200 rounded" />
+              </div>
+              <div className="h-8 bg-gray-200 rounded w-48 mt-6 mb-4" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="h-12 bg-gray-200 rounded" />
+                <div className="h-12 bg-gray-200 rounded" />
+              </div>
+              <div className="h-8 bg-gray-200 rounded w-40 mt-6 mb-4" />
+              <div className="h-32 bg-gray-200 rounded" />
+              <div className="h-12 bg-gray-200 rounded w-full mt-6" />
+            </div>
+          </div>
+        </div>
+      )}
+      {isChangingType && (
+        <div className="absolute inset-0 bg-white/90 z-50 flex items-center justify-center rounded-xl">
+          <div className="w-10 h-10 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+      {mode === 'create' && (
+        <div className="mb-6 border-b border-primary-500/20 -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8 pb-4">
+          <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
+            {t('listings.vehicleTypeLabel') || 'Тип транспорта'}
+          </h2>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => handleVehicleTypeChange('car')}
+              className={`flex-1 h-14 px-4 text-base font-semibold transition-colors duration-300 rounded-lg flex items-center justify-center ${
+                vehicleType === 'car'
+                  ? 'bg-primary-500/10 border-2 border-primary-500'
+                  : 'bg-primary-500/5 border-2 border-transparent hover:bg-primary-500/10'
+              }`}
+            >
+              <CarIcon className="w-12 h-12 text-black" />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleVehicleTypeChange('truck')}
+              className={`flex-1 h-14 px-4 text-base font-semibold transition-colors duration-300 rounded-lg flex items-center justify-center ${
+                vehicleType === 'truck'
+                  ? 'bg-primary-500/10 border-2 border-primary-500'
+                  : 'bg-primary-500/5 border-2 border-transparent hover:bg-primary-500/10'
+              }`}
+            >
+              <TruckIcon className="w-12 h-12 text-black" />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleVehicleTypeChange('moto')}
+              className={`flex-1 h-14 px-4 text-base font-semibold transition-colors duration-300 rounded-lg flex items-center justify-center ${
+                vehicleType === 'moto'
+                  ? 'bg-primary-500/10 border-2 border-primary-500'
+                  : 'bg-primary-500/5 border-2 border-transparent hover:bg-primary-500/10'
+              }`}
+            >
+              <MotoIcon className="w-12 h-12 text-black" />
+            </button>
+          </div>
+        </div>
+      )}
+
       <BasicInfoSection {...sectionProps} />
 
       <div className="border-t border-primary-500/20 pt-6 mb-6">
@@ -706,52 +881,57 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
               error={!!errors['vehicle.transmission']}
               options={[
                 { value: '', label: t('listings.selectModel') },
-                ...getTransmissionOptions(t),
+                ...getTransmissionOptions(t, vehicleType),
               ]}
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 491.532 491.532"
-                fill="currentColor"
-                className="flex-shrink-0"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M471.05,368.643h-40.958v-52.957l55.442-55.442c7.998-7.998,7.998-20.965,0-28.963l-55.442-55.442v-52.957h40.958
-                      c11.311,0,20.48-9.169,20.48-20.48v-61.44c0-11.311-9.169-20.48-20.48-20.48H348.17c-11.311,0-20.48,9.169-20.48,20.48v61.44
-                      c0,11.311,9.169,20.48,20.48,20.48h40.962v52.957l-49.443,49.443H151.855l-49.443-49.443v-43.701l24.939,9.808
-                      c10.526,4.14,22.415-1.038,26.554-11.564l22.487-57.18c4.14-10.526-1.038-22.415-11.564-26.554L50.468,1.673
-                      c-10.526-4.14-22.415,1.038-26.554,11.564L1.426,70.417c-4.14,10.526,1.038,22.415,11.564,26.554l48.461,19.058v59.81
-                      L6.01,231.281c-7.998,7.998-7.998,20.965,0,28.963l55.442,55.442v38.219l-10.984-4.32c-10.526-4.14-22.415,1.038-26.554,11.564
-                      L1.426,418.33c-4.14,10.526,1.038,22.415,11.564,26.554l114.36,44.974c10.526,4.14,22.415-1.038,26.554-11.564l22.487-57.18
-                      c4.14-10.526-1.038-22.415-11.564-26.554l-62.417-24.546v-54.328l49.443-49.443h187.834l49.443,49.443v52.957H348.17
-                      c-11.311,0-20.48,9.169-20.48,20.48v61.44c0,11.311,9.169,20.48,20.48,20.48h122.88c11.311,0,20.48-9.169,20.48-20.48v-61.44
-                      C491.53,377.812,482.36,368.643,471.05,368.643z M368.65,61.443h81.92v20.48h-81.92V61.443z M54.536,47.287l76.242,29.983
-                      l-7.496,19.062L47.04,66.349L54.536,47.287z M123.282,444.245L47.04,414.261l7.496-19.062l76.242,29.984L123.282,444.245z
-                       M81.932,278.24l-32.477-32.477l32.477-32.477l32.477,32.477L81.932,278.24z M409.612,213.286l32.477,32.477l-32.477,32.477
-                      l-32.477-32.477L409.612,213.286z M450.57,430.083h-81.92v-20.48h81.92V430.083z"
-                />
-              </svg>
-              {t('listings.driveTypeLabel')}
-            </label>
-            <Dropdown
-              value={formData.vehicle.drive_type}
-              onChange={(value) => {
-                clearError('vehicle.drive_type');
-                setFormData((prev) => ({
-                  ...prev,
-                  vehicle: { ...prev.vehicle, drive_type: value },
-                }));
-              }}
-              error={!!errors['vehicle.drive_type']}
-              options={[{ value: '', label: t('listings.selectModel') }, ...getDriveTypeOptions(t)]}
-            />
-          </div>
+          {vehicleType !== 'moto' && (
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 491.532 491.532"
+                  fill="currentColor"
+                  className="flex-shrink-0"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M471.05,368.643h-40.958v-52.957l55.442-55.442c7.998-7.998,7.998-20.965,0-28.963l-55.442-55.442v-52.957h40.958
+                        c11.311,0,20.48-9.169,20.48-20.48v-61.44c0-11.311-9.169-20.48-20.48-20.48H348.17c-11.311,0-20.48,9.169-20.48,20.48v61.44
+                        c0,11.311,9.169,20.48,20.48,20.48h40.962v52.957l-49.443,49.443H151.855l-49.443-49.443v-43.701l24.939,9.808
+                        c10.526,4.14,22.415-1.038,26.554-11.564l22.487-57.18c4.14-10.526-1.038-22.415-11.564-26.554L50.468,1.673
+                        c-10.526-4.14-22.415,1.038-26.554,11.564L1.426,70.417c-4.14,10.526,1.038,22.415,11.564,26.554l48.461,19.058v59.81
+                        L6.01,231.281c-7.998,7.998-7.998,20.965,0,28.963l55.442,55.442v38.219l-10.984-4.32c-10.526-4.14-22.415,1.038-26.554,11.564
+                        L1.426,418.33c-4.14,10.526,1.038,22.415,11.564,26.554l114.36,44.974c10.526,4.14,22.415-1.038,26.554-11.564l22.487-57.18
+                        c4.14-10.526-1.038-22.415-11.564-26.554l-62.417-24.546v-54.328l49.443-49.443h187.834l49.443,49.443v52.957H348.17
+                        c-11.311,0-20.48,9.169-20.48,20.48v61.44c0,11.311,9.169,20.48,20.48,20.48h122.88c11.311,0,20.48-9.169,20.48-20.48v-61.44
+                        C491.53,377.812,482.36,368.643,471.05,368.643z M368.65,61.443h81.92v20.48h-81.92V61.443z M54.536,47.287l76.242,29.983
+                        l-7.496,19.062L47.04,66.349L54.536,47.287z M123.282,444.245L47.04,414.261l7.496-19.062l76.242,29.984L123.282,444.245z
+                         M81.932,278.24l-32.477-32.477l32.477-32.477l32.477,32.477L81.932,278.24z M409.612,213.286l32.477,32.477l-32.477,32.477
+                        l-32.477-32.477L409.612,213.286z M450.57,430.083h-81.92v-20.48h81.92V430.083z"
+                  />
+                </svg>
+                {t('listings.driveTypeLabel')}
+              </label>
+              <Dropdown
+                value={formData.vehicle.drive_type}
+                onChange={(value) => {
+                  clearError('vehicle.drive_type');
+                  setFormData((prev) => ({
+                    ...prev,
+                    vehicle: { ...prev.vehicle, drive_type: value },
+                  }));
+                }}
+                error={!!errors['vehicle.drive_type']}
+                options={[
+                  { value: '', label: t('listings.selectModel') },
+                  ...getDriveTypeOptions(t),
+                ]}
+              />
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
@@ -1042,7 +1222,10 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
               }}
               error={!!errors['vehicle.body_type']}
               searchable={true}
-              options={[{ value: '', label: t('listings.selectModel') }, ...getBodyTypeOptions(t)]}
+              options={[
+                { value: '', label: t('listings.selectModel') },
+                ...getBodyTypeOptions(t, vehicleType),
+              ]}
             />
           </div>
 
@@ -1063,21 +1246,23 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400">
-              {t('vehicleOptions.doorsLabel')}
-            </label>
-            <Dropdown
-              value={formData.vehicle.doors}
-              onChange={(value) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  vehicle: { ...prev.vehicle, doors: value },
-                }))
-              }
-              options={[{ value: '', label: t('listings.selectModel') }, ...getDoorOptions(t)]}
-            />
-          </div>
+          {vehicleType !== 'moto' && (
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-primary-400">
+                {t('vehicleOptions.doorsLabel')}
+              </label>
+              <Dropdown
+                value={formData.vehicle.doors}
+                onChange={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    vehicle: { ...prev.vehicle, doors: value },
+                  }))
+                }
+                options={[{ value: '', label: t('listings.selectModel') }, ...getDoorOptions(t)]}
+              />
+            </div>
+          )}
         </div>
       </div>
 

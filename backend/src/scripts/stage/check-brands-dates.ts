@@ -1,20 +1,19 @@
 import 'reflect-metadata';
 import { Brand } from '../../brands/entities/brand.entity';
 import { AppDataSource } from '../../data-source';
-
 import { checkEnvironment } from '../script-guard';
 
 checkEnvironment(['stage', 'development', 'test']);
 async function checkBrandsDates() {
   await AppDataSource.initialize();
-  console.log('✅ Поврзано со базата на податоци\n');
+  console.log('✅ Connected to database\n');
 
   const brandRepo = AppDataSource.getRepository(Brand);
   const brands = await brandRepo.find({
     order: { created_at: 'DESC' },
   });
 
-  console.log(`📊 Вкупно марки: ${brands.length}\n`);
+  console.log(`📊 Total brands: ${brands.length}\n`);
 
   if (brands.length > 0) {
     const latest = brands[0];
@@ -30,7 +29,7 @@ async function checkBrandsDates() {
   }
 
   await AppDataSource.destroy();
-  console.log('\n🔌 Врската со базата на податоци е затворена');
+  console.log('\n🔌 Database connection closed');
 }
 
 checkBrandsDates()

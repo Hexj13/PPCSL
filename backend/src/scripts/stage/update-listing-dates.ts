@@ -1,8 +1,8 @@
 import 'reflect-metadata';
 
+import { ListingStatus as ListingStatusEnum } from '../../common/types';
 import { AppDataSource } from '../../data-source';
 import { Listing } from '../../listings/entities/listing.entity';
-import { ListingStatus as ListingStatusEnum } from '../../common/types';
 import { checkEnvironment } from '../script-guard';
 
 checkEnvironment(['stage', 'development', 'test']);

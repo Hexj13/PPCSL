@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { Brand } from '../../brands/entities/brand.entity';
 import { VehicleModel } from '../../brands/entities/vehicle-model.entity';
 import { AppDataSource } from '../../data-source';
+import { determineVehicleType } from '../data/vehicle-classification';
 
 const ADDITIONAL_MODELS: Record<string, string[]> = {
   Volkswagen: ['Touareg', 'Arteon', 'ID. Buzz', 'T-Cross', 'Tiguan Allspace'],
@@ -12,9 +13,9 @@ const ADDITIONAL_MODELS: Record<string, string[]> = {
   Toyota: ['Highlander', 'Land Cruiser', 'Prius', 'bZ4X'],
   Honda: ['e:Ny1', 'Civic Type R', 'Pilot'],
   Tesla: ['Cybertruck', 'Roadster'],
-  Nissan: ['Leaf Plus', 'Ariya e-4ORCE'],
-  Kia: ['EV9 GT', 'Sportage Hybrid'],
-  Hyundai: ['Ioniq 7', 'N Vision 74'],
+  Nissan: ['Leaf', 'Ariya'],
+  Kia: ['EV9', 'Sportage'],
+  Hyundai: ['Ioniq 7'],
 };
 
 async function addModelsToBrands() {
@@ -54,10 +55,12 @@ async function addModelsToBrands() {
       const existingModel = existingModels.find((m) => m.name.toLowerCase() === modelNameLower);
 
       if (!existingModel) {
+        const vehicleType = determineVehicleType(modelName, brand.name);
         const model = modelRepo.create({
           name: modelName,
           brand_id: brand.id,
           order: maxOrder + i + 1,
+          vehicle_type: vehicleType,
         });
         await modelRepo.save(model);
         added++;
@@ -68,6 +71,21 @@ async function addModelsToBrands() {
         updated++;
         console.log(`  ♻️  Updated model: ${modelName}`);
       }
+    }
+
+    const allModelsForBrand = await modelRepo.find({
+      where: { brand_id: brand.id },
+      select: ['vehicle_type'],
+    });
+    const vehicleTypes = new Set<'car' | 'truck' | 'moto'>();
+    for (const model of allModelsForBrand) {
+      if (model.vehicle_type) {
+        vehicleTypes.add(model.vehicle_type);
+      }
+    }
+    if (vehicleTypes.size > 0) {
+      brand.vehicle_types = Array.from(vehicleTypes).sort();
+      await brandRepo.save(brand);
     }
 
     totalAdded += added;

@@ -1,14 +1,20 @@
 'use client';
 
 import { sortOptionsByLabel } from '@/lib/utils';
-import { VEHICLE_EQUIPMENT_KEYS } from '@/lib/vehicle-equipment';
+import { getEquipmentKeysByVehicleType } from '@/lib/vehicle-equipment';
 import { Checkbox } from '@/ui';
 
 import { ListingFormSectionProps } from './types';
 
-export function EquipmentSection({ formData, setFormData, t }: ListingFormSectionProps) {
+export function EquipmentSection({
+  formData,
+  setFormData,
+  t,
+  vehicleType,
+}: ListingFormSectionProps) {
+  const availableKeys = getEquipmentKeysByVehicleType(vehicleType);
   const sortedKeys = sortOptionsByLabel(
-    VEHICLE_EQUIPMENT_KEYS.map((key) => ({
+    availableKeys.map((key) => ({
       value: key,
       label: t(`vehicleOptions.equipment.${key}`),
     }))

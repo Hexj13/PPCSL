@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { Brand } from '../../brands/entities/brand.entity';
 import { VehicleModel } from '../../brands/entities/vehicle-model.entity';
 import { AppDataSource } from '../../data-source';
+import { determineVehicleType } from '../data/vehicle-classification';
 import { checkEnvironment } from '../script-guard';
 
 checkEnvironment(['stage', 'development', 'test']);
@@ -44,7 +45,7 @@ class CarQuerySync {
 
       const response = await fetch(url);
       if (!response.ok) {
-        throw new Error(`HTTP грешка! статус: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = (await response.json()) as CarQueryResponse;
@@ -81,7 +82,7 @@ class CarQuerySync {
       }
 
       return [];
-    } catch (error) {
+    } catch {
       return [];
     }
   }
@@ -91,10 +92,10 @@ class CarQuerySync {
   }
 
   async syncAll() {
-    console.log('🚀 Започнување на синхронизација со CarQuery API...\n');
+    console.log('🚀 Starting synchronization with CarQuery API...\n');
 
     await AppDataSource.initialize();
-    console.log('✅ Поврзано со базата на податоци\n');
+    console.log('✅ Connected to database\n');
 
     const brandRepo = AppDataSource.getRepository(Brand);
     const modelRepo = AppDataSource.getRepository(VehicleModel);
@@ -122,9 +123,12 @@ class CarQuerySync {
       let brand = existingBrandsMap.get(make);
 
       if (!brand) {
+        const initialVehicleType =
+          models.length > 0 ? determineVehicleType(models[0], make) : 'car';
         brand = brandRepo.create({
           name: make,
           order: order++,
+          vehicle_types: [initialVehicleType],
         });
         brand = await brandRepo.save(brand);
         newBrandsCount++;
@@ -143,10 +147,12 @@ class CarQuerySync {
         const modelName = models[i];
 
         if (!existingModelsMap.has(modelName)) {
+          const vehicleType = determineVehicleType(modelName, make);
           const model = modelRepo.create({
             name: modelName,
             brand_id: brand.id,
             order: i + 1,
+            vehicle_type: vehicleType,
           });
           await modelRepo.save(model);
           newModelsCount++;
@@ -160,6 +166,26 @@ class CarQuerySync {
         totalModelsCount++;
       }
 
+      const allModelsForBrand = await modelRepo.find({
+        where: { brand_id: brand.id },
+        select: ['vehicle_type'],
+      });
+      const vehicleTypes = new Set<'car' | 'truck' | 'moto'>();
+      for (const model of allModelsForBrand) {
+        if (model.vehicle_type) {
+          vehicleTypes.add(model.vehicle_type);
+        }
+      }
+      if (vehicleTypes.size > 0) {
+        brand.vehicle_types = Array.from(vehicleTypes).sort();
+        await brandRepo.save(brand);
+      } else if (!brand.vehicle_types || brand.vehicle_types.length === 0) {
+        const initialVehicleType =
+          models.length > 0 ? determineVehicleType(models[0], make) : 'car';
+        brand.vehicle_types = [initialVehicleType];
+        await brandRepo.save(brand);
+      }
+
       processed++;
 
       if (processed % 20 === 0) {
@@ -169,15 +195,15 @@ class CarQuerySync {
       await this.delay(200);
     }
 
-    console.log(`\n✅ Синхронизацијата е завршена!`);
-    console.log(`   📊 Вкупно марки: ${makes.length}`);
-    console.log(`   📊 Марки со модели: ${processed}`);
-    console.log(`   📊 Вкупно модели: ${totalModelsCount}`);
-    console.log(`   🆕 Нови марки: ${newBrandsCount}`);
-    console.log(`   🆕 Нови модели: ${newModelsCount}\n`);
+    console.log(`\n✅ Synchronization completed!`);
+    console.log(`   📊 Total brands: ${makes.length}`);
+    console.log(`   📊 Brands with models: ${processed}`);
+    console.log(`   📊 Total models: ${totalModelsCount}`);
+    console.log(`   🆕 New brands: ${newBrandsCount}`);
+    console.log(`   🆕 New models: ${newModelsCount}\n`);
 
     await AppDataSource.destroy();
-    console.log('🔌 Врската со базата на податоци е затворена');
+    console.log('🔌 Database connection closed');
   }
 }
 

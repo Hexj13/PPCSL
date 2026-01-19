@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 
 import { brandsApi, Brand, VehicleModel } from '@/lib/api';
 import { sortByName } from '@/lib/utils';
@@ -6,29 +6,49 @@ import { sortByName } from '@/lib/utils';
 interface UseBrandsAndModelsOptions {
   brandId?: string;
   autoLoadModels?: boolean;
+  vehicleType?: 'car' | 'truck' | 'moto';
 }
 
 export function useBrandsAndModels({
   brandId,
   autoLoadModels = true,
+  vehicleType,
 }: UseBrandsAndModelsOptions = {}) {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [models, setModels] = useState<VehicleModel[]>([]);
   const [loadingBrands, setLoadingBrands] = useState(true);
   const [loadingModels, setLoadingModels] = useState(false);
+  const [, startTransition] = useTransition();
+  const prevVehicleTypeRef = useRef(vehicleType);
 
   useEffect(() => {
-    setLoadingBrands(true);
+    let cancelled = false;
+    const isTypeChange = prevVehicleTypeRef.current !== vehicleType;
+    prevVehicleTypeRef.current = vehicleType;
+
+    if (!isTypeChange) {
+      setLoadingBrands(true);
+    }
+
     brandsApi
-      .getAll()
+      .getAll(vehicleType)
       .then((res) => {
-        setBrands(sortByName(res.data));
-        setLoadingBrands(false);
+        if (!cancelled) {
+          startTransition(() => {
+            setBrands(sortByName(res.data));
+            setLoadingBrands(false);
+          });
+        }
       })
       .catch(() => {
-        setLoadingBrands(false);
+        if (!cancelled) {
+          setLoadingBrands(false);
+        }
       });
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [vehicleType]);
 
   useEffect(() => {
     if (!autoLoadModels || !brandId) {
@@ -38,7 +58,7 @@ export function useBrandsAndModels({
 
     setLoadingModels(true);
     brandsApi
-      .getModels(brandId)
+      .getModels(brandId, vehicleType)
       .then((res) => {
         setModels(sortByName(res.data));
         setLoadingModels(false);
@@ -46,20 +66,23 @@ export function useBrandsAndModels({
       .catch(() => {
         setLoadingModels(false);
       });
-  }, [brandId, autoLoadModels]);
+  }, [brandId, autoLoadModels, vehicleType]);
 
-  const loadModels = useCallback((id: string) => {
-    setLoadingModels(true);
-    brandsApi
-      .getModels(id)
-      .then((res) => {
-        setModels(sortByName(res.data));
-        setLoadingModels(false);
-      })
-      .catch(() => {
-        setLoadingModels(false);
-      });
-  }, []);
+  const loadModels = useCallback(
+    (id: string) => {
+      setLoadingModels(true);
+      brandsApi
+        .getModels(id, vehicleType)
+        .then((res) => {
+          setModels(sortByName(res.data));
+          setLoadingModels(false);
+        })
+        .catch(() => {
+          setLoadingModels(false);
+        });
+    },
+    [vehicleType]
+  );
 
   const setModelsDirectly = useCallback((modelsList: VehicleModel[]) => {
     setModels(sortByName(modelsList));

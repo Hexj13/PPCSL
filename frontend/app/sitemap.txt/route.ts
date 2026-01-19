@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 
 import { Listing } from '@/lib/api';
-import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/popular-brands';
+import {
+  POPULAR_BRANDS,
+  POPULAR_MODELS_BY_BRAND,
+  getPopularBrands,
+  getPopularModelsByBrand,
+} from '@/lib/popular-brands';
 import { fetchBrands, fetchModelsByBrands } from '@/lib/server-api';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { createSlug } from '@/lib/utils';
@@ -23,15 +28,34 @@ const POPULAR_BODY_TYPES = [
   'Convertible',
 ] as const;
 
-function generateBodyTypeCombinations(siteUrl: string): string[] {
+const POPULAR_TRUCK_BODY_TYPES = [
+  'Truck',
+  'Bus',
+  'SemiTruck',
+  'Tractor',
+  'SpecialEquipment',
+] as const;
+
+const POPULAR_MOTO_BODY_TYPES = [
+  'Naked',
+  'Sport',
+  'Touring',
+  'Cruiser',
+  'Adventure',
+  'Scooter',
+  'Enduro',
+  'Cross',
+] as const;
+
+function generateBodyTypeCombinations(siteUrl: string, bodyTypes: readonly string[]): string[] {
   const urls: string[] = [];
-  const n = POPULAR_BODY_TYPES.length;
+  const n = bodyTypes.length;
 
   for (let mask = 1; mask < 1 << n; mask++) {
     const combination: string[] = [];
     for (let i = 0; i < n; i++) {
       if (mask & (1 << i)) {
-        combination.push(POPULAR_BODY_TYPES[i]);
+        combination.push(bodyTypes[i]);
       }
     }
     combination.sort();
@@ -115,10 +139,37 @@ async function getSitemapUrls(): Promise<string[]> {
     });
   });
 
-  const bodyTypeUrls = generateBodyTypeCombinations(siteUrl);
+  const allPopularBrands = [...getPopularBrands('truck'), ...getPopularBrands('moto')];
+  const truckModelsByBrand = getPopularModelsByBrand('truck');
+  const motoModelsByBrand = getPopularModelsByBrand('moto');
+  const allPopularModelsByBrand = { ...truckModelsByBrand, ...motoModelsByBrand };
+
+  allPopularBrands.forEach((brand) => {
+    const brandSlug = createSlug(brand);
+    const brandUrl = `${siteUrl}/?brand=${brandSlug}`;
+    const models = allPopularModelsByBrand[brand] || [];
+
+    if (!addedUrls.has(brandUrl)) {
+      brandModelUrls.push(brandUrl);
+      addedUrls.add(brandUrl);
+    }
+
+    models.forEach((model) => {
+      const modelSlug = createSlug(model);
+      const brandModelUrl = `${siteUrl}/?brand=${brandSlug}&model=${modelSlug}`;
+      if (!addedUrls.has(brandModelUrl)) {
+        brandModelUrls.push(brandModelUrl);
+        addedUrls.add(brandModelUrl);
+      }
+    });
+  });
+
+  const bodyTypeUrls = generateBodyTypeCombinations(siteUrl, POPULAR_BODY_TYPES);
+  const truckBodyTypeUrls = generateBodyTypeCombinations(siteUrl, POPULAR_TRUCK_BODY_TYPES);
+  const motoBodyTypeUrls = generateBodyTypeCombinations(siteUrl, POPULAR_MOTO_BODY_TYPES);
 
   if (!apiUrl) {
-    return [...urls, ...brandModelUrls, ...bodyTypeUrls];
+    return [...urls, ...brandModelUrls, ...bodyTypeUrls, ...truckBodyTypeUrls, ...motoBodyTypeUrls];
   }
 
   const listingUrls: string[] = [];
@@ -162,7 +213,14 @@ async function getSitemapUrls(): Promise<string[]> {
     }
   }
 
-  return [...urls, ...brandModelUrls, ...bodyTypeUrls, ...listingUrls];
+  return [
+    ...urls,
+    ...brandModelUrls,
+    ...bodyTypeUrls,
+    ...truckBodyTypeUrls,
+    ...motoBodyTypeUrls,
+    ...listingUrls,
+  ];
 }
 
 export async function GET() {

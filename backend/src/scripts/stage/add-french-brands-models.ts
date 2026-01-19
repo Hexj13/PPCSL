@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { Brand } from '../../brands/entities/brand.entity';
 import { VehicleModel } from '../../brands/entities/vehicle-model.entity';
 import { AppDataSource } from '../../data-source';
+import { determineVehicleType } from '../data/vehicle-classification';
 
 const FRENCH_BRANDS_MODELS: Record<string, string[]> = {
   Citroën: [
@@ -18,19 +19,13 @@ const FRENCH_BRANDS_MODELS: Record<string, string[]> = {
     'Grand C4 Picasso',
     'C5',
     'C5 Aircross',
-    'C5 Grand Tourer',
     'C6',
     'C8',
     'C-Crosser',
     'Berlingo',
-    'Berlingo Grand',
     'Jumper',
-    'Spacetourer',
+    'SpaceTourer',
     'Ami',
-    'DS3',
-    'DS4',
-    'DS5',
-    'DS7 Crossback',
     'E-Mehari',
     'C-Zero',
     'C-Elysée',
@@ -56,13 +51,9 @@ const FRENCH_BRANDS_MODELS: Record<string, string[]> = {
     '4008',
     '5008',
     'Partner',
-    'Partner Grand',
     'Expert',
-    'Expert Grand',
     'Rifter',
-    'Rifter Grand',
     'Traveller',
-    'Traveller Grand',
     'Boxer',
     'Bipper',
     'iOn',
@@ -71,8 +62,6 @@ const FRENCH_BRANDS_MODELS: Record<string, string[]> = {
     'e-Expert',
     'e-Partner',
     'RCZ',
-    '4008 GT',
-    '5008 GT',
   ],
   Renault: [
     'Twingo',
@@ -90,15 +79,10 @@ const FRENCH_BRANDS_MODELS: Record<string, string[]> = {
     'Talisman Estate',
     'Scenic',
     'Grand Scenic',
-    'Scenic Grand',
     'Espace',
-    'Grand Espace',
     'Kangoo',
-    'Kangoo Grand',
     'Trafic',
-    'Trafic Grand',
     'Master',
-    'Master Grand',
     'Captur',
     'Kadjar',
     'Koleos',
@@ -131,7 +115,6 @@ const FRENCH_BRANDS_MODELS: Record<string, string[]> = {
     'Jogger',
     'Jogger Hybrid',
     'Bigster',
-    'Manifesto',
   ],
 };
 
@@ -195,15 +178,20 @@ async function addFrenchBrandsModels() {
       const existingModel = existingModelsMap.get(modelNameLower);
 
       if (!existingModel) {
+        const vehicleType = determineVehicleType(modelName, brandName);
         const model = modelRepo.create({
           name: modelName,
           brand_id: brand.id,
           order: maxOrder + i + 1,
+          vehicle_type: vehicleType,
         });
         modelsToCreate.push(model);
         totalAdded++;
       } else {
         existingModel.order = maxOrder + i + 1;
+        if (!existingModel.vehicle_type) {
+          existingModel.vehicle_type = determineVehicleType(modelName, brandName);
+        }
         modelsToUpdate.push(existingModel);
         totalUpdated++;
       }

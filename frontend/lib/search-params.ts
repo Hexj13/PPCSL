@@ -4,6 +4,7 @@ import { createSlug } from './utils';
 export interface ParsedSearchParams {
   page: number;
   limit: number;
+  vehicleType?: 'car' | 'truck' | 'moto';
   brand_ids?: string;
   model_ids?: string;
   cities?: string;
@@ -130,6 +131,11 @@ export async function parseSearchParams(
         }
       }
     });
+  }
+
+  const vehicleTypeParam = getValue('vehicleType');
+  if (vehicleTypeParam && ['car', 'truck', 'moto'].includes(vehicleTypeParam)) {
+    params.vehicleType = vehicleTypeParam as 'car' | 'truck' | 'moto';
   }
 
   const brandParam = getValue('brand');

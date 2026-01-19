@@ -11,7 +11,7 @@ async function updateListingTitles() {
   try {
     console.log('🔌 Поврзување со базата на податоци...');
     await AppDataSource.initialize();
-    console.log('✅ Поврзано со базата на податоци');
+    console.log('✅ Connected to database');
 
     const listingRepo = AppDataSource.getRepository(Listing);
     const brandRepo = AppDataSource.getRepository(Brand);
@@ -43,17 +43,20 @@ async function updateListingTitles() {
       if (model) titleParts.push(model.name);
       if (vehicle.year) titleParts.push(vehicle.year.toString());
 
-      const transmissionStr =
-        vehicle.transmission === 'Automatic'
-          ? 'Автоматска'
-          : vehicle.transmission === 'Manual'
-            ? 'Мануелна'
-            : vehicle.transmission === 'CVT'
-              ? 'Варијатор'
-              : '';
-
       const baseTitle = titleParts.join(' ');
-      const newTitle = transmissionStr ? `${baseTitle} (${transmissionStr})` : baseTitle;
+
+      let newTitle = baseTitle;
+      if (model?.vehicle_type !== 'moto') {
+        const transmissionStr =
+          vehicle.transmission === 'Automatic'
+            ? 'Автоматска'
+            : vehicle.transmission === 'Manual'
+              ? 'Мануелна'
+              : vehicle.transmission === 'CVT'
+                ? 'Варијатор'
+                : '';
+        newTitle = transmissionStr ? `${baseTitle} (${transmissionStr})` : baseTitle;
+      }
 
       if (listing.title !== newTitle) {
         listing.title = newTitle;
@@ -76,7 +79,7 @@ async function updateListingTitles() {
   } finally {
     if (AppDataSource.isInitialized) {
       await AppDataSource.destroy();
-      console.log('🔌 Врската со базата на податоци е затворена');
+      console.log('🔌 Database connection closed');
     }
   }
 }

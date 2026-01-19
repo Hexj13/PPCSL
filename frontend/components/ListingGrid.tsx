@@ -1,16 +1,9 @@
 'use client';
 
 import { useSearchParams, usePathname } from 'next/navigation';
-import {
-  useEffect,
-  useState,
-  useCallback,
-  useRef,
-  useMemo,
-  useDeferredValue,
-  startTransition,
-} from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo, startTransition } from 'react';
 
+import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
 import { brandsApi, favoritesApi, listingsApi, Listing, PaginationMeta } from '@/lib/api';
 import { createBrandResolver, createModelResolver, parseSearchParams } from '@/lib/search-params';
@@ -19,7 +12,6 @@ import { useAuthStore, useFavoritesStore } from '@/lib/store';
 import { ListingCard } from './ListingCard';
 import { ListingCardSkeleton } from './ListingCardSkeleton';
 import { LoadMoreButton } from './LoadMoreButton';
-import { SkeletonContainer } from './SkeletonContainer';
 
 interface ListingGridProps {
   initialData?: { data: Listing[]; meta: PaginationMeta };
@@ -95,7 +87,6 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   const prevSearchParamsString = useRef<string>('');
 
   const searchParamsString = useMemo(() => searchParams.toString(), [searchParams]);
-  const deferredListings = useDeferredValue(listings);
 
   const checkFavorites = useCallback(
     async (listingIds: string[]) => {
@@ -122,16 +113,26 @@ export function ListingGrid({ initialData }: ListingGridProps) {
     ) => {
       let parsedParams;
       try {
-        const brands = await brandsApi.getAll();
+        const currentSearchParams = new URLSearchParams(searchParamsString);
+        const vehicleTypeParam = currentSearchParams.get('vehicleType') as
+          | 'car'
+          | 'truck'
+          | 'moto'
+          | null;
+        const vehicleType =
+          vehicleTypeParam && ['car', 'truck', 'moto'].includes(vehicleTypeParam)
+            ? vehicleTypeParam
+            : undefined;
+
+        const brands = await brandsApi.getAll(vehicleType);
         const brandResolver = createBrandResolver(brands.data);
 
-        const currentSearchParams = new URLSearchParams(searchParamsString);
         parsedParams = await parseSearchParams(currentSearchParams, {
           brandResolver: async (slugs) => {
             return brandResolver(slugs);
           },
           modelResolver: async (brandIds, slugs) => {
-            const modelsByBrand = await brandsApi.getModelsBatch(brandIds);
+            const modelsByBrand = await brandsApi.getModelsBatch(brandIds, vehicleType);
             const modelResolver = createModelResolver(modelsByBrand.data);
             return modelResolver(brandIds, slugs);
           },
@@ -144,9 +145,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       if (append) {
         setLoadingMore(true);
       } else {
-        if (listingsRef.current.length === 0) {
-          setLoading(true);
-        }
+        setLoading(true);
         setError(null);
       }
 
@@ -240,6 +239,8 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       setCurrentPage(1);
       setAutoLoadCount(0);
       setHasLoadedWithFilters(false);
+      setLoading(true);
+      setError(null);
       sessionStorage.removeItem(GRID_STATE_KEY);
       sessionStorage.removeItem('homeScrollTimestamp');
       fetchListings(1, false);
@@ -312,17 +313,26 @@ export function ListingGrid({ initialData }: ListingGridProps) {
     await fetchListings(currentPage + 1, true, 20, true);
   }, [loadingMore, meta, currentPage, fetchListings]);
 
+  const { visible: showSkeleton } = useLoadingState({
+    isLoading: loading,
+    immediate: false,
+    showDelay: 200,
+    minDisplayTime: 500,
+  });
+
+  const showContent = !showSkeleton;
+
   return (
     <>
-      <SkeletonContainer isLoading={loading}>
+      {showSkeleton && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
           {Array.from({ length: 8 }).map((_, index) => (
             <ListingCardSkeleton key={`skeleton-${index}`} />
           ))}
         </div>
-      </SkeletonContainer>
+      )}
 
-      {!loading && (
+      {showContent && (
         <>
           {error && (
             <div className="text-center py-12">
@@ -364,7 +374,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
           {!error && listings.length > 0 && (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
-                {deferredListings.map((listing, index) => (
+                {listings.map((listing, index) => (
                   <ListingCard key={listing.id} listing={listing} priority={index < 8} />
                 ))}
               </div>

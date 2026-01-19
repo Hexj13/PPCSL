@@ -32,6 +32,18 @@ export const bodyTypes = [
   'Pickup',
   'Minivan',
   'Truck',
+  'Bus',
+  'SemiTruck',
+  'Tractor',
+  'SpecialEquipment',
+  'Naked',
+  'Sport',
+  'Touring',
+  'Cruiser',
+  'Adventure',
+  'Scooter',
+  'Enduro',
+  'Cross',
 ] as const;
 
 export const conditionTypes = ['Undamaged', 'Damaged', 'ForParts'] as const;
@@ -87,6 +99,52 @@ export const BodyType = {
   Pickup: bodyTypes[7],
   Minivan: bodyTypes[8],
   Truck: bodyTypes[9],
+  Bus: bodyTypes[10],
+  SemiTruck: bodyTypes[11],
+  Tractor: bodyTypes[12],
+  SpecialEquipment: bodyTypes[13],
+  Naked: bodyTypes[14],
+  Sport: bodyTypes[15],
+  Touring: bodyTypes[16],
+  Cruiser: bodyTypes[17],
+  Adventure: bodyTypes[18],
+  Scooter: bodyTypes[19],
+  Enduro: bodyTypes[20],
+  Cross: bodyTypes[21],
+} as const;
+
+export const BODY_TYPES_BY_VEHICLE_TYPE: Record<
+  'car' | 'truck' | 'moto',
+  readonly (typeof bodyTypes)[number][]
+> = {
+  car: [
+    BodyType.Sedan,
+    BodyType.Hatchback,
+    BodyType.Wagon,
+    BodyType.SUV,
+    BodyType.Coupe,
+    BodyType.Convertible,
+    BodyType.Van,
+    BodyType.Minivan,
+    BodyType.Pickup,
+  ],
+  truck: [
+    BodyType.Truck,
+    BodyType.Bus,
+    BodyType.SemiTruck,
+    BodyType.Tractor,
+    BodyType.SpecialEquipment,
+  ],
+  moto: [
+    BodyType.Naked,
+    BodyType.Sport,
+    BodyType.Touring,
+    BodyType.Cruiser,
+    BodyType.Adventure,
+    BodyType.Scooter,
+    BodyType.Enduro,
+    BodyType.Cross,
+  ],
 } as const;
 
 export const ConditionType = {

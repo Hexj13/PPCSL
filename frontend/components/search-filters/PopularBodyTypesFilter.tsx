@@ -1,35 +1,65 @@
 'use client';
 
 import Image from 'next/image';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo, memo } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface PopularBodyTypesFilterProps {
   selectedBodyTypes: string[];
   onSelectionChange: (_bodyTypes: string[]) => void;
+  vehicleType?: 'car' | 'truck' | 'moto';
 }
 
-const POPULAR_BODY_TYPES = [
-  { value: 'SUV', image: '/popular_body_types/SUV.png' },
-  { value: 'Hatchback', image: '/popular_body_types/HATCHBACK.png' },
-  { value: 'Wagon', image: '/popular_body_types/WAGON.png' },
-  { value: 'Minivan', image: '/popular_body_types/VAN.png' },
-  { value: 'Sedan', image: '/popular_body_types/SEDAN.png' },
-  { value: 'Convertible', image: '/popular_body_types/CABRIO.png' },
-] as const;
+const POPULAR_BODY_TYPES_CAR: Array<{ value: string; image: string }> = [
+  { value: 'SUV', image: '/popular_body_types/cars/SUV.png' },
+  { value: 'Hatchback', image: '/popular_body_types/cars/HATCHBACK.png' },
+  { value: 'Wagon', image: '/popular_body_types/cars/WAGON.png' },
+  { value: 'Minivan', image: '/popular_body_types/cars/VAN.png' },
+  { value: 'Sedan', image: '/popular_body_types/cars/SEDAN.png' },
+  { value: 'Convertible', image: '/popular_body_types/cars/CABRIO.png' },
+];
+
+const POPULAR_BODY_TYPES_TRUCK: Array<{ value: string; image: string }> = [
+  { value: 'Truck', image: '/popular_body_types/trucks/TRUCK.png' },
+  { value: 'SemiTruck', image: '/popular_body_types/trucks/SEMITRUCK.png' },
+  { value: 'SpecialEquipment', image: '/popular_body_types/trucks/SPECIAL.png' },
+  { value: 'Tractor', image: '/popular_body_types/trucks/TRACTOR.png' },
+  { value: 'Bus', image: '/popular_body_types/trucks/BUS.png' },
+];
+
+const POPULAR_BODY_TYPES_MOTO: Array<{ value: string; image: string | null }> = [
+  { value: 'Naked', image: '/popular_body_types/moto/NAKED.png' },
+  { value: 'Sport', image: '/popular_body_types/moto/SPORT.png' },
+  { value: 'Touring', image: '/popular_body_types/moto/TURING.png' },
+  { value: 'Cruiser', image: '/popular_body_types/moto/CRUISER.png' },
+  { value: 'Adventure', image: '/popular_body_types/moto/ADVENTURE.png' },
+  { value: 'Scooter', image: '/popular_body_types/moto/SCOUTER.png' },
+];
 
 export function PopularBodyTypesFilter({
   selectedBodyTypes,
   onSelectionChange,
+  vehicleType = 'car',
 }: PopularBodyTypesFilterProps) {
   const { t } = useTranslation();
+
+  const POPULAR_BODY_TYPES = useMemo(
+    () =>
+      vehicleType === 'truck'
+        ? POPULAR_BODY_TYPES_TRUCK
+        : vehicleType === 'moto'
+          ? POPULAR_BODY_TYPES_MOTO
+          : POPULAR_BODY_TYPES_CAR,
+    [vehicleType]
+  );
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [showFade, setShowFade] = useState(true);
 
-  const checkScrollability = () => {
+  const checkScrollability = useRef(() => {
     if (!scrollContainerRef.current) return;
 
     const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
@@ -37,29 +67,37 @@ export function PopularBodyTypesFilter({
     const isAtEnd = scrollLeft >= scrollWidth - clientWidth - 1;
     setCanScrollRight(!isAtEnd);
     setShowFade(!isAtEnd);
-  };
+  }).current;
 
   useEffect(() => {
-    checkScrollability();
     const container = scrollContainerRef.current;
     if (!container) return;
+
+    requestAnimationFrame(() => {
+      if (container) {
+        container.scrollLeft = 0;
+        checkScrollability();
+      }
+    });
 
     const handleScroll = () => {
       checkScrollability();
     };
 
     const resizeObserver = new ResizeObserver(() => {
-      checkScrollability();
+      requestAnimationFrame(() => {
+        checkScrollability();
+      });
     });
 
-    container.addEventListener('scroll', handleScroll);
+    container.addEventListener('scroll', handleScroll, { passive: true });
     resizeObserver.observe(container);
 
     return () => {
       container.removeEventListener('scroll', handleScroll);
       resizeObserver.disconnect();
     };
-  }, []);
+  }, [vehicleType, POPULAR_BODY_TYPES, checkScrollability]);
 
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
@@ -168,8 +206,9 @@ export function PopularBodyTypesFilter({
 
             return (
               <div
-                key={value}
+                key={`${vehicleType}-${value}`}
                 className="flex-shrink-0 flex flex-col items-center gap-2 w-[150px] md:w-[180px] lg:flex-1 lg:min-w-0 lg:max-w-[210px]"
+                style={{ minHeight: '152px' }}
               >
                 <button
                   type="button"
@@ -188,35 +227,59 @@ export function PopularBodyTypesFilter({
                     e.currentTarget.blur();
                   }}
                   style={{
-                    background: isSelected ? '#F4F4F4' : '#F4F4F4',
+                    background: '#F4F4F4',
                   }}
                   aria-pressed={isSelected}
                   aria-label={`${t(`vehicleOptions.bodyType.${value}`)}${isSelected ? ', selected' : ''}`}
                 >
                   <div className="relative w-full h-full flex items-center justify-center">
-                    <Image
-                      src={image}
-                      alt={t(`vehicleOptions.bodyType.${value}`)}
-                      width={180}
-                      height={180}
-                      className={`object-contain select-none ${value === 'Wagon' ? 'object-top -mt-4' : ''}`}
-                      sizes="(max-width: 768px) 180px, (max-width: 1024px) 200px, 220px"
-                      loading="eager"
-                      priority
-                      draggable={false}
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                        const parent = target.parentElement;
-                        if (parent) {
-                          parent.innerHTML = `
-                          <svg class="w-full h-full text-text-secondary/50" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
-                          </svg>
-                        `;
-                        }
-                      }}
-                    />
+                    {image ? (
+                      <Image
+                        key={image}
+                        src={image}
+                        alt={t(`vehicleOptions.bodyType.${value}`)}
+                        width={180}
+                        height={180}
+                        className={`object-contain select-none transition-opacity duration-200 ${value === 'Wagon' ? 'object-top -mt-4' : ''}`}
+                        sizes="(max-width: 768px) 180px, (max-width: 1024px) 200px, 220px"
+                        loading="lazy"
+                        draggable={false}
+                        unoptimized={true}
+                        priority={false}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          const parent = target.parentElement;
+                          if (parent && !parent.querySelector('svg')) {
+                            target.style.display = 'none';
+                            const iconSvg = document.createElementNS(
+                              'http://www.w3.org/2000/svg',
+                              'svg'
+                            );
+                            iconSvg.setAttribute('class', 'w-full h-full text-text-secondary/50');
+                            iconSvg.setAttribute('viewBox', '0 0 24 24');
+                            iconSvg.setAttribute('fill', 'currentColor');
+                            const path = document.createElementNS(
+                              'http://www.w3.org/2000/svg',
+                              'path'
+                            );
+                            path.setAttribute(
+                              'd',
+                              'M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z'
+                            );
+                            iconSvg.appendChild(path);
+                            parent.appendChild(iconSvg);
+                          }
+                        }}
+                      />
+                    ) : (
+                      <svg
+                        className="w-full h-full text-text-secondary/50"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                      >
+                        <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z" />
+                      </svg>
+                    )}
                   </div>
                   {isSelected && (
                     <div
@@ -245,7 +308,7 @@ export function PopularBodyTypesFilter({
                     </div>
                   )}
                 </button>
-                <span className="text-xs md:text-sm font-medium text-text-secondary text-center select-none">
+                <span className="text-xs md:text-sm font-medium text-text-primary text-center select-none h-[32px] flex items-center justify-center">
                   {t(`vehicleOptions.bodyType.${value}`)}
                 </span>
               </div>
@@ -259,3 +322,5 @@ export function PopularBodyTypesFilter({
     </div>
   );
 }
+
+export default memo(PopularBodyTypesFilter);
