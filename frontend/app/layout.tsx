@@ -83,10 +83,10 @@ export async function generateMetadata(): Promise<Metadata> {
     icons: {
       icon: [
         { url: '/favicon.ico', sizes: 'any' },
-        { url: '/favicon-64.png', sizes: '64x64', type: 'image/png' },
         { url: '/favicon-192.png', sizes: '192x192', type: 'image/png' },
-        { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
         { url: '/favicon-512.png', sizes: '512x512', type: 'image/png' },
+        { url: '/favicon-64.png', sizes: '64x64', type: 'image/png' },
+        { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
       ],
       apple: [{ url: '/logo.png', sizes: '180x180', type: 'image/png' }],
     },
@@ -114,6 +114,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={siteConfig.locale.split('-')[0]} suppressHydrationWarning>
       <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/favicon-192.png" type="image/png" sizes="192x192" />
+        <link rel="shortcut icon" href="/favicon.ico" />
         <link
           rel="preconnect"
           href={process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}
