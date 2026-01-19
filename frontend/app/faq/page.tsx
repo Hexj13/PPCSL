@@ -50,7 +50,7 @@ export default function FAQPage() {
                 onClick={() => toggleItem(item.id)}
                 className="w-full text-left flex justify-between items-center p-4 hover:bg-primary-500/10 transition-colors duration-200 rounded-lg"
               >
-                <h2 className="text-lg md:text-xl font-semibold text-white pr-4">
+                <h2 className="text-lg md:text-xl font-semibold text-text-primary pr-4">
                   {normalizeText(item.question)}
                 </h2>
                 <span className="text-primary-400 text-2xl font-bold flex-shrink-0">
@@ -77,7 +77,7 @@ export default function FAQPage() {
       </div>
 
       <div className="surface mt-12">
-        <h2 className="text-2xl md:text-3xl font-bold mb-6 text-white">
+        <h2 className="text-2xl md:text-3xl font-bold mb-6 text-text-primary">
           {t('faq.userScenarios.title')}
         </h2>
         <p
