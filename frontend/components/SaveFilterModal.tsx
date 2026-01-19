@@ -116,19 +116,19 @@ export function SaveFilterModal({
         <div className="flex gap-3 pt-4">
           <button
             type="button"
-            onClick={handleSave}
-            disabled={saving || !name.trim()}
-            className="flex-1 text-primary-500 font-medium text-xs md:text-sm lg:text-base hover:text-primary-700 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-500/20 hover:border-primary-500/40 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-primary-500/20"
-          >
-            {saving ? t('saveFilter.saving') : t('saveFilter.save')}
-          </button>
-          <button
-            type="button"
             onClick={handleClose}
             disabled={saving}
             className="flex-1 text-primary-500 font-medium text-xs md:text-sm lg:text-base hover:text-primary-700 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-500/20 hover:border-primary-500/40 select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-primary-500/20"
           >
             {t('common.cancel')}
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving || !name.trim()}
+            className="flex-1 text-primary-500 font-medium text-xs md:text-sm lg:text-base hover:text-primary-700 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-500/20 hover:border-primary-500/40 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-primary-500/20"
+          >
+            {saving ? t('saveFilter.saving') : t('saveFilter.save')}
           </button>
         </div>
       </div>

@@ -716,21 +716,16 @@ export default function MyListingsPage() {
           >
             <div className="space-y-6">
               <div className="space-y-3">
-                <p
-                  className="text-base leading-relaxed"
-                  style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-                >
+                <p className="text-base leading-relaxed text-text-secondary">
                   {t('myListings.closeConfirmQuestion')}
                 </p>
-                <ol
-                  className="list-decimal list-inside space-y-2 text-base leading-relaxed"
-                  style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-                >
+                <ol className="list-decimal list-inside space-y-2 text-base leading-relaxed text-text-secondary">
                   <li>{t('myListings.closeConfirmWarning1')}</li>
+                  <li>{t('myListings.closeConfirmWarning2')}</li>
                   {listingToClose && listings.find((l) => l.id === listingToClose)?.is_promoted && (
                     <>
-                      <li>{t('myListings.closeConfirmWarning2')}</li>
                       <li>{t('myListings.closeConfirmWarning3')}</li>
+                      <li>{t('myListings.closeConfirmWarning4')}</li>
                     </>
                   )}
                 </ol>
@@ -741,14 +736,11 @@ export default function MyListingsPage() {
                     setIsCloseConfirmOpen(false);
                     setListingToClose(null);
                   }}
-                  className="px-6 py-2.5 bg-bg-secondary border-2 border-primary-500/30 text-white hover:bg-bg-base hover:border-primary-500/50 rounded-lg font-semibold transition-colors"
+                  className="flex-1 sm:flex-none btn-secondary"
                 >
                   {t('myListings.closeConfirmCancel')}
                 </button>
-                <button
-                  onClick={handleCloseConfirm}
-                  className="px-6 py-2.5 bg-primary-600 text-white hover:bg-primary-700 rounded-lg font-semibold transition-colors"
-                >
+                <button onClick={handleCloseConfirm} className="flex-1 sm:flex-none btn-primary">
                   {t('myListings.closeConfirmOk')}
                 </button>
               </div>
