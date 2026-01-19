@@ -1307,6 +1307,10 @@ async function addTruckBrandsAndModels() {
     '🚛 Adding missing brands and models for trucks, semitrucks, special equipment, tractors and buses...\n',
   );
 
+  if (!process.env.DB_SYNC) {
+    process.env.DB_SYNC = 'false';
+  }
+
   await AppDataSource.initialize();
 
   const brandRepo = AppDataSource.getRepository(Brand);

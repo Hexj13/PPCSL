@@ -9,6 +9,10 @@ checkEnvironment(['stage', 'development', 'test']);
 checkPlatform(['mk', 'al']);
 
 async function addMotorcycleBrandsAndModels() {
+  if (!process.env.DB_SYNC) {
+    process.env.DB_SYNC = 'false';
+  }
+
   await AppDataSource.initialize();
   console.log('✅ Connected to database\n');
 

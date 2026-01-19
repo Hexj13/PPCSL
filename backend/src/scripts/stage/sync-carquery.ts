@@ -94,6 +94,10 @@ class CarQuerySync {
   async syncAll() {
     console.log('🚀 Starting synchronization with CarQuery API...\n');
 
+    if (!process.env.DB_SYNC) {
+      process.env.DB_SYNC = 'false';
+    }
+
     await AppDataSource.initialize();
     console.log('✅ Connected to database\n');
 
