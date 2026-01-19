@@ -69,6 +69,12 @@ These scripts can be run in production, but should still be used with caution:
 - `make-admin.ts` - Create or promote user to admin (production-safe)
 - `remove-admin.ts` - Remove admin role from user (production-safe)
 - `update-listing-titles.ts` - Update listing titles based on vehicle data
+- `fix-price-nulls.ts` - Fix NULL values in price column and convert to integer
+- `seed-all-brands.ts` - Run all brand and model seeding scripts (production-safe)
+- `add-truck-brands-models.ts` - Add truck brands and models (production-safe)
+- `add-motorcycle-brands-models.ts` - Add motorcycle brands and models (production-safe)
+- `check-brands-count.ts` - Check total brands count (production-safe)
+- `check-models-stats.ts` - Check models statistics (production-safe)
 - `backup-database.ts` - Create database backup (uses pg_dump)
 
 ## Security
@@ -137,6 +143,16 @@ npm run make-admin:prod
 npm run remove-admin:prod
 npm run update-titles
 npm run backup
+
+# Database maintenance
+npm run fix-price-nulls:prod
+
+# Brand and model management
+npm run seed:all-brands:prod
+npm run add-truck-brands:prod
+npm run add-moto-brands:prod
+npm run check-brands:prod
+npm run check-models:prod
 ```
 
 #### Creating Admin User in Production
@@ -183,6 +199,103 @@ npm run remove-admin:prod -- --email user@example.com --type Individual
 **Options:**
 - `--email` - Email address (required)
 - `--type` - New user type: `Individual` or `Business` (default: `Individual`)
+
+#### Database Maintenance in Production
+
+##### Fixing NULL Values in Price Column
+
+Before running brand/model scripts on production, fix NULL values in the price column:
+
+```bash
+npm run fix-price-nulls:prod
+```
+
+This script:
+- Replaces all NULL values in the `price` column with 0
+- Converts the `price` column from decimal to integer type
+- Sets NOT NULL constraint
+
+**⚠️ Important:** Run this script BEFORE adding brands and models to prevent database schema conflicts.
+
+#### Brand and Model Management in Production
+
+##### Seeding All Brands and Models
+
+Run all brand and model seeding scripts sequentially (production-safe version):
+
+```bash
+# Basic usage (runs all scripts with 8 second delays)
+npm run seed:all-brands:prod
+
+# Skip duplicate check to save memory
+npm run seed:all-brands:prod -- --skip-duplicates
+
+# Skip heavy scripts (American, Japanese, Commercial, Historical models)
+npm run seed:all-brands:prod -- --skip-heavy
+
+# Custom delay between scripts (in milliseconds)
+SCRIPT_DELAY_MS=10000 npm run seed:all-brands:prod
+```
+
+##### Adding Truck Brands and Models
+
+Add truck brands and models to the database:
+
+```bash
+npm run add-truck-brands:prod
+```
+
+Includes brands like: Renault Trucks, MAN, Scania, DAF, Volvo Trucks, Mercedes-Benz Trucks, Iveco, etc.
+
+##### Adding Motorcycle Brands and Models
+
+Add motorcycle brands and models to the database:
+
+```bash
+npm run add-moto-brands:prod
+```
+
+Includes brands like: Yamaha, Honda, BMW, Kawasaki, Ducati, Harley-Davidson, etc.
+
+##### Checking Database Status
+
+Verify that brands and models were added successfully:
+
+```bash
+# Check total brands count
+npm run check-brands:prod
+
+# Check models statistics
+npm run check-models:prod
+```
+
+#### Complete Production Setup Sequence
+
+For a fresh production database:
+
+```bash
+# 1. Apply migrations
+npm run migration:run
+
+# 2. Fix price column issues
+npm run fix-price-nulls:prod
+
+# 3. Add all brands and models
+npm run seed:all-brands:prod
+
+# 4. Add trucks
+npm run add-truck-brands:prod
+
+# 5. Add motorcycles
+npm run add-moto-brands:prod
+
+# 6. Clear cache
+npm run clear-cache:brands
+
+# 7. Verify
+npm run check-brands:prod
+npm run check-models:prod
+```
 
 ## Migration Scripts
 
