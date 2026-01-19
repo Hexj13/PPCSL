@@ -43,7 +43,7 @@ export function Header() {
   }, []);
 
   const navLinkClasses =
-    'text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded select-none';
+    'text-white font-medium text-xs md:text-sm lg:text-sm xl:text-base hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded select-none';
 
   const mobileNavLinkClasses =
     'text-white font-medium hover:text-primary-100 active:text-primary-300 transition-colors duration-200 py-2 pl-4 flex items-center gap-2 select-none';
@@ -54,7 +54,7 @@ export function Header() {
         <div className="flex justify-between items-center h-full">
           <Link
             href="/"
-            className="flex items-center hover:opacity-90 transition-opacity duration-200 select-none"
+            className="flex items-center hover:opacity-90 transition-opacity duration-200 select-none mr-4 lg:mr-6"
           >
             <Image
               src="/logo-desktop.svg"
@@ -107,7 +107,7 @@ export function Header() {
             </div>
           )}
 
-          <nav className="hidden lg:flex gap-3 lg:gap-6 items-center">
+          <nav className="hidden lg:flex gap-2 lg:gap-3 xl:gap-6 items-center">
             {!isInitialized ? (
               <div className="flex gap-4 items-center">
                 <div className="h-9 w-24 bg-white/20 rounded animate-pulse" />
@@ -242,14 +242,14 @@ export function Header() {
                           }
                         }
                       }}
-                      className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none"
+                      className="text-white font-medium text-xs md:text-sm lg:text-sm xl:text-base hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center gap-2 md:gap-2.5 px-2.5 md:px-3 lg:px-3 xl:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none"
                     >
                       <span className="hidden xl:inline">{t('header.login')}</span>
                       <span className="xl:hidden">{t('header.loginShort')}</span>
                     </Link>
                     <Link
                       href="/register"
-                      className="text-white font-medium text-xs md:text-sm lg:text-base hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none"
+                      className="text-white font-medium text-xs md:text-sm lg:text-sm xl:text-base hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center gap-2 md:gap-2.5 px-2.5 md:px-3 lg:px-3 xl:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none"
                     >
                       {t('header.register')}
                     </Link>
@@ -259,9 +259,11 @@ export function Header() {
             )}
           </nav>
         </div>
+      </div>
 
-        {isMobileMenuOpen && !isAuthPage && (
-          <nav className="lg:hidden pb-4 pt-4 bg-primary-700 -mx-3 sm:-mx-4 px-3 sm:px-4">
+      {isMobileMenuOpen && !isAuthPage && (
+        <nav className="lg:hidden pb-4 pt-4 bg-primary-700 w-full">
+          <div className="container mx-auto px-3 sm:px-4">
             {!isInitialized ? (
               <div className="flex flex-col gap-3">
                 <div className="h-10 bg-white/20 rounded animate-pulse" />
@@ -377,7 +379,11 @@ export function Header() {
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                <CreateListingButton variant="mobile" onClick={handleMobileMenuClose} />
+                <CreateListingButton
+                  variant="mobile"
+                  onClick={handleMobileMenuClose}
+                  className="!py-3.5"
+                />
                 <Link
                   href="/login"
                   onClick={() => {
@@ -389,22 +395,22 @@ export function Header() {
                       }
                     }
                   }}
-                  className="text-white font-medium text-xs hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none"
+                  className="text-white font-medium text-xs hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-3.5 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none"
                 >
                   {t('header.login')}
                 </Link>
                 <Link
                   href="/register"
                   onClick={handleMobileMenuClose}
-                  className="text-white font-medium text-xs hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none"
+                  className="text-white font-medium text-xs hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-3.5 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none"
                 >
                   {t('header.register')}
                 </Link>
               </div>
             )}
-          </nav>
-        )}
-      </div>
+          </div>
+        </nav>
+      )}
     </header>
   );
 }

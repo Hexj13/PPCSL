@@ -9,6 +9,10 @@ const nextConfig = {
     optimizeCss: true,
   },
 
+  ...(process.env.NODE_ENV === 'production' && {
+    cacheMaxMemorySize: 50 * 1024 * 1024,
+  }),
+
   // Отключаем кеширование в development
   ...(process.env.NODE_ENV === 'development' && {
     cacheMaxMemorySize: 0,

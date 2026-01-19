@@ -41,7 +41,7 @@ export function CreateListingButton({
 
   const variantClasses = isMobile
     ? 'text-xs gap-1.5 px-2.5 py-2 rounded-lg w-full'
-    : 'text-xs md:text-sm lg:text-base gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg';
+    : 'text-xs md:text-sm lg:text-sm xl:text-base gap-2 md:gap-2.5 px-2.5 md:px-3 lg:px-3 xl:px-4 py-2 md:py-2.5 rounded-lg';
 
   const iconSize = isMobile ? 'w-4 h-4' : 'w-3.5 h-3.5 md:w-4 md:h-4';
 

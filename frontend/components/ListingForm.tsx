@@ -498,9 +498,9 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
         <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
           {t('listings.technicalSpecs')}
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="sm:col-span-2 lg:col-span-1">
+            <label className="block text-sm font-semibold mb-2 text-primary-400 whitespace-nowrap">
               {t('listings.engineDisplacementLabel')}
             </label>
             <input
@@ -558,68 +558,66 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400">
-                {t('listings.powerHorsepowerLabel')}
-              </label>
-              <input
-                type="text"
-                required
-                min="1"
-                max="9999"
-                value={formData.horsepower}
-                onChange={(e) => {
-                  clearError('horsepower');
-                  clearError('power_kw');
-                  const value = e.target.value.replace(/[^0-9]/g, '');
-                  if (value === '' || (parseInt(value) >= 1 && parseInt(value) <= 9999)) {
-                    const hpValue = value === '' ? 0 : parseInt(value);
-                    const kwValue = hpValue > 0 ? horsepowerToKw(hpValue) : '';
-                    setFormData((prev) => ({
-                      ...prev,
-                      horsepower: value,
-                      power_kw: kwValue.toString(),
-                    }));
-                  }
-                }}
-                onWheel={handleWheel}
-                className={`input-field h-[48px] ${errors['horsepower'] ? 'border-red-500 focus:border-red-500 ' : ''}`}
-                placeholder="150"
-                title={t('listings.powerHorsepowerTitle')}
-              />
-            </div>
+          <div className="sm:col-span-1">
+            <label className="block text-sm font-semibold mb-2 text-primary-400 whitespace-nowrap">
+              {t('listings.powerHorsepowerLabel')}
+            </label>
+            <input
+              type="text"
+              required
+              min="1"
+              max="9999"
+              value={formData.horsepower}
+              onChange={(e) => {
+                clearError('horsepower');
+                clearError('power_kw');
+                const value = e.target.value.replace(/[^0-9]/g, '');
+                if (value === '' || (parseInt(value) >= 1 && parseInt(value) <= 9999)) {
+                  const hpValue = value === '' ? 0 : parseInt(value);
+                  const kwValue = hpValue > 0 ? horsepowerToKw(hpValue) : '';
+                  setFormData((prev) => ({
+                    ...prev,
+                    horsepower: value,
+                    power_kw: kwValue.toString(),
+                  }));
+                }
+              }}
+              onWheel={handleWheel}
+              className={`input-field h-[48px] ${errors['horsepower'] ? 'border-red-500 focus:border-red-500 ' : ''}`}
+              placeholder="150"
+              title={t('listings.powerHorsepowerTitle')}
+            />
+          </div>
 
-            <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400">
-                {t('listings.powerKwLabel')}
-              </label>
-              <input
-                type="text"
-                required
-                min="1"
-                max="9999"
-                value={formData.power_kw}
-                onChange={(e) => {
-                  clearError('power_kw');
-                  clearError('horsepower');
-                  const value = e.target.value.replace(/[^0-9]/g, '');
-                  if (value === '' || (parseInt(value) >= 1 && parseInt(value) <= 9999)) {
-                    const kwValue = value === '' ? 0 : parseInt(value);
-                    const hpValue = kwValue > 0 ? kwToHorsepower(kwValue) : '';
-                    setFormData((prev) => ({
-                      ...prev,
-                      power_kw: value,
-                      horsepower: hpValue.toString(),
-                    }));
-                  }
-                }}
-                onWheel={handleWheel}
-                className={`input-field h-[48px] ${errors['power_kw'] ? 'border-red-500 focus:border-red-500 ' : ''}`}
-                placeholder="110"
-                title={t('listings.powerKwTitle')}
-              />
-            </div>
+          <div className="sm:col-span-1">
+            <label className="block text-sm font-semibold mb-2 text-primary-400 whitespace-nowrap">
+              {t('listings.powerKwLabel')}
+            </label>
+            <input
+              type="text"
+              required
+              min="1"
+              max="9999"
+              value={formData.power_kw}
+              onChange={(e) => {
+                clearError('power_kw');
+                clearError('horsepower');
+                const value = e.target.value.replace(/[^0-9]/g, '');
+                if (value === '' || (parseInt(value) >= 1 && parseInt(value) <= 9999)) {
+                  const kwValue = value === '' ? 0 : parseInt(value);
+                  const hpValue = kwValue > 0 ? kwToHorsepower(kwValue) : '';
+                  setFormData((prev) => ({
+                    ...prev,
+                    power_kw: value,
+                    horsepower: hpValue.toString(),
+                  }));
+                }
+              }}
+              onWheel={handleWheel}
+              className={`input-field h-[48px] ${errors['power_kw'] ? 'border-red-500 focus:border-red-500 ' : ''}`}
+              placeholder="110"
+              title={t('listings.powerKwTitle')}
+            />
           </div>
 
           <div>

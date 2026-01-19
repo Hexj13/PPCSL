@@ -174,6 +174,8 @@ export function SearchFilters() {
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
   const tabsContainerRef = useRef<HTMLDivElement>(null);
   const [showFade, setShowFade] = useState(true);
+  const buttonsContainerRef = useRef<HTMLDivElement>(null);
+  const [showFadeButtons, setShowFadeButtons] = useState(true);
 
   useEffect(() => {
     setIsHydrated(true);
@@ -245,6 +247,40 @@ export function SearchFilters() {
 
     return undefined;
   }, [activeTab]);
+
+  useEffect(() => {
+    const checkButtonsScrollability = () => {
+      if (!buttonsContainerRef.current) return;
+      const { scrollLeft, scrollWidth, clientWidth } = buttonsContainerRef.current;
+      const threshold = 2;
+      const isAtEnd = scrollLeft + clientWidth >= scrollWidth - threshold;
+      setShowFadeButtons(!isAtEnd && scrollWidth > clientWidth);
+    };
+
+    checkButtonsScrollability();
+    const container = buttonsContainerRef.current;
+    if (container) {
+      const handleScroll = () => {
+        checkButtonsScrollability();
+      };
+
+      const resizeObserver = new ResizeObserver(() => {
+        checkButtonsScrollability();
+      });
+
+      container.addEventListener('scroll', handleScroll, { passive: true });
+      resizeObserver.observe(container);
+      window.addEventListener('resize', checkButtonsScrollability);
+
+      return () => {
+        container.removeEventListener('scroll', handleScroll);
+        resizeObserver.disconnect();
+        window.removeEventListener('resize', checkButtonsScrollability);
+      };
+    }
+
+    return undefined;
+  }, [isInitialized, userForUi]);
 
   const applyPopularFilter = useCallback(
     (brandName: string, modelName?: string) => {
@@ -1298,104 +1334,116 @@ export function SearchFilters() {
         />
       )}
 
-      <div className="mt-6 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <LoadingButton
-            type="submit"
-            loading={showSearchLoader}
-            loadingText={t('searchFilters.searching')}
-            disabled={!hasFiltersChanged}
-            className={`w-full sm:w-auto btn-secondary flex items-center justify-center gap-2 ${
-              !hasFiltersChanged ? '' : '!border-primary-500'
-            }`}
-          >
-            <span className="inline-flex items-center gap-2">
-              <svg
-                className="w-4 h-4 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+      <div className="mt-6 relative -mx-3 sm:mx-0 px-3 sm:px-0">
+        <div ref={buttonsContainerRef} className="overflow-x-auto">
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between min-w-max sm:min-w-0">
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              <LoadingButton
+                type="submit"
+                loading={showSearchLoader}
+                loadingText={t('searchFilters.searching')}
+                disabled={!hasFiltersChanged}
+                className={`w-full sm:w-auto btn-secondary flex items-center justify-center gap-2 ${
+                  !hasFiltersChanged ? '' : '!border-primary-500'
+                }`}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-              {t('searchFilters.search')}
-            </span>
-          </LoadingButton>
-          <button
-            type="button"
-            onClick={() => handleReset(false)}
-            disabled={!hasActiveFilters}
-            className="w-full sm:w-auto btn-secondary flex items-center justify-center gap-2"
-          >
-            <svg
-              className="w-5 h-5 flex-shrink-0"
-              viewBox="0 0 15 15"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                fillRule="evenodd"
-                clipRule="evenodd"
-                d="M4.85355 2.14645C5.04882 2.34171 5.04882 2.65829 4.85355 2.85355L3.70711 4H9C11.4853 4 13.5 6.01472 13.5 8.5C13.5 10.9853 11.4853 13 9 13H5C4.72386 13 4.5 12.7761 4.5 12.5C4.5 12.2239 4.72386 12 5 12H9C10.933 12 12.5 10.433 12.5 8.5C12.5 6.567 10.933 5 9 5H3.70711L4.85355 6.14645C5.04882 6.34171 5.04882 6.65829 4.85355 6.85355C4.65829 7.04882 4.34171 7.04882 4.14645 6.85355L2.14645 4.85355C1.95118 4.65829 1.95118 4.34171 2.14645 4.14645L4.14645 2.14645C4.34171 1.95118 4.65829 1.95118 4.85355 2.14645Z"
-                fill="currentColor"
-              />
-            </svg>
-            {t('searchFilters.reset')}
-          </button>
-          {!isInitialized ? (
-            <button
-              type="button"
-              disabled
-              className="w-full sm:w-auto btn-secondary flex items-center justify-center gap-2 opacity-50"
-            >
-              <div className="w-5 h-5 border-2 border-primary-300 border-t-transparent rounded-full animate-spin"></div>
-              <span>{t('common.loading')}</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => {
-                if (userForUi) {
-                  setShowSaveModal(true);
-                } else {
-                  if (isBrowser) {
-                    localStorage.setItem('pendingSavedFilter', JSON.stringify(getFiltersForSave()));
-                    localStorage.setItem('returnUrl', '/favorites?tab=filters');
-                  }
-                  router.push('/login');
-                }
-              }}
-              disabled={!canSaveFilter()}
-              className="w-full sm:w-auto btn-secondary flex items-center justify-center gap-2"
-              title={!userForUi ? t('common.loginRequired') : ''}
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
+                <span className="inline-flex items-center gap-2">
+                  <svg
+                    className="w-4 h-4 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
+                  {t('searchFilters.search')}
+                </span>
+              </LoadingButton>
+              <button
+                type="button"
+                onClick={() => handleReset(false)}
+                disabled={!hasActiveFilters}
+                className="w-full sm:w-auto btn-secondary flex items-center justify-center gap-2 whitespace-nowrap"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                />
-              </svg>
-              <span>
-                {userForUi ? t('searchFilters.addToFavorites') : t('searchFilters.login')}
-              </span>
-            </button>
+                <svg
+                  className="w-5 h-5 flex-shrink-0"
+                  viewBox="0 0 15 15"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M4.85355 2.14645C5.04882 2.34171 5.04882 2.65829 4.85355 2.85355L3.70711 4H9C11.4853 4 13.5 6.01472 13.5 8.5C13.5 10.9853 11.4853 13 9 13H5C4.72386 13 4.5 12.7761 4.5 12.5C4.5 12.2239 4.72386 12 5 12H9C10.933 12 12.5 10.433 12.5 8.5C12.5 6.567 10.933 5 9 5H3.70711L4.85355 6.14645C5.04882 6.34171 5.04882 6.65829 4.85355 6.85355C4.65829 7.04882 4.34171 7.04882 4.14645 6.85355L2.14645 4.85355C1.95118 4.65829 1.95118 4.34171 2.14645 4.14645L4.14645 2.14645C4.34171 1.95118 4.65829 1.95118 4.85355 2.14645Z"
+                    fill="currentColor"
+                  />
+                </svg>
+                {t('searchFilters.reset')}
+              </button>
+              {!isInitialized ? (
+                <button
+                  type="button"
+                  disabled
+                  className="w-full sm:w-auto btn-secondary flex items-center justify-center gap-2 opacity-50 !px-3 sm:!px-6"
+                >
+                  <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-primary-300 border-t-transparent rounded-full animate-spin flex-shrink-0"></div>
+                  <span className="whitespace-nowrap text-sm sm:text-base">
+                    {t('common.loading')}
+                  </span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (userForUi) {
+                      setShowSaveModal(true);
+                    } else {
+                      if (isBrowser) {
+                        localStorage.setItem(
+                          'pendingSavedFilter',
+                          JSON.stringify(getFiltersForSave())
+                        );
+                        localStorage.setItem('returnUrl', '/favorites?tab=filters');
+                      }
+                      router.push('/login');
+                    }
+                  }}
+                  disabled={!canSaveFilter()}
+                  className="w-full sm:w-auto btn-secondary flex items-center justify-center gap-2 !px-3 sm:!px-6"
+                  title={!userForUi ? t('common.loginRequired') : ''}
+                >
+                  <svg
+                    className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                    />
+                  </svg>
+                  <span className="whitespace-nowrap text-sm sm:text-base">
+                    {userForUi ? t('searchFilters.addToFavorites') : t('searchFilters.login')}
+                  </span>
+                </button>
+              )}
+            </div>
+            <div className="w-full sm:w-auto border-t border-primary-500/20 pt-3 sm:border-t-0 sm:pt-0 flex-shrink-0">
+              <SortDropdown />
+            </div>
+          </div>
+          {showFadeButtons && (
+            <div className="lg:hidden absolute right-0 top-0 bottom-0 w-24 pointer-events-none bg-gradient-to-l from-white via-white/60 to-transparent z-20" />
           )}
-        </div>
-        <div className="w-full sm:w-auto border-t border-primary-500/20 pt-3 sm:border-t-0 sm:pt-0">
-          <SortDropdown />
         </div>
       </div>
 
