@@ -125,7 +125,8 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
     const currentYear = new Date().getFullYear().toString();
 
     // Handle vehicle type - always include to ensure proper restoration
-    const vehicleType = typeof filterParams.vehicleType === 'string' ? filterParams.vehicleType : 'car';
+    const vehicleType =
+      typeof filterParams.vehicleType === 'string' ? filterParams.vehicleType : 'car';
     params.set('vehicleType', vehicleType);
 
     const brandIds = Array.isArray(filterParams.brand_ids)
