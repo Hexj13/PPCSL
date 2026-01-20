@@ -85,10 +85,20 @@ async function generateSitemapContent(): Promise<string> {
             for (const model of models) {
               const modelSlug = createSlug(model.name);
               const modelVehicleType = model.vehicle_type;
+
+              if (vehicleType) {
+                if (!modelVehicleType || modelVehicleType !== vehicleType) {
+                  continue;
+                }
+              } else {
+                if (modelVehicleType && modelVehicleType !== 'car') {
+                  continue;
+                }
+              }
+
               const urlVehicleType =
-                modelVehicleType && modelVehicleType !== 'car' ? modelVehicleType : vehicleType;
-              const param =
-                urlVehicleType && urlVehicleType !== 'car' ? `&vehicleType=${urlVehicleType}` : '';
+                modelVehicleType && modelVehicleType !== 'car' ? modelVehicleType : undefined;
+              const param = urlVehicleType ? `&vehicleType=${urlVehicleType}` : '';
               urls.push(`${siteUrl}/?brand=${brandSlug}&model=${modelSlug}${param}`);
             }
           }
