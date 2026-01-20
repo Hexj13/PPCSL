@@ -60,10 +60,11 @@ export class RegisterDto {
 
   @ApiPropertyOptional({
     example: 'John',
-    description: 'First name (required for Individual type)',
+    description: 'First name',
   })
-  @ValidateIf((o) => o.type === UserTypeEnum.Individual)
-  @IsString({ message: 'Името е задолжително' })
+  @IsOptional()
+  @ValidateIf((o) => o.firstName != null && o.firstName !== '')
+  @IsString()
   @MinLength(2, { message: 'Името мора да содржи минимум 2 карактери' })
   @MaxLength(50, { message: 'Името не може да биде подолго од 50 карактери' })
   @IsName()

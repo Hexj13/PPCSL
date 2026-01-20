@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { useTranslation } from '@/hooks/useTranslation';
@@ -32,15 +32,31 @@ export default function RegisterPage() {
   const [passwordError, setPasswordError] = useState('');
   const [phoneError, setPhoneError] = useState('');
   const [emailError, setEmailError] = useState('');
-  const [firstNameError, setFirstNameError] = useState('');
-  const [lastNameError, setLastNameError] = useState('');
+  const [phoneTouched, setPhoneTouched] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const prevTypeRef = useRef<'Individual' | 'Business'>(formData.type);
 
   useEffect(() => {
     if (isInitialized && user) {
       router.push('/');
     }
   }, [user, isInitialized, router]);
+
+  useEffect(() => {
+    if (formData.type === 'Individual' && prevTypeRef.current !== formData.type) {
+      setFormData((prev) => ({
+        ...prev,
+        email: '',
+        emailNotifications: false,
+        firstName: '',
+        lastName: '',
+      }));
+      setEmailError('');
+      setPhoneTouched(false);
+      setPhoneError('');
+    }
+    prevTypeRef.current = formData.type;
+  }, [formData.type]);
 
   const validatePassword = (password: string): string => {
     if (password.length < 8) {
@@ -118,23 +134,14 @@ export default function RegisterPage() {
     return '';
   };
 
-  const validateName = (name: string): string => {
-    if (!name) {
-      return '';
-    }
-    const nameRegex = /^[a-zA-Zа-яА-ЯёЁјЈљЉњЊќЌџЅ\s-]+$/;
-    if (!nameRegex.test(name)) {
-      return t('register.firstNameInvalid');
-    }
-    return '';
-  };
-
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value;
 
     if (value === '') {
       setFormData({ ...formData, phone: '' });
-      setPhoneError('');
+      if (phoneTouched) {
+        setPhoneError('');
+      }
       return;
     }
 
@@ -160,10 +167,15 @@ export default function RegisterPage() {
     }
 
     setFormData({ ...formData, phone: value });
-    if (value) {
+    if (phoneTouched && value) {
       setPhoneError(validatePhone(value));
-    } else {
-      setPhoneError('');
+    }
+  };
+
+  const handlePhoneBlur = () => {
+    setPhoneTouched(true);
+    if (formData.phone) {
+      setPhoneError(validatePhone(formData.phone));
     }
   };
 
@@ -191,28 +203,6 @@ export default function RegisterPage() {
     }
   };
 
-  const handleFirstNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value;
-    value = value.replace(/[^a-zA-Zа-яА-ЯёЁјЈљЉњЊќЌџЅ\s-]/g, '');
-    setFormData({ ...formData, firstName: value });
-    if (value) {
-      setFirstNameError(validateName(value));
-    } else {
-      setFirstNameError('');
-    }
-  };
-
-  const handleLastNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value;
-    value = value.replace(/[^a-zA-Zа-яА-ЯёЁјЈљЉњЊќЌџЅ\s-]/g, '');
-    setFormData({ ...formData, lastName: value });
-    if (value) {
-      setLastNameError(validateName(value));
-    } else {
-      setLastNameError('');
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -235,56 +225,17 @@ export default function RegisterPage() {
 
     if (formData.type === 'Individual') {
       if (!formData.phone.trim()) {
+        setPhoneTouched(true);
         toast.error(t('register.phoneRequired'));
+        setPhoneError(t('register.phoneRequired'));
         return;
       }
+      setPhoneTouched(true);
       const phoneValidationError = validatePhone(formData.phone);
       if (phoneValidationError) {
         toast.error(phoneValidationError);
         setPhoneError(phoneValidationError);
         return;
-      }
-      if (!formData.firstName.trim()) {
-        toast.error(t('register.firstNameRequired'));
-        return;
-      }
-      const firstNameValidationError = validateName(formData.firstName.trim());
-      if (firstNameValidationError) {
-        toast.error(firstNameValidationError);
-        setFirstNameError(firstNameValidationError);
-        return;
-      }
-      if (formData.firstName.trim().length < 2) {
-        toast.error(t('register.firstNameMinLength'));
-        return;
-      }
-      if (formData.firstName.trim().length > 50) {
-        toast.error(t('register.firstNameMaxLength'));
-        return;
-      }
-      if (formData.lastName && formData.lastName.trim()) {
-        const lastNameValidationError = validateName(formData.lastName.trim());
-        if (lastNameValidationError) {
-          toast.error(lastNameValidationError);
-          setLastNameError(lastNameValidationError);
-          return;
-        }
-        if (formData.lastName.trim().length < 2) {
-          toast.error(t('register.lastNameMinLength'));
-          return;
-        }
-        if (formData.lastName.trim().length > 50) {
-          toast.error(t('register.lastNameMaxLength'));
-          return;
-        }
-      }
-      if (formData.email) {
-        const emailValidationError = validateEmail(formData.email);
-        if (emailValidationError) {
-          toast.error(emailValidationError);
-          setEmailError(emailValidationError);
-          return;
-        }
       }
     } else {
       if (!formData.companyName.trim()) {
@@ -300,9 +251,12 @@ export default function RegisterPage() {
         return;
       }
       if (!formData.phone.trim()) {
+        setPhoneTouched(true);
         toast.error(t('register.phoneRequired'));
+        setPhoneError(t('register.phoneRequired'));
         return;
       }
+      setPhoneTouched(true);
       const phoneValidationError = validatePhone(formData.phone);
       if (phoneValidationError) {
         toast.error(phoneValidationError);
@@ -330,15 +284,11 @@ export default function RegisterPage() {
         submitData = {
           ...formData,
           companyName: '',
-          emailNotifications:
-            formData.email && formData.email.trim() ? formData.emailNotifications : false,
+          email: undefined,
+          emailNotifications: false,
+          firstName: undefined,
+          lastName: undefined,
         };
-        if (!formData.email || !formData.email.trim()) {
-          delete submitData.email;
-        }
-        if (!formData.lastName || !formData.lastName.trim()) {
-          delete submitData.lastName;
-        }
       } else {
         submitData = {
           ...formData,
@@ -425,7 +375,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-6 md:mt-12">
+    <div className="max-w-md mx-auto mt-6 md:mt-12 mb-16">
       <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
         {t('register.title')}
       </h1>
@@ -471,11 +421,14 @@ export default function RegisterPage() {
                 required
                 value={formData.phone}
                 onChange={handlePhoneChange}
-                className={`input-field ${phoneError ? 'border-red-500' : ''}`}
+                onBlur={handlePhoneBlur}
+                className={`input-field ${phoneTouched && phoneError ? 'border-red-500' : ''}`}
                 placeholder="+38970123456"
                 autoComplete="off"
               />
-              {phoneError && <p className="mt-1 text-sm text-red-400">{phoneError}</p>}
+              {phoneTouched && phoneError && (
+                <p className="mt-1 text-sm text-red-400">{phoneError}</p>
+              )}
             </div>
 
             <div className="mb-5">
@@ -484,7 +437,7 @@ export default function RegisterPage() {
                 <span className="text-hint text-xs font-normal">{t('register.optional')}</span>
               </label>
               {/* eslint-disable no-hardcoded-text/no-hardcoded-text */}
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 <div className="flex items-center gap-2 group">
                   <div className="relative">
                     <input
@@ -662,131 +615,6 @@ export default function RegisterPage() {
                 ))}
               </div>
             </div>
-            <div className="mb-5">
-              <label className="block text-sm font-semibold mb-2 text-primary-500">
-                {t('register.firstName')} <span className="text-red-400">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.firstName}
-                onChange={handleFirstNameChange}
-                className={`input-field ${firstNameError ? 'border-red-500' : ''}`}
-                placeholder={t('register.firstName')}
-                autoComplete="off"
-              />
-              {firstNameError && <p className="mt-1 text-sm text-red-400">{firstNameError}</p>}
-            </div>
-
-            <div className="mb-5">
-              <label className="block text-sm font-semibold mb-2 text-primary-500">
-                {t('register.lastName')}{' '}
-                <span className="text-hint text-xs">{t('register.optional')}</span>
-              </label>
-              <input
-                type="text"
-                value={formData.lastName}
-                onChange={handleLastNameChange}
-                className={`input-field ${lastNameError ? 'border-red-500' : ''}`}
-                placeholder={t('register.lastName')}
-                autoComplete="off"
-              />
-              {lastNameError && <p className="mt-1 text-sm text-red-400">{lastNameError}</p>}
-            </div>
-
-            <div className="mb-5">
-              <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center justify-between">
-                <span>
-                  {t('register.email')}{' '}
-                  <span className="text-hint text-xs">{t('register.optional')}</span>
-                </span>
-                <span className="group relative inline-block">
-                  <svg
-                    className="w-4 h-4 text-primary-400 hover:text-primary-300 cursor-help transition-colors"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  <span className="absolute bottom-full right-0 mb-2 w-64 px-3 py-2 text-xs text-text-secondary bg-bg-darker border border-primary-500/30 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10 shadow-lg">
-                    {t('register.phoneHint')}
-                  </span>
-                </span>
-              </label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={handleEmailChange}
-                className={`input-field ${emailError ? 'border-red-500' : ''}`}
-                // eslint-disable-next-line no-hardcoded-text/no-hardcoded-text
-                placeholder="example@email.com"
-                autoComplete="off"
-              />
-              {emailError && <p className="mt-1 text-sm text-red-400">{emailError}</p>}
-            </div>
-
-            {formData.email && (
-              <div className="mb-5">
-                <div className="flex items-center gap-3 group">
-                  <div className="relative">
-                    <input
-                      type="checkbox"
-                      checked={formData.emailNotifications}
-                      onChange={(e) =>
-                        setFormData({ ...formData, emailNotifications: e.target.checked })
-                      }
-                      className="sr-only"
-                    />
-                    <div
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setFormData({
-                          ...formData,
-                          emailNotifications: !formData.emailNotifications,
-                        });
-                      }}
-                      className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
-                        formData.emailNotifications
-                          ? 'bg-primary-500 border-primary-700'
-                          : 'border-primary-500/50 bg-bg-secondary group-hover:border-primary-500'
-                      }`}
-                    >
-                      {formData.emailNotifications && (
-                        <svg
-                          className="w-3 h-3 text-white"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={3}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                      )}
-                    </div>
-                  </div>
-                  <span
-                    onClick={() =>
-                      setFormData({ ...formData, emailNotifications: !formData.emailNotifications })
-                    }
-                    className={`text-sm cursor-pointer ${
-                      formData.emailNotifications ? 'text-text-primary' : 'text-text-secondary'
-                    }`}
-                  >
-                    {t('register.emailNotifications')}
-                  </span>
-                </div>
-              </div>
-            )}
           </>
         ) : (
           <>
@@ -837,11 +665,14 @@ export default function RegisterPage() {
                 required
                 value={formData.phone}
                 onChange={handlePhoneChange}
-                className={`input-field ${phoneError ? 'border-red-500' : ''}`}
+                onBlur={handlePhoneBlur}
+                className={`input-field ${phoneTouched && phoneError ? 'border-red-500' : ''}`}
                 placeholder="+38970123456"
                 autoComplete="off"
               />
-              {phoneError && <p className="mt-1 text-sm text-red-400">{phoneError}</p>}
+              {phoneTouched && phoneError && (
+                <p className="mt-1 text-sm text-red-400">{phoneError}</p>
+              )}
             </div>
 
             <div className="mb-5">
@@ -850,7 +681,7 @@ export default function RegisterPage() {
                 <span className="text-hint text-xs font-normal">{t('register.optional')}</span>
               </label>
               {/* eslint-disable no-hardcoded-text/no-hardcoded-text */}
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 <div className="flex items-center gap-2 group">
                   <div className="relative">
                     <input

@@ -155,6 +155,16 @@ export interface Translations {
     dataPreparationError: string;
     alreadyHaveAccount: string;
   };
+  completeProfile: {
+    title: string;
+    description: string;
+    skip: string;
+    save: string;
+    saveSuccess: string;
+    fixErrors: string;
+    fillAtLeastOne: string;
+    registrationSuccess: string;
+  };
   resetPassword: {
     title: string;
     phoneNumber: string;

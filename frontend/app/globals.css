@@ -589,3 +589,8 @@ label {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+body.register-page .register-page-main {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}

@@ -12,6 +12,8 @@ import { Header } from '@/components/Header';
 import { I18nProvider } from '@/components/I18nProvider';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { OrganizationSchema } from '@/components/OrganizationSchema';
+import { ProfileSaveSuccessToast } from '@/components/ProfileSaveSuccessToast';
+import { RegisterPageBodyClass } from '@/components/RegisterPageBodyClass';
 import { ScrollReset } from '@/components/ScrollReset';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 import { getServerTranslations } from '@/lib/i18n';
@@ -134,12 +136,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <CookieConsent />
         <I18nProvider>
           <AuthProvider>
+            <RegisterPageBodyClass />
+            <ProfileSaveSuccessToast />
             <ServiceWorkerRegistration />
             <ScrollReset />
             <div className="min-h-screen flex flex-col">
               <Header />
               <OfflineBanner />
-              <main className="flex-grow container mx-auto px-3 sm:px-4 py-6 md:py-8">
+              <main className="flex-grow container mx-auto px-3 sm:px-4 py-6 md:py-8 register-page-main">
                 {children}
               </main>
               <Footer />

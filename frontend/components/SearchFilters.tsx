@@ -1584,6 +1584,7 @@ export function SearchFilters() {
         <PopularFilters
           isQuickFilterActive={isQuickFilterActive}
           onApplyFilter={applyPopularFilter}
+          onReset={() => handleReset(false)}
           vehicleType={vehicleType}
         />
       )}

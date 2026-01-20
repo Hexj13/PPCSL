@@ -276,6 +276,14 @@ function VerifyPhoneContent() {
         if (typeof window !== 'undefined') {
           localStorage.removeItem('pendingRegistration');
 
+          if (formData.type === 'Individual') {
+            if (typeof window !== 'undefined' && window.location) {
+              localStorage.setItem('showRegistrationSuccess', 'true');
+              window.location.href = '/complete-profile';
+            }
+            return;
+          }
+
           const pendingFavorites = JSON.parse(localStorage.getItem('pendingFavorites') || '[]');
           if (pendingFavorites.length > 0) {
             const validFavorites: string[] = [];

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { getPopularBrands, getPopularModelsByBrand } from '@/lib/popular-brands';
@@ -9,19 +10,31 @@ import { compareNames, createSlug } from '@/lib/utils';
 interface PopularFiltersProps {
   isQuickFilterActive: (_brandName: string, _modelName?: string) => boolean;
   onApplyFilter: (_brandName: string, _modelName?: string) => void;
+  onReset?: () => void;
   vehicleType?: 'car' | 'truck' | 'moto';
 }
 
 export function PopularFilters({
   isQuickFilterActive,
   onApplyFilter,
+  onReset,
   vehicleType = 'car',
 }: PopularFiltersProps) {
   const { t } = useTranslation();
+  const router = useRouter();
   const popularBrands = getPopularBrands(vehicleType) || [];
   const popularModelsByBrand = getPopularModelsByBrand(vehicleType) || {};
   const sortedBrands =
     popularBrands.length > 0 ? [...popularBrands].sort((a, b) => compareNames(a, b)) : [];
+
+  const handleReset = () => {
+    if (onReset) {
+      onReset();
+    } else {
+      const baseUrl = vehicleType !== 'car' ? `/?vehicleType=${vehicleType}` : '/';
+      router.push(baseUrl);
+    }
+  };
 
   const renderBrand = (brand: string) => {
     if (!brand) return null;
@@ -36,7 +49,9 @@ export function PopularFilters({
           suppressHydrationWarning
           onClick={(e) => {
             e.preventDefault();
-            if (!isBrandActive) {
+            if (isBrandActive) {
+              handleReset();
+            } else {
               onApplyFilter(brand);
             }
           }}
@@ -87,7 +102,9 @@ export function PopularFilters({
                 suppressHydrationWarning
                 onClick={(e) => {
                   e.preventDefault();
-                  if (!isModelActive) {
+                  if (isModelActive) {
+                    handleReset();
+                  } else {
                     onApplyFilter(brand, model);
                   }
                 }}

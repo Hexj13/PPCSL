@@ -1044,6 +1044,16 @@
     "registrationSuccessButLoginFailed": "Registration successful, but login failed. Please log in manually.",
     "phoneNotAvailable": "Phone number is not available"
   },
+  "completeProfile": {
+    "title": "Provide Additional Information",
+    "description": "You can provide additional information about yourself or skip this step and fill it in later in 'Profile'",
+    "skip": "Skip",
+    "save": "Save",
+    "saveSuccess": "Data saved successfully",
+    "fixErrors": "Please fix errors in the form",
+    "fillAtLeastOne": "Fill in at least one field to save",
+    "registrationSuccess": "You have successfully registered"
+  },
   "pwa": {
     "install": "Install App",
     "installTitle": "Install Kupito",
