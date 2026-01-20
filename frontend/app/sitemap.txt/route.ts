@@ -62,8 +62,12 @@ async function generateSitemapContent(): Promise<string> {
         }
       });
 
-      const addBrandUrls = async (brands: typeof allBrands, vehicleType?: 'truck' | 'moto') => {
-        const vehicleTypeParam = vehicleType ? `&vehicleType=${vehicleType}` : '';
+      const addBrandUrls = async (
+        brands: typeof allBrands,
+        vehicleType?: 'car' | 'truck' | 'moto'
+      ) => {
+        const vehicleTypeParam =
+          vehicleType && vehicleType !== 'car' ? `&vehicleType=${vehicleType}` : '';
 
         for (const brand of brands) {
           const brandSlug = createSlug(brand.name);
