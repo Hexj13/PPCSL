@@ -11,7 +11,7 @@ import { listingsApi, Listing } from '@/lib/api';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { useComparisonStore } from '@/lib/store';
 
-import { comparisonFields } from './comparisonFields';
+import { getComparisonFieldsForListings } from './comparisonFields';
 
 export default function ComparePage() {
   const { t } = useTranslation();
@@ -216,7 +216,7 @@ export default function ComparePage() {
             </tr>
           </thead>
           <tbody>
-            {comparisonFields.map((field) => (
+            {getComparisonFieldsForListings(listings).map((field) => (
               <tr key={field.key} className="border-b border-primary-500/10">
                 <td className="py-4 px-4 text-primary-500 font-semibold">{t(field.labelKey)}</td>
                 {listings.map((listing) => field.renderCell(listing, t, siteConfig))}

@@ -15,7 +15,6 @@ async function updateListingDates() {
 
     const listingRepo = AppDataSource.getRepository(Listing);
 
-    // Получаем все активные объявления
     const activeListings = await listingRepo.find({
       where: { status: ListingStatusEnum.Active },
       order: { created_at: 'DESC' },
@@ -33,28 +32,24 @@ async function updateListingDates() {
     let updatedDaysAgo = 0;
     let updatedOlder = 0;
 
-    // Распределяем объявления по группам
     for (let i = 0; i < activeListings.length; i++) {
       const listing = activeListings[i];
-      const position = i % 20; // Цикл каждые 20 объявлений
+      const position = i % 20;
 
       let newDate: Date;
 
       if (position < 5) {
-        // Первые 5 - сегодня (0 дней назад)
         newDate = new Date(now);
         newDate.setHours(now.getHours() - position * 2); // Разные часы в течение дня
         updatedToday++;
       } else if (position < 12) {
-        // Следующие 7 - от 1 до 7 дней назад
-        const daysAgo = position - 4; // 1, 2, 3, 4, 5, 6, 7
+        const daysAgo = position - 4;
         newDate = new Date(now);
         newDate.setDate(newDate.getDate() - daysAgo);
         newDate.setHours(Math.floor(Math.random() * 24));
         updatedDaysAgo++;
       } else {
-        // Остальные - старше 7 дней (8-30 дней назад)
-        const daysAgo = 8 + Math.floor((position - 12) * 2.75); // 8-30 дней
+        const daysAgo = 8 + Math.floor((position - 12) * 2.75);
         newDate = new Date(now);
         newDate.setDate(newDate.getDate() - daysAgo);
         newDate.setHours(Math.floor(Math.random() * 24));

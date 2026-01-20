@@ -12,6 +12,7 @@ import {
   formatFuel,
   horsepowerToKw,
   formatMileage,
+  getVehicleType,
 } from '@/lib/utils';
 
 interface ListingPageCharacteristicsProps {
@@ -21,6 +22,7 @@ interface ListingPageCharacteristicsProps {
 export function ListingPageCharacteristics({ listing }: ListingPageCharacteristicsProps) {
   const { t } = useTranslation();
   const vehicle = listing.vehicle;
+  const vehicleType = getVehicleType(listing);
 
   if (!vehicle) {
     return null;
@@ -132,7 +134,7 @@ export function ListingPageCharacteristics({ listing }: ListingPageCharacteristi
                   </span>
                 </div>
               )}
-              {vehicle.drive_type && (
+              {vehicle.drive_type && vehicleType !== 'moto' && (
                 <div>
                   <span className="text-primary-500 font-semibold">
                     {t('listingDetail.driveType')}:
@@ -179,7 +181,7 @@ export function ListingPageCharacteristics({ listing }: ListingPageCharacteristi
                   </span>
                 </div>
               )}
-              {vehicle.doors && (
+              {vehicle.doors && vehicleType !== 'moto' && (
                 <div>
                   <span className="text-primary-500 font-semibold">
                     {t('listingDetail.doors')}:

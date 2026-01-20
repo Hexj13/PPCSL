@@ -136,6 +136,8 @@ export async function parseSearchParams(
   const vehicleTypeParam = getValue('vehicleType');
   if (vehicleTypeParam && ['car', 'truck', 'moto'].includes(vehicleTypeParam)) {
     params.vehicleType = vehicleTypeParam as 'car' | 'truck' | 'moto';
+  } else {
+    params.vehicleType = 'car';
   }
 
   const brandParam = getValue('brand');

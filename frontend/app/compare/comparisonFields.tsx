@@ -13,6 +13,7 @@ import {
   formatFuel,
   formatRegistrationType,
   horsepowerToKw,
+  getVehicleType,
 } from '@/lib/utils';
 
 export interface ComparisonField {
@@ -354,3 +355,19 @@ export const comparisonFields: ComparisonField[] = [
     ),
   },
 ];
+
+export function getComparisonFieldsForListings(listings: Listing[]): ComparisonField[] {
+  if (listings.length === 0) {
+    return comparisonFields;
+  }
+
+  const vehicleTypes = new Set(listings.map((listing) => getVehicleType(listing)));
+  const hasMoto = vehicleTypes.has('moto');
+
+  if (!hasMoto) {
+    return comparisonFields;
+  }
+
+  const excludeForMoto = ['driveType', 'doors'];
+  return comparisonFields.filter((field) => !excludeForMoto.includes(field.key));
+}

@@ -113,6 +113,8 @@ export const BodyType = {
   Cross: bodyTypes[21],
 } as const;
 
+export const VEHICLE_TYPE_BY_BODY_TYPE: Record<string, 'car' | 'truck' | 'moto'> = {};
+
 export const BODY_TYPES_BY_VEHICLE_TYPE: Record<
   'car' | 'truck' | 'moto',
   readonly (typeof bodyTypes)[number][]
@@ -146,6 +148,12 @@ export const BODY_TYPES_BY_VEHICLE_TYPE: Record<
     BodyType.Cross,
   ],
 } as const;
+
+Object.entries(BODY_TYPES_BY_VEHICLE_TYPE).forEach(([vehicleType, bodyTypes]) => {
+  bodyTypes.forEach((bodyType) => {
+    VEHICLE_TYPE_BY_BODY_TYPE[bodyType] = vehicleType as 'car' | 'truck' | 'moto';
+  });
+});
 
 export const ConditionType = {
   Undamaged: conditionTypes[0],

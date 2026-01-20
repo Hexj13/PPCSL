@@ -48,7 +48,9 @@ export class BrandsService {
       this.logger.warn('Failed to get brands from cache', error);
     }
 
-    const queryBuilder = this.brandsRepository.createQueryBuilder('brand');
+    const queryBuilder = this.brandsRepository
+      .createQueryBuilder('brand')
+      .select(['brand.id', 'brand.name', 'brand.logoUrl', 'brand.order', 'brand.vehicle_types']);
 
     if (vehicleType) {
       queryBuilder.where(

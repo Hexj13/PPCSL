@@ -112,8 +112,8 @@ export class ListingsService {
       await this.redisService.del(
         generateCacheKey({ prefix: CACHE_PREFIXES.listings, parts: [savedListing.id] }),
       );
-    } catch {
-      // Ignore cache errors
+    } catch (_: unknown) {
+      void _;
     }
 
     return savedListing;
@@ -132,8 +132,8 @@ export class ListingsService {
       if (cached) {
         return cached;
       }
-    } catch {
-      // Ignore cache errors
+    } catch (_: unknown) {
+      void _;
     }
 
     const queryBuilder = this.listingsRepository
@@ -344,8 +344,8 @@ export class ListingsService {
 
     try {
       await this.redisService.setJson(cacheKey, result, this.CACHE_TTL_SEARCH);
-    } catch {
-      // Ignore cache errors
+    } catch (_: unknown) {
+      void _;
     }
 
     return result;
@@ -353,7 +353,6 @@ export class ListingsService {
 
   async findOne(id: string): Promise<Listing> {
     try {
-      // Clear cache before loading to ensure fresh data
       await this.listingsRepository.manager.connection.queryResultCache?.remove([`listing_${id}`]);
 
       const listing = await this.listingsRepository
@@ -490,7 +489,6 @@ export class ListingsService {
   async update(id: string, updateListingDto: UpdateListingDto, userId: string): Promise<Listing> {
     validateRegistrationDate(updateListingDto.registration_expires_at);
 
-    // Load current listing
     const listing = await this.listingsRepository.findOne({
       where: { id },
       relations: ['vehicle'],
@@ -510,7 +508,6 @@ export class ListingsService {
 
     const previousBrandId = listing.vehicle?.brand_id;
 
-    // Update vehicle if needed
     if (updateListingDto.vehicle && listing.vehicle_id) {
       const vehicleUpdateData: Partial<Vehicle> = {};
       const vehicleDto = updateListingDto.vehicle;
@@ -532,14 +529,12 @@ export class ListingsService {
       if (Object.keys(vehicleUpdateData).length > 0) {
         await this.vehiclesRepository.update(listing.vehicle_id, vehicleUpdateData);
 
-        // Clear TypeORM cache
         await this.vehiclesRepository.manager.connection.queryResultCache?.remove([
           `vehicle_${listing.vehicle_id}`,
         ]);
       }
     }
 
-    // Load updated vehicle for title generation
     if (!listing.vehicle_id) {
       throw new NotFoundException('Vehicle ID not found');
     }
@@ -552,7 +547,6 @@ export class ListingsService {
       throw new NotFoundException('Vehicle not found');
     }
 
-    // Prepare listing update data
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { vehicle, registration_expires_at, ...listingFields } = updateListingDto;
     const listingUpdateData: Partial<Listing> = {
@@ -569,13 +563,10 @@ export class ListingsService {
         registration_expires_at === null ? null : new Date(registration_expires_at);
     }
 
-    // Update listing
     await this.listingsRepository.update(id, listingUpdateData);
 
-    // Clear TypeORM cache for listing
     await this.listingsRepository.manager.connection.queryResultCache?.remove([`listing_${id}`]);
 
-    // Load fresh listing with all relations
     const freshListing = await this.listingsRepository.findOne({
       where: { id },
       relations: ['vehicle', 'vehicle.brand', 'vehicle.model', 'user'],
@@ -585,7 +576,6 @@ export class ListingsService {
       throw new NotFoundException('errors.listingNotFound');
     }
 
-    // Clear Redis cache
     try {
       await this.redisService.invalidateByPrefix(CACHE_PREFIXES.listingsSearch);
       await this.redisService.del(
@@ -605,11 +595,10 @@ export class ListingsService {
           }),
         );
       }
-    } catch {
-      // Ignore cache errors
+    } catch (_: unknown) {
+      void _;
     }
 
-    // Remove sensitive user data
     if (freshListing.user) {
       freshListing.user = removePasswordFromUser(freshListing.user) as typeof freshListing.user;
     }
@@ -660,8 +649,8 @@ export class ListingsService {
       await this.redisService.del(
         generateCacheKey({ prefix: CACHE_PREFIXES.listings, parts: [id] }),
       );
-    } catch {
-      // Ignore cache errors
+    } catch (_: unknown) {
+      void _;
     }
 
     return publishedListing;
@@ -685,8 +674,8 @@ export class ListingsService {
       await this.redisService.del(
         generateCacheKey({ prefix: CACHE_PREFIXES.listings, parts: [id] }),
       );
-    } catch {
-      // Ignore cache errors
+    } catch (_: unknown) {
+      void _;
     }
 
     return pausedListing;
@@ -718,8 +707,8 @@ export class ListingsService {
       await this.redisService.del(
         generateCacheKey({ prefix: CACHE_PREFIXES.listings, parts: [id] }),
       );
-    } catch {
-      // Ignore cache errors
+    } catch (_: unknown) {
+      void _;
     }
 
     return closedListing;
@@ -888,8 +877,8 @@ export class ListingsService {
 
     try {
       await this.redisService.delPattern('cache:listings:search:*');
-    } catch {
-      // Ignore cache errors
+    } catch (_: unknown) {
+      void _;
     }
 
     return result.affected || 0;
@@ -971,8 +960,8 @@ export class ListingsService {
       await this.redisService.del(
         generateCacheKey({ prefix: CACHE_PREFIXES.listings, parts: [id] }),
       );
-    } catch {
-      // Ignore cache errors
+    } catch (_: unknown) {
+      void _;
     }
 
     return savedListing;
@@ -1067,8 +1056,8 @@ export class ListingsService {
       if (cached) {
         return cached.slice(normalizedOffset, normalizedOffset + normalizedLimit);
       }
-    } catch {
-      // Ignore cache errors
+    } catch (_: unknown) {
+      void _;
     }
 
     const candidates = await this.fetchSimilarCandidates(current);
@@ -1079,8 +1068,8 @@ export class ListingsService {
 
     try {
       await this.redisService.setJson(cacheKey, result, this.CACHE_TTL_SIMILAR);
-    } catch {
-      // Ignore cache errors
+    } catch (_: unknown) {
+      void _;
     }
 
     return result.slice(normalizedOffset, normalizedOffset + normalizedLimit);

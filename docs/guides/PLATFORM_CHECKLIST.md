@@ -26,15 +26,9 @@ platform-repo/
 │   └── {lang}.json           # Переводы
 ├── theme/
 │   └── colors.ts             # Цветовая схема
-├── scripts/                   # Platform-specific скрипты
-│   └── {country}/            # mk, al, и т.д.
-│       ├── production/
-│       └── stage/
-│           ├── seed-config.ts    # Города, описания, телефоны
-│           ├── seed.ts
-│           ├── reset-and-seed.ts
-│           └── ...
 ├── core/                      # Submodule PPCSL
+│   └── backend/src/scripts/platforms/{country}/  # Platform configs в core
+│       └── config.ts         # Города, описания, телефоны
 ├── package.json
 └── README.md
 ```
@@ -48,7 +42,7 @@ platform-repo/
 - [ ] Зарегистрирован домен (Namecheap)
 - [ ] Создан Git репозиторий
 - [ ] Добавлен PPCSL core как submodule
-- [ ] Создана структура папок (`assets/`, `config/`, `locales/`, `theme/`, `scripts/`)
+- [ ] Создана структура папок (`assets/`, `config/`, `locales/`, `theme/`)
 
 ### 2. Конфигурация (`config/site.ts`)
 

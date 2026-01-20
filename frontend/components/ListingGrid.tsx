@@ -111,29 +111,51 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       limit: number = 20,
       loadTwoPages: boolean = false
     ) => {
+      const currentSearchParams = new URLSearchParams(searchParamsString);
+      const vehicleTypeParam = currentSearchParams.get('vehicleType') as
+        | 'car'
+        | 'truck'
+        | 'moto'
+        | null;
+      const vehicleType =
+        vehicleTypeParam && ['car', 'truck', 'moto'].includes(vehicleTypeParam)
+          ? vehicleTypeParam
+          : 'car'; // Default to 'car' if not specified
+
       let parsedParams;
       try {
-        const currentSearchParams = new URLSearchParams(searchParamsString);
-        const vehicleTypeParam = currentSearchParams.get('vehicleType') as
-          | 'car'
-          | 'truck'
-          | 'moto'
-          | null;
-        const vehicleType =
-          vehicleTypeParam && ['car', 'truck', 'moto'].includes(vehicleTypeParam)
-            ? vehicleTypeParam
-            : undefined;
+        let brands;
+        try {
+          brands = await brandsApi.getAll(vehicleType);
+        } catch (error) {
+          console.error('ListingGrid: failed to get brands for vehicleType', vehicleType, error);
+          brands = await brandsApi.getAll();
+        }
 
-        const brands = await brandsApi.getAll(vehicleType);
-        const brandResolver = createBrandResolver(brands.data);
+        const fallbackBrands = brands.data.length === 0 ? await brandsApi.getAll() : brands;
+        const brandResolver = createBrandResolver(fallbackBrands.data);
 
         parsedParams = await parseSearchParams(currentSearchParams, {
           brandResolver: async (slugs) => {
             return brandResolver(slugs);
           },
           modelResolver: async (brandIds, slugs) => {
-            const modelsByBrand = await brandsApi.getModelsBatch(brandIds, vehicleType);
-            const modelResolver = createModelResolver(modelsByBrand.data);
+            let modelsByBrand;
+            try {
+              modelsByBrand = await brandsApi.getModelsBatch(brandIds, vehicleType);
+            } catch (error) {
+              console.error(
+                'ListingGrid: failed to get models for vehicleType',
+                vehicleType,
+                error
+              );
+              modelsByBrand = await brandsApi.getModelsBatch(brandIds); // Fallback
+            }
+            const fallbackModels =
+              Object.keys(modelsByBrand.data).length === 0
+                ? await brandsApi.getModelsBatch(brandIds)
+                : modelsByBrand;
+            const modelResolver = createModelResolver(fallbackModels.data);
             return modelResolver(brandIds, slugs);
           },
         });
@@ -155,6 +177,8 @@ export function ListingGrid({ initialData }: ListingGridProps) {
           page,
           limit,
         };
+
+        params.vehicleType = vehicleType;
 
         const requests: Array<
           Promise<{ data: { data: Listing[]; meta: PaginationMeta } }> | Promise<null>
@@ -218,7 +242,8 @@ export function ListingGrid({ initialData }: ListingGridProps) {
         });
 
         await checkFavorites(allNewListings.map((l) => l.id));
-      } catch {
+      } catch (error) {
+        console.error('ListingGrid: fetchListings failed', error);
         if (!append) {
           setListings([]);
           setError(t('listings.loadError'));

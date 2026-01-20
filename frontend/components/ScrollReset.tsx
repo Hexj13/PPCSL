@@ -38,9 +38,7 @@ export function ScrollReset() {
         try {
           sessionStorage.setItem('homeReloadScrollY', String(window.scrollY));
           sessionStorage.setItem('homeReloadScrollTs', String(Date.now()));
-        } catch {
-          // ignore
-        }
+        } catch {}
       };
 
       window.addEventListener('pagehide', saveReloadScroll);

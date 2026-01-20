@@ -87,10 +87,13 @@ PPCSL/
 ## 🧪 Testing
 
 ```bash
-# Backend tests (195 tests)
+# Backend unit tests (195 tests)
 cd backend && npm test
 
-# Frontend tests (52 tests)
+# Backend integration tests (44 tests)
+cd backend && npm run test:integration
+
+# Frontend tests (85 tests)
 cd frontend && npm test
 ```
 

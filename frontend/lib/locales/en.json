@@ -349,6 +349,11 @@
       "truck": "Truck",
       "moto": "Motorcycle"
     },
+    "vehicleTypeFull": {
+      "car": "",
+      "truck": "Trucks",
+      "moto": "Motorcycles"
+    },
     "brandRequired": "Brand selection is required",
     "modelRequired": "Model selection is required",
     "yearRequired": "Year is required",

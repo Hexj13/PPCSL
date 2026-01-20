@@ -32,11 +32,7 @@ export function DynamicPageTitle() {
     const bodyTypesParam = searchParams.get('body_types');
     const hasEncodedArrays = searchParams.get('_e') === '1';
 
-    // Приоритет: brand/model → body_types → default
-    if (brandParam || modelParam) {
-      // Используем существующую логику для brand/model, body_types игнорируется
-    } else if (bodyTypesParam) {
-      // Используем body_types только если нет brand/model
+    if (bodyTypesParam && !brandParam && !modelParam) {
       const bodyTypes = hasEncodedArrays
         ? decodeArray(bodyTypesParam)
         : bodyTypesParam

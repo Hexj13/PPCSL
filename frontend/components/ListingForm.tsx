@@ -28,6 +28,7 @@ import {
 } from '@/lib/form-options';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import {
+  BodyType,
   ConditionType,
   ConditionTypeEnum,
   Currency,
@@ -488,16 +489,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
           ...(vehicleType !== 'moto' && formData.vehicle.drive_type
             ? { drive_type: formData.vehicle.drive_type as 'FWD' | 'RWD' | 'AWD' }
             : {}),
-          body_type: formData.vehicle.body_type as
-            | 'Sedan'
-            | 'Hatchback'
-            | 'Wagon'
-            | 'SUV'
-            | 'Coupe'
-            | 'Convertible'
-            | 'Van'
-            | 'Pickup'
-            | 'Minivan',
+          body_type: formData.vehicle.body_type as BodyType,
           color: formData.vehicle.color || undefined,
           doors:
             vehicleType !== 'moto' && formData.vehicle.doors

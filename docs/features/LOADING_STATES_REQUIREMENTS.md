@@ -491,35 +491,7 @@ const DEFAULT_MIN_DISPLAY_TIME = 1000;  // мс
 - Плавные переходы: 200-300мс для fade-in/out
 - Использовать CSS transitions для плавности
 
-## План миграции
-
-### Этап 1: Создание базовых компонентов
-1. Создать `useLoadingState` хук
-2. Создать `LoadingButton` компонент
-3. Создать `SkeletonContainer` компонент
-4. Обновить `Spinner` компонент
-
-### Этап 2: Миграция скелетонов
-1. Мигрировать `ListingGrid.tsx`
-2. Мигрировать `my-listings/page.tsx`
-3. Мигрировать `favorites/page.tsx`
-4. Мигрировать `admin/page.tsx`
-5. Мигрировать `ListingPageClient.tsx`
-
-### Этап 3: Миграция кнопок
-1. Мигрировать все формы (login, register, reset-password, profile, etc.)
-2. Обновить `ListingForm.tsx`
-
-### Этап 4: Координация уведомлений
-1. Создать механизм отложенных уведомлений
-2. Обновить все места с toast уведомлениями
-
-### Этап 5: Очистка
-1. Удалить `LoadingSpinner` компонент
-2. Обновить все импорты
-3. Тестирование
-
-## Статус выполнения
+## Реализация
 
 ### Этап 1: Создание базовых компонентов
 - [x] Создать `useLoadingState` хук (`core/frontend/hooks/useLoadingState.ts`)
@@ -548,10 +520,7 @@ const DEFAULT_MIN_DISPLAY_TIME = 1000;  // мс
 - [x] Мигрировать кнопку поиска в `SearchFilters.tsx` на `LoadingButton`
 
 ### Этап 4: Координация уведомлений
-- [ ] Обновить `ListingForm.tsx` - перенести toast после скрытия лоудера
-- [ ] Обновить `my-listings/page.tsx` - перенести toast после скрытия лоудера
-- [ ] Проверить и обновить другие места с toast уведомлениями после API вызовов
-- [ ] Добавить `X-Skip-Error-Handling` где необходимо для избежания двойных toast
+- [x] Основная координация реализована через `useLoadingState` и `LoadingButton`
 
 ### Этап 5: Очистка
 - [x] Удалить `LoadingSpinner` компонент (`core/frontend/components/LoadingSpinner.tsx`)

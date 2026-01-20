@@ -599,9 +599,10 @@ cd frontend && npm test
 **Frontend Utilities:** ✅ Utility functions tested (`lib/utils.test.ts`)
 
 **Test Statistics:**
-- **Total Tests:** 247 tests across 18 test suites
-- **Backend:** 195 tests across 14 test suites (unit and integration tests)
-- **Frontend:** 52 tests across 4 test suites (component tests, utility tests, API tests, server API tests)
+- **Total Tests:** 324 tests across 27 test suites
+- **Backend Unit:** 195 tests across 14 test suites
+- **Backend Integration:** 44 tests across 5 test suites
+- **Frontend:** 85 tests across 8 test suites (component tests, utility tests, API tests, server API tests)
 
 ### CI/CD
 

@@ -29,7 +29,6 @@ async function checkModelsStats() {
     return;
   }
 
-  // Get brands with model counts
   const brandsWithCounts = await brandRepo
     .createQueryBuilder('brand')
     .leftJoin('brand.models', 'model')

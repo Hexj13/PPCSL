@@ -1,3 +1,5 @@
+import { Listing } from './api';
+import { VEHICLE_TYPE_BY_BODY_TYPE } from './constants';
 import { loadSiteConfigSync } from './site-config';
 
 export const isBrowser = typeof window !== 'undefined';
@@ -410,4 +412,14 @@ export function horsepowerToKw(hp: number): number {
 
 export function kwToHorsepower(kw: number): number {
   return Math.round(kw / 0.73549875);
+}
+
+export function getVehicleType(listing: Listing): 'car' | 'truck' | 'moto' {
+  if (listing.vehicle?.model?.vehicle_type) {
+    return listing.vehicle.model.vehicle_type;
+  }
+  if (listing.vehicle?.body_type) {
+    return VEHICLE_TYPE_BY_BODY_TYPE[listing.vehicle.body_type] || 'car';
+  }
+  return 'car';
 }

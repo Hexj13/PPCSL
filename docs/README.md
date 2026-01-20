@@ -35,8 +35,8 @@
 - [LOADING_STATES_REQUIREMENTS.md](./features/LOADING_STATES_REQUIREMENTS.md) - Loading states
 - [PAID_PROMOTION.md](./features/PAID_PROMOTION.md) - Платное продвижение
 - [SIMILAR_LISTINGS_BLOCK.md](./features/SIMILAR_LISTINGS_BLOCK.md) - Похожие объявления
+- [SITEMAP_GENERATION.md](./features/SITEMAP_GENERATION.md) - Генерация sitemap
 - [VEHICLE_TYPE_TOGGLES.md](./features/VEHICLE_TYPE_TOGGLES.md) - Переключатели типа транспорта (легковой/грузовой/мото) ✅
-- Фильтр популярных типов кузовов - Визуальный фильтр с плитками (реализовано)
 - [SEO_AUDIT.md](./features/SEO_AUDIT.md) - SEO аудит
 - [TODO.md](./features/TODO.md) - Задачи и планы
 

@@ -5,14 +5,12 @@ import { AppDataSource } from '../../data-source';
 import { determineVehicleType } from '../data/vehicle-classification';
 
 const ITALIAN_BRANDS_TO_ADD = [
-  // Основни италијански брендови (ако недостасуваат)
   { name: 'Fiat', order: 290 },
   { name: 'Alfa Romeo', order: 291 },
   { name: 'Lancia', order: 292 },
   { name: 'Maserati', order: 293 },
   { name: 'Ferrari', order: 294 },
   { name: 'Lamborghini', order: 295 },
-  // Плус помали/ретки брендови
   { name: 'Abarth', order: 300 },
   { name: 'De Tomaso', order: 301 },
   { name: 'Autobianchi', order: 302 },

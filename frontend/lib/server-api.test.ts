@@ -30,16 +30,28 @@ describe('server-api', () => {
         data: [],
         meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
       };
+      const mockBrandsResponse: unknown[] = [];
 
-      (global.fetch as jest.Mock).mockResolvedValue({
-        ok: true,
-        json: async () => mockResponse,
-      });
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockBrandsResponse,
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockResponse,
+        });
 
       const result = await getListings({});
 
       expect(global.fetch).toHaveBeenCalledWith(
-        'http://localhost:4000/api/listings?page=1&limit=20',
+        'http://localhost:4000/api/brands',
+        expect.objectContaining({
+          next: expect.any(Object),
+        })
+      );
+      expect(global.fetch).toHaveBeenCalledWith(
+        'http://localhost:4000/api/listings?page=1&limit=20&vehicleType=car',
         expect.objectContaining({
           next: expect.any(Object),
           cache: expect.any(String),

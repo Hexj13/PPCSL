@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -11,7 +12,7 @@ import { useSearchFilters, type FilterState } from '@/hooks/useSearchFilters';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { brandsApi, VehicleModel, User } from '@/lib/api';
-import { ConditionType, RegistrationType } from '@/lib/constants';
+import { ConditionType, RegistrationType, VEHICLE_TYPE_BY_BODY_TYPE } from '@/lib/constants';
 import { getColorOptions } from '@/lib/form-options';
 import { getPopularBrands } from '@/lib/popular-brands';
 import { useAuthStore } from '@/lib/store';
@@ -108,19 +109,16 @@ export function SearchFilters() {
   const isApplyingQuickFilterRef = useRef(false);
 
   const getInitialVehicleType = (): 'car' | 'moto' | 'truck' => {
-    // First check URL parameters
     const vehicleTypeParam = searchParams.get('vehicleType');
     if (vehicleTypeParam && ['car', 'truck', 'moto'].includes(vehicleTypeParam)) {
       return vehicleTypeParam as 'car' | 'truck' | 'moto';
     }
 
-    // Then check localStorage for saved preference
     const storedVehicleType = getVehicleTypeFromStorage();
     if (storedVehicleType) {
       return storedVehicleType;
     }
 
-    // Default to 'car'
     return 'car';
   };
 
@@ -235,16 +233,56 @@ export function SearchFilters() {
 
   useEffect(() => {
     const vehicleTypeParam = searchParams.get('vehicleType');
-    const newVehicleType =
-      vehicleTypeParam && ['car', 'truck', 'moto'].includes(vehicleTypeParam)
-        ? (vehicleTypeParam as 'car' | 'truck' | 'moto')
-        : 'car';
+    let newVehicleType: 'car' | 'truck' | 'moto' = 'car';
+
+    if (vehicleTypeParam && ['car', 'truck', 'moto'].includes(vehicleTypeParam)) {
+      newVehicleType = vehicleTypeParam as 'car' | 'truck' | 'moto';
+    } else {
+      const bodyTypesParam = searchParams.get('body_types');
+      if (bodyTypesParam) {
+        const bodyTypes = bodyTypesParam.split(',').map((bt) => bt.trim());
+        const categories = bodyTypes.map((bt) => VEHICLE_TYPE_BY_BODY_TYPE[bt]).filter(Boolean);
+
+        if (categories.length > 0 && categories.every((cat) => cat === categories[0])) {
+          newVehicleType = categories[0];
+        }
+      }
+    }
+
     if (newVehicleType !== vehicleType) {
       setVehicleType(newVehicleType);
       saveVehicleTypeToStorage(newVehicleType);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
+
+  useEffect(() => {
+    const vehicleTypeParam = searchParams.get('vehicleType');
+    const brandParam = searchParams.get('brand');
+
+    if (vehicleTypeParam || !brandParam || brands.length === 0) {
+      return;
+    }
+
+    const brandSlug = brandParam.split(',')[0].trim().toLowerCase();
+    const brand = brands.find(
+      (b) => b.name.toLowerCase() === brandSlug || createSlug(b.name) === brandSlug
+    );
+
+    if (!brand || !brand.vehicle_types || brand.vehicle_types.length === 0) {
+      return;
+    }
+
+    const vehicleTypes = brand.vehicle_types;
+    if (vehicleTypes.length === 1 && vehicleTypes[0] !== 'car') {
+      const newVehicleType = vehicleTypes[0];
+      if (newVehicleType !== vehicleType) {
+        setVehicleType(newVehicleType);
+        saveVehicleTypeToStorage(newVehicleType);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, brands]);
 
   useEffect(() => {
     const currentParams = searchParams.toString();

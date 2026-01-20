@@ -44,18 +44,40 @@ async function getTitleFromParams(
   brandParam: string | string[] | undefined,
   modelParam: string | string[] | undefined,
   bodyTypesParam: string | string[] | undefined,
+  vehicleTypeParam: string | string[] | undefined,
   defaultTitle: string,
   translations: Translations
 ): Promise<string> {
   const brand = typeof brandParam === 'string' ? brandParam : undefined;
   const model = typeof modelParam === 'string' ? modelParam : undefined;
   const bodyTypes = typeof bodyTypesParam === 'string' ? bodyTypesParam : undefined;
+  const vehicleType =
+    typeof vehicleTypeParam === 'string' && ['car', 'truck', 'moto'].includes(vehicleTypeParam)
+      ? vehicleTypeParam
+      : 'car';
 
-  // Приоритет: brand/model → body_types → default
-  if (brand || model) {
-    // Существующая логика для brand/model, body_types игнорируется
-  } else if (bodyTypes && !brand && !model) {
-    // Используем body_types только если нет brand/model
+  const getVehicleTypeLabel = (type: string): string => {
+    const key = `vehicleOptions.vehicleTypeFull.${type}`;
+    const value = getTranslationValue(translations, key);
+
+    if (value === key) {
+      switch (type) {
+        case 'truck':
+          return 'Камиони';
+        case 'moto':
+          return 'Мотоцикли';
+        case 'car':
+        default:
+          return '';
+      }
+    }
+
+    return value;
+  };
+
+  const vehicleTypeLabel = getVehicleTypeLabel(vehicleType);
+
+  if (bodyTypes && !brand && !model) {
     const bodyTypeValues = bodyTypes
       .split(',')
       .map((s) => s.trim())
@@ -72,13 +94,14 @@ async function getTitleFromParams(
         .filter((label): label is string => Boolean(label));
 
       if (bodyTypeLabels.length > 0) {
-        return bodyTypeLabels.join(', ');
+        const bodyTypeTitle = bodyTypeLabels.join(', ');
+        return vehicleTypeLabel ? `${bodyTypeTitle} | ${vehicleTypeLabel}` : bodyTypeTitle;
       }
     }
   }
 
   if (!brand && !model) {
-    return defaultTitle;
+    return vehicleTypeLabel ? `${vehicleTypeLabel} | ${defaultTitle}` : defaultTitle;
   }
 
   const brandSlugs = brand ? brand.split(',').map((s) => s.trim().toLowerCase()) : [];
@@ -124,12 +147,14 @@ async function getTitleFromParams(
         });
 
         if (foundModels.length > 0) {
-          return foundModels.join(', ');
+          const modelsTitle = foundModels.join(', ');
+          return vehicleTypeLabel ? `${modelsTitle} | ${vehicleTypeLabel}` : modelsTitle;
         }
       }
     }
 
-    return foundBrands.length === 1 ? foundBrands[0] : foundBrands.join(', ');
+    const brandsTitle = foundBrands.length === 1 ? foundBrands[0] : foundBrands.join(', ');
+    return vehicleTypeLabel ? `${brandsTitle} | ${vehicleTypeLabel}` : brandsTitle;
   } catch {
     const popularBrands = brandSlugs
       .map((slug) => {
@@ -156,11 +181,14 @@ async function getTitleFromParams(
       });
 
       if (foundModels.length > 0) {
-        return foundModels.join(', ');
+        const modelsTitle = foundModels.join(', ');
+        return vehicleTypeLabel ? `${modelsTitle} | ${vehicleTypeLabel}` : modelsTitle;
       }
     }
 
-    return popularBrands.length === 1 ? popularBrands[0] : popularBrands.join(', ');
+    const popularBrandsTitle =
+      popularBrands.length === 1 ? popularBrands[0] : popularBrands.join(', ');
+    return vehicleTypeLabel ? `${popularBrandsTitle} | ${vehicleTypeLabel}` : popularBrandsTitle;
   }
 }
 
@@ -174,9 +202,17 @@ export async function generateMetadata({
   const brandParam = params.brand;
   const modelParam = params.model;
   const bodyTypesParam = params.body_types;
+  const vehicleTypeParam = params.vehicleType;
   const pageParam = params.page;
   const baseTitle = t.metadata.site.defaultTitle;
-  const title = await getTitleFromParams(brandParam, modelParam, bodyTypesParam, baseTitle, t);
+  const title = await getTitleFromParams(
+    brandParam,
+    modelParam,
+    bodyTypesParam,
+    vehicleTypeParam,
+    baseTitle,
+    t
+  );
   const fullTitle = title === baseTitle ? title : `${title} | ${baseTitle}`;
 
   const page =

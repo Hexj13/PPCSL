@@ -298,13 +298,3 @@ CARD_GAP = 16  // px
 
 ### Documentation
 - `core/docs/SIMILAR_LISTINGS_BLOCK.md` - This file
-
-## Future Enhancements (Not Implemented)
-
-- Personalization based on user history
-- ML-based relevance ranking
-- Infinite scroll beyond 8 items
-- Filters/sorting within the block
-- A/B testing different algorithms
-- SSR support
-- "View all similar" button

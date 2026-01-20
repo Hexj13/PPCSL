@@ -18,6 +18,7 @@ import {
   formatTransmission,
   getCityNameMk,
   getOptimizedImageUrl,
+  getVehicleType,
 } from '@/lib/utils';
 
 import { Modal } from './Modal';
@@ -287,7 +288,7 @@ function UserListingsModalComponent({
                                 </span>
                               </div>
                             )}
-                            {vehicle.drive_type && (
+                            {vehicle.drive_type && getVehicleType(listing) !== 'moto' && (
                               <div>
                                 <span className="text-primary-500 font-semibold">
                                   {t('userListings.driveType')}:

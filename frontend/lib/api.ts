@@ -273,6 +273,7 @@ export interface Brand {
   name: string;
   logoUrl?: string;
   order: number;
+  vehicle_types?: ('car' | 'truck' | 'moto')[];
 }
 
 export interface VehicleModel {
