@@ -190,6 +190,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
             page: page + 1,
             limit,
           };
+          secondParams.vehicleType = vehicleType;
           requests.push(listingsApi.getAll(secondParams));
         } else {
           requests.push(Promise.resolve(null));

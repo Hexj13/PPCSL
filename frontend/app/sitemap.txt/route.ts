@@ -9,6 +9,14 @@ const siteConfig = loadSiteConfigSync(country);
 const siteUrl = siteConfig.siteUrl;
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
+const POPULAR_CAR_BODY_TYPES = [
+  'SUV',
+  'Hatchback',
+  'Wagon',
+  'Minivan',
+  'Sedan',
+  'Convertible',
+] as const;
 const POPULAR_TRUCK_BODY_TYPES = ['Truck', 'Bus', 'SemiTruck', 'Tractor'] as const;
 const POPULAR_MOTO_BODY_TYPES = [
   'Naked',
@@ -89,9 +97,9 @@ async function generateSitemapContent(): Promise<string> {
     } catch {}
   }
 
-  const addBodyTypeUrls = (bodyTypes: readonly string[], vehicleType: 'truck' | 'moto') => {
+  const addBodyTypeUrls = (bodyTypes: readonly string[], vehicleType: 'car' | 'truck' | 'moto') => {
     const n = bodyTypes.length;
-    const vehicleTypeParam = `&vehicleType=${vehicleType}`;
+    const vehicleTypeParam = vehicleType !== 'car' ? `&vehicleType=${vehicleType}` : '';
 
     for (let mask = 1; mask < 1 << n; mask++) {
       const combination: string[] = [];
@@ -105,6 +113,7 @@ async function generateSitemapContent(): Promise<string> {
     }
   };
 
+  addBodyTypeUrls(POPULAR_CAR_BODY_TYPES, 'car');
   addBodyTypeUrls(POPULAR_TRUCK_BODY_TYPES, 'truck');
   addBodyTypeUrls(POPULAR_MOTO_BODY_TYPES, 'moto');
 
