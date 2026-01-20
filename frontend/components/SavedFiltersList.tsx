@@ -124,6 +124,10 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
     const params = new URLSearchParams();
     const currentYear = new Date().getFullYear().toString();
 
+    // Handle vehicle type - always include to ensure proper restoration
+    const vehicleType = typeof filterParams.vehicleType === 'string' ? filterParams.vehicleType : 'car';
+    params.set('vehicleType', vehicleType);
+
     const brandIds = Array.isArray(filterParams.brand_ids)
       ? (filterParams.brand_ids as string[]).filter(
           (v) => v !== 'all' && v !== '' && v !== null && v !== undefined
@@ -187,6 +191,10 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
     }
 
     Object.entries(filterParams).forEach(([key, value]) => {
+      if (key === 'vehicleType') {
+        return;
+      }
+
       if (key === 'sortBy' || key === 'sortOrder') {
         if (value && value !== '' && value !== 'created_at' && value !== 'DESC') {
           params.set(key, String(value));

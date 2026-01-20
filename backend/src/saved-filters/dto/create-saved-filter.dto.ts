@@ -20,6 +20,7 @@ export class CreateSavedFilterDto {
       brand_ids: ['uuid1', 'uuid2'],
       price_gte: '10000',
       price_lte: '50000',
+      vehicleType: 'car',
     },
   })
   @IsObject()

@@ -60,6 +60,85 @@ describe('Saved Filters API Integration Tests', () => {
       savedFilterId = response.body.id;
     });
 
+    it('should create saved filter with vehicleType', async () => {
+      const filterData = {
+        name: 'Мото филтер',
+        filters: {
+          brand_ids: ['brand-1'],
+          vehicleType: 'moto',
+        },
+      };
+
+      const response = await request
+        .post('/api/saved-filters')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(filterData)
+        .expect(201);
+
+      expect(response).toSatisfyApiSpec();
+      expect(response.body).toHaveProperty('filters');
+      expect(response.body.filters).toHaveProperty('vehicleType', 'moto');
+    });
+
+    it('should create saved filter with vehicleType car', async () => {
+      const filterData = {
+        name: 'Авто филтер',
+        filters: {
+          brand_ids: ['brand-2'],
+          vehicleType: 'car',
+        },
+      };
+
+      const response = await request
+        .post('/api/saved-filters')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(filterData)
+        .expect(201);
+
+      expect(response).toSatisfyApiSpec();
+      expect(response.body).toHaveProperty('filters');
+      expect(response.body.filters).toHaveProperty('vehicleType', 'car');
+    });
+
+    it('should create saved filter without vehicleType (defaults to car)', async () => {
+      const filterData = {
+        name: 'Стар филтер без vehicleType',
+        filters: {
+          brand_ids: ['brand-3'],
+          price_gte: '5000',
+        },
+      };
+
+      const response = await request
+        .post('/api/saved-filters')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(filterData)
+        .expect(201);
+
+      expect(response).toSatisfyApiSpec();
+      expect(response.body).toHaveProperty('filters');
+      // vehicleType не обязательно должен быть в фильтре, если не указан
+    });
+
+    it('should return 400 when vehicleType has invalid value', async () => {
+      const filterData = {
+        name: 'Невалиден филтер',
+        filters: {
+          brand_ids: ['brand-1'],
+          vehicleType: 'invalid',
+        },
+      };
+
+      const response = await request
+        .post('/api/saved-filters')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(filterData)
+        .expect(400);
+
+      expect(response).toSatisfyApiSpec();
+      expect(response.body.message).toBe('Filters object contains invalid keys or values');
+    });
+
     it('should return 400 when name exceeds 100 characters', async () => {
       const filterData = {
         name: 'a'.repeat(101),

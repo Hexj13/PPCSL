@@ -34,6 +34,7 @@ const ALLOWED_FILTER_KEYS = [
   'is_registered',
   'sortBy',
   'sortOrder',
+  'vehicleType',
 ] as const;
 
 @ValidatorConstraint({ name: 'isValidFilterObject', async: false })
@@ -76,6 +77,13 @@ export class IsValidFilterObjectConstraint implements ValidatorConstraintInterfa
         }
       } else if (key === 'sortBy' || key === 'sortOrder') {
         if (val !== '' && val !== null && val !== undefined && typeof val !== 'string') {
+          return false;
+        }
+      } else if (key === 'vehicleType') {
+        if (val !== '' && val !== null && val !== undefined && typeof val !== 'string') {
+          return false;
+        }
+        if (typeof val === 'string' && !['car', 'moto', 'truck'].includes(val)) {
           return false;
         }
       } else if (Array.isArray(val)) {

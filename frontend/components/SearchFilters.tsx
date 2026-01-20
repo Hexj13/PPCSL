@@ -34,6 +34,7 @@ import { PopularFilters } from './search-filters/PopularFilters';
 const POPULAR_CITY_NAMES_EN = ['Skopje', 'Bitola', 'Kumanovo', 'Prilep', 'Tetovo'];
 
 const FILTERS_STORAGE_KEY = 'kupito_search_filters';
+const VEHICLE_TYPE_STORAGE_KEY = 'kupito_vehicle_type';
 const MAX_URL_LENGTH = 1800;
 
 const encodeArray = (arr: string[]): string => {
@@ -69,6 +70,30 @@ const clearFiltersFromStorage = () => {
   }
 };
 
+const saveVehicleTypeToStorage = (vehicleType: 'car' | 'moto' | 'truck') => {
+  if (isBrowser) {
+    try {
+      localStorage.setItem(VEHICLE_TYPE_STORAGE_KEY, vehicleType);
+    } catch (e) {
+      console.error('Failed to save vehicle type to storage:', e);
+    }
+  }
+};
+
+const getVehicleTypeFromStorage = (): 'car' | 'moto' | 'truck' | null => {
+  if (isBrowser) {
+    try {
+      const stored = localStorage.getItem(VEHICLE_TYPE_STORAGE_KEY);
+      if (stored && ['car', 'truck', 'moto'].includes(stored)) {
+        return stored as 'car' | 'moto' | 'truck';
+      }
+    } catch (e) {
+      console.error('Failed to get vehicle type from storage:', e);
+    }
+  }
+  return null;
+};
+
 export function SearchFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -83,10 +108,19 @@ export function SearchFilters() {
   const isApplyingQuickFilterRef = useRef(false);
 
   const getInitialVehicleType = (): 'car' | 'moto' | 'truck' => {
+    // First check URL parameters
     const vehicleTypeParam = searchParams.get('vehicleType');
     if (vehicleTypeParam && ['car', 'truck', 'moto'].includes(vehicleTypeParam)) {
       return vehicleTypeParam as 'car' | 'truck' | 'moto';
     }
+
+    // Then check localStorage for saved preference
+    const storedVehicleType = getVehicleTypeFromStorage();
+    if (storedVehicleType) {
+      return storedVehicleType;
+    }
+
+    // Default to 'car'
     return 'car';
   };
 
@@ -207,8 +241,10 @@ export function SearchFilters() {
         : 'car';
     if (newVehicleType !== vehicleType) {
       setVehicleType(newVehicleType);
+      saveVehicleTypeToStorage(newVehicleType);
     }
-  }, [searchParams, vehicleType]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   useEffect(() => {
     const currentParams = searchParams.toString();
@@ -426,6 +462,7 @@ export function SearchFilters() {
 
       startTransition(() => {
         setVehicleType(type);
+        saveVehicleTypeToStorage(type);
         resetFilters();
         setLastAppliedFilters(null);
         setActiveTab('basic');
@@ -1312,7 +1349,7 @@ export function SearchFilters() {
   };
 
   const getFiltersForSave = () => {
-    return { ...filters };
+    return { ...filters, vehicleType: vehicleType || 'car' };
   };
 
   const isQuickFilterActive = useCallback(
