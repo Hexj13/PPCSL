@@ -33,7 +33,7 @@ export function ListingPageHeader({ listing, title }: ListingPageHeaderProps) {
             </span>
           ) : (
             <>
-              <span className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-primary-700">
+              <span className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-primary-500">
                 {formatPrice(listing.price, listing.currency)}
               </span>
               <span

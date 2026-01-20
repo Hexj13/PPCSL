@@ -1580,14 +1580,14 @@ export function SearchFilters() {
         />
       )}
 
-      {activeTab === 'popular' && (
+      <div className={activeTab === 'popular' ? '' : 'hidden'}>
         <PopularFilters
           isQuickFilterActive={isQuickFilterActive}
           onApplyFilter={applyPopularFilter}
           onReset={() => handleReset(false)}
           vehicleType={vehicleType}
         />
-      )}
+      </div>
 
       <div className="mt-6 relative -mx-3 sm:mx-0 px-3 sm:px-0">
         <div ref={buttonsContainerRef} className="overflow-x-auto">
