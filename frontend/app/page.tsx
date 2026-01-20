@@ -63,7 +63,7 @@ async function getTitleFromParams(
     if (value === key) {
       switch (type) {
         case 'truck':
-          return 'Камиони';
+          return 'Комерцијален';
         case 'moto':
           return 'Мотоцикли';
         case 'car':

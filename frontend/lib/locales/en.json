@@ -351,7 +351,7 @@
     },
     "vehicleTypeFull": {
       "car": "",
-      "truck": "Trucks",
+      "truck": "Commercial",
       "moto": "Motorcycles"
     },
     "brandRequired": "Brand selection is required",

@@ -30,7 +30,37 @@ export function DynamicPageTitle() {
     const brandParam = searchParams.get('brand');
     const modelParam = searchParams.get('model');
     const bodyTypesParam = searchParams.get('body_types');
+    const vehicleTypeParam = searchParams.get('vehicleType');
     const hasEncodedArrays = searchParams.get('_e') === '1';
+
+    const vehicleType =
+      typeof vehicleTypeParam === 'string' && ['car', 'truck', 'moto'].includes(vehicleTypeParam)
+        ? vehicleTypeParam
+        : 'car';
+
+    const getVehicleTypeLabel = (type: string): string => {
+      try {
+        const key = `vehicleOptions.vehicleTypeFull.${type}`;
+        const value = t(key);
+        if (value === key) {
+          switch (type) {
+            case 'truck':
+              return 'Комерцијален';
+            case 'moto':
+              return 'Мотоцикли';
+            case 'car':
+            default:
+              return '';
+          }
+        }
+        return value;
+      } catch {
+        return '';
+      }
+    };
+
+    const vehicleTypeLabel = getVehicleTypeLabel(vehicleType);
+    const baseTitle = t('metadata.site.defaultTitle');
 
     if (bodyTypesParam && !brandParam && !modelParam) {
       const bodyTypes = hasEncodedArrays
@@ -52,14 +82,17 @@ export function DynamicPageTitle() {
           .filter((label): label is string => Boolean(label));
 
         if (bodyTypeLabels.length > 0) {
-          document.title = `${bodyTypeLabels.join(', ')} | ${t('metadata.site.defaultTitle')}`;
+          const bodyTypeTitle = bodyTypeLabels.join(', ');
+          const title = vehicleTypeLabel ? `${bodyTypeTitle} | ${vehicleTypeLabel}` : bodyTypeTitle;
+          document.title = `${title} | ${baseTitle}`;
           return;
         }
       }
     }
 
     if (!brandParam && !modelParam) {
-      document.title = t('metadata.site.defaultTitle');
+      const title = vehicleTypeLabel ? `${vehicleTypeLabel} | ${baseTitle}` : baseTitle;
+      document.title = title;
       return;
     }
 
@@ -100,7 +133,8 @@ export function DynamicPageTitle() {
     })();
 
     if (quickTitle) {
-      document.title = `${quickTitle} | ${t('metadata.site.defaultTitle')}`;
+      const title = vehicleTypeLabel ? `${quickTitle} | ${vehicleTypeLabel}` : quickTitle;
+      document.title = `${title} | ${baseTitle}`;
     }
 
     const updateTitle = async () => {
@@ -119,7 +153,7 @@ export function DynamicPageTitle() {
           .filter((name): name is string => name !== undefined);
 
         if (foundBrands.length === 0) {
-          document.title = t('metadata.site.defaultTitle');
+          document.title = baseTitle;
           return;
         }
 
@@ -179,13 +213,14 @@ export function DynamicPageTitle() {
         }
 
         if (newTitle) {
-          document.title = `${newTitle} | ${t('metadata.site.defaultTitle')}`;
+          const title = vehicleTypeLabel ? `${newTitle} | ${vehicleTypeLabel}` : newTitle;
+          document.title = `${title} | ${baseTitle}`;
         } else {
-          document.title = t('metadata.site.defaultTitle');
+          document.title = baseTitle;
         }
       } catch (error) {
         console.error('Failed to update page title:', error);
-        document.title = t('metadata.site.defaultTitle');
+        document.title = baseTitle;
       }
     };
 
