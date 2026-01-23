@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback, useRef, useMemo, startTransition } fr
 
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
+import { analytics } from '@/lib/analytics';
 import { brandsApi, favoritesApi, listingsApi, Listing, PaginationMeta } from '@/lib/api';
 import { createBrandResolver, createModelResolver, parseSearchParams } from '@/lib/search-params';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
@@ -239,6 +240,16 @@ export function ListingGrid({ initialData }: ListingGridProps) {
             setMeta(finalMeta);
             setError(null);
             setHasLoadedWithFilters(true);
+
+            if (allNewListings.length > 0) {
+              analytics.viewItemList(
+                allNewListings.map((listing) => ({
+                  id: listing.id,
+                  title: listing.title,
+                  price: listing.price,
+                }))
+              );
+            }
           }
         });
 
@@ -274,19 +285,29 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   }, [fetchListings, searchParamsString]);
 
   useEffect(() => {
-    if (initialData && initialData.data.length > 0 && user) {
-      const listingIds = initialData.data.map((l) => l.id);
-      favoritesApi
-        .checkBatch(listingIds)
-        .then((favoritesRes) => {
-          const favoriteIds = Object.entries(favoritesRes.data)
-            .filter(([, isFavorite]) => isFavorite)
-            .map(([listingId]) => listingId);
-          const currentFavorites = useFavoritesStore.getState().favorites;
-          const updatedFavorites = new Set([...currentFavorites, ...favoriteIds]);
-          setFavorites(Array.from(updatedFavorites));
-        })
-        .catch(() => {});
+    if (initialData && initialData.data.length > 0) {
+      if (user) {
+        const listingIds = initialData.data.map((l) => l.id);
+        favoritesApi
+          .checkBatch(listingIds)
+          .then((favoritesRes) => {
+            const favoriteIds = Object.entries(favoritesRes.data)
+              .filter(([, isFavorite]) => isFavorite)
+              .map(([listingId]) => listingId);
+            const currentFavorites = useFavoritesStore.getState().favorites;
+            const updatedFavorites = new Set([...currentFavorites, ...favoriteIds]);
+            setFavorites(Array.from(updatedFavorites));
+          })
+          .catch(() => {});
+      }
+
+      analytics.viewItemList(
+        initialData.data.map((listing) => ({
+          id: listing.id,
+          title: listing.title,
+          price: listing.price,
+        }))
+      );
     }
   }, [initialData, user, setFavorites]);
 

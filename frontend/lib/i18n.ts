@@ -781,6 +781,10 @@ export interface Translations {
     site: {
       defaultTitle: string;
       defaultDescription: string;
+      homePageDescription: string;
+      homePageDescriptionWithBrand: string;
+      homePageDescriptionWithBrandModel: string;
+      organizationDescription: string;
       keywords: string[];
     };
     faq: {

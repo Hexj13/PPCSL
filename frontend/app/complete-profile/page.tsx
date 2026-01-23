@@ -1,10 +1,11 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Suspense, useState, useEffect } from 'react';
+import { Suspense, useState, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { useTranslation } from '@/hooks/useTranslation';
+import { analytics } from '@/lib/analytics';
 import { authApi, favoritesApi, listingsApi, savedFiltersApi, UpdateProfileDto } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import { LoadingButton } from '@/ui';
@@ -29,6 +30,7 @@ function CompleteProfileContent() {
     email: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const formStartSentRef = useRef(false);
 
   useEffect(() => {
     if (isInitialized && !user) {
@@ -104,6 +106,13 @@ function CompleteProfileContent() {
     setFormData({ ...formData, email: value });
     if (touched.email) {
       setErrors({ ...errors, email: validateEmail(value) });
+    }
+  };
+
+  const handleFormFieldFocus = () => {
+    if (!formStartSentRef.current) {
+      analytics.formStart('complete_profile');
+      formStartSentRef.current = true;
     }
   };
 
@@ -285,20 +294,29 @@ function CompleteProfileContent() {
       const response = await authApi.updateProfile(updateData);
       setAuth(response.data, useAuthStore.getState().token);
 
+      const filledFields = {
+        firstName: !!formData.firstName && formData.firstName.trim().length > 0,
+        lastName: !!formData.lastName && formData.lastName.trim().length > 0,
+        email: !!formData.email && formData.email.trim().length > 0,
+      };
+
       const redirected = await processPendingData();
       if (redirected) {
+        analytics.formSubmit('complete_profile', true, filledFields);
         return;
       }
 
       const returnUrl = typeof window !== 'undefined' ? localStorage.getItem('returnUrl') : null;
       if (returnUrl) {
         localStorage.removeItem('returnUrl');
+        analytics.formSubmit('complete_profile', true, filledFields);
         if (typeof window !== 'undefined' && window.location) {
           localStorage.setItem('showProfileSaveSuccess', 'true');
           window.location.href = returnUrl;
         }
         return;
       } else {
+        analytics.formSubmit('complete_profile', true, filledFields);
         if (typeof window !== 'undefined' && window.location) {
           localStorage.setItem('showProfileSaveSuccess', 'true');
           window.location.href = '/';
@@ -306,12 +324,24 @@ function CompleteProfileContent() {
         return;
       }
     } catch {
+      const filledFields = {
+        firstName: !!formData.firstName && formData.firstName.trim().length > 0,
+        lastName: !!formData.lastName && formData.lastName.trim().length > 0,
+        email: !!formData.email && formData.email.trim().length > 0,
+      };
+      analytics.formSubmit('complete_profile', false, filledFields);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleSkip = async () => {
+    analytics.completeProfileSkip({
+      firstName: !!formData.firstName && formData.firstName.trim().length > 0,
+      lastName: !!formData.lastName && formData.lastName.trim().length > 0,
+      email: !!formData.email && formData.email.trim().length > 0,
+    });
+
     setIsSubmitting(true);
     try {
       const redirected = await processPendingData();
@@ -367,6 +397,7 @@ function CompleteProfileContent() {
                 type="text"
                 value={formData.firstName}
                 onChange={handleFirstNameChange}
+                onFocus={handleFormFieldFocus}
                 onBlur={handleFirstNameBlur}
                 className={`input-field ${touched.firstName && errors.firstName ? 'border-red-500' : ''}`}
                 placeholder={t('register.firstName')}
@@ -385,6 +416,7 @@ function CompleteProfileContent() {
                 type="text"
                 value={formData.lastName}
                 onChange={handleLastNameChange}
+                onFocus={handleFormFieldFocus}
                 onBlur={handleLastNameBlur}
                 className={`input-field ${touched.lastName && errors.lastName ? 'border-red-500' : ''}`}
                 placeholder={t('register.lastName')}
@@ -403,6 +435,7 @@ function CompleteProfileContent() {
                 type="email"
                 value={formData.email}
                 onChange={handleEmailChange}
+                onFocus={handleFormFieldFocus}
                 onBlur={handleEmailBlur}
                 className={`input-field ${touched.email && errors.email ? 'border-red-500' : ''}`}
                 // eslint-disable-next-line no-hardcoded-text/no-hardcoded-text

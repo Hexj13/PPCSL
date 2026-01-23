@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { useTranslation } from '@/hooks/useTranslation';
+import { analytics } from '@/lib/analytics';
 import { authApi, RegisterDto } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import { LoadingButton } from '@/ui';
@@ -35,6 +36,7 @@ export default function RegisterPage() {
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const prevTypeRef = useRef<'Individual' | 'Business'>(formData.type);
+  const formStartSentRef = useRef(false);
 
   useEffect(() => {
     if (isInitialized && user) {
@@ -203,21 +205,31 @@ export default function RegisterPage() {
     }
   };
 
+  const handleFormFieldFocus = () => {
+    if (!formStartSentRef.current) {
+      analytics.formStart('register');
+      formStartSentRef.current = true;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.termsAccepted) {
+      analytics.formSubmit('register', false);
       toast.error(t('register.termsRequired'));
       return;
     }
 
     if (!formData.password.trim()) {
+      analytics.formSubmit('register', false);
       toast.error(t('register.passwordRequired'));
       return;
     }
 
     const passwordValidationError = validatePassword(formData.password);
     if (passwordValidationError) {
+      analytics.formSubmit('register', false);
       toast.error(passwordValidationError);
       setPasswordError(passwordValidationError);
       return;
@@ -300,6 +312,18 @@ export default function RegisterPage() {
       if (typeof window !== 'undefined') {
         try {
           await authApi.sendSms({ phone: formData.phone });
+          const filledFields: Record<string, boolean> = {
+            phone: !!formData.phone,
+            password: !!formData.password,
+            type: true,
+            messengers: formData.viber || formData.whatsapp || formData.telegram,
+            ...(formData.type === 'Business' && {
+              companyName: !!formData.companyName,
+              email: !!formData.email,
+              emailNotifications: formData.emailNotifications,
+            }),
+          };
+          analytics.formSubmit('register', true, filledFields);
           localStorage.setItem('pendingRegistration', JSON.stringify(submitData));
           router.push(`/verify-phone?phone=${encodeURIComponent(formData.phone)}`);
         } catch (checkError: unknown) {
@@ -361,6 +385,18 @@ export default function RegisterPage() {
             errorMessage = t('register.phoneServiceUnavailable');
           }
 
+          const filledFields: Record<string, boolean> = {
+            phone: !!formData.phone,
+            password: !!formData.password,
+            type: true,
+            messengers: formData.viber || formData.whatsapp || formData.telegram,
+            ...(formData.type === 'Business' && {
+              companyName: !!formData.companyName,
+              email: !!formData.email,
+              emailNotifications: formData.emailNotifications,
+            }),
+          };
+          analytics.formSubmit('register', false, filledFields);
           toast.error(errorMessage);
           setPhoneError(errorMessage);
           setLoading(false);
@@ -368,6 +404,18 @@ export default function RegisterPage() {
         }
       }
     } catch {
+      const filledFields: Record<string, boolean> = {
+        phone: !!formData.phone,
+        password: !!formData.password,
+        type: true,
+        messengers: formData.viber || formData.whatsapp || formData.telegram,
+        ...(formData.type === 'Business' && {
+          companyName: !!formData.companyName,
+          email: !!formData.email,
+          emailNotifications: formData.emailNotifications,
+        }),
+      };
+      analytics.formSubmit('register', false, filledFields);
       toast.error(t('register.dataPreparationError'));
     } finally {
       setLoading(false);
@@ -422,6 +470,7 @@ export default function RegisterPage() {
                 value={formData.phone}
                 onChange={handlePhoneChange}
                 onBlur={handlePhoneBlur}
+                onFocus={handleFormFieldFocus}
                 className={`input-field ${phoneTouched && phoneError ? 'border-red-500' : ''}`}
                 placeholder="+38970123456"
                 autoComplete="off"
@@ -666,6 +715,7 @@ export default function RegisterPage() {
                 value={formData.phone}
                 onChange={handlePhoneChange}
                 onBlur={handlePhoneBlur}
+                onFocus={handleFormFieldFocus}
                 className={`input-field ${phoneTouched && phoneError ? 'border-red-500' : ''}`}
                 placeholder="+38970123456"
                 autoComplete="off"

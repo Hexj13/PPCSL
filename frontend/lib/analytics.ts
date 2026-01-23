@@ -217,4 +217,67 @@ export const analytics = {
       action,
     });
   },
+
+  selectVehicleType: (vehicleType: 'car' | 'truck' | 'moto') => {
+    trackEvent('select_content', {
+      content_type: 'vehicle_type',
+      content_id: vehicleType,
+    });
+  },
+
+  pageScroll: (percent: number) => {
+    trackEvent('scroll', {
+      percent_scrolled: percent,
+    });
+  },
+
+  formStart: (formName: string) => {
+    trackEvent('form_start', {
+      form_name: formName,
+    });
+  },
+
+  formSubmit: (formName: string, success: boolean, fields?: Record<string, boolean>) => {
+    const filledFields = fields
+      ? Object.keys(fields)
+          .filter((key) => fields[key])
+          .join(',')
+      : undefined;
+
+    trackEvent('form_submit', {
+      form_name: formName,
+      success: success,
+      ...(filledFields && { filled_fields: filledFields }),
+      ...(fields && { fields_count: Object.values(fields).filter(Boolean).length }),
+    });
+  },
+
+  completeProfileSkip: (filledFields?: Record<string, boolean>) => {
+    const filledFieldsList = filledFields
+      ? Object.keys(filledFields)
+          .filter((key) => filledFields[key])
+          .join(',')
+      : undefined;
+
+    trackEvent('complete_profile_skip', {
+      ...(filledFieldsList && { filled_fields: filledFieldsList }),
+      ...(filledFields && { fields_count: Object.values(filledFields).filter(Boolean).length }),
+      ...(filledFields && { had_partial_data: Object.values(filledFields).some(Boolean) }),
+    });
+  },
+
+  selectContent: (contentType: string, contentId: string, category?: string) => {
+    trackEvent('select_content', {
+      content_type: contentType,
+      content_id: contentId,
+      ...(category && { item_category: category }),
+    });
+  },
+
+  click: (url: string, linkText?: string) => {
+    trackEvent('click', {
+      link_url: url,
+      ...(linkText && { link_text: linkText }),
+    });
+  },
 };

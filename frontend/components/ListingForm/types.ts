@@ -17,4 +17,7 @@ export interface ListingFormSectionProps {
   handleWheel?: (_e: React.WheelEvent<HTMLInputElement>) => void;
   siteConfig?: { currency: string };
   vehicleType?: 'car' | 'truck' | 'moto';
+  onFormFieldFocus?: () => void;
+  uploading?: boolean;
+  onFileUpload?: (_file: File) => Promise<void>;
 }

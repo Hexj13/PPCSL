@@ -1,0 +1,118 @@
+import type { Listing } from '@/lib/api';
+import {
+  ConditionTypeEnum,
+  CurrencyEnum,
+  ListingStatusEnum,
+  RegistrationTypeEnum,
+} from '@/lib/types';
+import { sortOptionsByLabel } from '@/lib/utils';
+
+import type { ListingFormData } from '../ListingForm';
+
+type TranslationFunction = (_key: string, _params?: Record<string, string | number>) => string;
+
+export function getInitialFormData(initialData?: Listing): ListingFormData {
+  if (!initialData) {
+    return {
+      price: '',
+      currency: CurrencyEnum.EUR,
+      city: '',
+      description: '',
+      status: ListingStatusEnum.Active,
+      images: [],
+      urgent: false,
+      is_new: false,
+      vin: '',
+      condition: ConditionTypeEnum.Undamaged,
+      registration_type: RegistrationTypeEnum.Local,
+      horsepower: '',
+      power_kw: '',
+      is_registered: false,
+      registration_expires_at: '',
+      equipment: [],
+      vehicle: {
+        brand_id: '',
+        model_id: '',
+        year: '',
+        engine_displ_l: '',
+        mileage_km: '',
+        fuel: '',
+        transmission: '',
+        drive_type: '',
+        body_type: '',
+        color: '',
+        doors: '',
+      },
+    };
+  }
+
+  const registrationExpiresAtFormatted = initialData.registration_expires_at
+    ? (() => {
+        const date = new Date(initialData.registration_expires_at);
+        const month = date.getMonth() + 1;
+        const year = date.getFullYear();
+        return `${month.toString().padStart(2, '0')}.${year}`;
+      })()
+    : '';
+
+  return {
+    price: initialData.price ? Math.floor(initialData.price).toString() : '',
+    currency: initialData.currency || CurrencyEnum.EUR,
+    city: initialData.city || '',
+    description: initialData.description || '',
+    status: initialData.status || ListingStatusEnum.Active,
+    images: initialData.images || [],
+    urgent: initialData.urgent || false,
+    is_new: initialData.is_new || false,
+    vin: initialData.vin || '',
+    condition: initialData.condition || ConditionTypeEnum.Undamaged,
+    registration_type: initialData.registration_type || RegistrationTypeEnum.Local,
+    horsepower: initialData.horsepower?.toString() || '',
+    power_kw: initialData.power_kw
+      ? Math.floor(initialData.power_kw).toString()
+      : initialData.horsepower
+        ? Math.round(initialData.horsepower * 0.73549875).toString()
+        : '',
+    is_registered: initialData.is_registered || false,
+    registration_expires_at: registrationExpiresAtFormatted,
+    equipment: initialData.equipment || [],
+    vehicle: {
+      brand_id: initialData.vehicle?.brand_id || '',
+      model_id: initialData.vehicle?.model_id || '',
+      year: initialData.vehicle?.year?.toString() || '',
+      engine_displ_l: initialData.vehicle?.engine_displ_l?.toString() || '',
+      mileage_km: initialData.vehicle?.mileage_km?.toString() || '',
+      fuel: initialData.vehicle?.fuel || '',
+      transmission: initialData.vehicle?.transmission || '',
+      drive_type: initialData.vehicle?.drive_type || '',
+      body_type: initialData.vehicle?.body_type || '',
+      color: initialData.vehicle?.color || '',
+      doors: initialData.vehicle?.doors?.toString() || '',
+    },
+  };
+}
+
+export function getConditionOptions(t: TranslationFunction) {
+  return sortOptionsByLabel([
+    { value: ConditionTypeEnum.Undamaged, label: t('vehicleOptions.condition.Undamaged') },
+    { value: ConditionTypeEnum.Damaged, label: t('vehicleOptions.condition.Damaged') },
+    { value: ConditionTypeEnum.ForParts, label: t('vehicleOptions.condition.ForParts') },
+  ]);
+}
+
+export function getRegistrationTypeOptions(t: TranslationFunction) {
+  return sortOptionsByLabel([
+    {
+      value: RegistrationTypeEnum.Local,
+      label: t('searchFilters.registrationTypeOptions.Local'),
+    },
+    {
+      value: RegistrationTypeEnum.Foreign,
+      label: t('searchFilters.registrationTypeOptions.Foreign'),
+    },
+    {
+      value: RegistrationTypeEnum.Cleared,
+      label: t('searchFilters.registrationTypeOptions.Cleared'),
+    },
+  ]);
+}

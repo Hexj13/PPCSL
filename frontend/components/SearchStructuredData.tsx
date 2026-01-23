@@ -1,4 +1,5 @@
 import type { Listing } from '@/lib/api';
+import { getServerTranslations } from '@/lib/i18n';
 import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/popular-brands';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { createSlug } from '@/lib/utils';
@@ -16,6 +17,7 @@ export function SearchStructuredData({
 }) {
   const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
   const siteConfig = loadSiteConfigSync(country);
+  const t = getServerTranslations();
   const siteUrl = siteConfig.siteUrl;
   const brandParam = brand || null;
   const modelParam = model || null;
@@ -166,15 +168,17 @@ export function SearchStructuredData({
           ) || modelParam
         : null;
 
-    let pageTitle = 'Автомобили во Македонија';
-    let pageDescription = 'Купете или продадете авто на Kupito! Објавете оглас бесплатно.';
+    let pageTitle = t.metadata.site.defaultTitle;
+    let pageDescription = t.metadata.site.defaultDescription;
 
     if (modelName && brandName) {
-      pageTitle = `${brandName} ${modelName} - Автомобили во Македонија`;
-      pageDescription = `Купете ${brandName} ${modelName} на Kupito! Најдете најдобри цени и избор на ${brandName} ${modelName} автомобили во Македонија.`;
+      pageTitle = `${brandName} ${modelName} - ${t.metadata.site.defaultTitle}`;
+      pageDescription = t.metadata.site.homePageDescriptionWithBrandModel
+        .replace('{brand}', brandName)
+        .replace('{model}', modelName);
     } else if (brandName) {
-      pageTitle = `${brandName} автомобили - Купете во Македонија`;
-      pageDescription = `Купете ${brandName} автомобили на Kupito! Најдете најдобри цени и избор на ${brandName} автомобили во Македонија.`;
+      pageTitle = `${brandName} автомобили - ${t.metadata.site.defaultTitle}`;
+      pageDescription = t.metadata.site.homePageDescriptionWithBrand.replace('{brand}', brandName);
     }
 
     collectionPageSchema = {

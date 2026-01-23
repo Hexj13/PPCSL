@@ -19,6 +19,7 @@ export function BasicInfoSection({
   showVinHint: showVinHintProp,
   setShowVinHint: setShowVinHintProp,
   handleWheel,
+  onFormFieldFocus,
 }: ListingFormSectionProps) {
   const { t } = useTranslation();
   const [showVinHintLocal, setShowVinHintLocal] = useState(false);
@@ -88,6 +89,7 @@ export function BasicInfoSection({
             type="text"
             required
             value={formData.vehicle.year}
+            onFocus={onFormFieldFocus}
             onChange={(e) => {
               clearError('vehicle.year');
               const value = e.target.value.replace(/[^0-9]/g, '');

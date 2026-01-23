@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast';
 
 import { AuthProvider } from '@/components/AuthProvider';
 import { CookieConsent } from '@/components/CookieConsent';
+import { ExternalLinkTracker } from '@/components/ExternalLinkTracker';
 import { Footer } from '@/components/Footer';
 import { GoogleAnalytics } from '@/components/GoogleAnalytics';
 import { GoogleAnalyticsConsent } from '@/components/GoogleAnalyticsConsent';
@@ -12,6 +13,7 @@ import { Header } from '@/components/Header';
 import { I18nProvider } from '@/components/I18nProvider';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { OrganizationSchema } from '@/components/OrganizationSchema';
+import { PageScrollTracker } from '@/components/PageScrollTracker';
 import { ProfileSaveSuccessToast } from '@/components/ProfileSaveSuccessToast';
 import { RegisterPageBodyClass } from '@/components/RegisterPageBodyClass';
 import { ScrollReset } from '@/components/ScrollReset';
@@ -140,6 +142,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <ProfileSaveSuccessToast />
             <ServiceWorkerRegistration />
             <ScrollReset />
+            <PageScrollTracker />
+            <ExternalLinkTracker />
             <div className="min-h-screen flex flex-col">
               <Header />
               <OfflineBanner />

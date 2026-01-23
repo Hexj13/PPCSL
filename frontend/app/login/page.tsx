@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { useTranslation } from '@/hooks/useTranslation';
@@ -71,10 +71,18 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ login?: string; password?: string }>({});
   const [showPassword, setShowPassword] = useState(false);
+  const formStartSentRef = useRef(false);
 
   if (isInitialized && user) {
     return null;
   }
+
+  const handleFormFieldFocus = () => {
+    if (!formStartSentRef.current) {
+      analytics.formStart('login');
+      formStartSentRef.current = true;
+    }
+  };
 
   const validateForm = (): boolean => {
     const newErrors: { login?: string; password?: string } = {};
@@ -97,15 +105,20 @@ export default function LoginPage() {
     e.preventDefault();
 
     if (!validateForm()) {
+      analytics.formSubmit('login', false);
       return;
     }
 
     setLoading(true);
 
+    const loginMethod = isValidEmail(formData.login) ? 'email' : 'phone';
+    const filledFields: Record<string, boolean> = {
+      login: !!formData.login,
+      password: !!formData.password,
+    };
+
     try {
       const res = await authApi.login(formData);
-      const loginMethod = isValidEmail(formData.login) ? 'email' : 'phone';
-      analytics.login(loginMethod);
 
       const savedReturnUrl =
         typeof window !== 'undefined' ? localStorage.getItem('returnUrl') : null;
@@ -189,6 +202,8 @@ export default function LoginPage() {
             await savedFiltersApi.create(filterName, filters);
             localStorage.removeItem('pendingSavedFilter');
             localStorage.removeItem('returnUrl');
+            analytics.login(loginMethod);
+            analytics.formSubmit('login', true, filledFields);
             toast.success(t('login.filterSavedSuccess'));
             if (typeof window !== 'undefined' && window.location) {
               window.location.href = '/favorites?tab=filters';
@@ -209,6 +224,8 @@ export default function LoginPage() {
                 errorMessage.includes('филтри. Ве молиме избришете некој од постоечките филтри.'));
             if (isLimitError) {
               localStorage.removeItem('returnUrl');
+              analytics.login(loginMethod);
+              analytics.formSubmit('login', true, filledFields);
               if (typeof window !== 'undefined' && window.location) {
                 window.location.href = '/favorites?tab=filters';
               }
@@ -217,11 +234,15 @@ export default function LoginPage() {
               const returnUrl = savedReturnUrl || localStorage.getItem('returnUrl');
               if (returnUrl) {
                 localStorage.removeItem('returnUrl');
+                analytics.login(loginMethod);
+                analytics.formSubmit('login', true, filledFields);
                 if (typeof window !== 'undefined' && window.location) {
                   window.location.href = returnUrl;
                 }
                 return;
               } else {
+                analytics.login(loginMethod);
+                analytics.formSubmit('login', true, filledFields);
                 if (typeof window !== 'undefined' && window.location) {
                   window.location.href = '/';
                 }
@@ -233,11 +254,15 @@ export default function LoginPage() {
           const returnUrl = savedReturnUrl || localStorage.getItem('returnUrl');
           if (returnUrl) {
             localStorage.removeItem('returnUrl');
+            analytics.login(loginMethod);
+            analytics.formSubmit('login', true, filledFields);
             if (typeof window !== 'undefined' && window.location) {
               window.location.href = returnUrl;
             }
             return;
           } else {
+            analytics.login(loginMethod);
+            analytics.formSubmit('login', true, filledFields);
             if (typeof window !== 'undefined' && window.location) {
               window.location.href = '/';
             }
@@ -245,6 +270,8 @@ export default function LoginPage() {
           }
         }
       } else {
+        analytics.login(loginMethod);
+        analytics.formSubmit('login', true, filledFields);
         if (typeof window !== 'undefined') {
           const win = window as unknown as Window;
           if (win.location) {
@@ -254,7 +281,7 @@ export default function LoginPage() {
         return;
       }
     } catch {
-      // Error is already handled by API interceptor
+      analytics.formSubmit('login', false, filledFields);
     } finally {
       setLoading(false);
     }
@@ -279,6 +306,7 @@ export default function LoginPage() {
                 setErrors({ ...errors, login: undefined });
               }
             }}
+            onFocus={handleFormFieldFocus}
             className={`input-field ${errors.login ? 'border-red-500' : ''}`}
             placeholder={t('login.emailOrPhone')}
             autoComplete="username"

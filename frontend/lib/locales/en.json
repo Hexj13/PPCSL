@@ -1087,6 +1087,10 @@
     "site": {
       "defaultTitle": "Cars in Macedonia",
       "defaultDescription": "Buy or sell a car on Kupito! Post your ad for free.",
+      "homePageDescription": "Buy or sell a car on Kupito! Post your ad for free. Platform for buying and selling cars online in Macedonia. Car listings Macedonia - free listing posting for individuals and car dealerships.",
+      "homePageDescriptionWithBrand": "Buy {brand} cars on Kupito! Find the best prices and selection of {brand} cars in Macedonia.",
+      "homePageDescriptionWithBrandModel": "Buy {brand} {model} on Kupito! Find the best prices and selection of {brand} {model} cars in Macedonia.",
+      "organizationDescription": "Buy or sell a car on Kupito! Post your ad for free. Platform for buying and selling cars online in Macedonia. Car listings Macedonia.",
       "keywords": [
         "cars Macedonia",
         "buy cars online",

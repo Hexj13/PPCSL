@@ -225,10 +225,33 @@ export async function generateMetadata({
     return true;
   });
 
-  const description =
-    title === baseTitle
-      ? 'Купете или продадете авто на Kupito! Објавете оглас бесплатно. Платформа за купување и продавање автомобили онлајн во Македонија. Автомобили огласи Македонија - бесплатно објавување огласи за приватни лица и авто-плацови.'
-      : `Купете ${title} на Kupito! Најдете најдобри цени и избор на ${title} автомобили во Македонија.`;
+  let description: string;
+  if (title === baseTitle) {
+    description = t.metadata.site.homePageDescription;
+  } else {
+    const brandParamValue = typeof brandParam === 'string' ? brandParam : null;
+    const modelParamValue = typeof modelParam === 'string' ? modelParam : null;
+
+    if (modelParamValue && brandParamValue) {
+      const brandName =
+        POPULAR_BRANDS.find((b) => createSlug(b) === brandParamValue.toLowerCase()) ||
+        brandParamValue;
+      const models = POPULAR_MODELS_BY_BRAND[brandName] || [];
+      const modelName =
+        models.find((m) => createSlug(m) === modelParamValue.toLowerCase()) || modelParamValue;
+
+      description = t.metadata.site.homePageDescriptionWithBrandModel
+        .replace('{brand}', brandName)
+        .replace('{model}', modelName);
+    } else {
+      const brandName = brandParamValue
+        ? POPULAR_BRANDS.find((b) => createSlug(b) === brandParamValue.toLowerCase()) ||
+          brandParamValue
+        : title;
+
+      description = t.metadata.site.homePageDescriptionWithBrand.replace('{brand}', brandName);
+    }
+  }
 
   const queryParams = new URLSearchParams();
   if (brandParam && typeof brandParam === 'string') {

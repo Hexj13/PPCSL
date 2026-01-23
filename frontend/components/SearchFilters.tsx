@@ -491,6 +491,8 @@ export function SearchFilters() {
 
   const handleVehicleTypeChange = useCallback(
     (type: 'car' | 'truck' | 'moto') => {
+      analytics.selectVehicleType(type);
+
       const params = new URLSearchParams();
       if (type !== 'car') {
         params.set('vehicleType', type);
@@ -981,9 +983,47 @@ export function SearchFilters() {
   const handleMultiSelectChange = useCallback(
     (key: keyof typeof filters, values: string[]) => {
       const filteredValues = values.filter((v) => v !== 'all' && !v.startsWith('__category__'));
+
+      const contentTypeMap: Record<string, string> = {
+        brand_ids: 'brand',
+        model_ids: 'model',
+        cities: 'city',
+        transmissions: 'transmission',
+        body_types: 'body_type',
+        fuels: 'fuel',
+        colors: 'color',
+        colors_single: 'color',
+        doors: 'door',
+        conditions: 'condition',
+        registration_types: 'registration_type',
+        drive_types: 'drive_type',
+      };
+
+      const contentType = contentTypeMap[key] || key;
+
+      const previousValues = (filters[key] as string[]) || [];
+      const newValues = filteredValues.filter((v) => !previousValues.includes(v));
+
+      newValues.forEach((value) => {
+        let option: { value: string; label: string; category?: string } | undefined;
+
+        if (key === 'brand_ids') {
+          const brandOptions = getBrandOptions();
+          option = brandOptions.find((opt) => opt.value === value);
+        } else if (key === 'model_ids') {
+          const modelOptions = getModelOptions();
+          option = modelOptions.find((opt) => opt.value === value);
+        } else if (key === 'cities') {
+          const cityOptions = getCityOptions();
+          option = cityOptions.find((opt) => opt.value === value);
+        }
+
+        analytics.selectContent(contentType, value, option?.category);
+      });
+
       updateFilter(key, filteredValues);
     },
-    [updateFilter]
+    [updateFilter, filters, getBrandOptions, getModelOptions, getCityOptions]
   );
 
   const handleCheckboxChange = useCallback(
