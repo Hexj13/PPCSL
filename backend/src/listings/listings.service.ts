@@ -44,6 +44,7 @@ import { Vehicle } from './entities/vehicle.entity';
 interface ListingWithSimilarityMetadata extends Listing {
   __bucket_priority?: number;
   __same_city?: number;
+  __mileage_diff?: number;
 }
 
 @Injectable()
@@ -1095,6 +1096,7 @@ export class ListingsService {
     const { price, city, id: currentId } = current;
 
     const year = vehicle?.year;
+    const mileage = vehicle?.mileage_km;
     const body_type = vehicle?.body_type;
     const brand_id = vehicle?.brand_id;
     const model_id = vehicle?.model_id;
@@ -1104,10 +1106,15 @@ export class ListingsService {
       vehicle_type = this.getVehicleTypeFromBodyType(body_type);
     }
 
-    const yearMin = year ? year - 5 : null;
-    const yearMax = year ? year + 5 : null;
-    const priceMin = price ? price * 0.5 : null;
-    const priceMax = price ? price * 1.5 : null;
+    // Адаптивные диапазоны года: старые машины - ±3 года, новые - ±5 лет
+    const yearRange = year && year < 2010 ? 3 : 5;
+    const yearMin = year ? year - yearRange : null;
+    const yearMax = year ? year + yearRange : null;
+
+    // Адаптивные диапазоны цены: дешёвые машины - ±30%, дорогие - ±60%
+    const priceRange = price && price < 10000 ? 0.3 : 0.6;
+    const priceMin = price ? price * (1 - priceRange) : null;
+    const priceMax = price ? price * (1 + priceRange) : null;
 
     const queryBuilder = this.listingsRepository
       .createQueryBuilder('listing')
@@ -1128,7 +1135,7 @@ export class ListingsService {
       );
     }
 
-    queryBuilder.limit(50);
+    queryBuilder.limit(100);
 
     const listings = await queryBuilder.getMany();
 
@@ -1215,10 +1222,16 @@ export class ListingsService {
       const listingCityNormalized = listing.city ? listing.city.trim().toLowerCase() : '';
       const sameCity = listingCityNormalized === currentCityNormalized ? 1 : 0;
 
+      let mileageDiff = Infinity;
+      if (mileage && v?.mileage_km) {
+        mileageDiff = Math.abs(v.mileage_km - mileage);
+      }
+
       const listingWithMetadata: ListingWithSimilarityMetadata = {
         ...listing,
         __bucket_priority: bucketPriority,
         __same_city: sameCity,
+        __mileage_diff: mileageDiff,
       };
 
       return listingWithMetadata;
@@ -1248,10 +1261,18 @@ export class ListingsService {
         return sameCityB - sameCityA;
       }
 
+      const mileageDiffA = a.__mileage_diff ?? Infinity;
+      const mileageDiffB = b.__mileage_diff ?? Infinity;
+      if (mileageDiffA !== mileageDiffB) {
+        return mileageDiffA - mileageDiffB;
+      }
+
       return new Date(b.last_updated_at).getTime() - new Date(a.last_updated_at).getTime();
     });
 
-    return listingsWithMetadata.map(({ __bucket_priority, __same_city, ...listing }) => listing);
+    return listingsWithMetadata.map(
+      ({ __bucket_priority, __same_city, __mileage_diff, ...listing }) => listing,
+    );
   }
 
   private applySellerDiversification(listings: Listing[], maxPerSeller: number): Listing[] {

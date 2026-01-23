@@ -26,6 +26,7 @@ The Similar Listings block is displayed at the bottom of the listing detail page
 - Request starts after 100ms delay (non-blocking priority)
 - Shows 4 skeleton loaders while fetching
 - No lazy loading — all data loaded upfront for simplicity and reliability
+- **Candidate Pool**: Up to 100 listings fetched from database (increased from 50)
 
 ### Navigation
 
@@ -62,33 +63,33 @@ GET /api/listings/:id/similar?limit=4&offset=4
 
 **Important**: All buckets work only with **Active listings**. The `status = Active` filter is applied globally at the SQL query level before bucket assignment, ensuring that all 6 buckets process only active listings.
 
-1. **Same brand + model, year ±5**
+1. **Same brand + model, year ±3-5**
    - `brand_id` matches
    - `model_id` matches
-   - `year` within ±5 years
+   - `year` within ±3-5 years (адаптивно: старые машины < 2010 ±3, новые ±5)
    - ✅ Only Active listings
 
-2. **Same brand + body type, year ±5, price ±50%**
+2. **Same brand + body type, year ±3-5, price ±30-60%**
    - `brand_id` matches
    - `body_type` matches
-   - `year` within ±5 years
-   - `price` within 50-150% range
+   - `year` within ±3-5 years (адаптивно)
+   - `price` within ±30-60% range (адаптивно: дешёвые машины < 10k€ ±30%, дорогие ≥ 10k€ ±60%)
    - ✅ Only Active listings
 
-3. **Same body type, year ±5, price ±50%**
+3. **Same body type, year ±3-5, price ±30-60%**
    - `body_type` matches
-   - `year` within ±5 years
-   - `price` within 50-150% range
+   - `year` within ±3-5 years (адаптивно)
+   - `price` within ±30-60% range (адаптивно)
    - ✅ Only Active listings
 
-4. **Same body type, price ±50%**
+4. **Same body type, price ±30-60%**
    - `body_type` matches
-   - `price` within 50-150% range
+   - `price` within ±30-60% range (адаптивно)
    - ✅ Only Active listings
 
-5. **Year ±5, price ±50%**
-   - `year` within ±5 years
-   - `price` within 50-150% range
+5. **Year ±3-5, price ±30-60%**
+   - `year` within ±3-5 years (адаптивно)
+   - `price` within ±30-60% range (адаптивно)
    - ✅ Only Active listings
 
 6. **Fallback: all other active listings**
@@ -102,11 +103,13 @@ For listings in the same bucket, secondary sorting:
 
 1. **Promoted status** (`is_promoted DESC`) - promoted listings first
 2. **Same city** (`same_city DESC`) - listings from same city first
-3. **Freshness** (`last_updated_at DESC`) - newer listings first
+3. **Mileage similarity** (`mileage_diff ASC`) - closer mileage ranks higher
+4. **Freshness** (`last_updated_at DESC`) - newer listings first
 
 This means:
 - ✅ Promoted listings always rank higher within their relevance tier
 - ✅ Listings from the same city get a boost
+- ✅ Similar mileage = more relevant (if both have mileage data)
 - ✅ Newer listings break ties between otherwise equal results
 
 ### Seller Diversification
@@ -229,7 +232,7 @@ SimilarListings
 2. **Lazy Second Batch**: Only loads when user shows interest
 3. **Efficient Query**: Single query with CASE expressions for bucket priority
 4. **Caching**: 2-minute cache reduces database load
-5. **Limit to 50 candidates**: Prevents large result sets
+5. **Limit to 100 candidates**: Prevents large result sets while ensuring diversity
 
 ### Performance Targets
 
@@ -297,4 +300,4 @@ CARD_GAP = 16  // px
 - `core/backend/src/listings/dto/similar-listings.dto.ts` - DTO validation
 
 ### Documentation
-- `core/docs/SIMILAR_LISTINGS_BLOCK.md` - This file
+- `core/docs/features/SIMILAR_LISTINGS_BLOCK.md` - This file
