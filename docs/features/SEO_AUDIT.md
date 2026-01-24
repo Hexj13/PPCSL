@@ -1,4 +1,4 @@
-# SEO & Indexation Audit (Google Search) — PPCSL
+# Аудит SEO и индексации (Google Search)
 
 **Date:** 2025-12-17
 

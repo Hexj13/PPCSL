@@ -1,4 +1,4 @@
-# Image Preview System
+# Система превью изображений
 
 Complete documentation for the image preview and photo viewer system on listing detail pages.
 
@@ -344,7 +344,7 @@ const { visible: showMainImageLoader } = useLoadingState({
 
 ### Why minDisplayTime: 1000ms?
 
-From `LOADING_STATES_REQUIREMENTS.md`:
+From `LOADING_STATES.md`:
 > "Loader shown for minimum 1 second (prevents flicker)"
 
 **Important distinction:**
@@ -567,8 +567,8 @@ If you need to add features:
 
 ## Related Documentation
 
-- [`LOADING_STATES_REQUIREMENTS.md`](./LOADING_STATES_REQUIREMENTS.md) - General loading states system
-- [`TECHNICAL.md`](./TECHNICAL.md#11-performance-optimizations) - Performance optimizations section
+- [`LOADING_STATES.md`](./LOADING_STATES.md) - General loading states system
+- [`TECHNICAL.md`](../architecture/TECHNICAL.md#11-performance-optimizations) - Performance optimizations section
 
 ---
 

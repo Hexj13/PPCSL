@@ -1,13 +1,13 @@
-# Platform Creation Checklist
+# Чеклист создания платформы
 
 Краткий чеклист для создания новой платформы на базе PPCSL core.
 
 ## Перед началом
 
 ⚠️ **ВАЖНО:** Прочитайте следующие документы:
-- [`MULTI_REPOSITORY_ARCHITECTURE.md`](./MULTI_REPOSITORY_ARCHITECTURE.md) - Общая архитектура
-- [`SCRIPTS_ARCHITECTURE.md`](./SCRIPTS_ARCHITECTURE.md) - Архитектура скриптов
-- [`ARCHITECTURE_IMPROVEMENTS_NEEDED.md`](./ARCHITECTURE_IMPROVEMENTS_NEEDED.md) - Известные проблемы
+- [`MULTI_REPOSITORY.md`](../architecture/MULTI_REPOSITORY.md) - Общая архитектура
+- [`SCRIPTS_ARCHITECTURE.md`](../architecture/SCRIPTS_ARCHITECTURE.md) - Архитектура скриптов
+- [`KNOWN_ISSUES.md`](../architecture/KNOWN_ISSUES.md) - Известные проблемы
 
 ---
 
@@ -279,11 +279,11 @@ npm run dev
 ## Полезные ссылки
 
 - [PPCSL Core Repository](https://github.com/your-org/ppcsl)
-- [Multi-Repository Architecture](./MULTI_REPOSITORY_ARCHITECTURE.md)
-- [Scripts Architecture](./SCRIPTS_ARCHITECTURE.md)
-- [Architecture Improvements](./ARCHITECTURE_IMPROVEMENTS_NEEDED.md)
+- [Multi-Repository](../architecture/MULTI_REPOSITORY.md)
+- [Scripts Architecture](../architecture/SCRIPTS_ARCHITECTURE.md)
+- [Known Issues](../architecture/KNOWN_ISSUES.md)
 - [Platform Guide](./PLATFORM_GUIDE.md)
-- [Deployment Guide](./DEPLOYMENT.md)
+- [Deployment](./DEPLOYMENT.md)
 
 ---
 

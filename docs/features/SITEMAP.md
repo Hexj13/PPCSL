@@ -1,4 +1,4 @@
-# Sitemap Generation - Документация
+# Генерация sitemap
 
 ## Обзор
 
@@ -276,4 +276,4 @@ COUNTRY=mk npx ts-node src/scripts/stage/audit-vehicle-types.ts --fix
 
 ---
 
-[← Назад к документации фич](./README.md)
+[← К документации](../README.md)

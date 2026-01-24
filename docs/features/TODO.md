@@ -1,4 +1,4 @@
-# TODO - All Project Tasks
+# Задачи проекта (TODO)
 
 ## 🟡 Medium Priority
 

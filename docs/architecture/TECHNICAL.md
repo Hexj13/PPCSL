@@ -1,4 +1,4 @@
-# Technical Documentation
+# Техническая документация PPCSL
 
 Complete technical documentation for the PPCSL platform.
 
@@ -892,7 +892,7 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md#72-rendercom-deployment) for CloudFront CDN 
   - **Loading states:** Loader only shown when image is actually loading, with 1s minimum display time to prevent flicker
   - **Modal viewer:** Full-screen photo viewer with keyboard navigation and swipe gestures
   - **Performance:** 80% code reduction, instant cache switching, no artificial delays
-  - See [`docs/IMAGE_PREVIEW_SYSTEM.md`](./IMAGE_PREVIEW_SYSTEM.md) for complete documentation
+  - See [IMAGE_PREVIEW.md](../features/IMAGE_PREVIEW.md) for complete documentation
 - **Race condition prevention:** Loading states and request guards to prevent duplicate API calls
   - Favorite toggle button disabled during operation with visual feedback
   - Ref-based guards to prevent concurrent requests
@@ -1245,7 +1245,7 @@ cd core/backend && npm run start:prod
 9. **Test submodule updates** in staging before production
 10. **Backup** platform-specific files before major core updates
 
-For detailed implementation, see [Multi-Repository Architecture Guide](./MULTI_REPOSITORY_ARCHITECTURE.md).
+For detailed implementation, see [Multi-Repository](./MULTI_REPOSITORY.md).
 
 ---
 

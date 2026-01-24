@@ -19,7 +19,7 @@
 
 - **[docs/README.md](./docs/README.md)** - Главный entry point
 - **[docs/guides/PLATFORM_CHECKLIST.md](./docs/guides/PLATFORM_CHECKLIST.md)** - Чеклист для новых платформ
-- **[docs/architecture/README_ARCHITECTURE.md](./docs/architecture/README_ARCHITECTURE.md)** - Обзор архитектуры
+- **[docs/architecture/ARCHITECTURE_OVERVIEW.md](./docs/architecture/ARCHITECTURE_OVERVIEW.md)** - Обзор архитектуры
 
 ### 📂 Категории:
 
@@ -105,7 +105,7 @@ cd frontend && npm test
 
 ⚠️ **Перед созданием новых платформ** прочитайте:
 - [docs/architecture/SCRIPTS_ARCHITECTURE.md](./docs/architecture/SCRIPTS_ARCHITECTURE.md) 🔴 **КРИТИЧНО**
-- [docs/architecture/ARCHITECTURE_IMPROVEMENTS_NEEDED.md](./docs/architecture/ARCHITECTURE_IMPROVEMENTS_NEEDED.md)
+- [docs/architecture/KNOWN_ISSUES.md](./docs/architecture/KNOWN_ISSUES.md)
 
 ---
 

@@ -730,8 +730,8 @@ npm run dev
 5. Сохранить DSN для настройки в переменных окружения
 
 **Примечание:** 
-- Подробная инструкция по настройке Sentry находится в [`SENTRY_SETUP.md`](../analytics/SENTRY_SETUP.md)
-- Информация о конфигурации аналитики для разных платформ находится в [`PLATFORM_CONFIGURATION.md`](../analytics/PLATFORM_CONFIGURATION.md)
+- Подробная инструкция по настройке Sentry: [SENTRY.md](../guides/SENTRY.md)
+- Конфигурация GA, GTM, Sentry для платформ: [PLATFORM_GUIDE.md, раздел 6](../guides/PLATFORM_GUIDE.md#6-конфигурация-аналитики-и-мониторинга-ga-gtm-sentry)
 
 **Важно:** 
 - ✅ Все настройки Sentry конфигурируются через переменные окружения
@@ -1783,7 +1783,7 @@ COUNTRY=al npx ts-node -r tsconfig-paths/register src/scripts/stage/seed.ts
 
 ### Архитектурные улучшения (рекомендуется ДО создания Албании)
 - [x] ~~Идентифицированы хардкодные platform-specific данные в core~~ ✅ Выполнено
-- [x] ~~Создан документ `ARCHITECTURE_IMPROVEMENTS_NEEDED.md`~~ ✅ Выполнено
+- [x] ~~Создан документ `KNOWN_ISSUES.md`~~ ✅ Выполнено
 - [x] ~~**Вынести SEO keywords** из core в config/locales~~ ✅ Выполнено (добавлено в locales/mk.json → metadata.site.keywords)
 - [x] ~~**Вынести default metadata** (title, description) из core в locales~~ ✅ Выполнено (locales/mk.json → metadata.site)
 - [x] ~~**Вынести OpenGraph хардкоды** из core~~ ✅ Выполнено (app/opengraph-image.tsx, app/page.tsx используют config и locales)
@@ -1953,7 +1953,7 @@ platform-repo/
 
 ### Детальная документация:
 
-- **📄 Frontend/SEO:** [`ARCHITECTURE_IMPROVEMENTS_NEEDED.md`](../architecture/ARCHITECTURE_IMPROVEMENTS_NEEDED.md)
+- **📄 Frontend/SEO:** [`KNOWN_ISSUES.md`](../architecture/KNOWN_ISSUES.md)
 - **📄 Скрипты:** [`SCRIPTS_ARCHITECTURE.md`](../architecture/SCRIPTS_ARCHITECTURE.md) - **НОВОЕ!**
 
 ### Рекомендуемый порядок действий:
@@ -1984,13 +1984,13 @@ platform-repo/
 
 ## Предложения по дальнейшим улучшениям (опционально)
 
-См. [`ARCHITECTURE_IMPROVEMENTS_NEEDED.md`](../architecture/ARCHITECTURE_IMPROVEMENTS_NEEDED.md) для полного списка улучшений.
+См. [`KNOWN_ISSUES.md`](../architecture/KNOWN_ISSUES.md) для полного списка улучшений.
 
 ---
 
 ## Дополнительные ресурсы
 
-- [MULTI_REPOSITORY_ARCHITECTURE.md](../architecture/MULTI_REPOSITORY_ARCHITECTURE.md) - Архитектура мультирепозиториев
+- [MULTI_REPOSITORY.md](../architecture/MULTI_REPOSITORY.md) - Архитектура мультирепозиториев
 - [PLATFORM_GUIDE.md](./PLATFORM_GUIDE.md) - Руководство по созданию платформ
 - [DEPLOYMENT.md](./DEPLOYMENT.md) - Инструкции по деплою
 - [LOCAL_DEVELOPMENT.md](./LOCAL_DEVELOPMENT.md) - Локальная разработка
@@ -2008,9 +2008,9 @@ platform-repo/
 
 ### Архитектура
 4. **[SCRIPTS_ARCHITECTURE.md](../architecture/SCRIPTS_ARCHITECTURE.md)** 🔴 - Архитектура скриптов (ОБЯЗАТЕЛЬНО)
-5. **[ARCHITECTURE_IMPROVEMENTS_NEEDED.md](../architecture/ARCHITECTURE_IMPROVEMENTS_NEEDED.md)** - Известные проблемы
-6. **[MULTI_REPOSITORY_ARCHITECTURE.md](../architecture/MULTI_REPOSITORY_ARCHITECTURE.md)** - Общая архитектура
-7. **[README_ARCHITECTURE.md](../architecture/README_ARCHITECTURE.md)** - Обзор архитектуры
+5. **[KNOWN_ISSUES.md](../architecture/KNOWN_ISSUES.md)** - Известные проблемы
+6. **[MULTI_REPOSITORY.md](../architecture/MULTI_REPOSITORY.md)** - Общая архитектура
+7. **[ARCHITECTURE_OVERVIEW.md](../architecture/ARCHITECTURE_OVERVIEW.md)** - Обзор архитектуры
 
 ---
 

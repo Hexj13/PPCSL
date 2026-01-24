@@ -1,12 +1,12 @@
-# Настройка Sentry для отслеживания ошибок
+# Sentry — настройка и мониторинг ошибок
 
 ## Дата создания
 23 января 2026
 
 ## Связанные документы
 
-- **[GA4_EVENTS_ANALYSIS.md](./GA4_EVENTS_ANALYSIS.md)** - Анализ событий Google Analytics 4 (отслеживание ошибок вынесено в этот документ)
-- **[PLATFORM_CONFIGURATION.md](./PLATFORM_CONFIGURATION.md)** - Конфигурация аналитики и мониторинга для разных платформ (без хардкода)
+- **[GA4_EVENTS.md](../analytics/GA4_EVENTS.md)** — события и архитектура GA4 (ошибки — в Sentry)
+- **[PLATFORM_GUIDE.md](./PLATFORM_GUIDE.md#6-конфигурация-аналитики-и-мониторинга-ga-gtm-sentry)** — конфигурация GA, GTM, Sentry для платформ
 
 ## Обзор
 

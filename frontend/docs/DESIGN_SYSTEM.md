@@ -1,4 +1,4 @@
-# PPCSL Design System
+# Дизайн-система PPCSL
 
 Centralized UI component library for the PPCSL platform.
 
@@ -280,7 +280,7 @@ afterHidden(() => {
 - Skeleton loaders: Use `SkeletonContainer` component (wraps `useLoadingState` with `immediate: true`)
 - Custom loaders: Use `useLoadingState` hook directly
 
-For detailed requirements and best practices, see [`LOADING_STATES_REQUIREMENTS.md`](../../docs/LOADING_STATES_REQUIREMENTS.md).
+For detailed requirements and best practices, see [`LOADING_STATES.md`](../../docs/LOADING_STATES.md).
 
 ## Interactive Documentation
 

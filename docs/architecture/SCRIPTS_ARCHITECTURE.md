@@ -236,6 +236,6 @@ export type Platform = 'mk' | 'al' | '{code}' | 'common';
 
 ## Дополнительные ресурсы
 
-- [MULTI_REPOSITORY_ARCHITECTURE.md](./MULTI_REPOSITORY_ARCHITECTURE.md) - Общая архитектура
+- [MULTI_REPOSITORY.md](./MULTI_REPOSITORY.md) - Общая архитектура
 - [../guides/PLATFORM_CHECKLIST.md](../guides/PLATFORM_CHECKLIST.md) - Чеклист создания платформы
-- [ARCHITECTURE_IMPROVEMENTS_NEEDED.md](./ARCHITECTURE_IMPROVEMENTS_NEEDED.md) - Другие улучшения
+- [KNOWN_ISSUES.md](./KNOWN_ISSUES.md) - Другие улучшения

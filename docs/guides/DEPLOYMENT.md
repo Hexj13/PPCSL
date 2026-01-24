@@ -1,4 +1,4 @@
-# Deployment Guide
+# Деплой платформы
 
 Complete deployment guide for the PPCSL platform on different hosting environments.
 

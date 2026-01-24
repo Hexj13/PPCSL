@@ -1,4 +1,4 @@
-# Storybook Setup (Alternative)
+# Storybook — настройка (альтернативная)
 
 If you want to use Storybook for more advanced component documentation, follow these steps:
 

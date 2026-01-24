@@ -1,4 +1,4 @@
-# Platform Setup and Development Guide
+# Руководство по настройке и разработке платформы
 
 Complete guide for creating new platforms and understanding where to make code changes.
 
@@ -11,6 +11,7 @@ Complete guide for creating new platforms and understanding where to make code c
 3. [Development Workflows](#3-development-workflows)
 4. [File Structure Reference](#4-file-structure-reference)
 5. [Troubleshooting](#5-troubleshooting)
+6. [Конфигурация аналитики и мониторинга (GA, GTM, Sentry)](#6-конфигурация-аналитики-и-мониторинга-ga-gtm-sentry)
 
 ---
 
@@ -646,8 +647,48 @@ cd ../backend && npm run build
 
 ---
 
+## 6. Конфигурация аналитики и мониторинга (GA, GTM, Sentry)
+
+Все настройки конфигурируются **только через переменные окружения**. У каждой платформы — отдельные проекты GA4, GTM (опционально) и Sentry (Frontend + Backend).
+
+### Google Analytics
+- **Переменная:** `NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX`
+- **Где:** `GoogleAnalytics.tsx`. Без переменной — компонент не рендерится.
+
+### Google Tag Manager
+- **Сейчас:** `GTM_ID` захардкожен в `GoogleTagManager.tsx`. Для мультиплатформы — вынести в `NEXT_PUBLIC_GTM_ID`.
+- **Порядок в layout:** `GoogleTagManager` → `GoogleAnalyticsConsent` → `GoogleAnalytics`.
+
+### Sentry (переменные)
+- **Frontend:** `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`
+- **Backend:** `SENTRY_DSN`, `SENTRY_ENVIRONMENT`, `SENTRY_RELEASE`
+
+Детальная установка и интеграция: [SENTRY.md](./SENTRY.md).
+
+### Пример (Македония, Frontend)
+```env
+NEXT_PUBLIC_GA_ID=G-MK12345678
+NEXT_PUBLIC_SENTRY_DSN=https://mk-frontend@sentry.io/123456
+SENTRY_ORG=kupito
+SENTRY_PROJECT=kupito-frontend
+```
+
+### Чеклист для новой платформы
+- [ ] GA4: отдельный проект, `NEXT_PUBLIC_GA_ID`, проверка событий
+- [ ] GTM (опционально): контейнер и/или `NEXT_PUBLIC_GTM_ID`
+- [ ] Sentry: Frontend + Backend проекты, DSN и env в обоих, при необходимости — [SENTRY.md](./SENTRY.md)
+
+### Важно
+- Один проект GA/Sentry на несколько платформ не использовать.
+- Нет fallback: core не задаёт значения по умолчанию.
+
+**См. также:** [GA4_EVENTS.md](../analytics/GA4_EVENTS.md), [SENTRY.md](./SENTRY.md), [PLAN_ALBANIA_PLATFORM.md](../platform-plans/PLAN_ALBANIA_PLATFORM.md).
+
+---
+
 **Related Documentation:**
-- [MULTI_REPOSITORY_ARCHITECTURE.md](./MULTI_REPOSITORY_ARCHITECTURE.md) - Architecture overview
+- [MULTI_REPOSITORY.md](../architecture/MULTI_REPOSITORY.md) - Architecture overview
 - [LOCAL_DEVELOPMENT.md](./LOCAL_DEVELOPMENT.md) - Local development guide
 - [DEPLOYMENT.md](./DEPLOYMENT.md) - Deployment instructions
-- [TECHNICAL.md](./TECHNICAL.md#13-cicd-configuration) - CI/CD configuration
+- [SENTRY.md](./SENTRY.md) - Sentry setup and monitoring
+- [TECHNICAL.md](../architecture/TECHNICAL.md#13-cicd-configuration) - CI/CD configuration

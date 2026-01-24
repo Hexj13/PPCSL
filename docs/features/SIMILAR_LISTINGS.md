@@ -1,4 +1,4 @@
-# Similar Listings Block - Implementation Documentation
+# Блок похожих объявлений — документация
 
 ## Overview
 
@@ -300,4 +300,4 @@ CARD_GAP = 16  // px
 - `core/backend/src/listings/dto/similar-listings.dto.ts` - DTO validation
 
 ### Documentation
-- `core/docs/features/SIMILAR_LISTINGS_BLOCK.md` - This file
+- `core/docs/features/SIMILAR_LISTINGS.md` - This file

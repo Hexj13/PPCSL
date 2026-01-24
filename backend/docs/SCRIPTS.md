@@ -1,4 +1,4 @@
-# Scripts Organization
+# Организация и использование скриптов
 
 Scripts are organized into two directories based on their intended environment:
 

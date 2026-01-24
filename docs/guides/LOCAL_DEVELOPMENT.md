@@ -1,4 +1,4 @@
-# Local Development Guide
+# Локальная разработка
 
 Complete guide for working locally with multi-repository architecture (PPCSL core and platform repositories).
 

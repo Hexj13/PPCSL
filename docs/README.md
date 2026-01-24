@@ -7,56 +7,71 @@
 ### 🏗️ [`architecture/`](./architecture/)
 **Архитектура системы** - как устроена multi-platform система
 
-- **[README_ARCHITECTURE.md](./architecture/README_ARCHITECTURE.md)** ⭐ **НАЧНИ ЗДЕСЬ**
-- [MULTI_REPOSITORY_ARCHITECTURE.md](./architecture/MULTI_REPOSITORY_ARCHITECTURE.md) - Core + Platform repos
+- **[ARCHITECTURE_OVERVIEW.md](./architecture/ARCHITECTURE_OVERVIEW.md)** ⭐ **НАЧНИ ЗДЕСЬ**
+- [MULTI_REPOSITORY.md](./architecture/MULTI_REPOSITORY.md) - Core + Platform repos
 - [SCRIPTS_ARCHITECTURE.md](./architecture/SCRIPTS_ARCHITECTURE.md) 🔴 **КРИТИЧНО**
-- [ARCHITECTURE_IMPROVEMENTS_NEEDED.md](./architecture/ARCHITECTURE_IMPROVEMENTS_NEEDED.md) - Известные проблемы
+- [KNOWN_ISSUES.md](./architecture/KNOWN_ISSUES.md) - Известные проблемы
 - [TECHNICAL.md](./architecture/TECHNICAL.md) - Технические детали
 
 ### 📖 [`guides/`](./guides/)
-**Руководства для разработчиков** - как создавать и деплоить платформы
+**Руководства** — создание платформ, деплой, настройка сервисов
 
 - **[PLATFORM_CHECKLIST.md](./guides/PLATFORM_CHECKLIST.md)** ⭐ **Чеклист для новых платформ**
-- [PLATFORM_GUIDE.md](./guides/PLATFORM_GUIDE.md) - Детальное руководство
-- [DEPLOYMENT.md](./guides/DEPLOYMENT.md) - Инструкции по деплою
-- [LOCAL_DEVELOPMENT.md](./guides/LOCAL_DEVELOPMENT.md) - Локальная разработка
-- [QUICK_START_RU.md](./guides/QUICK_START_RU.md) - Быстрый старт
+- [PLATFORM_GUIDE.md](./guides/PLATFORM_GUIDE.md) — настройка и разработка (включая GA, GTM, Sentry)
+- [SENTRY.md](./guides/SENTRY.md) — настройка и мониторинг Sentry
+- [DEPLOYMENT.md](./guides/DEPLOYMENT.md) — деплой
+- [LOCAL_DEVELOPMENT.md](./guides/LOCAL_DEVELOPMENT.md) — локальная разработка
+- [QUICK_START_RU.md](./guides/QUICK_START_RU.md) — быстрый старт
+
+**Порядок:** PLATFORM_CHECKLIST → PLATFORM_GUIDE → DEPLOYMENT. Локально: LOCAL_DEVELOPMENT → QUICK_START_RU.
+
+### 📊 [`analytics/`](./analytics/)
+**Аналитика**
+
+- [GA4_EVENTS.md](./analytics/GA4_EVENTS.md) — события и архитектура GA4 (Sentry — в [guides/SENTRY.md](./guides/SENTRY.md))
 
 ### 🌍 [`platform-plans/`](./platform-plans/)
 **Планы конкретных платформ** - детальные планы для каждой страны
 
-- [PLAN_ALBANIA_PLATFORM.md](./platform-plans/PLAN_ALBANIA_PLATFORM.md) - План для Албании
-- _Будущие планы для других стран..._
+- [PLAN_ALBANIA_PLATFORM.md](./platform-plans/PLAN_ALBANIA_PLATFORM.md) — план для Албании (шаблон для других стран)
+- _Будущие: Serbia, Kosovo, Bulgaria..._
 
 ### ✨ [`features/`](./features/)
 **Документация фич** - описание компонентов и функциональности
 
-- [IMAGE_PREVIEW_SYSTEM.md](./features/IMAGE_PREVIEW_SYSTEM.md) - Система превью изображений
-- [LOADING_STATES_REQUIREMENTS.md](./features/LOADING_STATES_REQUIREMENTS.md) - Loading states
+- [IMAGE_PREVIEW.md](./features/IMAGE_PREVIEW.md) - Система превью изображений
+- [LOADING_STATES.md](./features/LOADING_STATES.md) - Loading states
 - [PAID_PROMOTION.md](./features/PAID_PROMOTION.md) - Платное продвижение
-- [SIMILAR_LISTINGS_BLOCK.md](./features/SIMILAR_LISTINGS_BLOCK.md) - Похожие объявления
-- [SITEMAP_GENERATION.md](./features/SITEMAP_GENERATION.md) - Генерация sitemap
-- [VEHICLE_TYPE_TOGGLES.md](./features/VEHICLE_TYPE_TOGGLES.md) - Переключатели типа транспорта (легковой/грузовой/мото) ✅
+- [SIMILAR_LISTINGS.md](./features/SIMILAR_LISTINGS.md) - Похожие объявления
+- [SITEMAP.md](./features/SITEMAP.md) - Генерация sitemap
+- [VEHICLE_TYPE.md](./features/VEHICLE_TYPE.md) - Переключатели типа транспорта (легковой/грузовой/мото) ✅
 - [SEO_AUDIT.md](./features/SEO_AUDIT.md) - SEO аудит
 - [TODO.md](./features/TODO.md) - Задачи и планы
+
+---
+
+## 🗺️ Roadmap (архитектура)
+
+**Приоритет 1:** Assets — ✅; Скрипты — 🔴 [SCRIPTS_ARCHITECTURE.md](./architecture/SCRIPTS_ARCHITECTURE.md)  
+**Приоритет 2:** Frontend хардкоды — ⚠️ [KNOWN_ISSUES.md](./architecture/KNOWN_ISSUES.md)
 
 ---
 
 ## 🚀 Быстрый старт
 
 ### Для Product Manager / Project Manager:
-1. [architecture/README_ARCHITECTURE.md](./architecture/README_ARCHITECTURE.md) - Обзор системы
+1. [architecture/ARCHITECTURE_OVERVIEW.md](./architecture/ARCHITECTURE_OVERVIEW.md) - Обзор системы
 2. [guides/PLATFORM_CHECKLIST.md](./guides/PLATFORM_CHECKLIST.md) - Чеклист
 3. [platform-plans/PLAN_ALBANIA_PLATFORM.md](./platform-plans/PLAN_ALBANIA_PLATFORM.md) - Пример плана
 
 ### Для Backend разработчика:
-1. [architecture/MULTI_REPOSITORY_ARCHITECTURE.md](./architecture/MULTI_REPOSITORY_ARCHITECTURE.md)
+1. [architecture/MULTI_REPOSITORY.md](./architecture/MULTI_REPOSITORY.md)
 2. [architecture/SCRIPTS_ARCHITECTURE.md](./architecture/SCRIPTS_ARCHITECTURE.md) 🔴 **ОБЯЗАТЕЛЬНО**
 3. [guides/LOCAL_DEVELOPMENT.md](./guides/LOCAL_DEVELOPMENT.md)
 
 ### Для Frontend разработчика:
-1. [architecture/MULTI_REPOSITORY_ARCHITECTURE.md](./architecture/MULTI_REPOSITORY_ARCHITECTURE.md)
-2. [architecture/ARCHITECTURE_IMPROVEMENTS_NEEDED.md](./architecture/ARCHITECTURE_IMPROVEMENTS_NEEDED.md)
+1. [architecture/MULTI_REPOSITORY.md](./architecture/MULTI_REPOSITORY.md)
+2. [architecture/KNOWN_ISSUES.md](./architecture/KNOWN_ISSUES.md)
 3. [guides/LOCAL_DEVELOPMENT.md](./guides/LOCAL_DEVELOPMENT.md)
 
 ### Для DevOps:
@@ -74,18 +89,21 @@
    - Требует реорганизации перед созданием новых платформ
 
 2. **⚠️ Хардкодные данные в frontend** (СРЕДНИЙ приоритет)
-   - См. [architecture/ARCHITECTURE_IMPROVEMENTS_NEEDED.md](./architecture/ARCHITECTURE_IMPROVEMENTS_NEEDED.md)
+   - См. [architecture/KNOWN_ISSUES.md](./architecture/KNOWN_ISSUES.md)
    - Можно обойти временными решениями
 
 ---
 
 ## 📞 Поддержка
 
-При возникновении вопросов:
-1. Проверить документацию в соответствующей папке
-2. Проверить [architecture/ARCHITECTURE_IMPROVEMENTS_NEEDED.md](./architecture/ARCHITECTURE_IMPROVEMENTS_NEEDED.md)
-3. Обратиться к команде разработки
+1. Документация в нужной секции (архитектура, guides, features, platform-plans)
+2. [KNOWN_ISSUES.md](./architecture/KNOWN_ISSUES.md) — известные проблемы
+3. Обращение в команду
 
 ---
 
-**Последнее обновление:** 2026-01-16
+## Для разработчиков (фичи)
+
+При новой фиче: создать док в `features/`, описать архитектуру/API/UI, обновить список в разделе «features» выше.
+
+**Последнее обновление:** 2026-01

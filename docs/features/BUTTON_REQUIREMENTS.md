@@ -455,6 +455,6 @@
 
 ## Связанные документы
 
-- [DESIGN_SYSTEM.md](../../frontend/docs/DESIGN_SYSTEM.md) - Общая документация дизайн-системы
-- [LOADING_STATES_REQUIREMENTS.md](./LOADING_STATES_REQUIREMENTS.md) - Требования к состояниям загрузки
+- [DESIGN_SYSTEM.md](../../frontend/docs/DESIGN_SYSTEM.md) - Дизайн-система
+- [LOADING_STATES.md](./LOADING_STATES.md) - Требования к состояниям загрузки
 - [theme/colors.ts](../../../theme/colors.ts) - Цветовая палитра проекта

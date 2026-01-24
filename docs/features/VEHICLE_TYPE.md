@@ -1,4 +1,4 @@
-# Vehicle Type Toggles - Implementation Documentation
+# Переключатель типа транспорта — документация
 
 ## Overview
 
@@ -1045,11 +1045,11 @@ COUNTRY=mk npx ts-node src/scripts/stage/seed-motorcycles.ts
 
 ## Связанные документы
 
-- [Search Filters Architecture](../architecture/README.md)
-- [UI Components Documentation](../../frontend/docs/README.md)
+- [Обзор архитектуры](../architecture/ARCHITECTURE_OVERVIEW.md)
+- [Frontend документация](../../frontend/docs/README.md)
 - [Database Schema](../architecture/TECHNICAL.md)
 - [Scripts Documentation](../../backend/docs/SCRIPTS.md)
 
 ---
 
-[← Назад к списку фич](./README.md)
+[← К документации](../README.md)

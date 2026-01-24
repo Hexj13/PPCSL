@@ -1,4 +1,4 @@
-# Архитектура multi-platform: Статус реализации
+# Multi-platform: известные проблемы и статус
 
 Документ описывает, что реализовано и что осталось для полной поддержки multi-platform архитектуры.
 
@@ -92,5 +92,5 @@ Platform-specific конфигурация сайта: название, дом�
 ## 🔗 Связанные документы
 
 - [SCRIPTS_ARCHITECTURE.md](./SCRIPTS_ARCHITECTURE.md) - Архитектура скриптов
-- [MULTI_REPOSITORY_ARCHITECTURE.md](./MULTI_REPOSITORY_ARCHITECTURE.md) - Multi-repo архитектура
+- [MULTI_REPOSITORY.md](./MULTI_REPOSITORY.md) - Multi-repo архитектура
 - [../guides/PLATFORM_CHECKLIST.md](../guides/PLATFORM_CHECKLIST.md) - Чеклист создания платформы

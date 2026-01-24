@@ -27,7 +27,7 @@ Macedonia Platform          Albania Platform           Future Platform
 
 ### Для понимания системы (читать первым)
 
-1. **[MULTI_REPOSITORY_ARCHITECTURE.md](./MULTI_REPOSITORY_ARCHITECTURE.md)**
+1. **[MULTI_REPOSITORY.md](./MULTI_REPOSITORY.md)**
    - Общая архитектура мультирепозиториев
    - Как работает core + platform-repo
    - Git submodules
@@ -56,7 +56,7 @@ Macedonia Platform          Albania Platform           Future Platform
    - Разделение на `common/` и `{country}/`
    - Как избежать конфликтов
 
-6. **[ARCHITECTURE_IMPROVEMENTS_NEEDED.md](./ARCHITECTURE_IMPROVEMENTS_NEEDED.md)** ⚠️ **ИЗВЕСТНЫЕ ПРОБЛЕМЫ**
+6. **[KNOWN_ISSUES.md](./KNOWN_ISSUES.md)** ⚠️ **ИЗВЕСТНЫЕ ПРОБЛЕМЫ**
    - Хардкодные данные в core
    - SEO keywords, metadata, OpenGraph
    - План оптимизации
@@ -93,7 +93,7 @@ Macedonia Platform          Albania Platform           Future Platform
 
 **Проблема:** SEO keywords, metadata, OpenGraph тексты хардкоднуты на македонском в core.
 
-**Решение:** См. [ARCHITECTURE_IMPROVEMENTS_NEEDED.md](./ARCHITECTURE_IMPROVEMENTS_NEEDED.md)
+**Решение:** См. [KNOWN_ISSUES.md](./KNOWN_ISSUES.md)
 
 **Статус:** 📋 План создан, можно работать с временными workarounds
 
@@ -152,15 +152,15 @@ Macedonia Platform          Albania Platform           Future Platform
 3. [PLAN_ALBANIA_PLATFORM.md](./PLAN_ALBANIA_PLATFORM.md)
 
 ### Для Backend разработчика:
-1. [MULTI_REPOSITORY_ARCHITECTURE.md](./MULTI_REPOSITORY_ARCHITECTURE.md)
+1. [MULTI_REPOSITORY.md](./MULTI_REPOSITORY.md)
 2. [SCRIPTS_ARCHITECTURE.md](./SCRIPTS_ARCHITECTURE.md) 🔴 **ОБЯЗАТЕЛЬНО**
-3. [PLATFORM_GUIDE.md](./PLATFORM_GUIDE.md)
-4. [LOCAL_DEVELOPMENT.md](./LOCAL_DEVELOPMENT.md)
+3. [PLATFORM_GUIDE.md](../guides/PLATFORM_GUIDE.md)
+4. [LOCAL_DEVELOPMENT.md](../guides/LOCAL_DEVELOPMENT.md)
 
 ### Для Frontend разработчика:
-1. [MULTI_REPOSITORY_ARCHITECTURE.md](./MULTI_REPOSITORY_ARCHITECTURE.md)
-2. [ARCHITECTURE_IMPROVEMENTS_NEEDED.md](./ARCHITECTURE_IMPROVEMENTS_NEEDED.md)
-3. [PLATFORM_GUIDE.md](./PLATFORM_GUIDE.md)
+1. [MULTI_REPOSITORY.md](./MULTI_REPOSITORY.md)
+2. [KNOWN_ISSUES.md](./KNOWN_ISSUES.md)
+3. [PLATFORM_GUIDE.md](../guides/PLATFORM_GUIDE.md)
 
 ### Для DevOps:
 1. [DEPLOYMENT.md](./DEPLOYMENT.md)
@@ -182,7 +182,7 @@ Macedonia Platform          Albania Platform           Future Platform
 
 При возникновении вопросов:
 1. Проверить документацию (см. выше)
-2. Проверить [ARCHITECTURE_IMPROVEMENTS_NEEDED.md](./ARCHITECTURE_IMPROVEMENTS_NEEDED.md) - может это известная проблема?
+2. Проверить [KNOWN_ISSUES.md](./KNOWN_ISSUES.md) - может это известная проблема?
 3. Обратиться к команде разработки
 
 ---

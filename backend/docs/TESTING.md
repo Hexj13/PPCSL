@@ -1,4 +1,4 @@
-# Integration Tests
+# Интеграционные тесты
 
 This directory contains integration tests that validate API endpoints against the Swagger/OpenAPI specification.
 

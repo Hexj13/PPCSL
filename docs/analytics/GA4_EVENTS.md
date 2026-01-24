@@ -1,12 +1,12 @@
-# Google Analytics 4 - Текущее состояние системы
+# Google Analytics 4 — события и архитектура
 
 ## Обзор
 
-Документ описывает текущее состояние интеграции Google Analytics 4 в систему. Все события проверяют согласие пользователя перед отправкой через `checkConsent()`.
+Документ описывает текущее состояние интеграции Google Analytics 4 в систему. События из `analytics.ts` проверяют согласие через `checkConsent()`; компоненты (`GoogleAnalytics`, `ConversionEventTrigger`) — через `useCookieConsent`; оба опираются на `localStorage['cookie_consent']`.
 
 **Связанные документы:**
-- **[SENTRY_SETUP.md](./SENTRY_SETUP.md)** - Настройка Sentry для отслеживания ошибок
-- **[PLATFORM_CONFIGURATION.md](./PLATFORM_CONFIGURATION.md)** - Конфигурация аналитики и мониторинга для разных платформ
+- **[SENTRY.md](../guides/SENTRY.md)** — настройка и мониторинг
+- **[PLATFORM_GUIDE.md](../guides/PLATFORM_GUIDE.md#6-конфигурация-аналитики-и-мониторинга-ga-gtm-sentry)** — конфигурация GA, GTM, Sentry
 
 ## Реализованные события
 
@@ -15,49 +15,63 @@
 #### view_item
 **Описание:** Просмотр детальной страницы объявления  
 **Метод:** `analytics.viewItem(listingId, listing)`  
+**Где используется:** `useListingData.ts` (страница объявления)  
 **Параметры:**
-- `currency` - валюта из конфигурации
-- `value` - цена объявления
-- `items[]` - массив с информацией об объявлении
+- `currency` — валюта из конфигурации
+- `value` — цена объявления
+- `items[]` — массив с `item_id`, `item_name`, `price`, `item_brand`, `item_category: 'Vehicle'`
 
 #### view_item_list
 **Описание:** Просмотр списка объявлений  
-**Метод:** `analytics.viewItemList(listings)`  
-**Где используется:** `ListingGrid.tsx` - при загрузке результатов поиска и для `initialData` на главной странице  
+**Метод:** `analytics.viewItemList(items)`  
+**Где используется:** `ListingGrid.tsx` — при загрузке результатов поиска и для `initialData` на главной странице  
 **Параметры:**
-- `currency` - валюта из конфигурации
-- `items[]` - массив объявлений с id, title, price
+- `item_list_id` — `'search_results'`
+- `item_list_name` — `'Search Results'`
+- `items[]` — массив с `item_id`, `item_name`, `price`, `item_category: 'Vehicle'`
 
 #### add_to_wishlist / remove_from_wishlist
 **Описание:** Добавление/удаление из избранного  
-**Методы:** `analytics.addToWishlist()`, `analytics.removeFromWishlist()`
+**Методы:** `analytics.addToWishlist(listingId, listing)`, `analytics.removeFromWishlist(listingId)`  
+**Где используется:** `ListingCard.tsx`, `ListingPageClient.tsx` (страница объявления)
 
 #### add_to_comparison / remove_from_comparison
 **Описание:** Добавление/удаление к сравнению  
-**Методы:** `analytics.addToComparison()`, `analytics.removeFromComparison()`
+**Методы:** `analytics.addToComparison(listingId, listing)`, `analytics.removeFromComparison(listingId)`  
+**Где используется:** `ListingPageClient.tsx` (страница объявления)
 
 #### contact_seller
 **Описание:** Контакт с продавцом  
-**Метод:** `analytics.contactSeller(listingId, method, listing)`  
+**Метод:** `analytics.contactSeller(listingId, method, listing?)`  
+**Где используется:** `ListingPageSeller.tsx`  
 **Методы контакта:** `phone`, `viber`, `whatsapp`, `telegram`
 
 #### create_listing
 **Описание:** Создание объявления  
-**Метод:** `analytics.createListing(listingId, listing)`
+**Метод:** `analytics.createListing(listingId, listing)`  
+**Где используется:** `ListingForm.tsx` (при успешной публикации)
 
 ### Поиск и фильтрация
 
 #### search
 **Описание:** Выполнение поиска/фильтрации  
-**Метод:** `analytics.search(query, filters)`
+**Метод:** `analytics.search(searchTerm?, filters?)`  
+**Где используется:** `SearchFilters.tsx`  
+**Параметры:** `search_term`, плюс поля фильтров из `filters` (brand, model, city и т.д.)
 
 #### quick_filter_click
-**Описание:** Клик по быстрому фильтру  
-**Метод:** `analytics.quickFilterClick(filterType, value)`
+**Описание:** Клик по быстрому фильтру (популярные бренды/модели)  
+**Метод:** `analytics.quickFilter(brand, model?)`  
+**Где используется:** `SearchFilters.tsx`  
+**Параметры:**
+- `filter_type` — `'brand'` или `'brand_model'`
+- `brand` — название бренда
+- `model` — название модели (опционально)
 
 #### save_filter
 **Описание:** Сохранение фильтра поиска  
-**Метод:** `analytics.saveFilter(filterName, filters)`
+**Метод:** `analytics.saveFilter(filterName, filters?)`  
+**Где используется:** `SaveFilterModal.tsx`
 
 #### select_content
 **Описание:** Отслеживание выбора контента (фильтры, категории, тип транспорта)  
@@ -87,31 +101,41 @@
 ### Конверсии
 
 #### conversion_event_page_view
-**Описание:** Просмотр главной страницы (конверсия)  
-**Метод:** `analytics.conversionEventPageView()`
+**Описание:** Просмотр главной страницы или страницы каталога (конверсия)  
+**Реализация:** компонент `ConversionEvent` → `ConversionEventTrigger`; событие отправляется через `gtag('event', 'conversion_event_page_view')` при наличии согласия  
+**Где используется:** `app/page.tsx` (главная), `app/listings/page.tsx` (каталог)  
+**Примечание:** метод в `analytics.ts` отсутствует; `ConversionEventTrigger` вызывает `gtag` напрямую после проверки `useCookieConsent`
 
 ### Блок похожих объявлений
 
 #### similar_block_impression
 **Описание:** Показ блока похожих объявлений  
-**Метод:** `analytics.similarBlockImpression(listingId)`
+**Метод:** `analytics.similarBlockImpression(listingId, similarCount)`  
+**Где используется:** `SimilarListings.tsx`  
+**Параметры:**
+- `listing_id` — ID объявления, на странице которого показан блок
+- `similar_count` — количество карточек в блоке
 
 #### similar_card_click
 **Описание:** Клик по карточке в блоке похожих  
-**Метод:** `analytics.similarCardClick(listingId, clickedListingId, position)`
+**Метод:** `analytics.similarCardClick(listingId, clickedListingId, position)`  
+**Где используется:** `SimilarListings.tsx`
 
 #### similar_scroll
 **Описание:** Прокрутка блока похожих  
-**Метод:** `analytics.similarScroll(listingId)`
+**Метод:** `analytics.similarScroll(listingId)`  
+**Где используется:** `SimilarListings.tsx`
 
 #### similar_favorite_toggle
 **Описание:** Переключение избранного в блоке похожих  
-**Метод:** `analytics.similarFavoriteToggle(listingId, targetListingId, action)`
+**Метод:** `analytics.similarFavoriteToggle(listingId, targetListingId, action)`  
+**Где используется:** `SimilarListings.tsx`  
+**Параметры:** `action` — `'add'` | `'remove'`
 
 ### Автоматические события GA4
 
 #### page_view
-**Описание:** Автоматически отслеживается через `gtag('config')` в `GoogleAnalytics.tsx`
+**Описание:** Отправляется при смене маршрута через `gtag('config', gaId, { page_path: pathname })` в `GoogleAnalytics.tsx`; срабатывает только при `consent === 'granted'` и в production
 
 ### Базовые события GA4
 
@@ -190,10 +214,27 @@
 
 ### Компоненты
 
+#### GoogleAnalyticsConsent.tsx
+**Расположение:** `core/frontend/components/GoogleAnalyticsConsent.tsx`  
+**Функция:** Инициализация `dataLayer` и `gtag` до загрузки GA; задаёт consent по умолчанию `analytics_storage: 'denied'`, `ad_storage: 'denied'`  
+**Загрузка:** `strategy="beforeInteractive"` — выполняется до интерактивности страницы  
+**Важно:** должен быть подключён в `layout.tsx` **до** `GoogleAnalytics` для корректной работы согласия (GDPR)
+
 #### GoogleAnalytics.tsx
 **Расположение:** `core/frontend/components/GoogleAnalytics.tsx`  
-**Функция:** Инициализация GA4 и обработка согласия пользователя  
-**Использует:** `process.env.NEXT_PUBLIC_GA_ID` (конфигурируется через переменные окружения)
+**Функция:** Подключение gtag.js и отправка `page_view` при смене `pathname`; обновление `consent` через `gtag('consent', 'update')` при смене выбора пользователя  
+**Условия:** загрузка только в production (не localhost/127.0.0.1/приватные сети); скрипт не подключается и `config` не вызывается, пока `useCookieConsent` не вернёт `granted`  
+**Использует:** `process.env.NEXT_PUBLIC_GA_ID`, хук `useCookieConsent`
+
+#### GoogleTagManager.tsx
+**Расположение:** `core/frontend/components/GoogleTagManager.tsx`  
+**Функция:** Загрузка GTM-контейнера в production; `GoogleTagManagerNoscript` — iframe для noscript  
+**Конфигурация:** `GTM_ID` захардкожен в компоненте; для мультиплатформы рекомендуется вынести в `NEXT_PUBLIC_GTM_ID`
+
+#### ConversionEvent.tsx / ConversionEventTrigger.tsx
+**Расположение:** `core/frontend/components/ConversionEvent.tsx`, `ConversionEventTrigger.tsx`  
+**Функция:** `ConversionEvent` — обёртка с событием `conversion_event_page_view`; `ConversionEventTrigger` — универсальный триггер конверсии: один раз вызывает `gtag('event', eventName)` при `consent === 'granted'` и готовности `gtag`  
+**Использует:** `useCookieConsent`, ожидание появления `window.gtag`
 
 #### analytics.ts
 **Расположение:** `core/frontend/lib/analytics.ts`  
@@ -211,6 +252,11 @@
 
 ### Хуки
 
+#### useCookieConsent.ts
+**Расположение:** `core/frontend/hooks/useCookieConsent.ts`  
+**Функция:** Чтение и обновление согласия из `localStorage` (`cookie_consent`); при `updateConsent` вызывает `gtag('consent', 'update')` и пушит `consent_update` в `dataLayer`  
+**Возвращает:** `consent`, `isLoading`, `hasConsent`, `grantConsent`, `denyConsent`
+
 #### usePageScroll.ts
 **Расположение:** `core/frontend/hooks/usePageScroll.ts`  
 **Функция:** Отслеживание прокрутки с порогами 25%, 50%, 75%, 90%  
@@ -219,12 +265,15 @@
 ## Особенности реализации
 
 ### Проверка согласия
-Все события проверяют согласие пользователя через `checkConsent()` перед отправкой. Согласие хранится в `localStorage` под ключом `cookie_consent`.
+- **analytics.ts:** перед каждым `trackEvent` вызывается `checkConsent()` — проверка `localStorage['cookie_consent']` → `parsed.analytics === 'granted'`.
+- **GoogleAnalyticsConsent:** до загрузки GA задаёт `gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'denied' })`, чтобы до выбора пользователя ничего не отправлялось.
+- **useCookieConsent:** при смене выбора обновляет `localStorage` и вызывает `gtag('consent', 'update', { analytics_storage, ad_storage })`; `CookieConsent` использует этот хук для UI.
+- **Порядок в layout.tsx:** `GoogleTagManager` → `GoogleTagManagerNoscript` → `GoogleAnalyticsConsent` → `GoogleAnalytics` (Consent до GA обязательно).
 
 ### Структура событий
 - Используются стандартные имена событий GA4 где возможно
 - Добавляются кастомные параметры для контекста
-- Включаются `currency` и `value` для e-commerce событий
+- В e-commerce: `currency` и `value` — в `view_item`, `add_to_wishlist`, `contact_seller`, `create_listing`; `view_item_list` передаёт только `item_list_id`, `item_list_name`, `items[]`
 - Используется структура `items[]` для товарных событий
 
 ### Производительность
@@ -283,8 +332,8 @@
 
 ## Примечания
 
-1. `page_view` автоматически отслеживается через `gtag('config')` в `GoogleAnalytics.tsx`
+1. `page_view` отправляется при смене маршрута через `gtag('config')` в `GoogleAnalytics.tsx` (при согласии и в production)
 2. Все события проверяют согласие пользователя перед отправкой
 3. Структура событий соответствует стандартам GA4 E-commerce
-4. Отслеживание ошибок (Exception events) вынесено в отдельный документ `SENTRY_SETUP.md`. Sentry предоставляет более детальную информацию об ошибках, чем GA4 exception events
-5. Конфигурация GA4 и Sentry для разных платформ описана в `PLATFORM_CONFIGURATION.md`
+4. Отслеживание ошибок (Exception events) вынесено в отдельный документ `SENTRY.md`. Sentry предоставляет более детальную информацию об ошибках, чем GA4 exception events
+5. Конфигурация GA4, GTM и Sentry для платформ — в [PLATFORM_GUIDE.md](../guides/PLATFORM_GUIDE.md#6-конфигурация-аналитики-и-мониторинга-ga-gtm-sentry)
