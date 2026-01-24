@@ -408,6 +408,8 @@ export function TechnicalSpecsSection({
       <EquipmentSection
         formData={formData}
         setFormData={setFormData}
+        errors={errors}
+        clearError={clearError}
         t={t}
         vehicleType={vehicleType}
       />

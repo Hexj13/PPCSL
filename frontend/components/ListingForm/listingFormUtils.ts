@@ -82,7 +82,7 @@ export function getInitialFormData(initialData?: Listing): ListingFormData {
       year: initialData.vehicle?.year?.toString() || '',
       engine_displ_l: (() => {
         const raw = initialData.vehicle?.engine_displ_l;
-        if (raw == null || raw === '') return '';
+        if (raw == null || (typeof raw === 'string' && raw === '')) return '';
         const num = parseFloat(String(raw));
         return Number.isFinite(num) ? num.toFixed(1) : '';
       })(),
