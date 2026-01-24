@@ -8,10 +8,10 @@ import { toast } from 'react-hot-toast';
 
 import { AdditionalInfoSection } from '@/components/ListingForm/AdditionalInfoSection';
 import { BasicInfoSection } from '@/components/ListingForm/BasicInfoSection';
-import { EquipmentSection } from '@/components/ListingForm/EquipmentSection';
 import { ListingFormSkeleton } from '@/components/ListingForm/ListingFormSkeleton';
 import { ListingSettingsSection } from '@/components/ListingForm/ListingSettingsSection';
 import { PhotosSection } from '@/components/ListingForm/PhotosSection';
+import { PriceAndLocationSection } from '@/components/ListingForm/PriceAndLocationSection';
 import { TechnicalSpecsSection } from '@/components/ListingForm/TechnicalSpecsSection';
 import { VehicleTypeSelector } from '@/components/ListingForm/VehicleTypeSelector';
 import { getInitialFormData } from '@/components/ListingForm/listingFormUtils';
@@ -527,11 +527,11 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
 
       <TechnicalSpecsSection {...sectionProps} />
 
-      <EquipmentSection {...sectionProps} />
-
       <AdditionalInfoSection {...sectionProps} />
 
       <PhotosSection {...sectionProps} uploading={uploading} onFileUpload={handleFileUpload} />
+
+      <PriceAndLocationSection {...sectionProps} />
 
       <ListingSettingsSection {...sectionProps} mode={mode} />
 

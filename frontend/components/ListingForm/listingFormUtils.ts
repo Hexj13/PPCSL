@@ -80,7 +80,12 @@ export function getInitialFormData(initialData?: Listing): ListingFormData {
       brand_id: initialData.vehicle?.brand_id || '',
       model_id: initialData.vehicle?.model_id || '',
       year: initialData.vehicle?.year?.toString() || '',
-      engine_displ_l: initialData.vehicle?.engine_displ_l?.toString() || '',
+      engine_displ_l: (() => {
+        const raw = initialData.vehicle?.engine_displ_l;
+        if (raw == null || raw === '') return '';
+        const num = parseFloat(String(raw));
+        return Number.isFinite(num) ? num.toFixed(1) : '';
+      })(),
       mileage_km: initialData.vehicle?.mileage_km?.toString() || '',
       fuel: initialData.vehicle?.fuel || '',
       transmission: initialData.vehicle?.transmission || '',

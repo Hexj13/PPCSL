@@ -11,9 +11,10 @@ import {
   getFuelOptions,
   getTransmissionOptions,
 } from '@/lib/form-options';
-import { ConditionType, Currency, CurrencyEnum, RegistrationType } from '@/lib/types';
-import { horsepowerToKw, kwToHorsepower, sortOptionsByLabel } from '@/lib/utils';
+import { ConditionType, RegistrationType } from '@/lib/types';
+import { horsepowerToKw, kwToHorsepower } from '@/lib/utils';
 
+import { EquipmentSection } from './EquipmentSection';
 import { getConditionOptions, getRegistrationTypeOptions } from './listingFormUtils';
 import type { ListingFormSectionProps } from './types';
 
@@ -25,13 +26,8 @@ export function TechnicalSpecsSection({
   t,
   vehicleType = 'car',
   handleWheel,
-  cities = [],
 }: ListingFormSectionProps) {
   const COLOR_OPTIONS = getColorOptions(t);
-  const CURRENCY_OPTIONS = sortOptionsByLabel([
-    { value: CurrencyEnum.EUR, label: 'EUR' },
-    { value: CurrencyEnum.MKD, label: 'MKD' },
-  ]);
 
   return (
     <>
@@ -39,8 +35,54 @@ export function TechnicalSpecsSection({
         <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
           {t('listings.technicalSpecs')}
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="sm:col-span-2 lg:col-span-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 512.002 512.002"
+                fill="currentColor"
+                className="flex-shrink-0"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M192,64.001h-85.333c-11.782,0-21.333,9.551-21.333,21.333v85.333c0,11.782,9.551,21.333,21.333,21.333H192
+                      c11.782,0,21.333-9.551,21.333-21.333V85.334C213.333,73.552,203.782,64.001,192,64.001z M170.667,149.334H128v-42.667h42.667
+                      V149.334z"
+                />
+                <path
+                  d="M492.766,63.615C468.845,24.117,425.98,0.328,362.779,0.001c-15.139-0.078-25.54,15.199-19.918,29.256l42.667,106.667
+                      c3.24,8.099,11.084,13.41,19.808,13.41h21.333v192c0,23.589-19.078,42.667-42.667,42.667s-42.667-19.078-42.667-42.667V192.001
+                      c0-39.786-27.183-73.185-64.002-82.649V21.334c0-11.782-9.551-21.333-21.333-21.333H42.667c-11.782,0-21.333,9.551-21.333,21.333
+                      v384C9.551,405.334,0,414.886,0,426.668v64c0,11.782,9.551,21.333,21.333,21.333h256c11.782,0,21.333-9.551,21.333-21.333v-64
+                      c0-11.782-9.551-21.333-21.333-21.333V155.044c12.757,7.371,21.335,21.146,21.335,36.957v149.333
+                      c0,47.153,38.181,85.333,85.333,85.333c47.153,0,85.333-38.181,85.333-85.333v-192h21.333c11.782,0,21.333-9.551,21.333-21.333
+                      C512.002,111.119,507.235,87.506,492.766,63.615z M256,469.334H42.667v-21.333H256V469.334z M64,405.334V42.668h170.667v362.667
+                      H64z M395.413,45.754c29.378,5.895,48.745,19.965,60.857,39.964c4.039,6.67,7.081,13.748,9.244,20.95h-45.736L395.413,45.754z"
+                />
+                <path
+                  d="M170.669,234.668h-42.667c-11.782,0-21.333,9.551-21.333,21.333c0,11.782,9.551,21.333,21.333,21.333h42.667
+                      c11.782,0,21.333-9.551,21.333-21.333C192.002,244.219,182.451,234.668,170.669,234.668z"
+                />
+              </svg>
+              {t('listings.fuelLabel')}
+            </label>
+            <Dropdown
+              value={formData.vehicle.fuel}
+              onChange={(value) => {
+                clearError('vehicle.fuel');
+                setFormData((prev) => ({
+                  ...prev,
+                  vehicle: { ...prev.vehicle, fuel: value },
+                }));
+              }}
+              error={!!errors['vehicle.fuel']}
+              options={[{ value: '', label: t('listings.selectModel') }, ...getFuelOptions(t)]}
+            />
+          </div>
+
+          <div>
             <label className="block text-sm font-semibold mb-2 text-primary-400 whitespace-nowrap">
               {t('listings.engineDisplacementLabel')}
             </label>
@@ -99,7 +141,7 @@ export function TechnicalSpecsSection({
             />
           </div>
 
-          <div className="sm:col-span-1">
+          <div>
             <label className="block text-sm font-semibold mb-2 text-primary-400 whitespace-nowrap">
               {t('listings.powerHorsepowerLabel')}
             </label>
@@ -130,7 +172,7 @@ export function TechnicalSpecsSection({
             />
           </div>
 
-          <div className="sm:col-span-1">
+          <div>
             <label className="block text-sm font-semibold mb-2 text-primary-400 whitespace-nowrap">
               {t('listings.powerKwLabel')}
             </label>
@@ -158,52 +200,6 @@ export function TechnicalSpecsSection({
               className={`input-field h-[48px] ${errors['power_kw'] ? 'border-red-500 focus:border-red-500 ' : ''}`}
               placeholder="110"
               title={t('listings.powerKwTitle')}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 512.002 512.002"
-                fill="currentColor"
-                className="flex-shrink-0"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M192,64.001h-85.333c-11.782,0-21.333,9.551-21.333,21.333v85.333c0,11.782,9.551,21.333,21.333,21.333H192
-                      c11.782,0,21.333-9.551,21.333-21.333V85.334C213.333,73.552,203.782,64.001,192,64.001z M170.667,149.334H128v-42.667h42.667
-                      V149.334z"
-                />
-                <path
-                  d="M492.766,63.615C468.845,24.117,425.98,0.328,362.779,0.001c-15.139-0.078-25.54,15.199-19.918,29.256l42.667,106.667
-                      c3.24,8.099,11.084,13.41,19.808,13.41h21.333v192c0,23.589-19.078,42.667-42.667,42.667s-42.667-19.078-42.667-42.667V192.001
-                      c0-39.786-27.183-73.185-64.002-82.649V21.334c0-11.782-9.551-21.333-21.333-21.333H42.667c-11.782,0-21.333,9.551-21.333,21.333
-                      v384C9.551,405.334,0,414.886,0,426.668v64c0,11.782,9.551,21.333,21.333,21.333h256c11.782,0,21.333-9.551,21.333-21.333v-64
-                      c0-11.782-9.551-21.333-21.333-21.333V155.044c12.757,7.371,21.335,21.146,21.335,36.957v149.333
-                      c0,47.153,38.181,85.333,85.333,85.333c47.153,0,85.333-38.181,85.333-85.333v-192h21.333c11.782,0,21.333-9.551,21.333-21.333
-                      C512.002,111.119,507.235,87.506,492.766,63.615z M256,469.334H42.667v-21.333H256V469.334z M64,405.334V42.668h170.667v362.667
-                      H64z M395.413,45.754c29.378,5.895,48.745,19.965,60.857,39.964c4.039,6.67,7.081,13.748,9.244,20.95h-45.736L395.413,45.754z"
-                />
-                <path
-                  d="M170.669,234.668h-42.667c-11.782,0-21.333,9.551-21.333,21.333c0,11.782,9.551,21.333,21.333,21.333h42.667
-                      c11.782,0,21.333-9.551,21.333-21.333C192.002,244.219,182.451,234.668,170.669,234.668z"
-                />
-              </svg>
-              {t('listings.fuelLabel')}
-            </label>
-            <Dropdown
-              value={formData.vehicle.fuel}
-              onChange={(value) => {
-                clearError('vehicle.fuel');
-                setFormData((prev) => ({
-                  ...prev,
-                  vehicle: { ...prev.vehicle, fuel: value },
-                }));
-              }}
-              error={!!errors['vehicle.fuel']}
-              options={[{ value: '', label: t('listings.selectModel') }, ...getFuelOptions(t)]}
             />
           </div>
 
@@ -304,6 +300,50 @@ export function TechnicalSpecsSection({
               <svg
                 width="16"
                 height="16"
+                viewBox="0 0 512 512"
+                fill="currentColor"
+                className="flex-shrink-0"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M500.325,211.661l-34.024-54.143c-11.508-18.302-31.61-29.402-53.216-29.402H254.645
+                      c-26.654,0-52.195,10.719-70.849,29.745l-45.216,46.107L30.738,228.933C12.733,233.11,0,249.147,0,267.615v42.348
+                      c0,9.122,7.406,16.538,16.538,16.538h57.336c-0.074,1.141-0.185,2.274-0.185,3.425c0,29.8,24.167,53.958,53.977,53.958
+                      c29.792,0,53.958-24.158,53.958-53.958c0-1.151-0.111-2.284-0.185-3.425h169.67c-0.074,1.141-0.185,2.274-0.185,3.425
+                      c0,29.8,24.166,53.958,53.958,53.958c29.81,0,53.958-24.158,53.958-53.958c0-1.151-0.092-2.284-0.166-3.425h36.789
+                      c9.132,0,16.538-7.416,16.538-16.538v-57.81C512,237.824,507.954,223.801,500.325,211.661z M127.666,351.43
+                      c-11.879,0-21.494-9.643-21.494-21.504c0-11.871,9.615-21.495,21.494-21.495c11.86,0,21.494,9.624,21.494,21.495
+                      C149.16,341.786,139.526,351.43,127.666,351.43z M264.13,215.754h-97.188l37.198-37.93c13.216-13.476,31.628-21.198,50.505-21.198
+                      h9.486V215.754z M374.998,215.754h-85.94v-59.128h85.94V215.754z M404.882,351.43c-11.86,0-21.494-9.643-21.494-21.504
+                      c0-11.871,9.634-21.495,21.494-21.495c11.879,0,21.494,9.624,21.494,21.495C426.376,341.786,416.761,351.43,404.882,351.43z
+                       M399.944,215.754v-59.128h13.142c11.879,0,22.756,6.004,29.067,16.065l27.062,43.063H399.944z"
+                />
+              </svg>
+              {t('listings.bodyTypeLabel')}
+            </label>
+            <Dropdown
+              value={formData.vehicle.body_type}
+              onChange={(value) => {
+                clearError('vehicle.body_type');
+                setFormData((prev) => ({
+                  ...prev,
+                  vehicle: { ...prev.vehicle, body_type: value },
+                }));
+              }}
+              error={!!errors['vehicle.body_type']}
+              searchable={true}
+              options={[
+                { value: '', label: t('listings.selectModel') },
+                ...getBodyTypeOptions(t, vehicleType),
+              ]}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
+              <svg
+                width="16"
+                height="16"
                 viewBox="0 0 512.009 512.009"
                 fill="currentColor"
                 className="flex-shrink-0"
@@ -364,6 +404,13 @@ export function TechnicalSpecsSection({
           </div>
         </div>
       </div>
+
+      <EquipmentSection
+        formData={formData}
+        setFormData={setFormData}
+        t={t}
+        vehicleType={vehicleType}
+      />
 
       <div className="border-t border-primary-500/20 pt-6 mb-6">
         <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
@@ -550,50 +597,6 @@ export function TechnicalSpecsSection({
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 512 512"
-                fill="currentColor"
-                className="flex-shrink-0"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M500.325,211.661l-34.024-54.143c-11.508-18.302-31.61-29.402-53.216-29.402H254.645
-                      c-26.654,0-52.195,10.719-70.849,29.745l-45.216,46.107L30.738,228.933C12.733,233.11,0,249.147,0,267.615v42.348
-                      c0,9.122,7.406,16.538,16.538,16.538h57.336c-0.074,1.141-0.185,2.274-0.185,3.425c0,29.8,24.167,53.958,53.977,53.958
-                      c29.792,0,53.958-24.158,53.958-53.958c0-1.151-0.111-2.284-0.185-3.425h169.67c-0.074,1.141-0.185,2.274-0.185,3.425
-                      c0,29.8,24.166,53.958,53.958,53.958c29.81,0,53.958-24.158,53.958-53.958c0-1.151-0.092-2.284-0.166-3.425h36.789
-                      c9.132,0,16.538-7.416,16.538-16.538v-57.81C512,237.824,507.954,223.801,500.325,211.661z M127.666,351.43
-                      c-11.879,0-21.494-9.643-21.494-21.504c0-11.871,9.615-21.495,21.494-21.495c11.86,0,21.494,9.624,21.494,21.495
-                      C149.16,341.786,139.526,351.43,127.666,351.43z M264.13,215.754h-97.188l37.198-37.93c13.216-13.476,31.628-21.198,50.505-21.198
-                      h9.486V215.754z M374.998,215.754h-85.94v-59.128h85.94V215.754z M404.882,351.43c-11.86,0-21.494-9.643-21.494-21.504
-                      c0-11.871,9.634-21.495,21.494-21.495c11.879,0,21.494,9.624,21.494,21.495C426.376,341.786,416.761,351.43,404.882,351.43z
-                       M399.944,215.754v-59.128h13.142c11.879,0,22.756,6.004,29.067,16.065l27.062,43.063H399.944z"
-                />
-              </svg>
-              {t('listings.bodyTypeLabel')}
-            </label>
-            <Dropdown
-              value={formData.vehicle.body_type}
-              onChange={(value) => {
-                clearError('vehicle.body_type');
-                setFormData((prev) => ({
-                  ...prev,
-                  vehicle: { ...prev.vehicle, body_type: value },
-                }));
-              }}
-              error={!!errors['vehicle.body_type']}
-              searchable={true}
-              options={[
-                { value: '', label: t('listings.selectModel') },
-                ...getBodyTypeOptions(t, vehicleType),
-              ]}
-            />
-          </div>
-
-          <div>
             <label className="block text-sm font-semibold mb-2 text-primary-400">
               {t('listings.colorLabel')}
             </label>
@@ -627,146 +630,6 @@ export function TechnicalSpecsSection({
               />
             </div>
           )}
-        </div>
-      </div>
-
-      <div className="border-t border-primary-500/20 pt-6 mb-6">
-        <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
-          {t('listings.priceAndLocation')}
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                className="flex-shrink-0"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <circle
-                  cx="12.04"
-                  cy="12"
-                  r="2.87"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeMiterlimit="10"
-                  strokeWidth="1.92"
-                  strokeLinecap="square"
-                />
-                <path
-                  d="M22.58,6.25v9.58a2.87,2.87,0,0,1-2.87,2.88H7.25l3.83,3.83"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeMiterlimit="10"
-                  strokeWidth="1.92"
-                />
-                <line
-                  x1="4.38"
-                  y1="12"
-                  x2="6.29"
-                  y2="12"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeMiterlimit="10"
-                  strokeWidth="1.92"
-                />
-                <line
-                  x1="17.79"
-                  y1="12"
-                  x2="19.71"
-                  y2="12"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeMiterlimit="10"
-                  strokeWidth="1.92"
-                />
-                <path
-                  d="M1.5,17.75V8.17A2.88,2.88,0,0,1,4.38,5.29H16.83L13,1.46"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeMiterlimit="10"
-                  strokeWidth="1.92"
-                />
-              </svg>
-              {t('listings.priceLabel')}
-            </label>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <input
-                type="text"
-                required
-                min="0"
-                max="999999999"
-                value={formData.price}
-                onChange={(e) => {
-                  clearError('price');
-                  const value = e.target.value.replace(/[^0-9]/g, '');
-                  setFormData((prev) => ({ ...prev, price: value }));
-                }}
-                onBlur={(e) => {
-                  const value = e.target.value.trim();
-                  if (value && /^0+$/.test(value)) {
-                    setFormData((prev) => ({
-                      ...prev,
-                      price: '0',
-                    }));
-                  }
-                }}
-                onWheel={handleWheel}
-                className={`input-field flex-1 h-[48px] ${errors['price'] ? 'border-red-500 focus:border-red-500 ' : ''}`}
-                placeholder="0"
-                title={t('listings.priceTitle')}
-              />
-              <Dropdown
-                value={formData.currency}
-                onChange={(value) =>
-                  setFormData((prev) => ({ ...prev, currency: value as Currency }))
-                }
-                className="w-32 flex-shrink-0"
-                options={CURRENCY_OPTIONS}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                className="flex-shrink-0"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M5.7 15C4.03377 15.6353 3 16.5205 3 17.4997C3 19.4329 7.02944 21 12 21C16.9706 21 21 19.4329 21 17.4997C21 16.5205 19.9662 15.6353 18.3 15M12 9H12.01M18 9C18 13.0637 13.5 15 12 18C10.5 15 6 13.0637 6 9C6 5.68629 8.68629 3 12 3C15.3137 3 18 5.68629 18 9ZM13 9C13 9.55228 12.5523 10 12 10C11.4477 10 11 9.55228 11 9C11 8.44772 11.4477 8 12 8C12.5523 8 13 8.44772 13 9Z"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              {t('listings.cityLabel')}
-            </label>
-            <Dropdown
-              value={formData.city}
-              onChange={(value) => {
-                clearError('city');
-                setFormData((prev) => ({ ...prev, city: value }));
-              }}
-              searchable={true}
-              placeholder={t('listings.selectCity')}
-              error={!!errors['city']}
-              options={[
-                { value: '', label: t('listings.selectCity') },
-                ...cities.map((city) => ({
-                  value: city.nameEn,
-                  label: `${city.name} (${city.nameEn})`,
-                })),
-              ]}
-            />
-          </div>
         </div>
       </div>
     </>

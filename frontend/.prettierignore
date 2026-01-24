@@ -6,3 +6,7 @@ public
 package-lock.json
 *.md
 next-env.d.ts
+
+lib/config
+lib/theme
+lib/locales
