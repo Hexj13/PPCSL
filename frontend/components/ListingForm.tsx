@@ -14,7 +14,10 @@ import { PhotosSection } from '@/components/ListingForm/PhotosSection';
 import { PriceAndLocationSection } from '@/components/ListingForm/PriceAndLocationSection';
 import { TechnicalSpecsSection } from '@/components/ListingForm/TechnicalSpecsSection';
 import { VehicleTypeSelector } from '@/components/ListingForm/VehicleTypeSelector';
-import { getInitialFormData } from '@/components/ListingForm/listingFormUtils';
+import {
+  getInitialFormData,
+  getInitialVehicleType,
+} from '@/components/ListingForm/listingFormUtils';
 import { useBrandsAndModels } from '@/hooks/useBrandsAndModels';
 import { useCities } from '@/hooks/useCities';
 import { useLoadingState } from '@/hooks/useLoadingState';
@@ -80,7 +83,9 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState<ListingFormData>(() => getInitialFormData(initialData));
   const [errors, setErrors] = useState<Record<string, boolean>>({});
-  const [vehicleType, setVehicleType] = useState<'car' | 'truck' | 'moto'>('car');
+  const [vehicleType, setVehicleType] = useState<'car' | 'truck' | 'moto'>(() =>
+    getInitialVehicleType(initialData)
+  );
   const [isChangingType, setIsChangingType] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -155,13 +160,10 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
   useEffect(() => {
     if (initialData && initialDataRef.current !== listingId) {
       initialDataRef.current = listingId;
-      const newFormData = getInitialFormData(initialData);
-      setFormData(newFormData);
-      if (initialData.vehicle?.brand_id) {
-        loadModels(initialData.vehicle.brand_id);
-      }
+      setFormData(getInitialFormData(initialData));
+      setVehicleType(getInitialVehicleType(initialData));
     }
-  }, [initialData, listingId, loadModels]);
+  }, [initialData, listingId]);
 
   useEffect(() => {
     if (mode === 'edit' && models.length > 0 && formData.vehicle.model_id) {

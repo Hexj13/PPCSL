@@ -1,4 +1,5 @@
 import type { Listing } from '@/lib/api';
+import { VEHICLE_TYPE_BY_BODY_TYPE } from '@/lib/constants';
 import {
   ConditionTypeEnum,
   CurrencyEnum,
@@ -8,6 +9,14 @@ import {
 import { sortOptionsByLabel } from '@/lib/utils';
 
 import type { ListingFormData } from '../ListingForm';
+
+export function getInitialVehicleType(initialData?: Listing): 'car' | 'truck' | 'moto' {
+  const bodyType = initialData?.vehicle?.body_type;
+  if (bodyType && VEHICLE_TYPE_BY_BODY_TYPE[bodyType]) return VEHICLE_TYPE_BY_BODY_TYPE[bodyType];
+  const modelType = initialData?.vehicle?.model?.vehicle_type;
+  if (modelType === 'truck' || modelType === 'moto') return modelType;
+  return 'car';
+}
 
 type TranslationFunction = (_key: string, _params?: Record<string, string | number>) => string;
 

@@ -56,6 +56,7 @@ export function useBrandsAndModels({
       return;
     }
 
+    setModels([]);
     setLoadingModels(true);
     brandsApi
       .getModels(brandId, vehicleType)
