@@ -20,6 +20,7 @@ interface DropdownProps {
   searchable?: boolean;
   showActionButtons?: boolean;
   error?: boolean;
+  autoPosition?: boolean;
 }
 
 function DropdownComponent({
@@ -32,14 +33,18 @@ function DropdownComponent({
   searchable = false,
   showActionButtons = false,
   error = false,
+  autoPosition = false,
 }: DropdownProps) {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const [tempValue, setTempValue] = useState<string>(value);
+  const [openUpwards, setOpenUpwards] = useState(false);
+  const [isPositioned, setIsPositioned] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setTempValue(value);
@@ -50,6 +55,38 @@ function DropdownComponent({
       setTempValue(value);
     }
   }, [isOpen, value, showActionButtons]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setIsPositioned(false);
+      return;
+    }
+
+    if (autoPosition && dropdownRef.current && menuRef.current) {
+      setIsPositioned(false);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (!dropdownRef.current || !menuRef.current) return;
+
+          const triggerRect = dropdownRef.current.getBoundingClientRect();
+          const menuHeight = menuRef.current.offsetHeight;
+          const viewportHeight = window.innerHeight;
+          const spaceBelow = viewportHeight - triggerRect.bottom;
+          const spaceAbove = triggerRect.top;
+
+          if (spaceBelow < menuHeight && spaceAbove > menuHeight) {
+            setOpenUpwards(true);
+          } else {
+            setOpenUpwards(false);
+          }
+          setIsPositioned(true);
+        });
+      });
+    } else {
+      setOpenUpwards(false);
+      setIsPositioned(true);
+    }
+  }, [autoPosition, isOpen, options.length]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -202,7 +239,12 @@ function DropdownComponent({
       )}
 
       {isOpen && !disabled && (
-        <div className="absolute z-[100] w-full mt-1 top-full bg-white border-2 border-primary-500/30 rounded-lg shadow-xl">
+        <div
+          ref={menuRef}
+          className={`absolute z-[100] w-full bg-white border-2 border-primary-500/30 rounded-lg shadow-xl ${
+            openUpwards ? 'bottom-full mb-1' : 'top-full mt-1'
+          } ${!isPositioned ? 'opacity-0 pointer-events-none' : ''}`}
+        >
           <div className="max-h-96 overflow-auto scrollbar-custom">
             {filteredOptions.length > 0 ? (
               filteredOptions.map((option) => {

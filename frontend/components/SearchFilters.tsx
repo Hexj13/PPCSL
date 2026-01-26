@@ -1630,9 +1630,9 @@ export function SearchFilters() {
       </div>
 
       <div className="mt-6 relative -mx-3 sm:mx-0 px-3 sm:px-0">
-        <div ref={buttonsContainerRef} className="overflow-x-auto">
-          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between min-w-max sm:min-w-0">
-            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+          <div ref={buttonsContainerRef} className="overflow-x-auto flex-1 relative">
+            <div className="flex gap-3 items-stretch sm:items-center min-w-max sm:min-w-0">
               <LoadingButton
                 type="submit"
                 loading={showSearchLoader}
@@ -1732,13 +1732,13 @@ export function SearchFilters() {
                 </button>
               )}
             </div>
-            <div className="w-full sm:w-auto border-t border-primary-500/20 pt-3 sm:border-t-0 sm:pt-0 flex-shrink-0">
-              <SortDropdown />
-            </div>
+            {showFadeButtons && (
+              <div className="lg:hidden absolute right-0 top-0 bottom-0 w-24 pointer-events-none bg-gradient-to-l from-white via-white/60 to-transparent z-20" />
+            )}
           </div>
-          {showFadeButtons && (
-            <div className="lg:hidden absolute right-0 top-0 bottom-0 w-24 pointer-events-none bg-gradient-to-l from-white via-white/60 to-transparent z-20" />
-          )}
+          <div className="w-full sm:w-auto border-t border-primary-500/20 pt-3 sm:border-t-0 sm:pt-0 flex-shrink-0 relative">
+            <SortDropdown />
+          </div>
         </div>
       </div>
 

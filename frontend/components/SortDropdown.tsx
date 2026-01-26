@@ -65,6 +65,7 @@ export function SortDropdown() {
         }}
         placeholder={t('common.selectSorting')}
         options={LISTING_SORT_OPTIONS}
+        autoPosition={true}
       />
     </div>
   );
