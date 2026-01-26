@@ -219,9 +219,16 @@ export async function generateMetadata({
     typeof pageParam === 'string' && pageParam.trim() !== '' ? parseInt(pageParam, 10) : 1;
   const safePage = Number.isFinite(page) && page > 0 ? page : 1;
 
+  const isValidVehicleType = (value: string | string[] | undefined): value is string => {
+    return typeof value === 'string' && ['car', 'truck', 'moto'].includes(value);
+  };
+
   const hasNonIndexableParams = Object.entries(params).some(([key, value]) => {
     if (value === undefined) return false;
-    if (key === 'brand' || key === 'model' || key === 'page') return false;
+    if (key === 'brand' || key === 'model' || key === 'page' || key === 'body_types') return false;
+    if (key === 'vehicleType') {
+      return !isValidVehicleType(value);
+    }
     return true;
   });
 
@@ -260,6 +267,16 @@ export async function generateMetadata({
   if (modelParam && typeof modelParam === 'string') {
     queryParams.set('model', modelParam);
   }
+  if (
+    vehicleTypeParam &&
+    typeof vehicleTypeParam === 'string' &&
+    ['car', 'truck', 'moto'].includes(vehicleTypeParam)
+  ) {
+    queryParams.set('vehicleType', vehicleTypeParam);
+  }
+  if (bodyTypesParam && typeof bodyTypesParam === 'string') {
+    queryParams.set('body_types', bodyTypesParam);
+  }
   if (!hasNonIndexableParams && safePage > 1) {
     queryParams.set('page', String(safePage));
   }
@@ -269,6 +286,16 @@ export async function generateMetadata({
   const canonicalParams = new URLSearchParams();
   if (brandParam && typeof brandParam === 'string') canonicalParams.set('brand', brandParam);
   if (modelParam && typeof modelParam === 'string') canonicalParams.set('model', modelParam);
+  if (
+    vehicleTypeParam &&
+    typeof vehicleTypeParam === 'string' &&
+    ['car', 'truck', 'moto'].includes(vehicleTypeParam)
+  ) {
+    canonicalParams.set('vehicleType', vehicleTypeParam);
+  }
+  if (bodyTypesParam && typeof bodyTypesParam === 'string') {
+    canonicalParams.set('body_types', bodyTypesParam);
+  }
   const canonicalQuery = canonicalParams.toString();
   const canonicalUrl = `${siteUrl}${canonicalQuery ? `?${canonicalQuery}` : ''}`;
 
