@@ -1,5 +1,5 @@
 import { useSearchParams } from 'next/navigation';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const FILTERS_STORAGE_KEY = 'kupito_search_filters';
 
@@ -203,6 +203,110 @@ export function useSearchFilters() {
   }, [searchParams, hasEncodedArrays, storedFilters, currentYear]);
 
   const [filters, setFilters] = useState<FilterState>(getInitialFilters);
+  const prevUrlParamsRef = useRef<string>('');
+
+  useEffect(() => {
+    const currentUrlParams = searchParams.toString();
+    if (currentUrlParams === prevUrlParamsRef.current) {
+      return;
+    }
+    prevUrlParamsRef.current = currentUrlParams;
+
+    setFilters((prev) => {
+      const urlCities = Array.isArray(storedFilters?.cities)
+        ? (storedFilters?.cities as string[])
+        : parseArrayParam(
+            searchParams.get('cities') || searchParams.get('city') || null,
+            hasEncodedArrays
+          );
+      const urlYearGte = searchParams.get('year_gte') || '';
+      const urlYearLte = searchParams.get('year_lte') || currentYear;
+      const urlPriceGte = searchParams.get('price_gte') || '';
+      const urlPriceLte = searchParams.get('price_lte') || '';
+      const urlMileageGte = searchParams.get('mileage_gte') || '';
+      const urlMileageLte = searchParams.get('mileage_lte') || '';
+      const urlEngineDisplGte = searchParams.get('engine_displ_l_gte') || '';
+      const urlEngineDisplLte = searchParams.get('engine_displ_l_lte') || '';
+      const urlHorsepowerGte = searchParams.get('horsepower_gte') || '';
+      const urlHorsepowerLte = searchParams.get('horsepower_lte') || '';
+      const urlCurrency = searchParams.get('currency') || '';
+      const urlUrgent = searchParams.get('urgent') === 'true';
+      const urlIsNew = searchParams.get('is_new') === 'true';
+      const urlIsRegistered =
+        searchParams.get('is_registered') === 'true'
+          ? true
+          : searchParams.get('is_registered') === 'false'
+            ? false
+            : undefined;
+      const urlFuels = Array.isArray(storedFilters?.fuels)
+        ? (storedFilters?.fuels as string[])
+        : parseArrayParam(
+            searchParams.get('fuels') || searchParams.get('fuel') || null,
+            hasEncodedArrays
+          );
+      const urlTransmissions = Array.isArray(storedFilters?.transmissions)
+        ? (storedFilters?.transmissions as string[])
+        : parseArrayParam(
+            searchParams.get('transmissions') || searchParams.get('transmission') || null,
+            hasEncodedArrays
+          );
+      const urlBodyTypes = Array.isArray(storedFilters?.body_types)
+        ? (storedFilters?.body_types as string[])
+        : parseArrayParam(
+            searchParams.get('body_types') || searchParams.get('body_type') || null,
+            hasEncodedArrays
+          );
+      const urlColors = Array.isArray(storedFilters?.colors)
+        ? (storedFilters?.colors as string[])
+        : parseArrayParam(
+            searchParams.get('colors') || searchParams.get('color') || null,
+            hasEncodedArrays
+          );
+      const urlDoors = Array.isArray(storedFilters?.doors)
+        ? (storedFilters?.doors as string[])
+        : parseArrayParam(searchParams.get('doors') || null, hasEncodedArrays);
+      const urlConditions = Array.isArray(storedFilters?.conditions)
+        ? (storedFilters?.conditions as string[])
+        : parseArrayParam(searchParams.get('conditions') || null, hasEncodedArrays);
+      const urlRegistrationTypes = Array.isArray(storedFilters?.registration_types)
+        ? (storedFilters?.registration_types as string[])
+        : parseArrayParam(searchParams.get('registration_types') || null, hasEncodedArrays);
+      const urlDriveTypes = Array.isArray(storedFilters?.drive_types)
+        ? (storedFilters?.drive_types as string[])
+        : parseArrayParam(searchParams.get('drive_types') || null, hasEncodedArrays);
+      const urlSortBy = searchParams.get('sortBy') || 'created_at';
+      const urlSortOrder = (searchParams.get('sortOrder') || 'DESC') as 'ASC' | 'DESC';
+
+      return {
+        ...prev,
+        cities: urlCities,
+        year_gte: urlYearGte,
+        year_lte: urlYearLte,
+        price_gte: urlPriceGte,
+        price_lte: urlPriceLte,
+        mileage_gte: urlMileageGte,
+        mileage_lte: urlMileageLte,
+        engine_displ_l_gte: urlEngineDisplGte,
+        engine_displ_l_lte: urlEngineDisplLte,
+        horsepower_gte: urlHorsepowerGte,
+        horsepower_lte: urlHorsepowerLte,
+        currency: urlCurrency,
+        urgent: urlUrgent,
+        is_new: urlIsNew,
+        is_registered: urlIsRegistered,
+        fuels: urlFuels,
+        transmissions: urlTransmissions,
+        body_types: urlBodyTypes,
+        colors: urlColors,
+        doors: urlDoors,
+        conditions: urlConditions,
+        registration_types: urlRegistrationTypes,
+        drive_types: urlDriveTypes,
+        sortBy: urlSortBy,
+        sortOrder: urlSortOrder,
+      };
+    });
+  }, [searchParams, hasEncodedArrays, storedFilters, currentYear]);
 
   const updateFilter = useCallback(<K extends keyof FilterState>(key: K, value: FilterState[K]) => {
     setFilters((prev) => ({ ...prev, [key]: value }));

@@ -29,7 +29,7 @@ export const validators = {
       return { isValid: false, errorKey: 'yearMustBePositive' };
     }
 
-    if (year < 1900) {
+    if (year < 1940) {
       return { isValid: false, errorKey: 'yearMinError' };
     }
 

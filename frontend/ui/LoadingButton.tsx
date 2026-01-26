@@ -28,7 +28,7 @@ export function LoadingButton({
     minDisplayTime: 1000,
   });
 
-  const isDisabled = disabled || showLoading;
+  const isDisabled = Boolean(disabled || showLoading);
 
   const showSpinnerElement = showSpinner && showLoading;
 

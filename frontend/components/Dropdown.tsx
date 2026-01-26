@@ -115,7 +115,7 @@ function DropdownComponent({
   }, [isOpen, searchable]);
 
   const selectedOption = useMemo(
-    () => options.find((opt) => opt.value === value),
+    () => options.find((opt) => opt.value === value) || null,
     [options, value]
   );
   const displayText = useMemo(
@@ -169,13 +169,13 @@ function DropdownComponent({
           <input
             ref={inputRef}
             type="text"
-            value={isOpen ? searchQuery : displayText}
+            value={isOpen ? searchQuery : selectedOption ? displayText : ''}
             onChange={handleInputChange}
             onFocus={handleInputFocus}
             disabled={disabled}
             placeholder={isOpen ? '' : placeholder}
-            className={`input-field ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
-            style={{ paddingRight: '52px' }}
+            className={`input-field ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''} ${selectedOption ? 'text-text-primary' : ''}`}
+            style={{ paddingRight: '52px', color: selectedOption ? undefined : '#9ca3af' }}
           />
           <svg
             className={`absolute top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-400 transition-transform duration-200 cursor-pointer ${
@@ -220,7 +220,8 @@ function DropdownComponent({
           style={{ paddingRight: '52px' }}
         >
           <span
-            className={`flex-1 truncate min-w-0 ${value ? 'text-text-primary' : 'text-text-secondary'}`}
+            className="flex-1 truncate min-w-0 text-text-primary"
+            style={!selectedOption ? { color: '#9ca3af' } : undefined}
           >
             {displayText}
           </span>

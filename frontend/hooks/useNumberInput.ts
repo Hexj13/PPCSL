@@ -50,7 +50,7 @@ export function useNumberInput() {
     const year = parseInt(_value);
     const currentYear = new Date().getFullYear();
 
-    if (isNaN(year) || year < 1900 || year > currentYear) {
+    if (isNaN(year) || year < 1940 || year > currentYear) {
       onChange('');
     }
   };

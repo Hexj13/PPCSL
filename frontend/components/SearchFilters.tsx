@@ -1,99 +1,30 @@
-/* eslint-disable max-lines */
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect, startTransition, useCallback, useRef, useMemo } from 'react';
-import { toast } from 'react-hot-toast';
+import { useState, useEffect, startTransition, useCallback, useRef } from 'react';
 
 import { useBrandsAndModels } from '@/hooks/useBrandsAndModels';
 import { useCities } from '@/hooks/useCities';
+import { useFilterHandlers } from '@/hooks/useFilterHandlers';
+import { useFilterOptions } from '@/hooks/useFilterOptions';
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { useSearchFilters, type FilterState } from '@/hooks/useSearchFilters';
+import { useSearchFiltersSync } from '@/hooks/useSearchFiltersSync';
+import { useSearchTabs } from '@/hooks/useSearchTabs';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useVehicleType } from '@/hooks/useVehicleType';
 import { analytics } from '@/lib/analytics';
-import { brandsApi, VehicleModel, User } from '@/lib/api';
-import { ConditionType, RegistrationType, VEHICLE_TYPE_BY_BODY_TYPE } from '@/lib/constants';
-import { getColorOptions } from '@/lib/form-options';
-import { getPopularBrands } from '@/lib/popular-brands';
+import { brandsApi, User } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
-import {
-  compareNames,
-  createSlug,
-  isBrowser,
-  sortByName,
-  sortOptionsByLabel,
-  type LabeledOption,
-} from '@/lib/utils';
-import { LoadingButton, CarIcon, MotoIcon, TruckIcon } from '@/ui';
+import { createSlug, isBrowser, sortByName } from '@/lib/utils';
 
 import { SaveFilterModal } from './SaveFilterModal';
-import { SortDropdown } from './SortDropdown';
 import { AdvancedFilters } from './search-filters/AdvancedFilters';
 import { BasicFilters } from './search-filters/BasicFilters';
 import { PopularFilters } from './search-filters/PopularFilters';
-
-const POPULAR_CITY_NAMES_EN = ['Skopje', 'Bitola', 'Kumanovo', 'Prilep', 'Tetovo'];
-
-const FILTERS_STORAGE_KEY = 'kupito_search_filters';
-const VEHICLE_TYPE_STORAGE_KEY = 'kupito_vehicle_type';
-const MAX_URL_LENGTH = 1800;
-
-const encodeArray = (arr: string[]): string => {
-  if (arr.length === 0) return '';
-  try {
-    const json = JSON.stringify(arr);
-    return btoa(json).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-  } catch (e) {
-    console.error('Failed to encode array:', e);
-    return arr.join(',');
-  }
-};
-
-const saveFiltersToStorage = (filters: Record<string, unknown>) => {
-  if (isBrowser) {
-    try {
-      sessionStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filters));
-      localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filters));
-    } catch (e) {
-      console.error('Failed to save filters to storage:', e);
-    }
-  }
-};
-
-const clearFiltersFromStorage = () => {
-  if (isBrowser) {
-    try {
-      sessionStorage.removeItem(FILTERS_STORAGE_KEY);
-      localStorage.removeItem(FILTERS_STORAGE_KEY);
-    } catch (e) {
-      console.error('Failed to clear filters from storage:', e);
-    }
-  }
-};
-
-const saveVehicleTypeToStorage = (vehicleType: 'car' | 'moto' | 'truck') => {
-  if (isBrowser) {
-    try {
-      localStorage.setItem(VEHICLE_TYPE_STORAGE_KEY, vehicleType);
-    } catch (e) {
-      console.error('Failed to save vehicle type to storage:', e);
-    }
-  }
-};
-
-const getVehicleTypeFromStorage = (): 'car' | 'moto' | 'truck' | null => {
-  if (isBrowser) {
-    try {
-      const stored = localStorage.getItem(VEHICLE_TYPE_STORAGE_KEY);
-      if (stored && ['car', 'truck', 'moto'].includes(stored)) {
-        return stored as 'car' | 'moto' | 'truck';
-      }
-    } catch (e) {
-      console.error('Failed to get vehicle type from storage:', e);
-    }
-  }
-  return null;
-};
+import { SearchFormActions } from './search-filters/SearchFormActions';
+import { SearchTabs } from './search-filters/SearchTabs';
+import { VehicleTypeSelector } from './search-filters/VehicleTypeSelector';
 
 export function SearchFilters() {
   const router = useRouter();
@@ -107,24 +38,61 @@ export function SearchFilters() {
   const prevSearchParamsRef = useRef<string>('');
   const [lastAppliedFilters, setLastAppliedFilters] = useState<FilterState | null>(null);
   const isApplyingQuickFilterRef = useRef(false);
+  const prevUserRef = useRef<User | null>(user);
+  const [showSaveModal, setShowSaveModal] = useState(false);
 
-  const getInitialVehicleType = (): 'car' | 'moto' | 'truck' => {
-    const vehicleTypeParam = searchParams.get('vehicleType');
-    if (vehicleTypeParam && ['car', 'truck', 'moto'].includes(vehicleTypeParam)) {
-      return vehicleTypeParam as 'car' | 'truck' | 'moto';
-    }
+  const currentYear = new Date().getFullYear().toString();
 
-    const storedVehicleType = getVehicleTypeFromStorage();
-    if (storedVehicleType) {
-      return storedVehicleType;
-    }
+  const {
+    filters,
+    updateFilter,
+    reset: resetFilters,
+    hasActiveFilters,
+    setFilters,
+  } = useSearchFilters();
 
-    return 'car';
-  };
+  const hasBasicFilters =
+    filters.brand_ids.length > 0 ||
+    filters.model_ids.length > 0 ||
+    filters.cities.length > 0 ||
+    filters.year_gte !== '' ||
+    filters.year_lte !== currentYear ||
+    filters.price_gte !== '' ||
+    filters.price_lte !== '' ||
+    filters.transmissions.length > 0 ||
+    filters.currency !== '' ||
+    filters.body_types.length > 0;
 
-  const [vehicleType, setVehicleType] = useState<'car' | 'moto' | 'truck'>(() =>
-    getInitialVehicleType()
-  );
+  const hasAdvancedFiltersActive =
+    filters.fuels.length > 0 ||
+    filters.drive_types.length > 0 ||
+    filters.mileage_gte !== '' ||
+    filters.mileage_lte !== '' ||
+    filters.engine_displ_l_gte !== '' ||
+    filters.engine_displ_l_lte !== '' ||
+    filters.horsepower_gte !== '' ||
+    filters.horsepower_lte !== '' ||
+    filters.body_types.length > 0 ||
+    filters.colors.length > 0 ||
+    filters.doors.length > 0 ||
+    filters.conditions.length > 0 ||
+    filters.registration_types.length > 0 ||
+    filters.is_registered !== undefined ||
+    filters.urgent === true ||
+    filters.is_new === true;
+
+  const tabs = useSearchTabs({
+    hasBasicFilters,
+    hasAdvancedFiltersActive,
+  });
+
+  const { vehicleType, setVehicleTypeWithStorage, handleVehicleTypeChange } = useVehicleType({
+    searchParams,
+    resetFilters,
+    setLastAppliedFilters,
+    setActiveTab: tabs.setActiveTab,
+    isApplyingQuickFilterRef,
+  });
 
   const {
     brands,
@@ -133,128 +101,52 @@ export function SearchFilters() {
   } = useBrandsAndModels({ autoLoadModels: false, vehicleType });
   const { cities } = useCities();
 
-  const { visible: showSearchLoader } = useLoadingState({
-    isLoading: isSearching,
+  const { isSyncingFromUrl, isInternalSearchRef } = useSearchFiltersSync({
+    searchParams,
+    filters,
+    setFilters,
+    brands,
+    models,
+    setLastAppliedFilters,
+    hasActiveFilters,
+    isApplyingQuickFilterRef,
   });
 
-  const COLOR_OPTIONS = getColorOptions(t);
+  const { visible: showSearchLoader } = useLoadingState({
+    isLoading: isSearching || isSyncingFromUrl,
+  });
 
-  const getConditionOptions = () =>
-    sortOptionsByLabel([
-      { value: ConditionType.Undamaged, label: t('vehicleOptions.condition.Undamaged') },
-      { value: ConditionType.Damaged, label: t('vehicleOptions.condition.Damaged') },
-      { value: ConditionType.ForParts, label: t('vehicleOptions.condition.ForParts') },
-    ]);
+  const filterOptions = useFilterOptions({
+    vehicleType,
+    brands,
+    models,
+    cities,
+    filters,
+    t,
+  });
 
-  const getRegistrationTypeOptions = () =>
-    sortOptionsByLabel([
-      { value: RegistrationType.Local, label: t('searchFilters.registrationTypeOptions.Local') },
-      {
-        value: RegistrationType.Foreign,
-        label: t('searchFilters.registrationTypeOptions.Foreign'),
-      },
-      {
-        value: RegistrationType.Cleared,
-        label: t('searchFilters.registrationTypeOptions.Cleared'),
-      },
-    ]);
-
-  const REGISTRATION_OPTIONS: Array<LabeledOption> = [
-    { value: '', label: t('searchFilters.all') },
-    ...sortOptionsByLabel([
-      { value: 'true', label: t('searchFilters.registered') },
-      { value: 'false', label: t('searchFilters.notRegistered') },
-    ]),
-  ];
-  const [showSaveModal, setShowSaveModal] = useState(false);
-  const prevUserRef = useRef<User | null>(user);
-
-  const currentYear = new Date().getFullYear().toString();
-
-  const getInitialTab = (): 'basic' | 'advanced' | 'popular' => {
-    const hasBasicParams =
-      searchParams.get('brand') ||
-      searchParams.get('model') ||
-      searchParams.get('cities') ||
-      searchParams.get('year_gte') ||
-      searchParams.get('year_lte') ||
-      searchParams.get('price_gte') ||
-      searchParams.get('price_lte') ||
-      searchParams.get('transmissions') ||
-      searchParams.get('currency') ||
-      searchParams.get('body_types');
-
-    if (hasBasicParams) {
-      return 'basic';
-    }
-
-    const hasAdvancedParams =
-      searchParams.get('fuels') ||
-      searchParams.get('drive_types') ||
-      searchParams.get('mileage_gte') ||
-      searchParams.get('mileage_lte') ||
-      searchParams.get('engine_displ_l_gte') ||
-      searchParams.get('engine_displ_l_lte') ||
-      searchParams.get('horsepower_gte') ||
-      searchParams.get('horsepower_lte') ||
-      searchParams.get('colors') ||
-      searchParams.get('doors') ||
-      searchParams.get('conditions') ||
-      searchParams.get('registration_types') ||
-      searchParams.get('is_registered') ||
-      searchParams.get('urgent') ||
-      searchParams.get('is_new');
-
-    return hasAdvancedParams ? 'advanced' : 'basic';
-  };
-
-  const [activeTab, setActiveTab] = useState<'basic' | 'advanced' | 'popular'>(() =>
-    getInitialTab()
-  );
-  const basicTabRef = useRef<HTMLButtonElement>(null);
-  const advancedTabRef = useRef<HTMLButtonElement>(null);
-  const popularTabRef = useRef<HTMLButtonElement>(null);
-  const indicatorRef = useRef<HTMLDivElement>(null);
-  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
-  const tabsContainerRef = useRef<HTMLDivElement>(null);
-  const [showFade, setShowFade] = useState(true);
-  const buttonsContainerRef = useRef<HTMLDivElement>(null);
-  const [showFadeButtons, setShowFadeButtons] = useState(true);
-  const carRef = useRef<HTMLButtonElement>(null);
-  const truckRef = useRef<HTMLButtonElement>(null);
-  const motoRef = useRef<HTMLButtonElement>(null);
-  const vehicleIconsContainerRef = useRef<HTMLDivElement>(null);
-  const [vehicleIndicatorStyle, setVehicleIndicatorStyle] = useState({ left: 0, width: 0 });
-  const [showVehicleFade, setShowVehicleFade] = useState(false);
-
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
-
-  useEffect(() => {
-    const vehicleTypeParam = searchParams.get('vehicleType');
-    let newVehicleType: 'car' | 'truck' | 'moto' = 'car';
-
-    if (vehicleTypeParam && ['car', 'truck', 'moto'].includes(vehicleTypeParam)) {
-      newVehicleType = vehicleTypeParam as 'car' | 'truck' | 'moto';
-    } else {
-      const bodyTypesParam = searchParams.get('body_types');
-      if (bodyTypesParam) {
-        const bodyTypes = bodyTypesParam.split(',').map((bt) => bt.trim());
-        const categories = bodyTypes.map((bt) => VEHICLE_TYPE_BY_BODY_TYPE[bt]).filter(Boolean);
-
-        if (categories.length > 0 && categories.every((cat) => cat === categories[0])) {
-          newVehicleType = categories[0];
-        }
-      }
-    }
-
-    if (newVehicleType !== vehicleType) {
-      setVehicleType(newVehicleType);
-      saveVehicleTypeToStorage(newVehicleType);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  const handlers = useFilterHandlers({
+    filters,
+    updateFilter,
+    setFilters,
+    resetFilters,
+    brands,
+    models,
+    cities,
+    vehicleType,
+    currentYear,
+    searchParams,
+    lastAppliedFilters,
+    hasActiveFilters,
+    isSearching,
+    setIsSearching,
+    setLastAppliedFilters,
+    isInternalSearchRef,
+    getBrandOptions: filterOptions.getBrandOptions,
+    getModelOptions: filterOptions.getModelOptions,
+    getCityOptions: filterOptions.getCityOptions,
+    t,
+  });
 
   useEffect(() => {
     const vehicleTypeParam = searchParams.get('vehicleType');
@@ -266,7 +158,7 @@ export function SearchFilters() {
 
     const brandSlug = brandParam.split(',')[0].trim().toLowerCase();
     const brand = brands.find(
-      (b) => b.name.toLowerCase() === brandSlug || createSlug(b.name) === brandSlug
+      (item) => item.name.toLowerCase() === brandSlug || createSlug(item.name) === brandSlug
     );
 
     if (!brand || !brand.vehicle_types || brand.vehicle_types.length === 0) {
@@ -277,12 +169,15 @@ export function SearchFilters() {
     if (vehicleTypes.length === 1 && vehicleTypes[0] !== 'car') {
       const newVehicleType = vehicleTypes[0];
       if (newVehicleType !== vehicleType) {
-        setVehicleType(newVehicleType);
-        saveVehicleTypeToStorage(newVehicleType);
+        setVehicleTypeWithStorage(newVehicleType);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, brands]);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   useEffect(() => {
     const currentParams = searchParams.toString();
@@ -291,154 +186,6 @@ export function SearchFilters() {
     }
     prevSearchParamsRef.current = currentParams;
   }, [searchParams, isSearching]);
-
-  useEffect(() => {
-    const updateIndicator = () => {
-      const activeRef =
-        activeTab === 'basic'
-          ? basicTabRef
-          : activeTab === 'advanced'
-            ? advancedTabRef
-            : popularTabRef;
-
-      if (activeRef.current && tabsContainerRef.current) {
-        const rect = activeRef.current.getBoundingClientRect();
-        const container = tabsContainerRef.current;
-        const containerRect = container.getBoundingClientRect();
-        const scrollLeft = container.scrollLeft;
-
-        setIndicatorStyle({
-          left: rect.left - containerRect.left + scrollLeft,
-          width: rect.width,
-        });
-      }
-    };
-
-    const checkScrollability = () => {
-      if (!tabsContainerRef.current) return;
-      const { scrollLeft, scrollWidth, clientWidth } = tabsContainerRef.current;
-      const isAtEnd = scrollLeft >= scrollWidth - clientWidth - 1;
-      setShowFade(!isAtEnd);
-    };
-
-    const handleResize = () => {
-      updateIndicator();
-      checkScrollability();
-    };
-
-    const handleScroll = () => {
-      updateIndicator();
-      checkScrollability();
-    };
-
-    updateIndicator();
-    checkScrollability();
-
-    const container = tabsContainerRef.current;
-    if (container) {
-      container.addEventListener('scroll', handleScroll);
-      const resizeObserver = new ResizeObserver(handleResize);
-      resizeObserver.observe(container);
-      window.addEventListener('resize', handleResize);
-
-      return () => {
-        container.removeEventListener('scroll', handleScroll);
-        resizeObserver.disconnect();
-        window.removeEventListener('resize', handleResize);
-      };
-    }
-
-    return undefined;
-  }, [activeTab]);
-
-  useEffect(() => {
-    const checkButtonsScrollability = () => {
-      if (!buttonsContainerRef.current) return;
-      const { scrollLeft, scrollWidth, clientWidth } = buttonsContainerRef.current;
-      const threshold = 2;
-      const isAtEnd = scrollLeft + clientWidth >= scrollWidth - threshold;
-      setShowFadeButtons(!isAtEnd && scrollWidth > clientWidth);
-    };
-
-    checkButtonsScrollability();
-    const container = buttonsContainerRef.current;
-    if (container) {
-      const handleScroll = () => {
-        checkButtonsScrollability();
-      };
-
-      const resizeObserver = new ResizeObserver(() => {
-        checkButtonsScrollability();
-      });
-
-      container.addEventListener('scroll', handleScroll, { passive: true });
-      resizeObserver.observe(container);
-      window.addEventListener('resize', checkButtonsScrollability);
-
-      return () => {
-        container.removeEventListener('scroll', handleScroll);
-        resizeObserver.disconnect();
-        window.removeEventListener('resize', checkButtonsScrollability);
-      };
-    }
-
-    return undefined;
-  }, [isInitialized, userForUi]);
-
-  useEffect(() => {
-    const updateVehicleIndicator = () => {
-      const activeRef =
-        vehicleType === 'car' ? carRef : vehicleType === 'truck' ? truckRef : motoRef;
-
-      if (activeRef.current && vehicleIconsContainerRef.current) {
-        const rect = activeRef.current.getBoundingClientRect();
-        const container = vehicleIconsContainerRef.current;
-        const containerRect = container.getBoundingClientRect();
-        const scrollLeft = container.scrollLeft || 0;
-
-        setVehicleIndicatorStyle({
-          left: rect.left - containerRect.left + scrollLeft,
-          width: rect.width,
-        });
-      }
-    };
-
-    const checkScrollability = () => {
-      if (!vehicleIconsContainerRef.current) return;
-      const { scrollLeft, scrollWidth, clientWidth } = vehicleIconsContainerRef.current;
-      const isAtEnd = scrollLeft >= scrollWidth - clientWidth - 1;
-      setShowVehicleFade(!isAtEnd);
-    };
-
-    const handleResize = () => {
-      updateVehicleIndicator();
-      checkScrollability();
-    };
-
-    const handleScroll = () => {
-      updateVehicleIndicator();
-      checkScrollability();
-    };
-
-    updateVehicleIndicator();
-    checkScrollability();
-
-    const container = vehicleIconsContainerRef.current;
-    if (container) {
-      container.addEventListener('scroll', handleScroll);
-      window.addEventListener('resize', handleResize);
-      const resizeObserver = new ResizeObserver(handleResize);
-      resizeObserver.observe(container);
-
-      return () => {
-        container.removeEventListener('scroll', handleScroll);
-        window.removeEventListener('resize', handleResize);
-        resizeObserver.disconnect();
-      };
-    }
-
-    return undefined;
-  }, [vehicleType]);
 
   const applyPopularFilter = useCallback(
     (brandName: string, modelName?: string) => {
@@ -481,299 +228,6 @@ export function SearchFilters() {
     [router, vehicleType]
   );
 
-  const {
-    filters,
-    updateFilter,
-    reset: resetFilters,
-    hasActiveFilters,
-    setFilters,
-  } = useSearchFilters();
-
-  const handleVehicleTypeChange = useCallback(
-    (type: 'car' | 'truck' | 'moto') => {
-      analytics.selectVehicleType(type);
-
-      const params = new URLSearchParams();
-      if (type !== 'car') {
-        params.set('vehicleType', type);
-      }
-
-      isApplyingQuickFilterRef.current = false;
-
-      startTransition(() => {
-        setVehicleType(type);
-        saveVehicleTypeToStorage(type);
-        resetFilters();
-        setLastAppliedFilters(null);
-        setActiveTab('basic');
-        router.replace(`/?${params.toString()}`, { scroll: false });
-      });
-    },
-    [router, resetFilters]
-  );
-
-  const processedBrandParamRef = useRef<string | null>(null);
-  const processedModelParamRef = useRef<string | null>(null);
-
-  const hasBasicFilters = useMemo(() => {
-    return (
-      filters.brand_ids.length > 0 ||
-      filters.model_ids.length > 0 ||
-      filters.cities.length > 0 ||
-      filters.year_gte !== '' ||
-      filters.year_lte !== currentYear ||
-      filters.price_gte !== '' ||
-      filters.price_lte !== '' ||
-      filters.transmissions.length > 0 ||
-      filters.currency !== '' ||
-      filters.body_types.length > 0
-    );
-  }, [filters, currentYear]);
-
-  const hasAdvancedFiltersActive = useMemo(() => {
-    return (
-      filters.fuels.length > 0 ||
-      filters.drive_types.length > 0 ||
-      filters.mileage_gte !== '' ||
-      filters.mileage_lte !== '' ||
-      filters.engine_displ_l_gte !== '' ||
-      filters.engine_displ_l_lte !== '' ||
-      filters.horsepower_gte !== '' ||
-      filters.horsepower_lte !== '' ||
-      filters.body_types.length > 0 ||
-      filters.colors.length > 0 ||
-      filters.doors.length > 0 ||
-      filters.conditions.length > 0 ||
-      filters.registration_types.length > 0 ||
-      filters.is_registered !== undefined ||
-      filters.urgent === true ||
-      filters.is_new === true
-    );
-  }, [filters]);
-
-  useEffect(() => {
-    const brandParam = searchParams.get('brand');
-
-    if (!brandParam) {
-      if (processedBrandParamRef.current !== null) {
-        processedBrandParamRef.current = null;
-        processedModelParamRef.current = null;
-      }
-      return;
-    }
-
-    if (brands.length > 0 && processedBrandParamRef.current !== brandParam) {
-      const brandSlugs = brandParam.split(',').map((s) => s.trim().toLowerCase());
-      const foundBrandIds = brandSlugs
-        .map((slug) => {
-          const brand = brands.find(
-            (b) => b.name.toLowerCase() === slug || createSlug(b.name) === slug
-          );
-          return brand?.id;
-        })
-        .filter((id): id is string => id !== undefined);
-
-      if (foundBrandIds.length > 0) {
-        setFilters((prev) => {
-          const currentIds = prev.brand_ids.sort().join(',');
-          const newIds = foundBrandIds.sort().join(',');
-          if (currentIds === newIds && prev.brand_ids.length === foundBrandIds.length) {
-            return prev;
-          }
-          processedModelParamRef.current = null;
-          const newFilters = {
-            ...prev,
-            brand_ids: foundBrandIds,
-            model_ids: [],
-          };
-          if (isApplyingQuickFilterRef.current) {
-            setLastAppliedFilters({ ...newFilters });
-          }
-          return newFilters;
-        });
-      }
-      processedBrandParamRef.current = brandParam;
-    }
-  }, [brands, searchParams, setFilters]);
-
-  useEffect(() => {
-    const modelParam = searchParams.get('model');
-
-    if (!modelParam) {
-      if (processedModelParamRef.current !== null) {
-        processedModelParamRef.current = null;
-        setFilters((prev) => ({ ...prev, model_ids: [] }));
-      }
-      return;
-    }
-
-    if (
-      models.length > 0 &&
-      filters.brand_ids.length > 0 &&
-      processedModelParamRef.current !== modelParam
-    ) {
-      const modelSlugs = modelParam.split(',').map((s) => s.trim().toLowerCase());
-      const foundModelIds = modelSlugs
-        .map((slug) => {
-          const model = models.find(
-            (m) => m.name.toLowerCase() === slug || createSlug(m.name) === slug
-          );
-          return model && filters.brand_ids.includes(model.brand_id) ? model.id : undefined;
-        })
-        .filter((id): id is string => id !== undefined);
-
-      setFilters((prev) => {
-        const currentIds = prev.model_ids.sort().join(',');
-        const newIds = foundModelIds.sort().join(',');
-        if (currentIds === newIds && prev.model_ids.length === foundModelIds.length) {
-          processedModelParamRef.current = modelParam;
-          return prev;
-        }
-        processedModelParamRef.current = modelParam;
-        return {
-          ...prev,
-          model_ids: foundModelIds,
-        };
-      });
-    }
-  }, [models, filters.brand_ids, searchParams, setFilters]);
-
-  useEffect(() => {
-    const urlSortBy = searchParams.get('sortBy');
-    const urlSortOrder = searchParams.get('sortOrder');
-    const currentSortBy = urlSortBy || 'created_at';
-    const currentSortOrder = urlSortOrder || 'DESC';
-
-    if (filters.sortBy !== currentSortBy || filters.sortOrder !== currentSortOrder) {
-      setFilters((prev) => ({
-        ...prev,
-        sortBy: currentSortBy,
-        sortOrder: currentSortOrder as 'ASC' | 'DESC',
-      }));
-    }
-  }, [searchParams, filters.sortBy, filters.sortOrder, setFilters]);
-
-  const getBrandOptions = useCallback(() => {
-    const popularBrandsList = getPopularBrands(vehicleType);
-    const popularBrands = sortByName(
-      brands.filter((brand) => popularBrandsList.includes(brand.name))
-    );
-    const otherBrands = sortByName(
-      brands.filter((brand) => !popularBrandsList.includes(brand.name))
-    );
-
-    const options: Array<{ value: string; label: string; category?: string }> = [
-      { value: 'all', label: t('searchFilters.allBrands') },
-    ];
-
-    if (popularBrands.length > 0) {
-      const popularLabel = t('searchFilters.popular');
-      options.push({ value: '__category__Популарни', label: popularLabel, category: popularLabel });
-      popularBrands.forEach((brand) => {
-        options.push({ value: brand.id, label: brand.name, category: popularLabel });
-      });
-    }
-
-    if (otherBrands.length > 0) {
-      const otherLabel = t('searchFilters.other');
-      options.push({ value: '__category__Други', label: otherLabel, category: otherLabel });
-      otherBrands.forEach((brand) => {
-        options.push({ value: brand.id, label: brand.name, category: otherLabel });
-      });
-    }
-
-    return options;
-  }, [brands, vehicleType, t]);
-
-  const getModelOptions = useCallback(() => {
-    const options: Array<{ value: string; label: string; category?: string }> = [
-      { value: 'all', label: t('searchFilters.allModels') },
-    ];
-
-    if (filters.brand_ids.length >= 2) {
-      const brandsMap = new Map(brands.map((b) => [b.id, b]));
-      const modelsByBrand = new Map<string, VehicleModel[]>();
-
-      models.forEach((model) => {
-        if (!modelsByBrand.has(model.brand_id)) {
-          modelsByBrand.set(model.brand_id, []);
-        }
-        modelsByBrand.get(model.brand_id)!.push(model);
-      });
-
-      const sortedBrandIds = [...filters.brand_ids].sort((a, b) => {
-        const brandA = brandsMap.get(a);
-        const brandB = brandsMap.get(b);
-        if (!brandA || !brandB) return 0;
-        return compareNames(brandA.name, brandB.name);
-      });
-
-      sortedBrandIds.forEach((brandId) => {
-        const brand = brandsMap.get(brandId);
-        if (brand) {
-          const brandModels = modelsByBrand.get(brandId) || [];
-          if (brandModels.length > 0) {
-            const sortedModels = sortByName(brandModels);
-            options.push({
-              value: `__category__${brand.id}`,
-              label: brand.name,
-              category: brand.name,
-            });
-            sortedModels.forEach((model) => {
-              options.push({ value: model.id, label: model.name, category: brand.name });
-            });
-          }
-        }
-      });
-    } else {
-      const sortedModels = sortByName(models);
-      sortedModels.forEach((model) => {
-        options.push({ value: model.id, label: model.name });
-      });
-    }
-
-    return options;
-  }, [models, brands, filters.brand_ids, t]);
-
-  const getCityOptions = useCallback(() => {
-    const popularCities = sortByName(
-      cities.filter((city) => POPULAR_CITY_NAMES_EN.includes(city.nameEn))
-    );
-    const otherCities = sortByName(
-      cities.filter((city) => !POPULAR_CITY_NAMES_EN.includes(city.nameEn))
-    );
-
-    const options: Array<{ value: string; label: string; category?: string }> = [
-      { value: 'all', label: t('searchFilters.allCities') },
-    ];
-
-    if (popularCities.length > 0) {
-      const popularLabel = t('searchFilters.popular');
-      options.push({ value: '__category__Популарни', label: popularLabel, category: popularLabel });
-      popularCities.forEach((city) => {
-        options.push({
-          value: city.nameEn,
-          label: `${city.name} (${city.nameEn})`,
-          category: popularLabel,
-        });
-      });
-    }
-
-    if (otherCities.length > 0) {
-      const otherLabel = t('searchFilters.other');
-      options.push({ value: '__category__Други', label: otherLabel, category: otherLabel });
-      otherCities.forEach((city) => {
-        options.push({
-          value: city.nameEn,
-          label: `${city.name} (${city.nameEn})`,
-          category: otherLabel,
-        });
-      });
-    }
-
-    return options;
-  }, [cities, t]);
-
   useEffect(() => {
     if (filters.brand_ids.length > 0) {
       setLoadingModels(true);
@@ -787,36 +241,6 @@ export function SearchFilters() {
           const sorted = sortByName(uniqueModels);
           setModelsFromHook(sorted);
           setLoadingModels(false);
-
-          const modelParam = searchParams.get('model');
-          if (modelParam) {
-            const modelSlugs = modelParam.split(',').map((s) => s.trim().toLowerCase());
-            const foundModelIds = modelSlugs
-              .map((slug) => {
-                const model = sorted.find(
-                  (m) => m.name.toLowerCase() === slug || createSlug(m.name) === slug
-                );
-                return model && filters.brand_ids.includes(model.brand_id) ? model.id : undefined;
-              })
-              .filter((id): id is string => id !== undefined);
-
-            if (foundModelIds.length > 0) {
-              setFilters((prev) => {
-                const currentIds = prev.model_ids.sort().join(',');
-                const newIds = foundModelIds.sort().join(',');
-                if (currentIds === newIds && prev.model_ids.length === foundModelIds.length) {
-                  return prev;
-                }
-                const newFilters = { ...prev, model_ids: foundModelIds };
-                if (isApplyingQuickFilterRef.current) {
-                  setLastAppliedFilters({ ...newFilters });
-                }
-                return newFilters;
-              });
-              processedModelParamRef.current = modelParam;
-              return;
-            }
-          }
 
           setFilters((prev) => {
             const validModelIds = prev.model_ids.filter((modelId) =>
@@ -832,7 +256,7 @@ export function SearchFilters() {
       setModelsFromHook([]);
       setFilters((prev) => ({ ...prev, model_ids: [] }));
     }
-  }, [filters.brand_ids, searchParams, setModelsFromHook, setFilters, vehicleType]);
+  }, [filters.brand_ids, setModelsFromHook, setFilters, vehicleType]);
 
   useEffect(() => {
     if (!isApplyingQuickFilterRef.current) {
@@ -881,54 +305,24 @@ export function SearchFilters() {
     }
 
     return undefined;
-  }, [searchParams, filters, brands]);
+  }, [searchParams, filters, brands, setLastAppliedFilters]);
 
   useEffect(() => {
     const prevUser = prevUserRef.current;
     prevUserRef.current = user;
 
     if (prevUser && !user) {
-      clearFiltersFromStorage();
-      setFilters({
-        brand_ids: [],
-        model_ids: [],
-        cities: [],
-        year_gte: '',
-        year_lte: currentYear,
-        price_gte: '',
-        price_lte: '',
-        mileage_gte: '',
-        mileage_lte: '',
-        fuels: [],
-        transmissions: [],
-        body_types: [],
-        engine_displ_l_gte: '',
-        engine_displ_l_lte: '',
-        colors: [],
-        doors: [],
-        currency: '',
-        urgent: false,
-        is_new: false,
-        conditions: [],
-        registration_types: [],
-        horsepower_gte: '',
-        horsepower_lte: '',
-        drive_types: [],
-        is_registered: undefined,
-        sortBy: 'created_at',
-        sortOrder: 'DESC',
-      });
+      resetFilters();
       if (searchParams.toString()) {
         startTransition(() => {
           router.replace('/');
         });
       }
     }
-  }, [user, router, currentYear, searchParams, setFilters]);
+  }, [user, router, searchParams, resetFilters]);
 
   useEffect(() => {
     const handleResetEvent = () => {
-      clearFiltersFromStorage();
       resetFilters();
       setLastAppliedFilters(null);
       startTransition(() => {
@@ -947,480 +341,7 @@ export function SearchFilters() {
         window.removeEventListener('resetFiltersFromListingGrid', handleResetEvent);
       };
     }
-  }, [router, resetFilters]);
-
-  const handleChange = useCallback(
-    (key: keyof typeof filters, value: string) => {
-      if (key === 'is_registered') {
-        const boolValue = value === 'true' ? true : value === 'false' ? false : undefined;
-        updateFilter(key, boolValue);
-      } else if (
-        key === 'brand_ids' ||
-        key === 'model_ids' ||
-        key === 'cities' ||
-        key === 'fuels' ||
-        key === 'transmissions' ||
-        key === 'body_types' ||
-        key === 'colors' ||
-        key === 'doors' ||
-        key === 'conditions' ||
-        key === 'registration_types' ||
-        key === 'drive_types'
-      ) {
-        updateFilter(
-          key,
-          value.split(',').filter((v) => v.trim() !== '')
-        );
-      } else if (key === 'sortOrder') {
-        updateFilter(key, value as 'ASC' | 'DESC');
-      } else {
-        updateFilter(key, value);
-      }
-    },
-    [updateFilter]
-  );
-
-  const handleMultiSelectChange = useCallback(
-    (key: keyof typeof filters, values: string[]) => {
-      const filteredValues = values.filter((v) => v !== 'all' && !v.startsWith('__category__'));
-
-      const contentTypeMap: Record<string, string> = {
-        brand_ids: 'brand',
-        model_ids: 'model',
-        cities: 'city',
-        transmissions: 'transmission',
-        body_types: 'body_type',
-        fuels: 'fuel',
-        colors: 'color',
-        colors_single: 'color',
-        doors: 'door',
-        conditions: 'condition',
-        registration_types: 'registration_type',
-        drive_types: 'drive_type',
-      };
-
-      const contentType = contentTypeMap[key] || key;
-
-      const previousValues = (filters[key] as string[]) || [];
-      const newValues = filteredValues.filter((v) => !previousValues.includes(v));
-
-      newValues.forEach((value) => {
-        let option: { value: string; label: string; category?: string } | undefined;
-
-        if (key === 'brand_ids') {
-          const brandOptions = getBrandOptions();
-          option = brandOptions.find((opt) => opt.value === value);
-        } else if (key === 'model_ids') {
-          const modelOptions = getModelOptions();
-          option = modelOptions.find((opt) => opt.value === value);
-        } else if (key === 'cities') {
-          const cityOptions = getCityOptions();
-          option = cityOptions.find((opt) => opt.value === value);
-        }
-
-        analytics.selectContent(contentType, value, option?.category);
-      });
-
-      updateFilter(key, filteredValues);
-    },
-    [updateFilter, filters, getBrandOptions, getModelOptions, getCityOptions]
-  );
-
-  const handleCheckboxChange = useCallback(
-    (key: keyof typeof filters, checked: boolean) => {
-      updateFilter(key, checked);
-    },
-    [updateFilter]
-  );
-
-  const handleYearBlur = (key: string, value: string) => {
-    if (value === '') {
-      return;
-    }
-
-    const year = parseInt(value);
-    const currentYear = new Date().getFullYear();
-    const maxYear = currentYear + 1;
-
-    if (isNaN(year) || year < 1900 || year > maxYear) {
-      toast.error(t('searchFilters.yearRangeError', { maxYear: maxYear.toString() }));
-      handleChange(key as keyof typeof filters, '');
-    }
-  };
-
-  const handlePriceChange = (key: string, value: string) => {
-    const numericValue = value.replace(/[^0-9]/g, '');
-    if (
-      numericValue === '' ||
-      (parseInt(numericValue, 10) >= 0 && parseInt(numericValue, 10) <= 999999999)
-    ) {
-      handleChange(key as keyof typeof filters, numericValue);
-    }
-  };
-
-  const handlePriceBlur = (key: string, value: string) => {
-    if (value === '') {
-      return;
-    }
-
-    const numericValue = value.replace(/\s/g, '');
-    const price = parseInt(numericValue, 10);
-    if (isNaN(price) || price < 0 || price > 999999999) {
-      toast.error(t('searchFilters.priceRangeError'));
-      handleChange(key as keyof typeof filters, '');
-    }
-  };
-
-  const validateRanges = useCallback((): boolean => {
-    if (filters.year_gte && filters.year_lte) {
-      const yearGte = parseInt(filters.year_gte, 10);
-      const yearLte = parseInt(filters.year_lte, 10);
-      if (!isNaN(yearGte) && !isNaN(yearLte) && yearGte > yearLte) {
-        toast.error(t('searchFilters.yearFromGreaterThanTo'));
-        return false;
-      }
-    }
-
-    if (filters.price_gte && filters.price_lte) {
-      const priceGte = parseInt(filters.price_gte, 10);
-      const priceLte = parseInt(filters.price_lte, 10);
-      if (!isNaN(priceGte) && !isNaN(priceLte) && priceGte > priceLte) {
-        toast.error(t('searchFilters.priceFromGreaterThanTo'));
-        return false;
-      }
-    }
-
-    if (filters.mileage_gte && filters.mileage_lte) {
-      const mileageGte = parseInt(filters.mileage_gte, 10);
-      const mileageLte = parseInt(filters.mileage_lte, 10);
-      if (!isNaN(mileageGte) && !isNaN(mileageLte) && mileageGte > mileageLte) {
-        toast.error(t('searchFilters.mileageFromGreaterThanTo'));
-        return false;
-      }
-    }
-
-    if (filters.engine_displ_l_gte && filters.engine_displ_l_lte) {
-      const engineGte = parseFloat(filters.engine_displ_l_gte);
-      const engineLte = parseFloat(filters.engine_displ_l_lte);
-      if (!isNaN(engineGte) && !isNaN(engineLte) && engineGte > engineLte) {
-        toast.error(t('searchFilters.engineFromGreaterThanTo'));
-        return false;
-      }
-    }
-
-    if (filters.horsepower_gte && filters.horsepower_lte) {
-      const hpGte = parseInt(filters.horsepower_gte, 10);
-      const hpLte = parseInt(filters.horsepower_lte, 10);
-      if (!isNaN(hpGte) && !isNaN(hpLte) && hpGte > hpLte) {
-        toast.error(t('searchFilters.horsepowerFromGreaterThanTo'));
-        return false;
-      }
-    }
-
-    return true;
-  }, [filters, t]);
-
-  const handleWheel = useCallback((e: React.WheelEvent<HTMLInputElement>) => {
-    const target = e.currentTarget;
-    if (target === document.activeElement && target.type === 'number') {
-      target.blur();
-    }
-  }, []);
-
-  const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
-      e.preventDefault();
-
-      if (isSearching) {
-        return;
-      }
-
-      if (!validateRanges()) {
-        return;
-      }
-
-      setIsSearching(true);
-      setLastAppliedFilters({ ...filters });
-
-      const validBrandIds = filters.brand_ids.filter(
-        (id) => id !== 'all' && id !== '' && !id.startsWith('__category__')
-      );
-      const validModelIds = filters.model_ids.filter(
-        (id) => id !== 'all' && id !== '' && !id.startsWith('__category__')
-      );
-      const validCities = filters.cities.filter(
-        (city) => city !== 'all' && city !== '' && !city.startsWith('__category__')
-      );
-      const allBrandsSelected = validBrandIds.length === brands.length && brands.length > 0;
-      const allModelsSelected = validModelIds.length === models.length && models.length > 0;
-      const allCitiesSelected = validCities.length === cities.length && cities.length > 0;
-
-      const params = new URLSearchParams();
-      const largeArrays: Record<string, string[]> = {};
-
-      params.delete('brand_ids');
-      params.delete('model_ids');
-      params.delete('brand_id');
-      params.delete('model_id');
-
-      if (vehicleType !== 'car') {
-        params.set('vehicleType', vehicleType);
-      }
-
-      if (
-        (filters.sortBy && filters.sortBy !== 'created_at') ||
-        (filters.sortOrder && filters.sortOrder !== 'DESC')
-      ) {
-        params.set('sortBy', filters.sortBy || 'created_at');
-        params.set('sortOrder', filters.sortOrder || 'DESC');
-      }
-
-      Object.entries(filters).forEach(([key, value]) => {
-        if (key === 'sortBy' || key === 'sortOrder') {
-          return;
-        }
-        if (key === 'year_lte') {
-          const urlYearLte = searchParams.get('year_lte');
-          if (
-            value !== '' &&
-            value !== undefined &&
-            value !== currentYear &&
-            value !== urlYearLte
-          ) {
-            params.set(key, value as string);
-          } else if (urlYearLte && urlYearLte !== currentYear) {
-            params.set(key, urlYearLte);
-          }
-          return;
-        }
-        if (key === 'brand_ids') {
-          if (!allBrandsSelected && validBrandIds.length > 0) {
-            const brandSlugs = validBrandIds
-              .map((id) => {
-                const brand = brands.find((b) => b.id === id);
-                return brand ? createSlug(brand.name) : null;
-              })
-              .filter((slug): slug is string => slug !== null);
-
-            if (brandSlugs.length > 0) {
-              params.set('brand', brandSlugs.join(','));
-            }
-          }
-          return;
-        }
-        if (key === 'model_ids') {
-          if (!allModelsSelected && validModelIds.length > 0) {
-            const modelSlugs = validModelIds
-              .map((id) => {
-                const model = models.find((m) => m.id === id);
-                return model ? createSlug(model.name) : null;
-              })
-              .filter((slug): slug is string => slug !== null);
-
-            if (modelSlugs.length > 0) {
-              params.set('model', modelSlugs.join(','));
-            }
-          }
-          return;
-        }
-        if (key === 'cities') {
-          if (!allCitiesSelected && validCities.length > 0) {
-            largeArrays[key] = validCities;
-          }
-          return;
-        }
-        if (Array.isArray(value)) {
-          const filteredArray = value.filter(
-            (v) => v !== 'all' && v !== '' && !v.startsWith('__category__')
-          );
-          if (filteredArray.length > 0) {
-            const arrayParams = [
-              'fuels',
-              'transmissions',
-              'body_types',
-              'colors',
-              'doors',
-              'conditions',
-              'registration_types',
-              'drive_types',
-            ];
-            if (arrayParams.includes(key)) {
-              largeArrays[key] = filteredArray;
-            } else {
-              params.set(key, filteredArray.join(','));
-            }
-          }
-        } else if (value !== '' && value !== undefined) {
-          if (typeof value === 'boolean') {
-            if (value === true) {
-              params.set(key, 'true');
-            }
-          } else {
-            params.set(key, value as string);
-          }
-        }
-      });
-
-      let urlString = params.toString();
-      let needsStorage = false;
-      if (Object.keys(largeArrays).length > 0) {
-        const testParamsPlain = new URLSearchParams(params);
-        Object.entries(largeArrays).forEach(([key, values]) => {
-          testParamsPlain.set(key, values.join(','));
-        });
-        const testUrlPlain = `/?${testParamsPlain.toString()}`;
-
-        if (testUrlPlain.length > MAX_URL_LENGTH) {
-          const testParamsEncoded = new URLSearchParams(params);
-          Object.entries(largeArrays).forEach(([key, values]) => {
-            testParamsEncoded.set(key, encodeArray(values));
-          });
-          testParamsEncoded.set('_e', '1');
-          const testUrlEncoded = `/?${testParamsEncoded.toString()}`;
-
-          if (testUrlEncoded.length > MAX_URL_LENGTH) {
-            needsStorage = true;
-            saveFiltersToStorage(largeArrays);
-            params.set('_f', '1');
-          } else {
-            Object.entries(largeArrays).forEach(([key, values]) => {
-              params.set(key, encodeArray(values));
-            });
-            params.set('_e', '1');
-            urlString = params.toString();
-          }
-        } else {
-          Object.entries(largeArrays).forEach(([key, values]) => {
-            params.set(key, values.join(','));
-          });
-          urlString = params.toString();
-        }
-      }
-
-      if (!needsStorage) {
-        clearFiltersFromStorage();
-      }
-
-      const searchFilters: Record<string, unknown> = {};
-      if (validBrandIds.length > 0) searchFilters.brand_ids_count = validBrandIds.length;
-      if (validModelIds.length > 0) searchFilters.model_ids_count = validModelIds.length;
-      if (validCities.length > 0) searchFilters.cities_count = validCities.length;
-      if (filters.price_gte) searchFilters.price_min = filters.price_gte;
-      if (filters.price_lte) searchFilters.price_max = filters.price_lte;
-      if (filters.year_gte) searchFilters.year_min = filters.year_gte;
-      if (filters.year_lte) searchFilters.year_max = filters.year_lte;
-
-      analytics.search(undefined, searchFilters);
-
-      const newUrl = `/?${urlString}`;
-      const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('scrollPreserved', 'true');
-      }
-      startTransition(() => {
-        router.replace(newUrl, { scroll: false });
-        if (typeof window !== 'undefined') {
-          requestAnimationFrame(() => {
-            window.scrollTo({ top: scrollY, behavior: 'instant' });
-            requestAnimationFrame(() => {
-              requestAnimationFrame(() => {
-                sessionStorage.removeItem('scrollPreserved');
-              });
-            });
-          });
-        }
-        if (allBrandsSelected) {
-          setFilters((prev) => ({ ...prev, brand_ids: [] }));
-        }
-        if (allModelsSelected) {
-          setFilters((prev) => ({ ...prev, model_ids: [] }));
-        }
-        if (allCitiesSelected) {
-          setFilters((prev) => ({ ...prev, cities: [] }));
-        }
-      });
-    },
-    [
-      filters,
-      brands,
-      models,
-      cities,
-      currentYear,
-      searchParams,
-      router,
-      validateRanges,
-      setFilters,
-      isSearching,
-      vehicleType,
-    ]
-  );
-
-  const handleReset = (scrollToTop: boolean = false) => {
-    clearFiltersFromStorage();
-    resetFilters();
-    setLastAppliedFilters(null);
-    const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
-    if (typeof window !== 'undefined' && !scrollToTop) {
-      sessionStorage.setItem('scrollPreserved', 'true');
-    }
-    startTransition(() => {
-      const params = new URLSearchParams();
-      if (vehicleType !== 'car') {
-        params.set('vehicleType', vehicleType);
-      }
-      router.replace(`/?${params.toString()}`, { scroll: false });
-      if (typeof window !== 'undefined') {
-        requestAnimationFrame(() => {
-          if (scrollToTop) {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          } else {
-            window.scrollTo({ top: scrollY, behavior: 'instant' });
-            requestAnimationFrame(() => {
-              requestAnimationFrame(() => {
-                sessionStorage.removeItem('scrollPreserved');
-              });
-            });
-          }
-        });
-      }
-    });
-  };
-
-  const hasFiltersChanged = useMemo(() => {
-    if (!lastAppliedFilters) {
-      return hasActiveFilters;
-    }
-
-    const normalizeFilters = (f: typeof filters) => {
-      const normalized = { ...f };
-      const arrayKeys: (keyof typeof filters)[] = [
-        'brand_ids',
-        'model_ids',
-        'cities',
-        'transmissions',
-        'fuels',
-        'drive_types',
-        'body_types',
-        'colors',
-        'doors',
-        'conditions',
-      ];
-
-      arrayKeys.forEach((key) => {
-        if (Array.isArray(normalized[key])) {
-          const sortedArray = [...(normalized[key] as string[])].sort();
-          (normalized as Record<string, unknown>)[key] = sortedArray;
-        }
-      });
-
-      return normalized;
-    };
-
-    const normalizedFilters = normalizeFilters(filters);
-    const normalizedLastFilters = normalizeFilters(lastAppliedFilters);
-
-    return JSON.stringify(normalizedFilters) !== JSON.stringify(normalizedLastFilters);
-  }, [filters, lastAppliedFilters, hasActiveFilters]);
+  }, [router, resetFilters, setLastAppliedFilters]);
 
   const canSaveFilter = () => {
     return hasActiveFilters;
@@ -1460,287 +381,94 @@ export function SearchFilters() {
   return (
     <form
       id="search-filters"
-      onSubmit={handleSubmit}
+      onSubmit={handlers.handleSubmit}
       className="card p-4 md:p-5 mb-6 overflow-visible relative"
     >
       <div className="mb-6 border-b border-primary-500/20 -mx-4 md:-mx-5 px-4 md:px-5 relative">
         <div className="relative overflow-visible">
-          <div
-            ref={vehicleIconsContainerRef}
-            className="flex justify-start lg:justify-end gap-1 overflow-x-auto overflow-y-visible scrollbar-hide relative mb-3 lg:mb-0 lg:absolute lg:right-4 lg:top-0 lg:bottom-0 lg:items-center"
-          >
-            <span className="hidden lg:inline text-base font-bold text-primary-700 flex-shrink-0 flex items-center mr-2 lg:mr-2">
-              {t('searchFilters.categoryLabel')}
-            </span>
-            <button
-              ref={carRef}
-              type="button"
-              onClick={() => handleVehicleTypeChange('car')}
-              className={`h-12 px-2 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap flex items-center justify-center ${
-                vehicleType === 'car'
-                  ? 'bg-primary-500/5 rounded-t-lg'
-                  : 'hover:bg-primary-500/5 hover:rounded-t-lg'
-              }`}
-            >
-              <CarIcon className="w-12 h-12 transition-colors duration-300 scale-x-[-1] text-black" />
-            </button>
-            <button
-              ref={truckRef}
-              type="button"
-              onClick={() => handleVehicleTypeChange('truck')}
-              className={`h-12 px-2 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap flex items-center justify-center ${
-                vehicleType === 'truck'
-                  ? 'bg-primary-500/5 rounded-t-lg'
-                  : 'hover:bg-primary-500/5 hover:rounded-t-lg'
-              }`}
-            >
-              <TruckIcon className="w-12 h-12 transition-colors duration-300 scale-x-[-1] text-black" />
-            </button>
-            <button
-              ref={motoRef}
-              type="button"
-              onClick={() => handleVehicleTypeChange('moto')}
-              className={`h-12 px-2 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap flex items-center justify-center ${
-                vehicleType === 'moto'
-                  ? 'bg-primary-500/5 rounded-t-lg'
-                  : 'hover:bg-primary-500/5 hover:rounded-t-lg'
-              }`}
-            >
-              <MotoIcon className="w-12 h-12 transition-colors duration-300 scale-x-[-1] text-black" />
-            </button>
-            <div
-              className="absolute bottom-0 lg:bottom-0 h-0.5 bg-primary-400 transition-all duration-300 ease-in-out"
-              style={{
-                left: `${vehicleIndicatorStyle.left}px`,
-                width: `${vehicleIndicatorStyle.width}px`,
-              }}
-            />
-            {showVehicleFade && (
-              <div className="lg:hidden absolute right-0 top-0 bottom-0 w-24 pointer-events-none bg-gradient-to-l from-bg-light via-bg-light/60 to-transparent z-20" />
-            )}
-          </div>
-          <div
-            ref={tabsContainerRef}
-            className="relative flex gap-1 overflow-x-auto scrollbar-hide"
-          >
-            <button
-              ref={basicTabRef}
-              type="button"
-              onClick={() => setActiveTab('basic')}
-              className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap ${
-                activeTab === 'basic'
-                  ? 'text-text-primary bg-primary-500/5 rounded-t-lg'
-                  : 'text-text-primary hover:bg-primary-500/5'
-              }`}
-            >
-              {t('searchFilters.basicCriteria')}
-              {hasBasicFilters && (
-                <span className="absolute right-2 top-2 w-2 h-2 rounded-full bg-accent" />
-              )}
-            </button>
-            <button
-              ref={advancedTabRef}
-              type="button"
-              onClick={() => setActiveTab('advanced')}
-              className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap ${
-                activeTab === 'advanced'
-                  ? 'text-text-primary bg-primary-500/5 rounded-t-lg'
-                  : 'text-text-primary hover:bg-primary-500/5'
-              }`}
-            >
-              {t('searchFilters.additionalCriteria')}
-              {hasAdvancedFiltersActive && (
-                <span className="absolute right-2 top-2 w-2 h-2 rounded-full bg-accent" />
-              )}
-            </button>
-            <button
-              ref={popularTabRef}
-              type="button"
-              onClick={() => setActiveTab('popular')}
-              className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap ${
-                activeTab === 'popular'
-                  ? 'text-text-primary bg-primary-500/5 rounded-t-lg'
-                  : 'text-text-primary hover:bg-primary-500/5'
-              }`}
-            >
-              {t('searchFilters.popularFilters')}
-            </button>
-            <div
-              ref={indicatorRef}
-              className="absolute bottom-0 h-0.5 bg-primary-400 transition-all duration-300 ease-in-out"
-              style={{
-                left: `${indicatorStyle.left}px`,
-                width: `${indicatorStyle.width}px`,
-              }}
-            />
-          </div>
-          {showFade && (
-            <div
-              className="lg:hidden absolute top-0 bottom-0 w-24 pointer-events-none z-20"
-              style={{
-                right: '0px',
-                background:
-                  'linear-gradient(to left, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.95) 20%, rgba(255, 255, 255, 0.7) 50%, rgba(255, 255, 255, 0.3) 80%, rgba(255, 255, 255, 0) 100%)',
-              }}
-            />
-          )}
+          <VehicleTypeSelector
+            vehicleType={vehicleType}
+            onVehicleTypeChange={handleVehicleTypeChange}
+          />
+          <SearchTabs
+            activeTab={tabs.activeTab}
+            onTabChange={tabs.setActiveTab}
+            hasBasicFilters={hasBasicFilters}
+            hasAdvancedFiltersActive={hasAdvancedFiltersActive}
+            basicTabRef={tabs.basicTabRef}
+            advancedTabRef={tabs.advancedTabRef}
+            popularTabRef={tabs.popularTabRef}
+            indicatorRef={tabs.indicatorRef}
+            indicatorStyle={tabs.indicatorStyle}
+            tabsContainerRef={tabs.tabsContainerRef}
+            showFade={tabs.showFade}
+          />
         </div>
       </div>
 
-      {activeTab === 'basic' && (
+      {tabs.activeTab === 'basic' && (
         <BasicFilters
           filters={filters}
-          onFilterChange={handleChange}
-          onMultiSelectChange={handleMultiSelectChange}
-          onYearBlur={handleYearBlur}
-          onPriceChange={handlePriceChange}
-          onPriceBlur={handlePriceBlur}
-          onWheel={handleWheel}
-          brandOptions={getBrandOptions()}
-          modelOptions={getModelOptions()}
-          cityOptions={getCityOptions()}
+          onFilterChange={handlers.handleChange}
+          onMultiSelectChange={handlers.handleMultiSelectChange}
+          onYearBlur={handlers.handleYearBlur}
+          onPriceChange={handlers.handlePriceChange}
+          onPriceBlur={handlers.handlePriceBlur}
+          onWheel={handlers.handleWheel}
+          brandOptions={filterOptions.getBrandOptions()}
+          modelOptions={filterOptions.getModelOptions()}
+          cityOptions={filterOptions.getCityOptions()}
           loadingModels={loadingModels}
           currentYear={currentYear}
           vehicleType={vehicleType}
         />
       )}
 
-      {activeTab === 'advanced' && (
+      {tabs.activeTab === 'advanced' && (
         <AdvancedFilters
           filters={filters}
-          onFilterChange={handleChange}
-          onMultiSelectChange={handleMultiSelectChange}
-          onCheckboxChange={handleCheckboxChange}
-          onWheel={handleWheel}
-          colorOptions={COLOR_OPTIONS}
-          getConditionOptions={getConditionOptions}
-          getRegistrationTypeOptions={getRegistrationTypeOptions}
-          registrationOptions={REGISTRATION_OPTIONS}
+          onFilterChange={handlers.handleChange}
+          onMultiSelectChange={handlers.handleMultiSelectChange}
+          onCheckboxChange={handlers.handleCheckboxChange}
+          onWheel={handlers.handleWheel}
+          colorOptions={filterOptions.COLOR_OPTIONS}
+          getConditionOptions={filterOptions.getConditionOptions}
+          getRegistrationTypeOptions={filterOptions.getRegistrationTypeOptions}
+          registrationOptions={filterOptions.REGISTRATION_OPTIONS}
           vehicleType={vehicleType}
         />
       )}
 
-      <div className={activeTab === 'popular' ? '' : 'hidden'}>
+      <div className={tabs.activeTab === 'popular' ? '' : 'hidden'}>
         <PopularFilters
           isQuickFilterActive={isQuickFilterActive}
           onApplyFilter={applyPopularFilter}
-          onReset={() => handleReset(false)}
+          onReset={() => handlers.handleReset(false)}
           vehicleType={vehicleType}
         />
       </div>
 
-      <div className="mt-6 relative -mx-3 sm:mx-0 px-3 sm:px-0">
-        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-          <div ref={buttonsContainerRef} className="overflow-x-auto flex-1 relative">
-            <div className="flex gap-3 items-stretch sm:items-center min-w-max sm:min-w-0">
-              <LoadingButton
-                type="submit"
-                loading={showSearchLoader}
-                loadingText={t('searchFilters.searching')}
-                disabled={!hasFiltersChanged}
-                className={`w-full sm:w-auto btn-secondary flex items-center justify-center gap-2 ${
-                  !hasFiltersChanged ? '' : '!border-primary-500'
-                }`}
-              >
-                <span className="inline-flex items-center gap-2">
-                  <svg
-                    className="w-4 h-4 flex-shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
-                  {t('searchFilters.search')}
-                </span>
-              </LoadingButton>
-              <button
-                type="button"
-                onClick={() => handleReset(false)}
-                disabled={!hasActiveFilters}
-                className="w-full sm:w-auto btn-secondary flex items-center justify-center gap-2 whitespace-nowrap"
-              >
-                <svg
-                  className="w-5 h-5 flex-shrink-0"
-                  viewBox="0 0 15 15"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fillRule="evenodd"
-                    clipRule="evenodd"
-                    d="M4.85355 2.14645C5.04882 2.34171 5.04882 2.65829 4.85355 2.85355L3.70711 4H9C11.4853 4 13.5 6.01472 13.5 8.5C13.5 10.9853 11.4853 13 9 13H5C4.72386 13 4.5 12.7761 4.5 12.5C4.5 12.2239 4.72386 12 5 12H9C10.933 12 12.5 10.433 12.5 8.5C12.5 6.567 10.933 5 9 5H3.70711L4.85355 6.14645C5.04882 6.34171 5.04882 6.65829 4.85355 6.85355C4.65829 7.04882 4.34171 7.04882 4.14645 6.85355L2.14645 4.85355C1.95118 4.65829 1.95118 4.34171 2.14645 4.14645L4.14645 2.14645C4.34171 1.95118 4.65829 1.95118 4.85355 2.14645Z"
-                    fill="currentColor"
-                  />
-                </svg>
-                {t('searchFilters.reset')}
-              </button>
-              {!isInitialized ? (
-                <button
-                  type="button"
-                  disabled
-                  className="w-full sm:w-auto btn-secondary flex items-center justify-center gap-2 opacity-50 !px-3 sm:!px-6"
-                >
-                  <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-primary-300 border-t-transparent rounded-full animate-spin flex-shrink-0"></div>
-                  <span className="whitespace-nowrap text-sm sm:text-base">
-                    {t('common.loading')}
-                  </span>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (userForUi) {
-                      setShowSaveModal(true);
-                    } else {
-                      if (isBrowser) {
-                        localStorage.setItem(
-                          'pendingSavedFilter',
-                          JSON.stringify(getFiltersForSave())
-                        );
-                        localStorage.setItem('returnUrl', '/favorites?tab=filters');
-                      }
-                      router.push('/login');
-                    }
-                  }}
-                  disabled={!canSaveFilter()}
-                  className="w-full sm:w-auto btn-secondary flex items-center justify-center gap-2 !px-3 sm:!px-6"
-                  title={!userForUi ? t('common.loginRequired') : ''}
-                >
-                  <svg
-                    className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                    />
-                  </svg>
-                  <span className="whitespace-nowrap text-sm sm:text-base">
-                    {userForUi ? t('searchFilters.addToFavorites') : t('searchFilters.login')}
-                  </span>
-                </button>
-              )}
-            </div>
-            {showFadeButtons && (
-              <div className="lg:hidden absolute right-0 top-0 bottom-0 w-24 pointer-events-none bg-gradient-to-l from-white via-white/60 to-transparent z-20" />
-            )}
-          </div>
-          <div className="w-full sm:w-auto border-t border-primary-500/20 pt-3 sm:border-t-0 sm:pt-0 flex-shrink-0 relative">
-            <SortDropdown />
-          </div>
-        </div>
-      </div>
+      <SearchFormActions
+        onReset={() => handlers.handleReset(false)}
+        onSaveClick={() => {
+          if (userForUi) {
+            setShowSaveModal(true);
+          } else {
+            if (isBrowser) {
+              localStorage.setItem('pendingSavedFilter', JSON.stringify(getFiltersForSave()));
+              localStorage.setItem('returnUrl', '/favorites?tab=filters');
+            }
+            router.push('/login');
+          }
+        }}
+        hasFiltersChanged={handlers.hasFiltersChanged}
+        isSyncingFromUrl={isSyncingFromUrl}
+        showSearchLoader={showSearchLoader}
+        hasActiveFilters={hasActiveFilters}
+        canSaveFilter={canSaveFilter()}
+        buttonsContainerRef={tabs.buttonsContainerRef}
+        showFadeButtons={tabs.showFadeButtons}
+      />
 
       <SaveFilterModal
         isOpen={showSaveModal}

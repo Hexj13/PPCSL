@@ -264,6 +264,9 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       } finally {
         setLoadingMore(false);
         setLoading(false);
+        if (!append && typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('searchComplete'));
+        }
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps

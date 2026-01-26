@@ -90,6 +90,19 @@ export function getDoorOptions(t: (_key: string) => string): Array<LabeledOption
   ]);
 }
 
+export function getYearOptions(): Array<LabeledOption<string>> {
+  const currentYear = new Date().getFullYear();
+  const startYear = 1940;
+  const maxYear = currentYear + 1;
+  const years: Array<LabeledOption<string>> = [];
+
+  for (let year = maxYear; year >= startYear; year--) {
+    years.push({ value: year.toString(), label: year.toString() });
+  }
+
+  return years;
+}
+
 export function getColorLabel(color: string | undefined, t: (_key: string) => string): string {
   if (!color) return '';
   return t(`vehicleOptions.color.${color}`);

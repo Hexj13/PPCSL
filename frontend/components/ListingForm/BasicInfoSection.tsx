@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { toast } from 'react-hot-toast';
 
 import { Dropdown } from '@/components/Dropdown';
 import { useTranslation } from '@/hooks/useTranslation';
+import { getYearOptions } from '@/lib/form-options';
 
 import { ListingFormSectionProps } from './types';
 
@@ -18,8 +18,6 @@ export function BasicInfoSection({
   loadingModels = false,
   showVinHint: showVinHintProp,
   setShowVinHint: setShowVinHintProp,
-  handleWheel,
-  onFormFieldFocus,
 }: ListingFormSectionProps) {
   const { t } = useTranslation();
   const [showVinHintLocal, setShowVinHintLocal] = useState(false);
@@ -85,41 +83,19 @@ export function BasicInfoSection({
           <label className="block text-sm font-semibold mb-2 text-primary-400">
             {t('listings.yearLabel')}
           </label>
-          <input
-            type="text"
-            required
+          <Dropdown
             value={formData.vehicle.year}
-            onFocus={onFormFieldFocus}
-            onChange={(e) => {
+            onChange={(value) => {
               clearError('vehicle.year');
-              const value = e.target.value.replace(/[^0-9]/g, '');
-              if (value.length <= 4) {
-                setFormData((prev) => ({
-                  ...prev,
-                  vehicle: { ...prev.vehicle, year: value },
-                }));
-              }
+              setFormData((prev) => ({
+                ...prev,
+                vehicle: { ...prev.vehicle, year: value },
+              }));
             }}
-            onBlur={(e) => {
-              const value = e.target.value.trim();
-              if (value) {
-                const year = parseInt(value, 10);
-                const currentYear = new Date().getFullYear();
-                const maxYear = currentYear + 1;
-
-                if (isNaN(year) || year < 1900 || year > maxYear) {
-                  toast.error(t('listings.yearRangeErrorForm', { maxYear: maxYear.toString() }));
-                  setFormData((prev) => ({
-                    ...prev,
-                    vehicle: { ...prev.vehicle, year: '' },
-                  }));
-                }
-              }
-            }}
-            onWheel={handleWheel}
-            className={`input-field h-[48px] ${errors['vehicle.year'] ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
-            placeholder="2020"
-            title={t('listings.yearTitle')}
+            searchable={true}
+            placeholder={t('searchFilters.selectYear')}
+            error={!!errors['vehicle.year']}
+            options={getYearOptions()}
           />
         </div>
 

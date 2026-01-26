@@ -32,6 +32,7 @@ export function ListingSettingsSection({
           onChange={(value) =>
             setFormData((prev) => ({ ...prev, status: value as 'Active' | 'Paused' }))
           }
+          placeholder={t('listings.statusLabel')}
           options={[
             { value: 'Active', label: t('listings.publishedStatus') },
             { value: 'Paused', label: t('listings.pausedStatus') },

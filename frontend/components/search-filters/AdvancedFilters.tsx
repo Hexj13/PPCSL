@@ -511,6 +511,7 @@ export function AdvancedFilters({
                       : ''
                 }
                 onChange={(value) => onFilterChange('is_registered', value)}
+                placeholder={t('searchFilters.all')}
                 showActionButtons={true}
                 options={registrationOptions}
               />

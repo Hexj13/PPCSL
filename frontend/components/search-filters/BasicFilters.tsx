@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import { FilterState } from '@/hooks/useSearchFilters';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Currency } from '@/lib/constants';
-import { getTransmissionOptions } from '@/lib/form-options';
+import { getTransmissionOptions, getYearOptions } from '@/lib/form-options';
 import { sortOptionsByLabel, type LabeledOption } from '@/lib/utils';
 
 import { Dropdown } from '../Dropdown';
@@ -24,7 +24,6 @@ interface BasicFiltersProps {
   filters: FilterState;
   onFilterChange: (_key: keyof FilterState, _value: string) => void;
   onMultiSelectChange: (_key: keyof FilterState, _values: string[]) => void;
-  onYearBlur: (_key: string, _value: string) => void;
   onPriceChange: (_key: string, _value: string) => void;
   onPriceBlur: (_key: string, _value: string) => void;
   onWheel: (_e: React.WheelEvent<HTMLInputElement>) => void;
@@ -32,7 +31,6 @@ interface BasicFiltersProps {
   modelOptions: Array<{ value: string; label: string; category?: string }>;
   cityOptions: Array<{ value: string; label: string; category?: string }>;
   loadingModels: boolean;
-  currentYear: string;
   vehicleType?: 'car' | 'truck' | 'moto';
 }
 
@@ -40,7 +38,6 @@ export function BasicFilters({
   filters,
   onFilterChange,
   onMultiSelectChange,
-  onYearBlur,
   onPriceChange,
   onPriceBlur,
   onWheel,
@@ -48,7 +45,6 @@ export function BasicFilters({
   modelOptions,
   cityOptions,
   loadingModels,
-  currentYear,
   vehicleType = 'car',
 }: BasicFiltersProps) {
   const { t } = useTranslation();
@@ -190,20 +186,12 @@ export function BasicFilters({
             </svg>
             {t('searchFilters.yearFrom')}
           </label>
-          <input
-            type="text"
+          <Dropdown
             value={filters.year_gte}
-            onChange={(e) => {
-              const value = e.target.value.replace(/[^0-9]/g, '');
-              if (value.length <= 4) {
-                onFilterChange('year_gte', value);
-              }
-            }}
-            onBlur={(e) => onYearBlur('year_gte', e.target.value)}
-            onWheel={onWheel}
-            className="input-field"
-            placeholder="2018"
-            title={t('searchFilters.yearFromTitle', { currentYear })}
+            onChange={(value) => onFilterChange('year_gte', value)}
+            searchable={true}
+            placeholder={t('searchFilters.selectYear')}
+            options={getYearOptions()}
           />
         </div>
 
@@ -227,20 +215,12 @@ export function BasicFilters({
             </svg>
             {t('searchFilters.yearTo')}
           </label>
-          <input
-            type="text"
+          <Dropdown
             value={filters.year_lte}
-            onChange={(e) => {
-              const value = e.target.value.replace(/[^0-9]/g, '');
-              if (value.length <= 4) {
-                onFilterChange('year_lte', value);
-              }
-            }}
-            onBlur={(e) => onYearBlur('year_lte', e.target.value)}
-            onWheel={onWheel}
-            className="input-field"
-            placeholder="2023"
-            title={t('searchFilters.yearToTitle', { currentYear })}
+            onChange={(value) => onFilterChange('year_lte', value)}
+            searchable={true}
+            placeholder={t('searchFilters.yearTo')}
+            options={getYearOptions()}
           />
         </div>
       </div>
@@ -306,6 +286,7 @@ export function BasicFilters({
           <Dropdown
             value={filters.currency}
             onChange={(value) => onFilterChange('currency', value)}
+            placeholder={t('searchFilters.allCurrencies')}
             options={CURRENCY_OPTIONS}
           />
         </div>

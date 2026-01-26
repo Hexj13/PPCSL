@@ -115,6 +115,7 @@ export function PriceAndLocationSection({
                 setFormData((prev) => ({ ...prev, currency: value as Currency }))
               }
               className="w-32 flex-shrink-0"
+              placeholder={t('searchFilters.allCurrencies')}
               options={CURRENCY_OPTIONS}
             />
           </div>
@@ -149,13 +150,10 @@ export function PriceAndLocationSection({
             searchable={true}
             placeholder={t('listings.selectCity')}
             error={!!errors['city']}
-            options={[
-              { value: '', label: t('listings.selectCity') },
-              ...cities.map((city) => ({
-                value: city.nameEn,
-                label: `${city.name} (${city.nameEn})`,
-              })),
-            ]}
+            options={cities.map((city) => ({
+              value: city.nameEn,
+              label: `${city.name} (${city.nameEn})`,
+            }))}
           />
         </div>
       </div>

@@ -325,8 +325,8 @@
    - Строка ~520
 
 8. **SearchFilters.tsx**
-   - Заменить кнопку поиска на `<LoadingButton>`
-   - Строка ~2085
+   - ✅ Заменить кнопку поиска на `<LoadingButton>` (выполнено)
+   - Кнопка находится в компоненте `SearchFormActions.tsx`
 
 ### Спиннеры (Spinner с useLoadingState)
 

@@ -77,8 +77,9 @@ export function TechnicalSpecsSection({
                   vehicle: { ...prev.vehicle, fuel: value },
                 }));
               }}
+              placeholder={t('searchFilters.selectFuel')}
               error={!!errors['vehicle.fuel']}
-              options={[{ value: '', label: t('listings.selectModel') }, ...getFuelOptions(t)]}
+              options={getFuelOptions(t)}
             />
           </div>
 
@@ -240,11 +241,9 @@ export function TechnicalSpecsSection({
                   vehicle: { ...prev.vehicle, transmission: value },
                 }));
               }}
+              placeholder={t('searchFilters.selectTransmission')}
               error={!!errors['vehicle.transmission']}
-              options={[
-                { value: '', label: t('listings.selectModel') },
-                ...getTransmissionOptions(t, vehicleType),
-              ]}
+              options={getTransmissionOptions(t, vehicleType)}
             />
           </div>
 
@@ -286,11 +285,9 @@ export function TechnicalSpecsSection({
                     vehicle: { ...prev.vehicle, drive_type: value },
                   }));
                 }}
+                placeholder={t('searchFilters.selectDriveType')}
                 error={!!errors['vehicle.drive_type']}
-                options={[
-                  { value: '', label: t('listings.selectModel') },
-                  ...getDriveTypeOptions(t),
-                ]}
+                options={getDriveTypeOptions(t)}
               />
             </div>
           )}
@@ -330,12 +327,10 @@ export function TechnicalSpecsSection({
                   vehicle: { ...prev.vehicle, body_type: value },
                 }));
               }}
+              placeholder={t('searchFilters.selectBodyType')}
               error={!!errors['vehicle.body_type']}
               searchable={true}
-              options={[
-                { value: '', label: t('listings.selectModel') },
-                ...getBodyTypeOptions(t, vehicleType),
-              ]}
+              options={getBodyTypeOptions(t, vehicleType)}
             />
           </div>
 
@@ -568,6 +563,7 @@ export function TechnicalSpecsSection({
                   condition: value as ConditionType,
                 }));
               }}
+              placeholder={t('searchFilters.selectCondition')}
               error={!!errors['condition']}
               options={getConditionOptions(t)}
             />
@@ -586,6 +582,7 @@ export function TechnicalSpecsSection({
                   registration_type: value as RegistrationType,
                 }));
               }}
+              placeholder={t('searchFilters.selectRegistrationType')}
               error={!!errors['registration_type']}
               options={getRegistrationTypeOptions(t)}
             />
@@ -610,8 +607,9 @@ export function TechnicalSpecsSection({
                   vehicle: { ...prev.vehicle, color: value },
                 }))
               }
+              placeholder={t('searchFilters.selectColor')}
               searchable={true}
-              options={[{ value: '', label: t('searchFilters.selectColor') }, ...COLOR_OPTIONS]}
+              options={COLOR_OPTIONS}
             />
           </div>
 
@@ -628,7 +626,8 @@ export function TechnicalSpecsSection({
                     vehicle: { ...prev.vehicle, doors: value },
                   }))
                 }
-                options={[{ value: '', label: t('listings.selectModel') }, ...getDoorOptions(t)]}
+                placeholder={t('searchFilters.selectDoors')}
+                options={getDoorOptions(t)}
               />
             </div>
           )}

@@ -644,6 +644,7 @@
     "city": "City",
     "yearFrom": "Year from",
     "yearTo": "Year to",
+    "selectYear": "Select year",
     "currency": "Currency",
     "priceFrom": "Price from",
     "priceTo": "Price to",
