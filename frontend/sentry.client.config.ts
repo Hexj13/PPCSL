@@ -12,7 +12,6 @@ Sentry.init({
     Sentry.browserTracingIntegration({
       enableInp: true,
       enableLongTask: true,
-      enableWebVitalsInstrumentation: true,
     }),
     Sentry.replayIntegration({
       maskAllText: true,
