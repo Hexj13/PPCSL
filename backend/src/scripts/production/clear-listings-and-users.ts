@@ -123,8 +123,17 @@ async function clearListingsAndUsers() {
   const allUsers = await userRepo.find();
   console.log(`   Found ${allUsers.length} users`);
 
-  await AppDataSource.query('DELETE FROM phone_verification_codes');
-  console.log('   ✅ Deleted phone verification codes\n');
+  try {
+    await AppDataSource.query('DELETE FROM phone_verification_codes');
+    console.log('   ✅ Deleted phone verification codes\n');
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (errorMessage.includes('does not exist')) {
+      console.log('   ⚠️  Table phone_verification_codes does not exist, skipping\n');
+    } else {
+      console.log(`   ⚠️  Could not delete phone verification codes: ${errorMessage}\n`);
+    }
+  }
 
   for (const user of allUsers) {
     const favorites = await favoriteRepo.find({ where: { user_id: user.id } });
