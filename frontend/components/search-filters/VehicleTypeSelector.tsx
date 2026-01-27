@@ -84,7 +84,7 @@ export function VehicleTypeSelector({
       suppressHydrationWarning
     >
       <span
-        className="hidden lg:inline text-base font-bold text-primary-700 flex-shrink-0 flex items-center mr-2 lg:mr-2"
+        className="hidden xl:inline text-base font-bold text-primary-700 flex-shrink-0 flex items-center mr-2 lg:mr-2"
         suppressHydrationWarning
       >
         {t('searchFilters.categoryLabel')}
