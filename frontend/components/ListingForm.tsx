@@ -371,7 +371,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
           model_id: formData.vehicle.model_id,
           year: parseInt(formData.vehicle.year),
           engine_displ_l: formData.vehicle.engine_displ_l
-            ? parseFloat(formData.vehicle.engine_displ_l)
+            ? Number(formData.vehicle.engine_displ_l)
             : undefined,
           mileage_km: formData.vehicle.mileage_km
             ? parseInt(formData.vehicle.mileage_km)

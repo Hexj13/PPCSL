@@ -123,21 +123,22 @@ export function TechnicalSpecsSection({
                 if (isNaN(numValue)) {
                   return;
                 }
-                if (numValue < 0) {
-                  numValue = 0;
-                } else if (numValue > 99) {
-                  numValue = 99;
-                }
-                const maxDecimals = vehicleType === 'moto' ? 3 : 1;
-                const parts = inputValue.split('.');
                 let finalValue: string;
-                if (parts.length === 2) {
-                  const decimalPart = parts[1].substring(0, maxDecimals);
-                  finalValue = parts[0] + (decimalPart ? '.' + decimalPart : '');
+                if (numValue < 0) {
+                  finalValue = '0';
+                } else if (numValue > 99) {
+                  finalValue = '99';
                 } else {
-                  finalValue = numValue.toString();
+                  const maxDecimals = vehicleType === 'moto' ? 3 : 1;
+                  const parts = inputValue.split('.');
+                  if (parts.length === 2) {
+                    const decimalPart = parts[1].substring(0, maxDecimals);
+                    finalValue = parts[0] + (decimalPart ? '.' + decimalPart : '');
+                  } else {
+                    finalValue = inputValue;
+                  }
+                  finalValue = finalValue.replace(/\.?0+$/, '');
                 }
-                finalValue = finalValue.replace(/\.?0+$/, '');
                 setFormData((prev) => ({
                   ...prev,
                   vehicle: { ...prev.vehicle, engine_displ_l: finalValue },

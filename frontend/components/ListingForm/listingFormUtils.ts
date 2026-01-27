@@ -92,12 +92,9 @@ export function getInitialFormData(initialData?: Listing): ListingFormData {
       engine_displ_l: (() => {
         const raw = initialData.vehicle?.engine_displ_l;
         if (raw == null || (typeof raw === 'string' && raw === '')) return '';
-        const num = parseFloat(String(raw));
+        const num = Number(String(raw));
         if (!Number.isFinite(num)) return '';
-        const vehicleType = getInitialVehicleType(initialData);
-        const maxDecimals = vehicleType === 'moto' ? 3 : 1;
-        const formatted = num.toFixed(maxDecimals);
-        return formatted.replace(/\.?0+$/, '');
+        return typeof raw === 'string' ? raw : raw.toString();
       })(),
       mileage_km: initialData.vehicle?.mileage_km?.toString() || '',
       fuel: initialData.vehicle?.fuel || '',
