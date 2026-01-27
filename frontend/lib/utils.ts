@@ -82,7 +82,8 @@ export function formatDateShort(date: string | Date): string {
 
 export function formatDateRelative(
   date: string | Date,
-  t: (_key: string, _params?: Record<string, string | number>) => string
+  t: (_key: string, _params?: Record<string, string | number>) => string,
+  locale?: string
 ): string {
   const d = new Date(date);
   if (Number.isNaN(d.getTime())) return '';
@@ -91,18 +92,35 @@ export function formatDateRelative(
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const dateOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
-  // Разница в днях
   const diffTime = today.getTime() - dateOnly.getTime();
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
   if (diffDays === 0) {
-    // Сегодня
     return t('common.today');
   } else if (diffDays > 0 && diffDays <= 7) {
-    // 1-7 дней назад
+    const currentLocale = locale || getLocale();
+
+    if (currentLocale === 'ru') {
+      let dayWord: string;
+      if (diffDays === 1) {
+        dayWord = 'день';
+      } else if (diffDays >= 2 && diffDays <= 4) {
+        dayWord = 'дня';
+      } else {
+        dayWord = 'дней';
+      }
+      return `${diffDays} ${dayWord} назад`;
+    }
+
+    if (currentLocale === 'ro') {
+      if (diffDays === 1) {
+        return 'acum o zi';
+      }
+      return `acum ${diffDays} zile`;
+    }
+
     return t('common.daysAgo', { days: diffDays });
   } else {
-    // Старше 7 дней - обычная дата
     return formatDateShort(date);
   }
 }

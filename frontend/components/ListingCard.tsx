@@ -429,7 +429,7 @@ function ListingCardComponent({
               )}
               <span>
                 {isHydrated
-                  ? formatDateRelative(listing.last_updated_at, t)
+                  ? formatDateRelative(listing.last_updated_at, t, locale)
                   : formatDateShort(listing.last_updated_at)}
               </span>
             </div>
