@@ -1,6 +1,8 @@
 'use client';
 
+import * as Sentry from '@sentry/nextjs';
 import Link from 'next/link';
+import { useEffect } from 'react';
 
 import { I18nProvider } from '@/components/I18nProvider';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -67,6 +69,17 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    Sentry.captureException(error, {
+      tags: {
+        errorBoundary: true,
+      },
+      extra: {
+        digest: error.digest,
+      },
+    });
+  }, [error]);
+
   return (
     <I18nProvider>
       <ErrorContent error={error} reset={reset} />

@@ -292,6 +292,21 @@ api.interceptors.response.use(
       if (typeof window !== 'undefined') {
         const { toast } = await import('react-hot-toast');
         toast.error(errorMessage);
+
+        if (error.response?.status && error.response.status >= 500) {
+          const Sentry = await import('@sentry/nextjs');
+          Sentry.captureException(error, {
+            tags: {
+              apiError: true,
+              statusCode: error.response.status,
+            },
+            extra: {
+              url: error.config?.url,
+              method: error.config?.method,
+              response: error.response?.data,
+            },
+          });
+        }
       }
     }
     return Promise.reject(error);
