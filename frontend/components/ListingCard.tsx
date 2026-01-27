@@ -375,7 +375,7 @@ function ListingCardComponent({
                     {t('userListings.fuel')}: {formatFuel(vehicle.fuel, t)}
                   </div>
                 )}
-                {vehicle.mileage_km && (
+                {vehicle.mileage_km !== null && vehicle.mileage_km !== undefined && (
                   <div>
                     {t('userListings.mileage')}: {formatMileage(vehicle.mileage_km)}{' '}
                     {t('listings.km')}

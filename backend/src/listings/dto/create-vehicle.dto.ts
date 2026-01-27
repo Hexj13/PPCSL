@@ -36,7 +36,7 @@ export class CreateVehicleDto {
     maximum: 99,
   })
   @IsOptional()
-  @IsNumber({ maxDecimalPlaces: 1 })
+  @IsNumber({ maxDecimalPlaces: 3 })
   @Min(0)
   @Max(99)
   engine_displ_l?: number;

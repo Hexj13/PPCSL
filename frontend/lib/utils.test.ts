@@ -104,9 +104,14 @@ describe('utils', () => {
   describe('formatEngineVolume', () => {
     it('should format engine volume correctly', () => {
       expect(formatEngineVolume(1.6)).toBe('1.6');
-      expect(formatEngineVolume(2.0)).toBe('2.0');
+      expect(formatEngineVolume(2.0)).toBe('2');
       expect(formatEngineVolume(3.5)).toBe('3.5');
-      expect(formatEngineVolume(2)).toBe('2.0');
+      expect(formatEngineVolume(2)).toBe('2');
+      expect(formatEngineVolume(0.65)).toBe('0.65');
+      expect(formatEngineVolume(0.796)).toBe('0.796');
+      expect(formatEngineVolume(0.650)).toBe('0.65');
+      expect(formatEngineVolume(1.5)).toBe('1.5');
+      expect(formatEngineVolume(1.500)).toBe('1.5');
     });
   });
 

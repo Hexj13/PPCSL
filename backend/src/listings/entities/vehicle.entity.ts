@@ -36,7 +36,7 @@ export class Vehicle {
   @Column('int')
   year: number;
 
-  @Column('decimal', { precision: 4, scale: 2, nullable: true })
+  @Column('decimal', { precision: 5, scale: 3, nullable: true })
   engine_displ_l: number;
 
   @Column('int', { nullable: true })

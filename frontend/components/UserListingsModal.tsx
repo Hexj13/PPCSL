@@ -272,7 +272,7 @@ function UserListingsModalComponent({
                                 <span className="ml-2">{formatFuel(vehicle.fuel, t)}</span>
                               </div>
                             )}
-                            {vehicle.mileage_km && (
+                            {vehicle.mileage_km !== null && vehicle.mileage_km !== undefined && (
                               <div>
                                 <span className="text-primary-500 font-semibold">
                                   {t('userListings.mileage')}:

@@ -62,7 +62,7 @@ export function VehicleSpecs({
             </span>
           </div>
         )}
-        {vehicle.mileage_km && (
+        {vehicle.mileage_km !== null && vehicle.mileage_km !== undefined && (
           <div>
             <span className="text-primary-400">{t('vehicleSpecs.mileage')}</span>
             <span className="ml-2 font-medium text-gray-200">

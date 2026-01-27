@@ -29,6 +29,37 @@ export function BasicInfoSection({
       <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
         {t('listings.basicInfo')}
       </h2>
+      <div className="bg-primary-500/10 border border-primary-500/30 rounded-lg p-4 mb-5">
+        <div className="flex items-start gap-3">
+          <svg
+            className="w-5 h-5 text-primary-400 flex-shrink-0 mt-0.5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <p className="text-sm text-text-secondary leading-relaxed">
+            {t('listings.brandModelInfo')
+              .split('support@kupito.club')
+              .map((part, index, array) => (
+                <span key={index}>
+                  {part}
+                  {index < array.length - 1 && (
+                    <strong className="font-bold text-primary-400">
+                      support@kupito.club
+                    </strong>
+                  )}
+                </span>
+              ))}
+          </p>
+        </div>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
         <div>
           <label className="block text-sm font-semibold mb-2 text-primary-400">

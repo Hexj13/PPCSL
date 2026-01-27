@@ -102,8 +102,9 @@ export function TechnicalSpecsSection({
                 if (parts.length > 2) {
                   value = parts[0] + '.' + parts.slice(1).join('');
                 }
-                if (parts.length === 2 && parts[1].length > 1) {
-                  value = parts[0] + '.' + parts[1].substring(0, 1);
+                const maxDecimals = vehicleType === 'moto' ? 3 : 1;
+                if (parts.length === 2 && parts[1].length > maxDecimals) {
+                  value = parts[0] + '.' + parts[1].substring(0, maxDecimals);
                 }
                 const numValue = value === '' ? 0 : parseFloat(value);
                 if (value === '' || (!isNaN(numValue) && numValue >= 0 && numValue <= 99)) {
@@ -121,17 +122,23 @@ export function TechnicalSpecsSection({
                   } else if (value > 99) {
                     value = 99;
                   }
+                  const maxDecimals = vehicleType === 'moto' ? 3 : 1;
+                  const formatted = value.toFixed(maxDecimals);
+                  const trimmed = formatted.replace(/\.?0+$/, '');
                   setFormData((prev) => ({
                     ...prev,
-                    vehicle: { ...prev.vehicle, engine_displ_l: value.toFixed(1) },
+                    vehicle: { ...prev.vehicle, engine_displ_l: trimmed },
                   }));
                 } else if (e.target.value && e.target.value.trim() !== '') {
                   const numValue = parseFloat(e.target.value);
                   if (!isNaN(numValue)) {
                     const clampedValue = Math.max(0, Math.min(99, numValue));
+                    const maxDecimals = vehicleType === 'moto' ? 3 : 1;
+                    const formatted = clampedValue.toFixed(maxDecimals);
+                    const trimmed = formatted.replace(/\.?0+$/, '');
                     setFormData((prev) => ({
                       ...prev,
-                      vehicle: { ...prev.vehicle, engine_displ_l: clampedValue.toFixed(1) },
+                      vehicle: { ...prev.vehicle, engine_displ_l: trimmed },
                     }));
                   }
                 }

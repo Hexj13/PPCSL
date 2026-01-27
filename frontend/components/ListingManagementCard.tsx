@@ -122,12 +122,13 @@ export function ListingManagementCard({
                       {t('userListings.fuel')}: {formatFuel(listing.vehicle.fuel, t)}
                     </div>
                   )}
-                  {listing.vehicle.mileage_km && (
-                    <div>
-                      {t('userListings.mileage')}: {formatMileage(listing.vehicle.mileage_km)}{' '}
-                      {t('listings.km')}
-                    </div>
-                  )}
+                  {listing.vehicle.mileage_km !== null &&
+                    listing.vehicle.mileage_km !== undefined && (
+                      <div>
+                        {t('userListings.mileage')}: {formatMileage(listing.vehicle.mileage_km)}{' '}
+                        {t('listings.km')}
+                      </div>
+                    )}
                   {listing.vehicle.drive_type && (
                     <div>
                       {t('userListings.driveType')}:{' '}

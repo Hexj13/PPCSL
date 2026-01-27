@@ -144,7 +144,7 @@ export function ListingPageCharacteristics({ listing }: ListingPageCharacteristi
                   </span>
                 </div>
               )}
-              {vehicle.mileage_km && (
+              {vehicle.mileage_km !== null && vehicle.mileage_km !== undefined && (
                 <div>
                   <span className="text-primary-500 font-semibold">
                     {t('listingDetail.mileage')}:

@@ -140,7 +140,9 @@ export function formatDateLong(date: string | Date): string {
 }
 
 export function formatEngineVolume(volume: number): string {
-  return parseFloat(volume.toString()).toFixed(1);
+  const num = parseFloat(volume.toString());
+  const formatted = num.toFixed(3);
+  return formatted.replace(/\.?0+$/, '');
 }
 
 export function formatMileage(mileage: number): string {
