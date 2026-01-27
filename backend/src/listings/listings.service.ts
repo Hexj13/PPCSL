@@ -119,6 +119,25 @@ export class ListingsService {
       void _;
     }
 
+    const Sentry = await import('@sentry/node');
+    const vehicleWithModel = await this.vehiclesRepository.findOne({
+      where: { id: savedVehicle.id },
+      relations: ['model'],
+    });
+    const vehicle_type =
+      vehicleWithModel?.model?.vehicle_type ||
+      (savedVehicle.body_type ? this.getVehicleTypeFromBodyType(savedVehicle.body_type) : undefined) ||
+      'unknown';
+
+    Sentry.metrics.count('listings.created', 1, {
+      attributes: {
+        status: savedListing.status,
+        currency: savedListing.currency,
+        vehicle_type: vehicle_type,
+        is_promoted: savedListing.is_promoted || false,
+      },
+    });
+
     return savedListing;
   }
 
@@ -350,6 +369,16 @@ export class ListingsService {
     } catch (_: unknown) {
       void _;
     }
+
+    const Sentry = await import('@sentry/node');
+    Sentry.metrics.count('listings.searches', 1, {
+      attributes: {
+        has_filters: !!(searchDto.brand_ids || searchDto.model_ids || searchDto.vehicleType || searchDto.price_gte || searchDto.price_lte),
+        results_count: total,
+        page: page,
+        vehicle_type: searchDto.vehicleType || 'all',
+      },
+    });
 
     return result;
   }
@@ -729,46 +758,60 @@ export class ListingsService {
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async autoCloseOldListings(): Promise<{ closed: number }> {
-    const fiveMonthsAgo = new Date();
-    fiveMonthsAgo.setMonth(fiveMonthsAgo.getMonth() - 5);
-    const now = new Date();
-    const closedAt = new Date();
+    const Sentry = await import('@sentry/node');
+    return Sentry.withMonitor(
+      'auto-close-old-listings',
+      async () => {
+        const fiveMonthsAgo = new Date();
+        fiveMonthsAgo.setMonth(fiveMonthsAgo.getMonth() - 5);
+        const now = new Date();
+        const closedAt = new Date();
 
-    const promotedListingsWithExpiredPromo = await this.listingsRepository.find({
-      where: {
-        status: ListingStatusEnum.Active,
-        last_updated_at: LessThanOrEqual(fiveMonthsAgo),
-        is_promoted: true,
-        promoted_until: LessThan(now),
+        const promotedListingsWithExpiredPromo = await this.listingsRepository.find({
+          where: {
+            status: ListingStatusEnum.Active,
+            last_updated_at: LessThanOrEqual(fiveMonthsAgo),
+            is_promoted: true,
+            promoted_until: LessThan(now),
+          },
+          select: ['id'],
+        });
+
+        for (const listing of promotedListingsWithExpiredPromo) {
+          await this.updatePromotionHistoryEndDate(listing.id);
+        }
+
+        const result = await this.listingsRepository
+          .createQueryBuilder()
+          .update(Listing)
+          .set({
+            status: ListingStatusEnum.Closed,
+            closed_at: closedAt,
+            is_promoted: false,
+            promoted_until: null,
+            promoted_started_at: null,
+            promoted_paused_at: null,
+          })
+          .where('status = :status', { status: ListingStatusEnum.Active })
+          .andWhere('last_updated_at <= :fiveMonthsAgo', { fiveMonthsAgo })
+          .andWhere(
+            '(is_promoted = false OR (is_promoted = true AND promoted_until IS NOT NULL AND promoted_until < :now))',
+            { now },
+          )
+          .execute();
+
+        this.logger.log(`Auto-closed ${result.affected || 0} old listings`);
+        return { closed: result.affected || 0 };
       },
-      select: ['id'],
-    });
-
-    for (const listing of promotedListingsWithExpiredPromo) {
-      await this.updatePromotionHistoryEndDate(listing.id);
-    }
-
-    const result = await this.listingsRepository
-      .createQueryBuilder()
-      .update(Listing)
-      .set({
-        status: ListingStatusEnum.Closed,
-        closed_at: closedAt,
-        is_promoted: false,
-        promoted_until: null,
-        promoted_started_at: null,
-        promoted_paused_at: null,
-      })
-      .where('status = :status', { status: ListingStatusEnum.Active })
-      .andWhere('last_updated_at <= :fiveMonthsAgo', { fiveMonthsAgo })
-      .andWhere(
-        '(is_promoted = false OR (is_promoted = true AND promoted_until IS NOT NULL AND promoted_until < :now))',
-        { now },
-      )
-      .execute();
-
-    this.logger.log(`Auto-closed ${result.affected || 0} old listings`);
-    return { closed: result.affected || 0 };
+      {
+        schedule: {
+          type: 'crontab',
+          value: '0 0 * * *',
+        },
+        checkinMargin: 5,
+        maxRuntime: 30,
+      },
+    );
   }
 
   async getUserListings(

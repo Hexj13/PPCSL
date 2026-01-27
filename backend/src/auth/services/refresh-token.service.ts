@@ -66,6 +66,20 @@ export class RefreshTokenService {
 
   @Cron(CronExpression.EVERY_DAY_AT_2AM)
   async handleCleanupExpiredTokens(): Promise<void> {
-    await this.cleanupExpiredTokens();
+    const Sentry = await import('@sentry/node');
+    return Sentry.withMonitor(
+      'refresh-token-cleanup',
+      async () => {
+        await this.cleanupExpiredTokens();
+      },
+      {
+        schedule: {
+          type: 'crontab',
+          value: '0 2 * * *',
+        },
+        checkinMargin: 5,
+        maxRuntime: 10,
+      },
+    );
   }
 }

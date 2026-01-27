@@ -9,5 +9,6 @@ Sentry.init({
   tracesSampleRate: 1.0,
   profilesSampleRate: 1.0,
   debug: false,
+  enableLogs: true,
   integrations: [httpIntegration(), nodeProfilingIntegration()],
 });

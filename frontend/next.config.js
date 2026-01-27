@@ -9,7 +9,6 @@ const nextConfig = {
 
   experimental: {
     optimizeCss: true,
-    instrumentationHook: true,
   },
 
   ...(process.env.NODE_ENV === 'production' && {
@@ -179,8 +178,12 @@ const sentryWebpackPluginOptions = {
   authToken: process.env.SENTRY_AUTH_TOKEN,
   widenClientFileUpload: true,
   hideSourceMaps: true,
-  disableLogger: true,
-  automaticVercelMonitors: true,
+  webpack: {
+    treeshake: {
+      removeDebugLogging: true,
+    },
+    automaticVercelMonitors: true,
+  },
 };
 
 module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);

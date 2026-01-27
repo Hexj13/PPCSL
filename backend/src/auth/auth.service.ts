@@ -173,6 +173,15 @@ export class AuthService {
         }
       }
 
+      const Sentry = await import('@sentry/node');
+      Sentry.metrics.count('users.registered', 1, {
+        attributes: {
+          user_type: registerDto.type,
+          has_email: !!user.email,
+          has_phone: !!user.phone,
+        },
+      });
+
       return removePasswordFromUser(user);
     } catch (error) {
       handleDuplicateKeyError(error, {

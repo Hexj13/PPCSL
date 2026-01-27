@@ -17,8 +17,23 @@ export class IpBlockService implements OnModuleInit {
   }
 
   @Cron(CronExpression.EVERY_HOUR)
-  handleCleanup() {
-    this.cleanup();
+  async handleCleanup() {
+    const Sentry = await import('@sentry/node');
+    return Sentry.withMonitor(
+      'ip-block-cleanup',
+      () => {
+        this.cleanup();
+      },
+      {
+        schedule: {
+          type: 'interval',
+          value: 1,
+          unit: 'hour',
+        },
+        checkinMargin: 5,
+        maxRuntime: 5,
+      },
+    );
   }
 
   getClientIp(request: {
