@@ -104,6 +104,21 @@ export default [
           skipComments: true,
         },
       ],
+    },
+  },
+  {
+    files: ['lib/config/legal.ts'],
+    rules: {
+      'max-lines': 'off',
+    },
+  },
+  {
+    files: ['**/*.{ts,tsx}'],
+    plugins: {
+      import: importPlugin,
+      'no-hardcoded-text': noHardcodedTextPlugin,
+    },
+    rules: {
       'max-lines-per-function': [
         'warn',
         {
@@ -148,7 +163,16 @@ export default [
     },
   },
   {
-    files: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}', '**/__tests__/**/*.{ts,tsx}'],
+    files: [
+      '**/*.test.{ts,tsx}',
+      '**/*.spec.{ts,tsx}',
+      '**/__tests__/**/*.{ts,tsx}',
+      '**/*.stories.{ts,tsx}',
+      '**/design-system/**',
+      '**/color-palette/**',
+      'app/design-system/**',
+      'app/color-palette/**',
+    ],
     languageOptions: {
       globals: {
         ...globals.jest,
@@ -176,6 +200,7 @@ export default [
       'out/**',
       'dist/**',
       'stories.backup/**',
+      '**/*.css',
     ],
   },
   prettierConfig,

@@ -219,7 +219,7 @@ function DropdownComponent({
           }}
           disabled={disabled ? true : undefined}
           className={`input-field dropdown-button text-left cursor-pointer relative ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''} ${buttonClassName || ''}`}
-          style={{ paddingRight: '52px' }}
+          style={buttonClassName ? { paddingRight: '52px' } : { paddingRight: '52px' }}
           suppressHydrationWarning
         >
           <span
@@ -261,24 +261,11 @@ function DropdownComponent({
                     key={option.value}
                     type="button"
                     onClick={() => handleSelect(option.value)}
-                    className={`w-full px-4 py-3 text-left text-text-primary hover:bg-primary-500/10 transition-colors duration-150 flex items-center justify-between ${
+                    className={`w-full px-4 py-3 text-left text-sm text-text-primary hover:bg-primary-500/10 transition-colors duration-150 flex items-center justify-between ${
                       isSelected ? 'bg-primary-500/20' : ''
                     } ${isSelected ? 'font-semibold' : ''}`}
                   >
                     <span>{option.label}</span>
-                    {isSelected && (
-                      <svg
-                        className="w-5 h-5 text-primary-400"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    )}
                   </button>
                 );
               })

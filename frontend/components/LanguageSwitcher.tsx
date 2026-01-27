@@ -8,7 +8,7 @@ import { setStoredLocale, type Locale } from '@/lib/i18n';
 import { Dropdown } from './Dropdown';
 
 const headerFooterStyle =
-  '!bg-transparent !text-white font-medium text-xs md:text-sm lg:text-sm xl:text-base hover:!text-primary-100 active:!text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center gap-2 md:gap-2.5 px-2.5 md:px-3 lg:px-3 xl:px-4 py-2 md:py-2.5 rounded-lg !border-2 !border-primary-300 active:!border-primary-500 select-none [&_span]:!text-white [&_span]:hover:!text-primary-100 [&_svg]:!text-white [&_svg]:hover:!text-primary-100';
+  'header-language-switcher !bg-transparent !text-white font-medium text-xs md:text-xs lg:text-xs xl:text-sm hover:!text-primary-100 active:!text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 rounded-lg select-none [&_span]:!text-white [&_span]:hover:!text-primary-100 [&_svg]:!text-white [&_svg]:hover:!text-primary-100';
 
 export function LanguageSwitcher({
   variant = 'desktop',
@@ -42,15 +42,20 @@ export function LanguageSwitcher({
 
   const buttonClassName = headerFooterStyle;
 
+  const mobileButtonClassName =
+    variant === 'mobile'
+      ? 'header-language-switcher-mobile !bg-transparent !text-white font-medium text-base hover:!text-primary-100 active:!text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-3.5 rounded-lg select-none w-full [&_span]:!text-white [&_span]:hover:!text-primary-100 [&_svg]:!text-white [&_svg]:hover:!text-primary-100'
+      : buttonClassName;
+
   return (
-    <div className={variant === 'mobile' ? 'px-4 py-2' : ''} suppressHydrationWarning>
+    <div className={variant === 'mobile' ? 'w-full' : ''} suppressHydrationWarning>
       <div suppressHydrationWarning>
         <Dropdown
           value={locale}
           onChange={handleLanguageChange}
           options={languages}
           placeholder={selectedLanguage?.label || languages[0].label}
-          buttonClassName={buttonClassName}
+          buttonClassName={mobileButtonClassName}
           autoPosition={true}
           searchable={false}
         />

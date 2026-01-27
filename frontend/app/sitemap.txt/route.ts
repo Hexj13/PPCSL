@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { BODY_TYPES_BY_VEHICLE_TYPE } from '@/lib/constants';
 import { fetchBrands, fetchModelsByBrands } from '@/lib/server-api';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { createSlug } from '@/lib/utils';
@@ -17,16 +18,20 @@ const POPULAR_CAR_BODY_TYPES = [
   'Sedan',
   'Convertible',
 ] as const;
-const POPULAR_TRUCK_BODY_TYPES = ['Truck', 'Bus', 'SemiTruck', 'Tractor'] as const;
+const POPULAR_TRUCK_BODY_TYPES = [
+  'Truck',
+  'SemiTruck',
+  'SpecialEquipment',
+  'Tractor',
+  'Bus',
+] as const;
 const POPULAR_MOTO_BODY_TYPES = [
   'Naked',
   'Sport',
   'Touring',
-  'Cruiser',
+  'ATV',
   'Adventure',
   'Scooter',
-  'Enduro',
-  'Cross',
 ] as const;
 
 async function generateSitemapContent(): Promise<string> {
@@ -111,25 +116,49 @@ async function generateSitemapContent(): Promise<string> {
     } catch {}
   }
 
-  const addBodyTypeUrls = (bodyTypes: readonly string[], vehicleType: 'car' | 'truck' | 'moto') => {
-    const n = bodyTypes.length;
+  const addBodyTypeUrls = (
+    bodyTypes: readonly string[],
+    vehicleType: 'car' | 'truck' | 'moto',
+    generateCombinations = false
+  ) => {
     const vehicleTypeParam = vehicleType !== 'car' ? `&vehicleType=${vehicleType}` : '';
 
-    for (let mask = 1; mask < 1 << n; mask++) {
-      const combination: string[] = [];
-      for (let i = 0; i < n; i++) {
-        if (mask & (1 << i)) {
-          combination.push(bodyTypes[i]);
+    if (generateCombinations) {
+      const n = bodyTypes.length;
+      for (let mask = 1; mask < 1 << n; mask++) {
+        const combination: string[] = [];
+        for (let i = 0; i < n; i++) {
+          if (mask & (1 << i)) {
+            combination.push(bodyTypes[i]);
+          }
         }
+        combination.sort();
+        urls.push(`${siteUrl}/?body_types=${combination.join(',')}${vehicleTypeParam}`);
       }
-      combination.sort();
-      urls.push(`${siteUrl}/?body_types=${combination.join(',')}${vehicleTypeParam}`);
+    } else {
+      for (const bodyType of bodyTypes) {
+        urls.push(`${siteUrl}/?body_types=${bodyType}${vehicleTypeParam}`);
+      }
     }
   };
 
-  addBodyTypeUrls(POPULAR_CAR_BODY_TYPES, 'car');
-  addBodyTypeUrls(POPULAR_TRUCK_BODY_TYPES, 'truck');
-  addBodyTypeUrls(POPULAR_MOTO_BODY_TYPES, 'moto');
+  addBodyTypeUrls(POPULAR_CAR_BODY_TYPES, 'car', true);
+  addBodyTypeUrls(POPULAR_TRUCK_BODY_TYPES, 'truck', true);
+  addBodyTypeUrls(POPULAR_MOTO_BODY_TYPES, 'moto', true);
+
+  const allCarTypes = BODY_TYPES_BY_VEHICLE_TYPE.car.filter(
+    (type) => !(POPULAR_CAR_BODY_TYPES as readonly string[]).includes(type)
+  );
+  const allTruckTypes = BODY_TYPES_BY_VEHICLE_TYPE.truck.filter(
+    (type) => !(POPULAR_TRUCK_BODY_TYPES as readonly string[]).includes(type)
+  );
+  const allMotoTypes = BODY_TYPES_BY_VEHICLE_TYPE.moto.filter(
+    (type) => !(POPULAR_MOTO_BODY_TYPES as readonly string[]).includes(type)
+  );
+
+  addBodyTypeUrls(allCarTypes, 'car', false);
+  addBodyTypeUrls(allTruckTypes, 'truck', false);
+  addBodyTypeUrls(allMotoTypes, 'moto', false);
 
   return urls.join('\n');
 }

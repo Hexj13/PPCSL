@@ -82,9 +82,10 @@ https://kupito.club/?brand=ducati&model=panigale-v4&vehicleType=moto
 
 ```
 https://kupito.club/?body_types=Truck&vehicleType=truck
-https://kupito.club/?body_types=Bus&vehicleType=truck
 https://kupito.club/?body_types=SemiTruck&vehicleType=truck
+https://kupito.club/?body_types=SpecialEquipment&vehicleType=truck
 https://kupito.club/?body_types=Tractor&vehicleType=truck
+https://kupito.club/?body_types=Bus&vehicleType=truck
 ```
 
 #### Мото
@@ -93,6 +94,9 @@ https://kupito.club/?body_types=Tractor&vehicleType=truck
 https://kupito.club/?body_types=Naked&vehicleType=moto
 https://kupito.club/?body_types=Sport&vehicleType=moto
 https://kupito.club/?body_types=Touring&vehicleType=moto
+https://kupito.club/?body_types=ATV&vehicleType=moto
+https://kupito.club/?body_types=Adventure&vehicleType=moto
+https://kupito.club/?body_types=Scooter&vehicleType=moto
 ```
 
 ## Источники данных

@@ -40,10 +40,10 @@ export function CreateListingButton({
     'text-white font-medium transition-all duration-200 whitespace-nowrap flex items-center justify-center border-2 border-accent select-none hover:text-accent-100 active:text-accent-100';
 
   const variantClasses = isMobile
-    ? 'text-xs gap-1.5 px-2.5 py-2 rounded-lg w-full'
-    : 'text-xs md:text-sm lg:text-sm xl:text-base gap-2 md:gap-2.5 px-2.5 md:px-3 lg:px-3 xl:px-4 py-2 md:py-2.5 rounded-lg';
+    ? 'text-sm gap-1.5 px-2.5 py-2 rounded-lg w-full'
+    : 'text-xs md:text-xs lg:text-xs xl:text-sm gap-1.5 md:gap-2 px-2 md:px-2.5 lg:px-2.5 xl:px-3 py-1.5 md:py-2 rounded-lg';
 
-  const iconSize = isMobile ? 'w-4 h-4' : 'w-3.5 h-3.5 md:w-4 md:h-4';
+  const iconSize = isMobile ? 'w-4 h-4' : 'w-3 h-3 md:w-3.5 md:h-3.5';
 
   const href = user ? '/listings/new' : '/login';
 

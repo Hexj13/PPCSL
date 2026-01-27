@@ -31,6 +31,7 @@ const FRENCH_BRANDS_MODELS: Record<string, string[]> = {
     'C-Elysée',
     'C3 Pluriel',
     'C4 Sedan',
+    'C4 X',
     'C5 X',
   ],
   Peugeot: [

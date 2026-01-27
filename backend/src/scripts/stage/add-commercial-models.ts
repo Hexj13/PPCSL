@@ -187,8 +187,10 @@ const COMMERCIAL_MODELS: Record<string, string[]> = {
     'Ioniq 5',
     'Ioniq 6',
     'H-1',
+    'H-1 Van',
     'Staria',
     'Santa Cruz',
+    'Porter',
   ],
   Kia: [
     'Picanto',
@@ -201,6 +203,9 @@ const COMMERCIAL_MODELS: Record<string, string[]> = {
     'EV9',
     'Carnival',
     'Mohave',
+    'Bongo',
+    'K2500',
+    'K2700',
   ],
   Mazda: ['Mazda2', 'Mazda3', 'Mazda6', 'CX-30', 'CX-5', 'MX-30', 'CX-60', 'BT-50', 'B-Series'],
   Honda: ['Civic', 'Accord', 'CR-V', 'HR-V', 'Jazz', 'e:Ny1', 'Ridgeline'],
@@ -211,6 +216,9 @@ const COMMERCIAL_MODELS: Record<string, string[]> = {
   Suzuki: ['Carry', 'Every', 'Super Carry', 'APV', 'Eeco'],
   Daihatsu: ['Hijet', 'Atrai', 'Naked', 'Storia', 'Opti'],
   Dacia: ['Dokker', 'Dokker Van', 'Logan MCV', 'Logan Van', 'Logan Pick-Up'],
+  Chevrolet: ['Express', 'Silverado'],
+  Dodge: ['ProMaster', 'ProMaster City'],
+  Lifan: ['Solano', 'Cebrium', 'X60', 'X50'],
 };
 
 function delay(ms: number): Promise<void> {

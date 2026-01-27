@@ -24,7 +24,6 @@ export function Footer() {
             <div suppressHydrationWarning>
               <PWAInstallButtonGray />
             </div>
-            <LanguageSwitcher variant="desktop" context="footer" />
           </div>
           <div
             className="flex flex-col md:flex-row justify-center gap-2 md:gap-4 text-xs sm:text-sm mb-4 mt-6"
@@ -77,6 +76,9 @@ export function Footer() {
               {t('footer.tagline')}
             </span>
           </p>
+          <div className="mt-4 flex justify-center" suppressHydrationWarning>
+            <LanguageSwitcher variant="desktop" context="footer" />
+          </div>
         </div>
       </div>
     </footer>

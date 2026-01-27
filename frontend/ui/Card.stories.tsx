@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react';
+
 import { Card } from './Card';
-import { Typography } from './Typography';
 import { Heading } from './Heading';
+import { Typography } from './Typography';
 
 const meta: Meta<typeof Card> = {
   title: 'Design System/Card',

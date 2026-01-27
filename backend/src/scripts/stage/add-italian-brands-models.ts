@@ -71,6 +71,7 @@ const ITALIAN_BRANDS_MODELS: Record<string, string[]> = {
     'Giulia',
     'Stelvio',
     'Tonale',
+    'Junior',
     'Giulietta',
     '147',
     '156',

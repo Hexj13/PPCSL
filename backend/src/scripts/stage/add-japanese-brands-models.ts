@@ -418,6 +418,7 @@ const JAPANESE_BRANDS_MODELS: Record<string, string[]> = {
     'SC 300',
     'SC 400',
     'SC 430',
+    'RZ',
   ],
   Infiniti: [
     'Q50',

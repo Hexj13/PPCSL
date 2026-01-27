@@ -1,0 +1,65 @@
+module.exports = {
+  extends: [
+    'stylelint-config-standard',
+    'stylelint-config-tailwindcss',
+  ],
+  rules: {
+    'at-rule-no-unknown': [
+      true,
+      {
+        ignoreAtRules: [
+          'tailwind',
+          'apply',
+          'variants',
+          'responsive',
+          'screen',
+          'layer',
+        ],
+      },
+    ],
+    'selector-class-pattern': null,
+    'custom-property-pattern': null,
+    'comment-empty-line-before': null,
+    'declaration-empty-line-before': null,
+    'rule-empty-line-before': null,
+    'at-rule-empty-line-before': null,
+    'color-function-notation': 'modern',
+    'alpha-value-notation': 'number',
+    'length-zero-no-unit': true,
+    'no-duplicate-selectors': true,
+    'no-descending-specificity': [
+      true,
+      {
+        ignore: ['selectors-within-list'],
+      },
+    ],
+    'property-no-deprecated': true,
+    'media-feature-range-notation': 'prefix',
+    'function-url-quotes': 'always',
+    'media-type-no-deprecated': true,
+    'declaration-block-no-duplicate-properties': true,
+    'declaration-block-no-redundant-longhand-properties': true,
+    'declaration-block-no-shorthand-property-overrides': true,
+    'declaration-no-important': null,
+    'selector-max-id': 0,
+    'selector-max-universal': 1,
+    'unit-no-unknown': true,
+    'value-no-vendor-prefix': [
+      true,
+      {
+        ignoreValues: ['box', 'flex'],
+      },
+    ],
+  },
+  ignoreFiles: [
+    '**/*.js',
+    '**/*.jsx',
+    '**/*.ts',
+    '**/*.tsx',
+    'node_modules/**',
+    '.next/**',
+    'dist/**',
+    'out/**',
+    'coverage/**',
+  ],
+};

@@ -32,7 +32,7 @@ const POPULAR_BODY_TYPES_MOTO: Array<{ value: string; image: string | null }> = 
   { value: 'Naked', image: '/popular_body_types/moto/NAKED.png' },
   { value: 'Sport', image: '/popular_body_types/moto/SPORT.png' },
   { value: 'Touring', image: '/popular_body_types/moto/TURING.png' },
-  { value: 'Cruiser', image: '/popular_body_types/moto/CRUISER.png' },
+  { value: 'ATV', image: '/popular_body_types/moto/ATV.png' },
   { value: 'Adventure', image: '/popular_body_types/moto/ADVENTURE.png' },
   { value: 'Scooter', image: '/popular_body_types/moto/SCOUTER.png' },
 ];
@@ -215,7 +215,7 @@ export function PopularBodyTypesFilter({
                   onClick={() => handleTileClick(value)}
                   className={`
                   relative w-full h-[110px] flex items-center justify-center p-2 rounded-lg
-                  outline-none select-none
+                  outline-none select-none ${value === 'ATV' ? 'overflow-hidden' : ''}
                   ${
                     isSelected
                       ? 'border border-primary-500'
@@ -232,16 +232,22 @@ export function PopularBodyTypesFilter({
                   aria-pressed={isSelected}
                   aria-label={`${t(`vehicleOptions.bodyType.${value}`)}${isSelected ? ', selected' : ''}`}
                 >
-                  <div className="relative w-full h-full flex items-center justify-center">
+                  <div
+                    className={`relative w-full h-full flex items-center justify-center ${value === 'ATV' ? 'overflow-hidden' : ''}`}
+                  >
                     {image ? (
                       <Image
                         key={image}
                         src={image}
                         alt={t(`vehicleOptions.bodyType.${value}`)}
-                        width={180}
-                        height={180}
-                        className={`object-contain select-none transition-opacity duration-200 ${value === 'Wagon' ? 'object-top -mt-4' : ''}`}
-                        sizes="(max-width: 768px) 180px, (max-width: 1024px) 200px, 220px"
+                        width={value === 'ATV' ? 260 : 180}
+                        height={value === 'ATV' ? 260 : 180}
+                        className={`object-contain select-none transition-opacity duration-200 ${value === 'Wagon' ? 'object-top -mt-4' : ''} ${value === 'ATV' ? 'max-w-full max-h-full scale-125' : ''}`}
+                        sizes={
+                          value === 'ATV'
+                            ? '(max-width: 768px) 260px, (max-width: 1024px) 280px, 300px'
+                            : '(max-width: 768px) 180px, (max-width: 1024px) 200px, 220px'
+                        }
                         loading="lazy"
                         draggable={false}
                         unoptimized={true}

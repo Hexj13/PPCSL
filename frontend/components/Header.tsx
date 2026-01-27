@@ -55,7 +55,7 @@ export function Header() {
   }, []);
 
   const navLinkClasses =
-    'text-white font-medium text-xs md:text-sm lg:text-sm xl:text-base hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 rounded select-none';
+    'text-white font-medium text-xs md:text-xs lg:text-sm xl:text-sm hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center gap-1 md:gap-1.5 px-1 md:px-1.5 py-1 md:py-1.5 rounded select-none';
 
   const mobileNavLinkClasses =
     'text-white font-medium hover:text-primary-100 active:text-primary-300 transition-colors duration-200 py-2 pl-4 flex items-center gap-2 select-none';
@@ -125,7 +125,7 @@ export function Header() {
             </div>
           )}
 
-          <nav className="hidden lg:flex gap-2 lg:gap-3 xl:gap-6 items-center">
+          <nav className="hidden lg:flex gap-1.5 lg:gap-2 xl:gap-4 items-center">
             {!isInitialized || showSkeleton ? (
               <div className="flex gap-4 items-center">
                 <div className="h-9 w-24 bg-white/20 rounded animate-pulse" />
@@ -136,7 +136,7 @@ export function Header() {
                 <CreateListingButton variant="desktop" />
                 <Link href="/my-listings" className={navLinkClasses}>
                   <svg
-                    className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+                    className="w-3 h-3 md:w-3.5 md:h-3.5 flex-shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -157,7 +157,7 @@ export function Header() {
                 </Link>
                 <Link href="/favorites" className={navLinkClasses}>
                   <svg
-                    className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+                    className="w-3 h-3 md:w-3.5 md:h-3.5 flex-shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -178,7 +178,7 @@ export function Header() {
                 </Link>
                 <Link href="/compare" className={navLinkClasses}>
                   <svg
-                    className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+                    className="w-3 h-3 md:w-3.5 md:h-3.5 flex-shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -286,7 +286,7 @@ export function Header() {
                           }
                         }
                       }}
-                      className="text-white font-medium text-xs md:text-sm lg:text-sm xl:text-base hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center gap-2 md:gap-2.5 px-2.5 md:px-3 lg:px-3 xl:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none"
+                      className="text-white font-medium text-xs md:text-xs lg:text-sm xl:text-sm hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-2 md:px-2.5 lg:px-2.5 xl:px-3 py-1.5 md:py-2 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none"
                     >
                       <span className="hidden xl:inline" suppressHydrationWarning>
                         {t('header.login')}
@@ -297,7 +297,7 @@ export function Header() {
                     </Link>
                     <Link
                       href="/register"
-                      className="text-white font-medium text-xs md:text-sm lg:text-sm xl:text-base hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center gap-2 md:gap-2.5 px-2.5 md:px-3 lg:px-3 xl:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none"
+                      className="text-white font-medium text-xs md:text-xs lg:text-sm xl:text-sm hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-2 md:px-2.5 lg:px-2.5 xl:px-3 py-1.5 md:py-2 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none"
                     >
                       <span suppressHydrationWarning>{t('header.register')}</span>
                     </Link>
@@ -431,7 +431,10 @@ export function Header() {
                   <span suppressHydrationWarning>{t('header.logout')}</span>
                 </button>
                 {!isAuthPage && !isErrorPage && (
-                  <LanguageSwitcher variant="mobile" context="header" />
+                  <>
+                    <div className="h-px bg-white/20 my-2"></div>
+                    <LanguageSwitcher variant="mobile" context="header" />
+                  </>
                 )}
               </div>
             ) : (
@@ -457,20 +460,25 @@ export function Header() {
                             }
                           }
                         }}
-                        className="text-white font-medium text-xs hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-3.5 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none"
+                        className="text-white font-medium text-sm hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-3.5 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none"
                       >
                         <span suppressHydrationWarning>{t('header.login')}</span>
                       </Link>
                       <Link
                         href="/register"
                         onClick={handleMobileMenuClose}
-                        className="text-white font-medium text-xs hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-3.5 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none"
+                        className="text-white font-medium text-sm hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-3.5 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none"
                       >
                         <span suppressHydrationWarning>{t('header.register')}</span>
                       </Link>
                     </>
                   )}
-                  {!isAuthPage && <LanguageSwitcher variant="mobile" context="header" />}
+                  {!isAuthPage && (
+                    <>
+                      <div className="h-px bg-white/20 my-2"></div>
+                      <LanguageSwitcher variant="mobile" context="header" />
+                    </>
+                  )}
                 </div>
               )
             )}

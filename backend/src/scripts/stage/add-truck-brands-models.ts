@@ -1290,6 +1290,11 @@ const TRUCK_BRANDS_AND_MODELS: Record<string, string[]> = {
   Peugeot: ['Partner', 'Expert', 'Boxer', 'J9'],
   Citroen: ['Berlingo', 'Jumpy', 'Jumper', 'Type H', 'HY Van'],
   Fiat: ['Ducato', 'Doblo', 'Talento', 'Fiorino', 'Scudo', '682', '619', '626', '666'],
+  Ikarus: ['250', '255', '256', '260', '280', '435', 'E91', 'E94', 'E95', 'E98', 'C80', 'C83'],
+  Temsa: ['Safari', 'Tourmalin', 'HD', 'MD', 'LD', 'Maraton', 'Prestige', 'Avenue'],
+  'Van Hool': ['A300', 'A320', 'A330', 'A360', 'T9', 'T12', 'T917', 'T927', 'EX11', 'EX15'],
+  ПАЗ: ['ПАЗ-3205', 'ПАЗ-4234', 'ПАЗ-3237', 'ПАЗ-3204', 'ПАЗ-3206', 'ПАЗ-32053'],
+  УАЗ: ['УАЗ-3303', 'УАЗ-3909', 'УАЗ-3741', 'УАЗ-2206', 'УАЗ-3962', 'УАЗ-452'],
 };
 
 function delay(ms: number): Promise<void> {

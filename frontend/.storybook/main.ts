@@ -1,6 +1,7 @@
-import type { StorybookConfig } from '@storybook/nextjs-vite';
-import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+
+import type { StorybookConfig } from '@storybook/nextjs-vite';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
