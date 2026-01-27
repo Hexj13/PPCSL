@@ -116,33 +116,20 @@ export function TechnicalSpecsSection({
               }}
               onBlur={(e) => {
                 const inputValue = e.target.value.trim();
-                if (!inputValue) {
-                  return;
-                }
-                let numValue = parseFloat(inputValue);
-                if (isNaN(numValue)) {
-                  return;
-                }
-                let finalValue: string;
+                if (!inputValue) return;
+                const numValue = parseFloat(inputValue);
+                if (isNaN(numValue)) return;
                 if (numValue < 0) {
-                  finalValue = '0';
+                  setFormData((prev) => ({
+                    ...prev,
+                    vehicle: { ...prev.vehicle, engine_displ_l: '0' },
+                  }));
                 } else if (numValue > 99) {
-                  finalValue = '99';
-                } else {
-                  const maxDecimals = vehicleType === 'moto' ? 3 : 1;
-                  const parts = inputValue.split('.');
-                  if (parts.length === 2) {
-                    const decimalPart = parts[1].substring(0, maxDecimals);
-                    finalValue = parts[0] + (decimalPart ? '.' + decimalPart : '');
-                  } else {
-                    finalValue = inputValue;
-                  }
-                  finalValue = finalValue.replace(/\.?0+$/, '');
+                  setFormData((prev) => ({
+                    ...prev,
+                    vehicle: { ...prev.vehicle, engine_displ_l: '99' },
+                  }));
                 }
-                setFormData((prev) => ({
-                  ...prev,
-                  vehicle: { ...prev.vehicle, engine_displ_l: finalValue },
-                }));
               }}
               className={`input-field h-[48px] ${errors['vehicle.engine_displ_l'] ? 'border-red-500 focus:border-red-500 ' : ''}`}
               placeholder={t('listings.engineDisplacementPlaceholder')}
