@@ -129,11 +129,18 @@ export function TechnicalSpecsSection({
                   numValue = 99;
                 }
                 const maxDecimals = vehicleType === 'moto' ? 3 : 1;
-                const formatted = numValue.toFixed(maxDecimals);
-                const trimmed = formatted.replace(/\.?0+$/, '');
+                const parts = inputValue.split('.');
+                let finalValue: string;
+                if (parts.length === 2) {
+                  const decimalPart = parts[1].substring(0, maxDecimals);
+                  finalValue = parts[0] + (decimalPart ? '.' + decimalPart : '');
+                } else {
+                  finalValue = numValue.toString();
+                }
+                finalValue = finalValue.replace(/\.?0+$/, '');
                 setFormData((prev) => ({
                   ...prev,
-                  vehicle: { ...prev.vehicle, engine_displ_l: trimmed },
+                  vehicle: { ...prev.vehicle, engine_displ_l: finalValue },
                 }));
               }}
               className={`input-field h-[48px] ${errors['vehicle.engine_displ_l'] ? 'border-red-500 focus:border-red-500 ' : ''}`}
