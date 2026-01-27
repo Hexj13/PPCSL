@@ -46,15 +46,22 @@ export const useAuthStore = create<AuthState>()(
         }
       },
       initAuth: async () => {
-        const { token, refreshToken } = get();
+        if (typeof window === 'undefined') {
+          set({ isInitialized: true });
+          return;
+        }
 
-        if (token && typeof window !== 'undefined') {
+        const { token, refreshToken } = get();
+        const storedToken = localStorage.getItem('token');
+        const actualToken = token || storedToken;
+
+        if (actualToken) {
           try {
             const response = await authApi.me();
             const storedRefreshToken = localStorage.getItem('refresh_token');
             set({
               user: response.data,
-              token,
+              token: actualToken,
               refreshToken: refreshToken || storedRefreshToken,
               isInitialized: true,
             });
@@ -71,10 +78,8 @@ export const useAuthStore = create<AuthState>()(
                   refreshToken: refreshResponse.data.refresh_token,
                   isInitialized: true,
                 });
-                if (typeof window !== 'undefined') {
-                  localStorage.setItem('token', refreshResponse.data.access_token);
-                  localStorage.setItem('refresh_token', refreshResponse.data.refresh_token);
-                }
+                localStorage.setItem('token', refreshResponse.data.access_token);
+                localStorage.setItem('refresh_token', refreshResponse.data.refresh_token);
               } catch {
                 get().logout();
                 set({ isInitialized: true });

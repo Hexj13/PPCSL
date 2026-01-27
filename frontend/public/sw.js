@@ -162,8 +162,9 @@ const fetchHandler = async (event) => {
       }
       return response;
     } catch (error) {
-      if (cached) {
-        return cached;
+      const fallbackCached = await apiCache.match(request);
+      if (fallbackCached) {
+        return fallbackCached;
       }
       throw error;
     }
