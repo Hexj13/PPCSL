@@ -178,13 +178,13 @@ describe('Saved Filters API Integration Tests', () => {
         .post('/api/saved-filters')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
-          name: '21-ти филтер',
+          name: '21-й фильтр',
           filters: { brand_ids: ['brand-1'] },
         })
         .expect(400);
 
       expect(response).toSatisfyApiSpec();
-      expect(response.body.message).toContain('максимум 20 филтри');
+      expect(response.body.message).toContain('maximum');
     });
 
     it('should return 401 when not authenticated', async () => {

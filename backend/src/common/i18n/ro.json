@@ -47,6 +47,7 @@
     "comparisonNotFound": "Comparație nu a fost găsită",
     "filterNotFound": "Filtru nu a fost găsit",
     "filterLimitExceeded": "Ați atins limita de filtre salvate. Maximum: {max}",
+    "maxSavedFiltersReached": "Puteți salva maximum {max} filtre. Vă rugăm să ștergeți unul dintre filtrele existente.",
     "invalidImageFormat": "Format imagine invalid",
     "imageTooLarge": "Imaginea este prea mare. Dimensiunea maximă: {max}MB",
     "tooManyImages": "Prea multe imagini. Numărul maxim: {max}",
