@@ -94,7 +94,7 @@ export function getInitialFormData(initialData?: Listing): ListingFormData {
         if (raw == null || (typeof raw === 'string' && raw === '')) return '';
         const num = Number(String(raw));
         if (!Number.isFinite(num)) return '';
-        return typeof raw === 'string' ? raw : raw.toString();
+        return num.toString();
       })(),
       mileage_km: initialData.vehicle?.mileage_km?.toString() || '',
       fuel: initialData.vehicle?.fuel || '',

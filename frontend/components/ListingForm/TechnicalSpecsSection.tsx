@@ -106,8 +106,7 @@ export function TechnicalSpecsSection({
                 if (parts.length === 2 && parts[1].length > maxDecimals) {
                   value = parts[0] + '.' + parts[1].substring(0, maxDecimals);
                 }
-                const numValue = value === '' ? 0 : parseFloat(value);
-                if (value === '' || (!isNaN(numValue) && numValue >= 0 && numValue <= 99)) {
+                if (value === '' || (parseFloat(value) >= 0 && parseFloat(value) <= 99)) {
                   setFormData((prev) => ({
                     ...prev,
                     vehicle: { ...prev.vehicle, engine_displ_l: value },
