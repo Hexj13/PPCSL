@@ -411,7 +411,7 @@
     "imageEmptyError": "File is empty",
     "imageMaxCountError": "Maximum 20 photos",
     "basicInfo": "Basic Information",
-    "brandModelInfo": "If you cannot find the brand or model you are looking for, please write to us at support@kupito.club and we will add it within a day and notify you immediately upon addition.",
+    "brandModelInfo": "If the brand or model you are looking for is not available, write to us at support@kupito.club. We will add it within a day and notify you immediately.",
     "brandLabel": "Brand *",
     "modelLabel": "Model *",
     "yearLabel": "Year *",
