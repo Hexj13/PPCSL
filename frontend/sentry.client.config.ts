@@ -18,5 +18,4 @@ Sentry.init({
       blockAllMedia: true,
     }),
   ],
-  instrumenter: 'sentry',
 });
