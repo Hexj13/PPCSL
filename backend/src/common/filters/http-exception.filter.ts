@@ -7,6 +7,7 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
+import * as Sentry from '@sentry/node';
 import { Request, Response } from 'express';
 
 import { I18nService } from '../i18n/i18n.service';
@@ -49,6 +50,21 @@ export class HttpExceptionFilter implements ExceptionFilter {
       }
     } else if (exception instanceof Error) {
       this.logger.error(`Unhandled exception: ${exception.message}`, exception.stack);
+
+      Sentry.captureException(exception, {
+        tags: {
+          httpStatus: status,
+          httpMethod: request.method,
+          httpPath: request.url,
+          errorType: 'unhandled',
+        },
+        extra: {
+          requestBody: request.body,
+          queryParams: request.query,
+          params: request.params,
+          user: (request as { user?: { id?: string; email?: string } }).user,
+        },
+      });
     }
 
     if (status >= 500) {
@@ -58,6 +74,20 @@ export class HttpExceptionFilter implements ExceptionFilter {
         `Method: ${request.method}`,
         exception instanceof Error ? exception.stack : undefined,
       );
+
+      Sentry.captureException(exception, {
+        tags: {
+          httpStatus: status,
+          httpMethod: request.method,
+          httpPath: request.url,
+        },
+        extra: {
+          requestBody: request.body,
+          queryParams: request.query,
+          params: request.params,
+          user: (request as { user?: { id?: string; email?: string } }).user,
+        },
+      });
     }
 
     response.status(status).json({

@@ -9,10 +9,15 @@ Sentry.init({
   replaysOnErrorSampleRate: 1.0,
   replaysSessionSampleRate: 0.1,
   integrations: [
-    Sentry.browserTracingIntegration(),
+    Sentry.browserTracingIntegration({
+      enableInp: true,
+      enableLongTask: true,
+      enableWebVitalsInstrumentation: true,
+    }),
     Sentry.replayIntegration({
       maskAllText: true,
       blockAllMedia: true,
     }),
   ],
+  instrumenter: 'sentry',
 });
