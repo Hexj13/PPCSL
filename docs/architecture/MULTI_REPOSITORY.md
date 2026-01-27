@@ -40,7 +40,7 @@ This architecture separates the core application code from locale-specific confi
 ### What's in Platform-Specific Repositories
 
 Each platform (e.g., kupito.club) contains only:
-1. **Translations** (`locales/mk.json`, `locales/en.json`, etc.) - All user-facing text in supported languages
+1. **Translations** (`locales/ro.json`, `locales/ru.json`, `locales/en.json`, etc.) - All user-facing text in supported languages
 2. **Theme** (`theme/colors.ts`) - Color scheme specific to the platform
 3. **Site Configuration** (`config/site.ts`) - Domain, locale, currency, support email
 4. **Build Configuration** - CI/CD workflows, deployment scripts
@@ -62,9 +62,9 @@ Each platform (e.g., kupito.club) contains only:
 - Ready for use by platform repositories
 
 **Active Platform:**
-- **kupito.club** - Platform for Macedonia
+- **kupito.club** - Platform for Moldova
 - Uses PPCSL core via Git submodule
-- Has Macedonian translations, theme, and configuration
+- Has Romanian and Russian translations, theme, and configuration
 
 ---
 
@@ -75,9 +75,10 @@ Each platform (e.g., kupito.club) contains only:
 ```
 ppcsl (GitHub) - PPCSL (Platform for posting car sale listings)
     │
-    └─── kupito.club (GitHub) - Platform for Macedonia
+    └─── kupito.club (GitHub) - Platform for Moldova
          └── core/ (Git Submodule → ppcsl)
-         ├── locales/mk.json
+         ├── locales/ro.json
+         ├── locales/ru.json
          └── locales/en.json
          └── theme/colors.ts
          └── config/site.ts
@@ -131,15 +132,16 @@ kupito.club/
 │   ├── frontend/
 │   └── backend/
 ├── locales/
-│   ├── mk.json                 # Macedonian translations
+│   ├── ro.json                 # Romanian translations
+│   ├── ru.json                 # Russian translations
 │   └── en.json                 # English translations
 ├── theme/
-│   └── colors.ts              # Macedonian color scheme
+│   └── colors.ts              # Platform color scheme
 ├── config/
 │   └── site.ts                # Site configuration (domain, email, etc.)
 ├── .github/
 │   └── workflows/
-│       └── ci.yml             # Build and deploy for MK
+│       └── ci.yml             # Build and deploy for MD
 ├── package.json
 └── README.md
 ```
@@ -156,7 +158,7 @@ kupito.club/
 - `frontend/hooks/useTranslation.ts` - Hook for using translations
 
 **In platform repositories:**
-- `locales/{country}.json` - Translation files (e.g., `locales/mk.json`, `locales/en.json`)
+- `locales/{country}.json` - Translation files (e.g., `locales/ro.json`, `locales/ru.json`, `locales/en.json`)
 
 **Usage:**
 ```typescript
@@ -256,7 +258,7 @@ git submodule update --remote --merge core
 ## Best Practices
 
 1. **Always test** core changes with platform files before pushing
-2. **Keep translations in sync** - if you add a new key, add it to all platform locales (e.g., `locales/mk.json`, `locales/en.json`)
+2. **Keep translations in sync** - if you add a new key, add it to all platform locales (e.g., `locales/ro.json`, `locales/ru.json`, `locales/en.json`)
 3. **Monitor builds** - ensure platform builds succeed after core updates
 4. **Code review** - carefully review core changes as they affect all platforms
 5. **Use feature branches** for core changes (see [Platform Guide](PLATFORM_GUIDE.md#workflow-1-making-core-changes))
@@ -274,7 +276,7 @@ This architecture provides:
 ✅ **Flexibility** - Each platform can have custom configurations
 
 **Current Platform:**
-- **kupito.club** - Platform for Macedonia
+- **kupito.club** - Platform for Moldova
 
 **Core Repository:**
 - **PPCSL** (ppcsl) - Platform for posting car sale listings

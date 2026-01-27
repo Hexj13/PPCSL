@@ -7,12 +7,12 @@ interface SearchTabsProps {
   onTabChange: (_tab: 'basic' | 'advanced' | 'popular') => void;
   hasBasicFilters: boolean;
   hasAdvancedFiltersActive: boolean;
-  basicTabRef: React.RefObject<HTMLButtonElement>;
-  advancedTabRef: React.RefObject<HTMLButtonElement>;
-  popularTabRef: React.RefObject<HTMLButtonElement>;
-  indicatorRef: React.RefObject<HTMLDivElement>;
+  basicTabRef: React.RefObject<HTMLButtonElement | null>;
+  advancedTabRef: React.RefObject<HTMLButtonElement | null>;
+  popularTabRef: React.RefObject<HTMLButtonElement | null>;
+  indicatorRef: React.RefObject<HTMLDivElement | null>;
   indicatorStyle: { left: number; width: number };
-  tabsContainerRef: React.RefObject<HTMLDivElement>;
+  tabsContainerRef: React.RefObject<HTMLDivElement | null>;
   showFade: boolean;
 }
 
@@ -32,7 +32,11 @@ export function SearchTabs({
   const { t } = useTranslation();
 
   return (
-    <div ref={tabsContainerRef} className="relative flex gap-1 overflow-x-auto scrollbar-hide">
+    <div
+      ref={tabsContainerRef}
+      className="relative flex gap-1 overflow-x-auto scrollbar-hide"
+      suppressHydrationWarning
+    >
       <button
         ref={basicTabRef}
         type="button"
@@ -42,8 +46,9 @@ export function SearchTabs({
             ? 'text-text-primary bg-primary-500/5 rounded-t-lg'
             : 'text-text-primary hover:bg-primary-500/5'
         }`}
+        suppressHydrationWarning
       >
-        {t('searchFilters.basicCriteria')}
+        <span suppressHydrationWarning>{t('searchFilters.basicCriteria')}</span>
         {hasBasicFilters && (
           <span className="absolute right-2 top-2 w-2 h-2 rounded-full bg-accent" />
         )}
@@ -57,8 +62,9 @@ export function SearchTabs({
             ? 'text-text-primary bg-primary-500/5 rounded-t-lg'
             : 'text-text-primary hover:bg-primary-500/5'
         }`}
+        suppressHydrationWarning
       >
-        {t('searchFilters.additionalCriteria')}
+        <span suppressHydrationWarning>{t('searchFilters.additionalCriteria')}</span>
         {hasAdvancedFiltersActive && (
           <span className="absolute right-2 top-2 w-2 h-2 rounded-full bg-accent" />
         )}
@@ -72,8 +78,9 @@ export function SearchTabs({
             ? 'text-text-primary bg-primary-500/5 rounded-t-lg'
             : 'text-text-primary hover:bg-primary-500/5'
         }`}
+        suppressHydrationWarning
       >
-        {t('searchFilters.popularFilters')}
+        <span suppressHydrationWarning>{t('searchFilters.popularFilters')}</span>
       </button>
       <div
         ref={indicatorRef}

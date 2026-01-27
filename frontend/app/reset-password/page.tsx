@@ -400,7 +400,7 @@ export default function ResetPasswordPage() {
                 }
               }}
               className={`input-field ${errors.phone ? 'border-red-500' : ''}`}
-              placeholder="+38970123456"
+              placeholder={t('register.phonePlaceholder')}
               autoComplete="tel"
             />
             {errors.phone && <p className="mt-1 text-sm text-red-400">{errors.phone}</p>}

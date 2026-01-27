@@ -5,7 +5,7 @@ import { loadSiteConfigSync } from './site-config';
 export const isBrowser = typeof window !== 'undefined';
 
 export function getLocale(): string {
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
   const siteConfig = loadSiteConfigSync(country);
   return siteConfig.locale.split('-')[0];
 }
@@ -38,7 +38,7 @@ export function formatPrice(price: number | undefined, currency?: string): strin
   }
 
   if (!currency) {
-    const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+    const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
     const siteConfig = loadSiteConfigSync(country);
     currency = siteConfig.currency;
   }
@@ -110,7 +110,7 @@ export function formatDateRelative(
 export function formatDateLong(date: string | Date): string {
   const d = new Date(date);
   if (Number.isNaN(d.getTime())) return '';
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
   const siteConfig = loadSiteConfigSync(country);
   return d.toLocaleDateString(siteConfig.locale, {
     year: 'numeric',
@@ -357,17 +357,51 @@ export function getCityNameMk(cityNameEn: string | undefined): string {
   return cityNamesMap[cityNameEn] || cityNameEn;
 }
 
+export interface City {
+  name: string;
+  nameEn: string;
+  nameRu?: string;
+}
+
+export function getCityName(
+  cityNameEn: string | undefined,
+  locale: string,
+  cities?: City[]
+): string {
+  if (!cityNameEn) return '';
+
+  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
+
+  if (country === 'md') {
+    if (cities && cities.length > 0) {
+      const city = cities.find((c) => c.nameEn === cityNameEn);
+      if (city) {
+        if (locale === 'ro') {
+          return city.name;
+        }
+        if (locale === 'ru' && city.nameRu) {
+          return `${city.nameRu} (${city.name})`;
+        }
+        return city.name;
+      }
+    }
+    return cityNameEn;
+  }
+
+  return getCityNameMk(cityNameEn);
+}
+
 function normalizePhoneDigits(phone: string): string {
   return phone.replace(/\D/g, '');
 }
 
 function getPhoneWithCountryCode(phone: string): string {
   const digits = normalizePhoneDigits(phone);
-  if (digits.startsWith('389')) {
+  if (digits.startsWith('373')) {
     return digits;
   }
-  if (digits.length === 9) {
-    return `389${digits}`;
+  if (digits.length === 8) {
+    return `373${digits}`;
   }
   return digits;
 }

@@ -1,14 +1,12 @@
 import { getPlatform, Platform } from '../script-guard';
 
-import alConfig from './al/config';
-import mkConfig, { PlatformSeedConfig } from './mk/config';
+import mdConfig, { PlatformSeedConfig } from './md/config';
 
 export { PlatformSeedConfig };
 
 const configs: Record<Platform, PlatformSeedConfig> = {
-  mk: mkConfig,
-  al: alConfig,
-  common: mkConfig,
+  md: mdConfig,
+  common: mdConfig,
 };
 
 export function getPlatformConfig(): PlatformSeedConfig {
@@ -24,4 +22,4 @@ export function getPlatformConfig(): PlatformSeedConfig {
   return config;
 }
 
-export { mkConfig, alConfig };
+export { mdConfig };

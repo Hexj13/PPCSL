@@ -27,7 +27,7 @@ import { getPlatformConfig } from '../platforms';
 import { checkEnvironment, checkPlatform } from '../script-guard';
 
 checkEnvironment(['stage', 'development', 'test']);
-checkPlatform(['mk', 'al']);
+checkPlatform(['md']);
 
 const platformConfig = getPlatformConfig();
 const { cities, descriptions } = platformConfig;
@@ -162,7 +162,7 @@ async function getOrCreateAdminUser() {
       password: hashedPassword,
       firstName: 'Admin',
       lastName: 'User',
-      phone: '+38970111111',
+      phone: `${platformConfig.phonePrefix}70111111`,
       type: UserTypeEnum.Admin,
       active: true,
     });
@@ -171,6 +171,7 @@ async function getOrCreateAdminUser() {
   } else {
     admin.type = UserTypeEnum.Admin;
     admin.active = true;
+    admin.phone = `${platformConfig.phonePrefix}70111111`;
     admin = await userRepo.save(admin);
     console.log('✅ Updated admin user');
   }
@@ -178,12 +179,26 @@ async function getOrCreateAdminUser() {
   return admin;
 }
 
-async function seedListings(
+async function seedListingsByType(
   users: User[],
-  activeCount: number = 100,
-  withHistoryCount: number = 10,
+  vehicleType: 'car' | 'truck' | 'moto',
+  activeCount: number,
+  withHistoryCount: number = 0,
 ) {
-  console.log(`🚗 Creating ${activeCount} active listings...`);
+  const vehicleTypeLabels = {
+    car: '🚗',
+    truck: '🚛',
+    moto: '🏍️',
+  };
+  const vehicleTypeNames = {
+    car: 'легковых автомобилей',
+    truck: 'коммерческого транспорта',
+    moto: 'мототранспорта',
+  };
+
+  console.log(
+    `${vehicleTypeLabels[vehicleType]} Creating ${activeCount} active listings (${vehicleTypeNames[vehicleType]})...`,
+  );
 
   const listingRepo = AppDataSource.getRepository(Listing);
   const vehicleRepo = AppDataSource.getRepository(Vehicle);
@@ -197,11 +212,12 @@ async function seedListings(
 
   const validBrands = brandsWithModels.filter((b) => {
     if (!b.models || b.models.length === 0) return false;
-    return b.models.some((m) => m.vehicle_type === 'car');
+    return b.models.some((m) => m.vehicle_type === vehicleType);
   });
 
   if (validBrands.length === 0) {
-    throw new Error('No brands with models available!');
+    console.warn(`⚠️  No brands with ${vehicleType} models available, skipping...`);
+    return;
   }
 
   const fuelTypes = Object.values(FuelType);
@@ -209,16 +225,11 @@ async function seedListings(
   const driveTypes = Object.values(DriveType);
   const currencies = Object.values(Currency);
   const currentYear = new Date().getFullYear();
-  const bodyTypes = [...BODY_TYPES_BY_VEHICLE_TYPE.car] as BodyType[];
+  const bodyTypes = [...BODY_TYPES_BY_VEHICLE_TYPE[vehicleType]] as BodyType[];
   const conditionTypes = Object.values(ConditionType);
   const registrationTypes = Object.values(RegistrationType);
 
   const seedImages = getSeedImages();
-  if (seedImages.length === 0) {
-    console.warn('⚠️  No images found in seed-images/. Using placeholder.');
-  } else {
-    console.log(`   📸 Found ${seedImages.length} images in seed-images/`);
-  }
 
   const activeListings: Listing[] = [];
   const vinsWithHistory: Array<{
@@ -230,33 +241,70 @@ async function seedListings(
     year: number;
   }> = [];
 
+  const priceRanges = {
+    car: { min: 5000, max: 50000 },
+    truck: { min: 15000, max: 150000 },
+    moto: { min: 2000, max: 25000 },
+  };
+
+  const mileageRanges = {
+    car: { min: 0, max: 300000 },
+    truck: { min: 0, max: 500000 },
+    moto: { min: 0, max: 100000 },
+  };
+
+  const engineDisplRanges = {
+    car: { min: 1.0, max: 6.0 },
+    truck: { min: 2.0, max: 15.0 },
+    moto: { min: 0.1, max: 2.0 },
+  };
+
+  const horsepowerRanges = {
+    car: { min: 50, max: 500 },
+    truck: { min: 100, max: 800 },
+    moto: { min: 10, max: 200 },
+  };
+
+  const yearRanges = {
+    car: { min: 2010, max: currentYear },
+    truck: { min: 2005, max: currentYear },
+    moto: { min: 2010, max: currentYear },
+  };
+
   for (let i = 0; i < activeCount; i++) {
     const user = getRandomElement(users);
     const brand = getRandomElement(validBrands);
-    const carModels = brand.models.filter((m) => m.vehicle_type === 'car');
-    if (carModels.length === 0) {
-      console.warn(`⚠️  Brand ${brand.name} has no car models, skipping...`);
+    const typeModels = brand.models.filter((m) => m.vehicle_type === vehicleType);
+    if (typeModels.length === 0) {
+      console.warn(`⚠️  Brand ${brand.name} has no ${vehicleType} models, skipping...`);
       continue;
     }
-    const model = getRandomElement(carModels);
+    const model = getRandomElement(typeModels);
 
-    const year = getRandomInt(2010, currentYear);
-    const mileage = getRandomInt(0, 9999999);
-    const engineDispl = getRandomFloat(0, 99, 1);
+    const year = getRandomInt(yearRanges[vehicleType].min, yearRanges[vehicleType].max);
+    const mileage = getRandomInt(mileageRanges[vehicleType].min, mileageRanges[vehicleType].max);
+    const engineDispl = getRandomFloat(
+      engineDisplRanges[vehicleType].min,
+      engineDisplRanges[vehicleType].max,
+      1,
+    );
     const fuel = getRandomElement(fuelTypes);
     const transmission = getRandomElement(transmissionTypes);
-    const driveType = getRandomElement(driveTypes);
+    const driveType = vehicleType === 'moto' ? DriveType.RWD : getRandomElement(driveTypes);
     const bodyType = getRandomElement(bodyTypes);
     const color = getRandomElement(colors);
-    const doors = getRandomElement([3, 4, 5]);
+    const doors = vehicleType === 'moto' ? undefined : getRandomElement([3, 4, 5]);
 
     const city = getRandomElement(cities);
-    const price = getRandomInt(5000, 50000);
+    const price = getRandomInt(priceRanges[vehicleType].min, priceRanges[vehicleType].max);
     const currency = getRandomElement(currencies);
     const description = getRandomElement(descriptions);
     const condition = getRandomElement(conditionTypes);
     const registrationType = getRandomElement(registrationTypes);
-    const horsepower = getRandomInt(50, 500);
+    const horsepower = getRandomInt(
+      horsepowerRanges[vehicleType].min,
+      horsepowerRanges[vehicleType].max,
+    );
     const isRegistered = Math.random() > 0.3;
     const registrationExpiresAt = isRegistered
       ? (() => {
@@ -275,12 +323,23 @@ async function seedListings(
         (img) => `${baseUrl}/api/upload/image/seed-images%2F${encodeURIComponent(img)}`,
       );
     } else {
-      images = [`${baseUrl}/placeholder-car.jpg`];
+      const placeholder =
+        vehicleType === 'moto'
+          ? 'placeholder-moto.jpg'
+          : vehicleType === 'truck'
+            ? 'placeholder-truck.jpg'
+            : 'placeholder-car.jpg';
+      images = [`${baseUrl}/${placeholder}`];
     }
 
     const vin = generateVin();
 
-    const vehicle = vehicleRepo.create({
+    const vehicleData: Partial<Vehicle> & {
+      brand_id: string;
+      model_id: string;
+      year: number;
+      body_type: BodyType;
+    } = {
       brand_id: brand.id,
       model_id: model.id,
       year,
@@ -291,8 +350,12 @@ async function seedListings(
       drive_type: driveType,
       body_type: bodyType,
       color,
-      doors,
-    });
+    };
+    if (doors !== undefined) {
+      vehicleData.doors = doors;
+    }
+
+    const vehicle = vehicleRepo.create(vehicleData) as unknown as Vehicle;
 
     const savedVehicle = await vehicleRepo.save(vehicle);
 
@@ -346,7 +409,7 @@ async function seedListings(
     }
   }
 
-  console.log(`✅ Created all ${activeCount} active listings!`);
+  console.log(`✅ Created all ${activeCount} active listings (${vehicleTypeNames[vehicleType]})!`);
 
   if (vinsWithHistory.length > 0) {
     console.log(`\n📜 Creating VIN history for ${vinsWithHistory.length} listings...`);
@@ -358,10 +421,25 @@ async function seedListings(
         vinData.model,
         users,
         vinData.year,
+        vehicleType,
       );
     }
     console.log(`✅ Created VIN history!`);
   }
+}
+
+async function seedListings(
+  users: User[],
+  activeCount: number = 100,
+  withHistoryCount: number = 10,
+) {
+  const carCount = Math.floor(activeCount * 0.7);
+  const truckCount = Math.floor(activeCount * 0.2);
+  const motoCount = activeCount - carCount - truckCount;
+
+  await seedListingsByType(users, 'car', carCount, Math.floor(withHistoryCount * 0.7));
+  await seedListingsByType(users, 'truck', truckCount, Math.floor(withHistoryCount * 0.2));
+  await seedListingsByType(users, 'moto', motoCount, Math.floor(withHistoryCount * 0.1));
 }
 
 async function createVinHistory(
@@ -371,6 +449,7 @@ async function createVinHistory(
   model: VehicleModel,
   users: User[],
   baseYear: number,
+  vehicleType: 'car' | 'truck' | 'moto' = 'car',
 ) {
   const listingRepo = AppDataSource.getRepository(Listing);
   const vehicleRepo = AppDataSource.getRepository(Vehicle);
@@ -381,7 +460,7 @@ async function createVinHistory(
   const transmissionTypes = Object.values(TransmissionType);
   const driveTypes = Object.values(DriveType);
   const currencies = Object.values(Currency);
-  const bodyTypes = [...BODY_TYPES_BY_VEHICLE_TYPE.car] as BodyType[];
+  const bodyTypes = [...BODY_TYPES_BY_VEHICLE_TYPE[vehicleType]] as BodyType[];
   const conditionTypes = Object.values(ConditionType);
   const registrationTypes = Object.values(RegistrationType);
 
@@ -394,26 +473,50 @@ async function createVinHistory(
   let previousMileage = baseVehicle.mileage_km || 0;
   const startYear = baseYear - historyCount;
 
+  const mileageIncreaseRanges = {
+    car: { min: 10000, max: 30000 },
+    truck: { min: 20000, max: 50000 },
+    moto: { min: 5000, max: 15000 },
+  };
+
+  const priceRanges = {
+    car: { min: 3000, max: 40000 },
+    truck: { min: 10000, max: 120000 },
+    moto: { min: 1000, max: 20000 },
+  };
+
+  const horsepowerRanges = {
+    car: { min: 50, max: 500 },
+    truck: { min: 100, max: 800 },
+    moto: { min: 10, max: 200 },
+  };
+
   for (let i = 0; i < historyCount; i++) {
     const historyUser = getRandomElement(users.filter((u) => u.type !== UserTypeEnum.Admin));
     const historyYear = startYear + i;
-    const mileageIncrease = getRandomInt(10000, 30000);
+    const mileageIncrease = getRandomInt(
+      mileageIncreaseRanges[vehicleType].min,
+      mileageIncreaseRanges[vehicleType].max,
+    );
     const historyMileage = previousMileage - mileageIncrease;
     previousMileage = historyMileage;
 
     const fuel = getRandomElement(fuelTypes);
     const transmission = getRandomElement(transmissionTypes);
-    const driveType = getRandomElement(driveTypes);
+    const driveType = vehicleType === 'moto' ? DriveType.RWD : getRandomElement(driveTypes);
     const bodyType = getRandomElement(bodyTypes);
     const color = getRandomElement(colors);
-    const doors = getRandomElement([3, 4, 5]);
+    const doors = vehicleType === 'moto' ? undefined : getRandomElement([3, 4, 5]);
     const city = getRandomElement(cities);
-    const price = getRandomInt(3000, 40000);
+    const price = getRandomInt(priceRanges[vehicleType].min, priceRanges[vehicleType].max);
     const currency = getRandomElement(currencies);
     const description = getRandomElement(descriptions);
     const condition = getRandomElement(conditionTypes);
     const registrationType = getRandomElement(registrationTypes);
-    const horsepower = getRandomInt(50, 500);
+    const horsepower = getRandomInt(
+      horsepowerRanges[vehicleType].min,
+      horsepowerRanges[vehicleType].max,
+    );
     const isRegistered = Math.random() > 0.3;
     const registrationExpiresAt = isRegistered
       ? (() => {
@@ -432,10 +535,21 @@ async function createVinHistory(
         (img) => `${baseUrl}/api/upload/image/seed-images%2F${encodeURIComponent(img)}`,
       );
     } else {
-      images = [`${baseUrl}/placeholder-car.jpg`];
+      const placeholder =
+        vehicleType === 'moto'
+          ? 'placeholder-moto.jpg'
+          : vehicleType === 'truck'
+            ? 'placeholder-truck.jpg'
+            : 'placeholder-car.jpg';
+      images = [`${baseUrl}/${placeholder}`];
     }
 
-    const historyVehicle = vehicleRepo.create({
+    const historyVehicleData: Partial<Vehicle> & {
+      brand_id: string;
+      model_id: string;
+      year: number;
+      body_type: BodyType;
+    } = {
       brand_id: brand.id,
       model_id: model.id,
       year: historyYear,
@@ -446,8 +560,12 @@ async function createVinHistory(
       drive_type: driveType,
       body_type: bodyType,
       color,
-      doors,
-    });
+    };
+    if (doors !== undefined) {
+      historyVehicleData.doors = doors;
+    }
+
+    const historyVehicle = vehicleRepo.create(historyVehicleData) as unknown as Vehicle;
 
     const savedHistoryVehicle = await vehicleRepo.save(historyVehicle);
 
@@ -506,7 +624,7 @@ export async function seed() {
     console.log(`   - 1 admin`);
     console.log(`   - ${regularUsers.length} regular users\n`);
 
-    await seedListings(allUsers, 100, 10);
+    await seedListings(allUsers, 150, 15);
 
     console.log('\n🎉 All data successfully seeded!');
     console.log('\n📝 Test credentials:');

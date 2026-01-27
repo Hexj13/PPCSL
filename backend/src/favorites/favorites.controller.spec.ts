@@ -11,7 +11,7 @@ describe('FavoritesController', () => {
   const mockUser = {
     id: 'user-1',
     email: 'test@example.com',
-    phone: '+38970123456',
+    phone: '+37370123456',
     firstName: 'Test',
     lastName: 'User',
     password: 'hashed-password',
@@ -34,7 +34,7 @@ describe('FavoritesController', () => {
     id: 'listing-1',
     title: 'Test Car',
     price: 10000,
-    currency: 'MKD' as const,
+    currency: 'EUR' as const,
     city: 'Skopje',
     status: 'Active' as const,
     description: 'Test description',

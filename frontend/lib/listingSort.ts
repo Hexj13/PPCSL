@@ -2,37 +2,37 @@ export const LISTING_SORTS = {
   created_at_DESC: {
     sortBy: 'created_at',
     sortOrder: 'DESC' as const,
-    label: 'Најнови прво',
+    translationKey: 'common.sorting.newestFirst',
   },
   created_at_ASC: {
     sortBy: 'created_at',
     sortOrder: 'ASC' as const,
-    label: 'Најстари прво',
+    translationKey: 'common.sorting.oldestFirst',
   },
   views_DESC: {
     sortBy: 'views',
     sortOrder: 'DESC' as const,
-    label: 'Популарно',
+    translationKey: 'common.sorting.popular',
   },
   price_ASC: {
     sortBy: 'price',
     sortOrder: 'ASC' as const,
-    label: 'Цена растечки',
+    translationKey: 'common.sorting.priceAscending',
   },
   price_DESC: {
     sortBy: 'price',
     sortOrder: 'DESC' as const,
-    label: 'Цена опаѓачки',
+    translationKey: 'common.sorting.priceDescending',
   },
   year_DESC: {
     sortBy: 'year',
     sortOrder: 'DESC' as const,
-    label: 'Година опаѓачки',
+    translationKey: 'common.sorting.yearDescending',
   },
   year_ASC: {
     sortBy: 'year',
     sortOrder: 'ASC' as const,
-    label: 'Година растечки',
+    translationKey: 'common.sorting.yearAscending',
   },
 } as const;
 
@@ -55,7 +55,9 @@ export const resolveListingSortKey = (
   return DEFAULT_LISTING_SORT_KEY;
 };
 
-export const LISTING_SORT_OPTIONS = (Object.keys(LISTING_SORTS) as ListingSortKey[]).map((key) => ({
-  value: key,
-  label: LISTING_SORTS[key].label,
-}));
+export const getListingSortOptions = (t: (_key: string) => string) => {
+  return (Object.keys(LISTING_SORTS) as ListingSortKey[]).map((sortKey) => ({
+    value: sortKey,
+    label: t(LISTING_SORTS[sortKey].translationKey),
+  }));
+};

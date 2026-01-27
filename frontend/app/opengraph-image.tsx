@@ -6,7 +6,7 @@ import { ImageResponse } from 'next/og';
 import { getServerTranslations } from '@/lib/i18n';
 import { loadSiteConfigSync } from '@/lib/site-config';
 
-const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
 const siteConfig = loadSiteConfigSync(country);
 
 export const runtime = 'nodejs';

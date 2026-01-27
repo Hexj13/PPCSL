@@ -1,7 +1,7 @@
 {
   "footer": {
     "copyright": "© 2025 Kupito.club. All rights reserved.",
-    "tagline": "Platform for posting car sale listings in Macedonia",
+    "tagline": "Platform for posting car sale listings in Moldova",
     "faq": "Frequently Asked Questions",
     "terms": "Terms of Use",
     "privacy": "Privacy Policy",
@@ -27,7 +27,7 @@
     "toggleMenu": "Toggle Menu"
   },
   "home": {
-    "title": "Cars in Macedonia",
+    "title": "Cars in Moldova",
     "subtitle": "Buy or sell a car on",
     "subtitleBold": "Kupito!",
     "subtitle2": "Post an ad",
@@ -36,7 +36,7 @@
   },
   "listingsPage": {
     "title": "Car Listings",
-    "description": "Search for cars for sale in Macedonia. Filter by brand, model, price, year and much more on Kupito."
+    "description": "Search for cars for sale in Moldova. Filter by brand, model, price, year and much more on Kupito."
   },
   "common": {
     "loading": "Loading...",
@@ -58,6 +58,21 @@
     "yes": "Yes",
     "no": "No",
     "search": "Search",
+    "apiErrors": {
+      "timeout": "Connection timeout. Please try again.",
+      "networkError": "Network error. Check your internet connection.",
+      "connectionError": "Error connecting to server. Please try again.",
+      "badRequest": "Invalid request. Check the entered data.",
+      "unauthorized": "Unauthorized access. Please log in again.",
+      "forbidden": "You do not have permission for this action.",
+      "notFound": "Resource not found.",
+      "conflict": "Conflict. Resource already exists.",
+      "validationError": "Validation error. Check the entered data.",
+      "tooManyRequests": "Too many requests. Please try later.",
+      "serverError": "Server error. Please try later.",
+      "serviceUnavailable": "Server is temporarily unavailable. Please try later.",
+      "unknownError": "Error {status}. Please try again."
+    },
     "filter": "Filter",
     "reset": "Reset",
     "apply": "Apply",
@@ -66,6 +81,15 @@
     "continue": "Continue",
     "ok": "OK",
     "selectSorting": "Select sorting",
+    "sorting": {
+      "newestFirst": "Newest first",
+      "oldestFirst": "Oldest first",
+      "popular": "Popular",
+      "priceAscending": "Price ascending",
+      "priceDescending": "Price descending",
+      "yearDescending": "Year descending",
+      "yearAscending": "Year ascending"
+    },
     "scrollToFilters": "Scroll to filters",
     "scrollBack": "Go back",
     "scrollLeft": "Scroll left",
@@ -91,7 +115,9 @@
     "saving": "Saving...",
     "goToHome": "Go to Home",
     "today": "Today",
-    "daysAgo": "{days} days ago"
+    "daysAgo": "{days} days ago",
+    "languageRo": "Română",
+    "languageRu": "Русский"
   },
   "cookieSettings": {
     "loading": "Loading...",
@@ -155,6 +181,7 @@
     "emailNotifications": "Receive email notifications",
     "termsLink": "terms of use",
     "phone": "Phone",
+    "phonePlaceholder": "+37370123456",
     "phoneHint": "If email is also provided, login can be performed by both phone number and email",
     "phoneRequired": "Phone is required",
     "phoneInvalid": "Enter a valid phone (format: +country code number)",
@@ -433,6 +460,12 @@
     "mileageTitle": "Enter car mileage in kilometers (0-9999999)",
     "registrationExpiresTitle": "Enter registration expiration date (format: month.year, e.g., 12.2025). Cannot be less than current month and year.",
     "priceTitle": "Enter car price (integers only)",
+    "pricePlaceholder": "0",
+    "engineDisplacementPlaceholder": "2.0",
+    "powerPlaceholder": "150",
+    "torquePlaceholder": "110",
+    "mileagePlaceholder": "50000",
+    "registrationDatePlaceholder": "12.2025",
     "moveUp": "Move up",
     "moveDown": "Move down",
     "deleteImage": "Delete",
@@ -616,7 +649,11 @@
     "yearToTitle": "Enter year (1900-{currentYear})",
     "priceFromTitle": "Enter price (integers only, 0-999999999)",
     "priceToTitle": "Enter price (integers only, 0-999999999)",
+    "priceFromPlaceholder": "0",
+    "priceToPlaceholder": "500 000",
     "mileageFromTitle": "Enter mileage in kilometers (0-9999999)",
+    "mileageFromPlaceholder": "0",
+    "horsepowerToPlaceholder": "500",
     "mileageToTitle": "Enter mileage in kilometers (0-9999999)",
     "engineDisplacementFromTitle": "Enter engine displacement in liters (0-99, e.g., 2.0)",
     "engineDisplacementToTitle": "Enter engine displacement in liters (0-99, e.g., 2.0)",
@@ -1086,21 +1123,21 @@
   },
   "metadata": {
     "site": {
-      "defaultTitle": "Cars in Macedonia",
+      "defaultTitle": "Cars in Moldova",
       "defaultDescription": "Buy or sell a car on Kupito! Post your ad for free.",
-      "homePageDescription": "Buy or sell a car on Kupito! Post your ad for free. Platform for buying and selling cars online in Macedonia. Car listings Macedonia - free listing posting for individuals and car dealerships.",
-      "homePageDescriptionWithBrand": "Buy {brand} cars on Kupito! Find the best prices and selection of {brand} cars in Macedonia.",
-      "homePageDescriptionWithBrandModel": "Buy {brand} {model} on Kupito! Find the best prices and selection of {brand} {model} cars in Macedonia.",
-      "organizationDescription": "Buy or sell a car on Kupito! Post your ad for free. Platform for buying and selling cars online in Macedonia. Car listings Macedonia.",
+      "homePageDescription": "Buy or sell a car on Kupito! Post your ad for free. Platform for buying and selling cars online in Moldova. Car listings Moldova - free listing posting for individuals and car dealerships.",
+      "homePageDescriptionWithBrand": "Buy {brand} cars on Kupito! Find the best prices and selection of {brand} cars in Moldova.",
+      "homePageDescriptionWithBrandModel": "Buy {brand} {model} on Kupito! Find the best prices and selection of {brand} {model} cars in Moldova.",
+      "organizationDescription": "Buy or sell a car on Kupito! Post your ad for free. Platform for buying and selling cars online in Moldova. Car listings Moldova.",
       "keywords": [
-        "cars Macedonia",
+        "cars Moldova",
         "buy cars online",
-        "sell cars Macedonia",
-        "car ads Macedonia",
-        "avtomobili makedonija",
-        "kupuvanje avtomobili online",
-        "prodazba avtomobili mk",
-        "avtomobil oglasi makedonija"
+        "sell cars Moldova",
+        "car ads Moldova",
+        "autoturisme Moldova",
+        "cumpărare auto online",
+        "vânzare auto Moldova",
+        "anunțuri auto Moldova"
       ]
     },
     "login": {
@@ -1114,7 +1151,7 @@
       "title": "Register",
       "description": "Register on Kupito and start posting car sale listings for free. Create a profile for individual or business.",
       "ogTitle": "Register - Kupito",
-      "ogDescription": "Register on Kupito and start posting car sale listings for free. Create a profile for individual or business and get in touch with buyers in Macedonia.",
+      "ogDescription": "Register on Kupito and start posting car sale listings for free. Create a profile for individual or business and get in touch with buyers in Moldova.",
       "ogAlt": "Kupito - Register"
     },
     "resetPassword": {
@@ -1130,6 +1167,13 @@
       "ogTitle": "Frequently Asked Questions (FAQ) - Kupito",
       "ogDescription": "Find answers to the most common questions about Kupito. Learn how to post a listing, manage your listings, search and compare cars, and more.",
       "ogAlt": "Kupito - FAQ"
+    },
+    "cookieSettings": {
+      "title": "Cookie Settings",
+      "description": "Manage your cookie preferences on Kupito. Choose which cookies you want to accept.",
+      "ogTitle": "Cookie Settings - Kupito",
+      "ogDescription": "Manage your cookie preferences on Kupito. Choose which cookies you want to accept.",
+      "ogAlt": "Kupito - Cookie Settings"
     },
     "terms": {
       "title": "Terms of Service",
@@ -1153,7 +1197,7 @@
         "cars": "cars",
         "buyCar": "buy car",
         "carsForSale": "cars for sale",
-        "northMacedonia": "North Macedonia"
+        "northMacedonia": "Moldova"
       }
     }
   },

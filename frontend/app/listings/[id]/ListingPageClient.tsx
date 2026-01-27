@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { useI18n } from '@/components/I18nProvider';
 import { ListingPageActions } from '@/components/ListingPage/ListingPageActions';
 import { ListingPageCharacteristics } from '@/components/ListingPage/ListingPageCharacteristics';
 import { ListingPageDescription } from '@/components/ListingPage/ListingPageDescription';
@@ -25,6 +26,7 @@ import {
 import { PromotionModal } from '@/components/PromotionModal';
 import { SimilarListings } from '@/components/SimilarListings';
 import { UserListingsModal } from '@/components/UserListingsModal';
+import { useCities } from '@/hooks/useCities';
 import { useListingData } from '@/hooks/useListingData';
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -35,7 +37,7 @@ import {
   formatDate,
   formatMileage,
   formatRegistrationType,
-  getCityNameMk,
+  getCityName,
   getOptimizedImageUrl,
 } from '@/lib/utils';
 import { LoadingSpinner, Spinner } from '@/ui';
@@ -52,6 +54,8 @@ export default function ListingPageClient({
   const { user, isInitialized } = useAuthStore();
   const { add: addFavorite, remove: removeFavorite } = useFavoritesStore();
   const { t } = useTranslation();
+  const { locale } = useI18n();
+  const { cities } = useCities();
   const {
     add: addComparison,
     remove: removeComparison,
@@ -124,10 +128,10 @@ export default function ListingPageClient({
     const brandName = listing.vehicle?.brand?.name;
     const modelName = listing.vehicle?.model?.name;
     const year = listing.vehicle?.year ? String(listing.vehicle.year) : null;
-    const city = getCityNameMk(listing.city);
+    const city = getCityName(listing.city, locale, cities);
     const details = [brandName, modelName, year].filter(Boolean).join(' ').trim();
     return [listing.title, details, city].filter((v) => v && v.trim() !== '').join(' - ');
-  }, [listing]);
+  }, [listing, locale, cities]);
 
   const descriptionHtml = useMemo(() => {
     if (!listing?.description || !isHydrated) return null;

@@ -79,7 +79,7 @@ const mockModels: VehicleModel[] = [
 ];
 
 const mockCities: City[] = [
-  { name: 'Skopje', nameEn: 'Skopje' },
+  { name: 'Chișinău', nameEn: 'Chișinău' },
   { name: 'Bitola', nameEn: 'Bitola' },
 ];
 
@@ -87,8 +87,8 @@ const mockListing = {
   id: 'listing-1',
   title: 'Test Car',
   price: 10000,
-  currency: Currency.MKD,
-  city: 'Skopje',
+  currency: Currency.EUR,
+  city: 'Chișinău',
   description: 'Test description',
   status: 'Active',
   images: [
@@ -437,7 +437,7 @@ describe('ListingForm', () => {
       );
 
       await waitFor(() => {
-        const currencyDropdown = screen.getByText(/MKD/i);
+        const currencyDropdown = screen.getByText(/EUR/i);
         expect(currencyDropdown).toBeInTheDocument();
       });
     });
@@ -465,9 +465,9 @@ describe('ListingForm', () => {
       await waitFor(
         () => {
           const dropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
-          const cityDropdown = dropdowns.find((dropdown) => dropdown.value === 'Skopje');
+          const cityDropdown = dropdowns.find((dropdown) => dropdown.value === 'Chișinău');
           expect(cityDropdown).toBeDefined();
-          expect(cityDropdown?.value).toBe('Skopje');
+          expect(cityDropdown?.value).toBe('Chișinău');
         },
         { timeout: 15000 }
       );
@@ -975,7 +975,7 @@ describe('ListingForm', () => {
       const cityDropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
       const cityDropdown =
         cityDropdowns.find((d) => d.value === '') || cityDropdowns[cityDropdowns.length - 1];
-      fireEvent.change(cityDropdown, { target: { value: 'Skopje' } });
+      fireEvent.change(cityDropdown, { target: { value: 'Chișinău' } });
 
       await waitFor(
         () => {
@@ -1171,7 +1171,7 @@ describe('ListingForm', () => {
       const cityDropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
       const cityDropdown =
         cityDropdowns.find((d) => d.value === '') || cityDropdowns[cityDropdowns.length - 1];
-      fireEvent.change(cityDropdown, { target: { value: 'Skopje' } });
+      fireEvent.change(cityDropdown, { target: { value: 'Chișinău' } });
 
       await waitFor(
         () => {

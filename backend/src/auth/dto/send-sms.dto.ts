@@ -3,7 +3,7 @@ import { IsString, Matches } from 'class-validator';
 
 export class SendSmsDto {
   @ApiProperty({
-    example: '+38970123456',
+    example: '+37370123456',
     description: 'Phone number in international format',
   })
   @IsString({ message: 'Телефонскиот број мора да биде стринг' })

@@ -1,4 +1,4 @@
-export type Locale = 'mk';
+export type Locale = 'ro' | 'ru';
 
 export interface Translations {
   footer: {
@@ -77,6 +77,10 @@ export interface Translations {
     large: string;
     saving: string;
     goToHome: string;
+    today: string;
+    daysAgo: string;
+    languageRo: string;
+    languageRu: string;
   };
   login: {
     title: string;
@@ -808,6 +812,13 @@ export interface Translations {
       ogDescription: string;
       ogAlt: string;
     };
+    cookieSettings: {
+      title: string;
+      description: string;
+      ogTitle: string;
+      ogDescription: string;
+      ogAlt: string;
+    };
     login: {
       title: string;
       description: string;
@@ -846,8 +857,10 @@ export interface Translations {
 import { loadSiteConfigSync } from './site-config';
 
 const STORAGE_KEY = 'kupito-locale';
+const COOKIE_KEY = 'kupito-locale';
 
-let mkTranslations: Translations | null = null;
+let roTranslations: Translations | null = null;
+let ruTranslations: Translations | null = null;
 
 function createEmptyTranslations(): Translations {
   const handler: ProxyHandler<object> = {
@@ -858,35 +871,79 @@ function createEmptyTranslations(): Translations {
   return new Proxy({} as object, handler) as Translations;
 }
 
-function loadMkTranslations(): Translations {
-  if (mkTranslations) {
-    return mkTranslations;
+function loadRoTranslations(): Translations {
+  if (roTranslations) {
+    return roTranslations;
   }
 
   try {
-    const translations = require('./locales/mk.json');
-    mkTranslations = translations as unknown as Translations;
-    return mkTranslations;
+    const translations = require('./locales/ro.json');
+    roTranslations = translations as unknown as Translations;
+    return roTranslations;
   } catch {
     console.warn(
-      'Translations file not found, using empty translations. This is expected in core repository.'
+      'Translations file ro.json not found, using empty translations. This is expected in core repository.'
     );
-    mkTranslations = createEmptyTranslations();
-    return mkTranslations;
+    roTranslations = createEmptyTranslations();
+    return roTranslations;
+  }
+}
+
+function loadRuTranslations(): Translations {
+  if (ruTranslations) {
+    return ruTranslations;
+  }
+
+  try {
+    const translations = require('./locales/ru.json');
+    ruTranslations = translations as unknown as Translations;
+    return ruTranslations;
+  } catch {
+    console.warn(
+      'Translations file ru.json not found, using empty translations. This is expected in core repository.'
+    );
+    ruTranslations = createEmptyTranslations();
+    return ruTranslations;
   }
 }
 
 export function getDefaultLocale(): Locale {
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
   try {
     const siteConfig = loadSiteConfigSync(country);
     return siteConfig.locale.split('-')[0] as Locale;
   } catch {
-    return 'mk';
+    return 'ro';
   }
 }
 
 export function getStoredLocale(): Locale {
+  const enableLanguageSwitcher = process.env.NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER === 'true';
+
+  if (!enableLanguageSwitcher) {
+    return getDefaultLocale();
+  }
+
+  if (typeof window === 'undefined') {
+    return getDefaultLocale();
+  }
+
+  try {
+    const cookieValue = document.cookie
+      .split('; ')
+      .find((row) => row.startsWith(`${COOKIE_KEY}=`))
+      ?.split('=')[1];
+
+    if (cookieValue && (cookieValue === 'ro' || cookieValue === 'ru')) {
+      return cookieValue as Locale;
+    }
+
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored && (stored === 'ro' || stored === 'ru')) {
+      return stored as Locale;
+    }
+  } catch {}
+
   return getDefaultLocale();
 }
 
@@ -896,6 +953,9 @@ export function setStoredLocale(locale: Locale): void {
   }
 
   localStorage.setItem(STORAGE_KEY, locale);
+
+  const maxAge = 365 * 24 * 60 * 60;
+  document.cookie = `${COOKIE_KEY}=${locale}; path=/; max-age=${maxAge}; SameSite=Lax`;
 }
 
 export function loadTranslations(locale?: Locale): Translations {
@@ -903,7 +963,11 @@ export function loadTranslations(locale?: Locale): Translations {
     locale = getDefaultLocale();
   }
 
-  return loadMkTranslations();
+  if (locale === 'ru') {
+    return loadRuTranslations();
+  }
+
+  return loadRoTranslations();
 }
 
 export function getServerTranslations(locale?: Locale): Translations {

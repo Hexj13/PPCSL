@@ -5,7 +5,7 @@ import { AppDataSource } from '../../data-source';
 import { checkEnvironment, checkPlatform } from '../script-guard';
 
 checkEnvironment(['production', 'stage', 'development', 'test']);
-checkPlatform(['mk', 'al']);
+checkPlatform(['md']);
 
 async function checkModelsStats() {
   console.log('🔍 Checking models statistics...\n');

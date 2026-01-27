@@ -50,7 +50,7 @@ export class RegisterDto {
   type: UserType;
 
   @ApiPropertyOptional({
-    example: '+38970123456',
+    example: '+37370123456',
     description: 'Phone number (required for Individual type)',
   })
   @ValidateIf((o) => o.type === UserTypeEnum.Individual)

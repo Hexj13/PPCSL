@@ -149,7 +149,8 @@ import { LoadingButton } from '@/ui';
    ```
 
 2. **Добавьте ключ во ВСЕ файлы переводов:**
-   - `locales/mk.json` (македонский)
+   - `locales/ro.json` (румынский)
+   - `locales/ru.json` (русский)
    - `locales/en.json` (английский)
    - Любые другие языки в проекте
 
@@ -209,7 +210,7 @@ toast.success(t('sms.codeSent'))
 
 ### Ошибка: "Missing key in lib/locales/en.json"
 
-**Проблема:** Ключ добавлен только в `mk.json`, но отсутствует в `en.json`.
+**Проблема:** Ключ добавлен только в `ro.json`, но отсутствует в `en.json`.
 
 **Решение:**
 1. Добавьте ключ в `locales/en.json`

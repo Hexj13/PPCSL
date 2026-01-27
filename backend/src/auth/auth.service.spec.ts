@@ -29,7 +29,7 @@ describe('AuthService', () => {
   const mockUser = {
     id: '1',
     email: 'test@test.com',
-    phone: '+38970123456',
+    phone: '+37370123456',
     password: 'hashedPassword',
     type: UserType.Individual,
     firstName: 'Test',
@@ -137,10 +137,10 @@ describe('AuthService', () => {
       usersService.findByPhone.mockResolvedValue(mockUser as User);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
-      const result = await service.validateUser('+38970123456', 'password123');
+      const result = await service.validateUser('+37370123456', 'password123');
 
       expect(result).toEqual(expectedResult);
-      expect(usersService.findByPhone).toHaveBeenCalledWith('+38970123456');
+      expect(usersService.findByPhone).toHaveBeenCalledWith('+37370123456');
     });
 
     it('should return null when user is not found', async () => {
@@ -211,7 +211,7 @@ describe('AuthService', () => {
         email: 'new@test.com',
         password: 'Password123!',
         type: UserType.Individual,
-        phone: '+38970123456',
+        phone: '+37370123456',
         firstName: 'New',
         lastName: 'User',
         termsAccepted: true,
@@ -244,7 +244,7 @@ describe('AuthService', () => {
         email: 'new@test.com',
         password: 'Password123!',
         type: UserType.Individual,
-        phone: '+38970123456',
+        phone: '+37370123456',
         firstName: 'New',
         termsAccepted: false,
       };
@@ -277,20 +277,20 @@ describe('AuthService', () => {
   describe('requestPasswordReset', () => {
     it('should send password reset code when user exists', async () => {
       usersService.findByPhone.mockResolvedValue(mockUser as User);
-      smsService.normalizePhoneNumber.mockReturnValue('+38970123456');
+      smsService.normalizePhoneNumber.mockReturnValue('+37370123456');
       smsService.sendPasswordResetCode.mockResolvedValue(undefined);
 
-      await service.requestPasswordReset({ phone: '+38970123456' });
+      await service.requestPasswordReset({ phone: '+37370123456' });
 
-      expect(usersService.findByPhone).toHaveBeenCalledWith('+38970123456');
-      expect(smsService.sendPasswordResetCode).toHaveBeenCalledWith('+38970123456');
+      expect(usersService.findByPhone).toHaveBeenCalledWith('+37370123456');
+      expect(smsService.sendPasswordResetCode).toHaveBeenCalledWith('+37370123456');
     });
 
     it('should throw BadRequestException when user does not exist', async () => {
       usersService.findByPhone.mockResolvedValue(null);
-      smsService.normalizePhoneNumber.mockReturnValue('+38970123456');
+      smsService.normalizePhoneNumber.mockReturnValue('+37370123456');
 
-      await expect(service.requestPasswordReset({ phone: '+38970123456' })).rejects.toThrow(
+      await expect(service.requestPasswordReset({ phone: '+37370123456' })).rejects.toThrow(
         BadRequestException,
       );
       expect(smsService.sendPasswordResetCode).not.toHaveBeenCalled();
@@ -300,34 +300,34 @@ describe('AuthService', () => {
   describe('verifyResetCode', () => {
     it('should return success when code is valid', async () => {
       usersService.findByPhone.mockResolvedValue(mockUser as User);
-      smsService.normalizePhoneNumber.mockReturnValue('+38970123456');
+      smsService.normalizePhoneNumber.mockReturnValue('+37370123456');
       smsService.verifyPasswordResetCode.mockResolvedValue(true);
 
       const result = await service.verifyResetCode({
-        phone: '+38970123456',
+        phone: '+37370123456',
         code: '123456',
       });
 
       expect(result).toEqual({ success: true });
-      expect(smsService.verifyPasswordResetCode).toHaveBeenCalledWith('+38970123456', '123456');
+      expect(smsService.verifyPasswordResetCode).toHaveBeenCalledWith('+37370123456', '123456');
     });
 
     it('should throw BadRequestException when user does not exist', async () => {
       usersService.findByPhone.mockResolvedValue(null);
-      smsService.normalizePhoneNumber.mockReturnValue('+38970123456');
+      smsService.normalizePhoneNumber.mockReturnValue('+37370123456');
 
       await expect(
-        service.verifyResetCode({ phone: '+38970123456', code: '123456' }),
+        service.verifyResetCode({ phone: '+37370123456', code: '123456' }),
       ).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException when code is invalid', async () => {
       usersService.findByPhone.mockResolvedValue(mockUser as User);
-      smsService.normalizePhoneNumber.mockReturnValue('+38970123456');
+      smsService.normalizePhoneNumber.mockReturnValue('+37370123456');
       smsService.verifyPasswordResetCode.mockResolvedValue(false);
 
       await expect(
-        service.verifyResetCode({ phone: '+38970123456', code: '000000' }),
+        service.verifyResetCode({ phone: '+37370123456', code: '000000' }),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -343,13 +343,13 @@ describe('AuthService', () => {
 
       usersService.findByPhone.mockResolvedValue(mockUser as User);
       usersService.update.mockResolvedValue(updatedUser as User);
-      smsService.normalizePhoneNumber.mockReturnValue('+38970123456');
+      smsService.normalizePhoneNumber.mockReturnValue('+37370123456');
       smsService.verifyPasswordResetCode.mockResolvedValue(true);
       smsService.clearPasswordResetCode.mockResolvedValue(undefined);
       (bcrypt.hash as jest.Mock).mockResolvedValue('newHashedPassword');
 
       const result = await service.resetPassword({
-        phone: '+38970123456',
+        phone: '+37370123456',
         code: '123456',
         newPassword: 'NewPassword123!',
       });
@@ -360,16 +360,16 @@ describe('AuthService', () => {
       expect(usersService.update).toHaveBeenCalledWith('1', {
         password: 'newHashedPassword',
       });
-      expect(smsService.clearPasswordResetCode).toHaveBeenCalledWith('+38970123456');
+      expect(smsService.clearPasswordResetCode).toHaveBeenCalledWith('+37370123456');
     });
 
     it('should throw BadRequestException when user does not exist', async () => {
       usersService.findByPhone.mockResolvedValue(null);
-      smsService.normalizePhoneNumber.mockReturnValue('+38970123456');
+      smsService.normalizePhoneNumber.mockReturnValue('+37370123456');
 
       await expect(
         service.resetPassword({
-          phone: '+38970123456',
+          phone: '+37370123456',
           code: '123456',
           newPassword: 'NewPassword123!',
         }),
@@ -378,12 +378,12 @@ describe('AuthService', () => {
 
     it('should throw BadRequestException when code is invalid', async () => {
       usersService.findByPhone.mockResolvedValue(mockUser as User);
-      smsService.normalizePhoneNumber.mockReturnValue('+38970123456');
+      smsService.normalizePhoneNumber.mockReturnValue('+37370123456');
       smsService.verifyPasswordResetCode.mockResolvedValue(false);
 
       await expect(
         service.resetPassword({
-          phone: '+38970123456',
+          phone: '+37370123456',
           code: '000000',
           newPassword: 'NewPassword123!',
         }),
@@ -395,7 +395,7 @@ describe('AuthService', () => {
   describe('requestPhoneChange', () => {
     it('should send verification code when phone is valid and not exists', async () => {
       const userId = '1';
-      const newPhone = '+38970987654';
+      const newPhone = '+37370987654';
       usersService.findByPhone.mockResolvedValue(null);
       usersService.findOne.mockResolvedValue(mockUser as User);
       smsService.normalizePhoneNumber.mockReturnValue(newPhone);
@@ -410,7 +410,7 @@ describe('AuthService', () => {
 
     it('should throw BadRequestException when phone already exists for another user', async () => {
       const userId = '1';
-      const newPhone = '+38970987654';
+      const newPhone = '+37370987654';
       const existingUser = { ...mockUser, id: '2' };
       usersService.findByPhone.mockResolvedValue(existingUser as User);
       smsService.normalizePhoneNumber.mockReturnValue(newPhone);
@@ -423,7 +423,7 @@ describe('AuthService', () => {
 
     it('should throw BadRequestException when new phone is same as current', async () => {
       const userId = '1';
-      const currentPhone = '+38970123456';
+      const currentPhone = '+37370123456';
       usersService.findByPhone.mockResolvedValue(null);
       usersService.findOne.mockResolvedValue({ ...mockUser, phone: currentPhone } as User);
       smsService.normalizePhoneNumber.mockReturnValue(currentPhone);
@@ -438,7 +438,7 @@ describe('AuthService', () => {
   describe('verifyPhoneChange', () => {
     it('should change phone when code is valid', async () => {
       const userId = '1';
-      const newPhone = '+38970987654';
+      const newPhone = '+37370987654';
       const updatedUser = {
         ...mockUser,
         phone: newPhone,
@@ -468,7 +468,7 @@ describe('AuthService', () => {
 
     it('should throw BadRequestException when phone already exists for another user', async () => {
       const userId = '1';
-      const newPhone = '+38970987654';
+      const newPhone = '+37370987654';
       const existingUser = { ...mockUser, id: '2' };
       usersService.findByPhone.mockResolvedValue(existingUser as User);
       smsService.normalizePhoneNumber.mockReturnValue(newPhone);
@@ -481,7 +481,7 @@ describe('AuthService', () => {
 
     it('should throw BadRequestException when code is invalid', async () => {
       const userId = '1';
-      const newPhone = '+38970987654';
+      const newPhone = '+37370987654';
       usersService.findByPhone.mockResolvedValue(null);
       smsService.normalizePhoneNumber.mockReturnValue(newPhone);
       smsService.verifyCode.mockResolvedValue(false);

@@ -1,10 +1,12 @@
 'use client';
 
 import { CopyButton } from '@/components/CopyButton';
+import { useI18n } from '@/components/I18nProvider';
+import { useCities } from '@/hooks/useCities';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { Listing } from '@/lib/api';
-import { getCityNameMk, getTelegramUrl, getViberUrl, getWhatsAppUrl } from '@/lib/utils';
+import { getCityName, getTelegramUrl, getViberUrl, getWhatsAppUrl } from '@/lib/utils';
 
 interface ListingPageSellerProps {
   listing: Listing;
@@ -20,6 +22,8 @@ export function ListingPageSeller({
   onOpenUserListings,
 }: ListingPageSellerProps) {
   const { t } = useTranslation();
+  const { locale } = useI18n();
+  const { cities } = useCities();
 
   if (!listing.user) {
     return null;
@@ -63,7 +67,7 @@ export function ListingPageSeller({
         <div>
           <span className="font-semibold text-primary-500">{t('listingDetail.city')}:</span>
           <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
-            {getCityNameMk(listing.city)}
+            {getCityName(listing.city, locale, cities)}
           </span>
         </div>
 

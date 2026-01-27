@@ -156,12 +156,12 @@ export default function RegisterPage() {
 
     if (value.length > 0 && value[0] !== '+') {
       if (value.startsWith('0')) {
-        value = '+389' + value.substring(1);
+        value = '+373' + value.substring(1);
       } else {
         value = '+' + value.replace(/\+/g, '');
       }
     } else if (value.startsWith('+0')) {
-      value = '+389' + value.substring(2);
+      value = '+373' + value.substring(2);
     }
 
     if (value.length > 20) {
@@ -472,7 +472,7 @@ export default function RegisterPage() {
                 onBlur={handlePhoneBlur}
                 onFocus={handleFormFieldFocus}
                 className={`input-field ${phoneTouched && phoneError ? 'border-red-500' : ''}`}
-                placeholder="+38970123456"
+                placeholder={t('register.phonePlaceholder')}
                 autoComplete="off"
               />
               {phoneTouched && phoneError && (
@@ -717,7 +717,7 @@ export default function RegisterPage() {
                 onBlur={handlePhoneBlur}
                 onFocus={handleFormFieldFocus}
                 className={`input-field ${phoneTouched && phoneError ? 'border-red-500' : ''}`}
-                placeholder="+38970123456"
+                placeholder={t('register.phonePlaceholder')}
                 autoComplete="off"
               />
               {phoneTouched && phoneError && (

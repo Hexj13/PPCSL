@@ -231,7 +231,7 @@ npm run dev
 ```
 
 **Access:**
-- Frontend: http://localhost:3000 (with real Macedonian translations and theme)
+- Frontend: http://localhost:3000 (with real Romanian and Russian translations and theme)
 - Backend: http://localhost:4000
 
 ### Important Notes
@@ -288,7 +288,8 @@ If you need to make changes to core while working in kupito.club:
 #### Making Changes to Platform-Specific Files
 
 1. **Edit platform files:**
-   - `locales/mk.json` - Macedonian translations
+   - `locales/ro.json` - Romanian translations
+   - `locales/ru.json` - Russian translations
    - `locales/en.json` - English translations
    - `theme/colors.ts` - Color scheme
    - `config/site.ts` - Site configuration
@@ -458,7 +459,7 @@ cp -r theme core/frontend/lib/   # Required
 cp -r config core/frontend/lib/   # Required
 
 # 4. Make changes
-# Edit locales/mk.json, locales/en.json, theme/colors.ts, or config/site.ts
+# Edit locales/ro.json, locales/ru.json, locales/en.json, theme/colors.ts, or config/site.ts
 
 # 5. Copy files again and test
 cp -r locales core/frontend/lib/
@@ -531,7 +532,7 @@ git status  # Check what's modified
 **Solution:**
 1. Check that translation files exist in root `locales/` directory:
    ```bash
-   ls locales/mk.json
+   ls locales/ro.json locales/ru.json
    ls locales/en.json
    ```
    Translation files are loaded directly from the root directory.

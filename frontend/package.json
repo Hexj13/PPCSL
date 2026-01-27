@@ -96,7 +96,6 @@
     ],
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/$1",
-      "\\./locales/mk\\.json$": "<rootDir>/lib/__mocks__/mk.json",
       "\\./config/site$": "<rootDir>/lib/__mocks__/site.ts"
     },
     "testMatch": [

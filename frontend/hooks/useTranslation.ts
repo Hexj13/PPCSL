@@ -10,6 +10,10 @@ export function useTranslation() {
 
   const t = useCallback(
     (key: string, params?: Record<string, string | number>): string => {
+      if (!translations) {
+        return key;
+      }
+
       const keys = key.split('.');
       let value: unknown = translations;
 

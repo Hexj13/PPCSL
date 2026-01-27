@@ -5,6 +5,8 @@ import Link from 'next/link';
 import React, { useCallback, useMemo, startTransition } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { useI18n } from '@/components/I18nProvider';
+import { useCities } from '@/hooks/useCities';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { Listing, favoritesApi } from '@/lib/api';
@@ -19,7 +21,7 @@ import {
   formatDateShort,
   formatDateRelative,
   getOptimizedImageUrl,
-  getCityNameMk,
+  getCityName,
 } from '@/lib/utils';
 
 const SPARKLES_EMOJI = '\u2728';
@@ -38,6 +40,8 @@ function ListingCardComponent({
   priority = false,
 }: ListingCardProps) {
   const { t } = useTranslation();
+  const { locale } = useI18n();
+  const { cities } = useCities();
   const originalImageUrl = useMemo(
     () => listing.images?.[0] || '/placeholder-car.jpg',
     [listing.images]
@@ -82,11 +86,19 @@ function ListingCardComponent({
     const brandName = vehicle?.brand?.name;
     const modelName = vehicle?.model?.name;
     const year = vehicle?.year ? String(vehicle.year) : null;
-    const city = getCityNameMk(listing.city);
+    const city = getCityName(listing.city, locale, cities);
 
     const details = [brandName, modelName, year].filter(Boolean).join(' ').trim();
     return [listing.title, details, city].filter((v) => v && v.trim() !== '').join(' - ');
-  }, [listing.title, listing.city, vehicle?.brand?.name, vehicle?.model?.name, vehicle?.year]);
+  }, [
+    listing.title,
+    listing.city,
+    vehicle?.brand?.name,
+    vehicle?.model?.name,
+    vehicle?.year,
+    locale,
+    cities,
+  ]);
 
   const handleToggleFavorite = useCallback(
     (e: React.MouseEvent) => {
@@ -386,7 +398,7 @@ function ListingCardComponent({
             className="flex justify-between items-center text-sm font-medium mt-auto pt-3 border-t border-primary-500/20"
             style={{ color: 'rgb(var(--text-secondary-rgb))' }}
           >
-            <span>{getCityNameMk(listing.city)}</span>
+            <span>{getCityName(listing.city, locale, cities)}</span>
             <div className="flex items-center gap-3">
               {listing.views !== undefined && listing.views > 0 && (
                 <>

@@ -13,6 +13,7 @@ import { In, IsNull, LessThan, LessThanOrEqual, Repository } from 'typeorm';
 
 import { BrandsService } from '../brands/brands.service';
 import { BODY_TYPES_BY_VEHICLE_TYPE } from '../common/constants';
+import { I18nService } from '../common/i18n/i18n.service';
 import { RedisService } from '../common/redis.service';
 import { Currency as CurrencyEnum, ListingStatus as ListingStatusEnum } from '../common/types';
 import {
@@ -67,6 +68,7 @@ export class ListingsService {
     private usersService: UsersService,
     private brandsService: BrandsService,
     private redisService: RedisService,
+    private i18nService: I18nService,
   ) {}
 
   async create(createListingDto: CreateListingDto, userId: string): Promise<Listing> {
@@ -95,7 +97,7 @@ export class ListingsService {
         : undefined,
       title,
       status,
-      currency: createListingDto.currency || CurrencyEnum.MKD,
+      currency: createListingDto.currency || CurrencyEnum.EUR,
       vehicle_id: savedVehicle.id,
       user_id: userId,
       last_updated_at: new Date(),
@@ -461,7 +463,7 @@ export class ListingsService {
     return crypto.createHash('sha256').update(`${ip}:${userAgent}`).digest('hex');
   }
 
-  private async generateTitle(vehicle: Vehicle): Promise<string> {
+  private async generateTitle(vehicle: Vehicle, locale?: string): Promise<string> {
     const brand = vehicle.brand_id ? await this.brandsService.findOne(vehicle.brand_id) : null;
     const models = brand ? await this.brandsService.getModelsByBrand(vehicle.brand_id) : [];
     const model = models.find((m) => m.id === vehicle.model_id);
@@ -477,14 +479,15 @@ export class ListingsService {
       return baseTitle;
     }
 
-    const transmissionMap: Record<string, string> = {
-      Automatic: 'Автоматска',
-      Manual: 'Мануелна',
-      CVT: 'Варијатор',
-    };
+    if (vehicle.transmission) {
+      const transmissionKey = `vehicleOptions.transmission.${vehicle.transmission}`;
+      const transmissionStr = this.i18nService.translate(transmissionKey, locale);
+      if (transmissionStr && transmissionStr !== transmissionKey) {
+        return `${baseTitle} (${transmissionStr})`;
+      }
+    }
 
-    const transmissionStr = vehicle.transmission ? transmissionMap[vehicle.transmission] || '' : '';
-    return transmissionStr ? `${baseTitle} (${transmissionStr})` : baseTitle;
+    return baseTitle;
   }
 
   async update(id: string, updateListingDto: UpdateListingDto, userId: string): Promise<Listing> {

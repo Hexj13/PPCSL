@@ -38,6 +38,7 @@ const noHardcodedTextRule = {
     messages: {
       hardcodedText: 'Hardcoded text "{{text}}" found in {{element}}. Use {{function}}() for translations instead.',
       hardcodedTextInFunction: 'Hardcoded text "{{text}}" found in {{functionName}}() call. Use {{translationFunction}}() for translations instead.',
+      macedonianErrorText: 'Macedonian error text "{{text}}" found in {{functionName}}() call. This should be translated. Use {{translationFunction}}() with common.apiErrors.* keys instead.',
     },
   },
   create(context) {
@@ -70,6 +71,35 @@ const noHardcodedTextRule = {
       }
 
       return false;
+    }
+
+    function containsMacedonianErrorText(text) {
+      if (!text || typeof text !== 'string') return false;
+
+      const macedonianErrorPatterns = [
+        'Грешка во мрежата',
+        'Грешка при поврзување',
+        'Истече време',
+        'Невалидна барање',
+        'Неавторизиран пристап',
+        'Немате дозвола',
+        'Ресурсот не е пронајден',
+        'Конфликт',
+        'Грешка во валидација',
+        'Премногу барања',
+        'Грешка на серверот',
+        'Серверот е привремено недостапен',
+        'Непозната грешка',
+        'Проверете ја вашата интернет врска',
+        'Обидете се повторно',
+        'Обидете се подоцна',
+        'Најавете се повторно',
+        'Проверете ги внесените податоци',
+        'Можете да зачувате максимум',
+        'филтри. Ве молиме избришете',
+      ];
+
+      return macedonianErrorPatterns.some((pattern) => text.includes(pattern));
     }
 
     function shouldIgnoreText(text) {
@@ -182,21 +212,17 @@ const noHardcodedTextRule = {
             if (firstArg.type === 'Literal' && typeof firstArg.value === 'string') {
               const text = firstArg.value;
               if (!shouldIgnoreText(text) && !isTranslationCall(firstArg)) {
-                context.report({
-                  node: firstArg,
-                  messageId: 'hardcodedTextInFunction',
-                  data: {
-                    text: text.trim().substring(0, 50) + (text.trim().length > 50 ? '...' : ''),
-                    functionName: `toast.${property.name}`,
-                    translationFunction,
-                  },
-                });
-              }
-            } else if (firstArg.type === 'TemplateLiteral') {
-              const hasExpressions = firstArg.expressions && firstArg.expressions.length > 0;
-              if (hasExpressions) {
-                const text = firstArg.quasis.map((q) => q.value.cooked || q.value.raw).join('');
-                if (text.trim().length > 0 && !shouldIgnoreText(text)) {
+                if (containsMacedonianErrorText(text)) {
+                  context.report({
+                    node: firstArg,
+                    messageId: 'macedonianErrorText',
+                    data: {
+                      text: text.trim().substring(0, 50) + (text.trim().length > 50 ? '...' : ''),
+                      functionName: `toast.${property.name}`,
+                      translationFunction,
+                    },
+                  });
+                } else {
                   context.report({
                     node: firstArg,
                     messageId: 'hardcodedTextInFunction',
@@ -206,6 +232,53 @@ const noHardcodedTextRule = {
                       translationFunction,
                     },
                   });
+                }
+              }
+            } else if (firstArg.type === 'TemplateLiteral') {
+              const hasExpressions = firstArg.expressions && firstArg.expressions.length > 0;
+              if (hasExpressions) {
+                const text = firstArg.quasis.map((q) => q.value.cooked || q.value.raw).join('');
+                if (text.trim().length > 0 && !shouldIgnoreText(text)) {
+                  if (containsMacedonianErrorText(text)) {
+                    context.report({
+                      node: firstArg,
+                      messageId: 'macedonianErrorText',
+                      data: {
+                        text: text.trim().substring(0, 50) + (text.trim().length > 50 ? '...' : ''),
+                        functionName: `toast.${property.name}`,
+                        translationFunction,
+                      },
+                    });
+                  } else {
+                    context.report({
+                      node: firstArg,
+                      messageId: 'hardcodedTextInFunction',
+                      data: {
+                        text: text.trim().substring(0, 50) + (text.trim().length > 50 ? '...' : ''),
+                        functionName: `toast.${property.name}`,
+                        translationFunction,
+                      },
+                    });
+                  }
+                }
+              }
+            } else if (firstArg.type === 'Identifier' || firstArg.type === 'MemberExpression') {
+              const parent = node.parent;
+              if (parent && parent.type === 'VariableDeclarator') {
+                const init = parent.init;
+                if (init && init === node) {
+                  const variableName = parent.id && parent.id.name;
+                  if (variableName && variableName.includes('errorMessage') || variableName && variableName.includes('Error')) {
+                    context.report({
+                      node: firstArg,
+                      messageId: 'hardcodedTextInFunction',
+                      data: {
+                        text: 'error message variable',
+                        functionName: `toast.${property.name}`,
+                        translationFunction,
+                      },
+                    });
+                  }
                 }
               }
             }

@@ -307,7 +307,7 @@ export class UploadService {
         error,
         this.logger,
         'Error processing image',
-        `errors.imageProcessingError|${error instanceof Error ? error.message : 'Непозната грешка'}`,
+        `errors.imageProcessingError|${error instanceof Error ? error.message : 'errors.unknownError'}`,
       );
     }
   }

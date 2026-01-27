@@ -3,5 +3,5 @@ import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 export const Language = createParamDecorator((data: unknown, ctx: ExecutionContext): string => {
   const request = ctx.switchToHttp().getRequest();
   const acceptLanguage = request.headers?.['accept-language'];
-  return acceptLanguage || 'mk';
+  return acceptLanguage || 'ro';
 });

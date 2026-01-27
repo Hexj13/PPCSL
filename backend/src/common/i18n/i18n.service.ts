@@ -12,8 +12,11 @@ export class I18nService {
 
   constructor() {
     const envLocale = process.env.DEFAULT_LOCALE?.toLowerCase();
-    this.defaultLocale = envLocale && ['mk', 'en'].includes(envLocale) ? envLocale : 'mk';
+    this.defaultLocale =
+      envLocale && ['ro', 'ru', 'mk', 'en'].includes(envLocale) ? envLocale : 'ro';
 
+    this.loadTranslations('ro');
+    this.loadTranslations('ru');
     this.loadTranslations('mk');
     this.loadTranslations('en');
   }
@@ -41,8 +44,16 @@ export class I18nService {
   translate(key: string, locale?: string): string {
     const envLocale = process.env.DEFAULT_LOCALE?.toLowerCase();
     const effectiveLocale = locale || envLocale || this.defaultLocale;
-    const translations =
-      this.translations.get(effectiveLocale) || this.translations.get(this.defaultLocale);
+    let translations = this.translations.get(effectiveLocale);
+    if (!translations) {
+      translations = this.translations.get(this.defaultLocale);
+    }
+    if (!translations) {
+      translations = this.translations.get('ro');
+    }
+    if (!translations) {
+      translations = this.translations.get('en');
+    }
 
     if (!translations) {
       return key;
@@ -72,7 +83,11 @@ export class I18nService {
 
   getLocaleFromHeader(acceptLanguage?: string): string {
     const envLocale = process.env.DEFAULT_LOCALE?.toLowerCase();
-    if (envLocale && this.translations.has(envLocale)) {
+    if (
+      envLocale &&
+      ['ro', 'ru', 'mk', 'en'].includes(envLocale) &&
+      this.translations.has(envLocale)
+    ) {
       return envLocale;
     }
 

@@ -5,7 +5,7 @@ import { IsPhone } from '../../common/decorators/is-phone.decorator';
 
 export class ChangePhoneRequestDto {
   @ApiProperty({
-    example: '+38970123456',
+    example: '+37370123456',
     description: 'New phone number',
   })
   @IsString({ message: 'Телефонскиот број е задолжителен' })
@@ -15,7 +15,7 @@ export class ChangePhoneRequestDto {
 
 export class ChangePhoneVerifyDto {
   @ApiProperty({
-    example: '+38970123456',
+    example: '+37370123456',
     description: 'New phone number',
   })
   @IsString({ message: 'Телефонскиот број е задолжителен' })

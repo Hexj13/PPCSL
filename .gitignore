@@ -64,6 +64,7 @@ storybook-static
 # Platform-specific files (should be in platform repositories, not in core)
 frontend/lib/config/site.ts
 frontend/lib/locales/*.json
+!frontend/lib/locales/en.json
 frontend/lib/theme/colors.ts
 frontend/next-env.d.ts
 

@@ -2,16 +2,18 @@
 
 import { useState } from 'react';
 
+import { useI18n } from '@/components/I18nProvider';
 import { useTranslation } from '@/hooks/useTranslation';
 import { loadFaqSync } from '@/lib/faq';
 import { loadSiteConfigSync } from '@/lib/site-config';
 
 export default function FAQPage() {
   const { t } = useTranslation();
+  const { locale } = useI18n();
   const [openItems, setOpenItems] = useState<Set<string>>(new Set());
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
   const siteConfig = loadSiteConfigSync(country);
-  const faqConfig = loadFaqSync(country);
+  const faqConfig = loadFaqSync(country, locale);
   const faqItems = faqConfig?.items || [];
   const userScenarios = faqConfig?.scenarios || [];
 

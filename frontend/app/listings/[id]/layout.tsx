@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { getServerTranslations } from '@/lib/i18n';
 import { loadSiteConfigSync } from '@/lib/site-config';
 
-const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
 const siteConfig = loadSiteConfigSync(country);
 const siteUrl = siteConfig.siteUrl;
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
@@ -105,7 +105,7 @@ export async function generateMetadata({
 
 function getOptimizedImageUrl(imageUrl: string): string {
   if (!imageUrl || imageUrl === '/placeholder-car.jpg') {
-    const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+    const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
     const siteConfig = loadSiteConfigSync(country);
     return `${siteConfig.siteUrl}/og-image.jpg`;
   }

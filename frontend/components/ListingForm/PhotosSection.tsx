@@ -75,7 +75,10 @@ export function PhotosSection({
               <div className="relative">
                 <Image
                   src={url}
-                  alt={`Photo ${index + 1}`}
+                  alt={t('listings.imageAlt', {
+                    title: t('listings.defaultTitle'),
+                    index: String(index + 1),
+                  })}
                   width={200}
                   height={96}
                   className="w-full h-24 object-cover rounded"

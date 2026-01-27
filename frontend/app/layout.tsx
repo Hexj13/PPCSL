@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
+import { cookies } from 'next/headers';
 import { Toaster } from 'react-hot-toast';
 
 import { AuthProvider } from '@/components/AuthProvider';
@@ -18,16 +19,27 @@ import { ProfileSaveSuccessToast } from '@/components/ProfileSaveSuccessToast';
 import { RegisterPageBodyClass } from '@/components/RegisterPageBodyClass';
 import { ScrollReset } from '@/components/ScrollReset';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
-import { getServerTranslations } from '@/lib/i18n';
+import { getServerTranslations, type Locale } from '@/lib/i18n';
 import { loadSiteConfig } from '@/lib/site-config';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'], display: 'swap' });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
   const siteConfig = await loadSiteConfig(country);
-  const t = getServerTranslations();
+
+  const cookieStore = await cookies();
+  const localeCookie = cookieStore.get('kupito-locale')?.value;
+  const defaultLocale = siteConfig.locale.split('-')[0] as Locale;
+  const enableLanguageSwitcher = process.env.NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER === 'true';
+
+  let metadataLocale: Locale = defaultLocale;
+  if (enableLanguageSwitcher && localeCookie && (localeCookie === 'ro' || localeCookie === 'ru')) {
+    metadataLocale = localeCookie as Locale;
+  }
+
+  const t = getServerTranslations(metadataLocale);
 
   const defaultTitle = `${siteConfig.name} - ${t.metadata.site.defaultTitle}`;
   const defaultDescription = t.metadata.site.defaultDescription;
@@ -112,11 +124,21 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
   const siteConfig = await loadSiteConfig(country);
 
+  const cookieStore = await cookies();
+  const localeCookie = cookieStore.get('kupito-locale')?.value;
+  const defaultLocale = siteConfig.locale.split('-')[0] as Locale;
+  const enableLanguageSwitcher = process.env.NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER === 'true';
+
+  let initialLocale: Locale = defaultLocale;
+  if (enableLanguageSwitcher && localeCookie && (localeCookie === 'ro' || localeCookie === 'ru')) {
+    initialLocale = localeCookie as Locale;
+  }
+
   return (
-    <html lang={siteConfig.locale.split('-')[0]} suppressHydrationWarning>
+    <html lang={initialLocale} suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/favicon-192.png" type="image/png" sizes="192x192" />
@@ -136,7 +158,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <GoogleAnalytics />
         <OrganizationSchema />
         <CookieConsent />
-        <I18nProvider>
+        <I18nProvider initialLocale={initialLocale}>
           <AuthProvider>
             <RegisterPageBodyClass />
             <ProfileSaveSuccessToast />

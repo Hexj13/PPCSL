@@ -6,7 +6,7 @@ import { determineVehicleType } from '../data/vehicle-classification';
 import { checkEnvironment, checkPlatform } from '../script-guard';
 
 checkEnvironment(['production', 'stage', 'development', 'test']);
-checkPlatform(['mk', 'al']);
+checkPlatform(['md']);
 
 const TRUCK_BRANDS_AND_MODELS: Record<string, string[]> = {
   'Renault Trucks': [

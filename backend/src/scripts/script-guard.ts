@@ -15,12 +15,12 @@ export function checkEnvironment(allowedEnvironments: string[]): void {
   }
 }
 
-export type Platform = 'mk' | 'al' | 'common';
+export type Platform = 'md' | 'common';
 
 export function checkPlatform(allowedPlatforms: Platform[]): void {
   const currentPlatform = (process.env.COUNTRY ||
     process.env.NEXT_PUBLIC_COUNTRY ||
-    'mk') as Platform;
+    'md') as Platform;
 
   if (allowedPlatforms.includes('common')) {
     return;
@@ -35,7 +35,7 @@ export function checkPlatform(allowedPlatforms: Platform[]): void {
     console.error(`║  Allowed platforms: ${allowedPlatforms.join(', ').padEnd(42)}║`);
     console.error('╠═══════════════════════════════════════════════════════════════╣');
     console.error('║  Set COUNTRY env variable to change platform:                 ║');
-    console.error('║  COUNTRY=al npx ts-node script.ts                             ║');
+    console.error('║  COUNTRY=md npx ts-node script.ts                             ║');
     console.error('╚═══════════════════════════════════════════════════════════════╝');
     console.error('');
     process.exit(1);
@@ -45,5 +45,5 @@ export function checkPlatform(allowedPlatforms: Platform[]): void {
 }
 
 export function getPlatform(): Platform {
-  return (process.env.COUNTRY || process.env.NEXT_PUBLIC_COUNTRY || 'mk') as Platform;
+  return (process.env.COUNTRY || process.env.NEXT_PUBLIC_COUNTRY || 'md') as Platform;
 }

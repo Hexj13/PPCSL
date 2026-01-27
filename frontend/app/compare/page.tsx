@@ -22,7 +22,7 @@ export default function ComparePage() {
   const listingsLengthRef = useRef(0);
   const hasRehydratedRef = useRef(false);
 
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
   const siteConfig = loadSiteConfigSync(country);
 
   useEffect(() => {

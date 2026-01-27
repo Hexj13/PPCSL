@@ -372,13 +372,7 @@ function VerifyPhoneContent() {
               toast.error(errorMessage);
               localStorage.removeItem('pendingSavedFilter');
               const limitErrorText = t('login.filterLimitError');
-              const isLimitError =
-                errorMessage === limitErrorText ||
-                (typeof errorMessage === 'string' &&
-                  errorMessage.startsWith('Можете да зачувате максимум') &&
-                  errorMessage.includes(
-                    'филтри. Ве молиме избришете некој од постоечките филтри.'
-                  ));
+              const isLimitError = errorMessage === limitErrorText;
               if (isLimitError) {
                 localStorage.removeItem('returnUrl');
                 if (typeof window !== 'undefined' && window.location) {

@@ -89,7 +89,7 @@ checkPlatform(['common']);
 const config: PlatformSeedConfig = {
   cities: ['Скопје', 'Битола', 'Прилеп', ...],
   descriptions: ['Отлично одржан автомобил...', ...],
-  phonePrefix: '+389',
+  phonePrefix: '+373',
   testUserFirstName: 'Тест',
   testUserLastName: 'Корисник',
   testCompanyName: 'Тест Компанија',
@@ -126,8 +126,8 @@ const config: PlatformSeedConfig = {
 ### С указанием платформы
 
 ```bash
-# Macedonia
-COUNTRY=mk npx ts-node src/scripts/stage/seed.ts
+# Moldova
+COUNTRY=md npx ts-node src/scripts/stage/seed.ts
 
 # Albania
 COUNTRY=al npx ts-node src/scripts/stage/seed.ts

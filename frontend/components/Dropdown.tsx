@@ -17,6 +17,7 @@ interface DropdownProps {
   disabled?: boolean;
   placeholder?: string;
   className?: string;
+  buttonClassName?: string;
   searchable?: boolean;
   showActionButtons?: boolean;
   error?: boolean;
@@ -30,6 +31,7 @@ function DropdownComponent({
   disabled = false,
   placeholder = '',
   className = '',
+  buttonClassName = '',
   searchable = false,
   showActionButtons = false,
   error = false,
@@ -163,7 +165,7 @@ function DropdownComponent({
   }, [disabled]);
 
   return (
-    <div ref={dropdownRef} className={`relative ${className}`}>
+    <div ref={dropdownRef} className={`relative ${className || ''}`} suppressHydrationWarning>
       {searchable ? (
         <div className="relative">
           <input
@@ -215,13 +217,15 @@ function DropdownComponent({
               setIsOpen((prev) => !prev);
             }
           }}
-          disabled={disabled}
-          className={`input-field dropdown-button text-left cursor-pointer relative ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+          disabled={disabled ? true : undefined}
+          className={`input-field dropdown-button text-left cursor-pointer relative ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''} ${buttonClassName || ''}`}
           style={{ paddingRight: '52px' }}
+          suppressHydrationWarning
         >
           <span
             className="flex-1 truncate min-w-0 text-text-primary"
             style={!selectedOption ? { color: '#9ca3af' } : undefined}
+            suppressHydrationWarning
           >
             {displayText}
           </span>

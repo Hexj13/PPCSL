@@ -16,7 +16,7 @@ describe('UsersService', () => {
   const mockUser: User = {
     id: '1',
     email: 'test@test.com',
-    phone: '+38970123456',
+    phone: '+37370123456',
     password: 'hashedPassword',
     type: UserType.Individual,
     firstName: 'Test',
@@ -36,11 +36,11 @@ describe('UsersService', () => {
     favorites: [],
   };
 
-  const mockListing: Listing = {
+  const mockListing = {
     id: '1',
     title: 'Test Listing',
     price: 10000,
-    currency: 'MKD' as const,
+    currency: 'EUR' as const,
     city: 'Skopje',
     status: ListingStatus.Active,
     user_id: '1',
@@ -49,7 +49,7 @@ describe('UsersService', () => {
     updated_at: new Date(),
     last_updated_at: new Date(),
     closed_at: null,
-  } as Listing;
+  } as Partial<Listing> as Listing;
 
   beforeEach(async () => {
     const mockRepository = {
@@ -149,11 +149,11 @@ describe('UsersService', () => {
     it('should return user by phone', async () => {
       repository.findOne.mockResolvedValue(mockUser);
 
-      const result = await service.findByPhone('+38970123456');
+      const result = await service.findByPhone('+37370123456');
 
       expect(result).toEqual(mockUser);
       expect(repository.findOne).toHaveBeenCalledWith({
-        where: { phone: '+38970123456', active: true },
+        where: { phone: '+37370123456', active: true },
       });
     });
   });

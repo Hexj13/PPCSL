@@ -5,6 +5,8 @@ import { analytics } from '@/lib/analytics';
 import { VEHICLE_TYPE_BY_BODY_TYPE } from '@/lib/constants';
 import { isBrowser } from '@/lib/utils';
 
+import type { FilterState } from './useSearchFilters';
+
 const VEHICLE_TYPE_STORAGE_KEY = 'kupito_vehicle_type';
 
 const saveVehicleTypeToStorage = (vehicleType: 'car' | 'moto' | 'truck') => {
@@ -34,7 +36,7 @@ const getVehicleTypeFromStorage = (): 'car' | 'moto' | 'truck' | null => {
 interface UseVehicleTypeParams {
   searchParams: ReturnType<typeof useSearchParams>;
   resetFilters: () => void;
-  setLastAppliedFilters: React.Dispatch<React.SetStateAction<unknown>>;
+  setLastAppliedFilters: React.Dispatch<React.SetStateAction<FilterState | null>>;
   setActiveTab: (_tab: 'basic' | 'advanced' | 'popular') => void;
   isApplyingQuickFilterRef: React.MutableRefObject<boolean>;
 }

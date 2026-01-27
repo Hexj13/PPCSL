@@ -6,6 +6,7 @@ import { In, Repository, SelectQueryBuilder, UpdateResult } from 'typeorm';
 import { BrandsService } from '../brands/brands.service';
 import { Brand } from '../brands/entities/brand.entity';
 import { VehicleModel } from '../brands/entities/vehicle-model.entity';
+import { I18nService } from '../common/i18n/i18n.service';
 import { RedisService } from '../common/redis.service';
 import { Currency, ListingStatus } from '../common/types';
 import { UsersService } from '../users/users.service';
@@ -47,7 +48,7 @@ describe('ListingsService', () => {
     id: 'listing-1',
     title: 'Test Car',
     price: 10000,
-    currency: Currency.MKD,
+    currency: Currency.EUR,
     city: 'Skopje',
     status: ListingStatus.Active,
     user_id: 'user-1',
@@ -112,6 +113,11 @@ describe('ListingsService', () => {
       invalidateByPrefix: jest.fn().mockResolvedValue(undefined),
     };
 
+    const mockI18nService = {
+      translate: jest.fn((key: string) => key),
+      getLocaleFromHeader: jest.fn(() => 'ro'),
+    };
+
     const mockPromotionHistoryRepository = {
       save: jest.fn(),
       findOne: jest.fn(),
@@ -149,6 +155,10 @@ describe('ListingsService', () => {
         {
           provide: RedisService,
           useValue: mockRedisService,
+        },
+        {
+          provide: I18nService,
+          useValue: mockI18nService,
         },
       ],
     }).compile();
@@ -575,7 +585,7 @@ describe('ListingsService', () => {
 
       const createDto = {
         price: 10000,
-        currency: Currency.MKD,
+        currency: Currency.EUR,
         city: 'Skopje',
         vehicle: {
           brand_id: 'brand-1',
@@ -597,7 +607,7 @@ describe('ListingsService', () => {
 
       const createDto = {
         price: 10000,
-        currency: Currency.MKD,
+        currency: Currency.EUR,
         city: 'Skopje',
         vehicle: {
           brand_id: 'brand-1',
@@ -627,7 +637,7 @@ describe('ListingsService', () => {
     it('should set last_published_at when creating listing with Active status', async () => {
       const createDto = {
         price: 10000,
-        currency: Currency.MKD,
+        currency: Currency.EUR,
         city: 'Skopje',
         status: ListingStatus.Active,
         vehicle: {
@@ -661,7 +671,7 @@ describe('ListingsService', () => {
     it('should set last_published_at to null when creating listing with Paused status', async () => {
       const createDto = {
         price: 10000,
-        currency: Currency.MKD,
+        currency: Currency.EUR,
         city: 'Skopje',
         status: ListingStatus.Paused,
         vehicle: {
@@ -693,7 +703,7 @@ describe('ListingsService', () => {
     it('should create listing with equipment array', async () => {
       const createDto = {
         price: 10000,
-        currency: Currency.MKD,
+        currency: Currency.EUR,
         city: 'Skopje',
         vehicle: {
           brand_id: 'brand-1',
@@ -731,7 +741,7 @@ describe('ListingsService', () => {
     it('should create listing without equipment when equipment is not provided', async () => {
       const createDto = {
         price: 10000,
-        currency: Currency.MKD,
+        currency: Currency.EUR,
         city: 'Skopje',
         vehicle: {
           brand_id: 'brand-1',

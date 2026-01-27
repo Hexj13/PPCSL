@@ -12,7 +12,7 @@ export class VerifySmsDto {
   code: string;
 
   @ApiProperty({
-    example: '+38970123456',
+    example: '+37370123456',
     description: 'Phone number',
   })
   @IsString({ message: 'Телефонскиот број мора да биде стринг' })

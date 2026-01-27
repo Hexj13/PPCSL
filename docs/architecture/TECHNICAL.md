@@ -557,7 +557,7 @@ Backups are saved to `backend/backups/` by default with format: `ppcsl_backup_YY
 #### Error Handling
 - Global exception filter with integrated I18nService for localized error messages
 - Error logging without exposing details to users
-- Unified error messages with support for multiple locales (mk, en)
+- Unified error messages with support for multiple locales (ro, ru, en)
 - Locale detection from `Accept-Language` header or `DEFAULT_LOCALE` environment variable
 
 ---

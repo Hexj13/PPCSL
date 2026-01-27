@@ -17,7 +17,7 @@ import { createSlug } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
-const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
 const siteConfig = loadSiteConfigSync(country);
 const siteUrl = siteConfig.siteUrl;
 
@@ -379,7 +379,6 @@ export default async function Home({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const t = getServerTranslations();
   const params = await searchParams;
   const brand = typeof params.brand === 'string' ? params.brand : null;
   const model = typeof params.model === 'string' ? params.model : null;
@@ -391,13 +390,7 @@ export default async function Home({
       <ConversionEvent />
       <DynamicPageTitle />
       <SearchStructuredData brand={brand} model={model} listings={initialData.data} />
-      <HomeHero
-        title={t.home.title}
-        subtitle={t.home.subtitle}
-        subtitleBold={t.home.subtitleBold}
-        subtitle2={t.home.subtitle2}
-        subtitle3={t.home.subtitle3}
-      />
+      <HomeHero />
 
       <SearchFiltersWrapper />
 

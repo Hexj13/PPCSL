@@ -212,9 +212,9 @@ export class SmsService {
     let normalized = phone.replace(/\s+/g, '').replace(/[()-]/g, '');
 
     if (normalized.startsWith('0')) {
-      normalized = '+389' + normalized.substring(1);
+      normalized = '+373' + normalized.substring(1);
     } else if (!normalized.startsWith('+')) {
-      normalized = '+389' + normalized;
+      normalized = '+373' + normalized;
     }
 
     return normalized;

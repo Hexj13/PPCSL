@@ -1,13 +1,13 @@
 import { SiteConfig } from '../site-config';
 
 const config: SiteConfig = {
-  country: 'mk',
+  country: 'md',
   name: 'Test',
   domain: 'test.com',
-  locale: 'mk-MK',
-  currency: 'MKD',
-  currencies: ['MKD', 'EUR'] as const,
-  countryCode: 'MK',
+  locale: 'ro-MD',
+  currency: 'EUR',
+  currencies: ['EUR', 'MDL'] as const,
+  countryCode: 'MD',
   supportEmail: 'support@test.com',
   siteUrl: 'https://test.com',
 };

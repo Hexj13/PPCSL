@@ -137,7 +137,7 @@ export function TechnicalSpecsSection({
                 }
               }}
               className={`input-field h-[48px] ${errors['vehicle.engine_displ_l'] ? 'border-red-500 focus:border-red-500 ' : ''}`}
-              placeholder="2.0"
+              placeholder={t('listings.engineDisplacementPlaceholder')}
               title={t('listings.engineDisplacementTitle')}
             />
           </div>
@@ -168,7 +168,7 @@ export function TechnicalSpecsSection({
               }}
               onWheel={handleWheel}
               className={`input-field h-[48px] ${errors['horsepower'] ? 'border-red-500 focus:border-red-500 ' : ''}`}
-              placeholder="150"
+              placeholder={t('listings.powerPlaceholder')}
               title={t('listings.powerHorsepowerTitle')}
             />
           </div>
@@ -199,7 +199,7 @@ export function TechnicalSpecsSection({
               }}
               onWheel={handleWheel}
               className={`input-field h-[48px] ${errors['power_kw'] ? 'border-red-500 focus:border-red-500 ' : ''}`}
-              placeholder="110"
+              placeholder={t('listings.torquePlaceholder')}
               title={t('listings.powerKwTitle')}
             />
           </div>
@@ -393,7 +393,7 @@ export function TechnicalSpecsSection({
               }}
               onWheel={handleWheel}
               className={`input-field h-[48px] ${errors['vehicle.mileage_km'] ? 'border-red-500 focus:border-red-500 ' : ''}`}
-              placeholder="50000"
+              placeholder={t('listings.mileagePlaceholder')}
               title={t('listings.mileageTitle')}
             />
           </div>
@@ -543,7 +543,7 @@ export function TechnicalSpecsSection({
                 }
               }}
               className={`input-field h-[48px] ${errors['registration_expires_at'] ? 'border-red-500 focus:border-red-500 ' : ''} ${!formData.is_registered ? 'opacity-50 cursor-not-allowed' : ''}`}
-              placeholder="12.2025"
+              placeholder={t('listings.registrationDatePlaceholder')}
               title={t('listings.registrationExpiresTitle')}
             />
           </div>

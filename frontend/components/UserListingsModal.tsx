@@ -5,6 +5,8 @@ import Link from 'next/link';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { useI18n } from '@/components/I18nProvider';
+import { useCities } from '@/hooks/useCities';
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Listing, User } from '@/lib/api';
@@ -16,7 +18,7 @@ import {
   formatMileage,
   formatPrice,
   formatTransmission,
-  getCityNameMk,
+  getCityName,
   getOptimizedImageUrl,
   getVehicleType,
 } from '@/lib/utils';
@@ -41,6 +43,8 @@ function UserListingsModalComponent({
   showOnlyActive = true,
 }: UserListingsModalProps) {
   const { t } = useTranslation();
+  const { locale } = useI18n();
+  const { cities } = useCities();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(false);
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
@@ -387,7 +391,7 @@ function UserListingsModalComponent({
                         {t('userListings.city')}:
                       </span>
                       <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
-                        {getCityNameMk(listing.city)}
+                        {getCityName(listing.city, locale, cities)}
                       </span>
                     </div>
                   )}

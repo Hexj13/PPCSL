@@ -26,7 +26,7 @@ describe('AuthController', () => {
   const mockUser = {
     id: 'user-1',
     email: 'test@example.com',
-    phone: '+38970123456',
+    phone: '+37370123456',
     firstName: 'Test',
     lastName: 'User',
     type: 'Individual' as const,
@@ -104,7 +104,7 @@ describe('AuthController', () => {
         email: 'test@example.com',
         password: 'Test123!@#',
         type: 'Individual',
-        phone: '+38970123456',
+        phone: '+37370123456',
         firstName: 'Test',
         lastName: 'User',
         termsAccepted: true,
@@ -248,22 +248,22 @@ describe('AuthController', () => {
 
   describe('checkPhone', () => {
     it('should return available when phone does not exist', async () => {
-      const sendSmsDto: SendSmsDto = { phone: '+38970123456' };
+      const sendSmsDto: SendSmsDto = { phone: '+37370123456' };
 
-      smsService.normalizePhoneNumber.mockReturnValue('+38970123456');
+      smsService.normalizePhoneNumber.mockReturnValue('+37370123456');
       usersService.findByPhone.mockResolvedValue(null);
 
       const result = await controller.checkPhone(sendSmsDto);
 
-      expect(smsService.normalizePhoneNumber).toHaveBeenCalledWith('+38970123456');
-      expect(usersService.findByPhone).toHaveBeenCalledWith('+38970123456');
+      expect(smsService.normalizePhoneNumber).toHaveBeenCalledWith('+37370123456');
+      expect(usersService.findByPhone).toHaveBeenCalledWith('+37370123456');
       expect(result).toEqual({ available: true });
     });
 
     it('should throw BadRequestException when phone already exists', async () => {
-      const sendSmsDto: SendSmsDto = { phone: '+38970123456' };
+      const sendSmsDto: SendSmsDto = { phone: '+37370123456' };
 
-      smsService.normalizePhoneNumber.mockReturnValue('+38970123456');
+      smsService.normalizePhoneNumber.mockReturnValue('+37370123456');
       usersService.findByPhone.mockResolvedValue(mockUser);
 
       await expect(controller.checkPhone(sendSmsDto)).rejects.toThrow(BadRequestException);
@@ -272,24 +272,24 @@ describe('AuthController', () => {
 
   describe('sendSms', () => {
     it('should send SMS verification code', async () => {
-      const sendSmsDto: SendSmsDto = { phone: '+38970123456' };
+      const sendSmsDto: SendSmsDto = { phone: '+37370123456' };
 
-      smsService.normalizePhoneNumber.mockReturnValue('+38970123456');
+      smsService.normalizePhoneNumber.mockReturnValue('+37370123456');
       usersService.findByPhone.mockResolvedValue(null);
       smsService.sendVerificationCode.mockResolvedValue(undefined);
 
       const result = await controller.sendSms(sendSmsDto);
 
-      expect(smsService.normalizePhoneNumber).toHaveBeenCalledWith('+38970123456');
-      expect(usersService.findByPhone).toHaveBeenCalledWith('+38970123456');
-      expect(smsService.sendVerificationCode).toHaveBeenCalledWith('+38970123456');
+      expect(smsService.normalizePhoneNumber).toHaveBeenCalledWith('+37370123456');
+      expect(usersService.findByPhone).toHaveBeenCalledWith('+37370123456');
+      expect(smsService.sendVerificationCode).toHaveBeenCalledWith('+37370123456');
       expect(result).toEqual({ success: true, message: 'SMS кодот е испратен' });
     });
 
     it('should throw BadRequestException when phone already exists', async () => {
-      const sendSmsDto: SendSmsDto = { phone: '+38970123456' };
+      const sendSmsDto: SendSmsDto = { phone: '+37370123456' };
 
-      smsService.normalizePhoneNumber.mockReturnValue('+38970123456');
+      smsService.normalizePhoneNumber.mockReturnValue('+37370123456');
       usersService.findByPhone.mockResolvedValue(mockUser);
 
       await expect(controller.sendSms(sendSmsDto)).rejects.toThrow(BadRequestException);
@@ -299,7 +299,7 @@ describe('AuthController', () => {
   describe('verifySms', () => {
     it('should verify SMS code successfully', async () => {
       const req = { ip: '127.0.0.1' };
-      const verifySmsDto: VerifySmsDto = { phone: '+38970123456', code: '123456' };
+      const verifySmsDto: VerifySmsDto = { phone: '+37370123456', code: '123456' };
 
       ipBlockService.getClientIp.mockReturnValue('127.0.0.1');
       smsService.verifyCode.mockResolvedValue(true);
@@ -308,7 +308,7 @@ describe('AuthController', () => {
       const result = await controller.verifySms(req, verifySmsDto);
 
       expect(ipBlockService.getClientIp).toHaveBeenCalledWith(req);
-      expect(smsService.verifyCode).toHaveBeenCalledWith('+38970123456', '123456');
+      expect(smsService.verifyCode).toHaveBeenCalledWith('+37370123456', '123456');
       expect(ipBlockService.resetAttempts).toHaveBeenCalledWith('127.0.0.1');
       expect(result).toEqual({ success: true, message: 'Кодот е успешно верифициран' });
     });
@@ -322,7 +322,7 @@ describe('AuthController', () => {
 
     it('should record failed attempt and throw when code is invalid', async () => {
       const req = { ip: '127.0.0.1' };
-      const verifySmsDto: VerifySmsDto = { phone: '+38970123456', code: '000000' };
+      const verifySmsDto: VerifySmsDto = { phone: '+37370123456', code: '000000' };
 
       ipBlockService.getClientIp.mockReturnValue('127.0.0.1');
       smsService.verifyCode.mockResolvedValue(false);
@@ -383,7 +383,7 @@ describe('AuthController', () => {
   describe('requestPasswordReset', () => {
     it('should request password reset', async () => {
       const req = { ip: '127.0.0.1' };
-      const requestPasswordResetDto: RequestPasswordResetDto = { phone: '+38970123456' };
+      const requestPasswordResetDto: RequestPasswordResetDto = { phone: '+37370123456' };
 
       ipBlockService.getClientIp.mockReturnValue('127.0.0.1');
       authService.requestPasswordReset.mockResolvedValue(undefined);
@@ -401,7 +401,7 @@ describe('AuthController', () => {
 
     it('should record failed attempt when request fails', async () => {
       const req = { ip: '127.0.0.1' };
-      const requestPasswordResetDto: RequestPasswordResetDto = { phone: '+38970123456' };
+      const requestPasswordResetDto: RequestPasswordResetDto = { phone: '+37370123456' };
 
       ipBlockService.getClientIp.mockReturnValue('127.0.0.1');
       authService.requestPasswordReset.mockRejectedValue(new BadRequestException('User not found'));
@@ -418,7 +418,7 @@ describe('AuthController', () => {
     it('should verify reset code successfully', async () => {
       const req = { ip: '127.0.0.1' };
       const verifyResetCodeDto: VerifyResetCodeDto = {
-        phone: '+38970123456',
+        phone: '+37370123456',
         code: '123456',
       };
 
@@ -446,7 +446,7 @@ describe('AuthController', () => {
     it('should record failed attempt when code is invalid', async () => {
       const req = { ip: '127.0.0.1' };
       const verifyResetCodeDto: VerifyResetCodeDto = {
-        phone: '+38970123456',
+        phone: '+37370123456',
         code: '000000',
       };
 
@@ -465,7 +465,7 @@ describe('AuthController', () => {
     it('should reset password successfully', async () => {
       const req = { ip: '127.0.0.1' };
       const resetPasswordDto: ResetPasswordDto = {
-        phone: '+38970123456',
+        phone: '+37370123456',
         code: '123456',
         newPassword: 'NewPassword123!@#',
       };
@@ -530,7 +530,7 @@ describe('AuthController', () => {
     it('should throw BadRequestException when code is missing', async () => {
       const req = { ip: '127.0.0.1' };
       const resetPasswordDto: ResetPasswordDto = {
-        phone: '+38970123456',
+        phone: '+37370123456',
         code: '',
         newPassword: 'NewPassword123!@#',
       };
@@ -543,7 +543,7 @@ describe('AuthController', () => {
     it('should throw BadRequestException when newPassword is missing', async () => {
       const req = { ip: '127.0.0.1' };
       const resetPasswordDto: ResetPasswordDto = {
-        phone: '+38970123456',
+        phone: '+37370123456',
         code: '123456',
         newPassword: '',
       };
@@ -556,7 +556,7 @@ describe('AuthController', () => {
     it('should record failed attempt when reset fails', async () => {
       const req = { ip: '127.0.0.1' };
       const resetPasswordDto: ResetPasswordDto = {
-        phone: '+38970123456',
+        phone: '+37370123456',
         code: '000000',
         newPassword: 'NewPassword123!@#',
       };
@@ -612,7 +612,7 @@ describe('AuthController', () => {
   describe('requestPhoneChange', () => {
     it('should request phone change successfully', async () => {
       const req = { user: { id: mockUser.id } };
-      const changePhoneRequestDto = { phone: '+38970987654' };
+      const changePhoneRequestDto = { phone: '+37370987654' };
 
       authService.requestPhoneChange.mockResolvedValue(undefined);
 
@@ -630,14 +630,14 @@ describe('AuthController', () => {
     it('should verify phone change successfully', async () => {
       const req = { user: { id: mockUser.id } };
       const changePhoneVerifyDto = {
-        phone: '+38970987654',
+        phone: '+37370987654',
         code: '123456',
       };
 
       authService.verifyPhoneChange.mockResolvedValue({
         id: mockUser.id,
         email: mockUser.email,
-        phone: '+38970987654',
+        phone: '+37370987654',
         firstName: mockUser.firstName,
         lastName: mockUser.lastName,
         type: mockUser.type,
@@ -659,7 +659,7 @@ describe('AuthController', () => {
       const result = await controller.verifyPhoneChange(req, changePhoneVerifyDto);
 
       expect(authService.verifyPhoneChange).toHaveBeenCalledWith(mockUser.id, changePhoneVerifyDto);
-      expect(result).toHaveProperty('phone', '+38970987654');
+      expect(result).toHaveProperty('phone', '+37370987654');
       expect(result).toHaveProperty('phoneVerified', true);
     });
   });

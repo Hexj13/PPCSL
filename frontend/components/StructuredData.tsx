@@ -12,7 +12,7 @@ interface StructuredDataProps {
 
 export function StructuredData({ listing }: StructuredDataProps) {
   useEffect(() => {
-    const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+    const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
     const siteConfig = loadSiteConfigSync(country);
     const siteUrl = siteConfig.siteUrl;
 

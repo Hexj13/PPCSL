@@ -5,7 +5,7 @@ import { loadSiteConfigSync } from '@/lib/site-config';
 import { loadThemeSync } from '@/lib/theme';
 
 export default function manifest(): MetadataRoute.Manifest {
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
   const siteConfig = loadSiteConfigSync(country);
   const theme = loadThemeSync(country);
   const t = getServerTranslations();

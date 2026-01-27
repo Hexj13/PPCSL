@@ -4,6 +4,7 @@ interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
 
+import { getDefaultLocale, loadTranslations, type Translations } from './i18n';
 import {
   BodyType,
   ConditionType,
@@ -55,31 +56,86 @@ api.interceptors.request.use((config) => {
 });
 
 const getErrorMessage = (error: AxiosError): string => {
+  let translations: Translations | null = null;
+  try {
+    let locale: 'ro' | 'ru' = getDefaultLocale();
+    if (typeof window !== 'undefined') {
+      const storedLocale = localStorage.getItem('kupito-locale') as 'ro' | 'ru' | null;
+      if (storedLocale === 'ro' || storedLocale === 'ru') {
+        locale = storedLocale;
+      }
+    }
+    translations = loadTranslations(locale);
+  } catch {
+    translations = null;
+  }
+
+  const t = (key: string, params?: Record<string, string | number>): string => {
+    const keys = key.split('.');
+    let value: unknown = translations;
+    for (const k of keys) {
+      if (value && typeof value === 'object' && value !== null && k in value) {
+        value = (value as Record<string, unknown>)[k];
+      } else {
+        return key;
+      }
+    }
+    if (typeof value !== 'string') {
+      return key;
+    }
+    if (params) {
+      return value.replace(/\{(\w+)\}/g, (match: string, paramKey: string) => {
+        return params[paramKey]?.toString() || match;
+      });
+    }
+    return value;
+  };
+
   if (!error.response) {
     if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
-      return 'Истече време за поврзување. Обидете се повторно.';
+      return t('common.apiErrors.timeout');
     }
     if (error.message === 'Network Error' || error.code === 'ERR_NETWORK') {
-      return 'Грешка во мрежата. Проверете ја вашата интернет врска.';
+      return t('common.apiErrors.networkError');
     }
-    return 'Грешка при поврзување со серверот. Обидете се повторно.';
+    return t('common.apiErrors.connectionError');
   }
 
   const status = error.response.status;
   const data = error.response.data as ErrorResponseData;
-  let message = '';
+  let backendMessage = '';
 
   if (data?.message) {
     if (Array.isArray(data.message)) {
-      message = data.message.join(', ');
+      backendMessage = data.message.join(', ');
     } else {
-      message = data.message;
+      backendMessage = data.message;
     }
   }
 
+  const isStandardError = (msg: string): boolean => {
+    const standardErrors = [
+      'Грешка во мрежата',
+      'Грешка при поврзување',
+      'Истече време',
+      'Невалидна барање',
+      'Неавторизиран пристап',
+      'Немате дозвола',
+      'Ресурсот не е пронајден',
+      'Конфликт',
+      'Грешка во валидација',
+      'Премногу барања',
+      'Грешка на серверот',
+      'Серверот е привремено недостапен',
+    ];
+    return standardErrors.some((err) => msg.includes(err));
+  };
+
+  const shouldUseTranslation = !backendMessage || isStandardError(backendMessage);
+
   switch (status) {
     case 400:
-      return message || 'Невалидна барање. Проверете ги внесените податоци.';
+      return shouldUseTranslation ? t('common.apiErrors.badRequest') : backendMessage;
     case 401:
       if (typeof window !== 'undefined') {
         const refreshToken = localStorage.getItem('refresh_token');
@@ -91,25 +147,27 @@ const getErrorMessage = (error: AxiosError): string => {
           }
         }
       }
-      return message || 'Неавторизиран пристап. Најавете се повторно.';
+      return shouldUseTranslation ? t('common.apiErrors.unauthorized') : backendMessage;
     case 403:
-      return message || 'Немате дозвола за оваа акција.';
+      return shouldUseTranslation ? t('common.apiErrors.forbidden') : backendMessage;
     case 404:
-      return message || 'Ресурсот не е пронајден.';
+      return shouldUseTranslation ? t('common.apiErrors.notFound') : backendMessage;
     case 409:
-      return message || 'Конфликт. Ресурсот веќе постои.';
+      return shouldUseTranslation ? t('common.apiErrors.conflict') : backendMessage;
     case 422:
-      return message || 'Грешка во валидација. Проверете ги внесените податоци.';
+      return shouldUseTranslation ? t('common.apiErrors.validationError') : backendMessage;
     case 429:
-      return 'Премногу барања. Обидете се подоцна.';
+      return t('common.apiErrors.tooManyRequests');
     case 500:
-      return message || 'Грешка на серверот. Обидете се подоцна.';
+      return shouldUseTranslation ? t('common.apiErrors.serverError') : backendMessage;
     case 502:
     case 503:
     case 504:
-      return 'Серверот е привремено недостапен. Обидете се подоцна.';
+      return t('common.apiErrors.serviceUnavailable');
     default:
-      return message || `Грешка ${status}. Обидете се повторно.`;
+      return shouldUseTranslation
+        ? t('common.apiErrors.unknownError', { status: status.toString() })
+        : backendMessage;
   }
 };
 
@@ -653,6 +711,7 @@ export const brandsApi = {
 export interface City {
   name: string;
   nameEn: string;
+  nameRu?: string;
 }
 
 export const citiesApi = {

@@ -10,7 +10,7 @@ import { getServerTranslations } from '@/lib/i18n';
 import { getListings } from '@/lib/server-api';
 import { loadSiteConfigSync } from '@/lib/site-config';
 
-const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
 const siteConfig = loadSiteConfigSync(country);
 const siteUrl = siteConfig.siteUrl;
 

@@ -4,6 +4,7 @@ import Link from 'next/link';
 
 import { useTranslation } from '@/hooks/useTranslation';
 
+import { LanguageSwitcher } from './LanguageSwitcher';
 import { PWAInstallButtonGray } from './PWAInstallButtonGray';
 
 export function Footer() {
@@ -16,8 +17,14 @@ export function Footer() {
     >
       <div className="container mx-auto px-3 sm:px-4 py-6 md:py-8">
         <div className="text-center">
-          <div suppressHydrationWarning>
-            <PWAInstallButtonGray />
+          <div
+            className="flex flex-col md:flex-row justify-center items-center gap-3 md:gap-4"
+            suppressHydrationWarning
+          >
+            <div suppressHydrationWarning>
+              <PWAInstallButtonGray />
+            </div>
+            <LanguageSwitcher variant="desktop" context="footer" />
           </div>
           <div
             className="flex flex-col md:flex-row justify-center gap-2 md:gap-4 text-xs sm:text-sm mb-4 mt-6"
@@ -26,6 +33,7 @@ export function Footer() {
             <Link
               href="/faq"
               className="text-white hover:text-primary-100 active:text-primary-300 transition-colors duration-200 underline"
+              suppressHydrationWarning
             >
               {t('footer.faq')}
             </Link>
@@ -35,6 +43,7 @@ export function Footer() {
             <Link
               href="/terms"
               className="text-white hover:text-primary-100 active:text-primary-300 transition-colors duration-200 underline"
+              suppressHydrationWarning
             >
               {t('footer.terms')}
             </Link>
@@ -44,6 +53,7 @@ export function Footer() {
             <Link
               href="/privacy"
               className="text-white hover:text-primary-100 active:text-primary-300 transition-colors duration-200 underline"
+              suppressHydrationWarning
             >
               {t('footer.privacy')}
             </Link>
@@ -53,14 +63,19 @@ export function Footer() {
             <Link
               href="/cookie-settings"
               className="text-white hover:text-primary-100 active:text-primary-300 transition-colors duration-200 underline"
+              suppressHydrationWarning
             >
               {t('footer.cookieSettings')}
             </Link>
           </div>
-          <p className="text-xs sm:text-sm">
-            <span className="font-medium text-white">{t('footer.copyright')}</span>
+          <p className="text-xs sm:text-sm" suppressHydrationWarning>
+            <span className="font-medium text-white" suppressHydrationWarning>
+              {t('footer.copyright')}
+            </span>
             <span className="text-white mx-2">|</span>
-            <span className="text-white">{t('footer.tagline')}</span>
+            <span className="text-white" suppressHydrationWarning>
+              {t('footer.tagline')}
+            </span>
           </p>
         </div>
       </div>

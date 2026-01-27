@@ -1,6 +1,7 @@
 'use client';
 
 import { Dropdown } from '@/components/Dropdown';
+import { useI18n } from '@/components/I18nProvider';
 import { Currency, CurrencyEnum } from '@/lib/types';
 import { sortOptionsByLabel } from '@/lib/utils';
 
@@ -8,7 +9,7 @@ import type { ListingFormSectionProps } from './types';
 
 const CURRENCY_OPTIONS = sortOptionsByLabel([
   { value: CurrencyEnum.EUR, label: 'EUR' },
-  { value: CurrencyEnum.MKD, label: 'MKD' },
+  { value: CurrencyEnum.MDL, label: 'MDL' },
 ]);
 
 export function PriceAndLocationSection({
@@ -20,6 +21,7 @@ export function PriceAndLocationSection({
   cities = [],
   handleWheel,
 }: ListingFormSectionProps) {
+  const { locale } = useI18n();
   return (
     <div className="border-t border-primary-500/20 pt-6 mb-6">
       <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
@@ -106,7 +108,7 @@ export function PriceAndLocationSection({
               }}
               onWheel={handleWheel}
               className={`input-field flex-1 h-[48px] ${errors['price'] ? 'border-red-500 focus:border-red-500 ' : ''}`}
-              placeholder="0"
+              placeholder={t('listings.pricePlaceholder')}
               title={t('listings.priceTitle')}
             />
             <Dropdown
@@ -150,10 +152,20 @@ export function PriceAndLocationSection({
             searchable={true}
             placeholder={t('listings.selectCity')}
             error={!!errors['city']}
-            options={cities.map((city) => ({
-              value: city.nameEn,
-              label: `${city.name} (${city.nameEn})`,
-            }))}
+            options={cities.map((city) => {
+              let label: string;
+              if (locale === 'ro') {
+                label = city.name;
+              } else if (locale === 'ru' && city.nameRu) {
+                label = `${city.nameRu} (${city.name})`;
+              } else {
+                label = city.name;
+              }
+              return {
+                value: city.nameEn,
+                label,
+              };
+            })}
           />
         </div>
       </div>

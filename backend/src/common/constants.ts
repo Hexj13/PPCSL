@@ -2,7 +2,7 @@ export const userTypes = ['Individual', 'Business', 'Admin'] as const;
 
 export const listingStatuses = ['Active', 'Paused', 'Closed'] as const;
 
-export const currencies = ['MKD', 'EUR'] as const;
+export const currencies = ['EUR', 'MDL'] as const;
 
 export const fuelTypes = ['Petrol', 'Diesel', 'Electric', 'Hybrid', 'LPG'] as const;
 
@@ -54,8 +54,8 @@ export const ListingStatus = {
 } as const;
 
 export const Currency = {
-  MKD: currencies[0],
-  EUR: currencies[1],
+  EUR: currencies[0],
+  MDL: currencies[1],
 } as const;
 
 export const FuelType = {

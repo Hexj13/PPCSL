@@ -44,13 +44,13 @@ export function getSiteConfig(): SiteConfig {
 }
 
 const defaultConfig: SiteConfig = {
-  country: 'mk',
+  country: 'md',
   name: 'PPCSL',
   domain: 'ppcsl.com',
-  locale: 'mk-MK',
-  currency: 'MKD',
-  currencies: ['MKD', 'EUR'] as const,
-  countryCode: 'MK',
+  locale: 'ro-MD',
+  currency: 'EUR',
+  currencies: ['EUR', 'MDL'] as const,
+  countryCode: 'MD',
   supportEmail: 'support@ppcsl.com',
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://ppcsl.com',
 };

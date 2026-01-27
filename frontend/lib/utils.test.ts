@@ -15,7 +15,7 @@ import {
 jest.mock('./site-config', () => ({
   loadSiteConfigSync: jest.fn(() => ({
     locale: 'en-US',
-    currency: 'MKD',
+    currency: 'EUR',
   })),
 }));
 

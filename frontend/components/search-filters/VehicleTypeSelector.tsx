@@ -81,8 +81,12 @@ export function VehicleTypeSelector({
     <div
       ref={vehicleIconsContainerRef}
       className="flex justify-start lg:justify-end gap-1 overflow-x-auto overflow-y-visible scrollbar-hide relative mb-3 lg:mb-0 lg:absolute lg:right-4 lg:top-0 lg:bottom-0 lg:items-center"
+      suppressHydrationWarning
     >
-      <span className="hidden lg:inline text-base font-bold text-primary-700 flex-shrink-0 flex items-center mr-2 lg:mr-2">
+      <span
+        className="hidden lg:inline text-base font-bold text-primary-700 flex-shrink-0 flex items-center mr-2 lg:mr-2"
+        suppressHydrationWarning
+      >
         {t('searchFilters.categoryLabel')}
       </span>
       <button

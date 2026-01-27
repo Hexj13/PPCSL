@@ -24,7 +24,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     const envLocale = process.env.DEFAULT_LOCALE?.toLowerCase();
-    const locale = envLocale && ['mk', 'en'].includes(envLocale) ? envLocale : 'mk';
+    const locale = envLocale && ['ro', 'ru', 'mk', 'en'].includes(envLocale) ? envLocale : 'ro';
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = this.i18nService.translate('errors.serverError', locale);

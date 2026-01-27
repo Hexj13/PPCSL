@@ -17,7 +17,7 @@ describe('ListingsController', () => {
     id: 'listing-1',
     title: 'Test Car',
     price: 10000,
-    currency: Currency.MKD,
+    currency: Currency.EUR,
     city: 'Skopje',
     status: ListingStatus.Active,
     user_id: 'user-1',
@@ -208,7 +208,7 @@ describe('ListingsController', () => {
       const createDto: CreateListingDto = {
         title: 'New Car',
         price: 15000,
-        currency: Currency.MKD,
+        currency: Currency.EUR,
         city: 'Bitola',
         condition: 'Undamaged',
         registration_type: 'Local',
@@ -235,7 +235,7 @@ describe('ListingsController', () => {
       const createDto: CreateListingDto = {
         title: 'New Car',
         price: 15000,
-        currency: Currency.MKD,
+        currency: Currency.EUR,
         city: 'Bitola',
         condition: 'Undamaged',
         registration_type: 'Local',

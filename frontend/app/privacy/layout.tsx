@@ -4,7 +4,7 @@ import { getServerTranslations } from '@/lib/i18n';
 import { loadSiteConfigSync } from '@/lib/site-config';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
   const siteConfig = loadSiteConfigSync(country);
   const siteUrl = siteConfig.siteUrl;
   const t = getServerTranslations();

@@ -246,7 +246,8 @@ docker logs kupito-postgres
 
 Убедитесь, что файлы переводов существуют в корневой директории:
 ```bash
-ls locales/mk.json
+ls locales/ro.json
+ls locales/ru.json
 ls locales/en.json
 ```
 Файлы переводов загружаются напрямую из корневой директории.

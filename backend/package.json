@@ -37,6 +37,7 @@
     "make-admin": "ts-node -r tsconfig-paths/register src/scripts/stage/make-admin.ts",
     "make-admin:prod": "ts-node -r tsconfig-paths/register src/scripts/production/make-admin.ts",
     "remove-admin:prod": "ts-node -r tsconfig-paths/register src/scripts/production/remove-admin.ts",
+    "clear-listings-and-users:prod": "ts-node -r tsconfig-paths/register src/scripts/production/clear-listings-and-users.ts",
     "fix-price-nulls:prod": "ts-node -r tsconfig-paths/register src/scripts/production/fix-price-nulls.ts",
     "seed:all-brands:prod": "ts-node -r tsconfig-paths/register src/scripts/production/seed-all-brands.ts",
     "add-truck-brands:prod": "ts-node -r tsconfig-paths/register src/scripts/production/add-truck-brands-models.ts",

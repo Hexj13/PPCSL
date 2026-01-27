@@ -127,7 +127,7 @@ Create `locales/{country-code}.json` (e.g., `locales/en.json`, `locales/de.json`
 }
 ```
 
-**Important:** Copy all translation keys from `locales/mk.json` or `locales/en.json` in the root directory (or from another existing platform) and translate them to your language. Translation files are loaded directly from the root `locales/` directory.
+**Important:** Copy all translation keys from `locales/ro.json`, `locales/ru.json` or `locales/en.json` in the root directory (or from another existing platform) and translate them to your language. Translation files are loaded directly from the root `locales/` directory.
 
 ### Step 5: Create Theme File
 
@@ -665,10 +665,10 @@ cd ../backend && npm run build
 
 Детальная установка и интеграция: [SENTRY.md](./SENTRY.md).
 
-### Пример (Македония, Frontend)
+### Пример (Молдова, Frontend)
 ```env
-NEXT_PUBLIC_GA_ID=G-MK12345678
-NEXT_PUBLIC_SENTRY_DSN=https://mk-frontend@sentry.io/123456
+NEXT_PUBLIC_GA_ID=G-MD12345678
+NEXT_PUBLIC_SENTRY_DSN=https://md-frontend@sentry.io/123456
 SENTRY_ORG=kupito
 SENTRY_PROJECT=kupito-frontend
 ```

@@ -6,7 +6,7 @@ import { MIXED_BRANDS, MOTO_ONLY_BRANDS } from '../data/vehicle-classification';
 import { checkEnvironment, checkPlatform } from '../script-guard';
 
 checkEnvironment(['stage', 'development', 'test']);
-checkPlatform(['mk', 'al']);
+checkPlatform(['md']);
 
 async function addMotorcycleBrandsAndModels() {
   if (!process.env.DB_SYNC) {

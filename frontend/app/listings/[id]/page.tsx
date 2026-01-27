@@ -8,7 +8,7 @@ import { getOptimizedImageUrl } from '@/lib/utils';
 
 import ListingPageClient from './ListingPageClient';
 
-const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
 const siteConfig = loadSiteConfigSync(country);
 const siteUrl = siteConfig.siteUrl;
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
@@ -217,7 +217,7 @@ export async function generateMetadata({
         },
       ],
       siteName: 'Kupito',
-      locale: 'mk-MK',
+      locale: siteConfig.locale,
     },
     twitter: {
       card: 'summary_large_image',

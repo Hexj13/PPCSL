@@ -7,7 +7,7 @@ import { determineVehicleType, getBrandCategory } from '../data/vehicle-classifi
 import { checkEnvironment, checkPlatform } from '../script-guard';
 
 checkEnvironment(['stage', 'development', 'test']);
-checkPlatform(['mk', 'al']);
+checkPlatform(['md']);
 
 async function syncVehicleTypes(forceReset: boolean = false) {
   console.log('🔄 Starting vehicle types synchronization...\n');

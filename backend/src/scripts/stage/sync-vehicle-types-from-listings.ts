@@ -10,7 +10,7 @@ import { determineVehicleType } from '../data/vehicle-classification';
 import { checkEnvironment, checkPlatform } from '../script-guard';
 
 checkEnvironment(['stage', 'development', 'test']);
-checkPlatform(['mk', 'al']);
+checkPlatform(['md']);
 
 function getVehicleTypeFromBodyType(bodyType: string): 'car' | 'truck' | 'moto' | null {
   if (!bodyType) {

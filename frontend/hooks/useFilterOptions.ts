@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 
+import { useI18n } from '@/components/I18nProvider';
 import type { useTranslation } from '@/hooks/useTranslation';
 import type { Brand, VehicleModel } from '@/lib/api';
 import type { City } from '@/lib/api';
@@ -12,7 +13,15 @@ import type { FilterState } from './useSearchFilters';
 
 type TranslationFunction = ReturnType<typeof useTranslation>['t'];
 
-const POPULAR_CITY_NAMES_EN = ['Skopje', 'Bitola', 'Kumanovo', 'Prilep', 'Tetovo'];
+const getPopularCityNamesEn = (): string[] => {
+  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
+  if (country === 'md') {
+    return ['Chișinău', 'Bălți', 'Tiraspol', 'Bender', 'Orhei'];
+  }
+  return ['Skopje', 'Bitola', 'Kumanovo', 'Prilep', 'Tetovo'];
+};
+
+const POPULAR_CITY_NAMES_EN = getPopularCityNamesEn();
 
 interface UseFilterOptionsParams {
   vehicleType: 'car' | 'moto' | 'truck';
@@ -31,6 +40,7 @@ export function useFilterOptions({
   filters,
   t,
 }: UseFilterOptionsParams) {
+  const { locale } = useI18n();
   const COLOR_OPTIONS = getColorOptions(t);
 
   const getConditionOptions = useCallback(() => {
@@ -161,9 +171,17 @@ export function useFilterOptions({
       const popularLabel = t('searchFilters.popular');
       options.push({ value: '__category__Популарни', label: popularLabel, category: popularLabel });
       popularCities.forEach((city) => {
+        let label: string;
+        if (locale === 'ro') {
+          label = city.name;
+        } else if (locale === 'ru' && city.nameRu) {
+          label = `${city.nameRu} (${city.name})`;
+        } else {
+          label = city.name;
+        }
         options.push({
           value: city.nameEn,
-          label: `${city.name} (${city.nameEn})`,
+          label,
           category: popularLabel,
         });
       });
@@ -173,16 +191,24 @@ export function useFilterOptions({
       const otherLabel = t('searchFilters.other');
       options.push({ value: '__category__Други', label: otherLabel, category: otherLabel });
       otherCities.forEach((city) => {
+        let label: string;
+        if (locale === 'ro') {
+          label = city.name;
+        } else if (locale === 'ru' && city.nameRu) {
+          label = `${city.nameRu} (${city.name})`;
+        } else {
+          label = city.name;
+        }
         options.push({
           value: city.nameEn,
-          label: `${city.name} (${city.nameEn})`,
+          label,
           category: otherLabel,
         });
       });
     }
 
     return options;
-  }, [cities, t]);
+  }, [cities, t, locale]);
 
   return {
     COLOR_OPTIONS,

@@ -1,30 +1,21 @@
 'use client';
 
-import { useState } from 'react';
-
+import { useI18n } from '@/components/I18nProvider';
 import type { LegalDocument } from '@/lib/legal';
 import { loadLegalConfigSync } from '@/lib/legal';
 import { loadSiteConfigSync } from '@/lib/site-config';
 
-type Language = string;
-
 const terms = {} as Record<string, LegalDocument>;
 
 export default function TermsPage() {
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+  const { locale } = useI18n();
+  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
   const siteConfig = loadSiteConfigSync(country);
   const legalConfig = loadLegalConfigSync(country);
   const termsData = (legalConfig?.terms || terms) as Record<string, LegalDocument>;
   const languages = Object.keys(termsData);
-  const defaultLanguage = siteConfig.locale.split('-')[0];
 
-  const [language, setLanguage] = useState<Language>(() => {
-    if (languages.includes(defaultLanguage)) {
-      return defaultLanguage;
-    }
-    return languages[0] || 'en';
-  });
-
+  const language = languages.includes(locale) ? locale : languages[0] || 'en';
   const currentTerms = termsData[language] || termsData[languages[0]]!;
 
   const normalizeText = (text: string) => {
@@ -41,29 +32,12 @@ export default function TermsPage() {
     }
   };
 
-  const toggleLanguage = () => {
-    if (languages.length <= 1) {
-      return;
-    }
-    const currentIndex = languages.indexOf(language);
-    const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % languages.length;
-    setLanguage(languages[nextIndex]);
-  };
-
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-8">
+      <div className="mb-8">
         <h1 className="text-4xl md:text-5xl font-extrabold text-primary-700">
           {normalizeText(currentTerms.title)}
         </h1>
-        <button
-          onClick={toggleLanguage}
-          className="px-4 py-2 bg-bg-secondary border-2 border-primary-500/30 rounded-lg hover:bg-bg-secondary/80 hover:border-primary-500 transition-all duration-200 text-text-primary font-medium"
-        >
-          {(
-            languages[(languages.indexOf(language) + 1) % Math.max(languages.length, 1)] || language
-          ).toUpperCase()}
-        </button>
       </div>
 
       <p className="text-text-secondary mb-8 text-sm">{normalizeText(currentTerms.lastUpdated)}</p>

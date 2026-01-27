@@ -5,7 +5,7 @@ import { AppDataSource } from '../../data-source';
 import { checkEnvironment, checkPlatform } from '../script-guard';
 
 checkEnvironment(['stage', 'development', 'test']);
-checkPlatform(['mk', 'al']);
+checkPlatform(['md']);
 
 const BUS_KEYWORDS = [
   'Bus',

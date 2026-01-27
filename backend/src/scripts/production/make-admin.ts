@@ -8,11 +8,11 @@ import { User } from '../../users/entities/user.entity';
 async function makeAdmin() {
   try {
     const args = process.argv.slice(2);
-    let email = 'admin@admin.com';
+    let email: string | null = null;
     let password = 'admin123';
     let firstName = 'Admin';
     let lastName = 'User';
-    let phone = '+38970111111';
+    let phone: string | null = null;
 
     for (let i = 0; i < args.length; i++) {
       if (args[i] === '--email' && args[i + 1]) {
@@ -33,15 +33,41 @@ async function makeAdmin() {
       }
     }
 
+    if (!email && !phone) {
+      console.error('❌ Error: Either --email or --phone parameter is required');
+      console.log('Usage: npm run make-admin:prod -- --email user@example.com');
+      console.log('   or: npm run make-admin:prod -- --phone +373XXXXXXXXX');
+      process.exit(1);
+    }
+
     console.log('🔌 Connecting to database...');
     await AppDataSource.initialize();
     console.log('✅ Connected to database');
 
     const userRepo = AppDataSource.getRepository(User);
 
-    let admin = await userRepo.findOne({ where: { email } });
+    let admin: User | null = null;
+
+    if (email) {
+      admin = await userRepo.findOne({ where: { email } });
+      if (admin) {
+        console.log(`👤 Found existing user by email: ${email}`);
+      }
+    }
+
+    if (!admin && phone) {
+      admin = await userRepo.findOne({ where: { phone } });
+      if (admin) {
+        console.log(`👤 Found existing user by phone: ${phone}`);
+      }
+    }
 
     if (!admin) {
+      if (!email) {
+        console.error('❌ Error: Cannot create new user without email');
+        console.log('Please provide --email parameter to create a new admin user');
+        process.exit(1);
+      }
       console.log(`👤 Creating new user ${email}...`);
       const hashedPassword = await bcrypt.hash(password, 10);
       admin = userRepo.create({
@@ -49,23 +75,32 @@ async function makeAdmin() {
         password: hashedPassword,
         firstName,
         lastName,
-        phone,
+        phone: phone || null,
         type: UserTypeEnum.Admin,
         active: true,
       });
       admin = await userRepo.save(admin);
       console.log('✅ Created new admin user');
       console.log(`   Email: ${email}`);
+      if (phone) {
+        console.log(`   Phone: ${phone}`);
+      }
       console.log(`   Password: ${password}`);
       console.log(`   Type: Admin`);
     } else {
-      console.log(`👤 Found existing user ${email}`);
       const wasAdmin = admin.type === UserTypeEnum.Admin;
+      const identifier = email ? `email: ${email}` : `phone: ${phone}`;
+      console.log(`👤 Found existing user by ${identifier}`);
 
       admin.type = UserTypeEnum.Admin;
       admin.active = true;
 
       if (args.includes('--update-password')) {
+        if (!email) {
+          console.error('❌ Error: Cannot update password without email');
+          console.log('Please provide --email parameter to update password');
+          process.exit(1);
+        }
         const hashedPassword = await bcrypt.hash(password, 10);
         admin.password = hashedPassword;
         console.log('   Password will be updated');
@@ -78,7 +113,12 @@ async function makeAdmin() {
       } else {
         console.log('✅ User successfully promoted to admin');
       }
-      console.log(`   Email: ${email}`);
+      if (admin.email) {
+        console.log(`   Email: ${admin.email}`);
+      }
+      if (admin.phone) {
+        console.log(`   Phone: ${admin.phone}`);
+      }
       console.log(`   Type: Admin`);
       if (args.includes('--update-password')) {
         console.log(`   New Password: ${password}`);

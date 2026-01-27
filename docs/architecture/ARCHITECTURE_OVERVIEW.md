@@ -11,12 +11,12 @@
 - **Platform-repo** = локализация (страна, язык, валюта, дизайн)
 
 ```
-Macedonia Platform          Albania Platform           Future Platform
+Moldova Platform            Albania Platform           Future Platform
 ├── config/                ├── config/                ├── config/
 ├── locales/               ├── locales/               ├── locales/
 ├── theme/                 ├── theme/                 ├── theme/
 ├── assets/                ├── assets/                ├── assets/
-├── scripts/mk/            ├── scripts/al/            ├── scripts/{country}/
+├── scripts/md/            ├── scripts/al/            ├── scripts/{country}/
 └── core/ (submodule) ←────┴── core/ (submodule) ←────┴── core/ (submodule)
       ОДНО ЯДРО ДЛЯ ВСЕХ!
 ```
@@ -130,7 +130,7 @@ Macedonia Platform          Albania Platform           Future Platform
 1. Разделить скрипты на `common/` и `{country}/`
 2. Переместить platform-specific скрипты из core в platform-repo
 3. Обновить `prepare:build` и `.gitignore`
-4. Протестировать на Macedonia
+4. Протестировать на Moldova
 
 **Этап 2: Оптимизация frontend (опционально)**
 1. Вынести SEO keywords в config/locales

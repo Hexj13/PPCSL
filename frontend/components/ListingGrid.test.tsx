@@ -64,7 +64,7 @@ const mockListing1: Listing = {
   id: 'listing-1',
   title: 'Test Car 1',
   price: 10000,
-  currency: Currency.MKD,
+  currency: Currency.EUR,
   city: 'Skopje',
   status: 'Active',
   condition: 'Undamaged',

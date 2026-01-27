@@ -64,7 +64,16 @@
     "invalidStatus": "Invalid status. Please select \"Temporarily outdated\" status to deactivate the listing.",
     "codeSaveError": "Error saving code. Please try again.",
     "smsSendError": "Error sending SMS. Please try again.",
-    "onlyImagesSupported": "Only images are supported"
+    "onlyImagesSupported": "Only images are supported",
+    "unknownError": "Unknown error"
+  },
+  "vehicleOptions": {
+    "transmission": {
+      "Automatic": "Automatic",
+      "Manual": "Manual",
+      "CVT": "CVT",
+      "Robot": "Robot"
+    }
   }
 }
 

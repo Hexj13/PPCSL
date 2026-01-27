@@ -151,6 +151,7 @@ export function AdvancedFilters({
                 values={filters.fuels}
                 onChange={(values) => onMultiSelectChange('fuels', values)}
                 placeholder={t('searchFilters.selectFuel')}
+                searchable={false}
                 showActionButtons={true}
                 options={getFuelOptions(t)}
               />
@@ -189,6 +190,7 @@ export function AdvancedFilters({
                   values={filters.drive_types}
                   onChange={(values) => onMultiSelectChange('drive_types', values)}
                   placeholder={t('searchFilters.selectDriveType')}
+                  searchable={false}
                   showActionButtons={true}
                   options={getDriveTypeOptions(t)}
                 />
@@ -242,7 +244,7 @@ export function AdvancedFilters({
                 onBlur={(e) => handleMileageBlur('mileage_gte', e.target.value)}
                 onWheel={onWheel}
                 className="input-field"
-                placeholder="0"
+                placeholder={t('searchFilters.mileageFromPlaceholder')}
                 title={t('searchFilters.mileageFromTitle')}
               />
             </div>
@@ -398,7 +400,7 @@ export function AdvancedFilters({
                 onBlur={(e) => handleHorsepowerBlur('horsepower_lte', e.target.value)}
                 onWheel={onWheel}
                 className="input-field"
-                placeholder="500"
+                placeholder={t('searchFilters.horsepowerToPlaceholder')}
                 title={t('searchFilters.horsepowerToTitle')}
               />
             </div>
@@ -466,6 +468,7 @@ export function AdvancedFilters({
                   values={filters.doors}
                   onChange={(values) => onMultiSelectChange('doors', values)}
                   placeholder={t('searchFilters.selectDoors')}
+                  searchable={false}
                   showActionButtons={true}
                   options={getDoorOptions(t)}
                 />
@@ -480,6 +483,7 @@ export function AdvancedFilters({
                 values={filters.conditions}
                 onChange={(values) => onMultiSelectChange('conditions', values)}
                 placeholder={t('searchFilters.selectCondition')}
+                searchable={false}
                 showActionButtons={true}
                 options={getConditionOptions()}
               />
@@ -493,6 +497,7 @@ export function AdvancedFilters({
                 values={filters.registration_types}
                 onChange={(values) => onMultiSelectChange('registration_types', values)}
                 placeholder={t('searchFilters.selectRegistrationType')}
+                searchable={false}
                 showActionButtons={true}
                 options={getRegistrationTypeOptions()}
               />

@@ -1,11 +1,11 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useMemo, startTransition } from 'react';
+import { useCallback, useMemo, startTransition, useState, useEffect } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
 import {
-  LISTING_SORT_OPTIONS,
+  getListingSortOptions,
   LISTING_SORTS,
   isListingSortKey,
   resolveListingSortKey,
@@ -17,11 +17,20 @@ export function SortDropdown() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useTranslation();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const currentSortKey = useMemo(
     () => resolveListingSortKey(searchParams.get('sortBy'), searchParams.get('sortOrder')),
     [searchParams]
   );
+
+  const sortOptions = useMemo(() => {
+    return getListingSortOptions(t);
+  }, [t]);
 
   const updateSortParams = useCallback(
     (sortBy: string, sortOrder: 'ASC' | 'DESC') => {
@@ -53,7 +62,7 @@ export function SortDropdown() {
   );
 
   return (
-    <div className="w-full sm:min-w-[200px]" suppressHydrationWarning>
+    <div className="w-full sm:min-w-[200px]">
       <Dropdown
         value={currentSortKey}
         onChange={(value) => {
@@ -64,8 +73,9 @@ export function SortDropdown() {
           updateSortParams(sortBy, sortOrder);
         }}
         placeholder={t('common.selectSorting')}
-        options={LISTING_SORT_OPTIONS}
+        options={sortOptions}
         autoPosition={true}
+        disabled={!mounted}
       />
     </div>
   );

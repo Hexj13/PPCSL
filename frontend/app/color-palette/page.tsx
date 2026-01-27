@@ -85,7 +85,7 @@ export default function ColorPalettePage() {
     notFound();
   }
 
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
   const theme = loadThemeSync(country);
 
   return (

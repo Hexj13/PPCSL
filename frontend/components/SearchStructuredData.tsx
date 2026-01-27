@@ -15,12 +15,13 @@ export function SearchStructuredData({
   listings?: Listing[];
   maxItems?: number;
 }) {
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
   const siteConfig = loadSiteConfigSync(country);
   const t = getServerTranslations();
   const siteUrl = siteConfig.siteUrl;
   const brandParam = brand || null;
   const modelParam = model || null;
+  const locale = siteConfig.locale;
 
   const itemListElements: Array<{
     '@type': string;
@@ -31,13 +32,13 @@ export function SearchStructuredData({
     {
       '@type': 'ListItem',
       position: 1,
-      name: 'Почетна',
+      name: t.breadcrumbs.home,
       item: siteUrl,
     },
     {
       '@type': 'ListItem',
       position: 2,
-      name: 'Автомобили',
+      name: t.home.title,
       item: `${siteUrl}/`,
     },
   ];
@@ -93,11 +94,11 @@ export function SearchStructuredData({
         target: {
           '@type': 'EntryPoint',
           urlTemplate: `${siteUrl}/?brand=${brandSlug}`,
-          inLanguage: 'mk-MK',
+          inLanguage: locale,
         },
         result: {
           '@type': 'ItemList',
-          name: `${brand} автомобили`,
+          name: `${brand} ${t.home.title}`,
         },
       });
     });
@@ -112,7 +113,7 @@ export function SearchStructuredData({
           target: {
             '@type': 'EntryPoint',
             urlTemplate: `${siteUrl}/?brand=${brandParam}&model=${modelSlug}`,
-            inLanguage: 'mk-MK',
+            inLanguage: locale,
           },
           result: {
             '@type': 'ItemList',
@@ -177,7 +178,7 @@ export function SearchStructuredData({
         .replace('{brand}', brandName)
         .replace('{model}', modelName);
     } else if (brandName) {
-      pageTitle = `${brandName} автомобили - ${t.metadata.site.defaultTitle}`;
+      pageTitle = `${brandName} - ${t.metadata.site.defaultTitle}`;
       pageDescription = t.metadata.site.homePageDescriptionWithBrand.replace('{brand}', brandName);
     }
 

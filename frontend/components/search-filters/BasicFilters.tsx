@@ -24,6 +24,7 @@ interface BasicFiltersProps {
   filters: FilterState;
   onFilterChange: (_key: keyof FilterState, _value: string) => void;
   onMultiSelectChange: (_key: keyof FilterState, _values: string[]) => void;
+  onYearBlur: (_key: string, _value: string) => void;
   onPriceChange: (_key: string, _value: string) => void;
   onPriceBlur: (_key: string, _value: string) => void;
   onWheel: (_e: React.WheelEvent<HTMLInputElement>) => void;
@@ -31,6 +32,7 @@ interface BasicFiltersProps {
   modelOptions: Array<{ value: string; label: string; category?: string }>;
   cityOptions: Array<{ value: string; label: string; category?: string }>;
   loadingModels: boolean;
+  currentYear: string;
   vehicleType?: 'car' | 'truck' | 'moto';
 }
 
@@ -38,6 +40,7 @@ export function BasicFilters({
   filters,
   onFilterChange,
   onMultiSelectChange,
+  onYearBlur: _onYearBlur,
   onPriceChange,
   onPriceBlur,
   onWheel,
@@ -45,6 +48,7 @@ export function BasicFilters({
   modelOptions,
   cityOptions,
   loadingModels,
+  currentYear: _currentYear,
   vehicleType = 'car',
 }: BasicFiltersProps) {
   const { t } = useTranslation();
@@ -62,7 +66,7 @@ export function BasicFilters({
     { value: '', label: t('searchFilters.allCurrencies') },
     ...sortOptionsByLabel([
       { value: Currency.EUR, label: Currency.EUR },
-      { value: Currency.MKD, label: Currency.MKD },
+      { value: Currency.MDL, label: Currency.MDL },
     ]),
   ];
 
@@ -312,7 +316,7 @@ export function BasicFilters({
             onBlur={(e) => onPriceBlur('price_gte', e.target.value.replace(/\s/g, ''))}
             onWheel={onWheel}
             className="input-field"
-            placeholder="0"
+            placeholder={t('searchFilters.priceFromPlaceholder')}
             title={t('searchFilters.priceFromTitle')}
           />
         </div>
@@ -338,8 +342,8 @@ export function BasicFilters({
             onBlur={(e) => onPriceBlur('price_lte', e.target.value.replace(/\s/g, ''))}
             onWheel={onWheel}
             className="input-field"
-            placeholder="500 000"
-            title={t('searchFilters.priceFromTitle')}
+            placeholder={t('searchFilters.priceToPlaceholder')}
+            title={t('searchFilters.priceToTitle')}
           />
         </div>
       </div>

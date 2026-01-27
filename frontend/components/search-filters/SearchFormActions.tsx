@@ -14,7 +14,7 @@ interface SearchFormActionsProps {
   showSearchLoader: boolean;
   hasActiveFilters: boolean;
   canSaveFilter: boolean;
-  buttonsContainerRef: React.RefObject<HTMLDivElement>;
+  buttonsContainerRef: React.RefObject<HTMLDivElement | null>;
   showFadeButtons: boolean;
 }
 

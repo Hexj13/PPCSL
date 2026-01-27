@@ -1,6 +1,6 @@
 const { loadThemeSync } = require('./lib/theme');
 
-const country = process.env.NEXT_PUBLIC_COUNTRY || 'mk';
+const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
 const theme = loadThemeSync(country);
 
 /** @type {import('tailwindcss').Config} */
