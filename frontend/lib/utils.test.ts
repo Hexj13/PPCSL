@@ -109,9 +109,9 @@ describe('utils', () => {
       expect(formatEngineVolume(2)).toBe('2');
       expect(formatEngineVolume(0.65)).toBe('0.65');
       expect(formatEngineVolume(0.796)).toBe('0.796');
-      expect(formatEngineVolume(0.650)).toBe('0.65');
+      expect(formatEngineVolume(0.65)).toBe('0.65');
       expect(formatEngineVolume(1.5)).toBe('1.5');
-      expect(formatEngineVolume(1.500)).toBe('1.5');
+      expect(formatEngineVolume(1.5)).toBe('1.5');
     });
   });
 

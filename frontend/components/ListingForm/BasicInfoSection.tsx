@@ -51,9 +51,7 @@ export function BasicInfoSection({
                 <span key={index}>
                   {part}
                   {index < array.length - 1 && (
-                    <strong className="font-bold text-primary-400">
-                      support@kupito.club
-                    </strong>
+                    <strong className="font-bold text-primary-400">support@kupito.club</strong>
                   )}
                 </span>
               ))}
