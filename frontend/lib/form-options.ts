@@ -67,6 +67,23 @@ export function getBodyTypeOptions(
     { value: 'Scooter', label: t('vehicleOptions.bodyType.Scooter') },
     { value: 'Enduro', label: t('vehicleOptions.bodyType.Enduro') },
     { value: 'Cross', label: t('vehicleOptions.bodyType.Cross') },
+    { value: 'Dragster', label: t('vehicleOptions.bodyType.Dragster') },
+    { value: 'Kart', label: t('vehicleOptions.bodyType.Kart') },
+    { value: 'Custom', label: t('vehicleOptions.bodyType.Custom') },
+    { value: 'ATV', label: t('vehicleOptions.bodyType.ATV') },
+    { value: 'Classic', label: t('vehicleOptions.bodyType.Classic') },
+    { value: 'MaxiScooter', label: t('vehicleOptions.bodyType.MaxiScooter') },
+    { value: 'Minibike', label: t('vehicleOptions.bodyType.Minibike') },
+    { value: 'Moped', label: t('vehicleOptions.bodyType.Moped') },
+    { value: 'Motard', label: t('vehicleOptions.bodyType.Motard') },
+    { value: 'AllTerrainVehicle', label: t('vehicleOptions.bodyType.AllTerrainVehicle') },
+    { value: 'Snowmobile', label: t('vehicleOptions.bodyType.Snowmobile') },
+    { value: 'SportTouring', label: t('vehicleOptions.bodyType.SportTouring') },
+    { value: 'Street', label: t('vehicleOptions.bodyType.Street') },
+    { value: 'Trial', label: t('vehicleOptions.bodyType.Trial') },
+    { value: 'TourEnduro', label: t('vehicleOptions.bodyType.TourEnduro') },
+    { value: 'Chopper', label: t('vehicleOptions.bodyType.Chopper') },
+    { value: 'ElectricScooter', label: t('vehicleOptions.bodyType.ElectricScooter') },
   ];
 
   if (vehicleType) {
