@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Dropdown } from '@/components/Dropdown';
 import { useTranslation } from '@/hooks/useTranslation';
 import { getYearOptions } from '@/lib/form-options';
+import { loadSiteConfigSync } from '@/lib/site-config';
 
 import { ListingFormSectionProps } from './types';
 
@@ -20,6 +21,8 @@ export function BasicInfoSection({
   setShowVinHint: setShowVinHintProp,
 }: ListingFormSectionProps) {
   const { t } = useTranslation();
+  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
+  const siteConfig = loadSiteConfigSync(country);
   const [showVinHintLocal, setShowVinHintLocal] = useState(false);
   const showVinHint = showVinHintProp !== undefined ? showVinHintProp : showVinHintLocal;
   const setShowVinHint = setShowVinHintProp || setShowVinHintLocal;
@@ -51,7 +54,9 @@ export function BasicInfoSection({
                 <span key={index}>
                   {part}
                   {index < array.length - 1 && (
-                    <strong className="font-bold text-primary-400">support@kupito.club</strong>
+                    <strong className="font-bold text-primary-400">
+                      {siteConfig.supportEmail}
+                    </strong>
                   )}
                 </span>
               ))}
@@ -80,6 +85,9 @@ export function BasicInfoSection({
               ...brands.map((brand) => ({ value: brand.id, label: brand.name })),
             ]}
           />
+          {errors['vehicle.brand_id'] && (
+            <p className="mt-1 text-sm text-red-500">{t('listings.brandRequired')}</p>
+          )}
         </div>
 
         <div>
@@ -104,6 +112,9 @@ export function BasicInfoSection({
               ...models.map((model) => ({ value: model.id, label: model.name })),
             ]}
           />
+          {errors['vehicle.model_id'] && (
+            <p className="mt-1 text-sm text-red-500">{t('listings.modelRequired')}</p>
+          )}
         </div>
       </div>
 

@@ -258,12 +258,14 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
       }
     };
 
-    checkField('vehicle.brand_id', formData.vehicle.brand_id, (val) =>
-      validators.required(val as string)
-    );
-    checkField('vehicle.model_id', formData.vehicle.model_id, (val) =>
-      validators.required(val as string)
-    );
+    checkField('vehicle.brand_id', formData.vehicle.brand_id, (val) => ({
+      ...validators.required(val as string),
+      errorKey: 'brandRequired',
+    }));
+    checkField('vehicle.model_id', formData.vehicle.model_id, (val) => ({
+      ...validators.required(val as string),
+      errorKey: 'modelRequired',
+    }));
     checkField('vehicle.year', formData.vehicle.year, (val) => validators.year(val as string));
     checkField('vehicle.engine_displ_l', formData.vehicle.engine_displ_l, (val) =>
       validators.required(val as string)
@@ -463,15 +465,19 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
         filledFields
       );
       afterHidden(() => {
-        if (mode === 'create') {
-          toast.error(t('listings.createError'));
-        } else {
-          const errorMessage =
-            error instanceof AxiosError && error.response?.data?.message
-              ? error.response.data.message
+        const errorMessage =
+          error instanceof AxiosError && error.response?.data?.message
+            ? error.response.data.message
+            : mode === 'create'
+              ? t('listings.createError')
               : t('listings.updateError');
-          toast.error(typeof errorMessage === 'string' ? errorMessage : t('listings.updateError'));
-        }
+        toast.error(
+          typeof errorMessage === 'string'
+            ? errorMessage
+            : mode === 'create'
+              ? t('listings.createError')
+              : t('listings.updateError')
+        );
       });
     }
   };

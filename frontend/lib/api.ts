@@ -49,6 +49,12 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  if (typeof window !== 'undefined') {
+    const storedLocale = localStorage.getItem('kupito-locale') as 'ro' | 'ru' | null;
+    const locale =
+      storedLocale === 'ro' || storedLocale === 'ru' ? storedLocale : getDefaultLocale();
+    config.headers['Accept-Language'] = locale;
+  }
   if (config.data instanceof FormData) {
     delete config.headers['Content-Type'];
   }

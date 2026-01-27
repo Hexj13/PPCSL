@@ -80,28 +80,33 @@ export class I18nService {
   }
 
   getLocaleFromHeader(acceptLanguage?: string): string {
+    if (acceptLanguage) {
+      const languages = acceptLanguage
+        .split(',')
+        .map((lang) => {
+          const parts = lang.trim().split(';');
+          const locale = parts[0] || '';
+          const q = parts[1] || 'q=1';
+          const qualityStr = q.trim().toLowerCase().replace(/^q=/, '');
+          const quality = qualityStr ? parseFloat(qualityStr) : 1.0;
+          return {
+            locale: locale.split('-')[0].toLowerCase(),
+            quality: isNaN(quality) ? 1.0 : quality,
+          };
+        })
+        .filter((lang) => lang.locale)
+        .sort((a, b) => b.quality - a.quality);
+
+      for (const { locale } of languages) {
+        if (this.translations.has(locale)) {
+          return locale;
+        }
+      }
+    }
+
     const envLocale = process.env.DEFAULT_LOCALE?.toLowerCase();
     if (envLocale && ['ro', 'ru', 'en'].includes(envLocale) && this.translations.has(envLocale)) {
       return envLocale;
-    }
-
-    if (!acceptLanguage) {
-      return this.defaultLocale;
-    }
-
-    const languages = acceptLanguage
-      .split(',')
-      .map((lang) => {
-        const [locale, q = 'q=1'] = lang.trim().split(';');
-        const quality = parseFloat(q.replace('q=', ''));
-        return { locale: locale.split('-')[0].toLowerCase(), quality };
-      })
-      .sort((a, b) => b.quality - a.quality);
-
-    for (const { locale } of languages) {
-      if (this.translations.has(locale)) {
-        return locale;
-      }
     }
 
     return this.defaultLocale;

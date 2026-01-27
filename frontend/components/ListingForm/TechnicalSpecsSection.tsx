@@ -115,33 +115,26 @@ export function TechnicalSpecsSection({
                 }
               }}
               onBlur={(e) => {
-                let value = parseFloat(e.target.value);
-                if (!isNaN(value)) {
-                  if (value < 0) {
-                    value = 0;
-                  } else if (value > 99) {
-                    value = 99;
-                  }
-                  const maxDecimals = vehicleType === 'moto' ? 3 : 1;
-                  const formatted = value.toFixed(maxDecimals);
-                  const trimmed = formatted.replace(/\.?0+$/, '');
-                  setFormData((prev) => ({
-                    ...prev,
-                    vehicle: { ...prev.vehicle, engine_displ_l: trimmed },
-                  }));
-                } else if (e.target.value && e.target.value.trim() !== '') {
-                  const numValue = parseFloat(e.target.value);
-                  if (!isNaN(numValue)) {
-                    const clampedValue = Math.max(0, Math.min(99, numValue));
-                    const maxDecimals = vehicleType === 'moto' ? 3 : 1;
-                    const formatted = clampedValue.toFixed(maxDecimals);
-                    const trimmed = formatted.replace(/\.?0+$/, '');
-                    setFormData((prev) => ({
-                      ...prev,
-                      vehicle: { ...prev.vehicle, engine_displ_l: trimmed },
-                    }));
-                  }
+                const inputValue = e.target.value.trim();
+                if (!inputValue) {
+                  return;
                 }
+                let numValue = parseFloat(inputValue);
+                if (isNaN(numValue)) {
+                  return;
+                }
+                if (numValue < 0) {
+                  numValue = 0;
+                } else if (numValue > 99) {
+                  numValue = 99;
+                }
+                const maxDecimals = vehicleType === 'moto' ? 3 : 1;
+                const formatted = numValue.toFixed(maxDecimals);
+                const trimmed = formatted.replace(/\.?0+$/, '');
+                setFormData((prev) => ({
+                  ...prev,
+                  vehicle: { ...prev.vehicle, engine_displ_l: trimmed },
+                }));
               }}
               className={`input-field h-[48px] ${errors['vehicle.engine_displ_l'] ? 'border-red-500 focus:border-red-500 ' : ''}`}
               placeholder={t('listings.engineDisplacementPlaceholder')}

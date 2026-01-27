@@ -22,6 +22,7 @@ interface DropdownProps {
   showActionButtons?: boolean;
   error?: boolean;
   autoPosition?: boolean;
+  rightIcon?: React.ReactNode;
 }
 
 function DropdownComponent({
@@ -36,6 +37,7 @@ function DropdownComponent({
   showActionButtons = false,
   error = false,
   autoPosition = false,
+  rightIcon,
 }: DropdownProps) {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
@@ -218,10 +220,15 @@ function DropdownComponent({
             }
           }}
           disabled={disabled ? true : undefined}
-          className={`input-field dropdown-button text-left cursor-pointer relative ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''} ${buttonClassName || ''}`}
+          className={`input-field dropdown-button text-left cursor-pointer relative flex items-center ${rightIcon ? 'gap-1 md:gap-1.5' : ''} ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''} ${buttonClassName || ''}`}
           style={buttonClassName ? { paddingRight: '52px' } : { paddingRight: '52px' }}
           suppressHydrationWarning
         >
+          {rightIcon && (
+            <span className="flex-shrink-0" suppressHydrationWarning>
+              {rightIcon}
+            </span>
+          )}
           <span
             className="flex-1 truncate min-w-0 text-text-primary"
             style={!selectedOption ? { color: '#9ca3af' } : undefined}
