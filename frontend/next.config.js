@@ -9,6 +9,7 @@ const nextConfig = {
 
   experimental: {
     optimizeCss: true,
+    instrumentationHook: true,
   },
 
   ...(process.env.NODE_ENV === 'production' && {
@@ -172,9 +173,10 @@ const nextConfig = {
 };
 
 const sentryWebpackPluginOptions = {
-  silent: true,
+  silent: !process.env.CI,
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
   widenClientFileUpload: true,
   hideSourceMaps: true,
   disableLogger: true,
