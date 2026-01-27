@@ -2850,6 +2850,14 @@ export const MIXED_BRANDS: Record<
       'Voge 500DS',
       'Voge 500R',
       'Voge 650DS',
+      'XWolf 200',
+      'XWolf 300',
+      'XWolf 550',
+      'XWolf 700',
+      'XWolf 1000',
+      'Overland 200',
+      'ATV 400',
+      'Sumahao 400L',
     ],
   },
   Zongshen: {
@@ -3276,7 +3284,7 @@ export const MIXED_BRANDS: Record<
   Odes: {
     car: [],
     truck: [],
-    moto: ['Odes 250', 'Odes 400', 'Odes 500', 'Odes 700'],
+    moto: ['Odes 250', 'Odes 400', 'Odes 500', 'Odes 650L', 'Odes 700'],
   },
   Orox: {
     car: [],
@@ -3363,7 +3371,15 @@ export const MIXED_BRANDS: Record<
   Sharmax: {
     car: [],
     truck: [],
-    moto: ['Sharmax 125', 'Sharmax 150', 'Sharmax 200'],
+    moto: [
+      'Sharmax 125',
+      'Sharmax 150',
+      'Sharmax 200',
+      'Sharmax Cross 180 RX',
+      'Sharmax Hummer 320 RX LTD',
+      'Sharmax GX-Cruiser 320',
+      'Sharmax Force 1000',
+    ],
   },
   Sonic: {
     car: [],
