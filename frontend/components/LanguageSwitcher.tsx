@@ -47,7 +47,7 @@ export function LanguageSwitcher({
 
   const mobileButtonClassName =
     variant === 'mobile'
-      ? 'header-language-switcher-mobile !bg-transparent !text-white font-medium text-base hover:!text-primary-100 active:!text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-3.5 rounded-lg select-none w-full [&_span]:!text-white [&_span]:hover:!text-primary-100 [&_svg]:!text-white [&_svg]:hover:!text-primary-100'
+      ? 'header-language-switcher-mobile !bg-transparent !text-white font-medium text-base hover:!text-primary-100 active:!text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-3.5 rounded-lg select-none [&_span]:!text-white [&_span]:hover:!text-primary-100 [&_svg]:!text-white [&_svg]:hover:!text-primary-100'
       : buttonClassName;
 
   const currentLanguageAbbr = getLanguageAbbreviation(locale);
@@ -69,7 +69,7 @@ export function LanguageSwitcher({
   );
 
   return (
-    <div className={variant === 'mobile' ? 'w-full' : ''} suppressHydrationWarning>
+    <div className={variant === 'mobile' ? 'inline-flex' : ''} suppressHydrationWarning>
       <div suppressHydrationWarning>
         <Dropdown
           value={locale}

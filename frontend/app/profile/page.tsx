@@ -586,7 +586,7 @@ export default function ProfilePage() {
             type="submit"
             loading={loading}
             loadingText={t('profile.saving')}
-            className="w-full px-8 py-2 md:py-2.5 text-xs md:text-sm lg:text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-500 hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 border-2 border-primary-500 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-500 hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 border-2 border-primary-500 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('profile.saveChanges')}
           </LoadingButton>
@@ -600,7 +600,7 @@ export default function ProfilePage() {
           <button
             type="button"
             onClick={() => setShowDeleteModal(true)}
-            className="w-full bg-transparent hover:bg-red-500/10 text-red-400 hover:text-red-300 font-semibold rounded-lg px-4 py-2.5 border-2 border-red-500/30 hover:border-red-500/50 transition-all duration-200"
+            className="w-full min-h-12 bg-transparent hover:bg-red-500/10 text-red-400 hover:text-red-300 font-semibold text-base rounded-lg px-4 py-2.5 border-2 border-red-500/30 hover:border-red-500/50 transition-all duration-200 flex items-center justify-center"
           >
             {t('profile.deleteAccount')}
           </button>
@@ -640,7 +640,7 @@ export default function ProfilePage() {
             <button
               onClick={handleDeleteAccount}
               disabled={deleting}
-              className="flex-1 bg-transparent hover:bg-red-500/10 text-red-400 hover:text-red-300 font-semibold rounded-lg px-4 py-2.5 border-2 border-red-500/30 hover:border-red-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+              className="flex-1 bg-transparent hover:bg-red-500/10 text-red-400 hover:text-red-300 font-semibold text-base rounded-lg px-4 py-2.5 border-2 border-red-500/30 hover:border-red-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
             >
               {deleting ? t('profile.deleting') : t('profile.deleteAccount')}
             </button>

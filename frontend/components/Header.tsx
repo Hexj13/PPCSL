@@ -433,7 +433,9 @@ export function Header() {
                 {!isAuthPage && !isErrorPage && (
                   <>
                     <div className="h-px bg-white/20 my-2"></div>
-                    <LanguageSwitcher variant="mobile" context="header" />
+                    <div className="flex justify-center">
+                      <LanguageSwitcher variant="mobile" context="header" />
+                    </div>
                   </>
                 )}
               </div>
@@ -476,7 +478,9 @@ export function Header() {
                   {!isAuthPage && (
                     <>
                       <div className="h-px bg-white/20 my-2"></div>
-                      <LanguageSwitcher variant="mobile" context="header" />
+                      <div className="flex justify-center">
+                        <LanguageSwitcher variant="mobile" context="header" />
+                      </div>
                     </>
                   )}
                 </div>

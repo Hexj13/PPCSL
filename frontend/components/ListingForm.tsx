@@ -547,7 +547,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
         type="submit"
         loading={loading}
         loadingText={mode === 'create' ? t('listings.creating') : t('listings.saving')}
-        className="w-full text-primary-400 font-medium text-xs md:text-sm lg:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 select-none disabled:hover:border-primary-400/20"
+        className="w-full min-h-12 text-primary-400 font-medium text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 select-none disabled:hover:border-primary-400/20 flex items-center justify-center"
       >
         {mode === 'create' ? t('listings.createListing') : t('listings.saveChanges')}
       </LoadingButton>

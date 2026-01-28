@@ -38,7 +38,7 @@ export function ListingPageActions({
           {!isInitialized && listing.user ? (
             <button
               disabled
-              className="w-full sm:w-auto sm:max-w-fit px-6 py-3.5 md:py-2.5 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 bg-primary-500/10 text-primary-300 border border-primary-500/30 cursor-not-allowed opacity-50 text-xs md:text-sm lg:text-base"
+              className="w-full sm:w-auto sm:max-w-fit h-12 py-2 sm:h-auto sm:min-h-0 sm:py-3.5 md:py-2.5 px-6 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 bg-primary-500/10 text-primary-300 border border-primary-500/30 cursor-not-allowed opacity-50 text-base"
             >
               <LoadingSpinner size="sm" className="border-primary-300 border-t-transparent" />
               <span>{t('common.loading')}</span>
@@ -47,7 +47,7 @@ export function ListingPageActions({
             <button
               onClick={onToggleComparison}
               disabled={isInComparison}
-              className={`w-full sm:w-auto sm:max-w-fit px-8 py-3.5 md:py-2.5 text-xs md:text-sm lg:text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
+              className={`w-full sm:w-auto sm:max-w-fit h-12 py-2 sm:h-auto sm:min-h-0 sm:py-3.5 md:py-2.5 px-8 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
                 isInComparison
                   ? 'bg-primary-500/10 text-primary-500 border-2 border-primary-500 cursor-not-allowed opacity-50'
                   : 'text-primary-500 hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 border-2 border-primary-500 bg-primary-500/10 select-none'
@@ -75,7 +75,7 @@ export function ListingPageActions({
       {!isInitialized && listing.user ? (
         <button
           disabled
-          className="w-full sm:w-auto sm:max-w-fit px-6 py-3.5 md:py-2.5 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 bg-primary-500/10 text-primary-300 border border-primary-500/30 cursor-not-allowed opacity-50 text-xs md:text-sm lg:text-base"
+          className="w-full sm:w-auto sm:max-w-fit h-12 py-2 sm:h-auto sm:min-h-0 sm:py-3.5 md:py-2.5 px-6 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 bg-primary-500/10 text-primary-300 border border-primary-500/30 cursor-not-allowed opacity-50 text-base"
         >
           <div className="w-3.5 h-3.5 md:w-4 md:h-4 border-2 border-primary-300 border-t-transparent rounded-full animate-spin"></div>
           <span>{t('common.loading')}</span>
@@ -84,7 +84,7 @@ export function ListingPageActions({
         <button
           onClick={onToggleFavorite}
           disabled={isOwnListing}
-          className={`w-full sm:w-auto sm:max-w-fit px-8 py-3.5 md:py-2.5 text-xs md:text-sm lg:text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
+          className={`w-full sm:w-auto sm:max-w-fit h-12 py-2 sm:h-auto sm:min-h-0 sm:py-3.5 md:py-2.5 px-8 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
             isOwnListing
               ? 'bg-primary-500/10 text-primary-500 border-2 border-primary-500 cursor-not-allowed opacity-50'
               : 'text-primary-500 hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 border-2 border-primary-500 bg-primary-500/10 select-none'
@@ -114,7 +114,7 @@ export function ListingPageActions({
       {showPromoteButton && canPromote && listing.status === 'Active' && !listing.is_promoted && (
         <button
           onClick={onPromoteClick}
-          className="w-full sm:w-auto sm:max-w-fit px-6 py-2 md:py-2.5 text-xs md:text-sm lg:text-base rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 bg-accent/20 border-2 border-accent/40 text-text-secondary hover:bg-accent/30 hover:border-accent/60"
+          className="w-full sm:w-auto sm:max-w-fit h-12 py-2 sm:h-auto sm:min-h-0 sm:py-2 md:py-2.5 px-6 text-base rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 bg-accent/20 border-2 border-accent/40 text-text-secondary hover:bg-accent/30 hover:border-accent/60"
         >
           <svg
             className="w-3.5 h-3.5 md:w-4 md:h-4"

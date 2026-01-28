@@ -59,7 +59,7 @@ export function PhotosSection({
         />
         <label
           htmlFor="image-upload"
-          className={`inline-flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 font-medium text-xs md:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap select-none ${
+          className={`inline-flex items-center justify-center gap-2 md:gap-2.5 min-h-12 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 font-medium text-base transition-colors duration-200 whitespace-nowrap select-none ${
             uploading || formData.images.length >= 20
               ? 'text-primary-400/50 border-primary-400/20 bg-primary-500/10 cursor-not-allowed'
               : 'text-primary-400 hover:text-primary-500 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 cursor-pointer'

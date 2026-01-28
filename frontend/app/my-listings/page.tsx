@@ -607,7 +607,7 @@ export default function MyListingsPage() {
             {(!listings || listings.length === 0) && (
               <a
                 href="/listings/new"
-                className="w-full sm:w-auto text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 inline-block text-center"
+                className="w-full sm:w-auto text-primary-400 font-medium text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 inline-block text-center"
               >
                 {t('myListings.createListing')}
               </a>

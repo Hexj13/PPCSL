@@ -322,7 +322,7 @@ export function PopularBodyTypesFilter({
           })}
         </div>
         {showFade && (
-          <div className="lg:hidden absolute right-0 top-0 bottom-0 w-24 pointer-events-none bg-gradient-to-l from-white via-white/60 to-transparent z-20" />
+          <div className="lg:hidden absolute -right-px top-0 bottom-0 w-16 pointer-events-none bg-gradient-to-l from-white/95 via-white/70 to-transparent z-20" />
         )}
       </div>
     </div>

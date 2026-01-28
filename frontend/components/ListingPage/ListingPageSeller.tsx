@@ -248,7 +248,7 @@ export function ListingPageSeller({
             <button
               onClick={onOpenUserListings}
               disabled={listing.status === 'Closed'}
-              className={`w-full px-8 py-2 md:py-2.5 text-xs md:text-sm lg:text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
+              className={`w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
                 listing.status === 'Closed'
                   ? 'bg-bg-darker text-text-secondary border-2 border-divider cursor-not-allowed opacity-50'
                   : 'text-primary-500 hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 border-2 border-primary-500 bg-primary-500/10 select-none'

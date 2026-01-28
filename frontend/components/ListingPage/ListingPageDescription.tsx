@@ -112,7 +112,7 @@ export function ListingPageDescription({ descriptionHtml }: ListingPageDescripti
         <div className="absolute left-0 right-0 bottom-4 flex justify-center z-10">
           <button
             onClick={handleToggle}
-            className="px-4 py-2 text-primary-400 hover:text-primary-300 transition-colors duration-200 text-sm font-medium border border-primary-500/30 rounded-lg hover:border-primary-500/50 bg-bg-secondary"
+            className="min-h-12 px-4 py-2 text-primary-400 hover:text-primary-300 transition-colors duration-200 text-base font-medium border border-primary-500/30 rounded-lg hover:border-primary-500/50 bg-bg-secondary flex items-center justify-center"
           >
             {isExpanded ? t('listingDetail.collapse') : t('listingDetail.expand')}
           </button>

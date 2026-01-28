@@ -52,7 +52,7 @@ export function StatusFilterButtons({
         <button
           key={status}
           onClick={() => onFilterChange(status)}
-          className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-xs md:text-sm lg:text-base transition-colors bg-bg-secondary hover:bg-bg-base border ${
+          className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-base transition-colors bg-bg-secondary hover:bg-bg-base border ${
             currentFilter === status
               ? 'border-primary-500 text-primary-500'
               : 'border-gray-400 text-text-secondary'
@@ -60,7 +60,7 @@ export function StatusFilterButtons({
         >
           {getLabel(status)}
           {status !== 'All' && (
-            <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-xs">
+            <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-sm">
               {counts[status]}
             </span>
           )}
@@ -70,14 +70,14 @@ export function StatusFilterButtons({
       {showPromoted && onPromotedClick && (
         <button
           onClick={onPromotedClick}
-          className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-xs md:text-sm lg:text-base transition-colors bg-bg-secondary hover:bg-bg-base border ${
+          className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-base transition-colors bg-bg-secondary hover:bg-bg-base border ${
             promotedActive
               ? 'border-primary-500 text-primary-500'
               : 'border-gray-400 text-text-secondary'
           }`}
         >
           {t('myListings.promoted')}
-          <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-xs">
+          <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-sm">
             {promotedCount}
           </span>
         </button>

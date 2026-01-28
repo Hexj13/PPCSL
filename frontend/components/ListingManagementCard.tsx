@@ -176,7 +176,7 @@ export function ListingManagementCard({
               )}
               <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-start md:justify-end">
                 {listing.is_promoted && (
-                  <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-accent text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-accent/10 before:pointer-events-none">
+                  <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-base font-semibold bg-white/90 border-2 border-accent text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-accent/10 before:pointer-events-none">
                     <svg
                       className="relative z-10 w-4 h-4 flex-shrink-0"
                       fill="none"
@@ -194,7 +194,7 @@ export function ListingManagementCard({
                   </span>
                 )}
                 {listing.is_new && (
-                  <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-primary-500 text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-primary-500/10 before:pointer-events-none">
+                  <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-base font-semibold bg-white/90 border-2 border-primary-500 text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-primary-500/10 before:pointer-events-none">
                     {}
                     {}
                     <span
@@ -208,7 +208,7 @@ export function ListingManagementCard({
                   </span>
                 )}
                 {listing.urgent && (
-                  <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-accentSecondary text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-accentSecondary/10 before:pointer-events-none">
+                  <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-base font-semibold bg-white/90 border-2 border-accentSecondary text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-accentSecondary/10 before:pointer-events-none">
                     <span
                       className="relative z-10 text-text-secondary"
                       style={{ filter: 'grayscale(1) brightness(0.5)' }}
@@ -224,16 +224,16 @@ export function ListingManagementCard({
           <div className="mt-auto pt-3 border-t border-primary-500/20">
             <div className="flex flex-col xl:flex-row xl:justify-between items-start xl:items-center gap-2 lg:gap-3 min-w-0 max-w-full">
               <div className="inline-flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
-                <div className="text-xs sm:text-sm font-semibold text-text-primary">
+                <div className="text-base font-semibold text-text-primary">
                   {t('listings.status')}
                 </div>
                 <div
                   className={
                     listing.status === 'Active'
-                      ? 'text-primary-400 font-bold text-xs sm:text-sm'
+                      ? 'text-primary-400 font-bold text-base'
                       : listing.status === 'Paused'
-                        ? 'text-blue-400 font-bold text-xs sm:text-sm'
-                        : 'text-text-secondary font-bold text-xs sm:text-sm'
+                        ? 'text-blue-400 font-bold text-base'
+                        : 'text-text-secondary font-bold text-base'
                   }
                 >
                   {listing.status === 'Active'
@@ -252,7 +252,7 @@ export function ListingManagementCard({
                       onPromoteClick && (
                         <button
                           onClick={() => onPromoteClick(listing.id)}
-                          className="text-text-secondary font-medium text-xs md:text-sm lg:text-base hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-accent/40 hover:border-accent/60 bg-accent/20 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
+                          className="text-text-secondary font-medium text-base hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-accent/40 hover:border-accent/60 bg-accent/20 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
                         >
                           <svg
                             className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
@@ -273,7 +273,7 @@ export function ListingManagementCard({
                     {mode === 'admin' && listing.status !== 'Closed' && onPromoteClick && (
                       <button
                         onClick={() => onPromoteClick(listing.id)}
-                        className={`font-medium text-xs md:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px] text-text-secondary hover:text-text-primary ${
+                        className={`font-medium text-base transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px] text-text-secondary hover:text-text-primary ${
                           listing.is_promoted
                             ? 'bg-[#f069be33] border-[#f069be]/40 hover:border-[#f069be]/60'
                             : 'bg-accent/20 border-accent/40 hover:border-accent/60'
@@ -300,7 +300,7 @@ export function ListingManagementCard({
                     {listing.status === 'Paused' && (
                       <button
                         onClick={() => onAction(listing.id, 'publish')}
-                        className="text-text-secondary font-medium text-xs md:text-sm lg:text-base hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-500/40 hover:border-primary-500/60 bg-primary-500/20 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
+                        className="text-text-secondary font-medium text-base hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-500/40 hover:border-primary-500/60 bg-primary-500/20 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
                       >
                         {t('listings.publishAction')}
                       </button>
@@ -308,7 +308,7 @@ export function ListingManagementCard({
                     {listing.status === 'Active' && (
                       <button
                         onClick={() => onAction(listing.id, 'pause')}
-                        className="text-text-secondary font-medium text-xs md:text-sm lg:text-base hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-blue-500/40 hover:border-blue-500/60 bg-blue-500/20 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
+                        className="text-text-secondary font-medium text-base hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-blue-500/40 hover:border-blue-500/60 bg-blue-500/20 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
                       >
                         {t('listings.pauseAction')}
                       </button>
@@ -316,7 +316,7 @@ export function ListingManagementCard({
                     {listing.status !== 'Closed' && (
                       <button
                         onClick={() => onAction(listing.id, 'close')}
-                        className="text-text-secondary font-medium text-xs md:text-sm lg:text-base hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-gray-500/40 hover:border-gray-500/60 bg-gray-500/20 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
+                        className="text-text-secondary font-medium text-base hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-gray-500/40 hover:border-gray-500/60 bg-gray-500/20 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
                       >
                         {t('common.close')}
                       </button>
@@ -326,7 +326,7 @@ export function ListingManagementCard({
                 {mode === 'my-listings' && listing.status !== 'Closed' && (
                   <Link
                     href={`/listings/${listing.id}/edit`}
-                    className="text-text-secondary font-medium text-xs md:text-sm lg:text-base hover:text-text-primary transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-700 hover:border-primary-700 bg-transparent hover:bg-primary-700/10 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
+                    className="text-text-secondary font-medium text-base hover:text-text-primary transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-700 hover:border-primary-700 bg-transparent hover:bg-primary-700/10 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
                     title={t('common.editListing')}
                     onClick={(e) => e.stopPropagation()}
                   >
