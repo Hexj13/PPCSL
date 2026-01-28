@@ -32,9 +32,9 @@ const POPULAR_BODY_TYPES_MOTO: Array<{ value: string; image: string | null }> = 
   { value: 'Naked', image: '/popular_body_types/moto/NAKED.png' },
   { value: 'Sport', image: '/popular_body_types/moto/SPORT.png' },
   { value: 'Touring', image: '/popular_body_types/moto/TURING.png' },
-  { value: 'ATV', image: '/popular_body_types/moto/ATV.png' },
   { value: 'Adventure', image: '/popular_body_types/moto/ADVENTURE.png' },
   { value: 'Scooter', image: '/popular_body_types/moto/SCOUTER.png' },
+  { value: 'ATV', image: '/popular_body_types/moto/ATV.png' },
 ];
 
 export function PopularBodyTypesFilter({
