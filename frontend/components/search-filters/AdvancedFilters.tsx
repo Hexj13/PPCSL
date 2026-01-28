@@ -105,7 +105,9 @@ export function AdvancedFilters({
                 <>
                   {/* eslint-disable-next-line no-hardcoded-text/no-hardcoded-text */}
                   <span>✨</span>
-                  <span>{t('searchFilters.new')}</span>
+                  <span>
+                    {vehicleType === 'moto' ? t('searchFilters.newMoto') : t('searchFilters.new')}
+                  </span>
                 </>
               }
               labelClassName="font-semibold flex items-center gap-2"

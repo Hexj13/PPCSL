@@ -15,6 +15,7 @@ import {
   formatMileage,
   formatPrice,
   getOptimizedImageUrl,
+  getVehicleType,
 } from '@/lib/utils';
 
 const SPARKLES_EMOJI = '\u2728';
@@ -36,6 +37,8 @@ export function ListingManagementCard({
 }: ListingManagementCardProps) {
   const { t } = useTranslation();
   const [imageError, setImageError] = useState(false);
+  const vehicleType = getVehicleType(listing);
+  const newLabel = vehicleType === 'moto' ? t('listings.newMoto') : t('listings.new');
 
   const imageUrl =
     listing.images && listing.images.length > 0 && listing.images[0]
@@ -194,17 +197,17 @@ export function ListingManagementCard({
                   </span>
                 )}
                 {listing.is_new && (
-                  <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-base font-semibold bg-white/90 border-2 border-[rgb(106,164,198)] text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-[rgb(106_164_198/0.1)] before:pointer-events-none">
+                  <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-base font-semibold bg-white/90 border-2 border-newBadge text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-newBadge/10 before:pointer-events-none">
                     {}
                     {}
                     <span
                       className="relative z-10 text-text-secondary"
                       style={{ filter: 'grayscale(1) brightness(0.5)' }}
-                      aria-label={t('listings.new')}
+                      aria-label={newLabel}
                     >
                       {SPARKLES_EMOJI}
                     </span>
-                    <span className="relative z-10">{t('listings.new')}</span>
+                    <span className="relative z-10">{newLabel}</span>
                   </span>
                 )}
                 {listing.urgent && (

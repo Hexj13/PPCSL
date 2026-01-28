@@ -343,8 +343,12 @@ function UserListingsModalComponent({
                             </span>
                           )}
                           {listing.is_new && (
-                            <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/90 border-2 border-[rgb(106,164,198)] text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-[rgb(106_164_198/0.1)] before:pointer-events-none">
-                              <span className="relative z-10">{t('listings.new')}</span>
+                            <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/90 border-2 border-newBadge text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-newBadge/10 before:pointer-events-none">
+                              <span className="relative z-10">
+                                {getVehicleType(listing) === 'moto'
+                                  ? t('listings.newMoto')
+                                  : t('listings.new')}
+                              </span>
                             </span>
                           )}
                           {listing.urgent && (

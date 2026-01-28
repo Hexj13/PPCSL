@@ -2,7 +2,7 @@
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { Listing } from '@/lib/api';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, getVehicleType } from '@/lib/utils';
 
 const SPARKLES_EMOJI = '\u2728';
 
@@ -13,6 +13,8 @@ interface ListingPageHeaderProps {
 
 export function ListingPageHeader({ listing, title }: ListingPageHeaderProps) {
   const { t } = useTranslation();
+  const vehicleType = getVehicleType(listing);
+  const newLabel = vehicleType === 'moto' ? t('listingDetail.newMoto') : t('listingDetail.new');
 
   return (
     <div>
@@ -71,17 +73,17 @@ export function ListingPageHeader({ listing, title }: ListingPageHeaderProps) {
             </span>
           )}
           {listing.is_new && (
-            <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-[rgb(106,164,198)] text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-[rgb(106_164_198/0.1)] before:pointer-events-none">
+            <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-newBadge text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-newBadge/10 before:pointer-events-none">
               {}
               {}
               <span
                 className="relative z-10 text-text-secondary"
                 style={{ filter: 'grayscale(1) brightness(0.5)' }}
-                aria-label={t('listingDetail.new')}
+                aria-label={newLabel}
               >
                 {SPARKLES_EMOJI}
               </span>
-              <span className="relative z-10">{t('listingDetail.new')}</span>
+              <span className="relative z-10">{newLabel}</span>
             </span>
           )}
           {listing.urgent && (

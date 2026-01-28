@@ -286,18 +286,18 @@ export function Header() {
                           }
                         }
                       }}
-                      className="text-white font-medium text-xs md:text-xs lg:text-sm xl:text-sm hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-2 md:px-2.5 lg:px-2.5 xl:px-3 py-1.5 md:py-2 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none"
+                      className="text-white font-medium h-10 text-xs md:text-xs lg:text-sm xl:text-sm hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-2 md:px-2.5 lg:px-2.5 xl:px-3 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none"
                     >
-                      <span className="hidden xl:inline" suppressHydrationWarning>
+                      <span className="hidden lg:inline" suppressHydrationWarning>
                         {t('header.login')}
                       </span>
-                      <span className="xl:hidden" suppressHydrationWarning>
+                      <span className="lg:hidden" suppressHydrationWarning>
                         {t('header.loginShort')}
                       </span>
                     </Link>
                     <Link
                       href="/register"
-                      className="text-white font-medium text-xs md:text-xs lg:text-sm xl:text-sm hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-2 md:px-2.5 lg:px-2.5 xl:px-3 py-1.5 md:py-2 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none"
+                      className="text-white font-medium h-10 text-xs md:text-xs lg:text-sm xl:text-sm hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-2 md:px-2.5 lg:px-2.5 xl:px-3 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none"
                     >
                       <span suppressHydrationWarning>{t('header.register')}</span>
                     </Link>

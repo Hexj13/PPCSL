@@ -21,6 +21,7 @@ module.exports = {
         divider: theme.divider,
         accent: theme.accent,
         accentSecondary: theme.accentSecondary,
+        newBadge: theme.newBadge,
         semantic: theme.semantic,
       },
     },

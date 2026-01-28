@@ -41,7 +41,7 @@ export function CreateListingButton({
 
   const variantClasses = isMobile
     ? 'text-sm gap-1.5 px-2.5 py-2 rounded-lg w-full'
-    : 'text-xs md:text-xs lg:text-xs xl:text-sm gap-1.5 md:gap-2 px-2 md:px-2.5 lg:px-2.5 xl:px-3 py-1.5 md:py-2 rounded-lg';
+    : 'h-10 text-xs md:text-xs lg:text-xs xl:text-sm gap-1.5 md:gap-2 px-2 md:px-2.5 lg:px-2.5 xl:px-3 rounded-lg';
 
   const iconSize = isMobile ? 'w-4 h-4' : 'w-3 h-3 md:w-3.5 md:h-3.5';
 
@@ -65,8 +65,8 @@ export function CreateListingButton({
         <span>{t('header.createListing')}</span>
       ) : (
         <>
-          <span className="hidden xl:inline">{t('header.createListing')}</span>
-          <span className="xl:hidden">{t('header.createListingShort')}</span>
+          <span className="hidden lg:inline">{t('header.createListing')}</span>
+          <span className="lg:hidden">{t('header.createListingShort')}</span>
         </>
       )}
     </Link>
