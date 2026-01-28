@@ -15,6 +15,9 @@ import { Checkbox } from '@/ui';
 import { Dropdown } from '../Dropdown';
 import { MultiSelectDropdown } from '../MultiSelectDropdown';
 
+const FIRE_EMOJI = '🔥';
+const SPARKLES_EMOJI = '\u2728';
+
 interface AdvancedFiltersProps {
   filters: FilterState;
   onFilterChange: (_key: keyof FilterState, _value: string) => void;
@@ -89,12 +92,17 @@ export function AdvancedFilters({
               checked={filters.urgent}
               onChange={(checked) => onCheckboxChange('urgent', checked)}
               label={
-                <>
-                  <span>🔥</span>
-                  <span>{t('searchFilters.urgent')}</span>
-                </>
+                <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-accentSecondary text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-accentSecondary/10 before:pointer-events-none">
+                  <span
+                    className="relative z-10 flex-shrink-0 text-text-secondary"
+                    style={{ filter: 'grayscale(1) brightness(0.5)' }}
+                  >
+                    {FIRE_EMOJI}
+                  </span>
+                  <span className="relative z-10">{t('searchFilters.urgent')}</span>
+                </span>
               }
-              labelClassName="font-semibold flex items-center gap-2"
+              labelClassName="font-semibold"
             />
 
             <Checkbox
@@ -102,15 +110,19 @@ export function AdvancedFilters({
               checked={filters.is_new}
               onChange={(checked) => onCheckboxChange('is_new', checked)}
               label={
-                <>
-                  {/* eslint-disable-next-line no-hardcoded-text/no-hardcoded-text */}
-                  <span>✨</span>
-                  <span>
+                <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-newBadge text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-newBadge/10 before:pointer-events-none">
+                  <span
+                    className="relative z-10 flex-shrink-0 text-text-secondary"
+                    style={{ filter: 'grayscale(1) brightness(0.5)' }}
+                  >
+                    {SPARKLES_EMOJI}
+                  </span>
+                  <span className="relative z-10">
                     {vehicleType === 'moto' ? t('searchFilters.newMoto') : t('searchFilters.new')}
                   </span>
-                </>
+                </span>
               }
-              labelClassName="font-semibold flex items-center gap-2"
+              labelClassName="font-semibold"
             />
           </div>
         </div>
