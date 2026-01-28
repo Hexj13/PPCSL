@@ -194,7 +194,7 @@ export function ListingManagementCard({
                   </span>
                 )}
                 {listing.is_new && (
-                  <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-base font-semibold bg-white/90 border-2 border-primary-500 text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-primary-500/10 before:pointer-events-none">
+                  <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-base font-semibold bg-white/90 border-2 border-[rgb(106,164,198)] text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-[rgb(106_164_198/0.1)] before:pointer-events-none">
                     {}
                     {}
                     <span

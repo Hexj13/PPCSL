@@ -252,7 +252,7 @@ function ListingCardComponent({
             )}
             {listing.is_new && (
               <span
-                className={`relative inline-flex items-center overflow-hidden rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-primary-500 text-text-secondary shadow-lg whitespace-nowrap transition-all duration-300 w-fit before:absolute before:inset-0 before:rounded-lg before:bg-primary-500/10 before:pointer-events-none ${
+                className={`relative inline-flex items-center overflow-hidden rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-[rgb(106,164,198)] text-text-secondary shadow-lg whitespace-nowrap transition-all duration-300 w-fit before:absolute before:inset-0 before:rounded-lg before:bg-[rgb(106_164_198/0.1)] before:pointer-events-none ${
                   listing.is_promoted && listing.is_new && listing.urgent
                     ? 'px-3 py-1.5 gap-1.5 lg:px-1.5 lg:py-1.5 lg:gap-0 lg:group-hover:px-3 lg:group-hover:gap-1.5'
                     : 'px-3 py-1.5 gap-1.5'
