@@ -242,7 +242,7 @@ export function PopularBodyTypesFilter({
                         alt={t(`vehicleOptions.bodyType.${value}`)}
                         width={value === 'ATV' ? 260 : 180}
                         height={value === 'ATV' ? 260 : 180}
-                        className={`object-contain select-none transition-opacity duration-200 ${value === 'Wagon' ? 'object-top -mt-4' : ''} ${value === 'ATV' ? 'max-w-full max-h-full scale-125' : ''}`}
+                        className={`object-contain select-none transition-opacity duration-200 ${value === 'Wagon' ? 'object-top -mt-4' : ''} ${value === 'ATV' ? 'max-w-full max-h-full scale-125' : ''} ${vehicleType === 'car' && value !== 'Convertible' ? 'scale-[1.2]' : ''}`}
                         sizes={
                           value === 'ATV'
                             ? '(max-width: 768px) 260px, (max-width: 1024px) 280px, 300px'
