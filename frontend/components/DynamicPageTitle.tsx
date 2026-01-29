@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { brandsApi } from '@/lib/api';
 import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/popular-brands';
-import { createSlug } from '@/lib/utils';
+import { createSlug, slugMatches } from '@/lib/utils';
 
 const decodeArray = (encoded: string): string[] => {
   if (!encoded) return [];
@@ -116,7 +116,10 @@ export function DynamicPageTitle() {
           const models = POPULAR_MODELS_BY_BRAND[brandName] || [];
           modelSlugs.forEach((modelSlug) => {
             const model = models.find(
-              (m) => m.toLowerCase() === modelSlug || createSlug(m) === modelSlug
+              (m) =>
+                m.toLowerCase() === modelSlug ||
+                createSlug(m) === modelSlug ||
+                slugMatches(modelSlug, m)
             );
             if (model) {
               foundModels.push(`${brandName} ${model}`);
@@ -173,7 +176,8 @@ export function DynamicPageTitle() {
                 const model = allModels.find(
                   (m) =>
                     m.name.toLowerCase() === slug.toLowerCase() ||
-                    createSlug(m.name) === slug.toLowerCase()
+                    createSlug(m.name) === slug.toLowerCase() ||
+                    slugMatches(slug, m.name)
                 );
                 return model?.name;
               })

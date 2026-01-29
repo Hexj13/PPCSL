@@ -13,7 +13,7 @@ import { getServerTranslations, type Translations } from '@/lib/i18n';
 import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/popular-brands';
 import { fetchBrands, fetchModelsByBrands, getListings } from '@/lib/server-api';
 import { loadSiteConfigSync } from '@/lib/site-config';
-import { createSlug, getCountry } from '@/lib/utils';
+import { createSlug, getCountry, slugMatches } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -137,7 +137,10 @@ async function getTitleFromParams(
             const brandModels = modelsByBrand[brandId] || [];
             modelSlugs.forEach((modelSlug) => {
               const model = brandModels.find(
-                (m) => m.name.toLowerCase() === modelSlug || createSlug(m.name) === modelSlug
+                (m) =>
+                  m.name.toLowerCase() === modelSlug ||
+                  createSlug(m.name) === modelSlug ||
+                  slugMatches(modelSlug, m.name)
               );
               if (model) {
                 foundModels.push(`${brandName} ${model.name}`);
@@ -172,7 +175,10 @@ async function getTitleFromParams(
         const models = POPULAR_MODELS_BY_BRAND[brandName] || [];
         modelSlugs.forEach((modelSlug) => {
           const model = models.find(
-            (m) => m.toLowerCase() === modelSlug || createSlug(m) === modelSlug
+            (m) =>
+              m.toLowerCase() === modelSlug ||
+              createSlug(m) === modelSlug ||
+              slugMatches(modelSlug, m)
           );
           if (model) {
             foundModels.push(`${brandName} ${model}`);

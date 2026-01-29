@@ -454,6 +454,12 @@ export function createSlug(text: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
+export function slugMatches(urlSlug: string, name: string): boolean {
+  const normalizedUrl = createSlug(urlSlug.trim()).replace(/-/g, '');
+  const normalizedName = createSlug(name).replace(/-/g, '');
+  return normalizedUrl === normalizedName;
+}
+
 export function slugToName(slug: string): string {
   return slug
     .split('-')
