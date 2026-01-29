@@ -257,7 +257,7 @@ model.vehicle_type существует и !== 'car'
 **Решение**:
 ```bash
 cd core/backend
-COUNTRY=mk npx ts-node src/scripts/stage/sync-vehicle-types.ts
+COUNTRY=md npx ts-node src/scripts/stage/sync-vehicle-types.ts
 ```
 
 ### Модель с неправильным vehicleType
@@ -266,7 +266,7 @@ COUNTRY=mk npx ts-node src/scripts/stage/sync-vehicle-types.ts
 
 **Решение**:
 ```bash
-COUNTRY=mk npx ts-node src/scripts/stage/audit-vehicle-types.ts --fix
+COUNTRY=md npx ts-node src/scripts/stage/audit-vehicle-types.ts --fix
 ```
 
 ## Связанные файлы

@@ -7,8 +7,8 @@ export const currencies = ['EUR', 'MDL'] as const;
 export function getPlatformCurrencies(): readonly string[] {
   try {
     const { loadSiteConfigSync } = require('./site-config');
-    const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
-    const config = loadSiteConfigSync(country);
+    const { getCountry } = require('./utils');
+    const config = loadSiteConfigSync(getCountry());
     return config.currencies || currencies;
   } catch {
     return currencies;

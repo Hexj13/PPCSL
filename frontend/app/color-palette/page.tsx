@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { loadThemeSync } from '@/lib/theme';
+import { getCountry } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -89,8 +90,7 @@ export default function ColorPalettePage() {
     notFound();
   }
 
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
-  const theme = loadThemeSync(country);
+  const theme = loadThemeSync(getCountry());
 
   return (
     <div className="min-h-screen py-8 px-4">

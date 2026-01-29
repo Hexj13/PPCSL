@@ -9,9 +9,9 @@ import { SearchStructuredData } from '@/components/SearchStructuredData';
 import { getServerTranslations } from '@/lib/i18n';
 import { getListings } from '@/lib/server-api';
 import { loadSiteConfigSync } from '@/lib/site-config';
+import { getCountry } from '@/lib/utils';
 
-const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
-const siteConfig = loadSiteConfigSync(country);
+const siteConfig = loadSiteConfigSync(getCountry());
 const siteUrl = siteConfig.siteUrl;
 
 export const dynamic = 'force-dynamic';

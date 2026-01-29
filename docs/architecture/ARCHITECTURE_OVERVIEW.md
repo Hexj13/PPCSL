@@ -11,14 +11,14 @@
 - **Platform-repo** = локализация (страна, язык, валюта, дизайн)
 
 ```
-Moldova Platform            Albania Platform           Future Platform
-├── config/                ├── config/                ├── config/
-├── locales/               ├── locales/               ├── locales/
-├── theme/                 ├── theme/                 ├── theme/
-├── assets/                ├── assets/                ├── assets/
-├── scripts/md/            ├── scripts/al/            ├── scripts/{country}/
-└── core/ (submodule) ←────┴── core/ (submodule) ←────┴── core/ (submodule)
-      ОДНО ЯДРО ДЛЯ ВСЕХ!
+Moldova (kupito.club)              Future Platform
+├── config/                        ├── config/
+├── locales/                       ├── locales/
+├── theme/                         ├── theme/
+├── assets/                        ├── assets/
+└── core/ (submodule) ←────────────┴── core/ (submodule)
+  Конфиг платформы: core/backend/src/scripts/platforms/{country}/
+  ОДНО ЯДРО ДЛЯ ВСЕХ!
 ```
 
 ---
@@ -34,7 +34,7 @@ Moldova Platform            Albania Platform           Future Platform
 
 ### Для создания новых платформ
 
-2. **[PLATFORM_CHECKLIST.md](./PLATFORM_CHECKLIST.md)** ⭐ **НАЧНИ ЗДЕСЬ**
+2. **[PLATFORM_CHECKLIST.md](../guides/PLATFORM_CHECKLIST.md)** ⭐ **НАЧНИ ЗДЕСЬ**
    - Пошаговый чеклист для создания платформы
    - Все необходимые шаги
    - Команды и примеры
@@ -44,17 +44,14 @@ Moldova Platform            Albania Platform           Future Platform
    - Best practices
    - Примеры конфигурации
 
-4. **[PLAN_ALBANIA_PLATFORM.md](./PLAN_ALBANIA_PLATFORM.md)**
-   - Конкретный план для Албании
-   - Пример реального проекта
-   - Все специфичные детали
+4. **[platform-plans/](./platform-plans/)** — планы платформ при добавлении новой страны (по образцу Moldova).
 
 ### Для разработчиков (важно!)
 
 5. **[SCRIPTS_ARCHITECTURE.md](./SCRIPTS_ARCHITECTURE.md)** 🔴 **КРИТИЧНО**
-   - Архитектура скриптов генерации данных
-   - Разделение на `common/` и `{country}/`
-   - Как избежать конфликтов
+   - Архитектура скриптов и конфигов платформ в core
+   - Конфиги в `platforms/{country}/config.ts`
+   - Запуск с переменной `COUNTRY`
 
 6. **[KNOWN_ISSUES.md](./KNOWN_ISSUES.md)** ⚠️ **ИЗВЕСТНЫЕ ПРОБЛЕМЫ**
    - Хардкодные данные в core
@@ -63,12 +60,12 @@ Moldova Platform            Albania Platform           Future Platform
 
 ### Для деплоя
 
-7. **[DEPLOYMENT.md](./DEPLOYMENT.md)**
+7. **[DEPLOYMENT.md](../guides/DEPLOYMENT.md)**
    - Инструкции по деплою на Render.com
    - Настройка CI/CD
    - Production checklist
 
-8. **[LOCAL_DEVELOPMENT.md](./LOCAL_DEVELOPMENT.md)**
+8. **[LOCAL_DEVELOPMENT.md](../guides/LOCAL_DEVELOPMENT.md)**
    - Локальная разработка
    - Настройка окружения
    - Отладка
@@ -77,27 +74,19 @@ Moldova Platform            Albania Platform           Future Platform
 
 ## 🚨 Критические проблемы (требуют внимания)
 
-### 1. 🔴 Скрипты генерации данных в core
+### 1. ✅ Скрипты и конфиги платформ
 
-**Проблема:** Скрипты с македонскими городами, описаниями находятся в core.
+**Реализовано:** Скрипты в core, данные платформы (города, описания, телефон) — в `core/backend/src/scripts/platforms/{country}/config.ts`. Переменная `COUNTRY` задаёт платформу.
 
-**Решение:** См. [SCRIPTS_ARCHITECTURE.md](./SCRIPTS_ARCHITECTURE.md)
-
-**Статус:** 📋 План создан, требует реализации
-
-**Приоритет:** ВЫСОКИЙ (блокирует создание новых платформ)
+**Документация:** [SCRIPTS_ARCHITECTURE.md](./SCRIPTS_ARCHITECTURE.md)
 
 ---
 
-### 2. ⚠️ Хардкодные данные в frontend
+### 2. ✅ SEO и метаданные
 
-**Проблема:** SEO keywords, metadata, OpenGraph тексты хардкоднуты на македонском в core.
+**Реализовано:** Ключи SEO, metadata, OpenGraph вынесены в локали платформы (`locales/*.json` → `metadata.*`) и в config.
 
-**Решение:** См. [KNOWN_ISSUES.md](./KNOWN_ISSUES.md)
-
-**Статус:** 📋 План создан, можно работать с временными workarounds
-
-**Приоритет:** СРЕДНИЙ (можно обойти, но усложняет поддержку)
+**Детали:** [KNOWN_ISSUES.md](./KNOWN_ISSUES.md)
 
 ---
 
@@ -112,35 +101,13 @@ Moldova Platform            Albania Platform           Future Platform
 
 ## 🗺️ Roadmap для создания новой платформы
 
-### Вариант A: Быстрый старт (с временными workarounds)
+### Создание новой платформы
 
-1. Создать platform-repo
-2. Настроить config, locales, theme, assets
-3. **Временно:** Скопировать и изменить скрипты вручную
-4. **Временно:** Заменить хардкоды в core для платформы
-5. Задеплоить
-
-**Минусы:** Конфликты при обновлении core, не масштабируется
-
----
-
-### Вариант B: Правильный подход (рекомендуется) ⭐
-
-**Этап 1: Реорганизация скриптов**
-1. Разделить скрипты на `common/` и `{country}/`
-2. Переместить platform-specific скрипты из core в platform-repo
-3. Обновить `prepare:build` и `.gitignore`
-4. Протестировать на Moldova
-
-**Этап 2: Оптимизация frontend (опционально)**
-1. Вынести SEO keywords в config/locales
-2. Вынести metadata в locales
-3. Вынести OpenGraph тексты
-4. Протестировать
-
-**Этап 3: Создание новой платформы**
-1. Использовать [PLATFORM_CHECKLIST.md](./PLATFORM_CHECKLIST.md)
-2. Всё легко и без конфликтов! 🎉
+1. Создать platform-repo (config, locales, theme, assets).
+2. Добавить в core конфиг платформы: `core/backend/src/scripts/platforms/{country}/config.ts` (города, описания, телефонный префикс и т.д.).
+3. Зарегистрировать платформу в `platforms/index.ts` и в типе `Platform` в `script-guard.ts`.
+4. Использовать [PLATFORM_CHECKLIST.md](../guides/PLATFORM_CHECKLIST.md).
+5. Задеплоить с `NEXT_PUBLIC_COUNTRY={country}` и `COUNTRY={country}` для скриптов.
 
 ---
 
@@ -148,8 +115,8 @@ Moldova Platform            Albania Platform           Future Platform
 
 ### Для Product Manager / Project Manager:
 1. Этот README
-2. [PLATFORM_CHECKLIST.md](./PLATFORM_CHECKLIST.md)
-3. [PLAN_ALBANIA_PLATFORM.md](./PLAN_ALBANIA_PLATFORM.md)
+2. [PLATFORM_CHECKLIST.md](../guides/PLATFORM_CHECKLIST.md)
+3. [platform-plans/](./platform-plans/) — при добавлении новой страны
 
 ### Для Backend разработчика:
 1. [MULTI_REPOSITORY.md](./MULTI_REPOSITORY.md)
@@ -163,8 +130,8 @@ Moldova Platform            Albania Platform           Future Platform
 3. [PLATFORM_GUIDE.md](../guides/PLATFORM_GUIDE.md)
 
 ### Для DevOps:
-1. [DEPLOYMENT.md](./DEPLOYMENT.md)
-2. [PLATFORM_GUIDE.md](./PLATFORM_GUIDE.md)
+1. [DEPLOYMENT.md](../guides/DEPLOYMENT.md)
+2. [PLATFORM_GUIDE.md](../guides/PLATFORM_GUIDE.md)
 
 ---
 
@@ -187,6 +154,4 @@ Moldova Platform            Albania Platform           Future Platform
 
 ---
 
-**Дата создания:** 2025-01-12  
-**Последнее обновление:** 2026-01-16  
-**Версия:** 1.0
+**Последнее обновление:** 2026-01-29

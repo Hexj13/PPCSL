@@ -21,13 +21,13 @@ import { ScrollReset } from '@/components/ScrollReset';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 import { getServerTranslations, type Locale } from '@/lib/i18n';
 import { loadSiteConfig } from '@/lib/site-config';
+import { getCountry } from '@/lib/utils';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'], display: 'swap' });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
-  const siteConfig = await loadSiteConfig(country);
+  const siteConfig = await loadSiteConfig(getCountry());
 
   const cookieStore = await cookies();
   const localeCookie = cookieStore.get('kupito-locale')?.value;
@@ -124,8 +124,7 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
-  const siteConfig = await loadSiteConfig(country);
+  const siteConfig = await loadSiteConfig(getCountry());
 
   const cookieStore = await cookies();
   const localeCookie = cookieStore.get('kupito-locale')?.value;

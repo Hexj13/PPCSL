@@ -679,7 +679,7 @@ SENTRY_PROJECT=kupito-frontend
 - Один проект GA/Sentry на несколько платформ не использовать.
 - Нет fallback: core не задаёт значения по умолчанию.
 
-**См. также:** [GA4_EVENTS.md](../analytics/GA4_EVENTS.md), [SENTRY.md](./SENTRY.md), [PLAN_ALBANIA_PLATFORM.md](../platform-plans/PLAN_ALBANIA_PLATFORM.md).
+**См. также:** [GA4_EVENTS.md](../analytics/GA4_EVENTS.md), [SENTRY.md](./SENTRY.md), [PLATFORM_CHECKLIST.md](./PLATFORM_CHECKLIST.md).
 
 ---
 

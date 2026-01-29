@@ -487,7 +487,7 @@ const MODELS_VEHICLE_TYPES: Record<string, 'car' | 'truck' | 'moto'> = {
 **Использование:**
 ```bash
 cd core/backend
-COUNTRY=mk npx ts-node src/scripts/stage/sync-vehicle-types.ts
+COUNTRY=md npx ts-node src/scripts/stage/sync-vehicle-types.ts
 ```
 
 ### 3. Скрипт наполнения мототехникой
@@ -930,7 +930,7 @@ const handleVehicleTypeChange = (type: 'car' | 'truck' | 'moto') => {
 
 ```bash
 cd core/backend
-COUNTRY=mk npx ts-node src/scripts/stage/sync-vehicle-types.ts
+COUNTRY=md npx ts-node src/scripts/stage/sync-vehicle-types.ts
 ```
 
 **Что делает скрипт:**
@@ -963,14 +963,14 @@ COUNTRY=mk npx ts-node src/scripts/stage/sync-vehicle-types.ts
 #### Легковые авто (50 объявлений)
 ```bash
 cd core/backend
-COUNTRY=mk npx ts-node src/scripts/stage/seed.ts
+COUNTRY=md npx ts-node src/scripts/stage/seed.ts
 ```
 **Примечание**: Скрипт `seed.ts` обновлен и теперь генерирует только легковые авто (фильтрует по `vehicle_type: 'car'`).
 
 #### Грузовые (50 объявлений)
 ```bash
 cd core/backend
-COUNTRY=mk npx ts-node src/scripts/stage/seed-trucks.ts
+COUNTRY=md npx ts-node src/scripts/stage/seed-trucks.ts
 ```
 
 **Параметры для грузовых:**
@@ -985,7 +985,7 @@ COUNTRY=mk npx ts-node src/scripts/stage/seed-trucks.ts
 #### Мото (50 объявлений)
 ```bash
 cd core/backend
-COUNTRY=mk npx ts-node src/scripts/stage/seed-motorcycles.ts
+COUNTRY=md npx ts-node src/scripts/stage/seed-motorcycles.ts
 ```
 
 **Параметры для мото:**
@@ -1000,42 +1000,42 @@ COUNTRY=mk npx ts-node src/scripts/stage/seed-motorcycles.ts
 1. **Применить миграции БД** (добавление новых типов кузова):
    ```bash
    cd core/backend
-   COUNTRY=mk NODE_ENV=stage npm run migration:run
+   COUNTRY=md NODE_ENV=stage npm run migration:run
    ```
 
 2. **Синхронизировать существующие данные** (если в БД уже есть марки и модели):
    ```bash
-   COUNTRY=mk NODE_ENV=stage npx ts-node src/scripts/stage/sync-vehicle-types.ts --force
+   COUNTRY=md NODE_ENV=stage npx ts-node src/scripts/stage/sync-vehicle-types.ts --force
    ```
    Это обновит классификацию всех моделей согласно справочнику `vehicle-classification.ts`.
 
 3. **Проверить классификацию** (опционально):
    ```bash
-   COUNTRY=mk NODE_ENV=stage npx ts-node src/scripts/stage/audit-vehicle-types.ts
+   COUNTRY=md NODE_ENV=stage npx ts-node src/scripts/stage/audit-vehicle-types.ts
    ```
    Для исправления найденных проблем:
    ```bash
-   COUNTRY=mk NODE_ENV=stage npx ts-node src/scripts/stage/audit-vehicle-types.ts --fix
+   COUNTRY=md NODE_ENV=stage npx ts-node src/scripts/stage/audit-vehicle-types.ts --fix
    ```
 
 4. **Очистить кеш** (после синхронизации):
    ```bash
-   COUNTRY=mk NODE_ENV=stage npx ts-node src/scripts/stage/clear-cache.ts
+   COUNTRY=md NODE_ENV=stage npx ts-node src/scripts/stage/clear-cache.ts
    ```
 
 5. Запустить основной seed для создания пользователей и легковых объявлений:
    ```bash
-   COUNTRY=mk NODE_ENV=stage npx ts-node src/scripts/stage/seed.ts
+   COUNTRY=md NODE_ENV=stage npx ts-node src/scripts/stage/seed.ts
    ```
 
 6. Запустить seed для грузовых (после добавления марок/моделей грузовых):
    ```bash
-   COUNTRY=mk NODE_ENV=stage npx ts-node src/scripts/stage/seed-trucks.ts
+   COUNTRY=md NODE_ENV=stage npx ts-node src/scripts/stage/seed-trucks.ts
    ```
 
 7. Запустить seed для мото (после добавления марок/моделей мото):
    ```bash
-   COUNTRY=mk NODE_ENV=stage npx ts-node src/scripts/stage/seed-motorcycles.ts
+   COUNTRY=md NODE_ENV=stage npx ts-node src/scripts/stage/seed-motorcycles.ts
    ```
 
 **Важно**: После обновления классификации (Van и Pickup → легковые, грузовые только Truck/Bus/SemiTruck/Tractor) необходимо:

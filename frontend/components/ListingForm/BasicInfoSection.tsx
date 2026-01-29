@@ -6,6 +6,7 @@ import { Dropdown } from '@/components/Dropdown';
 import { useTranslation } from '@/hooks/useTranslation';
 import { getYearOptions } from '@/lib/form-options';
 import { loadSiteConfigSync } from '@/lib/site-config';
+import { getCountry } from '@/lib/utils';
 
 import { ListingFormSectionProps } from './types';
 
@@ -21,7 +22,7 @@ export function BasicInfoSection({
   setShowVinHint: setShowVinHintProp,
 }: ListingFormSectionProps) {
   const { t } = useTranslation();
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
+  const country = getCountry();
   const siteConfig = loadSiteConfigSync(country);
   const [showVinHintLocal, setShowVinHintLocal] = useState(false);
   const showVinHint = showVinHintProp !== undefined ? showVinHintProp : showVinHintLocal;

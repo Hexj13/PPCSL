@@ -31,7 +31,7 @@ if [ ! -f "$WORKFLOW_FILE" ]; then
 fi
 
 cat > "$TEMP_FILE" << 'WORKFLOW_EOF'
-name: CI/CD MK
+name: CI/CD
 
 on:
   push:
@@ -40,7 +40,7 @@ on:
 
 jobs:
   build:
-    name: Build and Deploy MK
+    name: Build and Deploy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -70,7 +70,7 @@ jobs:
       - name: Build frontend
         working-directory: ./core/frontend
         env:
-          NEXT_PUBLIC_COUNTRY: mk
+          NEXT_PUBLIC_COUNTRY: md
           NEXT_PUBLIC_SITE_URL: https://kupito.club
           NEXT_PUBLIC_API_URL: ${{ secrets.API_URL }}
         run: npm run build

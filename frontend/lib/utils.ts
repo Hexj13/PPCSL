@@ -4,9 +4,12 @@ import { loadSiteConfigSync } from './site-config';
 
 export const isBrowser = typeof window !== 'undefined';
 
+export function getCountry(): string {
+  return process.env.COUNTRY || process.env.NEXT_PUBLIC_COUNTRY || 'md';
+}
+
 export function getLocale(): string {
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
-  const siteConfig = loadSiteConfigSync(country);
+  const siteConfig = loadSiteConfigSync(getCountry());
   return siteConfig.locale.split('-')[0];
 }
 
@@ -38,8 +41,7 @@ export function formatPrice(price: number | undefined, currency?: string): strin
   }
 
   if (!currency) {
-    const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
-    const siteConfig = loadSiteConfigSync(country);
+    const siteConfig = loadSiteConfigSync(getCountry());
     currency = siteConfig.currency;
   }
 
@@ -128,8 +130,7 @@ export function formatDateRelative(
 export function formatDateLong(date: string | Date): string {
   const d = new Date(date);
   if (Number.isNaN(d.getTime())) return '';
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
-  const siteConfig = loadSiteConfigSync(country);
+  const siteConfig = loadSiteConfigSync(getCountry());
   return d.toLocaleDateString(siteConfig.locale, {
     year: 'numeric',
     month: 'long',
@@ -390,7 +391,7 @@ export function getCityName(
 ): string {
   if (!cityNameEn) return '';
 
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
+  const country = getCountry();
 
   if (country === 'md') {
     if (cities && cities.length > 0) {

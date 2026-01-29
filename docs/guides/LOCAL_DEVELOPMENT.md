@@ -2,6 +2,8 @@
 
 Complete guide for working locally with multi-repository architecture (PPCSL core and platform repositories).
 
+**Универсально для любой страны:** в переменных `NEXT_PUBLIC_COUNTRY` (frontend) и `COUNTRY` (скрипты) укажите код платформы (например, `md` для Молдовы).
+
 ---
 
 ## Overview
@@ -76,8 +78,9 @@ Use this approach when:
    Create `frontend/.env.local`:
    ```env
    NEXT_PUBLIC_API_URL=http://localhost:4000
-   NEXT_PUBLIC_COUNTRY=mk
+   NEXT_PUBLIC_COUNTRY=<country>
    ```
+   Replace `<country>` with your platform's ISO 3166-1 alpha-2 code (e.g. `md` for Moldova).
 
 5. **Run database migrations:**
    ```bash
@@ -199,9 +202,10 @@ Use this approach when:
    Create `core/frontend/.env.local`:
    ```env
    NEXT_PUBLIC_API_URL=http://localhost:4000
-   NEXT_PUBLIC_COUNTRY=mk
+   NEXT_PUBLIC_COUNTRY=<country>
    NEXT_PUBLIC_SITE_URL=http://localhost:3000
    ```
+   Replace `<country>` with your platform's ISO 3166-1 alpha-2 code (e.g. `md` for Moldova).
 
 7. **Run database migrations:**
    ```bash

@@ -5,9 +5,9 @@ import { ImageResponse } from 'next/og';
 
 import { getServerTranslations } from '@/lib/i18n';
 import { loadSiteConfigSync } from '@/lib/site-config';
+import { getCountry } from '@/lib/utils';
 
-const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
-const siteConfig = loadSiteConfigSync(country);
+const siteConfig = loadSiteConfigSync(getCountry());
 
 export const runtime = 'nodejs';
 export const alt = `${siteConfig.name} - ${getServerTranslations().metadata.site.defaultTitle}`;

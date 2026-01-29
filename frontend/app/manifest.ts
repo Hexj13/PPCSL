@@ -3,9 +3,10 @@ import { MetadataRoute } from 'next';
 import { getServerTranslations } from '@/lib/i18n';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { loadThemeSync } from '@/lib/theme';
+import { getCountry } from '@/lib/utils';
 
 export default function manifest(): MetadataRoute.Manifest {
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
+  const country = getCountry();
   const siteConfig = loadSiteConfigSync(country);
   const theme = loadThemeSync(country);
   const t = getServerTranslations();

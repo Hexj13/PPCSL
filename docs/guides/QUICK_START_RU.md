@@ -1,5 +1,7 @@
 # Быстрый старт для локальной разработки
 
+Инструкция подходит для запуска в любой стране: укажите код платформы в переменных `NEXT_PUBLIC_COUNTRY` и (для скриптов) `COUNTRY` (например, `md` для Молдовы).
+
 ## Вариант 1: Работа в PPCSL (core)
 
 Если вы работаете в папке PPCSL:
@@ -51,8 +53,9 @@ REDIS_PORT=6379
 **Создайте файл `frontend/.env.local`:**
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:4000
-NEXT_PUBLIC_COUNTRY=mk
+NEXT_PUBLIC_COUNTRY=<country>
 ```
+Замените `<country>` на код страны платформы (например, `md` для Молдовы).
 
 ### 4. Запуск миграций базы данных
 
@@ -159,9 +162,10 @@ REDIS_PORT=6379
 **Создайте файл `core/frontend/.env.local`:**
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:4000
-NEXT_PUBLIC_COUNTRY=mk
+NEXT_PUBLIC_COUNTRY=<country>
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
+Замените `<country>` на код страны платформы (например, `md` для Молдовы).
 
 ### 6. Запуск миграций базы данных
 
@@ -196,7 +200,7 @@ npm run dev
 
 ### Доступ к приложению
 
-- **Frontend:** http://localhost:3000 (с реальными македонскими переводами и темой)
+- **Frontend:** http://localhost:3000 (с переводами и темой платформы)
 - **Backend:** http://localhost:4000
 
 ---

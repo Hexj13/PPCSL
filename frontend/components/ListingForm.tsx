@@ -26,7 +26,7 @@ import { analytics } from '@/lib/analytics';
 import { listingsApi, uploadApi, Listing } from '@/lib/api';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { BodyType, ConditionType, Currency, ListingStatus, RegistrationType } from '@/lib/types';
-import { isBrowser } from '@/lib/utils';
+import { getCountry, isBrowser } from '@/lib/utils';
 import { validators } from '@/lib/validators';
 import { getEquipmentKeysByVehicleType, VehicleEquipmentKey } from '@/lib/vehicle-equipment';
 import { LoadingButton } from '@/ui';
@@ -514,7 +514,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
     );
   }
 
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
+  const country = getCountry();
   const siteConfig = loadSiteConfigSync(country);
 
   const sectionProps = {

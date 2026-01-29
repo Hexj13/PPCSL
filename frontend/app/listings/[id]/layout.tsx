@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 
 import { getServerTranslations } from '@/lib/i18n';
 import { loadSiteConfigSync } from '@/lib/site-config';
+import { getCountry } from '@/lib/utils';
 
-const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
-const siteConfig = loadSiteConfigSync(country);
+const siteConfig = loadSiteConfigSync(getCountry());
 const siteUrl = siteConfig.siteUrl;
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -73,7 +73,7 @@ export async function generateMetadata({
       t.metadata.listing.keywords.cars,
       t.metadata.listing.keywords.buyCar,
       t.metadata.listing.keywords.carsForSale,
-      t.metadata.listing.keywords.northMacedonia,
+      t.metadata.listing.keywords.moldova,
     ].filter(Boolean),
     openGraph: {
       type: 'website',
@@ -105,8 +105,7 @@ export async function generateMetadata({
 
 function getOptimizedImageUrl(imageUrl: string): string {
   if (!imageUrl || imageUrl === '/placeholder-car.jpg') {
-    const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
-    const siteConfig = loadSiteConfigSync(country);
+    const siteConfig = loadSiteConfigSync(getCountry());
     return `${siteConfig.siteUrl}/og-image.jpg`;
   }
 

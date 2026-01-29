@@ -1,6 +1,7 @@
 'use client';
 
 import { loadSiteConfigSync } from './site-config';
+import { getCountry } from './utils';
 
 function checkConsent(): boolean {
   if (typeof window === 'undefined') return false;
@@ -18,7 +19,7 @@ function checkConsent(): boolean {
 }
 
 function getCurrency(): string {
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
+  const country = getCountry();
   const siteConfig = loadSiteConfigSync(country);
   return siteConfig.currency;
 }

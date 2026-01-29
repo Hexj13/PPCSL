@@ -10,6 +10,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { listingsApi, Listing } from '@/lib/api';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { useComparisonStore } from '@/lib/store';
+import { getCountry } from '@/lib/utils';
 
 import { getComparisonFieldsForListings } from './comparisonFields';
 
@@ -22,8 +23,7 @@ export default function ComparePage() {
   const listingsLengthRef = useRef(0);
   const hasRehydratedRef = useRef(false);
 
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
-  const siteConfig = loadSiteConfigSync(country);
+  const siteConfig = loadSiteConfigSync(getCountry());
 
   useEffect(() => {
     const rehydrateAndFetch = async () => {
@@ -115,7 +115,7 @@ export default function ComparePage() {
           items={[{ label: t('breadcrumbs.home'), href: '/' }, { label: t('compare.title') }]}
           className="mb-6"
         />
-        <h1 className="text-3xl md:text-4xl font-extrabold mb-6 bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+        <h1 className="text-xl md:text-3xl lg:text-4xl font-extrabold mb-6 bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
           {t('compare.title')}
         </h1>
         <div className="surface text-center py-12">
@@ -159,8 +159,8 @@ export default function ComparePage() {
         items={[{ label: t('breadcrumbs.home'), href: '/' }, { label: t('compare.title') }]}
         className="mb-6"
       />
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <h1 className="text-xl md:text-3xl lg:text-4xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
           {t('compare.title')}
         </h1>
         <button
@@ -171,7 +171,7 @@ export default function ComparePage() {
             }
             toast.success(t('compare.allRemoved'));
           }}
-          className="px-8 py-2 md:py-2.5 text-xs md:text-sm lg:text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-500 hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 border-2 border-primary-500 bg-primary-500/10 select-none"
+          className="px-8 py-2 md:py-2.5 text-sm md:text-sm lg:text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-500 hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 border-2 border-primary-500 bg-primary-500/10 select-none"
         >
           {t('compare.clearAll')}
         </button>
@@ -181,13 +181,13 @@ export default function ComparePage() {
         <table className="w-full min-w-[800px]">
           <thead>
             <tr className="border-b border-primary-500/20">
-              <th className="text-left py-4 px-4 text-primary-500 font-semibold">
+              <th className="text-left py-2 px-2 md:py-4 md:px-4 text-sm md:text-base text-primary-500 font-semibold">
                 {t('compare.parameter')}
               </th>
               {listings.map((listing) => (
                 <th
                   key={listing.id}
-                  className="text-center py-4 px-4 text-primary-500 font-semibold min-w-[200px]"
+                  className="text-center py-2 px-2 md:py-4 md:px-4 text-sm md:text-base text-primary-500 font-semibold min-w-[200px]"
                 >
                   <div className="flex justify-center items-center">
                     <button
@@ -196,7 +196,7 @@ export default function ComparePage() {
                       title={t('common.removeFromComparison')}
                     >
                       <svg
-                        className="w-6 h-6"
+                        className="w-5 h-5 md:w-6 md:h-6"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -217,8 +217,10 @@ export default function ComparePage() {
           </thead>
           <tbody>
             {getComparisonFieldsForListings(listings).map((field) => (
-              <tr key={field.key} className="border-b border-primary-500/10">
-                <td className="py-4 px-4 text-primary-500 font-semibold">{t(field.labelKey)}</td>
+              <tr key={field.key} className="border-b border-primary-500/10 last:border-b-0">
+                <td className="py-2 px-2 md:py-4 md:px-4 text-sm md:text-base text-primary-500 font-semibold">
+                  {t(field.labelKey)}
+                </td>
                 {listings.map((listing) => field.renderCell(listing, t, siteConfig))}
               </tr>
             ))}

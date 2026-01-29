@@ -7,14 +7,20 @@ import type { City } from '@/lib/api';
 import { ConditionType, RegistrationType } from '@/lib/constants';
 import { getColorOptions } from '@/lib/form-options';
 import { getPopularBrands } from '@/lib/popular-brands';
-import { compareNames, sortByName, sortOptionsByLabel, type LabeledOption } from '@/lib/utils';
+import {
+  compareNames,
+  getCountry,
+  sortByName,
+  sortOptionsByLabel,
+  type LabeledOption,
+} from '@/lib/utils';
 
 import type { FilterState } from './useSearchFilters';
 
 type TranslationFunction = ReturnType<typeof useTranslation>['t'];
 
 const getPopularCityNamesEn = (): string[] => {
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
+  const country = getCountry();
   if (country === 'md') {
     return ['Chișinău', 'Bălți', 'Tiraspol', 'Bender', 'Orhei'];
   }

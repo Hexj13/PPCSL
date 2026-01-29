@@ -221,23 +221,23 @@ For complete CI/CD documentation, see **[Technical Documentation - CI/CD Configu
 ## Workflow
 
 For detailed workflow documentation, see:
-- **[Platform Guide - Development Workflows](PLATFORM_GUIDE.md#3-development-workflows)** - Complete workflow guide with examples
-- **[Local Development Guide - Common Workflows](LOCAL_DEVELOPMENT.md#common-workflows)** - Daily development workflows
+- **[Platform Guide - Development Workflows](../guides/PLATFORM_GUIDE.md#3-development-workflows)** - Complete workflow guide with examples
+- **[Local Development Guide - Common Workflows](../guides/LOCAL_DEVELOPMENT.md#common-workflows)** - Daily development workflows
 
 ### Quick Overview
 
 1. **Core changes** → Made in PPCSL → CI/CD updates platform submodules automatically
 2. **Platform changes** → Made in platform repository → CI/CD builds and deploys
-3. **New platform** → See [Platform Guide - Creating a New Platform](PLATFORM_GUIDE.md#2-creating-a-new-platform)
+3. **New platform** → See [Platform Guide - Creating a New Platform](../guides/PLATFORM_GUIDE.md#2-creating-a-new-platform)
 
 ---
 
 ## Troubleshooting
 
 For detailed troubleshooting guides, see:
-- **[Platform Guide - Troubleshooting](PLATFORM_GUIDE.md#5-troubleshooting)** - Platform setup issues
-- **[Local Development Guide - Troubleshooting](LOCAL_DEVELOPMENT.md#troubleshooting)** - Local development issues
-- **[Deployment Guide - Troubleshooting](DEPLOYMENT.md#7-troubleshooting)** - Deployment issues
+- **[Platform Guide - Troubleshooting](../guides/PLATFORM_GUIDE.md#5-troubleshooting)** - Platform setup issues
+- **[Local Development Guide - Troubleshooting](../guides/LOCAL_DEVELOPMENT.md#troubleshooting)** - Local development issues
+- **[Deployment Guide - Troubleshooting](../guides/DEPLOYMENT.md#7-troubleshooting)** - Deployment issues
 
 ### Quick Fixes
 
@@ -259,7 +259,7 @@ git submodule update --remote --merge core
 2. **Keep translations in sync** - if you add a new key, add it to all platform locales (e.g., `locales/ro.json`, `locales/ru.json`, `locales/en.json`)
 3. **Monitor builds** - ensure platform builds succeed after core updates
 4. **Code review** - carefully review core changes as they affect all platforms
-5. **Use feature branches** for core changes (see [Platform Guide](PLATFORM_GUIDE.md#workflow-1-making-core-changes))
+5. **Use feature branches** for core changes (see [Platform Guide](../guides/PLATFORM_GUIDE.md#workflow-1-making-core-changes))
 
 ---
 

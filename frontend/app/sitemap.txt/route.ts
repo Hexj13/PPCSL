@@ -3,9 +3,9 @@ import { NextResponse } from 'next/server';
 import { BODY_TYPES_BY_VEHICLE_TYPE } from '@/lib/constants';
 import { fetchBrands, fetchModelsByBrands } from '@/lib/server-api';
 import { loadSiteConfigSync } from '@/lib/site-config';
-import { createSlug } from '@/lib/utils';
+import { createSlug, getCountry } from '@/lib/utils';
 
-const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
+const country = getCountry();
 const siteConfig = loadSiteConfigSync(country);
 const siteUrl = siteConfig.siteUrl;
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';

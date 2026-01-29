@@ -4,12 +4,13 @@ import { useI18n } from '@/components/I18nProvider';
 import type { LegalDocument } from '@/lib/legal';
 import { loadLegalConfigSync } from '@/lib/legal';
 import { loadSiteConfigSync } from '@/lib/site-config';
+import { getCountry } from '@/lib/utils';
 
 const terms = {} as Record<string, LegalDocument>;
 
 export default function TermsPage() {
   const { locale } = useI18n();
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
+  const country = getCountry();
   const siteConfig = loadSiteConfigSync(country);
   const legalConfig = loadLegalConfigSync(country);
   const termsData = (legalConfig?.terms || terms) as Record<string, LegalDocument>;

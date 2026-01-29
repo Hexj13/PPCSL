@@ -2,7 +2,7 @@ import type { Listing } from '@/lib/api';
 import { getServerTranslations } from '@/lib/i18n';
 import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/popular-brands';
 import { loadSiteConfigSync } from '@/lib/site-config';
-import { createSlug } from '@/lib/utils';
+import { createSlug, getCountry } from '@/lib/utils';
 
 export function SearchStructuredData({
   brand,
@@ -15,7 +15,7 @@ export function SearchStructuredData({
   listings?: Listing[];
   maxItems?: number;
 }) {
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
+  const country = getCountry();
   const siteConfig = loadSiteConfigSync(country);
   const t = getServerTranslations();
   const siteUrl = siteConfig.siteUrl;

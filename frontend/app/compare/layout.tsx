@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 
 import { loadSiteConfigSync } from '@/lib/site-config';
+import { getCountry } from '@/lib/utils';
 
-const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
+const country = getCountry();
 const siteConfig = loadSiteConfigSync(country);
 const siteUrl = siteConfig.siteUrl;
 

@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 
 import { Listing } from '@/lib/api';
 import { loadSiteConfigSync } from '@/lib/site-config';
-import { getOptimizedImageUrl } from '@/lib/utils';
+import { getCountry, getOptimizedImageUrl } from '@/lib/utils';
 
 interface StructuredDataProps {
   listing: Listing;
@@ -12,7 +12,7 @@ interface StructuredDataProps {
 
 export function StructuredData({ listing }: StructuredDataProps) {
   useEffect(() => {
-    const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
+    const country = getCountry();
     const siteConfig = loadSiteConfigSync(country);
     const siteUrl = siteConfig.siteUrl;
 

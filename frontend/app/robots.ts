@@ -1,10 +1,10 @@
 import { MetadataRoute } from 'next';
 
 import { loadSiteConfigSync } from '@/lib/site-config';
+import { getCountry } from '@/lib/utils';
 
 export default function robots(): MetadataRoute.Robots {
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
-  const siteConfig = loadSiteConfigSync(country);
+  const siteConfig = loadSiteConfigSync(getCountry());
   const siteUrl = siteConfig.siteUrl;
 
   return {

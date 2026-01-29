@@ -31,10 +31,7 @@
 - [GA4_EVENTS.md](./analytics/GA4_EVENTS.md) — события и архитектура GA4 (Sentry — в [guides/SENTRY.md](./guides/SENTRY.md))
 
 ### 🌍 [`platform-plans/`](./platform-plans/)
-**Планы конкретных платформ** - детальные планы для каждой страны
-
-- [PLAN_ALBANIA_PLATFORM.md](./platform-plans/PLAN_ALBANIA_PLATFORM.md) — план для Албании (шаблон для других стран)
-- _Будущие: Serbia, Kosovo, Bulgaria..._
+**Планы конкретных платформ** — при добавлении новой страны можно создать план по образцу существующей платформы (Moldova).
 
 ### ✨ [`features/`](./features/)
 **Документация фич** - описание компонентов и функциональности
@@ -62,7 +59,7 @@
 ### Для Product Manager / Project Manager:
 1. [architecture/ARCHITECTURE_OVERVIEW.md](./architecture/ARCHITECTURE_OVERVIEW.md) - Обзор системы
 2. [guides/PLATFORM_CHECKLIST.md](./guides/PLATFORM_CHECKLIST.md) - Чеклист
-3. [platform-plans/PLAN_ALBANIA_PLATFORM.md](./platform-plans/PLAN_ALBANIA_PLATFORM.md) - Пример плана
+3. [platform-plans/](./platform-plans/) - Планы платформ (при добавлении новой страны)
 
 ### Для Backend разработчика:
 1. [architecture/MULTI_REPOSITORY.md](./architecture/MULTI_REPOSITORY.md)

@@ -4,12 +4,11 @@ import { notFound } from 'next/navigation';
 import { Listing } from '@/lib/api';
 import { getServerTranslations } from '@/lib/i18n';
 import { loadSiteConfigSync } from '@/lib/site-config';
-import { getOptimizedImageUrl } from '@/lib/utils';
+import { getCountry, getOptimizedImageUrl } from '@/lib/utils';
 
 import ListingPageClient from './ListingPageClient';
 
-const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
-const siteConfig = loadSiteConfigSync(country);
+const siteConfig = loadSiteConfigSync(getCountry());
 const siteUrl = siteConfig.siteUrl;
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -198,7 +197,7 @@ export async function generateMetadata({
       t.metadata.listing.keywords.cars,
       t.metadata.listing.keywords.buyCar,
       t.metadata.listing.keywords.carsForSale,
-      t.metadata.listing.keywords.northMacedonia,
+      t.metadata.listing.keywords.moldova,
     ],
     alternates: {
       canonical: `${siteUrl}/listings/${listing.id}`,

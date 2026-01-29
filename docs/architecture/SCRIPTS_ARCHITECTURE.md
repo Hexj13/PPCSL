@@ -10,10 +10,8 @@
 core/backend/src/scripts/
 ├── platforms/                    # Конфигурации платформ
 │   ├── index.ts                  # Экспорт getPlatformConfig()
-│   ├── mk/
-│   │   └── config.ts             # 🇲🇰 Македонские города, описания, телефоны
-│   └── al/
-│       └── config.ts             # 🇦🇱 Албанские города, описания, телефоны
+│   └── md/
+│       └── config.ts             # Конфиг платформы (города, описания, телефоны)
 │
 ├── production/                   # Production скрипты
 │   ├── backup-database.ts
@@ -44,15 +42,15 @@ core/backend/src/scripts/
 ### script-guard.ts
 
 ```typescript
-export type Platform = 'mk' | 'al' | 'common';
+export type Platform = 'md' | 'common';
 
 export function checkPlatform(allowedPlatforms: Platform[]): void {
-  const currentPlatform = process.env.COUNTRY || 'mk';
-  
+  const currentPlatform = process.env.COUNTRY || process.env.NEXT_PUBLIC_COUNTRY || 'md';
+
   if (allowedPlatforms.includes('common')) {
-    return; // Доступен всем
+    return;
   }
-  
+
   if (!allowedPlatforms.includes(currentPlatform)) {
     console.error('❌ PLATFORM MISMATCH');
     console.error(`   Current: ${currentPlatform}`);
@@ -62,58 +60,37 @@ export function checkPlatform(allowedPlatforms: Platform[]): void {
 }
 
 export function getPlatform(): Platform {
-  return process.env.COUNTRY || 'mk';
+  return (process.env.COUNTRY || process.env.NEXT_PUBLIC_COUNTRY || 'md') as Platform;
 }
 ```
 
 ### Использование в скриптах
 
 ```typescript
-// Platform-specific скрипт (только MK и AL)
-checkPlatform(['mk', 'al']);
+checkPlatform(['md']);
 const config = getPlatformConfig();
 const { cities, descriptions } = config;
 
-// Универсальный скрипт (доступен всем)
-// checkPlatform не нужен или:
 checkPlatform(['common']);
 ```
 
 ---
 
-## Конфигурации платформ
+## Конфигурация платформы
 
-### platforms/mk/config.ts
+### platforms/md/config.ts
 
 ```typescript
 const config: PlatformSeedConfig = {
-  cities: ['Скопје', 'Битола', 'Прилеп', ...],
-  descriptions: ['Отлично одржан автомобил...', ...],
+  cities: ['Chișinău', 'Bălți', ...],
+  descriptions: ['Mașină în stare foarte bună...', ...],
   phonePrefix: '+373',
-  testUserFirstName: 'Тест',
-  testUserLastName: 'Корисник',
-  testCompanyName: 'Тест Компанија',
-  transmissionLabels: {
-    automatic: 'Автоматска',
-    manual: 'Мануелна',
-    cvt: 'Варијатор',
-  },
-};
-```
-
-### platforms/al/config.ts
-
-```typescript
-const config: PlatformSeedConfig = {
-  cities: ['Tiranë', 'Durrës', 'Vlorë', ...],
-  descriptions: ['Automobil në gjendje të shkëlqyer...', ...],
-  phonePrefix: '+355',
   testUserFirstName: 'Test',
-  testUserLastName: 'Përdorues',
-  testCompanyName: 'Test Kompania',
+  testUserLastName: 'Utilizator',
+  testCompanyName: 'Test SRL',
   transmissionLabels: {
-    automatic: 'Automatike',
-    manual: 'Manuale',
+    automatic: 'Automată',
+    manual: 'Manuală',
     cvt: 'CVT',
   },
 };
@@ -126,11 +103,7 @@ const config: PlatformSeedConfig = {
 ### С указанием платформы
 
 ```bash
-# Moldova
 COUNTRY=md npx ts-node src/scripts/stage/seed.ts
-
-# Albania
-COUNTRY=al npx ts-node src/scripts/stage/seed.ts
 ```
 
 ### В package.json платформы
@@ -138,11 +111,13 @@ COUNTRY=al npx ts-node src/scripts/stage/seed.ts
 ```json
 {
   "scripts": {
-    "seed": "COUNTRY=mk cd core/backend && npx ts-node -r tsconfig-paths/register src/scripts/stage/seed.ts",
+    "seed": "COUNTRY=md npm run prepare:build && cd core/backend && COUNTRY=md npx ts-node -r tsconfig-paths/register src/scripts/stage/seed.ts",
     "add-brands": "cd core/backend && npx ts-node -r tsconfig-paths/register src/scripts/stage/add-brands.ts"
   }
 }
 ```
+
+Замените `md` на код вашей страны при добавлении новой платформы.
 
 ---
 
@@ -176,12 +151,20 @@ COUNTRY=al npx ts-node src/scripts/stage/seed.ts
 
 ---
 
-## Добавление новой платформы
+## Добавление новой страны (платформы)
 
-1. Создать конфиг `platforms/{code}/config.ts`:
+1. Создать конфиг `platforms/{code}/config.ts` по образцу `platforms/md/config.ts`:
 
 ```typescript
-import { PlatformSeedConfig } from '../mk/config';
+export interface PlatformSeedConfig {
+  cities: string[];
+  descriptions: string[];
+  phonePrefix: string;
+  testUserFirstName: string;
+  testUserLastName: string;
+  testCompanyName: string;
+  transmissionLabels: { automatic: string; manual: string; cvt: string };
+}
 
 const config: PlatformSeedConfig = {
   cities: ['City1', 'City2', ...],
@@ -193,34 +176,9 @@ const config: PlatformSeedConfig = {
 export default config;
 ```
 
-2. Добавить в `platforms/index.ts`:
+2. Добавить платформу в `platforms/index.ts` и тип в `script-guard.ts` (`Platform = 'md' | 'xx' | 'common'`).
 
-```typescript
-import newConfig from './{code}/config';
-
-const configs: Record<Platform, PlatformSeedConfig> = {
-  mk: mkConfig,
-  al: alConfig,
-  {code}: newConfig,  // Добавить
-  common: mkConfig,
-};
-   ```
-
-3. Добавить тип в `script-guard.ts`:
-
-```typescript
-export type Platform = 'mk' | 'al' | '{code}' | 'common';
-   ```
-
-4. Обновить `package.json` в platform-repo:
-
-   ```json
-   {
-     "scripts": {
-    "seed": "COUNTRY={code} cd core/backend && npx ts-node -r tsconfig-paths/register src/scripts/stage/seed.ts"
-     }
-   }
-   ```
+3. В репозитории платформы в `package.json` указать `COUNTRY={code}` в скриптах (seed, reset-and-seed и т.д.).
 
 ---
 

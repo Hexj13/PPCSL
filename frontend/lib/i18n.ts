@@ -848,13 +848,14 @@ export interface Translations {
         cars: string;
         buyCar: string;
         carsForSale: string;
-        northMacedonia: string;
+        moldova: string;
       };
     };
   };
 }
 
 import { loadSiteConfigSync } from './site-config';
+import { getCountry } from './utils';
 
 const STORAGE_KEY = 'kupito-locale';
 const COOKIE_KEY = 'kupito-locale';
@@ -908,9 +909,8 @@ function loadRuTranslations(): Translations {
 }
 
 export function getDefaultLocale(): Locale {
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
   try {
-    const siteConfig = loadSiteConfigSync(country);
+    const siteConfig = loadSiteConfigSync(getCountry());
     return siteConfig.locale.split('-')[0] as Locale;
   } catch {
     return 'ro';

@@ -30,7 +30,7 @@ Platform-specific конфигурация сайта: название, дом�
 
 ### 9. Platform-specific скрипты
 Все скрипты в core с системой `checkPlatform()` и `getPlatformConfig()`.
-Конфиги платформ: `core/backend/src/scripts/platforms/{mk,al}/config.ts`.
+Конфиги платформ: `core/backend/src/scripts/platforms/{country}/config.ts` (например, `md` для Молдовы).
 
 ---
 
@@ -57,11 +57,11 @@ Platform-specific конфигурация сайта: название, дом�
 
 - Добавлен loader `loadLegalConfigSync()` (поддержка `config/legal.ts` как platform override)
 - В Terms/Privacy добавлена безопасная замена домена/email на значения из `config/site.ts`
-- Переключение языка теперь работает по доступным языкам в конфиге (не захардкожено `mk/en`)
+- Переключение языка работает по доступным языкам в конфиге платформы
 
 **Важно:** тексты Terms/Privacy должны жить в platform repo в `config/legal.ts` (source of truth)
 
-**Для Албании:** добавить `config/legal.ts` и включить `sq` (и/или `en`) без изменений в core
+**Для новой страны:** добавить `config/legal.ts` и нужные локали без изменений в core.
 
 ---
 
@@ -78,13 +78,13 @@ Platform-specific конфигурация сайта: название, дом�
 ├── assets/
 │   ├── frontend/public/     # Логотипы, favicon, OG
 │   └── backend/watermark/   # Watermark для фото
-└── package.json             # COUNTRY=xx для скриптов
+└── package.json             # COUNTRY=<code> для скриптов
 
 {core}/
 └── backend/src/scripts/
     └── platforms/
-        ├── mk/config.ts     # Македонские города, описания
-        └── al/config.ts     # Албанские города, описания
+        └── {code}/
+            └── config.ts    # Города, описания, телефонный префикс
 ```
 
 ---

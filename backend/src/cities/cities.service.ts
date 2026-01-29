@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
+import { getCountry } from '../common/env';
 import { RedisService } from '../common/redis.service';
 import { CACHE_PREFIXES, CACHE_TTL, generateCacheKey } from '../common/utils/cache.utils';
 
@@ -8,6 +9,10 @@ export interface City {
   nameEn: string;
   nameRu?: string;
 }
+
+const SORT_LOCALE_BY_COUNTRY: Record<string, string> = {
+  md: 'ro-MD',
+};
 
 @Injectable()
 export class CitiesService {
@@ -101,8 +106,8 @@ export class CitiesService {
       // Ignore cache errors
     }
 
-    const country = process.env.COUNTRY || process.env.NEXT_PUBLIC_COUNTRY || 'md';
-    const locale = country === 'md' ? 'ro' : 'mk';
+    const country = getCountry();
+    const locale = SORT_LOCALE_BY_COUNTRY[country] || 'ro-MD';
     const sortedCities = [...this.cities].sort((a, b) => a.name.localeCompare(b.name, locale));
 
     try {

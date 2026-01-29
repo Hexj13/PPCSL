@@ -46,12 +46,12 @@ platform-repo/
 
 ### 2. Конфигурация (`config/site.ts`)
 
-- [ ] Установлен `country` код (например, `al` для Албании)
-- [ ] Установлено `name` платформы (например, `AutoShqip`)
-- [ ] Установлен `domain` (например, `autoshqip.al`)
-- [ ] Установлен `locale` (например, `sq-AL`)
-- [ ] Установлена `currency` (например, `EUR`)
-- [ ] Установлен `countryCode` для телефонов (например, `AL`)
+- [ ] Установлен `country` код (например, `md` для Молдовы)
+- [ ] Установлено `name` платформы
+- [ ] Установлен `domain` (например, `kupito.club`)
+- [ ] Установлен `locale` (например, `ro-MD`)
+- [ ] Установлена `currency` (например, `MDL`)
+- [ ] Установлен `countryCode` для телефонов (например, `MD`)
 - [ ] Установлен `supportEmail`
 - [ ] Установлен `siteUrl`
 
@@ -87,19 +87,13 @@ platform-repo/
 
 ### 6. Скрипты генерации данных (`scripts/{country}/`)
 
-- [ ] Создана папка `scripts/{country}/stage/`
-- [ ] Создан `seed-config.ts` с локальными данными:
-  - [ ] Города страны (реальные города, не переводы!)
+- [ ] Создан конфиг платформы в core: `core/backend/src/scripts/platforms/{country}/config.ts`
+  - [ ] Города страны (реальные города)
   - [ ] Описания на местном языке
-  - [ ] Телефонный префикс (например, `+355` для Албании)
+  - [ ] Телефонный префикс (например, `+373` для Молдовы)
   - [ ] Тестовые имена пользователей
   - [ ] Transmission labels на местном языке
-- [ ] Скопированы скрипты из `scripts/mk/stage/`:
-  - [ ] `seed.ts`
-  - [ ] `reset-and-seed.ts`
-  - [ ] `seed-vin-test.ts`
-  - [ ] `create-test-listing.ts`
-  - [ ] `generate-listings-for-all-models.ts`
+- [ ] Скрипты seed/reset-and-seed и т.д. запускаются с `COUNTRY={country}` (скрипты в core, конфиг в platforms/{country})
 
 ### 7. Package.json
 
@@ -111,9 +105,9 @@ platform-repo/
   ```
 - [ ] Добавлены скрипты для запуска:
   ```json
-  "seed": "cd core/backend && npm run script scripts/{country}/stage/seed.ts",
-  "reset-and-seed": "cd core/backend && npm run script scripts/{country}/stage/reset-and-seed.ts",
-  "add-brands": "cd core/backend && npm run script scripts/common/stage/add-brands.ts"
+  "seed": "COUNTRY={country} npm run prepare:build && cd core/backend && COUNTRY={country} npx ts-node -r tsconfig-paths/register src/scripts/stage/seed.ts",
+  "reset-and-seed": "COUNTRY={country} npm run prepare:build && cd core/backend && COUNTRY={country} npx ts-node -r tsconfig-paths/register src/scripts/stage/reset-and-seed.ts",
+  "add-brands": "cd core/backend && npx ts-node -r tsconfig-paths/register src/scripts/stage/add-brands.ts"
   ```
 
 ### 8. Environment Variables (`.env`)
@@ -123,13 +117,13 @@ platform-repo/
 - [ ] `REDIS_URL`
 - [ ] `JWT_SECRET`
 - [ ] `JWT_REFRESH_SECRET`
-- [ ] `FRONTEND_URL` (например, `https://autoshqip.al`)
+- [ ] `FRONTEND_URL` (например, `https://kupito.club`)
 - [ ] `AWS_ACCESS_KEY_ID`
 - [ ] `AWS_SECRET_ACCESS_KEY`
 - [ ] `AWS_S3_BUCKET_NAME` (общий или отдельный?)
 - [ ] `AWS_REGION`
 - [ ] `CLOUDFRONT_URL`
-- [ ] `WATERMARK_DOMAIN` (например, `autoshqip.al`)
+- [ ] `WATERMARK_DOMAIN` (например, `kupito.club`)
 - [ ] `TWILIO_ACCOUNT_SID`
 - [ ] `TWILIO_AUTH_TOKEN`
 - [ ] `TWILIO_MESSAGING_SERVICE_SID` или `TWILIO_PHONE_NUMBER`
@@ -137,7 +131,7 @@ platform-repo/
 #### Frontend
 - [ ] `NEXT_PUBLIC_API_URL`
 - [ ] `NEXT_PUBLIC_SITE_URL`
-- [ ] `NEXT_PUBLIC_COUNTRY` (например, `al`)
+- [ ] `NEXT_PUBLIC_COUNTRY` (например, `md`)
 - [ ] `NEXT_PUBLIC_GOOGLE_ANALYTICS_ID`
 - [ ] `NEXT_PUBLIC_GOOGLE_VERIFICATION`
 

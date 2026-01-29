@@ -8,7 +8,7 @@ console.log('\n🚀 Запуск Storybook...\n');
 console.log(`📖 Storybook будет доступен на: http://localhost:${port}\n`);
 console.log('⏳ Ожидание запуска сервера...\n');
 
-const storybook = spawn('npx', ['storybook', 'dev', '-p', port.toString()], {
+const storybook = spawn(`npx storybook dev -p ${port}`, {
   stdio: 'inherit',
   shell: true,
 });

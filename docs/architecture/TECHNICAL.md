@@ -183,8 +183,8 @@ SMTP_PASSWORD=your-app-password
 SMTP_FROM=noreply@your-domain.com
 
 # Internationalization (optional)
-DEFAULT_LOCALE=mk
-# Supported locales: mk, en
+DEFAULT_LOCALE=<locale>
+# Supported locales depend on platform (e.g. ro, ru for Moldova)
 ```
 
 ### Frontend (`frontend/.env.local`)
@@ -195,8 +195,8 @@ NEXT_PUBLIC_API_URL=http://localhost:4000
 
 # Site Configuration
 NEXT_PUBLIC_SITE_URL=https://your-domain.com
-NEXT_PUBLIC_COUNTRY=mk
-# Country code for locale-specific configuration (mk, al, etc.)
+NEXT_PUBLIC_COUNTRY=<country>
+# ISO 3166-1 alpha-2 country code (e.g. md for Moldova)
 
 # Google Search Console Verification (optional)
 NEXT_PUBLIC_GOOGLE_VERIFICATION=your-verification-code
@@ -735,18 +735,18 @@ All scripts are located in `backend/src/scripts/` and can be executed via npm co
 ### Google Search Console Setup
 
 1. Go to https://search.google.com/search-console
-2. Add property: `https://kupito.mk`
+2. Add property: `https://your-domain.com`
 3. Choose verification method: **HTML tag**
 4. Copy verification code and add to `NEXT_PUBLIC_GOOGLE_VERIFICATION` in `.env.local`
 5. Restart server and verify
-6. Submit sitemap: `https://kupito.mk/sitemap.xml`
+6. Submit sitemap: `https://your-domain.com/sitemap.xml`
 
 ### Google Analytics Setup
 
 1. Go to https://analytics.google.com/
 2. Create account: "Your Platform Name"
 3. Create property: "Your Platform Website"
-4. Create data stream: Web → `https://kupito.mk`
+4. Create data stream: Web → `https://your-domain.com`
 5. Copy Measurement ID (format: `G-XXXXXXXXXX`)
 6. Add to `NEXT_PUBLIC_GA_ID` in `.env.local` (or production environment variables)
 7. Component `GoogleAnalytics.tsx` is already created and integrated
@@ -1096,7 +1096,7 @@ For deploying kupito.club on Render.com, configure the following:
 
 **Environment Variables:**
 - `GITHUB_PAT` - Personal Access Token with `repo` scope for accessing private PPCSL submodule
-- `NEXT_PUBLIC_COUNTRY` - Set to `mk`
+- `NEXT_PUBLIC_COUNTRY` - Set to your platform's country code (e.g. `md` for Moldova)
 - `NEXT_PUBLIC_SITE_URL` - Set to `https://kupito.club`
 - `NEXT_PUBLIC_API_URL` - Backend API URL
 

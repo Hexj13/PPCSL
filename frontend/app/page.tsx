@@ -13,11 +13,11 @@ import { getServerTranslations, type Translations } from '@/lib/i18n';
 import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/popular-brands';
 import { fetchBrands, fetchModelsByBrands, getListings } from '@/lib/server-api';
 import { loadSiteConfigSync } from '@/lib/site-config';
-import { createSlug } from '@/lib/utils';
+import { createSlug, getCountry } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
-const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
+const country = getCountry();
 const siteConfig = loadSiteConfigSync(country);
 const siteUrl = siteConfig.siteUrl;
 

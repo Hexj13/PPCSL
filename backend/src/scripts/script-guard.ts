@@ -1,3 +1,5 @@
+import { getCountry } from '../common/env';
+
 export function checkEnvironment(allowedEnvironments: string[]): void {
   const nodeEnv = process.env.NODE_ENV || 'development';
   const isProduction = nodeEnv === 'production';
@@ -18,9 +20,7 @@ export function checkEnvironment(allowedEnvironments: string[]): void {
 export type Platform = 'md' | 'common';
 
 export function checkPlatform(allowedPlatforms: Platform[]): void {
-  const currentPlatform = (process.env.COUNTRY ||
-    process.env.NEXT_PUBLIC_COUNTRY ||
-    'md') as Platform;
+  const currentPlatform = getCountry() as Platform;
 
   if (allowedPlatforms.includes('common')) {
     return;
@@ -45,5 +45,5 @@ export function checkPlatform(allowedPlatforms: Platform[]): void {
 }
 
 export function getPlatform(): Platform {
-  return (process.env.COUNTRY || process.env.NEXT_PUBLIC_COUNTRY || 'md') as Platform;
+  return getCountry() as Platform;
 }

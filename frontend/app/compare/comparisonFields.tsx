@@ -46,7 +46,7 @@ export const comparisonFields: ComparisonField[] = [
       const isExternal = imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
 
       return (
-        <td key={listing.id} className="py-4 px-4 text-center">
+        <td key={listing.id} className="py-2 px-2 md:py-4 md:px-4 text-center">
           <div className="flex justify-center">
             <Link
               href={`/listings/${listing.id}`}
@@ -95,7 +95,7 @@ export const comparisonFields: ComparisonField[] = [
     key: 'title',
     labelKey: 'compare.titleColumn',
     renderCell: (listing, t) => (
-      <td key={listing.id} className="py-4 px-4 text-center">
+      <td key={listing.id} className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base">
         <Link
           href={`/listings/${listing.id}`}
           className="text-text-primary hover:text-primary-500 transition-colors underline font-medium inline-flex items-center gap-1.5"
@@ -126,7 +126,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t) => (
       <td
         key={listing.id}
-        className="py-4 px-4 text-center"
+        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {getValue(listing.vehicle?.brand?.name, t)}
@@ -139,7 +139,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t) => (
       <td
         key={listing.id}
-        className="py-4 px-4 text-center"
+        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {getValue(listing.vehicle?.model?.name, t)}
@@ -152,7 +152,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t) => (
       <td
         key={listing.id}
-        className="py-4 px-4 text-center"
+        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {getValue(listing.vehicle?.year, t)}
@@ -165,7 +165,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t) => (
       <td
         key={listing.id}
-        className="py-4 px-4 text-center"
+        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {listing.vehicle?.mileage_km
@@ -180,7 +180,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t) => (
       <td
         key={listing.id}
-        className="py-4 px-4 text-center"
+        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {listing.vehicle?.engine_displ_l
@@ -195,7 +195,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t) => (
       <td
         key={listing.id}
-        className="py-4 px-4 text-center"
+        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {listing.horsepower !== undefined && listing.horsepower !== null
@@ -212,7 +212,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t) => (
       <td
         key={listing.id}
-        className="py-4 px-4 text-center"
+        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {listing.vehicle?.fuel ? formatFuel(listing.vehicle.fuel, t) : t('compare.notAvailable')}
@@ -225,7 +225,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t) => (
       <td
         key={listing.id}
-        className="py-4 px-4 text-center"
+        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {listing.vehicle?.transmission
@@ -240,7 +240,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t) => (
       <td
         key={listing.id}
-        className="py-4 px-4 text-center"
+        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {listing.vehicle?.drive_type
@@ -255,7 +255,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t) => (
       <td
         key={listing.id}
-        className="py-4 px-4 text-center"
+        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {listing.vehicle?.body_type
@@ -270,7 +270,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t) => (
       <td
         key={listing.id}
-        className="py-4 px-4 text-center"
+        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {listing.vehicle?.color
@@ -285,7 +285,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t) => (
       <td
         key={listing.id}
-        className="py-4 px-4 text-center"
+        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {getValue(listing.vehicle?.doors, t)}
@@ -298,7 +298,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t) => (
       <td
         key={listing.id}
-        className="py-4 px-4 text-center"
+        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {listing.condition
@@ -313,7 +313,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t) => (
       <td
         key={listing.id}
-        className="py-4 px-4 text-center"
+        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {listing.registration_type
@@ -328,7 +328,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t) => (
       <td
         key={listing.id}
-        className="py-4 px-4 text-center"
+        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {listing.is_registered !== undefined
@@ -345,7 +345,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t, siteConfig) => (
       <td
         key={listing.id}
-        className="py-4 px-4 text-center"
+        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {listing.status === 'Closed' || listing.price === undefined

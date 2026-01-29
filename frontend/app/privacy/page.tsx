@@ -4,12 +4,13 @@ import { useI18n } from '@/components/I18nProvider';
 import type { LegalDocument } from '@/lib/legal';
 import { loadLegalConfigSync } from '@/lib/legal';
 import { loadSiteConfigSync } from '@/lib/site-config';
+import { getCountry } from '@/lib/utils';
 
 const privacy = {} as Record<string, LegalDocument>;
 
 export default function PrivacyPage() {
   const { locale } = useI18n();
-  const country = process.env.NEXT_PUBLIC_COUNTRY || 'md';
+  const country = getCountry();
   const siteConfig = loadSiteConfigSync(country);
   const legalConfig = loadLegalConfigSync(country);
   const privacyData = (legalConfig?.privacy || privacy) as Record<string, LegalDocument>;
