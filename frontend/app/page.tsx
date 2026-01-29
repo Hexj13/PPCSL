@@ -258,10 +258,11 @@ export async function generateMetadata({
   const pageParam = params.page;
   const baseTitle = t.metadata.site.defaultTitle;
 
-  const vehicleType =
+  const vehicleType = (
     typeof vehicleTypeParam === 'string' && ['car', 'truck', 'moto'].includes(vehicleTypeParam)
       ? vehicleTypeParam
-      : 'car';
+      : 'car'
+  ) as 'car' | 'truck' | 'moto';
   const metadataFromApi = await fetchSearchMetadata({
     brand: typeof brandParam === 'string' ? brandParam : undefined,
     model: typeof modelParam === 'string' ? modelParam : undefined,
