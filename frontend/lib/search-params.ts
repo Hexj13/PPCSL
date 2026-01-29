@@ -143,11 +143,15 @@ export async function parseSearchParams(
   const brandParam = getValue('brand');
   const modelParam = getValue('model');
 
+  const NO_MATCH_BRAND_ID = '00000000-0000-0000-0000-000000000000';
+
   if (brandParam && options?.brandResolver) {
     const brandSlugs = brandParam.split(',').map((s) => s.trim());
     const brandIds = await options.brandResolver(brandSlugs);
     if (brandIds.length > 0) {
       params.brand_ids = brandIds.join(',');
+    } else {
+      params.brand_ids = NO_MATCH_BRAND_ID;
     }
 
     if (modelParam && options?.modelResolver && brandIds.length > 0) {

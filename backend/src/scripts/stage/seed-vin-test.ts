@@ -143,20 +143,12 @@ async function seedVinTestData() {
       const createdDate = new Date(now);
       createdDate.setDate(createdDate.getDate() - daysAgo * 30);
 
-      const status = i === 0 ? ListingStatusEnum.Active : ListingStatusEnum.Closed;
-
-      const updatedDate = status === ListingStatusEnum.Closed ? new Date(createdDate) : new Date();
-
-      if (status === ListingStatusEnum.Closed) {
-        updatedDate.setDate(updatedDate.getDate() + getRandomInt(15, 90));
-      }
-
       const listing = listingRepo.create({
         title,
         price,
         currency,
         city,
-        status,
+        status: ListingStatusEnum.Active,
         description,
         user_id: user.id,
         vehicle_id: savedVehicle.id,
@@ -164,24 +156,22 @@ async function seedVinTestData() {
         vin,
         last_updated_at: createdDate,
         created_at: createdDate,
-        updated_at: updatedDate,
+        updated_at: createdDate,
       });
 
       await listingRepo.save(listing);
 
-      console.log(
-        `   ${listingNumber}. ${title} - ${status === ListingStatusEnum.Closed ? 'Closed' : 'Active'} - ${formatDate(updatedDate)}`,
-      );
+      console.log(`   ${listingNumber}. ${title} - Active - ${formatDate(createdDate)}`);
     }
   }
 
   console.log(`\n✅ Created ${listingNumber} test listings with VIN!\n`);
   console.log('📋 Summary:');
-  console.log('   - 1HGBH41JXMN109186: 4 listings (1 active, 3 closed)');
-  console.log('   - WBAWL73529P123456: 3 listings (1 active, 2 closed)');
-  console.log('   - JM7TB1824J0123456: 3 listings (1 active, 2 closed)');
+  console.log('   - 1HGBH41JXMN109186: 4 listings (all active)');
+  console.log('   - WBAWL73529P123456: 3 listings (all active)');
+  console.log('   - JM7TB1824J0123456: 3 listings (all active)');
   console.log(
-    '\n💡 To test, open an active listing and check if previous closed listings are displayed.',
+    '\n💡 To test, open a listing and check if other listings with same VIN are displayed.',
   );
 }
 

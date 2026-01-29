@@ -68,6 +68,12 @@ export class ListingsController {
       },
     },
   })
+  @Throttle({
+    default: {
+      limit: process.env.NODE_ENV === 'production' ? 200 : 10000,
+      ttl: 60000,
+    },
+  })
   @Get()
   findAll(@Query() searchDto: SearchListingsDto) {
     return this.listingsService.findAll(searchDto);

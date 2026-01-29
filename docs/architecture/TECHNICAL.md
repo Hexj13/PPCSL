@@ -327,7 +327,8 @@ GET    /api/listings/promotion-access  # Get promotion access status (no auth re
 - The frontend supports **slug-based URLs** for better SEO and user-friendly URLs:
   - `?brand=toyota` or `?brand=toyota,bmw` - Filter by brand slugs (comma-separated)
   - `?model=yaris` or `?model=yaris,corolla` - Filter by model slugs (comma-separated, requires brand filter)
-  - These slug parameters are automatically converted to `brand_ids` and `model_ids` on the server side
+  - Slug parameters are converted to `brand_ids` and `model_ids` on the **frontend** (in `parseSearchParams` via `brandResolver`) before the API request; the API receives only UUIDs.
+  - If a brand slug from the URL is not found (e.g. no such brand in the catalog), the search returns **0 listings** (no fallback to “all brands”).
   - Other filter parameters remain unchanged (price, year, city, etc.)
 - Example URLs:
   - `/?brand=toyota` - All Toyota listings

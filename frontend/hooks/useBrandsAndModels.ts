@@ -3,6 +3,63 @@ import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import { brandsApi, Brand, VehicleModel } from '@/lib/api';
 import { sortByName } from '@/lib/utils';
 
+type VehicleTypeOption = 'car' | 'truck' | 'moto' | undefined;
+
+const brandsCache = new Map<string, Brand[]>();
+const brandsPromiseCache = new Map<string, Promise<Brand[]>>();
+const modelsCache = new Map<string, VehicleModel[]>();
+const modelsPromiseCache = new Map<string, Promise<VehicleModel[]>>();
+
+function getBrandsKey(vehicleType: VehicleTypeOption): string {
+  return vehicleType ?? 'all';
+}
+
+function getModelsKey(brandId: string, vehicleType: VehicleTypeOption): string {
+  return `${brandId}_${vehicleType ?? 'all'}`;
+}
+
+function fetchBrands(vehicleType: VehicleTypeOption): Promise<Brand[]> {
+  const key = getBrandsKey(vehicleType);
+  const cached = brandsCache.get(key);
+  if (cached) return Promise.resolve(cached);
+  const existing = brandsPromiseCache.get(key);
+  if (existing) return existing;
+  const promise = brandsApi
+    .getAll(vehicleType)
+    .then((res) => {
+      const sorted = sortByName(res.data);
+      brandsCache.set(key, sorted);
+      return sorted;
+    })
+    .catch(() => {
+      brandsPromiseCache.delete(key);
+      return [];
+    });
+  brandsPromiseCache.set(key, promise);
+  return promise;
+}
+
+function fetchModels(brandId: string, vehicleType: VehicleTypeOption): Promise<VehicleModel[]> {
+  const key = getModelsKey(brandId, vehicleType);
+  const cached = modelsCache.get(key);
+  if (cached) return Promise.resolve(cached);
+  const existing = modelsPromiseCache.get(key);
+  if (existing) return existing;
+  const promise = brandsApi
+    .getModels(brandId, vehicleType)
+    .then((res) => {
+      const sorted = sortByName(res.data);
+      modelsCache.set(key, sorted);
+      return sorted;
+    })
+    .catch(() => {
+      modelsPromiseCache.delete(key);
+      return [];
+    });
+  modelsPromiseCache.set(key, promise);
+  return promise;
+}
+
 interface UseBrandsAndModelsOptions {
   brandId?: string;
   autoLoadModels?: boolean;
@@ -14,37 +71,40 @@ export function useBrandsAndModels({
   autoLoadModels = true,
   vehicleType,
 }: UseBrandsAndModelsOptions = {}) {
-  const [brands, setBrands] = useState<Brand[]>([]);
+  const brandsKey = getBrandsKey(vehicleType);
+  const [brands, setBrands] = useState<Brand[]>(() => brandsCache.get(brandsKey) ?? []);
   const [models, setModels] = useState<VehicleModel[]>([]);
-  const [loadingBrands, setLoadingBrands] = useState(true);
+  const [loadingBrands, setLoadingBrands] = useState(!brandsCache.has(brandsKey));
   const [loadingModels, setLoadingModels] = useState(false);
   const [, startTransition] = useTransition();
-  const prevVehicleTypeRef = useRef(vehicleType);
+  const mountedRef = useRef(true);
+  const loadModelsRequestIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
-    const isTypeChange = prevVehicleTypeRef.current !== vehicleType;
-    prevVehicleTypeRef.current = vehicleType;
-
-    if (!isTypeChange) {
-      setLoadingBrands(true);
+    const key = getBrandsKey(vehicleType);
+    const cached = brandsCache.get(key);
+    if (cached) {
+      setBrands(cached);
+      setLoadingBrands(false);
+      return;
     }
-
-    brandsApi
-      .getAll(vehicleType)
-      .then((res) => {
-        if (!cancelled) {
-          startTransition(() => {
-            setBrands(sortByName(res.data));
-            setLoadingBrands(false);
-          });
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
+    setLoadingBrands(true);
+    fetchBrands(vehicleType).then((data) => {
+      if (!cancelled) {
+        startTransition(() => {
+          setBrands(data);
           setLoadingBrands(false);
-        }
-      });
+        });
+      }
+    });
     return () => {
       cancelled = true;
     };
@@ -53,34 +113,49 @@ export function useBrandsAndModels({
   useEffect(() => {
     if (!autoLoadModels || !brandId) {
       setModels([]);
+      setLoadingModels(false);
+      return;
+    }
+
+    let cancelled = false;
+    const modelsKey = getModelsKey(brandId, vehicleType);
+    const cachedModels = modelsCache.get(modelsKey);
+    if (cachedModels) {
+      setModels(cachedModels);
+      setLoadingModels(false);
       return;
     }
 
     setModels([]);
     setLoadingModels(true);
-    brandsApi
-      .getModels(brandId, vehicleType)
-      .then((res) => {
-        setModels(sortByName(res.data));
+    fetchModels(brandId, vehicleType).then((data) => {
+      if (!cancelled) {
+        setModels(data);
         setLoadingModels(false);
-      })
-      .catch(() => {
-        setLoadingModels(false);
-      });
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [brandId, autoLoadModels, vehicleType]);
 
   const loadModels = useCallback(
     (id: string) => {
+      loadModelsRequestIdRef.current = id;
+      const key = getModelsKey(id, vehicleType);
+      const cached = modelsCache.get(key);
+      if (cached) {
+        setModels(cached);
+        setLoadingModels(false);
+        return;
+      }
       setLoadingModels(true);
-      brandsApi
-        .getModels(id, vehicleType)
-        .then((res) => {
-          setModels(sortByName(res.data));
+      fetchModels(id, vehicleType).then((data) => {
+        if (mountedRef.current && loadModelsRequestIdRef.current === id) {
+          setModels(data);
           setLoadingModels(false);
-        })
-        .catch(() => {
-          setLoadingModels(false);
-        });
+        }
+      });
     },
     [vehicleType]
   );
