@@ -126,7 +126,9 @@ export class ListingsService {
     });
     const vehicle_type =
       vehicleWithModel?.model?.vehicle_type ||
-      (savedVehicle.body_type ? this.getVehicleTypeFromBodyType(savedVehicle.body_type) : undefined) ||
+      (savedVehicle.body_type
+        ? this.getVehicleTypeFromBodyType(savedVehicle.body_type)
+        : undefined) ||
       'unknown';
 
     Sentry.metrics.count('listings.created', 1, {
@@ -373,7 +375,13 @@ export class ListingsService {
     const Sentry = await import('@sentry/node');
     Sentry.metrics.count('listings.searches', 1, {
       attributes: {
-        has_filters: !!(searchDto.brand_ids || searchDto.model_ids || searchDto.vehicleType || searchDto.price_gte || searchDto.price_lte),
+        has_filters: !!(
+          searchDto.brand_ids ||
+          searchDto.model_ids ||
+          searchDto.vehicleType ||
+          searchDto.price_gte ||
+          searchDto.price_lte
+        ),
         results_count: total,
         page: page,
         vehicle_type: searchDto.vehicleType || 'all',

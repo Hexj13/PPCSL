@@ -267,34 +267,58 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
       errorKey: 'modelRequired',
     }));
     checkField('vehicle.year', formData.vehicle.year, (val) => validators.year(val as string));
-    checkField('vehicle.engine_displ_l', formData.vehicle.engine_displ_l, (val) =>
-      validators.required(val as string)
-    );
-    checkField('vehicle.mileage_km', formData.vehicle.mileage_km, (val) =>
-      validators.required(val as string)
-    );
-    checkField('vehicle.fuel', formData.vehicle.fuel, (val) => validators.required(val as string));
-    checkField('vehicle.transmission', formData.vehicle.transmission, (val) =>
-      validators.required(val as string)
-    );
-    checkField('vehicle.body_type', formData.vehicle.body_type, (val) =>
-      validators.required(val as string)
-    );
+    checkField('vehicle.engine_displ_l', formData.vehicle.engine_displ_l, (val) => ({
+      ...validators.required(val as string),
+      errorKey: 'engineRequired',
+    }));
+    checkField('vehicle.mileage_km', formData.vehicle.mileage_km, (val) => ({
+      ...validators.required(val as string),
+      errorKey: 'mileageRequired',
+    }));
+    checkField('vehicle.fuel', formData.vehicle.fuel, (val) => ({
+      ...validators.required(val as string),
+      errorKey: 'fuelRequired',
+    }));
+    checkField('vehicle.transmission', formData.vehicle.transmission, (val) => ({
+      ...validators.required(val as string),
+      errorKey: 'transmissionRequired',
+    }));
+    checkField('vehicle.body_type', formData.vehicle.body_type, (val) => ({
+      ...validators.required(val as string),
+      errorKey: 'bodyTypeRequired',
+    }));
     if (vehicleType !== 'moto') {
-      checkField('vehicle.drive_type', formData.vehicle.drive_type, (val) =>
-        validators.required(val as string)
-      );
+      checkField('vehicle.drive_type', formData.vehicle.drive_type, (val) => ({
+        ...validators.required(val as string),
+        errorKey: 'driveTypeRequired',
+      }));
     }
-    checkField('price', formData.price, (val) => validators.required(val as string));
-    checkField('city', formData.city, (val) => validators.required(val as string));
+    checkField('price', formData.price, (val) => ({
+      ...validators.required(val as string),
+      errorKey: 'priceRequired',
+    }));
+    checkField('city', formData.city, (val) => ({
+      ...validators.required(val as string),
+      errorKey: 'cityRequired',
+    }));
     checkField('images', formData.images, (val) => validators.images(val as string[]));
     checkField('vin', formData.vin, (val) => validators.vin(val as string | undefined));
-    checkField('condition', formData.condition, (val) => validators.required(val as string));
-    checkField('registration_type', formData.registration_type, (val) =>
-      validators.required(val as string)
-    );
-    checkField('horsepower', formData.horsepower, (val) => validators.required(val as string));
-    checkField('power_kw', formData.power_kw, (val) => validators.required(val as string));
+    checkField('condition', formData.condition, (val) => ({
+      ...validators.required(val as string),
+      errorKey: 'conditionRequired',
+    }));
+    checkField('registration_type', formData.registration_type, (val) => ({
+      ...validators.required(val as string),
+      errorKey: 'registrationTypeRequired',
+    }));
+    checkField('horsepower', formData.horsepower, (val) => ({
+      ...validators.required(val as string),
+      errorKey: 'horsepowerRequired',
+    }));
+    checkField('power_kw', formData.power_kw, (val) => ({
+      ...validators.required(val as string),
+      errorKey: 'powerKwRequired',
+    }));
     checkField('registration_expires_at', formData.registration_expires_at, (val) =>
       validators.registrationDate(val as string | undefined, formData.is_registered)
     );

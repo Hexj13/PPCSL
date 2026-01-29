@@ -381,6 +381,7 @@
       "truck": "Commercial",
       "moto": "Motorcycles"
     },
+    "required": "Please fill in the required field",
     "brandRequired": "Brand selection is required",
     "modelRequired": "Model selection is required",
     "yearRequired": "Year is required",
@@ -401,6 +402,7 @@
     "conditionRequired": "Condition selection is required",
     "registrationTypeRequired": "Registration type selection is required",
     "horsepowerRequired": "Valid horsepower is required",
+    "powerKwRequired": "Valid power (kW) is required",
     "registrationDateRequired": "Registration expiration date is required",
     "registrationDateInvalid": "Registration date cannot be less than current month and year",
     "registrationDateFormatError": "Date must be in format month.year (e.g., 05.2025). Month must be two digits.",

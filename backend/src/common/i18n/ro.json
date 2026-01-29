@@ -2,7 +2,7 @@
   "validation": {
     "name": "Câmpul poate conține doar litere, spații, cratime și liniuțe",
     "phone": "Numărul de telefon trebuie să fie în format +cod țară (1-4 cifre) + număr (6-15 cifre)",
-    "password": "Parola trebuie să conțină cel puțin o literă mare, o literă mică și un caracter special"
+    "password": "Parola trebuie să conțină cel puțin o literă mare și o literă mică"
   },
   "errors": {
     "serverError": "Eroare pe server. Încercați mai târziu.",

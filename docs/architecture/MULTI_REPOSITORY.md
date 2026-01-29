@@ -189,14 +189,12 @@ return <h1>{t('header.addListing')}</h1>;
 
 ### In Platform Repositories
 
-1. **Copy platform files** to core before build:
-   ```bash
-   cp -r locales core/frontend/lib/  # Optional: translations load from root
-   cp -r theme core/frontend/lib/   # Required: TypeScript modules
-   cp -r config core/frontend/lib/  # Required: TypeScript modules
-   ```
-   
-   **Note:** Translation files are loaded directly from the root `locales/` directory. Copying them to core is optional and only used as a fallback. Theme and config files must be copied as they are TypeScript modules that need to be compiled.
+1. **Copy platform files** to core before build (e.g. `npm run prepare:build`):
+   - `locales/ro.json`, `locales/ru.json` → `core/frontend/lib/locales/` (frontend)
+   - `locales/backend/*.json` → `core/backend/src/common/i18n/` (backend)
+   - `theme/` → `core/frontend/lib/theme/`
+   - `config/` → `core/frontend/lib/config/`
+   - Assets: `assets/frontend/public/*`, `assets/backend/watermark/` → core
 
 2. **Build** happens in `core/frontend` and `core/backend` using copied files
 

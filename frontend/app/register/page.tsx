@@ -70,9 +70,6 @@ export default function RegisterPage() {
     if (!/[a-z]/.test(password)) {
       return t('register.passwordLowercase');
     }
-    if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
-      return t('register.passwordSpecial');
-    }
     return '';
   };
 
@@ -89,10 +86,6 @@ export default function RegisterPage() {
       {
         text: t('register.passwordRuleLowercase'),
         isValid: /[a-z]/.test(password),
-      },
-      {
-        text: t('register.passwordRuleSpecial'),
-        isValid: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password),
       },
     ];
   };

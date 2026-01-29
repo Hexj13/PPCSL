@@ -107,7 +107,7 @@ git submodule update --init --recursive
 
 ```bash
 # Это делает файлы локализации доступными для core во время разработки
-cp -r locales core/frontend/lib/
+mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/
 cp -r theme core/frontend/lib/
 cp -r config core/frontend/lib/
 ```
@@ -260,7 +260,7 @@ ls core/frontend/lib/config/
 
 Если файлов нет, скопируйте их снова:
 ```bash
-cp -r locales core/frontend/lib/
+mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/
 cp -r theme core/frontend/lib/
 cp -r config core/frontend/lib/
 ```

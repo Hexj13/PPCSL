@@ -12,11 +12,7 @@ export class IsPasswordConstraint implements ValidatorConstraintInterface {
     if (typeof value !== 'string') {
       return false;
     }
-    return (
-      /[A-Z]/.test(value) &&
-      /[a-z]/.test(value) &&
-      /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value)
-    );
+    return /[A-Z]/.test(value) && /[a-z]/.test(value);
   }
 
   defaultMessage(_args: ValidationArguments): string {

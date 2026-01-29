@@ -195,10 +195,10 @@ async function getTitleFromParams(
 export async function generateMetadata({
   searchParams,
 }: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  searchParams?: Promise<Record<string, string | string[] | undefined> | undefined>;
 }): Promise<Metadata> {
   const t = getServerTranslations();
-  const params = await searchParams;
+  const params = (await (searchParams ?? Promise.resolve(undefined))) ?? {};
   const brandParam = params.brand;
   const modelParam = params.model;
   const bodyTypesParam = params.body_types;
@@ -377,9 +377,9 @@ function SearchFiltersWrapper() {
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  searchParams?: Promise<Record<string, string | string[] | undefined> | undefined>;
 }) {
-  const params = await searchParams;
+  const params = (await (searchParams ?? Promise.resolve(undefined))) ?? {};
   const brand = typeof params.brand === 'string' ? params.brand : null;
   const model = typeof params.model === 'string' ? params.model : null;
   const initialData = await getListings(params);

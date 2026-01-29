@@ -11,5 +11,11 @@ if (dsn && isProduction) {
     tracesSampleRate: 1.0,
     debug: false,
     enableLogs: true,
+    ignoreErrors: [
+      'NEXT_REDIRECT',
+      'NEXT_NOT_FOUND',
+      /Command failed: curl.*AWS_CONTAINER_CREDENTIALS/,
+      /Command failed: curl.*169\.254\.170\.2/,
+    ],
   });
 }

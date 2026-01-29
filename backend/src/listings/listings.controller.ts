@@ -448,27 +448,13 @@ export class ListingsController {
   @ApiResponse({ status: 401, description: 'Unauthorized - Invalid secret key' })
   @Post('cron/close-old')
   async closeOldListings(@Headers('x-cron-secret') secret: string) {
-    const Sentry = await import('@sentry/node');
     const expectedSecret = process.env.CRON_SECRET;
     if (!expectedSecret || secret !== expectedSecret) {
       throw new ForbiddenException('Invalid secret key');
     }
 
-    return Sentry.withMonitor(
-      'close-old-listings-endpoint',
-      async () => {
-        const result = await this.listingsService.autoCloseOldListings();
-        return { message: 'Old listings closed successfully', result };
-      },
-      {
-        schedule: {
-          type: 'crontab',
-          value: '0 0 * * *',
-        },
-        checkinMargin: 5,
-        maxRuntime: 30,
-      },
-    );
+    const result = await this.listingsService.autoCloseOldListings();
+    return { message: 'Old listings closed successfully', result };
   }
 
   @Patch(':id/promote')

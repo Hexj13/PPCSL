@@ -149,7 +149,7 @@ Use this approach when:
    ```bash
    # Translations are loaded directly from root, but copying provides fallback
    # Theme and config files must be copied as they are TypeScript modules
-   cp -r locales core/frontend/lib/  # Optional for translations
+   mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/  # Frontend ro/ru + backend locales
    cp -r theme core/frontend/lib/   # Required
    cp -r config core/frontend/lib/  # Required
    ```
@@ -296,12 +296,12 @@ If you need to make changes to core while working in kupito.club:
 
 2. **Copy files to core for testing:**
    ```bash
-   cp -r locales core/frontend/lib/  # Optional for translations (loaded from root)
+   mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/  # Frontend ro/ru + backend locales (loaded from root)
    cp -r theme core/frontend/lib/
    cp -r config core/frontend/lib/
    ```
    
-   **Note:** Translation files are loaded directly from the root `locales/` directory. Copying them to core is optional and only used as a fallback.
+   **Note:** Frontend uses `locales/ro.json`, `locales/ru.json`; backend uses `locales/backend/*.json`. No `backend/` folder is created in `core/frontend/lib/locales/`.
 
 3. **Test locally**
 
@@ -326,7 +326,7 @@ Create a helper script to simplify the workflow:
 
 # Copy platform files to core
 echo "Copying platform files to core..."
-cp -r locales core/frontend/lib/  # Optional: translations load from root
+mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/  # Frontend ro/ru + backend locales
 cp -r theme core/frontend/lib/    # Required
 cp -r config core/frontend/lib/   # Required
 
@@ -359,7 +359,7 @@ git pull origin main
 cd ..
 
 echo "Copying locale files to core..."
-cp -r locales core/frontend/lib/
+mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/
 cp -r theme core/frontend/lib/
 cp -r config core/frontend/lib/
 
@@ -409,7 +409,7 @@ echo "Done! Core updated and locale files copied."
 1. Edit files in `kupito.club/locales/`, `theme/`, or `config/`
 2. Copy to core for testing:
    ```bash
-   cp -r locales core/frontend/lib/
+   mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/
    cp -r theme core/frontend/lib/
    cp -r config core/frontend/lib/
    ```
@@ -454,7 +454,7 @@ git pull origin main
 cd ..
 
 # 3. Copy platform files
-cp -r locales core/frontend/lib/  # Optional: translations load from root
+mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/  # Frontend ro/ru + backend locales
 cp -r theme core/frontend/lib/   # Required
 cp -r config core/frontend/lib/   # Required
 
@@ -462,7 +462,7 @@ cp -r config core/frontend/lib/   # Required
 # Edit locales/ro.json, locales/ru.json, locales/en.json, theme/colors.ts, or config/site.ts
 
 # 5. Copy files again and test
-cp -r locales core/frontend/lib/
+mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/
 cp -r theme core/frontend/lib/
 cp -r config core/frontend/lib/
 cd core
@@ -502,7 +502,7 @@ git push origin main
    ```
 4. **Copy platform files and test:**
    ```bash
-   cp -r locales core/frontend/lib/  # Optional for translations
+   mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/  # Frontend ro/ru + backend locales
    cp -r theme core/frontend/lib/    # Required
    cp -r config core/frontend/lib/   # Required
    cd core
@@ -535,7 +535,7 @@ git status  # Check what's modified
    ls locales/ro.json locales/ru.json
    ls locales/en.json
    ```
-   Translation files are loaded directly from the root directory.
+   Translations are copied to core at prepare:build (frontend ro/ru, backend from locales/backend).
 
 2. Ensure theme and config files are copied to `core/frontend/lib/`:
    ```bash

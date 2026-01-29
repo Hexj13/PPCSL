@@ -239,9 +239,6 @@ export default function ResetPasswordPage() {
     if (!/[a-z]/.test(passwordValue)) {
       return t('register.passwordLowercase');
     }
-    if (!/[!@#$%^&*()_+=[\]{};':"\\|,.<>/?-]/.test(passwordValue)) {
-      return t('register.passwordSpecial');
-    }
     return '';
   };
 
@@ -253,12 +250,7 @@ export default function ResetPasswordPage() {
     if (trimmed.length === 0) {
       return false;
     }
-    return (
-      trimmed.length >= 8 &&
-      /[A-Z]/.test(trimmed) &&
-      /[a-z]/.test(trimmed) &&
-      /[!@#$%^&*()_+=[\]{};':"\\|,.<>/?-]/.test(trimmed)
-    );
+    return trimmed.length >= 8 && /[A-Z]/.test(trimmed) && /[a-z]/.test(trimmed);
   }, []);
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -356,10 +348,6 @@ export default function ResetPasswordPage() {
       {
         text: t('register.passwordRuleLowercase'),
         isValid: /[a-z]/.test(passwordValue),
-      },
-      {
-        text: t('register.passwordRuleSpecial'),
-        isValid: /[!@#$%^&*()_+=[\]{};':"\\|,.<>/?-]/.test(passwordValue),
       },
     ];
   };

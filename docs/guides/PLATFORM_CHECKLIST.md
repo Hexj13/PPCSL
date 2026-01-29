@@ -107,7 +107,7 @@ platform-repo/
 - [ ] Настроен `description`
 - [ ] Обновлён скрипт `prepare:build`:
   ```json
-  "prepare:build": "cp -r scripts/{country} core/backend/src/scripts/ && cp -r locales core/frontend/lib/ && cp -r theme core/frontend/lib/ && cp -r config core/frontend/lib/ && cp -r assets/frontend/public/* core/frontend/public/ && cp -r assets/backend/watermark core/backend/assets/"
+  "prepare:build": "mkdir -p core/frontend/lib/locales && rm -rf core/frontend/lib/locales/backend && cp locales/ro.json locales/ru.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/ && cp -r theme core/frontend/lib/ && cp -r config core/frontend/lib/ && cp -r assets/frontend/public/* core/frontend/public/ && cp -r assets/backend/watermark core/backend/assets/"
   ```
 - [ ] Добавлены скрипты для запуска:
   ```json

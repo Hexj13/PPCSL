@@ -468,7 +468,7 @@ export default colors;
   "description": "Platform for posting car sale listings in Albania",
   "private": true,
   "scripts": {
-    "prepare:build": "cp -r locales core/frontend/lib/ && cp -r theme core/frontend/lib/ && cp -r config core/frontend/lib/",
+    "prepare:build": "mkdir -p core/frontend/lib/locales && rm -rf core/frontend/lib/locales/backend && cp locales/ro.json locales/ru.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/ && cp -r theme core/frontend/lib/ && cp -r config core/frontend/lib/",
     "build": "npm run prepare:build && cd core/frontend && npm run build",
     "build:backend": "cd core/backend && npm run build",
     "dev": "npm run prepare:build && cd core && npm run dev"
@@ -501,10 +501,7 @@ jobs:
           token: ${{ secrets.PAT_TOKEN }}
 
       - name: Copy platform files
-        run: |
-          cp -r locales core/frontend/lib/
-          cp -r theme core/frontend/lib/
-          cp -r config core/frontend/lib/
+        run: npm run prepare:build
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -598,9 +595,10 @@ jobs:
 
 ```bash
 # В корне репозитория albania-platform
-cp -r locales core/frontend/lib/
-cp -r theme core/frontend/lib/
-cp -r config core/frontend/lib/
+npm run prepare:build
+# или вручную:
+# mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/
+# cp -r theme core/frontend/lib/ && cp -r config core/frontend/lib/
 ```
 
 ### 4.2. Установка зависимостей
@@ -1315,12 +1313,12 @@ assets/
 
 **Обновлённый скрипт `prepare:build` в `package.json`:**
 ```json
-"prepare:build": "cp -r locales core/frontend/lib/ && cp -r theme core/frontend/lib/ && cp -r config core/frontend/lib/ && cp -r assets/frontend/public/* core/frontend/public/ && cp -r assets/backend/watermark core/backend/assets/"
+"prepare:build": "mkdir -p core/frontend/lib/locales && rm -rf core/frontend/lib/locales/backend && cp locales/ro.json locales/ru.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/ && cp -r theme core/frontend/lib/ && cp -r config core/frontend/lib/ && cp -r assets/frontend/public/* core/frontend/public/ && cp -r assets/backend/watermark core/backend/assets/"
 ```
 
 **Процесс:**
 1. При запуске `npm run prepare:build` или `npm run dev`:
-   - Копируются `locales/` → `core/frontend/lib/locales/`
+   - Копируются `locales/ro.json`, `locales/ru.json` → `core/frontend/lib/locales/`; `locales/backend/*.json` → `core/backend/src/common/i18n/`
    - Копируются `theme/` → `core/frontend/lib/theme/`
    - Копируются `config/` → `core/frontend/lib/config/`
    - **Копируются `assets/frontend/public/*` → `core/frontend/public/`**

@@ -548,7 +548,7 @@ Backups are saved to `backend/backups/` by default with format: `ppcsl_backup_YY
 - Custom validation decorators:
   - `@IsName()` - Validates name fields (letters, spaces, hyphens, dashes only)
   - `@IsPhone()` - Validates phone number format (+country code 1-4 digits + number 6-15 digits)
-  - `@IsPassword()` - Validates password strength (uppercase, lowercase, special character required)
+  - `@IsPassword()` - Validates password strength (uppercase, lowercase required)
 - Phone number format validation
 - Email validation
 - VIN length validation (17 characters)
@@ -1059,11 +1059,12 @@ PPCSL (Core Repository)
    - Initializes and updates submodules recursively
 
 2. **Copy platform-specific files:**
-   - Copies `locales/` to `core/frontend/lib/locales/` (for fallback, translations are loaded directly from root)
-   - Copies `theme/colors.ts` to `core/frontend/lib/theme/colors.ts`
-   - Copies `config/site.ts` to `core/frontend/lib/config/site.ts`
+   - Copies `locales/ro.json`, `locales/ru.json` to `core/frontend/lib/locales/` (frontend; no backend folder in frontend)
+   - Copies `locales/backend/*.json` to `core/backend/src/common/i18n/` (backend)
+   - Copies `theme/` to `core/frontend/lib/theme/`
+   - Copies `config/` to `core/frontend/lib/config/`
 
-   **Note:** Translation files are loaded directly from the root `locales/` directory. The copy to core is kept for backward compatibility.
+   **Note:** Translation files are loaded from the copied files in core at build/runtime.
 
 3. **Install dependencies:**
    - Installs frontend and backend dependencies
@@ -1101,7 +1102,7 @@ For deploying kupito.club on Render.com, configure the following:
 
 **Build Command:**
 ```bash
-git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && git submodule update --init --recursive && cp -r locales core/frontend/lib/ && cp -r theme core/frontend/lib/ && cp -r config core/frontend/lib/ && cd core/frontend && npm ci && npm run build
+git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && git submodule update --init --recursive && npm run prepare:build && cd core/frontend && npm ci && npm run build
 ```
 
 **Start Command:**
@@ -1112,7 +1113,7 @@ cd core/frontend && npm start
 **Important:** The Build Command must:
 1. Configure git credentials for accessing private submodule
 2. Initialize and update the submodule
-3. Copy platform-specific files (locales, theme, config) to `core/frontend/lib/`
+3. Copy platform-specific files via `npm run prepare:build` (frontend locales ro/ru, backend locales, theme, config, assets)
 4. Install dependencies and build the application
 
 ### 13.4.2. Render.com Backend Deployment Configuration

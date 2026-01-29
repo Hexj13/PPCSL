@@ -32,7 +32,7 @@ export class RegisterDto {
 
   @ApiProperty({
     example: 'SecurePass123!',
-    description: 'Password (min 8 chars, must contain uppercase, lowercase, and special character)',
+    description: 'Password (min 8 chars, must contain uppercase and lowercase)',
   })
   @IsString()
   @MinLength(8, { message: 'Лозинката мора да содржи минимум 8 карактери' })

@@ -2,7 +2,7 @@
   "validation": {
     "name": "Field can only contain letters, spaces, hyphens and dashes",
     "phone": "Phone number must be in format +country code (1-4 digits) + number (6-15 digits)",
-    "password": "Password must contain at least one uppercase letter, one lowercase letter and one special character"
+    "password": "Password must contain at least one uppercase letter and one lowercase letter"
   },
   "errors": {
     "serverError": "Server error. Please try again later.",
@@ -76,4 +76,3 @@
     }
   }
 }
-

@@ -19,10 +19,10 @@ export const dynamic = 'force-dynamic';
 export async function generateMetadata({
   searchParams,
 }: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  searchParams?: Promise<Record<string, string | string[] | undefined> | undefined>;
 }): Promise<Metadata> {
   const t = getServerTranslations();
-  const params = await searchParams;
+  const params = (await (searchParams ?? Promise.resolve(undefined))) ?? {};
   const brand = typeof params.brand === 'string' ? params.brand : null;
   const model = typeof params.model === 'string' ? params.model : null;
 
@@ -95,9 +95,9 @@ function SearchFiltersWrapper() {
 async function ListingGridServer({
   searchParams,
 }: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  searchParams?: Promise<Record<string, string | string[] | undefined> | undefined>;
 }) {
-  const params = await searchParams;
+  const params = (await (searchParams ?? Promise.resolve(undefined))) ?? {};
   const initialData = await getListings(params);
   return <ListingGrid initialData={initialData} />;
 }
@@ -105,7 +105,7 @@ async function ListingGridServer({
 function ListingGridWrapper({
   searchParams,
 }: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  searchParams?: Promise<Record<string, string | string[] | undefined> | undefined>;
 }) {
   return (
     <Suspense fallback={<div className="animate-pulse h-96" />}>
@@ -117,10 +117,10 @@ function ListingGridWrapper({
 export default async function ListingsPage({
   searchParams,
 }: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  searchParams?: Promise<Record<string, string | string[] | undefined> | undefined>;
 }) {
   const t = getServerTranslations();
-  const params = await searchParams;
+  const params = (await (searchParams ?? Promise.resolve(undefined))) ?? {};
   const brand = typeof params.brand === 'string' ? params.brand : null;
   const model = typeof params.model === 'string' ? params.model : null;
 
