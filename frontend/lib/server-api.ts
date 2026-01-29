@@ -5,6 +5,39 @@ import { createBrandResolver, createModelResolver, parseSearchParams } from './s
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
+export interface SearchMetadataResponse {
+  title: string | null;
+  description?: string;
+  brandName?: string;
+  modelNames?: string[];
+}
+
+export const fetchSearchMetadata = cache(
+  async (params: {
+    brand?: string;
+    model?: string;
+    vehicleType?: 'car' | 'truck' | 'moto';
+  }): Promise<SearchMetadataResponse> => {
+    try {
+      const searchParams = new URLSearchParams();
+      if (params.brand) searchParams.set('brand', params.brand);
+      if (params.model) searchParams.set('model', params.model);
+      if (params.vehicleType) searchParams.set('vehicleType', params.vehicleType);
+      const query = searchParams.toString();
+      const response = await fetch(
+        `${API_URL}/api/brands/search-metadata${query ? `?${query}` : ''}`,
+        {
+          next: { revalidate: 3600 },
+        }
+      );
+      if (!response.ok) return { title: null };
+      return response.json();
+    } catch {
+      return { title: null };
+    }
+  }
+);
+
 export const fetchBrands = cache(async (): Promise<Brand[]> => {
   try {
     const response = await fetch(`${API_URL}/api/brands`, {

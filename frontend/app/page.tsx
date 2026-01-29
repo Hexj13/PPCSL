@@ -11,9 +11,14 @@ import { SearchFilters } from '@/components/SearchFilters';
 import { SearchStructuredData } from '@/components/SearchStructuredData';
 import { getServerTranslations, type Translations } from '@/lib/i18n';
 import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/popular-brands';
-import { fetchBrands, fetchModelsByBrands, getListings } from '@/lib/server-api';
+import {
+  fetchBrands,
+  fetchModelsByBrands,
+  fetchSearchMetadata,
+  getListings,
+} from '@/lib/server-api';
 import { loadSiteConfigSync } from '@/lib/site-config';
-import { createSlug, getCountry, slugMatches } from '@/lib/utils';
+import { createSlug, getCountry, slugMatches, slugToName } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -104,17 +109,27 @@ async function getTitleFromParams(
     return vehicleTypeLabel ? `${vehicleTypeLabel} | ${defaultTitle}` : defaultTitle;
   }
 
-  const brandSlugs = brand ? brand.split(',').map((s) => s.trim().toLowerCase()) : [];
-  const modelSlugs = model ? model.split(',').map((s) => s.trim().toLowerCase()) : [];
+  const brandSlugs = brand
+    ? brand
+        .split(',')
+        .map((s) => s.trim().toLowerCase())
+        .filter(Boolean)
+    : [];
+  const modelSlugs = model
+    ? model
+        .split(',')
+        .map((s) => s.trim().toLowerCase())
+        .filter(Boolean)
+    : [];
 
   try {
     const allBrands = await fetchBrands();
     const foundBrands = brandSlugs
       .map((slug) => {
-        const brand = allBrands.find(
-          (b) => b.name.toLowerCase() === slug || createSlug(b.name) === slug
-        );
-        return brand?.name;
+        const bySlug = allBrands.find((b) => createSlug(b.name) === slug);
+        if (bySlug) return bySlug.name;
+        const byName = allBrands.find((b) => b.name.toLowerCase() === slug);
+        return byName?.name;
       })
       .filter((name): name is string => name !== undefined);
 
@@ -129,10 +144,12 @@ async function getTitleFromParams(
 
       if (brandIds.length > 0) {
         const modelsByBrand = await fetchModelsByBrands(brandIds);
-        const foundModels: string[] = [];
+        const parts: string[] = [];
 
         foundBrands.forEach((brandName) => {
           const brandId = allBrands.find((b) => b.name === brandName)?.id;
+          const brandParts: string[] = [];
+
           if (brandId) {
             const brandModels = modelsByBrand[brandId] || [];
             modelSlugs.forEach((modelSlug) => {
@@ -143,14 +160,38 @@ async function getTitleFromParams(
                   slugMatches(modelSlug, m.name)
               );
               if (model) {
-                foundModels.push(`${brandName} ${model.name}`);
+                brandParts.push(`${brandName} ${model.name}`);
               }
             });
           }
+
+          if (brandParts.length === 0) {
+            const popularModels = POPULAR_MODELS_BY_BRAND[brandName] || [];
+            modelSlugs.forEach((modelSlug) => {
+              const model = popularModels.find(
+                (m) =>
+                  m.toLowerCase() === modelSlug ||
+                  createSlug(m) === modelSlug ||
+                  slugMatches(modelSlug, m)
+              );
+              if (model) {
+                brandParts.push(`${brandName} ${model}`);
+              }
+            });
+          }
+
+          if (brandParts.length > 0) {
+            parts.push(...brandParts);
+          } else if (foundBrands.length === 1 && modelSlugs.length > 0) {
+            const fallbackModels = modelSlugs.map((s) => slugToName(s)).join(', ');
+            parts.push(`${brandName} ${fallbackModels}`);
+          } else {
+            parts.push(brandName);
+          }
         });
 
-        if (foundModels.length > 0) {
-          const modelsTitle = foundModels.join(', ');
+        if (parts.length > 0) {
+          const modelsTitle = parts.join(', ');
           return vehicleTypeLabel ? `${modelsTitle} | ${vehicleTypeLabel}` : modelsTitle;
         }
       }
@@ -190,6 +231,11 @@ async function getTitleFromParams(
         const modelsTitle = foundModels.join(', ');
         return vehicleTypeLabel ? `${modelsTitle} | ${vehicleTypeLabel}` : modelsTitle;
       }
+
+      if (popularBrands.length === 1 && modelSlugs.length > 0) {
+        const slugBasedTitle = `${popularBrands[0]} ${modelSlugs.map((s) => slugToName(s)).join(', ')}`;
+        return vehicleTypeLabel ? `${slugBasedTitle} | ${vehicleTypeLabel}` : slugBasedTitle;
+      }
     }
 
     const popularBrandsTitle =
@@ -211,14 +257,26 @@ export async function generateMetadata({
   const vehicleTypeParam = params.vehicleType;
   const pageParam = params.page;
   const baseTitle = t.metadata.site.defaultTitle;
-  const title = await getTitleFromParams(
-    brandParam,
-    modelParam,
-    bodyTypesParam,
-    vehicleTypeParam,
-    baseTitle,
-    t
-  );
+
+  const vehicleType =
+    typeof vehicleTypeParam === 'string' && ['car', 'truck', 'moto'].includes(vehicleTypeParam)
+      ? vehicleTypeParam
+      : 'car';
+  const metadataFromApi = await fetchSearchMetadata({
+    brand: typeof brandParam === 'string' ? brandParam : undefined,
+    model: typeof modelParam === 'string' ? modelParam : undefined,
+    vehicleType,
+  });
+  const title =
+    metadataFromApi.title ??
+    (await getTitleFromParams(
+      brandParam,
+      modelParam,
+      bodyTypesParam,
+      vehicleTypeParam,
+      baseTitle,
+      t
+    ));
   const fullTitle = title === baseTitle ? title : `${title} | ${baseTitle}`;
 
   const page =
@@ -239,30 +297,50 @@ export async function generateMetadata({
   });
 
   let description: string;
-  if (title === baseTitle) {
+  if (metadataFromApi.description) {
+    description = metadataFromApi.description;
+  } else if (title === baseTitle) {
     description = t.metadata.site.homePageDescription;
   } else {
     const brandParamValue = typeof brandParam === 'string' ? brandParam : null;
     const modelParamValue = typeof modelParam === 'string' ? modelParam : null;
+    const apiBrandName = metadataFromApi.brandName;
+    const apiModelName =
+      metadataFromApi.modelNames && metadataFromApi.modelNames.length === 1
+        ? metadataFromApi.modelNames[0]
+        : undefined;
 
-    if (modelParamValue && brandParamValue) {
+    if (apiBrandName && apiModelName) {
+      description = t.metadata.site.homePageDescriptionWithBrandModel
+        .replaceAll('{brand}', apiBrandName)
+        .replaceAll('{model}', apiModelName);
+    } else if (apiBrandName) {
+      description = t.metadata.site.homePageDescriptionWithBrand.replaceAll(
+        '{brand}',
+        apiBrandName
+      );
+    } else if (brandParamValue && brandParamValue.includes(',')) {
+      description = t.metadata.site.homePageDescription;
+    } else if (modelParamValue && brandParamValue) {
       const brandName =
         POPULAR_BRANDS.find((b) => createSlug(b) === brandParamValue.toLowerCase()) ||
         brandParamValue;
       const models = POPULAR_MODELS_BY_BRAND[brandName] || [];
+      const modelSlugFallback = modelParamValue.split(',')[0]?.trim() ?? modelParamValue;
       const modelName =
-        models.find((m) => createSlug(m) === modelParamValue.toLowerCase()) || modelParamValue;
+        models.find((m) => createSlug(m) === modelSlugFallback.toLowerCase()) ||
+        slugToName(modelSlugFallback);
 
       description = t.metadata.site.homePageDescriptionWithBrandModel
-        .replace('{brand}', brandName)
-        .replace('{model}', modelName);
+        .replaceAll('{brand}', brandName)
+        .replaceAll('{model}', modelName);
     } else {
       const brandName = brandParamValue
         ? POPULAR_BRANDS.find((b) => createSlug(b) === brandParamValue.toLowerCase()) ||
           brandParamValue
         : title;
 
-      description = t.metadata.site.homePageDescriptionWithBrand.replace('{brand}', brandName);
+      description = t.metadata.site.homePageDescriptionWithBrand.replaceAll('{brand}', brandName);
     }
   }
 

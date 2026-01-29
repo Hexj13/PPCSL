@@ -64,5 +64,12 @@
       "CVT": "Variator",
       "Robot": "Robot"
     }
+  },
+  "metadata": {
+    "site": {
+      "homePageDescription": "Cumpără sau vinde auto pe Kupito! Publică anunț gratuit. Platformă pentru cumpărarea și vânzarea autoturismelor online în Moldova. Anunțuri auto Moldova - publicare gratuită de anunțuri pentru persoane fizice și dealeri auto.",
+      "homePageDescriptionWithBrand": "Cumpără autoturisme {brand} pe Kupito! Găsește cele mai bune prețuri și selecție de autoturisme {brand} în Moldova.",
+      "homePageDescriptionWithBrandModel": "Cumpără {brand} {model} pe Kupito! Găsește cele mai bune prețuri și selecție de autoturisme {brand} {model} în Moldova."
+    }
   }
 }

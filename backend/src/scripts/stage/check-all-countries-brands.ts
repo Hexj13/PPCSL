@@ -30,7 +30,7 @@ const COUNTRIES_BRANDS: Record<string, string[]> = {
     'Terex',
   ],
   Germany: ['MAN', 'Mercedes-Benz', 'Setra', 'Neoplan', 'Fendt', 'Claas', 'Deutz-Fahr', 'Liebherr'],
-  France: ['Renault Trucks', 'Peugeot', 'Citroen'],
+  France: ['Renault Trucks', 'Peugeot', 'Citroën'],
   Italy: ['Iveco', 'Fiat'],
   Russia: ['Kamaz', 'MAZ', 'GAZ', 'Ural', 'BelAZ'],
   Japan: [

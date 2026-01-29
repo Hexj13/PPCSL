@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { brandsApi } from '@/lib/api';
 import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/popular-brands';
-import { createSlug, slugMatches } from '@/lib/utils';
+import { createSlug, slugMatches, slugToName } from '@/lib/utils';
 
 const decodeArray = (encoded: string): string[] => {
   if (!encoded) return [];
@@ -21,6 +21,53 @@ const decodeArray = (encoded: string): string[] => {
     return [];
   }
 };
+
+function getFallbackTitle(
+  brandParam: string | null,
+  modelParam: string | null,
+  vehicleTypeLabel: string,
+  baseTitle: string
+): string {
+  if (!brandParam && !modelParam) {
+    return vehicleTypeLabel ? `${vehicleTypeLabel} | ${baseTitle}` : baseTitle;
+  }
+  const brandSlugs = brandParam ? brandParam.split(',').map((s) => s.trim().toLowerCase()) : [];
+  const modelSlugs = modelParam ? modelParam.split(',').map((s) => s.trim().toLowerCase()) : [];
+  const foundBrands = brandSlugs
+    .map((slug) => POPULAR_BRANDS.find((b) => b.toLowerCase() === slug || createSlug(b) === slug))
+    .filter((name): name is string => name !== undefined);
+  if (foundBrands.length === 0) return baseTitle;
+  if (modelSlugs.length > 0 && foundBrands.length > 0) {
+    const foundModels: string[] = [];
+    foundBrands.forEach((brandName) => {
+      const models = POPULAR_MODELS_BY_BRAND[brandName] || [];
+      modelSlugs.forEach((modelSlug) => {
+        const model = models.find(
+          (m) =>
+            m.toLowerCase() === modelSlug ||
+            createSlug(m) === modelSlug ||
+            slugMatches(modelSlug, m)
+        );
+        if (model) foundModels.push(`${brandName} ${model}`);
+      });
+    });
+    if (foundModels.length > 0) {
+      const title = vehicleTypeLabel
+        ? `${foundModels.join(', ')} | ${vehicleTypeLabel}`
+        : foundModels.join(', ');
+      return `${title} | ${baseTitle}`;
+    }
+    if (foundBrands.length === 1) {
+      const title = vehicleTypeLabel
+        ? `${foundBrands[0]} ${modelSlugs.map((s) => slugToName(s)).join(', ')} | ${vehicleTypeLabel}`
+        : `${foundBrands[0]} ${modelSlugs.map((s) => slugToName(s)).join(', ')}`;
+      return `${title} | ${baseTitle}`;
+    }
+  }
+  const brandsTitle = foundBrands.length === 1 ? foundBrands[0] : foundBrands.join(', ');
+  const title = vehicleTypeLabel ? `${brandsTitle} | ${vehicleTypeLabel}` : brandsTitle;
+  return `${title} | ${baseTitle}`;
+}
 
 export function DynamicPageTitle() {
   const searchParams = useSearchParams();
@@ -69,7 +116,6 @@ export function DynamicPageTitle() {
             .split(',')
             .map((s) => s.trim())
             .filter(Boolean);
-
       if (bodyTypes.length > 0) {
         const bodyTypeLabels = bodyTypes
           .map((bt) => {
@@ -80,10 +126,10 @@ export function DynamicPageTitle() {
             }
           })
           .filter((label): label is string => Boolean(label));
-
         if (bodyTypeLabels.length > 0) {
-          const bodyTypeTitle = bodyTypeLabels.join(', ');
-          const title = vehicleTypeLabel ? `${bodyTypeTitle} | ${vehicleTypeLabel}` : bodyTypeTitle;
+          const title = vehicleTypeLabel
+            ? `${bodyTypeLabels.join(', ')} | ${vehicleTypeLabel}`
+            : bodyTypeLabels.join(', ');
           document.title = `${title} | ${baseTitle}`;
           return;
         }
@@ -91,144 +137,33 @@ export function DynamicPageTitle() {
     }
 
     if (!brandParam && !modelParam) {
-      const title = vehicleTypeLabel ? `${vehicleTypeLabel} | ${baseTitle}` : baseTitle;
-      document.title = title;
+      document.title = vehicleTypeLabel ? `${vehicleTypeLabel} | ${baseTitle}` : baseTitle;
       return;
     }
 
-    const brandSlugs = brandParam ? brandParam.split(',').map((s) => s.trim().toLowerCase()) : [];
-    const modelSlugs = modelParam ? modelParam.split(',').map((s) => s.trim().toLowerCase()) : [];
+    const vehicleTypeForApi = vehicleType as 'car' | 'truck' | 'moto' | undefined;
 
-    const quickTitle = (() => {
-      const foundBrands = brandSlugs
-        .map((slug) => {
-          return POPULAR_BRANDS.find((b) => b.toLowerCase() === slug || createSlug(b) === slug);
-        })
-        .filter((name): name is string => name !== undefined);
+    document.title = getFallbackTitle(brandParam, modelParam, vehicleTypeLabel, baseTitle);
 
-      if (foundBrands.length === 0) {
-        return null;
-      }
-
-      if (modelSlugs.length > 0 && foundBrands.length > 0) {
-        const foundModels: string[] = [];
-        foundBrands.forEach((brandName) => {
-          const models = POPULAR_MODELS_BY_BRAND[brandName] || [];
-          modelSlugs.forEach((modelSlug) => {
-            const model = models.find(
-              (m) =>
-                m.toLowerCase() === modelSlug ||
-                createSlug(m) === modelSlug ||
-                slugMatches(modelSlug, m)
-            );
-            if (model) {
-              foundModels.push(`${brandName} ${model}`);
-            }
-          });
-        });
-
-        if (foundModels.length > 0) {
-          return foundModels.join(', ');
-        }
-      }
-
-      return foundBrands.length === 1 ? foundBrands[0] : foundBrands.join(', ');
-    })();
-
-    if (quickTitle) {
-      const title = vehicleTypeLabel ? `${quickTitle} | ${vehicleTypeLabel}` : quickTitle;
-      document.title = `${title} | ${baseTitle}`;
-    }
-
-    const updateTitle = async () => {
-      try {
-        const brands = await brandsApi.getAll();
-        const brandSlugs = brandParam ? brandParam.split(',').map((s) => s.trim()) : [];
-        const foundBrands = brandSlugs
-          .map((slug) => {
-            const brand = brands.data.find(
-              (b) =>
-                b.name.toLowerCase() === slug.toLowerCase() ||
-                createSlug(b.name) === slug.toLowerCase()
-            );
-            return brand?.name;
-          })
-          .filter((name): name is string => name !== undefined);
-
-        if (foundBrands.length === 0) {
-          document.title = baseTitle;
-          return;
-        }
-
-        let newTitle = '';
-
-        if (modelParam && foundBrands.length > 0) {
-          const brandIds = foundBrands
-            .map((brandName) => brands.data.find((b) => b.name === brandName)?.id)
-            .filter((id): id is string => id !== undefined);
-
-          if (brandIds.length > 0) {
-            const modelsByBrand = await brandsApi.getModelsBatch(brandIds);
-            const allModels = Object.values(modelsByBrand.data).flat();
-            const modelSlugs = modelParam.split(',').map((s) => s.trim());
-            const foundModels = modelSlugs
-              .map((slug) => {
-                const model = allModels.find(
-                  (m) =>
-                    m.name.toLowerCase() === slug.toLowerCase() ||
-                    createSlug(m.name) === slug.toLowerCase() ||
-                    slugMatches(slug, m.name)
-                );
-                return model?.name;
-              })
-              .filter((name): name is string => name !== undefined);
-
-            if (foundModels.length > 0) {
-              if (foundBrands.length === 1 && foundModels.length === 1) {
-                newTitle = `${foundBrands[0]} ${foundModels[0]}`;
-              } else if (foundBrands.length === 1) {
-                newTitle = `${foundBrands[0]} ${foundModels.join(', ')}`;
-              } else {
-                const brandModelPairs: string[] = [];
-                foundBrands.forEach((brandName) => {
-                  const brandId = brands.data.find((b) => b.name === brandName)?.id;
-                  if (brandId) {
-                    const brandModels = modelsByBrand.data[brandId] || [];
-                    const matchingModels = foundModels.filter((modelName) =>
-                      brandModels.some((m) => m.name === modelName)
-                    );
-                    if (matchingModels.length > 0) {
-                      matchingModels.forEach((modelName) => {
-                        brandModelPairs.push(`${brandName} ${modelName}`);
-                      });
-                    }
-                  }
-                });
-                newTitle = brandModelPairs.join(', ');
-              }
-            } else {
-              newTitle = foundBrands.length === 1 ? foundBrands[0] : foundBrands.join(', ');
-            }
-          } else {
-            newTitle = foundBrands.length === 1 ? foundBrands[0] : foundBrands.join(', ');
-          }
-        } else {
-          newTitle = foundBrands.length === 1 ? foundBrands[0] : foundBrands.join(', ');
-        }
-
-        if (newTitle) {
-          const title = vehicleTypeLabel ? `${newTitle} | ${vehicleTypeLabel}` : newTitle;
+    brandsApi
+      .getSearchMetadata({
+        brand: brandParam ?? undefined,
+        model: modelParam ?? undefined,
+        vehicleType: vehicleTypeForApi,
+      })
+      .then((res) => {
+        if (res.data.title) {
+          const title = vehicleTypeLabel
+            ? `${res.data.title} | ${vehicleTypeLabel}`
+            : res.data.title;
           document.title = `${title} | ${baseTitle}`;
         } else {
-          document.title = baseTitle;
+          document.title = getFallbackTitle(brandParam, modelParam, vehicleTypeLabel, baseTitle);
         }
-      } catch (error) {
-        console.error('Failed to update page title:', error);
-        document.title = baseTitle;
-      }
-    };
-
-    updateTitle();
+      })
+      .catch(() => {
+        document.title = getFallbackTitle(brandParam, modelParam, vehicleTypeLabel, baseTitle);
+      });
   }, [searchParams, t]);
 
   return null;

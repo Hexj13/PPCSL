@@ -74,5 +74,12 @@
       "CVT": "CVT",
       "Robot": "Robot"
     }
+  },
+  "metadata": {
+    "site": {
+      "homePageDescription": "Buy or sell cars on Kupito! Publish a listing for free. Platform for buying and selling cars online in Moldova. Car listings Moldova - free listings for private sellers and dealers.",
+      "homePageDescriptionWithBrand": "Buy {brand} cars on Kupito! Find the best prices and selection of {brand} cars in Moldova.",
+      "homePageDescriptionWithBrandModel": "Buy {brand} {model} on Kupito! Find the best prices and selection of {brand} {model} cars in Moldova."
+    }
   }
 }

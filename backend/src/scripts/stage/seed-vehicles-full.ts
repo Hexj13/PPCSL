@@ -1250,7 +1250,7 @@ const BRANDS_AND_MODELS = {
     'Cayman S',
     '911 Turbo',
   ],
-  Mini: [
+  MINI: [
     'Cooper',
     'Countryman',
     'Clubman',

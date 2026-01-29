@@ -2,8 +2,10 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+import { I18nService } from '../common/i18n/i18n.service';
 import { RedisService } from '../common/redis.service';
 import { CACHE_PREFIXES, CACHE_TTL, generateCacheKey } from '../common/utils/cache.utils';
+import { createSlug, slugMatches, slugToName } from '../common/utils/slug.utils';
 import { Favorite } from '../favorites/entities/favorite.entity';
 import { ListingView } from '../listings/entities/listing-view.entity';
 import { Listing } from '../listings/entities/listing.entity';
@@ -32,6 +34,7 @@ export class BrandsService {
     @InjectRepository(Favorite)
     private favoritesRepository: Repository<Favorite>,
     private redisService: RedisService,
+    private i18nService: I18nService,
   ) {}
 
   async findAll(vehicleType?: 'car' | 'truck' | 'moto'): Promise<Brand[]> {
@@ -197,6 +200,135 @@ export class BrandsService {
     }
 
     return result;
+  }
+
+  async getSearchMetadata(
+    brandSlug: string | undefined,
+    modelSlug: string | undefined,
+    locale: string,
+    vehicleType?: 'car' | 'truck' | 'moto',
+  ): Promise<{
+    title: string | null;
+    description?: string;
+    brandName?: string;
+    modelNames?: string[];
+  }> {
+    if (!brandSlug || !brandSlug.trim()) {
+      return {
+        title: null,
+        description: this.i18nService.translate('metadata.site.homePageDescription', locale),
+      };
+    }
+    const brandSlugs = brandSlug
+      .split(',')
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
+    if (brandSlugs.length === 0) {
+      return {
+        title: null,
+        description: this.i18nService.translate('metadata.site.homePageDescription', locale),
+      };
+    }
+    const brands = await this.findAll(vehicleType);
+    const foundBrands = brandSlugs
+      .map((slug) => {
+        const bySlug = brands.find((b) => createSlug(b.name) === slug);
+        if (bySlug) return bySlug;
+        return brands.find((b) => b.name.toLowerCase() === slug);
+      })
+      .filter((b): b is Brand => Boolean(b));
+    if (foundBrands.length === 0) {
+      return {
+        title: null,
+        description: this.i18nService.translate('metadata.site.homePageDescription', locale),
+      };
+    }
+
+    const modelSlugs = modelSlug
+      ? modelSlug
+          .split(',')
+          .map((s) => s.trim().toLowerCase())
+          .filter(Boolean)
+      : [];
+    if (modelSlugs.length === 0) {
+      const title =
+        foundBrands.length === 1 ? foundBrands[0].name : foundBrands.map((b) => b.name).join(', ');
+      const brandName = foundBrands.length === 1 ? foundBrands[0].name : undefined;
+      const description = brandName
+        ? this.i18nService
+            .translate('metadata.site.homePageDescriptionWithBrand', locale)
+            .replace('{brand}', brandName)
+        : this.i18nService.translate('metadata.site.homePageDescription', locale);
+      return { title, description, brandName };
+    }
+
+    const brandIds = foundBrands.map((b) => b.id);
+    const modelsByBrand = await this.getModelsByBrands(brandIds, vehicleType);
+    const parts: string[] = [];
+    const modelNames: string[] = [];
+
+    foundBrands.forEach((brand) => {
+      const models = modelsByBrand[brand.id] || [];
+      const brandParts: string[] = [];
+
+      modelSlugs.forEach((slug) => {
+        const model = models.find(
+          (m) =>
+            m.name.toLowerCase() === slug ||
+            createSlug(m.name) === slug ||
+            slugMatches(slug, m.name),
+        );
+        if (model) {
+          brandParts.push(`${brand.name} ${model.name}`);
+          if (foundBrands.length === 1) {
+            modelNames.push(model.name);
+          }
+        }
+      });
+
+      if (brandParts.length > 0) {
+        parts.push(...brandParts);
+      } else if (foundBrands.length === 1 && modelSlugs.length > 0) {
+        const fallbackModels = modelSlugs.map((s) => slugToName(s)).join(', ');
+        parts.push(`${brand.name} ${fallbackModels}`);
+        modelSlugs.forEach((s) => modelNames.push(slugToName(s)));
+      } else {
+        parts.push(brand.name);
+      }
+    });
+
+    if (parts.length === 0) {
+      const title =
+        foundBrands.length === 1 ? foundBrands[0].name : foundBrands.map((b) => b.name).join(', ');
+      const brandName = foundBrands.length === 1 ? foundBrands[0].name : undefined;
+      const description = brandName
+        ? this.i18nService
+            .translate('metadata.site.homePageDescriptionWithBrand', locale)
+            .replace('{brand}', brandName)
+        : this.i18nService.translate('metadata.site.homePageDescription', locale);
+      return { title, description, brandName };
+    }
+
+    const brandName = foundBrands.length === 1 ? foundBrands[0].name : undefined;
+    const modelName =
+      foundBrands.length === 1 && modelNames.length === 1 ? modelNames[0] : undefined;
+    const description = brandName
+      ? modelName
+        ? this.i18nService
+            .translate('metadata.site.homePageDescriptionWithBrandModel', locale)
+            .replace('{brand}', brandName)
+            .replace('{model}', modelName)
+        : this.i18nService
+            .translate('metadata.site.homePageDescriptionWithBrand', locale)
+            .replace('{brand}', brandName)
+      : this.i18nService.translate('metadata.site.homePageDescription', locale);
+
+    return {
+      title: parts.join(', '),
+      description,
+      brandName,
+      modelNames: foundBrands.length === 1 ? modelNames : undefined,
+    };
   }
 
   async getModelsByBrandName(brandName: string): Promise<VehicleModel[]> {

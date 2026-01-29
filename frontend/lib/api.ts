@@ -726,6 +726,17 @@ export const brandsApi = {
     }),
   getModelsByName: (brandName: string) =>
     api.get<VehicleModel[]>(`/api/brands/name/${brandName}/models`),
+  getSearchMetadata: (params: {
+    brand?: string;
+    model?: string;
+    vehicleType?: 'car' | 'truck' | 'moto';
+  }) =>
+    api.get<{
+      title: string | null;
+      description?: string;
+      brandName?: string;
+      modelNames?: string[];
+    }>('/api/brands/search-metadata', { params }),
   seed: () => api.post('/api/brands/seed'),
 };
 

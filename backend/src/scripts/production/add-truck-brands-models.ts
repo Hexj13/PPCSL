@@ -1288,7 +1288,7 @@ const TRUCK_BRANDS_AND_MODELS: Record<string, string[]> = {
     'Quester MK',
   ],
   Peugeot: ['Partner', 'Expert', 'Boxer', 'J9'],
-  Citroen: ['Berlingo', 'Jumpy', 'Jumper', 'Type H', 'HY Van'],
+  Citroën: ['Berlingo', 'Jumpy', 'Jumper', 'Type H', 'HY Van'],
   Fiat: ['Ducato', 'Doblo', 'Talento', 'Fiorino', 'Scudo', '682', '619', '626', '666'],
 };
 

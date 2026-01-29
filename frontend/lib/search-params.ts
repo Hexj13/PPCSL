@@ -1,5 +1,5 @@
 import { Brand, VehicleModel } from './api';
-import { createSlug } from './utils';
+import { createSlug, slugMatches } from './utils';
 
 export interface ParsedSearchParams {
   page: number;
@@ -343,7 +343,9 @@ export function createModelResolver(
       .map((slug) => {
         const model = allModels.find(
           (m) =>
-            m.name.toLowerCase() === slug.toLowerCase() || createSlug(m.name) === slug.toLowerCase()
+            m.name.toLowerCase() === slug.toLowerCase() ||
+            createSlug(m.name) === slug.toLowerCase() ||
+            slugMatches(slug, m.name)
         );
         return model && brandIds.includes(model.brand_id) ? model.id : undefined;
       })

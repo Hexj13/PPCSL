@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   HttpCode,
   NotFoundException,
   Param,
@@ -13,9 +14,12 @@ import {
 import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 
+import { I18nService } from '../common/i18n/i18n.service';
+
 import { BrandsService } from './brands.service';
 import { GetBrandsQueryDto } from './dto/get-brands-query.dto';
 import { GetModelsBatchDto } from './dto/get-models-batch.dto';
+import { GetSearchMetadataQueryDto } from './dto/get-search-metadata-query.dto';
 
 const isProduction = process.env.NODE_ENV === 'production';
 const getThrottleLimit = (prodLimit: number, devLimit: number = prodLimit * 100) => ({
@@ -25,7 +29,10 @@ const getThrottleLimit = (prodLimit: number, devLimit: number = prodLimit * 100)
 @ApiTags('brands')
 @Controller('api/brands')
 export class BrandsController {
-  constructor(private readonly brandsService: BrandsService) {}
+  constructor(
+    private readonly brandsService: BrandsService,
+    private readonly i18nService: I18nService,
+  ) {}
 
   @ApiOperation({ summary: 'Get all brands' })
   @ApiResponse({
@@ -46,6 +53,35 @@ export class BrandsController {
   @Get()
   findAll(@Query() query: GetBrandsQueryDto) {
     return this.brandsService.findAll(query.vehicleType);
+  }
+
+  @ApiOperation({ summary: 'Get search page metadata (brand/model title)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Title and resolved brand/model names',
+    schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', nullable: true },
+        description: { type: 'string', nullable: true },
+        brandName: { type: 'string', nullable: true },
+        modelNames: { type: 'array', items: { type: 'string' }, nullable: true },
+      },
+    },
+  })
+  @Throttle(getThrottleLimit(500, 10000))
+  @Get('search-metadata')
+  async getSearchMetadata(
+    @Query() query: GetSearchMetadataQueryDto,
+    @Headers('accept-language') acceptLanguage?: string,
+  ) {
+    const locale = this.i18nService.getLocaleFromHeader(acceptLanguage);
+    return this.brandsService.getSearchMetadata(
+      query.brand?.trim(),
+      query.model?.trim(),
+      locale,
+      query.vehicleType,
+    );
   }
 
   @ApiOperation({ summary: 'Get models by brand ID' })
