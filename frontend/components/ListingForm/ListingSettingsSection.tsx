@@ -20,7 +20,7 @@ export function ListingSettingsSection({
 
   return (
     <div className="border-t border-primary-500/20 pt-6 mb-6">
-      <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
+      <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-700">
         {t('listings.listingSettings')}
       </h2>
       <div>

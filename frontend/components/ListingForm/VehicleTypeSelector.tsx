@@ -11,7 +11,7 @@ interface VehicleTypeSelectorProps {
 export function VehicleTypeSelector({ vehicleType, onTypeChange, t }: VehicleTypeSelectorProps) {
   return (
     <div className="mb-6 border-b border-primary-500/20 -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8 pb-4">
-      <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
+      <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-700">
         {t('listings.vehicleTypeLabel') || 'Тип транспорта'}
       </h2>
       <div className="flex gap-2">

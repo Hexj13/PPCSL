@@ -30,7 +30,7 @@ export function BasicInfoSection({
 
   return (
     <div className="mb-6">
-      <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
+      <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-700">
         {t('listings.basicInfo')}
       </h2>
       <div className="bg-primary-500/10 border border-primary-500/30 rounded-lg p-4 mb-5">

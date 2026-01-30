@@ -32,7 +32,7 @@ export function TechnicalSpecsSection({
   return (
     <>
       <div className="border-t border-primary-500/20 pt-6 mb-6">
-        <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
+        <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-700">
           {t('listings.technicalSpecs')}
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -404,7 +404,7 @@ export function TechnicalSpecsSection({
       />
 
       <div className="border-t border-primary-500/20 pt-6 mb-6">
-        <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
+        <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-700">
           {t('listings.conditionAndRegistration')}
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
@@ -585,7 +585,7 @@ export function TechnicalSpecsSection({
       </div>
 
       <div className="border-t border-primary-500/20 pt-6 mb-6">
-        <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-400">
+        <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-700">
           {t('listings.exterior')}
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
