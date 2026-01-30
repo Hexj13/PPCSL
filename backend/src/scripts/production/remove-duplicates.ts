@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { Brand } from '../../brands/entities/brand.entity';
 import { VehicleModel } from '../../brands/entities/vehicle-model.entity';
 import { AppDataSource } from '../../data-source';
+import { Vehicle } from '../../listings/entities/vehicle.entity';
 import { checkEnvironment, checkPlatform } from '../script-guard';
 
 checkEnvironment(['production', 'stage', 'development', 'test']);
@@ -15,6 +16,7 @@ async function removeDuplicates() {
 
   const brandRepo = AppDataSource.getRepository(Brand);
   const modelRepo = AppDataSource.getRepository(VehicleModel);
+  const vehicleRepo = AppDataSource.getRepository(Vehicle);
 
   console.log('📊 Удаление дубликатов марок...\n');
 
@@ -61,6 +63,14 @@ async function removeDuplicates() {
 
         for (const model of modelsToMove) {
           await modelRepo.update(model.id, { brand_id: keepBrand.id });
+        }
+
+        const vehiclesUpdated = await vehicleRepo.update(
+          { brand_id: brandToRemove.id },
+          { brand_id: keepBrand.id },
+        );
+        if (vehiclesUpdated.affected && vehiclesUpdated.affected > 0) {
+          console.log(`   ✅ Обновлено объявлений (vehicle): ${vehiclesUpdated.affected}`);
         }
 
         await brandRepo.remove(brandToRemove);
@@ -118,6 +128,13 @@ async function removeDuplicates() {
 
         for (const modelToRemove of removeModels) {
           const modelId = modelToRemove.id;
+          const vehiclesUpdated = await vehicleRepo.update(
+            { model_id: modelId },
+            { model_id: keepModel.id },
+          );
+          if (vehiclesUpdated.affected && vehiclesUpdated.affected > 0) {
+            console.log(`   ✅ Обновлено объявлений (vehicle): ${vehiclesUpdated.affected}`);
+          }
           await modelRepo.remove(modelToRemove);
           totalRemoved++;
           console.log(`   ✅ Удален дубликат: ID ${modelId}`);

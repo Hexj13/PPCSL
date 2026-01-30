@@ -19,7 +19,7 @@ const COUNTRIES_BRANDS: Record<string, string[]> = {
     'Ford Trucks',
     'Chevrolet Trucks',
     'GMC Trucks',
-    'Dodge Trucks',
+    'Ram',
     'John Deere',
     'Case IH',
     'New Holland',

@@ -280,6 +280,26 @@ async function seedAllBrandsComplete() {
     },
     { name: 'Марки грузовиков', script: 'add-truck-brands:prod', heavy: true },
     { name: 'Марки мотоциклов', script: 'add-moto-brands:prod', heavy: true },
+    {
+      name: 'Разделение марок (Great Wall / Land Rover)',
+      script: 'apply-brand-splits:prod',
+      heavy: false,
+    },
+    {
+      name: 'Исправление названий Tank/Haval (убрать префикс)',
+      script: 'fix-tank-haval-model-names:prod',
+      heavy: false,
+    },
+    {
+      name: 'Исправление названий моделей грузовиков',
+      script: 'fix-truck-model-names:prod',
+      heavy: false,
+    },
+    {
+      name: 'Исправление названий моделей мотоциклов',
+      script: 'fix-moto-model-names:prod',
+      heavy: false,
+    },
   ];
 
   const scripts = skipHeavyScripts ? allScripts.filter((s) => !s.heavy) : allScripts;

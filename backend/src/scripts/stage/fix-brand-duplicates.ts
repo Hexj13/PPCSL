@@ -32,6 +32,7 @@ const CORRECT_BRAND_NAMES: Record<string, string> = {
   mercedesbenz: 'Mercedes-Benz',
   alfaromeo: 'Alfa Romeo',
   landrover: 'Land Rover',
+  rangerover: 'Range Rover',
   astonmartin: 'Aston Martin',
   rollsroyce: 'Rolls-Royce',
   greatwall: 'Great Wall',

@@ -217,7 +217,6 @@ const COMMERCIAL_MODELS: Record<string, string[]> = {
   Daihatsu: ['Hijet', 'Atrai', 'Naked', 'Storia', 'Opti'],
   Dacia: ['Dokker', 'Dokker Van', 'Logan MCV', 'Logan Van', 'Logan Pick-Up'],
   Chevrolet: ['Express', 'Silverado'],
-  Dodge: ['ProMaster', 'ProMaster City'],
   Lifan: ['Solano', 'Cebrium', 'X60', 'X50'],
 };
 
