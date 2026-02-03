@@ -11,6 +11,6 @@ This directory contains backend-specific documentation.
 
 For general project documentation, see the main [`docs/`](../../docs/) folder:
 - **[README.md](../../docs/README.md)** - Project overview
-- **[TECHNICAL.md](../../docs/TECHNICAL.md)** - Technical documentation
-- **[DEPLOYMENT.md](../../docs/DEPLOYMENT.md)** - Deployment guides (includes Render.com)
+- **[TECHNICAL.md](../../docs/architecture/TECHNICAL.md)** - Technical documentation
+- **[DEPLOYMENT.md](../../docs/guides/DEPLOYMENT.md)** - Deployment guides (includes Render.com)
 
