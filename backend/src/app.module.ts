@@ -9,6 +9,7 @@ import { AdminModule } from './admin/admin.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { BoardModule } from './board/board.module';
 import { BrandsModule } from './brands/brands.module';
 import { CitiesModule } from './cities/cities.module';
 import { CommonModule } from './common/common.module';
@@ -38,6 +39,7 @@ import { UsersModule } from './users/users.module';
     AuthModule,
     UsersModule,
     ListingsModule,
+    BoardModule,
     FavoritesModule,
     SavedFiltersModule,
     AdminModule,

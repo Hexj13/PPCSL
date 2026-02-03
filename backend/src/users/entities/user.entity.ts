@@ -16,6 +16,7 @@ import { Listing } from '../../listings/entities/listing.entity';
 @Index(['phone'], { where: '"phone" IS NOT NULL' })
 @Index(['type'])
 @Index(['active'])
+@Index(['board_slug'], { unique: true, where: '"board_slug" IS NOT NULL' })
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -44,6 +45,12 @@ export class User {
 
   @Column({ type: 'varchar', nullable: true })
   companyName: string | null;
+
+  @Column({ type: 'varchar', nullable: true, name: 'company_website_url' })
+  companyWebsiteUrl: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  board_slug: string | null;
 
   @Column({ type: 'boolean', default: true })
   active: boolean;

@@ -254,7 +254,7 @@ function VerifyPhoneContent() {
           ? formData.email && formData.email.trim()
             ? formData.email
             : formData.phone
-          : formData.email;
+          : (formData.email && formData.email.trim()) || formData.phone;
 
       if (!loginValue) {
         toast.error(t('verifyPhone.missingLoginValue'));
@@ -275,14 +275,6 @@ function VerifyPhoneContent() {
 
         if (typeof window !== 'undefined') {
           localStorage.removeItem('pendingRegistration');
-
-          if (formData.type === 'Individual') {
-            if (typeof window !== 'undefined' && window.location) {
-              localStorage.setItem('showRegistrationSuccess', 'true');
-              window.location.href = '/complete-profile';
-            }
-            return;
-          }
 
           const pendingFavorites = JSON.parse(localStorage.getItem('pendingFavorites') || '[]');
           if (pendingFavorites.length > 0) {
@@ -396,19 +388,11 @@ function VerifyPhoneContent() {
               }
             }
           } else {
-            const returnUrl = localStorage.getItem('returnUrl');
-            if (returnUrl) {
-              localStorage.removeItem('returnUrl');
-              if (typeof window !== 'undefined' && window.location) {
-                window.location.href = returnUrl;
-              }
-              return;
-            } else {
-              if (typeof window !== 'undefined' && window.location) {
-                window.location.href = '/';
-              }
-              return;
+            localStorage.setItem('showRegistrationSuccess', 'true');
+            if (typeof window !== 'undefined' && window.location) {
+              window.location.href = '/complete-profile';
             }
+            return;
           }
         } else {
           if (typeof window !== 'undefined') {

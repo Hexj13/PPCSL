@@ -18,6 +18,7 @@
     "promotionAdminOnly": "Promovarea este disponibilă doar pentru administratori",
     "maxPromotionsReached": "Numărul maxim de promovări active este {max}. Vă rugăm să închideți unele dintre promovările existente.",
     "userNotFound": "Utilizatorul nu a fost găsit",
+    "boardNotFound": "Dosarul nu a fost găsit",
     "listingNotFound": "Anunțul nu a fost găsit",
     "promotionOnlyActive": "Puteți promova doar anunțuri active. Vă rugăm să activați mai întâi anunțul.",
     "invalidPromotionPeriod": "Perioadă de promovare invalidă. Valorile permise sunt: 1, 7, 14 sau 30 de zile.",

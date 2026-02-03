@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
@@ -578,6 +579,34 @@ export default function MyListingsPage() {
                 </>
               )}
             </LoadMoreButton>
+            {user?.boardSlug && (
+              <Link
+                href={`/board/${user.boardSlug}`}
+                className="w-full sm:w-auto text-primary-500 font-medium text-base hover:text-primary-700 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-500 hover:border-primary-700 bg-primary-500/10 hover:bg-primary-500/20 inline-block"
+              >
+                <svg
+                  className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
+                </svg>
+                {t('myListings.myBoard')}
+              </Link>
+            )}
             {listings && listings.length > 0 && canPromote && (
               <LoadMoreButton
                 onClick={() => {
@@ -607,7 +636,7 @@ export default function MyListingsPage() {
             {(!listings || listings.length === 0) && (
               <a
                 href="/listings/new"
-                className="w-full sm:w-auto text-primary-400 font-medium text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 inline-block text-center"
+                className="w-full sm:w-auto text-primary-500 font-medium text-base hover:text-primary-700 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-500 hover:border-primary-700 bg-primary-500/10 hover:bg-primary-500/20 inline-block text-center"
               >
                 {t('myListings.createListing')}
               </a>

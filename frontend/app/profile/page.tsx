@@ -26,6 +26,18 @@ const validateEmail = (email: string): boolean => {
   return emailRegex.test(email);
 };
 
+const validateCompanyWebsiteUrl = (value: string): boolean => {
+  if (!value.trim()) return true;
+  const trimmed = value.trim();
+  if (!/^https?:\/\//i.test(trimmed)) return false;
+  try {
+    new URL(trimmed);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 const initializeFormData = (user: User | null): UpdateProfileDto => {
   if (!user) {
     return {
@@ -33,6 +45,7 @@ const initializeFormData = (user: User | null): UpdateProfileDto => {
       firstName: '',
       lastName: '',
       companyName: '',
+      companyWebsiteUrl: '',
       emailNotifications: false,
       viber: false,
       whatsapp: false,
@@ -45,6 +58,7 @@ const initializeFormData = (user: User | null): UpdateProfileDto => {
     firstName: user.firstName || '',
     lastName: user.lastName || '',
     companyName: user.companyName || '',
+    companyWebsiteUrl: user.companyWebsiteUrl || '',
     emailNotifications: convertToBoolean(user.emailNotifications),
     viber: convertToBoolean(user.viber),
     whatsapp: convertToBoolean(user.whatsapp),
@@ -93,6 +107,7 @@ export default function ProfilePage() {
           firstName: profileUser.firstName || '',
           lastName: profileUser.lastName || '',
           companyName: profileUser.companyName || '',
+          companyWebsiteUrl: profileUser.companyWebsiteUrl || '',
           emailNotifications: convertToBoolean(profileUser.emailNotifications),
           viber: convertToBoolean(profileUser.viber),
           whatsapp: convertToBoolean(profileUser.whatsapp),
@@ -122,6 +137,7 @@ export default function ProfilePage() {
           prev.firstName !== newFormData.firstName ||
           prev.lastName !== newFormData.lastName ||
           prev.companyName !== newFormData.companyName ||
+          prev.companyWebsiteUrl !== newFormData.companyWebsiteUrl ||
           prev.emailNotifications !== newFormData.emailNotifications ||
           prev.viber !== newFormData.viber ||
           prev.whatsapp !== newFormData.whatsapp ||
@@ -166,12 +182,18 @@ export default function ProfilePage() {
         return;
       }
 
+      if (formData.companyWebsiteUrl && !validateCompanyWebsiteUrl(formData.companyWebsiteUrl)) {
+        toast.error(t('profile.invalidCompanyWebsiteUrl'));
+        return;
+      }
+
       const initialData = initializeFormData(user);
       const hasChanges =
         formData.email !== initialData.email ||
         formData.firstName !== initialData.firstName ||
         formData.lastName !== initialData.lastName ||
         formData.companyName !== initialData.companyName ||
+        formData.companyWebsiteUrl !== initialData.companyWebsiteUrl ||
         formData.emailNotifications !== initialData.emailNotifications ||
         formData.viber !== initialData.viber ||
         formData.whatsapp !== initialData.whatsapp ||
@@ -271,7 +293,24 @@ export default function ProfilePage() {
                 </svg>
               </Link>
             </div>
+            <p className="mt-2 text-sm text-text-secondary">
+              {t('profile.phoneChangeBoardUrlNoticeBefore')}
+              {user?.boardSlug ? (
+                <Link
+                  href={`/board/${user.boardSlug}`}
+                  className="text-primary-500 underline hover:text-primary-700"
+                >
+                  {t('myListings.myBoard')}
+                </Link>
+              ) : (
+                t('myListings.myBoard')
+              )}
+              {t('profile.phoneChangeBoardUrlNoticeAfter')}
+            </p>
             <div className="mt-4 space-y-3">
+              <span className="block text-sm font-semibold mb-2 text-primary-500">
+                {t('profile.availableMessengers')}
+              </span>
               <div className="flex items-center gap-3 group">
                 <div className="relative">
                   <input
@@ -513,23 +552,40 @@ export default function ProfilePage() {
             <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-500">
               {t('profile.companyInfo')}
             </h2>
-            <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-500">
-                {t('profile.companyName')}
-              </label>
-              <input
-                type="text"
-                maxLength={100}
-                value={formData.companyName || ''}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value.length <= 100) {
-                    handleChange('companyName', value);
-                  }
-                }}
-                className="input-field"
-                placeholder={t('profile.companyNamePlaceholder')}
-              />
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold mb-2 text-primary-500">
+                  {t('profile.companyName')}
+                </label>
+                <input
+                  type="text"
+                  maxLength={100}
+                  value={formData.companyName || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value.length <= 100) {
+                      handleChange('companyName', value);
+                    }
+                  }}
+                  className="input-field"
+                  placeholder={t('profile.companyNamePlaceholder')}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-2 text-primary-500">
+                  {t('profile.companyWebsiteUrl')}
+                </label>
+                <input
+                  type="url"
+                  inputMode="url"
+                  autoComplete="url"
+                  maxLength={500}
+                  value={formData.companyWebsiteUrl || ''}
+                  onChange={(e) => handleChange('companyWebsiteUrl', e.target.value)}
+                  className="input-field"
+                  placeholder={t('profile.companyWebsiteUrlPlaceholder')}
+                />
+              </div>
             </div>
           </div>
         )}

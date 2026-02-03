@@ -330,15 +330,11 @@
 
 ### Спиннеры (Spinner с useLoadingState)
 
-1. **UserListingsModal.tsx**
-   - Использовать `useLoadingState` для показа спиннера
-   - Строка ~155
-
-2. **profile/page.tsx**
+1. **profile/page.tsx**
    - Использовать `useLoadingState` для `loadingProfile`
    - Строка ~218
 
-3. **listings/[id]/edit/page.tsx**
+2. **listings/[id]/edit/page.tsx**
    - Использовать `useLoadingState` для `loadingListing`
    - Строка ~110
 

@@ -22,6 +22,8 @@ describe('UsersService', () => {
     firstName: 'Test',
     lastName: 'User',
     companyName: '',
+    companyWebsiteUrl: null,
+    board_slug: null,
     active: true,
     emailNotifications: false,
     viber: false,

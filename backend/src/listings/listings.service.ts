@@ -206,6 +206,7 @@ export class ListingsService {
         'user.firstName',
         'user.lastName',
         'user.companyName',
+        'user.companyWebsiteUrl',
       ])
       .where('listing.status = :status', { status: ListingStatusEnum.Active });
 
@@ -351,6 +352,7 @@ export class ListingsService {
           listing.user.firstName = null;
           listing.user.lastName = null;
           listing.user.companyName = null;
+          listing.user.companyWebsiteUrl = null;
         }
       }
       return listing;
@@ -415,6 +417,9 @@ export class ListingsService {
 
       if (listing.user) {
         listing.user = removePasswordFromUser(listing.user) as typeof listing.user;
+        if (!listing.user.board_slug) {
+          listing.user.board_slug = await this.usersService.ensureBoardSlug(listing.user_id);
+        }
       }
 
       if (listing.status === ListingStatusEnum.Closed) {
@@ -426,6 +431,7 @@ export class ListingsService {
           listing.user.firstName = null;
           listing.user.lastName = null;
           listing.user.companyName = null;
+          listing.user.companyWebsiteUrl = null;
         }
       }
 
@@ -435,6 +441,7 @@ export class ListingsService {
         listing.user.firstName = null;
         listing.user.lastName = null;
         listing.user.companyName = null;
+        listing.user.companyWebsiteUrl = null;
       }
 
       return listing;
@@ -860,6 +867,66 @@ export class ListingsService {
     });
   }
 
+  async getBoardListings(
+    boardSlug: string,
+    opts: {
+      page: number;
+      limit: number;
+      sortBy: string;
+      sortOrder: 'ASC' | 'DESC';
+    },
+  ): Promise<{
+    data: Listing[];
+    meta: { total: number; page: number; limit: number; totalPages: number };
+  }> {
+    const user = await this.usersService.findByBoardSlug(boardSlug);
+    if (!user) {
+      throw new NotFoundException('errors.boardNotFound');
+    }
+    const { page = 1, limit = 20, sortBy = 'created_at', sortOrder = 'DESC' } = opts;
+    const validSortFields = ['created_at', 'price', 'year', 'views'];
+    const sortField = validSortFields.includes(sortBy) ? sortBy : 'created_at';
+    const order = sortOrder === 'ASC' ? 'ASC' : 'DESC';
+    const skip = (page - 1) * limit;
+
+    const queryBuilder = this.listingsRepository
+      .createQueryBuilder('listing')
+      .leftJoinAndSelect('listing.vehicle', 'vehicle')
+      .leftJoinAndSelect('vehicle.brand', 'brand')
+      .leftJoinAndSelect('vehicle.model', 'model')
+      .leftJoinAndSelect('listing.user', 'user')
+      .where('listing.user_id = :userId', { userId: user.id })
+      .andWhere('listing.status = :status', { status: ListingStatusEnum.Active })
+      .orderBy('listing.is_promoted', 'DESC');
+
+    if (sortField === 'year') {
+      queryBuilder.addOrderBy('vehicle.year', order);
+    } else if (sortField === 'views') {
+      queryBuilder.addOrderBy('listing.views', order);
+    } else {
+      queryBuilder.addOrderBy(`listing.${sortField}`, order);
+    }
+
+    const [listings, total] = await queryBuilder.skip(skip).take(limit).getManyAndCount();
+
+    const listingsWithoutPasswords = listings.map((listing) => {
+      if (listing.user) {
+        listing.user = removePasswordFromUser(listing.user) as typeof listing.user;
+      }
+      return listing;
+    });
+
+    return {
+      data: listingsWithoutPasswords,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
   async refreshAllDates(userId: string): Promise<{ updated: number }> {
     const now = new Date();
     const result = await this.listingsRepository.update(
@@ -895,6 +962,7 @@ export class ListingsService {
         listing.user.firstName = null;
         listing.user.lastName = null;
         listing.user.companyName = null;
+        listing.user.companyWebsiteUrl = null;
       }
       return listing;
     });

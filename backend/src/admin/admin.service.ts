@@ -201,6 +201,7 @@ export class AdminService {
           listing.user.firstName = null;
           listing.user.lastName = null;
           listing.user.companyName = null;
+          listing.user.companyWebsiteUrl = null;
         }
       }
       return listing;

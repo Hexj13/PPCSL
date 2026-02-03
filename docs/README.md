@@ -39,6 +39,7 @@
 - [IMAGE_PREVIEW.md](./features/IMAGE_PREVIEW.md) - Система превью изображений
 - [LOADING_STATES.md](./features/LOADING_STATES.md) - Loading states
 - [PAID_PROMOTION.md](./features/PAID_PROMOTION.md) - Платное продвижение
+- [SELLER_LISTINGS_BOARD.md](./features/SELLER_LISTINGS_BOARD.md) - Доска объявлений продавца
 - [SIMILAR_LISTINGS.md](./features/SIMILAR_LISTINGS.md) - Похожие объявления
 - [SITEMAP.md](./features/SITEMAP.md) - Генерация sitemap
 - [VEHICLE_TYPE.md](./features/VEHICLE_TYPE.md) - Переключатели типа транспорта (легковой/грузовой/мото) ✅

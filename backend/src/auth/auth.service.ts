@@ -2,7 +2,6 @@ import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
-import * as constants from '../common/constants';
 import { cleanUserData } from '../common/utils/data-cleanup.utils';
 import {
   handleDuplicateKeyError,
@@ -25,6 +24,10 @@ import { RefreshTokenService } from './services/refresh-token.service';
 import { SmsService } from './services/sms.service';
 
 export type UserWithoutPassword = Omit<User, 'password'>;
+
+export type UserProfileResponse = Omit<UserWithoutPassword, 'board_slug'> & {
+  boardSlug: string | null;
+};
 
 @Injectable()
 export class AuthService {
@@ -79,6 +82,7 @@ export class AuthService {
     const payload = { email: user.email || '', sub: user.id, type: user.type };
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = await this.refreshTokenService.generateToken(user.id);
+    const boardSlug = await this.usersService.ensureBoardSlug(user.id);
 
     return {
       access_token: accessToken,
@@ -90,7 +94,9 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         companyName: user.companyName,
+        companyWebsiteUrl: user.companyWebsiteUrl,
         phone: user.phone,
+        boardSlug,
       },
     };
   }
@@ -110,6 +116,7 @@ export class AuthService {
 
     await this.refreshTokenService.revokeToken(refreshTokenDto.refresh_token);
     const newRefreshToken = await this.refreshTokenService.generateToken(user.id);
+    const boardSlug = await this.usersService.ensureBoardSlug(user.id);
 
     return {
       access_token: accessToken,
@@ -121,7 +128,9 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         companyName: user.companyName,
+        companyWebsiteUrl: user.companyWebsiteUrl,
         phone: user.phone,
+        boardSlug,
       },
     };
   }
@@ -131,7 +140,7 @@ export class AuthService {
       throw new BadRequestException('errors.termsNotAccepted');
     }
 
-    if (registerDto.type === constants.UserType.Individual && registerDto.phone) {
+    if (registerDto.phone) {
       const normalizedPhone = this.smsService.normalizePhoneNumber(registerDto.phone);
       const existingUserByPhone = await this.usersService.findByPhone(normalizedPhone);
       if (existingUserByPhone) {
@@ -192,6 +201,7 @@ export class AuthService {
 
   async getUserProfile(userId: string) {
     const user = await this.usersService.findOne(userId);
+    const boardSlug = await this.usersService.ensureBoardSlug(userId);
     const result = removePasswordFromUser(user);
     return {
       id: result.id,
@@ -200,7 +210,9 @@ export class AuthService {
       firstName: result.firstName,
       lastName: result.lastName,
       companyName: result.companyName,
+      companyWebsiteUrl: result.companyWebsiteUrl,
       phone: result.phone,
+      boardSlug,
       emailNotifications: result.emailNotifications ?? false,
       phoneVerified: result.phoneVerified ?? false,
       emailVerified: result.emailVerified ?? false,
@@ -213,7 +225,7 @@ export class AuthService {
   async updateProfile(
     userId: string,
     updateProfileDto: UpdateProfileDto,
-  ): Promise<UserWithoutPassword> {
+  ): Promise<UserProfileResponse> {
     const currentUser = await this.usersService.findOne(userId);
     const cleanedData: Partial<User> = { ...updateProfileDto };
 
@@ -244,19 +256,41 @@ export class AuthService {
       cleanedData.companyName = null;
     }
 
+    if (
+      cleanedData.companyWebsiteUrl === '' ||
+      cleanedData.companyWebsiteUrl === null ||
+      cleanedData.companyWebsiteUrl === undefined
+    ) {
+      cleanedData.companyWebsiteUrl = null;
+    } else if (
+      cleanedData.companyWebsiteUrl !== undefined &&
+      cleanedData.companyWebsiteUrl.trim() === ''
+    ) {
+      cleanedData.companyWebsiteUrl = null;
+    }
+
+    const phoneChanged = cleanedData.phone !== undefined && cleanedData.phone !== currentUser.phone;
+    if (phoneChanged) {
+      cleanedData.board_slug = null;
+    }
+
     const updatedUser = await this.usersService.update(userId, cleanedData);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _, ...result } = updatedUser;
-    return result;
+    const { password: _, board_slug: boardSlugRaw, ...result } = updatedUser;
+    const boardSlug = phoneChanged
+      ? await this.usersService.ensureBoardSlug(userId)
+      : (boardSlugRaw ?? (await this.usersService.ensureBoardSlug(userId)));
+    return { ...result, boardSlug };
   }
 
-  async verifyPhone(userId: string): Promise<UserWithoutPassword> {
+  async verifyPhone(userId: string): Promise<UserProfileResponse> {
     const updatedUser = await this.usersService.update(userId, {
       phoneVerified: true,
     });
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _, ...result } = updatedUser;
-    return result;
+    const { password: _p, board_slug: _s, ...result } = updatedUser;
+    const boardSlug = await this.usersService.ensureBoardSlug(userId);
+    return { ...result, boardSlug };
   }
 
   async verifyEmail(token: string): Promise<UserWithoutPassword> {
@@ -411,6 +445,7 @@ export class AuthService {
       firstName: null,
       lastName: null,
       companyName: null,
+      companyWebsiteUrl: null,
       active: false,
     });
 

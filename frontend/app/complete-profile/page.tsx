@@ -18,16 +18,20 @@ function CompleteProfileContent() {
     firstName: '',
     lastName: '',
     email: '',
+    companyWebsiteUrl: '',
+    emailNotifications: false,
   });
   const [errors, setErrors] = useState({
     firstName: '',
     lastName: '',
     email: '',
+    companyWebsiteUrl: '',
   });
   const [touched, setTouched] = useState({
     firstName: false,
     lastName: false,
     email: false,
+    companyWebsiteUrl: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const formStartSentRef = useRef(false);
@@ -43,6 +47,8 @@ function CompleteProfileContent() {
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         email: user.email || '',
+        companyWebsiteUrl: user.companyWebsiteUrl || '',
+        emailNotifications: user.emailNotifications ?? false,
       });
     }
   }, [user, isInitialized, router]);
@@ -83,6 +89,22 @@ function CompleteProfileContent() {
       return t('register.emailInvalid');
     }
     return '';
+  };
+
+  const validateCompanyWebsiteUrl = (value: string): string => {
+    if (!value.trim()) {
+      return '';
+    }
+    const trimmed = value.trim();
+    if (!/^https?:\/\//i.test(trimmed)) {
+      return t('profile.invalidCompanyWebsiteUrl');
+    }
+    try {
+      new URL(trimmed);
+      return '';
+    } catch {
+      return t('profile.invalidCompanyWebsiteUrl');
+    }
   };
 
   const handleFirstNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -131,7 +153,31 @@ function CompleteProfileContent() {
     setErrors({ ...errors, email: validateEmail(formData.email) });
   };
 
+  const handleCompanyWebsiteUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFormData({ ...formData, companyWebsiteUrl: value });
+    if (touched.companyWebsiteUrl) {
+      setErrors({ ...errors, companyWebsiteUrl: validateCompanyWebsiteUrl(value) });
+    }
+  };
+
+  const handleCompanyWebsiteUrlBlur = () => {
+    setTouched({ ...touched, companyWebsiteUrl: true });
+    setErrors({
+      ...errors,
+      companyWebsiteUrl: validateCompanyWebsiteUrl(formData.companyWebsiteUrl),
+    });
+  };
+
+  const isBusiness = user?.type === 'Business';
+
   const hasAnyField = () => {
+    if (isBusiness) {
+      return (
+        (formData.companyWebsiteUrl && formData.companyWebsiteUrl.trim()) ||
+        (formData.email && formData.email.trim())
+      );
+    }
     return (
       (formData.firstName && formData.firstName.trim()) ||
       (formData.lastName && formData.lastName.trim()) ||
@@ -140,6 +186,9 @@ function CompleteProfileContent() {
   };
 
   const hasErrors = () => {
+    if (isBusiness) {
+      return !!(errors.companyWebsiteUrl || errors.email);
+    }
     return !!(errors.firstName || errors.lastName || errors.email);
   };
 
@@ -247,13 +296,25 @@ function CompleteProfileContent() {
   };
 
   const validateAllFields = () => {
+    if (isBusiness) {
+      const newErrors = {
+        firstName: '',
+        lastName: '',
+        email: validateEmail(formData.email),
+        companyWebsiteUrl: validateCompanyWebsiteUrl(formData.companyWebsiteUrl),
+      };
+      setErrors(newErrors);
+      setTouched({ ...touched, email: true, companyWebsiteUrl: true });
+      return !!(newErrors.companyWebsiteUrl || newErrors.email);
+    }
     const newErrors = {
       firstName: validateName(formData.firstName),
       lastName: validateName(formData.lastName),
       email: validateEmail(formData.email),
+      companyWebsiteUrl: '',
     };
     setErrors(newErrors);
-    setTouched({ firstName: true, lastName: true, email: true });
+    setTouched({ firstName: true, lastName: true, email: true, companyWebsiteUrl: false });
     return !!(newErrors.firstName || newErrors.lastName || newErrors.email);
   };
 
@@ -277,24 +338,43 @@ function CompleteProfileContent() {
 
     try {
       const updateData: UpdateProfileDto = {};
-      if (formData.firstName && formData.firstName.trim()) {
-        updateData.firstName = formData.firstName.trim();
-      }
-      if (formData.lastName && formData.lastName.trim()) {
-        updateData.lastName = formData.lastName.trim();
-      }
-      if (formData.email && formData.email.trim()) {
-        updateData.email = formData.email.trim();
+      if (isBusiness) {
+        if (formData.companyWebsiteUrl && formData.companyWebsiteUrl.trim()) {
+          updateData.companyWebsiteUrl = formData.companyWebsiteUrl.trim();
+        } else {
+          updateData.companyWebsiteUrl = '';
+        }
+        if (formData.email && formData.email.trim()) {
+          updateData.email = formData.email.trim();
+        }
+        updateData.emailNotifications = formData.emailNotifications;
+      } else {
+        if (formData.firstName && formData.firstName.trim()) {
+          updateData.firstName = formData.firstName.trim();
+        }
+        if (formData.lastName && formData.lastName.trim()) {
+          updateData.lastName = formData.lastName.trim();
+        }
+        if (formData.email && formData.email.trim()) {
+          updateData.email = formData.email.trim();
+        }
       }
 
       const response = await authApi.updateProfile(updateData);
       setAuth(response.data, useAuthStore.getState().token);
 
-      const filledFields = {
-        firstName: !!formData.firstName && formData.firstName.trim().length > 0,
-        lastName: !!formData.lastName && formData.lastName.trim().length > 0,
-        email: !!formData.email && formData.email.trim().length > 0,
-      };
+      const filledFields = isBusiness
+        ? {
+            companyWebsiteUrl:
+              !!formData.companyWebsiteUrl && formData.companyWebsiteUrl.trim().length > 0,
+            email: !!formData.email && formData.email.trim().length > 0,
+            emailNotifications: formData.emailNotifications,
+          }
+        : {
+            firstName: !!formData.firstName && formData.firstName.trim().length > 0,
+            lastName: !!formData.lastName && formData.lastName.trim().length > 0,
+            email: !!formData.email && formData.email.trim().length > 0,
+          };
 
       const redirected = await processPendingData();
       if (redirected) {
@@ -320,11 +400,18 @@ function CompleteProfileContent() {
         return;
       }
     } catch {
-      const filledFields = {
-        firstName: !!formData.firstName && formData.firstName.trim().length > 0,
-        lastName: !!formData.lastName && formData.lastName.trim().length > 0,
-        email: !!formData.email && formData.email.trim().length > 0,
-      };
+      const filledFields = isBusiness
+        ? {
+            companyWebsiteUrl:
+              !!formData.companyWebsiteUrl && formData.companyWebsiteUrl.trim().length > 0,
+            email: !!formData.email && formData.email.trim().length > 0,
+            emailNotifications: formData.emailNotifications,
+          }
+        : {
+            firstName: !!formData.firstName && formData.firstName.trim().length > 0,
+            lastName: !!formData.lastName && formData.lastName.trim().length > 0,
+            email: !!formData.email && formData.email.trim().length > 0,
+          };
       analytics.formSubmit('complete_profile', false, filledFields);
     } finally {
       setIsSubmitting(false);
@@ -332,11 +419,20 @@ function CompleteProfileContent() {
   };
 
   const handleSkip = async () => {
-    analytics.completeProfileSkip({
-      firstName: !!formData.firstName && formData.firstName.trim().length > 0,
-      lastName: !!formData.lastName && formData.lastName.trim().length > 0,
-      email: !!formData.email && formData.email.trim().length > 0,
-    });
+    analytics.completeProfileSkip(
+      isBusiness
+        ? {
+            companyWebsiteUrl:
+              !!formData.companyWebsiteUrl && formData.companyWebsiteUrl.trim().length > 0,
+            email: !!formData.email && formData.email.trim().length > 0,
+            emailNotifications: formData.emailNotifications,
+          }
+        : {
+            firstName: !!formData.firstName && formData.firstName.trim().length > 0,
+            lastName: !!formData.lastName && formData.lastName.trim().length > 0,
+            email: !!formData.email && formData.email.trim().length > 0,
+          }
+    );
 
     setIsSubmitting(true);
     try {
@@ -385,63 +481,166 @@ function CompleteProfileContent() {
             }}
             className="space-y-5"
           >
-            <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-500">
-                {t('register.firstName')}
-              </label>
-              <input
-                type="text"
-                value={formData.firstName}
-                onChange={handleFirstNameChange}
-                onFocus={handleFormFieldFocus}
-                onBlur={handleFirstNameBlur}
-                className={`input-field ${touched.firstName && errors.firstName ? 'border-red-500' : ''}`}
-                placeholder={t('register.firstName')}
-                autoComplete="given-name"
-              />
-              {touched.firstName && errors.firstName && (
-                <p className="mt-1 text-sm text-red-400">{errors.firstName}</p>
-              )}
-            </div>
+            {isBusiness ? (
+              <>
+                <div>
+                  <label className="block text-sm font-semibold mb-2 text-primary-500">
+                    {t('profile.companyWebsiteUrl')}
+                  </label>
+                  <input
+                    type="url"
+                    value={formData.companyWebsiteUrl}
+                    onChange={handleCompanyWebsiteUrlChange}
+                    onFocus={handleFormFieldFocus}
+                    onBlur={handleCompanyWebsiteUrlBlur}
+                    className={`input-field ${touched.companyWebsiteUrl && errors.companyWebsiteUrl ? 'border-red-500' : ''}`}
+                    placeholder={t('profile.companyWebsiteUrlPlaceholder')}
+                    autoComplete="url"
+                  />
+                  {touched.companyWebsiteUrl && errors.companyWebsiteUrl && (
+                    <p className="mt-1 text-sm text-red-400">{errors.companyWebsiteUrl}</p>
+                  )}
+                </div>
 
-            <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-500">
-                {t('register.lastName')}
-              </label>
-              <input
-                type="text"
-                value={formData.lastName}
-                onChange={handleLastNameChange}
-                onFocus={handleFormFieldFocus}
-                onBlur={handleLastNameBlur}
-                className={`input-field ${touched.lastName && errors.lastName ? 'border-red-500' : ''}`}
-                placeholder={t('register.lastName')}
-                autoComplete="family-name"
-              />
-              {touched.lastName && errors.lastName && (
-                <p className="mt-1 text-sm text-red-400">{errors.lastName}</p>
-              )}
-            </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-2 text-primary-500">
+                    {t('register.email')}
+                  </label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={handleEmailChange}
+                    onFocus={handleFormFieldFocus}
+                    onBlur={handleEmailBlur}
+                    className={`input-field ${touched.email && errors.email ? 'border-red-500' : ''}`}
+                    // eslint-disable-next-line no-hardcoded-text/no-hardcoded-text
+                    placeholder="example@email.com"
+                    autoComplete="email"
+                  />
+                  {touched.email && errors.email && (
+                    <p className="mt-1 text-sm text-red-400">{errors.email}</p>
+                  )}
+                </div>
 
-            <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-500">
-                {t('register.email')}
-              </label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={handleEmailChange}
-                onFocus={handleFormFieldFocus}
-                onBlur={handleEmailBlur}
-                className={`input-field ${touched.email && errors.email ? 'border-red-500' : ''}`}
-                // eslint-disable-next-line no-hardcoded-text/no-hardcoded-text
-                placeholder="example@email.com"
-                autoComplete="email"
-              />
-              {touched.email && errors.email && (
-                <p className="mt-1 text-sm text-red-400">{errors.email}</p>
-              )}
-            </div>
+                <div className="flex items-start gap-3 group">
+                  <div className="relative mt-0.5">
+                    <input
+                      type="checkbox"
+                      id="complete-profile-email-notifications"
+                      checked={formData.emailNotifications}
+                      onChange={(e) =>
+                        setFormData({ ...formData, emailNotifications: e.target.checked })
+                      }
+                      onFocus={handleFormFieldFocus}
+                      className="sr-only"
+                    />
+                    <div
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setFormData({
+                          ...formData,
+                          emailNotifications: !formData.emailNotifications,
+                        });
+                      }}
+                      className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer flex-shrink-0 ${
+                        formData.emailNotifications
+                          ? 'bg-primary-500 border-primary-700'
+                          : 'border-primary-500/50 bg-bg-secondary group-hover:border-primary-500'
+                      }`}
+                    >
+                      {formData.emailNotifications && (
+                        <svg
+                          className="w-3 h-3 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={3}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                  <span
+                    onClick={() =>
+                      setFormData({
+                        ...formData,
+                        emailNotifications: !formData.emailNotifications,
+                      })
+                    }
+                    className={`text-sm cursor-pointer leading-relaxed ${
+                      formData.emailNotifications ? 'text-text-primary' : 'text-text-secondary'
+                    }`}
+                  >
+                    {t('register.emailNotifications')}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-sm font-semibold mb-2 text-primary-500">
+                    {t('register.firstName')}
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.firstName}
+                    onChange={handleFirstNameChange}
+                    onFocus={handleFormFieldFocus}
+                    onBlur={handleFirstNameBlur}
+                    className={`input-field ${touched.firstName && errors.firstName ? 'border-red-500' : ''}`}
+                    placeholder={t('register.firstName')}
+                    autoComplete="given-name"
+                  />
+                  {touched.firstName && errors.firstName && (
+                    <p className="mt-1 text-sm text-red-400">{errors.firstName}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold mb-2 text-primary-500">
+                    {t('register.lastName')}
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.lastName}
+                    onChange={handleLastNameChange}
+                    onFocus={handleFormFieldFocus}
+                    onBlur={handleLastNameBlur}
+                    className={`input-field ${touched.lastName && errors.lastName ? 'border-red-500' : ''}`}
+                    placeholder={t('register.lastName')}
+                    autoComplete="family-name"
+                  />
+                  {touched.lastName && errors.lastName && (
+                    <p className="mt-1 text-sm text-red-400">{errors.lastName}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold mb-2 text-primary-500">
+                    {t('register.email')}
+                  </label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={handleEmailChange}
+                    onFocus={handleFormFieldFocus}
+                    onBlur={handleEmailBlur}
+                    className={`input-field ${touched.email && errors.email ? 'border-red-500' : ''}`}
+                    // eslint-disable-next-line no-hardcoded-text/no-hardcoded-text
+                    placeholder="example@email.com"
+                    autoComplete="email"
+                  />
+                  {touched.email && errors.email && (
+                    <p className="mt-1 text-sm text-red-400">{errors.email}</p>
+                  )}
+                </div>
+              </>
+            )}
 
             <div className="flex gap-3 pt-4">
               <button

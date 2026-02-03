@@ -4,6 +4,7 @@ import {
   IsEmail,
   IsOptional,
   IsString,
+  IsUrl,
   MaxLength,
   MinLength,
   ValidateIf,
@@ -54,6 +55,19 @@ export class UpdateProfileDto {
   @MinLength(2, { message: 'Името на компанијата мора да содржи минимум 2 карактери' })
   @MaxLength(100, { message: 'Името на компанијата не може да биде подолго од 100 карактери' })
   companyName?: string;
+
+  @ApiPropertyOptional({
+    example: 'https://example.com',
+    description: 'Company website URL (for Business type)',
+  })
+  @IsOptional()
+  @ValidateIf((o) => o.companyWebsiteUrl != null && o.companyWebsiteUrl !== '')
+  @IsUrl(
+    { protocols: ['http', 'https'], require_protocol: true },
+    { message: 'URL мора да започнува со http или https и да биде валидна адреса' },
+  )
+  @MaxLength(500)
+  companyWebsiteUrl?: string;
 
   @ApiPropertyOptional({
     example: true,

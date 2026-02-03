@@ -32,7 +32,6 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [phoneError, setPhoneError] = useState('');
-  const [emailError, setEmailError] = useState('');
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const prevTypeRef = useRef<'Individual' | 'Business'>(formData.type);
@@ -53,7 +52,6 @@ export default function RegisterPage() {
         firstName: '',
         lastName: '',
       }));
-      setEmailError('');
       setPhoneTouched(false);
       setPhoneError('');
     }
@@ -118,17 +116,6 @@ export default function RegisterPage() {
     return '';
   };
 
-  const validateEmail = (email: string): string => {
-    if (!email) {
-      return '';
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return t('register.emailInvalid');
-    }
-    return '';
-  };
-
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value;
 
@@ -181,20 +168,6 @@ export default function RegisterPage() {
       setPasswordError(validatePassword(password));
     } else {
       setPasswordError('');
-    }
-  };
-
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const email = e.target.value;
-    setFormData({
-      ...formData,
-      email,
-      emailNotifications: email ? formData.emailNotifications : false,
-    });
-    if (email) {
-      setEmailError(validateEmail(email));
-    } else {
-      setEmailError('');
     }
   };
 
@@ -268,16 +241,6 @@ export default function RegisterPage() {
         setPhoneError(phoneValidationError);
         return;
       }
-      if (!formData.email || !formData.email.trim()) {
-        toast.error(t('register.emailRequired'));
-        return;
-      }
-      const emailValidationError = validateEmail(formData.email);
-      if (emailValidationError) {
-        toast.error(emailValidationError);
-        setEmailError(emailValidationError);
-        return;
-      }
     }
 
     setLoading(true);
@@ -297,6 +260,8 @@ export default function RegisterPage() {
       } else {
         submitData = {
           ...formData,
+          email: formData.email?.trim() || undefined,
+          emailNotifications: formData.emailNotifications ?? false,
           firstName: '',
           lastName: '',
         };
@@ -312,8 +277,6 @@ export default function RegisterPage() {
             messengers: formData.viber || formData.whatsapp || formData.telegram,
             ...(formData.type === 'Business' && {
               companyName: !!formData.companyName,
-              email: !!formData.email,
-              emailNotifications: formData.emailNotifications,
             }),
           };
           analytics.formSubmit('register', true, filledFields);
@@ -385,8 +348,6 @@ export default function RegisterPage() {
             messengers: formData.viber || formData.whatsapp || formData.telegram,
             ...(formData.type === 'Business' && {
               companyName: !!formData.companyName,
-              email: !!formData.email,
-              emailNotifications: formData.emailNotifications,
             }),
           };
           analytics.formSubmit('register', false, filledFields);
@@ -404,8 +365,6 @@ export default function RegisterPage() {
         messengers: formData.viber || formData.whatsapp || formData.telegram,
         ...(formData.type === 'Business' && {
           companyName: !!formData.companyName,
-          email: !!formData.email,
-          emailNotifications: formData.emailNotifications,
         }),
       };
       analytics.formSubmit('register', false, filledFields);
@@ -683,23 +642,6 @@ export default function RegisterPage() {
 
             <div className="mb-5">
               <label className="block text-sm font-semibold mb-2 text-primary-500">
-                {t('register.email')} <span className="text-red-400">*</span>
-              </label>
-              <input
-                type="email"
-                required
-                value={formData.email}
-                onChange={handleEmailChange}
-                className={`input-field ${emailError ? 'border-red-500' : ''}`}
-                // eslint-disable-next-line no-hardcoded-text/no-hardcoded-text
-                placeholder="example@company.com"
-                autoComplete="off"
-              />
-              {emailError && <p className="mt-1 text-sm text-red-400">{emailError}</p>}
-            </div>
-
-            <div className="mb-5">
-              <label className="block text-sm font-semibold mb-2 text-primary-500">
                 {t('register.phone')} <span className="text-red-400">*</span>
               </label>
               <input
@@ -900,61 +842,6 @@ export default function RegisterPage() {
                     </p>
                   </div>
                 ))}
-              </div>
-            </div>
-
-            <div className="mb-5">
-              <div className="flex items-center gap-3 group">
-                <div className="relative">
-                  <input
-                    type="checkbox"
-                    checked={formData.emailNotifications}
-                    onChange={(e) =>
-                      setFormData({ ...formData, emailNotifications: e.target.checked })
-                    }
-                    className="sr-only"
-                  />
-                  <div
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setFormData({
-                        ...formData,
-                        emailNotifications: !formData.emailNotifications,
-                      });
-                    }}
-                    className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
-                      formData.emailNotifications
-                        ? 'bg-primary-500 border-primary-700'
-                        : 'border-primary-500/50 bg-bg-secondary group-hover:border-primary-500'
-                    }`}
-                  >
-                    {formData.emailNotifications && (
-                      <svg
-                        className="w-3 h-3 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={3}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                    )}
-                  </div>
-                </div>
-                <span
-                  onClick={() =>
-                    setFormData({ ...formData, emailNotifications: !formData.emailNotifications })
-                  }
-                  className={`text-sm cursor-pointer ${
-                    formData.emailNotifications ? 'text-text-primary' : 'text-text-secondary'
-                  }`}
-                >
-                  {t('register.emailNotifications')}
-                </span>
               </div>
             </div>
           </>

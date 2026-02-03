@@ -22,7 +22,7 @@ const SPARKLES_EMOJI = '\u2728';
 
 interface ListingManagementCardProps {
   listing: Listing;
-  mode: 'admin' | 'my-listings';
+  mode: 'admin' | 'my-listings' | 'board';
   onAction?: (_id: string, _action: 'publish' | 'pause' | 'close') => void;
   onCopyId?: (_id: string) => void;
   onPromoteClick?: (_id: string) => void;
@@ -48,6 +48,7 @@ export function ListingManagementCard({
   const optimizedImageUrl = hasImage ? getOptimizedImageUrl(imageUrl, 70, 900) : '';
 
   const isAdminMode = mode === 'admin';
+  const isBoardMode = mode === 'board';
 
   return (
     <div className="card overflow-visible group">
@@ -224,38 +225,64 @@ export function ListingManagementCard({
               </div>
             </div>
           </div>
-          <div className="mt-auto pt-3 border-t border-primary-500/20">
-            <div className="flex flex-col xl:flex-row xl:justify-between items-start xl:items-center gap-2 lg:gap-3 min-w-0 max-w-full">
-              <div className="inline-flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
-                <div className="text-base font-semibold text-text-primary">
-                  {t('listings.status')}
-                </div>
-                <div
-                  className={
-                    listing.status === 'Active'
-                      ? 'text-primary-400 font-bold text-base'
+          {!isBoardMode && (
+            <div className="mt-auto pt-3 border-t border-primary-500/20">
+              <div className="flex flex-col xl:flex-row xl:justify-between items-start xl:items-center gap-2 lg:gap-3 min-w-0 max-w-full">
+                <div className="inline-flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
+                  <div className="text-base font-semibold text-text-primary">
+                    {t('listings.status')}
+                  </div>
+                  <div
+                    className={
+                      listing.status === 'Active'
+                        ? 'text-primary-400 font-bold text-base'
+                        : listing.status === 'Paused'
+                          ? 'text-blue-400 font-bold text-base'
+                          : 'text-text-secondary font-bold text-base'
+                    }
+                  >
+                    {listing.status === 'Active'
+                      ? t('userListings.active')
                       : listing.status === 'Paused'
-                        ? 'text-blue-400 font-bold text-base'
-                        : 'text-text-secondary font-bold text-base'
-                  }
-                >
-                  {listing.status === 'Active'
-                    ? t('userListings.active')
-                    : listing.status === 'Paused'
-                      ? t('userListings.paused')
-                      : t('userListings.closed')}
+                        ? t('userListings.paused')
+                        : t('userListings.closed')}
+                  </div>
                 </div>
-              </div>
-              <div className="flex flex-col lg:flex-col xl:flex-row xl:flex-wrap xl:justify-end items-stretch xl:items-center gap-2 w-full lg:w-full lg:flex-shrink-0 lg:max-w-full xl:flex-1 xl:flex-shrink xl:min-w-0 xl:max-w-full min-h-[48px] lg:min-h-[40px] xl:min-h-[52px]">
-                {onAction && (
-                  <>
-                    {mode === 'my-listings' &&
-                      listing.status === 'Active' &&
-                      !listing.is_promoted &&
-                      onPromoteClick && (
+                <div className="flex flex-col lg:flex-col xl:flex-row xl:flex-wrap xl:justify-end items-stretch xl:items-center gap-2 w-full lg:w-full lg:flex-shrink-0 lg:max-w-full xl:flex-1 xl:flex-shrink xl:min-w-0 xl:max-w-full min-h-[48px] lg:min-h-[40px] xl:min-h-[52px]">
+                  {onAction && (
+                    <>
+                      {mode === 'my-listings' &&
+                        listing.status === 'Active' &&
+                        !listing.is_promoted &&
+                        onPromoteClick && (
+                          <button
+                            onClick={() => onPromoteClick(listing.id)}
+                            className="text-text-secondary font-medium text-base hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-accent/40 hover:border-accent/60 bg-accent/20 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
+                          >
+                            <svg
+                              className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+                              />
+                            </svg>
+                            <span>{t('listings.promote')}</span>
+                          </button>
+                        )}
+                      {mode === 'admin' && listing.status !== 'Closed' && onPromoteClick && (
                         <button
                           onClick={() => onPromoteClick(listing.id)}
-                          className="text-text-secondary font-medium text-base hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-accent/40 hover:border-accent/60 bg-accent/20 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
+                          className={`font-medium text-base transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px] text-text-secondary hover:text-text-primary ${
+                            listing.is_promoted
+                              ? 'bg-[#f069be33] border-[#f069be]/40 hover:border-[#f069be]/60'
+                              : 'bg-accent/20 border-accent/40 hover:border-accent/60'
+                          }`}
                         >
                           <svg
                             className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
@@ -270,88 +297,64 @@ export function ListingManagementCard({
                               d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
                             />
                           </svg>
-                          <span>{t('listings.promote')}</span>
+                          <span>
+                            {listing.is_promoted ? t('listings.unpromote') : t('listings.promote')}
+                          </span>
                         </button>
                       )}
-                    {mode === 'admin' && listing.status !== 'Closed' && onPromoteClick && (
-                      <button
-                        onClick={() => onPromoteClick(listing.id)}
-                        className={`font-medium text-base transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px] text-text-secondary hover:text-text-primary ${
-                          listing.is_promoted
-                            ? 'bg-[#f069be33] border-[#f069be]/40 hover:border-[#f069be]/60'
-                            : 'bg-accent/20 border-accent/40 hover:border-accent/60'
-                        }`}
-                      >
-                        <svg
-                          className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                      {listing.status === 'Paused' && (
+                        <button
+                          onClick={() => onAction(listing.id, 'publish')}
+                          className="text-text-secondary font-medium text-base hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-500/40 hover:border-primary-500/60 bg-primary-500/20 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
-                          />
-                        </svg>
-                        <span>
-                          {listing.is_promoted ? t('listings.unpromote') : t('listings.promote')}
-                        </span>
-                      </button>
-                    )}
-                    {listing.status === 'Paused' && (
-                      <button
-                        onClick={() => onAction(listing.id, 'publish')}
-                        className="text-text-secondary font-medium text-base hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-500/40 hover:border-primary-500/60 bg-primary-500/20 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
-                      >
-                        {t('listings.publishAction')}
-                      </button>
-                    )}
-                    {listing.status === 'Active' && (
-                      <button
-                        onClick={() => onAction(listing.id, 'pause')}
-                        className="text-text-secondary font-medium text-base hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-blue-500/40 hover:border-blue-500/60 bg-blue-500/20 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
-                      >
-                        {t('listings.pauseAction')}
-                      </button>
-                    )}
-                    {listing.status !== 'Closed' && (
-                      <button
-                        onClick={() => onAction(listing.id, 'close')}
-                        className="text-text-secondary font-medium text-base hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-gray-500/40 hover:border-gray-500/60 bg-gray-500/20 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
-                      >
-                        {t('common.close')}
-                      </button>
-                    )}
-                  </>
-                )}
-                {mode === 'my-listings' && listing.status !== 'Closed' && (
-                  <Link
-                    href={`/listings/${listing.id}/edit`}
-                    className="text-text-secondary font-medium text-base hover:text-text-primary transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-700 hover:border-primary-700 bg-transparent hover:bg-primary-700/10 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
-                    title={t('common.editListing')}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <svg
-                      className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0 text-primary-700"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                          {t('listings.publishAction')}
+                        </button>
+                      )}
+                      {listing.status === 'Active' && (
+                        <button
+                          onClick={() => onAction(listing.id, 'pause')}
+                          className="text-text-secondary font-medium text-base hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-blue-500/40 hover:border-blue-500/60 bg-blue-500/20 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
+                        >
+                          {t('listings.pauseAction')}
+                        </button>
+                      )}
+                      {listing.status !== 'Closed' && (
+                        <button
+                          onClick={() => onAction(listing.id, 'close')}
+                          className="text-text-secondary font-medium text-base hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-gray-500/40 hover:border-gray-500/60 bg-gray-500/20 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
+                        >
+                          {t('common.close')}
+                        </button>
+                      )}
+                    </>
+                  )}
+                  {mode === 'my-listings' && listing.status !== 'Closed' && (
+                    <Link
+                      href={`/listings/${listing.id}/edit`}
+                      className="text-text-secondary font-medium text-base hover:text-text-primary transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-700 hover:border-primary-700 bg-transparent hover:bg-primary-700/10 select-none w-full xl:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
+                      title={t('common.editListing')}
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                      />
-                    </svg>
-                    <span className="sm:hidden">{t('common.editListing')}</span>
-                  </Link>
-                )}
+                      <svg
+                        className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0 text-primary-700"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        />
+                      </svg>
+                      <span className="sm:hidden">{t('common.editListing')}</span>
+                    </Link>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

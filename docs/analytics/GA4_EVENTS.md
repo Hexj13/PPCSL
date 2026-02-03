@@ -174,9 +174,9 @@
 - `fields_count` - количество заполненных полей
 
 **Формы:**
-- `complete_profile` - firstName, lastName, email
+- `complete_profile` - для физ. лиц: firstName, lastName, email; для юр. лиц: companyWebsiteUrl, email, emailNotifications
 - `create_listing` / `edit_listing` - brand, model, year, price, city, description, images
-- `register` - phone, password, type, messengers, companyName (для Business), email (для Business)
+- `register` - phone, password, type, messengers, companyName (для Business)
 - `login` - login, password
 
 #### complete_profile_skip
@@ -314,10 +314,17 @@
 ## Специфика формы завершения профиля
 
 ### Описание
-Форма `/complete-profile` запрашивает дополнительные данные после регистрации:
-- **Имя** (firstName) - опционально
-- **Фамилия** (lastName) - опционально
-- **Email** (email) - опционально
+Форма `/complete-profile` показывается после подтверждения телефона по SMS и запрашивает дополнительные данные (можно пропустить или заполнить позже в профиле).
+
+**Для физических лиц (Individual):**
+- Имя (firstName) — опционально
+- Фамилия (lastName) — опционально
+- Email (email) — опционально
+
+**Для юридических лиц (Business):**
+- Ссылка на сайт продавца (companyWebsiteUrl) — опционально
+- Email (email) — опционально
+- Чекбокс уведомлений по почте (emailNotifications)
 
 ### События
 1. **form_start** - при первом фокусе на любом поле

@@ -20,13 +20,9 @@ import { UserType, UserType as UserTypeEnum } from '../../common/types';
 export class RegisterDto {
   @ApiPropertyOptional({
     example: 'user@example.com',
-    description: 'Email address (required for Business type)',
+    description: 'Email address (optional)',
   })
-  @ValidateIf((o) => o.type === UserTypeEnum.Business)
-  @IsNotEmpty({ message: 'Email е задолжителен за правно лице' })
-  @ValidateIf(
-    (o) => o.type === UserTypeEnum.Business || (o.type === UserTypeEnum.Individual && o.email),
-  )
+  @ValidateIf((o) => o.email != null && o.email !== '')
   @IsEmail({}, { message: 'Невалидна email адреса' })
   email?: string;
 
@@ -49,14 +45,14 @@ export class RegisterDto {
   @NotEquals(UserTypeEnum.Admin, { message: 'Не можете да се регистрирате како администратор' })
   type: UserType;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     example: '+37370123456',
-    description: 'Phone number (required for Individual type)',
+    description: 'Phone number (required for all user types)',
   })
-  @ValidateIf((o) => o.type === UserTypeEnum.Individual)
+  @IsNotEmpty({ message: 'Телефонот е задолжителен' })
   @IsString({ message: 'Телефонот е задолжителен' })
   @IsPhone()
-  phone?: string;
+  phone: string;
 
   @ApiPropertyOptional({
     example: 'John',

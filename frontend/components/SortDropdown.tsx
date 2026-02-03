@@ -13,7 +13,11 @@ import {
 
 import { Dropdown } from './Dropdown';
 
-export function SortDropdown() {
+interface SortDropdownProps {
+  basePath?: string;
+}
+
+export function SortDropdown({ basePath = '/' }: SortDropdownProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useTranslation();
@@ -39,7 +43,8 @@ export function SortDropdown() {
       currentParams.delete('sortOrder');
       currentParams.set('sortBy', sortBy);
       currentParams.set('sortOrder', sortOrder);
-      const newUrl = `/?${currentParams.toString()}`;
+      const query = currentParams.toString();
+      const newUrl = basePath === '/' ? `/?${query}` : `${basePath}${query ? `?${query}` : ''}`;
       const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('scrollPreserved', 'true');
@@ -58,7 +63,7 @@ export function SortDropdown() {
         }
       });
     },
-    [searchParams, router]
+    [searchParams, router, basePath]
   );
 
   return (

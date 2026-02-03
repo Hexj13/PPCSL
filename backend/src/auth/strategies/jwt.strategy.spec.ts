@@ -58,6 +58,7 @@ describe('JwtStrategy', () => {
         active: true,
         email: 'test@example.com',
         type: UserType.Admin,
+        board_slug: null,
       };
       usersService.findOne.mockResolvedValue(mockUser as User);
 
@@ -83,6 +84,7 @@ describe('JwtStrategy', () => {
         active: false,
         email: 'test@example.com',
         type: UserType.Individual,
+        board_slug: null,
       };
       usersService.findOne.mockResolvedValue(mockUser as User);
 
@@ -101,6 +103,7 @@ describe('JwtStrategy', () => {
         active: true,
         email: null,
         type: UserType.Individual,
+        board_slug: null,
       };
       usersService.findOne.mockResolvedValue(mockUser as User);
 
@@ -124,6 +127,7 @@ describe('JwtStrategy', () => {
         active: true,
         email: 'test@example.com',
         type: UserType.Business,
+        board_slug: null,
       };
       usersService.findOne.mockResolvedValue(mockUser as User);
 

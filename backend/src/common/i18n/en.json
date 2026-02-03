@@ -18,6 +18,7 @@
     "promotionAdminOnly": "Promotion is available only for administrators",
     "maxPromotionsReached": "Maximum number of active promotions is {max}. Please close some existing promotions.",
     "userNotFound": "User not found",
+    "boardNotFound": "Board not found",
     "listingNotFound": "Listing not found",
     "promotionOnlyActive": "You can only promote active listings. Please activate the listing first.",
     "invalidPromotionPeriod": "Invalid promotion period. Allowed values are: 1, 7, 14, or 30 days.",

@@ -538,7 +538,17 @@
     "promoted": "Promoted",
     "notPromoted": "Not Promoted",
     "promotionHistory": "Promotion History",
-    "noPromotionHistory": "No promotion history"
+    "noPromotionHistory": "No promotion history",
+    "myBoard": "My listings board"
+  },
+  "board": {
+    "title": "Listings board from {sellerName}",
+    "home": "Home",
+    "loadMore": "Load more",
+    "noMoreListings": "No more listings",
+    "noListings": "This seller has no active listings yet.",
+    "ownerNoticeTitle": "This is your listings board.",
+    "ownerNoticeText": "Here are all your active listings. You can use the link to this page to share it in messengers or social networks and show all your listings in one place."
   },
   "listingDetail": {
     "home": "Home",
@@ -602,6 +612,7 @@
     "individual": "Individual",
     "business": "Business",
     "company": "Company",
+    "companyWebsite": "Company website",
     "name": "Name",
     "city": "City",
     "email": "Email",
@@ -722,6 +733,9 @@
     "title": "Profile",
     "contactInfo": "Contact Information",
     "phone": "Phone",
+    "phoneChangeBoardUrlNoticeBefore": "Changing your phone number will also change the link to your listings board. If you have shared this link elsewhere (e.g. on social networks or in messengers), update it with the new link from \"",
+    "phoneChangeBoardUrlNoticeAfter": "\".",
+    "availableMessengers": "Available messengers",
     "emailAndNotifications": "Email and Notifications",
     "email": "Email",
     "emailPlaceholder": "Enter email address",
@@ -731,6 +745,9 @@
     "companyInfo": "Company Information",
     "companyName": "Company Name",
     "companyNamePlaceholder": "Enter company name",
+    "companyWebsiteUrl": "Company website link",
+    "companyWebsiteUrlPlaceholder": "https://example.com",
+    "invalidCompanyWebsiteUrl": "Enter a valid URL starting with http:// or https://",
     "personalData": "Personal Data",
     "firstName": "First Name",
     "firstNamePlaceholder": "Enter your first name",

@@ -237,6 +237,17 @@ const faqConfig: FAQConfigWithLanguages = {
       },
       {
         id: "22",
+        question: "Ce este tabla de anunțuri a vânzătorului?",
+        answer: [
+          "Tabla de anunțuri este o pagină publică pe care fiecare vânzător o are. Pe această pagină sunt afișate toate anunțurile active ale vânzătorului.",
+          "Cum puteți deschide tabla unui vânzător:",
+          "• Pe pagina unui anunț: în blocul de contact al vânzătorului, dacă vânzătorul are mai mult de un anunț activ, apăsați pe „Vezi toate anunțurile vânzătorului”. Linkul se deschide într-o filă nouă.",
+          '• Dacă sunteți vânzător: în „Anunțurile mele” apăsați pe „Tabla mea de anunțuri” pentru a deschide propria pagină.',
+          "Puteți partaja linkul către tabla dvs. în mesagerii sau rețele sociale, ca să afișați toate anunțurile într-un singur loc.",
+        ],
+      },
+      {
+        id: "23",
         question: "Există o aplicație mobilă pentru Kupito?",
         answer: [
           "Kupito este o Progressive Web App (PWA), ceea ce înseamnă că o puteți instala pe telefonul dvs. ca aplicație mobilă:",
@@ -517,6 +528,17 @@ const faqConfig: FAQConfigWithLanguages = {
       },
       {
         id: "22",
+        question: "Что такое доска объявлений продавца?",
+        answer: [
+          "Доска объявлений — это публичная страница каждого продавца. На ней отображаются все активные объявления этого продавца.",
+          "Как открыть доску продавца:",
+          "• На странице объявления: в блоке контактов продавца, если у продавца больше одного активного объявления, нажмите «Посмотреть все объявления продавца». Ссылка откроется в новой вкладке.",
+          '• Если вы продавец: в «Мои объявления» нажмите «Моя доска объявлений», чтобы открыть свою страницу.',
+          "Ссылку на свою доску можно отправить в мессенджеры или соцсети, чтобы показать все объявления в одном месте.",
+        ],
+      },
+      {
+        id: "23",
         question: "Существует ли мобильное приложение для Kupito?",
         answer: [
           "Kupito - это Progressive Web App (PWA), что означает, что вы можете установить его на свой телефон как мобильное приложение:",

@@ -434,6 +434,7 @@ export interface Translations {
     individual: string;
     business: string;
     company: string;
+    companyWebsite: string;
     name: string;
     city: string;
     email: string;
@@ -543,6 +544,9 @@ export interface Translations {
     companyInfo: string;
     companyName: string;
     companyNamePlaceholder: string;
+    companyWebsiteUrl: string;
+    companyWebsiteUrlPlaceholder: string;
+    invalidCompanyWebsiteUrl: string;
     personalData: string;
     firstName: string;
     firstNamePlaceholder: string;

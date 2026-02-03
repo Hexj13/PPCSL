@@ -25,7 +25,6 @@ import {
 } from '@/components/ListingPageSkeleton';
 import { PromotionModal } from '@/components/PromotionModal';
 import { SimilarListings } from '@/components/SimilarListings';
-import { UserListingsModal } from '@/components/UserListingsModal';
 import { useCities } from '@/hooks/useCities';
 import { useListingData } from '@/hooks/useListingData';
 import { useLoadingState } from '@/hooks/useLoadingState';
@@ -103,7 +102,6 @@ export default function ListingPageClient({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [modalImageIndex, setModalImageIndex] = useState(0);
-  const [isUserListingsModalOpen, setIsUserListingsModalOpen] = useState(false);
   const [showHistoryHint, setShowHistoryHint] = useState(false);
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
   const [promotionModalOpen, setPromotionModalOpen] = useState(false);
@@ -735,7 +733,13 @@ export default function ListingPageClient({
               listing={listing}
               listingId={id}
               activeListingsCount={activeListingsCount}
-              onOpenUserListings={() => setIsUserListingsModalOpen(true)}
+              boardSlug={
+                listing?.user
+                  ? ((listing.user as { board_slug?: string; boardSlug?: string }).board_slug ??
+                    (listing.user as { boardSlug?: string }).boardSlug ??
+                    null)
+                  : null
+              }
             />
 
             <div className="surface overflow-hidden">
@@ -839,18 +843,6 @@ export default function ListingPageClient({
         onPrev={prevImage}
         onIndexChange={setModalImageIndex}
       />
-
-      {listing?.user && (
-        <UserListingsModal
-          isOpen={isUserListingsModalOpen}
-          onClose={() => setIsUserListingsModalOpen(false)}
-          user={listing.user}
-          fetchListings={async (userId: string) => {
-            const res = await listingsApi.getUserActiveListings(userId);
-            return res.data;
-          }}
-        />
-      )}
 
       <PromotionModal
         isOpen={promotionModalOpen}

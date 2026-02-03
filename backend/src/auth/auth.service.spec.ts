@@ -35,6 +35,7 @@ describe('AuthService', () => {
     firstName: 'Test',
     lastName: 'User',
     active: true,
+    board_slug: 'test-slug',
   };
 
   beforeEach(async () => {
@@ -46,6 +47,7 @@ describe('AuthService', () => {
       create: jest.fn(),
       findOne: jest.fn(),
       update: jest.fn(),
+      ensureBoardSlug: jest.fn().mockResolvedValue('test-slug'),
     };
 
     const mockJwtService = {
@@ -270,7 +272,9 @@ describe('AuthService', () => {
       expect(result).toHaveProperty('id');
       expect(result).toHaveProperty('email');
       expect(result).toHaveProperty('type');
+      expect(result).toHaveProperty('boardSlug', 'test-slug');
       expect(usersService.findOne).toHaveBeenCalledWith('1');
+      expect(usersService.ensureBoardSlug).toHaveBeenCalledWith('1');
     });
   });
 
@@ -519,6 +523,7 @@ describe('AuthService', () => {
         firstName: null,
         lastName: null,
         companyName: null,
+        companyWebsiteUrl: null,
         active: false,
       });
       expect(result).toEqual({ message: 'Аккаунтот е успешно избришан' });
@@ -567,6 +572,7 @@ describe('AuthService', () => {
         firstName: null,
         lastName: null,
         companyName: null,
+        companyWebsiteUrl: null,
         active: false,
       } as User);
 
@@ -578,6 +584,7 @@ describe('AuthService', () => {
         firstName: null,
         lastName: null,
         companyName: null,
+        companyWebsiteUrl: null,
         active: false,
       });
     });

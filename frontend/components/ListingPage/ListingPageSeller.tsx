@@ -12,14 +12,14 @@ interface ListingPageSellerProps {
   listing: Listing;
   listingId: string;
   activeListingsCount: number;
-  onOpenUserListings: () => void;
+  boardSlug: string | null;
 }
 
 export function ListingPageSeller({
   listing,
   listingId: id,
   activeListingsCount,
-  onOpenUserListings,
+  boardSlug,
 }: ListingPageSellerProps) {
   const { t } = useTranslation();
   const { locale } = useI18n();
@@ -61,6 +61,26 @@ export function ListingPageSeller({
               <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
                 {listing.user.companyName}
               </span>
+            </div>
+          )}
+
+        {listing.status !== 'Closed' &&
+          listing.user.type === 'Business' &&
+          listing.user.companyWebsiteUrl && (
+            <div className="flex items-center min-w-0 gap-2">
+              <span className="font-semibold text-primary-500 flex-shrink-0">
+                {t('listingDetail.companyWebsite')}:
+              </span>
+              <a
+                href={listing.user.companyWebsiteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="min-w-0 truncate hover:text-primary-300 transition-colors underline"
+                style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+                title={listing.user.companyWebsiteUrl}
+              >
+                {listing.user.companyWebsiteUrl}
+              </a>
             </div>
           )}
 
@@ -243,33 +263,51 @@ export function ListingPageSeller({
             </div>
           )}
 
-        {listing.user && activeListingsCount > 1 && (
+        {listing.user && activeListingsCount > 1 && boardSlug && (
           <div className="pt-4 border-t border-primary-500/20">
-            <button
-              onClick={onOpenUserListings}
-              disabled={listing.status === 'Closed'}
-              className={`w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
-                listing.status === 'Closed'
-                  ? 'bg-bg-darker text-text-secondary border-2 border-divider cursor-not-allowed opacity-50'
-                  : 'text-primary-500 hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 border-2 border-primary-500 bg-primary-500/10 select-none'
-              }`}
-              title={listing.status === 'Closed' ? t('listingDetail.unavailableForClosed') : ''}
-            >
-              <svg
-                className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+            {listing.status === 'Closed' ? (
+              <span
+                className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium flex items-center justify-center gap-2 bg-bg-darker text-text-secondary border-2 border-divider cursor-not-allowed opacity-50"
+                title={t('listingDetail.unavailableForClosed')}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-              <span>{t('listingDetail.allListingsFromSeller')}</span>
-            </button>
+                <svg
+                  className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+                <span>{t('listingDetail.allListingsFromSeller')}</span>
+              </span>
+            ) : (
+              <a
+                href={`/board/${boardSlug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-500 hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 border-2 border-primary-500 bg-primary-500/10 select-none"
+              >
+                <svg
+                  className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+                <span>{t('listingDetail.allListingsFromSeller')}</span>
+              </a>
+            )}
           </div>
         )}
       </div>
