@@ -363,7 +363,7 @@ function CompleteProfileContent() {
       const response = await authApi.updateProfile(updateData);
       setAuth(response.data, useAuthStore.getState().token);
 
-      const filledFields = isBusiness
+      const filledFields: Record<string, boolean> = isBusiness
         ? {
             companyWebsiteUrl:
               !!formData.companyWebsiteUrl && formData.companyWebsiteUrl.trim().length > 0,
@@ -400,7 +400,7 @@ function CompleteProfileContent() {
         return;
       }
     } catch {
-      const filledFields = isBusiness
+      const filledFields: Record<string, boolean> = isBusiness
         ? {
             companyWebsiteUrl:
               !!formData.companyWebsiteUrl && formData.companyWebsiteUrl.trim().length > 0,

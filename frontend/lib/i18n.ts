@@ -36,6 +36,15 @@ export interface Translations {
     title: string;
     description: string;
   };
+  board: {
+    title: string;
+    home: string;
+    loadMore: string;
+    noMoreListings: string;
+    noListings: string;
+    ownerNoticeTitle: string;
+    ownerNoticeText: string;
+  };
   common: {
     loading: string;
     error: string;
