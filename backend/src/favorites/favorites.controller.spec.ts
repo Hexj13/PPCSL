@@ -17,6 +17,7 @@ describe('FavoritesController', () => {
     password: 'hashed-password',
     type: 'Individual' as const,
     companyName: null,
+    companyWebsiteUrl: null,
     board_slug: null,
     active: true,
     emailNotifications: false,
