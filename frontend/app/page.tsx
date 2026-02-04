@@ -62,22 +62,9 @@ async function getTitleFromParams(
       : 'car';
 
   const getVehicleTypeLabel = (type: string): string => {
-    const key = `vehicleOptions.vehicleTypeFull.${type}`;
+    const key = `listings.vehicleTypeFull.${type}`;
     const value = getTranslationValue(translations, key);
-
-    if (value === key) {
-      switch (type) {
-        case 'truck':
-          return 'Комерцијален';
-        case 'moto':
-          return 'Мотоцикли';
-        case 'car':
-        default:
-          return '';
-      }
-    }
-
-    return value;
+    return value === key ? '' : value;
   };
 
   const vehicleTypeLabel = getVehicleTypeLabel(vehicleType);

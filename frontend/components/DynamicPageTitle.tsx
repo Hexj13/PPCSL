@@ -87,20 +87,9 @@ export function DynamicPageTitle() {
 
     const getVehicleTypeLabel = (type: string): string => {
       try {
-        const key = `vehicleOptions.vehicleTypeFull.${type}`;
+        const key = `listings.vehicleTypeFull.${type}`;
         const value = t(key);
-        if (value === key) {
-          switch (type) {
-            case 'truck':
-              return 'Комерцијален';
-            case 'moto':
-              return 'Мотоцикли';
-            case 'car':
-            default:
-              return '';
-          }
-        }
-        return value;
+        return value === key ? '' : value;
       } catch {
         return '';
       }
