@@ -19,6 +19,7 @@ import { ProfileSaveSuccessToast } from '@/components/ProfileSaveSuccessToast';
 import { RegisterPageBodyClass } from '@/components/RegisterPageBodyClass';
 import { ScrollReset } from '@/components/ScrollReset';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
+import { TawkTo } from '@/components/TawkTo';
 import { getServerTranslations, type Locale } from '@/lib/i18n';
 import { loadSiteConfig } from '@/lib/site-config';
 import { getCountry } from '@/lib/utils';
@@ -149,10 +150,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://www.googletagmanager.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://embed.tawk.to" />
+        <link rel="preconnect" href="https://embed.tawk.to" crossOrigin="anonymous" />
       </head>
       <body className={inter.className} suppressHydrationWarning>
         <GoogleTagManager />
         <GoogleTagManagerNoscript />
+        <TawkTo />
         <GoogleAnalyticsConsent />
         <GoogleAnalytics />
         <OrganizationSchema />

@@ -4,7 +4,7 @@ const legal: LegalConfig = {
   terms: {
     en: {
       title: "Terms and Conditions",
-      lastUpdated: "Last updated: January 19, 2026",
+      lastUpdated: "Last updated: February 3, 2026",
       languageToggle: "Switch language",
       dictionary: {
         title: "Glossary of Terms",
@@ -22,7 +22,7 @@ const legal: LegalConfig = {
           {
             term: "Registered User",
             definition:
-              "A user who has created a profile on the Platform with a valid email address and password.",
+              "A user who has created a profile on the Platform by verifying their phone number and setting a password. An email address is optional and may be added later in the profile.",
           },
           {
             term: "Listing",
@@ -261,7 +261,7 @@ const legal: LegalConfig = {
     },
     ro: {
       title: "Termeni și condiții",
-      lastUpdated: "Ultima actualizare: 19 ianuarie 2026",
+      lastUpdated: "Ultima actualizare: 3 februarie 2026",
       languageToggle: "Schimbă limba",
       dictionary: {
         title: "Glosar de termeni",
@@ -279,7 +279,7 @@ const legal: LegalConfig = {
           {
             term: "Utilizator înregistrat",
             definition:
-              "Un utilizator care a creat un profil pe Platformă cu o adresă de email și parolă valide.",
+              "Un utilizator care a creat un profil pe Platformă prin verificarea numărului de telefon și setarea unei parole. Adresa de email este opțională și poate fi adăugată ulterior în profil.",
           },
           {
             term: "Anunț",
@@ -520,7 +520,7 @@ const legal: LegalConfig = {
     },
     ru: {
       title: "Условия использования",
-      lastUpdated: "Последнее обновление: 19 января 2026",
+      lastUpdated: "Последнее обновление: 3 февраля 2026",
       languageToggle: "Переключить язык",
       dictionary: {
         title: "Глоссарий терминов",
@@ -538,7 +538,7 @@ const legal: LegalConfig = {
           {
             term: "Зарегистрированный пользователь",
             definition:
-              "Пользователь, создавший профиль на Платформе с действительным адресом электронной почты и паролем.",
+              "Пользователь, создавший профиль на Платформе путём подтверждения номера телефона и установки пароля. Адрес электронной почты необязателен и может быть добавлен позже в профиле.",
           },
           {
             term: "Объявление",
@@ -781,7 +781,7 @@ const legal: LegalConfig = {
   privacy: {
     ro: {
       title: "Politica de confidențialitate",
-      lastUpdated: "Ultima actualizare: 19 ianuarie 2026",
+      lastUpdated: "Ultima actualizare: 3 februarie 2026",
       languageToggle: "Schimbă limba",
       dictionary: {
         title: "Glosar de termeni",
@@ -1179,7 +1179,7 @@ const legal: LegalConfig = {
     },
     en: {
       title: "Privacy Policy",
-      lastUpdated: "Last updated: January 19, 2026",
+      lastUpdated: "Last updated: February 3, 2026",
       languageToggle: "Switch language",
       dictionary: {
         title: "Glossary of Terms",
@@ -1577,7 +1577,7 @@ const legal: LegalConfig = {
     },
     ru: {
       title: "Политика конфиденциальности",
-      lastUpdated: "Последнее обновление: 19 января 2026",
+      lastUpdated: "Последнее обновление: 3 февраля 2026",
       languageToggle: "Переключить язык",
       dictionary: {
         title: "Глоссарий терминов",
