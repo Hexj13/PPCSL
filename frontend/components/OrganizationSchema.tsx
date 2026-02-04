@@ -1,18 +1,19 @@
-import { getServerTranslations } from '@/lib/i18n';
+import { getMetadataLocale, getServerTranslations } from '@/lib/i18n';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { getCountry } from '@/lib/utils';
 
-export function OrganizationSchema() {
+export async function OrganizationSchema() {
   const country = getCountry();
   const siteConfig = loadSiteConfigSync(country);
-  const t = getServerTranslations();
+  const locale = await getMetadataLocale();
+  const t = getServerTranslations(locale);
 
-  const locale = siteConfig.locale;
+  const localeTag = siteConfig.locale;
   const languageNames: Record<string, string> = {
     'ro-MD': 'Romanian',
     'ru-MD': 'Russian',
   };
-  const availableLanguage = languageNames[locale] || 'Romanian';
+  const availableLanguage = languageNames[localeTag] || 'Romanian';
 
   const schemaData = {
     '@context': 'https://schema.org',

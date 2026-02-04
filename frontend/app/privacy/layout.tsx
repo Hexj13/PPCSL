@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-import { getServerTranslations } from '@/lib/i18n';
+import { getMetadataLocale, getServerTranslations } from '@/lib/i18n';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { getCountry } from '@/lib/utils';
 
@@ -8,7 +8,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const country = getCountry();
   const siteConfig = loadSiteConfigSync(country);
   const siteUrl = siteConfig.siteUrl;
-  const t = getServerTranslations();
+  const locale = await getMetadataLocale();
+  const t = getServerTranslations(locale);
 
   return {
     title: t.metadata.privacy.title,

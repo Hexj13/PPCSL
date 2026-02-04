@@ -6,7 +6,7 @@ import { ListingGrid } from '@/components/ListingGrid';
 import { ScrollToFiltersButton } from '@/components/ScrollToFiltersButton';
 import { SearchFilters } from '@/components/SearchFilters';
 import { SearchStructuredData } from '@/components/SearchStructuredData';
-import { getServerTranslations } from '@/lib/i18n';
+import { getMetadataLocale, getServerTranslations } from '@/lib/i18n';
 import { getListings } from '@/lib/server-api';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { getCountry } from '@/lib/utils';
@@ -21,7 +21,8 @@ export async function generateMetadata({
 }: {
   searchParams?: Promise<Record<string, string | string[] | undefined> | undefined>;
 }): Promise<Metadata> {
-  const t = getServerTranslations();
+  const locale = await getMetadataLocale();
+  const t = getServerTranslations(locale);
   const params = (await (searchParams ?? Promise.resolve(undefined))) ?? {};
   const brand = typeof params.brand === 'string' ? params.brand : null;
   const model = typeof params.model === 'string' ? params.model : null;
@@ -119,7 +120,8 @@ export default async function ListingsPage({
 }: {
   searchParams?: Promise<Record<string, string | string[] | undefined> | undefined>;
 }) {
-  const t = getServerTranslations();
+  const locale = await getMetadataLocale();
+  const t = getServerTranslations(locale);
   const params = (await (searchParams ?? Promise.resolve(undefined))) ?? {};
   const brand = typeof params.brand === 'string' ? params.brand : null;
   const model = typeof params.model === 'string' ? params.model : null;

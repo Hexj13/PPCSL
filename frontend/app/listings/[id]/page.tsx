@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { Listing } from '@/lib/api';
-import { getServerTranslations } from '@/lib/i18n';
+import { getMetadataLocale, getServerTranslations, getTFromTranslations } from '@/lib/i18n';
 import { loadSiteConfigSync } from '@/lib/site-config';
-import { getCountry, getOptimizedImageUrl } from '@/lib/utils';
+import { getCountry, getOptimizedImageUrl, getListingDisplayTitle } from '@/lib/utils';
 
 import ListingPageClient from './ListingPageClient';
 
@@ -119,7 +119,8 @@ function buildListingJsonLd(listing: Listing): Record<string, unknown> {
 
 function buildListingBreadcrumbJsonLd(
   listing: Listing,
-  homeLabel: string
+  homeLabel: string,
+  listingDisplayTitle: string
 ): Record<string, unknown> {
   return {
     '@context': 'https://schema.org',
@@ -134,7 +135,7 @@ function buildListingBreadcrumbJsonLd(
       {
         '@type': 'ListItem',
         position: 2,
-        name: listing.title,
+        name: listingDisplayTitle,
         item: `${siteUrl}/listings/${listing.id}`,
       },
     ],
@@ -159,7 +160,8 @@ export async function generateMetadata({
 }: {
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
-  const t = getServerTranslations();
+  const locale = await getMetadataLocale();
+  const t = getServerTranslations(locale);
   const { id } = await params;
 
   const listing = await getListing(id);
@@ -181,7 +183,9 @@ export async function generateMetadata({
     };
   }
 
-  const title = `${listing.title} | Kupito`;
+  const tFn = getTFromTranslations(t);
+  const displayTitle = getListingDisplayTitle(listing, tFn) || listing.title;
+  const title = `${displayTitle} | Kupito`;
   const description = buildListingOgDescription(listing, t.metadata.listing.defaultDescription);
 
   const ogImage =
@@ -212,7 +216,7 @@ export async function generateMetadata({
           url: ogImage,
           width: 1200,
           height: 630,
-          alt: listing.title,
+          alt: displayTitle,
         },
       ],
       siteName: 'Kupito',
@@ -235,8 +239,15 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
     notFound();
   }
 
-  const t = getServerTranslations();
-  const breadcrumbJsonLd = buildListingBreadcrumbJsonLd(listing, t.listingDetail.home);
+  const locale = await getMetadataLocale();
+  const t = getServerTranslations(locale);
+  const tFn = getTFromTranslations(t);
+  const displayTitle = getListingDisplayTitle(listing, tFn) || listing.title;
+  const breadcrumbJsonLd = buildListingBreadcrumbJsonLd(
+    listing,
+    t.listingDetail.home,
+    displayTitle
+  );
   const listingJsonLd = buildListingJsonLd(listing);
 
   return (

@@ -990,6 +990,35 @@ export function getServerTranslations(locale?: Locale): Translations {
   return loadTranslations(locale);
 }
 
+export async function getMetadataLocale(): Promise<Locale> {
+  const defaultLocale = getDefaultLocale();
+  if (process.env.NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER !== 'true') {
+    return defaultLocale;
+  }
+  const { cookies } = await import('next/headers');
+  const cookieStore = await cookies();
+  const localeCookie = cookieStore.get('kupito-locale')?.value;
+  if (localeCookie && (localeCookie === 'ro' || localeCookie === 'ru')) {
+    return localeCookie as Locale;
+  }
+  return defaultLocale;
+}
+
+export function getTFromTranslations(translations: Translations): (_key: string) => string {
+  return (keyPath: string) => {
+    const keys = keyPath.split('.');
+    let value: unknown = translations;
+    for (const k of keys) {
+      if (value && typeof value === 'object' && k in value) {
+        value = (value as Record<string, unknown>)[k];
+      } else {
+        return keyPath;
+      }
+    }
+    return typeof value === 'string' ? value : keyPath;
+  };
+}
+
 export async function loadTranslationsAsync(locale: Locale): Promise<Translations> {
   return loadTranslations(locale);
 }

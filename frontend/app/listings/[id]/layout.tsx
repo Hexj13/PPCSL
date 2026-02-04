@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 
-import { getServerTranslations } from '@/lib/i18n';
+import { getMetadataLocale, getServerTranslations, getTFromTranslations } from '@/lib/i18n';
 import { loadSiteConfigSync } from '@/lib/site-config';
-import { getCountry } from '@/lib/utils';
+import { getCountry, getListingDisplayTitle } from '@/lib/utils';
 
 const siteConfig = loadSiteConfigSync(getCountry());
 const siteUrl = siteConfig.siteUrl;
@@ -37,7 +37,8 @@ export async function generateMetadata({
   const { id } = await params;
   const listing = await getListing(id);
 
-  const t = getServerTranslations();
+  const locale = await getMetadataLocale();
+  const t = getServerTranslations(locale);
 
   if (!listing) {
     return {
@@ -46,15 +47,13 @@ export async function generateMetadata({
     };
   }
 
-  const brand = listing.vehicle?.brand?.name || '';
-  const model = listing.vehicle?.model?.name || '';
-  const year = listing.vehicle?.year || '';
-  const vehicleInfo = [brand, model, year].filter(Boolean).join(' ');
-  const fullTitle = vehicleInfo || listing.title || t.listings.defaultTitle;
+  const tFn = getTFromTranslations(t);
+  const fullTitle =
+    getListingDisplayTitle(listing, tFn) || listing.title || t.listings.defaultTitle;
 
   const description =
     listing.description?.replace(/<[^>]*>/g, '').substring(0, 160) ||
-    `${vehicleInfo || listing.title || t.listings.defaultTitle}. ${t.metadata.listing.defaultDescription}`;
+    `${fullTitle}. ${t.metadata.listing.defaultDescription}`;
 
   const imageUrl =
     listing.images && listing.images.length > 0
@@ -68,7 +67,7 @@ export async function generateMetadata({
     description,
     keywords: [
       listing.title,
-      vehicleInfo,
+      fullTitle,
       listing.city,
       t.metadata.listing.keywords.cars,
       t.metadata.listing.keywords.buyCar,

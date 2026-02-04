@@ -3,7 +3,7 @@ import { join } from 'path';
 
 import { ImageResponse } from 'next/og';
 
-import { getServerTranslations } from '@/lib/i18n';
+import { getMetadataLocale, getServerTranslations } from '@/lib/i18n';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { getCountry } from '@/lib/utils';
 
@@ -18,7 +18,8 @@ export const size = {
 export const contentType = 'image/png';
 
 export default async function Image() {
-  const t = getServerTranslations();
+  const locale = await getMetadataLocale();
+  const t = getServerTranslations(locale);
 
   try {
     const imagePath = join(process.cwd(), 'public', 'opengraph-image.png');

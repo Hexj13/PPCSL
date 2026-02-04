@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import type { BoardInfo } from '@/lib/api';
-import { getServerTranslations } from '@/lib/i18n';
+import { getMetadataLocale, getServerTranslations } from '@/lib/i18n';
 
 import BoardPageClient from './BoardPageClient';
 
@@ -30,7 +30,8 @@ export async function generateMetadata({
   if (!board) {
     return { title: 'Not Found' };
   }
-  const t = getServerTranslations();
+  const locale = await getMetadataLocale();
+  const t = getServerTranslations(locale);
   const title = t.board.title.replace('{sellerName}', board.displayName);
   return {
     title,

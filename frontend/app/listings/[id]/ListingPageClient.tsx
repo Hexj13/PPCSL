@@ -37,6 +37,7 @@ import {
   formatMileage,
   formatRegistrationType,
   getCityName,
+  getListingDisplayTitle,
   getOptimizedImageUrl,
 } from '@/lib/utils';
 import { LoadingSpinner, Spinner } from '@/ui';
@@ -152,6 +153,12 @@ export default function ListingPageClient({
     };
     checkPromotionAccess();
   }, []);
+
+  const displayTitle = listing ? getListingDisplayTitle(listing, t) : '';
+  useEffect(() => {
+    if (!displayTitle) return;
+    document.title = `${displayTitle} | Kupito`;
+  }, [displayTitle]);
 
   const handleToggleFavorite = async () => {
     if (!user) {
@@ -457,7 +464,10 @@ export default function ListingPageClient({
     <>
       <div className="max-w-6xl mx-auto">
         <Breadcrumbs
-          items={[{ label: t('listingDetail.home'), href: '/' }, { label: listing.title }]}
+          items={[
+            { label: t('listingDetail.home'), href: '/' },
+            { label: displayTitle || listing.title },
+          ]}
           className="mb-6"
         />
         <div className="grid grid-cols-1 lg:grid-cols-[1.86fr_1fr] gap-6">

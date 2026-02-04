@@ -1,15 +1,16 @@
 import { MetadataRoute } from 'next';
 
-import { getServerTranslations } from '@/lib/i18n';
+import { getMetadataLocale, getServerTranslations } from '@/lib/i18n';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { loadThemeSync } from '@/lib/theme';
 import { getCountry } from '@/lib/utils';
 
-export default function manifest(): MetadataRoute.Manifest {
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
   const country = getCountry();
   const siteConfig = loadSiteConfigSync(country);
   const theme = loadThemeSync(country);
-  const t = getServerTranslations();
+  const locale = await getMetadataLocale();
+  const t = getServerTranslations(locale);
 
   return {
     name: `${siteConfig.name} - ${t.home.title}`,
@@ -46,7 +47,7 @@ export default function manifest(): MetadataRoute.Manifest {
       },
     ],
     categories: ['automotive', 'shopping', 'marketplace'],
-    lang: siteConfig.locale.split('-')[0],
+    lang: locale,
     dir: 'ltr',
     orientation: 'portrait',
   };

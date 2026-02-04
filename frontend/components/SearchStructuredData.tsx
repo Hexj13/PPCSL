@@ -1,10 +1,10 @@
 import type { Listing } from '@/lib/api';
-import { getServerTranslations } from '@/lib/i18n';
+import { getMetadataLocale, getServerTranslations } from '@/lib/i18n';
 import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/popular-brands';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { createSlug, getCountry } from '@/lib/utils';
 
-export function SearchStructuredData({
+export async function SearchStructuredData({
   brand,
   model,
   listings,
@@ -17,11 +17,12 @@ export function SearchStructuredData({
 }) {
   const country = getCountry();
   const siteConfig = loadSiteConfigSync(country);
-  const t = getServerTranslations();
+  const locale = await getMetadataLocale();
+  const t = getServerTranslations(locale);
   const siteUrl = siteConfig.siteUrl;
   const brandParam = brand || null;
   const modelParam = model || null;
-  const locale = siteConfig.locale;
+  const localeTag = `${locale}-${siteConfig.locale.split('-')[1] || 'MD'}` as `${string}-${string}`;
 
   const itemListElements: Array<{
     '@type': string;
@@ -94,7 +95,7 @@ export function SearchStructuredData({
         target: {
           '@type': 'EntryPoint',
           urlTemplate: `${siteUrl}/?brand=${brandSlug}`,
-          inLanguage: locale,
+          inLanguage: localeTag,
         },
         result: {
           '@type': 'ItemList',
@@ -113,7 +114,7 @@ export function SearchStructuredData({
           target: {
             '@type': 'EntryPoint',
             urlTemplate: `${siteUrl}/?brand=${brandParam}&model=${modelSlug}`,
-            inLanguage: locale,
+            inLanguage: localeTag,
           },
           result: {
             '@type': 'ItemList',

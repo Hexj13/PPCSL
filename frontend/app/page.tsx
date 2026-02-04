@@ -9,7 +9,7 @@ import { ListingGrid } from '@/components/ListingGrid';
 import { ScrollToFiltersButton } from '@/components/ScrollToFiltersButton';
 import { SearchFilters } from '@/components/SearchFilters';
 import { SearchStructuredData } from '@/components/SearchStructuredData';
-import { getServerTranslations, type Translations } from '@/lib/i18n';
+import { getMetadataLocale, getServerTranslations, type Translations } from '@/lib/i18n';
 import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/popular-brands';
 import {
   fetchBrands,
@@ -236,7 +236,8 @@ export async function generateMetadata({
 }: {
   searchParams?: Promise<Record<string, string | string[] | undefined> | undefined>;
 }): Promise<Metadata> {
-  const t = getServerTranslations();
+  const locale = await getMetadataLocale();
+  const t = getServerTranslations(locale);
   const params = (await (searchParams ?? Promise.resolve(undefined))) ?? {};
   const brandParam = params.brand;
   const modelParam = params.model;
