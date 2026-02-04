@@ -126,7 +126,7 @@ export class BrandsController {
   async getModels(@Param('id', ParseUUIDPipe) id: string, @Query() query: GetBrandsQueryDto) {
     const brand = await this.brandsService.findOne(id);
     if (!brand) {
-      throw new NotFoundException('Brand not found');
+      throw new NotFoundException('errors.brandNotFoundById');
     }
     return this.brandsService.getModelsByBrand(id, query.vehicleType);
   }

@@ -237,15 +237,15 @@ export class UploadController {
         decodedFilename.startsWith('/') ||
         decodedFilename.startsWith('\\')
       ) {
-        throw new BadRequestException('Invalid filename');
+        throw new BadRequestException('errors.invalidFilename');
       }
 
       if (quality && (isNaN(Number(quality)) || Number(quality) < 1 || Number(quality) > 100)) {
-        throw new BadRequestException('Quality must be a number between 1 and 100');
+        throw new BadRequestException('errors.qualityMustBeNumber');
       }
 
       if (width && (isNaN(Number(width)) || Number(width) < 1 || Number(width) > 5000)) {
-        throw new BadRequestException('Width must be a number between 1 and 5000');
+        throw new BadRequestException('errors.widthMustBeNumber');
       }
 
       const filePath = `/uploads/${decodedFilename}`;
@@ -269,7 +269,7 @@ export class UploadController {
       if (error instanceof BadRequestException) {
         throw error;
       }
-      throw new NotFoundException('Image not found');
+      throw new NotFoundException('errors.imageNotFound');
     }
   }
 }

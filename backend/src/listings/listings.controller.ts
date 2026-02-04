@@ -456,7 +456,7 @@ export class ListingsController {
   async closeOldListings(@Headers('x-cron-secret') secret: string) {
     const expectedSecret = process.env.CRON_SECRET;
     if (!expectedSecret || secret !== expectedSecret) {
-      throw new ForbiddenException('Invalid secret key');
+      throw new ForbiddenException('errors.invalidSecretKey');
     }
 
     const result = await this.listingsService.autoCloseOldListings();

@@ -296,7 +296,7 @@ export class UploadService {
         return `/${s3Key}`;
       } else {
         if (!this.uploadDir) {
-          throw new BadRequestException('Upload directory not configured');
+          throw new BadRequestException('errors.uploadDirectoryNotConfigured');
         }
         const filePath = path.join(this.uploadDir, fileName);
         fs.writeFileSync(filePath, compressedBuffer);

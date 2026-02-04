@@ -56,7 +56,7 @@ export default tseslint.config(
         },
       ],
       'no-hardcoded-text/no-hardcoded-text': [
-        'warn',
+        'error',
         {
           allowedPatterns: [
             '^[A-Za-z0-9\\s\\-_.,:;!?()\\[\\]{}@#$%^&*+=|\\\\/<>`~]+$',

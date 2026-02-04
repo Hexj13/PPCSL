@@ -500,6 +500,7 @@ export interface PaginationMeta {
   limit?: number;
   total?: number;
   totalPages?: number;
+  last_listing_refresh_at?: string | null;
 }
 
 export interface PromotionHistory {

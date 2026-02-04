@@ -33,6 +33,7 @@ describe('UsersService', () => {
     emailVerified: null,
     registration_ip: null,
     last_login_ip: null,
+    last_listing_refresh_at: null,
     created_at: new Date(),
     listings: [],
     favorites: [],

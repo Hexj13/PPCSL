@@ -64,6 +64,51 @@ module.exports = {
       return false;
     }
 
+    function isExceptionCallee(node) {
+      if (!node) return false;
+      const name =
+        node.type === 'Identifier'
+          ? node.name
+          : node.type === 'MemberExpression' && node.property?.type === 'Identifier'
+            ? node.property.name
+            : null;
+      return [
+        'BadRequestException',
+        'ForbiddenException',
+        'NotFoundException',
+        'UnauthorizedException',
+        'ConflictException',
+      ].includes(name);
+    }
+
+    function isTranslationKey(str) {
+      return /^(errors|validation)\./.test(str || '');
+    }
+
+    function checkExceptionMessage(firstArg) {
+      if (!firstArg) return;
+      if (firstArg.type === 'Literal' && typeof firstArg.value === 'string') {
+        if (!isTranslationKey(firstArg.value)) {
+          context.report({
+            node: firstArg,
+            messageId: 'hardcodedText',
+            data: {
+              text: firstArg.value.substring(0, 50) + (firstArg.value.length > 50 ? '...' : ''),
+            },
+          });
+        }
+      } else if (firstArg.type === 'TemplateLiteral' && firstArg.quasis?.length > 0) {
+        const firstQuasi = firstArg.quasis[0].value?.raw || '';
+        if (!isTranslationKey(firstQuasi)) {
+          context.report({
+            node: firstArg.quasis[0],
+            messageId: 'hardcodedText',
+            data: { text: firstQuasi.substring(0, 50) + (firstQuasi.length > 50 ? '...' : '') },
+          });
+        }
+      }
+    }
+
     function checkStringLiteral(node) {
       if (node.type === 'Literal' && typeof node.value === 'string') {
         if (isHardcodedText(node.value)) {
@@ -92,35 +137,19 @@ module.exports = {
 
     return {
       CallExpression(node) {
-        const callee = node.callee;
-        if (
-          callee.type === 'NewExpression' ||
-          (callee.type === 'Identifier' &&
-            ['BadRequestException', 'ForbiddenException', 'NotFoundException', 'UnauthorizedException', 'ConflictException'].includes(callee.name)) ||
-          (callee.type === 'MemberExpression' &&
-            callee.object.type === 'Identifier' &&
-            callee.object.name === 'Error' &&
-            callee.property.type === 'Identifier' &&
-            ['BadRequestException', 'ForbiddenException', 'NotFoundException', 'UnauthorizedException', 'ConflictException'].includes(callee.property.name))
-        ) {
-          if (node.arguments.length > 0) {
-            const firstArg = node.arguments[0];
-            checkStringLiteral(firstArg);
-          }
+        if (!isExceptionCallee(node.callee)) return;
+        if (node.arguments.length > 0) {
+          checkExceptionMessage(node.arguments[0]);
         }
       },
       ThrowStatement(node) {
-        if (node.argument) {
-          if (node.argument.type === 'NewExpression') {
-            if (node.argument.arguments.length > 0) {
-              const firstArg = node.argument.arguments[0];
-              checkStringLiteral(firstArg);
-            }
-          } else if (node.argument.type === 'CallExpression') {
-            if (node.argument.arguments.length > 0) {
-              const firstArg = node.argument.arguments[0];
-              checkStringLiteral(firstArg);
-            }
+        if (node.argument?.type === 'NewExpression' && isExceptionCallee(node.argument.callee)) {
+          if (node.argument.arguments.length > 0) {
+            checkExceptionMessage(node.argument.arguments[0]);
+          }
+        } else if (node.argument?.type === 'CallExpression' && isExceptionCallee(node.argument.callee)) {
+          if (node.argument.arguments.length > 0) {
+            checkExceptionMessage(node.argument.arguments[0]);
           }
         }
       },

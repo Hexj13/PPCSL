@@ -102,7 +102,13 @@ describe('ListingsController', () => {
       const mockListings = [mockListing];
       const mockResult = {
         data: mockListings,
-        meta: { total: 1, page: 1, limit: 20, totalPages: 1 },
+        meta: {
+          total: 1,
+          page: 1,
+          limit: 20,
+          totalPages: 1,
+          last_listing_refresh_at: null,
+        },
       };
 
       service.getUserListings.mockResolvedValue(mockResult);

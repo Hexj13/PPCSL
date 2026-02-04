@@ -316,9 +316,9 @@ PATCH  /api/listings/:id              # Update listing (only non-closed)
 POST   /api/listings/:id/publish      # Activate listing
 POST   /api/listings/:id/pause        # Pause listing
 POST   /api/listings/:id/close        # Close listing
-GET    /api/listings/my               # Get user's listings
+GET    /api/listings/my               # Get user's listings (meta includes last_listing_refresh_at for 48h timer)
 GET    /api/listings/vin/:vin         # Find listings by VIN
-POST   /api/listings/refresh-dates    # Refresh all user's listing dates
+POST   /api/listings/refresh-dates    # Refresh all user's listing dates (max once per 48h; returns 400 if too soon)
 POST   /api/listings/cron/close-old   # Close old listings (cron job, requires x-cron-secret header)
 PATCH  /api/listings/:id/promote      # Toggle listing promotion (user, JWT required)
 GET    /api/listings/promotion-history # Get user's promotion history (JWT required)
@@ -454,6 +454,7 @@ GET /health                          # Health check (database, Redis)
 
 **Users Table:**
 - `phone` (partial), `type`, `active`, `email` (unique)
+- `last_listing_refresh_at` - Timestamp of last "Refresh dates" action; used to enforce 48h limit per user
 
 **Saved Filters Table:**
 - `user_id`, `created_at`
@@ -465,6 +466,8 @@ GET /health                          # Health check (database, Redis)
 3. **Cleanup favorites** - Removes favorite records when listing is deleted
 
 **Note:** The auto-update trigger for `last_updated_at` was removed. This field is now updated manually only during listing creation and when using the "Refresh dates" feature. This allows users to control when their listings' auto-close timer resets.
+
+**Refresh dates (48h limit):** The "Refresh dates" action is allowed at most once per 48 hours per user. The backend stores `users.last_listing_refresh_at` and returns 400 with `errors.refreshDatesTooSoon` if the user calls `POST /api/listings/refresh-dates` before 48 hours have passed. The frontend uses `meta.last_listing_refresh_at` from `GET /api/listings/my` (ISO string or null) to show the countdown and syncs it to localStorage as fallback.
 
 #### Connection Pooling
 

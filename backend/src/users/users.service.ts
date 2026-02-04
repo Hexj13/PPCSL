@@ -69,6 +69,14 @@ export class UsersService {
     return this.findOne(id);
   }
 
+  async getLastListingRefreshAt(userId: string): Promise<Date | null> {
+    const row = await this.usersRepository.findOne({
+      where: { id: userId },
+      select: ['last_listing_refresh_at'],
+    });
+    return row?.last_listing_refresh_at ?? null;
+  }
+
   async findByBoardSlug(boardSlug: string): Promise<User | null> {
     return this.usersRepository.findOne({
       where: { board_slug: boardSlug, active: true },

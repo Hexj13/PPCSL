@@ -206,6 +206,17 @@ export default function MyListingsPage() {
   }, [user, fetchListings]);
 
   useEffect(() => {
+    if (!meta?.last_listing_refresh_at || !user?.id) return;
+    const at = new Date(meta.last_listing_refresh_at).getTime();
+    const fortyEightHoursMs = 48 * 60 * 60 * 1000;
+    const remaining = at + fortyEightHoursMs - Date.now();
+    if (remaining > 0) {
+      setTimeUntilRefresh(remaining);
+      localStorage.setItem(`lastRefreshDate_${user.id}`, at.toString());
+    }
+  }, [meta?.last_listing_refresh_at, user?.id]);
+
+  useEffect(() => {
     if (timeUntilRefresh === null || timeUntilRefresh <= 0) return;
 
     const interval = setInterval(() => {
@@ -367,17 +378,24 @@ export default function MyListingsPage() {
       return;
     }
 
+    if (!user?.id) return;
+
     setIsRefreshing(true);
     try {
       const res = await listingsApi.refreshDates();
       toast.success(t('myListings.datesUpdated', { count: res.data.updated }));
 
-      const lastRefreshKey = `lastRefreshDate_${user?.id}`;
-      localStorage.setItem(lastRefreshKey, Date.now().toString());
+      localStorage.setItem(`lastRefreshDate_${user.id}`, Date.now().toString());
       setTimeUntilRefresh(48 * 60 * 60 * 1000);
 
       fetchListings(1, false);
-    } catch {
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { status?: number } };
+      if (axiosError.response?.status === 400) {
+        toast.error(t('myListings.refreshDateLimit'));
+      } else {
+        toast.error(t('common.apiErrors.serverError'));
+      }
     } finally {
       setIsRefreshing(false);
     }

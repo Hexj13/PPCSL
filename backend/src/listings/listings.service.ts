@@ -412,7 +412,7 @@ export class ListingsService {
 
       if (!listing.vehicle) {
         this.logger.error(`Listing ${id} has no vehicle`);
-        throw new NotFoundException('Vehicle not found for listing');
+        throw new NotFoundException('errors.vehicleNotFoundForListing');
       }
 
       if (listing.user) {
@@ -584,7 +584,7 @@ export class ListingsService {
     }
 
     if (!listing.vehicle_id) {
-      throw new NotFoundException('Vehicle ID not found');
+      throw new NotFoundException('errors.vehicleIdNotFound');
     }
     const updatedVehicle = await this.vehiclesRepository.findOne({
       where: { id: listing.vehicle_id },
@@ -592,7 +592,7 @@ export class ListingsService {
     });
 
     if (!updatedVehicle) {
-      throw new NotFoundException('Vehicle not found');
+      throw new NotFoundException('errors.vehicleNotFound');
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -835,7 +835,13 @@ export class ListingsService {
     limit: number = 20,
   ): Promise<{
     data: Listing[];
-    meta: { total: number; page: number; limit: number; totalPages: number };
+    meta: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+      last_listing_refresh_at: string | null;
+    };
   }> {
     const skip = (page - 1) * limit;
     const [listings, total] = await this.listingsRepository.findAndCount({
@@ -847,6 +853,7 @@ export class ListingsService {
     });
 
     const totalPages = Math.ceil(total / limit);
+    const lastRefresh = await this.usersService.getLastListingRefreshAt(userId);
 
     return {
       data: listings,
@@ -855,6 +862,7 @@ export class ListingsService {
         page,
         limit,
         totalPages,
+        last_listing_refresh_at: lastRefresh ? lastRefresh.toISOString() : null,
       },
     };
   }
@@ -929,10 +937,19 @@ export class ListingsService {
 
   async refreshAllDates(userId: string): Promise<{ updated: number }> {
     const now = new Date();
+    const lastRefresh = await this.usersService.getLastListingRefreshAt(userId);
+    if (lastRefresh) {
+      const elapsed = now.getTime() - lastRefresh.getTime();
+      const fortyEightHoursMs = 48 * 60 * 60 * 1000;
+      if (elapsed < fortyEightHoursMs) {
+        throw new BadRequestException('errors.refreshDatesTooSoon');
+      }
+    }
     const result = await this.listingsRepository.update(
       { user_id: userId, status: ListingStatusEnum.Active },
       { last_updated_at: now },
     );
+    await this.usersService.update(userId, { last_listing_refresh_at: now });
     return { updated: result.affected || 0 };
   }
 

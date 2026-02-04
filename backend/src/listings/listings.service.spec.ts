@@ -98,6 +98,8 @@ describe('ListingsService', () => {
     const mockUsersService = {
       getListingLimit: jest.fn(),
       findOne: jest.fn(),
+      getLastListingRefreshAt: jest.fn(),
+      update: jest.fn(),
     };
 
     const mockBrandsService = {
@@ -962,7 +964,9 @@ describe('ListingsService', () => {
     it('should update last_updated_at for all active listings of user', async () => {
       const userId = 'user-1';
       const updateResult: UpdateResult = { affected: 5, generatedMaps: [], raw: [] };
+      usersService.getLastListingRefreshAt.mockResolvedValue(null);
       listingsRepository.update.mockResolvedValue(updateResult);
+      usersService.update.mockResolvedValue({} as never);
 
       const result = await service.refreshAllDates(userId);
 
@@ -972,17 +976,33 @@ describe('ListingsService', () => {
           last_updated_at: expect.any(Date),
         }),
       );
+      expect(usersService.update).toHaveBeenCalledWith(
+        userId,
+        expect.objectContaining({ last_listing_refresh_at: expect.any(Date) }),
+      );
       expect(result).toEqual({ updated: 5 });
     });
 
     it('should return 0 when no active listings found', async () => {
       const userId = 'user-1';
       const updateResult: UpdateResult = { affected: 0, generatedMaps: [], raw: [] };
+      usersService.getLastListingRefreshAt.mockResolvedValue(null);
       listingsRepository.update.mockResolvedValue(updateResult);
+      usersService.update.mockResolvedValue({} as never);
 
       const result = await service.refreshAllDates(userId);
 
       expect(result).toEqual({ updated: 0 });
+    });
+
+    it('should throw BadRequestException when last refresh was less than 48 hours ago', async () => {
+      const userId = 'user-1';
+      const recentRefresh = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      usersService.getLastListingRefreshAt.mockResolvedValue(recentRefresh);
+
+      await expect(service.refreshAllDates(userId)).rejects.toThrow(BadRequestException);
+      expect(listingsRepository.update).not.toHaveBeenCalled();
+      expect(usersService.update).not.toHaveBeenCalled();
     });
   });
 
