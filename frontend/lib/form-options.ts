@@ -14,7 +14,7 @@ export function getFuelOptions(t: (_key: string) => string): Array<LabeledOption
 
 export function getTransmissionOptions(
   t: (_key: string) => string,
-  vehicleType?: 'car' | 'truck' | 'moto'
+  _vehicleType?: 'car' | 'truck' | 'moto'
 ): Array<LabeledOption<string>> {
   const allOptions = [
     { value: 'Manual', label: t('vehicleOptions.transmission.Manual') },
@@ -22,13 +22,6 @@ export function getTransmissionOptions(
     { value: 'CVT', label: t('vehicleOptions.transmission.CVT') },
     { value: 'Robot', label: t('vehicleOptions.transmission.Robot') },
   ];
-
-  if (vehicleType === 'moto') {
-    return sortOptionsByLabel(
-      allOptions.filter((opt) => opt.value !== 'CVT' && opt.value !== 'Robot')
-    );
-  }
-
   return sortOptionsByLabel(allOptions);
 }
 
@@ -142,6 +135,8 @@ export function getColorOptions(t: (_key: string) => string): Array<LabeledOptio
     'beige',
     'gold',
     'bronze',
+    'burgundy',
+    'cream',
     'dark_blue',
     'light_blue',
     'dark_gray',
@@ -157,6 +152,9 @@ export function getColorOptions(t: (_key: string) => string): Array<LabeledOptio
     'matte_black',
     'matte_gray',
     'matte_blue',
+    'chameleon',
+    'special',
+    'other',
   ];
   return sortOptionsByLabel(
     colors.map((color) => ({

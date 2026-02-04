@@ -22,6 +22,7 @@ import {
   formatDateRelative,
   getOptimizedImageUrl,
   getCityName,
+  getListingDisplayTitle,
   getVehicleType,
 } from '@/lib/utils';
 
@@ -85,23 +86,11 @@ function ListingCardComponent({
     [user, listing.user]
   );
   const [imageError, setImageError] = React.useState(false);
+  const displayTitle = useMemo(() => getListingDisplayTitle(listing, t), [listing, t]);
   const imageAltTitle = useMemo(() => {
-    const brandName = vehicle?.brand?.name;
-    const modelName = vehicle?.model?.name;
-    const year = vehicle?.year ? String(vehicle.year) : null;
     const city = getCityName(listing.city, locale, cities);
-
-    const details = [brandName, modelName, year].filter(Boolean).join(' ').trim();
-    return [listing.title, details, city].filter((v) => v && v.trim() !== '').join(' - ');
-  }, [
-    listing.title,
-    listing.city,
-    vehicle?.brand?.name,
-    vehicle?.model?.name,
-    vehicle?.year,
-    locale,
-    cities,
-  ]);
+    return [displayTitle, city].filter((v) => v && v.trim() !== '').join(' - ');
+  }, [displayTitle, listing.city, locale, cities]);
 
   const handleToggleFavorite = useCallback(
     (e: React.MouseEvent) => {
@@ -158,7 +147,7 @@ function ListingCardComponent({
           .add(listing.id)
           .then(() => {
             analytics.addToWishlist(listing.id, {
-              title: listing.title,
+              title: displayTitle,
               price: listing.price,
             });
             toast.success(t('listings.addToFavorites'));
@@ -179,7 +168,7 @@ function ListingCardComponent({
       isFavorite,
       isOwnListing,
       listing.id,
-      listing.title,
+      displayTitle,
       listing.price,
       removeFavorite,
       addFavorite,
@@ -342,7 +331,7 @@ function ListingCardComponent({
         </div>
         <div className="p-4 md:p-5 flex-grow flex flex-col">
           <h3 className="font-bold text-base md:text-lg mb-3 line-clamp-2 text-primary-500 group-hover:text-primary-700 transition-colors">
-            {listing.title}
+            {displayTitle}
           </h3>
           <div className="flex items-baseline gap-2 mb-3">
             {listing.price !== undefined ? (

@@ -484,3 +484,19 @@ export function getVehicleType(listing: Listing): 'car' | 'truck' | 'moto' {
   }
   return 'car';
 }
+
+export function getListingDisplayTitle(listing: Listing, t: (_key: string) => string): string {
+  const vehicle = listing.vehicle;
+  const brandName = vehicle?.brand?.name;
+  const modelName = vehicle?.model?.name;
+  const year = vehicle?.year ? String(vehicle.year) : null;
+  const baseTitle = [brandName, modelName, year].filter(Boolean).join(' ').trim();
+  if (!baseTitle) return listing.title;
+  const vehicleType = getVehicleType(listing);
+  if (vehicleType === 'moto') return baseTitle;
+  if (vehicle?.transmission) {
+    const transmissionStr = formatTransmission(vehicle.transmission, t);
+    if (transmissionStr) return `${baseTitle} (${transmissionStr})`;
+  }
+  return baseTitle;
+}

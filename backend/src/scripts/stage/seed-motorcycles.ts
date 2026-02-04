@@ -123,7 +123,7 @@ async function seedMotorcycles(activeCount: number = 50) {
   }
 
   const fuelTypes = [FuelType.Petrol, FuelType.Electric];
-  const transmissionTypes = [TransmissionType.Manual, TransmissionType.Automatic];
+  const transmissionTypes = Object.values(TransmissionType);
   const currentYear = new Date().getFullYear();
   const motoBodyTypes = [...BODY_TYPES_BY_VEHICLE_TYPE.moto] as BodyType[];
   const conditionTypes = Object.values(ConditionType);

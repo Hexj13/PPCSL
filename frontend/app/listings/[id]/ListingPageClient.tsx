@@ -662,28 +662,16 @@ export default function ListingPageClient({
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-primary-500/20">
-                        <th
-                          className="text-left py-2 px-2 sm:px-3 font-semibold text-xs sm:text-sm"
-                          style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-                        >
+                        <th className="text-left py-2 px-2 sm:px-3 font-semibold text-xs sm:text-sm text-primary-500">
                           {t('listingDetail.title')}
                         </th>
-                        <th
-                          className="text-left py-2 px-2 sm:px-3 font-semibold text-xs sm:text-sm hidden sm:table-cell"
-                          style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-                        >
+                        <th className="text-left py-2 px-2 sm:px-3 font-semibold text-xs sm:text-sm hidden sm:table-cell text-primary-500">
                           {t('listingDetail.mileage')}
                         </th>
-                        <th
-                          className="text-left py-2 px-2 sm:px-3 font-semibold text-xs sm:text-sm hidden md:table-cell"
-                          style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-                        >
+                        <th className="text-left py-2 px-2 sm:px-3 font-semibold text-xs sm:text-sm hidden md:table-cell text-primary-500">
                           {t('listingDetail.closedAt')}
                         </th>
-                        <th
-                          className="text-left sm:text-right py-2 px-2 sm:px-3 font-semibold text-xs sm:text-sm"
-                          style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-                        ></th>
+                        <th className="text-left sm:text-right py-2 px-2 sm:px-3 font-semibold text-xs sm:text-sm text-primary-500"></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -693,12 +681,15 @@ export default function ListingPageClient({
                           className="border-b border-primary-500/10 hover:bg-bg-darker/50 transition-colors cursor-pointer"
                           onClick={() => router.push(`/listings/${prevListing.id}`)}
                         >
-                          <td className="py-3 px-2 sm:px-3 text-white text-xs sm:text-sm">
+                          <td
+                            className="py-3 px-2 sm:px-3 text-xs sm:text-sm"
+                            style={{ color: 'rgb(var(--text-primary-rgb))' }}
+                          >
                             {prevListing.title}
                           </td>
                           <td
                             className="py-3 px-2 sm:px-3 font-semibold text-xs sm:text-sm hidden sm:table-cell"
-                            style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+                            style={{ color: 'rgb(var(--text-primary-rgb))' }}
                           >
                             {prevListing.vehicle?.mileage_km
                               ? `${formatMileage(prevListing.vehicle.mileage_km)} ${t('listings.km')}`
@@ -706,7 +697,7 @@ export default function ListingPageClient({
                           </td>
                           <td
                             className="py-3 px-2 sm:px-3 font-semibold text-xs sm:text-sm hidden md:table-cell"
-                            style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+                            style={{ color: 'rgb(var(--text-primary-rgb))' }}
                           >
                             {formatDate(prevListing.updated_at)}
                           </td>

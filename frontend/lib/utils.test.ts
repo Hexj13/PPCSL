@@ -8,6 +8,7 @@ import {
   formatMileage,
   formatPrice,
   formatTransmission,
+  getListingDisplayTitle,
   horsepowerToKw,
   kwToHorsepower,
 } from './utils';
@@ -146,6 +147,60 @@ describe('utils', () => {
 
     it('should return original value for unknown transmission', () => {
       expect(formatTransmission('Unknown', mockT)).toBe('Unknown');
+    });
+  });
+
+  describe('getListingDisplayTitle', () => {
+    it('should build title with translated transmission', () => {
+      const listing = {
+        id: '1',
+        title: 'Acura EL 2025 (Automată)',
+        vehicle: {
+          id: 'v1',
+          brand_id: 'b1',
+          model_id: 'm1',
+          year: 2025,
+          transmission: 'Automatic',
+          drive_type: 'FWD',
+          body_type: 'Sedan',
+          brand: { id: 'b1', name: 'Acura' },
+          model: { id: 'm1', name: 'EL', vehicle_type: 'car' },
+        },
+      } as Parameters<typeof getListingDisplayTitle>[0];
+      expect(getListingDisplayTitle(listing, mockT)).toBe('Acura EL 2025 (Автоматска)');
+    });
+
+    it('should return base title for moto without transmission', () => {
+      const listing = {
+        id: '1',
+        title: 'Honda CBR',
+        vehicle: {
+          id: 'v1',
+          brand_id: 'b1',
+          model_id: 'm1',
+          year: 2024,
+          drive_type: 'FWD',
+          body_type: 'Sedan',
+          brand: { id: 'b1', name: 'Honda' },
+          model: { id: 'm1', name: 'CBR', vehicle_type: 'moto' },
+        },
+      } as Parameters<typeof getListingDisplayTitle>[0];
+      expect(getListingDisplayTitle(listing, mockT)).toBe('Honda CBR 2024');
+    });
+
+    it('should fallback to listing.title when vehicle has no brand/model/year', () => {
+      const listing = {
+        id: '1',
+        title: 'Some Title',
+        vehicle: {
+          id: 'v1',
+          brand_id: 'b1',
+          model_id: 'm1',
+          drive_type: 'FWD',
+          body_type: 'Sedan',
+        },
+      } as Parameters<typeof getListingDisplayTitle>[0];
+      expect(getListingDisplayTitle(listing, mockT)).toBe('Some Title');
     });
   });
 

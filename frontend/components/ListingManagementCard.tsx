@@ -14,6 +14,7 @@ import {
   formatFuel,
   formatMileage,
   formatPrice,
+  getListingDisplayTitle,
   getOptimizedImageUrl,
   getVehicleType,
 } from '@/lib/utils';
@@ -37,6 +38,7 @@ export function ListingManagementCard({
 }: ListingManagementCardProps) {
   const { t } = useTranslation();
   const [imageError, setImageError] = useState(false);
+  const displayTitle = getListingDisplayTitle(listing, t);
   const vehicleType = getVehicleType(listing);
   const newLabel = vehicleType === 'moto' ? t('listings.newMoto') : t('listings.new');
 
@@ -58,7 +60,7 @@ export function ListingManagementCard({
             {hasImage ? (
               <Image
                 src={optimizedImageUrl}
-                alt={listing.title}
+                alt={displayTitle}
                 fill
                 className="object-cover rounded-t-xl lg:rounded-tl-xl lg:rounded-bl-xl lg:rounded-tr-none lg:rounded-br-none"
                 sizes="(max-width: 1024px) 100vw, 450px"
@@ -92,7 +94,7 @@ export function ListingManagementCard({
               <Link href={`/listings/${listing.id}`} className="mb-3 block group">
                 <div className="flex items-start gap-1.5">
                   <h3 className="font-bold text-base md:text-lg text-primary-500 lg:group-hover:text-primary-700 transition-colors line-clamp-2">
-                    {listing.title}
+                    {displayTitle}
                   </h3>
                   <svg
                     className="w-5 h-5 opacity-60 lg:group-hover:opacity-100 lg:group-hover:text-primary-600 flex-shrink-0 mt-0.5 transition-all duration-200"
