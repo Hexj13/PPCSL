@@ -75,7 +75,8 @@ async function generateSitemapContent(): Promise<string> {
           vehicleType && vehicleType !== 'car' ? `&vehicleType=${vehicleType}` : '';
 
         for (const brand of brands) {
-          const brandSlug = createSlug(brand.name);
+          const brandSlug = createSlug(brand.name ?? '').trim();
+          if (!brandSlug) continue;
           urls.push(`${siteUrl}/?brand=${brandSlug}${vehicleTypeParam}`);
         }
 
@@ -84,11 +85,13 @@ async function generateSitemapContent(): Promise<string> {
           const modelsByBrand = await fetchModelsByBrands(brandIds);
 
           for (const brand of brands) {
-            const brandSlug = createSlug(brand.name);
+            const brandSlug = createSlug(brand.name ?? '').trim();
+            if (!brandSlug) continue;
             const models = modelsByBrand[brand.id] || [];
 
             for (const model of models) {
-              const modelSlug = createSlug(model.name);
+              const modelSlug = createSlug(model.name ?? '').trim();
+              if (!modelSlug) continue;
               const modelVehicleType = model.vehicle_type;
 
               if (vehicleType) {

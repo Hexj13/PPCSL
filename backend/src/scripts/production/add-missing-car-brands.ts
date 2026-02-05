@@ -201,7 +201,6 @@ const MISSING_BRANDS_AND_MODELS: Record<string, string[]> = {
   Xiaomi: ['SU7', 'YU7'],
   Zotye: ['T600', 'T700', 'T800', 'SR9', 'E200', 'Z300', 'Z500', 'Z700'],
   iCar: ['03', 'V23'],
-  'Другая марка': [],
 };
 
 function delay(ms: number): Promise<void> {

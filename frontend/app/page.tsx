@@ -276,11 +276,30 @@ export async function generateMetadata({
     return typeof value === 'string' && ['car', 'truck', 'moto'].includes(value);
   };
 
+  const indexableParamKeys = new Set([
+    'brand',
+    'model',
+    'page',
+    'body_types',
+    'vehicleType',
+    'utm_source',
+    'utm_medium',
+    'utm_campaign',
+    'utm_content',
+    'utm_term',
+    'gclid',
+    'gclsrc',
+    'fbclid',
+    'ref',
+    'mc_cid',
+    'mc_eid',
+  ]);
+
   const hasNonIndexableParams = Object.entries(params).some(([key, value]) => {
     if (value === undefined) return false;
-    if (key === 'brand' || key === 'model' || key === 'page' || key === 'body_types') return false;
-    if (key === 'vehicleType') {
-      return !isValidVehicleType(value);
+    if (indexableParamKeys.has(key)) {
+      if (key === 'vehicleType') return !isValidVehicleType(value);
+      return false;
     }
     return true;
   });

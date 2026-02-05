@@ -14,6 +14,8 @@ import { Vehicle } from '../listings/entities/vehicle.entity';
 import { Brand } from './entities/brand.entity';
 import { VehicleModel } from './entities/vehicle-model.entity';
 
+const BRANDS_EXCLUDED_FROM_LIST: string[] = ['Другая марка'];
+
 @Injectable()
 export class BrandsService {
   private readonly logger = new Logger(BrandsService.name);
@@ -45,7 +47,7 @@ export class BrandsService {
     try {
       const cached = await this.redisService.getJson<Brand[]>(cacheKey);
       if (cached) {
-        return cached;
+        return cached.filter((b) => !BRANDS_EXCLUDED_FROM_LIST.includes(b.name));
       }
     } catch (error) {
       this.logger.warn('Failed to get brands from cache', error);
@@ -68,14 +70,15 @@ export class BrandsService {
     }
 
     const brands = await queryBuilder.orderBy('brand.name', 'ASC').getMany();
+    const filtered = brands.filter((b) => !BRANDS_EXCLUDED_FROM_LIST.includes(b.name));
 
     try {
-      await this.redisService.setJson(cacheKey, brands, this.CACHE_TTL);
+      await this.redisService.setJson(cacheKey, filtered, this.CACHE_TTL);
     } catch (error) {
       this.logger.warn('Failed to set brands cache', error);
     }
 
-    return brands;
+    return filtered;
   }
 
   async findOne(id: string): Promise<Brand | null> {
