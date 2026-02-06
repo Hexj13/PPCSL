@@ -1,9 +1,18 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import type { Metadata } from 'next';
 
 import { loadTranslations } from '@/lib/i18n';
 
 const translations = loadTranslations();
+
+export const metadata: Metadata = {
+  title: '404',
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default function NotFound() {
   return (

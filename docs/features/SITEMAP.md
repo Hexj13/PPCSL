@@ -4,9 +4,9 @@
 
 Sitemap генерируется динамически на основе данных из базы данных. Используется поисковыми системами для индексации страниц сайта.
 
-**Расположение**: `core/frontend/app/sitemap.ts`
+**Расположение**: `core/frontend/app/sitemap.txt/route.ts`
 
-**Основной формат**: `sitemap.txt` (приоритетный)
+**Формат**: plain text — один URL на строку (текстовый список, без XML).
 
 **URL доступа**: `/sitemap.txt`
 
@@ -14,13 +14,25 @@ Sitemap генерируется динамически на основе дан
 
 | Тип | Включается | Примечание |
 |-----|------------|------------|
-| Базовые страницы | ✅ | /, /listings, /terms, /privacy, /faq |
+| Базовые страницы | ✅ | /, /listings, /terms, /privacy, /faq, /cookie-settings |
 | URL марок | ✅ | /?brand=mercedes-benz |
 | URL марок + моделей | ✅ | /?brand=mercedes-benz&model=c-class |
-| URL типов кузовов | ✅ | /?body_types=SUV&vehicleType=truck |
+| URL типов кузовов | ✅ | Одиночные и комбинации для популярных типов; только одиночные для непопулярных (см. ниже) |
 | Конкретные объявления | ❌ | /listings/{id} — НЕ добавляются |
 
 **Почему объявления не включаются**: Конкретные объявления индексируются поисковыми системами самостоятельно через внутренние ссылки на сайте.
+
+### Типы кузовов по категориям
+
+В sitemap включаются только определённые типы кузовов. Для **популярных** типов генерируются и одиночные URL, и комбинации (все непустые подмножества). Для **непопулярных** — только одиночные URL (без комбинаций).
+
+**Популярные (car):** SUV, Hatchback, Wagon, Minivan, Sedan, Convertible — одиночные + комбинации.
+
+**Популярные (truck):** Truck, SemiTruck, SpecialEquipment, Tractor, Bus — одиночные + комбинации.
+
+**Популярные (moto):** Naked, Sport, Touring, ATV, Adventure, Scooter — одиночные + комбинации.
+
+**Непопулярные:** остальные типы из `BODY_TYPES_BY_VEHICLE_TYPE` по каждой категории — только одиночные URL. Непопулярные мото-типы (например, Cruiser, Cross и т.д., не входящие в список выше) включаются по одному, без комбинаций.
 
 ## Структура URL
 
@@ -273,7 +285,7 @@ COUNTRY=md npx ts-node src/scripts/stage/audit-vehicle-types.ts --fix
 
 | Файл | Описание |
 |------|----------|
-| `core/frontend/app/sitemap.ts` | Генерация sitemap |
+| `core/frontend/app/sitemap.txt/route.ts` | Генерация sitemap (plain text, один URL на строку) |
 | `core/frontend/lib/server-api.ts` | API для получения марок/моделей |
 | `core/frontend/lib/api.ts` | Типы Brand, VehicleModel |
 | `core/backend/src/brands/brands.service.ts` | Backend сервис марок |

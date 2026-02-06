@@ -33,6 +33,6 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: [`${siteUrl}/sitemap.txt`, `${siteUrl}/sitemap.xml`],
+    sitemap: `${siteUrl}/sitemap.txt`,
   };
 }
