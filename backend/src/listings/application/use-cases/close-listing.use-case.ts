@@ -1,0 +1,40 @@
+import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+
+import { Listing } from '../../entities/listing.entity';
+import { IListingCache, LISTING_CACHE } from '../ports/listing-cache.port';
+import { IListingRepository, LISTING_REPOSITORY } from '../ports/listing.repository.port';
+import { IPromotionHistoryWriter, PROMOTION_HISTORY_WRITER } from '../ports/promotion-history.port';
+
+@Injectable()
+export class CloseListingUseCase {
+  constructor(
+    @Inject(LISTING_REPOSITORY)
+    private readonly listingRepo: IListingRepository,
+    @Inject(LISTING_CACHE)
+    private readonly listingCache: IListingCache,
+    @Inject(PROMOTION_HISTORY_WRITER)
+    private readonly promotionHistory: IPromotionHistoryWriter,
+  ) {}
+
+  async execute(listingId: string, userId: string): Promise<Listing> {
+    const listing = await this.listingRepo.findById(listingId);
+    if (!listing) {
+      throw new NotFoundException('errors.listingNotFound');
+    }
+    if (listing.user_id !== userId) {
+      throw new ForbiddenException('errors.listingAccessDenied');
+    }
+
+    const wasPromoted = listing.isPromoted();
+    listing.close();
+    const saved = await this.listingRepo.save(listing);
+
+    if (wasPromoted) {
+      await this.promotionHistory.updateEndDateForListing(listingId);
+    }
+
+    await this.listingCache.invalidateSearch();
+    await this.listingCache.invalidateSingle(listingId);
+    return saved;
+  }
+}

@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   Headers,
   HttpCode,
@@ -186,12 +185,5 @@ export class BrandsController {
   @Post('name/:name/models')
   async addModels(@Param('name') name: string, @Body() body: { models: string[] }) {
     return this.brandsService.addModelsToBrand(name, body.models);
-  }
-
-  @ApiOperation({ summary: 'Delete all brands (admin only)' })
-  @ApiResponse({ status: 200, description: 'All brands deleted successfully' })
-  @Delete('all')
-  async deleteAll() {
-    return this.brandsService.deleteAll();
   }
 }

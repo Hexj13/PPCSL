@@ -4,21 +4,21 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
-import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { EmptyState } from '@/components/EmptyState';
-import { ListingManagementCard } from '@/components/ListingManagementCard';
-import { ListingManagementCardSkeleton } from '@/components/ListingManagementCardSkeleton';
-import { LoadMoreButton } from '@/components/LoadMoreButton';
-import { Modal } from '@/components/Modal';
-import { PromotionHistoryModal } from '@/components/PromotionHistoryModal';
-import { PromotionModal } from '@/components/PromotionModal';
-import { StatusFilterButtons } from '@/components/StatusFilterButtons';
+import { EmptyState } from '@/components/common/EmptyState';
+import { Breadcrumbs } from '@/components/layout/Breadcrumbs';
+import { ListingManagementCard } from '@/components/listing/ListingManagementCard';
+import { ListingManagementCardSkeleton } from '@/components/listing/ListingManagementCardSkeleton';
+import { LoadMoreButton } from '@/components/listing/LoadMoreButton';
+import { StatusFilterButtons } from '@/components/listing/StatusFilterButtons';
+import { Modal } from '@/components/modals/Modal';
+import { PromotionHistoryModal } from '@/components/modals/PromotionHistoryModal';
+import { PromotionModal } from '@/components/modals/PromotionModal';
 import { useListingActions } from '@/hooks/useListingActions';
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 import { listingsApi, Listing, PaginationMeta, PromotionHistory } from '@/lib/api';
-import { normalizeListingResponse } from '@/lib/api-utils';
+import { normalizeListingResponse } from '@/lib/api';
 
 export default function MyListingsPage() {
   const { user, isLoading, isAuthorized } = useRequireAuth();

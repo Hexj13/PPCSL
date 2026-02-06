@@ -198,7 +198,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 ### 4. Обработка ошибок API
 
-Обновить `core/frontend/lib/api.ts`:
+Обновить `core/frontend/lib/api/api.ts` (или перехватчик в `lib/api/`):
 ```typescript
 import * as Sentry from '@sentry/nextjs';
 
@@ -226,7 +226,7 @@ try {
 
 ### 5. Контекст пользователя
 
-Добавить в `core/frontend/lib/store.ts` (auth store):
+Добавить в `core/frontend/lib/store/store.ts` (auth store):
 ```typescript
 import * as Sentry from '@sentry/nextjs';
 

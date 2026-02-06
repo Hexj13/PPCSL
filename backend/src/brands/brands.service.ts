@@ -1,16 +1,15 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { I18nService } from '../common/i18n/i18n.service';
-import { RedisService } from '../common/redis.service';
-import { CACHE_PREFIXES, CACHE_TTL, generateCacheKey } from '../common/utils/cache.utils';
 import { createSlug, slugMatches, slugToName } from '../common/utils/slug.utils';
-import { Favorite } from '../favorites/entities/favorite.entity';
-import { ListingView } from '../listings/entities/listing-view.entity';
-import { Listing } from '../listings/entities/listing.entity';
-import { Vehicle } from '../listings/entities/vehicle.entity';
 
+import {
+  IBrandsCache,
+  BRANDS_CACHE,
+  BrandVehicleType,
+} from './application/ports/brands-cache.port';
 import { Brand } from './entities/brand.entity';
 import { VehicleModel } from './entities/vehicle-model.entity';
 
@@ -19,33 +18,20 @@ const BRANDS_EXCLUDED_FROM_LIST: string[] = ['Другая марка'];
 @Injectable()
 export class BrandsService {
   private readonly logger = new Logger(BrandsService.name);
-  private readonly CACHE_TTL = CACHE_TTL.brands.all;
-  private readonly CACHE_TTL_MODELS = CACHE_TTL.brands.models;
 
   constructor(
     @InjectRepository(Brand)
     private brandsRepository: Repository<Brand>,
     @InjectRepository(VehicleModel)
     private modelsRepository: Repository<VehicleModel>,
-    @InjectRepository(Vehicle)
-    private vehiclesRepository: Repository<Vehicle>,
-    @InjectRepository(Listing)
-    private listingsRepository: Repository<Listing>,
-    @InjectRepository(ListingView)
-    private listingViewsRepository: Repository<ListingView>,
-    @InjectRepository(Favorite)
-    private favoritesRepository: Repository<Favorite>,
-    private redisService: RedisService,
+    @Inject(BRANDS_CACHE)
+    private brandsCache: IBrandsCache,
     private i18nService: I18nService,
   ) {}
 
-  async findAll(vehicleType?: 'car' | 'truck' | 'moto'): Promise<Brand[]> {
-    const cacheKey = generateCacheKey({
-      prefix: CACHE_PREFIXES.brands,
-      parts: vehicleType ? ['all', vehicleType] : ['all'],
-    });
+  async findAll(vehicleType?: BrandVehicleType): Promise<Brand[]> {
     try {
-      const cached = await this.redisService.getJson<Brand[]>(cacheKey);
+      const cached = await this.brandsCache.getBrands(vehicleType);
       if (cached) {
         return cached.filter((b) => !BRANDS_EXCLUDED_FROM_LIST.includes(b.name));
       }
@@ -73,7 +59,7 @@ export class BrandsService {
     const filtered = brands.filter((b) => !BRANDS_EXCLUDED_FROM_LIST.includes(b.name));
 
     try {
-      await this.redisService.setJson(cacheKey, filtered, this.CACHE_TTL);
+      await this.brandsCache.setBrands(vehicleType, filtered);
     } catch (error) {
       this.logger.warn('Failed to set brands cache', error);
     }
@@ -94,16 +80,9 @@ export class BrandsService {
     });
   }
 
-  async getModelsByBrand(
-    brandId: string,
-    vehicleType?: 'car' | 'truck' | 'moto',
-  ): Promise<VehicleModel[]> {
-    const cacheKey = generateCacheKey({
-      prefix: CACHE_PREFIXES.brandsModels,
-      parts: vehicleType ? [brandId, vehicleType] : [brandId],
-    });
+  async getModelsByBrand(brandId: string, vehicleType?: BrandVehicleType): Promise<VehicleModel[]> {
     try {
-      const cached = await this.redisService.getJson<VehicleModel[]>(cacheKey);
+      const cached = await this.brandsCache.getModels(brandId, vehicleType);
       if (cached) {
         return cached;
       }
@@ -126,7 +105,7 @@ export class BrandsService {
       .getMany();
 
     try {
-      await this.redisService.setJson(cacheKey, models, this.CACHE_TTL_MODELS);
+      await this.brandsCache.setModels(brandId, vehicleType, models);
     } catch (error) {
       this.logger.warn(`Failed to set models cache for brand ${brandId}`, error);
     }
@@ -136,7 +115,7 @@ export class BrandsService {
 
   async getModelsByBrands(
     brandIds: string[],
-    vehicleType?: 'car' | 'truck' | 'moto',
+    vehicleType?: BrandVehicleType,
   ): Promise<Record<string, VehicleModel[]>> {
     if (brandIds.length === 0) {
       return {};
@@ -146,12 +125,8 @@ export class BrandsService {
     const uncachedBrandIds: string[] = [];
 
     for (const brandId of brandIds) {
-      const cacheKey = generateCacheKey({
-        prefix: CACHE_PREFIXES.brandsModels,
-        parts: vehicleType ? [brandId, vehicleType] : [brandId],
-      });
       try {
-        const cached = await this.redisService.getJson<VehicleModel[]>(cacheKey);
+        const cached = await this.brandsCache.getModels(brandId, vehicleType);
         if (cached) {
           result[brandId] = cached;
         } else {
@@ -190,12 +165,8 @@ export class BrandsService {
         const brandModels = modelsByBrand.get(brandId) || [];
         result[brandId] = brandModels;
 
-        const cacheKey = generateCacheKey({
-          prefix: CACHE_PREFIXES.brandsModels,
-          parts: vehicleType ? [brandId, vehicleType] : [brandId],
-        });
         try {
-          await this.redisService.setJson(cacheKey, brandModels, this.CACHE_TTL_MODELS);
+          await this.brandsCache.setModels(brandId, vehicleType, brandModels);
         } catch (error) {
           this.logger.warn(`Failed to set models cache for brand ${brandId}`, error);
         }
@@ -388,12 +359,8 @@ export class BrandsService {
     });
 
     try {
-      await this.redisService.del(
-        generateCacheKey({ prefix: CACHE_PREFIXES.brandsModels, parts: [brand.id] }),
-      );
-      await this.redisService.del(
-        generateCacheKey({ prefix: CACHE_PREFIXES.brands, parts: ['all'] }),
-      );
+      await this.brandsCache.invalidateModels(brand.id);
+      await this.brandsCache.invalidateBrandsList();
     } catch (error) {
       this.logger.warn('Failed to invalidate cache after adding models', error);
     }
@@ -403,86 +370,6 @@ export class BrandsService {
       added,
       updated,
       total: totalModels,
-    };
-  }
-
-  async deleteAll(): Promise<{
-    deletedBrands: number;
-    deletedModels: number;
-    deletedVehicles: number;
-    deletedListings: number;
-  }> {
-    this.logger.log('Starting deletion of all brands...');
-
-    const allBrands = await this.brandsRepository.find();
-    this.logger.log(`Found ${allBrands.length} brands to delete`);
-
-    let deletedListings = 0;
-    let deletedVehicles = 0;
-    let deletedModels = 0;
-    let deletedBrands = 0;
-
-    for (const brand of allBrands) {
-      const vehicles = await this.vehiclesRepository.find({
-        where: { brand_id: brand.id },
-      });
-
-      for (const vehicle of vehicles) {
-        const listings = await this.listingsRepository.find({
-          where: { vehicle_id: vehicle.id },
-        });
-
-        for (const listing of listings) {
-          const views = await this.listingViewsRepository.find({
-            where: { listing_id: listing.id },
-          });
-          for (const view of views) {
-            await this.listingViewsRepository.remove(view);
-          }
-
-          const favorites = await this.favoritesRepository.find({
-            where: { listing_id: listing.id },
-          });
-          for (const favorite of favorites) {
-            await this.favoritesRepository.remove(favorite);
-          }
-
-          await this.listingsRepository.remove(listing);
-          deletedListings++;
-        }
-
-        await this.vehiclesRepository.remove(vehicle);
-        deletedVehicles++;
-      }
-
-      const models = await this.modelsRepository.find({
-        where: { brand_id: brand.id },
-      });
-      for (const model of models) {
-        await this.modelsRepository.remove(model);
-        deletedModels++;
-      }
-
-      await this.brandsRepository.remove(brand);
-      deletedBrands++;
-      this.logger.log(`Deleted brand: ${brand.name}`);
-    }
-
-    try {
-      await this.redisService.invalidateByPrefix(CACHE_PREFIXES.brands);
-    } catch (error) {
-      this.logger.warn('Failed to invalidate cache after deleting brands', error);
-    }
-
-    this.logger.log(
-      `Deletion completed: ${deletedBrands} brands, ${deletedModels} models, ${deletedVehicles} vehicles, ${deletedListings} listings`,
-    );
-
-    return {
-      deletedBrands,
-      deletedModels,
-      deletedVehicles,
-      deletedListings,
     };
   }
 }

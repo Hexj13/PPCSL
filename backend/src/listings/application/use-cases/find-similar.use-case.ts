@@ -1,0 +1,74 @@
+import { Inject, Injectable } from '@nestjs/common';
+
+import { ListingStatus as ListingStatusEnum } from '../../../common/types';
+import { SimilarListingsRankingService } from '../../domain/services/similar-ranking.service';
+import { Listing } from '../../entities/listing.entity';
+import { IListingCache, LISTING_CACHE } from '../ports/listing-cache.port';
+import { IListingRepository, LISTING_REPOSITORY } from '../ports/listing.repository.port';
+
+type ListingData = Omit<
+  Listing,
+  | 'isActive'
+  | 'isPromoted'
+  | 'canBeEdited'
+  | 'canBePublished'
+  | 'publish'
+  | 'pause'
+  | 'close'
+  | 'startPromotion'
+  | 'pausePromotion'
+  | 'resumePromotion'
+  | 'stopPromotion'
+>;
+
+@Injectable()
+export class FindSimilarUseCase {
+  constructor(
+    @Inject(LISTING_REPOSITORY)
+    private readonly listingRepo: IListingRepository,
+    @Inject(LISTING_CACHE)
+    private readonly listingCache: IListingCache,
+    private readonly similarRankingService: SimilarListingsRankingService,
+  ) {}
+
+  async execute(listingId: string, limit: number = 4, offset: number = 0): Promise<ListingData[]> {
+    const normalizedLimit = Math.min(Math.max(1, limit || 4), 8);
+    const normalizedOffset = Math.max(0, offset || 0);
+
+    const current = await this.listingRepo.findById(listingId);
+    if (!current || current.status !== ListingStatusEnum.Active) {
+      return [];
+    }
+
+    const cached = await this.listingCache.getSimilarResults(listingId);
+    if (cached) {
+      return cached.slice(normalizedOffset, normalizedOffset + normalizedLimit) as ListingData[];
+    }
+
+    const candidates = await this.listingRepo.findSimilarCandidates(current);
+    const ranked = this.similarRankingService.rank(
+      {
+        price: current.price,
+        city: current.city,
+        vehicle: current.vehicle
+          ? {
+              brand_id: current.vehicle.brand_id,
+              model_id: current.vehicle.model_id,
+              body_type: current.vehicle.body_type,
+              year: current.vehicle.year,
+              mileage_km: current.vehicle.mileage_km,
+            }
+          : null,
+      },
+      candidates as ListingData[],
+    );
+    const uniqueSellers = new Set(ranked.map((l) => l.user_id)).size;
+    const maxPerSeller = uniqueSellers <= 2 ? 8 : 2;
+    const diversified = this.similarRankingService.diversifyBySeller(ranked, maxPerSeller);
+    const result = diversified.slice(0, 8);
+
+    await this.listingCache.setSimilarResults(listingId, result as Listing[]);
+
+    return result.slice(normalizedOffset, normalizedOffset + normalizedLimit) as ListingData[];
+  }
+}

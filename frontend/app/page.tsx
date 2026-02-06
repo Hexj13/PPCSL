@@ -2,21 +2,16 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 
 import { BackgroundDecorations } from '@/components/BackgroundDecorations';
-import { ConversionEvent } from '@/components/ConversionEvent';
-import { DynamicPageTitle } from '@/components/DynamicPageTitle';
 import { HomeHero } from '@/components/HomeHero';
-import { ListingGrid } from '@/components/ListingGrid';
-import { ScrollToFiltersButton } from '@/components/ScrollToFiltersButton';
-import { SearchFilters } from '@/components/SearchFilters';
-import { SearchStructuredData } from '@/components/SearchStructuredData';
+import { ConversionEvent } from '@/components/analytics/ConversionEvent';
+import { SearchStructuredData } from '@/components/analytics/SearchStructuredData';
+import { DynamicPageTitle } from '@/components/common/DynamicPageTitle';
+import { ListingGrid } from '@/components/listing/ListingGrid';
+import { ScrollToFiltersButton } from '@/components/search/ScrollToFiltersButton';
+import { SearchFilters } from '@/components/search/SearchFilters';
+import { fetchBrands, fetchModelsByBrands, fetchSearchMetadata, getListings } from '@/lib/api';
+import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/content/popular-brands';
 import { getMetadataLocale, getServerTranslations, type Translations } from '@/lib/i18n';
-import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/popular-brands';
-import {
-  fetchBrands,
-  fetchModelsByBrands,
-  fetchSearchMetadata,
-  getListings,
-} from '@/lib/server-api';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { createSlug, getCountry, slugMatches, slugToName } from '@/lib/utils';
 

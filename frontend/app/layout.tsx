@@ -3,23 +3,26 @@ import { Inter } from 'next/font/google';
 import { cookies } from 'next/headers';
 import { Toaster } from 'react-hot-toast';
 
-import { AuthProvider } from '@/components/AuthProvider';
-import { CookieConsent } from '@/components/CookieConsent';
-import { ExternalLinkTracker } from '@/components/ExternalLinkTracker';
-import { Footer } from '@/components/Footer';
-import { GoogleAnalytics } from '@/components/GoogleAnalytics';
-import { GoogleAnalyticsConsent } from '@/components/GoogleAnalyticsConsent';
-import { GoogleTagManager, GoogleTagManagerNoscript } from '@/components/GoogleTagManager';
-import { Header } from '@/components/Header';
-import { I18nProvider } from '@/components/I18nProvider';
-import { OfflineBanner } from '@/components/OfflineBanner';
-import { OrganizationSchema } from '@/components/OrganizationSchema';
 import { PageScrollTracker } from '@/components/PageScrollTracker';
 import { ProfileSaveSuccessToast } from '@/components/ProfileSaveSuccessToast';
 import { RegisterPageBodyClass } from '@/components/RegisterPageBodyClass';
-import { ScrollReset } from '@/components/ScrollReset';
-import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 import { TawkTo } from '@/components/TawkTo';
+import { ExternalLinkTracker } from '@/components/analytics/ExternalLinkTracker';
+import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics';
+import { GoogleAnalyticsConsent } from '@/components/analytics/GoogleAnalyticsConsent';
+import {
+  GoogleTagManager,
+  GoogleTagManagerNoscript,
+} from '@/components/analytics/GoogleTagManager';
+import { OrganizationSchema } from '@/components/analytics/OrganizationSchema';
+import { Footer } from '@/components/layout/Footer';
+import { Header } from '@/components/layout/Header';
+import { ScrollReset } from '@/components/layout/ScrollReset';
+import { AuthProvider } from '@/components/providers/AuthProvider';
+import { CookieConsent } from '@/components/providers/CookieConsent';
+import { I18nProvider } from '@/components/providers/I18nProvider';
+import { OfflineBanner } from '@/components/pwa/OfflineBanner';
+import { ServiceWorkerRegistration } from '@/components/pwa/ServiceWorkerRegistration';
 import { getServerTranslations, type Locale } from '@/lib/i18n';
 import { loadSiteConfig } from '@/lib/site-config';
 import { getCountry } from '@/lib/utils';

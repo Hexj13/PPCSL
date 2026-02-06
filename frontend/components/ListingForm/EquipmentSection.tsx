@@ -1,7 +1,7 @@
 'use client';
 
+import { getEquipmentKeysByVehicleType } from '@/lib/options';
 import { sortOptionsByLabel } from '@/lib/utils';
-import { getEquipmentKeysByVehicleType } from '@/lib/vehicle-equipment';
 import { Checkbox } from '@/ui';
 
 import { ListingFormSectionProps } from './types';

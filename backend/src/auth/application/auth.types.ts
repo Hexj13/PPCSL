@@ -1,0 +1,28 @@
+import { User } from '../../users/entities/user.entity';
+
+type UserDataKeys = Exclude<
+  keyof User,
+  'getDisplayName' | 'canCreateListing' | 'deactivate' | 'isAdmin'
+>;
+
+export type UserWithoutPassword = Omit<Pick<User, UserDataKeys>, 'password'>;
+
+export type UserProfileResponse = Omit<UserWithoutPassword, 'board_slug'> & {
+  boardSlug: string | null;
+};
+
+export type LoginResponse = {
+  access_token: string;
+  refresh_token: string;
+  user: {
+    id: string;
+    email: string | null;
+    type: string;
+    firstName: string | null;
+    lastName: string | null;
+    companyName: string | null;
+    companyWebsiteUrl: string | null;
+    phone: string | null;
+    boardSlug: string | null;
+  };
+};

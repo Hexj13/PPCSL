@@ -9,8 +9,8 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const require = createRequire(import.meta.url);
-const noHardcodedTextPlugin = require('./eslint-plugin-no-hardcoded-text.cjs');
-const requireVehicleTypePlugin = require('./eslint-plugin-require-vehicle-type.cjs');
+const noHardcodedTextPlugin = require('./config/eslint/eslint-plugin-no-hardcoded-text.cjs');
+const requireVehicleTypePlugin = require('./config/eslint/eslint-plugin-require-vehicle-type.cjs');
 
 export default tseslint.config(
   js.configs.recommended,

@@ -11,10 +11,10 @@
     "dev:clean": "rm -rf .next node_modules/.cache && next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint . --ext .ts,.tsx && npm run lint:translations",
-    "lint:fix": "eslint . --ext .ts,.tsx --fix",
-    "lint:styles": "stylelint \"**/*.css\"",
-    "lint:styles:fix": "stylelint \"**/*.css\" --fix",
+    "lint": "eslint . -c config/eslint.config.mjs && npm run lint:translations",
+    "lint:fix": "eslint . -c config/eslint.config.mjs --fix",
+    "lint:styles": "stylelint \"**/*.css\" --config config/stylelint.config.js --ignore-pattern \"coverage/**\" --ignore-pattern \".next/**\"",
+    "lint:styles:fix": "stylelint \"**/*.css\" --config config/stylelint.config.js --fix --ignore-pattern \"coverage/**\" --ignore-pattern \".next/**\"",
     "lint:translations": "ts-node --transpile-only --compiler-options '{\"module\":\"commonjs\"}' scripts/check-translations-sync.ts",
     "lint:all": "npm run lint && npm run lint:styles && npm run lint:translations",
     "format": "prettier --write \"**/*.{ts,tsx,json,css,md}\"",
@@ -93,12 +93,10 @@
       "/node_modules/",
       "/.next/",
       "/out/",
-      "components/ListingForm.test.tsx",
-      "components/SearchFilters.test.tsx",
-      "components/ListingGrid.test.tsx"
+      "components/ListingForm.test.tsx"
     ],
     "setupFilesAfterEnv": [
-      "<rootDir>/jest.setup.js"
+      "<rootDir>/config/jest/jest.setup.js"
     ],
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/$1",

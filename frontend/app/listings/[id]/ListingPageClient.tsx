@@ -5,8 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
-import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { useI18n } from '@/components/I18nProvider';
 import { ListingPageActions } from '@/components/ListingPage/ListingPageActions';
 import { ListingPageCharacteristics } from '@/components/ListingPage/ListingPageCharacteristics';
 import { ListingPageDescription } from '@/components/ListingPage/ListingPageDescription';
@@ -14,6 +12,7 @@ import { ListingPageHeader } from '@/components/ListingPage/ListingPageHeader';
 import { ListingPageImageModal } from '@/components/ListingPage/ListingPageImageModal';
 import { ListingPageImages } from '@/components/ListingPage/ListingPageImages';
 import { ListingPageSeller } from '@/components/ListingPage/ListingPageSeller';
+import { Breadcrumbs } from '@/components/layout/Breadcrumbs';
 import {
   BreadcrumbsSkeleton,
   MainImageSkeleton,
@@ -22,9 +21,10 @@ import {
   FavoriteButtonSkeleton,
   TitleSkeleton,
   BadgesSkeleton,
-} from '@/components/ListingPageSkeleton';
-import { PromotionModal } from '@/components/PromotionModal';
-import { SimilarListings } from '@/components/SimilarListings';
+} from '@/components/listing/ListingPageSkeleton';
+import { SimilarListings } from '@/components/listing/SimilarListings';
+import { PromotionModal } from '@/components/modals/PromotionModal';
+import { useI18n } from '@/components/providers/I18nProvider';
 import { useCities } from '@/hooks/useCities';
 import { useListingData } from '@/hooks/useListingData';
 import { useLoadingState } from '@/hooks/useLoadingState';

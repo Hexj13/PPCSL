@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 
-import { ConversionEvent } from '@/components/ConversionEvent';
-import { ListingGrid } from '@/components/ListingGrid';
-import { ScrollToFiltersButton } from '@/components/ScrollToFiltersButton';
-import { SearchFilters } from '@/components/SearchFilters';
-import { SearchStructuredData } from '@/components/SearchStructuredData';
+import { ConversionEvent } from '@/components/analytics/ConversionEvent';
+import { SearchStructuredData } from '@/components/analytics/SearchStructuredData';
+import { ListingGrid } from '@/components/listing/ListingGrid';
+import { ScrollToFiltersButton } from '@/components/search/ScrollToFiltersButton';
+import { SearchFilters } from '@/components/search/SearchFilters';
+import { getListings } from '@/lib/api';
 import { getMetadataLocale, getServerTranslations } from '@/lib/i18n';
-import { getListings } from '@/lib/server-api';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { getCountry } from '@/lib/utils';
 

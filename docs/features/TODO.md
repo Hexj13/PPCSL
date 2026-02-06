@@ -3,7 +3,7 @@
 ## 🟡 Medium Priority
 
 ### Internal Links Improvement
-- [ ] Create component `components/SimilarListings.tsx`
+- [ ] Create component `components/listing/SimilarListings.tsx` (already exists; link from listing page)
   - Show similar listings on listing page
   - Filter by brand/model/city
   - Add "View all" link to filtered search

@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
-import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { LoadMoreButton } from '@/components/LoadMoreButton';
+import { Breadcrumbs } from '@/components/layout/Breadcrumbs';
+import { LoadMoreButton } from '@/components/listing/LoadMoreButton';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 import { listingsApi, Listing } from '@/lib/api';

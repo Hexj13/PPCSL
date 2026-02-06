@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   ForbiddenException,
   Get,
   Param,
@@ -20,19 +21,23 @@ import {
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 
-import { AdminGuard } from '../auth/guards/admin.guard';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { AdminGuard } from '../auth/infrastructure/guards/admin.guard';
+import { JwtAuthGuard } from '../auth/infrastructure/guards/jwt-auth.guard';
 import { ListingStatus } from '../common/types';
-import { TogglePromotionDto } from '../listings/dto/toggle-promotion.dto';
+import { TogglePromotionDto } from '../listings/presentation/dto/toggle-promotion.dto';
 
 import { AdminService } from './admin.service';
+import { DeleteAllBrandsService } from './delete-all-brands.service';
 
 @ApiTags('admin')
 @ApiBearerAuth('JWT-auth')
 @Controller('api/admin')
 @UseGuards(JwtAuthGuard, AdminGuard)
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(
+    private readonly adminService: AdminService,
+    private readonly deleteAllBrandsService: DeleteAllBrandsService,
+  ) {}
 
   @ApiOperation({ summary: 'Get all users' })
   @ApiResponse({
@@ -105,6 +110,13 @@ export class AdminController {
     const pageNum = page ? Math.max(1, parseInt(page, 10)) : 1;
     const limitNum = limit ? Math.min(100, Math.max(1, parseInt(limit, 10))) : 20;
     return this.adminService.getAllUsers(pageNum, limitNum, search, userType);
+  }
+
+  @ApiOperation({ summary: 'Delete all brands (cascade: models, vehicles, listings, favorites)' })
+  @ApiResponse({ status: 200, description: 'All brands deleted successfully' })
+  @Delete('brands/all')
+  deleteAllBrands() {
+    return this.deleteAllBrandsService.execute();
   }
 
   @ApiOperation({ summary: 'Get all listings' })

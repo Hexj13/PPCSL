@@ -9,6 +9,7 @@
 
 - **[ARCHITECTURE_OVERVIEW.md](./architecture/ARCHITECTURE_OVERVIEW.md)** ⭐ **НАЧНИ ЗДЕСЬ**
 - [MULTI_REPOSITORY.md](./architecture/MULTI_REPOSITORY.md) - Core + Platform repos
+- [BACKEND_LAYERS.md](./architecture/BACKEND_LAYERS.md) - Слоистая архитектура бэкенда (use cases, domain)
 - [SCRIPTS_ARCHITECTURE.md](./architecture/SCRIPTS_ARCHITECTURE.md) 🔴 **КРИТИЧНО**
 - [KNOWN_ISSUES.md](./architecture/KNOWN_ISSUES.md) - Известные проблемы
 - [TECHNICAL.md](./architecture/TECHNICAL.md) - Технические детали

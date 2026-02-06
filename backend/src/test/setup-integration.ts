@@ -7,7 +7,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 
 import { AppModule } from '../app.module';
-import { EmailService } from '../auth/services/email.service';
+import { EmailService } from '../auth/infrastructure/services/email.service';
 import { HttpExceptionFilter } from '../common/filters/http-exception.filter';
 import { I18nService } from '../common/i18n/i18n.service';
 

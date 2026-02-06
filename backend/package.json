@@ -18,8 +18,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "test:integration": "NODE_OPTIONS=--experimental-vm-modules jest --config jest-integration.config.cjs",
-    "test:integration:watch": "NODE_OPTIONS=--experimental-vm-modules jest --config jest-integration.config.cjs --watch",
+    "test:integration": "NODE_OPTIONS=--experimental-vm-modules jest --config config/jest-integration.config.cjs",
+    "test:integration:watch": "NODE_OPTIONS=--experimental-vm-modules jest --config config/jest-integration.config.cjs --watch",
     "migration:generate": "typeorm-ts-node-commonjs migration:generate -d src/data-source.ts",
     "migration:run": "typeorm-ts-node-commonjs migration:run -d src/data-source.ts",
     "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/data-source.ts",
@@ -55,6 +55,8 @@
     "fix-empty-brands:prod": "ts-node -r tsconfig-paths/register src/scripts/production/fix-empty-brand-names.ts",
     "remove-other-brand": "ts-node -r tsconfig-paths/register src/scripts/stage/remove-other-brand.ts",
     "remove-other-brand:prod": "ts-node -r tsconfig-paths/register src/scripts/production/remove-other-brand.ts",
+    "remove-body-code-models": "ts-node -r tsconfig-paths/register src/scripts/stage/remove-body-code-models.ts",
+    "remove-body-code-models:prod": "ts-node -r tsconfig-paths/register src/scripts/production/remove-body-code-models.ts",
     "check-brands:prod": "ts-node -r tsconfig-paths/register src/scripts/production/check-brands-count.ts",
     "check-models:prod": "ts-node -r tsconfig-paths/register src/scripts/production/check-models-stats.ts",
     "reset-users": "ts-node -r tsconfig-paths/register src/scripts/stage/reset-users.ts",
@@ -62,7 +64,7 @@
     "update-engine-volumes": "ts-node -r tsconfig-paths/register src/scripts/stage/update-engine-volumes.ts",
     "update-listing-dates": "ts-node -r tsconfig-paths/register src/scripts/stage/update-listing-dates.ts",
     "sync-carquery": "ts-node -r tsconfig-paths/register src/scripts/stage/sync-carquery.ts",
-    "sort-imports": "ts-node -r tsconfig-paths/register scripts/sort-imports.ts",
+    "sort-imports": "ts-node -r tsconfig-paths/register config/scripts/sort-imports.ts",
     "cleanup-brands": "ts-node -r tsconfig-paths/register src/scripts/stage/cleanup-brands.ts",
     "clear-database": "ts-node -r tsconfig-paths/register src/scripts/stage/clear-database.ts",
     "clear-listings": "ts-node -r tsconfig-paths/register src/scripts/stage/clear-listings.ts",
@@ -170,7 +172,7 @@
       "^.+\\.ts$": [
         "ts-jest",
         {
-          "tsconfig": "tsconfig.test.json"
+          "tsconfig": "config/tsconfig.test.json"
         }
       ]
     },

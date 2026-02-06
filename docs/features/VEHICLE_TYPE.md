@@ -766,7 +766,7 @@ CREATE INDEX idx_vehicles_model_type ON vehicles(model_id)
 
 ### Компоненты
 
-- `core/frontend/components/SearchFilters.tsx` - основной компонент с переключателями
+- `core/frontend/components/search/SearchFilters.tsx` - основной компонент с переключателями
 - `core/frontend/ui/icons.tsx` - компоненты иконок (CarIcon, TruckIcon, MotoIcon)
 - `core/frontend/ui/index.ts` - экспорты иконок
 

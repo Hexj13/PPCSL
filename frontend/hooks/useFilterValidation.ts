@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { useTranslation } from '@/hooks/useTranslation';
-import { getFilterRangesValidationError } from '@/lib/validation-rules';
+import { getFilterRangesValidationError } from '@/lib/validation';
 
 import { FilterState } from './useSearchFilters';
 

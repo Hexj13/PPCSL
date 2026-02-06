@@ -10,6 +10,13 @@ const brandsPromiseCache = new Map<string, Promise<Brand[]>>();
 const modelsCache = new Map<string, VehicleModel[]>();
 const modelsPromiseCache = new Map<string, Promise<VehicleModel[]>>();
 
+export function clearBrandsAndModelsCache(): void {
+  brandsCache.clear();
+  brandsPromiseCache.clear();
+  modelsCache.clear();
+  modelsPromiseCache.clear();
+}
+
 function getBrandsKey(vehicleType: VehicleTypeOption): string {
   return vehicleType ?? 'all';
 }

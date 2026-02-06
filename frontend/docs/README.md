@@ -18,8 +18,8 @@ Frontend-specific documentation for PPCSL Next.js application.
 
 ### Data Fetching
 - **Server Components:** Initial data loaded on server (SEO)
-- **Server API:** `lib/server-api.ts` - Server-side fetching
-- **Client API:** `lib/api.ts` - Client-side Axios client
+- **Server API:** `lib/api/server-api.ts` - Server-side fetching
+- **Client API:** `lib/api/api.ts` (import via `@/lib/api`) - Client-side Axios client
 - **Hybrid approach:** Server + Client for optimal UX
 
 ### URL Parameters & SEO
@@ -42,14 +42,16 @@ Frontend-specific documentation for PPCSL Next.js application.
 
 ## 📦 Key Components
 
+**Structure:** Components are grouped under `components/` by domain: `layout/`, `listing/`, `search/` (incl. `search-filters/`), `modals/`, `analytics/`, `providers/`, `pwa/`, `common/`. Root-level components (e.g. `SkeletonContainer`, `HomeHero`) remain in `components/`.
+
 **Layout & Navigation:**
-- `Breadcrumbs` - Navigation breadcrumbs
-- `PWAInstallButtonGray` - PWA install prompt
+- `layout/Breadcrumbs` - Navigation breadcrumbs
+- `pwa/PWAInstallButtonGray` - PWA install prompt
 
 **Listings:**
-- `ListingGrid` - Infinite scroll grid
-- `ListingManagementCard` - Status management
-- `SavedFiltersList` - Saved filters with caching
+- `listing/ListingGrid` - Infinite scroll grid
+- `listing/ListingManagementCard` - Status management
+- `search/SavedFiltersList` - Saved filters with caching
 
 **Loading States:**
 - `LoadingButton` - Button with loading state

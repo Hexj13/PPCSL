@@ -41,6 +41,7 @@
     "stories.backup",
     "**/*.stories.tsx",
     "**/*.stories.ts",
-    "vitest.config.ts"
+    "vitest.config.ts",
+    "config/vitest.config.ts"
   ]
 }

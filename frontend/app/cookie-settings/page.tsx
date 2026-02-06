@@ -27,7 +27,7 @@ export default function CookieSettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-3xl mx-auto pt-10 md:pt-14">
         <div className="surface p-8 text-center">
           <p className="text-text-secondary">{t('common.loading')}</p>
         </div>
@@ -36,7 +36,7 @@ export default function CookieSettingsPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto pt-10 md:pt-14">
       <div className="mb-8">
         <h1 className="text-4xl md:text-5xl font-extrabold text-primary-700 mb-4">
           {t('cookieSettings.title')}
@@ -124,24 +124,18 @@ export default function CookieSettingsPage() {
         </h2>
         <div className="flex flex-col sm:flex-row gap-4">
           <button
+            type="button"
             onClick={() => handleSave('granted')}
             disabled={isSaving || consent === 'granted'}
-            className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
-              consent === 'granted'
-                ? 'bg-primary-500 text-white cursor-not-allowed'
-                : 'bg-primary-500 hover:bg-primary-600 text-white border-2 border-primary-500 hover:border-primary-600'
-            }`}
+            className="flex-1 min-w-0 btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSaving ? t('common.saving') : t('cookieSettings.acceptAnalytical')}
           </button>
           <button
+            type="button"
             onClick={() => handleSave('denied')}
             disabled={isSaving || consent === 'denied'}
-            className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
-              consent === 'denied'
-                ? 'bg-dark-600 text-white cursor-not-allowed'
-                : 'bg-bg-secondary hover:bg-bg-darker text-text-primary border-2 border-divider hover:border-dark-400'
-            }`}
+            className="flex-1 min-w-0 btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSaving ? t('common.saving') : t('cookieSettings.denyAnalytical')}
           </button>

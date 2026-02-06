@@ -1,6 +1,6 @@
 import React, { ChangeEvent, WheelEvent } from 'react';
 
-import { getYearRange, isInRange } from '@/lib/validation-rules';
+import { getYearRange, isInRange } from '@/lib/validation';
 
 export function useNumberInput() {
   const handleWheel = (e: WheelEvent<HTMLInputElement>) => {

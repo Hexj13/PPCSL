@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 
-import { Dropdown } from '@/components/Dropdown';
+import { Dropdown } from '@/components/common/Dropdown';
 import { useTranslation } from '@/hooks/useTranslation';
-import { getYearOptions } from '@/lib/form-options';
+import { getYearOptions } from '@/lib/options';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { getCountry } from '@/lib/utils';
 

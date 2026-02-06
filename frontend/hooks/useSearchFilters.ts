@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FILTERS_STORAGE_KEY,
   getDefaultFilters as getDefaultFiltersFromSearchParams,
-} from '@/lib/search-params';
+} from '@/lib/search';
 
 const decodeArray = (encoded: string): string[] => {
   if (!encoded) return [];

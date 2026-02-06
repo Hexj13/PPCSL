@@ -1,7 +1,7 @@
 'use client';
 
-import { Dropdown } from '@/components/Dropdown';
-import { useI18n } from '@/components/I18nProvider';
+import { Dropdown } from '@/components/common/Dropdown';
+import { useI18n } from '@/components/providers/I18nProvider';
 import { Currency, CurrencyEnum } from '@/lib/types';
 import { sortOptionsByLabel } from '@/lib/utils';
 

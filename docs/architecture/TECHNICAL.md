@@ -231,16 +231,24 @@ See [PAID_PROMOTION.md](../features/PAID_PROMOTION.md) for complete promotion fe
 
 ## 4. Architecture
 
+### Backend layered architecture
+
+The backend uses a layered design: **Presentation** (controllers, DTOs) → **Application** (use cases, ports) → **Domain** (entities, value objects, domain services) → **Infrastructure** (TypeORM, Redis, SMS, etc.). Controllers are thin; business logic lives in use cases and domain. See [BACKEND_LAYERS.md](./BACKEND_LAYERS.md) for layer conventions and module structure (Listings, Auth).
+
 ### Project Structure
 
 ```
 PPCSL/
 ├── frontend/          # Next.js application
 │   ├── app/          # Pages and routes (Server Components)
-│   ├── components/   # React components (Client/Server)
+│   ├── components/   # React components (layout/, listing/, search/, modals/, analytics/, providers/, pwa/, common/)
+│   ├── config/       # Tool configs (ESLint, Jest, Sentry, Stylelint, Vitest, proxy)
 │   └── lib/          # Utilities and API clients
-│       ├── api.ts    # Client-side API client (Axios)
-│       └── server-api.ts # Server-side API functions (native fetch)
+│       ├── api/      # Client API (api.ts), server API (server-api.ts), api-utils
+│       ├── search/   # search-params, listingSort
+│       ├── utils/    # utils.ts, status-utils
+│       ├── validation/, options/, content/, store/
+│       └── config/   # Loaders: faq, legal, popular-brands (copied from platform)
 ├── backend/          # NestJS API
 │   ├── src/
 │   │   ├── auth/     # Authentication
@@ -275,7 +283,7 @@ PPCSL/
 **Client Components:**
 - Interactive components (forms, modals, infinite scroll) remain as Client Components
 - State management handled by Zustand stores
-- API calls for subsequent data loads use Axios client (`lib/api.ts`)
+- API calls for subsequent data loads use Axios client (`lib/api` → api.ts)
 
 ### Key Features
 
@@ -610,9 +618,9 @@ cd frontend && npm test
 **Controllers:** ✅ All controllers have comprehensive unit tests
 **Guards:** ✅ JwtAuthGuard, AdminGuard, IpBlockGuard tested
 **Frontend Components:** ✅ Core components tested (AuthProvider)
-**Frontend Server API:** ✅ Server-side data fetching functions tested (`lib/server-api.test.ts`)
-**Frontend API:** ✅ Client-side API functions tested (`lib/api.test.ts`)
-**Frontend Utilities:** ✅ Utility functions tested (`lib/utils.test.ts`)
+**Frontend Server API:** ✅ Server-side data fetching functions tested (`lib/api/server-api.test.ts`)
+**Frontend API:** ✅ Client-side API functions tested (`lib/api/api.test.ts`)
+**Frontend Utilities:** ✅ Utility functions tested (`lib/utils/utils.test.ts`)
 
 **Test Statistics:**
 - **Total Tests:** 324 tests across 27 test suites
@@ -881,7 +889,7 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
 ### Frontend Optimizations
 - **Server-side data fetching:** Initial listings data loaded on server using Next.js Server Components and native `fetch` API, improving SEO and initial page load performance
 - **Request deduplication:** `React.cache()` wrapper for server-side functions (`fetchBrands`, `fetchModelsByBrands`, `getListings`) eliminates duplicate API calls, reducing initial page load time by ~40-50%
-- **Centralized search parameter parsing:** Shared `lib/search-params.ts` module provides `buildSearchQuery()` (URL construction, base64 encoding, localStorage fallback for long query strings), `getDefaultFilters()`, URL parameter parsing via `parseSearchParams()`, base64 encoding/decoding, and slug-to-ID conversion via `createBrandResolver` / `createModelResolver`
+- **Centralized search parameter parsing:** Shared `lib/search/search-params.ts` module provides `buildSearchQuery()` (URL construction, base64 encoding, localStorage fallback for long query strings), `getDefaultFilters()`, URL parameter parsing via `parseSearchParams()`, base64 encoding/decoding, and slug-to-ID conversion via `createBrandResolver` / `createModelResolver`
 - **Optimized search filters:** Refactored `SearchFilters.tsx` component split into 5 custom hooks (`useSearchFiltersSync`, `useVehicleType`, `useSearchTabs`, `useFilterHandlers`, `useFilterOptions`) and 3 modular components (`VehicleTypeSelector`, `SearchTabs`, `SearchFormActions`), reducing main component from 1796 to 473 lines (73% reduction)
 - **Unified listing fetch logic:** Merged `fetchListings` and `handleLoadMore` functions into a single unified function, eliminating ~180 lines of duplicate code
 - **Component memoization:** React.memo, useMemo, useCallback for preventing unnecessary re-renders
@@ -1311,7 +1319,7 @@ cd backend && npm run test -- listings.service.spec.ts
 ### Recent Updates
 - **Slug-based URLs & SEO Improvements (2025-12-17):**
   - Implemented slug-based URLs for brand and model filters (`?brand=toyota&model=yaris`) for better SEO and user-friendly URLs
-  - Added utility functions `createSlug()` and `slugToName()` in `lib/utils.ts` for URL-friendly text conversion
+  - Added utility functions `createSlug()` and `slugToName()` in `lib/utils/utils.ts` for URL-friendly text conversion
   - Updated sitemap to include brand landing pages (`/?brand={slug}`) and brand-model combinations (`/?brand={slug}&model={slug}`)
   - Enhanced SavedFiltersList to use slug-based URLs when applying saved filters
   - Improved sitemap scalability with pagination support (up to 45,000 listing URLs)

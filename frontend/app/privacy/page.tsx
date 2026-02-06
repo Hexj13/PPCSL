@@ -1,8 +1,8 @@
 'use client';
 
-import { useI18n } from '@/components/I18nProvider';
-import type { LegalDocument } from '@/lib/legal';
-import { loadLegalConfigSync } from '@/lib/legal';
+import { useI18n } from '@/components/providers/I18nProvider';
+import type { LegalDocument } from '@/lib/content/legal';
+import { loadLegalConfigSync } from '@/lib/content/legal';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { getCountry } from '@/lib/utils';
 
@@ -34,7 +34,7 @@ export default function PrivacyPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto pt-10 md:pt-14">
       <div className="mb-8">
         <h1 className="text-4xl md:text-5xl font-extrabold text-primary-700">
           {normalizeText(currentPrivacy.title)}

@@ -1,0 +1,258 @@
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+
+import { BODY_TYPES_BY_VEHICLE_TYPE } from '../../../common/constants';
+import { ListingStatus as ListingStatusEnum } from '../../../common/types';
+import {
+  applyBooleanFilter,
+  applyInOrEqualFilter,
+  applyRangeFilter,
+  applyTextSearchFilter,
+} from '../../../common/utils/query-builder.utils';
+import {
+  IListingRepository,
+  SearchCriteria,
+} from '../../application/ports/listing.repository.port';
+import { getVehicleTypeFromBodyType } from '../../domain/utils/vehicle-type.utils';
+import { Listing } from '../../entities/listing.entity';
+import { applyCitiesFilter } from '../utils/query-filters.utils';
+
+@Injectable()
+export class TypeOrmListingRepository implements IListingRepository {
+  constructor(
+    @InjectRepository(Listing)
+    private readonly repository: Repository<Listing>,
+  ) {}
+
+  async findById(id: string): Promise<Listing | null> {
+    return this.repository
+      .createQueryBuilder('listing')
+      .leftJoinAndSelect('listing.vehicle', 'vehicle')
+      .leftJoinAndSelect('vehicle.brand', 'brand')
+      .leftJoinAndSelect('vehicle.model', 'model')
+      .leftJoinAndSelect('listing.user', 'user')
+      .where('listing.id = :id', { id })
+      .getOne();
+  }
+
+  async save(listing: Listing): Promise<Listing> {
+    return this.repository.save(listing);
+  }
+
+  async search(criteria: SearchCriteria): Promise<{ data: Listing[]; total: number }> {
+    const { page = 1, limit = 20, sortBy = 'created_at', sortOrder = 'DESC' } = criteria;
+    const skip = (page - 1) * limit;
+
+    const queryBuilder = this.buildSearchQuery(criteria);
+    const validSortFields = ['created_at', 'price', 'year', 'views'];
+    const sortField = validSortFields.includes(sortBy) ? sortBy : 'created_at';
+    const order = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+    queryBuilder.orderBy('listing.is_promoted', 'DESC');
+    if (sortField === 'year') {
+      queryBuilder.addOrderBy('vehicle.year', order);
+    } else if (sortField === 'views') {
+      queryBuilder.addOrderBy('listing.views', order);
+    } else {
+      queryBuilder.addOrderBy(`listing.${sortField}`, order);
+    }
+
+    const [data, total] = await queryBuilder.skip(skip).take(limit).getManyAndCount();
+    return { data, total };
+  }
+
+  async countActiveByUser(userId: string): Promise<number> {
+    return this.repository.count({
+      where: { user_id: userId, status: ListingStatusEnum.Active },
+    });
+  }
+
+  async countPromotedByUser(userId: string): Promise<number> {
+    return this.repository.count({
+      where: {
+        user_id: userId,
+        status: ListingStatusEnum.Active,
+        is_promoted: true,
+      },
+    });
+  }
+
+  async findByVin(vin: string): Promise<Listing | null> {
+    return this.repository.findOne({ where: { vin } });
+  }
+
+  async findSimilarCandidates(listing: Listing): Promise<Listing[]> {
+    const { vehicle } = listing;
+    const { id: currentId } = listing;
+    const body_type = vehicle?.body_type;
+    let vehicle_type = vehicle?.model?.vehicle_type;
+
+    if (!vehicle_type && body_type) {
+      vehicle_type = getVehicleTypeFromBodyType(body_type);
+    }
+
+    const queryBuilder = this.repository
+      .createQueryBuilder('listing')
+      .leftJoinAndSelect('listing.vehicle', 'vehicle')
+      .leftJoinAndSelect('vehicle.brand', 'brand')
+      .leftJoinAndSelect('vehicle.model', 'model')
+      .leftJoinAndSelect('listing.user', 'user')
+      .where('listing.status = :status', { status: ListingStatusEnum.Active })
+      .andWhere('listing.id != :currentId', { currentId });
+
+    if (vehicle_type) {
+      queryBuilder.andWhere(
+        '(model.vehicle_type = :vehicle_type OR (model.vehicle_type IS NULL AND vehicle.body_type IN (:...bodyTypes)))',
+        {
+          vehicle_type,
+          bodyTypes: BODY_TYPES_BY_VEHICLE_TYPE[vehicle_type],
+        },
+      );
+    }
+
+    queryBuilder.limit(100);
+    return queryBuilder.getMany();
+  }
+
+  private buildSearchQuery(searchDto: SearchCriteria) {
+    const qb = this.repository
+      .createQueryBuilder('listing')
+      .select([
+        'listing.id',
+        'listing.title',
+        'listing.price',
+        'listing.currency',
+        'listing.city',
+        'listing.status',
+        'listing.images',
+        'listing.urgent',
+        'listing.is_new',
+        'listing.is_promoted',
+        'listing.promoted_until',
+        'listing.views',
+        'listing.condition',
+        'listing.registration_type',
+        'listing.is_registered',
+        'listing.created_at',
+        'listing.last_updated_at',
+      ])
+      .leftJoin('listing.vehicle', 'vehicle')
+      .addSelect([
+        'vehicle.id',
+        'vehicle.year',
+        'vehicle.fuel',
+        'vehicle.transmission',
+        'vehicle.mileage_km',
+        'vehicle.body_type',
+        'vehicle.engine_displ_l',
+        'vehicle.color',
+        'vehicle.doors',
+        'vehicle.drive_type',
+      ])
+      .leftJoin('vehicle.brand', 'brand')
+      .addSelect(['brand.id', 'brand.name', 'brand.logoUrl'])
+      .leftJoin('vehicle.model', 'model')
+      .addSelect(['model.id', 'model.name', 'model.vehicle_type'])
+      .leftJoin('listing.user', 'user')
+      .addSelect([
+        'user.id',
+        'user.type',
+        'user.phone',
+        'user.firstName',
+        'user.lastName',
+        'user.companyName',
+        'user.companyWebsiteUrl',
+      ])
+      .where('listing.status = :status', { status: ListingStatusEnum.Active });
+
+    applyInOrEqualFilter(qb, 'vehicle', 'brand_id', searchDto.brand_ids, searchDto.brand_id);
+    applyInOrEqualFilter(qb, 'vehicle', 'model_id', searchDto.model_ids, searchDto.model_id);
+
+    if (searchDto.vehicleType) {
+      qb.andWhere(
+        '(model.vehicle_type = :vehicleType OR (model.vehicle_type IS NULL AND vehicle.body_type IN (:...bodyTypes)))',
+        {
+          vehicleType: searchDto.vehicleType,
+          bodyTypes: BODY_TYPES_BY_VEHICLE_TYPE[searchDto.vehicleType],
+        },
+      );
+    }
+
+    applyRangeFilter(qb, 'vehicle', 'year', searchDto.year_gte, searchDto.year_lte);
+    applyRangeFilter(qb, 'listing', 'price', searchDto.price_gte, searchDto.price_lte);
+    applyRangeFilter(qb, 'vehicle', 'mileage_km', searchDto.mileage_gte, searchDto.mileage_lte);
+    applyRangeFilter(
+      qb,
+      'vehicle',
+      'engine_displ_l',
+      searchDto.engine_displ_l_gte,
+      searchDto.engine_displ_l_lte,
+    );
+    applyRangeFilter(
+      qb,
+      'listing',
+      'horsepower',
+      searchDto.horsepower_gte,
+      searchDto.horsepower_lte,
+    );
+
+    applyCitiesFilter(qb, 'listing', searchDto.cities, searchDto.city);
+
+    applyInOrEqualFilter(qb, 'vehicle', 'fuel', searchDto.fuels, searchDto.fuel);
+    applyInOrEqualFilter(
+      qb,
+      'vehicle',
+      'transmission',
+      searchDto.transmissions,
+      searchDto.transmission,
+    );
+    if (searchDto.body_types && searchDto.body_types.length > 0) {
+      qb.andWhere('vehicle.body_type IN (:...bodyTypes)', {
+        bodyTypes: searchDto.body_types,
+      });
+    } else if (searchDto.body_type) {
+      qb.andWhere('vehicle.body_type = :bodyType', { bodyType: searchDto.body_type });
+    }
+    applyInOrEqualFilter(qb, 'vehicle', 'color', searchDto.colors, searchDto.color);
+
+    if (searchDto.vehicleType !== 'moto') {
+      applyInOrEqualFilter(qb, 'vehicle', 'drive_type', searchDto.drive_types, undefined);
+      if (searchDto.doors && searchDto.doors.length > 0) {
+        const doorNumbers = searchDto.doors.map((d) => parseInt(d, 10)).filter((d) => !isNaN(d));
+        if (doorNumbers.length > 0) {
+          qb.andWhere('vehicle.doors IN (:...doors)', { doors: doorNumbers });
+        }
+      } else if (searchDto.doors_single) {
+        qb.andWhere('vehicle.doors = :doors', { doors: searchDto.doors_single });
+      }
+    }
+
+    if (searchDto.currency) {
+      qb.andWhere('listing.currency = :currency', { currency: searchDto.currency });
+    }
+
+    applyTextSearchFilter(qb, 'listing', 'title', searchDto.title);
+    applyBooleanFilter(qb, 'listing', 'urgent', searchDto.urgent);
+    applyBooleanFilter(qb, 'listing', 'is_new', searchDto.is_new);
+    applyBooleanFilter(qb, 'listing', 'is_registered', searchDto.is_registered);
+
+    if (searchDto.conditions && searchDto.conditions.length > 0) {
+      qb.andWhere('listing.condition IN (:...conditions)', {
+        conditions: searchDto.conditions,
+      });
+    }
+
+    if (searchDto.registration_types && searchDto.registration_types.length > 0) {
+      qb.andWhere('listing.registration_type IN (:...registration_types)', {
+        registration_types: searchDto.registration_types,
+      });
+    }
+
+    qb.andWhere(
+      '(listing.is_promoted = false OR (listing.is_promoted = true AND (listing.promoted_until IS NULL OR listing.promoted_until > NOW())))',
+    );
+
+    return qb;
+  }
+}

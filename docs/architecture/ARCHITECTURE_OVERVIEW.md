@@ -48,24 +48,26 @@ Moldova (kupito.club)              Future Platform
 
 ### Для разработчиков (важно!)
 
-5. **[SCRIPTS_ARCHITECTURE.md](./SCRIPTS_ARCHITECTURE.md)** 🔴 **КРИТИЧНО**
+5. **[BACKEND_LAYERS.md](./BACKEND_LAYERS.md)** — слоистая архитектура бэкенда (Presentation → Application → Domain → Infrastructure), use cases, порты, структура модулей Listings/Auth.
+
+6. **[SCRIPTS_ARCHITECTURE.md](./SCRIPTS_ARCHITECTURE.md)** 🔴 **КРИТИЧНО**
    - Архитектура скриптов и конфигов платформ в core
    - Конфиги в `platforms/{country}/config.ts`
    - Запуск с переменной `COUNTRY`
 
-6. **[KNOWN_ISSUES.md](./KNOWN_ISSUES.md)** ⚠️ **ИЗВЕСТНЫЕ ПРОБЛЕМЫ**
+7. **[KNOWN_ISSUES.md](./KNOWN_ISSUES.md)** ⚠️ **ИЗВЕСТНЫЕ ПРОБЛЕМЫ**
    - Хардкодные данные в core
    - SEO keywords, metadata, OpenGraph
    - План оптимизации
 
 ### Для деплоя
 
-7. **[DEPLOYMENT.md](../guides/DEPLOYMENT.md)**
+8. **[DEPLOYMENT.md](../guides/DEPLOYMENT.md)**
    - Инструкции по деплою на Render.com
    - Настройка CI/CD
    - Production checklist
 
-8. **[LOCAL_DEVELOPMENT.md](../guides/LOCAL_DEVELOPMENT.md)**
+9. **[LOCAL_DEVELOPMENT.md](../guides/LOCAL_DEVELOPMENT.md)**
    - Локальная разработка
    - Настройка окружения
    - Отладка
@@ -120,9 +122,10 @@ Moldova (kupito.club)              Future Platform
 
 ### Для Backend разработчика:
 1. [MULTI_REPOSITORY.md](./MULTI_REPOSITORY.md)
-2. [SCRIPTS_ARCHITECTURE.md](./SCRIPTS_ARCHITECTURE.md) 🔴 **ОБЯЗАТЕЛЬНО**
-3. [PLATFORM_GUIDE.md](../guides/PLATFORM_GUIDE.md)
-4. [LOCAL_DEVELOPMENT.md](../guides/LOCAL_DEVELOPMENT.md)
+2. [BACKEND_LAYERS.md](./BACKEND_LAYERS.md) — слои и use cases
+3. [SCRIPTS_ARCHITECTURE.md](./SCRIPTS_ARCHITECTURE.md) 🔴 **ОБЯЗАТЕЛЬНО**
+4. [PLATFORM_GUIDE.md](../guides/PLATFORM_GUIDE.md)
+5. [LOCAL_DEVELOPMENT.md](../guides/LOCAL_DEVELOPMENT.md)
 
 ### Для Frontend разработчика:
 1. [MULTI_REPOSITORY.md](./MULTI_REPOSITORY.md)

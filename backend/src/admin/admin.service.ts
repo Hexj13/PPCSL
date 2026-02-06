@@ -1,15 +1,14 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { RefreshTokenService } from '../auth/services/refresh-token.service';
-import { RedisService } from '../common/redis.service';
+import { RefreshTokenService } from '../auth/infrastructure/services/refresh-token.service';
 import {
   ListingStatus,
   ListingStatus as ListingStatusEnum,
   UserType as UserTypeEnum,
 } from '../common/types';
-import { CACHE_PREFIXES, generateCacheKey } from '../common/utils/cache.utils';
+import { IListingCache, LISTING_CACHE } from '../listings/application/ports/listing-cache.port';
 import { Listing } from '../listings/entities/listing.entity';
 import { PromotionHistory } from '../listings/entities/promotion-history.entity';
 import { ListingsService } from '../listings/listings.service';
@@ -26,7 +25,8 @@ export class AdminService {
     private promotionHistoryRepository: Repository<PromotionHistory>,
     private refreshTokenService: RefreshTokenService,
     private listingsService: ListingsService,
-    private redisService: RedisService,
+    @Inject(LISTING_CACHE)
+    private listingCache: IListingCache,
   ) {}
 
   async getAllUsers(
@@ -35,7 +35,9 @@ export class AdminService {
     searchQuery?: string,
     userType?: string,
   ): Promise<{
-    data: Omit<User, 'password'>[];
+    data: Array<
+      Omit<User, 'password' | 'getDisplayName' | 'canCreateListing' | 'deactivate' | 'isAdmin'>
+    >;
     meta: { total: number; page: number; limit: number; totalPages: number };
   }> {
     const skip = (page - 1) * limit;
@@ -347,10 +349,8 @@ export class AdminService {
     }
 
     try {
-      await this.redisService.invalidateByPrefix(CACHE_PREFIXES.listingsSearch);
-      await this.redisService.del(
-        generateCacheKey({ prefix: CACHE_PREFIXES.listings, parts: [id] }),
-      );
+      await this.listingCache.invalidateSearch();
+      await this.listingCache.invalidateSingle(id);
     } catch {
       // Ignore cache errors
     }

@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
-import { CopyButton } from '@/components/CopyButton';
-import { EmptyState } from '@/components/EmptyState';
+import { CopyButton } from '@/components/common/CopyButton';
+import { EmptyState } from '@/components/common/EmptyState';
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { usePaginatedData } from '@/hooks/usePaginatedData';
 import { useTranslation } from '@/hooks/useTranslation';

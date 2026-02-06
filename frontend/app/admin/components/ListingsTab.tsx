@@ -3,11 +3,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
-import { EmptyState } from '@/components/EmptyState';
-import { ListingManagementCard } from '@/components/ListingManagementCard';
-import { ListingManagementCardSkeleton } from '@/components/ListingManagementCardSkeleton';
-import { PromotionModal } from '@/components/PromotionModal';
-import { StatusFilterButtons } from '@/components/StatusFilterButtons';
+import { EmptyState } from '@/components/common/EmptyState';
+import { ListingManagementCard } from '@/components/listing/ListingManagementCard';
+import { ListingManagementCardSkeleton } from '@/components/listing/ListingManagementCardSkeleton';
+import { StatusFilterButtons } from '@/components/listing/StatusFilterButtons';
+import { PromotionModal } from '@/components/modals/PromotionModal';
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { usePaginatedData } from '@/hooks/usePaginatedData';
 import { useTranslation } from '@/hooks/useTranslation';

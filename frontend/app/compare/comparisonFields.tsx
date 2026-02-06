@@ -2,7 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { Listing } from '@/lib/api';
-import { getColorLabel } from '@/lib/form-options';
+import { getColorLabel } from '@/lib/options';
 import {
   formatPrice,
   formatMileage,

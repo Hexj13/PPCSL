@@ -286,8 +286,8 @@ COUNTRY=md npx ts-node src/scripts/stage/audit-vehicle-types.ts --fix
 | Файл | Описание |
 |------|----------|
 | `core/frontend/app/sitemap.txt/route.ts` | Генерация sitemap (plain text, один URL на строку) |
-| `core/frontend/lib/server-api.ts` | API для получения марок/моделей |
-| `core/frontend/lib/api.ts` | Типы Brand, VehicleModel |
+| `core/frontend/lib/api/server-api.ts` | API для получения марок/моделей |
+| `core/frontend/lib/api/api.ts` | Типы Brand, VehicleModel |
 | `core/backend/src/brands/brands.service.ts` | Backend сервис марок |
 
 ---

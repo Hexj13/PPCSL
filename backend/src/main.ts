@@ -8,9 +8,13 @@ import helmet from 'helmet';
 
 import './common/sentry.config';
 import { AppModule } from './app.module';
+import { PrettyLogger } from './common/logger/pretty-logger';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const isDev = process.env.NODE_ENV !== 'production';
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    logger: isDev ? new PrettyLogger() : undefined,
+  });
 
   app.set('trust proxy', true);
 
@@ -142,6 +146,10 @@ async function bootstrap() {
 
   const port = process.env.PORT || 4000;
   await app.listen(port);
+  if (isDev) {
+    console.log(`  → http://localhost:${port}`);
+    console.log(`  → Swagger: http://localhost:${port}/api/docs\n`);
+  }
 }
 
 bootstrap();

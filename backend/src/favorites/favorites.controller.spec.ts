@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { Favorite } from './entities/favorite.entity';
 import { CheckBatchDto } from './dto/check-batch.dto';
 import { FavoritesController } from './favorites.controller';
 import { FavoritesService } from './favorites.service';
@@ -107,7 +108,7 @@ describe('FavoritesController', () => {
   describe('findAll', () => {
     it('should return all favorites for user', async () => {
       const req = { user: mockUser };
-      const mockFavorites = [mockFavorite];
+      const mockFavorites = [mockFavorite] as unknown as Favorite[];
 
       service.findAll.mockResolvedValue(mockFavorites);
 
@@ -175,7 +176,7 @@ describe('FavoritesController', () => {
         created_at: new Date(),
       };
 
-      service.add.mockResolvedValue(mockFavorite);
+      service.add.mockResolvedValue(mockFavorite as unknown as Favorite);
 
       const result = await controller.add(listingId, req);
 

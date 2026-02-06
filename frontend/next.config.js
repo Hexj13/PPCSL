@@ -15,7 +15,6 @@ const nextConfig = {
     cacheMaxMemorySize: 50 * 1024 * 1024,
   }),
 
-  // Отключаем кеширование в development
   ...(process.env.NODE_ENV === 'development' && {
     cacheMaxMemorySize: 0,
     onDemandEntries: {
@@ -24,7 +23,6 @@ const nextConfig = {
     },
   }),
 
-  // Отключаем кеширование страниц в dev режиме
   ...(process.env.NODE_ENV === 'development' && {
     generateBuildId: async () => {
       return `dev-${Date.now()}`;

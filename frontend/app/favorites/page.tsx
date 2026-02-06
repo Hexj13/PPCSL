@@ -3,10 +3,10 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
-import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { ListingCard } from '@/components/ListingCard';
-import { ListingCardSkeleton } from '@/components/ListingCardSkeleton';
-import { SavedFiltersList, updateSavedFiltersCache } from '@/components/SavedFiltersList';
+import { Breadcrumbs } from '@/components/layout/Breadcrumbs';
+import { ListingCard } from '@/components/listing/ListingCard';
+import { ListingCardSkeleton } from '@/components/listing/ListingCardSkeleton';
+import { SavedFiltersList, updateSavedFiltersCache } from '@/components/search/SavedFiltersList';
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTranslation } from '@/hooks/useTranslation';

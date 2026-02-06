@@ -2,7 +2,7 @@
 
 import { toast } from 'react-hot-toast';
 
-import { Dropdown } from '@/components/Dropdown';
+import { Dropdown } from '@/components/common/Dropdown';
 import {
   getBodyTypeOptions,
   getColorOptions,
@@ -10,7 +10,7 @@ import {
   getDriveTypeOptions,
   getFuelOptions,
   getTransmissionOptions,
-} from '@/lib/form-options';
+} from '@/lib/options';
 import { ConditionType, RegistrationType } from '@/lib/types';
 import { horsepowerToKw, kwToHorsepower } from '@/lib/utils';
 

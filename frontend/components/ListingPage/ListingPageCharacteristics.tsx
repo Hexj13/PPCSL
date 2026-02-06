@@ -1,9 +1,9 @@
 'use client';
 
-import { CopyButton } from '@/components/CopyButton';
+import { CopyButton } from '@/components/common/CopyButton';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Listing } from '@/lib/api';
-import { getColorLabel } from '@/lib/form-options';
+import { getColorLabel } from '@/lib/options';
 import {
   formatEngineVolume,
   formatTransmission,

@@ -90,4 +90,32 @@ export class User {
 
   @OneToMany(() => Favorite, (favorite) => favorite.user)
   favorites!: Favorite[];
+
+  getDisplayName(): string {
+    if (this.type === 'Business' && this.companyName?.trim()) {
+      return this.companyName.trim();
+    }
+    if (this.firstName?.trim()) {
+      return this.firstName.trim();
+    }
+    return this.phone ?? '';
+  }
+
+  canCreateListing(activeCount: number, limit: number): boolean {
+    return activeCount < limit;
+  }
+
+  deactivate(): void {
+    this.email = null;
+    this.phone = null;
+    this.firstName = null;
+    this.lastName = null;
+    this.companyName = null;
+    this.companyWebsiteUrl = null;
+    this.active = false;
+  }
+
+  isAdmin(): boolean {
+    return this.type === 'Admin';
+  }
 }

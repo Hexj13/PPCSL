@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
+import { fetchBrands, fetchModelsByBrands } from '@/lib/api';
 import { BODY_TYPES_BY_VEHICLE_TYPE } from '@/lib/constants';
-import { fetchBrands, fetchModelsByBrands } from '@/lib/server-api';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { createSlug, getCountry } from '@/lib/utils';
 

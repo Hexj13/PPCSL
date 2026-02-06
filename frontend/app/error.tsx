@@ -4,7 +4,7 @@ import * as Sentry from '@sentry/nextjs';
 import Link from 'next/link';
 import { useEffect } from 'react';
 
-import { I18nProvider } from '@/components/I18nProvider';
+import { I18nProvider } from '@/components/providers/I18nProvider';
 import { useTranslation } from '@/hooks/useTranslation';
 
 function ErrorContent({

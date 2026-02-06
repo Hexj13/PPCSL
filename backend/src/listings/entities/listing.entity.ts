@@ -16,6 +16,10 @@ import { User } from '../../users/entities/user.entity';
 
 import { Vehicle } from './vehicle.entity';
 
+const ListingStatusActive = 'Active' as const;
+const ListingStatusPaused = 'Paused' as const;
+const ListingStatusClosed = 'Closed' as const;
+
 @Entity('listings')
 @Index(['status'])
 @Index(['user_id'])
@@ -145,4 +149,97 @@ export class Listing {
 
   @UpdateDateColumn()
   updated_at: Date;
+
+  isActive(): boolean {
+    return this.status === ListingStatusActive;
+  }
+
+  isPromoted(): boolean {
+    return this.is_promoted === true;
+  }
+
+  canBeEdited(): boolean {
+    return this.status !== ListingStatusClosed;
+  }
+
+  canBePublished(): boolean {
+    return this.status !== ListingStatusClosed;
+  }
+
+  publish(): void {
+    if (this.status === ListingStatusClosed) {
+      throw new Error('errors.listingClosedCannotPublish');
+    }
+    if (this.is_promoted && this.promoted_until && this.promoted_paused_at) {
+      const now = new Date();
+      const pausedMs = now.getTime() - this.promoted_paused_at.getTime();
+      this.promoted_until = new Date(this.promoted_until.getTime() + pausedMs);
+      this.promoted_paused_at = null;
+    }
+    if (this.is_promoted && this.promoted_until && !this.promoted_paused_at) {
+      const now = new Date();
+      if (this.promoted_until < now) {
+        this.is_promoted = false;
+        this.promoted_until = null;
+        this.promoted_started_at = null;
+        this.promoted_paused_at = null;
+      }
+    }
+    this.status = ListingStatusActive as ListingStatus;
+    this.last_published_at = new Date();
+  }
+
+  pause(): void {
+    if (this.is_promoted && this.promoted_until && !this.promoted_paused_at) {
+      this.promoted_paused_at = new Date();
+    }
+    this.status = ListingStatusPaused as ListingStatus;
+  }
+
+  close(): void {
+    this.status = ListingStatusClosed as ListingStatus;
+    this.closed_at = new Date();
+    this.is_promoted = false;
+    this.promoted_until = null;
+    this.promoted_started_at = null;
+    this.promoted_paused_at = null;
+  }
+
+  startPromotion(days: number | null): void {
+    if (this.status !== ListingStatusActive) {
+      throw new Error('errors.promotionOnlyActive');
+    }
+    const now = new Date();
+    this.is_promoted = true;
+    this.promoted_started_at = now;
+    this.promoted_paused_at = null;
+    if (days === null || days === undefined) {
+      this.promoted_until = null;
+    } else {
+      const until = new Date(now);
+      until.setDate(until.getDate() + days);
+      this.promoted_until = until;
+    }
+  }
+
+  pausePromotion(): void {
+    if (this.is_promoted && this.promoted_until && !this.promoted_paused_at) {
+      this.promoted_paused_at = new Date();
+    }
+  }
+
+  resumePromotion(): void {
+    if (this.promoted_paused_at && this.promoted_until) {
+      const remainingMs = this.promoted_until.getTime() - this.promoted_paused_at.getTime();
+      this.promoted_until = new Date(Date.now() + remainingMs);
+      this.promoted_paused_at = null;
+    }
+  }
+
+  stopPromotion(): void {
+    this.is_promoted = false;
+    this.promoted_until = null;
+    this.promoted_started_at = null;
+    this.promoted_paused_at = null;
+  }
 }

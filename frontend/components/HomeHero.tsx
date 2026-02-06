@@ -2,7 +2,7 @@
 
 import { ComponentProps } from 'react';
 
-import { TranslatedText } from '@/components/TranslatedText';
+import { TranslatedText } from '@/components/common/TranslatedText';
 import { useTranslation } from '@/hooks/useTranslation';
 
 export interface HomeHeroProps extends ComponentProps<'div'> {

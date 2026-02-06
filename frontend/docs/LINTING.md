@@ -71,7 +71,7 @@ toast.success(t('sms.codeSent'))
 
 **Настройка правила:**
 
-Правило настроено в `eslint.config.mjs`:
+Правило настроено в `config/eslint.config.mjs`:
 
 ```javascript
 'no-hardcoded-text/no-hardcoded-text': [
@@ -268,5 +268,5 @@ npm run sort-imports
 
 Если у вас возникли вопросы или проблемы с линтером:
 1. Проверьте вывод `npm run lint` для деталей ошибки
-2. Проверьте настройки правила в `eslint.config.mjs`
+2. Проверьте настройки правила в `config/eslint.config.mjs`
 3. Убедитесь, что все зависимости установлены (`npm install`)

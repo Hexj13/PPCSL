@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useCallback } from 'react';
 
-import { CopyButton } from '@/components/CopyButton';
+import { CopyButton } from '@/components/common/CopyButton';
 import { usePaginatedData } from '@/hooks/usePaginatedData';
 import { useTranslation } from '@/hooks/useTranslation';
 import { adminApi, PromotionHistory } from '@/lib/api';

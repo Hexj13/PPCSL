@@ -1,14 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { getCountry } from '../common/env';
-import { RedisService } from '../common/redis.service';
-import { CACHE_PREFIXES, CACHE_TTL, generateCacheKey } from '../common/utils/cache.utils';
 
-export interface City {
-  name: string;
-  nameEn: string;
-  nameRu?: string;
-}
+import { CITIES_CACHE, City, ICitiesCache } from './application/ports/cities-cache.port';
 
 const SORT_LOCALE_BY_COUNTRY: Record<string, string> = {
   md: 'ro-MD',
@@ -16,9 +10,10 @@ const SORT_LOCALE_BY_COUNTRY: Record<string, string> = {
 
 @Injectable()
 export class CitiesService {
-  private readonly CACHE_TTL = CACHE_TTL.cities.all;
-
-  constructor(private redisService: RedisService) {}
+  constructor(
+    @Inject(CITIES_CACHE)
+    private readonly citiesCache: ICitiesCache,
+  ) {}
   private readonly cities: City[] = [
     { name: 'Chișinău', nameEn: 'Chișinău', nameRu: 'Кишинёв' },
     { name: 'Bălți', nameEn: 'Bălți', nameRu: 'Бельцы' },
@@ -96,9 +91,8 @@ export class CitiesService {
   ];
 
   async getAll(): Promise<City[]> {
-    const cacheKey = generateCacheKey({ prefix: CACHE_PREFIXES.cities, parts: ['all'] });
     try {
-      const cached = await this.redisService.getJson<City[]>(cacheKey);
+      const cached = await this.citiesCache.getAll();
       if (cached) {
         return cached;
       }
@@ -111,7 +105,7 @@ export class CitiesService {
     const sortedCities = [...this.cities].sort((a, b) => a.name.localeCompare(b.name, locale));
 
     try {
-      await this.redisService.setJson(cacheKey, sortedCities, this.CACHE_TTL);
+      await this.citiesCache.setAll(sortedCities);
     } catch {
       // Ignore cache errors
     }

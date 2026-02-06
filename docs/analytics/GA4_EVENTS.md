@@ -215,24 +215,24 @@
 ### Компоненты
 
 #### GoogleAnalyticsConsent.tsx
-**Расположение:** `core/frontend/components/GoogleAnalyticsConsent.tsx`  
+**Расположение:** `core/frontend/components/analytics/GoogleAnalyticsConsent.tsx`  
 **Функция:** Инициализация `dataLayer` и `gtag` до загрузки GA; задаёт consent по умолчанию `analytics_storage: 'denied'`, `ad_storage: 'denied'`  
 **Загрузка:** `strategy="beforeInteractive"` — выполняется до интерактивности страницы  
 **Важно:** должен быть подключён в `layout.tsx` **до** `GoogleAnalytics` для корректной работы согласия (GDPR)
 
 #### GoogleAnalytics.tsx
-**Расположение:** `core/frontend/components/GoogleAnalytics.tsx`  
+**Расположение:** `core/frontend/components/analytics/GoogleAnalytics.tsx`  
 **Функция:** Подключение gtag.js и отправка `page_view` при смене `pathname`; обновление `consent` через `gtag('consent', 'update')` при смене выбора пользователя  
 **Условия:** загрузка только в production (не localhost/127.0.0.1/приватные сети); скрипт не подключается и `config` не вызывается, пока `useCookieConsent` не вернёт `granted`  
 **Использует:** `process.env.NEXT_PUBLIC_GA_ID`, хук `useCookieConsent`
 
 #### GoogleTagManager.tsx
-**Расположение:** `core/frontend/components/GoogleTagManager.tsx`  
+**Расположение:** `core/frontend/components/analytics/GoogleTagManager.tsx`  
 **Функция:** Загрузка GTM-контейнера в production; `GoogleTagManagerNoscript` — iframe для noscript  
 **Конфигурация:** `GTM_ID` захардкожен в компоненте; для мультиплатформы рекомендуется вынести в `NEXT_PUBLIC_GTM_ID`
 
 #### ConversionEvent.tsx / ConversionEventTrigger.tsx
-**Расположение:** `core/frontend/components/ConversionEvent.tsx`, `ConversionEventTrigger.tsx`  
+**Расположение:** `core/frontend/components/analytics/ConversionEvent.tsx`, `ConversionEventTrigger.tsx`  
 **Функция:** `ConversionEvent` — обёртка с событием `conversion_event_page_view`; `ConversionEventTrigger` — универсальный триггер конверсии: один раз вызывает `gtag('event', eventName)` при `consent === 'granted'` и готовности `gtag`  
 **Использует:** `useCookieConsent`, ожидание появления `window.gtag`
 
@@ -247,7 +247,7 @@
 **Использует:** Хук `usePageScroll.ts`
 
 #### ExternalLinkTracker.tsx
-**Расположение:** `core/frontend/components/ExternalLinkTracker.tsx`  
+**Расположение:** `core/frontend/components/analytics/ExternalLinkTracker.tsx`  
 **Функция:** Отслеживание кликов по внешним ссылкам
 
 ### Хуки

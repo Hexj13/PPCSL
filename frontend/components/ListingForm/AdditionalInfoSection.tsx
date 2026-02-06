@@ -1,6 +1,6 @@
 'use client';
 
-import { RichTextEditor } from '@/components/RichTextEditor';
+import { RichTextEditor } from '@/components/common/RichTextEditor';
 
 import type { ListingFormSectionProps } from './types';
 

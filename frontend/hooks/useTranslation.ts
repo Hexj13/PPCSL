@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 
-import { useI18n } from '@/components/I18nProvider';
+import { useI18n } from '@/components/providers/I18nProvider';
 import type { Translations } from '@/lib/i18n';
 
 export function useTranslation() {

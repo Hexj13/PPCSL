@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 
-import { useI18n } from '@/components/I18nProvider';
+import { useI18n } from '@/components/providers/I18nProvider';
 import { useTranslation } from '@/hooks/useTranslation';
-import { loadFaqSync } from '@/lib/faq';
+import { loadFaqSync } from '@/lib/content/faq';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { getCountry } from '@/lib/utils';
 
@@ -37,8 +37,8 @@ export default function FAQPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-4xl md:text-5xl font-extrabold mb-8 bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+    <div className="max-w-4xl mx-auto pt-10 md:pt-14">
+      <h1 className="text-4xl md:text-5xl font-extrabold mb-8 text-primary-700">
         {t('faq.title')}
       </h1>
 

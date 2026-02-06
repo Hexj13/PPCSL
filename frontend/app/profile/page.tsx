@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
-import { Modal } from '@/components/Modal';
+import { Modal } from '@/components/modals/Modal';
 import { useTranslation } from '@/hooks/useTranslation';
 import { authApi, UpdateProfileDto, User } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';

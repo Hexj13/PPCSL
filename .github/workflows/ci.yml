@@ -63,6 +63,10 @@ jobs:
         working-directory: ./backend
         run: npm run lint:check
 
+      - name: Check formatting (backend)
+        working-directory: ./backend
+        run: npm run format:check
+
       - name: Run tests
         working-directory: ./backend
         env:
@@ -113,6 +117,10 @@ jobs:
       - name: Run linter
         working-directory: ./frontend
         run: npm run lint
+
+      - name: Run style linter
+        working-directory: ./frontend
+        run: npm run lint:styles
 
       - name: Check formatting
         working-directory: ./frontend

@@ -44,6 +44,7 @@ These scripts are **blocked from running in production** and can only be execute
 - `check-citroen-models.ts` - Check Citroen models
 - `check-duplicates.ts` - Check for duplicate brands/models
 - `remove-duplicates.ts` - Remove duplicate brands and models (handles both brand duplicates and model duplicates within the same brand)
+- `remove-body-code-models.ts` - Remove body/chassis code models (E30, W124, etc.) from BMW and Mercedes-Benz; skips models that are used in listings (stage and production)
 - `cleanup-brands.ts` - Cleanup and synchronize brands
 - `sync-carquery.ts` - Synchronize from CarQuery API
 - `update-engine-volumes.ts` - Update engine volumes
@@ -75,6 +76,7 @@ These scripts can be run in production, but should still be used with caution:
 - `add-motorcycle-brands-models.ts` - Add motorcycle brands and models (production-safe)
 - `check-brands-count.ts` - Check total brands count (production-safe)
 - `check-models-stats.ts` - Check models statistics (production-safe)
+- `remove-body-code-models.ts` - Remove BMW/Mercedes body code models (E30, W124, etc.); skips models in use (production-safe)
 - `backup-database.ts` - Create database backup (uses pg_dump)
 
 ## Security
@@ -151,6 +153,7 @@ npm run fix-price-nulls:prod
 npm run seed:all-brands:prod
 npm run add-truck-brands:prod
 npm run add-moto-brands:prod
+npm run remove-body-code-models:prod
 npm run check-brands:prod
 npm run check-models:prod
 ```
@@ -316,7 +319,7 @@ Database migrations are handled separately and are located in:
 For automated database backups, see:
 - **Documentation**: `../../docs/DEPLOYMENT.md` (Database Backups section)
 - **TypeScript script**: `src/scripts/production/backup-database.ts`
-- **Bash script**: `scripts/backup-database.sh` (for cron)
+- **Bash script**: `config/scripts/backup-database.sh` (for cron)
 
 Quick usage:
 ```bash

@@ -198,7 +198,7 @@ A floating action button that appears when users scroll past the search filters 
 **Usage:**
 
 ```tsx
-import { ScrollToFiltersButton } from '@/components/ScrollToFiltersButton';
+import { ScrollToFiltersButton } from '@/components/search/ScrollToFiltersButton';
 
 // On the homepage with search filters
 <ScrollToFiltersButton />
@@ -218,7 +218,7 @@ Container component for skeleton loaders that ensures minimum display time to pr
 
 ```tsx
 import { SkeletonContainer } from '@/components/SkeletonContainer';
-import { ListingCardSkeleton } from '@/components/ListingCardSkeleton';
+import { ListingCardSkeleton } from '@/components/listing/ListingCardSkeleton';
 
 {loading ? (
   <SkeletonContainer isLoading={loading}>

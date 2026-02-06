@@ -3,16 +3,16 @@
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { EmptyState } from '@/components/EmptyState';
-import { ListingManagementCard } from '@/components/ListingManagementCard';
-import { ListingManagementCardSkeleton } from '@/components/ListingManagementCardSkeleton';
-import { LoadMoreButton } from '@/components/LoadMoreButton';
-import { SortDropdown } from '@/components/SortDropdown';
+import { EmptyState } from '@/components/common/EmptyState';
+import { Breadcrumbs } from '@/components/layout/Breadcrumbs';
+import { ListingManagementCard } from '@/components/listing/ListingManagementCard';
+import { ListingManagementCardSkeleton } from '@/components/listing/ListingManagementCardSkeleton';
+import { LoadMoreButton } from '@/components/listing/LoadMoreButton';
+import { SortDropdown } from '@/components/search/SortDropdown';
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
 import { boardApi, type BoardInfo, type Listing, type PaginationMeta } from '@/lib/api';
-import { normalizeListingResponse } from '@/lib/api-utils';
+import { normalizeListingResponse } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 
 interface BoardPageClientProps {

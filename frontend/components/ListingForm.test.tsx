@@ -838,7 +838,7 @@ describe('ListingForm', () => {
       );
     });
 
-    it('should validate year is not greater than current year + 1', async () => {
+    it('should validate year is not greater than current year', async () => {
       const onSuccess = jest.fn();
       const { toast } = require('react-hot-toast');
       render(<ListingForm mode="create" onSuccess={onSuccess} />);
@@ -848,7 +848,7 @@ describe('ListingForm', () => {
       });
 
       const currentYear = new Date().getFullYear();
-      const maxYear = currentYear + 1;
+      const maxYear = currentYear;
       const invalidYear = maxYear + 1;
 
       await waitFor(
@@ -1049,7 +1049,7 @@ describe('ListingForm', () => {
       );
     });
 
-    it('should validate year accepts current year + 1', async () => {
+    it('should validate year accepts current year', async () => {
       const onSuccess = jest.fn();
       render(<ListingForm mode="create" onSuccess={onSuccess} />);
 
@@ -1058,7 +1058,6 @@ describe('ListingForm', () => {
       });
 
       const currentYear = new Date().getFullYear();
-      const maxYear = currentYear + 1;
 
       await waitFor(
         () => {
@@ -1070,11 +1069,11 @@ describe('ListingForm', () => {
 
       const yearInput = screen.getByPlaceholderText('2020') as HTMLInputElement;
 
-      fireEvent.change(yearInput, { target: { value: maxYear.toString() } });
+      fireEvent.change(yearInput, { target: { value: currentYear.toString() } });
       fireEvent.blur(yearInput);
 
       await waitFor(() => {
-        expect(yearInput.value).toBe(maxYear.toString());
+        expect(yearInput.value).toBe(currentYear.toString());
       });
     });
 
@@ -1115,7 +1114,7 @@ describe('ListingForm', () => {
       fireEvent.change(modelDropdown, { target: { value: 'model-1' } });
 
       const currentYear = new Date().getFullYear();
-      const invalidYear = currentYear + 2;
+      const invalidYear = currentYear + 1;
 
       await waitFor(
         () => {

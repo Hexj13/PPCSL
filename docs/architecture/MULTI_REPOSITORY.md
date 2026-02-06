@@ -154,7 +154,7 @@ kupito.club/
 
 **In PPCSL:**
 - `frontend/lib/i18n.ts` - Interface and translation loading functions
-- `frontend/components/I18nProvider.tsx` - React Context Provider
+- `frontend/components/providers/I18nProvider.tsx` - React Context Provider
 - `frontend/hooks/useTranslation.ts` - Hook for using translations
 
 **In platform repositories:**

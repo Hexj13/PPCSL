@@ -24,11 +24,11 @@ import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { listingsApi, uploadApi, Listing } from '@/lib/api';
+import { getEquipmentKeysByVehicleType, VehicleEquipmentKey } from '@/lib/options';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { BodyType, ConditionType, Currency, ListingStatus, RegistrationType } from '@/lib/types';
 import { getCountry, isBrowser } from '@/lib/utils';
-import { validators } from '@/lib/validators';
-import { getEquipmentKeysByVehicleType, VehicleEquipmentKey } from '@/lib/vehicle-equipment';
+import { validators } from '@/lib/validation';
 import { LoadingButton } from '@/ui';
 
 export interface ListingFormData {

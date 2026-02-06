@@ -1,7 +1,7 @@
 'use client';
 
-import { CopyButton } from '@/components/CopyButton';
-import { useI18n } from '@/components/I18nProvider';
+import { CopyButton } from '@/components/common/CopyButton';
+import { useI18n } from '@/components/providers/I18nProvider';
 import { useCities } from '@/hooks/useCities';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';

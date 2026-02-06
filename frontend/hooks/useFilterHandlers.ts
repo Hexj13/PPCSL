@@ -5,17 +5,13 @@ import { toast } from 'react-hot-toast';
 import type { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import type { Brand, VehicleModel, City } from '@/lib/api';
-import {
-  buildSearchQuery,
-  clearFiltersFromStorage,
-  saveFiltersToStorage,
-} from '@/lib/search-params';
+import { buildSearchQuery, clearFiltersFromStorage, saveFiltersToStorage } from '@/lib/search';
 import {
   getFilterRangesValidationError,
   getYearRange,
   isInRange,
   PRICE_RANGE,
-} from '@/lib/validation-rules';
+} from '@/lib/validation';
 
 import type { FilterState } from './useSearchFilters';
 

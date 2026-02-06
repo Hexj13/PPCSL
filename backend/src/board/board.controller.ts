@@ -2,7 +2,7 @@ import { Controller, Get, NotFoundException, Param, Query } from '@nestjs/common
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { ListingsService } from '../listings/listings.service';
-import { UsersService } from '../users/users.service';
+import { UsersService } from '../users/application/users.service';
 
 @ApiTags('board')
 @Controller('api/board')

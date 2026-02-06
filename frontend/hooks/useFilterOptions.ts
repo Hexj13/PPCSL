@@ -1,12 +1,12 @@
 import { useCallback } from 'react';
 
-import { useI18n } from '@/components/I18nProvider';
+import { useI18n } from '@/components/providers/I18nProvider';
 import type { useTranslation } from '@/hooks/useTranslation';
 import type { Brand, VehicleModel } from '@/lib/api';
 import type { City } from '@/lib/api';
 import { ConditionType, RegistrationType } from '@/lib/constants';
-import { getColorOptions } from '@/lib/form-options';
-import { getPopularBrands } from '@/lib/popular-brands';
+import { getPopularBrands } from '@/lib/content/popular-brands';
+import { getColorOptions } from '@/lib/options';
 import {
   compareNames,
   getCountry,
