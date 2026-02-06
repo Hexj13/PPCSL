@@ -117,9 +117,7 @@ export default function BoardPageClient({
         className="mb-6"
       />
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
-        <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-          {pageTitle}
-        </h1>
+        <h1 className="text-3xl md:text-4xl font-extrabold text-primary-700">{pageTitle}</h1>
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <SortDropdown basePath={`/board/${nameSlug}`} />
         </div>

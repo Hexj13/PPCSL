@@ -7,7 +7,7 @@ import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { ListingCard } from '@/components/ListingCard';
 import { ListingCardSkeleton } from '@/components/ListingCardSkeleton';
 import { SavedFiltersList, updateSavedFiltersCache } from '@/components/SavedFiltersList';
-import { SkeletonContainer } from '@/components/SkeletonContainer';
+import { useLoadingState } from '@/hooks/useLoadingState';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 import { favoritesApi, Listing, savedFiltersApi } from '@/lib/api';
@@ -126,6 +126,14 @@ function FavoritesContent() {
     }
   };
 
+  const isLoadingContent = isInitialLoading || loading;
+  const { visible: showSkeleton } = useLoadingState({
+    isLoading: isLoadingContent,
+    immediate: true,
+    showDelay: 0,
+    minDisplayTime: 1000,
+  });
+
   useEffect(() => {
     if (!isAuthorized || !user) {
       return;
@@ -150,7 +158,7 @@ function FavoritesContent() {
   }
 
   return (
-    <div>
+    <div className="min-h-[calc(100vh-200px)] pb-12 md:pb-16">
       <Breadcrumbs
         items={[
           { label: t('favorites.home'), href: '/' },
@@ -204,19 +212,19 @@ function FavoritesContent() {
 
       {activeTab === 'listings' && (
         <>
-          <SkeletonContainer isLoading={isInitialLoading || loading}>
+          {showSkeleton && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
-              {[...Array(8)].map((_, i) => (
+              {[...Array(4)].map((_, i) => (
                 <ListingCardSkeleton key={i} />
               ))}
             </div>
-          </SkeletonContainer>
+          )}
 
-          {!isInitialLoading && !loading && (
+          {!showSkeleton && (
             <>
               {listings.length === 0 ? (
                 <div className="text-center py-12">
-                  <p className="text-gray-300 text-lg">{t('favorites.empty')}</p>
+                  <p className="text-text-primary text-lg">{t('favorites.empty')}</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">

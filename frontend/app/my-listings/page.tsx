@@ -13,6 +13,7 @@ import { Modal } from '@/components/Modal';
 import { PromotionHistoryModal } from '@/components/PromotionHistoryModal';
 import { PromotionModal } from '@/components/PromotionModal';
 import { StatusFilterButtons } from '@/components/StatusFilterButtons';
+import { useLoadingState } from '@/hooks/useLoadingState';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 import { listingsApi, Listing, PaginationMeta, PromotionHistory } from '@/lib/api';
@@ -52,6 +53,14 @@ export default function MyListingsPage() {
   const hasLoadedRef = useRef(false);
   const showLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const listingsRef = useRef<Listing[]>([]);
+
+  const isLoadingContent = loading || !hasLoadedRef.current;
+  const { visible: showSkeleton } = useLoadingState({
+    isLoading: isLoadingContent,
+    immediate: true,
+    showDelay: 0,
+    minDisplayTime: 1000,
+  });
 
   const fetchListings = useCallback(
     async (page: number, append: boolean = false, limit: number = 20) => {
@@ -524,21 +533,36 @@ export default function MyListingsPage() {
     return null;
   }
 
-  const isLoadingContent = loading || !hasLoadedRef.current;
-
   return (
     <div className="min-h-[calc(100vh-200px)]">
       <div
-        className={`transition-opacity duration-300 ${isLoadingContent ? 'opacity-100' : 'opacity-0 hidden'}`}
+        className={`transition-opacity duration-300 ${showSkeleton ? 'opacity-100' : 'opacity-0 hidden'}`}
       >
         <Breadcrumbs
           items={[{ label: t('myListings.home'), href: '/' }, { label: t('myListings.title') }]}
           className="mb-6"
         />
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
-          <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-primary-700">
             {t('myListings.title')}
           </h1>
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            {[...Array(3)].map((_, i) => (
+              <div
+                key={i}
+                className="h-[48px] rounded-lg bg-primary-500/10 animate-pulse min-w-[140px] sm:min-w-[180px]"
+              />
+            ))}
+          </div>
+        </div>
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-2 md:gap-3">
+            <div className="h-9 md:h-10 w-14 rounded-lg bg-primary-500/10 animate-pulse" />
+            <div className="h-9 md:h-10 w-20 rounded-lg bg-primary-500/10 animate-pulse" />
+            <div className="h-9 md:h-10 w-20 rounded-lg bg-primary-500/10 animate-pulse" />
+            <div className="h-9 md:h-10 w-20 rounded-lg bg-primary-500/10 animate-pulse" />
+            <div className="h-9 md:h-10 w-24 rounded-lg bg-primary-500/10 animate-pulse" />
+          </div>
         </div>
         <div className="space-y-4">
           {[...Array(3)].map((_, i) => (
@@ -548,14 +572,14 @@ export default function MyListingsPage() {
       </div>
 
       <div
-        className={`transition-opacity duration-300 ${!isLoadingContent ? 'opacity-100' : 'opacity-0 hidden'}`}
+        className={`transition-opacity duration-300 ${!showSkeleton ? 'opacity-100' : 'opacity-0 hidden'}`}
       >
         <Breadcrumbs
           items={[{ label: t('myListings.home'), href: '/' }, { label: t('myListings.title') }]}
           className="mb-6"
         />
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
-          <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-primary-700">
             {t('myListings.title')}
           </h1>
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
@@ -600,7 +624,7 @@ export default function MyListingsPage() {
             {user?.boardSlug && (
               <Link
                 href={`/board/${user.boardSlug}`}
-                className="w-full sm:w-auto text-primary-500 font-medium text-base hover:text-primary-700 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-500 hover:border-primary-700 bg-primary-500/10 hover:bg-primary-500/20 inline-block"
+                className="w-full sm:w-auto h-[48px] text-primary-500 font-medium text-base hover:text-primary-700 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 rounded-lg border-2 border-primary-500 hover:border-primary-700 bg-primary-500/10 hover:bg-primary-500/20 inline-block"
               >
                 <svg
                   className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
@@ -654,7 +678,7 @@ export default function MyListingsPage() {
             {(!listings || listings.length === 0) && (
               <a
                 href="/listings/new"
-                className="w-full sm:w-auto text-primary-500 font-medium text-base hover:text-primary-700 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-500 hover:border-primary-700 bg-primary-500/10 hover:bg-primary-500/20 inline-block text-center"
+                className="w-full sm:w-auto h-[48px] text-primary-500 font-medium text-base hover:text-primary-700 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 rounded-lg border-2 border-primary-500 hover:border-primary-700 bg-primary-500/10 hover:bg-primary-500/20 inline-block text-center"
               >
                 {t('myListings.createListing')}
               </a>

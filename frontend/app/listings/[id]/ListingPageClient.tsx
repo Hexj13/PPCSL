@@ -518,7 +518,7 @@ export default function ListingPageClient({
 
             {listing.equipment && listing.equipment.length > 0 && (
               <div className="surface overflow-hidden">
-                <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-400">
+                <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-700">
                   {t('listingDetail.equipment')}
                 </h2>
                 <ul className="list-disc list-outside grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 pl-5">

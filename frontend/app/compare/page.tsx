@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Breadcrumbs } from '@/components/Breadcrumbs';
@@ -19,13 +19,23 @@ export default function ComparePage() {
   const { isLoading, isAuthorized } = useRequireAuth();
   const { comparisons, remove, rehydrate } = useComparisonStore();
   const [listings, setListings] = useState<Listing[]>([]);
+  const [hasInitialized, setHasInitialized] = useState(false);
   const prevComparisonsRef = useRef<string[]>([]);
   const listingsLengthRef = useRef(0);
   const hasRehydratedRef = useRef(false);
+  const skeletonStartRef = useRef<number | null>(null);
 
   const siteConfig = loadSiteConfigSync(getCountry());
 
+  const finishWithMinSkeleton = useCallback(() => {
+    const start = skeletonStartRef.current ?? Date.now();
+    const elapsed = Date.now() - start;
+    const remaining = Math.max(0, 1000 - elapsed);
+    setTimeout(() => setHasInitialized(true), remaining);
+  }, []);
+
   useEffect(() => {
+    skeletonStartRef.current = Date.now();
     const rehydrateAndFetch = async () => {
       if (!hasRehydratedRef.current) {
         hasRehydratedRef.current = true;
@@ -53,6 +63,7 @@ export default function ComparePage() {
         setListings([]);
         prevComparisonsRef.current = [];
         listingsLengthRef.current = 0;
+        finishWithMinSkeleton();
         return;
       }
 
@@ -66,7 +77,8 @@ export default function ComparePage() {
           listingsLengthRef.current = filtered.length;
           return filtered;
         });
-        prevComparisonsRef.current = comparisons;
+        prevComparisonsRef.current = currentComparisons;
+        finishWithMinSkeleton();
         return;
       }
 
@@ -92,11 +104,13 @@ export default function ComparePage() {
       } catch (error) {
         console.error('Error fetching listings:', error);
         toast.error(t('compare.loadError'));
+      } finally {
+        finishWithMinSkeleton();
       }
     };
 
     rehydrateAndFetch();
-  }, [comparisons, rehydrate, t]);
+  }, [comparisons, rehydrate, t, finishWithMinSkeleton]);
 
   if (isLoading || !isAuthorized) {
     return null;
@@ -108,14 +122,33 @@ export default function ComparePage() {
     toast.success(t('compare.removedFromComparison'));
   };
 
-  if (listings.length === 0) {
+  if (!hasInitialized) {
     return (
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto min-h-[calc(100vh-200px)]">
         <Breadcrumbs
           items={[{ label: t('breadcrumbs.home'), href: '/' }, { label: t('compare.title') }]}
           className="mb-6"
         />
-        <h1 className="text-xl md:text-3xl lg:text-4xl font-extrabold mb-6 bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+        <h1 className="text-xl md:text-3xl lg:text-4xl font-extrabold mb-6 text-primary-700">
+          {t('compare.title')}
+        </h1>
+        <div className="surface py-12 animate-pulse">
+          <div className="w-24 h-24 mx-auto rounded-full bg-primary-500/10 mb-4" />
+          <div className="h-8 w-64 mx-auto bg-primary-500/10 rounded mb-2" />
+          <div className="h-4 w-80 mx-auto bg-primary-500/10 rounded" />
+        </div>
+      </div>
+    );
+  }
+
+  if (listings.length === 0) {
+    return (
+      <div className="max-w-7xl mx-auto min-h-[calc(100vh-200px)]">
+        <Breadcrumbs
+          items={[{ label: t('breadcrumbs.home'), href: '/' }, { label: t('compare.title') }]}
+          className="mb-6"
+        />
+        <h1 className="text-xl md:text-3xl lg:text-4xl font-extrabold mb-6 text-primary-700">
           {t('compare.title')}
         </h1>
         <div className="surface text-center py-12">
@@ -154,13 +187,13 @@ export default function ComparePage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto min-h-[calc(100vh-200px)]">
       <Breadcrumbs
         items={[{ label: t('breadcrumbs.home'), href: '/' }, { label: t('compare.title') }]}
         className="mb-6"
       />
       <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <h1 className="text-xl md:text-3xl lg:text-4xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+        <h1 className="text-xl md:text-3xl lg:text-4xl font-extrabold text-primary-700">
           {t('compare.title')}
         </h1>
         <button

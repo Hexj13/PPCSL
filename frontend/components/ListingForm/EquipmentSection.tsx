@@ -25,7 +25,7 @@ export function EquipmentSection({
 
   return (
     <div className="border-t border-primary-500/20 pt-6 mb-6">
-      <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-700">
+      <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-500">
         {t('listings.equipment')}
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
