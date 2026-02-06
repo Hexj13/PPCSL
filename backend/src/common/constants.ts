@@ -160,6 +160,8 @@ export const SMS_MESSAGES = {
   PASSWORD_RESET_CODE: (code: string) => `Kupito password reset code: ${code}`,
 } as const;
 
+export const REFRESH_COOLDOWN_MS = 48 * 60 * 60 * 1000;
+
 export const BODY_TYPES_BY_VEHICLE_TYPE: Record<
   'car' | 'truck' | 'moto',
   readonly (typeof bodyTypes)[number][]

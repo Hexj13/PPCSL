@@ -501,6 +501,7 @@ export interface PaginationMeta {
   total?: number;
   totalPages?: number;
   last_listing_refresh_at?: string | null;
+  refreshCooldownMs?: number;
 }
 
 export interface PromotionHistory {
@@ -559,7 +560,7 @@ export const listingsApi = {
   update: (id: string, data: UpdateListingDto) => api.patch<Listing>(`/api/listings/${id}`, data),
   publish: (id: string) => api.post(`/api/listings/${id}/publish`),
   pause: (id: string) => api.post(`/api/listings/${id}/pause`),
-  close: (id: string) => api.post(`/api/listings/${id}/close`),
+  close: (id: string) => api.post<Listing>(`/api/listings/${id}/close`),
   getMy: (page: number = 1, limit: number = 20) => {
     const params = new URLSearchParams();
     params.set('page', page.toString());

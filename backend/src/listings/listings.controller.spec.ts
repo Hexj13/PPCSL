@@ -108,6 +108,7 @@ describe('ListingsController', () => {
           limit: 20,
           totalPages: 1,
           last_listing_refresh_at: null,
+          refreshCooldownMs: 172800000,
         },
       };
 

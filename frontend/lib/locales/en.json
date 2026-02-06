@@ -1049,7 +1049,12 @@
       "metallic_pearl": "Metallic Pearl",
       "matte_black": "Matte Black",
       "matte_gray": "Matte Gray",
-      "matte_blue": "Matte Blue"
+      "matte_blue": "Matte Blue",
+      "burgundy": "Burgundy",
+      "cream": "Cream",
+      "chameleon": "Chameleon",
+      "special": "Special",
+      "other": "Other"
     },
     "equipment": {
       "air_conditioning": "Air Conditioning",

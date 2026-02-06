@@ -13,6 +13,7 @@ import { Modal } from '@/components/Modal';
 import { PromotionHistoryModal } from '@/components/PromotionHistoryModal';
 import { PromotionModal } from '@/components/PromotionModal';
 import { StatusFilterButtons } from '@/components/StatusFilterButtons';
+import { useListingActions } from '@/hooks/useListingActions';
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -137,6 +138,38 @@ export default function MyListingsPage() {
     []
   );
 
+  const refetchAllForCount = useCallback(async () => {
+    try {
+      const res = await listingsApi.getMy(1, 1000);
+      const responseData = res.data;
+      let allListings: Listing[] = [];
+      if (Array.isArray(responseData)) {
+        allListings = responseData;
+      } else if (responseData && typeof responseData === 'object') {
+        allListings = responseData.data || [];
+      }
+      setAllListingsForCount(allListings);
+    } catch {}
+  }, []);
+
+  const listingActions = useListingActions(
+    {
+      refreshCooldownMs: meta?.refreshCooldownMs ?? 0,
+      lastRefreshAt: meta?.last_listing_refresh_at ?? null,
+      timeUntilRefresh,
+      setTimeUntilRefresh,
+      canPromote,
+      userId: user?.id,
+    },
+    {
+      setListings,
+      setAllListingsForCount,
+      listingsRef,
+      fetchListings,
+      refetchAllForCount,
+    }
+  );
+
   useEffect(() => {
     if (!isAuthorized || !user) {
       return;
@@ -166,20 +199,6 @@ export default function MyListingsPage() {
             setAllListingsForCount(allListings);
           })
           .catch(() => {});
-
-        const lastRefreshKey = `lastRefreshDate_${user.id}`;
-        const lastRefreshStr = localStorage.getItem(lastRefreshKey);
-        if (lastRefreshStr) {
-          const lastRefresh = parseInt(lastRefreshStr, 10);
-          const now = Date.now();
-          const twoDays = 48 * 60 * 60 * 1000;
-          const timePassed = now - lastRefresh;
-
-          if (timePassed < twoDays) {
-            const remaining = twoDays - timePassed;
-            setTimeUntilRefresh(remaining);
-          }
-        }
       }
     }
   }, [user, isAuthorized, fetchListings]);
@@ -215,15 +234,14 @@ export default function MyListingsPage() {
   }, [user, fetchListings]);
 
   useEffect(() => {
-    if (!meta?.last_listing_refresh_at || !user?.id) return;
+    if (!meta?.last_listing_refresh_at || meta?.refreshCooldownMs == null || !user?.id) return;
     const at = new Date(meta.last_listing_refresh_at).getTime();
-    const fortyEightHoursMs = 48 * 60 * 60 * 1000;
-    const remaining = at + fortyEightHoursMs - Date.now();
+    const remaining = at + meta.refreshCooldownMs - Date.now();
     if (remaining > 0) {
       setTimeUntilRefresh(remaining);
       localStorage.setItem(`lastRefreshDate_${user.id}`, at.toString());
     }
-  }, [meta?.last_listing_refresh_at, user?.id]);
+  }, [meta?.last_listing_refresh_at, meta?.refreshCooldownMs, user?.id]);
 
   useEffect(() => {
     if (timeUntilRefresh === null || timeUntilRefresh <= 0) return;
@@ -256,159 +274,33 @@ export default function MyListingsPage() {
         setIsCloseConfirmOpen(true);
         return;
       }
-
-      try {
-        switch (action) {
-          case 'publish':
-            await listingsApi.publish(id);
-            toast.success(t('myListings.published'));
-            break;
-          case 'pause':
-            await listingsApi.pause(id);
-            toast.success(t('myListings.pausedMessage'));
-            break;
-        }
-
-        setListings((prev) => {
-          const updated = prev.map((listing) => {
-            if (listing.id === id) {
-              const statusMap: Record<'publish' | 'pause', 'Active' | 'Paused'> = {
-                publish: 'Active',
-                pause: 'Paused',
-              };
-              return { ...listing, status: statusMap[action] };
-            }
-            return listing;
-          });
-          listingsRef.current = updated;
-          setAllListingsForCount((prevAll) => {
-            const found = prevAll.find((listing) => listing.id === id);
-            if (found) {
-              const statusMap: Record<'publish' | 'pause', 'Active' | 'Paused'> = {
-                publish: 'Active',
-                pause: 'Paused',
-              };
-              return prevAll.map((listing) => {
-                if (listing.id === id) {
-                  return { ...listing, status: statusMap[action] };
-                }
-                return listing;
-              });
-            } else {
-              listingsApi
-                .getMy(1, 1000)
-                .then((res) => {
-                  const responseData = res.data;
-                  let allListings: Listing[] = [];
-                  if (Array.isArray(responseData)) {
-                    allListings = responseData;
-                  } else if (responseData && typeof responseData === 'object') {
-                    allListings = responseData.data || [];
-                  }
-                  setAllListingsForCount(allListings);
-                })
-                .catch(() => {});
-              return prevAll;
-            }
-          });
-          return updated;
-        });
-      } catch {
-        toast.error(t('myListings.statusUpdateError'));
+      if (action === 'publish') {
+        await listingActions.publishListing(id);
+      } else {
+        await listingActions.pauseListing(id);
       }
     },
-    [t]
+    [listingActions]
   );
 
   const handleCloseConfirm = useCallback(async () => {
     if (!listingToClose) return;
-
     try {
-      await listingsApi.close(listingToClose);
-      toast.success(t('myListings.closedMessage'));
-
-      setListings((prev) => {
-        const updated = prev.map((listing) => {
-          if (listing.id === listingToClose) {
-            return {
-              ...listing,
-              status: 'Closed' as const,
-              is_promoted: false,
-              promoted_until: null,
-            };
-          }
-          return listing;
-        });
-        listingsRef.current = updated;
-        setAllListingsForCount((prevAll) => {
-          const found = prevAll.find((listing) => listing.id === listingToClose);
-          if (found) {
-            return prevAll.map((listing) => {
-              if (listing.id === listingToClose) {
-                return {
-                  ...listing,
-                  status: 'Closed' as const,
-                  is_promoted: false,
-                  promoted_until: null,
-                };
-              }
-              return listing;
-            });
-          } else {
-            listingsApi
-              .getMy(1, 1000)
-              .then((res) => {
-                const responseData = res.data;
-                let allListings: Listing[] = [];
-                if (Array.isArray(responseData)) {
-                  allListings = responseData;
-                } else if (responseData && typeof responseData === 'object') {
-                  allListings = responseData.data || [];
-                }
-                setAllListingsForCount(allListings);
-              })
-              .catch(() => {});
-            return prevAll;
-          }
-        });
-        return updated;
-      });
-    } catch {
-      toast.error(t('myListings.statusUpdateError'));
+      await listingActions.closeListing(listingToClose);
     } finally {
       setIsCloseConfirmOpen(false);
       setListingToClose(null);
     }
-  }, [listingToClose, t]);
+  }, [listingToClose, listingActions]);
 
   const handleRefreshDates = useCallback(async () => {
-    if (timeUntilRefresh !== null && timeUntilRefresh > 0) {
-      toast.error(t('myListings.refreshDateLimit'));
-      return;
-    }
-
-    if (!user?.id) return;
-
     setIsRefreshing(true);
     try {
-      const res = await listingsApi.refreshDates();
-      toast.success(t('myListings.datesUpdated', { count: res.data.updated }));
-
-      localStorage.setItem(`lastRefreshDate_${user.id}`, Date.now().toString());
-      setTimeUntilRefresh(48 * 60 * 60 * 1000);
-
-      fetchListings(1, false);
-    } catch (error: unknown) {
-      const axiosError = error as { response?: { status?: number } };
-      if (axiosError.response?.status === 400) {
-        toast.error(t('myListings.refreshDateLimit'));
-      } else {
-        toast.error(t('common.apiErrors.serverError'));
-      }
+      await listingActions.refreshAllDates();
     } finally {
       setIsRefreshing(false);
     }
-  }, [timeUntilRefresh, user?.id, fetchListings, t]);
+  }, [listingActions]);
 
   const checkPromotionHistory = useCallback(async () => {
     try {
@@ -462,43 +354,17 @@ export default function MyListingsPage() {
   const handlePromotionSelect = useCallback(
     async (days: number | null) => {
       if (!selectedListingId) return;
-      if (days === null) {
-        toast.error(t('listings.promotionNotAvailable'));
-        return;
-      }
-
-      try {
-        await listingsApi.togglePromotion(selectedListingId, true, days);
-        toast.success(t('listings.promotionEnabled'));
-        fetchListings(1, false);
-      } catch (error: unknown) {
-        const axiosError = error as { response?: { status?: number } };
-        if (axiosError.response?.status === 403) {
-          toast.error(t('listings.promotionNotAvailable'));
-        } else if (axiosError.response?.status === 400) {
-          toast.error(t('listings.promotionOnlyActive'));
-        } else {
-          toast.error(t('listings.promotionError'));
-        }
-      } finally {
-        setPromotionModalOpen(false);
-        setSelectedListingId(null);
-      }
+      await listingActions.togglePromotion(selectedListingId, true, days ?? undefined);
+      setPromotionModalOpen(false);
+      setSelectedListingId(null);
     },
-    [selectedListingId, fetchListings, t]
+    [selectedListingId, listingActions]
   );
-
-  const formatTimeRemaining = useCallback((ms: number): string => {
-    const hours = Math.floor(ms / (1000 * 60 * 60));
-    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((ms % (1000 * 60)) / 1000);
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  }, []);
 
   const formattedTime = useMemo(() => {
     if (timeUntilRefresh === null || timeUntilRefresh <= 0) return null;
-    return formatTimeRemaining(timeUntilRefresh);
-  }, [timeUntilRefresh, formatTimeRemaining]);
+    return listingActions.formatTimeRemaining(timeUntilRefresh);
+  }, [timeUntilRefresh, listingActions]);
 
   const hasActiveListings = useMemo(() => {
     return listings.some((listing) => listing.status === 'Active');

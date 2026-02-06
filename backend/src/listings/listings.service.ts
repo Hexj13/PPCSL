@@ -12,7 +12,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, LessThan, LessThanOrEqual, Repository } from 'typeorm';
 
 import { BrandsService } from '../brands/brands.service';
-import { BODY_TYPES_BY_VEHICLE_TYPE } from '../common/constants';
+import { BODY_TYPES_BY_VEHICLE_TYPE, REFRESH_COOLDOWN_MS } from '../common/constants';
 import { I18nService } from '../common/i18n/i18n.service';
 import { RedisService } from '../common/redis.service';
 import { Currency as CurrencyEnum, ListingStatus as ListingStatusEnum } from '../common/types';
@@ -841,6 +841,7 @@ export class ListingsService {
       limit: number;
       totalPages: number;
       last_listing_refresh_at: string | null;
+      refreshCooldownMs: number;
     };
   }> {
     const skip = (page - 1) * limit;
@@ -863,6 +864,7 @@ export class ListingsService {
         limit,
         totalPages,
         last_listing_refresh_at: lastRefresh ? lastRefresh.toISOString() : null,
+        refreshCooldownMs: REFRESH_COOLDOWN_MS,
       },
     };
   }
@@ -940,8 +942,7 @@ export class ListingsService {
     const lastRefresh = await this.usersService.getLastListingRefreshAt(userId);
     if (lastRefresh) {
       const elapsed = now.getTime() - lastRefresh.getTime();
-      const fortyEightHoursMs = 48 * 60 * 60 * 1000;
-      if (elapsed < fortyEightHoursMs) {
+      if (elapsed < REFRESH_COOLDOWN_MS) {
         throw new BadRequestException('errors.refreshDatesTooSoon');
       }
     }

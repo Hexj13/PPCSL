@@ -10,6 +10,13 @@ import {
   getDriveTypeOptions,
   getFuelOptions,
 } from '@/lib/form-options';
+import {
+  clampToRange,
+  ENGINE_RANGE,
+  isInRange,
+  MILEAGE_RANGE,
+  POWER_RANGE,
+} from '@/lib/validation-rules';
 import { Checkbox } from '@/ui';
 
 import { Dropdown } from '../Dropdown';
@@ -48,7 +55,7 @@ export function AdvancedFilters({
   const handleMileageBlur = (key: string, value: string) => {
     if (value && value.trim() !== '') {
       const mileage = parseInt(value, 10);
-      if (isNaN(mileage) || mileage < 0 || mileage > 9999999) {
+      if (Number.isNaN(mileage) || !isInRange(mileage, MILEAGE_RANGE)) {
         toast.error(t('searchFilters.mileageRangeError'));
         onFilterChange(key as keyof FilterState, '');
       }
@@ -58,12 +65,12 @@ export function AdvancedFilters({
   const handleEngineBlur = (key: string, value: string) => {
     if (value && value.trim() !== '') {
       const numValue = parseFloat(value.replace(',', '.'));
-      if (isNaN(numValue) || numValue < 0 || numValue > 99) {
+      if (Number.isNaN(numValue) || !isInRange(numValue, ENGINE_RANGE)) {
         toast.error(t('searchFilters.engineRangeError'));
         onFilterChange(key as keyof FilterState, '');
         return;
       }
-      const clampedValue = numValue > 99 ? 99 : numValue < 0 ? 0 : numValue;
+      const clampedValue = clampToRange(numValue, ENGINE_RANGE);
       const formattedValue = clampedValue.toFixed(1).replace(/\.?0+$/, '');
       onFilterChange(key as keyof FilterState, formattedValue);
     }
@@ -72,7 +79,7 @@ export function AdvancedFilters({
   const handleHorsepowerBlur = (key: string, value: string) => {
     if (value && value.trim() !== '') {
       const hp = parseInt(value, 10);
-      if (isNaN(hp) || hp < 1 || hp > 9999) {
+      if (Number.isNaN(hp) || !isInRange(hp, POWER_RANGE)) {
         toast.error(t('searchFilters.horsepowerRangeError'));
         onFilterChange(key as keyof FilterState, '');
       }
@@ -248,10 +255,8 @@ export function AdvancedFilters({
                 value={filters.mileage_gte}
                 onChange={(e) => {
                   const value = e.target.value.replace(/[^0-9]/g, '');
-                  if (
-                    value === '' ||
-                    (parseInt(value, 10) >= 0 && parseInt(value, 10) <= 9999999)
-                  ) {
+                  const num = parseInt(value, 10);
+                  if (value === '' || (!Number.isNaN(num) && isInRange(num, MILEAGE_RANGE))) {
                     onFilterChange('mileage_gte', value);
                   }
                 }}
@@ -300,10 +305,8 @@ export function AdvancedFilters({
                 value={filters.mileage_lte}
                 onChange={(e) => {
                   const value = e.target.value.replace(/[^0-9]/g, '');
-                  if (
-                    value === '' ||
-                    (parseInt(value, 10) >= 0 && parseInt(value, 10) <= 9999999)
-                  ) {
+                  const num = parseInt(value, 10);
+                  if (value === '' || (!Number.isNaN(num) && isInRange(num, MILEAGE_RANGE))) {
                     onFilterChange('mileage_lte', value);
                   }
                 }}

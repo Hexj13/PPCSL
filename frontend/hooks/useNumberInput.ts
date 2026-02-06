@@ -1,5 +1,7 @@
 import React, { ChangeEvent, WheelEvent } from 'react';
 
+import { getYearRange, isInRange } from '@/lib/validation-rules';
+
 export function useNumberInput() {
   const handleWheel = (e: WheelEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -47,10 +49,9 @@ export function useNumberInput() {
       return;
     }
 
-    const year = parseInt(_value);
-    const currentYear = new Date().getFullYear();
-
-    if (isNaN(year) || year < 1940 || year > currentYear) {
+    const year = parseInt(_value, 10);
+    const yearRange = getYearRange();
+    if (Number.isNaN(year) || !isInRange(year, yearRange)) {
       onChange('');
     }
   };

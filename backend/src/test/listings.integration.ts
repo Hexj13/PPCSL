@@ -69,7 +69,7 @@ describe('Listings API Integration Tests', () => {
       const listingData = {
         title: 'Test Vehicle',
         price: 10000,
-        currency: 'MKD',
+        currency: 'EUR',
         city: 'Skopje',
         description: 'Test description',
         images: [

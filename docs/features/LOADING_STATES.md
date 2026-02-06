@@ -83,7 +83,7 @@
 
 **Примеры:**
 - `ListingForm.tsx:419` — `toast.success()` вызывается сразу после `setLoading(false)`, но лоудер может еще быть виден
-- `my-listings/page.tsx:264` — уведомление показывается сразу после API вызова, но состояние загрузки может еще быть активным
+- `my-listings/page.tsx` — уведомления (в т.ч. из useListingActions) показываются сразу после API вызова, состояние загрузки может еще быть активным
 - Все места, где `toast.success/error` вызывается в `finally` блоке или сразу после `setLoading(false)`
 
 ### 4. Перестроение страниц и футер
@@ -269,7 +269,6 @@
 
 2. **my-listings/page.tsx**
    - Заменить `if (loading || !hasLoadedRef.current)` на `<SkeletonContainer isLoading={loading || !hasLoadedRef.current}>`
-   - Строка ~533
 
 3. **favorites/page.tsx**
    - Заменить `if (isInitialLoading || loading)` на `<SkeletonContainer isLoading={isInitialLoading || loading}>`
@@ -345,8 +344,7 @@
    - Строки ~419, ~426, ~439, ~445
 
 2. **my-listings/page.tsx**
-   - Отложить все `toast.success/error` после завершения лоудера
-   - Строки ~264, ~268, ~317, ~328, и др.
+   - Отложить все `toast.success/error` после завершения лоудера (вызовы на странице и в `useListingActions`)
 
 3. **Все места с toast уведомлениями после API вызовов**
    - Проверить координацию с лоудерами

@@ -5,47 +5,21 @@ import { toast } from 'react-hot-toast';
 import type { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import type { Brand, VehicleModel, City } from '@/lib/api';
-import { createSlug, isBrowser } from '@/lib/utils';
+import {
+  buildSearchQuery,
+  clearFiltersFromStorage,
+  saveFiltersToStorage,
+} from '@/lib/search-params';
+import {
+  getFilterRangesValidationError,
+  getYearRange,
+  isInRange,
+  PRICE_RANGE,
+} from '@/lib/validation-rules';
 
 import type { FilterState } from './useSearchFilters';
 
 type TranslationFunction = ReturnType<typeof useTranslation>['t'];
-
-const FILTERS_STORAGE_KEY = 'kupito_search_filters';
-const MAX_URL_LENGTH = 1800;
-
-const encodeArray = (arr: string[]): string => {
-  if (arr.length === 0) return '';
-  try {
-    const json = JSON.stringify(arr);
-    return btoa(json).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-  } catch (e) {
-    console.error('Failed to encode array:', e);
-    return arr.join(',');
-  }
-};
-
-const saveFiltersToStorage = (filters: Record<string, unknown>) => {
-  if (isBrowser) {
-    try {
-      sessionStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filters));
-      localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filters));
-    } catch (e) {
-      console.error('Failed to save filters to storage:', e);
-    }
-  }
-};
-
-const clearFiltersFromStorage = () => {
-  if (isBrowser) {
-    try {
-      sessionStorage.removeItem(FILTERS_STORAGE_KEY);
-      localStorage.removeItem(FILTERS_STORAGE_KEY);
-    } catch (e) {
-      console.error('Failed to clear filters from storage:', e);
-    }
-  }
-};
 
 interface UseFilterHandlersParams {
   filters: FilterState;
@@ -184,12 +158,10 @@ export function useFilterHandlers({
         return;
       }
 
-      const year = parseInt(value);
-      const currentYearNum = new Date().getFullYear();
-      const maxYear = currentYearNum + 1;
-
-      if (isNaN(year) || year < 1940 || year > maxYear) {
-        toast.error(t('searchFilters.yearRangeError', { maxYear: maxYear.toString() }));
+      const year = parseInt(value, 10);
+      const yearRange = getYearRange();
+      if (Number.isNaN(year) || !isInRange(year, yearRange)) {
+        toast.error(t('searchFilters.yearRangeError', { maxYear: yearRange.max.toString() }));
         handleChange(key as keyof typeof filters, '');
       }
     },
@@ -199,10 +171,8 @@ export function useFilterHandlers({
   const handlePriceChange = useCallback(
     (key: string, value: string) => {
       const numericValue = value.replace(/[^0-9]/g, '');
-      if (
-        numericValue === '' ||
-        (parseInt(numericValue, 10) >= 0 && parseInt(numericValue, 10) <= 999999999)
-      ) {
+      const num = parseInt(numericValue, 10);
+      if (numericValue === '' || (!Number.isNaN(num) && isInRange(num, PRICE_RANGE))) {
         handleChange(key as keyof typeof filters, numericValue);
       }
     },
@@ -217,7 +187,7 @@ export function useFilterHandlers({
 
       const numericValue = value.replace(/\s/g, '');
       const price = parseInt(numericValue, 10);
-      if (isNaN(price) || price < 0 || price > 999999999) {
+      if (Number.isNaN(price) || !isInRange(price, PRICE_RANGE)) {
         toast.error(t('searchFilters.priceRangeError'));
         handleChange(key as keyof typeof filters, '');
       }
@@ -226,51 +196,13 @@ export function useFilterHandlers({
   );
 
   const validateRanges = useCallback((): boolean => {
-    if (filters.year_gte && filters.year_lte) {
-      const yearGte = parseInt(filters.year_gte, 10);
-      const yearLte = parseInt(filters.year_lte, 10);
-      if (!isNaN(yearGte) && !isNaN(yearLte) && yearGte > yearLte) {
-        toast.error(t('searchFilters.yearFromGreaterThanTo'));
-        return false;
-      }
+    const errorKey = getFilterRangesValidationError(
+      filters as unknown as Record<string, string | undefined>
+    );
+    if (errorKey) {
+      toast.error(t(errorKey));
+      return false;
     }
-
-    if (filters.price_gte && filters.price_lte) {
-      const priceGte = parseInt(filters.price_gte, 10);
-      const priceLte = parseInt(filters.price_lte, 10);
-      if (!isNaN(priceGte) && !isNaN(priceLte) && priceGte > priceLte) {
-        toast.error(t('searchFilters.priceFromGreaterThanTo'));
-        return false;
-      }
-    }
-
-    if (filters.mileage_gte && filters.mileage_lte) {
-      const mileageGte = parseInt(filters.mileage_gte, 10);
-      const mileageLte = parseInt(filters.mileage_lte, 10);
-      if (!isNaN(mileageGte) && !isNaN(mileageLte) && mileageGte > mileageLte) {
-        toast.error(t('searchFilters.mileageFromGreaterThanTo'));
-        return false;
-      }
-    }
-
-    if (filters.engine_displ_l_gte && filters.engine_displ_l_lte) {
-      const engineGte = parseFloat(filters.engine_displ_l_gte);
-      const engineLte = parseFloat(filters.engine_displ_l_lte);
-      if (!isNaN(engineGte) && !isNaN(engineLte) && engineGte > engineLte) {
-        toast.error(t('searchFilters.engineFromGreaterThanTo'));
-        return false;
-      }
-    }
-
-    if (filters.horsepower_gte && filters.horsepower_lte) {
-      const hpGte = parseInt(filters.horsepower_gte, 10);
-      const hpLte = parseInt(filters.horsepower_lte, 10);
-      if (!isNaN(hpGte) && !isNaN(hpLte) && hpGte > hpLte) {
-        toast.error(t('searchFilters.horsepowerFromGreaterThanTo'));
-        return false;
-      }
-    }
-
     return true;
   }, [filters, t]);
 
@@ -285,17 +217,24 @@ export function useFilterHandlers({
     (e: React.FormEvent) => {
       e.preventDefault();
 
-      if (isSearching) {
-        return;
-      }
-
-      if (!validateRanges()) {
-        return;
-      }
+      if (isSearching) return;
+      if (!validateRanges()) return;
 
       setIsSearching(true);
       isInternalSearchRef.current = true;
       setLastAppliedFilters({ ...filters });
+
+      const result = buildSearchQuery(filters, brands, models, cities, {
+        currentYear,
+        vehicleType,
+        searchParams,
+      });
+
+      if (result.storageData) {
+        saveFiltersToStorage(result.storageData);
+      } else {
+        clearFiltersFromStorage();
+      }
 
       const validBrandIds = filters.brand_ids.filter(
         (id) => id !== 'all' && id !== '' && !id.startsWith('__category__')
@@ -306,156 +245,6 @@ export function useFilterHandlers({
       const validCities = filters.cities.filter(
         (city) => city !== 'all' && city !== '' && !city.startsWith('__category__')
       );
-      const allBrandsSelected = validBrandIds.length === brands.length && brands.length > 0;
-      const allModelsSelected = validModelIds.length === models.length && models.length > 0;
-      const allCitiesSelected = validCities.length === cities.length && cities.length > 0;
-
-      const params = new URLSearchParams();
-      const largeArrays: Record<string, string[]> = {};
-
-      params.delete('brand_ids');
-      params.delete('model_ids');
-      params.delete('brand_id');
-      params.delete('model_id');
-
-      if (vehicleType !== 'car') {
-        params.set('vehicleType', vehicleType);
-      }
-
-      if (
-        (filters.sortBy && filters.sortBy !== 'created_at') ||
-        (filters.sortOrder && filters.sortOrder !== 'DESC')
-      ) {
-        params.set('sortBy', filters.sortBy || 'created_at');
-        params.set('sortOrder', filters.sortOrder || 'DESC');
-      }
-
-      Object.entries(filters).forEach(([key, value]) => {
-        if (key === 'sortBy' || key === 'sortOrder') {
-          return;
-        }
-        if (key === 'year_lte') {
-          const urlYearLte = searchParams.get('year_lte');
-          if (
-            value !== '' &&
-            value !== undefined &&
-            value !== currentYear &&
-            value !== urlYearLte
-          ) {
-            params.set(key, value as string);
-          } else if (urlYearLte && urlYearLte !== currentYear) {
-            params.set(key, urlYearLte);
-          }
-          return;
-        }
-        if (key === 'brand_ids') {
-          if (!allBrandsSelected && validBrandIds.length > 0) {
-            const brandSlugs = validBrandIds
-              .map((id) => {
-                const brand = brands.find((b) => b.id === id);
-                return brand ? createSlug(brand.name) : null;
-              })
-              .filter((slug): slug is string => slug !== null);
-
-            if (brandSlugs.length > 0) {
-              params.set('brand', brandSlugs.join(','));
-            }
-          }
-          return;
-        }
-        if (key === 'model_ids') {
-          if (!allModelsSelected && validModelIds.length > 0) {
-            const modelSlugs = validModelIds
-              .map((id) => {
-                const model = models.find((m) => m.id === id);
-                return model ? createSlug(model.name) : null;
-              })
-              .filter((slug): slug is string => slug !== null);
-
-            if (modelSlugs.length > 0) {
-              params.set('model', modelSlugs.join(','));
-            }
-          }
-          return;
-        }
-        if (key === 'cities') {
-          if (!allCitiesSelected && validCities.length > 0) {
-            largeArrays[key] = validCities;
-          }
-          return;
-        }
-        if (Array.isArray(value)) {
-          const filteredArray = value.filter(
-            (v) => v !== 'all' && v !== '' && !v.startsWith('__category__')
-          );
-          if (filteredArray.length > 0) {
-            const arrayParams = [
-              'fuels',
-              'transmissions',
-              'body_types',
-              'colors',
-              'doors',
-              'conditions',
-              'registration_types',
-              'drive_types',
-            ];
-            if (arrayParams.includes(key)) {
-              largeArrays[key] = filteredArray;
-            } else {
-              params.set(key, filteredArray.join(','));
-            }
-          }
-        } else if (value !== '' && value !== undefined) {
-          if (typeof value === 'boolean') {
-            if (value === true) {
-              params.set(key, 'true');
-            }
-          } else {
-            params.set(key, value as string);
-          }
-        }
-      });
-
-      let urlString = params.toString();
-      let needsStorage = false;
-      if (Object.keys(largeArrays).length > 0) {
-        const testParamsPlain = new URLSearchParams(params);
-        Object.entries(largeArrays).forEach(([key, values]) => {
-          testParamsPlain.set(key, values.join(','));
-        });
-        const testUrlPlain = `/?${testParamsPlain.toString()}`;
-
-        if (testUrlPlain.length > MAX_URL_LENGTH) {
-          const testParamsEncoded = new URLSearchParams(params);
-          Object.entries(largeArrays).forEach(([key, values]) => {
-            testParamsEncoded.set(key, encodeArray(values));
-          });
-          testParamsEncoded.set('_e', '1');
-          const testUrlEncoded = `/?${testParamsEncoded.toString()}`;
-
-          if (testUrlEncoded.length > MAX_URL_LENGTH) {
-            needsStorage = true;
-            saveFiltersToStorage(largeArrays);
-            params.set('_f', '1');
-          } else {
-            Object.entries(largeArrays).forEach(([key, values]) => {
-              params.set(key, encodeArray(values));
-            });
-            params.set('_e', '1');
-            urlString = params.toString();
-          }
-        } else {
-          Object.entries(largeArrays).forEach(([key, values]) => {
-            params.set(key, values.join(','));
-          });
-          urlString = params.toString();
-        }
-      }
-
-      if (!needsStorage) {
-        clearFiltersFromStorage();
-      }
-
       const searchFilters: Record<string, unknown> = {};
       if (validBrandIds.length > 0) searchFilters.brand_ids_count = validBrandIds.length;
       if (validModelIds.length > 0) searchFilters.model_ids_count = validModelIds.length;
@@ -464,10 +253,9 @@ export function useFilterHandlers({
       if (filters.price_lte) searchFilters.price_max = filters.price_lte;
       if (filters.year_gte) searchFilters.year_min = filters.year_gte;
       if (filters.year_lte) searchFilters.year_max = filters.year_lte;
-
       analytics.search(undefined, searchFilters);
 
-      const newUrl = `/?${urlString}`;
+      const newUrl = `/?${result.urlString}`;
       const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('scrollPreserved', 'true');
@@ -484,15 +272,9 @@ export function useFilterHandlers({
             });
           });
         }
-        if (allBrandsSelected) {
-          setFilters((prev) => ({ ...prev, brand_ids: [] }));
-        }
-        if (allModelsSelected) {
-          setFilters((prev) => ({ ...prev, model_ids: [] }));
-        }
-        if (allCitiesSelected) {
-          setFilters((prev) => ({ ...prev, cities: [] }));
-        }
+        if (result.clearBrandIds) setFilters((prev) => ({ ...prev, brand_ids: [] }));
+        if (result.clearModelIds) setFilters((prev) => ({ ...prev, model_ids: [] }));
+        if (result.clearCities) setFilters((prev) => ({ ...prev, cities: [] }));
       });
     },
     [

@@ -151,7 +151,7 @@ describe('utils', () => {
   });
 
   describe('getListingDisplayTitle', () => {
-    it('should build title with translated transmission', () => {
+    it('should return listing.title when present', () => {
       const listing = {
         id: '1',
         title: 'Acura EL 2025 (Automată)',
@@ -167,13 +167,32 @@ describe('utils', () => {
           model: { id: 'm1', name: 'EL', vehicle_type: 'car' },
         },
       } as Parameters<typeof getListingDisplayTitle>[0];
+      expect(getListingDisplayTitle(listing, mockT)).toBe('Acura EL 2025 (Automată)');
+    });
+
+    it('should build title from vehicle when listing.title is empty', () => {
+      const listing = {
+        id: '1',
+        title: '',
+        vehicle: {
+          id: 'v1',
+          brand_id: 'b1',
+          model_id: 'm1',
+          year: 2025,
+          transmission: 'Automatic',
+          drive_type: 'FWD',
+          body_type: 'Sedan',
+          brand: { id: 'b1', name: 'Acura' },
+          model: { id: 'm1', name: 'EL', vehicle_type: 'car' },
+        },
+      } as Parameters<typeof getListingDisplayTitle>[0];
       expect(getListingDisplayTitle(listing, mockT)).toBe('Acura EL 2025 (Автоматска)');
     });
 
-    it('should return base title for moto without transmission', () => {
+    it('should return base title for moto without transmission when no API title', () => {
       const listing = {
         id: '1',
-        title: 'Honda CBR',
+        title: '',
         vehicle: {
           id: 'v1',
           brand_id: 'b1',

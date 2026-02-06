@@ -1,7 +1,10 @@
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-const FILTERS_STORAGE_KEY = 'kupito_search_filters';
+import {
+  FILTERS_STORAGE_KEY,
+  getDefaultFilters as getDefaultFiltersFromSearchParams,
+} from '@/lib/search-params';
 
 const decodeArray = (encoded: string): string[] => {
   if (!encoded) return [];
@@ -60,35 +63,8 @@ export interface FilterState {
   sortOrder: 'ASC' | 'DESC';
 }
 
-const getDefaultFilters = (currentYear: string): FilterState => ({
-  brand_ids: [],
-  model_ids: [],
-  cities: [],
-  year_gte: '',
-  year_lte: currentYear,
-  price_gte: '',
-  price_lte: '',
-  mileage_gte: '',
-  mileage_lte: '',
-  fuels: [],
-  transmissions: [],
-  body_types: [],
-  engine_displ_l_gte: '',
-  engine_displ_l_lte: '',
-  colors: [],
-  doors: [],
-  currency: '',
-  urgent: false,
-  is_new: false,
-  conditions: [],
-  registration_types: [],
-  horsepower_gte: '',
-  horsepower_lte: '',
-  drive_types: [],
-  is_registered: undefined,
-  sortBy: 'created_at',
-  sortOrder: 'DESC',
-});
+const getDefaultFilters = (currentYear: string): FilterState =>
+  getDefaultFiltersFromSearchParams(currentYear) as FilterState;
 
 const parseArrayParam = (param: string | null, isEncoded: boolean = false): string[] => {
   if (!param) return [];

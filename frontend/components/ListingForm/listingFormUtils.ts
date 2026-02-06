@@ -6,7 +6,7 @@ import {
   ListingStatusEnum,
   RegistrationTypeEnum,
 } from '@/lib/types';
-import { sortOptionsByLabel } from '@/lib/utils';
+import { horsepowerToKw, sortOptionsByLabel } from '@/lib/utils';
 
 import type { ListingFormData } from '../ListingForm';
 
@@ -80,7 +80,7 @@ export function getInitialFormData(initialData?: Listing): ListingFormData {
     power_kw: initialData.power_kw
       ? Math.floor(initialData.power_kw).toString()
       : initialData.horsepower
-        ? Math.round(initialData.horsepower * 0.73549875).toString()
+        ? horsepowerToKw(initialData.horsepower).toString()
         : '',
     is_registered: initialData.is_registered || false,
     registration_expires_at: registrationExpiresAtFormatted,

@@ -1,3 +1,5 @@
+import { getYearRange } from './validation-rules';
+
 type ValidationResult = {
   isValid: boolean;
   errorKey?: string;
@@ -29,14 +31,12 @@ export const validators = {
       return { isValid: false, errorKey: 'yearMustBePositive' };
     }
 
-    if (year < 1940) {
+    const yearRange = getYearRange();
+    if (year < yearRange.min) {
       return { isValid: false, errorKey: 'yearMinError' };
     }
-
-    const currentYear = new Date().getFullYear();
-    const maxYear = currentYear + 1;
-    if (year > maxYear) {
-      return { isValid: false, errorKey: 'yearMaxError', errorParams: { maxYear } };
+    if (year > yearRange.max) {
+      return { isValid: false, errorKey: 'yearMaxError', errorParams: { maxYear: yearRange.max } };
     }
 
     return { isValid: true };
