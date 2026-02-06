@@ -695,22 +695,13 @@ describe('SearchFilters', () => {
         isInitialized: true,
       });
 
+      mockGet.mockImplementation((key: string) => (key === 'brand_id' ? 'brand-1' : null));
+
       render(<SearchFilters />);
 
       await waitFor(() => {
         expect(brandsApi.getAll).toHaveBeenCalled();
       });
-
-      const brandDropdown = screen.getAllByTestId('multiselect-dropdown')[0] as HTMLSelectElement;
-      const option = Array.from(brandDropdown.options).find((opt) => opt.value === 'brand-1');
-      if (option) {
-        option.selected = true;
-        const mockEvent = {
-          target: brandDropdown,
-          currentTarget: brandDropdown,
-        } as React.ChangeEvent<HTMLSelectElement>;
-        fireEvent.change(brandDropdown, mockEvent);
-      }
 
       await waitFor(
         () => {
@@ -741,18 +732,13 @@ describe('SearchFilters', () => {
         isInitialized: true,
       });
 
+      mockGet.mockImplementation((key: string) => (key === 'brand_id' ? 'brand-1' : null));
+
       render(<SearchFilters />);
 
       await waitFor(() => {
         expect(brandsApi.getAll).toHaveBeenCalled();
       });
-
-      const brandDropdown = screen.getAllByTestId('multiselect-dropdown')[0] as HTMLSelectElement;
-      const option = Array.from(brandDropdown.options).find((opt) => opt.value === 'brand-1');
-      if (option) {
-        option.selected = true;
-        fireEvent.change(brandDropdown, { target: { value: 'brand-1' } });
-      }
 
       await waitFor(() => {
         const saveButton = screen.getByText('Add to favorites');
@@ -773,18 +759,13 @@ describe('SearchFilters', () => {
         isInitialized: true,
       });
 
+      mockGet.mockImplementation((key: string) => (key === 'brand_id' ? 'brand-1' : null));
+
       render(<SearchFilters />);
 
       await waitFor(() => {
         expect(brandsApi.getAll).toHaveBeenCalled();
       });
-
-      const brandDropdown = screen.getAllByTestId('multiselect-dropdown')[0] as HTMLSelectElement;
-      const option = Array.from(brandDropdown.options).find((opt) => opt.value === 'brand-1');
-      if (option) {
-        option.selected = true;
-        fireEvent.change(brandDropdown, { target: { value: 'brand-1' } });
-      }
 
       await waitFor(() => {
         const saveButton = screen.getByText('Log in');
