@@ -8,7 +8,7 @@ if (dsn && isProduction) {
     dsn,
     environment: 'production',
     enabled: true,
-    tracesSampleRate: 1.0,
+    tracesSampleRate: 0.2,
     debug: false,
     enableLogs: true,
     ignoreErrors: [

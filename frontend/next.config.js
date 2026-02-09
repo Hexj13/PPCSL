@@ -12,7 +12,7 @@ const nextConfig = {
   },
 
   ...(process.env.NODE_ENV === 'production' && {
-    cacheMaxMemorySize: 50 * 1024 * 1024,
+    cacheMaxMemorySize: 25 * 1024 * 1024,
   }),
 
   ...(process.env.NODE_ENV === 'development' && {
@@ -48,6 +48,7 @@ const nextConfig = {
         hostname: '**',
       },
     ],
+    minimumCacheTTL: 86400,
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],

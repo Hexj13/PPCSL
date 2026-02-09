@@ -1140,6 +1140,8 @@ cd core/frontend && npm start
 3. Copy platform-specific files via `npm run prepare:build` (frontend locales ro/ru, backend locales, theme, config, assets)
 4. Install dependencies and build the application
 
+**Memory tuning (Next.js frontend):** To avoid out-of-memory restarts on Render.com (e.g. when traffic is low but health checks run frequently), the app uses: `cacheMaxMemorySize: 25MB` in next.config.js, `minimumCacheTTL: 86400` for image optimization, and Sentry server `tracesSampleRate: 0.2`. See [SENTRY.md](../guides/SENTRY.md) for Sentry server config.
+
 ### 13.4.2. Render.com Backend Deployment Configuration
 
 For deploying kupito.club backend on Render.com, configure the following:

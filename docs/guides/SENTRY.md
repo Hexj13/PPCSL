@@ -104,9 +104,10 @@ import * as Sentry from '@sentry/nextjs';
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   environment: process.env.NODE_ENV,
-  tracesSampleRate: 1.0,
+  tracesSampleRate: 0.2,
 });
 ```
+На сервере используется 0.2 (20% транзакций), чтобы снизить потребление памяти: при 100% трейсинге каждый health check и запрос создаёт полный trace, что на хостингах с ограниченной памятью (например Render.com) может приводить к OOM без реального трафика.
 
 Создать файл `core/frontend/sentry.edge.config.ts`:
 ```typescript
@@ -441,12 +442,13 @@ Sentry.init({
 ```typescript
 Sentry.init({
   // ... другие настройки
-  tracesSampleRate: 1.0, // 100% для продакшена можно снизить до 0.1
+  tracesSampleRate: 0.2,
   integrations: [
     Sentry.browserTracingIntegration(),
   ],
 });
 ```
+На сервере (sentry.server.config.ts) рекомендуется 0.1–0.2 для снижения потребления памяти; на клиенте можно использовать до 1.0 при необходимости.
 
 #### Бэкенд
 ```typescript
