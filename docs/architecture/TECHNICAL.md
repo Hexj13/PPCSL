@@ -453,7 +453,7 @@ GET /health                          # Health check (database, Redis)
 **Listings Table Fields:**
 - `price` - Integer (stored as integer, no decimal places)
 - `power_kw` - Integer, nullable (power in kilowatts)
-- `equipment` - Simple array, nullable (array of equipment keys: air_conditioning, leather_seats, sunroof, navigation, parking_sensors, rear_camera, cruise_control, heated_seats, xenon_lights, led_lights, fog_lights, alloy_wheels, electric_windows, central_locking, bluetooth, usb_port, multifunction_steering, start_stop, esp, abs)
+- `equipment` - Simple array, nullable (max 40 items). Array of equipment keys; the available set depends on vehicle type (car / truck / moto). Keys and categories are defined in `core/frontend/lib/options/vehicle-equipment.ts`. Create/edit form groups options by category (Comfort, Safety, Lighting, Multimedia, Driver assistance, Other). Translations: `vehicleOptions.equipment.<key>` and `vehicleOptions.equipmentCategories.<category>` in frontend locales.
 
 **Vehicles Table:**
 - `brand_id`, `model_id`, `brand_id + model_id` (composite)

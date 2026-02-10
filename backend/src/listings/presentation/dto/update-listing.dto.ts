@@ -165,15 +165,15 @@ export class UpdateListingDto {
 
   @ApiPropertyOptional({
     example: ['air_conditioning', 'navigation', 'parking_sensors'],
-    description: 'Array of equipment keys (max 20 items)',
+    description: 'Array of equipment keys (max 40 items)',
     type: [String],
-    maxItems: 20,
+    maxItems: 40,
   })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  @ArrayMaxSize(20, {
-    message: 'Максимум 20 опции',
+  @ArrayMaxSize(40, {
+    message: 'Максимум 40 опции',
   })
   equipment?: string[];
 

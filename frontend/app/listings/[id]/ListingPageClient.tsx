@@ -39,6 +39,7 @@ import {
   getCityName,
   getListingDisplayTitle,
   getOptimizedImageUrl,
+  sortOptionsByLabel,
 } from '@/lib/utils';
 import { LoadingSpinner, Spinner } from '@/ui';
 
@@ -92,6 +93,19 @@ export default function ListingPageClient({
     }
     return user.id === currentListing.user.id;
   }, [user, listing, initialListing]);
+
+  const equipmentColumns = useMemo(() => {
+    const eq = listing?.equipment;
+    if (!eq?.length) return { left: [] as string[], right: [] as string[] };
+    const sorted = sortOptionsByLabel(
+      eq.map((key) => ({
+        value: key,
+        label: t(`vehicleOptions.equipment.${key}`),
+      }))
+    ).map((opt) => opt.value);
+    const mid = Math.ceil(sorted.length / 2);
+    return { left: sorted.slice(0, mid), right: sorted.slice(mid) };
+  }, [listing?.equipment, t]);
 
   const isLoadingListing = listing === null && !initialListing;
   const { visible: showSkeleton } = useLoadingState({
@@ -560,17 +574,28 @@ export default function ListingPageClient({
                 <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-700">
                   {t('listingDetail.equipment')}
                 </h2>
-                <ul className="list-disc list-outside grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 pl-5">
-                  {listing.equipment.map((key) => (
-                    <li
-                      key={key}
-                      className="ml-0"
-                      style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-                    >
-                      {t(`vehicleOptions.equipment.${key}`)}
-                    </li>
-                  ))}
-                </ul>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                  <ul
+                    className="list-disc list-outside pl-5 space-y-1"
+                    style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+                  >
+                    {equipmentColumns.left.map((key) => (
+                      <li key={key} className="ml-0">
+                        {t(`vehicleOptions.equipment.${key}`)}
+                      </li>
+                    ))}
+                  </ul>
+                  <ul
+                    className="list-disc list-outside pl-5 space-y-1"
+                    style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+                  >
+                    {equipmentColumns.right.map((key) => (
+                      <li key={key} className="ml-0">
+                        {t(`vehicleOptions.equipment.${key}`)}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             )}
 

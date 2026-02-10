@@ -1,6 +1,10 @@
 'use client';
 
-import { getEquipmentKeysByVehicleType } from '@/lib/options';
+import {
+  EQUIPMENT_CATEGORIES,
+  EQUIPMENT_CATEGORY_MAP,
+  getEquipmentKeysByVehicleType,
+} from '@/lib/options';
 import { sortOptionsByLabel } from '@/lib/utils';
 import { Checkbox } from '@/ui';
 
@@ -13,72 +17,73 @@ export function EquipmentSection({
   vehicleType,
 }: ListingFormSectionProps) {
   const availableKeys = getEquipmentKeysByVehicleType(vehicleType);
-  const sortedKeys = sortOptionsByLabel(
-    availableKeys.map((key) => ({
-      value: key,
-      label: t(`vehicleOptions.equipment.${key}`),
-    }))
-  ).map((opt) => opt.value);
-  const midPoint = Math.ceil(sortedKeys.length / 2);
-  const leftColumn = sortedKeys.slice(0, midPoint);
-  const rightColumn = sortedKeys.slice(midPoint);
+
+  const categorizedGroups = EQUIPMENT_CATEGORIES.map((category) => {
+    const keysInCategory = availableKeys.filter((key) => EQUIPMENT_CATEGORY_MAP[key] === category);
+    const sortedKeys = sortOptionsByLabel(
+      keysInCategory.map((key) => ({
+        value: key,
+        label: t(`vehicleOptions.equipment.${key}`),
+      }))
+    ).map((opt) => opt.value);
+    return { category, keys: sortedKeys };
+  }).filter((group) => group.keys.length > 0);
+
+  const handleChange = (key: string, checked: boolean) => {
+    if (checked) {
+      setFormData((prev) => ({
+        ...prev,
+        equipment: [...prev.equipment, key],
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        equipment: prev.equipment.filter((k) => k !== key),
+      }));
+    }
+  };
 
   return (
     <div className="border-t border-primary-500/20 pt-6 mb-6">
       <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-500">
         {t('listings.equipment')}
       </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="space-y-4">
-          {leftColumn.map((key) => {
-            const isChecked = formData.equipment.includes(key);
-            return (
-              <Checkbox
-                key={key}
-                checked={isChecked}
-                onChange={(checked) => {
-                  if (checked) {
-                    setFormData((prev) => ({
-                      ...prev,
-                      equipment: [...prev.equipment, key],
-                    }));
-                  } else {
-                    setFormData((prev) => ({
-                      ...prev,
-                      equipment: prev.equipment.filter((k) => k !== key),
-                    }));
-                  }
-                }}
-                label={t(`vehicleOptions.equipment.${key}`)}
-              />
-            );
-          })}
-        </div>
-        <div className="space-y-4">
-          {rightColumn.map((key) => {
-            const isChecked = formData.equipment.includes(key);
-            return (
-              <Checkbox
-                key={key}
-                checked={isChecked}
-                onChange={(checked) => {
-                  if (checked) {
-                    setFormData((prev) => ({
-                      ...prev,
-                      equipment: [...prev.equipment, key],
-                    }));
-                  } else {
-                    setFormData((prev) => ({
-                      ...prev,
-                      equipment: prev.equipment.filter((k) => k !== key),
-                    }));
-                  }
-                }}
-                label={t(`vehicleOptions.equipment.${key}`)}
-              />
-            );
-          })}
-        </div>
+      <div className="space-y-6">
+        {categorizedGroups.map(({ category, keys }) => {
+          const midPoint = Math.ceil(keys.length / 2);
+          const leftColumn = keys.slice(0, midPoint);
+          const rightColumn = keys.slice(midPoint);
+
+          return (
+            <div key={category}>
+              <h3 className="text-sm font-semibold mb-3 text-primary-500">
+                {t(`vehicleOptions.equipmentCategories.${category}`)}
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  {leftColumn.map((key) => (
+                    <Checkbox
+                      key={key}
+                      checked={formData.equipment.includes(key)}
+                      onChange={(checked) => handleChange(key, checked)}
+                      label={t(`vehicleOptions.equipment.${key}`)}
+                    />
+                  ))}
+                </div>
+                <div className="space-y-3">
+                  {rightColumn.map((key) => (
+                    <Checkbox
+                      key={key}
+                      checked={formData.equipment.includes(key)}
+                      onChange={(checked) => handleChange(key, checked)}
+                      label={t(`vehicleOptions.equipment.${key}`)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
