@@ -14,27 +14,32 @@ export function ListingPageDescription({ descriptionHtml }: ListingPageDescripti
   const [needsExpansion, setNeedsExpansion] = useState(true);
   const [fullHeight, setFullHeight] = useState<number>(400);
   const surfaceRef = useRef<HTMLDivElement>(null);
+  const skipMeasureAfterCollapseRef = useRef(false);
 
   useEffect(() => {
     if (!surfaceRef.current || !descriptionHtml) return;
 
     const checkHeight = () => {
-      if (surfaceRef.current) {
-        const currentMaxHeight = surfaceRef.current.style.maxHeight;
-        const currentTransition = surfaceRef.current.style.transition;
-
-        surfaceRef.current.style.maxHeight = 'none';
-        surfaceRef.current.style.transition = 'none';
-
-        const height = surfaceRef.current.scrollHeight;
-
-        surfaceRef.current.style.maxHeight = currentMaxHeight;
-        surfaceRef.current.style.transition = currentTransition;
-
-        const isLong = height > 400;
-        setNeedsExpansion(isLong);
-        setFullHeight(height);
+      if (!surfaceRef.current) return;
+      if (skipMeasureAfterCollapseRef.current) {
+        skipMeasureAfterCollapseRef.current = false;
+        return;
       }
+
+      const currentMaxHeight = surfaceRef.current.style.maxHeight;
+      const currentTransition = surfaceRef.current.style.transition;
+
+      surfaceRef.current.style.maxHeight = 'none';
+      surfaceRef.current.style.transition = 'none';
+
+      const height = surfaceRef.current.scrollHeight;
+
+      surfaceRef.current.style.maxHeight = currentMaxHeight;
+      surfaceRef.current.style.transition = currentTransition;
+
+      const isLong = height > 400;
+      setNeedsExpansion(isLong);
+      setFullHeight(height);
     };
 
     setTimeout(checkHeight, 100);
@@ -42,20 +47,15 @@ export function ListingPageDescription({ descriptionHtml }: ListingPageDescripti
 
   const handleToggle = () => {
     if (isExpanded && surfaceRef.current) {
-      setTimeout(() => {
-        const element = surfaceRef.current;
-        if (element) {
-          const elementPosition = element.getBoundingClientRect().top;
-          const offsetPosition = elementPosition + window.pageYOffset - 110;
-
-          window.scrollTo({
-            top: offsetPosition,
-            behavior: 'smooth',
-          });
-        }
-      }, 50);
+      skipMeasureAfterCollapseRef.current = true;
+      const element = surfaceRef.current;
+      const offsetPosition = element.getBoundingClientRect().top + window.pageYOffset - 110;
+      window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+      const scrollDurationMs = 500;
+      setTimeout(() => setIsExpanded(false), scrollDurationMs);
+    } else {
+      setIsExpanded(true);
     }
-    setIsExpanded(!isExpanded);
   };
 
   if (!descriptionHtml) {
@@ -82,7 +82,7 @@ export function ListingPageDescription({ descriptionHtml }: ListingPageDescripti
       className="surface overflow-hidden relative"
       style={{
         maxHeight: isExpanded ? `${fullHeight}px` : '400px',
-        transition: 'max-height 0.4s ease-in-out',
+        transition: 'max-height 0.5s ease-in-out',
       }}
     >
       <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-700">
@@ -112,9 +112,55 @@ export function ListingPageDescription({ descriptionHtml }: ListingPageDescripti
         <div className="absolute left-0 right-0 bottom-4 flex justify-center z-10">
           <button
             onClick={handleToggle}
-            className="min-h-12 px-4 py-2 text-primary-400 hover:text-primary-300 transition-colors duration-200 text-base font-medium border border-primary-500/30 rounded-lg hover:border-primary-500/50 bg-bg-secondary flex items-center justify-center"
+            className="btn-secondary !border-primary-500 min-h-0 flex items-center justify-center gap-2 !h-12 !min-h-12 !max-h-12"
           >
-            {isExpanded ? t('listingDetail.collapse') : t('listingDetail.expand')}
+            {isExpanded ? (
+              <>
+                <svg
+                  className="w-4 h-4 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 16l5-5 5 5"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 11l5-5 5 5"
+                  />
+                </svg>
+                {t('listingDetail.collapse')}
+              </>
+            ) : (
+              <>
+                <svg
+                  className="w-4 h-4 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 8l5 5 5-5"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 13l5 5 5-5"
+                  />
+                </svg>
+                {t('listingDetail.expand')}
+              </>
+            )}
           </button>
         </div>
       )}
@@ -122,6 +168,8 @@ export function ListingPageDescription({ descriptionHtml }: ListingPageDescripti
         .listing-description {
           color: rgb(var(--text-secondary-rgb));
           line-height: 1.75;
+          word-break: break-word;
+          overflow-wrap: anywhere;
         }
         .listing-description div,
         .listing-description p {

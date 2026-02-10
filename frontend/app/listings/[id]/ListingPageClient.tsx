@@ -107,9 +107,19 @@ export default function ListingPageClient({
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
   const [promotionModalOpen, setPromotionModalOpen] = useState(false);
   const [canPromote, setCanPromote] = useState(false);
+  const [canShare, setCanShare] = useState(false);
 
   useEffect(() => {
     setIsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !navigator.share) return;
+    const media = window.matchMedia('(max-width: 1024px)');
+    const update = () => setCanShare(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
   }, []);
 
   useEffect(() => {
@@ -252,6 +262,35 @@ export default function ListingPageClient({
   const handlePromoteClick = useCallback(() => {
     setPromotionModalOpen(true);
   }, []);
+
+  const handleCopyLink = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast.success(t('listingDetail.linkCopied'));
+    } catch {
+      const textArea = document.createElement('textarea');
+      textArea.value = window.location.href;
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      toast.success(t('listingDetail.linkCopied'));
+    }
+  }, [t]);
+
+  const handleShare = useCallback(async () => {
+    if (!navigator.share) return;
+    try {
+      await navigator.share({
+        title: listing?.title ?? '',
+        url: window.location.href,
+      });
+    } catch {
+      // AbortError
+    }
+  }, [listing?.title]);
 
   const handlePromotionSelect = useCallback(
     async (days: number | null) => {
@@ -744,6 +783,9 @@ export default function ListingPageClient({
             />
 
             <div className="surface overflow-hidden">
+              <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-700">
+                {t('listingDetail.listingInfo')}
+              </h2>
               <div className="space-y-3 break-words">
                 {listing.views !== undefined && listing.views > 0 && (
                   <div className="flex items-center gap-2 text-base min-w-0">
@@ -825,6 +867,50 @@ export default function ListingPageClient({
                     {formatDate(closingDate)}
                   </span>
                 </div>
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-primary-500/20 space-y-2">
+                <button
+                  onClick={handleCopyLink}
+                  className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-500 hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 border-2 border-primary-500 bg-primary-500/10 select-none"
+                >
+                  <svg
+                    className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                    />
+                  </svg>
+                  <span>{t('listingDetail.copyLink')}</span>
+                </button>
+
+                {canShare && (
+                  <button
+                    onClick={handleShare}
+                    className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-500 hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 border-2 border-primary-500 bg-primary-500/10 select-none"
+                  >
+                    <svg
+                      className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                      />
+                    </svg>
+                    <span>{t('listingDetail.share')}</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>
