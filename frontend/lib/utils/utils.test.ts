@@ -151,7 +151,7 @@ describe('utils', () => {
   });
 
   describe('getListingDisplayTitle', () => {
-    it('should return listing.title when present', () => {
+    it('should build title from vehicle with current locale (ignore API title for display)', () => {
       const listing = {
         id: '1',
         title: 'Acura EL 2025 (Automată)',
@@ -167,7 +167,7 @@ describe('utils', () => {
           model: { id: 'm1', name: 'EL', vehicle_type: 'car' },
         },
       } as Parameters<typeof getListingDisplayTitle>[0];
-      expect(getListingDisplayTitle(listing, mockT)).toBe('Acura EL 2025 (Automată)');
+      expect(getListingDisplayTitle(listing, mockT)).toBe('Acura EL 2025 (Automatic)');
     });
 
     it('should build title from vehicle when listing.title is empty', () => {
