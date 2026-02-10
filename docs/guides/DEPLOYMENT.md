@@ -586,7 +586,7 @@ npm run make-admin:prod -- --email your-email@example.com --password your-secure
 
 ### 3.9. Setting Up Cron Jobs
 
-The application has a built-in cron job that automatically closes listings older than 5 months (non-promoted listings only; promoted listings close automatically after promotion expires). However, on Render's free tier, services can sleep after inactivity.
+The application has a built-in cron job that automatically closes listings older than 90 days (non-promoted listings only; promoted listings close automatically after promotion expires). However, on Render's free tier, services can sleep after inactivity.
 
 **Solution: Use Render Cron Job Service**
 

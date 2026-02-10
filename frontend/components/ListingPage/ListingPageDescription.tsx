@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -8,55 +8,44 @@ interface ListingPageDescriptionProps {
   descriptionHtml: string | null;
 }
 
+const COLLAPSED_HEIGHT = 400;
+
 export function ListingPageDescription({ descriptionHtml }: ListingPageDescriptionProps) {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
-  const [needsExpansion, setNeedsExpansion] = useState(true);
-  const [fullHeight, setFullHeight] = useState<number>(400);
-  const surfaceRef = useRef<HTMLDivElement>(null);
-  const skipMeasureAfterCollapseRef = useRef(false);
+  const [needsExpansion, setNeedsExpansion] = useState(false);
+  const [contentHeight, setContentHeight] = useState(0);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!surfaceRef.current || !descriptionHtml) return;
+    if (!contentRef.current) return;
 
-    const checkHeight = () => {
-      if (!surfaceRef.current) return;
-      if (skipMeasureAfterCollapseRef.current) {
-        skipMeasureAfterCollapseRef.current = false;
-        return;
+    const measure = () => {
+      if (contentRef.current) {
+        const height = contentRef.current.scrollHeight;
+        setContentHeight(height);
+        setNeedsExpansion(height > COLLAPSED_HEIGHT);
       }
-
-      const currentMaxHeight = surfaceRef.current.style.maxHeight;
-      const currentTransition = surfaceRef.current.style.transition;
-
-      surfaceRef.current.style.maxHeight = 'none';
-      surfaceRef.current.style.transition = 'none';
-
-      const height = surfaceRef.current.scrollHeight;
-
-      surfaceRef.current.style.maxHeight = currentMaxHeight;
-      surfaceRef.current.style.transition = currentTransition;
-
-      const isLong = height > 400;
-      setNeedsExpansion(isLong);
-      setFullHeight(height);
     };
 
-    setTimeout(checkHeight, 100);
-  }, [descriptionHtml, isExpanded]);
+    measure();
 
-  const handleToggle = () => {
-    if (isExpanded && surfaceRef.current) {
-      skipMeasureAfterCollapseRef.current = true;
-      const element = surfaceRef.current;
-      const offsetPosition = element.getBoundingClientRect().top + window.pageYOffset - 110;
+    const observer = new ResizeObserver(measure);
+    observer.observe(contentRef.current);
+    return () => observer.disconnect();
+  }, [descriptionHtml]);
+
+  const handleToggle = useCallback(() => {
+    if (isExpanded && wrapperRef.current) {
+      const el = wrapperRef.current;
+      const offsetPosition = el.getBoundingClientRect().top + window.pageYOffset - 110;
       window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-      const scrollDurationMs = 500;
-      setTimeout(() => setIsExpanded(false), scrollDurationMs);
+      setTimeout(() => setIsExpanded(false), 500);
     } else {
       setIsExpanded(true);
     }
-  };
+  }, [isExpanded]);
 
   if (!descriptionHtml) {
     return (
@@ -76,40 +65,51 @@ export function ListingPageDescription({ descriptionHtml }: ListingPageDescripti
     );
   }
 
+  const targetHeight = isExpanded ? contentHeight : COLLAPSED_HEIGHT;
+
   return (
-    <div
-      ref={surfaceRef}
-      className="surface overflow-hidden relative"
-      style={{
-        maxHeight: isExpanded ? `${fullHeight}px` : '400px',
-        transition: 'max-height 0.5s ease-in-out',
-      }}
-    >
+    <div ref={wrapperRef} className="surface relative">
       <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-700">
         {t('listingDetail.description')}
       </h2>
+
       <div
-        className="leading-relaxed max-w-none listing-description whitespace-pre-wrap"
+        className="overflow-hidden relative"
         style={{
-          color: 'rgb(var(--text-secondary-rgb))',
-          paddingBottom: needsExpansion ? '60px' : '0',
+          maxHeight: `${targetHeight}px`,
+          transition: 'max-height 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
         }}
-        dangerouslySetInnerHTML={{
-          __html: descriptionHtml,
-        }}
-      />
+      >
+        <div
+          ref={contentRef}
+          className="leading-relaxed max-w-none listing-description whitespace-pre-wrap"
+          style={{
+            color: 'rgb(var(--text-secondary-rgb))',
+            paddingBottom: needsExpansion ? '60px' : '0',
+          }}
+          dangerouslySetInnerHTML={{
+            __html: descriptionHtml,
+          }}
+        />
+      </div>
+
       {!isExpanded && needsExpansion && (
         <div
-          className="absolute left-0 right-0 bottom-0 pointer-events-none"
+          className="absolute left-0 right-0 pointer-events-none"
           style={{
+            bottom: '0',
             height: '100px',
             background:
-              'linear-gradient(to top, rgb(var(--bg-secondary-rgb, 244, 244, 244)) 0%, rgb(var(--bg-secondary-rgb, 244, 244, 244)) 40px, transparent 100%)',
+              'linear-gradient(to top, rgba(var(--bg-secondary-rgb, 244, 244, 244), 0.96) 0%, rgba(var(--bg-secondary-rgb, 244, 244, 244), 0.65) 40px, transparent 100%)',
           }}
         />
       )}
+
       {needsExpansion && (
-        <div className="absolute left-0 right-0 bottom-4 flex justify-center z-10">
+        <div
+          className={`flex justify-center ${isExpanded ? 'mt-4' : 'absolute left-0 right-0 bottom-4'}`}
+          style={{ zIndex: 10 }}
+        >
           <button
             onClick={handleToggle}
             className="btn-secondary !border-primary-500 min-h-0 flex items-center justify-center gap-2 !h-12 !min-h-12 !max-h-12"

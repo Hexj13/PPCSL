@@ -34,8 +34,8 @@ Core application framework for creating car marketplace platforms for different 
 - Individual users: maximum **100 active listings** simultaneously
 - Business users: maximum **100 active listings** simultaneously
 - Listings have three statuses: **Active**, **Paused**, **Closed**
-- Automatic closing after **5 months** (approximately 150 days) since `last_updated_at` timestamp
-  - Non-promoted listings older than 5 months are closed automatically
+- Automatic closing after **90 days** since `last_updated_at` timestamp
+  - Non-promoted listings older than 90 days are closed automatically
   - Promoted listings with active promotion are not closed automatically
   - Promoted listings with expired promotion are closed automatically on the next cron run
 - **Paid Promotion Feature (MVP):** Users can promote their listings for higher visibility
@@ -443,7 +443,7 @@ GET /health                          # Health check (database, Redis)
 - `last_updated_at` - Updated only when:
   - Listing is created
   - User clicks "Refresh dates" button (updates all active listings)
-  - Used for automatic closing after 5 months
+  - Used for automatic closing after 90 days
 - `last_edited_at` - Updated when listing content is edited (price, description, images, etc.)
 - `last_published_at` - Updated when listing status changes to Active:
   - When listing is created with Active status

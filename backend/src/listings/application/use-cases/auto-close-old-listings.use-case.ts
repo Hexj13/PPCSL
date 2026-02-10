@@ -25,15 +25,15 @@ export class AutoCloseOldListingsUseCase {
     return Sentry.withMonitor(
       'auto-close-old-listings',
       async () => {
-        const fiveMonthsAgo = new Date();
-        fiveMonthsAgo.setMonth(fiveMonthsAgo.getMonth() - 5);
+        const ninetyDaysAgo = new Date();
+        ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
         const now = new Date();
         const closedAt = new Date();
 
         const promotedListingsWithExpiredPromo = await this.listingsRepository.find({
           where: {
             status: ListingStatusEnum.Active,
-            last_updated_at: LessThanOrEqual(fiveMonthsAgo),
+            last_updated_at: LessThanOrEqual(ninetyDaysAgo),
             is_promoted: true,
             promoted_until: LessThan(now),
           },
@@ -56,7 +56,7 @@ export class AutoCloseOldListingsUseCase {
             promoted_paused_at: null,
           })
           .where('status = :status', { status: ListingStatusEnum.Active })
-          .andWhere('last_updated_at <= :fiveMonthsAgo', { fiveMonthsAgo })
+          .andWhere('last_updated_at <= :ninetyDaysAgo', { ninetyDaysAgo })
           .andWhere(
             '(is_promoted = false OR (is_promoted = true AND promoted_until IS NOT NULL AND promoted_until < :now))',
             { now },
