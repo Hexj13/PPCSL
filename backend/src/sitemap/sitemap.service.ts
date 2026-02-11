@@ -1,0 +1,258 @@
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+
+import { Brand } from '../brands/entities/brand.entity';
+import { VehicleModel } from '../brands/entities/vehicle-model.entity';
+import { RedisService } from '../common/redis.service';
+import { createSlug } from '../common/utils/slug.utils';
+import { Listing } from '../listings/entities/listing.entity';
+import { User } from '../users/entities/user.entity';
+
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club').replace(/\/$/, '');
+const CACHE_TTL = 3600;
+const CACHE_PREFIX = 'sitemap:';
+
+interface SitemapUrl {
+  loc: string;
+  lastmod: string;
+  changefreq?: string;
+  priority?: number;
+}
+
+@Injectable()
+export class SitemapService {
+  constructor(
+    @InjectRepository(Listing)
+    private readonly listingRepo: Repository<Listing>,
+    @InjectRepository(Brand)
+    private readonly brandRepo: Repository<Brand>,
+    @InjectRepository(VehicleModel)
+    private readonly modelRepo: Repository<VehicleModel>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
+    private readonly redis: RedisService,
+  ) {}
+
+  async getSitemapIndex(): Promise<string> {
+    const cached = await this.getFromCache('index');
+    if (cached) return cached;
+
+    const months = await this.getActiveListingMonths();
+    const now = this.today();
+
+    const sitemaps: { loc: string; lastmod: string }[] = [
+      { loc: `${SITE_URL}/sitemaps/pages.xml`, lastmod: now },
+      { loc: `${SITE_URL}/sitemaps/brands.xml`, lastmod: now },
+      { loc: `${SITE_URL}/sitemaps/sellers.xml`, lastmod: now },
+    ];
+
+    for (const month of months) {
+      sitemaps.push({
+        loc: `${SITE_URL}/sitemaps/listings-${month}.xml`,
+        lastmod: now,
+      });
+    }
+
+    const xml = this.buildSitemapIndex(sitemaps);
+    await this.saveToCache('index', xml);
+    return xml;
+  }
+
+  async getPagesSitemap(): Promise<string> {
+    const cached = await this.getFromCache('pages');
+    if (cached) return cached;
+
+    const now = this.today();
+    const urls: SitemapUrl[] = [
+      { loc: SITE_URL, lastmod: now, changefreq: 'daily', priority: 1.0 },
+      { loc: `${SITE_URL}/listings`, lastmod: now, changefreq: 'daily', priority: 0.9 },
+      { loc: `${SITE_URL}/terms`, lastmod: now, changefreq: 'monthly', priority: 0.3 },
+      { loc: `${SITE_URL}/privacy`, lastmod: now, changefreq: 'monthly', priority: 0.3 },
+      { loc: `${SITE_URL}/faq`, lastmod: now, changefreq: 'monthly', priority: 0.4 },
+      { loc: `${SITE_URL}/cookie-settings`, lastmod: now, changefreq: 'monthly', priority: 0.2 },
+    ];
+
+    const xml = this.buildUrlset(urls);
+    await this.saveToCache('pages', xml);
+    return xml;
+  }
+
+  async getBrandsSitemap(): Promise<string> {
+    const cached = await this.getFromCache('brands');
+    if (cached) return cached;
+
+    const now = this.today();
+    const brands = await this.brandRepo.find({ order: { name: 'ASC' } });
+    const models = await this.modelRepo.find({
+      relations: ['brand'],
+      order: { name: 'ASC' },
+    });
+
+    const urls: SitemapUrl[] = [];
+
+    for (const brand of brands) {
+      const slug = createSlug(brand.name);
+      if (!slug) continue;
+
+      const vehicleTypes = brand.vehicle_types || [];
+      const types = vehicleTypes.length > 0 ? vehicleTypes : (['car'] as const);
+
+      for (const vt of types) {
+        const param = vt !== 'car' ? `&vehicleType=${vt}` : '';
+        urls.push({
+          loc: `${SITE_URL}/?brand=${slug}${param}`,
+          lastmod: now,
+          changefreq: 'daily',
+          priority: 0.8,
+        });
+      }
+    }
+
+    for (const model of models) {
+      if (!model.brand) continue;
+      const brandSlug = createSlug(model.brand.name);
+      const modelSlug = createSlug(model.name);
+      if (!brandSlug || !modelSlug) continue;
+
+      const vt = model.vehicle_type;
+      const param = vt && vt !== 'car' ? `&vehicleType=${vt}` : '';
+      urls.push({
+        loc: `${SITE_URL}/?brand=${brandSlug}&model=${modelSlug}${param}`,
+        lastmod: now,
+        changefreq: 'daily',
+        priority: 0.7,
+      });
+    }
+
+    const xml = this.buildUrlset(urls);
+    await this.saveToCache('brands', xml);
+    return xml;
+  }
+
+  async getSellersSitemap(): Promise<string> {
+    const cached = await this.getFromCache('sellers');
+    if (cached) return cached;
+
+    const rows: { board_slug: string; last_updated: string }[] = await this.userRepo.query(
+      `SELECT u.board_slug, MAX(l.updated_at)::text AS last_updated
+       FROM users u
+       JOIN listings l ON l.user_id = u.id
+       WHERE u.active = true
+         AND u.board_slug IS NOT NULL
+         AND l.status = 'Active'
+       GROUP BY u.board_slug
+       ORDER BY u.board_slug`,
+    );
+
+    const urls: SitemapUrl[] = rows.map((r) => ({
+      loc: `${SITE_URL}/board/${r.board_slug}`,
+      lastmod: r.last_updated.split('T')[0].split(' ')[0],
+      changefreq: 'daily',
+      priority: 0.6,
+    }));
+
+    const xml = this.buildUrlset(urls);
+    await this.saveToCache('sellers', xml);
+    return xml;
+  }
+
+  async getListingsSitemap(month: string): Promise<string | null> {
+    if (!/^\d{4}-\d{2}$/.test(month)) return null;
+
+    const cacheKey = `listings-${month}`;
+    const cached = await this.getFromCache(cacheKey);
+    if (cached) return cached;
+
+    const [year, mon] = month.split('-').map(Number);
+    const startDate = new Date(year, mon - 1, 1);
+    const endDate = new Date(year, mon, 1);
+
+    const listings: { id: string; updated_at: Date }[] = await this.listingRepo
+      .createQueryBuilder('l')
+      .select(['l.id', 'l.updated_at'])
+      .where('l.status = :status', { status: 'Active' })
+      .andWhere('l.created_at >= :start', { start: startDate })
+      .andWhere('l.created_at < :end', { end: endDate })
+      .orderBy('l.updated_at', 'DESC')
+      .addOrderBy('l.id', 'ASC')
+      .getMany();
+
+    if (listings.length === 0) return null;
+
+    const urls: SitemapUrl[] = listings.map((l) => ({
+      loc: `${SITE_URL}/listings/${l.id}`,
+      lastmod: l.updated_at.toISOString().split('T')[0],
+      changefreq: 'hourly',
+      priority: 0.9,
+    }));
+
+    const xml = this.buildUrlset(urls);
+    await this.saveToCache(cacheKey, xml);
+    return xml;
+  }
+
+  private async getActiveListingMonths(): Promise<string[]> {
+    const rows: { month: string }[] = await this.listingRepo.query(
+      `SELECT DISTINCT TO_CHAR(created_at, 'YYYY-MM') AS month
+       FROM listings
+       WHERE status = 'Active'
+       ORDER BY month DESC`,
+    );
+    return rows.map((r) => r.month);
+  }
+
+  private escapeXml(str: string): string {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;');
+  }
+
+  private buildSitemapIndex(sitemaps: { loc: string; lastmod: string }[]): string {
+    const entries = sitemaps
+      .map(
+        (s) =>
+          `  <sitemap>\n    <loc>${this.escapeXml(s.loc)}</loc>\n    <lastmod>${s.lastmod}</lastmod>\n  </sitemap>`,
+      )
+      .join('\n');
+
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</sitemapindex>\n`;
+  }
+
+  private buildUrlset(urls: SitemapUrl[]): string {
+    const entries = urls
+      .map((u) => {
+        let xml = `  <url>\n    <loc>${this.escapeXml(u.loc)}</loc>\n    <lastmod>${u.lastmod}</lastmod>`;
+        if (u.changefreq) xml += `\n    <changefreq>${u.changefreq}</changefreq>`;
+        if (u.priority !== undefined) xml += `\n    <priority>${u.priority}</priority>`;
+        xml += '\n  </url>';
+        return xml;
+      })
+      .join('\n');
+
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>\n`;
+  }
+
+  private today(): string {
+    return new Date().toISOString().split('T')[0];
+  }
+
+  private async getFromCache(name: string): Promise<string | null> {
+    try {
+      return await this.redis.get(`${CACHE_PREFIX}${name}`);
+    } catch {
+      return null;
+    }
+  }
+
+  private async saveToCache(name: string, xml: string): Promise<void> {
+    try {
+      await this.redis.set(`${CACHE_PREFIX}${name}`, xml, CACHE_TTL);
+    } catch {
+      // Redis write failure is non-critical
+    }
+  }
+}

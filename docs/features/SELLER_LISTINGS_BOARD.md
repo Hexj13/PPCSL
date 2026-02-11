@@ -50,8 +50,8 @@
 * Обязательные требования:
 
   * `meta robots: noindex, nofollow`
-  * отсутствие в sitemap
-* Страница доступна только для просмотра пользователями, но не для поисковых систем
+* Seller board URLs are included in the sitemap (`/sitemaps/sellers.xml`) only when the seller is active and has at least one Active listing; otherwise they are not in the sitemap and may use noindex
+* Страница доступна для просмотра пользователями; индексация — только для активных продавцов с активными объявлениями (через sitemap)
 
 ---
 
