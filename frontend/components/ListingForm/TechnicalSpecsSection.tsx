@@ -442,7 +442,7 @@ export function TechnicalSpecsSection({
                       : '',
                   }));
                 }}
-                className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
+                className={`w-6 h-6 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
                   formData.is_registered
                     ? 'bg-gradient-to-r from-primary-700 to-primary-800 border-primary-500'
                     : 'border-primary-500/50 bg-bg-secondary group-hover:border-primary-500'
@@ -450,7 +450,7 @@ export function TechnicalSpecsSection({
               >
                 {formData.is_registered && (
                   <svg
-                    className="w-3 h-3 text-white"
+                    className="w-4 h-4 text-white"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"

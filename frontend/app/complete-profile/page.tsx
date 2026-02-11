@@ -8,7 +8,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { authApi, favoritesApi, listingsApi, savedFiltersApi, UpdateProfileDto } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
-import { LoadingButton } from '@/ui';
+import { LoadingButton, InfoBlock, HintTooltip } from '@/ui';
 
 function CompleteProfileContent() {
   const router = useRouter();
@@ -470,9 +470,9 @@ function CompleteProfileContent() {
       </h1>
       <div className="card p-6 md:p-8">
         <div className="space-y-6">
-          <div className="text-center">
-            <p className="text-sm text-text-secondary">{t('completeProfile.description')}</p>
-          </div>
+          <InfoBlock>
+            <p>{t('completeProfile.description')}</p>
+          </InfoBlock>
 
           <form
             onSubmit={(e) => {
@@ -503,9 +503,14 @@ function CompleteProfileContent() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold mb-2 text-primary-500">
-                    {t('register.email')}
-                  </label>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <label className="text-sm font-semibold text-primary-500">
+                      {t('register.email')}
+                    </label>
+                    <HintTooltip ariaLabel={t('register.emailHint')}>
+                      {t('register.emailHint')}
+                    </HintTooltip>
+                  </div>
                   <input
                     type="email"
                     value={formData.email}
@@ -621,9 +626,14 @@ function CompleteProfileContent() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold mb-2 text-primary-500">
-                    {t('register.email')}
-                  </label>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <label className="text-sm font-semibold text-primary-500">
+                      {t('register.email')}
+                    </label>
+                    <HintTooltip ariaLabel={t('register.emailHint')}>
+                      {t('register.emailHint')}
+                    </HintTooltip>
+                  </div>
                   <input
                     type="email"
                     value={formData.email}

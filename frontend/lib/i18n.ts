@@ -58,6 +58,7 @@ export interface Translations {
     yes: string;
     no: string;
     search: string;
+    requiredAsterisk: string;
     filter: string;
     reset: string;
     apply: string;
@@ -116,6 +117,7 @@ export interface Translations {
     business: string;
     phone: string;
     phoneHint: string;
+    emailHint: string;
     phoneRequired: string;
     phoneInvalid: string;
     phoneMustStartWithPlus: string;

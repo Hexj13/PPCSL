@@ -12,7 +12,7 @@ import { IBrandsCache, BRANDS_CACHE } from '../../../brands/application/ports/br
 import { BrandsService } from '../../../brands/brands.service';
 import { I18nService } from '../../../common/i18n/i18n.service';
 import { removePasswordFromUser } from '../../../common/utils/error-handling.utils';
-import { sanitizeHtml } from '../../../common/utils/html-sanitizer';
+import { normalizeDescriptionHtml, sanitizeHtml } from '../../../common/utils/html-sanitizer';
 import { ListingTitleService } from '../../domain/services/listing-title.service';
 import { validateRegistrationDate } from '../../domain/utils/validation.utils';
 import { Listing } from '../../entities/listing.entity';
@@ -102,7 +102,7 @@ export class UpdateListingUseCase {
     const listingUpdateData: Partial<Listing> = {
       ...(listingFields as Partial<Listing>),
       description: listingFields.description
-        ? sanitizeHtml(listingFields.description)
+        ? normalizeDescriptionHtml(sanitizeHtml(listingFields.description)) || undefined
         : listingFields.description,
       last_edited_at: new Date(),
       title: await this.generateTitle(updatedVehicle),

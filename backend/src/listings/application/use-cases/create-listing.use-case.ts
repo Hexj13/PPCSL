@@ -6,7 +6,7 @@ import {
   Currency as CurrencyEnum,
   ListingStatus as ListingStatusEnum,
 } from '../../../common/types';
-import { sanitizeHtml } from '../../../common/utils/html-sanitizer';
+import { normalizeDescriptionHtml, sanitizeHtml } from '../../../common/utils/html-sanitizer';
 import { UsersService } from '../../../users/application/users.service';
 import { ListingTitleService } from '../../domain/services/listing-title.service';
 import { validateRegistrationDate } from '../../domain/utils/validation.utils';
@@ -50,7 +50,9 @@ export class CreateListingUseCase {
     const listing = new Listing();
     Object.assign(listing, {
       ...listingFields,
-      description: dto.description ? sanitizeHtml(dto.description) : undefined,
+      description: dto.description
+        ? normalizeDescriptionHtml(sanitizeHtml(dto.description)) || undefined
+        : undefined,
       title,
       status,
       currency: dto.currency || CurrencyEnum.EUR,

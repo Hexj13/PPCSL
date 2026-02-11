@@ -1,5 +1,15 @@
 const ALLOWED_TAGS = ['p', 'br', 'div', 'strong', 'em', 'i', 'b', 'u', 'ul', 'ol', 'li', 'font'];
 
+const EMPTY_BLOCK_CONTENT = '(?:(?:<\\s*br\\s*\\/?>)|&nbsp;|\\s)*';
+const EMPTY_BLOCK_PATTERN = `\\s*<\\s*(?:p|div)(?:\\s[^>]*)?>\\s*${EMPTY_BLOCK_CONTENT}\\s*<\\s*\\/(?:p|div)\\s*>\\s*`;
+const LEADING_EMPTY_BLOCKS = new RegExp(`^(?:${EMPTY_BLOCK_PATTERN})+`, 'i');
+const TRAILING_EMPTY_BLOCKS = new RegExp(`(?:${EMPTY_BLOCK_PATTERN})+$`, 'i');
+
+export function normalizeDescriptionHtml(html: string): string {
+  if (!html || typeof html !== 'string') return '';
+  return html.trim().replace(LEADING_EMPTY_BLOCKS, '').replace(TRAILING_EMPTY_BLOCKS, '').trim();
+}
+
 export function sanitizeHtml(html: string): string {
   if (!html || typeof html !== 'string') {
     return '';

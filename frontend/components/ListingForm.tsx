@@ -79,7 +79,6 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
     showDelay: 200,
     minDisplayTime: 1000,
   });
-  const [showVinHint, setShowVinHint] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState<ListingFormData>(() => getInitialFormData(initialData));
   const [errors, setErrors] = useState<Record<string, boolean>>({});
@@ -377,7 +376,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
         price: parseInt(formData.price, 10),
         currency: formData.currency,
         city: formData.city,
-        description: formData.description || undefined,
+        description: formData.description?.trim() || undefined,
         status: formData.status,
         images: formData.images,
         urgent: formData.urgent,
@@ -528,8 +527,6 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
     models,
     loadingModels,
     cities,
-    showVinHint,
-    setShowVinHint,
     handleWheel,
     siteConfig,
     onFormFieldFocus: handleFormFieldFocus,

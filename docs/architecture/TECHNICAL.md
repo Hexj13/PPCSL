@@ -285,6 +285,15 @@ PPCSL/
 - State management handled by Zustand stores
 - API calls for subsequent data loads use Axios client (`lib/api` → api.ts)
 
+### Shared UI Components
+
+Reusable UI primitives are located in `frontend/ui/` and exported from `@/ui`:
+
+- **InfoBlock** — Static informational block with icon (info or warning variant)
+- **HintTooltip** — "?" click-to-reveal popover with smart positioning and animation
+
+See [UI_COMPONENTS.md](../features/UI_COMPONENTS.md) for props, behavior, and usage guidelines.
+
 ### Key Features
 
 - **Image Processing:** Automatic compression, resizing (max 1920px width), conversion to WebP format (75% quality by default)
@@ -1009,7 +1018,7 @@ Or use `npm run dev` in root - it will start both servers.
 - **API Documentation:** Swagger available at `/api` endpoint (when running)
 - **Project README:** See [README.md](../../README.md) in project root
 - **Deployment Guide:** See [DEPLOYMENT.md](../guides/DEPLOYMENT.md) for production deployment
-- **Feature docs:** [SELLER_LISTINGS_BOARD.md](../features/SELLER_LISTINGS_BOARD.md), [PAID_PROMOTION.md](../features/PAID_PROMOTION.md), [IMAGE_PREVIEW.md](../features/IMAGE_PREVIEW.md), [TODO.md](../features/TODO.md)
+- **Feature docs:** [SELLER_LISTINGS_BOARD.md](../features/SELLER_LISTINGS_BOARD.md), [PAID_PROMOTION.md](../features/PAID_PROMOTION.md), [IMAGE_PREVIEW.md](../features/IMAGE_PREVIEW.md), [UI_COMPONENTS.md](../features/UI_COMPONENTS.md), [TODO.md](../features/TODO.md)
 
 ---
 

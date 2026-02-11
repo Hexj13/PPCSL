@@ -22,4 +22,6 @@ export {
   MotoIcon,
   TruckIcon,
 } from './icons';
+export { InfoBlock, type InfoBlockProps } from './InfoBlock';
+export { HintTooltip, type HintTooltipProps } from './HintTooltip';
 export { designTokens, type DesignTokens } from './design-tokens';

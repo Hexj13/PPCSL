@@ -546,6 +546,20 @@ export default function MyListingsPage() {
                 href="/listings/new"
                 className="w-full sm:w-auto h-[48px] text-primary-500 font-medium text-base hover:text-primary-700 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 rounded-lg border-2 border-primary-500 hover:border-primary-700 bg-primary-500/10 hover:bg-primary-500/20 inline-block text-center"
               >
+                <svg
+                  className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
                 {t('myListings.createListing')}
               </a>
             )}

@@ -12,8 +12,6 @@ export interface ListingFormSectionProps {
   models?: VehicleModel[];
   loadingModels?: boolean;
   cities?: City[];
-  showVinHint?: boolean;
-  setShowVinHint?: (_show: boolean) => void;
   handleWheel?: (_e: React.WheelEvent<HTMLInputElement>) => void;
   siteConfig?: { currency: string };
   vehicleType?: 'car' | 'truck' | 'moto';

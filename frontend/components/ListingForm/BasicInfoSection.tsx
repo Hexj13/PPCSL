@@ -1,12 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-
 import { Dropdown } from '@/components/common/Dropdown';
 import { useTranslation } from '@/hooks/useTranslation';
 import { getYearOptions } from '@/lib/options';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { getCountry } from '@/lib/utils';
+import { InfoBlock, HintTooltip } from '@/ui';
 
 import { RequiredAsterisk } from './RequiredAsterisk';
 import { ListingFormSectionProps } from './types';
@@ -19,52 +18,30 @@ export function BasicInfoSection({
   brands = [],
   models = [],
   loadingModels = false,
-  showVinHint: showVinHintProp,
-  setShowVinHint: setShowVinHintProp,
 }: ListingFormSectionProps) {
   const { t } = useTranslation();
   const country = getCountry();
   const siteConfig = loadSiteConfigSync(country);
-  const [showVinHintLocal, setShowVinHintLocal] = useState(false);
-  const showVinHint = showVinHintProp !== undefined ? showVinHintProp : showVinHintLocal;
-  const setShowVinHint = setShowVinHintProp || setShowVinHintLocal;
 
   return (
     <div className="mb-6">
       <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-500">
         {t('listings.basicInfo')}
       </h2>
-      <div className="bg-primary-500/10 border border-primary-500/30 rounded-lg p-4 mb-5">
-        <div className="flex items-start gap-3">
-          <svg
-            className="w-5 h-5 text-primary-400 flex-shrink-0 mt-0.5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          <p className="text-sm text-text-secondary leading-relaxed">
-            {t('listings.brandModelInfo')
-              .split('support@kupito.club')
-              .map((part, index, array) => (
-                <span key={index}>
-                  {part}
-                  {index < array.length - 1 && (
-                    <strong className="font-bold text-primary-400">
-                      {siteConfig.supportEmail}
-                    </strong>
-                  )}
-                </span>
-              ))}
-          </p>
-        </div>
-      </div>
+      <InfoBlock className="mb-5">
+        <p>
+          {t('listings.brandModelInfo')
+            .split('support@kupito.club')
+            .map((part, index, array) => (
+              <span key={index}>
+                {part}
+                {index < array.length - 1 && (
+                  <strong className="font-bold text-primary-400">{siteConfig.supportEmail}</strong>
+                )}
+              </span>
+            ))}
+        </p>
+      </InfoBlock>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
         <div>
           <label className="block text-sm font-semibold mb-2 text-primary-400">
@@ -145,41 +122,13 @@ export function BasicInfoSection({
         </div>
 
         <div>
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-1.5 mb-2">
             <label htmlFor="vin-input" className="text-sm font-semibold text-primary-400">
               {t('listings.vinLabel')}
             </label>
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowVinHint(!showVinHint)}
-                className="focus:outline-none p-0.5 -m-0.5 rounded"
-                aria-expanded={showVinHint}
-                aria-label={t('listings.vinHintButton')}
-              >
-                <svg
-                  className="w-4 h-4 text-primary-400 hover:text-primary-300 cursor-pointer transition-colors"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </button>
-              <div
-                className={`absolute right-0 bottom-full mb-2 ${showVinHint ? 'block' : 'hidden'} z-10 w-64`}
-              >
-                <div className="bg-bg-darker border-2 border-primary-500/50 rounded-lg p-3 shadow-lg">
-                  <p className="text-xs text-gray-900 leading-relaxed">{t('listings.vinHint')}</p>
-                  <div className="absolute right-4 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-primary-500/50"></div>
-                </div>
-              </div>
-            </div>
+            <HintTooltip ariaLabel={t('listings.vinHintButton')}>
+              {t('listings.vinHint')}
+            </HintTooltip>
           </div>
           <input
             id="vin-input"

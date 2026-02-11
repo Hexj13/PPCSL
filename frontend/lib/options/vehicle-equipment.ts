@@ -84,7 +84,6 @@ export const VEHICLE_EQUIPMENT_KEYS = [
   'tires_sport',
   'tires_all_terrain',
   'tires_all_season',
-  'tires_run_flat',
 ] as const;
 
 export type VehicleEquipmentKey = (typeof VEHICLE_EQUIPMENT_KEYS)[number];
@@ -200,7 +199,6 @@ export const EQUIPMENT_CATEGORY_MAP: Record<VehicleEquipmentKey, EquipmentCatego
   tires_sport: 'tires',
   tires_all_terrain: 'tires',
   tires_all_season: 'tires',
-  tires_run_flat: 'tires',
 };
 
 const CAR_EQUIPMENT: readonly VehicleEquipmentKey[] = [
@@ -261,7 +259,6 @@ const CAR_EQUIPMENT: readonly VehicleEquipmentKey[] = [
   'tires_sport',
   'tires_all_terrain',
   'tires_all_season',
-  'tires_run_flat',
 ] as const;
 
 const TRUCK_EQUIPMENT: readonly VehicleEquipmentKey[] = [

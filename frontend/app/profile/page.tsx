@@ -9,7 +9,7 @@ import { Modal } from '@/components/modals/Modal';
 import { useTranslation } from '@/hooks/useTranslation';
 import { authApi, UpdateProfileDto, User } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
-import { LoadingButton } from '@/ui';
+import { LoadingButton, InfoBlock } from '@/ui';
 
 const convertToBoolean = (value: unknown): boolean => {
   if (value === true || value === 'true' || value === 1 || value === '1') {
@@ -293,20 +293,22 @@ export default function ProfilePage() {
                 </svg>
               </Link>
             </div>
-            <p className="mt-2 text-sm text-text-secondary">
-              {t('profile.phoneChangeBoardUrlNoticeBefore')}
-              {user?.boardSlug ? (
-                <Link
-                  href={`/board/${user.boardSlug}`}
-                  className="text-primary-500 underline hover:text-primary-700"
-                >
-                  {t('myListings.myBoard')}
-                </Link>
-              ) : (
-                t('myListings.myBoard')
-              )}
-              {t('profile.phoneChangeBoardUrlNoticeAfter')}
-            </p>
+            <InfoBlock variant="warning" className="mt-2">
+              <p>
+                {t('profile.phoneChangeBoardUrlNoticeBefore')}
+                {user?.boardSlug ? (
+                  <Link
+                    href={`/board/${user.boardSlug}`}
+                    className="text-primary-500 underline hover:text-primary-700"
+                  >
+                    {t('myListings.myBoard')}
+                  </Link>
+                ) : (
+                  t('myListings.myBoard')
+                )}
+                {t('profile.phoneChangeBoardUrlNoticeAfter')}
+              </p>
+            </InfoBlock>
             <div className="mt-4 space-y-3">
               <span className="block text-sm font-semibold mb-2 text-primary-500">
                 {t('profile.availableMessengers')}

@@ -58,6 +58,7 @@
     "yes": "Yes",
     "no": "No",
     "search": "Search",
+    "requiredAsterisk": "*",
     "apiErrors": {
       "timeout": "Connection timeout. Please try again.",
       "networkError": "Network error. Check your internet connection.",
@@ -183,6 +184,7 @@
     "phone": "Phone",
     "phonePlaceholder": "+37370123456",
     "phoneHint": "If email is also provided, login can be performed by both phone number and email",
+    "emailHint": "You can log in with this email or with your phone number",
     "phoneRequired": "Phone is required",
     "phoneInvalid": "Enter a valid phone (format: +country code number)",
     "phoneMustStartWithPlus": "Phone must start with +",
