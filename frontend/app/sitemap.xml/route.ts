@@ -154,16 +154,8 @@ async function generateEntries(): Promise<SitemapEntry[]> {
   return entries;
 }
 
-function getFallbackEntries(): SitemapEntry[] {
-  return [
-    {
-      url: 'https://kupito.club',
-      lastmod: new Date().toISOString().split('T')[0],
-      changefreq: 'daily',
-      priority: 1.0,
-    },
-  ];
-}
+export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 export async function GET() {
   let entries: SitemapEntry[];
@@ -172,12 +164,24 @@ export async function GET() {
   } catch {
     entries = [];
   }
-  const xml = entries.length > 0 ? buildXml(entries) : buildXml(getFallbackEntries());
+
+  if (entries.length === 0) {
+    entries = [
+      {
+        url: 'https://kupito.club',
+        lastmod: new Date().toISOString().split('T')[0],
+        changefreq: 'daily',
+        priority: 1.0,
+      },
+    ];
+  }
+
+  const xml = buildXml(entries);
 
   return new NextResponse(xml, {
     headers: {
       'Content-Type': 'application/xml; charset=utf-8',
-      'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+      'Cache-Control': 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400',
     },
   });
 }
