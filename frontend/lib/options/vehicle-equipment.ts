@@ -157,7 +157,6 @@ export const EQUIPMENT_CATEGORY_MAP: Record<VehicleEquipmentKey, EquipmentCatego
   parking_sensors: 'assistance',
   rain_sensor: 'assistance',
   rear_camera: 'assistance',
-  rear_entertainment: 'multimedia',
   riding_modes: 'assistance',
   start_stop: 'assistance',
 
