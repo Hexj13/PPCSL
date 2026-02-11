@@ -102,13 +102,9 @@ export class TypeOrmListingRepository implements IListingRepository {
       .andWhere('listing.id != :currentId', { currentId });
 
     if (vehicle_type) {
-      queryBuilder.andWhere(
-        '(model.vehicle_type = :vehicle_type OR (model.vehicle_type IS NULL AND vehicle.body_type IN (:...bodyTypes)))',
-        {
-          vehicle_type,
-          bodyTypes: BODY_TYPES_BY_VEHICLE_TYPE[vehicle_type],
-        },
-      );
+      queryBuilder.andWhere('vehicle.body_type IN (:...bodyTypes)', {
+        bodyTypes: BODY_TYPES_BY_VEHICLE_TYPE[vehicle_type],
+      });
     }
 
     queryBuilder.limit(100);
@@ -171,13 +167,9 @@ export class TypeOrmListingRepository implements IListingRepository {
     applyInOrEqualFilter(qb, 'vehicle', 'model_id', searchDto.model_ids, searchDto.model_id);
 
     if (searchDto.vehicleType) {
-      qb.andWhere(
-        '(model.vehicle_type = :vehicleType OR (model.vehicle_type IS NULL AND vehicle.body_type IN (:...bodyTypes)))',
-        {
-          vehicleType: searchDto.vehicleType,
-          bodyTypes: BODY_TYPES_BY_VEHICLE_TYPE[searchDto.vehicleType],
-        },
-      );
+      qb.andWhere('vehicle.body_type IN (:...bodyTypes)', {
+        bodyTypes: BODY_TYPES_BY_VEHICLE_TYPE[searchDto.vehicleType],
+      });
     }
 
     applyRangeFilter(qb, 'vehicle', 'year', searchDto.year_gte, searchDto.year_lte);

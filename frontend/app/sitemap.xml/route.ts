@@ -5,10 +5,6 @@ import { BODY_TYPES_BY_VEHICLE_TYPE } from '@/lib/constants';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { createSlug, getCountry } from '@/lib/utils';
 
-const country = getCountry();
-const siteConfig = loadSiteConfigSync(country);
-const siteUrl = siteConfig.siteUrl;
-
 interface SitemapEntry {
   url: string;
   lastmod: string;
@@ -37,7 +33,10 @@ function buildXml(entries: SitemapEntry[]): string {
 }
 
 async function generateEntries(): Promise<SitemapEntry[]> {
-  const now = new Date().toISOString();
+  const country = getCountry();
+  const siteConfig = loadSiteConfigSync(country);
+  const siteUrl = (siteConfig.siteUrl || 'https://kupito.club').replace(/\/$/, '');
+  const now = new Date().toISOString().split('T')[0];
   const entries: SitemapEntry[] = [];
 
   entries.push(
@@ -155,13 +154,29 @@ async function generateEntries(): Promise<SitemapEntry[]> {
   return entries;
 }
 
+function getFallbackEntries(): SitemapEntry[] {
+  return [
+    {
+      url: 'https://kupito.club',
+      lastmod: new Date().toISOString().split('T')[0],
+      changefreq: 'daily',
+      priority: 1.0,
+    },
+  ];
+}
+
 export async function GET() {
-  const entries = await generateEntries();
-  const xml = buildXml(entries);
+  let entries: SitemapEntry[];
+  try {
+    entries = await generateEntries();
+  } catch {
+    entries = [];
+  }
+  const xml = entries.length > 0 ? buildXml(entries) : buildXml(getFallbackEntries());
 
   return new NextResponse(xml, {
     headers: {
-      'Content-Type': 'application/xml',
+      'Content-Type': 'application/xml; charset=utf-8',
       'Cache-Control': 'public, max-age=3600, s-maxage=3600',
     },
   });
