@@ -1146,12 +1146,11 @@
       "windshield": "Windshield",
       "wireless_charging": "Wireless Charging",
       "xenon_lights": "Xenon Lights",
-      "tires_summer": "Summer",
-      "tires_winter": "Winter",
-      "tires_sport": "Sport",
-      "tires_all_terrain": "All-Terrain",
-      "tires_all_season": "All-Season",
-      "tires_run_flat": "Run-Flat"
+      "tires_summer": "Summer tires",
+      "tires_winter": "Winter tires",
+      "tires_sport": "Sport tires",
+      "tires_all_terrain": "All-terrain tires",
+      "tires_all_season": "All-season tires"
     },
     "equipmentCategories": {
       "comfort": "Comfort",
