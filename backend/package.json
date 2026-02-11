@@ -30,6 +30,7 @@
     "clear-cache:listings": "ts-node -r tsconfig-paths/register src/scripts/stage/clear-listing-cache.ts",
     "clear-cache:listing": "ts-node -r tsconfig-paths/register src/scripts/stage/clear-listing-cache.ts",
     "clear-cache:brands": "ts-node -r tsconfig-paths/register src/scripts/stage/clear-brands-cache.ts",
+    "clear-cache:brands:prod": "ts-node -r tsconfig-paths/register src/scripts/production/clear-brands-cache.ts",
     "copy-seed-images": "ts-node -r tsconfig-paths/register src/scripts/stage/copy-images-to-seed.ts",
     "create-test-listing": "ts-node -r tsconfig-paths/register src/scripts/stage/create-test-listing.ts",
     "seed:vin": "ts-node -r tsconfig-paths/register src/scripts/stage/seed-vin-test.ts",

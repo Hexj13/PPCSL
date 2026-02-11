@@ -2,7 +2,6 @@ import 'reflect-metadata';
 import { Brand } from '../../brands/entities/brand.entity';
 import { VehicleModel } from '../../brands/entities/vehicle-model.entity';
 import { AppDataSource } from '../../data-source';
-import { determineVehicleType } from '../data/vehicle-classification';
 import { checkEnvironment, checkPlatform } from '../script-guard';
 
 checkEnvironment(['production', 'stage', 'development', 'test']);
@@ -1341,40 +1340,55 @@ async function addTruckBrandsAndModels() {
     const maxOrder =
       existingModels.length > 0 ? Math.max(...existingModels.map((m) => m.order || 0)) : 0;
 
-    const existingModelsMap = new Map<string, VehicleModel>();
+    const existingModelsByName = new Map<string, VehicleModel[]>();
     for (const model of existingModels) {
-      existingModelsMap.set(model.name.toLowerCase(), model);
+      const key = model.name.toLowerCase();
+      const list = existingModelsByName.get(key) ?? [];
+      list.push(model);
+      existingModelsByName.set(key, list);
     }
 
     const modelsToCreate: VehicleModel[] = [];
     const modelsToUpdate: VehicleModel[] = [];
+    let nextOrder = maxOrder + 1;
 
     for (let i = 0; i < models.length; i++) {
       const modelName = models[i];
       const modelNameLower = modelName.toLowerCase();
+      const existingList = existingModelsByName.get(modelNameLower) ?? [];
+      const existingTruck = existingList.find((m) => m.vehicle_type === 'truck');
+      const existingCar = existingList.find((m) => m.vehicle_type === 'car');
 
-      const existingModel = existingModelsMap.get(modelNameLower);
-
-      if (!existingModel) {
-        let vehicleType = determineVehicleType(modelName, brandName);
-        if (vehicleType !== 'truck') {
-          vehicleType = 'truck';
-        }
-        const model = modelRepo.create({
+      if (existingTruck) {
+        existingTruck.order = nextOrder++;
+        modelsToUpdate.push(existingTruck);
+        updatedModels++;
+      } else if (existingCar && existingList.length > 0) {
+        const truckModel = modelRepo.create({
           name: modelName,
           brand_id: brand.id,
-          order: maxOrder + i + 1,
-          vehicle_type: vehicleType,
+          order: nextOrder++,
+          vehicle_type: 'truck',
         });
-        modelsToCreate.push(model);
+        modelsToCreate.push(truckModel);
         newModels++;
-      } else {
-        existingModel.order = maxOrder + i + 1;
+      } else if (existingList.length > 0) {
+        const existingModel = existingList[0];
+        existingModel.order = nextOrder++;
         if (!existingModel.vehicle_type || existingModel.vehicle_type !== 'truck') {
           existingModel.vehicle_type = 'truck';
         }
         modelsToUpdate.push(existingModel);
         updatedModels++;
+      } else {
+        const model = modelRepo.create({
+          name: modelName,
+          brand_id: brand.id,
+          order: nextOrder++,
+          vehicle_type: 'truck',
+        });
+        modelsToCreate.push(model);
+        newModels++;
       }
     }
 
