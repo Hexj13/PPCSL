@@ -56,13 +56,6 @@ const nextConfig = {
   env: {
     API_URL: process.env.API_URL || 'http://localhost:4000',
   },
-  async rewrites() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-    return [
-      { source: '/sitemap.xml', destination: `${apiUrl}/api/sitemap.xml` },
-      { source: '/sitemaps/:path*', destination: `${apiUrl}/api/sitemaps/:path*` },
-    ];
-  },
   async headers() {
     const isDev = process.env.NODE_ENV === 'development';
     const headers = [
