@@ -38,7 +38,7 @@ jest.mock('@/lib/store', () => ({
 const searchFiltersTranslations: Record<string, string> = {
   'searchFilters.basicCriteria': 'Basic criteria',
   'searchFilters.additionalCriteria': 'Additional criteria',
-  'searchFilters.popularFilters': 'Popular filters',
+  'searchFilters.popularFilters': 'Popular Models',
   'searchFilters.brand': 'Brand',
   'searchFilters.model': 'Model',
   'searchFilters.city': 'City',

@@ -1,9 +1,11 @@
 export const VEHICLE_EQUIPMENT_KEYS = [
   'abs',
   'adaptive_cruise_control',
+  'adaptive_high_beam',
   'adblue_system',
   'air_conditioning',
   'air_suspension',
+  'auxiliary_lighting',
   'alarm_system',
   'ambient_lighting',
   'alloy_wheels',
@@ -16,6 +18,7 @@ export const VEHICLE_EQUIPMENT_KEYS = [
   'cb_radio',
   'center_stand',
   'central_locking',
+  'climate_control',
   'cornering_abs',
   'cornering_lights',
   'cruise_control',
@@ -49,17 +52,20 @@ export const VEHICLE_EQUIPMENT_KEYS = [
   'parking_brake',
   'parking_sensors',
   'phone_holder',
+  'premium_audio',
   'quick_shifter',
   'rain_sensor',
   'rear_camera',
   'rear_entertainment',
   'rear_footrest',
+  'running_boards',
   'refrigerator',
   'retarder',
   'riding_modes',
   'roof_rails',
   'saddlebags',
   'sleeper_cab',
+  'soft_close_doors',
   'socket_220v',
   'start_stop',
   'sunroof',
@@ -73,6 +79,12 @@ export const VEHICLE_EQUIPMENT_KEYS = [
   'windshield',
   'wireless_charging',
   'xenon_lights',
+  'tires_summer',
+  'tires_winter',
+  'tires_sport',
+  'tires_all_terrain',
+  'tires_all_season',
+  'tires_run_flat',
 ] as const;
 
 export type VehicleEquipmentKey = (typeof VEHICLE_EQUIPMENT_KEYS)[number];
@@ -83,23 +95,28 @@ export type EquipmentCategory =
   | 'lighting'
   | 'multimedia'
   | 'assistance'
-  | 'other';
+  | 'other'
+  | 'tires';
 
 export const EQUIPMENT_CATEGORIES: EquipmentCategory[] = [
   'comfort',
-  'safety',
-  'lighting',
   'multimedia',
+  'safety',
   'assistance',
+  'lighting',
+  'tires',
   'other',
 ];
 
 export const EQUIPMENT_CATEGORY_MAP: Record<VehicleEquipmentKey, EquipmentCategory> = {
+  adaptive_high_beam: 'lighting',
   air_conditioning: 'comfort',
   air_suspension: 'comfort',
+  auxiliary_lighting: 'lighting',
   ambient_lighting: 'comfort',
   alloy_wheels: 'comfort',
   central_locking: 'comfort',
+  climate_control: 'comfort',
   electric_trunk: 'comfort',
   electric_windows: 'comfort',
   heated_grips: 'comfort',
@@ -117,7 +134,9 @@ export const EQUIPMENT_CATEGORY_MAP: Record<VehicleEquipmentKey, EquipmentCatego
   panoramic_roof: 'comfort',
   quick_shifter: 'comfort',
   rear_footrest: 'comfort',
+  running_boards: 'other',
   sleeper_cab: 'comfort',
+  soft_close_doors: 'comfort',
   sunroof: 'comfort',
   ventilated_seats: 'comfort',
   windshield: 'comfort',
@@ -145,6 +164,7 @@ export const EQUIPMENT_CATEGORY_MAP: Record<VehicleEquipmentKey, EquipmentCatego
   navigation: 'multimedia',
   phone_holder: 'multimedia',
   rear_entertainment: 'multimedia',
+  premium_audio: 'multimedia',
   usb_port: 'multimedia',
   wireless_charging: 'multimedia',
 
@@ -174,12 +194,21 @@ export const EQUIPMENT_CATEGORY_MAP: Record<VehicleEquipmentKey, EquipmentCatego
   tachograph: 'other',
   tow_bar: 'other',
   winch: 'other',
+
+  tires_summer: 'tires',
+  tires_winter: 'tires',
+  tires_sport: 'tires',
+  tires_all_terrain: 'tires',
+  tires_all_season: 'tires',
+  tires_run_flat: 'tires',
 };
 
 const CAR_EQUIPMENT: readonly VehicleEquipmentKey[] = [
   'abs',
   'adaptive_cruise_control',
+  'adaptive_high_beam',
   'air_conditioning',
+  'auxiliary_lighting',
   'alloy_wheels',
   'ambient_lighting',
   'android_auto',
@@ -189,6 +218,7 @@ const CAR_EQUIPMENT: readonly VehicleEquipmentKey[] = [
   'bluetooth',
   'camera_360',
   'central_locking',
+  'climate_control',
   'cruise_control',
   'electric_trunk',
   'electric_windows',
@@ -210,12 +240,15 @@ const CAR_EQUIPMENT: readonly VehicleEquipmentKey[] = [
   'navigation',
   'panoramic_roof',
   'parking_sensors',
+  'premium_audio',
   'rain_sensor',
   'rear_camera',
   'rear_entertainment',
   'rear_footrest',
   'refrigerator',
   'roof_rails',
+  'running_boards',
+  'soft_close_doors',
   'start_stop',
   'sunroof',
   'tow_bar',
@@ -223,6 +256,12 @@ const CAR_EQUIPMENT: readonly VehicleEquipmentKey[] = [
   'ventilated_seats',
   'wireless_charging',
   'xenon_lights',
+  'tires_summer',
+  'tires_winter',
+  'tires_sport',
+  'tires_all_terrain',
+  'tires_all_season',
+  'tires_run_flat',
 ] as const;
 
 const TRUCK_EQUIPMENT: readonly VehicleEquipmentKey[] = [
@@ -232,10 +271,12 @@ const TRUCK_EQUIPMENT: readonly VehicleEquipmentKey[] = [
   'air_suspension',
   'alarm_system',
   'alloy_wheels',
+  'auxiliary_lighting',
   'bluetooth',
   'camera_360',
   'cb_radio',
   'central_locking',
+  'climate_control',
   'cruise_control',
   'electric_windows',
   'esp',
@@ -249,10 +290,12 @@ const TRUCK_EQUIPMENT: readonly VehicleEquipmentKey[] = [
   'navigation',
   'parking_brake',
   'parking_sensors',
+  'premium_audio',
   'rear_camera',
   'refrigerator',
   'retarder',
   'roof_rails',
+  'running_boards',
   'sleeper_cab',
   'socket_220v',
   'tachograph',
@@ -260,12 +303,17 @@ const TRUCK_EQUIPMENT: readonly VehicleEquipmentKey[] = [
   'usb_port',
   'winch',
   'xenon_lights',
+  'tires_summer',
+  'tires_winter',
+  'tires_all_terrain',
+  'tires_all_season',
 ] as const;
 
 const MOTO_EQUIPMENT: readonly VehicleEquipmentKey[] = [
   'abs',
   'alarm_system',
   'alloy_wheels',
+  'auxiliary_lighting',
   'bluetooth',
   'center_stand',
   'cornering_abs',
@@ -287,6 +335,11 @@ const MOTO_EQUIPMENT: readonly VehicleEquipmentKey[] = [
   'traction_control',
   'usb_port',
   'windshield',
+  'tires_summer',
+  'tires_winter',
+  'tires_sport',
+  'tires_all_terrain',
+  'tires_all_season',
 ] as const;
 
 export function getEquipmentKeysByVehicleType(

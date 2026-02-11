@@ -68,8 +68,13 @@ export function useSearchFiltersSync({
     }
 
     const brandSynced = !brandParam || (brands.length > 0 && filters.brand_ids.length > 0);
+    const modelsMatchBrand =
+      models.length > 0 && models.every((m) => filters.brand_ids.includes(m.brand_id));
     const modelSynced =
-      !modelParam || !brandParam || (models.length > 0 && filters.model_ids.length > 0);
+      !modelParam ||
+      !brandParam ||
+      (models.length > 0 && filters.model_ids.length > 0) ||
+      (modelsMatchBrand && processedModelParamRef.current === modelParam);
 
     if (brandSynced && modelSynced) {
       if (hasActiveFilters) {
@@ -152,6 +157,7 @@ export function useSearchFiltersSync({
       processedModelParamRef.current !== modelParam
     ) {
       const modelSlugs = modelParam.split(',').map((s) => s.trim().toLowerCase());
+      const modelsMatchBrand = models.every((m) => filters.brand_ids.includes(m.brand_id));
       const foundModelIds = modelSlugs
         .map((slug) => {
           const model = models.find(
@@ -161,14 +167,21 @@ export function useSearchFiltersSync({
         })
         .filter((id): id is string => id !== undefined);
 
+      const shouldMarkProcessed =
+        foundModelIds.length > 0 || (foundModelIds.length === 0 && modelsMatchBrand);
+
       setFilters((prev) => {
         const currentIds = prev.model_ids.sort().join(',');
         const newIds = foundModelIds.sort().join(',');
         if (currentIds === newIds && prev.model_ids.length === foundModelIds.length) {
-          processedModelParamRef.current = modelParam;
+          if (shouldMarkProcessed) {
+            processedModelParamRef.current = modelParam;
+          }
           return prev;
         }
-        processedModelParamRef.current = modelParam;
+        if (shouldMarkProcessed) {
+          processedModelParamRef.current = modelParam;
+        }
         return {
           ...prev,
           model_ids: foundModelIds,

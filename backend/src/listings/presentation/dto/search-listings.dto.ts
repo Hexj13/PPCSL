@@ -569,6 +569,25 @@ export class SearchListingsDto {
   drive_types?: DriveType[];
 
   @ApiPropertyOptional({
+    example: ['air_conditioning', 'navigation'],
+    description: 'Equipment keys to filter by (AND logic, comma-separated or array)',
+    type: [String],
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return value.split(',').filter((v) => v.trim() !== '');
+    }
+    if (Array.isArray(value)) {
+      return value;
+    }
+    return [];
+  })
+  @IsArray()
+  @IsString({ each: true })
+  equipment?: string[];
+
+  @ApiPropertyOptional({
     example: true,
     description: 'Filter by registered vehicles',
   })

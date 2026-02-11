@@ -21,6 +21,7 @@ import { createSlug, isBrowser, sortByName } from '@/lib/utils';
 
 import { AdvancedFilters } from './search-filters/AdvancedFilters';
 import { BasicFilters } from './search-filters/BasicFilters';
+import { EquipmentFilters } from './search-filters/EquipmentFilters';
 import { PopularFilters } from './search-filters/PopularFilters';
 import { SearchFormActions } from './search-filters/SearchFormActions';
 import { SearchTabs } from './search-filters/SearchTabs';
@@ -81,9 +82,12 @@ export function SearchFilters() {
     filters.urgent === true ||
     filters.is_new === true;
 
+  const hasEquipmentFiltersActive = filters.equipment.length > 0;
+
   const tabs = useSearchTabs({
     hasBasicFilters,
     hasAdvancedFiltersActive,
+    hasEquipmentFiltersActive,
   });
 
   const { vehicleType, setVehicleTypeWithStorage, handleVehicleTypeChange } = useVehicleType({
@@ -284,6 +288,7 @@ export function SearchFilters() {
       !searchParams.get('horsepower_gte') &&
       !searchParams.get('horsepower_lte') &&
       !searchParams.get('drive_types') &&
+      !searchParams.get('equipment') &&
       !searchParams.get('body_types') &&
       !searchParams.get('urgent') &&
       !searchParams.get('is_new') &&
@@ -395,8 +400,10 @@ export function SearchFilters() {
             onTabChange={tabs.setActiveTab}
             hasBasicFilters={hasBasicFilters}
             hasAdvancedFiltersActive={hasAdvancedFiltersActive}
+            hasEquipmentFiltersActive={hasEquipmentFiltersActive}
             basicTabRef={tabs.basicTabRef}
             advancedTabRef={tabs.advancedTabRef}
+            equipmentTabRef={tabs.equipmentTabRef}
             popularTabRef={tabs.popularTabRef}
             indicatorRef={tabs.indicatorRef}
             indicatorStyle={tabs.indicatorStyle}
@@ -435,6 +442,14 @@ export function SearchFilters() {
           getConditionOptions={filterOptions.getConditionOptions}
           getRegistrationTypeOptions={filterOptions.getRegistrationTypeOptions}
           registrationOptions={filterOptions.REGISTRATION_OPTIONS}
+          vehicleType={vehicleType}
+        />
+      )}
+
+      {tabs.activeTab === 'equipment' && (
+        <EquipmentFilters
+          equipment={filters.equipment}
+          onChange={(keys) => updateFilter('equipment', keys)}
           vehicleType={vehicleType}
         />
       )}

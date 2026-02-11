@@ -12,7 +12,13 @@ export interface CheckboxProps {
   id?: string;
   className?: string;
   labelClassName?: string;
+  size?: 'sm' | 'md';
 }
+
+const sizeClasses = {
+  sm: { box: 'w-5 h-5', icon: 'w-3 h-3' },
+  md: { box: 'w-6 h-6', icon: 'w-4 h-4' },
+};
 
 export function Checkbox({
   checked,
@@ -22,6 +28,7 @@ export function Checkbox({
   id,
   className = '',
   labelClassName = '',
+  size = 'sm',
 }: CheckboxProps) {
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -49,7 +56,7 @@ export function Checkbox({
         />
         <div
           onClick={handleClick}
-          className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center ${
+          className={`${sizeClasses[size].box} rounded border-2 transition-all duration-200 flex items-center justify-center ${
             disabled ? 'cursor-not-allowed' : 'cursor-pointer'
           } ${
             checked
@@ -57,7 +64,7 @@ export function Checkbox({
               : 'border-divider bg-bg-secondary group-hover:border-primary-500'
           }`}
         >
-          {checked && <CheckIcon className="w-3 h-3 text-white" />}
+          {checked && <CheckIcon className={`${sizeClasses[size].icon} text-white`} />}
         </div>
       </div>
       {label && (

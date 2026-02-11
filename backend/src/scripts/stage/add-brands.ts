@@ -157,6 +157,12 @@ const BRANDS_AND_MODELS = {
     'Rafale',
     'Zoe',
     'Master',
+    'Duster',
+    'Duster Adventure',
+    'Symbol',
+    'Logan',
+    'Sandero',
+    'Logan MCV',
   ],
   Peugeot: [
     '108',
@@ -268,6 +274,10 @@ const BRANDS_AND_MODELS = {
     'Bolt',
     'Bolt EUV',
     'Volt',
+    'Captiva',
+    'Orlando',
+    'Lacetti',
+    'Niva',
   ],
   'Land Rover': ['Defender', 'Discovery', 'Discovery Sport', 'Freelander'],
   'Range Rover': [

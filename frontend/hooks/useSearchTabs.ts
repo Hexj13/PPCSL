@@ -1,18 +1,22 @@
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
+type SearchTab = 'basic' | 'advanced' | 'equipment' | 'popular';
+
 interface UseSearchTabsParams {
   hasBasicFilters: boolean;
   hasAdvancedFiltersActive: boolean;
+  hasEquipmentFiltersActive: boolean;
 }
 
 export function useSearchTabs({
   hasBasicFilters: _hasBasicFilters,
   hasAdvancedFiltersActive: _hasAdvancedFiltersActive,
+  hasEquipmentFiltersActive: _hasEquipmentFiltersActive,
 }: UseSearchTabsParams) {
   const searchParams = useSearchParams();
 
-  const getInitialTab = (): 'basic' | 'advanced' | 'popular' => {
+  const getInitialTab = (): SearchTab => {
     const hasBasicParams =
       searchParams.get('brand') ||
       searchParams.get('model') ||
@@ -46,15 +50,23 @@ export function useSearchTabs({
       searchParams.get('urgent') ||
       searchParams.get('is_new');
 
-    return hasAdvancedParams ? 'advanced' : 'basic';
+    if (hasAdvancedParams) {
+      return 'advanced';
+    }
+
+    const hasEquipmentParams = searchParams.get('equipment');
+    if (hasEquipmentParams) {
+      return 'equipment';
+    }
+
+    return 'basic';
   };
 
-  const [activeTab, setActiveTab] = useState<'basic' | 'advanced' | 'popular'>(() =>
-    getInitialTab()
-  );
+  const [activeTab, setActiveTab] = useState<SearchTab>(() => getInitialTab());
 
   const basicTabRef = useRef<HTMLButtonElement>(null);
   const advancedTabRef = useRef<HTMLButtonElement>(null);
+  const equipmentTabRef = useRef<HTMLButtonElement>(null);
   const popularTabRef = useRef<HTMLButtonElement>(null);
   const indicatorRef = useRef<HTMLDivElement>(null);
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
@@ -70,7 +82,9 @@ export function useSearchTabs({
           ? basicTabRef
           : activeTab === 'advanced'
             ? advancedTabRef
-            : popularTabRef;
+            : activeTab === 'equipment'
+              ? equipmentTabRef
+              : popularTabRef;
 
       if (activeRef.current && tabsContainerRef.current) {
         const rect = activeRef.current.getBoundingClientRect();
@@ -161,6 +175,7 @@ export function useSearchTabs({
     setActiveTab,
     basicTabRef,
     advancedTabRef,
+    equipmentTabRef,
     popularTabRef,
     indicatorRef,
     indicatorStyle,

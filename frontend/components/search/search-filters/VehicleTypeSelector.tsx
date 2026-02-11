@@ -79,16 +79,16 @@ export function VehicleTypeSelector({
 
   return (
     <div
-      className="relative mb-3 lg:mb-0 lg:absolute lg:right-4 lg:top-0 lg:bottom-0 lg:items-center"
+      className="relative mb-3 xl:mb-0 xl:absolute xl:right-4 xl:top-0 xl:bottom-0"
       suppressHydrationWarning
     >
       <div
         ref={vehicleIconsContainerRef}
-        className="flex justify-start lg:justify-end lg:items-center gap-1 overflow-x-auto overflow-y-visible scrollbar-hide"
+        className="flex justify-start xl:justify-end items-center gap-1 overflow-x-auto overflow-y-visible scrollbar-hide"
         suppressHydrationWarning
       >
         <span
-          className="hidden xl:inline text-base font-bold text-primary-700 flex-shrink-0 flex items-center mr-2 lg:mr-2"
+          className="hidden lg:inline text-base font-bold text-primary-700 flex-shrink-0 flex items-center mr-2 xl:mr-2"
           suppressHydrationWarning
         >
           {t('searchFilters.categoryLabel')}
@@ -130,7 +130,7 @@ export function VehicleTypeSelector({
           <MotoIcon className="w-12 h-12 transition-colors duration-300 scale-x-[-1] text-black" />
         </button>
         <div
-          className="absolute bottom-0 lg:bottom-0 h-0.5 bg-primary-400 transition-all duration-300 ease-in-out"
+          className="absolute bottom-0 xl:bottom-0 h-0.5 bg-primary-400 transition-all duration-300 ease-in-out"
           style={{
             left: `${vehicleIndicatorStyle.left}px`,
             width: `${vehicleIndicatorStyle.width}px`,
@@ -138,7 +138,7 @@ export function VehicleTypeSelector({
         />
       </div>
       {showVehicleFade && (
-        <div className="lg:hidden absolute -right-px top-0 bottom-0 w-16 pointer-events-none bg-gradient-to-l from-bg-light/95 via-bg-light/70 to-transparent z-20" />
+        <div className="xl:hidden absolute -right-px top-0 bottom-0 w-16 pointer-events-none bg-gradient-to-l from-bg-light/95 via-bg-light/70 to-transparent z-20" />
       )}
     </div>
   );

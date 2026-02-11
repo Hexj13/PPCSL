@@ -85,7 +85,7 @@ export function ListingPageDescription({ descriptionHtml }: ListingPageDescripti
           className="leading-relaxed max-w-none listing-description whitespace-pre-wrap"
           style={{
             color: 'rgb(var(--text-secondary-rgb))',
-            paddingBottom: needsExpansion ? '60px' : '0',
+            paddingBottom: !needsExpansion ? '0' : isExpanded ? '24px' : '60px',
           }}
           dangerouslySetInnerHTML={{
             __html: descriptionHtml,
@@ -107,7 +107,7 @@ export function ListingPageDescription({ descriptionHtml }: ListingPageDescripti
 
       {needsExpansion && (
         <div
-          className={`flex justify-center ${isExpanded ? 'mt-4' : 'absolute left-0 right-0 bottom-4'}`}
+          className={`flex justify-center ${isExpanded ? 'mt-0' : 'absolute left-0 right-0 bottom-4'}`}
           style={{ zIndex: 10 }}
         >
           <button

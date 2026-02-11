@@ -66,6 +66,7 @@ export interface BuildSearchQueryFilters {
   horsepower_gte: string;
   horsepower_lte: string;
   drive_types: string[];
+  equipment: string[];
   is_registered: boolean | undefined;
   sortBy: string;
   sortOrder: string;
@@ -182,6 +183,7 @@ export function buildSearchQuery(
           'conditions',
           'registration_types',
           'drive_types',
+          'equipment',
         ];
         if (arrayParams.includes(key)) {
           largeArrays[key] = filteredArray;
@@ -268,6 +270,7 @@ export interface DefaultFiltersShape {
   horsepower_gte: string;
   horsepower_lte: string;
   drive_types: string[];
+  equipment: string[];
   is_registered: boolean | undefined;
   sortBy: string;
   sortOrder: 'ASC' | 'DESC';
@@ -299,6 +302,7 @@ export function getDefaultFilters(currentYear: string): DefaultFiltersShape {
     horsepower_gte: '',
     horsepower_lte: '',
     drive_types: [],
+    equipment: [],
     is_registered: undefined,
     sortBy: 'created_at',
     sortOrder: 'DESC',
@@ -320,6 +324,7 @@ export interface ParsedSearchParams {
   conditions?: string;
   registration_types?: string;
   drive_types?: string;
+  equipment?: string;
   year_gte?: number;
   year_lte?: number;
   price_gte?: number;
@@ -351,6 +356,7 @@ const ARRAY_PARAMS = [
   'conditions',
   'registration_types',
   'drive_types',
+  'equipment',
 ] as const;
 
 const NUMBER_PARAMS = [

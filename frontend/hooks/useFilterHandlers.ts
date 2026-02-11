@@ -80,7 +80,8 @@ export function useFilterHandlers({
         key === 'doors' ||
         key === 'conditions' ||
         key === 'registration_types' ||
-        key === 'drive_types'
+        key === 'drive_types' ||
+        key === 'equipment'
       ) {
         updateFilter(
           key,
@@ -343,6 +344,7 @@ export function useFilterHandlers({
         'colors',
         'doors',
         'conditions',
+        'equipment',
       ];
 
       arrayKeys.forEach((key) => {

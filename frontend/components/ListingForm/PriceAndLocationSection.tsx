@@ -5,6 +5,7 @@ import { useI18n } from '@/components/providers/I18nProvider';
 import { Currency, CurrencyEnum } from '@/lib/types';
 import { sortOptionsByLabel } from '@/lib/utils';
 
+import { RequiredAsterisk } from './RequiredAsterisk';
 import type { ListingFormSectionProps } from './types';
 
 const CURRENCY_OPTIONS = sortOptionsByLabel([
@@ -84,6 +85,7 @@ export function PriceAndLocationSection({
               />
             </svg>
             {t('listings.priceLabel')}
+            <RequiredAsterisk filled={!!formData.price.trim()} />
           </label>
           <div className="flex flex-col sm:flex-row gap-2">
             <input
@@ -142,6 +144,7 @@ export function PriceAndLocationSection({
               />
             </svg>
             {t('listings.cityLabel')}
+            <RequiredAsterisk filled={!!formData.city} />
           </label>
           <Dropdown
             value={formData.city}

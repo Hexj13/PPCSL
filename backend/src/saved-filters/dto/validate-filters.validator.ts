@@ -31,6 +31,7 @@ const ALLOWED_FILTER_KEYS = [
   'horsepower_gte',
   'horsepower_lte',
   'drive_types',
+  'equipment',
   'is_registered',
   'sortBy',
   'sortOrder',

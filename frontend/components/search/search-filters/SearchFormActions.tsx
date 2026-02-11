@@ -35,8 +35,8 @@ export function SearchFormActions({
 
   return (
     <div className="mt-6 relative -mx-3 sm:mx-0 px-3 sm:px-0">
-      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-        <div className="flex-1 relative">
+      <div className="flex flex-col lg:flex-row lg:flex-nowrap lg:justify-between gap-3 items-stretch lg:items-center">
+        <div className="min-w-0 relative">
           <div ref={buttonsContainerRef} className="overflow-x-auto scrollbar-hide">
             <div className="flex gap-3 items-stretch sm:items-center min-w-max sm:min-w-0">
               <LoadingButton
@@ -130,7 +130,7 @@ export function SearchFormActions({
             <div className="lg:hidden absolute -right-px top-0 bottom-0 w-16 pointer-events-none bg-gradient-to-l from-white/95 via-white/70 to-transparent z-20" />
           )}
         </div>
-        <div className="w-full sm:w-auto border-t border-primary-500/20 pt-3 sm:border-t-0 sm:pt-0 flex-shrink-0 relative">
+        <div className="w-full border-t border-primary-500/20 pt-3 lg:border-t-0 lg:pt-0 lg:w-auto flex-shrink-0 relative">
           <SortDropdown />
         </div>
       </div>

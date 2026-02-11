@@ -303,6 +303,7 @@ export interface Translations {
     vinPlaceholder: string;
     vinTitle: string;
     vinHint: string;
+    vinHintButton: string;
     engineDisplacementTitle: string;
     horsepowerTitle: string;
     mileageTitle: string;

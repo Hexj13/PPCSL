@@ -51,7 +51,6 @@ async function checkDuplicates() {
   });
 
   const modelDuplicatesByBrand = new Map<string, Map<string, VehicleModel[]>>();
-  const modelDuplicatesAcrossBrands = new Map<string, VehicleModel[]>();
 
   for (const model of allModels) {
     const modelNameLower = model.name.toLowerCase().trim();
@@ -66,15 +65,9 @@ async function checkDuplicates() {
       brandModels.set(modelNameLower, []);
     }
     brandModels.get(modelNameLower)!.push(model);
-
-    if (!modelDuplicatesAcrossBrands.has(modelNameLower)) {
-      modelDuplicatesAcrossBrands.set(modelNameLower, []);
-    }
-    modelDuplicatesAcrossBrands.get(modelNameLower)!.push(model);
   }
 
   let duplicatesInBrand = 0;
-  let duplicatesAcrossBrands = 0;
 
   console.log('🔍 Дубликати на модели во рамки на иста марка:\n');
   for (const [brandName, models] of modelDuplicatesByBrand.entries()) {
@@ -96,48 +89,11 @@ async function checkDuplicates() {
     console.log(`\n📊 Најдени ${duplicatesInBrand} дубликати на модели во рамки на иста марка\n`);
   }
 
-  console.log('🔍 Дубликати на модели меѓу различни марки:\n');
-  for (const [, modelList] of modelDuplicatesAcrossBrands.entries()) {
-    if (modelList.length > 1) {
-      const uniqueBrands = new Set(modelList.map((m) => m.brand?.name || 'Unknown'));
-      if (uniqueBrands.size > 1) {
-        duplicatesAcrossBrands++;
-        console.log(
-          `⚠️  Модел "${modelList[0].name}" се појавува кај ${uniqueBrands.size} различни марки:`,
-        );
-        const byBrand = new Map<string, VehicleModel[]>();
-        for (const model of modelList) {
-          const brandName = model.brand?.name || 'Unknown';
-          if (!byBrand.has(brandName)) {
-            byBrand.set(brandName, []);
-          }
-          byBrand.get(brandName)!.push(model);
-        }
-        for (const [brandName, models] of byBrand.entries()) {
-          console.log(`   - ${brandName}: ${models.length} записи`);
-          models.forEach((model, index) => {
-            console.log(`     ${index + 1}. ID: ${model.id}, Order: ${model.order}`);
-          });
-        }
-        console.log('');
-      }
-    }
-  }
-
-  if (duplicatesAcrossBrands === 0) {
-    console.log('✅ Нема дубликати на модели меѓу различни марки\n');
-  } else {
-    console.log(
-      `\n📊 Најдени ${duplicatesAcrossBrands} модели кои се појавуваат кај различни марки\n`,
-    );
-  }
-
   console.log('📊 Статистика:');
   console.log(`   - Total brands: ${allBrands.length}`);
   console.log(`   - Total models: ${allModels.length}`);
   console.log(`   - Дубликати на марки: ${brandDuplicates}`);
-  console.log(`   - Дубликати на модели во рамки на иста марка: ${duplicatesInBrand}`);
-  console.log(`   - Дубликати на модели меѓу различни марки: ${duplicatesAcrossBrands}\n`);
+  console.log(`   - Дубликати на модели во рамки на иста марка: ${duplicatesInBrand}\n`);
 
   await AppDataSource.destroy();
   console.log('🔌 Database connection closed');

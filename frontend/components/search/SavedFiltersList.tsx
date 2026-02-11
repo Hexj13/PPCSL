@@ -227,6 +227,7 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
             'conditions',
             'registration_types',
             'drive_types',
+            'equipment',
           ];
           if (arrayParams.includes(key)) {
             params.set(key, filteredArray.join(','));

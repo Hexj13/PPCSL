@@ -134,6 +134,7 @@ export class TypeOrmListingRepository implements IListingRepository {
         'listing.condition',
         'listing.registration_type',
         'listing.is_registered',
+        'listing.equipment',
         'listing.created_at',
         'listing.last_updated_at',
       ])
@@ -246,6 +247,14 @@ export class TypeOrmListingRepository implements IListingRepository {
     if (searchDto.registration_types && searchDto.registration_types.length > 0) {
       qb.andWhere('listing.registration_type IN (:...registration_types)', {
         registration_types: searchDto.registration_types,
+      });
+    }
+
+    if (searchDto.equipment && searchDto.equipment.length > 0) {
+      searchDto.equipment.forEach((key, index) => {
+        qb.andWhere(`listing.equipment LIKE :equip_${index}`, {
+          [`equip_${index}`]: `%${key}%`,
+        });
       });
     }
 

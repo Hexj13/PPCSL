@@ -3,12 +3,14 @@
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface SearchTabsProps {
-  activeTab: 'basic' | 'advanced' | 'popular';
-  onTabChange: (_tab: 'basic' | 'advanced' | 'popular') => void;
+  activeTab: 'basic' | 'advanced' | 'equipment' | 'popular';
+  onTabChange: (_tab: 'basic' | 'advanced' | 'equipment' | 'popular') => void;
   hasBasicFilters: boolean;
   hasAdvancedFiltersActive: boolean;
+  hasEquipmentFiltersActive: boolean;
   basicTabRef: React.RefObject<HTMLButtonElement | null>;
   advancedTabRef: React.RefObject<HTMLButtonElement | null>;
+  equipmentTabRef: React.RefObject<HTMLButtonElement | null>;
   popularTabRef: React.RefObject<HTMLButtonElement | null>;
   indicatorRef: React.RefObject<HTMLDivElement | null>;
   indicatorStyle: { left: number; width: number };
@@ -21,8 +23,10 @@ export function SearchTabs({
   onTabChange,
   hasBasicFilters,
   hasAdvancedFiltersActive,
+  hasEquipmentFiltersActive,
   basicTabRef,
   advancedTabRef,
+  equipmentTabRef,
   popularTabRef,
   indicatorRef,
   indicatorStyle,
@@ -68,6 +72,22 @@ export function SearchTabs({
           >
             <span suppressHydrationWarning>{t('searchFilters.additionalCriteria')}</span>
             {hasAdvancedFiltersActive && (
+              <span className="absolute right-2 top-2 w-2 h-2 rounded-full bg-accent" />
+            )}
+          </button>
+          <button
+            ref={equipmentTabRef}
+            type="button"
+            onClick={() => onTabChange('equipment')}
+            className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap ${
+              activeTab === 'equipment'
+                ? 'text-text-primary bg-primary-500/5 rounded-t-lg'
+                : 'text-text-primary hover:bg-primary-500/5'
+            }`}
+            suppressHydrationWarning
+          >
+            <span suppressHydrationWarning>{t('searchFilters.equipment')}</span>
+            {hasEquipmentFiltersActive && (
               <span className="absolute right-2 top-2 w-2 h-2 rounded-full bg-accent" />
             )}
           </button>

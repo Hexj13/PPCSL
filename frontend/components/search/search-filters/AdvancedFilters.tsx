@@ -94,6 +94,7 @@ export function AdvancedFilters({
           </h3>
           <div className="flex flex-wrap gap-4">
             <Checkbox
+              size="md"
               id="urgent"
               checked={filters.urgent}
               onChange={(checked) => onCheckboxChange('urgent', checked)}
@@ -112,6 +113,7 @@ export function AdvancedFilters({
             />
 
             <Checkbox
+              size="md"
               id="is_new"
               checked={filters.is_new}
               onChange={(checked) => onCheckboxChange('is_new', checked)}

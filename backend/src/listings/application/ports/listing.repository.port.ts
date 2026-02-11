@@ -33,6 +33,7 @@ export interface SearchCriteria {
   doors_single?: number;
   doors?: string[];
   drive_types?: string[];
+  equipment?: string[];
   currency?: string;
   title?: string;
   urgent?: boolean;

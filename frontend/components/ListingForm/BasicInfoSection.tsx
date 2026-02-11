@@ -8,6 +8,7 @@ import { getYearOptions } from '@/lib/options';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { getCountry } from '@/lib/utils';
 
+import { RequiredAsterisk } from './RequiredAsterisk';
 import { ListingFormSectionProps } from './types';
 
 export function BasicInfoSection({
@@ -68,6 +69,7 @@ export function BasicInfoSection({
         <div>
           <label className="block text-sm font-semibold mb-2 text-primary-400">
             {t('listings.brandLabel')}
+            <RequiredAsterisk filled={!!formData.vehicle.brand_id} />
           </label>
           <Dropdown
             value={formData.vehicle.brand_id}
@@ -94,6 +96,7 @@ export function BasicInfoSection({
         <div>
           <label className="block text-sm font-semibold mb-2 text-primary-400">
             {t('listings.modelLabel')}
+            <RequiredAsterisk filled={!!formData.vehicle.model_id} />
           </label>
           <Dropdown
             value={formData.vehicle.model_id}
@@ -123,6 +126,7 @@ export function BasicInfoSection({
         <div>
           <label className="block text-sm font-semibold mb-2 text-primary-400">
             {t('listings.yearLabel')}
+            <RequiredAsterisk filled={!!formData.vehicle.year} />
           </label>
           <Dropdown
             value={formData.vehicle.year}
@@ -141,16 +145,20 @@ export function BasicInfoSection({
         </div>
 
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center justify-between">
-            <span>{t('listings.vinLabel')}</span>
-            <div className="relative group">
+          <div className="flex items-center justify-between mb-2">
+            <label htmlFor="vin-input" className="text-sm font-semibold text-primary-400">
+              {t('listings.vinLabel')}
+            </label>
+            <div className="relative">
               <button
                 type="button"
                 onClick={() => setShowVinHint(!showVinHint)}
-                className="focus:outline-none"
+                className="focus:outline-none p-0.5 -m-0.5 rounded"
+                aria-expanded={showVinHint}
+                aria-label={t('listings.vinHintButton')}
               >
                 <svg
-                  className="w-4 h-4 text-primary-400 hover:text-primary-300 cursor-help transition-colors"
+                  className="w-4 h-4 text-primary-400 hover:text-primary-300 cursor-pointer transition-colors"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -164,16 +172,17 @@ export function BasicInfoSection({
                 </svg>
               </button>
               <div
-                className={`absolute right-0 bottom-full mb-2 ${showVinHint ? 'block' : 'hidden group-hover:block'} z-10 w-64`}
+                className={`absolute right-0 bottom-full mb-2 ${showVinHint ? 'block' : 'hidden'} z-10 w-64`}
               >
                 <div className="bg-bg-darker border-2 border-primary-500/50 rounded-lg p-3 shadow-lg">
-                  <p className="text-xs text-hint leading-relaxed">{t('listings.vinHint')}</p>
+                  <p className="text-xs text-gray-900 leading-relaxed">{t('listings.vinHint')}</p>
                   <div className="absolute right-4 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-primary-500/50"></div>
                 </div>
               </div>
             </div>
-          </label>
+          </div>
           <input
+            id="vin-input"
             type="text"
             maxLength={17}
             value={formData.vin}

@@ -341,6 +341,7 @@ GET    /api/listings/promotion-access  # Get promotion access status (no auth re
   - Slug parameters are converted to `brand_ids` and `model_ids` on the **frontend** (in `parseSearchParams` via `brandResolver`) before the API request; the API receives only UUIDs.
   - If a brand slug from the URL is not found (e.g. no such brand in the catalog), the search returns **0 listings** (no fallback to “all brands”).
   - Other filter parameters remain unchanged (price, year, city, etc.)
+- `?equipment=air_conditioning,navigation` - Filter by equipment keys (AND logic; comma-separated). Options depend on `vehicleType` (car/truck/moto). See `vehicle-equipment.ts` for keys and categories.
 - Example URLs:
   - `/?brand=toyota` - All Toyota listings
   - `/?brand=toyota&model=yaris` - Toyota Yaris listings

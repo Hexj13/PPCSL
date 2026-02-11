@@ -268,6 +268,8 @@ const BRANDS_AND_MODELS = {
     'Logan',
     'Sandero',
     'Duster',
+    'Duster Adventure',
+    'Logan MCV',
     'Lodgy',
     'Dokker',
     'Koleos',

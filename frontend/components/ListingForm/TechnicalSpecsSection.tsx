@@ -15,6 +15,7 @@ import { ConditionType, RegistrationType } from '@/lib/types';
 import { horsepowerToKw, kwToHorsepower } from '@/lib/utils';
 
 import { EquipmentSection } from './EquipmentSection';
+import { RequiredAsterisk } from './RequiredAsterisk';
 import { getConditionOptions, getRegistrationTypeOptions } from './listingFormUtils';
 import type { ListingFormSectionProps } from './types';
 
@@ -67,6 +68,7 @@ export function TechnicalSpecsSection({
                 />
               </svg>
               {t('listings.fuelLabel')}
+              <RequiredAsterisk filled={!!formData.vehicle.fuel} />
             </label>
             <Dropdown
               value={formData.vehicle.fuel}
@@ -86,6 +88,7 @@ export function TechnicalSpecsSection({
           <div>
             <label className="block text-sm font-semibold mb-2 text-primary-400 whitespace-nowrap">
               {t('listings.engineDisplacementLabel')}
+              <RequiredAsterisk filled={!!formData.vehicle.engine_displ_l.trim()} />
             </label>
             <input
               type="text"
@@ -139,6 +142,7 @@ export function TechnicalSpecsSection({
           <div>
             <label className="block text-sm font-semibold mb-2 text-primary-400 whitespace-nowrap">
               {t('listings.powerHorsepowerLabel')}
+              <RequiredAsterisk filled={!!formData.horsepower.trim()} />
             </label>
             <input
               type="text"
@@ -170,6 +174,7 @@ export function TechnicalSpecsSection({
           <div>
             <label className="block text-sm font-semibold mb-2 text-primary-400 whitespace-nowrap">
               {t('listings.powerKwLabel')}
+              <RequiredAsterisk filled={!!formData.power_kw.trim()} />
             </label>
             <input
               type="text"
@@ -225,6 +230,7 @@ export function TechnicalSpecsSection({
                 />
               </svg>
               {t('listings.transmissionLabel')}
+              <RequiredAsterisk filled={!!formData.vehicle.transmission} />
             </label>
             <Dropdown
               value={formData.vehicle.transmission}
@@ -269,6 +275,7 @@ export function TechnicalSpecsSection({
                   />
                 </svg>
                 {t('listings.driveTypeLabel')}
+                <RequiredAsterisk filled={!!formData.vehicle.drive_type} />
               </label>
               <Dropdown
                 value={formData.vehicle.drive_type}
@@ -311,6 +318,7 @@ export function TechnicalSpecsSection({
                 />
               </svg>
               {t('listings.bodyTypeLabel')}
+              <RequiredAsterisk filled={!!formData.vehicle.body_type} />
             </label>
             <Dropdown
               value={formData.vehicle.body_type}
@@ -359,6 +367,7 @@ export function TechnicalSpecsSection({
                 />
               </svg>
               {t('listings.mileageLabel')}
+              <RequiredAsterisk filled={!!formData.vehicle.mileage_km.trim()} />
             </label>
             <input
               type="text"
@@ -470,6 +479,9 @@ export function TechnicalSpecsSection({
           <div>
             <label className="block text-sm font-semibold mb-2 text-primary-400">
               {t('listings.registeredUntil')}
+              {formData.is_registered && (
+                <RequiredAsterisk filled={!!formData.registration_expires_at.trim()} />
+              )}
             </label>
             <input
               type="text"
@@ -547,6 +559,7 @@ export function TechnicalSpecsSection({
           <div>
             <label className="block text-sm font-semibold mb-2 text-primary-400">
               {t('listings.conditionLabel')}
+              <RequiredAsterisk filled={!!formData.condition} />
             </label>
             <Dropdown
               value={formData.condition}
@@ -566,6 +579,7 @@ export function TechnicalSpecsSection({
           <div>
             <label className="block text-sm font-semibold mb-2 text-primary-400">
               {t('listings.registrationTypeLabel')}
+              <RequiredAsterisk filled={!!formData.registration_type} />
             </label>
             <Dropdown
               value={formData.registration_type}
