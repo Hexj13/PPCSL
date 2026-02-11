@@ -68,9 +68,6 @@ frontend/lib/locales/*.json
 frontend/lib/theme/colors.ts
 frontend/next-env.d.ts
 
-# Generated sitemap
-frontend/public/sitemap.xml
-
 # Platform-specific assets (copied from platform repos during build)
 frontend/public/favicon*.png
 frontend/public/favicon.ico

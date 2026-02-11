@@ -10,7 +10,6 @@
     "dev": "rm -rf .next && next dev",
     "dev:clean": "rm -rf .next node_modules/.cache && next dev",
     "generate:sitemap": "ts-node --transpile-only --compiler-options '{\"module\":\"commonjs\"}' scripts/generate-sitemap.ts",
-    "prebuild": "npm run generate:sitemap || true",
     "build": "next build",
     "start": "next start",
     "lint": "eslint . -c config/eslint.config.mjs && npm run lint:translations",
