@@ -1,120 +1,150 @@
-# Генерация sitemap
+# Sitemap Generation
 
-## Обзор
+## Overview
 
-Sitemap генерируется динамически на основе данных из базы данных. Используется поисковыми системами для индексации страниц сайта.
+The sitemap is generated dynamically as a valid XML file based on database data. It is used by search engines to discover and index site pages.
 
-**Расположение**: `core/frontend/app/sitemap.txt/route.ts`
+**Location:** `core/frontend/app/sitemap.xml/route.ts`
+**Format:** XML (`Content-Type: application/xml`)
+**URL:** `/sitemap.xml`
+**Cache:** 1 hour (`Cache-Control: public, max-age=3600, s-maxage=3600`)
 
-**Формат**: plain text — один URL на строку (текстовый список, без XML).
+## What's Included
 
-**URL доступа**: `/sitemap.txt`
+| Type | Included | Priority | changefreq | Notes |
+|------|----------|----------|------------|-------|
+| Static pages | Yes | 0.2–1.0 | daily/monthly | `/`, `/listings`, `/terms`, `/privacy`, `/faq`, `/cookie-settings` |
+| Brand pages | Yes | 0.8 | daily | `/?brand=mercedes-benz` |
+| Brand+Model pages | Yes | 0.7 | daily | `/?brand=mercedes-benz&model=c-class` |
+| Body type pages (single) | Yes | 0.6 | weekly | `/?body_types=SUV` |
+| Body type combinations | No | — | — | Removed to reduce sitemap bloat |
+| Equipment filter pages | No | — | — | Not SEO-relevant |
+| Individual listings | No | — | — | Indexed via internal links |
 
-## Что включается в sitemap
+**Why no individual listings:** Listings are discovered by search engines through internal links on the site. Including them in the sitemap would require pagination and frequent updates.
 
-| Тип | Включается | Примечание |
-|-----|------------|------------|
-| Базовые страницы | ✅ | /, /listings, /terms, /privacy, /faq, /cookie-settings |
-| URL марок | ✅ | /?brand=mercedes-benz |
-| URL марок + моделей | ✅ | /?brand=mercedes-benz&model=c-class |
-| URL типов кузовов | ✅ | Одиночные и комбинации для популярных типов; только одиночные для непопулярных (см. ниже) |
-| URL фильтра комплектации | ❌ | `equipment=...` — НЕ добавляются |
-| Конкретные объявления | ❌ | /listings/{id} — НЕ добавляются |
+**Why no body type combinations:** Previously, all 2^n subsets were generated (~157 URLs for popular types), most pointing to empty pages. Now only single body types are included (~22 URLs).
 
-**Почему объявления не включаются**: Конкретные объявления индексируются поисковыми системами самостоятельно через внутренние ссылки на сайте.
+## URL Structure
 
-### Типы кузовов по категориям
+### Static Pages
 
-В sitemap включаются только определённые типы кузовов. Для **популярных** типов генерируются и одиночные URL, и комбинации (все непустые подмножества). Для **непопулярных** — только одиночные URL (без комбинаций).
-
-**Популярные (car):** SUV, Hatchback, Wagon, Minivan, Sedan, Convertible — одиночные + комбинации.
-
-**Популярные (truck):** Truck, SemiTruck, SpecialEquipment, Tractor, Bus — одиночные + комбинации.
-
-**Популярные (moto):** Naked, Sport, Touring, ATV, Adventure, Scooter — одиночные + комбинации.
-
-**Непопулярные:** остальные типы из `BODY_TYPES_BY_VEHICLE_TYPE` по каждой категории — только одиночные URL. Непопулярные мото-типы (например, Cruiser, Cross и т.д., не входящие в список выше) включаются по одному, без комбинаций.
-
-## Структура URL
-
-### Базовые страницы
-
-| URL | Приоритет | Частота обновления |
-|-----|-----------|-------------------|
+| URL | Priority | changefreq |
+|-----|----------|------------|
 | `/` | 1.0 | daily |
-| `/listings` | 0.9 | hourly |
-| `/terms` | 0.8 | monthly |
-| `/privacy` | 0.8 | monthly |
-| `/faq` | 0.8 | monthly |
+| `/listings` | 0.9 | daily |
+| `/terms` | 0.3 | monthly |
+| `/privacy` | 0.3 | monthly |
+| `/faq` | 0.4 | monthly |
+| `/cookie-settings` | 0.2 | monthly |
 
-### URL марок и моделей
+### Brand and Model URLs
 
-#### Правила формирования vehicleType
+#### vehicleType Rules
 
-| Категория | Параметр vehicleType | Пример URL |
-|-----------|---------------------|------------|
-| Легковые (`car`) | НЕ добавляется (по умолчанию) | `/?brand=mercedes-benz` |
-| Грузовые (`truck`) | `&vehicleType=truck` | `/?brand=mercedes-benz&vehicleType=truck` |
-| Мото (`moto`) | `&vehicleType=moto` | `/?brand=yamaha&vehicleType=moto` |
+| Category | vehicleType param | Example URL |
+|----------|-------------------|-------------|
+| Cars (`car`) | Not added (default) | `/?brand=mercedes-benz` |
+| Trucks (`truck`) | `&vehicleType=truck` | `/?brand=mercedes-benz&vehicleType=truck` |
+| Motorcycles (`moto`) | `&vehicleType=moto` | `/?brand=yamaha&vehicleType=moto` |
 
-#### Примеры URL марок
+#### Brand URL Examples
 
 ```
-# Легковые (vehicleType опускается)
+# Cars (vehicleType omitted)
 https://kupito.club/?brand=mercedes-benz
 https://kupito.club/?brand=bmw
 
-# Грузовые
+# Trucks
 https://kupito.club/?brand=mercedes-benz&vehicleType=truck
 https://kupito.club/?brand=man&vehicleType=truck
 
-# Мото
+# Motorcycles
 https://kupito.club/?brand=yamaha&vehicleType=moto
 https://kupito.club/?brand=ducati&vehicleType=moto
 ```
 
-#### Примеры URL моделей
+#### Model URL Examples
 
 ```
-# Легковые
+# Cars
 https://kupito.club/?brand=mercedes-benz&model=c-class
 https://kupito.club/?brand=bmw&model=3-series
 
-# Грузовые
+# Trucks
 https://kupito.club/?brand=mercedes-benz&model=actros&vehicleType=truck
 https://kupito.club/?brand=man&model=tgx&vehicleType=truck
 
-# Мото
+# Motorcycles
 https://kupito.club/?brand=yamaha&model=yzf-r1&vehicleType=moto
 https://kupito.club/?brand=ducati&model=panigale-v4&vehicleType=moto
 ```
 
-### URL типов кузовов
+### Body Type URLs
 
-#### Грузовые
+All body types from `BODY_TYPES_BY_VEHICLE_TYPE` are included as single entries:
 
+#### Cars (no vehicleType param)
+```
+https://kupito.club/?body_types=Sedan
+https://kupito.club/?body_types=Hatchback
+https://kupito.club/?body_types=SUV
+https://kupito.club/?body_types=Wagon
+https://kupito.club/?body_types=Coupe
+https://kupito.club/?body_types=Convertible
+https://kupito.club/?body_types=Van
+https://kupito.club/?body_types=Minivan
+https://kupito.club/?body_types=Pickup
+```
+
+#### Trucks
 ```
 https://kupito.club/?body_types=Truck&vehicleType=truck
-https://kupito.club/?body_types=SemiTruck&vehicleType=truck
-https://kupito.club/?body_types=SpecialEquipment&vehicleType=truck
-https://kupito.club/?body_types=Tractor&vehicleType=truck
 https://kupito.club/?body_types=Bus&vehicleType=truck
+https://kupito.club/?body_types=SemiTruck&vehicleType=truck
+https://kupito.club/?body_types=Tractor&vehicleType=truck
+https://kupito.club/?body_types=SpecialEquipment&vehicleType=truck
 ```
 
-#### Мото
-
+#### Motorcycles
 ```
 https://kupito.club/?body_types=Naked&vehicleType=moto
 https://kupito.club/?body_types=Sport&vehicleType=moto
 https://kupito.club/?body_types=Touring&vehicleType=moto
-https://kupito.club/?body_types=ATV&vehicleType=moto
+https://kupito.club/?body_types=Cruiser&vehicleType=moto
 https://kupito.club/?body_types=Adventure&vehicleType=moto
 https://kupito.club/?body_types=Scooter&vehicleType=moto
+https://kupito.club/?body_types=Enduro&vehicleType=moto
+https://kupito.club/?body_types=Cross&vehicleType=moto
 ```
 
-## Источники данных
+## XML Format
 
-### Таблица `brands`
+The sitemap generates standard XML with proper escaping:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://kupito.club</loc>
+    <lastmod>2026-02-11T17:00:00.000Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://kupito.club/?brand=bmw&amp;model=3-series</loc>
+    <lastmod>2026-02-11T17:00:00.000Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+</urlset>
+```
+
+**Note:** `&` in URLs is escaped to `&amp;` as required by XML specification. The `escapeXml()` function handles this automatically.
+
+## Data Sources
+
+### `brands` table
 
 ```typescript
 interface Brand {
@@ -124,9 +154,9 @@ interface Brand {
 }
 ```
 
-Поле `vehicle_types` — массив категорий. Марка может относиться к нескольким категориям (например, Mercedes-Benz: легковые + грузовые).
+`vehicle_types` is an array — a brand can belong to multiple categories (e.g., Mercedes-Benz: car + truck).
 
-### Таблица `vehicle_models`
+### `vehicle_models` table
 
 ```typescript
 interface VehicleModel {
@@ -137,27 +167,26 @@ interface VehicleModel {
 }
 ```
 
-Поле `vehicle_type` — одна категория. Каждая модель относится только к одной категории.
+`vehicle_type` is a single category. Each model belongs to exactly one category.
 
 ### API endpoints
 
-| Endpoint | Метод | Описание |
-|----------|-------|----------|
-| `/api/brands` | GET | Все марки с `vehicle_types` |
-| `/api/brands/models/batch` | POST | Модели по списку brand_ids |
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/brands` | GET | All brands with `vehicle_types` |
+| `/api/brands/models/batch` | POST | Models by list of brand_ids |
 
-## Алгоритм генерации
+## Generation Algorithm
 
-### 1. Классификация марок
+### 1. Brand Classification
 
 ```typescript
 const brandsByVehicleType = { car: [], truck: [], moto: [] };
 
 allBrands.forEach((brand) => {
   const vehicleTypes = brand.vehicle_types || [];
-  
   if (vehicleTypes.length === 0) {
-    brandsByVehicleType.car.push(brand);  // По умолчанию — легковые
+    brandsByVehicleType.car.push(brand); // Default: cars
   } else {
     vehicleTypes.forEach((type) => {
       brandsByVehicleType[type].push(brand);
@@ -166,33 +195,33 @@ allBrands.forEach((brand) => {
 });
 ```
 
-### 2. Генерация URL марки
+### 2. Brand URL Generation
 
 ```typescript
-const vehicleTypeParam = vehicleType ? `&vehicleType=${vehicleType}` : '';
+const vehicleTypeParam = vehicleType !== 'car' ? `&vehicleType=${vehicleType}` : '';
 const brandUrl = `${siteUrl}/?brand=${brandSlug}${vehicleTypeParam}`;
 ```
 
-### 3. Определение vehicleType для модели
+### 3. Model vehicleType Resolution
 
 ```
-model.vehicle_type существует и !== 'car'
-    → использовать model.vehicle_type
+model.vehicle_type exists and !== 'car'
+    → use model.vehicle_type
 
-иначе
-    → использовать vehicleType из марки (или пусто для car)
+else
+    → use vehicleType from brand context (or empty for car)
 ```
 
-## Примеры мультикатегорийных марок
+## Multi-Category Brand Examples
 
 ### Mercedes-Benz (car + truck)
 
-**Данные в БД:**
+**DB data:**
 ```json
 { "name": "Mercedes-Benz", "vehicle_types": ["car", "truck"] }
 ```
 
-**Модели:**
+**Models:**
 ```json
 [
   { "name": "C-Class", "vehicle_type": "car" },
@@ -200,7 +229,7 @@ model.vehicle_type существует и !== 'car'
 ]
 ```
 
-**Генерируемые URL:**
+**Generated URLs:**
 ```
 /?brand=mercedes-benz
 /?brand=mercedes-benz&model=c-class
@@ -210,12 +239,7 @@ model.vehicle_type существует и !== 'car'
 
 ### BMW (car + moto)
 
-**Данные в БД:**
-```json
-{ "name": "BMW", "vehicle_types": ["car", "moto"] }
-```
-
-**Генерируемые URL:**
+**Generated URLs:**
 ```
 /?brand=bmw
 /?brand=bmw&model=3-series
@@ -223,74 +247,60 @@ model.vehicle_type существует и !== 'car'
 /?brand=bmw&model=s-1000-rr&vehicleType=moto
 ```
 
-## Проверка работы формы поиска
+## Search Form Integration
 
-При переходе по URL из sitemap форма поиска должна корректно:
+When navigating to a sitemap URL, the search form should:
 
-1. **Определить категорию транспорта** по параметру `vehicleType`
-2. **Переключить вкладку** на соответствующую категорию (легковые/грузовые/мото)
-3. **Установить выбранную марку** в фильтр
-4. **Установить выбранную модель** в фильтр (если указана)
-5. **Установить типы кузовов** в фильтр (если указаны)
-6. **Загрузить релевантные результаты** для выбранной категории
+1. Detect vehicle category from `vehicleType` parameter
+2. Switch to the correct tab (cars/trucks/motorcycles)
+3. Set the selected brand
+4. Set the selected model (if specified)
+5. Set body types (if specified)
+6. Load relevant results
 
-### Чек-лист тестирования
+### Testing Checklist
 
-| URL | Ожидаемое поведение |
-|-----|---------------------|
-| `/?brand=mercedes-benz` | Вкладка "Легковые", марка Mercedes-Benz выбрана |
-| `/?brand=mercedes-benz&model=c-class` | Вкладка "Легковые", марка + модель выбраны |
-| `/?brand=mercedes-benz&vehicleType=truck` | Вкладка "Грузовые", марка Mercedes-Benz выбрана |
-| `/?brand=mercedes-benz&model=actros&vehicleType=truck` | Вкладка "Грузовые", марка + модель выбраны |
-| `/?brand=yamaha&vehicleType=moto` | Вкладка "Мото", марка Yamaha выбрана |
-| `/?brand=yamaha&model=yzf-r1&vehicleType=moto` | Вкладка "Мото", марка + модель выбраны |
-| `/?body_types=Truck&vehicleType=truck` | Вкладка "Грузовые", тип кузова Truck выбран |
-| `/?body_types=Naked,Sport&vehicleType=moto` | Вкладка "Мото", типы кузова Naked и Sport выбраны |
+| URL | Expected Behavior |
+|-----|-------------------|
+| `/?brand=mercedes-benz` | "Cars" tab, Mercedes-Benz selected |
+| `/?brand=mercedes-benz&model=c-class` | "Cars" tab, brand + model selected |
+| `/?brand=mercedes-benz&vehicleType=truck` | "Trucks" tab, Mercedes-Benz selected |
+| `/?brand=yamaha&vehicleType=moto` | "Moto" tab, Yamaha selected |
+| `/?body_types=Truck&vehicleType=truck` | "Trucks" tab, Truck body type selected |
+| `/?body_types=Naked,Sport&vehicleType=moto` | "Moto" tab, Naked and Sport selected |
 
-### Критические сценарии
+## Troubleshooting
 
-1. **URL без vehicleType, но с мото-маркой**: 
-   - URL: `/?brand=ducati`
-   - Ожидание: Должна определиться категория "Мото" на основе `brand.vehicle_types`
-   
-2. **URL без vehicleType, но с мото типом кузова**:
-   - URL: `/?body_types=Naked`
-   - Ожидание: Должна определиться категория "Мото" на основе типа кузова
+### Brand missing vehicleType in URL
 
-3. **URL с мультикатегорийной маркой без vehicleType**:
-   - URL: `/?brand=bmw` (BMW = car + moto)
-   - Ожидание: По умолчанию категория "Легковые"
+**Cause:** `brand.vehicle_types` not populated in DB
 
-## Типичные проблемы
-
-### Мото/грузовая марка без vehicleType в URL
-
-**Причина**: `brand.vehicle_types` не заполнено в БД
-
-**Решение**:
+**Fix:**
 ```bash
 cd core/backend
-COUNTRY=md npx ts-node src/scripts/stage/sync-vehicle-types.ts
+COUNTRY=md npx ts-node -r tsconfig-paths/register src/scripts/stage/sync-vehicle-types.ts
 ```
 
-### Модель с неправильным vehicleType
+### Model with wrong vehicleType
 
-**Причина**: `model.vehicle_type` не заполнено или неверное
+**Cause:** `model.vehicle_type` not set or incorrect
 
-**Решение**:
+**Fix:**
 ```bash
-COUNTRY=md npx ts-node src/scripts/stage/audit-vehicle-types.ts --fix
+COUNTRY=md npx ts-node -r tsconfig-paths/register src/scripts/stage/audit-vehicle-types.ts --fix
 ```
 
-## Связанные файлы
+## Related Files
 
-| Файл | Описание |
-|------|----------|
-| `core/frontend/app/sitemap.txt/route.ts` | Генерация sitemap (plain text, один URL на строку) |
-| `core/frontend/lib/api/server-api.ts` | API для получения марок/моделей |
-| `core/frontend/lib/api/api.ts` | Типы Brand, VehicleModel |
-| `core/backend/src/brands/brands.service.ts` | Backend сервис марок |
+| File | Description |
+|------|-------------|
+| `core/frontend/app/sitemap.xml/route.ts` | XML sitemap generation |
+| `core/frontend/app/robots.ts` | robots.txt generation |
+| `core/frontend/lib/api/server-api.ts` | Server-side API for brands/models |
+| `core/frontend/lib/api/api.ts` | Brand, VehicleModel types |
+| `core/frontend/lib/constants.ts` | `BODY_TYPES_BY_VEHICLE_TYPE` |
+| `core/backend/src/brands/brands.service.ts` | Backend brands service |
 
 ---
 
-[← К документации](../README.md)
+[← Back to documentation](../README.md)

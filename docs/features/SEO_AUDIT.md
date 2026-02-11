@@ -1,6 +1,7 @@
-# Аудит SEO и индексации (Google Search)
+# SEO Audit & Indexing (Google Search)
 
-**Date:** 2025-12-17
+**Date:** 2026-02-11
+**Last updated:** 2026-02-11
 
 This document audits technical SEO, crawlability, indexing, and Google Search visibility based on the current codebase.
 
@@ -29,227 +30,172 @@ This document audits technical SEO, crawlability, indexing, and Google Search vi
 
 ---
 
-## 2) What’s Already Good
+## 2) Current Implementation
 
-### 2.1 Robots + sitemaps exist
-- `frontend/app/robots.ts` provides user-agent rules and references both `sitemap.txt` and `sitemap.xml`.
-- `frontend/app/sitemap.ts` generates a **scalable multi-sitemap** (static + brand/model in one sitemap, and paginated listing sitemaps for volume growth).
-- `frontend/app/sitemap.txt/route.ts` generates `sitemap.txt` with static pages + brand/model URLs and a bounded, paginated listing URL set.
+### 2.1 Sitemap
 
-**Why this is good:** Google discovers URLs faster when sitemaps are correct and stable.
+**Location:** `frontend/app/sitemap.xml/route.ts`
+**Format:** XML (valid `application/xml` Content-Type)
+**URL:** `/sitemap.xml`
 
-### 2.2 Canonical exists for key static pages
-Canonical is set for:
-- Home (with `brand`/`model` query variants) in `frontend/app/page.tsx`.
-- Listing detail pages in `frontend/app/listings/[id]/layout.tsx`.
-- Static legal/help pages in their layouts (`terms`, `privacy`, `faq`, `cookie-settings`).
+The sitemap is a dynamic API route that generates a valid XML sitemap with:
+- `lastmod`, `changefreq`, `priority` for every URL
+- Proper XML escaping of `&` in query parameters (e.g., `&amp;`)
+- 1-hour cache (`Cache-Control: public, max-age=3600, s-maxage=3600`)
 
-**Why this is good:** canonical reduces duplicates and consolidates signals.
+**Included URLs:**
+| Type | Included | Priority | Example |
+|------|----------|----------|---------|
+| Static pages | Yes | 0.2–1.0 | `/`, `/listings`, `/terms`, `/privacy`, `/faq`, `/cookie-settings` |
+| Brand pages | Yes | 0.8 | `/?brand=mercedes-benz` |
+| Brand+Model pages | Yes | 0.7 | `/?brand=mercedes-benz&model=c-class` |
+| Body type pages (single) | Yes | 0.6 | `/?body_types=SUV`, `/?body_types=Truck&vehicleType=truck` |
+| Body type combinations | No | — | Removed to avoid sitemap bloat |
+| Individual listings | No | — | Indexed via internal links |
+| Equipment filter pages | No | — | Not SEO-relevant |
 
-### 2.3 Basic SEO metadata exists at the root
-`frontend/app/layout.tsx` defines:
-- `metadataBase`
-- default title template
-- default description
-- OpenGraph + Twitter
-- `robots` (index/follow)
-- Google verification
+### 2.2 robots.txt
 
-**Why this is good:** prevents “empty metadata” on most routes.
+**Location:** `frontend/app/robots.ts`
+**URL:** `/robots.txt`
 
-### 2.4 URL normalization middleware
-`frontend/middleware.ts` performs:
+```
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /board/
+Disallow: /login
+Disallow: /register
+Disallow: /reset-password
+Disallow: /verify-email
+Disallow: /verify-phone
+Disallow: /profile/
+Disallow: /favorites
+Disallow: /my-listings
+Disallow: /listings/new
+Disallow: /listings/*/edit
+Disallow: /complete-profile
+Disallow: /compare
+Disallow: /design-system
+Disallow: /offline
+Disallow: /color-palette
+
+Sitemap: https://kupito.club/sitemap.xml
+```
+
+### 2.3 Structured Data (JSON-LD)
+
+| Page | Schema Type | Rendered | Notes |
+|------|-------------|----------|-------|
+| All pages (layout) | `Organization` | Client-side | Via `OrganizationSchema` component |
+| Homepage `/` | `WebSite` + `SearchAction`, `BreadcrumbList`, `ItemList`, `CollectionPage` | SSR | Via `SearchStructuredData` component |
+| `/listings` | Same as homepage | SSR | Via `SearchStructuredData` component |
+| `/listings/[id]` | `Vehicle` + `Offer`, `BreadcrumbList` | SSR | Inline JSON-LD in `page.tsx` |
+
+**Important:** Listing detail pages use `Vehicle` type (not `Product`) to avoid Google merchant listing requirements (`aggregateRating`, `hasMerchantReturnPolicy`, `shippingDetails`). The `Vehicle` type provides rich vehicle-specific fields without triggering e-commerce validation.
+
+### 2.4 Metadata per route
+
+#### Indexable routes
+| Route | Title | Canonical | OG/Twitter | Structured Data |
+|-------|-------|-----------|------------|-----------------|
+| `/` | Dynamic (brand/model) | Self (with allowed params) | Yes | Yes |
+| `/listings` | Dynamic | Self | Yes | Yes |
+| `/listings/[id]` | Dynamic (vehicle title) | Self | Yes (with image) | Yes (`Vehicle`) |
+| `/terms` | Translated | Self | Default | No |
+| `/privacy` | Translated | Self | Default | No |
+| `/faq` | Translated | Self | Default | No |
+| `/cookie-settings` | Translated | Self | Default | No |
+
+#### Noindex routes (defense in depth: both `robots.txt` + metadata `noindex`)
+| Route | Purpose |
+|-------|---------|
+| `/admin` | Admin panel |
+| `/login`, `/register`, `/reset-password` | Auth pages |
+| `/verify-email`, `/verify-phone` | Verification flows |
+| `/profile/*`, `/complete-profile` | User profile |
+| `/favorites` | User favorites |
+| `/my-listings` | User's own listings |
+| `/listings/new`, `/listings/[id]/edit` | Listing create/edit |
+| `/compare` | Comparison tool |
+| `/board/[nameSlug]` | Seller board |
+| `/design-system`, `/color-palette` | Dev tools |
+| `/offline` | PWA offline page |
+
+### 2.5 Parameter Indexing Strategy
+
+The homepage (`/`) uses an allowlist approach for indexable parameters:
+
+| Parameter | Indexable | Notes |
+|-----------|----------|-------|
+| `brand` | Yes | Brand landing pages |
+| `model` | Yes | Brand+Model landing pages |
+| `body_types` | Yes | Body type landing pages |
+| `vehicleType` | Yes | Vehicle category (truck, moto) |
+| `page` | Yes (>1 only) | Pagination; page=1 canonicals to base URL |
+| All others | No | `noindex` + canonical to nearest clean URL |
+
+### 2.6 URL Normalization (Middleware)
+
+`frontend/middleware.ts` handles:
 - Trailing slash removal (301)
 - `www.` → apex redirect (301)
 - HTTP → HTTPS redirect in production (301)
 
-**Why this is good:** canonicalization via redirects reduces duplicates.
+### 2.7 Listing Detail Page (`/listings/[id]`)
 
-### 2.5 Brand/model “pretty” parameters (slugs)
-Recent work introduces `brand` and `model` slugs in URLs and converts them server-side to IDs for API filtering.
-
-**Why this is good:** user- and SEO-friendly URLs are easier to understand and share.
-
----
-
-## 3) Critical Issues (Must Fix)
-
-### P0 — `/listings` is in sitemap but no route exists (RESOLVED)
-**Status:** Implemented.
-
-**Impact:**
-- Submitting a sitemap with 404 URLs wastes crawl budget and can reduce trust in sitemap quality.
-
-**Action steps:**
-1. Ensure `/listings` returns `200` and is included in sitemaps.
-2. Validate with:
-   - `curl -I https://<site>/listings` must return `200`.
-   - Search Console → Sitemaps: errors should drop to 0.
+- **SSR:** Full server-side rendering with `generateMetadata` and JSON-LD
+- **Metadata:** Dynamic title, description, keywords (with `.filter(Boolean)`), canonical, OG image
+- **OG Image fallback:** If no listing image, uses `${siteUrl}/og-image.jpg` (absolute URL)
+- **Auto-close:** Listings auto-close after 90 days, keeping indexed pages fresh
+- **404 handling:** `notFound()` for missing listings with `noindex`
 
 ---
 
-### P0 — Many private/utility pages are indexable (RESOLVED)
-**Status:** Implemented via route-level metadata (`robots: { index: false, follow: false }`) on private/utility layouts.
+## 3) Resolved Issues (History)
 
-Routes likely should be **noindex**:
-- Auth/account: `/login`, `/register`, `/reset-password`, `/verify-*`, `/profile/*`
-- User/private: `/favorites`, `/my-listings`, `/listings/new`, `/listings/[id]/edit`
-- Admin: `/admin`
-- Utility: `/offline`, `/design-system`
-- Compare: `/compare` (usually low-value + user-specific content)
+### P0 — Private/utility pages were indexable (RESOLVED)
+All private routes now have `robots: { index: false }` in metadata AND are blocked in `robots.txt`.
 
-**Impact:**
-- Google may index thin/duplicated pages or user-specific states.
-- Risk of indexing pages with inconsistent content or requiring auth.
+### P0 — Canonical strategy was wrong (RESOLVED)
+Global canonical removed from root layout. Each indexable route sets canonical to itself.
 
-**Action steps:**
-1. Add route-level metadata to set:
-   - `robots: { index: false, follow: false }` (or `follow: true` if you want link discovery but no indexing).
-2. Optionally also disallow crawling in `robots.ts` for these paths (defense in depth).
-3. Validate with:
-   - `site:kupito.club login` etc should return 0 results.
-   - URL Inspection → “Indexing allowed?” should be “No: ‘noindex’ detected”.
+### P0 — Listing detail was client-only (RESOLVED)
+Converted to SSR with `generateMetadata` and server-rendered JSON-LD.
 
----
+### P0 — Structured data was injected via useEffect (RESOLVED)
+JSON-LD is now rendered in SSR output.
 
-### P0 — Canonical is wrong for routes without their own canonical (RESOLVED)
-**Status:** Implemented.
+### P1 — Product schema triggered merchant warnings (RESOLVED 2026-02-11)
+Changed `@type` from `Product` to `Vehicle` on listing detail pages. This eliminates Google Search Console warnings for:
+- `aggregateRating` (missing)
+- `hasMerchantReturnPolicy` (missing)
+- `shippingDetails` (missing)
 
-Examples that currently **lack canonical**:
-- `/login`, `/register`, `/reset-password` layouts only return title/description/OG/Twitter.
-- `/design-system` sets title/description only.
-- `/admin`, `/favorites`, `/my-listings`, `/profile`, `/compare`, `/offline` do not set metadata.
+The `Vehicle` schema provides rich vehicle-specific fields without triggering e-commerce validation rules.
 
-**Impact:**
-- Canonical to homepage on unrelated URLs can confuse indexing signals.
-- If those pages accidentally index, canonical mismatch increases duplicate/soft-canonical noise.
+### P1 — Sitemap was text format, not accepted by Search Console (RESOLVED 2026-02-11)
+Replaced `sitemap.txt/route.ts` (plain text) with `sitemap.xml/route.ts` (XML format) with:
+- Correct `Content-Type: application/xml`
+- Proper XML escaping (`&` → `&amp;`)
+- `lastmod`, `changefreq`, `priority` fields
+- 1-hour cache headers
 
-**Action steps (recommended approach):**
-1. Remove the global `alternates.canonical` from `frontend/app/layout.tsx`.
-2. Ensure each indexable route sets canonical to itself.
-3. For noindex routes, either omit canonical or set canonical to itself (both patterns are used; consistency matters).
-4. Validate:
-   - Inspect HTML `<link rel="canonical">` for key URLs.
+### P1 — Body type combinations bloated sitemap (RESOLVED 2026-02-11)
+Removed bitwise combination generation (~157 URLs) in favor of single body type entries (~22 URLs).
+
+### P1 — Layout duplicated metadata fetch for listings (RESOLVED 2026-02-11)
+`listings/[id]/layout.tsx` was making a separate API fetch to generate the same metadata as `page.tsx`. Layout simplified to a pass-through wrapper.
+
+### P1 — `/complete-profile` missing from robots.txt (RESOLVED 2026-02-11)
+Added to disallow list.
 
 ---
 
-### P0 — Listing detail page content is client-only (RESOLVED)
-**Status:** Implemented via SSR wrapper page and `notFound()` handling.
+## 4) Recommended Improvements (Medium Priority)
 
-**Impact:**
-- Google can render JS, but indexing becomes slower and less reliable.
-- HTML delivered to bots is thin until JS runs, increasing risk of:
-  - delayed indexing
-  - missing structured data extraction
-  - poor performance signals
-
-**Action steps:**
-1. Convert `/listings/[id]` to a server-rendered page:
-   - Fetch listing data in a Server Component.
-   - Render visible content on the server.
-   - Keep interactive parts (favorites, compare, galleries) as isolated Client Components.
-2. Ensure `notFound()` is used for 404 listings (proper status).
-3. Validate:
-   - View source: page should include the listing title/price/content.
-   - Search Console → URL Inspection: “Page is indexable” and renders content.
-
----
-
-### P0 — Structured data is injected via `useEffect` (RESOLVED)
-**Status:** Implemented by rendering JSON-LD scripts in SSR output for Organization, Search, and Listing detail.
-
-**Impact:**
-- Google may still process it, but SSR JSON-LD is more reliable.
-
-**Action steps:**
-1. Render JSON-LD in the HTML using:
-   - a Server Component with `<script type="application/ld+json">{...}</script>` or Next’s `Script` where appropriate.
-2. Ensure only one schema of each type exists and IDs are stable.
-3. Validate:
-   - Rich Results Test / Schema validator.
-   - Search Console → Enhancements (if applicable).
-
----
-
-## 4) High Priority Issues (Should Fix)
-
-### P1 — Parameter strategy can create crawl traps
-Current behavior supports many filters via query params, plus special `_f/_e` parameters.
-
-**Risk:** if Google discovers many combinations (prices, cities, fuels, etc.) it can crawl an effectively infinite space.
-
-**Recommended strategy:**
-- **Index only**:
-  - Homepage
-  - Listings page
-  - Brand pages (e.g. Toyota)
-  - Brand+Model pages (e.g. Toyota Yaris)
-  - Listing detail pages
-- **Noindex** all other filter combinations (price, year ranges, sorting, etc.) unless you intentionally build landing pages.
-
-**Action steps:**
-1. Define an allowlist of “indexable params”: `brand`, `model` (and maybe `page`).
-2. For any other params, output:
-   - `robots: { index: false }`
-   - canonical to the closest indexable URL (usually `/` or `/listings`).
-3. Ensure internal links only point to indexable variants.
-
----
-
-### P1 — Sitemap coverage and scalability (RESOLVED)
-**Status:** Implemented with multi-sitemap + pagination for listing URLs.
-
-**Risk:**
-- If listings exceed 10k, many URLs will never enter the sitemap.
-
-**Action steps:**
-1. Implement pagination in sitemap generation (loop pages until empty, or use a dedicated backend sitemap endpoint).
-2. Consider splitting into multiple sitemaps + sitemap index if volume grows (common for marketplaces).
-
----
-
-### P1 — `sitemap.xml` vs `sitemap.txt` mismatch on API failures (RESOLVED)
-**Status:** Implemented. Both sitemaps return consistent base + brand/model URLs on API failures, and listing URLs are best-effort.
-
-**Impact:** inconsistent discovery behavior depending on which sitemap Google prefers.
-
-**Action steps:**
-1. Make both sitemaps include the same static URL set when API is unavailable.
-
----
-
-### P1 — Design system route should not be indexable
-`frontend/app/design-system/layout.tsx` sets metadata but doesn’t set noindex.
-
-**Action steps:**
-- Set `robots: { index: false, follow: false }` and canonical (or remove canonical).
-
----
-
-### P1 — Pagination SEO for `/` (IMPLEMENTED)
-**Status:** Implemented.
-
-What’s implemented:
-- Canonical strategy for `page`:
-  - `page=1`: canonical without `page`
-  - `page>1`: canonical includes `page` (only when query params are allowlisted)
-- `rel="prev"` / `rel="next"` equivalents via `Metadata.alternates.prev/next` for indexable paginated pages.
-- Strict allowlist: `brand`, `model`, `page` are indexable; any other params → `noindex` and canonical to the nearest clean URL.
-
----
-
-### P1 — Alt text + OpenGraph on listing pages (IMPLEMENTED)
-**Status:** Implemented.
-
-What’s implemented:
-- Listing cards: alt now includes meaningful vehicle attributes (brand/model/year/city) instead of just the listing title.
-- Listing detail: SSR `generateMetadata` now sets title/description/canonical and OpenGraph/Twitter image.
-
----
-
-## 5) Recommended Improvements (Medium Priority)
-
-### P2 — Create SEO landing pages as real routes (not query-only)
+### P2 — Create SEO landing pages as real routes
 Query URLs can rank, but **path-based** pages are easier to scale and control.
 
 Examples:
@@ -268,318 +214,129 @@ Add visible HTML links to:
 
 **Rule:** only link to pages you want indexed.
 
-### P2 — Grid/listing structured data
-For listing result pages, consider `ItemList` schema with the first N items.
-
-### P2 — Pagination SEO
-If you introduce real `/listings?page=2`:
-- Keep canonical to the paginated URL (common), or canonical to page 1 (less recommended).
-- Add internal links to next/prev pages.
+### P2 — Expand structured data on collection pages
+For listing result pages, `ItemList` schema is already implemented with the first N items.
+Consider adding `CollectionPage` for body type landing pages.
 
 ---
 
-## 6) Operational Checklist (Fast Indexing)
+## 5) Operational Checklist
 
-### 6.1 Google Search Console
-1. Verify property (already supported via `NEXT_PUBLIC_GOOGLE_VERIFICATION`).
-2. Submit:
-   - `/sitemap.xml`
-   - `/sitemap.txt`
+### 5.1 Google Search Console
+1. Verify property (supported via `NEXT_PUBLIC_GOOGLE_VERIFICATION`).
+2. Submit `/sitemap.xml`.
 3. Use URL Inspection on:
    - Home
-   - `/listings` (after fixing)
+   - `/listings`
    - Several listing detail pages
 4. Monitor:
    - Coverage → Excluded (Soft 404, Duplicate, Crawled - currently not indexed)
    - Sitemaps → errors
    - CWV reports
+   - Enhancements → check for structured data warnings
 
-### 6.2 Indexing hygiene
-- Avoid indexing:
-  - account pages
-  - admin
-  - internal tools
-  - user-specific states
-
----
-
-## 7) Suggested Roadmap (Prioritized)
-
-### Week 1 (P0)
-✅ Fix `/listings` route (avoid 404s in sitemaps).
-✅ Add `noindex` to all private/utility routes.
-✅ Fix canonical strategy (remove global canonical, add per-route canonicals).
-✅ Convert listing detail page to SSR and render JSON-LD server-side.
-
-### Week 2 (P1)
-✅ Lock down param/indexing rules (allowlist `brand/model/page`).
-✅ Improve sitemap scalability (multi-sitemap + pagination).
-✅ Align `sitemap.xml` and `sitemap.txt` behavior.
-✅ Add pagination canonical + prev/next.
-✅ Add Alt/OG improvements for listing cards and listing detail.
-
-### Week 3+ (P2)
-- Add path-based brand/model landing pages with unique content blocks.
-- Strengthen internal linking.
-- Expand structured data on collection pages.
-
----
-
-## 8) Validation & Tools
-
-### Key validations
-- **HTTP status:** sitemapped URLs must be `200`.
-- **Canonical:** each indexable URL must canonical to itself.
-- **Robots/noindex:** sensitive pages must not be indexable.
-- **Rendered HTML:** important pages must contain meaningful content without JS.
-- **Schema:** validate JSON-LD with Google’s tools.
-
----
-
-## Appendix A — Route Indexing Policy (Recommended)
-
-### A.1 Indexable routes (crawlable + indexable)
-- `/` (homepage + brand/model landing via `?brand=...&model=...`)
-- `/listings` (once created; recommended)
-- `/listings/[id]` (listing detail)
-- `/terms`, `/privacy`, `/faq`, `/cookie-settings`
-
-### A.2 Noindex routes (must not appear in Google)
-- `/admin`
-- `/design-system`
-- `/offline`
-- `/compare`
-- `/login`, `/register`, `/reset-password`, `/verify-email`, `/verify-phone`, `/profile/**`
-- `/favorites`, `/my-listings`, `/listings/new`, `/listings/[id]/edit`
-
-**Implementation note:** prefer route-level metadata with `robots: { index: false }` rather than relying only on `robots.txt` disallows.
-
----
-
-## Appendix B — Canonical Strategy (Recommended)
-
-### B.1 Remove global canonical
-- Remove `alternates.canonical` from the root layout (`frontend/app/layout.tsx`) to avoid canonicalizing unrelated pages to the homepage.
-
-### B.2 Set canonical per route
-- Indexable routes: canonical to self.
-- Parameterized landing pages:
-  - If params are **indexable** (e.g. `brand`, `model`, optionally `page`): canonical includes those params.
-  - If params are **not indexable**: set `noindex` + canonical to the nearest indexable URL.
-
----
-
-## Appendix C — Query Parameter Allowlist (Crawl Trap Prevention)
-
-### C.1 Recommended allowlist
-Allow indexing only when query params are a subset of:
-- `brand`, `model` (and optionally `page`)
-
-### C.2 Everything else should be non-indexable
-Examples (non-indexable unless you explicitly create SEO landing pages):
-- price ranges (`price_gte`, `price_lte`)
-- sort parameters
-- city filters
-- `_f`, `_e` storage flags
-
-**Goal:** prevent crawling millions of low-value combinations.
-
----
-
-## Appendix D — Structured Data (SSR Best Practice)
-
-### D.1 Listing detail page
-- Render `Product`/`Offer`/`BreadcrumbList` JSON-LD on the server.
-- Keep only interactive UI in Client Components.
-
-### D.2 Collection/listing pages
-- Add `CollectionPage` + `ItemList` with a limited number of items.
-- Ensure breadcrumb schema matches visible breadcrumbs.
-
----
-
-## 9) Google Search Console Issues & Fixes
-
-### 9.1 CDN robots.txt 403 Error
-
-**Problem:** Google Search Console shows error 403 when trying to access `https://cdn.kupito.club/robots.txt`.
-
-**Root Cause:** `cdn.kupito.club` is a CloudFront CDN that serves static files (images) from S3 bucket. The `robots.txt` file doesn't exist in the S3 bucket, so CloudFront returns 403 when Googlebot tries to access it.
-
-**Solution 1: Remove CDN Domain from Google Search Console (Recommended)**
-
-CDN domains (`cdn.kupito.club`) are for serving static assets, not for indexing. Google should only check `robots.txt` on the main domain (`kupito.club`).
-
-**Steps:**
-1. Go to Google Search Console
-2. Remove `cdn.kupito.club` from the property list (if it was added)
-3. Ensure only `kupito.club` (or `www.kupito.club`) is verified
-4. Check `robots.txt` on the main domain: `https://kupito.club/robots.txt`
-
-**Solution 2: Upload robots.txt to S3**
-
-If you need to keep CDN domain in Search Console:
+### 5.2 Pre-Deployment Testing
 
 ```bash
-cd backend
-npm run upload-robots-txt
-```
-
-Then invalidate CloudFront cache for `/robots.txt` in AWS Console.
-
-**Note:** The main domain already has `robots.txt` generated by Next.js at `frontend/app/robots.ts`.
-
-### 9.2 Redirect Issues
-
-**Problem:** Google Search Console shows "Redirect issues" for:
-- `http://kupito.club/`
-- `http://www.kupito.club/`
-- `https://www.kupito.club/`
-
-**Root Cause:** Googlebot sees multiple versions of the same URL and cannot properly determine the canonical version due to:
-1. Incorrect redirect sequence
-2. Redirect chains (one URL redirects to another, which redirects to a third)
-3. Conflicting canonicalization rules
-4. Temporary redirects (302) instead of permanent (301)
-
-**Solution:**
-
-1. **Improve redirect logic in middleware:**
-   - Redirects should execute in the correct order and combine into a single redirect
-   - All versions should redirect to canonical: `https://kupito.club/` (without www, with HTTPS)
-
-2. **Ensure all versions redirect to canonical:**
-   - `http://kupito.club/` → `https://kupito.club/` (301)
-   - `http://www.kupito.club/` → `https://kupito.club/` (301)
-   - `https://www.kupito.club/` → `https://kupito.club/` (301)
-
-3. **Use only permanent redirects (301):**
-   - All redirects should be 301 (permanent), not 302 (temporary)
-
-4. **Check hosting settings:**
-   - Ensure no conflicting redirects at hosting level (Nginx, Apache, Cloudflare)
-
-**Verification:**
-```bash
+# Check redirects
 curl -I http://kupito.club/
 curl -I https://www.kupito.club/
 curl -I http://www.kupito.club/
+# All should → 301 → https://kupito.club/
+
+# Check robots.txt
+curl https://kupito.club/robots.txt
+
+# Check sitemap (should return valid XML)
+curl https://kupito.club/sitemap.xml
+
+# Validate structured data
+# Use: https://search.google.com/test/rich-results
 ```
 
-All should return 301 redirect to `https://kupito.club/`.
+### 5.3 Quick Diagnostics Checklist
 
-### 9.3 Common Google Search Console Issues
+- [ ] `curl https://kupito.club/robots.txt` returns valid robots.txt
+- [ ] `curl https://kupito.club/sitemap.xml` returns valid XML
+- [ ] All domain versions redirect to `https://kupito.club/` with 301
+- [ ] CDN domain is not added to Search Console
+- [ ] Canonical tags correct on key pages
+- [ ] No redirect chains (more than 3)
+- [ ] All sitemap URLs return 200
 
-#### Technical Issues
-1. **Server errors (4xx, 5xx)**
-   - 403 (access forbidden) — incorrect access permissions
-   - 404 (not found) — deleted or moved pages
-   - 500 (internal server error) — code or database issues
+---
 
-2. **robots.txt problems**
-   - File unavailable (403, 404)
-   - Incorrect syntax
-   - Blocking important pages
+## Appendix A — Route Indexing Policy
 
-3. **sitemap.xml problems**
-   - Sitemap contains non-existent URLs (404)
-   - Sitemap unavailable
-   - Incorrect XML format
+### A.1 Indexable routes
+- `/` (homepage + brand/model/body_type landing via query params)
+- `/listings` (listing search page)
+- `/listings/[id]` (listing detail)
+- `/terms`, `/privacy`, `/faq`, `/cookie-settings`
 
-#### Indexing Issues
-1. **Duplicate content**
-   - Multiple URLs with same content
-   - Missing or incorrect canonical tags
-   - URL parameters creating duplicates
+### A.2 Noindex routes
+- `/admin`, `/design-system`, `/color-palette`, `/offline`
+- `/compare`, `/board/*`
+- `/login`, `/register`, `/reset-password`
+- `/verify-email`, `/verify-phone`, `/complete-profile`
+- `/profile/*`, `/favorites`, `/my-listings`
+- `/listings/new`, `/listings/[id]/edit`
 
-2. **Redirect problems**
-   - Redirect chains (more than 3-4 redirects)
-   - Circular redirects
-   - Temporary redirects (302) instead of permanent (301)
+---
 
-3. **noindex meta tags**
-   - Pages with `noindex` accidentally included in sitemap
-   - Conflicts between robots.txt and meta tags
+## Appendix B — Structured Data Reference
 
-#### Content Issues
-1. **Thin content**
-   - Pages with minimal content
-   - Pages requiring JavaScript to display content
+### Listing Detail (`/listings/[id]`)
 
-2. **Missing structured data**
-   - No JSON-LD markup
-   - Incorrect Schema.org markup
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "Vehicle",
+  "name": "Peugeot 5008 2019",
+  "description": "...",
+  "image": ["https://cdn.kupito.club/..."],
+  "brand": { "@type": "Brand", "name": "Peugeot" },
+  "model": "5008",
+  "modelDate": "2019",
+  "vehicleIdentificationNumber": "VF3...",
+  "mileageFromOdometer": {
+    "@type": "QuantitativeValue",
+    "value": 85000,
+    "unitCode": "KMT"
+  },
+  "vehicleEngine": {
+    "@type": "EngineSpecification",
+    "engineDisplacement": {
+      "@type": "QuantitativeValue",
+      "value": 1.5,
+      "unitCode": "LTR"
+    }
+  },
+  "vehicleConfiguration": "SUV",
+  "offers": {
+    "@type": "Offer",
+    "price": "15000",
+    "priceCurrency": "EUR",
+    "availability": "https://schema.org/InStock",
+    "url": "https://kupito.club/listings/..."
+  },
+  "seller": { "@type": "Person", "name": "John Doe" },
+  "url": "https://kupito.club/listings/..."
+}
+```
 
-3. **Performance issues**
-   - Slow page loading
-   - Poor Core Web Vitals
+---
 
-### 9.4 Prevention Recommendations
+## Appendix C — File Reference
 
-#### Regular Monitoring
-1. **Weekly Google Search Console check**
-   - Check "Indexing" → "Pages" section
-   - Track new errors
-   - Check sitemap status
-
-2. **Performance monitoring**
-   - Core Web Vitals
-   - Page load speed
-   - Mobile version
-
-#### Technical SEO Hygiene
-1. **Proper redirect setup**
-   - All domain versions redirect to canonical
-   - Use only 301 redirects
-   - Avoid redirect chains
-
-2. **Proper canonical setup**
-   - Each indexable page has canonical to itself
-   - No global canonical to homepage
-
-3. **Proper robots.txt and sitemap setup**
-   - robots.txt is accessible and correct
-   - sitemap contains only existing URLs
-   - Regular sitemap updates
-
-#### Pre-Deployment Testing
-1. **Redirect testing:**
-   ```bash
-   curl -I http://kupito.club/
-   curl -I https://www.kupito.club/
-   curl -I http://www.kupito.club/
-   ```
-   All should redirect to `https://kupito.club/` with code 301.
-
-2. **robots.txt testing:**
-   ```bash
-   curl https://kupito.club/robots.txt
-   ```
-
-3. **sitemap testing:**
-   ```bash
-   curl https://kupito.club/sitemap.xml
-   ```
-
-### 9.5 Quick Diagnostics Checklist
-
-- [ ] Check robots.txt availability: `curl https://kupito.club/robots.txt`
-- [ ] Check sitemap.xml availability: `curl https://kupito.club/sitemap.xml`
-- [ ] Check redirects for all domain versions
-- [ ] Verify CDN domain is not added to Search Console
-- [ ] Check canonical tags on key pages
-- [ ] Verify no redirect chains (more than 3)
-- [ ] Check status codes for all URLs in sitemap (should be 200)
-
-### 9.6 Diagnostic Tools
-
-1. **Google Search Console**
-   - URL Inspection Tool
-   - Coverage Report
-   - Sitemap Report
-
-2. **External Tools**
-   - Screaming Frog SEO Spider
-   - Google Rich Results Test
-   - PageSpeed Insights
-
+| File | Purpose |
+|------|---------|
+| `frontend/app/robots.ts` | robots.txt generation |
+| `frontend/app/sitemap.xml/route.ts` | XML sitemap generation |
+| `frontend/app/layout.tsx` | Root metadata (title template, OG defaults, Google verification) |
+| `frontend/app/page.tsx` | Homepage metadata (brand/model SEO pages, parameter allowlist) |
+| `frontend/app/listings/[id]/page.tsx` | Listing metadata + Vehicle JSON-LD |
+| `frontend/app/listings/[id]/layout.tsx` | Pass-through layout (no metadata duplication) |
+| `frontend/components/analytics/OrganizationSchema.tsx` | Organization JSON-LD |
+| `frontend/components/analytics/SearchStructuredData.tsx` | Homepage/search JSON-LD |
+| `frontend/middleware.ts` | URL normalization (trailing slash, www, HTTPS) |

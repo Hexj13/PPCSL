@@ -26,6 +26,7 @@ export default function robots(): MetadataRoute.Robots {
           '/my-listings',
           '/listings/new',
           '/listings/*/edit',
+          '/complete-profile',
           '/compare',
           '/design-system',
           '/offline',
@@ -33,6 +34,6 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: `${siteUrl}/sitemap.txt`,
+    sitemap: `${siteUrl}/sitemap.xml`,
   };
 }

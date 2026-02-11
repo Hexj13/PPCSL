@@ -45,7 +45,7 @@ function buildListingJsonLd(listing: Listing): Record<string, unknown> {
 
   return {
     '@context': 'https://schema.org',
-    '@type': 'Product',
+    '@type': 'Vehicle',
     name: listing.title,
     description: listing.description
       ? listing.description.replace(/<[^>]*>/g, '').substring(0, 500)
@@ -58,26 +58,9 @@ function buildListingJsonLd(listing: Listing): Record<string, unknown> {
         }
       : undefined,
     model: modelName || undefined,
-    category: 'Vehicle',
-    offers: {
-      '@type': 'Offer',
-      ...(listing.price !== undefined &&
-        listing.price !== null && {
-          price: listing.price.toString(),
-          priceCurrency: listing.currency || siteConfig.currency,
-          priceValidUntil: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
-            .toISOString()
-            .split('T')[0],
-        }),
-      availability:
-        listing.status === 'Active'
-          ? 'https://schema.org/InStock'
-          : 'https://schema.org/OutOfStock',
-      url: `${siteUrl}/listings/${listing.id}`,
-    },
     ...(vehicle && {
       vehicleIdentificationNumber: listing.vin || undefined,
-      productionDate: year ? `${year}-01-01` : undefined,
+      modelDate: year ? `${year}-01-01` : undefined,
       mileageFromOdometer: vehicle.mileage_km
         ? {
             '@type': 'QuantitativeValue',
@@ -95,7 +78,21 @@ function buildListingJsonLd(listing: Listing): Record<string, unknown> {
             },
           }
         : undefined,
+      vehicleConfiguration: vehicle.body_type || undefined,
     }),
+    offers: {
+      '@type': 'Offer',
+      ...(listing.price !== undefined &&
+        listing.price !== null && {
+          price: listing.price.toString(),
+          priceCurrency: listing.currency || siteConfig.currency,
+        }),
+      availability:
+        listing.status === 'Active'
+          ? 'https://schema.org/InStock'
+          : 'https://schema.org/OutOfStock',
+      url: `${siteUrl}/listings/${listing.id}`,
+    },
     seller: listing.user
       ? {
           '@type': listing.user.type === 'Business' ? 'Organization' : 'Person',
@@ -106,14 +103,7 @@ function buildListingJsonLd(listing: Listing): Record<string, unknown> {
                 listing.user.email,
         }
       : undefined,
-    locationCreated: {
-      '@type': 'Place',
-      address: {
-        '@type': 'PostalAddress',
-        addressLocality: listing.city,
-        addressCountry: siteConfig.countryCode,
-      },
-    },
+    url: `${siteUrl}/listings/${listing.id}`,
   };
 }
 
@@ -188,21 +178,27 @@ export async function generateMetadata({
   const title = `${displayTitle} | Kupito`;
   const description = buildListingOgDescription(listing, t.metadata.listing.defaultDescription);
 
+  const firstImage =
+    listing.images && listing.images.length > 0 ? getOptimizedImageUrl(listing.images[0]) : '';
   const ogImage =
-    listing.images && listing.images.length > 0
-      ? getOptimizedImageUrl(listing.images[0])
-      : `${siteUrl}/placeholder-car.jpg`;
+    firstImage && firstImage !== '/placeholder-car.jpg'
+      ? firstImage.startsWith('http')
+        ? firstImage
+        : `${siteUrl}${firstImage}`
+      : `${siteUrl}/og-image.jpg`;
 
   return {
     title,
     description,
     keywords: [
       listing.title,
+      displayTitle,
+      listing.city,
       t.metadata.listing.keywords.cars,
       t.metadata.listing.keywords.buyCar,
       t.metadata.listing.keywords.carsForSale,
       t.metadata.listing.keywords.moldova,
-    ],
+    ].filter(Boolean),
     alternates: {
       canonical: `${siteUrl}/listings/${listing.id}`,
     },
