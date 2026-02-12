@@ -51,10 +51,10 @@ describe('server-api', () => {
         })
       );
       expect(global.fetch).toHaveBeenCalledWith(
-        'http://localhost:4000/api/listings?page=1&limit=20&vehicleType=car',
+        'http://localhost:4000/api/listings?page=1&limit=20&vehicleType=car&equipmentMatch=full',
         expect.objectContaining({
-          next: expect.any(Object),
-          cache: expect.any(String),
+          next: { revalidate: 0 },
+          cache: 'no-store',
         })
       );
       expect(result).toEqual(mockResponse);

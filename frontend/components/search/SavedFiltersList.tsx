@@ -212,6 +212,11 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
         return;
       }
 
+      if (key === 'equipment_match_mode') {
+        params.set('equipmentMatch', value === 'partial' ? 'partial' : 'full');
+        return;
+      }
+
       if (Array.isArray(value)) {
         const filteredArray = value.filter(
           (v) => v !== 'all' && v !== '' && v !== null && v !== undefined

@@ -34,6 +34,7 @@ export interface SearchCriteria {
   doors?: string[];
   drive_types?: string[];
   equipment?: string[];
+  equipmentMatch?: 'full' | 'partial';
   currency?: string;
   title?: string;
   urgent?: boolean;

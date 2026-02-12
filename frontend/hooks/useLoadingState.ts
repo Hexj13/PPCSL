@@ -44,6 +44,10 @@ export function useLoadingState({
 
   useEffect(() => {
     if (isLoading) {
+      if (minDisplayTimeoutRef.current) {
+        clearTimeout(minDisplayTimeoutRef.current);
+        minDisplayTimeoutRef.current = null;
+      }
       if (loadingStartTimeRef.current === null) {
         loadingStartTimeRef.current = Date.now();
 

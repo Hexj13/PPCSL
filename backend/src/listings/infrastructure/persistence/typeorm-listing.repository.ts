@@ -243,11 +243,23 @@ export class TypeOrmListingRepository implements IListingRepository {
     }
 
     if (searchDto.equipment && searchDto.equipment.length > 0) {
-      searchDto.equipment.forEach((key, index) => {
-        qb.andWhere(`listing.equipment LIKE :equip_${index}`, {
-          [`equip_${index}`]: `%${key}%`,
+      const isPartial = searchDto.equipmentMatch === 'partial';
+      if (isPartial) {
+        const orConditions = searchDto.equipment
+          .map((_, index) => `listing.equipment LIKE :equip_${index}`)
+          .join(' OR ');
+        const params: Record<string, string> = {};
+        searchDto.equipment.forEach((key, index) => {
+          params[`equip_${index}`] = `%${key}%`;
         });
-      });
+        qb.andWhere(`(${orConditions})`, params);
+      } else {
+        searchDto.equipment.forEach((key, index) => {
+          qb.andWhere(`listing.equipment LIKE :equip_${index}`, {
+            [`equip_${index}`]: `%${key}%`,
+          });
+        });
+      }
     }
 
     qb.andWhere(

@@ -39,6 +39,7 @@ export function SearchFilters() {
   const prevSearchParamsRef = useRef<string>('');
   const [lastAppliedFilters, setLastAppliedFilters] = useState<FilterState | null>(null);
   const isApplyingQuickFilterRef = useRef(false);
+  const [isApplyingQuickFilter, setIsApplyingQuickFilter] = useState(false);
   const prevUserRef = useRef<User | null>(user);
   const [showSaveModal, setShowSaveModal] = useState(false);
 
@@ -117,7 +118,7 @@ export function SearchFilters() {
   });
 
   const { visible: showSearchLoader } = useLoadingState({
-    isLoading: isSearching || isSyncingFromUrl,
+    isLoading: isSearching || (isSyncingFromUrl && !isApplyingQuickFilter),
   });
 
   const filterOptions = useFilterOptions({
@@ -191,6 +192,13 @@ export function SearchFilters() {
     prevSearchParamsRef.current = currentParams;
   }, [searchParams, isSearching]);
 
+  useEffect(() => {
+    if (!isSyncingFromUrl) {
+      isApplyingQuickFilterRef.current = false;
+      setIsApplyingQuickFilter(false);
+    }
+  }, [isSyncingFromUrl]);
+
   const applyPopularFilter = useCallback(
     (brandName: string, modelName?: string) => {
       analytics.quickFilter(brandName, modelName);
@@ -208,6 +216,7 @@ export function SearchFilters() {
       }
 
       isApplyingQuickFilterRef.current = true;
+      setIsApplyingQuickFilter(true);
 
       const newUrl = `/?${params.toString()}`;
       const scrollY = isBrowser ? window.scrollY : 0;
@@ -449,6 +458,8 @@ export function SearchFilters() {
       {tabs.activeTab === 'equipment' && (
         <EquipmentFilters
           equipment={filters.equipment}
+          equipmentMatchMode={filters.equipment_match_mode}
+          onEquipmentMatchModeChange={(mode) => updateFilter('equipment_match_mode', mode)}
           onChange={(keys) => updateFilter('equipment', keys)}
           vehicleType={vehicleType}
         />

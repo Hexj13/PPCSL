@@ -55,7 +55,7 @@ export function PopularFilters({
               onApplyFilter(brand);
             }
           }}
-          className={`relative px-3 py-2 rounded-full text-text-secondary border-2 transition-all text-sm ${
+          className={`relative px-3 py-2 rounded-full text-text-secondary border transition-all text-sm ${
             isBrandActive
               ? 'bg-primary-500/5 border-primary-500'
               : 'bg-primary-500/15 border-primary-400/60 hover:bg-primary-500/25 hover:border-primary-300/90'

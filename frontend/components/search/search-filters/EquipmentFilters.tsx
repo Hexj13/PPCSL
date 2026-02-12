@@ -7,15 +7,32 @@ import {
   getEquipmentKeysByVehicleType,
 } from '@/lib/options';
 import { sortOptionsByLabel } from '@/lib/utils';
-import { Checkbox } from '@/ui';
+import { Checkbox, HintTooltip } from '@/ui';
+
+const HEADLIGHT_GROUP: readonly string[] = ['led_lights', 'xenon_lights'];
+const TIRE_KEYS: readonly string[] = [
+  'tires_summer',
+  'tires_winter',
+  'tires_sport',
+  'tires_all_terrain',
+  'tires_all_season',
+];
 
 interface EquipmentFiltersProps {
   equipment: string[];
+  equipmentMatchMode: 'full' | 'partial';
+  onEquipmentMatchModeChange: (_mode: 'full' | 'partial') => void;
   onChange: (_keys: string[]) => void;
   vehicleType: 'car' | 'truck' | 'moto';
 }
 
-export function EquipmentFilters({ equipment, onChange, vehicleType }: EquipmentFiltersProps) {
+export function EquipmentFilters({
+  equipment,
+  equipmentMatchMode,
+  onEquipmentMatchModeChange,
+  onChange,
+  vehicleType,
+}: EquipmentFiltersProps) {
   const { t } = useTranslation();
   const availableKeys = getEquipmentKeysByVehicleType(vehicleType);
 
@@ -32,6 +49,18 @@ export function EquipmentFilters({ equipment, onChange, vehicleType }: Equipment
 
   const handleChange = (key: string, checked: boolean) => {
     if (checked) {
+      if (equipmentMatchMode === 'full') {
+        if (HEADLIGHT_GROUP.includes(key)) {
+          const withoutHeadlights = equipment.filter((k) => !HEADLIGHT_GROUP.includes(k));
+          onChange([...withoutHeadlights, key]);
+          return;
+        }
+        if (TIRE_KEYS.includes(key)) {
+          const withoutTires = equipment.filter((k) => !TIRE_KEYS.includes(k));
+          onChange([...withoutTires, key]);
+          return;
+        }
+      }
       onChange([...equipment, key]);
     } else {
       onChange(equipment.filter((k) => k !== key));
@@ -40,6 +69,40 @@ export function EquipmentFilters({ equipment, onChange, vehicleType }: Equipment
 
   return (
     <div className="mb-5">
+      <div className="flex flex-wrap items-center gap-2 mb-5">
+        <HintTooltip ariaLabel={t('searchFilters.equipmentSortMode')} width="w-72">
+          {t('searchFilters.equipmentSortModeHint')}
+        </HintTooltip>
+        <span className="text-sm font-semibold text-text-secondary">
+          {t('searchFilters.equipmentSortMode')}
+        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => onEquipmentMatchModeChange('full')}
+            className={`px-3 py-2 rounded-full text-sm border-2 transition-all ${
+              equipmentMatchMode === 'full'
+                ? 'bg-primary-500/5 border-primary-500 text-text-secondary'
+                : 'bg-primary-500/5 border-primary-500/20 text-text-secondary hover:bg-primary-500/15 hover:border-primary-500/30'
+            }`}
+            aria-pressed={equipmentMatchMode === 'full'}
+          >
+            {t('searchFilters.equipmentSortModeFull')}
+          </button>
+          <button
+            type="button"
+            onClick={() => onEquipmentMatchModeChange('partial')}
+            className={`px-3 py-2 rounded-full text-sm border-2 transition-all ${
+              equipmentMatchMode === 'partial'
+                ? 'bg-primary-500/5 border-primary-500 text-text-secondary'
+                : 'bg-primary-500/5 border-primary-500/20 text-text-secondary hover:bg-primary-500/15 hover:border-primary-500/30'
+            }`}
+            aria-pressed={equipmentMatchMode === 'partial'}
+          >
+            {t('searchFilters.equipmentSortModePartial')}
+          </button>
+        </div>
+      </div>
       <div className="space-y-6">
         {categorizedGroups.map(({ category, keys }) => {
           const third = Math.ceil(keys.length / 3);

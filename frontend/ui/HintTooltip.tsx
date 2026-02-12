@@ -18,16 +18,21 @@ export function HintTooltip({
   const [isOpen, setIsOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [placement, setPlacement] = useState<'top' | 'bottom'>('top');
+  const [horizontalPlacement, setHorizontalPlacement] = useState<'left' | 'right'>('right');
   const containerRef = useRef<HTMLDivElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const POPOVER_WIDTH = 288;
+  const POPOVER_HEIGHT = 80;
 
   const updatePlacement = useCallback(() => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     const spaceAbove = rect.top;
-    const popoverHeight = 80;
-    setPlacement(spaceAbove > popoverHeight ? 'top' : 'bottom');
+    const spaceLeft = rect.left;
+    setPlacement(spaceAbove > POPOVER_HEIGHT ? 'top' : 'bottom');
+    setHorizontalPlacement(spaceLeft < POPOVER_WIDTH ? 'right' : 'left');
   }, []);
 
   const open = useCallback(() => {
@@ -96,7 +101,13 @@ export function HintTooltip({
     };
   }, []);
 
-  const positionClasses = placement === 'top' ? 'bottom-full mb-2' : 'top-full mt-2';
+  const verticalClasses = placement === 'top' ? 'bottom-full mb-2' : 'top-full mt-2';
+  const horizontalClasses = horizontalPlacement === 'left' ? 'right-0' : 'left-0';
+  const arrowClasses =
+    placement === 'top'
+      ? 'top-full border-t-[5px] border-t-primary-500/50'
+      : 'bottom-full border-b-[5px] border-b-primary-500/50';
+  const arrowHorizontalClasses = horizontalPlacement === 'left' ? 'right-4' : 'left-4';
 
   return (
     <div ref={containerRef} className={`relative inline-flex ${className}`}>
@@ -124,7 +135,7 @@ export function HintTooltip({
       {isOpen && (
         <div
           ref={popoverRef}
-          className={`absolute right-0 ${positionClasses} z-[1070] ${width} transition-all duration-150 ease-out ${
+          className={`absolute ${horizontalClasses} ${verticalClasses} z-[1070] ${width} transition-all duration-150 ease-out ${
             isVisible
               ? 'opacity-100 translate-y-0'
               : placement === 'top'
@@ -135,11 +146,7 @@ export function HintTooltip({
           <div className="bg-bg-darker border-2 border-primary-500/50 rounded-lg p-3 shadow-lg relative">
             <div className="text-xs text-text-primary leading-relaxed">{children}</div>
             <div
-              className={`absolute right-4 w-0 h-0 border-l-[5px] border-r-[5px] border-transparent ${
-                placement === 'top'
-                  ? 'top-full border-t-[5px] border-t-primary-500/50'
-                  : 'bottom-full border-b-[5px] border-b-primary-500/50'
-              }`}
+              className={`absolute ${arrowHorizontalClasses} w-0 h-0 border-l-[5px] border-r-[5px] border-transparent ${arrowClasses}`}
             />
           </div>
         </div>

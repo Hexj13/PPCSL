@@ -34,6 +34,9 @@ export function useSearchFiltersSync({
   const hasInitializedRef = useRef(false);
   const processedBrandParamRef = useRef<string | null>(null);
   const processedModelParamRef = useRef<string | null>(null);
+  const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const SYNC_TIMEOUT_MS = 5000;
 
   useEffect(() => {
     const currentUrl = searchParams.toString();
@@ -42,6 +45,10 @@ export function useSearchFiltersSync({
     const urlChanged = currentUrl !== prevUrlForSyncRef.current;
 
     if (urlChanged) {
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+        syncTimeoutRef.current = null;
+      }
       if (isInternalSearchRef.current) {
         isInternalSearchRef.current = false;
         prevUrlForSyncRef.current = currentUrl;
@@ -51,7 +58,14 @@ export function useSearchFiltersSync({
       }
 
       if (brandParam || modelParam) {
+        processedBrandParamRef.current = null;
+        processedModelParamRef.current = null;
         setIsSyncingFromUrl(true);
+        syncTimeoutRef.current = setTimeout(() => {
+          syncTimeoutRef.current = null;
+          setIsSyncingFromUrl(false);
+          hasInitializedRef.current = true;
+        }, SYNC_TIMEOUT_MS);
       } else {
         if (hasActiveFilters) {
           setLastAppliedFilters({ ...filters });
@@ -77,6 +91,10 @@ export function useSearchFiltersSync({
       (modelsMatchBrand && processedModelParamRef.current === modelParam);
 
     if (brandSynced && modelSynced) {
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+        syncTimeoutRef.current = null;
+      }
       if (hasActiveFilters) {
         setLastAppliedFilters({ ...filters });
       } else {
@@ -94,6 +112,14 @@ export function useSearchFiltersSync({
     isSyncingFromUrl,
     setLastAppliedFilters,
   ]);
+
+  useEffect(() => {
+    return () => {
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const brandParam = searchParams.get('brand');

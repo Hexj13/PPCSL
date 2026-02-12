@@ -67,6 +67,7 @@ export interface BuildSearchQueryFilters {
   horsepower_lte: string;
   drive_types: string[];
   equipment: string[];
+  equipment_match_mode: 'full' | 'partial';
   is_registered: boolean | undefined;
   sortBy: string;
   sortOrder: string;
@@ -166,6 +167,13 @@ export function buildSearchQuery(
     if (key === 'cities') {
       if (!allCitiesSelected && validCities.length > 0) {
         largeArrays[key] = validCities;
+      }
+      return;
+    }
+    if (key === 'equipment_match_mode') {
+      const mode = value as string;
+      if (mode) {
+        params.set('equipmentMatch', mode);
       }
       return;
     }
@@ -271,6 +279,7 @@ export interface DefaultFiltersShape {
   horsepower_lte: string;
   drive_types: string[];
   equipment: string[];
+  equipment_match_mode: 'full' | 'partial';
   is_registered: boolean | undefined;
   sortBy: string;
   sortOrder: 'ASC' | 'DESC';
@@ -303,6 +312,7 @@ export function getDefaultFilters(currentYear: string): DefaultFiltersShape {
     horsepower_lte: '',
     drive_types: [],
     equipment: [],
+    equipment_match_mode: 'full',
     is_registered: undefined,
     sortBy: 'created_at',
     sortOrder: 'DESC',
@@ -325,6 +335,7 @@ export interface ParsedSearchParams {
   registration_types?: string;
   drive_types?: string;
   equipment?: string;
+  equipmentMatch?: string;
   year_gte?: number;
   year_lte?: number;
   price_gte?: number;
@@ -594,6 +605,9 @@ export async function parseSearchParams(
   if (sortOrder) {
     params.sortOrder = sortOrder as 'ASC' | 'DESC';
   }
+
+  const equipmentMatch = getValue('equipmentMatch');
+  params.equipmentMatch = equipmentMatch === 'partial' ? 'partial' : 'full';
 
   const title = getValue('title');
   if (title) {

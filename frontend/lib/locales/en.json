@@ -645,6 +645,10 @@
   "searchFilters": {
     "popular": "Popular",
     "popularFilters": "Popular Models",
+    "equipmentSortMode": "Sort mode:",
+    "equipmentSortModeFull": "Full match",
+    "equipmentSortModePartial": "Partial match",
+    "equipmentSortModeHint": "Full match: the listing must contain all selected equipment options. Partial match: the listing needs at least one of the selected options.",
     "showPopularFilters": "Show popular filters",
     "hidePopularFilters": "Hide popular filters",
     "selectBrands": "Select brands",

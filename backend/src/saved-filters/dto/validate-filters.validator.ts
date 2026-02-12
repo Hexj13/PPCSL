@@ -32,6 +32,7 @@ const ALLOWED_FILTER_KEYS = [
   'horsepower_lte',
   'drive_types',
   'equipment',
+  'equipment_match_mode',
   'is_registered',
   'sortBy',
   'sortOrder',
@@ -85,6 +86,16 @@ export class IsValidFilterObjectConstraint implements ValidatorConstraintInterfa
           return false;
         }
         if (typeof val === 'string' && !['car', 'moto', 'truck'].includes(val)) {
+          return false;
+        }
+      } else if (key === 'equipment_match_mode') {
+        if (
+          val !== '' &&
+          val !== null &&
+          val !== undefined &&
+          val !== 'full' &&
+          val !== 'partial'
+        ) {
           return false;
         }
       } else if (Array.isArray(val)) {

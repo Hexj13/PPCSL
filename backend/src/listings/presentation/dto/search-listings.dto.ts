@@ -4,6 +4,7 @@ import {
   IsArray,
   IsBoolean,
   IsEnum,
+  IsIn,
   IsNumber,
   IsOptional,
   IsString,
@@ -586,6 +587,16 @@ export class SearchListingsDto {
   @IsArray()
   @IsString({ each: true })
   equipment?: string[];
+
+  @ApiPropertyOptional({
+    example: 'full',
+    description:
+      'Equipment filter mode: "full" = listing must have all selected options (AND), "partial" = at least one (OR)',
+    enum: ['full', 'partial'],
+  })
+  @IsOptional()
+  @IsIn(['full', 'partial'])
+  equipmentMatch?: 'full' | 'partial';
 
   @ApiPropertyOptional({
     example: true,

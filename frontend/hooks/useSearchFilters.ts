@@ -78,6 +78,7 @@ export interface FilterState {
   horsepower_lte: string;
   drive_types: string[];
   equipment: string[];
+  equipment_match_mode: 'full' | 'partial';
   is_registered: boolean | undefined;
   sortBy: string;
   sortOrder: 'ASC' | 'DESC';
@@ -169,6 +170,7 @@ export function useSearchFilters() {
       horsepower_lte: searchParams.get('horsepower_lte') || '',
       drive_types: resolveArrayFromStorageOrUrl(ctx, 'drive_types', ['drive_types']),
       equipment: resolveArrayFromStorageOrUrl(ctx, 'equipment', ['equipment']),
+      equipment_match_mode: searchParams.get('equipmentMatch') === 'partial' ? 'partial' : 'full',
       is_registered: resolveIsRegistered(),
       sortBy: searchParams.get('sortBy') || 'created_at',
       sortOrder: (searchParams.get('sortOrder') || 'DESC') as 'ASC' | 'DESC',
@@ -242,6 +244,7 @@ export function useSearchFilters() {
       ]),
       drive_types: resolveArrayFromStorageOrUrl(ctx, 'drive_types', ['drive_types']),
       equipment: resolveArrayFromStorageOrUrl(ctx, 'equipment', ['equipment']),
+      equipment_match_mode: searchParams.get('equipmentMatch') === 'partial' ? 'partial' : 'full',
       sortBy: searchParams.get('sortBy') || 'created_at',
       sortOrder: (searchParams.get('sortOrder') || 'DESC') as 'ASC' | 'DESC',
     };
