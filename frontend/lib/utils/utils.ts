@@ -501,3 +501,7 @@ export function getListingDisplayTitle(listing: Listing, t: (_key: string) => st
   }
   return baseTitle;
 }
+
+export function toSafeJsonLdHtml(schema: object): string {
+  return JSON.stringify(schema).replace(/</g, '\\u003c');
+}

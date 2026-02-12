@@ -1,6 +1,6 @@
 import { getMetadataLocale, getServerTranslations } from '@/lib/i18n';
 import { loadSiteConfigSync } from '@/lib/site-config';
-import { getCountry } from '@/lib/utils';
+import { getCountry, toSafeJsonLdHtml } from '@/lib/utils';
 
 export async function OrganizationSchema() {
   const country = getCountry();
@@ -39,7 +39,7 @@ export async function OrganizationSchema() {
     <script
       id="structured-data-organization"
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaData) }}
+      dangerouslySetInnerHTML={{ __html: toSafeJsonLdHtml(schemaData) }}
     />
   );
 }

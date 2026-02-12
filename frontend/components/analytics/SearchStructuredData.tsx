@@ -2,7 +2,7 @@ import type { Listing } from '@/lib/api';
 import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/content/popular-brands';
 import { getMetadataLocale, getServerTranslations } from '@/lib/i18n';
 import { loadSiteConfigSync } from '@/lib/site-config';
-import { createSlug, getCountry } from '@/lib/utils';
+import { createSlug, getCountry, toSafeJsonLdHtml } from '@/lib/utils';
 
 export async function SearchStructuredData({
   brand,
@@ -209,27 +209,27 @@ export async function SearchStructuredData({
       <script
         id="structured-data-search-breadcrumb"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        dangerouslySetInnerHTML={{ __html: toSafeJsonLdHtml(breadcrumbSchema) }}
       />
       {potentialActions.length > 0 && (
         <script
           id="structured-data-search-website"
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+          dangerouslySetInnerHTML={{ __html: toSafeJsonLdHtml(websiteSchema) }}
         />
       )}
       {itemListSchema && (
         <script
           id="structured-data-search-itemlist"
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }}
+          dangerouslySetInnerHTML={{ __html: toSafeJsonLdHtml(itemListSchema) }}
         />
       )}
       {collectionPageSchema && (
         <script
           id="structured-data-search-collection"
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionPageSchema) }}
+          dangerouslySetInnerHTML={{ __html: toSafeJsonLdHtml(collectionPageSchema) }}
         />
       )}
     </>

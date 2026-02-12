@@ -4,7 +4,12 @@ import { notFound } from 'next/navigation';
 import { Listing } from '@/lib/api';
 import { getMetadataLocale, getServerTranslations, getTFromTranslations } from '@/lib/i18n';
 import { loadSiteConfigSync } from '@/lib/site-config';
-import { getCountry, getOptimizedImageUrl, getListingDisplayTitle } from '@/lib/utils';
+import {
+  getCountry,
+  getListingDisplayTitle,
+  getOptimizedImageUrl,
+  toSafeJsonLdHtml,
+} from '@/lib/utils';
 
 import ListingPageClient from './ListingPageClient';
 
@@ -251,12 +256,12 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
       <script
         id="structured-data-breadcrumb"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: toSafeJsonLdHtml(breadcrumbJsonLd) }}
       />
       <script
         id="structured-data-listing"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(listingJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: toSafeJsonLdHtml(listingJsonLd) }}
       />
       <ListingPageClient listingId={id} initialListing={listing} />
     </>
