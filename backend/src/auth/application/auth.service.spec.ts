@@ -72,6 +72,7 @@ describe('AuthService', () => {
       findByPhone: jest.fn(),
       create: jest.fn(),
       findOne: jest.fn(),
+      findOneById: jest.fn(),
       update: jest.fn(),
       ensureBoardSlug: jest.fn().mockResolvedValue('test-slug'),
     };
@@ -325,7 +326,7 @@ describe('AuthService', () => {
         whatsapp: true,
         telegram: false,
       };
-      usersService.findOne.mockResolvedValue(fullUser as User);
+      usersService.findOneById.mockResolvedValue(fullUser as User);
 
       const result = await service.getUserProfile('1');
 
@@ -334,7 +335,7 @@ describe('AuthService', () => {
       expect(result).toHaveProperty('email');
       expect(result).toHaveProperty('type');
       expect(result).toHaveProperty('boardSlug', 'test-slug');
-      expect(usersService.findOne).toHaveBeenCalledWith('1');
+      expect(usersService.findOneById).toHaveBeenCalledWith('1');
       expect(usersService.ensureBoardSlug).toHaveBeenCalledWith('1');
     });
   });
@@ -462,14 +463,14 @@ describe('AuthService', () => {
       const userId = '1';
       const newPhone = '+37370987654';
       usersService.findByPhone.mockResolvedValue(null);
-      usersService.findOne.mockResolvedValue(mockUser as User);
+      usersService.findOneById.mockResolvedValue(mockUser as User);
       smsService.normalizePhoneNumber.mockReturnValue(newPhone);
       smsService.sendVerificationCode.mockResolvedValue(undefined);
 
       await service.requestPhoneChange(userId, { phone: newPhone });
 
       expect(usersService.findByPhone).toHaveBeenCalledWith(newPhone);
-      expect(usersService.findOne).toHaveBeenCalledWith(userId);
+      expect(usersService.findOneById).toHaveBeenCalledWith(userId);
       expect(smsService.sendVerificationCode).toHaveBeenCalledWith(newPhone);
     });
 
@@ -490,7 +491,7 @@ describe('AuthService', () => {
       const userId = '1';
       const currentPhone = '+37370123456';
       usersService.findByPhone.mockResolvedValue(null);
-      usersService.findOne.mockResolvedValue({ ...mockUser, phone: currentPhone } as User);
+      usersService.findOneById.mockResolvedValue({ ...mockUser, phone: currentPhone } as User);
       smsService.normalizePhoneNumber.mockReturnValue(currentPhone);
 
       await expect(service.requestPhoneChange(userId, { phone: currentPhone })).rejects.toThrow(
@@ -562,7 +563,7 @@ describe('AuthService', () => {
     const userId = 'user-1';
 
     it('should delete account successfully', async () => {
-      usersService.findOne.mockResolvedValue(createUserWithDeactivate());
+      usersService.findOneById.mockResolvedValue(createUserWithDeactivate());
       listingsService.closeAllUserListings.mockResolvedValue(5);
       usersService.update.mockResolvedValue({
         ...mockUser,
@@ -576,7 +577,7 @@ describe('AuthService', () => {
 
       const result = await service.deleteAccount(userId);
 
-      expect(usersService.findOne).toHaveBeenCalledWith(userId);
+      expect(usersService.findOneById).toHaveBeenCalledWith(userId);
       expect(listingsService.closeAllUserListings).toHaveBeenCalledWith(userId);
       expect(usersService.update).toHaveBeenCalledWith(userId, {
         email: null,
@@ -592,16 +593,16 @@ describe('AuthService', () => {
 
     it('should throw BadRequestException when account is already deleted', async () => {
       const inactiveUser = { ...mockUser, active: false };
-      usersService.findOne.mockResolvedValue(inactiveUser as User);
+      usersService.findOneById.mockResolvedValue(inactiveUser as User);
 
       await expect(service.deleteAccount(userId)).rejects.toThrow(BadRequestException);
-      expect(usersService.findOne).toHaveBeenCalledWith(userId);
+      expect(usersService.findOneById).toHaveBeenCalledWith(userId);
       expect(listingsService.closeAllUserListings).not.toHaveBeenCalled();
       expect(usersService.update).not.toHaveBeenCalled();
     });
 
     it('should close all user listings before updating user', async () => {
-      usersService.findOne.mockResolvedValue(createUserWithDeactivate());
+      usersService.findOneById.mockResolvedValue(createUserWithDeactivate());
       listingsService.closeAllUserListings.mockResolvedValue(3);
       usersService.update.mockResolvedValue({
         ...mockUser,
@@ -624,7 +625,7 @@ describe('AuthService', () => {
     });
 
     it('should nullify all personal data', async () => {
-      usersService.findOne.mockResolvedValue(createUserWithDeactivate());
+      usersService.findOneById.mockResolvedValue(createUserWithDeactivate());
       listingsService.closeAllUserListings.mockResolvedValue(0);
       usersService.update.mockResolvedValue({
         ...mockUser,

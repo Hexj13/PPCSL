@@ -39,6 +39,7 @@ describe('UsersController', () => {
     const mockUsersService = {
       findAll: jest.fn(),
       findOne: jest.fn(),
+      findOneById: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -78,11 +79,11 @@ describe('UsersController', () => {
   describe('findOne', () => {
     it('should return user without password', async () => {
       const userId = 'user-1';
-      service.findOne.mockResolvedValue(mockUser as unknown as User);
+      service.findOneById.mockResolvedValue(mockUser as unknown as User);
 
       const result = await controller.findOne(userId);
 
-      expect(service.findOne).toHaveBeenCalledWith(userId);
+      expect(service.findOneById).toHaveBeenCalledWith(userId);
       expect(result).not.toHaveProperty('password');
       expect(result).toHaveProperty('id', 'user-1');
       expect(result).toHaveProperty('email', 'test@example.com');
@@ -90,7 +91,7 @@ describe('UsersController', () => {
 
     it('should throw NotFoundException when user not found', async () => {
       const userId = 'non-existent';
-      service.findOne.mockRejectedValue(new NotFoundException('User not found'));
+      service.findOneById.mockRejectedValue(new NotFoundException('User not found'));
 
       await expect(controller.findOne(userId)).rejects.toThrow(NotFoundException);
     });

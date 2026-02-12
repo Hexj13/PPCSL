@@ -19,7 +19,7 @@ export class RefreshTokensUseCase {
       refreshTokenDto.refresh_token,
     );
 
-    const user = await this.usersService.findOne(refreshToken.user_id);
+    const user = await this.usersService.findOneById(refreshToken.user_id);
     if (!user || !user.active) {
       throw new UnauthorizedException('errors.userNotActive');
     }

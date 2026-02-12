@@ -28,6 +28,16 @@ export class UsersService {
     });
   }
 
+  async findOneById(id: string): Promise<User> {
+    const user = await this.usersRepository.findOne({
+      where: { id },
+    });
+    if (!user) {
+      throw new NotFoundException('errors.userNotFound');
+    }
+    return user;
+  }
+
   async findOne(id: string): Promise<User> {
     const user = await this.usersRepository.findOne({
       where: { id },
@@ -66,7 +76,7 @@ export class UsersService {
 
   async update(id: string, updateData: Partial<User>): Promise<User> {
     await this.usersRepository.update(id, updateData);
-    return this.findOne(id);
+    return this.findOneById(id);
   }
 
   async getLastListingRefreshAt(userId: string): Promise<Date | null> {
@@ -84,7 +94,7 @@ export class UsersService {
   }
 
   async ensureBoardSlug(userId: string): Promise<string> {
-    const user = await this.findOne(userId);
+    const user = await this.findOneById(userId);
     if (user.board_slug) {
       return user.board_slug;
     }

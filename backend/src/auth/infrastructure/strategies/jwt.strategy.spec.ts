@@ -19,7 +19,7 @@ describe('JwtStrategy', () => {
     };
 
     const mockUsersService = {
-      findOne: jest.fn(),
+      findOneById: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -60,7 +60,7 @@ describe('JwtStrategy', () => {
         type: UserType.Admin,
         board_slug: null,
       };
-      usersService.findOne.mockResolvedValue(mockUser as User);
+      usersService.findOneById.mockResolvedValue(mockUser as User);
 
       const result = await strategy.validate(payload);
 
@@ -69,7 +69,7 @@ describe('JwtStrategy', () => {
         email: 'test@example.com',
         type: UserType.Admin,
       });
-      expect(usersService.findOne).toHaveBeenCalledWith('user-1');
+      expect(usersService.findOneById).toHaveBeenCalledWith('user-1');
     });
 
     it('should throw UnauthorizedException when user is inactive', async () => {
@@ -86,11 +86,11 @@ describe('JwtStrategy', () => {
         type: UserType.Individual,
         board_slug: null,
       };
-      usersService.findOne.mockResolvedValue(mockUser as User);
+      usersService.findOneById.mockResolvedValue(mockUser as User);
 
       await expect(strategy.validate(payload)).rejects.toThrow(UnauthorizedException);
       await expect(strategy.validate(payload)).rejects.toThrow('errors.userDeactivated');
-      expect(usersService.findOne).toHaveBeenCalledWith('user-1');
+      expect(usersService.findOneById).toHaveBeenCalledWith('user-1');
     });
 
     it('should return user data from database when payload is minimal', async () => {
@@ -105,7 +105,7 @@ describe('JwtStrategy', () => {
         type: UserType.Individual,
         board_slug: null,
       };
-      usersService.findOne.mockResolvedValue(mockUser as User);
+      usersService.findOneById.mockResolvedValue(mockUser as User);
 
       const result = await strategy.validate(payload);
 
@@ -129,7 +129,7 @@ describe('JwtStrategy', () => {
         type: UserType.Business,
         board_slug: null,
       };
-      usersService.findOne.mockResolvedValue(mockUser as User);
+      usersService.findOneById.mockResolvedValue(mockUser as User);
 
       const result = await strategy.validate(payload);
 

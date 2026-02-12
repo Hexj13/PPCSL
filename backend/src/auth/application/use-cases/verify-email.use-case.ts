@@ -17,7 +17,7 @@ export class VerifyEmailUseCase {
       throw new BadRequestException('errors.invalidOrExpiredToken');
     }
 
-    const user = await this.usersService.findOne(verificationData.userId);
+    const user = await this.usersService.findOneById(verificationData.userId);
     if (!user) {
       throw new BadRequestException('errors.userNotFound');
     }

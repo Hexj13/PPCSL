@@ -10,7 +10,7 @@ export class UpdateProfileUseCase {
   constructor(private usersService: UsersService) {}
 
   async execute(userId: string, updateProfileDto: UpdateProfileDto): Promise<UserProfileResponse> {
-    const currentUser = await this.usersService.findOne(userId);
+    const currentUser = await this.usersService.findOneById(userId);
     const cleanedData: Partial<User> = { ...updateProfileDto };
 
     if (cleanedData.email !== undefined) {

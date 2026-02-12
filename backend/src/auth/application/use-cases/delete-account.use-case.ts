@@ -13,7 +13,7 @@ export class DeleteAccountUseCase {
   ) {}
 
   async execute(userId: string): Promise<{ message: string }> {
-    const user = await this.usersService.findOne(userId);
+    const user = await this.usersService.findOneById(userId);
 
     if (!user.active) {
       throw new BadRequestException('errors.userDeactivated');

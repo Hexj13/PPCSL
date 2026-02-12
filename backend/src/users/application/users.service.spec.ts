@@ -115,8 +115,27 @@ describe('UsersService', () => {
     });
   });
 
+  describe('findOneById', () => {
+    it('should return user by id without relations', async () => {
+      repository.findOne.mockResolvedValue(mockUser);
+
+      const result = await service.findOneById('1');
+
+      expect(result).toEqual(mockUser);
+      expect(repository.findOne).toHaveBeenCalledWith({
+        where: { id: '1' },
+      });
+    });
+
+    it('should throw NotFoundException when user is not found', async () => {
+      repository.findOne.mockResolvedValue(null);
+
+      await expect(service.findOneById('999')).rejects.toThrow(NotFoundException);
+    });
+  });
+
   describe('findOne', () => {
-    it('should return user by id', async () => {
+    it('should return user by id with listings and favorites', async () => {
       repository.findOne.mockResolvedValue(mockUser);
 
       const result = await service.findOne('1');

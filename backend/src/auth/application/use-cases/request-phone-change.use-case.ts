@@ -21,7 +21,7 @@ export class RequestPhoneChangeUseCase {
       throw new BadRequestException('errors.phoneAlreadyExists');
     }
 
-    const user = await this.usersService.findOne(userId);
+    const user = await this.usersService.findOneById(userId);
     if (user.phone === normalizedNewPhone) {
       throw new BadRequestException('errors.phoneSameAsCurrent');
     }
