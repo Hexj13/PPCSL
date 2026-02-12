@@ -649,6 +649,8 @@
     "equipmentSortModeFull": "Full match",
     "equipmentSortModePartial": "Partial match",
     "equipmentSortModeHint": "Full match: the listing must contain all selected equipment options. Partial match: the listing needs at least one of the selected options.",
+    "comingSoonHint": "Coming soon on the site!",
+    "tireAlt": "Tires",
     "showPopularFilters": "Show popular filters",
     "hidePopularFilters": "Hide popular filters",
     "selectBrands": "Select brands",

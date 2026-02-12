@@ -42,10 +42,10 @@ export function HomeHero({
         className="text-xl md:text-2xl font-medium leading-relaxed tracking-wide text-text-secondary"
         suppressHydrationWarning
       >
-        <TranslatedText>{subtitle} </TranslatedText>
+        <TranslatedText>{subtitle}</TranslatedText>
+        <TranslatedText className="text-primary-500 font-bold"> {subtitle3}</TranslatedText>
+        <TranslatedText>{subtitle2}</TranslatedText>
         <TranslatedText className="text-primary-500 font-bold">{subtitleBold}</TranslatedText>
-        <TranslatedText> {subtitle2} </TranslatedText>
-        <TranslatedText className="text-primary-700">{subtitle3}</TranslatedText>
       </p>
     </div>
   );
