@@ -142,9 +142,7 @@ export function VehicleTypeSelector({
               : 'hover:bg-primary-500/10 hover:rounded-t-lg'
           }`}
         >
-          <CarIcon
-            className="w-12 h-12 transition-colors duration-300 scale-x-[-1] text-primary-900"
-          />
+          <CarIcon className="w-12 h-12 transition-colors duration-300 scale-x-[-1] text-primary-900" />
         </button>
         <button
           ref={truckRef}
@@ -156,9 +154,7 @@ export function VehicleTypeSelector({
               : 'hover:bg-primary-500/10 hover:rounded-t-lg'
           }`}
         >
-          <TruckIcon
-            className="w-12 h-12 transition-colors duration-300 scale-x-[-1] text-primary-900"
-          />
+          <TruckIcon className="w-12 h-12 transition-colors duration-300 scale-x-[-1] text-primary-900" />
         </button>
         <button
           ref={motoRef}
@@ -170,9 +166,7 @@ export function VehicleTypeSelector({
               : 'hover:bg-primary-500/10 hover:rounded-t-lg'
           }`}
         >
-          <MotoIcon
-            className="w-12 h-12 transition-colors duration-300 scale-x-[-1] text-primary-900"
-          />
+          <MotoIcon className="w-12 h-12 transition-colors duration-300 scale-x-[-1] text-primary-900" />
         </button>
         <span
           ref={comingSoonRef}
