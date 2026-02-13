@@ -131,7 +131,7 @@ export function PopularBodyTypesFilter({
 
   return (
     <div className="mt-6 mb-6 select-none">
-      <label className="block text-sm font-semibold mb-2 text-text-secondary flex items-center gap-2">
+      <label className="block text-sm font-semibold mb-2 text-primary-900 flex items-center gap-2">
         <svg
           width="16"
           height="16"
@@ -218,8 +218,8 @@ export function PopularBodyTypesFilter({
                   outline-none select-none ${value === 'ATV' ? 'overflow-hidden' : ''}
                   ${
                     isSelected
-                      ? 'border border-primary-500'
-                      : 'border border-primary-500/30 hover:border-primary-500/50 transition-colors duration-200'
+                      ? 'border-2 border-primary-700'
+                      : 'border-2 border-primary-700/30 hover:border-primary-700 transition-colors duration-200'
                   }
                 `}
                   onMouseDown={(e) => {
@@ -296,9 +296,9 @@ export function PopularBodyTypesFilter({
                           'radial-gradient(circle, rgba(64, 145, 107, 0.25) 0%, rgba(64, 145, 107, 0.15) 40%, rgba(64, 145, 107, 0.05) 100%)',
                       }}
                     >
-                      <div className="w-8 h-8 md:w-10 md:h-10 bg-primary-500 rounded-full flex items-center justify-center shadow-lg">
+                      <div className="w-8 h-8 md:w-10 md:h-10 bg-primary-500 rounded-full flex items-center justify-center shadow-lg border-2 border-primary-900">
                         <svg
-                          className="w-5 h-5 md:w-6 md:h-6 text-white"
+                          className="w-5 h-5 md:w-6 md:h-6 text-primary-900"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -314,7 +314,7 @@ export function PopularBodyTypesFilter({
                     </div>
                   )}
                 </button>
-                <span className="text-xs md:text-sm font-medium text-text-primary text-center select-none h-[32px] flex items-center justify-center">
+                <span className="text-xs md:text-sm font-medium text-primary-900 text-center select-none h-[32px] flex items-center justify-center">
                   {t(`vehicleOptions.bodyType.${value}`)}
                 </span>
               </div>

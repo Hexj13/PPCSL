@@ -330,13 +330,13 @@ function ListingCardComponent({
           </button>
         </div>
         <div className="p-4 md:p-5 flex-grow flex flex-col">
-          <h3 className="font-bold text-base md:text-lg mb-3 line-clamp-2 text-primary-500 group-hover:text-primary-700 transition-colors">
+          <h3 className="font-bold text-base md:text-lg mb-3 line-clamp-2 text-primary-900">
             {displayTitle}
           </h3>
           <div className="flex items-baseline gap-2 mb-3">
             {listing.price !== undefined ? (
               <>
-                <span className="text-xl md:text-2xl font-extrabold text-primary-500 group-hover:text-primary-700 transition-colors">
+                <span className="text-xl md:text-2xl font-extrabold text-primary-500">
                   {formatPrice(listing.price, listing.currency)}
                 </span>
                 <span

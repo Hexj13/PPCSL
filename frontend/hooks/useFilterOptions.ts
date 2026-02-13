@@ -71,13 +71,10 @@ export function useFilterOptions({
     ]);
   }, [t]);
 
-  const REGISTRATION_OPTIONS: Array<LabeledOption> = [
-    { value: '', label: t('searchFilters.all') },
-    ...sortOptionsByLabel([
-      { value: 'true', label: t('searchFilters.registered') },
-      { value: 'false', label: t('searchFilters.notRegistered') },
-    ]),
-  ];
+  const REGISTRATION_OPTIONS: Array<LabeledOption> = sortOptionsByLabel([
+    { value: 'true', label: t('searchFilters.registered') },
+    { value: 'false', label: t('searchFilters.notRegistered') },
+  ]);
 
   const getBrandOptions = useCallback(() => {
     const popularBrandsList = getPopularBrands(vehicleType);
@@ -94,7 +91,7 @@ export function useFilterOptions({
 
     if (popularBrands.length > 0) {
       const popularLabel = t('searchFilters.popular');
-      options.push({ value: '__category__Популарни', label: popularLabel, category: popularLabel });
+      options.push({ value: '__category__popular', label: popularLabel, category: popularLabel });
       popularBrands.forEach((brand) => {
         options.push({ value: brand.id, label: brand.name, category: popularLabel });
       });
@@ -102,7 +99,7 @@ export function useFilterOptions({
 
     if (otherBrands.length > 0) {
       const otherLabel = t('searchFilters.other');
-      options.push({ value: '__category__Други', label: otherLabel, category: otherLabel });
+      options.push({ value: '__category__other', label: otherLabel, category: otherLabel });
       otherBrands.forEach((brand) => {
         options.push({ value: brand.id, label: brand.name, category: otherLabel });
       });
@@ -175,7 +172,7 @@ export function useFilterOptions({
 
     if (popularCities.length > 0) {
       const popularLabel = t('searchFilters.popular');
-      options.push({ value: '__category__Популарни', label: popularLabel, category: popularLabel });
+      options.push({ value: '__category__popular', label: popularLabel, category: popularLabel });
       popularCities.forEach((city) => {
         let label: string;
         if (locale === 'ro') {
@@ -195,7 +192,7 @@ export function useFilterOptions({
 
     if (otherCities.length > 0) {
       const otherLabel = t('searchFilters.other');
-      options.push({ value: '__category__Други', label: otherLabel, category: otherLabel });
+      options.push({ value: '__category__other', label: otherLabel, category: otherLabel });
       otherCities.forEach((city) => {
         let label: string;
         if (locale === 'ro') {

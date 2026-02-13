@@ -8,7 +8,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { authApi, favoritesApi, listingsApi, savedFiltersApi, UpdateProfileDto } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
-import { LoadingButton, InfoBlock, HintTooltip } from '@/ui';
+import { Checkbox, LoadingButton, InfoBlock, HintTooltip } from '@/ui';
 
 function CompleteProfileContent() {
   const router = useRouter();
@@ -465,7 +465,7 @@ function CompleteProfileContent() {
 
   return (
     <div className="max-w-md mx-auto mt-6 md:mt-12 mb-16">
-      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center text-primary-700">
+      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center text-primary-900">
         {t('completeProfile.title')}
       </h1>
       <div className="card p-6 md:p-8">
@@ -484,7 +484,7 @@ function CompleteProfileContent() {
             {isBusiness ? (
               <>
                 <div>
-                  <label className="block text-sm font-semibold mb-2 text-primary-500">
+                  <label className="block text-sm font-semibold mb-2 text-primary-900">
                     {t('profile.companyWebsiteUrl')}
                   </label>
                   <input
@@ -504,7 +504,7 @@ function CompleteProfileContent() {
 
                 <div>
                   <div className="flex items-center gap-1.5 mb-2">
-                    <label className="text-sm font-semibold text-primary-500">
+                    <label className="text-sm font-semibold text-primary-900">
                       {t('register.email')}
                     </label>
                     <HintTooltip ariaLabel={t('register.emailHint')}>
@@ -527,68 +527,21 @@ function CompleteProfileContent() {
                   )}
                 </div>
 
-                <div className="flex items-start gap-3 group">
-                  <div className="relative mt-0.5">
-                    <input
-                      type="checkbox"
-                      id="complete-profile-email-notifications"
-                      checked={formData.emailNotifications}
-                      onChange={(e) =>
-                        setFormData({ ...formData, emailNotifications: e.target.checked })
-                      }
-                      onFocus={handleFormFieldFocus}
-                      className="sr-only"
-                    />
-                    <div
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setFormData({
-                          ...formData,
-                          emailNotifications: !formData.emailNotifications,
-                        });
-                      }}
-                      className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer flex-shrink-0 ${
-                        formData.emailNotifications
-                          ? 'bg-primary-500 border-primary-700'
-                          : 'border-primary-500/50 bg-bg-secondary group-hover:border-primary-500'
-                      }`}
-                    >
-                      {formData.emailNotifications && (
-                        <svg
-                          className="w-3 h-3 text-white"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={3}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                      )}
-                    </div>
-                  </div>
-                  <span
-                    onClick={() =>
-                      setFormData({
-                        ...formData,
-                        emailNotifications: !formData.emailNotifications,
-                      })
-                    }
-                    className={`text-sm cursor-pointer leading-relaxed ${
-                      formData.emailNotifications ? 'text-text-primary' : 'text-text-secondary'
-                    }`}
-                  >
-                    {t('register.emailNotifications')}
-                  </span>
-                </div>
+                <Checkbox
+                  id="complete-profile-email-notifications"
+                  checked={formData.emailNotifications}
+                  onChange={(checked) => {
+                    handleFormFieldFocus();
+                    setFormData({ ...formData, emailNotifications: checked });
+                  }}
+                  label={t('register.emailNotifications')}
+                  size="md"
+                />
               </>
             ) : (
               <>
                 <div>
-                  <label className="block text-sm font-semibold mb-2 text-primary-500">
+                  <label className="block text-sm font-semibold mb-2 text-primary-900">
                     {t('register.firstName')}
                   </label>
                   <input
@@ -607,7 +560,7 @@ function CompleteProfileContent() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold mb-2 text-primary-500">
+                  <label className="block text-sm font-semibold mb-2 text-primary-900">
                     {t('register.lastName')}
                   </label>
                   <input
@@ -627,7 +580,7 @@ function CompleteProfileContent() {
 
                 <div>
                   <div className="flex items-center gap-1.5 mb-2">
-                    <label className="text-sm font-semibold text-primary-500">
+                    <label className="text-sm font-semibold text-primary-900">
                       {t('register.email')}
                     </label>
                     <HintTooltip ariaLabel={t('register.emailHint')}>
@@ -665,7 +618,7 @@ function CompleteProfileContent() {
                 type="submit"
                 loading={isSubmitting}
                 disabled={!hasAnyField() || hasErrors()}
-                className="flex-1 text-primary-500 font-medium text-sm md:text-base hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-500 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 text-primary-700 font-medium text-sm md:text-base hover:text-primary-900 hover:border-primary-900 active:text-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {t('completeProfile.save')}
               </LoadingButton>

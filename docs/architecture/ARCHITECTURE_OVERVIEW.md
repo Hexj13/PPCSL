@@ -39,12 +39,12 @@ Moldova (kupito.club)              Future Platform
    - Все необходимые шаги
    - Команды и примеры
 
-3. **[PLATFORM_GUIDE.md](./PLATFORM_GUIDE.md)**
+3. **[PLATFORM_GUIDE.md](../guides/PLATFORM_GUIDE.md)**
    - Детальное руководство
    - Best practices
    - Примеры конфигурации
 
-4. **[platform-plans/](./platform-plans/)** — планы платформ при добавлении новой страны (по образцу Moldova).
+4. **[platform-plans/](../platform-plans/)** — планы платформ при добавлении новой страны (по образцу Moldova).
 
 ### Для разработчиков (важно!)
 

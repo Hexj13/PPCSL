@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { getPopularBrands, getPopularModelsByBrand } from '@/lib/content/popular-brands';
@@ -21,7 +20,6 @@ export function PopularFilters({
   vehicleType = 'car',
 }: PopularFiltersProps) {
   const { t } = useTranslation();
-  const router = useRouter();
   const popularBrands = getPopularBrands(vehicleType) || [];
   const popularModelsByBrand = getPopularModelsByBrand(vehicleType) || {};
   const sortedBrands =
@@ -30,9 +28,6 @@ export function PopularFilters({
   const handleReset = () => {
     if (onReset) {
       onReset();
-    } else {
-      const baseUrl = vehicleType !== 'car' ? `/?vehicleType=${vehicleType}` : '/';
-      router.push(baseUrl);
     }
   };
 
@@ -55,10 +50,10 @@ export function PopularFilters({
               onApplyFilter(brand);
             }
           }}
-          className={`relative px-3 py-2 rounded-full text-text-secondary border transition-all text-sm ${
+          className={`relative px-3 py-2 rounded-full border-2 text-primary-900 transition-all text-sm ${
             isBrandActive
-              ? 'bg-primary-500/5 border-primary-500'
-              : 'bg-primary-500/15 border-primary-400/60 hover:bg-primary-500/25 hover:border-primary-300/90'
+              ? 'border-primary-900 bg-primary-500/10'
+              : 'border-primary-700 bg-bg-secondary hover:border-primary-900 hover:bg-primary-500/10'
           }`}
         >
           {brand}
@@ -71,9 +66,9 @@ export function PopularFilters({
                   'radial-gradient(circle, rgba(64, 145, 107, 0.25) 0%, rgba(64, 145, 107, 0.15) 40%, rgba(64, 145, 107, 0.05) 100%)',
               }}
             >
-              <div className="w-5 h-5 bg-primary-500/50 rounded-full flex items-center justify-center shadow-lg">
+              <div className="w-5 h-5 bg-primary-500 rounded-full flex items-center justify-center shadow-lg border-2 border-primary-900">
                 <svg
-                  className="w-3 h-3 text-white"
+                  className="w-3 h-3 text-primary-900"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -108,10 +103,10 @@ export function PopularFilters({
                     onApplyFilter(brand, model);
                   }
                 }}
-                className={`relative px-3 py-2 rounded-full text-text-secondary border transition-all text-sm ${
+                className={`relative px-3 py-2 rounded-full border-2 text-primary-900 transition-all text-sm ${
                   isModelActive
-                    ? 'bg-primary-500/5 border-primary-500'
-                    : 'bg-primary-500/5 border-primary-500/20 hover:bg-primary-500/15 hover:border-primary-500/30'
+                    ? 'border-primary-900 bg-primary-500/10'
+                    : 'border-primary-500 bg-bg-secondary hover:border-primary-900 hover:bg-primary-500/10'
                 }`}
               >
                 {brand} {model}
@@ -124,9 +119,9 @@ export function PopularFilters({
                         'radial-gradient(circle, rgba(64, 145, 107, 0.25) 0%, rgba(64, 145, 107, 0.15) 40%, rgba(64, 145, 107, 0.05) 100%)',
                     }}
                   >
-                    <div className="w-5 h-5 bg-primary-500/50 rounded-full flex items-center justify-center shadow-lg">
+                    <div className="w-5 h-5 bg-primary-500 rounded-full flex items-center justify-center shadow-lg border-2 border-primary-900">
                       <svg
-                        className="w-3 h-3 text-white"
+                        className="w-3 h-3 text-primary-900"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"

@@ -169,7 +169,7 @@ function DropdownComponent({
   return (
     <div ref={dropdownRef} className={`relative ${className || ''}`} suppressHydrationWarning>
       {searchable ? (
-        <div className="relative">
+        <div className="relative group">
           <input
             ref={inputRef}
             type="text"
@@ -182,7 +182,7 @@ function DropdownComponent({
             style={{ paddingRight: '52px', color: selectedOption ? undefined : '#9ca3af' }}
           />
           <svg
-            className={`absolute top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-400 transition-transform duration-200 cursor-pointer ${
+            className={`absolute top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-900 group-hover:text-primary-700 transition-colors duration-200 cursor-pointer ${
               isOpen ? 'rotate-180' : ''
             }`}
             style={{ right: '16px' }}
@@ -220,7 +220,7 @@ function DropdownComponent({
             }
           }}
           disabled={disabled ? true : undefined}
-          className={`input-field dropdown-button text-left cursor-pointer relative flex items-center ${rightIcon ? 'gap-1 md:gap-1.5' : ''} ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''} ${buttonClassName || ''}`}
+          className={`input-field dropdown-button text-left cursor-pointer relative flex items-center group ${rightIcon ? 'gap-1 md:gap-1.5' : ''} ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''} ${buttonClassName || ''}`}
           style={buttonClassName ? { paddingRight: '52px' } : { paddingRight: '52px' }}
           suppressHydrationWarning
         >
@@ -237,7 +237,7 @@ function DropdownComponent({
             {displayText}
           </span>
           <svg
-            className={`absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-400 transition-transform duration-200 flex-shrink-0 pointer-events-none ${
+            className={`absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-900 group-hover:text-primary-700 transition-colors duration-200 flex-shrink-0 pointer-events-none ${
               isOpen ? 'rotate-180' : ''
             }`}
             fill="none"

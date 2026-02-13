@@ -32,13 +32,13 @@ export function TechnicalSpecsSection({
 
   return (
     <>
-      <div className="border-t border-primary-500/20 pt-6 mb-6">
-        <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-500">
+      <div className="border-t border-primary-700/30 pt-6 mb-6">
+        <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-900">
           {t('listings.technicalSpecs')}
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
+            <label className="block text-sm font-semibold mb-2 text-primary-700 flex items-center gap-2">
               <svg
                 width="16"
                 height="16"
@@ -86,7 +86,7 @@ export function TechnicalSpecsSection({
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400 whitespace-nowrap">
+            <label className="block text-sm font-semibold mb-2 text-primary-700 whitespace-nowrap">
               {t('listings.engineDisplacementLabel')}
               <RequiredAsterisk filled={!!formData.vehicle.engine_displ_l.trim()} />
             </label>
@@ -140,7 +140,7 @@ export function TechnicalSpecsSection({
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400 whitespace-nowrap">
+            <label className="block text-sm font-semibold mb-2 text-primary-700 whitespace-nowrap">
               {t('listings.powerHorsepowerLabel')}
               <RequiredAsterisk filled={!!formData.horsepower.trim()} />
             </label>
@@ -172,7 +172,7 @@ export function TechnicalSpecsSection({
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400 whitespace-nowrap">
+            <label className="block text-sm font-semibold mb-2 text-primary-700 whitespace-nowrap">
               {t('listings.powerKwLabel')}
               <RequiredAsterisk filled={!!formData.power_kw.trim()} />
             </label>
@@ -204,7 +204,7 @@ export function TechnicalSpecsSection({
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
+            <label className="block text-sm font-semibold mb-2 text-primary-700 flex items-center gap-2">
               <svg
                 width="16"
                 height="16"
@@ -249,7 +249,7 @@ export function TechnicalSpecsSection({
 
           {vehicleType !== 'moto' && (
             <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
+              <label className="block text-sm font-semibold mb-2 text-primary-700 flex items-center gap-2">
                 <svg
                   width="16"
                   height="16"
@@ -294,7 +294,7 @@ export function TechnicalSpecsSection({
           )}
 
           <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
+            <label className="block text-sm font-semibold mb-2 text-primary-700 flex items-center gap-2">
               <svg
                 width="16"
                 height="16"
@@ -337,7 +337,7 @@ export function TechnicalSpecsSection({
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
+            <label className="block text-sm font-semibold mb-2 text-primary-700 flex items-center gap-2">
               <svg
                 width="16"
                 height="16"
@@ -412,8 +412,8 @@ export function TechnicalSpecsSection({
         vehicleType={vehicleType}
       />
 
-      <div className="border-t border-primary-500/20 pt-6 mb-6">
-        <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-500">
+      <div className="border-t border-primary-700/30 pt-6 mb-6">
+        <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-900">
           {t('listings.conditionAndRegistration')}
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
@@ -444,13 +444,13 @@ export function TechnicalSpecsSection({
                 }}
                 className={`w-6 h-6 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
                   formData.is_registered
-                    ? 'bg-gradient-to-r from-primary-700 to-primary-800 border-primary-500'
-                    : 'border-primary-500/50 bg-bg-secondary group-hover:border-primary-500'
+                    ? 'border-primary-700 bg-primary-500/10'
+                    : 'border-primary-700/50 bg-bg-secondary group-hover:border-primary-700'
                 }`}
               >
                 {formData.is_registered && (
                   <svg
-                    className="w-4 h-4 text-white"
+                    className="w-4 h-4 text-primary-900"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -468,7 +468,7 @@ export function TechnicalSpecsSection({
             <span
               className={`text-sm transition-colors duration-200 ${
                 formData.is_registered
-                  ? 'text-primary-400'
+                  ? 'text-primary-700'
                   : 'text-gray-400 group-hover:text-gray-300'
               }`}
             >
@@ -477,7 +477,7 @@ export function TechnicalSpecsSection({
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400">
+            <label className="block text-sm font-semibold mb-2 text-primary-700">
               {t('listings.registeredUntil')}
               {formData.is_registered && (
                 <RequiredAsterisk filled={!!formData.registration_expires_at.trim()} />
@@ -557,7 +557,7 @@ export function TechnicalSpecsSection({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400">
+            <label className="block text-sm font-semibold mb-2 text-primary-700">
               {t('listings.conditionLabel')}
               <RequiredAsterisk filled={!!formData.condition} />
             </label>
@@ -577,7 +577,7 @@ export function TechnicalSpecsSection({
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400">
+            <label className="block text-sm font-semibold mb-2 text-primary-700">
               {t('listings.registrationTypeLabel')}
               <RequiredAsterisk filled={!!formData.registration_type} />
             </label>
@@ -598,13 +598,13 @@ export function TechnicalSpecsSection({
         </div>
       </div>
 
-      <div className="border-t border-primary-500/20 pt-6 mb-6">
-        <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-500">
+      <div className="border-t border-primary-700/30 pt-6 mb-6">
+        <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-900">
           {t('listings.exterior')}
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-400">
+            <label className="block text-sm font-semibold mb-2 text-primary-700">
               {t('listings.colorLabel')}
             </label>
             <Dropdown
@@ -623,7 +623,7 @@ export function TechnicalSpecsSection({
 
           {vehicleType !== 'moto' && (
             <div>
-              <label className="block text-sm font-semibold mb-2 text-primary-400">
+              <label className="block text-sm font-semibold mb-2 text-primary-700">
                 {t('vehicleOptions.doorsLabel')}
               </label>
               <Dropdown

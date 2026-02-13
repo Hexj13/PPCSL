@@ -31,12 +31,12 @@ export function ListingPageSeller({
 
   return (
     <div className="surface overflow-hidden">
-      <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-700">
+      <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-900">
         {t('listingDetail.contactInfo')}
       </h2>
       <div className="space-y-4 break-words">
         <div>
-          <span className="font-semibold text-primary-500">{t('listingDetail.sellerType')}:</span>
+          <span className="font-semibold text-primary-700">{t('listingDetail.sellerType')}:</span>
           <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
             {listing.user.type === 'Business'
               ? t('listingDetail.business')
@@ -46,7 +46,7 @@ export function ListingPageSeller({
 
         {listing.user.firstName && (
           <div>
-            <span className="font-semibold text-primary-500">{t('listingDetail.name')}:</span>
+            <span className="font-semibold text-primary-700">{t('listingDetail.name')}:</span>
             <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
               {listing.user.firstName}
             </span>
@@ -57,7 +57,7 @@ export function ListingPageSeller({
           listing.user.type === 'Business' &&
           listing.user.companyName && (
             <div>
-              <span className="font-semibold text-primary-500">{t('listingDetail.company')}:</span>
+              <span className="font-semibold text-primary-700">{t('listingDetail.company')}:</span>
               <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
                 {listing.user.companyName}
               </span>
@@ -68,7 +68,7 @@ export function ListingPageSeller({
           listing.user.type === 'Business' &&
           listing.user.companyWebsiteUrl && (
             <div className="flex items-center min-w-0 gap-2">
-              <span className="font-semibold text-primary-500 flex-shrink-0">
+              <span className="font-semibold text-primary-700 flex-shrink-0">
                 {t('listingDetail.companyWebsite')}:
               </span>
               <a
@@ -85,7 +85,7 @@ export function ListingPageSeller({
           )}
 
         <div>
-          <span className="font-semibold text-primary-500">{t('listingDetail.city')}:</span>
+          <span className="font-semibold text-primary-700">{t('listingDetail.city')}:</span>
           <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
             {getCityName(listing.city, locale, cities)}
           </span>
@@ -93,13 +93,13 @@ export function ListingPageSeller({
 
         {listing.status === 'Closed' ? (
           <div>
-            <span className="font-semibold text-primary-500">{t('listingDetail.email')}:</span>
+            <span className="font-semibold text-primary-700">{t('listingDetail.email')}:</span>
             <span className="ml-2 text-text-secondary">••••••••</span>
           </div>
         ) : (
           listing.user.email && (
             <div className="flex items-center min-w-0">
-              <span className="font-semibold text-primary-500 flex-shrink-0">
+              <span className="font-semibold text-primary-700 flex-shrink-0">
                 {t('listingDetail.email')}:
               </span>
               <a
@@ -124,13 +124,13 @@ export function ListingPageSeller({
 
         {listing.status === 'Closed' ? (
           <div>
-            <span className="font-semibold text-primary-500">{t('listingDetail.phone')}:</span>
+            <span className="font-semibold text-primary-700">{t('listingDetail.phone')}:</span>
             <span className="ml-2 text-text-secondary">••••••••</span>
           </div>
         ) : (
           listing.user.phone && (
             <div className="flex items-center min-w-0">
-              <span className="font-semibold text-primary-500 flex-shrink-0">
+              <span className="font-semibold text-primary-700 flex-shrink-0">
                 {t('listingDetail.phone')}:
               </span>
               <a
@@ -162,7 +162,7 @@ export function ListingPageSeller({
         {listing.status !== 'Closed' &&
           (listing.user.viber || listing.user.whatsapp || listing.user.telegram) && (
             <div>
-              <span className="font-semibold text-primary-400 mb-2 block">
+              <span className="font-semibold text-primary-700 mb-2 block">
                 {t('listingDetail.availableMessengers')}:
               </span>
               <div className="flex flex-wrap gap-2">
@@ -290,7 +290,7 @@ export function ListingPageSeller({
                 href={`/board/${boardSlug}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-500 hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 border-2 border-primary-500 bg-primary-500/10 select-none"
+                className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover:text-primary-900 hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 !bg-primary-500/10 select-none"
               >
                 <svg
                   className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"

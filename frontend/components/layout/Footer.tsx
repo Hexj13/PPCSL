@@ -10,10 +10,7 @@ export function Footer() {
   const { t } = useTranslation();
 
   return (
-    <footer
-      className="shadow-lg text-white mt-auto border-t-2 border-primary-500/20 backdrop-blur-sm"
-      style={{ backgroundColor: '#2E6F51' }}
-    >
+    <footer className="bg-primary-700 shadow-lg text-white mt-auto border-t-2 border-primary-500/20 backdrop-blur-sm">
       <div className="container mx-auto px-3 sm:px-4 py-6 md:py-8">
         <div className="text-center">
           <div

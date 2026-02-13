@@ -570,7 +570,7 @@ export default function ListingPageClient({
 
             {listing.equipment && listing.equipment.length > 0 && (
               <div className="surface overflow-hidden">
-                <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-700">
+                <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-900">
                   {t('listingDetail.equipment')}
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
@@ -604,13 +604,13 @@ export default function ListingPageClient({
               listing.registration_type ||
               listing.is_registered !== undefined) && (
               <div className="surface overflow-hidden">
-                <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-700">
+                <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-900">
                   {t('listingDetail.conditionAndRegistration')}
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {listing.condition && (
                     <div>
-                      <span className="text-primary-500 font-semibold">
+                      <span className="text-primary-700 font-semibold">
                         {t('listingDetail.condition')}:
                       </span>
                       <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
@@ -620,7 +620,7 @@ export default function ListingPageClient({
                   )}
                   {listing.registration_type && (
                     <div>
-                      <span className="text-primary-500 font-semibold">
+                      <span className="text-primary-700 font-semibold">
                         {t('listingDetail.registrationType')}:
                       </span>
                       <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
@@ -630,7 +630,7 @@ export default function ListingPageClient({
                   )}
                   {listing.is_registered !== undefined && (
                     <div>
-                      <span className="text-primary-500 font-semibold">
+                      <span className="text-primary-700 font-semibold">
                         {t('listingDetail.registration')}:
                       </span>
                       <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
@@ -642,7 +642,7 @@ export default function ListingPageClient({
                   )}
                   {listing.is_registered && listing.registration_expires_at && (
                     <div>
-                      <span className="text-primary-500 font-semibold">
+                      <span className="text-primary-700 font-semibold">
                         {t('listingDetail.registeredUntil')}:
                       </span>
                       <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
@@ -661,7 +661,7 @@ export default function ListingPageClient({
 
             <div className="surface overflow-visible">
               <div className="flex items-center gap-2 mb-4 min-w-0">
-                <h2 className="text-xl md:text-2xl font-bold text-primary-700 min-w-0 break-words">
+                <h2 className="text-xl md:text-2xl font-bold text-primary-900 min-w-0 break-words">
                   {listing.vin
                     ? t('listingDetail.previousListings')
                     : t('listingDetail.vehicleHistory')}
@@ -690,16 +690,16 @@ export default function ListingPageClient({
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-primary-500/20">
-                        <th className="text-left py-2 px-2 sm:px-3 font-semibold text-xs sm:text-sm text-primary-500">
+                        <th className="text-left py-2 px-2 sm:px-3 font-semibold text-xs sm:text-sm text-primary-700">
                           {t('listingDetail.title')}
                         </th>
-                        <th className="text-left py-2 px-2 sm:px-3 font-semibold text-xs sm:text-sm hidden sm:table-cell text-primary-500">
+                        <th className="text-left py-2 px-2 sm:px-3 font-semibold text-xs sm:text-sm hidden sm:table-cell text-primary-700">
                           {t('listingDetail.mileage')}
                         </th>
-                        <th className="text-left py-2 px-2 sm:px-3 font-semibold text-xs sm:text-sm hidden md:table-cell text-primary-500">
+                        <th className="text-left py-2 px-2 sm:px-3 font-semibold text-xs sm:text-sm hidden md:table-cell text-primary-700">
                           {t('listingDetail.closedAt')}
                         </th>
-                        <th className="text-left sm:text-right py-2 px-2 sm:px-3 font-semibold text-xs sm:text-sm text-primary-500"></th>
+                        <th className="text-left sm:text-right py-2 px-2 sm:px-3 font-semibold text-xs sm:text-sm text-primary-700"></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -762,7 +762,7 @@ export default function ListingPageClient({
             />
 
             <div className="surface overflow-hidden">
-              <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-700">
+              <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-900">
                 {t('listingDetail.listingInfo')}
               </h2>
               <div className="space-y-3 break-words">
@@ -787,7 +787,7 @@ export default function ListingPageClient({
                         d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                       />
                     </svg>
-                    <span className="font-semibold text-primary-500 flex-shrink-0">
+                    <span className="font-semibold text-primary-700 flex-shrink-0">
                       {t('listingDetail.views')}:
                     </span>
                     <span
@@ -812,7 +812,7 @@ export default function ListingPageClient({
                       d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  <span className="font-semibold text-primary-500 flex-shrink-0">
+                  <span className="font-semibold text-primary-700 flex-shrink-0">
                     {t('listingDetail.updated')}:
                   </span>
                   <span
@@ -836,7 +836,7 @@ export default function ListingPageClient({
                       d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                     />
                   </svg>
-                  <span className="font-semibold text-primary-500 flex-shrink-0">
+                  <span className="font-semibold text-primary-700 flex-shrink-0">
                     {t('listingDetail.willClose')}:
                   </span>
                   <span
@@ -851,7 +851,7 @@ export default function ListingPageClient({
               <div className="mt-4 pt-4 border-t border-primary-500/20 space-y-2">
                 <button
                   onClick={handleCopyLink}
-                  className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-500 hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 border-2 border-primary-500 bg-primary-500/10 select-none"
+                  className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover:text-primary-900 hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 !bg-primary-500/10 select-none"
                 >
                   <svg
                     className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
@@ -872,7 +872,7 @@ export default function ListingPageClient({
                 {canShare && (
                   <button
                     onClick={handleShare}
-                    className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-500 hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 border-2 border-primary-500 bg-primary-500/10 select-none"
+                    className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover:text-primary-900 hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 !bg-primary-500/10 select-none"
                   >
                     <svg
                       className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"

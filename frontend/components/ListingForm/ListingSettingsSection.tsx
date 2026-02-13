@@ -19,12 +19,12 @@ export function ListingSettingsSection({
   }
 
   return (
-    <div className="border-t border-primary-500/20 pt-6 mb-6">
-      <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-500">
+    <div className="border-t border-primary-700/30 pt-6 mb-6">
+      <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-900">
         {t('listings.listingSettings')}
       </h2>
       <div>
-        <label className="block text-sm font-semibold mb-2 text-primary-400">
+        <label className="block text-sm font-semibold mb-2 text-primary-700">
           {t('listings.statusLabel')}
         </label>
         <Dropdown

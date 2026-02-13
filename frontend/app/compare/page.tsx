@@ -129,7 +129,7 @@ export default function ComparePage() {
           items={[{ label: t('breadcrumbs.home'), href: '/' }, { label: t('compare.title') }]}
           className="mb-6"
         />
-        <h1 className="text-xl md:text-3xl lg:text-4xl font-extrabold mb-6 text-primary-700">
+        <h1 className="text-xl md:text-3xl lg:text-4xl font-extrabold mb-6 text-primary-900">
           {t('compare.title')}
         </h1>
         <div className="surface py-12 animate-pulse">
@@ -148,7 +148,7 @@ export default function ComparePage() {
           items={[{ label: t('breadcrumbs.home'), href: '/' }, { label: t('compare.title') }]}
           className="mb-6"
         />
-        <h1 className="text-xl md:text-3xl lg:text-4xl font-extrabold mb-6 text-primary-700">
+        <h1 className="text-xl md:text-3xl lg:text-4xl font-extrabold mb-6 text-primary-900">
           {t('compare.title')}
         </h1>
         <div className="surface text-center py-12">
@@ -165,7 +165,7 @@ export default function ComparePage() {
               d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"
             />
           </svg>
-          <h2 className="text-2xl font-bold text-primary-500 mb-2">{t('compare.noVehicles')}</h2>
+          <h2 className="text-2xl font-bold text-primary-900 mb-2">{t('compare.noVehicles')}</h2>
           <p className="mb-6" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
             {t('compare.addVehiclesHint')}
           </p>
@@ -193,7 +193,7 @@ export default function ComparePage() {
         className="mb-6"
       />
       <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <h1 className="text-xl md:text-3xl lg:text-4xl font-extrabold text-primary-700">
+        <h1 className="text-xl md:text-3xl lg:text-4xl font-extrabold text-primary-900">
           {t('compare.title')}
         </h1>
         <button
@@ -204,7 +204,7 @@ export default function ComparePage() {
             }
             toast.success(t('compare.allRemoved'));
           }}
-          className="px-8 py-2 md:py-2.5 text-sm md:text-sm lg:text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-500 hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 border-2 border-primary-500 bg-primary-500/10 select-none"
+          className="px-8 py-2 md:py-2.5 text-sm md:text-sm lg:text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover:text-primary-900 hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10 select-none"
         >
           {t('compare.clearAll')}
         </button>
@@ -213,14 +213,14 @@ export default function ComparePage() {
       <div className="surface overflow-x-auto">
         <table className="w-full min-w-[800px]">
           <thead>
-            <tr className="border-b border-primary-500/20">
-              <th className="text-left py-2 px-2 md:py-4 md:px-4 text-sm md:text-base text-primary-500 font-semibold">
+            <tr className="border-b border-primary-700/30">
+              <th className="text-left py-2 px-2 md:py-4 md:px-4 text-sm md:text-base text-primary-900 font-semibold">
                 {t('compare.parameter')}
               </th>
               {listings.map((listing) => (
                 <th
                   key={listing.id}
-                  className="text-center py-2 px-2 md:py-4 md:px-4 text-sm md:text-base text-primary-500 font-semibold min-w-[200px]"
+                  className="text-center py-2 px-2 md:py-4 md:px-4 text-sm md:text-base text-primary-900 font-semibold min-w-[200px]"
                 >
                   <div className="flex justify-center items-center">
                     <button
@@ -250,8 +250,8 @@ export default function ComparePage() {
           </thead>
           <tbody>
             {getComparisonFieldsForListings(listings).map((field) => (
-              <tr key={field.key} className="border-b border-primary-500/10 last:border-b-0">
-                <td className="py-2 px-2 md:py-4 md:px-4 text-sm md:text-base text-primary-500 font-semibold">
+              <tr key={field.key} className="border-b border-primary-700/10 last:border-b-0">
+                <td className="py-2 px-2 md:py-4 md:px-4 text-sm md:text-base text-primary-700 font-semibold">
                   {t(field.labelKey)}
                 </td>
                 {listings.map((listing) => field.renderCell(listing, t, siteConfig))}

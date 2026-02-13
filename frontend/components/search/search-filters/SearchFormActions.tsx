@@ -16,6 +16,7 @@ interface SearchFormActionsProps {
   canSaveFilter: boolean;
   buttonsContainerRef: React.RefObject<HTMLDivElement | null>;
   showFadeButtons: boolean;
+  isInternalSearchRef?: React.MutableRefObject<boolean>;
 }
 
 export function SearchFormActions({
@@ -28,6 +29,7 @@ export function SearchFormActions({
   canSaveFilter,
   buttonsContainerRef,
   showFadeButtons,
+  isInternalSearchRef,
 }: SearchFormActionsProps) {
   const { t } = useTranslation();
   const { user, isInitialized } = useAuthStore();
@@ -44,7 +46,7 @@ export function SearchFormActions({
                 loading={showSearchLoader}
                 loadingText={t('searchFilters.searching')}
                 disabled={Boolean(!hasFiltersChanged || isSyncingFromUrl)}
-                className={`w-full sm:w-auto btn-secondary flex items-center justify-center gap-2 ${
+                className={`w-full sm:w-auto btn-secondary flex items-center justify-center gap-2 !text-primary-900 ${
                   !hasFiltersChanged || isSyncingFromUrl ? '' : '!border-primary-500'
                 }`}
               >
@@ -69,7 +71,7 @@ export function SearchFormActions({
                 type="button"
                 onClick={onReset}
                 disabled={Boolean(!hasActiveFilters)}
-                className="w-full sm:w-auto btn-secondary flex items-center justify-center gap-2 whitespace-nowrap"
+                className="w-full sm:w-auto btn-secondary flex items-center justify-center gap-2 whitespace-nowrap !text-primary-900"
               >
                 <svg
                   className="w-5 h-5 flex-shrink-0"
@@ -90,7 +92,7 @@ export function SearchFormActions({
                 <button
                   type="button"
                   disabled
-                  className="w-full sm:w-auto btn-secondary flex items-center justify-center gap-2 opacity-50 !px-3 sm:!px-6"
+                  className="w-full sm:w-auto btn-secondary flex items-center justify-center gap-2 opacity-50 !px-3 sm:!px-6 !text-primary-900"
                 >
                   <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-primary-300 border-t-transparent rounded-full animate-spin flex-shrink-0"></div>
                   <span className="whitespace-nowrap text-sm sm:text-base">
@@ -102,7 +104,7 @@ export function SearchFormActions({
                   type="button"
                   onClick={onSaveClick}
                   disabled={Boolean(!canSaveFilter)}
-                  className="w-full sm:w-auto btn-secondary flex items-center justify-center gap-2 !px-3 sm:!px-6"
+                  className="w-full sm:w-auto btn-secondary flex items-center justify-center gap-2 !px-3 sm:!px-6 !text-primary-900"
                   title={!userForUi ? t('common.loginRequired') : ''}
                 >
                   <svg
@@ -131,7 +133,7 @@ export function SearchFormActions({
           )}
         </div>
         <div className="w-full border-t border-primary-500/20 pt-3 lg:border-t-0 lg:pt-0 lg:w-auto flex-shrink-0 relative">
-          <SortDropdown />
+          <SortDropdown isInternalSearchRef={isInternalSearchRef} />
         </div>
       </div>
     </div>

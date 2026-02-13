@@ -42,6 +42,9 @@ const searchFiltersTranslations: Record<string, string> = {
   'searchFilters.brand': 'Brand',
   'searchFilters.model': 'Model',
   'searchFilters.city': 'City',
+  'searchFilters.price': 'Price',
+  'searchFilters.from': 'From',
+  'searchFilters.to': 'To',
   'searchFilters.selectBrands': 'Select brands',
   'searchFilters.selectModels': 'Select models',
   'searchFilters.selectCities': 'Select cities',
@@ -68,9 +71,9 @@ const searchFiltersTranslations: Record<string, string> = {
   'searchFilters.priceTo': 'Price to',
   'searchFilters.priceFromPlaceholder': '0',
   'searchFilters.priceToPlaceholder': '0',
-  'searchFilters.priceFromTitle': 'Enter price 0-999999999',
-  'searchFilters.mileageFromTitle': 'Enter mileage in km',
-  'searchFilters.horsepowerFromTitle': 'Enter horsepower',
+  'searchFilters.priceFromTitle': 'Enter price (integers only, 0-999999999)',
+  'searchFilters.mileageFromTitle': 'Enter mileage in kilometers (0-9999999)',
+  'searchFilters.horsepowerFromTitle': 'Enter horsepower (1-9999)',
 };
 
 jest.mock('@/hooks/useTranslation', () => ({
@@ -390,7 +393,6 @@ describe('SearchFilters', () => {
     });
 
     expect(screen.getByText('Brand')).toBeInTheDocument();
-    expect(screen.getByText('City')).toBeInTheDocument();
 
     await waitFor(
       () => {
@@ -496,13 +498,11 @@ describe('SearchFilters', () => {
         expect(brandsApi.getAll).toHaveBeenCalled();
       });
 
-      const priceLabels = screen.getAllByText(/Price from|Price to/i);
-      const priceFromLabel = priceLabels.find((label) => label.textContent?.includes('Price from'));
-      const priceToLabel = priceLabels.find((label) => label.textContent?.includes('Price to'));
-      const priceFromInput = priceFromLabel
-        ?.closest('div')
-        ?.querySelector('input') as HTMLInputElement;
-      const priceToInput = priceToLabel?.closest('div')?.querySelector('input') as HTMLInputElement;
+      const priceFromInput = screen.getByTitle(
+        'Enter price (integers only, 0-999999999)'
+      ) as HTMLInputElement;
+      const priceSection = priceFromInput.closest('div.flex');
+      const priceToInput = priceSection?.querySelector('input.paired-right') as HTMLInputElement;
 
       fireEvent.change(priceFromInput, { target: { value: '500000' } });
       fireEvent.change(priceToInput, { target: { value: '100000' } });

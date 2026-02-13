@@ -50,7 +50,7 @@ export function ListingPageActions({
               className={`w-full sm:w-auto sm:max-w-fit h-12 py-2 sm:h-auto sm:min-h-0 sm:py-3.5 md:py-2.5 px-8 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
                 isInComparison
                   ? 'bg-primary-500/10 text-primary-500 border-2 border-primary-500 cursor-not-allowed opacity-50'
-                  : 'text-primary-500 hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 border-2 border-primary-500 bg-primary-500/10 select-none'
+                  : 'text-primary-700 hover:text-primary-900 hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10 select-none'
               }`}
               title={isInComparison ? t('listingDetail.alreadyInComparisonError') : ''}
             >
@@ -87,7 +87,7 @@ export function ListingPageActions({
           className={`w-full sm:w-auto sm:max-w-fit h-12 py-2 sm:h-auto sm:min-h-0 sm:py-3.5 md:py-2.5 px-8 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
             isOwnListing
               ? 'bg-primary-500/10 text-primary-500 border-2 border-primary-500 cursor-not-allowed opacity-50'
-              : 'text-primary-500 hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 border-2 border-primary-500 bg-primary-500/10 select-none'
+              : 'text-primary-700 hover:text-primary-900 hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10 select-none'
           }`}
           title={isOwnListing ? t('listingDetail.cannotAddOwnListing') : ''}
         >

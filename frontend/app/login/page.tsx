@@ -285,12 +285,12 @@ export default function LoginPage() {
 
   return (
     <div className="max-w-md mx-auto mt-6 md:mt-12 mb-16">
-      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center text-primary-900">
         {t('login.title')}
       </h1>
       <form onSubmit={handleSubmit} className="card p-6 md:p-8">
         <div className="mb-5">
-          <label className="block text-sm font-semibold mb-2 text-primary-500">
+          <label className="block text-sm font-semibold mb-2 text-primary-900">
             {t('login.emailOrPhone')}
           </label>
           <input
@@ -312,12 +312,12 @@ export default function LoginPage() {
 
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-semibold text-primary-500">
+            <label className="block text-sm font-semibold text-primary-900">
               {t('login.password')}
             </label>
             <a
               href="/reset-password"
-              className="text-sm text-primary-500 font-semibold hover:text-primary-700 underline transition-colors"
+              className="text-sm text-primary-700 font-semibold hover:text-primary-900 underline transition-colors"
             >
               {t('login.forgotPassword')}
             </a>
@@ -388,7 +388,7 @@ export default function LoginPage() {
           type="submit"
           loading={loading}
           loadingText={t('login.loggingIn')}
-          className="w-full text-primary-500 font-medium text-sm md:text-base hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-500 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full text-primary-700 font-medium text-sm md:text-base hover:text-primary-900 hover:border-primary-900 active:text-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {t('login.loginButton')}
         </LoadingButton>
@@ -397,7 +397,7 @@ export default function LoginPage() {
           {t('login.noAccount')}{' '}
           <a
             href="/register"
-            className="text-primary-500 font-semibold hover:text-primary-700 underline transition-colors"
+            className="text-primary-700 font-semibold hover:text-primary-900 underline transition-colors"
           >
             {t('login.registerLink')}
           </a>

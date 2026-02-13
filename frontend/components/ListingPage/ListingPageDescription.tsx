@@ -69,7 +69,7 @@ export function ListingPageDescription({ descriptionHtml }: ListingPageDescripti
 
   return (
     <div ref={wrapperRef} className="surface relative">
-      <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-700">
+      <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-900">
         {t('listingDetail.description')}
       </h2>
 
@@ -112,7 +112,7 @@ export function ListingPageDescription({ descriptionHtml }: ListingPageDescripti
         >
           <button
             onClick={handleToggle}
-            className="btn-secondary !border-primary-500 min-h-0 flex items-center justify-center gap-2 !h-12 !min-h-12 !max-h-12"
+            className="min-h-0 h-12 min-h-12 max-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover:text-primary-900 hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-white select-none"
           >
             {isExpanded ? (
               <>

@@ -409,7 +409,7 @@ export default function MyListingsPage() {
           className="mb-6"
         />
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
-          <h1 className="text-3xl md:text-4xl font-extrabold text-primary-700">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-primary-900">
             {t('myListings.title')}
           </h1>
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
@@ -445,7 +445,7 @@ export default function MyListingsPage() {
           className="mb-6"
         />
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
-          <h1 className="text-3xl md:text-4xl font-extrabold text-primary-700">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-primary-900">
             {t('myListings.title')}
           </h1>
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
@@ -461,7 +461,7 @@ export default function MyListingsPage() {
             >
               {isRefreshing ? (
                 <>
-                  <div className="w-3.5 h-3.5 md:w-4 md:h-4 border-2 border-primary-500 border-t-transparent rounded-full animate-spin flex-shrink-0"></div>
+                  <div className="w-3.5 h-3.5 md:w-4 md:h-4 border-2 border-primary-700 border-t-transparent rounded-full animate-spin flex-shrink-0"></div>
                   {t('myListings.refreshing')}
                 </>
               ) : (
@@ -490,7 +490,7 @@ export default function MyListingsPage() {
             {user?.boardSlug && (
               <Link
                 href={`/board/${user.boardSlug}`}
-                className="w-full sm:w-auto h-[48px] text-primary-500 font-medium text-base hover:text-primary-700 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 rounded-lg border-2 border-primary-500 hover:border-primary-700 bg-primary-500/10 hover:bg-primary-500/20 inline-block"
+                className="w-full sm:w-auto h-[48px] text-primary-700 font-medium text-base hover:text-primary-900 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 rounded-lg border-2 border-primary-700 hover:border-primary-900 bg-primary-500/10 select-none inline-block"
               >
                 <svg
                   className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
@@ -544,7 +544,7 @@ export default function MyListingsPage() {
             {(!listings || listings.length === 0) && (
               <a
                 href="/listings/new"
-                className="w-full sm:w-auto h-[48px] text-primary-500 font-medium text-base hover:text-primary-700 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 rounded-lg border-2 border-primary-500 hover:border-primary-700 bg-primary-500/10 hover:bg-primary-500/20 inline-block text-center"
+                className="w-full sm:w-auto h-[48px] text-primary-700 font-medium text-base hover:text-primary-900 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 rounded-lg border-2 border-primary-700 hover:border-primary-900 bg-primary-500/10 select-none inline-block text-center"
               >
                 <svg
                   className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"

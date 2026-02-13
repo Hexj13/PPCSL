@@ -16,12 +16,12 @@ export function AdditionalInfoSection({
   const newLabel = vehicleType === 'moto' ? t('listings.newMoto') : t('listings.new');
 
   return (
-    <div className="border-t border-primary-500/20 pt-6 mb-6">
-      <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-500">
+    <div className="border-t border-primary-700/30 pt-6 mb-6">
+      <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-900">
         {t('listings.additionalInfo')}
       </h2>
       <div className="mb-6">
-        <h3 className="text-sm font-semibold mb-3 text-primary-400">{t('listings.labels')}</h3>
+        <h3 className="text-sm font-semibold mb-3 text-primary-700">{t('listings.labels')}</h3>
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-3">
             <div className="relative">
@@ -38,13 +38,13 @@ export function AdditionalInfoSection({
                 }}
                 className={`w-6 h-6 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
                   formData.urgent
-                    ? 'bg-gradient-to-r from-primary-700 to-primary-800 border-primary-500'
-                    : 'border-primary-500/50 bg-bg-secondary hover:border-primary-500'
+                    ? 'border-primary-700 bg-primary-500/10'
+                    : 'border-primary-700/50 bg-bg-secondary hover:border-primary-700'
                 }`}
               >
                 {formData.urgent && (
                   <svg
-                    className="w-4 h-4 text-white"
+                    className="w-4 h-4 text-primary-900"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -85,13 +85,13 @@ export function AdditionalInfoSection({
                 }}
                 className={`w-6 h-6 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
                   formData.is_new
-                    ? 'bg-gradient-to-r from-primary-700 to-primary-800 border-primary-500'
-                    : 'border-primary-500/50 bg-bg-secondary hover:border-primary-500'
+                    ? 'border-primary-700 bg-primary-500/10'
+                    : 'border-primary-700/50 bg-bg-secondary hover:border-primary-700'
                 }`}
               >
                 {formData.is_new && (
                   <svg
-                    className="w-4 h-4 text-white"
+                    className="w-4 h-4 text-primary-900"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -120,7 +120,7 @@ export function AdditionalInfoSection({
       </div>
 
       <div className="mb-4">
-        <label className="block text-sm font-semibold mb-2 text-primary-400">
+        <label className="block text-sm font-semibold mb-2 text-primary-700">
           {t('listings.descriptionLabel')}
         </label>
         <RichTextEditor

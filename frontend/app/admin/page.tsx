@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { useTabIndicator } from '@/hooks/useTabIndicator';
 import { useTranslation } from '@/hooks/useTranslation';
 
 import { ListingsTab } from './components/ListingsTab';
@@ -24,6 +25,16 @@ export default function AdminPage() {
     return 'listings';
   });
 
+  const listingsTabRef = useRef<HTMLButtonElement>(null);
+  const usersTabRef = useRef<HTMLButtonElement>(null);
+  const promotionsTabRef = useRef<HTMLButtonElement>(null);
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
+  const { indicatorRef, indicatorStyle } = useTabIndicator(
+    activeTab,
+    { listings: listingsTabRef, users: usersTabRef, promotions: promotionsTabRef },
+    tabsContainerRef
+  );
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('adminActiveTab', activeTab);
@@ -37,45 +48,61 @@ export default function AdminPage() {
   return (
     <div>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
-        <h1 className="text-3xl md:text-4xl font-extrabold text-primary-700">{t('admin.title')}</h1>
+        <h1 className="text-3xl md:text-4xl font-extrabold text-primary-900">{t('admin.title')}</h1>
       </div>
 
-      <div className="mb-4 md:mb-6">
-        <div className="flex gap-2 md:gap-3 border-b border-primary-500/20 overflow-x-auto">
-          <button
-            onClick={() => setActiveTab('listings')}
-            className={`px-4 md:px-6 py-2 md:py-3 font-semibold transition-colors border-b-2 whitespace-nowrap ${
-              activeTab === 'listings'
-                ? 'border-primary-500 text-primary-500'
-                : 'border-transparent text-text-secondary'
-            }`}
-          >
-            {t('admin.listingsTabLabel')}
-          </button>
-          <button
-            onClick={() => setActiveTab('users')}
-            className={`px-4 md:px-6 py-2 md:py-3 font-semibold transition-colors border-b-2 whitespace-nowrap ${
-              activeTab === 'users'
-                ? 'border-primary-500 text-primary-500'
-                : 'border-transparent text-text-secondary'
-            }`}
-          >
-            {t('admin.usersTabLabel')}
-          </button>
-          <button
-            onClick={() => setActiveTab('promotions')}
-            className={`px-4 md:px-6 py-2 md:py-3 font-semibold transition-colors border-b-2 whitespace-nowrap ${
-              activeTab === 'promotions'
-                ? 'border-primary-500 text-primary-500'
-                : 'border-transparent text-text-secondary'
-            }`}
-          >
-            {t('admin.promotionsTabLabel')}
-          </button>
+      <div className="mb-6 border-b border-primary-500/20">
+        <div ref={tabsContainerRef} className="relative overflow-x-auto scrollbar-hide">
+          <div className="relative flex gap-1 min-w-max">
+            <button
+              ref={listingsTabRef}
+              type="button"
+              onClick={() => setActiveTab('listings')}
+              className={`flex-shrink-0 px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 whitespace-nowrap flex items-center ${
+                activeTab === 'listings'
+                  ? 'text-primary-700 bg-primary-500/10 rounded-t-lg'
+                  : 'text-primary-700 hover:text-primary-900 hover:bg-primary-500/10'
+              }`}
+            >
+              {t('admin.listingsTabLabel')}
+            </button>
+            <button
+              ref={usersTabRef}
+              type="button"
+              onClick={() => setActiveTab('users')}
+              className={`flex-shrink-0 px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 whitespace-nowrap flex items-center ${
+                activeTab === 'users'
+                  ? 'text-primary-700 bg-primary-500/10 rounded-t-lg'
+                  : 'text-primary-700 hover:text-primary-900 hover:bg-primary-500/10'
+              }`}
+            >
+              {t('admin.usersTabLabel')}
+            </button>
+            <button
+              ref={promotionsTabRef}
+              type="button"
+              onClick={() => setActiveTab('promotions')}
+              className={`flex-shrink-0 px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 whitespace-nowrap flex items-center ${
+                activeTab === 'promotions'
+                  ? 'text-primary-700 bg-primary-500/10 rounded-t-lg'
+                  : 'text-primary-700 hover:text-primary-900 hover:bg-primary-500/10'
+              }`}
+            >
+              {t('admin.promotionsTabLabel')}
+            </button>
+            <div
+              ref={indicatorRef}
+              className="absolute bottom-0 h-0.5 bg-primary-700 transition-all duration-300 ease-in-out"
+              style={{ left: `${indicatorStyle.left}px`, width: `${indicatorStyle.width}px` }}
+            />
+          </div>
         </div>
       </div>
 
-      {activeTab === 'listings' && (
+      <div
+        className={activeTab !== 'listings' ? 'hidden' : undefined}
+        aria-hidden={activeTab !== 'listings'}
+      >
         <ListingsTab
           initialSearchQuery={
             typeof window !== 'undefined'
@@ -83,8 +110,11 @@ export default function AdminPage() {
               : ''
           }
         />
-      )}
-      {activeTab === 'users' && (
+      </div>
+      <div
+        className={activeTab !== 'users' ? 'hidden' : undefined}
+        aria-hidden={activeTab !== 'users'}
+      >
         <UsersTab
           onViewUserListings={(userId) => {
             if (typeof window !== 'undefined') {
@@ -93,8 +123,13 @@ export default function AdminPage() {
             setActiveTab('listings');
           }}
         />
-      )}
-      {activeTab === 'promotions' && <PromotionsTab />}
+      </div>
+      <div
+        className={activeTab !== 'promotions' ? 'hidden' : undefined}
+        aria-hidden={activeTab !== 'promotions'}
+      >
+        <PromotionsTab />
+      </div>
     </div>
   );
 }

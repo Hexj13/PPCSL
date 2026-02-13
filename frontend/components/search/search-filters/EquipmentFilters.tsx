@@ -73,7 +73,7 @@ export function EquipmentFilters({
         <HintTooltip ariaLabel={t('searchFilters.equipmentSortMode')} width="w-72">
           {t('searchFilters.equipmentSortModeHint')}
         </HintTooltip>
-        <span className="text-sm font-semibold text-text-secondary">
+        <span className="text-sm font-semibold text-primary-900">
           {t('searchFilters.equipmentSortMode')}
         </span>
         <div className="flex flex-wrap items-center gap-2">
@@ -112,7 +112,7 @@ export function EquipmentFilters({
 
           return (
             <div key={category}>
-              <h3 className="text-sm font-semibold mb-3 text-primary-500">
+              <h3 className="text-sm font-semibold mb-3 text-primary-900">
                 {t(`vehicleOptions.equipmentCategories.${category}`)}
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

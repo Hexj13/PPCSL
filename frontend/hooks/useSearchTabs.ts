@@ -20,24 +20,24 @@ export function useSearchTabs({
     const hasBasicParams =
       searchParams.get('brand') ||
       searchParams.get('model') ||
-      searchParams.get('cities') ||
       searchParams.get('year_gte') ||
       searchParams.get('year_lte') ||
       searchParams.get('price_gte') ||
       searchParams.get('price_lte') ||
+      searchParams.get('fuels') ||
+      searchParams.get('body_types') ||
       searchParams.get('transmissions') ||
-      searchParams.get('currency') ||
-      searchParams.get('body_types');
+      searchParams.get('drive_types') ||
+      searchParams.get('mileage_gte') ||
+      searchParams.get('mileage_lte');
 
     if (hasBasicParams) {
       return 'basic';
     }
 
     const hasAdvancedParams =
-      searchParams.get('fuels') ||
-      searchParams.get('drive_types') ||
-      searchParams.get('mileage_gte') ||
-      searchParams.get('mileage_lte') ||
+      searchParams.get('cities') ||
+      searchParams.get('currency') ||
       searchParams.get('engine_displ_l_gte') ||
       searchParams.get('engine_displ_l_lte') ||
       searchParams.get('horsepower_gte') ||

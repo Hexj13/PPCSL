@@ -368,14 +368,14 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="max-w-md mx-auto mt-6 md:mt-12">
-      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center text-primary-900">
         {t('resetPassword.title')}
       </h1>
 
       {step === 'phone' && (
         <form onSubmit={handleRequestReset} className="card p-6 md:p-8">
           <div className="mb-5">
-            <label className="block text-sm font-semibold mb-2 text-primary-400">
+            <label className="block text-sm font-semibold mb-2 text-primary-900">
               {t('resetPassword.phoneNumber')}
             </label>
             <input
@@ -398,7 +398,7 @@ export default function ResetPasswordPage() {
             type="submit"
             loading={loading}
             loadingText={t('resetPassword.sending')}
-            className="w-full text-primary-500 font-medium text-sm md:text-base hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-500 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full text-primary-700 font-medium text-sm md:text-base hover:text-primary-900 hover:border-primary-900 active:text-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('resetPassword.sendCode')}
           </LoadingButton>
@@ -406,7 +406,7 @@ export default function ResetPasswordPage() {
           <p className="mt-6 text-center text-sm text-gray-300">
             <a
               href="/login"
-              className="text-primary-500 font-semibold hover:text-primary-400 hover:underline transition-colors"
+              className="text-primary-700 font-semibold hover:text-primary-900 underline transition-colors"
             >
               {t('resetPassword.backToLogin')}
             </a>
@@ -488,7 +488,7 @@ export default function ResetPasswordPage() {
                   loading={loading}
                   loadingText={t('resetPassword.verifying')}
                   disabled={code.join('').trim().length !== 6 || isVerificationBlocked}
-                  className="flex-1 text-primary-500 font-medium text-sm md:text-base hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-500 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 text-primary-700 font-medium text-sm md:text-base hover:text-primary-900 hover:border-primary-900 active:text-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isVerificationBlocked ? t('resetPassword.blocked') : t('resetPassword.verify')}
                 </LoadingButton>
@@ -514,7 +514,7 @@ export default function ResetPasswordPage() {
       {step === 'password' && (
         <form onSubmit={handleResetPassword} className="card p-6 md:p-8">
           <div className="mb-5">
-            <label className="block text-sm font-semibold mb-2 text-primary-400">
+            <label className="block text-sm font-semibold mb-2 text-primary-900">
               {t('resetPassword.newPassword')}
             </label>
             <div className="relative">
@@ -581,7 +581,7 @@ export default function ResetPasswordPage() {
                 <div key={index} className="flex items-center gap-2">
                   {rule.isValid ? (
                     <svg
-                      className="w-3 h-3 text-primary-400 flex-shrink-0"
+                      className="w-3 h-3 text-primary-900 flex-shrink-0"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -623,7 +623,7 @@ export default function ResetPasswordPage() {
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm font-semibold mb-2 text-primary-400">
+            <label className="block text-sm font-semibold mb-2 text-primary-900">
               {t('resetPassword.confirmPassword')}
             </label>
             <div className="relative">
@@ -704,7 +704,7 @@ export default function ResetPasswordPage() {
               loading={loading}
               loadingText={t('common.loading')}
               disabled={!isFormValid}
-              className="flex-1 text-primary-500 font-medium text-sm md:text-base hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-500 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 text-primary-700 font-medium text-sm md:text-base hover:text-primary-900 hover:border-primary-900 active:text-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {t('resetPassword.resetButton')}
             </LoadingButton>

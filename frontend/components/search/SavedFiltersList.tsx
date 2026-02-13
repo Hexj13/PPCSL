@@ -286,13 +286,13 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
               console.error('Failed to apply filter:', error);
             });
           }}
-          className="card p-4 md:p-5 cursor-pointer group lg:hover:border-primary-500 transition-colors duration-200"
+          className="card p-4 md:p-5 cursor-pointer group bg-white rounded-xl border-2 border-primary-700/30 shadow-none transition-all duration-200 hover:border-primary-900 focus-within:border-primary-900 hover:shadow-lg focus-within:shadow-lg"
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <span className="text-sm font-semibold text-primary-400">#{index + 1}</span>
-                <h3 className="text-lg font-bold text-text-primary lg:group-hover:text-primary-600 transition-colors duration-200">
+                <span className="text-sm font-semibold text-primary-700">#{index + 1}</span>
+                <h3 className="text-lg font-bold text-primary-900 transition-colors duration-200">
                   {filter.name}
                 </h3>
               </div>
@@ -307,7 +307,7 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
                   setEditingFilterId(filter.id);
                   setShowEditModal(true);
                 }}
-                className="flex-shrink-0 p-2 text-text-secondary hover:text-primary-400 transition-colors duration-200"
+                className="flex-shrink-0 p-2 text-primary-700 hover:text-primary-900 transition-colors duration-200"
                 title={t('common.edit')}
               >
                 <svg

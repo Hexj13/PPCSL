@@ -33,20 +33,20 @@ export function PromotionHistoryModal({
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-primary-500/30">
-              <th className="text-left py-3 px-4 text-sm font-semibold text-text-secondary">
+            <tr className="border-b border-primary-700/30">
+              <th className="text-left py-3 px-4 text-sm font-semibold text-primary-900">
                 {t('promotion.history.listingTitle')}
               </th>
-              <th className="text-center py-3 px-4 text-sm font-semibold text-text-secondary">
+              <th className="text-center py-3 px-4 text-sm font-semibold text-primary-900">
                 {t('promotion.history.status')}
               </th>
-              <th className="text-center py-3 px-4 text-sm font-semibold text-text-secondary">
+              <th className="text-center py-3 px-4 text-sm font-semibold text-primary-900">
                 {t('promotion.history.days')}
               </th>
-              <th className="text-center py-3 px-4 text-sm font-semibold text-text-secondary">
+              <th className="text-center py-3 px-4 text-sm font-semibold text-primary-900">
                 {t('promotion.history.startDate')}
               </th>
-              <th className="text-center py-3 px-4 text-sm font-semibold text-text-secondary">
+              <th className="text-center py-3 px-4 text-sm font-semibold text-primary-900">
                 {t('promotion.history.endDate')}
               </th>
             </tr>
@@ -66,11 +66,11 @@ export function PromotionHistoryModal({
               </tr>
             ) : (
               history.map((item) => (
-                <tr key={item.id} className="border-b border-primary-500/10">
+                <tr key={item.id} className="border-b border-primary-700/10">
                   <td className="py-3 px-4 text-sm">
                     <Link
                       href={`/listings/${item.listing_id}`}
-                      className="text-primary-500 hover:text-primary-700 hover:underline transition-colors"
+                      className="text-primary-700 hover:text-primary-900 hover:underline transition-colors"
                     >
                       {item.listing_title}
                     </Link>
@@ -122,7 +122,7 @@ export function PromotionHistoryModal({
           <button
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage === 1 || loading}
-            className="px-4 py-2 rounded-lg text-sm font-semibold bg-primary-500/20 border-2 border-primary-500/40 text-primary-500 hover:text-primary-700 hover:border-primary-500/60 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 rounded-lg text-sm font-semibold bg-primary-500/10 border-2 border-primary-700 text-primary-700 hover:text-primary-900 hover:border-primary-900 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('common.previous')}
           </button>
@@ -132,7 +132,7 @@ export function PromotionHistoryModal({
           <button
             onClick={() => onPageChange(currentPage + 1)}
             disabled={currentPage >= meta.totalPages || loading}
-            className="px-4 py-2 rounded-lg text-sm font-semibold bg-primary-500/20 border-2 border-primary-500/40 text-primary-500 hover:text-primary-700 hover:border-primary-500/60 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 rounded-lg text-sm font-semibold bg-primary-500/10 border-2 border-primary-700 text-primary-700 hover:text-primary-900 hover:border-primary-900 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('common.next')}
           </button>

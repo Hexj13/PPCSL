@@ -39,13 +39,13 @@ export function Breadcrumbs({ items, className = '' }: BreadcrumbsProps) {
           elements.push(
             <li key={index} className="flex items-center">
               {isLast ? (
-                <span className="text-primary-500 font-medium" aria-current="page">
+                <span className="text-primary-700 font-medium" aria-current="page">
                   {item.label}
                 </span>
               ) : item.href ? (
                 <Link
                   href={item.href}
-                  className="text-text-secondary hover:text-primary-400 transition-colors duration-200"
+                  className="text-primary-700 hover:text-primary-900 transition-colors duration-200"
                 >
                   {item.label}
                 </Link>

@@ -4,16 +4,20 @@ import { ReactNode } from 'react';
 
 export interface InfoBlockProps {
   children: ReactNode;
+  title?: ReactNode;
   variant?: 'info' | 'warning';
   className?: string;
 }
 
-export function InfoBlock({ children, variant = 'info', className = '' }: InfoBlockProps) {
+export function InfoBlock({ children, title, variant = 'info', className = '' }: InfoBlockProps) {
   return (
-    <div className={`bg-primary-500/10 border border-primary-500/30 rounded-lg p-4 ${className}`}>
+    <div className={`bg-primary-500/10 border border-primary-900 rounded-lg p-4 ${className}`}>
       <div className="flex items-start gap-3">
         {variant === 'info' ? <InfoIcon /> : <WarningIcon />}
-        <div className="text-sm text-text-secondary leading-relaxed min-w-0">{children}</div>
+        <div className="min-w-0">
+          {title && <div className="text-sm font-semibold text-primary-700 mb-1">{title}</div>}
+          <div className="text-sm text-primary-900 leading-relaxed">{children}</div>
+        </div>
       </div>
     </div>
   );
@@ -22,7 +26,7 @@ export function InfoBlock({ children, variant = 'info', className = '' }: InfoBl
 function InfoIcon() {
   return (
     <svg
-      className="w-5 h-5 text-primary-400 flex-shrink-0 mt-0.5"
+      className="w-5 h-5 text-primary-900 flex-shrink-0 mt-0.5"
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"
@@ -40,7 +44,7 @@ function InfoIcon() {
 function WarningIcon() {
   return (
     <svg
-      className="w-5 h-5 text-primary-400 flex-shrink-0 mt-0.5"
+      className="w-5 h-5 text-primary-900 flex-shrink-0 mt-0.5"
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"

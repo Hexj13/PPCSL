@@ -44,8 +44,8 @@ export function EquipmentSection({
   };
 
   return (
-    <div className="border-t border-primary-500/20 pt-6 mb-6">
-      <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-500">
+    <div className="border-t border-primary-700/30 pt-6 mb-6">
+      <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-900">
         {t('listings.equipment')}
       </h2>
       <InfoBlock className="mb-5">
@@ -59,7 +59,7 @@ export function EquipmentSection({
 
           return (
             <div key={category}>
-              <h3 className="text-sm font-semibold mb-3 text-primary-500">
+              <h3 className="text-sm font-semibold mb-3 text-primary-700">
                 {t(`vehicleOptions.equipmentCategories.${category}`)}
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

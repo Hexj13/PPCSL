@@ -38,7 +38,7 @@ export default function FAQPage() {
 
   return (
     <div className="max-w-4xl mx-auto pt-10 md:pt-14">
-      <h1 className="text-4xl md:text-5xl font-extrabold mb-8 text-primary-700">
+      <h1 className="text-4xl md:text-5xl font-extrabold mb-8 text-primary-900">
         {t('faq.title')}
       </h1>
 
@@ -53,7 +53,7 @@ export default function FAQPage() {
                 onClick={() => toggleItem(item.id)}
                 className="w-full text-left flex justify-between items-center p-4 hover:bg-primary-500/10 transition-colors duration-200 rounded-lg"
               >
-                <h2 className="text-lg md:text-xl font-semibold text-text-primary pr-4">
+                <h2 className="text-lg md:text-xl font-semibold text-primary-900 pr-4">
                   {normalizeText(item.question)}
                 </h2>
                 <span className="text-primary-400 text-2xl font-bold flex-shrink-0">
@@ -80,7 +80,7 @@ export default function FAQPage() {
       </div>
 
       <div className="surface mt-12">
-        <h2 className="text-2xl md:text-3xl font-bold mb-6 text-text-primary">
+        <h2 className="text-2xl md:text-3xl font-bold mb-6 text-primary-900">
           {t('faq.userScenarios.title')}
         </h2>
         <p
@@ -92,7 +92,7 @@ export default function FAQPage() {
         <div className="space-y-6">
           {userScenarios.map((scenario) => (
             <div key={scenario.id} className="border-l-4 border-primary-500 pl-4">
-              <h3 className="text-xl font-semibold text-primary-300 mb-3">
+              <h3 className="text-xl font-semibold text-primary-700 mb-3">
                 {normalizeText(scenario.title)}
               </h3>
               <ol className="space-y-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>

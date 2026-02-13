@@ -43,8 +43,8 @@ export function PhotosSection({
   };
 
   return (
-    <div className="border-t border-primary-500/20 pt-6 mb-6">
-      <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-500">
+    <div className="border-t border-primary-700/30 pt-6 mb-6">
+      <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-900">
         {t('listings.photos')}
       </h2>
       <div className="mb-4">
@@ -61,8 +61,8 @@ export function PhotosSection({
           htmlFor="image-upload"
           className={`inline-flex items-center justify-center gap-2 md:gap-2.5 min-h-12 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 font-medium text-base transition-colors duration-200 whitespace-nowrap select-none ${
             uploading || formData.images.length >= 20
-              ? 'text-primary-400/50 border-primary-400/20 bg-primary-500/10 cursor-not-allowed'
-              : 'text-primary-400 hover:text-primary-500 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 cursor-pointer'
+              ? 'text-primary-700/50 border-primary-700/30 bg-primary-500/10 cursor-not-allowed'
+              : 'text-primary-700 hover:text-primary-900 border-primary-700/30 hover:border-primary-700 bg-primary-500/10 cursor-pointer'
           }`}
         >
           {uploading ? t('common.loading') : t('listings.addPhotos')}

@@ -56,32 +56,31 @@ export function SearchFilters() {
   const hasBasicFilters =
     filters.brand_ids.length > 0 ||
     filters.model_ids.length > 0 ||
-    filters.cities.length > 0 ||
-    filters.year_gte !== '' ||
-    filters.year_lte !== currentYear ||
-    filters.price_gte !== '' ||
-    filters.price_lte !== '' ||
     filters.transmissions.length > 0 ||
-    filters.currency !== '' ||
-    filters.body_types.length > 0;
-
-  const hasAdvancedFiltersActive =
-    filters.fuels.length > 0 ||
     filters.drive_types.length > 0 ||
     filters.mileage_gte !== '' ||
     filters.mileage_lte !== '' ||
+    filters.fuels.length > 0 ||
+    filters.body_types.length > 0 ||
+    filters.year_gte !== '' ||
+    filters.year_lte !== currentYear ||
+    filters.price_gte !== '' ||
+    filters.price_lte !== '';
+
+  const hasAdvancedFiltersActive =
+    filters.cities.length > 0 ||
+    filters.currency !== '' ||
+    filters.urgent === true ||
+    filters.is_new === true ||
     filters.engine_displ_l_gte !== '' ||
     filters.engine_displ_l_lte !== '' ||
     filters.horsepower_gte !== '' ||
     filters.horsepower_lte !== '' ||
-    filters.body_types.length > 0 ||
     filters.colors.length > 0 ||
     filters.doors.length > 0 ||
     filters.conditions.length > 0 ||
     filters.registration_types.length > 0 ||
-    filters.is_registered !== undefined ||
-    filters.urgent === true ||
-    filters.is_new === true;
+    filters.is_registered !== undefined;
 
   const hasEquipmentFiltersActive = filters.equipment.length > 0;
 
@@ -433,7 +432,6 @@ export function SearchFilters() {
           onWheel={handlers.handleWheel}
           brandOptions={filterOptions.getBrandOptions()}
           modelOptions={filterOptions.getModelOptions()}
-          cityOptions={filterOptions.getCityOptions()}
           loadingModels={loadingModels}
           currentYear={currentYear}
           vehicleType={vehicleType}
@@ -447,6 +445,7 @@ export function SearchFilters() {
           onMultiSelectChange={handlers.handleMultiSelectChange}
           onCheckboxChange={handlers.handleCheckboxChange}
           onWheel={handlers.handleWheel}
+          cityOptions={filterOptions.getCityOptions()}
           colorOptions={filterOptions.COLOR_OPTIONS}
           getConditionOptions={filterOptions.getConditionOptions}
           getRegistrationTypeOptions={filterOptions.getRegistrationTypeOptions}
@@ -494,6 +493,7 @@ export function SearchFilters() {
         canSaveFilter={canSaveFilter()}
         buttonsContainerRef={tabs.buttonsContainerRef}
         showFadeButtons={tabs.showFadeButtons}
+        isInternalSearchRef={isInternalSearchRef}
       />
 
       <SaveFilterModal

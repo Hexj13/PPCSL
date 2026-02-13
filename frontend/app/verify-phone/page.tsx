@@ -432,15 +432,15 @@ function VerifyPhoneContent() {
 
   return (
     <div className="max-w-md mx-auto mt-6 md:mt-12">
-      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center text-primary-700">
+      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center text-primary-900">
         {t('verifyPhone.title')}
       </h1>
       <div className="card p-6 md:p-8">
         <div className="space-y-6">
-          <div className="text-center">
+          <div className="text-center text-primary-900">
             <p className="mb-2">
               {t('verifyPhone.codeSentTo')}{' '}
-              {phoneNumber && <span className="font-semibold text-primary-500">{phoneNumber}</span>}
+              {phoneNumber && <span className="font-semibold text-primary-700">{phoneNumber}</span>}
             </p>
             <p className="text-sm">{t('verifyPhone.enterCode')}</p>
           </div>
@@ -461,11 +461,11 @@ function VerifyPhoneContent() {
                     onKeyDown={(e) => handleKeyDown(index, e)}
                     onPaste={index === 0 ? handlePaste : undefined}
                     disabled={isSubmitting}
-                    className={`w-12 h-14 md:w-14 md:h-16 text-center text-2xl md:text-3xl font-bold bg-bg-secondary border-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+                    className={`w-12 h-14 md:w-14 md:h-16 text-center text-2xl md:text-3xl font-bold bg-bg-secondary border-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-700 focus:border-primary-700 ${
                       error
                         ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                        : 'border-primary-500/30 focus:border-primary-500'
-                    } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-text'} text-primary-500`}
+                        : 'border-primary-700/30 focus:border-primary-700'
+                    } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-text'} text-primary-900`}
                     style={{
                       caretColor: 'transparent',
                       fontFamily: "'Digital-7', monospace",
@@ -499,7 +499,7 @@ function VerifyPhoneContent() {
                 type="button"
                 onClick={handleBack}
                 disabled={isSubmitting}
-                className="flex-1 btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 text-primary-700 font-medium text-sm md:text-base hover:text-primary-900 hover:border-primary-900 border-2 border-primary-700 bg-primary-500/10 transition-all duration-200 rounded-lg py-3 select-none disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {t('common.back')}
               </button>
@@ -507,7 +507,7 @@ function VerifyPhoneContent() {
                 type="submit"
                 loading={isSubmitting}
                 disabled={code.join('').trim().length !== 6 || isVerificationBlocked}
-                className="flex-1 text-primary-500 font-medium text-sm md:text-base hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-500 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 text-primary-700 font-medium text-sm md:text-base hover:text-primary-900 hover:border-primary-900 active:text-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isVerificationBlocked ? t('smsVerification.blocked') : t('smsVerification.verify')}
               </LoadingButton>
@@ -538,7 +538,7 @@ function VerifyPhoneContent() {
                 toast.success(t('smsVerification.codeResent'));
               }}
               disabled={isSubmitting || resendCooldown > 0 || resendAttempts >= 3}
-              className="text-sm text-primary-500 hover:text-primary-500 active:text-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-sm text-primary-700 hover:text-primary-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {resendAttempts >= 3
                 ? t('smsVerification.maxResendAttempts')
@@ -561,9 +561,9 @@ function VerifyPhoneFallback() {
     <div className="max-w-md mx-auto mt-6 md:mt-12">
       <div className="card p-6 md:p-8 text-center">
         <div className="mb-4">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent"></div>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary-700 border-t-transparent"></div>
         </div>
-        <h1 className="text-2xl font-bold mb-4 text-primary-400">{t('common.loading')}</h1>
+        <h1 className="text-2xl font-bold mb-4 text-primary-700">{t('common.loading')}</h1>
       </div>
     </div>
   );

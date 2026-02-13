@@ -24,13 +24,13 @@ export function PriceAndLocationSection({
 }: ListingFormSectionProps) {
   const { locale } = useI18n();
   return (
-    <div className="border-t border-primary-500/20 pt-6 mb-6">
-      <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-500">
+    <div className="border-t border-primary-700/30 pt-6 mb-6">
+      <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-900">
         {t('listings.priceAndLocation')}
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
+          <label className="block text-sm font-semibold mb-2 text-primary-700 flex items-center gap-2">
             <svg
               width="16"
               height="16"
@@ -126,7 +126,7 @@ export function PriceAndLocationSection({
         </div>
 
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-400 flex items-center gap-2">
+          <label className="block text-sm font-semibold mb-2 text-primary-700 flex items-center gap-2">
             <svg
               width="16"
               height="16"

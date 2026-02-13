@@ -33,13 +33,13 @@ export function HomeHero({
   return (
     <div className={`mb-8 ${className || ''}`} {...props} suppressHydrationWarning>
       <h1
-        className="text-3xl md:text-4xl lg:text-5xl font-extrabold mb-4 md:mb-6 leading-tight text-text-secondary"
+        className="text-3xl md:text-4xl lg:text-5xl font-extrabold mb-4 md:mb-6 leading-tight text-primary-900"
         suppressHydrationWarning
       >
         {title}
       </h1>
       <p
-        className="text-xl md:text-2xl font-medium leading-relaxed tracking-wide text-text-secondary"
+        className="text-xl md:text-2xl font-medium leading-relaxed tracking-wide text-primary-900"
         suppressHydrationWarning
       >
         <TranslatedText>{subtitle}</TranslatedText>

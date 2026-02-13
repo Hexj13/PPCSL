@@ -186,7 +186,7 @@ export function ListingPageImageModal({
           e.stopPropagation();
           onClose();
         }}
-        className="absolute top-2 right-2 sm:top-4 sm:right-4 text-primary-500 hover:text-primary-500 transition-colors z-10 p-2"
+        className="absolute top-2 right-2 sm:top-4 sm:right-4 text-primary-700 hover:text-primary-900 transition-colors z-10 p-2"
       >
         <svg
           className="w-6 h-6 sm:w-8 sm:h-8"
@@ -210,7 +210,7 @@ export function ListingPageImageModal({
               e.stopPropagation();
               onPrev();
             }}
-            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 text-primary-500 hover:text-primary-500 transition-all z-10 bg-[#4A4A4A] hover:bg-[#3A3A3A] rounded-full p-3 sm:p-4 border-2 border-primary-500/50 hover:border-primary-500 shadow-lg hidden sm:block"
+            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 text-primary-900 transition-all z-10 bg-primary-500 rounded-full p-3 sm:p-4 border-2 border-primary-900 shadow-lg hidden sm:block"
           >
             <svg
               className="w-8 h-8 sm:w-10 sm:h-10"
@@ -232,7 +232,7 @@ export function ListingPageImageModal({
               e.stopPropagation();
               onNext();
             }}
-            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 text-primary-500 hover:text-primary-500 transition-all z-10 bg-[#4A4A4A] hover:bg-[#3A3A3A] rounded-full p-3 sm:p-4 border-2 border-primary-500/50 hover:border-primary-500 shadow-lg hidden sm:block"
+            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 text-primary-900 transition-all z-10 bg-primary-500 rounded-full p-3 sm:p-4 border-2 border-primary-900 shadow-lg hidden sm:block"
           >
             <svg
               className="w-8 h-8 sm:w-10 sm:h-10"

@@ -221,13 +221,46 @@ label {
   }
 
   /* Unified field style - 48px height total */
+  .paired-left .input-field,
+  .paired-left .input-field.dropdown-button,
+  .input-field.paired-left {
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-right-width: 1px !important;
+  }
+
+  .paired-right .input-field,
+  .paired-right .input-field.dropdown-button,
+  .input-field.paired-right {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-left-width: 1px !important;
+    margin-left: -1px !important;
+  }
+
+  .paired-left .input-field:focus,
+  .paired-left .input-field.dropdown-button:focus,
+  .input-field.paired-left:focus,
+  .paired-right .input-field:focus,
+  .paired-right .input-field.dropdown-button:focus,
+  .input-field.paired-right:focus {
+    z-index: 1 !important;
+    position: relative !important;
+  }
+
   .input-field {
     box-sizing: border-box !important;
     height: 48px !important;
     min-height: 48px !important;
     max-height: 48px !important;
     width: 100% !important;
-    padding: 4px 16px !important;
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+    padding-left: 16px !important;
+    padding-right: 16px;
+    text-overflow: ellipsis !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
     margin: 0 !important;
     border: 2px solid #dadada !important;
     border-radius: 0.5rem !important;

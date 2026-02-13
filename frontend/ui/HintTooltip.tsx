@@ -105,8 +105,8 @@ export function HintTooltip({
   const horizontalClasses = horizontalPlacement === 'left' ? 'right-0' : 'left-0';
   const arrowClasses =
     placement === 'top'
-      ? 'top-full border-t-[5px] border-t-primary-500/50'
-      : 'bottom-full border-b-[5px] border-b-primary-500/50';
+      ? 'top-full border-t-[5px] border-t-primary-900'
+      : 'bottom-full border-b-[5px] border-b-primary-900';
   const arrowHorizontalClasses = horizontalPlacement === 'left' ? 'right-4' : 'left-4';
 
   return (
@@ -119,7 +119,7 @@ export function HintTooltip({
         aria-label={ariaLabel}
       >
         <svg
-          className="w-4 h-4 text-primary-400 hover:text-primary-300 cursor-pointer transition-colors"
+          className="w-4 h-4 text-primary-500 hover:text-primary-700 cursor-pointer transition-colors"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -143,8 +143,8 @@ export function HintTooltip({
                 : 'opacity-0 -translate-y-1'
           }`}
         >
-          <div className="bg-bg-darker border-2 border-primary-500/50 rounded-lg p-3 shadow-lg relative">
-            <div className="text-xs text-text-primary leading-relaxed">{children}</div>
+          <div className="bg-bg-base border-2 border-primary-900 rounded-lg p-3 shadow-lg relative">
+            <div className="text-xs text-primary-900 leading-relaxed">{children}</div>
             <div
               className={`absolute ${arrowHorizontalClasses} w-0 h-0 border-l-[5px] border-r-[5px] border-transparent ${arrowClasses}`}
             />

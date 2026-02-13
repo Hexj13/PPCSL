@@ -25,7 +25,7 @@ export function BasicInfoSection({
 
   return (
     <div className="mb-6">
-      <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-500">
+      <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-900">
         {t('listings.basicInfo')}
       </h2>
       <InfoBlock className="mb-5">
@@ -36,7 +36,7 @@ export function BasicInfoSection({
               <span key={index}>
                 {part}
                 {index < array.length - 1 && (
-                  <strong className="font-bold text-primary-400">{siteConfig.supportEmail}</strong>
+                  <strong className="font-bold text-primary-900">{siteConfig.supportEmail}</strong>
                 )}
               </span>
             ))}
@@ -44,7 +44,7 @@ export function BasicInfoSection({
       </InfoBlock>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-400">
+          <label className="block text-sm font-semibold mb-2 text-primary-700">
             {t('listings.brandLabel')}
             <RequiredAsterisk filled={!!formData.vehicle.brand_id} />
           </label>
@@ -71,7 +71,7 @@ export function BasicInfoSection({
         </div>
 
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-400">
+          <label className="block text-sm font-semibold mb-2 text-primary-700">
             {t('listings.modelLabel')}
             <RequiredAsterisk filled={!!formData.vehicle.model_id} />
           </label>
@@ -101,7 +101,7 @@ export function BasicInfoSection({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-400">
+          <label className="block text-sm font-semibold mb-2 text-primary-700">
             {t('listings.yearLabel')}
             <RequiredAsterisk filled={!!formData.vehicle.year} />
           </label>
@@ -123,7 +123,7 @@ export function BasicInfoSection({
 
         <div>
           <div className="flex items-center gap-1.5 mb-2">
-            <label htmlFor="vin-input" className="text-sm font-semibold text-primary-400">
+            <label htmlFor="vin-input" className="text-sm font-semibold text-primary-700">
               {t('listings.vinLabel')}
             </label>
             <HintTooltip ariaLabel={t('listings.vinHintButton')}>
@@ -150,7 +150,7 @@ export function BasicInfoSection({
             </p>
           )}
           {formData.vin && formData.vin.length === 17 && (
-            <p className="mt-1 text-sm text-primary-400">{t('listings.vinValid')}</p>
+            <p className="mt-1 text-sm text-primary-700">{t('listings.vinValid')}</p>
           )}
         </div>
       </div>

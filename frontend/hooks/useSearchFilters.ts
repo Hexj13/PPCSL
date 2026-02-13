@@ -197,19 +197,18 @@ export function useSearchFilters() {
       searchParams.get('model_ids') || searchParams.get('model_id') || null,
       hasEncodedArrays
     );
-    const resolveBrandIds = () => {
-      if (hasBrandParam) return [];
+    const resolveBrandIds = (): string[] | undefined => {
+      if (hasBrandParam) return undefined;
       if (Array.isArray(storedFilters?.brand_ids)) return storedFilters.brand_ids as string[];
       return brandIdsFromUrl;
     };
-    const resolveModelIds = () => {
-      if (hasBrandParam || hasModelParam) return [];
+    const resolveModelIds = (): string[] | undefined => {
+      if (hasBrandParam || hasModelParam) return undefined;
       if (Array.isArray(storedFilters?.model_ids)) return storedFilters.model_ids as string[];
       return modelIdsFromUrl;
     };
-    return {
-      brand_ids: resolveBrandIds(),
-      model_ids: resolveModelIds(),
+
+    const derived: Partial<FilterState> = {
       cities: resolveArrayFromStorageOrUrl(ctx, 'cities', ['cities', 'city']),
       year_gte: searchParams.get('year_gte') || '',
       year_lte: searchParams.get('year_lte') || currentYear,
@@ -248,6 +247,17 @@ export function useSearchFilters() {
       sortBy: searchParams.get('sortBy') || 'created_at',
       sortOrder: (searchParams.get('sortOrder') || 'DESC') as 'ASC' | 'DESC',
     };
+
+    const brandIds = resolveBrandIds();
+    if (brandIds !== undefined) {
+      derived.brand_ids = brandIds;
+    }
+    const modelIds = resolveModelIds();
+    if (modelIds !== undefined) {
+      derived.model_ids = modelIds;
+    }
+
+    return derived;
   }, [searchParams, hasEncodedArrays, storedFilters, currentYear]);
 
   useEffect(() => {

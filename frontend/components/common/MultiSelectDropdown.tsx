@@ -156,7 +156,7 @@ function MultiSelectDropdownComponent({
   return (
     <div ref={dropdownRef} className={`relative ${className}`}>
       {searchable ? (
-        <div className="relative">
+        <div className="relative group">
           <input
             ref={inputRef}
             type="text"
@@ -169,7 +169,7 @@ function MultiSelectDropdownComponent({
             style={{ paddingRight: '52px' }}
           />
           <svg
-            className={`absolute top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-400 transition-transform duration-200 cursor-pointer ${
+            className={`absolute top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-900 group-hover:text-primary-700 transition-colors duration-200 cursor-pointer ${
               isOpen ? 'rotate-180' : ''
             }`}
             style={{ right: '16px' }}
@@ -207,7 +207,7 @@ function MultiSelectDropdownComponent({
             }
           }}
           disabled={disabled}
-          className="input-field text-left cursor-pointer relative"
+          className="input-field text-left cursor-pointer relative group"
           style={{ paddingRight: '52px' }}
         >
           <span
@@ -216,7 +216,7 @@ function MultiSelectDropdownComponent({
             {displayText}
           </span>
           <svg
-            className={`absolute top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-400 transition-transform duration-200 flex-shrink-0 ${
+            className={`absolute top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-900 group-hover:text-primary-700 transition-colors duration-200 flex-shrink-0 ${
               isOpen ? 'rotate-180' : ''
             }`}
             fill="none"
@@ -278,7 +278,7 @@ function MultiSelectDropdownComponent({
                       <span>{option.label}</span>
                       {isSelected && (
                         <svg
-                          className="w-5 h-5 text-primary-400"
+                          className="w-5 h-5 text-primary-900"
                           fill="currentColor"
                           viewBox="0 0 20 20"
                         >

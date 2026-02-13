@@ -9,6 +9,7 @@ import { ListingCardSkeleton } from '@/components/listing/ListingCardSkeleton';
 import { SavedFiltersList, updateSavedFiltersCache } from '@/components/search/SavedFiltersList';
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { useTabIndicator } from '@/hooks/useTabIndicator';
 import { useTranslation } from '@/hooks/useTranslation';
 import { favoritesApi, Listing, savedFiltersApi } from '@/lib/api';
 import { useFavoritesStore } from '@/lib/store';
@@ -31,6 +32,14 @@ function FavoritesContent() {
   const [filtersCount, setFiltersCount] = useState(0);
   const showLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasLoadedRef = useRef(false);
+  const listingsTabRef = useRef<HTMLButtonElement>(null);
+  const filtersTabRef = useRef<HTMLButtonElement>(null);
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
+  const { indicatorRef, indicatorStyle } = useTabIndicator(
+    activeTab,
+    { listings: listingsTabRef, filters: filtersTabRef },
+    tabsContainerRef
+  );
 
   const loadFavorites = useCallback(() => {
     if (!user) return;
@@ -171,42 +180,53 @@ function FavoritesContent() {
         ]}
         className="mb-6"
       />
-      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 md:mb-8 text-primary-700">
+      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 md:mb-8 text-primary-900">
         {t('favorites.title')}
       </h1>
 
-      <div className="mb-6">
-        <div className="flex gap-3 border-b border-primary-500/20">
-          <button
-            onClick={() => handleTabChange('listings')}
-            className={`px-6 py-3 font-semibold transition-colors border-b-2 flex items-center gap-2 ${
-              activeTab === 'listings'
-                ? 'border-primary-500 text-primary-500'
-                : 'border-transparent text-text-secondary hover:text-text-primary'
-            }`}
-          >
-            {t('favorites.listings')}
-            {listings.length > 0 && (
-              <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-xs">
-                {listings.length}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => handleTabChange('filters')}
-            className={`px-6 py-3 font-semibold transition-colors border-b-2 flex items-center gap-2 ${
-              activeTab === 'filters'
-                ? 'border-primary-500 text-primary-500'
-                : 'border-transparent text-text-secondary hover:text-text-primary'
-            }`}
-          >
-            {t('favorites.filters')}
-            {filtersCount > 0 && (
-              <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-xs">
-                {filtersCount}
-              </span>
-            )}
-          </button>
+      <div className="mb-6 border-b border-primary-500/20">
+        <div ref={tabsContainerRef} className="relative overflow-x-auto scrollbar-hide">
+          <div className="relative flex gap-1 min-w-max">
+            <button
+              ref={listingsTabRef}
+              type="button"
+              onClick={() => handleTabChange('listings')}
+              className={`flex-shrink-0 px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 whitespace-nowrap flex items-center gap-2 ${
+                activeTab === 'listings'
+                  ? 'text-primary-700 bg-primary-500/10 rounded-t-lg'
+                  : 'text-primary-700 hover:text-primary-900 hover:bg-primary-500/10'
+              }`}
+            >
+              {t('favorites.listings')}
+              {listings.length > 0 && (
+                <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-700/20 text-xs">
+                  {listings.length}
+                </span>
+              )}
+            </button>
+            <button
+              ref={filtersTabRef}
+              type="button"
+              onClick={() => handleTabChange('filters')}
+              className={`flex-shrink-0 px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 whitespace-nowrap flex items-center gap-2 ${
+                activeTab === 'filters'
+                  ? 'text-primary-700 bg-primary-500/10 rounded-t-lg'
+                  : 'text-primary-700 hover:text-primary-900 hover:bg-primary-500/10'
+              }`}
+            >
+              {t('favorites.filters')}
+              {filtersCount > 0 && (
+                <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-700/20 text-xs">
+                  {filtersCount}
+                </span>
+              )}
+            </button>
+            <div
+              ref={indicatorRef}
+              className="absolute bottom-0 h-0.5 bg-primary-700 transition-all duration-300 ease-in-out"
+              style={{ left: `${indicatorStyle.left}px`, width: `${indicatorStyle.width}px` }}
+            />
+          </div>
         </div>
       </div>
 

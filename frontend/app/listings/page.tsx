@@ -131,7 +131,7 @@ export default async function ListingsPage({
       <ConversionEvent />
       <SearchStructuredData brand={brand} model={model} />
 
-      <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-6 text-text-secondary">
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-6 text-primary-900">
         {t.listingsPage.title}
       </h1>
 

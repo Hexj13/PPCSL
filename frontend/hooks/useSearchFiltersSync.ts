@@ -52,6 +52,8 @@ export function useSearchFiltersSync({
       if (isInternalSearchRef.current) {
         isInternalSearchRef.current = false;
         prevUrlForSyncRef.current = currentUrl;
+        processedBrandParamRef.current = null;
+        processedModelParamRef.current = null;
         setIsSyncingFromUrl(false);
         hasInitializedRef.current = true;
         return;
@@ -145,8 +147,8 @@ export function useSearchFiltersSync({
 
       if (foundBrandIds.length > 0) {
         setFilters((prev) => {
-          const currentIds = prev.brand_ids.sort().join(',');
-          const newIds = foundBrandIds.sort().join(',');
+          const currentIds = [...prev.brand_ids].sort().join(',');
+          const newIds = [...foundBrandIds].sort().join(',');
           if (currentIds === newIds && prev.brand_ids.length === foundBrandIds.length) {
             return prev;
           }
@@ -197,8 +199,8 @@ export function useSearchFiltersSync({
         foundModelIds.length > 0 || (foundModelIds.length === 0 && modelsMatchBrand);
 
       setFilters((prev) => {
-        const currentIds = prev.model_ids.sort().join(',');
-        const newIds = foundModelIds.sort().join(',');
+        const currentIds = [...prev.model_ids].sort().join(',');
+        const newIds = [...foundModelIds].sort().join(',');
         if (currentIds === newIds && prev.model_ids.length === foundModelIds.length) {
           if (shouldMarkProcessed) {
             processedModelParamRef.current = modelParam;

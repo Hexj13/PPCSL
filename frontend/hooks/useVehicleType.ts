@@ -37,7 +37,7 @@ interface UseVehicleTypeParams {
   searchParams: ReturnType<typeof useSearchParams>;
   resetFilters: () => void;
   setLastAppliedFilters: React.Dispatch<React.SetStateAction<FilterState | null>>;
-  setActiveTab: (_tab: 'basic' | 'advanced' | 'popular') => void;
+  setActiveTab: (_tab: 'basic' | 'advanced' | 'equipment' | 'popular') => void;
   isApplyingQuickFilterRef: React.MutableRefObject<boolean>;
 }
 

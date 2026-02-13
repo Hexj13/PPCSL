@@ -213,7 +213,7 @@ export function ScrollToFiltersButton() {
           </svg>
         )}
         <span className="hidden md:block absolute -top-12 right-0 bg-bg-base text-primary-500 text-xs font-semibold px-3 py-1.5 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap border border-primary-500/20">
-          {showBackButton ? 'Врати се назад' : 'До филтри'}
+          {showBackButton ? t('common.scrollBack') : t('common.scrollToFilters')}
         </span>
       </button>
     </div>

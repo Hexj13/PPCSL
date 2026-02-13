@@ -56,8 +56,10 @@ npm run dev
 PPCSL/
 ├── backend/          # NestJS API
 │   ├── src/
-│   │   ├── scripts/common/  # Универсальные скрипты
-│   │   ├── brands/          # Бренды и модели
+│   │   ├── scripts/stage/       # Staging/dev scripts
+│   │   ├── scripts/production/  # Production-safe scripts
+│   │   ├── scripts/platforms/   # Platform configs (e.g. md/)
+│   │   ├── brands/              # Бренды и модели
 │   │   └── ...
 │   └── docs/         # Backend-specific docs
 ├── frontend/         # Next.js frontend
@@ -87,13 +89,13 @@ PPCSL/
 ## 🧪 Testing
 
 ```bash
-# Backend unit tests (195 tests)
+# Backend unit tests (265 tests)
 cd backend && npm test
 
 # Backend integration tests (44 tests)
 cd backend && npm run test:integration
 
-# Frontend tests (85 tests)
+# Frontend tests (136 tests)
 cd frontend && npm test
 ```
 

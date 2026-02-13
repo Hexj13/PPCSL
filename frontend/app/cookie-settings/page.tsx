@@ -38,7 +38,7 @@ export default function CookieSettingsPage() {
   return (
     <div className="max-w-3xl mx-auto pt-10 md:pt-14">
       <div className="mb-8">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-primary-700 mb-4">
+        <h1 className="text-4xl md:text-5xl font-extrabold text-primary-900 mb-4">
           {t('cookieSettings.title')}
         </h1>
         <p className="text-text-secondary text-sm sm:text-base leading-relaxed">
@@ -47,7 +47,7 @@ export default function CookieSettingsPage() {
       </div>
 
       <div className="surface mb-6">
-        <h2 className="text-2xl font-bold text-primary-500 mb-4">
+        <h2 className="text-2xl font-bold text-primary-900 mb-4">
           {t('cookieSettings.necessary.title')}
         </h2>
         <p className="text-text-secondary text-sm mb-4 leading-relaxed">
@@ -56,13 +56,13 @@ export default function CookieSettingsPage() {
         <div className="bg-bg-darker p-3 rounded-lg">
           <p className="text-text-secondary text-sm">
             {t('cookieSettings.status')}{' '}
-            <span className="text-primary-500">{t('cookieSettings.active')}</span>
+            <span className="text-primary-900">{t('cookieSettings.active')}</span>
           </p>
         </div>
       </div>
 
       <div className="surface mb-6">
-        <h2 className="text-2xl font-bold text-primary-500 mb-4">
+        <h2 className="text-2xl font-bold text-primary-900 mb-4">
           {t('cookieSettings.analytical.title')}
         </h2>
         <p className="text-text-secondary text-sm mb-4 leading-relaxed">
@@ -72,7 +72,7 @@ export default function CookieSettingsPage() {
           <div className="bg-bg-darker p-4 rounded-lg">
             <div className="flex items-center justify-between mb-2">
               <div>
-                <h3 className="font-semibold text-primary-500 mb-1">
+                <h3 className="font-semibold text-primary-700 mb-1">
                   {t('cookieSettings.googleAnalytics.title')}
                 </h3>
                 <p className="text-text-secondary text-xs">
@@ -82,7 +82,7 @@ export default function CookieSettingsPage() {
               <div className="flex items-center gap-3">
                 <span
                   className={`text-sm font-medium ${
-                    consent === 'granted' ? 'text-primary-500' : 'text-text-secondary'
+                    consent === 'granted' ? 'text-primary-900' : 'text-text-secondary'
                   }`}
                 >
                   {consent === 'granted'
@@ -95,7 +95,7 @@ export default function CookieSettingsPage() {
           <div className="bg-bg-darker p-4 rounded-lg">
             <div className="flex items-center justify-between mb-2">
               <div>
-                <h3 className="font-semibold text-primary-500 mb-1">
+                <h3 className="font-semibold text-primary-700 mb-1">
                   {t('cookieSettings.googleTagManager.title')}
                 </h3>
                 <p className="text-text-secondary text-xs">
@@ -105,7 +105,7 @@ export default function CookieSettingsPage() {
               <div className="flex items-center gap-3">
                 <span
                   className={`text-sm font-medium ${
-                    consent === 'granted' ? 'text-primary-500' : 'text-text-secondary'
+                    consent === 'granted' ? 'text-primary-900' : 'text-text-secondary'
                   }`}
                 >
                   {consent === 'granted'
@@ -119,7 +119,7 @@ export default function CookieSettingsPage() {
       </div>
 
       <div className="surface mb-6">
-        <h2 className="text-2xl font-bold text-primary-500 mb-4">
+        <h2 className="text-2xl font-bold text-primary-900 mb-4">
           {t('cookieSettings.yourChoice.title')}
         </h2>
         <div className="flex flex-col sm:flex-row gap-4">
@@ -143,14 +143,14 @@ export default function CookieSettingsPage() {
       </div>
 
       <div className="surface">
-        <h2 className="text-2xl font-bold text-primary-500 mb-4">
+        <h2 className="text-2xl font-bold text-primary-900 mb-4">
           {t('cookieSettings.moreInfo.title')}
         </h2>
         <p className="text-text-secondary text-sm mb-4 leading-relaxed">
           {t('cookieSettings.moreInfo.description')}{' '}
           <Link
             href="/privacy"
-            className="text-primary-500 hover:text-primary-600 underline transition-colors"
+            className="text-primary-900 hover:text-primary-600 underline transition-colors"
           >
             {t('cookieSettings.privacyPolicy')}
           </Link>

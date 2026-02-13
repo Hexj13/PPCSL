@@ -93,7 +93,7 @@ export function ListingManagementCard({
             <div className="flex-1 min-w-0">
               <Link href={`/listings/${listing.id}`} className="mb-3 block group">
                 <div className="flex items-start gap-1.5">
-                  <h3 className="font-bold text-base md:text-lg text-primary-500 lg:group-hover:text-primary-700 transition-colors line-clamp-2">
+                  <h3 className="font-bold text-base md:text-lg text-primary-900 line-clamp-2">
                     {displayTitle}
                   </h3>
                   <svg
@@ -172,7 +172,7 @@ export function ListingManagementCard({
             </div>
             <div className="flex flex-col items-start text-left w-full lg:items-end lg:text-right lg:min-w-[140px] lg:w-auto mb-3">
               {listing.price !== undefined ? (
-                <span className="text-lg sm:text-xl md:text-2xl font-extrabold text-primary-500 lg:group-hover:text-primary-700 transition-colors leading-snug whitespace-nowrap mb-3">
+                <span className="text-lg sm:text-xl md:text-2xl font-extrabold text-primary-500 leading-snug whitespace-nowrap mb-3">
                   {formatPrice(listing.price, listing.currency)} {listing.currency}
                 </span>
               ) : (
@@ -231,13 +231,13 @@ export function ListingManagementCard({
             <div className="mt-auto pt-3 border-t border-primary-500/20">
               <div className="flex flex-col xl:flex-row xl:justify-between items-start xl:items-center gap-2 lg:gap-3 min-w-0 max-w-full">
                 <div className="inline-flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
-                  <div className="text-base font-semibold text-text-primary">
+                  <div className="text-base font-semibold text-primary-900">
                     {t('listings.status')}
                   </div>
                   <div
                     className={
                       listing.status === 'Active'
-                        ? 'text-primary-400 font-bold text-base'
+                        ? 'text-primary-500 font-bold text-base'
                         : listing.status === 'Paused'
                           ? 'text-blue-400 font-bold text-base'
                           : 'text-text-secondary font-bold text-base'
@@ -333,12 +333,12 @@ export function ListingManagementCard({
                   {mode === 'my-listings' && listing.status !== 'Closed' && (
                     <Link
                       href={`/listings/${listing.id}/edit`}
-                      className="text-text-secondary font-medium text-base hover:text-text-primary transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-700 hover:border-primary-700 bg-transparent hover:bg-primary-700/10 select-none w-full xl:w-auto h-[48px]"
+                      className="text-primary-700 font-medium text-base hover:text-primary-900 hover:border-primary-900 active:text-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none w-full xl:w-auto h-[48px]"
                       title={t('common.editListing')}
                       onClick={(e) => e.stopPropagation()}
                     >
                       <svg
-                        className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0 text-primary-700"
+                        className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0 text-inherit"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"

@@ -127,7 +127,7 @@ export function VehicleTypeSelector({
         suppressHydrationWarning
       >
         <span
-          className="hidden lg:inline text-base font-bold text-primary-700 flex-shrink-0 flex items-center mr-2 xl:mr-2"
+          className="hidden lg:inline text-base font-bold text-primary-900 flex-shrink-0 flex items-center mr-2 xl:mr-2"
           suppressHydrationWarning
         >
           {t('searchFilters.categoryLabel')}
@@ -138,11 +138,13 @@ export function VehicleTypeSelector({
           onClick={() => onVehicleTypeChange('car')}
           className={`h-12 w-16 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap flex items-center justify-center ${
             vehicleType === 'car'
-              ? 'bg-primary-500/5 rounded-t-lg'
-              : 'hover:bg-primary-500/5 hover:rounded-t-lg'
+              ? 'bg-primary-500/10 rounded-t-lg'
+              : 'hover:bg-primary-500/10 hover:rounded-t-lg'
           }`}
         >
-          <CarIcon className="w-12 h-12 transition-colors duration-300 scale-x-[-1] text-black" />
+          <CarIcon
+            className={`w-12 h-12 transition-colors duration-300 scale-x-[-1] ${vehicleType === 'car' ? 'text-primary-900' : 'text-primary-700'}`}
+          />
         </button>
         <button
           ref={truckRef}
@@ -150,11 +152,13 @@ export function VehicleTypeSelector({
           onClick={() => onVehicleTypeChange('truck')}
           className={`h-12 w-16 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap flex items-center justify-center ${
             vehicleType === 'truck'
-              ? 'bg-primary-500/5 rounded-t-lg'
-              : 'hover:bg-primary-500/5 hover:rounded-t-lg'
+              ? 'bg-primary-500/10 rounded-t-lg'
+              : 'hover:bg-primary-500/10 hover:rounded-t-lg'
           }`}
         >
-          <TruckIcon className="w-12 h-12 transition-colors duration-300 scale-x-[-1] text-black" />
+          <TruckIcon
+            className={`w-12 h-12 transition-colors duration-300 scale-x-[-1] ${vehicleType === 'truck' ? 'text-primary-900' : 'text-primary-700'}`}
+          />
         </button>
         <button
           ref={motoRef}
@@ -162,11 +166,13 @@ export function VehicleTypeSelector({
           onClick={() => onVehicleTypeChange('moto')}
           className={`h-12 w-16 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap flex items-center justify-center ${
             vehicleType === 'moto'
-              ? 'bg-primary-500/5 rounded-t-lg'
-              : 'hover:bg-primary-500/5 hover:rounded-t-lg'
+              ? 'bg-primary-500/10 rounded-t-lg'
+              : 'hover:bg-primary-500/10 hover:rounded-t-lg'
           }`}
         >
-          <MotoIcon className="w-12 h-12 transition-colors duration-300 scale-x-[-1] text-black" />
+          <MotoIcon
+            className={`w-12 h-12 transition-colors duration-300 scale-x-[-1] ${vehicleType === 'moto' ? 'text-primary-900' : 'text-primary-700'}`}
+          />
         </button>
         <span
           ref={comingSoonRef}

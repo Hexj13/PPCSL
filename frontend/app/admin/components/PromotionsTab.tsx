@@ -80,7 +80,7 @@ export function PromotionsTab() {
             }))
           }
           placeholder={t('admin.promotionsTab.searchPlaceholder')}
-          className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-secondary border-2 border-primary-500/30 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-primary-500 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
+          className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-secondary border-2 border-primary-700/30 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-primary-700 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
         />
       </div>
 
@@ -95,16 +95,11 @@ export function PromotionsTab() {
                   timeFilter: filter,
                 }))
               }
-              className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium transition-colors text-sm md:text-base bg-bg-secondary hover:bg-bg-base border ${
+              className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium transition-colors text-sm md:text-base border-2 ${
                 filters.timeFilter === filter
-                  ? 'border-primary-500 text-text-primary'
-                  : 'border-primary-500/20'
+                  ? 'bg-primary-500/10 border-primary-700 text-primary-700'
+                  : 'bg-bg-secondary hover:bg-bg-base border-primary-700 text-primary-700 hover:text-primary-900 hover:border-primary-900'
               }`}
-              style={
-                filters.timeFilter !== filter
-                  ? { color: 'rgb(var(--text-secondary-rgb))' }
-                  : undefined
-              }
             >
               {filter === 'All'
                 ? t('admin.promotionsTab.allTime')
@@ -128,47 +123,44 @@ export function PromotionsTab() {
         </div>
       ) : (
         <>
-          <div
-            className="mb-3 md:mb-4 text-sm md:text-base"
-            style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-          >
+          <div className="mb-3 md:mb-4 text-sm md:text-base text-primary-900">
             {t('admin.promotionsTab.totalPromotions')}:{' '}
-            <span className="font-semibold text-text-primary">{meta?.total || 0}</span>
+            <span className="font-semibold text-primary-900">{meta?.total || 0}</span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="border-b border-primary-500/30">
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-primary-500">
+                <tr className="border-b border-primary-700/30">
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-primary-900">
                     {t('admin.promotionsTab.listingTitle')}
                   </th>
-                  <th className="text-center py-3 px-4 text-sm font-semibold text-primary-500">
+                  <th className="text-center py-3 px-4 text-sm font-semibold text-primary-900">
                     {t('admin.promotionsTab.status')}
                   </th>
-                  <th className="text-center py-3 px-4 text-sm font-semibold text-primary-500">
+                  <th className="text-center py-3 px-4 text-sm font-semibold text-primary-900">
                     {t('admin.promotionsTab.days')}
                   </th>
-                  <th className="text-center py-3 px-4 text-sm font-semibold text-primary-500">
+                  <th className="text-center py-3 px-4 text-sm font-semibold text-primary-900">
                     {t('admin.promotionsTab.startDate')}
                   </th>
-                  <th className="text-center py-3 px-4 text-sm font-semibold text-primary-500">
+                  <th className="text-center py-3 px-4 text-sm font-semibold text-primary-900">
                     {t('admin.promotionsTab.endDate')}
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-primary-500">
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-primary-900">
                     {t('admin.promotionsTab.userId')}
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-primary-500">
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-primary-900">
                     {t('admin.promotionsTab.listingId')}
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {promotions.map((promotion) => (
-                  <tr key={promotion.id} className="border-b border-primary-500/10">
+                  <tr key={promotion.id} className="border-b border-primary-700/10">
                     <td className="py-3 px-4 text-sm">
                       <Link
                         href={`/listings/${promotion.listing_id}`}
-                        className="text-primary-500 hover:text-primary-700 hover:underline transition-colors"
+                        className="text-primary-700 hover:text-primary-900 hover:underline transition-colors"
                       >
                         {promotion.listing_title}
                       </Link>
@@ -177,7 +169,7 @@ export function PromotionsTab() {
                       <span
                         className={
                           promotion.listing_status === 'Active'
-                            ? 'text-primary-500 font-semibold'
+                            ? 'text-primary-700 font-semibold'
                             : promotion.listing_status === 'Paused'
                               ? 'text-blue-500 font-semibold'
                               : 'text-text-secondary font-semibold'

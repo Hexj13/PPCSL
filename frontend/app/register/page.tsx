@@ -376,22 +376,22 @@ export default function RegisterPage() {
 
   return (
     <div className="max-w-md mx-auto mt-6 md:mt-12 mb-16">
-      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center text-primary-900">
         {t('register.title')}
       </h1>
       <form onSubmit={handleSubmit} className="card p-6 md:p-8" autoComplete="off">
         <div className="mb-5">
-          <label className="block text-sm font-semibold mb-2 text-primary-500">
+          <label className="block text-sm font-semibold mb-2 text-primary-900">
             {t('register.userType')}
           </label>
-          <div className="flex bg-bg-base rounded-lg p-1 border-2 border-primary-500/30">
+          <div className="flex bg-bg-base rounded-lg p-1 border-2 border-primary-700/30">
             <button
               type="button"
               onClick={() => setFormData({ ...formData, type: 'Individual' })}
               className={`flex-1 py-2 px-4 rounded-md font-semibold text-sm transition-all duration-200 ${
                 formData.type === 'Individual'
-                  ? 'bg-primary-500 text-white'
-                  : 'text-gray-400 hover:text-text-secondary'
+                  ? 'bg-primary-500/10 text-primary-700 border border-primary-700'
+                  : 'text-primary-900 hover:text-primary-700'
               }`}
             >
               {t('register.individual')}
@@ -401,8 +401,8 @@ export default function RegisterPage() {
               onClick={() => setFormData({ ...formData, type: 'Business' })}
               className={`flex-1 py-2 px-4 rounded-md font-semibold text-sm transition-all duration-200 ${
                 formData.type === 'Business'
-                  ? 'bg-primary-500 text-white'
-                  : 'text-gray-400 hover:text-text-secondary'
+                  ? 'bg-primary-500/10 text-primary-700 border border-primary-700'
+                  : 'text-primary-900 hover:text-primary-700'
               }`}
             >
               {t('register.business')}
@@ -413,7 +413,7 @@ export default function RegisterPage() {
         {formData.type === 'Individual' ? (
           <>
             <div className="mb-5">
-              <label className="block text-sm font-semibold mb-2 text-primary-500">
+              <label className="block text-sm font-semibold mb-2 text-primary-900">
                 {t('register.phone')} <span className="text-red-400">*</span>
               </label>
               <input
@@ -433,7 +433,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="mb-5">
-              <label className="block text-sm font-semibold mb-2 text-primary-500">
+              <label className="block text-sm font-semibold mb-2 text-primary-900">
                 {t('register.messengers')}{' '}
                 <span className="text-hint text-xs font-normal">{t('register.optional')}</span>
               </label>
@@ -454,8 +454,8 @@ export default function RegisterPage() {
                       }}
                       className={`px-4 py-3 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
                         formData.viber
-                          ? 'bg-primary-500 border-primary-500 text-white'
-                          : 'border-primary-500/50 bg-bg-secondary group-hover:border-primary-500 text-text-secondary'
+                          ? 'bg-primary-500/10 border-primary-700 text-primary-700'
+                          : 'border-primary-700/50 bg-bg-secondary group-hover:border-primary-700 text-primary-900'
                       }`}
                     >
                       <span className="text-sm font-semibold">Viber</span>
@@ -477,8 +477,8 @@ export default function RegisterPage() {
                       }}
                       className={`px-4 py-3 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
                         formData.whatsapp
-                          ? 'bg-primary-500 border-primary-500 text-white'
-                          : 'border-primary-500/50 bg-bg-secondary group-hover:border-primary-500 text-text-secondary'
+                          ? 'bg-primary-500/10 border-primary-700 text-primary-700'
+                          : 'border-primary-700/50 bg-bg-secondary group-hover:border-primary-700 text-primary-900'
                       }`}
                     >
                       <span className="text-sm font-semibold">WhatsApp</span>
@@ -500,8 +500,8 @@ export default function RegisterPage() {
                       }}
                       className={`px-4 py-3 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
                         formData.telegram
-                          ? 'bg-primary-500 border-primary-500 text-white'
-                          : 'border-primary-500/50 bg-bg-secondary group-hover:border-primary-500 text-text-secondary'
+                          ? 'bg-primary-500/10 border-primary-700 text-primary-700'
+                          : 'border-primary-700/50 bg-bg-secondary group-hover:border-primary-700 text-primary-900'
                       }`}
                     >
                       <span className="text-sm font-semibold">Telegram</span>
@@ -513,7 +513,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="mb-5">
-              <label className="block text-sm font-semibold mb-2 text-primary-500">
+              <label className="block text-sm font-semibold mb-2 text-primary-900">
                 {t('register.password')} <span className="text-red-400">*</span>
               </label>
               <div className="relative">
@@ -529,7 +529,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary-400 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-primary-900 hover:text-primary-700 transition-colors"
                   tabIndex={-1}
                 >
                   {showPassword ? (
@@ -576,7 +576,7 @@ export default function RegisterPage() {
                   <div key={index} className="flex items-center gap-2">
                     {rule.isValid ? (
                       <svg
-                        className="w-3 h-3 text-primary-500 flex-shrink-0"
+                        className="w-3 h-3 text-primary-900 flex-shrink-0"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -607,7 +607,7 @@ export default function RegisterPage() {
                     )}
                     <p
                       className={`text-[10px] leading-tight ${
-                        rule.isValid ? 'text-primary-500' : 'text-gray-400'
+                        rule.isValid ? 'text-primary-700' : 'text-gray-400'
                       } transition-colors`}
                     >
                       {rule.text}
@@ -620,7 +620,7 @@ export default function RegisterPage() {
         ) : (
           <>
             <div className="mb-5">
-              <label className="block text-sm font-semibold mb-2 text-primary-500">
+              <label className="block text-sm font-semibold mb-2 text-primary-900">
                 {t('register.companyName')} <span className="text-red-400">*</span>
               </label>
               <input
@@ -641,7 +641,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="mb-5">
-              <label className="block text-sm font-semibold mb-2 text-primary-500">
+              <label className="block text-sm font-semibold mb-2 text-primary-900">
                 {t('register.phone')} <span className="text-red-400">*</span>
               </label>
               <input
@@ -661,7 +661,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="mb-5">
-              <label className="block text-sm font-semibold mb-2 text-primary-500">
+              <label className="block text-sm font-semibold mb-2 text-primary-900">
                 {t('register.messengers')}{' '}
                 <span className="text-hint text-xs font-normal">{t('register.optional')}</span>
               </label>
@@ -682,8 +682,8 @@ export default function RegisterPage() {
                       }}
                       className={`px-4 py-3 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
                         formData.viber
-                          ? 'bg-primary-500 border-primary-500 text-white'
-                          : 'border-primary-500/50 bg-bg-secondary group-hover:border-primary-500 text-text-secondary'
+                          ? 'bg-primary-500/10 border-primary-700 text-primary-700'
+                          : 'border-primary-700/50 bg-bg-secondary group-hover:border-primary-700 text-primary-900'
                       }`}
                     >
                       <span className="text-sm font-semibold">Viber</span>
@@ -705,8 +705,8 @@ export default function RegisterPage() {
                       }}
                       className={`px-4 py-3 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
                         formData.whatsapp
-                          ? 'bg-primary-500 border-primary-500 text-white'
-                          : 'border-primary-500/50 bg-bg-secondary group-hover:border-primary-500 text-text-secondary'
+                          ? 'bg-primary-500/10 border-primary-700 text-primary-700'
+                          : 'border-primary-700/50 bg-bg-secondary group-hover:border-primary-700 text-primary-900'
                       }`}
                     >
                       <span className="text-sm font-semibold">WhatsApp</span>
@@ -728,8 +728,8 @@ export default function RegisterPage() {
                       }}
                       className={`px-4 py-3 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
                         formData.telegram
-                          ? 'bg-primary-500 border-primary-500 text-white'
-                          : 'border-primary-500/50 bg-bg-secondary group-hover:border-primary-500 text-text-secondary'
+                          ? 'bg-primary-500/10 border-primary-700 text-primary-700'
+                          : 'border-primary-700/50 bg-bg-secondary group-hover:border-primary-700 text-primary-900'
                       }`}
                     >
                       <span className="text-sm font-semibold">Telegram</span>
@@ -741,7 +741,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="mb-5">
-              <label className="block text-sm font-semibold mb-2 text-primary-500">
+              <label className="block text-sm font-semibold mb-2 text-primary-900">
                 {t('register.password')} <span className="text-red-400">*</span>
               </label>
               <div className="relative">
@@ -757,7 +757,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary-400 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-primary-900 hover:text-primary-700 transition-colors"
                   tabIndex={-1}
                 >
                   {showPassword ? (
@@ -804,7 +804,7 @@ export default function RegisterPage() {
                   <div key={index} className="flex items-center gap-2">
                     {rule.isValid ? (
                       <svg
-                        className="w-3 h-3 text-primary-500 flex-shrink-0"
+                        className="w-3 h-3 text-primary-900 flex-shrink-0"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -835,7 +835,7 @@ export default function RegisterPage() {
                     )}
                     <p
                       className={`text-[10px] leading-tight ${
-                        rule.isValid ? 'text-primary-500' : 'text-gray-400'
+                        rule.isValid ? 'text-primary-700' : 'text-gray-400'
                       } transition-colors`}
                     >
                       {rule.text}
@@ -864,13 +864,13 @@ export default function RegisterPage() {
                 }}
                 className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer flex-shrink-0 ${
                   formData.termsAccepted
-                    ? 'bg-primary-500 border-primary-700'
-                    : 'border-primary-500/50 bg-bg-secondary group-hover:border-primary-500'
+                    ? 'bg-primary-500/10 border-primary-700'
+                    : 'border-primary-700/50 bg-bg-secondary group-hover:border-primary-700'
                 }`}
               >
                 {formData.termsAccepted && (
                   <svg
-                    className="w-3 h-3 text-white"
+                    className="w-3 h-3 text-primary-900"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -887,16 +887,14 @@ export default function RegisterPage() {
             </div>
             <span
               onClick={() => setFormData({ ...formData, termsAccepted: !formData.termsAccepted })}
-              className={`text-sm cursor-pointer leading-relaxed ${
-                formData.termsAccepted ? 'text-text-primary' : 'text-text-secondary'
-              }`}
+              className={`text-sm cursor-pointer leading-relaxed text-primary-900`}
             >
               {t('register.termsAccept')}{' '}
               <Link
                 href="/terms"
                 target="_blank"
                 onClick={(e) => e.stopPropagation()}
-                className="text-primary-400 hover:text-primary-300 underline font-semibold"
+                className="text-primary-700 hover:text-primary-900 underline font-semibold"
               >
                 {t('register.termsLink')}
               </Link>
@@ -909,7 +907,7 @@ export default function RegisterPage() {
           type="submit"
           loading={loading}
           loadingText={t('register.registering')}
-          className="w-full text-primary-500 font-medium text-sm md:text-base hover:text-primary-700 hover:border-primary-700 active:text-primary-700 active:border-primary-700 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-500 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full text-primary-700 font-medium text-sm md:text-base hover:text-primary-900 hover:border-primary-900 active:text-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {t('register.registerButton')}
         </LoadingButton>
@@ -918,7 +916,7 @@ export default function RegisterPage() {
           {t('register.alreadyHaveAccount')}{' '}
           <a
             href="/login"
-            className="text-primary-500 font-semibold hover:text-primary-400 hover:underline transition-colors"
+            className="text-primary-700 font-semibold hover:text-primary-900 underline transition-colors"
           >
             {t('header.login')}
           </a>

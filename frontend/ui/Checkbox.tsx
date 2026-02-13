@@ -60,18 +60,18 @@ export function Checkbox({
             disabled ? 'cursor-not-allowed' : 'cursor-pointer'
           } ${
             checked
-              ? 'bg-gradient-to-r from-primary-700 to-primary-800 border-primary-500'
+              ? 'border-primary-500 bg-primary-500/10'
               : 'border-divider bg-bg-secondary group-hover:border-primary-500'
           }`}
         >
-          {checked && <CheckIcon className={`${sizeClasses[size].icon} text-white`} />}
+          {checked && <CheckIcon className={`${sizeClasses[size].icon} text-primary-900`} />}
         </div>
       </div>
       {label && (
         <label
           htmlFor={checkboxId}
           className={`text-sm transition-colors duration-200 cursor-pointer ${
-            checked ? 'text-primary-400' : 'text-text-secondary group-hover:text-text-secondary'
+            checked ? 'text-primary-700' : 'text-text-secondary group-hover:text-text-secondary'
           } ${labelClassName}`}
         >
           {label}

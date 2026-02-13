@@ -234,7 +234,7 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
                 }))
               }
               placeholder={t('admin.listingsTab.searchByIdPlaceholder')}
-              className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-secondary border-2 border-primary-500/30 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-primary-500 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
+              className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-secondary border-2 border-primary-700/30 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-primary-700 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
             />
           </div>
 
@@ -270,12 +270,9 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
             <EmptyState message={t('admin.listingsTab.noListings')} className="py-10 md:py-12" />
           ) : (
             <>
-              <div
-                className="mb-3 md:mb-4 text-sm md:text-base"
-                style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-              >
+              <div className="mb-3 md:mb-4 text-sm md:text-base text-primary-700">
                 {t('admin.listingsTab.totalListings')}:{' '}
-                <span className="font-semibold text-text-primary">{meta?.total || 0}</span>
+                <span className="font-semibold text-primary-900">{meta?.total || 0}</span>
               </div>
 
               <div className="space-y-3 md:space-y-4">

@@ -18,7 +18,7 @@ export function ListingPageHeader({ listing, title }: ListingPageHeaderProps) {
 
   return (
     <div>
-      <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-6 text-primary-700 hover:text-primary-500 transition-colors">
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-6 text-primary-900">
         {title}
       </h1>
       <div className="mb-6">

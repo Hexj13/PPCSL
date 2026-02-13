@@ -49,8 +49,8 @@ export function SearchTabs({
             onClick={() => onTabChange('basic')}
             className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap ${
               activeTab === 'basic'
-                ? 'text-text-primary bg-primary-500/5 rounded-t-lg'
-                : 'text-text-primary hover:bg-primary-500/5'
+                ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
+                : 'text-primary-700 hover:text-primary-900 hover:bg-primary-500/10'
             }`}
             suppressHydrationWarning
           >
@@ -65,8 +65,8 @@ export function SearchTabs({
             onClick={() => onTabChange('advanced')}
             className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap ${
               activeTab === 'advanced'
-                ? 'text-text-primary bg-primary-500/5 rounded-t-lg'
-                : 'text-text-primary hover:bg-primary-500/5'
+                ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
+                : 'text-primary-700 hover:text-primary-900 hover:bg-primary-500/10'
             }`}
             suppressHydrationWarning
           >
@@ -81,8 +81,8 @@ export function SearchTabs({
             onClick={() => onTabChange('equipment')}
             className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap ${
               activeTab === 'equipment'
-                ? 'text-text-primary bg-primary-500/5 rounded-t-lg'
-                : 'text-text-primary hover:bg-primary-500/5'
+                ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
+                : 'text-primary-700 hover:text-primary-900 hover:bg-primary-500/10'
             }`}
             suppressHydrationWarning
           >
@@ -97,8 +97,8 @@ export function SearchTabs({
             onClick={() => onTabChange('popular')}
             className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap ${
               activeTab === 'popular'
-                ? 'text-text-primary bg-primary-500/5 rounded-t-lg'
-                : 'text-text-primary hover:bg-primary-500/5'
+                ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
+                : 'text-primary-700 hover:text-primary-900 hover:bg-primary-500/10'
             }`}
             suppressHydrationWarning
           >
@@ -106,7 +106,7 @@ export function SearchTabs({
           </button>
           <div
             ref={indicatorRef}
-            className="absolute bottom-0 h-0.5 bg-primary-400 transition-all duration-300 ease-in-out"
+            className="absolute bottom-0 h-0.5 bg-primary-700 transition-all duration-300 ease-in-out"
             style={{
               left: `${indicatorStyle.left}px`,
               width: `${indicatorStyle.width}px`,

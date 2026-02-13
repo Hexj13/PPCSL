@@ -172,7 +172,7 @@ export function buildSearchQuery(
     }
     if (key === 'equipment_match_mode') {
       const mode = value as string;
-      if (mode) {
+      if (mode && mode !== 'full') {
         params.set('equipmentMatch', mode);
       }
       return;

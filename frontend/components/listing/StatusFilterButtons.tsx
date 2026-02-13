@@ -52,10 +52,10 @@ export function StatusFilterButtons({
         <button
           key={status}
           onClick={() => onFilterChange(status)}
-          className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-base transition-colors bg-bg-secondary hover:bg-bg-base border ${
+          className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-base transition-colors ${
             currentFilter === status
-              ? 'border-primary-500 text-primary-500'
-              : 'border-gray-400 text-text-secondary'
+              ? 'bg-primary-500/10 border-2 border-primary-700 text-primary-700'
+              : 'bg-bg-secondary hover:bg-bg-base border-2 border-primary-700 text-primary-700 hover:text-primary-900 hover:border-primary-900'
           }`}
         >
           {getLabel(status)}
@@ -70,10 +70,10 @@ export function StatusFilterButtons({
       {showPromoted && onPromotedClick && (
         <button
           onClick={onPromotedClick}
-          className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-base transition-colors bg-bg-secondary hover:bg-bg-base border ${
+          className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-base transition-colors ${
             promotedActive
-              ? 'border-primary-500 text-primary-500'
-              : 'border-gray-400 text-text-secondary'
+              ? 'bg-primary-500/10 border-2 border-primary-700 text-primary-700'
+              : 'bg-bg-secondary hover:bg-bg-base border-2 border-primary-700 text-primary-700 hover:text-primary-900 hover:border-primary-900'
           }`}
         >
           {t('myListings.promoted')}

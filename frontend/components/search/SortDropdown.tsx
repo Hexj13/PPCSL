@@ -14,9 +14,10 @@ import {
 
 interface SortDropdownProps {
   basePath?: string;
+  isInternalSearchRef?: React.MutableRefObject<boolean>;
 }
 
-export function SortDropdown({ basePath = '/' }: SortDropdownProps) {
+export function SortDropdown({ basePath = '/', isInternalSearchRef }: SortDropdownProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useTranslation();
@@ -48,6 +49,9 @@ export function SortDropdown({ basePath = '/' }: SortDropdownProps) {
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('scrollPreserved', 'true');
       }
+      if (isInternalSearchRef) {
+        isInternalSearchRef.current = true;
+      }
       startTransition(() => {
         router.replace(newUrl, { scroll: false });
         if (typeof window !== 'undefined') {
@@ -62,7 +66,7 @@ export function SortDropdown({ basePath = '/' }: SortDropdownProps) {
         }
       });
     },
-    [searchParams, router, basePath]
+    [searchParams, router, basePath, isInternalSearchRef]
   );
 
   return (

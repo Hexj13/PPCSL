@@ -523,6 +523,8 @@ export interface Translations {
     priceTo: string;
     additionalCriteria: string;
     fuel: string;
+    fuelType: string;
+    drive: string;
     driveType: string;
     mileageFrom: string;
     mileageTo: string;
@@ -530,6 +532,7 @@ export interface Translations {
     engineTo: string;
     horsepowerFrom: string;
     horsepowerTo: string;
+    body: string;
     bodyType: string;
     color: string;
     doors: string;
@@ -542,6 +545,13 @@ export interface Translations {
     reset: string;
     addToFavorites: string;
     login: string;
+    year: string;
+    price: string;
+    mileage: string;
+    from: string;
+    to: string;
+    horsepower: string;
+    engine: string;
   };
   profile: {
     title: string;

@@ -179,7 +179,7 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
                   }))
                 }
                 placeholder={t('admin.usersTab.searchPlaceholder')}
-                className="flex-1 px-4 py-2.5 md:py-3 rounded-lg bg-bg-secondary border-2 border-primary-500/30 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-primary-500 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
+                className="flex-1 px-4 py-2.5 md:py-3 rounded-lg bg-bg-secondary border-2 border-primary-700/30 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-primary-700 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
               />
             </div>
 
@@ -193,16 +193,11 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
                       roleFilter: role,
                     }))
                   }
-                  className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium transition-colors text-sm md:text-base bg-bg-secondary hover:bg-bg-base border ${
+                  className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium transition-colors text-sm md:text-base border-2 ${
                     filters.roleFilter === role
-                      ? 'border-primary-500 text-text-primary'
-                      : 'border-primary-500/20'
+                      ? 'bg-primary-500/10 border-primary-700 text-primary-700'
+                      : 'bg-bg-secondary hover:bg-bg-base border-primary-700 text-primary-700 hover:text-primary-900 hover:border-primary-900'
                   }`}
-                  style={
-                    filters.roleFilter !== role
-                      ? { color: 'rgb(var(--text-secondary-rgb))' }
-                      : undefined
-                  }
                 >
                   {role === 'All'
                     ? t('admin.usersTab.allRoles')
@@ -212,7 +207,7 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
                         ? t('admin.usersTab.business')
                         : t('admin.usersTab.admin')}
                   {role !== 'All' && (
-                    <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-xs">
+                    <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-700/20 text-xs">
                       {roleCounts[role]}
                     </span>
                   )}
@@ -262,12 +257,12 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
                         >
                           {user.email ? (
                             <div className="break-words">
-                              <span className="text-primary-500">{t('admin.usersTab.email')}</span>{' '}
+                              <span className="text-primary-700">{t('admin.usersTab.email')}</span>{' '}
                               {user.email}
                             </div>
                           ) : (
                             <div>
-                              <span className="text-primary-500">{t('admin.usersTab.email')}</span>{' '}
+                              <span className="text-primary-700">{t('admin.usersTab.email')}</span>{' '}
                               <span className="text-text-secondary">
                                 {t('admin.usersTab.unavailable')}
                               </span>
@@ -275,26 +270,26 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
                           )}
                           {user.phone ? (
                             <div>
-                              <span className="text-primary-500">{t('admin.usersTab.phone')}</span>{' '}
+                              <span className="text-primary-700">{t('admin.usersTab.phone')}</span>{' '}
                               {user.phone}
                             </div>
                           ) : (
                             <div>
-                              <span className="text-primary-500">{t('admin.usersTab.phone')}</span>{' '}
+                              <span className="text-primary-700">{t('admin.usersTab.phone')}</span>{' '}
                               <span className="text-text-secondary">
                                 {t('admin.usersTab.unavailable')}
                               </span>
                             </div>
                           )}
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-primary-500">{t('admin.usersTab.type')}</span>
+                            <span className="text-primary-700">{t('admin.usersTab.type')}</span>
                             <span
                               className={`px-2 py-1 rounded text-sm md:text-base font-semibold text-text-secondary ${
                                 user.type === 'Admin'
                                   ? 'bg-purple-500/20'
                                   : user.type === 'Business'
                                     ? 'bg-blue-500/20'
-                                    : 'bg-primary-500/20'
+                                    : 'bg-primary-700/20'
                               }`}
                             >
                               {user.type === 'Admin'
@@ -305,7 +300,7 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
                             </span>
                           </div>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-primary-500">{t('admin.usersTab.status')}</span>
+                            <span className="text-primary-700">{t('admin.usersTab.status')}</span>
                             <span
                               className={`px-2 py-1 rounded text-sm md:text-base font-semibold text-text-secondary ${
                                 user.active !== false ? 'bg-green-500/20' : 'bg-red-500/20'
@@ -317,7 +312,7 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
                             </span>
                           </div>
                           <div>
-                            <span className="text-primary-500">{t('admin.usersTab.listings')}</span>{' '}
+                            <span className="text-primary-700">{t('admin.usersTab.listings')}</span>{' '}
                             {user.listings?.length || 0}
                           </div>
                         </div>
@@ -326,7 +321,7 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
                         {(user.listings?.length || 0) > 0 && (
                           <button
                             onClick={() => handleViewListings(user)}
-                            className="text-text-secondary font-medium text-xs md:text-sm lg:text-base hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-500/30 hover:border-primary-500/50 bg-primary-500/10 hover:bg-primary-500/20 select-none flex-1 lg:flex-none lg:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
+                            className="text-primary-700 font-medium text-xs md:text-sm lg:text-base hover:text-primary-900 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-700 hover:border-primary-900 bg-primary-500/10 select-none flex-1 lg:flex-none lg:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
                           >
                             {t('admin.usersTab.viewListings', {
                               count: user.listings?.length || 0,
@@ -342,10 +337,10 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
                         ) ? null : (
                           <button
                             onClick={() => handleToggleStatus(user.id)}
-                            className={`font-medium text-xs md:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 select-none flex-1 lg:flex-none lg:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px] text-text-secondary hover:text-text-primary ${
+                            className={`font-medium text-xs md:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 select-none flex-1 lg:flex-none lg:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px] ${
                               user.active !== false
-                                ? 'border-red-500/40 hover:border-red-500/60 bg-red-500/20 hover:bg-red-500/30'
-                                : 'border-primary-500/40 hover:border-primary-500/60 bg-primary-500/20 hover:bg-primary-500/30'
+                                ? 'text-text-secondary hover:text-text-primary border-red-500/40 hover:border-red-500/60 bg-red-500/20 hover:bg-red-500/30'
+                                : 'text-primary-700 hover:text-primary-900 border-primary-700 hover:border-primary-900 bg-primary-500/10'
                             }`}
                           >
                             {user.active !== false

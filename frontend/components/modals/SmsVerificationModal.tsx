@@ -158,10 +158,10 @@ export function SmsVerificationModal({
                 onKeyDown={(e) => handleKeyDown(index, e)}
                 onPaste={index === 0 ? handlePaste : undefined}
                 disabled={isSubmitting}
-                className={`w-12 h-14 md:w-14 md:h-16 text-center text-2xl md:text-3xl font-bold bg-bg-secondary border-2 rounded-lg transition-all duration-200 focus:outline-none focus:border-primary-500 ${
+                className={`w-12 h-14 md:w-14 md:h-16 text-center text-2xl md:text-3xl font-bold bg-bg-secondary border-2 rounded-lg transition-all duration-200 focus:outline-none focus:border-primary-700 ${
                   error
                     ? 'border-red-500 focus:border-red-500'
-                    : 'border-divider focus:border-primary-500'
+                    : 'border-divider focus:border-primary-700'
                 } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-text'} text-white`}
                 autoComplete="off"
               />
@@ -186,7 +186,7 @@ export function SmsVerificationModal({
             <button
               type="submit"
               disabled={isSubmitting || code.trim().length !== 6}
-              className="flex-1 text-primary-500 font-medium text-sm md:text-base hover:text-primary-700 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-500/20 hover:border-primary-500/40 bg-primary-500/10 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-primary-500 disabled:hover:border-primary-500/20"
+              className="flex-1 text-primary-700 font-medium text-sm md:text-base hover:text-primary-900 hover:border-primary-900 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-700 bg-primary-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? t('smsVerification.verifying') : t('smsVerification.verify')}
             </button>

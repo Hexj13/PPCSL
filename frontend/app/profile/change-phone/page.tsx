@@ -86,13 +86,13 @@ export default function ChangePhonePage() {
 
   return (
     <div className="max-w-md mx-auto mt-6 md:mt-12">
-      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center text-primary-700">
+      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center text-primary-900">
         {t('profile.changePhone.title')}
       </h1>
 
       <form onSubmit={handleSubmit} className="card p-6 md:p-8">
         <div className="mb-5">
-          <label className="block text-sm font-semibold mb-2 text-primary-400">
+          <label className="block text-sm font-semibold mb-2 text-primary-900">
             {t('profile.changePhone.currentPhone')}
           </label>
           <input
@@ -104,7 +104,7 @@ export default function ChangePhonePage() {
         </div>
 
         <div className="mb-5">
-          <label className="block text-sm font-semibold mb-2 text-primary-400">
+          <label className="block text-sm font-semibold mb-2 text-primary-900">
             {t('profile.changePhone.newPhone')}
           </label>
           <input
@@ -127,7 +127,7 @@ export default function ChangePhonePage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-primary-400 disabled:hover:border-primary-400/20 disabled:hover:bg-primary-500/10"
+          className="w-full text-primary-700 font-medium text-sm md:text-base hover:text-primary-900 hover:border-primary-900 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? t('profile.changePhone.sending') : t('profile.changePhone.sendCode')}
         </button>
@@ -136,7 +136,7 @@ export default function ChangePhonePage() {
           <button
             type="button"
             onClick={() => router.push('/profile')}
-            className="text-primary-500 font-semibold hover:text-primary-400 hover:underline transition-colors"
+            className="text-primary-700 font-semibold hover:text-primary-900 underline transition-colors"
           >
             {t('profile.changePhone.backToProfile')}
           </button>
