@@ -170,7 +170,7 @@
     "loggingIn": "Logging in...",
     "loginButton": "Login",
     "passwordPlaceholder": "Enter your password",
-    "filterSavedSuccess": "Filter saved successfully",
+    "filterSavedSuccess": "Filter saved successfully to favorites",
     "filterSaveError": "Error saving filter",
     "filterLimitError": "You can save a maximum of 20 filters. Please delete one of the existing filters."
   },
@@ -290,7 +290,7 @@
     "maxResendAttempts": "Maximum number of attempts"
   },
   "saveFilter": {
-    "editTitle": "Edit Filter",
+    "editTitle": "Edit name",
     "saveTitle": "Save Filter",
     "name": "Name",
     "nameRequired": "Enter a name for the filter",
@@ -299,7 +299,7 @@
     "saving": "Saving...",
     "save": "Save",
     "filterUpdated": "Filter successfully updated",
-    "filterSaved": "Filter successfully saved",
+    "filterSaved": "Filter saved successfully to favorites",
     "updateError": "Error updating filter",
     "saveError": "Error saving filter"
   },
@@ -415,7 +415,7 @@
     "imageEmptyError": "File is empty",
     "imageMaxCountError": "Maximum 20 photos",
     "basicInfo": "Basic Information",
-    "brandModelInfo": "If the brand or model you are looking for is not available, write to us at support@kupito.club. We will add it within a day and notify you immediately.",
+    "brandModelInfo": "If the brand or model you are looking for is not in the list, write to us at support@kupito.club. We will add it within a day and notify you immediately.",
     "brandLabel": "Brand",
     "modelLabel": "Model",
     "yearLabel": "Year",
@@ -430,7 +430,7 @@
     "mileageLabel": "Mileage (km)",
     "technicalSpecs": "Technical Specifications",
     "equipment": "Equipment",
-    "equipmentInfo": "Specifying equipment is not required to create a listing, but if you specify it, the search for your listing will be more effective and it will improve its quality for potential buyers.",
+    "equipmentInfo": "Specifying equipment is optional, but it helps improve listing quality and search effectiveness for buyers.",
     "exterior": "Exterior",
     "priceAndLocation": "Price and Location",
     "conditionAndRegistration": "Condition and Registration",
@@ -552,7 +552,7 @@
     "noMoreListings": "No more listings",
     "noListings": "This seller has no active listings yet.",
     "ownerNoticeTitle": "This is your listings board.",
-    "ownerNoticeText": "Here are all your active listings. You can use the link to this page to share it in messengers or social networks and show all your listings in one place."
+    "ownerNoticeText": "Here are all your active listings. You can use the link to this page to share it in messengers or social networks and show all your listings on one page."
   },
   "listingDetail": {
     "home": "Home",
@@ -605,8 +605,8 @@
     "previousListings": "Previous listings for this vehicle",
     "vehicleHistory": "Vehicle History",
     "historyHint": "We show previous listings for this vehicle with the same VIN. For privacy protection, price and personal data of authors are hidden for closed listings.",
-    "vinNotProvided": "VIN code is not provided",
-    "vinNotProvidedDescription": "To check the history of this vehicle, VIN code must be provided in the listing. Without VIN code, we cannot identify previous listings for the same vehicle.",
+    "vinNotProvided": "VIN code was not provided by the seller",
+    "vinNotProvidedDescription": "Without it, we cannot identify previous listings for this vehicle.",
     "title": "Title",
     "closedAt": "Closed",
     "open": "Open →",
@@ -748,7 +748,7 @@
     "title": "Profile",
     "contactInfo": "Contact Information",
     "phone": "Phone",
-    "phoneChangeBoardUrlNoticeBefore": "Changing your phone number will also change the link to your listings board. If you have shared this link elsewhere (e.g. on social networks or in messengers), update it with the new link from \"",
+    "phoneChangeBoardUrlNoticeBefore": "Changing your phone number will also change the link to your listings board. If you have shared this link elsewhere (e.g. on social networks or in messengers), update it — the new URL can be copied on the \"",
     "phoneChangeBoardUrlNoticeAfter": "\".",
     "availableMessengers": "Available messengers",
     "emailAndNotifications": "Email and Notifications",
@@ -937,7 +937,7 @@
     "noVehicles": "No vehicles to compare",
     "addVehiclesHint": "Add vehicles from listing pages to compare them",
     "browseListings": "Browse Listings",
-    "clearAll": "Clear All",
+    "clearAll": "Clear all",
     "allRemoved": "All vehicles removed from comparison",
     "parameter": "Parameter",
     "photo": "Photo",
