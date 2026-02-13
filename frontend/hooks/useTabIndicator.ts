@@ -32,7 +32,7 @@ export function useTabIndicator<T extends string>(
       requestAnimationFrame(run);
     });
     const container = containerRef.current;
-    const timeoutIds: ReturnType<typeof setTimeout>[] = [];
+    const timeoutIds: number[] = [];
     let resizeObserver: ResizeObserver | null = null;
     let onUpdate: (() => void) | null = null;
     if (container) {
