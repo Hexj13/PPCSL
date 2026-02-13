@@ -50,7 +50,7 @@ export function SearchTabs({
             className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap ${
               activeTab === 'basic'
                 ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
-                : 'text-primary-700 hover:text-primary-900 hover:bg-primary-500/10'
+                : 'text-primary-900 hover:bg-primary-500/10'
             }`}
             suppressHydrationWarning
           >
@@ -66,7 +66,7 @@ export function SearchTabs({
             className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap ${
               activeTab === 'advanced'
                 ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
-                : 'text-primary-700 hover:text-primary-900 hover:bg-primary-500/10'
+                : 'text-primary-900 hover:bg-primary-500/10'
             }`}
             suppressHydrationWarning
           >
@@ -82,7 +82,7 @@ export function SearchTabs({
             className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap ${
               activeTab === 'equipment'
                 ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
-                : 'text-primary-700 hover:text-primary-900 hover:bg-primary-500/10'
+                : 'text-primary-900 hover:bg-primary-500/10'
             }`}
             suppressHydrationWarning
           >
@@ -98,7 +98,7 @@ export function SearchTabs({
             className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap ${
               activeTab === 'popular'
                 ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
-                : 'text-primary-700 hover:text-primary-900 hover:bg-primary-500/10'
+                : 'text-primary-900 hover:bg-primary-500/10'
             }`}
             suppressHydrationWarning
           >

@@ -143,7 +143,7 @@ export function VehicleTypeSelector({
           }`}
         >
           <CarIcon
-            className={`w-12 h-12 transition-colors duration-300 scale-x-[-1] ${vehicleType === 'car' ? 'text-primary-900' : 'text-primary-700'}`}
+            className="w-12 h-12 transition-colors duration-300 scale-x-[-1] text-primary-900"
           />
         </button>
         <button
@@ -157,7 +157,7 @@ export function VehicleTypeSelector({
           }`}
         >
           <TruckIcon
-            className={`w-12 h-12 transition-colors duration-300 scale-x-[-1] ${vehicleType === 'truck' ? 'text-primary-900' : 'text-primary-700'}`}
+            className="w-12 h-12 transition-colors duration-300 scale-x-[-1] text-primary-900"
           />
         </button>
         <button
@@ -171,7 +171,7 @@ export function VehicleTypeSelector({
           }`}
         >
           <MotoIcon
-            className={`w-12 h-12 transition-colors duration-300 scale-x-[-1] ${vehicleType === 'moto' ? 'text-primary-900' : 'text-primary-700'}`}
+            className="w-12 h-12 transition-colors duration-300 scale-x-[-1] text-primary-900"
           />
         </button>
         <span
