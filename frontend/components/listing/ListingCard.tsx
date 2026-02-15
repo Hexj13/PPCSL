@@ -419,7 +419,7 @@ function ListingCardComponent({
                   <span className="h-4 w-px bg-primary-500/20" />
                 </>
               )}
-              <span>
+              <span suppressHydrationWarning>
                 {isHydrated
                   ? formatDateRelative(listing.last_updated_at, t, locale)
                   : formatDateShort(listing.last_updated_at)}

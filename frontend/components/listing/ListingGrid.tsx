@@ -57,32 +57,17 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const savedState = useMemo(() => {
-    const hasScrollTimestamp =
-      typeof window !== 'undefined' && sessionStorage.getItem('homeScrollTimestamp');
-    if (hasScrollTimestamp) {
-      return loadGridState();
-    }
-    return null;
-  }, []);
-  const [listings, setListings] = useState<Listing[]>(
-    savedState && savedState.page > 1 ? savedState.listings : initialData?.data || []
-  );
+  const [listings, setListings] = useState<Listing[]>(initialData?.data || []);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [meta, setMeta] = useState<PaginationMeta | null>(
-    savedState && savedState.page > 1 ? savedState.meta : initialData?.meta || null
-  );
-  const [currentPage, setCurrentPage] = useState(
-    savedState && savedState.page > 1 ? savedState.page : initialData?.meta?.page || 1
-  );
+  const [meta, setMeta] = useState<PaginationMeta | null>(initialData?.meta || null);
+  const [currentPage, setCurrentPage] = useState(initialData?.meta?.page || 1);
   const [error, setError] = useState<string | null>(null);
   const [autoLoadCount, setAutoLoadCount] = useState(0);
   const [hasLoadedWithFilters, setHasLoadedWithFilters] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
-  const listingsRef = useRef<Listing[]>(
-    savedState && savedState.page > 1 ? savedState.listings : initialData?.data || []
-  );
+  const listingsRef = useRef<Listing[]>(initialData?.data || []);
+  const restoredFromStorageRef = useRef(false);
   const { user } = useAuthStore();
   const { setFavorites } = useFavoritesStore();
   const prevSearchParamsString = useRef<string>('');
@@ -272,6 +257,22 @@ export function ListingGrid({ initialData }: ListingGridProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [searchParamsString, setFavorites, user, t, checkFavorites, meta]
   );
+
+  useEffect(() => {
+    if (restoredFromStorageRef.current) return;
+    restoredFromStorageRef.current = true;
+    const hasScrollTimestamp =
+      typeof window !== 'undefined' && sessionStorage.getItem('homeScrollTimestamp');
+    if (hasScrollTimestamp) {
+      const saved = loadGridState();
+      if (saved && saved.page > 1) {
+        setListings(saved.listings);
+        setMeta(saved.meta);
+        setCurrentPage(saved.page);
+        listingsRef.current = saved.listings;
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (searchParamsString !== prevSearchParamsString.current) {
