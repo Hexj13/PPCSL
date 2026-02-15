@@ -14,6 +14,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { boardApi, type BoardInfo, type Listing, type PaginationMeta } from '@/lib/api';
 import { normalizeListingResponse } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
+import { InfoBlock } from '@/ui';
 
 interface BoardPageClientProps {
   nameSlug: string;
@@ -124,10 +125,9 @@ export default function BoardPageClient({
       </div>
 
       {isOwner && (
-        <div className="surface rounded-lg p-4 mb-6">
-          <p className="font-semibold text-primary-700 mb-1">{t('board.ownerNoticeTitle')}</p>
-          <p className="text-sm text-text-secondary">{t('board.ownerNoticeText')}</p>
-        </div>
+        <InfoBlock title={t('board.ownerNoticeTitle')} className="mb-6">
+          {t('board.ownerNoticeText')}
+        </InfoBlock>
       )}
 
       {showSkeleton && (

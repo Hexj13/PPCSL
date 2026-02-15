@@ -12,9 +12,9 @@ interface PopularBodyTypesFilterProps {
 }
 
 const POPULAR_BODY_TYPES_CAR: Array<{ value: string; image: string }> = [
-  { value: 'SUV', image: '/popular_body_types/cars/SUV.png' },
   { value: 'Hatchback', image: '/popular_body_types/cars/HATCHBACK.png' },
   { value: 'Wagon', image: '/popular_body_types/cars/WAGON.png' },
+  { value: 'SUV', image: '/popular_body_types/cars/SUV.png' },
   { value: 'Minivan', image: '/popular_body_types/cars/VAN.png' },
   { value: 'Sedan', image: '/popular_body_types/cars/SEDAN.png' },
   { value: 'Convertible', image: '/popular_body_types/cars/CABRIO.png' },
@@ -57,7 +57,6 @@ export function PopularBodyTypesFilter({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
-  const [showFade, setShowFade] = useState(true);
 
   const checkScrollability = useRef(() => {
     if (!scrollContainerRef.current) return;
@@ -66,7 +65,6 @@ export function PopularBodyTypesFilter({
     setCanScrollLeft(scrollLeft > 0);
     const isAtEnd = scrollLeft >= scrollWidth - clientWidth - 1;
     setCanScrollRight(!isAtEnd);
-    setShowFade(!isAtEnd);
   }).current;
 
   useEffect(() => {
@@ -199,7 +197,7 @@ export function PopularBodyTypesFilter({
         )}
         <div
           ref={scrollContainerRef}
-          className="flex gap-4 overflow-x-auto lg:overflow-x-auto scrollbar-hide lg:justify-between"
+          className="grid grid-cols-2 gap-3 lg:flex lg:gap-4 lg:overflow-x-auto lg:scrollbar-hide lg:justify-between"
         >
           {POPULAR_BODY_TYPES.map(({ value, image }) => {
             const isSelected = selectedBodyTypes.includes(value);
@@ -207,14 +205,13 @@ export function PopularBodyTypesFilter({
             return (
               <div
                 key={`${vehicleType}-${value}`}
-                className="flex-shrink-0 flex flex-col items-center gap-2 w-[150px] md:w-[180px] lg:flex-1 lg:min-w-0 lg:max-w-[210px]"
-                style={{ minHeight: '152px' }}
+                className="flex flex-col items-center gap-2 w-full min-w-0 min-h-[135px] lg:min-h-[152px] lg:flex-shrink-0 lg:w-[180px] lg:flex-1 lg:min-w-0 lg:max-w-[210px]"
               >
                 <button
                   type="button"
                   onClick={() => handleTileClick(value)}
                   className={`
-                  relative w-full h-[110px] flex items-center justify-center p-2 rounded-lg
+                  relative w-full h-[95px] lg:h-[110px] flex items-center justify-center p-2 rounded-lg
                   outline-none select-none ${value === 'ATV' ? 'overflow-hidden' : ''}
                   ${
                     isSelected
@@ -321,9 +318,6 @@ export function PopularBodyTypesFilter({
             );
           })}
         </div>
-        {showFade && (
-          <div className="lg:hidden absolute -right-px top-0 bottom-0 w-16 pointer-events-none bg-gradient-to-l from-white/95 via-white/70 to-transparent z-20" />
-        )}
       </div>
     </div>
   );

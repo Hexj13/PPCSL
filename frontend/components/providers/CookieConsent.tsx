@@ -34,7 +34,7 @@ export function CookieConsent() {
 
   return (
     <div
-      className={`fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-full sm:max-w-sm z-50 bg-bg-secondary rounded-xl shadow-2xl border border-primary-700/30 p-3 sm:p-4 md:p-5 transition-all duration-300 ${
+      className={`fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-full sm:max-w-sm z-50 bg-bg-secondary rounded-xl shadow-2xl border border-primary-900 p-3 sm:p-4 md:p-5 transition-all duration-300 ${
         isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}
       role="dialog"

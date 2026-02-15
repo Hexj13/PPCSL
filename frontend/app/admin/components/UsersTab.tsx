@@ -179,11 +179,11 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
                   }))
                 }
                 placeholder={t('admin.usersTab.searchPlaceholder')}
-                className="flex-1 px-4 py-2.5 md:py-3 rounded-lg bg-bg-secondary border-2 border-primary-700/30 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-primary-700 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
+                className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-secondary border-2 border-primary-700 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-primary-900 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
               />
             </div>
 
-            <div className="flex flex-wrap gap-2 md:gap-3">
+            <div className="pt-4 border-t border-primary-500/20 sm:border-t-0 sm:pt-0 flex flex-wrap gap-2 md:gap-3">
               {(['All', 'Individual', 'Business', 'Admin'] as const).map((role) => (
                 <button
                   key={role}
@@ -193,10 +193,10 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
                       roleFilter: role,
                     }))
                   }
-                  className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium transition-colors text-sm md:text-base border-2 ${
+                  className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-base transition-colors ${
                     filters.roleFilter === role
-                      ? 'bg-primary-500/10 border-primary-700 text-primary-700'
-                      : 'bg-bg-secondary hover:bg-bg-base border-primary-700 text-primary-700 hover:text-primary-900 hover:border-primary-900'
+                      ? 'bg-primary-500/10 border-2 border-primary-700 text-primary-700'
+                      : 'bg-bg-secondary hover:bg-bg-base border-2 border-primary-700 text-primary-700 hover:text-primary-900 hover:border-primary-900'
                   }`}
                 >
                   {role === 'All'
@@ -207,7 +207,7 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
                         ? t('admin.usersTab.business')
                         : t('admin.usersTab.admin')}
                   {role !== 'All' && (
-                    <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-700/20 text-xs">
+                    <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-sm">
                       {roleCounts[role]}
                     </span>
                   )}

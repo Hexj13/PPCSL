@@ -15,7 +15,6 @@ interface SearchFormActionsProps {
   hasActiveFilters: boolean;
   canSaveFilter: boolean;
   buttonsContainerRef: React.RefObject<HTMLDivElement | null>;
-  showFadeButtons: boolean;
   isInternalSearchRef?: React.MutableRefObject<boolean>;
 }
 
@@ -28,7 +27,6 @@ export function SearchFormActions({
   hasActiveFilters,
   canSaveFilter,
   buttonsContainerRef,
-  showFadeButtons,
   isInternalSearchRef,
 }: SearchFormActionsProps) {
   const { t } = useTranslation();
@@ -39,14 +37,14 @@ export function SearchFormActions({
     <div className="mt-6 relative -mx-3 sm:mx-0 px-3 sm:px-0">
       <div className="flex flex-col lg:flex-row lg:flex-nowrap lg:justify-between gap-3 items-stretch lg:items-center">
         <div className="min-w-0 relative">
-          <div ref={buttonsContainerRef} className="overflow-x-auto scrollbar-hide">
-            <div className="flex gap-3 items-stretch sm:items-center min-w-max sm:min-w-0">
+          <div ref={buttonsContainerRef} className="lg:overflow-x-auto lg:scrollbar-hide">
+            <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center lg:min-w-max">
               <LoadingButton
                 type="submit"
                 loading={showSearchLoader}
                 loadingText={t('searchFilters.searching')}
                 disabled={Boolean(!hasFiltersChanged || isSyncingFromUrl)}
-                className={`w-full sm:w-auto btn-secondary flex items-center justify-center gap-2 !text-primary-900 ${
+                className={`w-full btn-secondary flex items-center justify-center gap-2 !text-primary-900 ${
                   !hasFiltersChanged || isSyncingFromUrl ? '' : '!border-primary-500'
                 }`}
               >
@@ -71,7 +69,7 @@ export function SearchFormActions({
                 type="button"
                 onClick={onReset}
                 disabled={Boolean(!hasActiveFilters)}
-                className="w-full sm:w-auto btn-secondary flex items-center justify-center gap-2 whitespace-nowrap !text-primary-900"
+                className="w-full btn-secondary flex items-center justify-center gap-2 whitespace-nowrap !text-primary-900"
               >
                 <svg
                   className="w-5 h-5 flex-shrink-0"
@@ -92,7 +90,7 @@ export function SearchFormActions({
                 <button
                   type="button"
                   disabled
-                  className="w-full sm:w-auto btn-secondary flex items-center justify-center gap-2 opacity-50 !px-3 sm:!px-6 !text-primary-900"
+                  className="w-full btn-secondary flex items-center justify-center gap-2 opacity-50 !px-3 lg:!px-6 !text-primary-900"
                 >
                   <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-primary-300 border-t-transparent rounded-full animate-spin flex-shrink-0"></div>
                   <span className="whitespace-nowrap text-sm sm:text-base">
@@ -104,7 +102,7 @@ export function SearchFormActions({
                   type="button"
                   onClick={onSaveClick}
                   disabled={Boolean(!canSaveFilter)}
-                  className="w-full sm:w-auto btn-secondary flex items-center justify-center gap-2 !px-3 sm:!px-6 !text-primary-900"
+                  className="w-full btn-secondary flex items-center justify-center gap-2 !px-3 lg:!px-6 !text-primary-900"
                   title={!userForUi ? t('common.loginRequired') : ''}
                 >
                   <svg
@@ -128,9 +126,6 @@ export function SearchFormActions({
               )}
             </div>
           </div>
-          {showFadeButtons && (
-            <div className="lg:hidden absolute -right-px top-0 bottom-0 w-16 pointer-events-none bg-gradient-to-l from-white/95 via-white/70 to-transparent z-20" />
-          )}
         </div>
         <div className="w-full border-t border-primary-500/20 pt-3 lg:border-t-0 lg:pt-0 lg:w-auto flex-shrink-0 relative">
           <SortDropdown isInternalSearchRef={isInternalSearchRef} />

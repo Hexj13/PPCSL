@@ -492,7 +492,6 @@ export function SearchFilters() {
         hasActiveFilters={hasActiveFilters}
         canSaveFilter={canSaveFilter()}
         buttonsContainerRef={tabs.buttonsContainerRef}
-        showFadeButtons={tabs.showFadeButtons}
         isInternalSearchRef={isInternalSearchRef}
       />
 

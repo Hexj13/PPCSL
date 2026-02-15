@@ -73,7 +73,6 @@ export function useSearchTabs({
   const tabsContainerRef = useRef<HTMLDivElement>(null);
   const [showFade, setShowFade] = useState(true);
   const buttonsContainerRef = useRef<HTMLDivElement>(null);
-  const [showFadeButtons, setShowFadeButtons] = useState(true);
 
   useEffect(() => {
     const updateIndicator = () => {
@@ -136,40 +135,6 @@ export function useSearchTabs({
     return undefined;
   }, [activeTab]);
 
-  useEffect(() => {
-    const checkButtonsScrollability = () => {
-      if (!buttonsContainerRef.current) return;
-      const { scrollLeft, scrollWidth, clientWidth } = buttonsContainerRef.current;
-      const threshold = 2;
-      const isAtEnd = scrollLeft + clientWidth >= scrollWidth - threshold;
-      setShowFadeButtons(!isAtEnd && scrollWidth > clientWidth);
-    };
-
-    checkButtonsScrollability();
-    const container = buttonsContainerRef.current;
-    if (container) {
-      const handleScroll = () => {
-        checkButtonsScrollability();
-      };
-
-      const resizeObserver = new ResizeObserver(() => {
-        checkButtonsScrollability();
-      });
-
-      container.addEventListener('scroll', handleScroll, { passive: true });
-      resizeObserver.observe(container);
-      window.addEventListener('resize', checkButtonsScrollability);
-
-      return () => {
-        container.removeEventListener('scroll', handleScroll);
-        resizeObserver.disconnect();
-        window.removeEventListener('resize', checkButtonsScrollability);
-      };
-    }
-
-    return undefined;
-  }, []);
-
   return {
     activeTab,
     setActiveTab,
@@ -182,6 +147,5 @@ export function useSearchTabs({
     tabsContainerRef,
     showFade,
     buttonsContainerRef,
-    showFadeButtons,
   };
 }

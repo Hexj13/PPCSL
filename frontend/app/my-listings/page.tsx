@@ -567,7 +567,7 @@ export default function MyListingsPage() {
         </div>
 
         {listings && listings.length > 0 && (
-          <div className="mb-6">
+          <div className="mb-6 pt-4 border-t border-primary-500/20 sm:border-t-0 sm:pt-0">
             <StatusFilterButtons
               currentFilter={statusFilter}
               onFilterChange={(status) => {
