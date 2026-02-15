@@ -384,7 +384,7 @@ export async function generateMetadata({
     canonicalParams.set('body_types', bodyTypesParam);
   }
   const canonicalQuery = canonicalParams.toString();
-  const canonicalUrl = `${siteUrl}${canonicalQuery ? `?${canonicalQuery}` : ''}`;
+  const canonicalUrl = `${siteUrl}/${canonicalQuery ? `?${canonicalQuery}` : ''}`;
 
   let prevUrl: string | undefined;
   let nextUrl: string | undefined;
@@ -395,7 +395,7 @@ export async function generateMetadata({
       prevParams.set('page', String(safePage - 1));
     }
     const prevQuery = prevParams.toString();
-    prevUrl = `${siteUrl}${prevQuery ? `?${prevQuery}` : ''}`;
+    prevUrl = `${siteUrl}/${prevQuery ? `?${prevQuery}` : ''}`;
   }
 
   if (!hasNonIndexableParams) {
@@ -405,7 +405,7 @@ export async function generateMetadata({
       const nextParams = new URLSearchParams(canonicalParams.toString());
       nextParams.set('page', String(safePage + 1));
       const nextQuery = nextParams.toString();
-      nextUrl = `${siteUrl}${nextQuery ? `?${nextQuery}` : ''}`;
+      nextUrl = `${siteUrl}/${nextQuery ? `?${nextQuery}` : ''}`;
     }
   }
 
@@ -425,7 +425,7 @@ export async function generateMetadata({
       : undefined,
     openGraph: {
       type: 'website',
-      url: `${siteUrl}${urlSuffix}`,
+      url: `${siteUrl}/${urlSuffix}`,
       title: fullTitle,
       description,
       images: [
@@ -446,7 +446,7 @@ export async function generateMetadata({
       images: [`${siteUrl}/og-image.jpg`],
     },
     alternates: {
-      canonical: hasNonIndexableParams ? canonicalUrl : `${siteUrl}${urlSuffix}`,
+      canonical: hasNonIndexableParams ? canonicalUrl : `${siteUrl}/${urlSuffix}`,
       ...(prevUrl ? { prev: prevUrl } : {}),
       ...(nextUrl ? { next: nextUrl } : {}),
     },

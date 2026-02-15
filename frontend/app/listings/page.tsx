@@ -44,14 +44,6 @@ export async function generateMetadata({
     return {
       title: t.listingsPage.title,
       description: t.listingsPage.description,
-      robots: {
-        index: false,
-        follow: false,
-        googleBot: {
-          index: false,
-          follow: false,
-        },
-      },
       alternates: {
         canonical: `${siteUrl}/${suffix}`,
       },
@@ -62,14 +54,6 @@ export async function generateMetadata({
     return {
       title: t.listingsPage.title,
       description: t.listingsPage.description,
-      robots: {
-        index: false,
-        follow: false,
-        googleBot: {
-          index: false,
-          follow: false,
-        },
-      },
       alternates: {
         canonical: `${siteUrl}/listings`,
       },

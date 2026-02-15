@@ -91,12 +91,47 @@ function buildListingJsonLd(listing: Listing): Record<string, unknown> {
         listing.price !== null && {
           price: listing.price.toString(),
           priceCurrency: listing.currency || siteConfig.currency,
+          priceValidUntil: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
+            .toISOString()
+            .split('T')[0],
         }),
       availability:
         listing.status === 'Active'
           ? 'https://schema.org/InStock'
           : 'https://schema.org/OutOfStock',
       url: `${siteUrl}/listings/${listing.id}`,
+      hasMerchantReturnPolicy: {
+        '@type': 'MerchantReturnPolicy',
+        applicableCountry: siteConfig.countryCode,
+        returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
+      },
+      shippingDetails: {
+        '@type': 'OfferShippingDetails',
+        shippingDestination: {
+          '@type': 'DefinedRegion',
+          addressCountry: siteConfig.countryCode,
+        },
+        deliveryTime: {
+          '@type': 'ShippingDeliveryTime',
+          handlingTime: {
+            '@type': 'QuantitativeValue',
+            minValue: 0,
+            maxValue: 0,
+            unitCode: 'DAY',
+          },
+          transitTime: {
+            '@type': 'QuantitativeValue',
+            minValue: 0,
+            maxValue: 0,
+            unitCode: 'DAY',
+          },
+        },
+        shippingRate: {
+          '@type': 'MonetaryAmount',
+          value: '0',
+          currency: siteConfig.currency,
+        },
+      },
     },
     seller: listing.user
       ? {
