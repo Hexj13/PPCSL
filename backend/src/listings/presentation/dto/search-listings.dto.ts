@@ -14,6 +14,7 @@ import {
   Min,
 } from 'class-validator';
 
+import * as constants from '../../../common/constants';
 import {
   BodyType,
   ConditionType,
@@ -401,7 +402,7 @@ export class SearchListingsDto {
 
   @ApiPropertyOptional({
     example: 'EUR',
-    enum: ['MKD', 'EUR'],
+    enum: constants.currencies,
     description: 'Currency',
   })
   @IsOptional()

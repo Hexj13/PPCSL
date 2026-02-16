@@ -19,6 +19,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 
+import * as constants from '../../../common/constants';
 import { ConditionType, Currency, ListingStatus, RegistrationType } from '../../../common/types';
 
 import { CreateVehicleDto } from './create-vehicle.dto';
@@ -47,11 +48,13 @@ export class CreateListingDto {
 
   @ApiPropertyOptional({
     example: 'EUR',
-    enum: ['MKD', 'EUR'],
+    enum: constants.currencies,
     description: 'Currency',
   })
   @IsOptional()
-  @IsEnum(Currency, { message: 'Валутата мора да биде MKD или EUR' })
+  @IsEnum(Currency, {
+    message: `Currency must be one of: ${constants.currencies.join(', ')}`,
+  })
   currency?: Currency;
 
   @ApiProperty({

@@ -1,9 +1,6 @@
 import 'reflect-metadata';
 
-import { Pool } from 'pg';
-import { DataSourceOptions } from 'typeorm';
-
-import { AppDataSource, dataSourceOptions } from '../../data-source';
+import { AppDataSource } from '../../data-source';
 import { Favorite } from '../../favorites/entities/favorite.entity';
 import { ListingView } from '../../listings/entities/listing-view.entity';
 import { Listing } from '../../listings/entities/listing.entity';
@@ -17,37 +14,6 @@ checkEnvironment(['stage', 'development', 'test']);
 
 async function clearListingsAndUsers() {
   console.log('🚀 Starting cleanup of listings and users...\n');
-
-  const options = dataSourceOptions as DataSourceOptions & {
-    host: string;
-    port: number;
-    username: string;
-    password?: string;
-    database: string;
-  };
-
-  const pool = new Pool({
-    host: options.host,
-    port: options.port,
-    user: options.username,
-    password: options.password,
-    database: options.database,
-  });
-
-  console.log('🔄 Updating currencies from MKD to EUR (direct SQL)...');
-  try {
-    const client = await pool.connect();
-    await client.query(`
-      UPDATE "listings" 
-      SET "currency" = 'EUR' 
-      WHERE "currency" = 'MKD'
-    `);
-    client.release();
-    console.log('   ✅ Updated currencies from MKD to EUR\n');
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.log('   ⚠️  Could not update currencies (may already be updated):', errorMessage);
-  }
 
   await AppDataSource.initialize();
   console.log('✅ Connected to database via TypeORM\n');
@@ -66,22 +32,6 @@ async function clearListingsAndUsers() {
     await promotionHistoryRepo.remove(history);
   }
   console.log(`   ✅ Deleted ${allPromotionHistory.length} promotion history records\n`);
-
-  console.log('🔄 Updating currencies from MKD to EUR...');
-  try {
-    await AppDataSource.query(`
-      UPDATE "listings" 
-      SET "currency" = 'EUR' 
-      WHERE "currency" = 'MKD'
-    `);
-    console.log('   ✅ Updated currencies from MKD to EUR\n');
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.log(
-      '   ⚠️  Could not update currencies (may already be updated or enum changed):',
-      errorMessage,
-    );
-  }
 
   console.log('🗑️  Deleting listings...');
   const allListings = await listingRepo.find();
@@ -162,7 +112,6 @@ async function clearListingsAndUsers() {
   console.log(`   - Remaining users: ${finalUsers.length}\n`);
 
   await AppDataSource.destroy();
-  await pool.end();
   console.log('🔌 Database connection closed');
 }
 

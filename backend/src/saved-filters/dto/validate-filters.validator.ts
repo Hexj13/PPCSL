@@ -6,6 +6,8 @@ import {
   ValidationArguments,
 } from 'class-validator';
 
+import { currencies } from '../../common/constants';
+
 const ALLOWED_FILTER_KEYS = [
   'brand_ids',
   'model_ids',
@@ -70,7 +72,12 @@ export class IsValidFilterObjectConstraint implements ValidatorConstraintInterfa
           }
         }
       } else if (key === 'currency') {
-        if (val !== '' && val !== null && val !== undefined && val !== 'MKD' && val !== 'EUR') {
+        if (
+          val !== '' &&
+          val !== null &&
+          val !== undefined &&
+          !(currencies as readonly string[]).includes(val as string)
+        ) {
           return false;
         }
       } else if (key === 'urgent' || key === 'is_new' || key === 'is_registered') {
