@@ -337,7 +337,7 @@ function ListingCardComponent({
             {listing.price !== undefined ? (
               <PriceDisplay
                 price={listing.price}
-                currency={listing.currency}
+                currency={listing.currency ?? listing.defaultCurrencyCode ?? 'EUR'}
                 approxPrice={listing.approxPriceDefaultCurrency}
                 defaultCurrencyCode={listing.defaultCurrencyCode}
                 size="small"
