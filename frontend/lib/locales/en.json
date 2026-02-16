@@ -480,6 +480,7 @@
     "new": "New car",
     "newMoto": "New",
     "urgent": "Urgent",
+    "approxPriceWithCurrency": "(≈ {price} {currency})",
     "promoted": "Promoted",
     "promote": "Promote",
     "unpromote": "Cancel promotion",
