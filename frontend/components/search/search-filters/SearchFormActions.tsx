@@ -93,9 +93,7 @@ export function SearchFormActions({
                   className="w-full btn-secondary flex items-center justify-center gap-2 opacity-50 !px-3 lg:!px-6 !text-primary-900"
                 >
                   <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-primary-300 border-t-transparent rounded-full animate-spin flex-shrink-0"></div>
-                  <span className="whitespace-nowrap text-sm sm:text-base">
-                    {t('common.loading')}
-                  </span>
+                  <span className="whitespace-nowrap text-base">{t('common.loading')}</span>
                 </button>
               ) : (
                 <button
@@ -119,7 +117,7 @@ export function SearchFormActions({
                       d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
                     />
                   </svg>
-                  <span className="whitespace-nowrap text-sm sm:text-base">
+                  <span className="whitespace-nowrap text-base">
                     {userForUi ? t('searchFilters.addToFavorites') : t('searchFilters.login')}
                   </span>
                 </button>
