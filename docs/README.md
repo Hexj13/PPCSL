@@ -34,9 +34,16 @@
 ### 🌍 [`platform-plans/`](./platform-plans/)
 **Планы конкретных платформ** — при добавлении новой страны можно создать план по образцу существующей платформы (Moldova).
 
+### 📜 [`scripts/`](./scripts/)
+**Скрипты брендов и моделей**
+
+- [BRANDS_MODELS_MASTER_PLAN.md](./scripts/BRANDS_MODELS_MASTER_PLAN.md) - План и production-скрипты (seed-all-brands-complete, порядок, кэш)
+
 ### ✨ [`features/`](./features/)
 **Документация фич** - описание компонентов и функциональности
 
+- [SEARCH_TITLE_URL.md](./features/SEARCH_TITLE_URL.md) - URL и заголовок страницы поиска (слаги, диакритика)
+- Approximate price in default currency (≈ EUR) — FXRatesAPI, daily cron, listing enrichment; env: `FXRATESAPI_API_KEY`, `DEFAULT_CURRENCY` (see platform deployment docs)
 - [IMAGE_PREVIEW.md](./features/IMAGE_PREVIEW.md) - Система превью изображений
 - [LOADING_STATES.md](./features/LOADING_STATES.md) - Loading states
 - [PAID_PROMOTION.md](./features/PAID_PROMOTION.md) - Платное продвижение

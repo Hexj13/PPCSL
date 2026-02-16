@@ -4,19 +4,29 @@ import { formatPrice } from '@/lib/utils';
 interface PriceDisplayProps {
   price: number;
   currency: string;
+  approxPrice?: number | null;
+  defaultCurrencyCode?: string;
   size?: 'small' | 'medium' | 'large';
   showCurrency?: boolean;
   urgent?: boolean;
   className?: string;
+  priceClassName?: string;
+  currencyClassName?: string;
+  currencyStyle?: React.CSSProperties;
 }
 
 export function PriceDisplay({
   price,
   currency,
+  approxPrice,
+  defaultCurrencyCode,
   size = 'medium',
   showCurrency = true,
   urgent = false,
   className = '',
+  priceClassName = 'text-primary-700',
+  currencyClassName,
+  currencyStyle,
 }: PriceDisplayProps) {
   const { t } = useTranslation();
   const sizeClasses = {
@@ -34,12 +44,23 @@ export function PriceDisplay({
   return (
     <div className={className}>
       <div className="flex items-baseline gap-2 md:gap-3">
-        <span className={`${sizeClasses[size]} font-extrabold text-primary-700`}>
+        <span className={`${sizeClasses[size]} font-extrabold ${priceClassName}`}>
           {formatPrice(price, currency)}
         </span>
         {showCurrency && (
-          <span className={`${currencySizeClasses[size]} text-gray-400 font-medium`}>
+          <span
+            className={`${currencySizeClasses[size]} font-medium ${currencyClassName ?? 'text-gray-400'}`}
+            style={currencyStyle}
+          >
             {currency}
+          </span>
+        )}
+        {approxPrice != null && defaultCurrencyCode && (
+          <span className="text-sm font-normal" style={{ color: 'rgb(var(--gray-400-rgb))' }}>
+            {t('listings.approxPriceWithCurrency', {
+              price: formatPrice(approxPrice),
+              currency: defaultCurrencyCode,
+            })}
           </span>
         )}
       </div>

@@ -1,8 +1,9 @@
 'use client';
 
+import { PriceDisplay } from '@/components/listing/PriceDisplay';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Listing } from '@/lib/api';
-import { formatPrice, getVehicleType } from '@/lib/utils';
+import { getVehicleType } from '@/lib/utils';
 
 const SPARKLES_EMOJI = '\u2728';
 
@@ -34,17 +35,15 @@ export function ListingPageHeader({ listing, title }: ListingPageHeaderProps) {
               ••••
             </span>
           ) : (
-            <>
-              <span className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-primary-500">
-                {formatPrice(listing.price, listing.currency)}
-              </span>
-              <span
-                className="text-lg md:text-xl font-medium"
-                style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-              >
-                {listing.currency}
-              </span>
-            </>
+            <PriceDisplay
+              price={listing.price}
+              currency={listing.currency}
+              approxPrice={listing.approxPriceDefaultCurrency}
+              defaultCurrencyCode={listing.defaultCurrencyCode}
+              size="large"
+              priceClassName="text-primary-500"
+              currencyStyle={{ color: 'rgb(var(--text-secondary-rgb))' }}
+            />
           )}
         </div>
         <div className="flex items-center gap-2">

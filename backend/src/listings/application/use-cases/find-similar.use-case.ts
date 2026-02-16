@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 
 import { ListingStatus as ListingStatusEnum } from '../../../common/types';
+import { ExchangeRatesService } from '../../../exchange-rates/exchange-rates.service';
 import { SimilarListingsRankingService } from '../../domain/services/similar-ranking.service';
 import { Listing } from '../../entities/listing.entity';
 import { IListingCache, LISTING_CACHE } from '../ports/listing-cache.port';
@@ -29,6 +30,7 @@ export class FindSimilarUseCase {
     @Inject(LISTING_CACHE)
     private readonly listingCache: IListingCache,
     private readonly similarRankingService: SimilarListingsRankingService,
+    private readonly exchangeRatesService: ExchangeRatesService,
   ) {}
 
   async execute(listingId: string, limit: number = 4, offset: number = 0): Promise<ListingData[]> {
@@ -42,7 +44,8 @@ export class FindSimilarUseCase {
 
     const cached = await this.listingCache.getSimilarResults(listingId);
     if (cached) {
-      return cached.slice(normalizedOffset, normalizedOffset + normalizedLimit) as ListingData[];
+      const enriched = await this.exchangeRatesService.enrichListingsWithApproxPrice(cached);
+      return enriched.slice(normalizedOffset, normalizedOffset + normalizedLimit) as ListingData[];
     }
 
     const candidates = await this.listingRepo.findSimilarCandidates(current);
@@ -69,6 +72,9 @@ export class FindSimilarUseCase {
 
     await this.listingCache.setSimilarResults(listingId, result as Listing[]);
 
-    return result.slice(normalizedOffset, normalizedOffset + normalizedLimit) as ListingData[];
+    const enriched = await this.exchangeRatesService.enrichListingsWithApproxPrice(
+      result as Listing[],
+    );
+    return enriched.slice(normalizedOffset, normalizedOffset + normalizedLimit) as ListingData[];
   }
 }

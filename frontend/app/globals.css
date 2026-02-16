@@ -18,6 +18,7 @@
   --background-start-rgb: 245, 245, 245;
   --background-end-rgb: 245, 245, 245;
   --text-secondary-rgb: 74, 74, 74;
+  --gray-400-rgb: 156, 163, 175;
 }
 
 body {

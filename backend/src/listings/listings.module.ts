@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { BrandsModule } from '../brands/brands.module';
 import { CommonModule } from '../common/common.module';
 import { CronSecretGuard } from '../common/guards/cron-secret.guard';
+import { ExchangeRatesModule } from '../exchange-rates/exchange-rates.module';
 import { UsersModule } from '../users/users.module';
 
 import { LISTING_CACHE } from './application/ports/listing-cache.port';
@@ -48,6 +49,7 @@ import { ListingsController } from './presentation/listings.controller';
   imports: [
     TypeOrmModule.forFeature([Listing, Vehicle, ListingView, PromotionHistory]),
     CommonModule,
+    ExchangeRatesModule,
     UsersModule,
     BrandsModule,
   ],

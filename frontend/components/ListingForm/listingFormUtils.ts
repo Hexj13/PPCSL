@@ -1,14 +1,17 @@
 import type { Listing } from '@/lib/api';
 import { VEHICLE_TYPE_BY_BODY_TYPE } from '@/lib/constants';
-import {
-  ConditionTypeEnum,
-  CurrencyEnum,
-  ListingStatusEnum,
-  RegistrationTypeEnum,
-} from '@/lib/types';
-import { horsepowerToKw, sortOptionsByLabel } from '@/lib/utils';
+import { loadSiteConfigSync } from '@/lib/site-config';
+import type { Currency } from '@/lib/types';
+import { ConditionTypeEnum, ListingStatusEnum, RegistrationTypeEnum } from '@/lib/types';
+import { getCountry, horsepowerToKw, sortOptionsByLabel } from '@/lib/utils';
 
 import type { ListingFormData } from '../ListingForm';
+
+function getDefaultCurrency(): Currency {
+  const config = loadSiteConfigSync(getCountry());
+  const allowed = config.currencies as readonly string[];
+  return (allowed.includes(config.currency) ? config.currency : allowed[0]) as Currency;
+}
 
 export function getInitialVehicleType(initialData?: Listing): 'car' | 'truck' | 'moto' {
   const bodyType = initialData?.vehicle?.body_type;
@@ -24,7 +27,7 @@ export function getInitialFormData(initialData?: Listing): ListingFormData {
   if (!initialData) {
     return {
       price: '',
-      currency: CurrencyEnum.EUR,
+      currency: getDefaultCurrency(),
       city: '',
       description: '',
       status: ListingStatusEnum.Active,
@@ -66,7 +69,7 @@ export function getInitialFormData(initialData?: Listing): ListingFormData {
 
   return {
     price: initialData.price ? Math.floor(initialData.price).toString() : '',
-    currency: initialData.currency || CurrencyEnum.EUR,
+    currency: initialData.currency ?? getDefaultCurrency(),
     city: initialData.city || '',
     description: initialData.description || '',
     status: initialData.status || ListingStatusEnum.Active,

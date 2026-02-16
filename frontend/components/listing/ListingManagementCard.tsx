@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 import { CopyButton } from '@/components/common/CopyButton';
+import { PriceDisplay } from '@/components/listing/PriceDisplay';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Listing } from '@/lib/api';
 import {
@@ -13,7 +14,6 @@ import {
   formatEngineVolume,
   formatFuel,
   formatMileage,
-  formatPrice,
   getListingDisplayTitle,
   getOptimizedImageUrl,
   getVehicleType,
@@ -155,13 +155,17 @@ export function ListingManagementCard({
                 >
                   <div className="flex items-center gap-2">
                     {/* eslint-disable-next-line no-hardcoded-text/no-hardcoded-text */}
-                    <span className="text-gray-400 font-mono">LISTING ID: {listing.id}</span>
+                    <span className="font-mono" style={{ color: 'rgb(var(--gray-400-rgb))' }}>
+                      LISTING ID: {listing.id}
+                    </span>
                     {onCopyId && <CopyButton text={listing.id} iconClassName="w-3.5 h-3.5" />}
                   </div>
                   {listing.user && listing.user.id && (
                     <div className="flex items-center gap-2">
                       {/* eslint-disable-next-line no-hardcoded-text/no-hardcoded-text */}
-                      <span className="text-gray-400 font-mono">USER ID: {listing.user.id}</span>
+                      <span className="font-mono" style={{ color: 'rgb(var(--gray-400-rgb))' }}>
+                        USER ID: {listing.user.id}
+                      </span>
                       {onCopyId && listing.user?.id && (
                         <CopyButton text={listing.user.id} iconClassName="w-3.5 h-3.5" />
                       )}
@@ -172,9 +176,17 @@ export function ListingManagementCard({
             </div>
             <div className="flex flex-col items-start text-left w-full lg:items-end lg:text-right lg:min-w-[140px] lg:w-auto mb-3">
               {listing.price !== undefined ? (
-                <span className="text-lg sm:text-xl md:text-2xl font-extrabold text-primary-500 leading-snug whitespace-nowrap mb-3">
-                  {formatPrice(listing.price, listing.currency)} {listing.currency}
-                </span>
+                <div className="mb-3">
+                  <PriceDisplay
+                    price={listing.price}
+                    currency={listing.currency}
+                    approxPrice={listing.approxPriceDefaultCurrency}
+                    defaultCurrencyCode={listing.defaultCurrencyCode}
+                    size="medium"
+                    priceClassName="text-primary-500"
+                    currencyStyle={{ color: 'rgb(var(--text-secondary-rgb))' }}
+                  />
+                </div>
               ) : (
                 <span className="text-lg sm:text-xl md:text-2xl font-extrabold text-primary-400 mb-3">
                   ••••

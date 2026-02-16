@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 
 import { ListingStatus as ListingStatusEnum } from '../../../common/types';
 import { removePasswordFromUser } from '../../../common/utils/error-handling.utils';
+import { ExchangeRatesService } from '../../../exchange-rates/exchange-rates.service';
 import { UsersService } from '../../../users/application/users.service';
 import { Listing } from '../../entities/listing.entity';
 
@@ -13,6 +14,7 @@ export class GetBoardListingsUseCase {
     @InjectRepository(Listing)
     private readonly listingsRepository: Repository<Listing>,
     private readonly usersService: UsersService,
+    private readonly exchangeRatesService: ExchangeRatesService,
   ) {}
 
   async execute(
@@ -64,8 +66,11 @@ export class GetBoardListingsUseCase {
       return listing;
     });
 
+    const enriched =
+      await this.exchangeRatesService.enrichListingsWithApproxPrice(listingsWithoutPasswords);
+
     return {
-      data: listingsWithoutPasswords,
+      data: enriched,
       meta: {
         total,
         page,

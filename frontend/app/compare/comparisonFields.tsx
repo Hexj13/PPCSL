@@ -350,7 +350,19 @@ export const comparisonFields: ComparisonField[] = [
       >
         {listing.status === 'Closed' || listing.price === undefined
           ? t('compare.notAvailable')
-          : `${formatPrice(listing.price, listing.currency)} ${listing.currency || siteConfig?.currency || ''}`}
+          : (() => {
+              const main = `${formatPrice(listing.price, listing.currency)} ${listing.currency || siteConfig?.currency || ''}`;
+              const approx =
+                listing.approxPriceDefaultCurrency != null && listing.defaultCurrencyCode
+                  ? ` (≈ ${formatPrice(listing.approxPriceDefaultCurrency)} ${listing.defaultCurrencyCode})`
+                  : '';
+              return (
+                <>
+                  {main}
+                  {approx && <span style={{ color: 'rgb(var(--gray-400-rgb))' }}>{approx}</span>}
+                </>
+              );
+            })()}
       </td>
     ),
   },

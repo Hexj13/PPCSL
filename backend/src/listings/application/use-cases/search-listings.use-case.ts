@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 import { ListingStatus as ListingStatusEnum } from '../../../common/types';
 import { removePasswordFromUser } from '../../../common/utils/error-handling.utils';
+import { ExchangeRatesService } from '../../../exchange-rates/exchange-rates.service';
 import { Listing } from '../../entities/listing.entity';
 import { IListingCache, LISTING_CACHE } from '../ports/listing-cache.port';
 import {
@@ -27,6 +28,7 @@ export class SearchListingsUseCase {
     private readonly listingRepo: IListingRepository,
     @Inject(LISTING_CACHE)
     private readonly listingCache: IListingCache,
+    private readonly exchangeRatesService: ExchangeRatesService,
   ) {}
 
   async execute(criteria: SearchCriteria): Promise<SearchListingsResult> {
@@ -34,8 +36,9 @@ export class SearchListingsUseCase {
 
     const cached = await this.listingCache.getSearchResults(criteria);
     if (cached) {
+      const enriched = await this.exchangeRatesService.enrichListingsWithApproxPrice(cached.data);
       return {
-        data: cached.data,
+        data: enriched,
         meta: {
           total: cached.total,
           page,
@@ -47,11 +50,12 @@ export class SearchListingsUseCase {
 
     const { data: listings, total } = await this.listingRepo.search(criteria);
     const masked = this.maskListings(listings);
+    const enriched = await this.exchangeRatesService.enrichListingsWithApproxPrice(masked);
 
     await this.listingCache.setSearchResults(criteria, { data: masked, total });
 
     return {
-      data: masked,
+      data: enriched,
       meta: {
         total,
         page,

@@ -4,8 +4,10 @@ import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+import * as constants from '../../../common/constants';
 import { ListingStatus as ListingStatusEnum } from '../../../common/types';
 import { removePasswordFromUser } from '../../../common/utils/error-handling.utils';
+import { ExchangeRatesService } from '../../../exchange-rates/exchange-rates.service';
 import { UsersService } from '../../../users/application/users.service';
 import { ListingView } from '../../entities/listing-view.entity';
 import { Listing } from '../../entities/listing.entity';
@@ -29,6 +31,7 @@ export class GetListingUseCase {
     @InjectRepository(ListingView)
     private readonly listingViewsRepository: Repository<ListingView>,
     private readonly usersService: UsersService,
+    private readonly exchangeRatesService: ExchangeRatesService,
   ) {}
 
   async execute(id: string, context?: GetListingContext): Promise<Listing> {
@@ -82,7 +85,19 @@ export class GetListingUseCase {
       this.recordView(id, userId, visitorId).catch(() => {});
     }
 
-    return listing;
+    const defaultCurrency = constants.getDefaultCurrency();
+    let approxPriceDefaultCurrency: number | null = null;
+    if (listing.price !== undefined && listing.currency && listing.currency !== defaultCurrency) {
+      approxPriceDefaultCurrency = await this.exchangeRatesService.convertToDefaultCurrency(
+        listing.price,
+        listing.currency,
+      );
+    }
+    return {
+      ...listing,
+      approxPriceDefaultCurrency,
+      defaultCurrencyCode: defaultCurrency,
+    } as Listing & { approxPriceDefaultCurrency: number | null; defaultCurrencyCode: string };
   }
 
   private async recordView(

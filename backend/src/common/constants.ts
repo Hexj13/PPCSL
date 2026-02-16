@@ -4,6 +4,14 @@ export const listingStatuses = ['Active', 'Paused', 'Closed'] as const;
 
 export const currencies = ['EUR', 'MDL'] as const;
 
+export function getDefaultCurrency(): (typeof currencies)[number] {
+  const envCurrency = process.env.DEFAULT_CURRENCY?.trim();
+  if (envCurrency && (currencies as readonly string[]).includes(envCurrency)) {
+    return envCurrency as (typeof currencies)[number];
+  }
+  return currencies[0];
+}
+
 export const fuelTypes = ['Petrol', 'Diesel', 'Electric', 'Hybrid', 'LPG'] as const;
 
 export const transmissionTypes = ['Manual', 'Automatic', 'CVT', 'Robot'] as const;

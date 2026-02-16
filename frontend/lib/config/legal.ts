@@ -105,6 +105,7 @@ const legal: LegalConfig = {
             "• Add listings to favorites for easy access",
             "Kupito acts solely as an intermediary between sellers and buyers. The Platform does not participate in actual transactions between users, does not charge commissions or fees, and does not guarantee any aspect of the sale or the vehicle being sold.",
             "Kupito is a non-commercial organization and does not conduct business activities. All services are provided free of charge as a service to the community.",
+            "When a listing price is displayed in a currency other than the platform default (e.g. EUR), the Platform may show an approximate equivalent in the default currency for convenience; this is based on daily exchange rates and is not binding. The price that counts for the transaction is the one stated by the seller in the listing currency.",
           ],
         },
         {
@@ -364,6 +365,7 @@ const legal: LegalConfig = {
             "• Adauge anunțuri la favorite pentru acces ușor",
             "Kupito acționează doar ca intermediar între vânzători și cumpărători. Platforma nu participă la tranzacțiile reale între utilizatori, nu percepe comisioane sau taxe și nu garantează niciun aspect al vânzării sau al autoturismului care se vinde.",
             "Kupito este o organizație necomercială și nu desfășoară activități comerciale. Toate serviciile sunt oferite gratuit ca serviciu pentru comunitate.",
+            "Când prețul unui anunț este afișat într-o valută diferită de cea implicită a platformei (ex. EUR), Platforma poate afișa un echivalent aproximativ în valuta implicită pentru comoditate; acesta se bazează pe cursuri valutar zilnice și nu este obligatoriu. Prețul care contează pentru tranzacție este cel indicat de vânzător în valuta anunțului.",
           ],
         },
         {
@@ -623,6 +625,7 @@ const legal: LegalConfig = {
             "• Добавлять объявления в избранное для легкого доступа",
             "Kupito действует только как посредник между продавцами и покупателями. Платформа не участвует в реальных сделках между пользователями, не взимает комиссии или сборы и не гарантирует никаких аспектов продажи или продаваемого автомобиля.",
             "Kupito - это некоммерческая организация и не ведет коммерческую деятельность. Все услуги предоставляются бесплатно как услуга для сообщества.",
+            "Когда цена в объявлении указана в валюте, отличной от валюты платформы по умолчанию (напр. EUR), Платформа может показывать приблизительный эквивалент в валюте по умолчанию для удобства; он основан на ежедневных курсах валют и не является обязательным. Ценой, имеющей силу для сделки, является цена, указанная продавцом в валюте объявления.",
           ],
         },
         {
@@ -982,6 +985,7 @@ const legal: LegalConfig = {
             "• Twilio: Pentru trimiterea mesajelor SMS pentru verificarea numărului de telefon. Twilio accesează doar numărul de telefon necesar pentru trimiterea SMS. Pentru mai multe informații, consultați Politica de confidențialitate Twilio: https://www.twilio.com/legal/privacy",
             "• AWS S3 și CloudFront: Pentru stocarea și livrarea fotografiilor din anunțuri. Imaginile sunt stocate pe AWS S3 (Amazon Web Services) și livrate prin AWS CloudFront CDN pentru performanță îmbunătățită. AWS este certificat sub diferite standarde de securitate și protecție a datelor. Pentru mai multe informații, consultați Politica de confidențialitate AWS: https://aws.amazon.com/privacy/",
             "• Furnizori de hosting: Pentru stocarea și prelucrarea datelor pe servere situate în Republica Moldova",
+            "• FXRatesAPI: Folosit pentru a obține cursuri valutar zilnice pentru afișarea prețurilor aproximative în valuta implicită a platformei. Nu sunt trimise date cu caracter personal către acest serviciu.",
             "Toți acești parteneri sunt obligați să vă protejeze datele și să le folosească doar în scopurile menționate în conformitate cu politicile lor de confidențialitate și contractele de prelucrare a datelor.",
             "7.4. La transferul de afaceri:",
             "• În cazul fuziunii, achiziției sau vânzării unei părți a afacerii, datele pot fi transferate ca parte a tranzacției",
@@ -1380,6 +1384,7 @@ const legal: LegalConfig = {
             "• Twilio: For sending SMS messages to verify phone numbers. Twilio only has access to the phone number necessary for sending SMS. For more information, see Twilio's Privacy Policy: https://www.twilio.com/legal/privacy",
             "• AWS S3 and CloudFront: For storing and delivering photos from listings. Images are stored on AWS S3 (Amazon Web Services) and delivered via AWS CloudFront CDN for improved performance. AWS is certified under various security and data protection standards. For more information, see AWS Privacy Policy: https://aws.amazon.com/privacy/",
             "• Hosting providers: For storing and processing data on servers located in the Republic of Moldova",
+            "• FXRatesAPI: Used to obtain daily exchange rates for displaying approximate prices in the platform default currency. No personal data is sent to this service.",
             "All these partners are obligated to protect your data and use it only for the specified purposes in accordance with their privacy policies and data processing agreements.",
             "7.4. In case of business transfer:",
             "• In case of merger, acquisition, or sale of part of the business, data may be transferred as part of the transaction",
@@ -1778,6 +1783,7 @@ const legal: LegalConfig = {
             "• Twilio: Для отправки SMS-сообщений для проверки номера телефона. Twilio получает доступ только к номеру телефона, необходимому для отправки SMS. Для получения дополнительной информации см. Политику конфиденциальности Twilio: https://www.twilio.com/legal/privacy",
             "• AWS S3 и CloudFront: Для хранения и доставки фотографий из объявлений. Изображения хранятся на AWS S3 (Amazon Web Services) и доставляются через AWS CloudFront CDN для улучшения производительности. AWS сертифицирован по различным стандартам безопасности и защиты данных. Для получения дополнительной информации см. Политику конфиденциальности AWS: https://aws.amazon.com/privacy/",
             "• Хостинг-провайдеры: Для хранения и обработки данных на серверах, расположенных в Республике Молдова",
+            "• FXRatesAPI: Используется для получения ежедневных курсов валют для отображения приблизительных цен в валюте платформы по умолчанию. Персональные данные в этот сервис не передаются.",
             "Все эти партнеры обязаны защищать ваши данные и использовать их только в указанных целях в соответствии с их политиками конфиденциальности и договорами об обработке данных.",
             "7.4. При передаче бизнеса:",
             "• В случае слияния, приобретения или продажи части бизнеса данные могут быть переданы как часть сделки",

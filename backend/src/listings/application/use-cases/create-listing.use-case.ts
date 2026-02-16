@@ -1,11 +1,9 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 
 import { BrandsService } from '../../../brands/brands.service';
+import { getDefaultCurrency } from '../../../common/constants';
 import { I18nService } from '../../../common/i18n/i18n.service';
-import {
-  Currency as CurrencyEnum,
-  ListingStatus as ListingStatusEnum,
-} from '../../../common/types';
+import { ListingStatus as ListingStatusEnum } from '../../../common/types';
 import { normalizeDescriptionHtml, sanitizeHtml } from '../../../common/utils/html-sanitizer';
 import { UsersService } from '../../../users/application/users.service';
 import { ListingTitleService } from '../../domain/services/listing-title.service';
@@ -55,7 +53,7 @@ export class CreateListingUseCase {
         : undefined,
       title,
       status,
-      currency: dto.currency || CurrencyEnum.EUR,
+      currency: dto.currency || getDefaultCurrency(),
       user_id: userId,
       last_updated_at: new Date(),
       last_published_at: status === ListingStatusEnum.Active ? new Date() : null,

@@ -345,6 +345,8 @@ export interface Listing {
   promoted_paused_at?: string | null;
   created_at: string;
   updated_at: string;
+  approxPriceDefaultCurrency?: number | null;
+  defaultCurrencyCode?: string;
 }
 
 export interface Brand {

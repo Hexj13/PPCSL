@@ -16,6 +16,7 @@ import { CommonModule } from './common/common.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { SentryInterceptor } from './common/interceptors/sentry.interceptor';
 import { dataSourceOptions } from './data-source';
+import { ExchangeRatesModule } from './exchange-rates/exchange-rates.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { ListingsModule } from './listings/listings.module';
 import { SavedFiltersModule } from './saved-filters/saved-filters.module';
@@ -37,6 +38,7 @@ import { UsersModule } from './users/users.module';
     TypeOrmModule.forRoot(dataSourceOptions),
     ScheduleModule.forRoot(),
     CommonModule,
+    ExchangeRatesModule,
     AuthModule,
     UsersModule,
     ListingsModule,

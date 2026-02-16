@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { REFRESH_COOLDOWN_MS } from '../../../common/constants';
+import { ExchangeRatesService } from '../../../exchange-rates/exchange-rates.service';
 import { UsersService } from '../../../users/application/users.service';
 import { Listing } from '../../entities/listing.entity';
 
@@ -12,6 +13,7 @@ export class GetUserListingsUseCase {
     @InjectRepository(Listing)
     private readonly listingsRepository: Repository<Listing>,
     private readonly usersService: UsersService,
+    private readonly exchangeRatesService: ExchangeRatesService,
   ) {}
 
   async execute(
@@ -40,9 +42,10 @@ export class GetUserListingsUseCase {
 
     const totalPages = Math.ceil(total / limit);
     const lastRefresh = await this.usersService.getLastListingRefreshAt(userId);
+    const enriched = await this.exchangeRatesService.enrichListingsWithApproxPrice(listings);
 
     return {
-      data: listings,
+      data: enriched,
       meta: {
         total,
         page,

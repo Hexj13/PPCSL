@@ -3,6 +3,7 @@ import { DataSource, DataSourceOptions } from 'typeorm';
 import { RefreshToken } from './auth/entities/refresh-token.entity';
 import { Brand } from './brands/entities/brand.entity';
 import { VehicleModel } from './brands/entities/vehicle-model.entity';
+import { ExchangeRate } from './exchange-rates/entities/exchange-rate.entity';
 import { Favorite } from './favorites/entities/favorite.entity';
 import { ListingView } from './listings/entities/listing-view.entity';
 import { Listing } from './listings/entities/listing.entity';
@@ -30,6 +31,7 @@ export const dataSourceOptions: DataSourceOptions = {
     VehicleModel,
     RefreshToken,
     SavedFilter,
+    ExchangeRate,
   ],
   synchronize: process.env.DB_SYNC === 'true' || process.env.NODE_ENV !== 'production',
   logging: process.env.NODE_ENV === 'development',

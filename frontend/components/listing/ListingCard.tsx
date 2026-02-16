@@ -5,6 +5,7 @@ import Link from 'next/link';
 import React, { useCallback, useMemo, startTransition } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { PriceDisplay } from '@/components/listing/PriceDisplay';
 import { useI18n } from '@/components/providers/I18nProvider';
 import { useCities } from '@/hooks/useCities';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -12,7 +13,6 @@ import { analytics } from '@/lib/analytics';
 import { Listing, favoritesApi } from '@/lib/api';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
 import {
-  formatPrice,
   formatEngineVolume,
   formatMileage,
   formatDriveType,
@@ -333,19 +333,17 @@ function ListingCardComponent({
           <h3 className="font-bold text-base md:text-lg mb-3 line-clamp-2 text-primary-900">
             {displayTitle}
           </h3>
-          <div className="flex items-baseline gap-2 mb-3">
+          <div className="flex items-baseline gap-2 mb-3 flex-wrap">
             {listing.price !== undefined ? (
-              <>
-                <span className="text-xl md:text-2xl font-extrabold text-primary-500">
-                  {formatPrice(listing.price, listing.currency)}
-                </span>
-                <span
-                  className="text-xs md:text-sm font-medium"
-                  style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-                >
-                  {listing.currency}
-                </span>
-              </>
+              <PriceDisplay
+                price={listing.price}
+                currency={listing.currency}
+                approxPrice={listing.approxPriceDefaultCurrency}
+                defaultCurrencyCode={listing.defaultCurrencyCode}
+                size="small"
+                priceClassName="text-primary-500"
+                currencyStyle={{ color: 'rgb(var(--text-secondary-rgb))' }}
+              />
             ) : (
               <span className="text-xl md:text-2xl font-extrabold text-primary-400">••••</span>
             )}
