@@ -1180,7 +1180,7 @@ describe('ListingForm', () => {
       fireEvent.change(engineInput, { target: { value: '2.5' } });
 
       await waitFor(() => {
-        expect(engineInput.value).toBe('2.5');
+        expect((engineInput as HTMLInputElement).value).toBe('2.5');
       });
     });
 
@@ -1407,7 +1407,7 @@ describe('ListingForm', () => {
         expect(equipmentSection).toBeInTheDocument();
       });
 
-      let checkbox: HTMLInputElement;
+      let checkbox!: HTMLInputElement;
 
       await waitFor(() => {
         checkbox = screen.getByTestId(
@@ -1472,9 +1472,9 @@ describe('ListingForm', () => {
         expect(equipmentSection).toBeInTheDocument();
       });
 
-      let airConditioningCheckbox: HTMLInputElement;
-      let navigationCheckbox: HTMLInputElement;
-      let parkingSensorsCheckbox: HTMLInputElement;
+      let airConditioningCheckbox!: HTMLInputElement;
+      let navigationCheckbox!: HTMLInputElement;
+      let parkingSensorsCheckbox!: HTMLInputElement;
 
       await waitFor(() => {
         airConditioningCheckbox = screen.getByTestId(

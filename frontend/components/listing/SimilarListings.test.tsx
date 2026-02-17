@@ -303,7 +303,7 @@ describe('SimilarListings', () => {
       data: listings,
     });
 
-    let observerCallback: (_entries: Array<{ isIntersecting: boolean; target: Element }>) => void;
+    let observerCallback!: (_entries: Array<{ isIntersecting: boolean; target: Element }>) => void;
     global.IntersectionObserver = jest.fn().mockImplementation((callback) => {
       observerCallback = callback;
       return {
