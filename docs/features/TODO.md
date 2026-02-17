@@ -3,6 +3,7 @@
 ## 🟡 Medium Priority
 
 ### Internal Links Improvement
+
 - [ ] Create component `components/listing/SimilarListings.tsx` (already exists; link from listing page)
   - Show similar listings on listing page
   - Filter by brand/model/city
@@ -13,6 +14,7 @@
   - Use friendly URLs (`/?brand=toyota&model=yaris`)
 
 ### Improved Alt Tags
+
 - [x] Add car details to alt tags for images
 - [x] Format: `{title} - {brand} {model} {year} - Image {index}`
 - [x] Make alt tags more descriptive with keywords
@@ -21,16 +23,19 @@
 ## 🟢 Low Priority (Long-term)
 
 ### Content Strategy
+
 - [ ] Consider adding a blog
 - [ ] Regular articles about cars, buying tips
 - [ ] Helps with SEO and user engagement
 
 ### Backlinks
+
 - [ ] Build quality backlinks from relevant sites
 - [ ] Partnership with automotive websites
 - [ ] Local business directories
 
 ### Local SEO (if applicable)
+
 - [ ] Local citations
 - [ ] Location-specific content
 

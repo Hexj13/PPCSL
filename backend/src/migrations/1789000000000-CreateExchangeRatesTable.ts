@@ -1,4 +1,5 @@
-import { MigrationInterface, QueryRunner, Table, TableIndex, TableUnique } from 'typeorm';
+import type { MigrationInterface, QueryRunner } from 'typeorm';
+import { Table, TableIndex, TableUnique } from 'typeorm';
 
 export class CreateExchangeRatesTable1789000000000 implements MigrationInterface {
   name = 'CreateExchangeRatesTable1789000000000';

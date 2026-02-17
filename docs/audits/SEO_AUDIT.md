@@ -10,6 +10,7 @@ This document audits technical SEO, crawlability, indexing, and Google Search vi
 ## 1) Scope & Goals
 
 ### Goals
+
 - Ensure **fast, reliable indexing** of the right pages.
 - Prevent indexing of **private/thin/utility pages**.
 - Avoid **duplicate content** via canonical, parameter handling, and redirects.
@@ -17,6 +18,7 @@ This document audits technical SEO, crawlability, indexing, and Google Search vi
 - Reduce risk of **crawl traps** (infinite URL variations, unnecessary params).
 
 ### In scope
+
 - Next.js App Router metadata/robots/sitemap
 - Canonical strategy
 - URL structure and parameter strategy
@@ -26,6 +28,7 @@ This document audits technical SEO, crawlability, indexing, and Google Search vi
 - Performance signals that impact SEO (CWV, heavy client JS)
 
 ### Out of scope (but recommended)
+
 - Content strategy, backlinks, and PR (covered briefly as recommendations)
 
 ---
@@ -88,59 +91,62 @@ Sitemap: https://kupito.club/sitemap.xml
 
 ### 2.3 Structured Data (JSON-LD)
 
-| Page | Schema Type | Rendered | Notes |
-|------|-------------|----------|-------|
-| All pages (layout) | `Organization` | Client-side | Via `OrganizationSchema` component |
-| Homepage `/` | `WebSite` + `SearchAction`, `BreadcrumbList`, `ItemList`, `CollectionPage` | SSR | Via `SearchStructuredData` component |
-| `/listings` | Same as homepage | SSR | Via `SearchStructuredData` component |
-| `/listings/[id]` | `Vehicle` + `Offer`, `BreadcrumbList` | SSR | Inline JSON-LD in `page.tsx` |
+| Page               | Schema Type                                                                | Rendered    | Notes                                |
+| ------------------ | -------------------------------------------------------------------------- | ----------- | ------------------------------------ |
+| All pages (layout) | `Organization`                                                             | Client-side | Via `OrganizationSchema` component   |
+| Homepage `/`       | `WebSite` + `SearchAction`, `BreadcrumbList`, `ItemList`, `CollectionPage` | SSR         | Via `SearchStructuredData` component |
+| `/listings`        | Same as homepage                                                           | SSR         | Via `SearchStructuredData` component |
+| `/listings/[id]`   | `Vehicle` + `Offer`, `BreadcrumbList`                                      | SSR         | Inline JSON-LD in `page.tsx`         |
 
 **Important:** Listing detail pages use `Vehicle` type (not `Product`) to avoid Google merchant listing requirements (`aggregateRating`, `hasMerchantReturnPolicy`, `shippingDetails`). The `Vehicle` type provides rich vehicle-specific fields without triggering e-commerce validation.
 
 ### 2.4 Metadata per route
 
 #### Indexable routes
-| Route | Title | Canonical | OG/Twitter | Structured Data |
-|-------|-------|-----------|------------|-----------------|
-| `/` | Dynamic (brand/model) | Self (with allowed params) | Yes | Yes |
-| `/listings` | Dynamic | Self | Yes | Yes |
-| `/listings/[id]` | Dynamic (vehicle title) | Self | Yes (with image) | Yes (`Vehicle`) |
-| `/terms` | Translated | Self | Default | No |
-| `/privacy` | Translated | Self | Default | No |
-| `/faq` | Translated | Self | Default | No |
-| `/cookie-settings` | Translated | Self | Default | No |
+
+| Route              | Title                   | Canonical                  | OG/Twitter       | Structured Data |
+| ------------------ | ----------------------- | -------------------------- | ---------------- | --------------- |
+| `/`                | Dynamic (brand/model)   | Self (with allowed params) | Yes              | Yes             |
+| `/listings`        | Dynamic                 | Self                       | Yes              | Yes             |
+| `/listings/[id]`   | Dynamic (vehicle title) | Self                       | Yes (with image) | Yes (`Vehicle`) |
+| `/terms`           | Translated              | Self                       | Default          | No              |
+| `/privacy`         | Translated              | Self                       | Default          | No              |
+| `/faq`             | Translated              | Self                       | Default          | No              |
+| `/cookie-settings` | Translated              | Self                       | Default          | No              |
 
 #### Noindex routes (defense in depth: both `robots.txt` + metadata `noindex`)
-| Route | Purpose |
-|-------|---------|
-| `/admin` | Admin panel |
-| `/login`, `/register`, `/reset-password` | Auth pages |
-| `/verify-email`, `/verify-phone` | Verification flows |
-| `/profile/*`, `/complete-profile` | User profile |
-| `/favorites` | User favorites |
-| `/my-listings` | User's own listings |
-| `/listings/new`, `/listings/[id]/edit` | Listing create/edit |
-| `/compare` | Comparison tool |
-| `/board/[nameSlug]` | Seller board |
-| `/design-system`, `/color-palette` | Dev tools |
-| `/offline` | PWA offline page |
+
+| Route                                    | Purpose             |
+| ---------------------------------------- | ------------------- |
+| `/admin`                                 | Admin panel         |
+| `/login`, `/register`, `/reset-password` | Auth pages          |
+| `/verify-email`, `/verify-phone`         | Verification flows  |
+| `/profile/*`, `/complete-profile`        | User profile        |
+| `/favorites`                             | User favorites      |
+| `/my-listings`                           | User's own listings |
+| `/listings/new`, `/listings/[id]/edit`   | Listing create/edit |
+| `/compare`                               | Comparison tool     |
+| `/board/[nameSlug]`                      | Seller board        |
+| `/design-system`, `/color-palette`       | Dev tools           |
+| `/offline`                               | PWA offline page    |
 
 ### 2.5 Parameter Indexing Strategy
 
 The homepage (`/`) uses an allowlist approach for indexable parameters:
 
-| Parameter | Indexable | Notes |
-|-----------|----------|-------|
-| `brand` | Yes | Brand landing pages |
-| `model` | Yes | Brand+Model landing pages |
-| `body_types` | Yes | Body type landing pages |
-| `vehicleType` | Yes | Vehicle category (truck, moto) |
-| `page` | Yes (>1 only) | Pagination; page=1 canonicals to base URL |
-| All others | No | `noindex` + canonical to nearest clean URL |
+| Parameter     | Indexable     | Notes                                      |
+| ------------- | ------------- | ------------------------------------------ |
+| `brand`       | Yes           | Brand landing pages                        |
+| `model`       | Yes           | Brand+Model landing pages                  |
+| `body_types`  | Yes           | Body type landing pages                    |
+| `vehicleType` | Yes           | Vehicle category (truck, moto)             |
+| `page`        | Yes (>1 only) | Pagination; page=1 canonicals to base URL  |
+| All others    | No            | `noindex` + canonical to nearest clean URL |
 
 ### 2.6 URL Normalization (Proxy)
 
 `frontend/config/proxy.ts` (Next.js 16 proxy convention) handles:
+
 - Trailing slash removal (301)
 - `www.` → apex redirect (301)
 - HTTP → HTTPS redirect in production (301)
@@ -160,19 +166,25 @@ The proxy matcher excludes `robots.txt`, `sitemap.xml`, and `site.webmanifest` s
 ## 3) Resolved Issues (History)
 
 ### P0 — Private/utility pages were indexable (RESOLVED)
+
 All private routes now have `robots: { index: false }` in metadata AND are blocked in `robots.txt`.
 
 ### P0 — Canonical strategy was wrong (RESOLVED)
+
 Global canonical removed from root layout. Each indexable route sets canonical to itself.
 
 ### P0 — Listing detail was client-only (RESOLVED)
+
 Converted to SSR with `generateMetadata` and server-rendered JSON-LD.
 
 ### P0 — Structured data was injected via useEffect (RESOLVED)
+
 JSON-LD is now rendered in SSR output.
 
 ### P1 — Product schema triggered merchant warnings (RESOLVED 2026-02-11)
+
 Changed `@type` from `Product` to `Vehicle` on listing detail pages. This eliminates Google Search Console warnings for:
+
 - `aggregateRating` (missing)
 - `hasMerchantReturnPolicy` (missing)
 - `shippingDetails` (missing)
@@ -180,7 +192,9 @@ Changed `@type` from `Product` to `Vehicle` on listing detail pages. This elimin
 The `Vehicle` schema provides rich vehicle-specific fields without triggering e-commerce validation rules.
 
 ### P1 — Sitemap was text format / not accepted by Search Console (RESOLVED 2026-02-11)
+
 Sitemap is now generated by the backend (NestJS) and served as XML. Frontend rewrites `/sitemap.xml` and `/sitemaps/*` to the backend API. This provides:
+
 - Correct `Content-Type: application/xml; charset=utf-8`
 - Proper XML escaping (`&` → `&amp;`)
 - Sitemap index + child sitemaps (pages, brands, sellers, listings by month)
@@ -188,12 +202,15 @@ Sitemap is now generated by the backend (NestJS) and served as XML. Frontend rew
 - Individual listings and seller boards included
 
 ### P1 — Body type combinations bloated sitemap (RESOLVED 2026-02-11)
+
 Removed bitwise combination generation (~157 URLs) in favor of single body type entries (~22 URLs).
 
 ### P1 — Layout duplicated metadata fetch for listings (RESOLVED 2026-02-11)
+
 `listings/[id]/layout.tsx` was making a separate API fetch to generate the same metadata as `page.tsx`. Layout simplified to a pass-through wrapper.
 
 ### P1 — `/complete-profile` missing from robots.txt (RESOLVED 2026-02-11)
+
 Added to disallow list.
 
 ---
@@ -201,25 +218,31 @@ Added to disallow list.
 ## 4) Recommended Improvements (Medium Priority)
 
 ### P2 — Create SEO landing pages as real routes
+
 Query URLs can rank, but **path-based** pages are easier to scale and control.
 
 Examples:
+
 - `/brands/toyota`
 - `/brands/toyota/yaris`
 
 **Benefits:**
+
 - Cleaner URL hierarchy
 - Easier canonical and internal linking
 - Easier to build unique content blocks (FAQs, descriptions)
 
 ### P2 — Internal linking strategy
+
 Add visible HTML links to:
+
 - Top brands and top brand+model combinations
 - Cities and categories (if relevant)
 
 **Rule:** only link to pages you want indexed.
 
 ### P2 — Expand structured data on collection pages
+
 For listing result pages, `ItemList` schema is already implemented with the first N items.
 Consider adding `CollectionPage` for body type landing pages.
 
@@ -228,6 +251,7 @@ Consider adding `CollectionPage` for body type landing pages.
 ## 5) Operational Checklist
 
 ### 5.1 Google Search Console
+
 1. Verify property (supported via `NEXT_PUBLIC_GOOGLE_VERIFICATION`).
 2. Submit `/sitemap.xml`.
 3. Use URL Inspection on:
@@ -274,12 +298,14 @@ curl https://kupito.club/sitemap.xml
 ## Appendix A — Route Indexing Policy
 
 ### A.1 Indexable routes
+
 - `/` (homepage + brand/model/body_type landing via query params)
 - `/listings` (listing search page)
 - `/listings/[id]` (listing detail)
 - `/terms`, `/privacy`, `/faq`, `/cookie-settings`
 
 ### A.2 Noindex routes
+
 - `/admin`, `/design-system`, `/color-palette`, `/offline`
 - `/compare`, `/board/*`
 - `/login`, `/register`, `/reset-password`
@@ -334,16 +360,16 @@ curl https://kupito.club/sitemap.xml
 
 ## Appendix C — File Reference
 
-| File | Purpose |
-|------|---------|
-| `frontend/app/robots.ts` | robots.txt generation (Sitemap URL) |
-| `backend/src/sitemap/sitemap.controller.ts` | Sitemap API: `/api/sitemap.xml`, `/api/sitemaps/:name` |
-| `backend/src/sitemap/sitemap.service.ts` | XML generation, DB queries, Redis cache |
-| `frontend/next.config.js` | Rewrites: `/sitemap.xml`, `/sitemaps/*` → backend |
-| `frontend/config/proxy.ts` | URL normalization (trailing slash, www, HTTPS); excludes sitemap/robots |
-| `frontend/app/layout.tsx` | Root metadata (title template, OG defaults, Google verification) |
-| `frontend/app/page.tsx` | Homepage metadata (brand/model SEO pages, parameter allowlist) |
-| `frontend/app/listings/[id]/page.tsx` | Listing metadata + Vehicle JSON-LD |
-| `frontend/app/listings/[id]/layout.tsx` | Pass-through layout (no metadata duplication) |
-| `frontend/components/analytics/OrganizationSchema.tsx` | Organization JSON-LD |
-| `frontend/components/analytics/SearchStructuredData.tsx` | Homepage/search JSON-LD |
+| File                                                     | Purpose                                                                 |
+| -------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `frontend/app/robots.ts`                                 | robots.txt generation (Sitemap URL)                                     |
+| `backend/src/sitemap/sitemap.controller.ts`              | Sitemap API: `/api/sitemap.xml`, `/api/sitemaps/:name`                  |
+| `backend/src/sitemap/sitemap.service.ts`                 | XML generation, DB queries, Redis cache                                 |
+| `frontend/next.config.js`                                | Rewrites: `/sitemap.xml`, `/sitemaps/*` → backend                       |
+| `frontend/config/proxy.ts`                               | URL normalization (trailing slash, www, HTTPS); excludes sitemap/robots |
+| `frontend/app/layout.tsx`                                | Root metadata (title template, OG defaults, Google verification)        |
+| `frontend/app/page.tsx`                                  | Homepage metadata (brand/model SEO pages, parameter allowlist)          |
+| `frontend/app/listings/[id]/page.tsx`                    | Listing metadata + Vehicle JSON-LD                                      |
+| `frontend/app/listings/[id]/layout.tsx`                  | Pass-through layout (no metadata duplication)                           |
+| `frontend/components/analytics/OrganizationSchema.tsx`   | Organization JSON-LD                                                    |
+| `frontend/components/analytics/SearchStructuredData.tsx` | Homepage/search JSON-LD                                                 |

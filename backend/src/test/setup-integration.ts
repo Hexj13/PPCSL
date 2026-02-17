@@ -94,6 +94,6 @@ export function getSwaggerDocument(): OpenAPIObject {
   return swaggerDocument;
 }
 
-export function getTestRequest(): request.SuperTest<request.Test> {
+export function getTestRequest(): ReturnType<typeof request> {
   return request(app.getHttpServer());
 }

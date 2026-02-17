@@ -340,7 +340,7 @@ const MOTO_EQUIPMENT: readonly VehicleEquipmentKey[] = [
 ] as const;
 
 export function getEquipmentKeysByVehicleType(
-  vehicleType?: 'car' | 'truck' | 'moto'
+  vehicleType?: 'car' | 'truck' | 'moto',
 ): readonly VehicleEquipmentKey[] {
   switch (vehicleType) {
     case 'truck':

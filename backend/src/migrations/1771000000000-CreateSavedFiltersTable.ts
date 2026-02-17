@@ -1,4 +1,5 @@
-import { MigrationInterface, QueryRunner, Table, TableIndex } from 'typeorm';
+import type { MigrationInterface, QueryRunner } from 'typeorm';
+import { Table, TableIndex } from 'typeorm';
 
 export class CreateSavedFiltersTable1771000000000 implements MigrationInterface {
   name = 'CreateSavedFiltersTable1771000000000';

@@ -63,11 +63,22 @@ export function Modal({
   const modalContent = (
     <div
       className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-4 sm:p-6 md:p-8"
-      onClick={() => onCloseRef.current()}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onCloseRef.current();
+        }
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onCloseRef.current();
+        }
+      }}
     >
       <div
         className={`bg-bg-base rounded-lg w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto scrollbar-custom ${className}`}
-        onClick={(e) => e.stopPropagation()}
       >
         {title && (
           <div className="sticky top-0 z-10 bg-bg-base border-b border-primary-700/30 p-5 sm:p-6 flex justify-between items-center">

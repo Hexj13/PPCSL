@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { analytics } from '@/lib/analytics';
-import { api, listingsApi, Listing, favoritesApi } from '@/lib/api';
+import type { Listing } from '@/lib/api';
+import { api, listingsApi, favoritesApi } from '@/lib/api';
 import { useAuthStore, useFavoritesStore, useComparisonStore } from '@/lib/store';
 
 interface UseListingDataProps {
@@ -169,7 +170,7 @@ export function useListingData({
           }
         });
     },
-    [id, user, check, checkComparison]
+    [id, user, check, checkComparison],
   );
 
   useEffect(() => {

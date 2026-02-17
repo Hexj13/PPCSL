@@ -1,4 +1,4 @@
-import { LoggerService } from '@nestjs/common';
+import type { LoggerService } from '@nestjs/common';
 
 const dim = (s: string) => `\x1b[90m${s}\x1b[0m`;
 const cyan = (s: string) => `\x1b[36m${s}\x1b[0m`;

@@ -1,4 +1,5 @@
-import { getPlatform, Platform } from '../script-guard';
+import type { Platform } from '../script-guard';
+import { getPlatform } from '../script-guard';
 
 import mdConfig, { PlatformSeedConfig } from './md/config';
 

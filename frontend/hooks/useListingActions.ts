@@ -11,22 +11,37 @@ export interface ListingActionsConfig {
   setTimeUntilRefresh: (_value: number | null) => void;
   canPromote: boolean;
   userId: string | undefined;
+  statusFilter?: string;
+  promotedFilter?: string;
 }
 
 export interface ListingActionsCallbacks {
   setListings: React.Dispatch<React.SetStateAction<Listing[]>>;
   setAllListingsForCount: React.Dispatch<React.SetStateAction<Listing[]>>;
   listingsRef: React.MutableRefObject<Listing[]>;
-  fetchListings: (_page: number, _append: boolean, _limit?: number) => Promise<void>;
+  fetchListings: (
+    _page: number,
+    _append: boolean,
+    _limit?: number,
+    _status?: string,
+    _promoted?: boolean,
+  ) => Promise<void>;
   refetchAllForCount: () => Promise<void>;
 }
 
 export function useListingActions(
   config: ListingActionsConfig,
-  callbacks: ListingActionsCallbacks
+  callbacks: ListingActionsCallbacks,
 ) {
   const { t } = useTranslation();
-  const { refreshCooldownMs, timeUntilRefresh, setTimeUntilRefresh, userId } = config;
+  const {
+    refreshCooldownMs,
+    timeUntilRefresh,
+    setTimeUntilRefresh,
+    userId,
+    statusFilter,
+    promotedFilter,
+  } = config;
   const { setListings, setAllListingsForCount, listingsRef, fetchListings, refetchAllForCount } =
     callbacks;
 
@@ -34,7 +49,7 @@ export function useListingActions(
     (id: string, patch: Partial<Listing>) => {
       setListings((prev) => {
         const updated = prev.map((listing) =>
-          listing.id === id ? { ...listing, ...patch } : listing
+          listing.id === id ? { ...listing, ...patch } : listing,
         );
         listingsRef.current = updated;
         return updated;
@@ -44,11 +59,11 @@ export function useListingActions(
         if (found) {
           return prevAll.map((listing) => (listing.id === id ? { ...listing, ...patch } : listing));
         }
-        refetchAllForCount();
+        void refetchAllForCount();
         return prevAll;
       });
     },
-    [setListings, setAllListingsForCount, listingsRef, refetchAllForCount]
+    [setListings, setAllListingsForCount, listingsRef, refetchAllForCount],
   );
 
   const replaceListingInState = useCallback(
@@ -63,11 +78,11 @@ export function useListingActions(
         if (found) {
           return prevAll.map((l) => (l.id === id ? listing : l));
         }
-        refetchAllForCount();
+        void refetchAllForCount();
         return prevAll;
       });
     },
-    [setListings, setAllListingsForCount, listingsRef, refetchAllForCount]
+    [setListings, setAllListingsForCount, listingsRef, refetchAllForCount],
   );
 
   const publishListing = useCallback(
@@ -80,7 +95,7 @@ export function useListingActions(
         toast.error(t('myListings.statusUpdateError'));
       }
     },
-    [t, updateListingInState]
+    [t, updateListingInState],
   );
 
   const pauseListing = useCallback(
@@ -93,7 +108,7 @@ export function useListingActions(
         toast.error(t('myListings.statusUpdateError'));
       }
     },
-    [t, updateListingInState]
+    [t, updateListingInState],
   );
 
   const closeListing = useCallback(
@@ -107,7 +122,7 @@ export function useListingActions(
         toast.error(t('myListings.statusUpdateError'));
       }
     },
-    [t, replaceListingInState]
+    [t, replaceListingInState],
   );
 
   const canRefreshDates = useCallback((): boolean => {
@@ -126,6 +141,10 @@ export function useListingActions(
     }
     if (!userId) return;
 
+    const apiStatus = statusFilter && statusFilter !== 'All' ? statusFilter : undefined;
+    const apiPromoted =
+      promotedFilter === 'Promoted' ? true : promotedFilter === 'NotPromoted' ? false : undefined;
+
     try {
       const res = await listingsApi.refreshDates();
       toast.success(t('myListings.datesUpdated', { count: res.data.updated }));
@@ -133,7 +152,7 @@ export function useListingActions(
         localStorage.setItem(`lastRefreshDate_${userId}`, Date.now().toString());
       }
       if (refreshCooldownMs > 0) setTimeUntilRefresh(refreshCooldownMs);
-      await fetchListings(1, false);
+      await fetchListings(1, false, 20, apiStatus, apiPromoted);
     } catch (error: unknown) {
       const axiosError = error as { response?: { status?: number } };
       if (axiosError.response?.status === 400) {
@@ -142,7 +161,16 @@ export function useListingActions(
         toast.error(t('common.apiErrors.serverError'));
       }
     }
-  }, [canRefreshDates, userId, refreshCooldownMs, setTimeUntilRefresh, fetchListings, t]);
+  }, [
+    canRefreshDates,
+    userId,
+    statusFilter,
+    promotedFilter,
+    refreshCooldownMs,
+    setTimeUntilRefresh,
+    fetchListings,
+    t,
+  ]);
 
   const togglePromotion = useCallback(
     async (id: string, isPromoted: boolean, days?: number) => {
@@ -150,10 +178,15 @@ export function useListingActions(
         toast.error(t('listings.promotionNotAvailable'));
         return;
       }
+
+      const apiStatus = statusFilter && statusFilter !== 'All' ? statusFilter : undefined;
+      const apiPromoted =
+        promotedFilter === 'Promoted' ? true : promotedFilter === 'NotPromoted' ? false : undefined;
+
       try {
         await listingsApi.togglePromotion(id, isPromoted, days);
         toast.success(t('listings.promotionEnabled'));
-        await fetchListings(1, false);
+        await fetchListings(1, false, 20, apiStatus, apiPromoted);
       } catch (error: unknown) {
         const axiosError = error as { response?: { status?: number } };
         if (axiosError.response?.status === 403) {
@@ -165,7 +198,7 @@ export function useListingActions(
         }
       }
     },
-    [fetchListings, t]
+    [fetchListings, statusFilter, promotedFilter, t],
   );
 
   const formatTimeRemaining = useCallback((ms: number): string => {

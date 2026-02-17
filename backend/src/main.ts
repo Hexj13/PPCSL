@@ -2,8 +2,9 @@ import { join } from 'path';
 
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { NestExpressApplication } from '@nestjs/platform-express';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import type { NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 
 import './common/sentry.config';
@@ -50,7 +51,7 @@ async function bootstrap() {
     }),
   );
 
-  app.use('/uploads', (req, res, next) => {
+  app.use('/uploads', (req: Request, res: Response, next: NextFunction) => {
     res.setHeader(
       'Access-Control-Allow-Origin',
       process.env.FRONTEND_URL || 'http://localhost:3000',
@@ -94,7 +95,7 @@ async function bootstrap() {
     },
   });
 
-  app.use('/uploads', (req, res, next) => {
+  app.use('/uploads', (req: Request, res: Response, next: NextFunction) => {
     if (res.statusCode === 404) {
       res.setHeader(
         'Access-Control-Allow-Origin',
@@ -152,4 +153,7 @@ async function bootstrap() {
   }
 }
 
-bootstrap();
+bootstrap().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

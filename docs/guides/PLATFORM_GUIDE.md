@@ -22,6 +22,7 @@ Complete guide for creating new platforms and understanding where to make code c
 **Location:** `git@github.com:Hexj13/PPCSL.git`
 
 **Make changes here when:**
+
 - ✅ Adding new features (components, pages, API endpoints)
 - ✅ Fixing bugs in core functionality
 - ✅ Updating business logic
@@ -30,6 +31,7 @@ Complete guide for creating new platforms and understanding where to make code c
 - ✅ Adding new translation keys (but translations go to platform repos)
 
 **Do NOT make changes here for:**
+
 - ❌ Translations (text content)
 - ❌ Colors and themes
 - ❌ Site-specific configuration (domain, email, etc.)
@@ -40,6 +42,7 @@ Complete guide for creating new platforms and understanding where to make code c
 **Location:** `git@github.com:Hexj13/kupito.club.git` (example)
 
 **Make changes here when:**
+
 - ✅ Translating text (updating `locales/{country}.json`)
 - ✅ Changing colors or theme (`theme/colors.ts`)
 - ✅ Updating site configuration (`config/site.ts`)
@@ -47,6 +50,7 @@ Complete guide for creating new platforms and understanding where to make code c
 - ✅ Platform-specific CI/CD workflows
 
 **Do NOT make changes here for:**
+
 - ❌ Core functionality (components, API, business logic)
 - ❌ Database models or migrations
 - ❌ Shared utilities or hooks
@@ -262,6 +266,7 @@ jobs:
 ```
 
 **Required Secrets:**
+
 - `PAT_TOKEN` - Personal Access Token with `repo` scope for accessing PPCSL submodule
 - `API_URL` - Your backend API URL
 - `SITE_URL` - Your frontend URL
@@ -279,17 +284,17 @@ In PPCSL repository (`.github/workflows/ci.yml`), add a new step in `sync-to-loc
       echo "⚠️ PAT_TOKEN secret not set. Skipping submodule update."
       exit 0
     fi
-    
+
     CREDENTIAL_FILE=$(mktemp)
     echo "https://x-access-token:${PAT_TOKEN}@github.com" > "$CREDENTIAL_FILE"
     git config --global credential.helper "store --file=$CREDENTIAL_FILE"
-    
+
     cleanup() {
       rm -f "$CREDENTIAL_FILE"
       git config --global --unset credential.helper 2>/dev/null || true
     }
     trap cleanup EXIT
-    
+
     git clone https://github.com/your-username/your-platform.git ../your-platform || exit 0
     cd ../your-platform
     git config user.name "github-actions[bot]"
@@ -302,7 +307,7 @@ In PPCSL repository (`.github/workflows/ci.yml`), add a new step in `sync-to-loc
     git add core
     git commit -m "chore: update PPCSL core to ${{ github.sha }}" || exit 0
     git push origin main || exit 0
-    
+
     cleanup
 ```
 
@@ -338,6 +343,7 @@ npm run dev
 ### Step 10: Deploy
 
 Follow instructions in [DEPLOYMENT.md](./DEPLOYMENT.md) for:
+
 - VPS deployment
 - Render.com deployment
 - Namecheap domain setup
@@ -362,6 +368,7 @@ git push origin main
 **Steps:**
 
 1. **Work in PPCSL repository:**
+
    ```bash
    cd PPCSL
    git pull origin main
@@ -373,11 +380,13 @@ git push origin main
    - Add translation keys if needed (e.g., `common.newFeature`)
 
 3. **Test locally:**
+
    ```bash
    npm run dev
    ```
 
 4. **Commit and push:**
+
    ```bash
    git add .
    git commit -m "feat: new feature"
@@ -402,12 +411,14 @@ git push origin main
 **Steps:**
 
 1. **Work in platform repository:**
+
    ```bash
    cd kupito.club  # or your platform
    git pull origin main
    ```
 
 2. **Update core submodule (if needed):**
+
    ```bash
    cd core
    git pull origin main
@@ -415,6 +426,7 @@ git push origin main
    ```
 
 3. **Copy platform files to core for testing:**
+
    ```bash
    mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/
    cp -r theme core/frontend/lib/
@@ -427,6 +439,7 @@ git push origin main
    - Edit `config/site.ts` for site configuration
 
 5. **Copy files again and test:**
+
    ```bash
    mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/
    cp -r theme core/frontend/lib/
@@ -436,6 +449,7 @@ git push origin main
    ```
 
 6. **Commit and push:**
+
    ```bash
    cd ..
    git add locales theme config
@@ -452,6 +466,7 @@ git push origin main
 **Steps:**
 
 1. **Make changes in PPCSL:**
+
    ```bash
    cd PPCSL
    git checkout -b feature/test-feature
@@ -459,6 +474,7 @@ git push origin main
    ```
 
 2. **Clone platform repository in another directory:**
+
    ```bash
    cd ..
    git clone git@github.com:Hexj13/kupito.club.git test-platform
@@ -466,6 +482,7 @@ git push origin main
    ```
 
 3. **Link core submodule to local PPCSL (temporary):**
+
    ```bash
    cd core
    git remote set-url origin /absolute/path/to/PPCSL
@@ -475,6 +492,7 @@ git push origin main
    ```
 
 4. **Copy platform files and test:**
+
    ```bash
    mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/
    cp -r theme core/frontend/lib/
@@ -541,13 +559,17 @@ your-platform/
 ### Key Files
 
 #### `locales/{country}.json`
+
 All user-facing text in your language. Must include all keys from core.
 
 #### `theme/colors.ts`
+
 Color scheme for your platform. Exports default object with primary, secondary, accent colors.
 
 #### `config/site.ts`
+
 Site-specific configuration:
+
 - Domain name
 - Locale
 - Currency
@@ -555,7 +577,9 @@ Site-specific configuration:
 - Country code
 
 #### `.github/workflows/ci.yml`
+
 CI/CD workflow that:
+
 1. Checks out repository with submodules
 2. Copies platform files to core
 3. Builds frontend and backend
@@ -610,14 +634,14 @@ git submodule update --remote --merge core
 
 ### Where to Make Changes
 
-| Type of Change | Repository | Location |
-|---------------|------------|----------|
-| New feature | PPCSL | `frontend/` or `backend/` |
-| Bug fix | PPCSL | `frontend/` or `backend/` |
-| Translation | Platform | `locales/{country}.json` |
-| Colors | Platform | `theme/colors.ts` |
-| Site config | Platform | `config/site.ts` |
-| New translation key | PPCSL (usage) + Platform (text) | Component + `locales/` |
+| Type of Change      | Repository                      | Location                  |
+| ------------------- | ------------------------------- | ------------------------- |
+| New feature         | PPCSL                           | `frontend/` or `backend/` |
+| Bug fix             | PPCSL                           | `frontend/` or `backend/` |
+| Translation         | Platform                        | `locales/{country}.json`  |
+| Colors              | Platform                        | `theme/colors.ts`         |
+| Site config         | Platform                        | `config/site.ts`          |
+| New translation key | PPCSL (usage) + Platform (text) | Component + `locales/`    |
 
 ### Common Commands
 
@@ -649,20 +673,24 @@ cd ../backend && npm run build
 Все настройки конфигурируются **только через переменные окружения**. У каждой платформы — отдельные проекты GA4, GTM (опционально) и Sentry (Frontend + Backend).
 
 ### Google Analytics
+
 - **Переменная:** `NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX`
 - **Где:** `GoogleAnalytics.tsx`. Без переменной — компонент не рендерится.
 
 ### Google Tag Manager
+
 - **Сейчас:** `GTM_ID` захардкожен в `GoogleTagManager.tsx`. Для мультиплатформы — вынести в `NEXT_PUBLIC_GTM_ID`.
 - **Порядок в layout:** `GoogleTagManager` → `GoogleAnalyticsConsent` → `GoogleAnalytics`.
 
 ### Sentry (переменные)
+
 - **Frontend:** `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`
 - **Backend:** `SENTRY_DSN`, `SENTRY_ENVIRONMENT`, `SENTRY_RELEASE`
 
 Детальная установка и интеграция: [SENTRY.md](./SENTRY.md).
 
 ### Пример (Молдова, Frontend)
+
 ```env
 NEXT_PUBLIC_GA_ID=G-MD12345678
 NEXT_PUBLIC_SENTRY_DSN=https://md-frontend@sentry.io/123456
@@ -671,11 +699,13 @@ SENTRY_PROJECT=kupito-frontend
 ```
 
 ### Чеклист для новой платформы
+
 - [ ] GA4: отдельный проект, `NEXT_PUBLIC_GA_ID`, проверка событий
 - [ ] GTM (опционально): контейнер и/или `NEXT_PUBLIC_GTM_ID`
 - [ ] Sentry: Frontend + Backend проекты, DSN и env в обоих, при необходимости — [SENTRY.md](./SENTRY.md)
 
 ### Важно
+
 - Один проект GA/Sentry на несколько платформ не использовать.
 - Нет fallback: core не задаёт значения по умолчанию.
 
@@ -684,6 +714,7 @@ SENTRY_PROJECT=kupito-frontend
 ---
 
 **Related Documentation:**
+
 - [MULTI_REPOSITORY.md](../architecture/MULTI_REPOSITORY.md) - Architecture overview
 - [LOCAL_DEVELOPMENT.md](./LOCAL_DEVELOPMENT.md) - Local development guide
 - [DEPLOYMENT.md](./DEPLOYMENT.md) - Deployment instructions

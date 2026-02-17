@@ -1,4 +1,4 @@
-import { Listing } from '@/lib/api';
+import type { Listing } from '@/lib/api';
 
 import { VEHICLE_TYPE_BY_BODY_TYPE } from '../constants';
 import { loadSiteConfigSync } from '../site-config';
@@ -50,29 +50,16 @@ export function formatPrice(price: number | undefined, currency?: string): strin
   return integerPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 }
 
-export function formatDate(date: string | Date): string {
+export function formatDate(date: string | Date, locale?: string): string {
   const d = new Date(date);
   if (Number.isNaN(d.getTime())) return '';
 
-  const monthsMk = [
-    'јануари',
-    'февруари',
-    'март',
-    'април',
-    'мај',
-    'јуни',
-    'јули',
-    'август',
-    'септември',
-    'октомври',
-    'ноември',
-    'декември',
-  ];
-
-  const day = d.getDate();
-  const monthName = monthsMk[d.getMonth()];
-  const year = d.getFullYear();
-  return `${day} ${monthName} ${year}`;
+  const currentLocale = locale || getLocale();
+  return d.toLocaleDateString(currentLocale, {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
 }
 
 export function formatDateShort(date: string | Date): string {
@@ -86,7 +73,7 @@ export function formatDateShort(date: string | Date): string {
 export function formatDateRelative(
   date: string | Date,
   t: (_key: string, _params?: Record<string, string | number>) => string,
-  locale?: string
+  locale?: string,
 ): string {
   const d = new Date(date);
   if (Number.isNaN(d.getTime())) return '';
@@ -153,7 +140,7 @@ export function formatMileage(mileage: number): string {
 
 export function formatTransmission(
   transmission: string | undefined,
-  t: (_key: string) => string
+  t: (_key: string) => string,
 ): string {
   if (!transmission) return '';
   switch (transmission) {
@@ -172,7 +159,7 @@ export function formatTransmission(
 
 export function formatDriveType(
   driveType: string | undefined,
-  t: (_key: string) => string
+  t: (_key: string) => string,
 ): string {
   if (!driveType) return '';
   switch (driveType) {
@@ -189,7 +176,7 @@ export function formatDriveType(
 
 export function formatRegistrationType(
   registrationType: string | undefined,
-  t: (_key: string) => string
+  t: (_key: string) => string,
 ): string {
   if (!registrationType) return '';
   switch (registrationType) {
@@ -248,7 +235,7 @@ function normalizeUrl(url: string): string {
 export function getOptimizedImageUrl(
   imageUrl: string,
   quality: number = 75,
-  width?: number
+  width?: number,
 ): string {
   if (!imageUrl || imageUrl === '/placeholder-car.jpg') {
     return imageUrl;
@@ -388,7 +375,7 @@ export interface City {
 export function getCityName(
   cityNameEn: string | undefined,
   locale: string,
-  cities?: City[]
+  cities?: City[],
 ): string {
   if (!cityNameEn) return '';
 

@@ -6,7 +6,8 @@
 
 **Статус**: ✅ **РЕАЛИЗОВАНО** - Backend и Frontend готовы, классификация обновлена: Van и Pickup относятся к легковым, грузовые включают только Truck, Bus, SemiTruck, Tractor
 
-**Расположение**: 
+**Расположение**:
+
 - ✅ Форма поиска (`SearchFilters`), верхняя часть, над основными вкладками фильтров
 - ✅ Форма создания объявления (`ListingForm`) - переключатели типов транспорта в начале формы
 
@@ -19,6 +20,7 @@
 ### Классификация типов транспорта
 
 #### 🚗 Легковой транспорт (`car`)
+
 **Категория прав: B**
 
 К легковому транспорту относятся все транспортные средства, для управления которыми требуется категория прав B, даже если они используются для перевозки грузов:
@@ -30,11 +32,13 @@
 - Минивэны
 - Любые другие транспортные средства категории B
 
-**Важно**: 
+**Важно**:
+
 - Если транспортное средство требует категорию прав B, оно относится к легковому транспорту, независимо от его фактического использования (перевозка грузов или пассажиров)
 - Вэны и пикапы категории B (например, Ford Transit, Mercedes Sprinter, Ford F-150) относятся к легковым, даже если используются для перевозки грузов
 
 #### 🚛 Грузовой транспорт (`truck`)
+
 **Категория прав: C и выше**
 
 К грузовому транспорту относятся все транспортные средства, для управления которыми требуется категория прав C или выше:
@@ -46,12 +50,14 @@
 - **Спецтехника** (строительная, дорожная, коммунальная техника, например: Caterpillar, Komatsu, JCB)
 - Любые другие транспортные средства категории C, D, E
 
-**Важно**: 
+**Важно**:
+
 - Только транспортные средства, требующие категорию прав C или выше, относятся к грузовому транспорту
 - Вэны и пикапы категории B (например, Ford Transit, Mercedes Sprinter, Ford F-150) **НЕ** относятся к грузовым, они относятся к легковым
 - Маленькие грузовики до 3.5 тонн, требующие категорию B, относятся к легковым
 
 #### 🏍️ Мототехника (`moto`)
+
 **Категория прав: A, A1, A2**
 
 К мототехнике относятся все двухколесные и квадроциклы:
@@ -106,23 +112,23 @@
    - ✅ Показываются только марки и модели, соответствующие выбранному типу
    - ✅ Тип транспорта выбирается перед выбором марки и модели (по умолчанию: 'car')
 
-6. **Поиск на главной**
+7. **Поиск на главной**
    - ✅ При выборе типа транспорта ограничиваются доступные марки и модели в фильтрах
    - ✅ Показываются только марки и модели, соответствующие выбранному типу
 
-7. **Сброс фильтров при переключении типа**
+8. **Сброс фильтров при переключении типа**
    - ✅ При выборе типа транспорта на поиске сбрасываются все выбранные фильтры
    - ✅ Очищаются выбранные марки, модели, типы кузова и другие параметры
 
-8. **Фильтрация результатов поиска**
+9. **Фильтрация результатов поиска**
    - ✅ При выборе типа транспорта сразу ограничивается выдача объявлений
    - ✅ Показываются только объявления с соответствующим типом транспорта
    - ✅ Синхронизация с URL параметрами (`?vehicleType=car`)
 
-9. **Анализ и оптимизация БД**
-   - ✅ Проанализирована текущая структура хранения марок и моделей
-   - ✅ Добавлены индексы для оптимизации запросов (`vehicle_types`, `vehicle_type`, композитные индексы)
-   - ✅ Производительность запросов оптимизирована
+10. **Анализ и оптимизация БД**
+    - ✅ Проанализирована текущая структура хранения марок и моделей
+    - ✅ Добавлены индексы для оптимизации запросов (`vehicle_types`, `vehicle_type`, композитные индексы)
+    - ✅ Производительность запросов оптимизирована
 
 11. **Наполнение данными - Мототехника**
     - ✅ Создан скрипт для наполнения мотоциклами и мопедами (`seed-motorcycles.ts`)
@@ -146,25 +152,26 @@
 #### Переключатели типов транспорта
 
 Три иконки-переключателя:
+
 - 🚗 **Легковой** (`car`) - активен по умолчанию
   - Категория прав: B
   - Включает: легковые авто, вэны, каблучки, кроссоверы, SUV
   - Даже если используется для перевозки грузов, но требует категорию B
-  
 - 🚛 **Грузовой** (`truck`)
   - Категория прав: C и выше
   - Включает: грузовики, автобусы, трактора, спецтехнику
-  
 - 🏍️ **Мотоцикл** (`moto`)
   - Категория прав: A, A1, A2
   - Включает: мотоциклы, мопеды, скутеры, квадрики, снегоходы
 
 **Визуальные состояния:**
+
 - **Активная иконка**: Белый цвет (`text-white`), зеленый индикатор снизу, фон `bg-primary-500/5`
 - **Неактивная иконка**: Серый цвет (`text-gray-400`), без индикатора
 - **Hover**: Закругленные углы сверху (`rounded-t-lg`), легкий фон при наведении
 
 **Размеры:**
+
 - Высота кнопки: `48px` (`h-12`)
 - Размер иконки: `40px` (`w-10 h-10`)
 - Иконки отзеркалены горизонтально (`scale-x-[-1]`)
@@ -178,12 +185,14 @@
 ### Адаптивный дизайн
 
 **Мобильные и планшеты (< lg):**
+
 - Переключатели расположены **над** основными вкладками фильтров
 - Выравнивание по левому краю (`justify-start`)
 - Горизонтальная прокрутка при переполнении
 - Fade-эффект справа при наличии прокрутки
 
 **Десктоп (≥ lg):**
+
 - Переключатели расположены **справа** от основных вкладок
 - Выравнивание по правому краю (`lg:justify-end`)
 - Абсолютное позиционирование (`lg:absolute lg:right-4`)
@@ -194,16 +203,19 @@
 #### Компоненты
 
 **Иконки** (`core/frontend/ui/icons.tsx`):
+
 - `CarIcon` - компонент иконки легкового авто
 - `TruckIcon` - компонент иконки грузового авто
 - `MotoIcon` - компонент иконки мотоцикла
 
 **SVG файлы** (`core/frontend/public/icons/`):
+
 - `car.svg`
 - `truck.svg`
 - `moto.svg`
 
 **Оптимизация viewBox:**
+
 - Все иконки используют оптимизированный `viewBox`, который соответствует реальному размеру path
 - Это позволяет отображать крупные иконки без выхода за границы кнопки
 - Пример: `viewBox="250 1150 1050 450"` вместо `viewBox="0 0 1536 2752"`
@@ -235,13 +247,14 @@ const [showVehicleFade, setShowVehicleFade] = useState(false);
 ### Интеграция в SearchFilters
 
 **Расположение в DOM:**
+
 ```tsx
 <div className="mb-6 border-b border-primary-500/20 -mx-4 md:-mx-5 px-4 md:px-5 relative">
   {/* Переключатели типов транспорта */}
   <div ref={vehicleIconsContainerRef} className="flex justify-start lg:justify-end ...">
     {/* Кнопки с иконками */}
   </div>
-  
+
   {/* Основные вкладки фильтров */}
   <div ref={tabsContainerRef} className="relative flex gap-1 ...">
     {/* Вкладки */}
@@ -258,6 +271,7 @@ const [showVehicleFade, setShowVehicleFade] = useState(false);
 #### 🚗 Легковой транспорт (`car`)
 
 Типы кузовов для легкового транспорта (категория B):
+
 - `Sedan` - Седан
 - `Hatchback` - Хэтчбек
 - `Wagon` - Универсал
@@ -273,12 +287,14 @@ const [showVehicleFade, setShowVehicleFade] = useState(false);
 #### 🚛 Грузовой транспорт (`truck`)
 
 Типы кузовов для грузового транспорта (категория C и выше):
+
 - `Truck` - Грузовик (большие и маленькие грузовики, спецтехника)
 - `Bus` - Автобус
 - `SemiTruck` - Седельный тягач
 - `Tractor` - Трактор (сельскохозяйственный и промышленный)
 
-**Важно**: 
+**Важно**:
+
 - Вэны и пикапы категории B (например, Ford Transit, Mercedes Sprinter) относятся к легковому транспорту
 - Только транспортные средства категории C и выше относятся к грузовым
 - Седельные тягачи и трактора имеют отдельные типы кузова для более точной классификации
@@ -286,6 +302,7 @@ const [showVehicleFade, setShowVehicleFade] = useState(false);
 #### 🏍️ Мототехника (`moto`)
 
 Типы кузовов для мототехники (категория A, A1, A2):
+
 - `Naked` - Нейкед (голые мотоциклы)
 - `Sport` - Спорт (спортивные мотоциклы)
 - `Touring` - Туринг (туристические мотоциклы)
@@ -317,6 +334,7 @@ const [showVehicleFade, setShowVehicleFade] = useState(false);
 ### Текущая структура
 
 **Brand (Марки):**
+
 ```typescript
 @Entity('brands')
 export class Brand {
@@ -330,6 +348,7 @@ export class Brand {
 ```
 
 **VehicleModel (Модели):**
+
 ```typescript
 @Entity('vehicle_models')
 export class VehicleModel {
@@ -343,6 +362,7 @@ export class VehicleModel {
 ```
 
 **Vehicle (Транспорт в объявлениях):**
+
 ```typescript
 @Entity('vehicles')
 export class Vehicle {
@@ -364,13 +384,14 @@ export class Vehicle {
 @Entity('brands')
 export class Brand {
   // ... существующие поля
-  
+
   @Column('simple-array', { nullable: true })
   vehicle_types: ('car' | 'truck' | 'moto')[];
 }
 ```
 
 **Особенности:**
+
 - Тип: массив строк (`simple-array`)
 - Может быть `null` (для обратной совместимости)
 - Примеры значений: `['car', 'truck']`, `['car']`, `['moto']`
@@ -381,7 +402,7 @@ export class Brand {
 @Entity('vehicle_models')
 export class VehicleModel {
   // ... существующие поля
-  
+
   @Column({
     type: 'enum',
     enum: ['car', 'truck', 'moto'],
@@ -392,6 +413,7 @@ export class VehicleModel {
 ```
 
 **Особенности:**
+
 - Тип: enum (один из трех значений)
 - Обязательное поле (`nullable: false`)
 - Каждая модель имеет только один тип транспорта
@@ -399,11 +421,13 @@ export class VehicleModel {
 #### 3. Миграция базы данных
 
 **Создать миграцию:**
+
 ```bash
 npm run migration:generate -- AddVehicleTypesToBrandsAndModels
 ```
 
 **Содержание миграции:**
+
 1. Добавить колонку `vehicle_types` в таблицу `brands` (nullable)
 2. Добавить колонку `vehicle_type` в таблицу `vehicle_models` (nullable сначала)
 3. Заполнить данные через скрипт синхронизации
@@ -412,6 +436,7 @@ npm run migration:generate -- AddVehicleTypesToBrandsAndModels
 ### Индексы
 
 **Рекомендуемые индексы:**
+
 ```typescript
 // Для быстрого поиска марок по типу транспорта
 @Index(['vehicle_types'])
@@ -430,26 +455,28 @@ npm run migration:generate -- AddVehicleTypesToBrandsAndModels
 **Файл:** `core/backend/src/scripts/stage/add-brands.ts`
 
 **Изменения:**
+
 - Добавить маппинг марок к типам транспорта
 - Добавить маппинг моделей к типам транспорта
 - При создании/обновлении марок проставлять `vehicle_types`
 - При создании/обновлении моделей проставлять `vehicle_type`
 
 **Пример структуры данных:**
+
 ```typescript
 const BRANDS_VEHICLE_TYPES: Record<string, ('car' | 'truck' | 'moto')[]> = {
   'Mercedes-Benz': ['car', 'truck'],
-  'BMW': ['car', 'moto'],
-  'Toyota': ['car', 'truck'],
-  'Honda': ['car', 'moto'],
-  'Yamaha': ['moto'],
+  BMW: ['car', 'moto'],
+  Toyota: ['car', 'truck'],
+  Honda: ['car', 'moto'],
+  Yamaha: ['moto'],
   // ...
 };
 
 const MODELS_VEHICLE_TYPES: Record<string, 'car' | 'truck' | 'moto'> = {
   'Mercedes-Benz': {
     'C-Class': 'car',
-    'Sprinter': 'truck',
+    Sprinter: 'truck',
     // ...
   },
   // ...
@@ -461,6 +488,7 @@ const MODELS_VEHICLE_TYPES: Record<string, 'car' | 'truck' | 'moto'> = {
 **Файл:** `core/backend/src/scripts/stage/sync-vehicle-types.ts` ✅ **СОЗДАН**
 
 **Функциональность:**
+
 - Прочитать все существующие марки и модели из БД
 - Определить тип транспорта на основе названия/контекста и категории прав
 - Обновить записи в БД
@@ -468,11 +496,13 @@ const MODELS_VEHICLE_TYPES: Record<string, 'car' | 'truck' | 'moto'> = {
 - Выводить статистику обновлений
 
 **Правила классификации:**
+
 - **Легковой (`car`)**: По умолчанию, если не определен как грузовой или мото
 - **Грузовой (`truck`)**: Модели с ключевыми словами (Actros, Sprinter, Transit, F-150, Master, T, C, K, D, Partner, Expert, и т.д.) или марки грузовых производителей (MAN, Scania, DAF, Iveco, и т.д.)
 - **Мото (`moto`)**: Мотоциклетные марки (Yamaha, Honda, Kawasaki, Suzuki, Ducati, KTM, Triumph, Harley-Davidson, и т.д.) или модели с мотоциклетными ключевыми словами (YZF, CBR, Ninja, GSX, Panigale, и т.д.)
 
 **Алгоритм:**
+
 1. Получить все марки с их моделями
 2. Для каждой модели без `vehicle_type`:
    - Проверить, является ли марка мотоциклетной
@@ -485,6 +515,7 @@ const MODELS_VEHICLE_TYPES: Record<string, 'car' | 'truck' | 'moto'> = {
 4. Вывести статистику обновлений
 
 **Использование:**
+
 ```bash
 cd core/backend
 COUNTRY=md npx ts-node src/scripts/stage/sync-vehicle-types.ts
@@ -495,6 +526,7 @@ COUNTRY=md npx ts-node src/scripts/stage/sync-vehicle-types.ts
 **Файл:** `core/backend/src/scripts/stage/add-motorcycles.ts`
 
 **Функциональность:**
+
 - Добавить марки мототехники (Yamaha, Honda, Kawasaki, Suzuki, Ducati, KTM, etc.)
 - Добавить модели для каждой марки
 - Установить `vehicle_type: 'moto'` для всех моделей
@@ -502,6 +534,7 @@ COUNTRY=md npx ts-node src/scripts/stage/sync-vehicle-types.ts
 - Включить мотоциклы, мопеды, скутеры, квадрики (ATV) и снегоходы
 
 **Структура данных:**
+
 ```typescript
 const MOTORCYCLE_BRANDS: Record<string, string[]> = {
   'Yamaha': ['YZF-R1', 'YZF-R6', 'MT-07', 'MT-09', 'Ténéré 700', ...],
@@ -522,19 +555,21 @@ const MOTORCYCLE_BRANDS: Record<string, string[]> = {
 ### Изменения в BrandsService
 
 **Метод получения марок с фильтрацией:**
+
 ```typescript
 async findAll(vehicleType?: 'car' | 'truck' | 'moto'): Promise<Brand[]> {
   const query = this.brandRepository.createQueryBuilder('brand');
-  
+
   if (vehicleType) {
     query.where('brand.vehicle_types @> ARRAY[:vehicleType]', { vehicleType });
   }
-  
+
   return query.getMany();
 }
 ```
 
 **Метод получения моделей с фильтрацией:**
+
 ```typescript
 async findModelsByBrand(
   brandId: string,
@@ -543,11 +578,11 @@ async findModelsByBrand(
   const query = this.modelRepository
     .createQueryBuilder('model')
     .where('model.brand_id = :brandId', { brandId });
-  
+
   if (vehicleType) {
     query.andWhere('model.vehicle_type = :vehicleType', { vehicleType });
   }
-  
+
   return query.getMany();
 }
 ```
@@ -555,6 +590,7 @@ async findModelsByBrand(
 ### Изменения в ListingsService
 
 **Фильтрация объявлений по типу транспорта:**
+
 ```typescript
 async searchListings(filters: SearchFilters): Promise<Listing[]> {
   const query = this.listingRepository
@@ -562,15 +598,15 @@ async searchListings(filters: SearchFilters): Promise<Listing[]> {
     .leftJoinAndSelect('listing.vehicle', 'vehicle')
     .leftJoinAndSelect('vehicle.model', 'model')
     .leftJoinAndSelect('vehicle.brand', 'brand');
-  
+
   if (filters.vehicleType) {
-    query.andWhere('model.vehicle_type = :vehicleType', { 
-      vehicleType: filters.vehicleType 
+    query.andWhere('model.vehicle_type = :vehicleType', {
+      vehicleType: filters.vehicleType
     });
   }
-  
+
   // ... остальные фильтры
-  
+
   return query.getMany();
 }
 ```
@@ -582,6 +618,7 @@ async searchListings(filters: SearchFilters): Promise<Listing[]> {
 #### Текущая реализация
 
 **Реализовано:**
+
 - ✅ Визуальные переключатели типов транспорта
 - ✅ Состояние активного типа (по умолчанию: легковой)
 - ✅ Плавная анимация переключения
@@ -600,20 +637,24 @@ async searchListings(filters: SearchFilters): Promise<Listing[]> {
 **Реализованные функции:**
 
 **1. Синхронизация с URL:**
+
 - Тип транспорта синхронизируется с URL параметром `vehicleType`
 - При выборе типа 'car' параметр удаляется из URL (значение по умолчанию)
 - При выборе других типов параметр добавляется в URL
 
 **2. Восстановление из URL:**
+
 - При загрузке страницы тип транспорта восстанавливается из URL параметра
 - Если параметр отсутствует или невалиден, используется значение по умолчанию ('car')
 
 **3. Сброс фильтров при переключении:**
+
 - При смене типа транспорта автоматически сбрасываются все выбранные фильтры
 - Очищаются выбранные марки, модели, типы кузова и другие параметры
 - URL обновляется с новым типом транспорта
 
 **4. Фильтрация марок и моделей:**
+
 - При загрузке марок используется фильтрация по типу транспорта через API
 - При выборе марки загружаются только модели с соответствующим типом
 - Используется хук `useBrandsAndModels` с параметром `vehicleType`
@@ -641,16 +682,7 @@ export const BODY_TYPES_BY_VEHICLE_TYPE: Record<'car' | 'truck' | 'moto', BodyTy
     'SemiTruck', // седельные тягачи
     'Tractor', // трактора (сельскохозяйственные и промышленные)
   ],
-  moto: [
-    'Naked',
-    'Sport',
-    'Touring',
-    'Cruiser',
-    'Adventure',
-    'Scooter',
-    'Enduro',
-    'Cross',
-  ],
+  moto: ['Naked', 'Sport', 'Touring', 'Cruiser', 'Adventure', 'Scooter', 'Enduro', 'Cross'],
 };
 ```
 
@@ -664,10 +696,12 @@ export const BODY_TYPES_BY_VEHICLE_TYPE: Record<'car' | 'truck' | 'moto', BodyTy
 **7. Условное отображение полей в зависимости от типа транспорта:**
 
 **Поля, которые нужно скрывать для мото:**
+
 - `doors` (количество дверей) - не применимо для мото
 - `drive_type` (тип привода) - мото всегда задний привод
 
 **Поля, которые нужно адаптировать:**
+
 - `transmission` - для мото убрать CVT (вариатор), оставить только Manual и Automatic
 - `body_types` - показывать только типы кузовов, соответствующие выбранной категории
 
@@ -691,7 +725,7 @@ export const BODY_TYPES_BY_VEHICLE_TYPE: Record<'car' | 'truck' | 'moto', BodyTy
 )}
 
 // Адаптировать опции коробки передач
-const transmissionOptions = vehicleType === 'moto' 
+const transmissionOptions = vehicleType === 'moto'
   ? ['Manual', 'Automatic'] // Без вариатора (CVT) и робота
   : ['Manual', 'Automatic', 'CVT', 'Robot'];
 
@@ -708,24 +742,28 @@ const bodyTypeOptions = BODY_TYPES_BY_VEHICLE_TYPE[vehicleType] || [];
 #### Текущая реализация
 
 **1. Переключатели типов транспорта:**
+
 - ✅ Используются те же компоненты, что и в поиске (CarIcon, TruckIcon, MotoIcon)
 - ✅ Расположены в начале формы создания (перед выбором марки)
 - ✅ Тип транспорта выбирается перед выбором марки и модели (по умолчанию: 'car')
 - ✅ Визуальная обратная связь: активный тип выделяется зеленой рамкой и фоном
 
 **2. Ограничение марок и моделей:**
+
 - ✅ При выборе типа транспорта загружаются только марки с соответствующим типом
 - ✅ При выборе марки загружаются только модели с соответствующим типом
 - ✅ При смене типа транспорта автоматически сбрасываются выбранная марка и модель
 - ✅ Используется хук `useBrandsAndModels` с параметром `vehicleType`
 
 **3. Условное отображение полей:**
+
 - ✅ Скрыто поле "Количество дверей" (`doors`) для мото
 - ✅ Скрыто поле "Тип привода" (`drive_type`) для мото
 - ✅ Адаптированы опции коробки передач (убраны CVT и Robot для мото)
 - ✅ Фильтруются типы кузова по категории транспорта
 
 **4. Сохранение данных:**
+
 - ✅ Выбранный тип транспорта сохраняется в объявлении через модель транспорта
 - ✅ Тип транспорта определяется автоматически на основе выбранной модели
 
@@ -734,6 +772,7 @@ const bodyTypeOptions = BODY_TYPES_BY_VEHICLE_TYPE[vehicleType] || [];
 ### Анализ текущей структуры
 
 **Текущие индексы:**
+
 - `brands`: `['order']`
 - `vehicle_models`: `['brand_id']`, `['order']`
 - `vehicles`: `['brand_id']`, `['model_id']`, `['brand_id', 'model_id']`, `['year']`, `['fuel']`, `['transmission']`, `['body_type']`, `['mileage_km']`, `['engine_displ_l']`
@@ -741,6 +780,7 @@ const bodyTypeOptions = BODY_TYPES_BY_VEHICLE_TYPE[vehicleType] || [];
 ### Рекомендации
 
 **1. Добавить индексы для новых полей:**
+
 ```sql
 CREATE INDEX idx_brands_vehicle_types ON brands USING GIN(vehicle_types);
 CREATE INDEX idx_vehicle_models_vehicle_type ON vehicle_models(vehicle_type);
@@ -748,16 +788,18 @@ CREATE INDEX idx_vehicle_models_brand_type ON vehicle_models(brand_id, vehicle_t
 ```
 
 **2. Композитные индексы для запросов:**
+
 ```sql
 -- Для поиска моделей по марке и типу
 CREATE INDEX idx_models_brand_type ON vehicle_models(brand_id, vehicle_type);
 
 -- Для фильтрации объявлений
-CREATE INDEX idx_vehicles_model_type ON vehicles(model_id) 
+CREATE INDEX idx_vehicles_model_type ON vehicles(model_id)
   INCLUDE (vehicle_type) -- если поддерживается
 ```
 
 **3. Анализ производительности:**
+
 - Проверить планы выполнения запросов с `EXPLAIN ANALYZE`
 - Оптимизировать запросы с фильтрацией по типу транспорта
 - Рассмотреть денормализацию (добавить `vehicle_type` в таблицу `vehicles`)
@@ -833,6 +875,7 @@ CREATE INDEX idx_vehicles_model_type ON vehicles(model_id)
 **Правило ESLint**: `require-vehicle-type`
 
 **Проверяет:**
+
 - При вызове `brandRepo.create()` или `brandRepository.create()` объект должен содержать поле `vehicle_types` (массив)
 - При вызове `modelRepo.create()` или `modelRepository.create()` объект должен содержать поле `vehicle_type` (строка)
 
@@ -871,12 +914,14 @@ const model = modelRepo.create({
 ```
 
 **Реализация:**
+
 - Создать кастомное правило ESLint: `core/backend/eslint-plugin-require-vehicle-type.cjs`
 - Добавить правило в конфигурацию ESLint: `core/backend/eslint.config.mjs`
 - Правило должно проверять все скрипты создания марок и моделей
 - При нарушении правила линтер должен выдавать ошибку с понятным сообщением
 
 **Файлы:**
+
 - `core/backend/eslint-plugin-require-vehicle-type.cjs` - кастомное правило (создать)
 - `core/backend/eslint.config.mjs` - конфигурация ESLint (обновить)
 
@@ -896,10 +941,7 @@ const motoBrands = await brandsService.findAll('moto');
 
 ```typescript
 // Получить модели Mercedes только для легковых авто
-const mercedesCarModels = await brandsService.findModelsByBrand(
-  mercedesBrandId,
-  'car'
-);
+const mercedesCarModels = await brandsService.findModelsByBrand(mercedesBrandId, 'car');
 ```
 
 ### Frontend - Переключение типа транспорта
@@ -907,13 +949,13 @@ const mercedesCarModels = await brandsService.findModelsByBrand(
 ```typescript
 const handleVehicleTypeChange = (type: 'car' | 'truck' | 'moto') => {
   setVehicleType(type);
-  
+
   // Сброс фильтров
   resetAllFilters();
-  
+
   // Обновление URL
   updateURL({ vehicleType: type });
-  
+
   // Перезагрузка данных
   refetchBrands(type);
   refetchListings({ vehicleType: type });
@@ -934,6 +976,7 @@ COUNTRY=md npx ts-node src/scripts/stage/sync-vehicle-types.ts
 ```
 
 **Что делает скрипт:**
+
 1. Находит все марки без `vehicle_types` или с пустым массивом
 2. Находит все модели без `vehicle_type`
 3. Определяет тип транспорта на основе:
@@ -945,11 +988,13 @@ COUNTRY=md npx ts-node src/scripts/stage/sync-vehicle-types.ts
 6. Выводит статистику обновлений
 
 **Правила классификации:**
+
 - **Легковой (`car`)**: По умолчанию, если не определен как грузовой или мото
 - **Грузовой (`truck`)**: Модели с ключевыми словами (Actros, Sprinter, Transit, F-150, Master, и т.д.) или марки грузовых производителей
 - **Мото (`moto`)**: Мотоциклетные марки (Yamaha, Honda, KTM, и т.д.) или модели с мотоциклетными ключевыми словами
 
 **После синхронизации:**
+
 - Все существующие марки будут иметь `vehicle_types`
 - Все существующие модели будут иметь `vehicle_type`
 - Можно использовать фильтрацию по типу транспорта
@@ -961,19 +1006,23 @@ COUNTRY=md npx ts-node src/scripts/stage/sync-vehicle-types.ts
 После синхронизации существующих данных и наполнения базы данных марками и моделями с указанными типами транспорта, можно сгенерировать тестовые объявления:
 
 #### Легковые авто (50 объявлений)
+
 ```bash
 cd core/backend
 COUNTRY=md npx ts-node src/scripts/stage/seed.ts
 ```
+
 **Примечание**: Скрипт `seed.ts` обновлен и теперь генерирует только легковые авто (фильтрует по `vehicle_type: 'car'`).
 
 #### Грузовые (50 объявлений)
+
 ```bash
 cd core/backend
 COUNTRY=md npx ts-node src/scripts/stage/seed-trucks.ts
 ```
 
 **Параметры для грузовых:**
+
 - Объем двигателя: 3.0-16.0 л
 - Пробег: 50,000-800,000 км
 - Цена: 15,000-200,000
@@ -983,12 +1032,14 @@ COUNTRY=md npx ts-node src/scripts/stage/seed-trucks.ts
 - **Важно**: Вэны и пикапы категории B (например, Sprinter, Transit) относятся к легковым, не к грузовым
 
 #### Мото (50 объявлений)
+
 ```bash
 cd core/backend
 COUNTRY=md npx ts-node src/scripts/stage/seed-motorcycles.ts
 ```
 
 **Параметры для мото:**
+
 - Объем двигателя: 0.1-2.0 л
 - Пробег: 0-150,000 км
 - Цена: 1,000-50,000
@@ -998,37 +1049,46 @@ COUNTRY=md npx ts-node src/scripts/stage/seed-motorcycles.ts
 ### Порядок выполнения
 
 1. **Применить миграции БД** (добавление новых типов кузова):
+
    ```bash
    cd core/backend
    COUNTRY=md NODE_ENV=stage npm run migration:run
    ```
 
 2. **Синхронизировать существующие данные** (если в БД уже есть марки и модели):
+
    ```bash
    COUNTRY=md NODE_ENV=stage npx ts-node src/scripts/stage/sync-vehicle-types.ts --force
    ```
+
    Это обновит классификацию всех моделей согласно справочнику `vehicle-classification.ts`.
 
 3. **Проверить классификацию** (опционально):
+
    ```bash
    COUNTRY=md NODE_ENV=stage npx ts-node src/scripts/stage/audit-vehicle-types.ts
    ```
+
    Для исправления найденных проблем:
+
    ```bash
    COUNTRY=md NODE_ENV=stage npx ts-node src/scripts/stage/audit-vehicle-types.ts --fix
    ```
 
 4. **Очистить кеш** (после синхронизации):
+
    ```bash
    COUNTRY=md NODE_ENV=stage npx ts-node src/scripts/stage/clear-cache.ts
    ```
 
 5. Запустить основной seed для создания пользователей и легковых объявлений:
+
    ```bash
    COUNTRY=md NODE_ENV=stage npx ts-node src/scripts/stage/seed.ts
    ```
 
 6. Запустить seed для грузовых (после добавления марок/моделей грузовых):
+
    ```bash
    COUNTRY=md NODE_ENV=stage npx ts-node src/scripts/stage/seed-trucks.ts
    ```
@@ -1039,6 +1099,7 @@ COUNTRY=md npx ts-node src/scripts/stage/seed-motorcycles.ts
    ```
 
 **Важно**: После обновления классификации (Van и Pickup → легковые, грузовые только Truck/Bus/SemiTruck/Tractor) необходимо:
+
 - Запустить миграцию для добавления новых типов кузова (SemiTruck, Tractor)
 - Запустить синхронизацию с флагом `--force` для переклассификации всех моделей
 - Очистить кеш для обновления данных на фронтенде

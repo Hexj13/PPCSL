@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class AddVinToListing1762095885546 implements MigrationInterface {
   name = 'AddVinToListing1762095885546';

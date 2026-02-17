@@ -1,4 +1,4 @@
-import { SiteConfig } from '../site-config';
+import type { SiteConfig } from '../site-config';
 
 const config: SiteConfig = {
   country: 'md',

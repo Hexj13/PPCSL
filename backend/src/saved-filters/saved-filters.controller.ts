@@ -12,6 +12,7 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from '../auth/infrastructure/guards/jwt-auth.guard';
+import type { AuthenticatedRequest } from '../common/express-augmentation';
 
 import { CreateSavedFilterDto } from './dto/create-saved-filter.dto';
 import { UpdateSavedFilterDto } from './dto/update-saved-filter.dto';
@@ -64,7 +65,7 @@ export class SavedFiltersController {
   })
   @Get()
   @UseGuards(JwtAuthGuard)
-  findAll(@Request() req) {
+  findAll(@Request() req: AuthenticatedRequest) {
     return this.savedFiltersService.findAll(req.user.id);
   }
 
@@ -124,7 +125,7 @@ export class SavedFiltersController {
   })
   @Post()
   @UseGuards(JwtAuthGuard)
-  create(@Body() createDto: CreateSavedFilterDto, @Request() req) {
+  create(@Body() createDto: CreateSavedFilterDto, @Request() req: AuthenticatedRequest) {
     return this.savedFiltersService.create(req.user.id, createDto.name, createDto.filters);
   }
 
@@ -189,7 +190,11 @@ export class SavedFiltersController {
   })
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
-  update(@Param('id') id: string, @Body() updateDto: UpdateSavedFilterDto, @Request() req) {
+  update(
+    @Param('id') id: string,
+    @Body() updateDto: UpdateSavedFilterDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
     return this.savedFiltersService.update(req.user.id, id, updateDto.name);
   }
 
@@ -240,7 +245,7 @@ export class SavedFiltersController {
   })
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  remove(@Param('id') id: string, @Request() req) {
+  remove(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.savedFiltersService.remove(req.user.id, id);
   }
 }

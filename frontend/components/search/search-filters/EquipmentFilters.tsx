@@ -42,7 +42,7 @@ export function EquipmentFilters({
       keysInCategory.map((key) => ({
         value: key,
         label: t(`vehicleOptions.equipment.${key}`),
-      }))
+      })),
     ).map((opt) => opt.value);
     return { category, keys: sortedKeys };
   }).filter((group) => group.keys.length > 0);

@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import { Brand } from '../../brands/entities/brand.entity';
-import { VehicleModel } from '../../brands/entities/vehicle-model.entity';
+import type { VehicleModel } from '../../brands/entities/vehicle-model.entity';
 import {
   BodyType,
   ConditionType,
@@ -279,18 +279,18 @@ async function generateListingsForAllModels() {
 
 if (require.main === module) {
   generateListingsForAllModels()
-    .then(() => {
+    .then(async () => {
       if (AppDataSource.isInitialized) {
-        AppDataSource.destroy();
+        await AppDataSource.destroy();
         console.log('🔌 Database connection closed');
       }
       console.log('✅ Script completed successfully');
       process.exit(0);
     })
-    .catch((error) => {
+    .catch(async (error) => {
       console.error('❌ Грешка:', error);
       if (AppDataSource.isInitialized) {
-        AppDataSource.destroy();
+        await AppDataSource.destroy();
       }
       process.exit(1);
     });

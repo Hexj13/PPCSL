@@ -1,6 +1,7 @@
 'use client';
 
-import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export interface HintTooltipProps {
   children: ReactNode;

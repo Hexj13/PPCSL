@@ -9,7 +9,7 @@ interface UseLoadingStateOptions {
 
 interface UseLoadingStateReturn {
   visible: boolean;
-  // eslint-disable-next-line no-unused-vars
+
   afterHidden: (callback: () => void) => void;
 }
 

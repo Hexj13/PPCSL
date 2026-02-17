@@ -1,4 +1,5 @@
-import React, { ChangeEvent, WheelEvent } from 'react';
+import type { ChangeEvent, WheelEvent } from 'react';
+import type React from 'react';
 
 import { getYearRange, isInRange } from '@/lib/validation';
 
@@ -10,7 +11,7 @@ export function useNumberInput() {
 
   const handleEngineVolumeChange = (
     e: ChangeEvent<HTMLInputElement>,
-    onChange: (_value: string) => void
+    onChange: (_value: string) => void,
   ) => {
     let value = e.target.value.replace(',', '.');
     value = value.replace(/[^0-9.]/g, '');
@@ -26,7 +27,7 @@ export function useNumberInput() {
 
   const handleEngineVolumeBlur = (
     e: React.FocusEvent<HTMLInputElement>,
-    onChange: (_value: string) => void
+    onChange: (_value: string) => void,
   ) => {
     let value = parseFloat(e.target.value);
     if (!isNaN(value)) {

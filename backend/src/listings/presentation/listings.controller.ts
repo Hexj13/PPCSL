@@ -21,9 +21,11 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import type { Request as ExpressRequest } from 'express';
 
 import { JwtAuthGuard } from '../../auth/infrastructure/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../../auth/infrastructure/guards/optional-jwt-auth.guard';
+import type { AuthenticatedRequest } from '../../common/express-augmentation';
 import { CronSecretGuard } from '../../common/guards/cron-secret.guard';
 import { ListingsService } from '../listings.service';
 
@@ -125,10 +127,25 @@ export class ListingsController {
   })
   @Get('my')
   @UseGuards(JwtAuthGuard)
-  getMyListings(@Request() req, @Query('page') page?: string, @Query('limit') limit?: string) {
+  getMyListings(
+    @Request() req: AuthenticatedRequest,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('status') status?: string,
+    @Query('promoted') promoted?: string,
+  ) {
     const pageNum = page ? parseInt(page, 10) : 1;
     const limitNum = limit ? parseInt(limit, 10) : 20;
-    return this.listingsService.getUserListings(req.user.id, pageNum, limitNum);
+    const validStatuses = ['Active', 'Paused', 'Closed'];
+    const statusFilter = status && validStatuses.includes(status) ? status : undefined;
+    const promotedFilter = promoted === 'true' ? true : promoted === 'false' ? false : undefined;
+    return this.listingsService.getUserListings(
+      req.user.id,
+      pageNum,
+      limitNum,
+      statusFilter,
+      promotedFilter,
+    );
   }
 
   @ApiOperation({ summary: 'Get active listings by user' })
@@ -171,7 +188,7 @@ export class ListingsController {
   @ApiResponse({ status: 200, description: 'Promotion history retrieved successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized - authentication required' })
   getPromotionHistory(
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
@@ -186,7 +203,7 @@ export class ListingsController {
   @ApiOperation({ summary: 'Check if user has promotion history' })
   @ApiResponse({ status: 200, description: 'Check result' })
   @ApiResponse({ status: 401, description: 'Unauthorized - authentication required' })
-  async checkPromotionHistory(@Request() req) {
+  async checkPromotionHistory(@Request() req: AuthenticatedRequest) {
     const hasHistory = await this.listingsService.hasPromotionHistory(req.user.id);
     return { hasHistory };
   }
@@ -211,7 +228,7 @@ export class ListingsController {
       },
     },
   })
-  getPromotionAccess(@Request() req) {
+  getPromotionAccess(@Request() req: ExpressRequest) {
     return this.listingsService.getPromotionAccessStatus(req.user?.type);
   }
 
@@ -267,7 +284,7 @@ export class ListingsController {
   @ApiResponse({ status: 404, description: 'Listing not found' })
   @UseGuards(OptionalJwtAuthGuard)
   @Get(':id')
-  async findOne(@Param('id') id: string, @Request() req) {
+  async findOne(@Param('id') id: string, @Request() req: ExpressRequest) {
     try {
       const ip =
         req.ip ||
@@ -344,7 +361,7 @@ export class ListingsController {
   })
   @Post()
   @UseGuards(JwtAuthGuard)
-  create(@Body() createListingDto: CreateListingDto, @Request() req) {
+  create(@Body() createListingDto: CreateListingDto, @Request() req: AuthenticatedRequest) {
     return this.listingsService.create(createListingDto, req.user.id);
   }
 
@@ -361,7 +378,11 @@ export class ListingsController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
-  update(@Param('id') id: string, @Body() updateListingDto: UpdateListingDto, @Request() req) {
+  update(
+    @Param('id') id: string,
+    @Body() updateListingDto: UpdateListingDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
     return this.listingsService.update(id, updateListingDto, req.user.id);
   }
 
@@ -377,7 +398,7 @@ export class ListingsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @Post(':id/publish')
   @UseGuards(JwtAuthGuard)
-  publish(@Param('id') id: string, @Request() req) {
+  publish(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.listingsService.publish(id, req.user.id);
   }
 
@@ -392,7 +413,7 @@ export class ListingsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @Post(':id/pause')
   @UseGuards(JwtAuthGuard)
-  pause(@Param('id') id: string, @Request() req) {
+  pause(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.listingsService.pause(id, req.user.id);
   }
 
@@ -407,7 +428,7 @@ export class ListingsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @Post(':id/close')
   @UseGuards(JwtAuthGuard)
-  close(@Param('id') id: string, @Request() req) {
+  close(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.listingsService.close(id, req.user.id);
   }
 
@@ -418,7 +439,7 @@ export class ListingsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @Post('refresh-dates')
   @UseGuards(JwtAuthGuard)
-  refreshDates(@Request() req) {
+  refreshDates(@Request() req: AuthenticatedRequest) {
     return this.listingsService.refreshAllDates(req.user.id);
   }
 
@@ -448,7 +469,7 @@ export class ListingsController {
   async togglePromotion(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: TogglePromotionDto,
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.listingsService.togglePromotion(id, req.user.id, dto, req.user?.type);
   }

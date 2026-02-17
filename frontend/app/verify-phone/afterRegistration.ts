@@ -1,0 +1,124 @@
+import { toast } from 'react-hot-toast';
+
+import type { RegisterDto } from '@/lib/api';
+import { authApi, favoritesApi, listingsApi, savedFiltersApi } from '@/lib/api';
+
+type LoginResponse = {
+  data: {
+    user: { id: string };
+    access_token: string;
+    refresh_token: string;
+  };
+};
+
+export async function runAfterRegistration(
+  _formData: RegisterDto,
+  loginRes: LoginResponse,
+  setAuth: (user: unknown, accessToken: string, refreshToken: string) => void,
+  t: (key: string) => string,
+): Promise<void> {
+  setAuth(loginRes.data.user, loginRes.data.access_token, loginRes.data.refresh_token);
+  try {
+    await authApi.verifyPhone();
+  } catch {}
+
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem('pendingRegistration');
+
+  const pendingFavorites = JSON.parse(localStorage.getItem('pendingFavorites') || '[]');
+  if (pendingFavorites.length > 0) {
+    const validFavorites: string[] = [];
+    for (const listingId of pendingFavorites) {
+      try {
+        const listingRes = await listingsApi.getOne(listingId);
+        const listing = listingRes.data;
+        if (listing.user && listing.user.id !== loginRes.data.user.id) {
+          validFavorites.push(listingId);
+        }
+      } catch {
+        // skip
+      }
+    }
+    if (validFavorites.length > 0) {
+      await Promise.all(validFavorites.map((id: string) => favoritesApi.add(id).catch(() => {})));
+    }
+    localStorage.removeItem('pendingFavorites');
+  }
+
+  const pendingComparisons = JSON.parse(localStorage.getItem('pendingComparisons') || '[]');
+  if (pendingComparisons.length > 0) {
+    const { useComparisonStore } = await import('@/lib/store');
+    const comparisonStore = useComparisonStore.getState();
+    for (const listingId of pendingComparisons) {
+      try {
+        await listingsApi.getOne(listingId);
+        comparisonStore.add(listingId);
+      } catch {
+        // ignore
+      }
+    }
+    if (comparisonStore.comparisons.length > 0) {
+      const storageData = {
+        state: { comparisons: comparisonStore.comparisons },
+        version: 0,
+      };
+      const str = JSON.stringify(storageData);
+      localStorage.setItem('comparison-storage', str);
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => {
+          localStorage.setItem('comparison-storage', str);
+          requestAnimationFrame(() => {
+            localStorage.setItem('comparison-storage', str);
+            setTimeout(resolve, 100);
+          });
+        });
+      });
+    }
+    localStorage.removeItem('pendingComparisons');
+  }
+
+  const pendingSavedFilter = localStorage.getItem('pendingSavedFilter');
+  if (pendingSavedFilter) {
+    try {
+      const filters = JSON.parse(pendingSavedFilter);
+      const now = new Date();
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = now.getFullYear();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const filterName = `Филтер ${day}.${month}.${year} ${hours}:${minutes}`;
+      await savedFiltersApi.create(filterName, filters);
+      localStorage.removeItem('pendingSavedFilter');
+      localStorage.removeItem('returnUrl');
+      toast.success(t('login.filterSavedSuccess'));
+      window.location.href = '/favorites?tab=filters';
+      return;
+    } catch (error: unknown) {
+      const errorMessage =
+        (error && typeof error === 'object' && 'response' in error
+          ? (error.response as { data?: { message?: string } })?.data?.message
+          : null) || t('login.filterSaveError');
+      toast.error(errorMessage);
+      localStorage.removeItem('pendingSavedFilter');
+      const limitErrorText = t('login.filterLimitError');
+      const isLimitError = errorMessage === limitErrorText;
+      if (isLimitError) {
+        localStorage.removeItem('returnUrl');
+        window.location.href = '/favorites?tab=filters';
+        return;
+      }
+      const returnUrl = localStorage.getItem('returnUrl');
+      if (returnUrl) {
+        localStorage.removeItem('returnUrl');
+        window.location.href = returnUrl;
+        return;
+      }
+      window.location.href = '/';
+      return;
+    }
+  }
+
+  localStorage.setItem('showRegistrationSuccess', 'true');
+  window.location.href = '/complete-profile';
+}

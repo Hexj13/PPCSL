@@ -1,4 +1,5 @@
-import { useRouter, useSearchParams } from 'next/navigation';
+import type { useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, startTransition } from 'react';
 import { toast } from 'react-hot-toast';
 
@@ -85,7 +86,7 @@ export function useFilterHandlers({
       ) {
         updateFilter(
           key,
-          value.split(',').filter((v) => v.trim() !== '')
+          value.split(',').filter((v) => v.trim() !== ''),
         );
       } else if (key === 'sortOrder') {
         updateFilter(key, value as 'ASC' | 'DESC');
@@ -93,7 +94,7 @@ export function useFilterHandlers({
         updateFilter(key, value);
       }
     },
-    [updateFilter]
+    [updateFilter],
   );
 
   const handleMultiSelectChange = useCallback(
@@ -139,14 +140,14 @@ export function useFilterHandlers({
 
       updateFilter(key, filteredValues);
     },
-    [updateFilter, filters, getBrandOptions, getModelOptions, getCityOptions]
+    [updateFilter, filters, getBrandOptions, getModelOptions, getCityOptions],
   );
 
   const handleCheckboxChange = useCallback(
     (key: keyof typeof filters, checked: boolean) => {
       updateFilter(key, checked);
     },
-    [updateFilter]
+    [updateFilter],
   );
 
   const handleYearBlur = useCallback(
@@ -162,7 +163,7 @@ export function useFilterHandlers({
         handleChange(key as keyof typeof filters, '');
       }
     },
-    [handleChange, t]
+    [handleChange, t],
   );
 
   const handlePriceChange = useCallback(
@@ -173,7 +174,7 @@ export function useFilterHandlers({
         handleChange(key as keyof typeof filters, numericValue);
       }
     },
-    [handleChange]
+    [handleChange],
   );
 
   const handlePriceBlur = useCallback(
@@ -189,12 +190,12 @@ export function useFilterHandlers({
         handleChange(key as keyof typeof filters, '');
       }
     },
-    [handleChange, t]
+    [handleChange, t],
   );
 
   const validateRanges = useCallback((): boolean => {
     const errorKey = getFilterRangesValidationError(
-      filters as unknown as Record<string, string | undefined>
+      filters as unknown as Record<string, string | undefined>,
     );
     if (errorKey) {
       toast.error(t(errorKey));
@@ -234,13 +235,13 @@ export function useFilterHandlers({
       }
 
       const validBrandIds = filters.brand_ids.filter(
-        (id) => id !== 'all' && id !== '' && !id.startsWith('__category__')
+        (id) => id !== 'all' && id !== '' && !id.startsWith('__category__'),
       );
       const validModelIds = filters.model_ids.filter(
-        (id) => id !== 'all' && id !== '' && !id.startsWith('__category__')
+        (id) => id !== 'all' && id !== '' && !id.startsWith('__category__'),
       );
       const validCities = filters.cities.filter(
-        (city) => city !== 'all' && city !== '' && !city.startsWith('__category__')
+        (city) => city !== 'all' && city !== '' && !city.startsWith('__category__'),
       );
       const searchFilters: Record<string, unknown> = {};
       if (validBrandIds.length > 0) searchFilters.brand_ids_count = validBrandIds.length;
@@ -289,7 +290,7 @@ export function useFilterHandlers({
       setIsSearching,
       setLastAppliedFilters,
       isInternalSearchRef,
-    ]
+    ],
   );
 
   const handleReset = useCallback(
@@ -323,7 +324,7 @@ export function useFilterHandlers({
         }
       });
     },
-    [resetFilters, setLastAppliedFilters, vehicleType, router]
+    [resetFilters, setLastAppliedFilters, vehicleType, router],
   );
 
   const hasFiltersChanged = useMemo(() => {

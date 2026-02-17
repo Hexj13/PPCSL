@@ -6,7 +6,8 @@
 
 **PPCSL (Platform-Portable Car Sales Logic)** - универсальное ядро для создания автомобильных маркетплейсов для разных стран.
 
-**Принцип:** 
+**Принцип:**
+
 - **Core** = универсальная бизнес-логика (один для всех)
 - **Platform-repo** = локализация (страна, язык, валюта, дизайн)
 
@@ -116,11 +117,13 @@ Moldova (kupito.club)              Future Platform
 ## 📖 Порядок чтения документации
 
 ### Для Product Manager / Project Manager:
+
 1. Этот README
 2. [PLATFORM_CHECKLIST.md](../guides/PLATFORM_CHECKLIST.md)
 3. [platform-plans/](./platform-plans/) — при добавлении новой страны
 
 ### Для Backend разработчика:
+
 1. [MULTI_REPOSITORY.md](./MULTI_REPOSITORY.md)
 2. [BACKEND_LAYERS.md](./BACKEND_LAYERS.md) — слои и use cases
 3. [SCRIPTS_ARCHITECTURE.md](./SCRIPTS_ARCHITECTURE.md) 🔴 **ОБЯЗАТЕЛЬНО**
@@ -128,11 +131,13 @@ Moldova (kupito.club)              Future Platform
 5. [LOCAL_DEVELOPMENT.md](../guides/LOCAL_DEVELOPMENT.md)
 
 ### Для Frontend разработчика:
+
 1. [MULTI_REPOSITORY.md](./MULTI_REPOSITORY.md)
 2. [KNOWN_ISSUES.md](./KNOWN_ISSUES.md)
 3. [PLATFORM_GUIDE.md](../guides/PLATFORM_GUIDE.md)
 
 ### Для DevOps:
+
 1. [DEPLOYMENT.md](../guides/DEPLOYMENT.md)
 2. [PLATFORM_GUIDE.md](../guides/PLATFORM_GUIDE.md)
 
@@ -141,6 +146,7 @@ Moldova (kupito.club)              Future Platform
 ## 🤝 Contributing
 
 При внесении изменений в core:
+
 1. ❌ **НЕ хардкодить** platform-specific данные
 2. ✅ **Использовать** config, locales, theme
 3. ✅ **Тестировать** на всех существующих платформах
@@ -151,6 +157,7 @@ Moldova (kupito.club)              Future Platform
 ## 📞 Поддержка
 
 При возникновении вопросов:
+
 1. Проверить документацию (см. выше)
 2. Проверить [KNOWN_ISSUES.md](./KNOWN_ISSUES.md) - может это известная проблема?
 3. Обратиться к команде разработки

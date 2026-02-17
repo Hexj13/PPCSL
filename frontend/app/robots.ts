@@ -1,4 +1,4 @@
-import { MetadataRoute } from 'next';
+import type { MetadataRoute } from 'next';
 
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { getCountry } from '@/lib/utils';

@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class AddSpecialEquipmentBodyType1783000000000 implements MigrationInterface {
   name = 'AddSpecialEquipmentBodyType1783000000000';

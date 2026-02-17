@@ -2,7 +2,7 @@
 
 import { PriceDisplay } from '@/components/listing/PriceDisplay';
 import { useTranslation } from '@/hooks/useTranslation';
-import { Listing } from '@/lib/api';
+import type { Listing } from '@/lib/api';
 import { getVehicleType } from '@/lib/utils';
 
 const SPARKLES_EMOJI = '\u2728';

@@ -311,7 +311,7 @@ async function cleanupAndSyncBrands() {
         brand = existingBrandWithTargetName;
         console.log(`♻️  Користен постоечки бренд: ${normalizedTargetName}`);
       } else {
-        const models = TARGET_BRANDS[targetBrandName] || [];
+        const models = (TARGET_BRANDS as Record<string, string[]>)[targetBrandName] ?? [];
         const initialVehicleType =
           models.length > 0 ? determineVehicleType(models[0], normalizedTargetName) : 'car';
         brand = brandRepo.create({
@@ -465,7 +465,7 @@ async function cleanupAndSyncBrands() {
       brand.vehicle_types = Array.from(vehicleTypes).sort();
       await brandRepo.save(brand);
     } else if (!brand.vehicle_types || brand.vehicle_types.length === 0) {
-      const models = TARGET_BRANDS[targetBrandName] || [];
+      const models = (TARGET_BRANDS as Record<string, string[]>)[targetBrandName] ?? [];
       const initialVehicleType =
         models.length > 0 ? determineVehicleType(models[0], normalizedTargetName) : 'car';
       brand.vehicle_types = [initialVehicleType];

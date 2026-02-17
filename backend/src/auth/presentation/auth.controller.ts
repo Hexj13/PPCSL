@@ -13,17 +13,18 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 
-const isProduction = process.env.NODE_ENV === 'production';
-const getThrottleLimit = (prodLimit: number, devLimit: number = prodLimit * 100) => ({
-  default: { limit: isProduction ? prodLimit : devLimit, ttl: 60000 },
-});
-
+import type { AuthenticatedRequest } from '../../common/express-augmentation';
 import { UsersService } from '../../users/application/users.service';
 import { AuthService } from '../application/auth.service';
 import { IpBlockGuard } from '../infrastructure/guards/ip-block.guard';
 import { JwtAuthGuard } from '../infrastructure/guards/jwt-auth.guard';
 import { IpBlockService } from '../infrastructure/services/ip-block.service';
 import { SmsService } from '../infrastructure/services/sms.service';
+
+const isProduction = process.env.NODE_ENV === 'production';
+const getThrottleLimit = (prodLimit: number, devLimit: number = prodLimit * 100) => ({
+  default: { limit: isProduction ? prodLimit : devLimit, ttl: 60000 },
+});
 
 import { ChangePhoneRequestDto, ChangePhoneVerifyDto } from './dto/change-phone.dto';
 import { LoginDto } from './dto/login.dto';
@@ -90,7 +91,7 @@ export class AuthController {
   })
   @Throttle(getThrottleLimit(3, 100))
   @Post('register')
-  async register(@Request() req, @Body() registerDto: RegisterDto) {
+  async register(@Request() req: AuthenticatedRequest, @Body() registerDto: RegisterDto) {
     const ip = this.ipBlockService.getClientIp(req);
     return this.authService.register(registerDto, ip);
   }
@@ -145,7 +146,7 @@ export class AuthController {
   @UseGuards(IpBlockGuard)
   @HttpCode(200)
   @Post('login')
-  async login(@Request() req, @Body() loginDto: LoginDto) {
+  async login(@Request() req: AuthenticatedRequest, @Body() loginDto: LoginDto) {
     const ip = this.ipBlockService.getClientIp(req);
     try {
       const result = await this.authService.login(loginDto, ip);
@@ -229,7 +230,7 @@ export class AuthController {
   })
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  async getProfile(@Request() req) {
+  async getProfile(@Request() req: AuthenticatedRequest) {
     const user = await this.authService.getUserProfile(req.user.id);
     return user;
   }
@@ -283,7 +284,10 @@ export class AuthController {
   })
   @UseGuards(JwtAuthGuard)
   @Patch('profile')
-  async updateProfile(@Request() req, @Body() updateProfileDto: UpdateProfileDto) {
+  async updateProfile(
+    @Request() req: AuthenticatedRequest,
+    @Body() updateProfileDto: UpdateProfileDto,
+  ) {
     const user = await this.authService.updateProfile(req.user.id, updateProfileDto);
     return user;
   }
@@ -334,7 +338,7 @@ export class AuthController {
   })
   @UseGuards(JwtAuthGuard)
   @Delete('profile')
-  async deleteAccount(@Request() req) {
+  async deleteAccount(@Request() req: AuthenticatedRequest) {
     return this.authService.deleteAccount(req.user.id);
   }
 
@@ -365,7 +369,10 @@ export class AuthController {
   })
   @UseGuards(JwtAuthGuard)
   @Post('change-phone-request')
-  async requestPhoneChange(@Request() req, @Body() changePhoneRequestDto: ChangePhoneRequestDto) {
+  async requestPhoneChange(
+    @Request() req: AuthenticatedRequest,
+    @Body() changePhoneRequestDto: ChangePhoneRequestDto,
+  ) {
     await this.authService.requestPhoneChange(req.user.id, changePhoneRequestDto);
     return { success: true, message: 'SMS кодот е испратен' };
   }
@@ -393,7 +400,10 @@ export class AuthController {
   })
   @UseGuards(JwtAuthGuard)
   @Post('change-phone-verify')
-  async verifyPhoneChange(@Request() req, @Body() changePhoneVerifyDto: ChangePhoneVerifyDto) {
+  async verifyPhoneChange(
+    @Request() req: AuthenticatedRequest,
+    @Body() changePhoneVerifyDto: ChangePhoneVerifyDto,
+  ) {
     const user = await this.authService.verifyPhoneChange(req.user.id, changePhoneVerifyDto);
     return user;
   }
@@ -430,7 +440,7 @@ export class AuthController {
   })
   @UseGuards(JwtAuthGuard)
   @Post('verify-phone')
-  async verifyPhone(@Request() req) {
+  async verifyPhone(@Request() req: AuthenticatedRequest) {
     const user = await this.authService.verifyPhone(req.user.id);
     return user;
   }
@@ -547,7 +557,7 @@ export class AuthController {
   })
   @UseGuards(IpBlockGuard)
   @Post('verify-sms')
-  async verifySms(@Request() req, @Body() verifySmsDto: VerifySmsDto) {
+  async verifySms(@Request() req: AuthenticatedRequest, @Body() verifySmsDto: VerifySmsDto) {
     const ip = this.ipBlockService.getClientIp(req);
 
     const isVerified = await this.smsService.verifyCode(verifySmsDto.phone, verifySmsDto.code);
@@ -654,7 +664,7 @@ export class AuthController {
   @HttpCode(200)
   @Post('request-password-reset')
   async requestPasswordReset(
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @Body() requestPasswordResetDto: RequestPasswordResetDto,
   ) {
     const ip = this.ipBlockService.getClientIp(req);
@@ -702,7 +712,10 @@ export class AuthController {
   })
   @UseGuards(IpBlockGuard)
   @Post('verify-reset-code')
-  async verifyResetCode(@Request() req, @Body() verifyResetCodeDto: VerifyResetCodeDto) {
+  async verifyResetCode(
+    @Request() req: AuthenticatedRequest,
+    @Body() verifyResetCodeDto: VerifyResetCodeDto,
+  ) {
     const ip = this.ipBlockService.getClientIp(req);
 
     const result = await this.authService.verifyResetCode(verifyResetCodeDto);
@@ -752,7 +765,10 @@ export class AuthController {
   })
   @UseGuards(IpBlockGuard)
   @Post('reset-password')
-  async resetPassword(@Request() req, @Body() resetPasswordDto: ResetPasswordDto) {
+  async resetPassword(
+    @Request() req: AuthenticatedRequest,
+    @Body() resetPasswordDto: ResetPasswordDto,
+  ) {
     const ip = this.ipBlockService.getClientIp(req);
 
     try {

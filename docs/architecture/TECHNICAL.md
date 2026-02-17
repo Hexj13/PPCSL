@@ -90,6 +90,7 @@ cd frontend && npm run dev
 If you see `Cannot connect to the Docker daemon`:
 
 **Option 1: Start Docker Desktop**
+
 1. Open Docker Desktop application
 2. Wait for full startup
 3. Run `docker-compose up -d`
@@ -97,6 +98,7 @@ If you see `Cannot connect to the Docker daemon`:
 **Option 2: Install PostgreSQL and Redis locally**
 
 #### PostgreSQL (macOS)
+
 ```bash
 brew install postgresql@15
 brew services start postgresql@15
@@ -105,6 +107,7 @@ psql postgres
 ```
 
 In psql:
+
 ```sql
 CREATE USER ppcsl WITH PASSWORD 'ppcsl123';
 ALTER DATABASE ppcsl OWNER TO ppcsl;
@@ -113,6 +116,7 @@ GRANT ALL PRIVILEGES ON DATABASE ppcsl TO ppcsl;
 ```
 
 #### Redis (macOS)
+
 ```bash
 brew install redis
 brew services start redis
@@ -121,6 +125,7 @@ brew services start redis
 ### Database Setup
 
 **For production (migrations):**
+
 ```bash
 cd backend
 npm run build
@@ -128,6 +133,7 @@ npm run migration:run
 ```
 
 **For development (TypeORM sync):**
+
 ```bash
 cd backend && npm run start:dev
 ```
@@ -275,12 +281,14 @@ PPCSL/
 ### Frontend Architecture
 
 **Server Components (Next.js App Router):**
+
 - Homepage (`app/page.tsx`) is an async Server Component that fetches initial listings data
 - Server-side data fetching uses native `fetch` with Next.js Data Cache and Request Memoization
 - Initial data passed as props to client components for infinite scroll functionality
 - Improves SEO, reduces client-side JavaScript, and improves initial page load performance
 
 **Client Components:**
+
 - Interactive components (forms, modals, infinite scroll) remain as Client Components
 - State management handled by Zustand stores
 - API calls for subsequent data loads use Axios client (`lib/api` → api.ts)
@@ -333,7 +341,7 @@ PATCH  /api/listings/:id              # Update listing (only non-closed)
 POST   /api/listings/:id/publish      # Activate listing
 POST   /api/listings/:id/pause        # Pause listing
 POST   /api/listings/:id/close        # Close listing
-GET    /api/listings/my               # Get user's listings (meta: last_listing_refresh_at, refreshCooldownMs for 48h timer)
+GET    /api/listings/my               # Get user's listings; query: page, limit, status (Active|Paused|Closed), promoted (true|false); meta: last_listing_refresh_at, refreshCooldownMs for 48h timer
 GET    /api/listings/vin/:vin         # Find listings by VIN
 POST   /api/listings/refresh-dates    # Refresh all user's listing dates (max once per 48h; returns 400 if too soon)
 POST   /api/listings/cron/close-old   # Close old listings (cron job, requires x-cron-secret header)
@@ -344,6 +352,7 @@ GET    /api/listings/promotion-access  # Get promotion access status (no auth re
 ```
 
 **Filter Parameters:**
+
 - The frontend supports **slug-based URLs** for better SEO and user-friendly URLs:
   - `?brand=toyota` or `?brand=toyota,bmw` - Filter by brand slugs (comma-separated)
   - `?model=yaris` or `?model=yaris,corolla` - Filter by model slugs (comma-separated, requires brand filter)
@@ -371,6 +380,7 @@ GET    /api/favorites/check/:id       # Check if listing is in favorites
 ### Car Comparison
 
 Car comparison feature allows users to compare up to 3 cars simultaneously:
+
 - Comparison data stored in `localStorage` (Zustand store with persist middleware)
 - Maximum 3 cars can be added to comparison
 - Comparison page displays detailed side-by-side table with all vehicle specifications
@@ -407,6 +417,7 @@ GET  /api/upload/image/:filename      # Get optimized image version
 ```
 
 **Watermark Details:**
+
 - Watermark is automatically applied to all uploaded images
 - Logo file location: `backend/assets/watermark/logo.png`
 - Watermark includes: logo (15% of image size) + domain text below
@@ -444,12 +455,14 @@ GET /health                          # Health check (database, Redis)
 #### Indexes
 
 **Listings Table:**
+
 - `status`, `user_id`, `status + user_id` (composite)
 - `status + last_updated_at` (composite, for auto-closing)
 - `price`, `created_at`, `views`, `vin` (partial), `urgent` (partial)
 - `currency`, `city`, `title`
 
 **Listing Date Fields:**
+
 - `created_at` - Date when listing was created (automatic, never changes)
 - `last_updated_at` - Updated only when:
   - Listing is created
@@ -462,20 +475,24 @@ GET /health                          # Health check (database, Redis)
 - `updated_at` - Automatically updated by TypeORM on any listing modification
 
 **Listings Table Fields:**
+
 - `price` - Integer (stored as integer, no decimal places)
 - `power_kw` - Integer, nullable (power in kilowatts)
 - `equipment` - Simple array, nullable (max 40 items). Array of equipment keys; the available set depends on vehicle type (car / truck / moto). Keys and categories are defined in `core/frontend/lib/options/vehicle-equipment.ts`. Create/edit form groups options by category (Comfort, Safety, Lighting, Multimedia, Driver assistance, Other). Translations: `vehicleOptions.equipment.<key>` and `vehicleOptions.equipmentCategories.<category>` in frontend locales.
 
 **Vehicles Table:**
+
 - `brand_id`, `model_id`, `brand_id + model_id` (composite)
 - `year`, `fuel` (partial), `transmission` (partial)
 - `body_type`, `mileage_km` (partial), `engine_displ_l` (partial)
 
 **Users Table:**
+
 - `phone` (partial), `type`, `active`, `email` (unique)
 - `last_listing_refresh_at` - Timestamp of last "Refresh dates" action; used to enforce 48h limit per user
 
 **Saved Filters Table:**
+
 - `user_id`, `created_at`
 
 #### Triggers
@@ -487,6 +504,23 @@ GET /health                          # Health check (database, Redis)
 **Note:** The auto-update trigger for `last_updated_at` was removed. This field is now updated manually only during listing creation and when using the "Refresh dates" feature. This allows users to control when their listings' auto-close timer resets.
 
 **Refresh dates (48h limit):** The "Refresh dates" action is allowed at most once per 48 hours per user. The backend defines `REFRESH_COOLDOWN_MS` in `common/constants.ts`, stores `users.last_listing_refresh_at`, and returns 400 with `errors.refreshDatesTooSoon` if the user calls `POST /api/listings/refresh-dates` before the cooldown has passed. The response of `GET /api/listings/my` includes `meta.last_listing_refresh_at` (ISO string or null) and `meta.refreshCooldownMs`; the frontend uses these (no hardcoded 48h) to show the countdown and syncs to localStorage as fallback.
+
+#### Exchange Rates
+
+**Table:** `exchange_rates` — stores daily exchange rates from FXRatesAPI.
+
+- **Retention:** keeps the 3 most recent rows per currency pair (rolling window, not date-based cutoff)
+- **Fetch schedule:** daily cron at 02:30 UTC (`ExchangeRatesService.fetchDailyRates`)
+- **Cache:** Redis with 1h TTL per rate; env fallback `EXCHANGE_RATE_EUR_<CURRENCY>`
+- **`ExchangeRatesService.getAllRatesMap()`** — returns `{ defaultCurrency, rates }` for all non-default currencies (parallel fetch via `Promise.all`)
+- **`enrichListingsWithApproxPrice()`** — adds `approxPriceDefaultCurrency` and `defaultCurrencyCode` to each listing; used in search, board, favorites, user listings, and single listing endpoints
+- **Price sorting in default currency:** when `sortBy=price`, the SQL ORDER BY uses a CASE expression that converts prices to the default currency (EUR) using current exchange rates:
+  ```sql
+  CASE WHEN currency = 'EUR' THEN price
+       WHEN currency = 'MDL' THEN price::numeric / :rate_MDL
+       ELSE price END
+  ```
+  The expression is added via `addSelect(expr, alias)` + `addOrderBy(alias)` to avoid TypeORM alias parsing issues. Exchange rates are fetched in the use case and passed to the repository via `SearchCriteria.priceSortRates`; these fields are excluded from the cache key (rates only affect sort order, not which results are returned).
 
 #### Connection Pooling
 
@@ -536,6 +570,7 @@ Backups are saved to `backend/backups/` by default with format: `ppcsl_backup_YY
 ### Implemented Security Measures
 
 #### Authentication & Authorization
+
 - JWT tokens with expiration (1 hour access tokens, 7 days refresh tokens)
 - Password hashing with bcrypt (10 rounds)
 - Protected routes with guards (JwtAuthGuard, AdminGuard)
@@ -546,17 +581,20 @@ Backups are saved to `backend/backups/` by default with format: `ppcsl_backup_YY
 **Global:** 100 requests per 60 seconds
 
 **Special Limits:**
+
 - `POST /api/auth/register`: 3 requests per 10 minutes
 - `POST /api/auth/login`: 5 requests per 5 minutes
 - `POST /api/auth/send-sms`: 3 requests per minute
 - `POST /api/upload/image`: 20 requests per minute
 
 #### SMS Verification
+
 - IP-based brute force protection (40 attempts per IP, 1-hour block)
 - Frontend: 10 attempts per code, 3 code resends maximum
 - Automatic cleanup of expired IP blocks (hourly cron job)
 
 #### File Upload Security
+
 - Magic byte validation (file signature checking for JPEG, PNG, GIF, WebP)
 - MIME type validation
 - File size limits (10MB per image)
@@ -566,6 +604,7 @@ Backups are saved to `backend/backups/` by default with format: `ppcsl_backup_YY
 - Authentication required (JWT)
 
 #### HTML Sanitization
+
 - Backend HTML sanitization for listing descriptions
 - Removes dangerous HTML tags (script, iframe, object, embed, etc.)
 - Strips event handlers (onclick, onerror, etc.)
@@ -573,11 +612,13 @@ Backups are saved to `backend/backups/` by default with format: `ppcsl_backup_YY
 - Allows only safe formatting tags (p, br, strong, em, u, ul, ol, li, font)
 
 #### HTTP Security Headers
+
 - Helmet middleware configured
 - Content Security Policy (CSP)
 - Standard security headers (XSS Protection, Content-Type-Options, Frame-Options, etc.)
 
 #### Input Validation
+
 - Class-validator for all DTOs
 - ValidationPipe with whitelist and transform
 - Custom validation decorators:
@@ -590,6 +631,7 @@ Backups are saved to `backend/backups/` by default with format: `ppcsl_backup_YY
 - SMS code validation (6 digits, numeric only)
 
 #### Error Handling
+
 - Global exception filter with integrated I18nService for localized error messages
 - Error logging without exposing details to users
 - Unified error messages with support for multiple locales (ro, ru, en)
@@ -605,6 +647,7 @@ Backups are saved to `backend/backups/` by default with format: `ppcsl_backup_YY
 **Frontend:** Jest + React Testing Library for components and utilities
 
 **Running Tests:**
+
 ```bash
 # Backend unit tests
 cd backend && npm test
@@ -634,6 +677,7 @@ cd frontend && npm test
 **Frontend Utilities:** ✅ Utility functions tested (`lib/utils/utils.test.ts`)
 
 **Test Statistics:**
+
 - **Total Tests:** 324 tests across 27 test suites
 - **Backend Unit:** 195 tests across 14 test suites
 - **Backend Integration:** 44 tests across 5 test suites
@@ -728,6 +772,7 @@ All scripts are located in `backend/src/scripts/` and can be executed via npm co
 ### SEO Optimizations
 
 #### Meta Tags
+
 - **Comprehensive metadata** (title, description, keywords) on all pages
 - **Open Graph tags** for social media sharing:
   - `og:type`, `og:url`, `og:title`, `og:description`, `og:image`, `og:site_name`, `og:locale`
@@ -750,6 +795,7 @@ All scripts are located in `backend/src/scripts/` and can be executed via npm co
   - Other pages: Page-specific H1 tags
 
 #### Structured Data (Schema.org)
+
 - **Organization Schema** - Business entity information
 - **WebSite Schema** - Site structure with SearchAction
 - **Vehicle Schema** - Vehicle-specific information for listings
@@ -757,6 +803,7 @@ All scripts are located in `backend/src/scripts/` and can be executed via npm co
 - **BreadcrumbList Schema** - Navigation structure
 
 #### Technical SEO
+
 - **Robots.txt** - Proper crawling instructions
 - **Sitemap** - Backend-generated XML sitemap index at `/sitemap.xml` (proxied from frontend) with child sitemaps:
   - Static pages (homepage, listings, terms, privacy, FAQ, cookie-settings)
@@ -789,12 +836,14 @@ All scripts are located in `backend/src/scripts/` and can be executed via npm co
 #### Google Analytics Features
 
 **Consent Mode v2:**
+
 - Implements Google Analytics Consent Mode v2 for GDPR compliance
 - Analytics are disabled by default until user grants consent
 - Consent can be managed via `/cookie-settings` page
 - All events respect user consent preferences
 
 **Tracked Events:**
+
 - `view_item` - When user views a listing detail page
 - `search` - When user performs search/filtering
 - `add_to_wishlist` / `remove_from_wishlist` - Favorite management
@@ -811,10 +860,12 @@ All events are sent only after user grants analytics consent.
 
 **Architecture:**
 The project uses the recommended approach:
+
 1. **Google Analytics 4 (GA4)** - tracks all user events
 2. **Google Ads conversions** - imported from GA4 (the only recommended method)
 
 **Data Flow:**
+
 ```
 User → Site → GA4 (all events) → Google Ads (only conversions)
 ```
@@ -851,16 +902,19 @@ User → Site → GA4 (all events) → Google Ads (only conversions)
    - **Conversion window:** 1-90 days depending on conversion type
 
 **Main Conversions:**
+
 - **Homepage view** (`conversion_event_page_view`) - 1 day window, high priority
 - **User registration** (`sign_up`) - 30 days window, high priority
 - **Listing creation** (`create_listing`) - 90 days window, high priority
 
 **Verification:**
+
 1. Check events in GA4 real-time reports
 2. Check conversions in Google Ads (may take 24-48 hours for first data)
 3. Use Google Tag Assistant for debugging
 
 **Common Issues:**
+
 - **Conversions not recording:** Check events are sent correctly, verify user consent
 - **Data delay:** Normal - GA4 data updates in Google Ads every 3-24 hours
 - **Duplicate conversions:** Use only import from GA4, don't configure events directly in Google Ads
@@ -874,6 +928,7 @@ For detailed setup instructions, see [Google Ads Help](https://support.google.co
 The backend has `trust proxy: true` configured, which correctly identifies real user IP through Cloudflare.
 
 **Setup Steps:**
+
 1. Register on Cloudflare (free)
 2. Add domain
 3. Change DNS servers at registrar
@@ -888,6 +943,7 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
 ## 11. Performance Optimizations
 
 ### Database Optimizations
+
 - Comprehensive indexing strategy with partial and composite indexes
 - **Search query optimization:**
   - Composite indexes for search sorting: `(is_promoted DESC, created_at DESC)`, `(is_promoted DESC, price ASC)`, `(is_promoted DESC, views DESC)` with `WHERE status = 'Active'`
@@ -898,6 +954,7 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
 - Full-text search support with GIN indexes (if pg_trgm available)
 
 ### Frontend Optimizations
+
 - **Server-side data fetching:** Initial listings data loaded on server using Next.js Server Components and native `fetch` API, improving SEO and initial page load performance
 - **Request deduplication:** `React.cache()` wrapper for server-side functions (`fetchBrands`, `fetchModelsByBrands`, `getListings`) eliminates duplicate API calls, reducing initial page load time by ~40-50%
 - **Centralized search parameter parsing:** Shared `lib/search/search-params.ts` module provides `buildSearchQuery()` (URL construction, base64 encoding, localStorage fallback for long query strings), `getDefaultFilters()`, URL parameter parsing via `parseSearchParams()`, base64 encoding/decoding, and slug-to-ID conversion via `createBrandResolver` / `createModelResolver`
@@ -962,11 +1019,13 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
   - Component: `components/ListingPage/ListingPageDescription.tsx`
 
 ### Redis Optimizations
+
 - SCAN instead of KEYS for better performance
 - Batch operations
 - Proper TTL management
 
 ### Code Quality
+
 - TypeScript strict mode enabled in backend
 - CI/CD automation
 - Automated bundle analysis
@@ -974,7 +1033,7 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
   - `no-hardcoded-text` - Enforces use of translation keys instead of hardcoded text
   - `import/order` - Ensures consistent import ordering
   - TypeScript and React rules for code quality
-  - See [LINTING.md](../../frontend/docs/LINTING.md) for complete linting guide
+  - See [LINTING.md](../../LINTING.md) for complete linting guide
 
 ---
 
@@ -1001,6 +1060,7 @@ npm run dev
 ### Quick Restart
 
 If already running:
+
 1. In backend terminal: `Ctrl+C`, then `npm run start:dev`
 2. In frontend terminal: `Ctrl+C`, then `npm run dev`
 
@@ -1030,6 +1090,7 @@ Complete guide for setting up Continuous Integration and Continuous Deployment (
 ### 13.1. Overview
 
 The CI/CD system is designed to:
+
 - **Automatically test** code changes in PPCSL core
 - **Verify code quality** (linting, formatting, TypeScript type checking)
 - **Update submodules** in platform repositories when core changes
@@ -1063,6 +1124,7 @@ PPCSL (Core Repository)
 **Workflow File:** `.github/workflows/ci.yml` in PPCSL repository
 
 **Jobs:**
+
 1. **Test Jobs:**
    - Backend: Installs dependencies, runs linters, runs unit and integration tests
    - Frontend: Installs dependencies, runs linters, checks formatting, runs tests
@@ -1079,6 +1141,7 @@ PPCSL (Core Repository)
    - Commits and pushes changes
 
 **Required Secrets:**
+
 - `PAT_TOKEN` (optional) - Personal Access Token with `repo` scope for pushing to platform repositories
   - If not set, submodule updates will be skipped with a warning
   - To create: GitHub Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token
@@ -1089,6 +1152,7 @@ PPCSL (Core Repository)
 **Workflow File:** `.github/workflows/ci.yml` in kupito.club repository
 
 **Steps:**
+
 1. **Checkout with submodules:**
    - Clones repository with PPCSL core submodule
    - Initializes and updates submodules recursively
@@ -1115,6 +1179,7 @@ PPCSL (Core Repository)
    - Deploys to production environment
 
 **Required Secrets:**
+
 - `PAT_TOKEN` (required) - Personal Access Token with `repo` scope for accessing private PPCSL submodule
   - If not set, submodule checkout will fail with "Repository not found" error
   - To create: GitHub Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token
@@ -1130,22 +1195,26 @@ For deploying kupito.club on Render.com, configure the following:
 **Root Directory:** (leave empty)
 
 **Environment Variables:**
+
 - `GITHUB_PAT` - Personal Access Token with `repo` scope for accessing private PPCSL submodule
 - `NEXT_PUBLIC_COUNTRY` - Set to your platform's country code (e.g. `md` for Moldova)
 - `NEXT_PUBLIC_SITE_URL` - Set to `https://kupito.club`
 - `NEXT_PUBLIC_API_URL` - Backend API URL
 
 **Build Command:**
+
 ```bash
 git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && git submodule update --init --recursive && npm run prepare:build && cd core/frontend && npm ci && npm run build
 ```
 
 **Start Command:**
+
 ```bash
 cd core/frontend && npm start
 ```
 
 **Important:** The Build Command must:
+
 1. Configure git credentials for accessing private submodule
 2. Initialize and update the submodule
 3. Copy platform-specific files via `npm run prepare:build` (frontend locales ro/ru, backend locales, theme, config, assets)
@@ -1160,6 +1229,7 @@ For deploying kupito.club backend on Render.com, configure the following:
 **Root Directory:** (leave empty)
 
 **Environment Variables:**
+
 - `GITHUB_PAT` - Personal Access Token with `repo` scope for accessing private PPCSL submodule
 - `NODE_ENV` - Set to `production`
 - `PORT` - Automatically set by Render (use `process.env.PORT || 4000` in code)
@@ -1179,27 +1249,33 @@ For deploying kupito.club backend on Render.com, configure the following:
 - `REDIS_PORT` - Redis port (if using external Redis)
 
 **Build Command:**
+
 ```bash
 git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && git submodule update --init --recursive && cd core/backend && npm ci && npm run build
 ```
 
 **Start Command:**
+
 ```bash
 cd core/backend && npm run start:prod
 ```
 
 **Important:** The Build Command must:
+
 1. Configure git credentials for accessing private submodule
 2. Initialize and update the submodule
 3. Install dependencies and build the backend application
 
 **After First Deployment:**
+
 1. Run database migrations via Render Shell:
+
    ```bash
    cd core/backend && npm run migration:run
    ```
 
 2. Load brands and models:
+
    ```bash
    cd core/backend && npm run seed:all-brands
    ```
@@ -1212,6 +1288,7 @@ cd core/backend && npm run start:prod
 ### 13.5. Workflow Overview
 
 **Development Workflow:**
+
 1. Developer makes changes in PPCSL core
 2. Commits and pushes to PPCSL/main
 3. PPCSL CI/CD triggers:
@@ -1225,6 +1302,7 @@ cd core/backend && npm run start:prod
    - Deploys to production
 
 **Platform-Specific Changes:**
+
 1. Developer makes changes in kupito.club
 2. Updates locales/theme/config files
 3. Commits and pushes to kupito.club/main
@@ -1236,11 +1314,13 @@ cd core/backend && npm run start:prod
 ### 13.6. Troubleshooting
 
 **Submodule Update Fails:**
+
 - Ensure `PAT_TOKEN` secret is set in repository settings
 - PAT must have `repo` scope to push to other repositories
 - To create PAT: GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
 
 **Submodule Checkout Fails in kupito.club (Repository not found):**
+
 - Ensure `PAT_TOKEN` secret is set in kupito.club repository settings
 - The `actions/checkout@v4` action must be configured with `token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}`
 - `GITHUB_TOKEN` may not have sufficient permissions to access private submodules
@@ -1249,22 +1329,26 @@ cd core/backend && npm run start:prod
 - Add secret: Repository Settings → Secrets and variables → Actions → New repository secret → Name: `PAT_TOKEN`
 
 **Build Fails After Submodule Update:**
+
 - Verify copy commands in workflow are correct
 - Check file paths match repository structure
 - Ensure files exist in platform repository
 
 **Tests Fail in Platform CI/CD:**
+
 - Tests should run in PPCSL core CI/CD only
 - Platform CI/CD should only run build and deployment
 - Remove test steps from platform workflow if needed
 
 **Why No Build in PPCSL Core:**
+
 - Build requires locale-specific files (translations, theme, config) that don't exist in core
 - Build in core would use default values, not reflecting real production builds
 - Build is done in platform repositories (kupito.club) where locale files are available
 - TypeScript type checking (`tsc --noEmit`) is sufficient to verify code compiles correctly
 
 **Deployment Fails:**
+
 - Check deployment credentials/secrets
 - Verify deployment commands are correct
 - Check deployment target is accessible
@@ -1315,6 +1399,7 @@ Comprehensive test coverage for promotion features:
 - **P1 (Important):** Promotion history, sorting, pause/resume behavior
 
 Run tests:
+
 ```bash
 cd backend && npm run test -- listings.service.spec.ts
 ```
@@ -1330,6 +1415,7 @@ cd backend && npm run test -- listings.service.spec.ts
 **Version:** 1.11
 
 ### Recent Updates
+
 - **Slug-based URLs & SEO Improvements (2025-12-17):**
   - Implemented slug-based URLs for brand and model filters (`?brand=toyota&model=yaris`) for better SEO and user-friendly URLs
   - Added utility functions `createSlug()` and `slugToName()` in `lib/utils/utils.ts` for URL-friendly text conversion
@@ -1356,4 +1442,3 @@ cd backend && npm run test -- listings.service.spec.ts
 - Added breadcrumbs navigation on key pages
 - Optimized filter loading to prevent skeleton flickering
 - Comprehensive test coverage: 52 frontend tests across 4 test suites, 195 backend tests across 14 test suites
-

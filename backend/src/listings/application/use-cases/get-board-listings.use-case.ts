@@ -7,6 +7,7 @@ import { removePasswordFromUser } from '../../../common/utils/error-handling.uti
 import { ExchangeRatesService } from '../../../exchange-rates/exchange-rates.service';
 import { UsersService } from '../../../users/application/users.service';
 import { Listing } from '../../entities/listing.entity';
+import { buildPriceInDefaultCurrencyOrderExpression } from '../utils/price-sort.utils';
 
 @Injectable()
 export class GetBoardListingsUseCase {
@@ -53,6 +54,17 @@ export class GetBoardListingsUseCase {
       queryBuilder.addOrderBy('vehicle.year', order);
     } else if (sortField === 'views') {
       queryBuilder.addOrderBy('listing.views', order);
+    } else if (sortField === 'price') {
+      const { defaultCurrency, rates } = await this.exchangeRatesService.getAllRatesMap();
+      const { expression, params } = buildPriceInDefaultCurrencyOrderExpression(
+        defaultCurrency,
+        rates,
+      );
+      for (const [key, value] of Object.entries(params)) {
+        queryBuilder.setParameter(key, value);
+      }
+      queryBuilder.addSelect(expression, 'price_in_default_currency');
+      queryBuilder.addOrderBy('price_in_default_currency', order);
     } else {
       queryBuilder.addOrderBy(`listing.${sortField}`, order);
     }

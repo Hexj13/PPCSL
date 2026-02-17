@@ -1,4 +1,5 @@
-import { MigrationInterface, QueryRunner, Table } from 'typeorm';
+import type { MigrationInterface, QueryRunner } from 'typeorm';
+import { Table } from 'typeorm';
 
 export class AddViewsToListings1762194843300 implements MigrationInterface {
   name = 'AddViewsToListings1762194843300';

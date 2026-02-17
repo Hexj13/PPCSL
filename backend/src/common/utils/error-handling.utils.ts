@@ -1,4 +1,5 @@
-import { BadRequestException, Logger } from '@nestjs/common';
+import type { Logger } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import { QueryFailedError } from 'typeorm';
 
 export function handleDuplicateKeyError(

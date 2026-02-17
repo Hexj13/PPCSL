@@ -167,6 +167,23 @@ describe('ExchangeRatesService', () => {
     });
   });
 
+  describe('getAllRatesMap', () => {
+    it('should return default currency and rates for non-default currencies', async () => {
+      redisService.getJson.mockResolvedValue({ rate: 19.45 });
+      const result = await service.getAllRatesMap();
+      expect(result.defaultCurrency).toBe('EUR');
+      expect(result.rates).toEqual({ MDL: 19.45 });
+    });
+
+    it('should return empty rates when no rates available', async () => {
+      redisService.getJson.mockResolvedValue(null);
+      exchangeRateRepo.findOne.mockResolvedValue(null);
+      const result = await service.getAllRatesMap();
+      expect(result.defaultCurrency).toBe('EUR');
+      expect(result.rates).toEqual({});
+    });
+  });
+
   describe('doFetchRates', () => {
     it('should throw when FXRATESAPI_API_KEY is not set', async () => {
       const orig = process.env.FXRATESAPI_API_KEY;

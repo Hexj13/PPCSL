@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslation } from '@/hooks/useTranslation';
-import { ListingStatus } from '@/lib/types';
+import type { ListingStatus } from '@/lib/types';
 import { getStatusConfig } from '@/lib/utils';
 
 interface StatusBadgeProps {

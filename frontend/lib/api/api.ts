@@ -1,11 +1,4 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
-
-interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
-  _retry?: boolean;
-}
-
-import { getDefaultLocale, loadTranslations, type Translations } from '../i18n';
-import {
+import type {
   BodyType,
   ConditionType,
   Currency,
@@ -17,301 +10,9 @@ import {
   UserType,
 } from '../types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+import { api } from './api-client';
 
-export const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-let isRefreshing = false;
-let failedQueue: Array<{
-  resolve: (_value?: unknown) => void;
-  reject: (_error?: unknown) => void;
-}> = [];
-
-const processQueue = (error: AxiosError | null, token: string | null = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
-  });
-
-  failedQueue = [];
-};
-
-api.interceptors.request.use((config) => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  if (typeof window !== 'undefined') {
-    const storedLocale = localStorage.getItem('kupito-locale') as 'ro' | 'ru' | null;
-    const locale =
-      storedLocale === 'ro' || storedLocale === 'ru' ? storedLocale : getDefaultLocale();
-    config.headers['Accept-Language'] = locale;
-  }
-  if (config.data instanceof FormData) {
-    delete config.headers['Content-Type'];
-  }
-  return config;
-});
-
-const getErrorMessage = (error: AxiosError): string => {
-  let translations: Translations | null = null;
-  try {
-    let locale: 'ro' | 'ru' = getDefaultLocale();
-    if (typeof window !== 'undefined') {
-      const storedLocale = localStorage.getItem('kupito-locale') as 'ro' | 'ru' | null;
-      if (storedLocale === 'ro' || storedLocale === 'ru') {
-        locale = storedLocale;
-      }
-    }
-    translations = loadTranslations(locale);
-  } catch {
-    translations = null;
-  }
-
-  const t = (key: string, params?: Record<string, string | number>): string => {
-    const keys = key.split('.');
-    let value: unknown = translations;
-    for (const k of keys) {
-      if (value && typeof value === 'object' && value !== null && k in value) {
-        value = (value as Record<string, unknown>)[k];
-      } else {
-        return key;
-      }
-    }
-    if (typeof value !== 'string') {
-      return key;
-    }
-    if (params) {
-      return value.replace(/\{(\w+)\}/g, (match: string, paramKey: string) => {
-        return params[paramKey]?.toString() || match;
-      });
-    }
-    return value;
-  };
-
-  if (!error.response) {
-    if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
-      return t('common.apiErrors.timeout');
-    }
-    if (error.message === 'Network Error' || error.code === 'ERR_NETWORK') {
-      return t('common.apiErrors.networkError');
-    }
-    return t('common.apiErrors.connectionError');
-  }
-
-  const status = error.response.status;
-  const data = error.response.data as ErrorResponseData;
-  let backendMessage = '';
-
-  if (data?.message) {
-    if (Array.isArray(data.message)) {
-      backendMessage = data.message.join(', ');
-    } else {
-      backendMessage = data.message;
-    }
-  }
-
-  const isStandardError = (msg: string): boolean => {
-    const standardErrors = [
-      'Грешка во мрежата',
-      'Грешка при поврзување',
-      'Истече време',
-      'Невалидна барање',
-      'Неавторизиран пристап',
-      'Немате дозвола',
-      'Ресурсот не е пронајден',
-      'Конфликт',
-      'Грешка во валидација',
-      'Премногу барања',
-      'Грешка на серверот',
-      'Серверот е привремено недостапен',
-    ];
-    return standardErrors.some((err) => msg.includes(err));
-  };
-
-  const shouldUseTranslation = !backendMessage || isStandardError(backendMessage);
-
-  switch (status) {
-    case 400:
-      return shouldUseTranslation ? t('common.apiErrors.badRequest') : backendMessage;
-    case 401:
-      if (typeof window !== 'undefined') {
-        const refreshToken = localStorage.getItem('refresh_token');
-        if (!refreshToken) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('refresh_token');
-          if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
-            window.location.href = '/login';
-          }
-        }
-      }
-      return shouldUseTranslation ? t('common.apiErrors.unauthorized') : backendMessage;
-    case 403:
-      return shouldUseTranslation ? t('common.apiErrors.forbidden') : backendMessage;
-    case 404:
-      return shouldUseTranslation ? t('common.apiErrors.notFound') : backendMessage;
-    case 409:
-      return shouldUseTranslation ? t('common.apiErrors.conflict') : backendMessage;
-    case 422:
-      return shouldUseTranslation ? t('common.apiErrors.validationError') : backendMessage;
-    case 429:
-      return t('common.apiErrors.tooManyRequests');
-    case 500:
-      return shouldUseTranslation ? t('common.apiErrors.serverError') : backendMessage;
-    case 502:
-    case 503:
-    case 504:
-      return t('common.apiErrors.serviceUnavailable');
-    default:
-      return shouldUseTranslation
-        ? t('common.apiErrors.unknownError', { status: status.toString() })
-        : backendMessage;
-  }
-};
-
-api.interceptors.response.use(
-  (response) => response,
-  async (error: AxiosError) => {
-    const originalRequest = error.config as ExtendedAxiosRequestConfig | undefined;
-
-    if (error.response?.status === 429 && originalRequest && !originalRequest._retry) {
-      originalRequest._retry = true;
-      const retryAfter = error.response.headers['retry-after']
-        ? parseInt(error.response.headers['retry-after'], 10) * 1000
-        : 2000;
-
-      await new Promise((resolve) => setTimeout(resolve, retryAfter));
-      return api(originalRequest);
-    }
-
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
-      const isLoginEndpoint = originalRequest.url?.includes('/api/auth/login');
-      const isRegisterEndpoint = originalRequest.url?.includes('/api/auth/register');
-
-      if (isLoginEndpoint || isRegisterEndpoint) {
-        if (error.config && !error.config.headers['X-Skip-Error-Handling']) {
-          const errorMessage = getErrorMessage(error);
-          if (typeof window !== 'undefined') {
-            (async () => {
-              const { toast } = await import('react-hot-toast');
-              toast.error(errorMessage);
-            })();
-          }
-        }
-        return Promise.reject(error);
-      }
-
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            if (originalRequest.headers) {
-              originalRequest.headers.Authorization = `Bearer ${token}`;
-            }
-            return api(originalRequest);
-          })
-          .catch((err) => {
-            return Promise.reject(err);
-          });
-      }
-
-      originalRequest._retry = true;
-      isRefreshing = true;
-
-      const refreshToken =
-        typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null;
-
-      if (!refreshToken) {
-        processQueue(error);
-        isRefreshing = false;
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('token');
-          localStorage.removeItem('refresh_token');
-          if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
-            const currentUrl = window.location.pathname + window.location.search;
-            localStorage.setItem('returnUrl', currentUrl);
-            window.location.href = '/login';
-          }
-        }
-        return Promise.reject(error);
-      }
-
-      try {
-        const response = await api.post<{
-          access_token: string;
-          refresh_token: string;
-          user: User;
-        }>(
-          '/api/auth/refresh',
-          { refresh_token: refreshToken },
-          { headers: { 'X-Skip-Error-Handling': 'true' } }
-        );
-
-        const { access_token, refresh_token: newRefreshToken } = response.data;
-
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('token', access_token);
-          localStorage.setItem('refresh_token', newRefreshToken);
-        }
-
-        if (originalRequest.headers) {
-          originalRequest.headers.Authorization = `Bearer ${access_token}`;
-        }
-
-        processQueue(null, access_token);
-        isRefreshing = false;
-
-        return api(originalRequest);
-      } catch (refreshError) {
-        processQueue(refreshError as AxiosError);
-        isRefreshing = false;
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('token');
-          localStorage.removeItem('refresh_token');
-          if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
-            const currentUrl = window.location.pathname + window.location.search;
-            localStorage.setItem('returnUrl', currentUrl);
-            window.location.href = '/login';
-          }
-        }
-        return Promise.reject(refreshError);
-      }
-    }
-
-    if (error.config && !error.config.headers['X-Skip-Error-Handling']) {
-      const errorMessage = getErrorMessage(error);
-      if (typeof window !== 'undefined') {
-        const { toast } = await import('react-hot-toast');
-        toast.error(errorMessage);
-
-        if (error.response?.status && error.response.status >= 500) {
-          const Sentry = await import('@sentry/nextjs');
-          Sentry.captureException(error, {
-            tags: {
-              apiError: true,
-              statusCode: error.response.status,
-            },
-            extra: {
-              url: error.config?.url,
-              method: error.config?.method,
-              response: error.response?.data,
-            },
-          });
-        }
-      }
-    }
-    return Promise.reject(error);
-  }
-);
+export { api };
 
 export interface Listing {
   id: string;
@@ -532,10 +233,6 @@ export interface AdminStats {
   };
 }
 
-interface ErrorResponseData {
-  message?: string | string[];
-}
-
 export const listingsApi = {
   getAll: (params?: SearchParams) =>
     api.get<{ data: Listing[]; meta: PaginationMeta }>('/api/listings', { params }),
@@ -563,10 +260,16 @@ export const listingsApi = {
   publish: (id: string) => api.post(`/api/listings/${id}/publish`),
   pause: (id: string) => api.post(`/api/listings/${id}/pause`),
   close: (id: string) => api.post<Listing>(`/api/listings/${id}/close`),
-  getMy: (page: number = 1, limit: number = 20) => {
+  getMy: (page: number = 1, limit: number = 20, status?: string, promoted?: boolean) => {
     const params = new URLSearchParams();
     params.set('page', page.toString());
     params.set('limit', limit.toString());
+    if (status) {
+      params.set('status', status);
+    }
+    if (promoted !== undefined) {
+      params.set('promoted', String(promoted));
+    }
     const query = params.toString();
     return api.get<{ data: Listing[]; meta: PaginationMeta }>(`/api/listings/my?${query}`);
   },
@@ -613,7 +316,7 @@ export const boardApi = {
   getBySlug: (slug: string) => api.get<BoardInfo>(`/api/board/${encodeURIComponent(slug)}`),
   getListings: (
     slug: string,
-    params: { page?: number; limit?: number; sortBy?: string; sortOrder?: 'ASC' | 'DESC' }
+    params: { page?: number; limit?: number; sortBy?: string; sortOrder?: 'ASC' | 'DESC' },
   ) => {
     const search = new URLSearchParams();
     if (params.page != null) search.set('page', params.page.toString());
@@ -622,7 +325,7 @@ export const boardApi = {
     if (params.sortOrder != null) search.set('sortOrder', params.sortOrder);
     const query = search.toString();
     return api.get<{ data: Listing[]; meta: PaginationMeta }>(
-      `/api/board/${encodeURIComponent(slug)}/listings${query ? `?${query}` : ''}`
+      `/api/board/${encodeURIComponent(slug)}/listings${query ? `?${query}` : ''}`,
     );
   },
 };
@@ -695,7 +398,7 @@ export const authApi = {
   refresh: (data: RefreshTokenDto) =>
     api.post<{ access_token: string; refresh_token: string; user: User }>(
       '/api/auth/refresh',
-      data
+      data,
     ),
   me: () => api.get<User>('/api/auth/me'),
   updateProfile: (data: UpdateProfileDto) => api.patch<User>('/api/auth/profile', data),
@@ -731,8 +434,16 @@ export const authApi = {
     }),
 };
 
+export interface FavoriteItem {
+  listing: Listing;
+}
+
 export const favoritesApi = {
-  getAll: () => api.get('/api/favorites'),
+  getPage: (page: number = 1, limit: number = 20) =>
+    api.get<{ data: FavoriteItem[]; meta: PaginationMeta }>('/api/favorites', {
+      params: { page, limit },
+    }),
+  getIds: () => api.get<{ listingIds: string[] }>('/api/favorites/ids'),
   add: (listingId: string) => api.post(`/api/favorites/${listingId}`),
   remove: (listingId: string) => api.delete(`/api/favorites/${listingId}`),
   check: (listingId: string) =>
@@ -805,7 +516,7 @@ export const adminApi = {
     listingId?: string,
     userId?: string,
     status?: ListingStatus,
-    isPromoted?: boolean
+    isPromoted?: boolean,
   ) => {
     const params = new URLSearchParams();
     params.set('page', page.toString());
@@ -827,7 +538,7 @@ export const adminApi = {
   },
   getListingsStatusCounts: () => {
     return api.get<{ Active: number; Paused: number; Closed: number; Promoted: number }>(
-      '/api/admin/listings/status-counts'
+      '/api/admin/listings/status-counts',
     );
   },
   updateListingStatus: (id: string, status: ListingStatus) =>
@@ -855,7 +566,7 @@ export const adminApi = {
     limit: number = 50,
     listingId?: string,
     userId?: string,
-    fromDate?: Date
+    fromDate?: Date,
   ) => {
     const params = new URLSearchParams();
     params.set('page', page.toString());

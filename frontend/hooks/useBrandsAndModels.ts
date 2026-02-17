@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 
-import { brandsApi, Brand, VehicleModel } from '@/lib/api';
+import type { Brand, VehicleModel } from '@/lib/api';
+import { brandsApi } from '@/lib/api';
 import { sortByName } from '@/lib/utils';
 
 type VehicleTypeOption = 'car' | 'truck' | 'moto' | undefined;
@@ -104,14 +105,22 @@ export function useBrandsAndModels({
       return;
     }
     setLoadingBrands(true);
-    fetchBrands(vehicleType).then((data) => {
-      if (!cancelled) {
-        startTransition(() => {
-          setBrands(data);
-          setLoadingBrands(false);
-        });
-      }
-    });
+    fetchBrands(vehicleType)
+      .then((data) => {
+        if (!cancelled) {
+          startTransition(() => {
+            setBrands(data);
+            setLoadingBrands(false);
+          });
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          startTransition(() => {
+            setLoadingBrands(false);
+          });
+        }
+      });
     return () => {
       cancelled = true;
     };
@@ -135,12 +144,18 @@ export function useBrandsAndModels({
 
     setModels([]);
     setLoadingModels(true);
-    fetchModels(brandId, vehicleType).then((data) => {
-      if (!cancelled) {
-        setModels(data);
-        setLoadingModels(false);
-      }
-    });
+    fetchModels(brandId, vehicleType)
+      .then((data) => {
+        if (!cancelled) {
+          setModels(data);
+          setLoadingModels(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLoadingModels(false);
+        }
+      });
     return () => {
       cancelled = true;
     };
@@ -157,14 +172,20 @@ export function useBrandsAndModels({
         return;
       }
       setLoadingModels(true);
-      fetchModels(id, vehicleType).then((data) => {
-        if (mountedRef.current && loadModelsRequestIdRef.current === id) {
-          setModels(data);
-          setLoadingModels(false);
-        }
-      });
+      fetchModels(id, vehicleType)
+        .then((data) => {
+          if (mountedRef.current && loadModelsRequestIdRef.current === id) {
+            setModels(data);
+            setLoadingModels(false);
+          }
+        })
+        .catch(() => {
+          if (mountedRef.current && loadModelsRequestIdRef.current === id) {
+            setLoadingModels(false);
+          }
+        });
     },
-    [vehicleType]
+    [vehicleType],
   );
 
   const setModelsDirectly = useCallback((modelsList: VehicleModel[]) => {

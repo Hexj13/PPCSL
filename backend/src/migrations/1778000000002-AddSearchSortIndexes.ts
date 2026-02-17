@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class AddSearchSortIndexes1778000000002 implements MigrationInterface {
   name = 'AddSearchSortIndexes1778000000002';

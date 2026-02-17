@@ -31,12 +31,12 @@ Filter state is synced with the URL; submitting the form runs the search and upd
 
 ## Tabs
 
-| Tab | Key (i18n) | Content |
-|-----|------------|--------|
-| Basic criteria | `searchFilters.basicCriteria` | Brand, model, year, price, fuel, body, transmission, drive, mileage, popular body types |
+| Tab                 | Key (i18n)                         | Content                                                                                                    |
+| ------------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Basic criteria      | `searchFilters.basicCriteria`      | Brand, model, year, price, fuel, body, transmission, drive, mileage, popular body types                    |
 | Additional criteria | `searchFilters.additionalCriteria` | City, currency, registration, condition, engine, horsepower, color, doors (or color only for moto), labels |
-| Equipment | `searchFilters.equipment` | Equipment checkboxes by category, match mode (full/partial) |
-| Popular | `searchFilters.popularFilters` | Quick links for popular brands and models |
+| Equipment           | `searchFilters.equipment`          | Equipment checkboxes by category, match mode (full/partial)                                                |
+| Popular             | `searchFilters.popularFilters`     | Quick links for popular brands and models                                                                  |
 
 Only one tab’s content is rendered at a time (`activeTab === 'basic' | 'advanced' | 'equipment' | 'popular'`). Tab state is managed by `useSearchTabs`.
 
@@ -50,14 +50,14 @@ Only one tab’s content is rendered at a time (`activeTab === 'basic' | 'advanc
 
 ### Row 1 (three columns)
 
-| Column 1 | Column 2 | Column 3 |
-|----------|----------|----------|
+| Column 1                                                      | Column 2                               | Column 3                                                         |
+| ------------------------------------------------------------- | -------------------------------------- | ---------------------------------------------------------------- |
 | **Brand** + **Model** (two MultiSelectDropdowns side by side) | **Year** (paired: From / To dropdowns) | **Fuel** + **Body type** (two MultiSelectDropdowns side by side) |
 
 ### Row 2 (three columns)
 
-| Column 1 | Column 2 | Column 3 |
-|----------|----------|----------|
+| Column 1                                                         | Column 2                                                     | Column 3                                        |
+| ---------------------------------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------- |
 | **Price** (paired: From / To text inputs, thousands with spaces) | **Transmission** + **Drive type** (two MultiSelectDropdowns) | **Mileage** (paired: From / To text inputs, km) |
 
 ### Row 3 (full width)
@@ -78,14 +78,14 @@ Only one tab’s content is rendered at a time (`activeTab === 'basic' | 'advanc
 
 ### Row 1 (three columns)
 
-| Column 1 | Column 2 | Column 3 |
-|----------|----------|----------|
+| Column 1                                             | Column 2                                                                      | Column 3                            |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------- | ----------------------------------- |
 | **City** + **Currency** (two dropdowns side by side) | **Has registration** + **Registration type** (Dropdown + MultiSelectDropdown) | **Condition** (MultiSelectDropdown) |
 
 ### Row 2 (three columns)
 
-| Column 1 | Column 2 | Column 3 (car/truck vs moto) |
-|----------|----------|------------------------------|
+| Column 1                               | Column 2                               | Column 3 (car/truck vs moto)                                             |
+| -------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------ |
 | **Engine (l)** — paired From/To inputs | **Power (hp)** — paired From/To inputs | **Color** + **Number of doors** (car/truck) **or** **Color** only (moto) |
 
 ### Row 3 (full width)
@@ -154,18 +154,18 @@ Only one tab’s content is rendered at a time (`activeTab === 'basic' | 'advanc
 
 ## Files
 
-| File | Role |
-|------|------|
-| `SearchFilters.tsx` | Form container, vehicle type, tabs, conditional render of tab content, actions, save modal |
-| `search-filters/BasicFilters.tsx` | Basic criteria grid + PopularBodyTypesFilter |
-| `search-filters/AdvancedFilters.tsx` | Additional criteria grid + labels |
-| `search-filters/EquipmentFilters.tsx` | Equipment checkboxes and match mode |
-| `search-filters/PopularFilters.tsx` | Popular brands/models links |
-| `search-filters/SearchTabs.tsx` | Tab buttons and indicator |
-| `search-filters/SearchFormActions.tsx` | Search, Reset, Save, Log in buttons |
-| `search-filters/VehicleTypeSelector.tsx` | Car / Truck / Moto selector |
-| `search-filters/PopularBodyTypesFilter.tsx` | Body type chips under Basic filters |
-| `app/globals.css` | `.paired-left`, `.paired-right`, `.input-field` padding/truncation |
+| File                                        | Role                                                                                       |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `SearchFilters.tsx`                         | Form container, vehicle type, tabs, conditional render of tab content, actions, save modal |
+| `search-filters/BasicFilters.tsx`           | Basic criteria grid + PopularBodyTypesFilter                                               |
+| `search-filters/AdvancedFilters.tsx`        | Additional criteria grid + labels                                                          |
+| `search-filters/EquipmentFilters.tsx`       | Equipment checkboxes and match mode                                                        |
+| `search-filters/PopularFilters.tsx`         | Popular brands/models links                                                                |
+| `search-filters/SearchTabs.tsx`             | Tab buttons and indicator                                                                  |
+| `search-filters/SearchFormActions.tsx`      | Search, Reset, Save, Log in buttons                                                        |
+| `search-filters/VehicleTypeSelector.tsx`    | Car / Truck / Moto selector                                                                |
+| `search-filters/PopularBodyTypesFilter.tsx` | Body type chips under Basic filters                                                        |
+| `app/globals.css`                           | `.paired-left`, `.paired-right`, `.input-field` padding/truncation                         |
 
 ---
 

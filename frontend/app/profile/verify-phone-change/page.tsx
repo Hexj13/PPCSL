@@ -178,13 +178,13 @@ function VerifyPhoneChangeContent() {
           setError(
             t('profile.verifyPhoneChange.maxAttemptsReachedWithMinutes', {
               minutes: remainingMinutes.toString(),
-            })
+            }),
           );
           setIsVerificationBlocked(true);
           setCode(['', '', '', '', '', '']);
           setLoading(false);
           toast.error(
-            t('profile.verifyPhoneChange.ipBlocked', { minutes: remainingMinutes.toString() })
+            t('profile.verifyPhoneChange.ipBlocked', { minutes: remainingMinutes.toString() }),
           );
           return;
         }
@@ -200,7 +200,7 @@ function VerifyPhoneChangeContent() {
         setError(
           t('profile.verifyPhoneChange.invalidCodeWithAttempts', {
             attempts: newAttempts.toString(),
-          })
+          }),
         );
       }
 
@@ -230,7 +230,7 @@ function VerifyPhoneChangeContent() {
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { message?: string } } };
       toast.error(
-        axiosError.response?.data?.message || t('profile.verifyPhoneChange.resendCodeError')
+        axiosError.response?.data?.message || t('profile.verifyPhoneChange.resendCodeError'),
       );
     }
   };

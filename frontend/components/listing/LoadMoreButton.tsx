@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
 

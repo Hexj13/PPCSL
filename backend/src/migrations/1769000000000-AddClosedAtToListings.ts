@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class AddClosedAtToListings1769000000000 implements MigrationInterface {
   name = 'AddClosedAtToListings1769000000000';

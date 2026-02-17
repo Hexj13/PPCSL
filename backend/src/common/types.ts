@@ -1,4 +1,4 @@
-import * as constants from './constants';
+import type * as constants from './constants';
 
 export type UserType = (typeof constants.userTypes)[number];
 

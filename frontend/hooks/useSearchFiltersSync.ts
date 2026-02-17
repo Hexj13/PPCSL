@@ -1,4 +1,4 @@
-import { useSearchParams } from 'next/navigation';
+import type { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 import type { Brand, VehicleModel } from '@/lib/api';
@@ -139,7 +139,7 @@ export function useSearchFiltersSync({
       const foundBrandIds = brandSlugs
         .map((slug) => {
           const brand = brands.find(
-            (b) => b.name.toLowerCase() === slug || createSlug(b.name) === slug
+            (b) => b.name.toLowerCase() === slug || createSlug(b.name) === slug,
           );
           return brand?.id;
         })
@@ -189,7 +189,7 @@ export function useSearchFiltersSync({
       const foundModelIds = modelSlugs
         .map((slug) => {
           const model = models.find(
-            (m) => m.name.toLowerCase() === slug || createSlug(m.name) === slug
+            (m) => m.name.toLowerCase() === slug || createSlug(m.name) === slug,
           );
           return model && filters.brand_ids.includes(model.brand_id) ? model.id : undefined;
         })

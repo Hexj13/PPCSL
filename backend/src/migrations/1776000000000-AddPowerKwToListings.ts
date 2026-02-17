@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class AddPowerKwToListings1776000000000 implements MigrationInterface {
   name = 'AddPowerKwToListings1776000000000';

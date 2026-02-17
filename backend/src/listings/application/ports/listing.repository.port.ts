@@ -1,4 +1,4 @@
-import { Listing } from '../../entities/listing.entity';
+import type { Listing } from '../../entities/listing.entity';
 
 export const LISTING_REPOSITORY = Symbol('LISTING_REPOSITORY');
 
@@ -44,6 +44,8 @@ export interface SearchCriteria {
   horsepower_gte?: number;
   horsepower_lte?: number;
   is_registered?: boolean;
+  defaultCurrency?: string;
+  priceSortRates?: Record<string, number>;
 }
 
 export interface IListingRepository {

@@ -67,7 +67,7 @@ export async function loadTheme(country: string): Promise<ThemeColors> {
     throw new Error('Module not found');
   } catch {
     console.warn(
-      `Theme file not found for ${country}, using default theme. This is expected in core repository.`
+      `Theme file not found for ${country}, using default theme. This is expected in core repository.`,
     );
     return defaultTheme;
   }
@@ -137,7 +137,7 @@ export function loadThemeSync(country: string): ThemeColors {
     return themeModule.default;
   } catch {
     console.warn(
-      `Theme file not found for ${country}, using default theme. This is expected in core repository.`
+      `Theme file not found for ${country}, using default theme. This is expected in core repository.`,
     );
     return defaultTheme;
   }

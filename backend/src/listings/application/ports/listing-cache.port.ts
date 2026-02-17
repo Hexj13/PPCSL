@@ -1,6 +1,6 @@
-import { Listing } from '../../entities/listing.entity';
+import type { Listing } from '../../entities/listing.entity';
 
-import { SearchCriteria } from './listing.repository.port';
+import type { SearchCriteria } from './listing.repository.port';
 
 export const LISTING_CACHE = Symbol('LISTING_CACHE');
 

@@ -3,7 +3,7 @@
   "compilerOptions": {
     "types": ["node", "jest"]
   },
-  "include": ["src/**/*.ts", "src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.integration.ts"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.integration.ts"],
   "exclude": ["node_modules", "dist"]
 }
 

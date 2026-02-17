@@ -40,13 +40,159 @@ function getTranslationValue(translations: Translations, key: string): string {
   return value;
 }
 
+function withVehicleTypeSuffix(title: string, vehicleTypeLabel: string): string {
+  return vehicleTypeLabel ? `${title} | ${vehicleTypeLabel}` : title;
+}
+
+function getBodyTypesTitle(
+  bodyTypes: string,
+  vehicleTypeLabel: string,
+  translations: Translations,
+): string | null {
+  const bodyTypeValues = bodyTypes
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (bodyTypeValues.length === 0) return null;
+  const bodyTypeLabels = bodyTypeValues
+    .map((bt) => {
+      try {
+        return getTranslationValue(translations, `vehicleOptions.bodyType.${bt}`);
+      } catch {
+        return null;
+      }
+    })
+    .filter((label): label is string => Boolean(label));
+  if (bodyTypeLabels.length === 0) return null;
+  const bodyTypeTitle = bodyTypeLabels.join(', ');
+  return withVehicleTypeSuffix(bodyTypeTitle, vehicleTypeLabel);
+}
+
+async function resolveTitleWithBrandsApi(
+  brandSlugs: string[],
+  modelSlugs: string[],
+  vehicleTypeLabel: string,
+  defaultTitle: string,
+): Promise<string> {
+  const allBrands = await fetchBrands();
+  const foundBrands = brandSlugs
+    .map((slug) => {
+      const bySlug = allBrands.find((b) => createSlug(b.name) === slug);
+      if (bySlug) return bySlug.name;
+      const byName = allBrands.find((b) => b.name.toLowerCase() === slug);
+      return byName?.name;
+    })
+    .filter((name): name is string => name !== undefined);
+
+  if (foundBrands.length === 0) return defaultTitle;
+
+  if (modelSlugs.length > 0 && foundBrands.length > 0) {
+    const brandIds = foundBrands
+      .map((brandName) => allBrands.find((b) => b.name === brandName)?.id)
+      .filter((id): id is string => id !== undefined);
+
+    if (brandIds.length > 0) {
+      const modelsByBrand = await fetchModelsByBrands(brandIds);
+      const parts: string[] = [];
+
+      foundBrands.forEach((brandName) => {
+        const brandId = allBrands.find((b) => b.name === brandName)?.id;
+        const brandParts: string[] = [];
+
+        if (brandId) {
+          const brandModels = modelsByBrand[brandId] || [];
+          modelSlugs.forEach((modelSlug) => {
+            const model = brandModels.find(
+              (m) =>
+                m.name.toLowerCase() === modelSlug ||
+                createSlug(m.name) === modelSlug ||
+                slugMatches(modelSlug, m.name),
+            );
+            if (model) brandParts.push(`${brandName} ${model.name}`);
+          });
+        }
+
+        if (brandParts.length === 0) {
+          const popularModels = POPULAR_MODELS_BY_BRAND[brandName] || [];
+          modelSlugs.forEach((modelSlug) => {
+            const model = popularModels.find(
+              (m) =>
+                m.toLowerCase() === modelSlug ||
+                createSlug(m) === modelSlug ||
+                slugMatches(modelSlug, m),
+            );
+            if (model) brandParts.push(`${brandName} ${model}`);
+          });
+        }
+
+        if (brandParts.length > 0) {
+          parts.push(...brandParts);
+        } else if (foundBrands.length === 1 && modelSlugs.length > 0) {
+          parts.push(`${brandName} ${modelSlugs.map((s) => slugToName(s)).join(', ')}`);
+        } else {
+          parts.push(brandName);
+        }
+      });
+
+      if (parts.length > 0) {
+        return withVehicleTypeSuffix(parts.join(', '), vehicleTypeLabel);
+      }
+    }
+  }
+
+  const brandsTitle = foundBrands.length === 1 ? foundBrands[0] : foundBrands.join(', ');
+  return withVehicleTypeSuffix(brandsTitle, vehicleTypeLabel);
+}
+
+function resolveTitleWithPopularBrands(
+  brandSlugs: string[],
+  modelSlugs: string[],
+  vehicleTypeLabel: string,
+  defaultTitle: string,
+): string {
+  const popularBrands = brandSlugs
+    .map((slug) => POPULAR_BRANDS.find((b) => b.toLowerCase() === slug || createSlug(b) === slug))
+    .filter((name): name is string => name !== undefined);
+
+  if (popularBrands.length === 0) return defaultTitle;
+
+  if (modelSlugs.length > 0 && popularBrands.length > 0) {
+    const foundModels: string[] = [];
+    popularBrands.forEach((brandName) => {
+      const models = POPULAR_MODELS_BY_BRAND[brandName] || [];
+      modelSlugs.forEach((modelSlug) => {
+        const model = models.find(
+          (m) =>
+            m.toLowerCase() === modelSlug ||
+            createSlug(m) === modelSlug ||
+            slugMatches(modelSlug, m),
+        );
+        if (model) foundModels.push(`${brandName} ${model}`);
+      });
+    });
+
+    if (foundModels.length > 0) {
+      return withVehicleTypeSuffix(foundModels.join(', '), vehicleTypeLabel);
+    }
+
+    if (popularBrands.length === 1 && modelSlugs.length > 0) {
+      const slugBasedTitle = `${popularBrands[0]} ${modelSlugs.map((s) => slugToName(s)).join(', ')}`;
+      return withVehicleTypeSuffix(slugBasedTitle, vehicleTypeLabel);
+    }
+  }
+
+  const popularBrandsTitle =
+    popularBrands.length === 1 ? popularBrands[0] : popularBrands.join(', ');
+  return withVehicleTypeSuffix(popularBrandsTitle, vehicleTypeLabel);
+}
+
 async function getTitleFromParams(
   brandParam: string | string[] | undefined,
   modelParam: string | string[] | undefined,
   bodyTypesParam: string | string[] | undefined,
   vehicleTypeParam: string | string[] | undefined,
   defaultTitle: string,
-  translations: Translations
+  translations: Translations,
 ): Promise<string> {
   const brand = typeof brandParam === 'string' ? brandParam : undefined;
   const model = typeof modelParam === 'string' ? modelParam : undefined;
@@ -56,35 +202,13 @@ async function getTitleFromParams(
       ? vehicleTypeParam
       : 'car';
 
-  const getVehicleTypeLabel = (type: string): string => {
-    const key = `listings.vehicleTypeFull.${type}`;
-    const value = getTranslationValue(translations, key);
-    return value === key ? '' : value;
-  };
-
-  const vehicleTypeLabel = getVehicleTypeLabel(vehicleType);
+  const key = `listings.vehicleTypeFull.${vehicleType}`;
+  const vehicleTypeLabel =
+    getTranslationValue(translations, key) === key ? '' : getTranslationValue(translations, key);
 
   if (bodyTypes && !brand && !model) {
-    const bodyTypeValues = bodyTypes
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean);
-    if (bodyTypeValues.length > 0) {
-      const bodyTypeLabels = bodyTypeValues
-        .map((bt) => {
-          try {
-            return getTranslationValue(translations, `vehicleOptions.bodyType.${bt}`);
-          } catch {
-            return null;
-          }
-        })
-        .filter((label): label is string => Boolean(label));
-
-      if (bodyTypeLabels.length > 0) {
-        const bodyTypeTitle = bodyTypeLabels.join(', ');
-        return vehicleTypeLabel ? `${bodyTypeTitle} | ${vehicleTypeLabel}` : bodyTypeTitle;
-      }
-    }
+    const bodyTitle = getBodyTypesTitle(bodyTypes, vehicleTypeLabel, translations);
+    if (bodyTitle) return bodyTitle;
   }
 
   if (!brand && !model) {
@@ -105,125 +229,195 @@ async function getTitleFromParams(
     : [];
 
   try {
-    const allBrands = await fetchBrands();
-    const foundBrands = brandSlugs
-      .map((slug) => {
-        const bySlug = allBrands.find((b) => createSlug(b.name) === slug);
-        if (bySlug) return bySlug.name;
-        const byName = allBrands.find((b) => b.name.toLowerCase() === slug);
-        return byName?.name;
-      })
-      .filter((name): name is string => name !== undefined);
-
-    if (foundBrands.length === 0) {
-      return defaultTitle;
-    }
-
-    if (modelSlugs.length > 0 && foundBrands.length > 0) {
-      const brandIds = foundBrands
-        .map((brandName) => allBrands.find((b) => b.name === brandName)?.id)
-        .filter((id): id is string => id !== undefined);
-
-      if (brandIds.length > 0) {
-        const modelsByBrand = await fetchModelsByBrands(brandIds);
-        const parts: string[] = [];
-
-        foundBrands.forEach((brandName) => {
-          const brandId = allBrands.find((b) => b.name === brandName)?.id;
-          const brandParts: string[] = [];
-
-          if (brandId) {
-            const brandModels = modelsByBrand[brandId] || [];
-            modelSlugs.forEach((modelSlug) => {
-              const model = brandModels.find(
-                (m) =>
-                  m.name.toLowerCase() === modelSlug ||
-                  createSlug(m.name) === modelSlug ||
-                  slugMatches(modelSlug, m.name)
-              );
-              if (model) {
-                brandParts.push(`${brandName} ${model.name}`);
-              }
-            });
-          }
-
-          if (brandParts.length === 0) {
-            const popularModels = POPULAR_MODELS_BY_BRAND[brandName] || [];
-            modelSlugs.forEach((modelSlug) => {
-              const model = popularModels.find(
-                (m) =>
-                  m.toLowerCase() === modelSlug ||
-                  createSlug(m) === modelSlug ||
-                  slugMatches(modelSlug, m)
-              );
-              if (model) {
-                brandParts.push(`${brandName} ${model}`);
-              }
-            });
-          }
-
-          if (brandParts.length > 0) {
-            parts.push(...brandParts);
-          } else if (foundBrands.length === 1 && modelSlugs.length > 0) {
-            const fallbackModels = modelSlugs.map((s) => slugToName(s)).join(', ');
-            parts.push(`${brandName} ${fallbackModels}`);
-          } else {
-            parts.push(brandName);
-          }
-        });
-
-        if (parts.length > 0) {
-          const modelsTitle = parts.join(', ');
-          return vehicleTypeLabel ? `${modelsTitle} | ${vehicleTypeLabel}` : modelsTitle;
-        }
-      }
-    }
-
-    const brandsTitle = foundBrands.length === 1 ? foundBrands[0] : foundBrands.join(', ');
-    return vehicleTypeLabel ? `${brandsTitle} | ${vehicleTypeLabel}` : brandsTitle;
+    return await resolveTitleWithBrandsApi(brandSlugs, modelSlugs, vehicleTypeLabel, defaultTitle);
   } catch {
-    const popularBrands = brandSlugs
-      .map((slug) => {
-        return POPULAR_BRANDS.find((b) => b.toLowerCase() === slug || createSlug(b) === slug);
-      })
-      .filter((name): name is string => name !== undefined);
-
-    if (popularBrands.length === 0) {
-      return defaultTitle;
-    }
-
-    if (modelSlugs.length > 0 && popularBrands.length > 0) {
-      const foundModels: string[] = [];
-      popularBrands.forEach((brandName) => {
-        const models = POPULAR_MODELS_BY_BRAND[brandName] || [];
-        modelSlugs.forEach((modelSlug) => {
-          const model = models.find(
-            (m) =>
-              m.toLowerCase() === modelSlug ||
-              createSlug(m) === modelSlug ||
-              slugMatches(modelSlug, m)
-          );
-          if (model) {
-            foundModels.push(`${brandName} ${model}`);
-          }
-        });
-      });
-
-      if (foundModels.length > 0) {
-        const modelsTitle = foundModels.join(', ');
-        return vehicleTypeLabel ? `${modelsTitle} | ${vehicleTypeLabel}` : modelsTitle;
-      }
-
-      if (popularBrands.length === 1 && modelSlugs.length > 0) {
-        const slugBasedTitle = `${popularBrands[0]} ${modelSlugs.map((s) => slugToName(s)).join(', ')}`;
-        return vehicleTypeLabel ? `${slugBasedTitle} | ${vehicleTypeLabel}` : slugBasedTitle;
-      }
-    }
-
-    const popularBrandsTitle =
-      popularBrands.length === 1 ? popularBrands[0] : popularBrands.join(', ');
-    return vehicleTypeLabel ? `${popularBrandsTitle} | ${vehicleTypeLabel}` : popularBrandsTitle;
+    return resolveTitleWithPopularBrands(brandSlugs, modelSlugs, vehicleTypeLabel, defaultTitle);
   }
+}
+
+const INDEXABLE_PARAM_KEYS = new Set([
+  'brand',
+  'model',
+  'page',
+  'body_types',
+  'vehicleType',
+  'utm_source',
+  'utm_medium',
+  'utm_campaign',
+  'utm_content',
+  'utm_term',
+  'gclid',
+  'gclsrc',
+  'fbclid',
+  'ref',
+  'mc_cid',
+  'mc_eid',
+]);
+
+function isIndexableVehicleType(value: string | string[] | undefined): value is string {
+  return typeof value === 'string' && ['car', 'truck', 'moto'].includes(value);
+}
+
+function hasNonIndexableSearchParams(
+  params: Record<string, string | string[] | undefined>,
+): boolean {
+  return Object.entries(params).some(([key, value]) => {
+    if (value === undefined) return false;
+    if (!INDEXABLE_PARAM_KEYS.has(key)) return true;
+    if (key === 'vehicleType') return !isIndexableVehicleType(value);
+    return false;
+  });
+}
+
+type SearchMetadataApi = Awaited<ReturnType<typeof fetchSearchMetadata>>;
+
+function getHomeMetaDescription(
+  metadataFromApi: SearchMetadataApi,
+  title: string,
+  baseTitle: string,
+  brandParam: string | string[] | undefined,
+  modelParam: string | string[] | undefined,
+  t: Translations,
+): string {
+  if (metadataFromApi.description) return metadataFromApi.description;
+  if (title === baseTitle) return t.metadata.site.homePageDescription;
+  const brandParamValue = typeof brandParam === 'string' ? brandParam : null;
+  const modelParamValue = typeof modelParam === 'string' ? modelParam : null;
+  const apiBrandName = metadataFromApi.brandName;
+  const apiModelName =
+    metadataFromApi.modelNames && metadataFromApi.modelNames.length === 1
+      ? metadataFromApi.modelNames[0]
+      : undefined;
+  if (apiBrandName && apiModelName) {
+    return t.metadata.site.homePageDescriptionWithBrandModel
+      .replaceAll('{brand}', apiBrandName)
+      .replaceAll('{model}', apiModelName);
+  }
+  if (apiBrandName) {
+    return t.metadata.site.homePageDescriptionWithBrand.replaceAll('{brand}', apiBrandName);
+  }
+  if (brandParamValue?.includes(',')) return t.metadata.site.homePageDescription;
+  if (modelParamValue && brandParamValue) {
+    const brandName =
+      POPULAR_BRANDS.find((b) => createSlug(b) === brandParamValue.toLowerCase()) ||
+      brandParamValue;
+    const models = POPULAR_MODELS_BY_BRAND[brandName] || [];
+    const modelSlugFallback = modelParamValue.split(',')[0]?.trim() ?? modelParamValue;
+    const modelName =
+      models.find((m) => createSlug(m) === modelSlugFallback.toLowerCase()) ||
+      slugToName(modelSlugFallback);
+    return t.metadata.site.homePageDescriptionWithBrandModel
+      .replaceAll('{brand}', brandName)
+      .replaceAll('{model}', modelName);
+  }
+  const brandName = brandParamValue
+    ? POPULAR_BRANDS.find((b) => createSlug(b) === brandParamValue.toLowerCase()) || brandParamValue
+    : title;
+  return t.metadata.site.homePageDescriptionWithBrand.replaceAll('{brand}', brandName);
+}
+
+function buildHomeMetaUrls(
+  params: Record<string, string | string[] | undefined>,
+  hasNonIndexableParams: boolean,
+  safePage: number,
+): { urlSuffix: string; canonicalUrl: string; canonicalParams: URLSearchParams } {
+  const brandParam = params.brand;
+  const modelParam = params.model;
+  const vehicleTypeParam = params.vehicleType;
+  const bodyTypesParam = params.body_types;
+  const queryParams = new URLSearchParams();
+  if (brandParam && typeof brandParam === 'string') queryParams.set('brand', brandParam);
+  if (modelParam && typeof modelParam === 'string') queryParams.set('model', modelParam);
+  if (isIndexableVehicleType(vehicleTypeParam)) queryParams.set('vehicleType', vehicleTypeParam);
+  if (bodyTypesParam && typeof bodyTypesParam === 'string') {
+    queryParams.set('body_types', bodyTypesParam);
+  }
+  if (!hasNonIndexableParams && safePage > 1) queryParams.set('page', String(safePage));
+  const queryString = queryParams.toString();
+  const urlSuffix = queryString ? `?${queryString}` : '';
+  const canonicalParams = new URLSearchParams();
+  if (brandParam && typeof brandParam === 'string') canonicalParams.set('brand', brandParam);
+  if (modelParam && typeof modelParam === 'string') canonicalParams.set('model', modelParam);
+  if (isIndexableVehicleType(vehicleTypeParam))
+    canonicalParams.set('vehicleType', vehicleTypeParam);
+  if (bodyTypesParam && typeof bodyTypesParam === 'string') {
+    canonicalParams.set('body_types', bodyTypesParam);
+  }
+  const canonicalQuery = canonicalParams.toString();
+  const canonicalUrl = `${siteUrl}/${canonicalQuery ? `?${canonicalQuery}` : ''}`;
+  return { urlSuffix, canonicalUrl, canonicalParams };
+}
+
+async function getHomePrevNextUrls(
+  hasNonIndexableParams: boolean,
+  safePage: number,
+  canonicalParams: URLSearchParams,
+  params: Record<string, string | string[] | undefined>,
+): Promise<{ prevUrl?: string; nextUrl?: string }> {
+  let prevUrl: string | undefined;
+  let nextUrl: string | undefined;
+  if (!hasNonIndexableParams && safePage > 1) {
+    const prevParams = new URLSearchParams(canonicalParams.toString());
+    if (safePage - 1 > 1) prevParams.set('page', String(safePage - 1));
+    const prevQuery = prevParams.toString();
+    prevUrl = `${siteUrl}/${prevQuery ? `?${prevQuery}` : ''}`;
+  }
+  if (!hasNonIndexableParams) {
+    const listings = await getListings(params);
+    const totalPages = listings?.meta?.totalPages ?? 0;
+    if (typeof totalPages === 'number' && totalPages > 0 && safePage < totalPages) {
+      const nextParams = new URLSearchParams(canonicalParams.toString());
+      nextParams.set('page', String(safePage + 1));
+      const nextQuery = nextParams.toString();
+      nextUrl = `${siteUrl}/${nextQuery ? `?${nextQuery}` : ''}`;
+    }
+  }
+  return { prevUrl, nextUrl };
+}
+
+function buildHomeMetadata(
+  fullTitle: string,
+  description: string,
+  title: string,
+  urlSuffix: string,
+  canonicalUrl: string,
+  hasNonIndexableParams: boolean,
+  prevUrl: string | undefined,
+  nextUrl: string | undefined,
+  t: Translations,
+): Metadata {
+  return {
+    title: fullTitle,
+    description,
+    keywords: [title, ...t.metadata.site.keywords],
+    robots: hasNonIndexableParams
+      ? {
+          index: false,
+          follow: false,
+          googleBot: { index: false, follow: false },
+        }
+      : undefined,
+    openGraph: {
+      type: 'website',
+      url: `${siteUrl}/${urlSuffix}`,
+      title: fullTitle,
+      description,
+      images: [{ url: `${siteUrl}/og-image.jpg`, width: 1200, height: 630, alt: siteConfig.name }],
+      siteName: siteConfig.name,
+      locale: siteConfig.locale,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: fullTitle,
+      description,
+      images: [`${siteUrl}/og-image.jpg`],
+    },
+    alternates: {
+      canonical: hasNonIndexableParams ? canonicalUrl : `${siteUrl}/${urlSuffix}`,
+      ...(prevUrl ? { prev: prevUrl } : {}),
+      ...(nextUrl ? { next: nextUrl } : {}),
+    },
+  };
 }
 
 export async function generateMetadata({
@@ -241,11 +435,10 @@ export async function generateMetadata({
   const pageParam = params.page;
   const baseTitle = t.metadata.site.defaultTitle;
 
-  const vehicleType = (
-    typeof vehicleTypeParam === 'string' && ['car', 'truck', 'moto'].includes(vehicleTypeParam)
-      ? vehicleTypeParam
-      : 'car'
-  ) as 'car' | 'truck' | 'moto';
+  const vehicleType = (isIndexableVehicleType(vehicleTypeParam) ? vehicleTypeParam : 'car') as
+    | 'car'
+    | 'truck'
+    | 'moto';
   const metadataFromApi = await fetchSearchMetadata({
     brand: typeof brandParam === 'string' ? brandParam : undefined,
     model: typeof modelParam === 'string' ? modelParam : undefined,
@@ -259,198 +452,45 @@ export async function generateMetadata({
       bodyTypesParam,
       vehicleTypeParam,
       baseTitle,
-      t
+      t,
     ));
   const fullTitle = title === baseTitle ? title : `${title} | ${baseTitle}`;
 
   const page =
     typeof pageParam === 'string' && pageParam.trim() !== '' ? parseInt(pageParam, 10) : 1;
   const safePage = Number.isFinite(page) && page > 0 ? page : 1;
+  const hasNonIndexableParams = hasNonIndexableSearchParams(params);
 
-  const isValidVehicleType = (value: string | string[] | undefined): value is string => {
-    return typeof value === 'string' && ['car', 'truck', 'moto'].includes(value);
-  };
-
-  const indexableParamKeys = new Set([
-    'brand',
-    'model',
-    'page',
-    'body_types',
-    'vehicleType',
-    'utm_source',
-    'utm_medium',
-    'utm_campaign',
-    'utm_content',
-    'utm_term',
-    'gclid',
-    'gclsrc',
-    'fbclid',
-    'ref',
-    'mc_cid',
-    'mc_eid',
-  ]);
-
-  const hasNonIndexableParams = Object.entries(params).some(([key, value]) => {
-    if (value === undefined) return false;
-    if (indexableParamKeys.has(key)) {
-      if (key === 'vehicleType') return !isValidVehicleType(value);
-      return false;
-    }
-    return true;
-  });
-
-  let description: string;
-  if (metadataFromApi.description) {
-    description = metadataFromApi.description;
-  } else if (title === baseTitle) {
-    description = t.metadata.site.homePageDescription;
-  } else {
-    const brandParamValue = typeof brandParam === 'string' ? brandParam : null;
-    const modelParamValue = typeof modelParam === 'string' ? modelParam : null;
-    const apiBrandName = metadataFromApi.brandName;
-    const apiModelName =
-      metadataFromApi.modelNames && metadataFromApi.modelNames.length === 1
-        ? metadataFromApi.modelNames[0]
-        : undefined;
-
-    if (apiBrandName && apiModelName) {
-      description = t.metadata.site.homePageDescriptionWithBrandModel
-        .replaceAll('{brand}', apiBrandName)
-        .replaceAll('{model}', apiModelName);
-    } else if (apiBrandName) {
-      description = t.metadata.site.homePageDescriptionWithBrand.replaceAll(
-        '{brand}',
-        apiBrandName
-      );
-    } else if (brandParamValue && brandParamValue.includes(',')) {
-      description = t.metadata.site.homePageDescription;
-    } else if (modelParamValue && brandParamValue) {
-      const brandName =
-        POPULAR_BRANDS.find((b) => createSlug(b) === brandParamValue.toLowerCase()) ||
-        brandParamValue;
-      const models = POPULAR_MODELS_BY_BRAND[brandName] || [];
-      const modelSlugFallback = modelParamValue.split(',')[0]?.trim() ?? modelParamValue;
-      const modelName =
-        models.find((m) => createSlug(m) === modelSlugFallback.toLowerCase()) ||
-        slugToName(modelSlugFallback);
-
-      description = t.metadata.site.homePageDescriptionWithBrandModel
-        .replaceAll('{brand}', brandName)
-        .replaceAll('{model}', modelName);
-    } else {
-      const brandName = brandParamValue
-        ? POPULAR_BRANDS.find((b) => createSlug(b) === brandParamValue.toLowerCase()) ||
-          brandParamValue
-        : title;
-
-      description = t.metadata.site.homePageDescriptionWithBrand.replaceAll('{brand}', brandName);
-    }
-  }
-
-  const queryParams = new URLSearchParams();
-  if (brandParam && typeof brandParam === 'string') {
-    queryParams.set('brand', brandParam);
-  }
-  if (modelParam && typeof modelParam === 'string') {
-    queryParams.set('model', modelParam);
-  }
-  if (
-    vehicleTypeParam &&
-    typeof vehicleTypeParam === 'string' &&
-    ['car', 'truck', 'moto'].includes(vehicleTypeParam)
-  ) {
-    queryParams.set('vehicleType', vehicleTypeParam);
-  }
-  if (bodyTypesParam && typeof bodyTypesParam === 'string') {
-    queryParams.set('body_types', bodyTypesParam);
-  }
-  if (!hasNonIndexableParams && safePage > 1) {
-    queryParams.set('page', String(safePage));
-  }
-  const queryString = queryParams.toString();
-  const urlSuffix = queryString ? `?${queryString}` : '';
-
-  const canonicalParams = new URLSearchParams();
-  if (brandParam && typeof brandParam === 'string') canonicalParams.set('brand', brandParam);
-  if (modelParam && typeof modelParam === 'string') canonicalParams.set('model', modelParam);
-  if (
-    vehicleTypeParam &&
-    typeof vehicleTypeParam === 'string' &&
-    ['car', 'truck', 'moto'].includes(vehicleTypeParam)
-  ) {
-    canonicalParams.set('vehicleType', vehicleTypeParam);
-  }
-  if (bodyTypesParam && typeof bodyTypesParam === 'string') {
-    canonicalParams.set('body_types', bodyTypesParam);
-  }
-  const canonicalQuery = canonicalParams.toString();
-  const canonicalUrl = `${siteUrl}/${canonicalQuery ? `?${canonicalQuery}` : ''}`;
-
-  let prevUrl: string | undefined;
-  let nextUrl: string | undefined;
-
-  if (!hasNonIndexableParams && safePage > 1) {
-    const prevParams = new URLSearchParams(canonicalParams.toString());
-    if (safePage - 1 > 1) {
-      prevParams.set('page', String(safePage - 1));
-    }
-    const prevQuery = prevParams.toString();
-    prevUrl = `${siteUrl}/${prevQuery ? `?${prevQuery}` : ''}`;
-  }
-
-  if (!hasNonIndexableParams) {
-    const listings = await getListings(params);
-    const totalPages = listings?.meta?.totalPages ?? 0;
-    if (typeof totalPages === 'number' && totalPages > 0 && safePage < totalPages) {
-      const nextParams = new URLSearchParams(canonicalParams.toString());
-      nextParams.set('page', String(safePage + 1));
-      const nextQuery = nextParams.toString();
-      nextUrl = `${siteUrl}/${nextQuery ? `?${nextQuery}` : ''}`;
-    }
-  }
-
-  return {
-    title: fullTitle,
+  const description = getHomeMetaDescription(
+    metadataFromApi,
+    title,
+    baseTitle,
+    brandParam,
+    modelParam,
+    t,
+  );
+  const { urlSuffix, canonicalUrl, canonicalParams } = buildHomeMetaUrls(
+    params,
+    hasNonIndexableParams,
+    safePage,
+  );
+  const { prevUrl, nextUrl } = await getHomePrevNextUrls(
+    hasNonIndexableParams,
+    safePage,
+    canonicalParams,
+    params,
+  );
+  return buildHomeMetadata(
+    fullTitle,
     description,
-    keywords: [title, ...t.metadata.site.keywords],
-    robots: hasNonIndexableParams
-      ? {
-          index: false,
-          follow: false,
-          googleBot: {
-            index: false,
-            follow: false,
-          },
-        }
-      : undefined,
-    openGraph: {
-      type: 'website',
-      url: `${siteUrl}/${urlSuffix}`,
-      title: fullTitle,
-      description,
-      images: [
-        {
-          url: `${siteUrl}/og-image.jpg`,
-          width: 1200,
-          height: 630,
-          alt: siteConfig.name,
-        },
-      ],
-      siteName: siteConfig.name,
-      locale: siteConfig.locale,
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: fullTitle,
-      description,
-      images: [`${siteUrl}/og-image.jpg`],
-    },
-    alternates: {
-      canonical: hasNonIndexableParams ? canonicalUrl : `${siteUrl}/${urlSuffix}`,
-      ...(prevUrl ? { prev: prevUrl } : {}),
-      ...(nextUrl ? { next: nextUrl } : {}),
-    },
-  };
+    title,
+    urlSuffix,
+    canonicalUrl,
+    hasNonIndexableParams,
+    prevUrl,
+    nextUrl,
+    t,
+  );
 }
 
 function SearchFiltersWrapper() {

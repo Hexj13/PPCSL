@@ -4,6 +4,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { User } from '../../users/entities/user.entity';
 import { UsersService } from '../../users/application/users.service';
 
+import type { AuthenticatedRequest } from '../../common/express-augmentation';
+
 import { AuthController } from './auth.controller';
 import { AuthService } from '../application/auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -120,7 +122,10 @@ describe('AuthController', () => {
       ipBlockService.getClientIp.mockReturnValue('127.0.0.1');
       authService.register.mockResolvedValue(mockUser as unknown as Omit<User, 'password'>);
 
-      const result = await controller.register(mockRequest, registerDto);
+      const result = await controller.register(
+        mockRequest as unknown as AuthenticatedRequest,
+        registerDto,
+      );
 
       expect(ipBlockService.getClientIp).toHaveBeenCalledWith(mockRequest);
       expect(authService.register).toHaveBeenCalledWith(registerDto, '127.0.0.1');
@@ -157,7 +162,7 @@ describe('AuthController', () => {
       authService.login.mockResolvedValue(mockResponse);
       ipBlockService.resetAttempts.mockReturnValue(undefined);
 
-      const result = await controller.login(req, loginDto);
+      const result = await controller.login(req as unknown as AuthenticatedRequest, loginDto);
 
       expect(ipBlockService.getClientIp).toHaveBeenCalledWith(req);
       expect(authService.login).toHaveBeenCalledWith(loginDto, '127.0.0.1');
@@ -173,7 +178,9 @@ describe('AuthController', () => {
       authService.login.mockRejectedValue(new BadRequestException('Invalid credentials'));
       ipBlockService.recordFailedAttempt.mockReturnValue(undefined);
 
-      await expect(controller.login(req, loginDto)).rejects.toThrow(BadRequestException);
+      await expect(
+        controller.login(req as unknown as AuthenticatedRequest, loginDto),
+      ).rejects.toThrow(BadRequestException);
       expect(ipBlockService.getClientIp).toHaveBeenCalledWith(req);
       expect(ipBlockService.recordFailedAttempt).toHaveBeenCalledWith('127.0.0.1');
     });
@@ -190,7 +197,7 @@ describe('AuthController', () => {
         boardSlug: _bs ?? null,
       } as Awaited<ReturnType<AuthService['getUserProfile']>>);
 
-      const result = await controller.getProfile(req);
+      const result = await controller.getProfile(req as unknown as AuthenticatedRequest);
 
       expect(authService.getUserProfile).toHaveBeenCalledWith('user-1');
       expect(result).toEqual({ ...profile, boardSlug: _bs ?? null });
@@ -227,7 +234,7 @@ describe('AuthController', () => {
 
       authService.verifyPhone.mockResolvedValue(verifiedUser);
 
-      const result = await controller.verifyPhone(req);
+      const result = await controller.verifyPhone(req as unknown as AuthenticatedRequest);
 
       expect(authService.verifyPhone).toHaveBeenCalledWith('user-1');
       expect(result).toEqual(verifiedUser);
@@ -292,7 +299,10 @@ describe('AuthController', () => {
       smsService.verifyCode.mockResolvedValue(true);
       ipBlockService.resetAttempts.mockReturnValue(undefined);
 
-      const result = await controller.verifySms(req, verifySmsDto);
+      const result = await controller.verifySms(
+        req as unknown as AuthenticatedRequest,
+        verifySmsDto,
+      );
 
       expect(ipBlockService.getClientIp).toHaveBeenCalledWith(req);
       expect(smsService.verifyCode).toHaveBeenCalledWith('+37370123456', '123456');
@@ -308,7 +318,9 @@ describe('AuthController', () => {
       smsService.verifyCode.mockResolvedValue(false);
       ipBlockService.recordFailedAttempt.mockReturnValue(undefined);
 
-      await expect(controller.verifySms(req, verifySmsDto)).rejects.toThrow(BadRequestException);
+      await expect(
+        controller.verifySms(req as unknown as AuthenticatedRequest, verifySmsDto),
+      ).rejects.toThrow(BadRequestException);
       expect(ipBlockService.recordFailedAttempt).toHaveBeenCalledWith('127.0.0.1');
     });
   });
@@ -373,7 +385,10 @@ describe('AuthController', () => {
       authService.requestPasswordReset.mockResolvedValue(undefined);
       ipBlockService.resetAttempts.mockReturnValue(undefined);
 
-      const result = await controller.requestPasswordReset(req, requestPasswordResetDto);
+      const result = await controller.requestPasswordReset(
+        req as unknown as AuthenticatedRequest,
+        requestPasswordResetDto,
+      );
 
       expect(ipBlockService.getClientIp).toHaveBeenCalledWith(req);
       expect(authService.requestPasswordReset).toHaveBeenCalledWith(requestPasswordResetDto);
@@ -391,9 +406,12 @@ describe('AuthController', () => {
       authService.requestPasswordReset.mockRejectedValue(new BadRequestException('User not found'));
       ipBlockService.recordFailedAttempt.mockReturnValue(undefined);
 
-      await expect(controller.requestPasswordReset(req, requestPasswordResetDto)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        controller.requestPasswordReset(
+          req as unknown as AuthenticatedRequest,
+          requestPasswordResetDto,
+        ),
+      ).rejects.toThrow(BadRequestException);
       expect(ipBlockService.recordFailedAttempt).toHaveBeenCalledWith('127.0.0.1');
     });
   });
@@ -410,7 +428,10 @@ describe('AuthController', () => {
       authService.verifyResetCode.mockResolvedValue({ success: true });
       ipBlockService.resetAttempts.mockReturnValue(undefined);
 
-      const result = await controller.verifyResetCode(req, verifyResetCodeDto);
+      const result = await controller.verifyResetCode(
+        req as unknown as AuthenticatedRequest,
+        verifyResetCodeDto,
+      );
 
       expect(ipBlockService.getClientIp).toHaveBeenCalledWith(req);
       expect(authService.verifyResetCode).toHaveBeenCalledWith(verifyResetCodeDto);
@@ -429,9 +450,9 @@ describe('AuthController', () => {
       authService.verifyResetCode.mockResolvedValue({ success: false });
       ipBlockService.recordFailedAttempt.mockReturnValue(undefined);
 
-      await expect(controller.verifyResetCode(req, verifyResetCodeDto)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        controller.verifyResetCode(req as unknown as AuthenticatedRequest, verifyResetCodeDto),
+      ).rejects.toThrow(BadRequestException);
       expect(ipBlockService.recordFailedAttempt).toHaveBeenCalledWith('127.0.0.1');
     });
   });
@@ -472,7 +493,10 @@ describe('AuthController', () => {
       });
       ipBlockService.resetAttempts.mockReturnValue(undefined);
 
-      const result = await controller.resetPassword(req, resetPasswordDto);
+      const result = await controller.resetPassword(
+        req as unknown as AuthenticatedRequest,
+        resetPasswordDto,
+      );
 
       expect(ipBlockService.getClientIp).toHaveBeenCalledWith(req);
       expect(authService.resetPassword).toHaveBeenCalledWith(resetPasswordDto);
@@ -505,9 +529,9 @@ describe('AuthController', () => {
       authService.resetPassword.mockRejectedValue(new BadRequestException('Invalid code'));
       ipBlockService.recordFailedAttempt.mockReturnValue(undefined);
 
-      await expect(controller.resetPassword(req, resetPasswordDto)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        controller.resetPassword(req as unknown as AuthenticatedRequest, resetPasswordDto),
+      ).rejects.toThrow(BadRequestException);
       expect(ipBlockService.recordFailedAttempt).toHaveBeenCalledWith('127.0.0.1');
     });
   });
@@ -545,7 +569,10 @@ describe('AuthController', () => {
         favorites: [],
       });
 
-      const result = await controller.updateProfile(req, updateProfileDto);
+      const result = await controller.updateProfile(
+        req as unknown as AuthenticatedRequest,
+        updateProfileDto,
+      );
 
       expect(authService.updateProfile).toHaveBeenCalledWith(mockUser.id, updateProfileDto);
       expect(result).toHaveProperty('firstName', 'Updated');
@@ -559,7 +586,10 @@ describe('AuthController', () => {
 
       authService.requestPhoneChange.mockResolvedValue(undefined);
 
-      const result = await controller.requestPhoneChange(req, changePhoneRequestDto);
+      const result = await controller.requestPhoneChange(
+        req as unknown as AuthenticatedRequest,
+        changePhoneRequestDto,
+      );
 
       expect(authService.requestPhoneChange).toHaveBeenCalledWith(
         mockUser.id,
@@ -602,7 +632,10 @@ describe('AuthController', () => {
         favorites: [],
       });
 
-      const result = await controller.verifyPhoneChange(req, changePhoneVerifyDto);
+      const result = await controller.verifyPhoneChange(
+        req as unknown as AuthenticatedRequest,
+        changePhoneVerifyDto,
+      );
 
       expect(authService.verifyPhoneChange).toHaveBeenCalledWith(mockUser.id, changePhoneVerifyDto);
       expect(result).toHaveProperty('phone', '+37370987654');

@@ -78,7 +78,7 @@ function MultiSelectDropdownComponent({
   const tempValuesSet = useMemo(() => new Set(tempValues), [tempValues]);
   const selectedOptions = useMemo(
     () => options.filter((opt) => valuesSet.has(opt.value)),
-    [options, valuesSet]
+    [options, valuesSet],
   );
   const displayText = useMemo(
     () =>
@@ -87,17 +87,17 @@ function MultiSelectDropdownComponent({
         : selectedOptions.length === 1
           ? selectedOptions[0].label
           : `Избрани ${selectedOptions.length}`,
-    [selectedOptions, placeholder]
+    [selectedOptions, placeholder],
   );
 
   const filteredOptions = useMemo(
     () =>
       searchable && deferredSearchQuery
         ? options.filter((option) =>
-            option.label.toLowerCase().includes(deferredSearchQuery.toLowerCase())
+            option.label.toLowerCase().includes(deferredSearchQuery.toLowerCase()),
           )
         : options,
-    [options, searchable, deferredSearchQuery]
+    [options, searchable, deferredSearchQuery],
   );
 
   const handleToggle = useCallback(
@@ -134,7 +134,7 @@ function MultiSelectDropdownComponent({
         }
       }
     },
-    [tempValues, values, options, showActionButtons, onChange]
+    [tempValues, values, options, showActionButtons, onChange],
   );
 
   const handleInputChange = useCallback(
@@ -144,7 +144,7 @@ function MultiSelectDropdownComponent({
         setIsOpen(true);
       }
     },
-    [isOpen]
+    [isOpen],
   );
 
   const handleInputFocus = useCallback(() => {

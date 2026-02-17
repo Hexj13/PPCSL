@@ -1,4 +1,4 @@
-import { HTMLAttributes } from 'react';
+import type { HTMLAttributes } from 'react';
 
 export interface SpinnerProps extends HTMLAttributes<HTMLDivElement> {
   size?: 'sm' | 'md' | 'lg';
@@ -30,6 +30,7 @@ export function Spinner({
   return (
     <div className={`${containerClasses} ${className}`} {...props}>
       <div
+        data-testid="spinner"
         className={`inline-block animate-spin rounded-full border-b-2 border-primary-600 ${sizeClasses[size]}`}
       />
       {text && (

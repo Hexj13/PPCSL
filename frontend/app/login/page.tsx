@@ -18,6 +18,112 @@ const isValidPhone = (value: string): boolean => {
   return /^\+\d{1,4}\d{6,15}$/.test(value);
 };
 
+async function processPendingFavorites(userId: string): Promise<void> {
+  const pending = JSON.parse(localStorage.getItem('pendingFavorites') || '[]');
+  if (pending.length === 0) return;
+  const validFavorites: string[] = [];
+  for (const listingId of pending) {
+    try {
+      const listingRes = await listingsApi.getOne(listingId);
+      const listing = listingRes.data;
+      if (listing.user && listing.user.id !== userId) validFavorites.push(listingId);
+    } catch {
+      // skip
+    }
+  }
+  if (validFavorites.length > 0) {
+    await Promise.all(validFavorites.map((id: string) => favoritesApi.add(id).catch(() => {})));
+  }
+  localStorage.removeItem('pendingFavorites');
+}
+
+async function processPendingComparisons(): Promise<void> {
+  const pending = JSON.parse(localStorage.getItem('pendingComparisons') || '[]');
+  if (pending.length === 0) return;
+  const { useComparisonStore } = await import('@/lib/store');
+  const store = useComparisonStore.getState();
+  for (const listingId of pending) {
+    try {
+      await listingsApi.getOne(listingId);
+      store.add(listingId);
+    } catch {
+      // ignore
+    }
+  }
+  if (store.comparisons.length > 0 && typeof window !== 'undefined') {
+    const storageData = { state: { comparisons: store.comparisons }, version: 0 };
+    const str = JSON.stringify(storageData);
+    localStorage.setItem('comparison-storage', str);
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => {
+        localStorage.setItem('comparison-storage', str);
+        requestAnimationFrame(() => {
+          localStorage.setItem('comparison-storage', str);
+          setTimeout(resolve, 100);
+        });
+      });
+    });
+  }
+  localStorage.removeItem('pendingComparisons');
+}
+
+async function processPendingSavedFilter(
+  pendingSavedFilter: string | null,
+  t: (k: string) => string,
+  loginMethod: string,
+  filledFields: Record<string, boolean>,
+  savedReturnUrl: string | null,
+): Promise<boolean> {
+  if (!pendingSavedFilter) return false;
+  try {
+    const filters = JSON.parse(pendingSavedFilter);
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const filterName = `${t('common.filter')} ${day}.${month}.${year} ${hours}:${minutes}`;
+    await savedFiltersApi.create(filterName, filters);
+    localStorage.removeItem('pendingSavedFilter');
+    localStorage.removeItem('returnUrl');
+    analytics.login(loginMethod);
+    analytics.formSubmit('login', true, filledFields);
+    toast.success(t('login.filterSavedSuccess'));
+    if (typeof window !== 'undefined' && window.location) {
+      window.location.href = '/favorites?tab=filters';
+    }
+    return true;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    const errorMessage = err?.response?.data?.message ?? t('login.filterSaveError');
+    toast.error(errorMessage);
+    localStorage.removeItem('pendingSavedFilter');
+    const isLimitError = errorMessage === t('login.filterLimitError');
+    const url = isLimitError
+      ? '/favorites?tab=filters'
+      : savedReturnUrl || localStorage.getItem('returnUrl') || '/';
+    if (isLimitError) localStorage.removeItem('returnUrl');
+    analytics.login(loginMethod);
+    analytics.formSubmit('login', true, filledFields);
+    if (typeof window !== 'undefined' && window.location) window.location.href = url;
+    return true;
+  }
+}
+
+function applyLoginSuccessRedirect(
+  returnUrl: string,
+  loginMethod: string,
+  filledFields: Record<string, boolean>,
+): void {
+  localStorage.removeItem('returnUrl');
+  analytics.login(loginMethod);
+  analytics.formSubmit('login', true, filledFields);
+  if (typeof window !== 'undefined' && (window as Window).location) {
+    (window as Window).location.href = returnUrl;
+  }
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const { setAuth, user, isInitialized } = useAuthStore();
@@ -103,179 +209,39 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!validateForm()) {
       analytics.formSubmit('login', false);
       return;
     }
-
     setLoading(true);
-
     const loginMethod = isValidEmail(formData.login) ? 'email' : 'phone';
     const filledFields: Record<string, boolean> = {
       login: !!formData.login,
       password: !!formData.password,
     };
-
     try {
       const res = await authApi.login(formData);
-
-      const savedReturnUrl =
-        typeof window !== 'undefined' ? localStorage.getItem('returnUrl') : null;
-
       setIsRedirecting(true);
       setAuth(res.data.user, res.data.access_token, res.data.refresh_token);
-
-      if (typeof window !== 'undefined') {
-        const pendingFavorites = JSON.parse(localStorage.getItem('pendingFavorites') || '[]');
-        if (pendingFavorites.length > 0) {
-          const validFavorites: string[] = [];
-          for (const listingId of pendingFavorites) {
-            try {
-              const listingRes = await listingsApi.getOne(listingId);
-              const listing = listingRes.data;
-              if (listing.user && listing.user.id !== res.data.user.id) {
-                validFavorites.push(listingId);
-              }
-            } catch {
-              // Skip if listing not found or error occurred
-            }
-          }
-          if (validFavorites.length > 0) {
-            const addPromises = validFavorites.map((listingId: string) =>
-              favoritesApi.add(listingId).catch(() => {})
-            );
-            await Promise.all(addPromises);
-          }
-          localStorage.removeItem('pendingFavorites');
-        }
-
-        const pendingComparisons = JSON.parse(localStorage.getItem('pendingComparisons') || '[]');
-        if (pendingComparisons.length > 0) {
-          const { useComparisonStore } = await import('@/lib/store');
-          const comparisonStore = useComparisonStore.getState();
-
-          for (const listingId of pendingComparisons) {
-            try {
-              await listingsApi.getOne(listingId);
-              comparisonStore.add(listingId);
-            } catch {
-              // Ignore errors
-            }
-          }
-
-          if (typeof window !== 'undefined' && comparisonStore.comparisons.length > 0) {
-            const storageData = {
-              state: { comparisons: comparisonStore.comparisons },
-              version: 0,
-            };
-            localStorage.setItem('comparison-storage', JSON.stringify(storageData));
-            const verify = localStorage.getItem('comparison-storage');
-            if (!verify || verify !== JSON.stringify(storageData)) {
-              localStorage.setItem('comparison-storage', JSON.stringify(storageData));
-            }
-            await new Promise((resolve) => {
-              requestAnimationFrame(() => {
-                localStorage.setItem('comparison-storage', JSON.stringify(storageData));
-                requestAnimationFrame(() => {
-                  localStorage.setItem('comparison-storage', JSON.stringify(storageData));
-                  setTimeout(resolve, 100);
-                });
-              });
-            });
-          }
-
-          localStorage.removeItem('pendingComparisons');
-        }
-
-        const pendingSavedFilter = localStorage.getItem('pendingSavedFilter');
-        if (pendingSavedFilter) {
-          try {
-            const filters = JSON.parse(pendingSavedFilter);
-            const now = new Date();
-            const day = String(now.getDate()).padStart(2, '0');
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const year = now.getFullYear();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const filterName = `${t('common.filter')} ${day}.${month}.${year} ${hours}:${minutes}`;
-            await savedFiltersApi.create(filterName, filters);
-            localStorage.removeItem('pendingSavedFilter');
-            localStorage.removeItem('returnUrl');
-            analytics.login(loginMethod);
-            analytics.formSubmit('login', true, filledFields);
-            toast.success(t('login.filterSavedSuccess'));
-            if (typeof window !== 'undefined' && window.location) {
-              window.location.href = '/favorites?tab=filters';
-            }
-            return;
-          } catch (error: unknown) {
-            const errorMessage =
-              (error && typeof error === 'object' && 'response' in error
-                ? (error.response as { data?: { message?: string } })?.data?.message
-                : null) || t('login.filterSaveError');
-            toast.error(errorMessage);
-            localStorage.removeItem('pendingSavedFilter');
-            const limitErrorText = t('login.filterLimitError');
-            const isLimitError = errorMessage === limitErrorText;
-            if (isLimitError) {
-              localStorage.removeItem('returnUrl');
-              analytics.login(loginMethod);
-              analytics.formSubmit('login', true, filledFields);
-              if (typeof window !== 'undefined' && window.location) {
-                window.location.href = '/favorites?tab=filters';
-              }
-              return;
-            } else {
-              const returnUrl = savedReturnUrl || localStorage.getItem('returnUrl');
-              if (returnUrl) {
-                localStorage.removeItem('returnUrl');
-                analytics.login(loginMethod);
-                analytics.formSubmit('login', true, filledFields);
-                if (typeof window !== 'undefined' && window.location) {
-                  window.location.href = returnUrl;
-                }
-                return;
-              } else {
-                analytics.login(loginMethod);
-                analytics.formSubmit('login', true, filledFields);
-                if (typeof window !== 'undefined' && window.location) {
-                  window.location.href = '/';
-                }
-                return;
-              }
-            }
-          }
-        } else {
-          const returnUrl = savedReturnUrl || localStorage.getItem('returnUrl');
-          if (returnUrl) {
-            localStorage.removeItem('returnUrl');
-            analytics.login(loginMethod);
-            analytics.formSubmit('login', true, filledFields);
-            if (typeof window !== 'undefined' && window.location) {
-              window.location.href = returnUrl;
-            }
-            return;
-          } else {
-            analytics.login(loginMethod);
-            analytics.formSubmit('login', true, filledFields);
-            if (typeof window !== 'undefined' && window.location) {
-              window.location.href = '/';
-            }
-            return;
-          }
-        }
-      } else {
+      const savedReturnUrl =
+        typeof window !== 'undefined' ? localStorage.getItem('returnUrl') : null;
+      if (typeof window === 'undefined') {
         analytics.login(loginMethod);
         analytics.formSubmit('login', true, filledFields);
-        if (typeof window !== 'undefined') {
-          const win = window as unknown as Window;
-          if (win.location) {
-            win.location.href = '/';
-          }
-        }
         return;
       }
+      await processPendingFavorites(res.data.user.id);
+      await processPendingComparisons();
+      const filterHandled = await processPendingSavedFilter(
+        localStorage.getItem('pendingSavedFilter'),
+        t,
+        loginMethod,
+        filledFields,
+        savedReturnUrl,
+      );
+      if (filterHandled) return;
+      const returnUrl = savedReturnUrl || localStorage.getItem('returnUrl') || '/';
+      applyLoginSuccessRedirect(returnUrl, loginMethod, filledFields);
     } catch {
       analytics.formSubmit('login', false, filledFields);
     } finally {

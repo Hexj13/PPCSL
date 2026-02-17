@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 import { LoadingButton } from './LoadingButton';
 
@@ -31,17 +31,17 @@ describe('LoadingButton', () => {
 
     await waitFor(() => {
       const button = screen.getByRole('button');
-      const spinner = button.querySelector('.animate-spin');
+      const spinner = within(button).getByTestId('spinner');
       expect(spinner).toBeInTheDocument();
       expect(screen.queryByText('Click me')).not.toBeInTheDocument();
     });
   });
 
   it('should not change dimensions when toggling loading state', () => {
-    const { container, rerender } = render(<LoadingButton loading={false}>Click me</LoadingButton>);
+    const { rerender } = render(<LoadingButton loading={false}>Click me</LoadingButton>);
 
-    const firstChild = container.firstChild as HTMLElement;
-    const initialHeight = firstChild?.getBoundingClientRect().height;
+    const button = screen.getByRole('button');
+    const initialHeight = button.getBoundingClientRect().height;
 
     rerender(<LoadingButton loading={true}>Click me</LoadingButton>);
 
@@ -49,8 +49,7 @@ describe('LoadingButton', () => {
       jest.advanceTimersByTime(200);
     });
 
-    const loadingFirstChild = container.firstChild as HTMLElement;
-    const loadingHeight = loadingFirstChild?.getBoundingClientRect().height;
+    const loadingHeight = button.getBoundingClientRect().height;
 
     expect(loadingHeight).toBe(initialHeight);
   });
@@ -60,7 +59,7 @@ describe('LoadingButton', () => {
     const { rerender } = render(
       <LoadingButton loading={false} onClick={handleClick}>
         Click me
-      </LoadingButton>
+      </LoadingButton>,
     );
 
     const button = screen.getByRole('button');
@@ -71,7 +70,7 @@ describe('LoadingButton', () => {
     rerender(
       <LoadingButton loading={true} onClick={handleClick}>
         Click me
-      </LoadingButton>
+      </LoadingButton>,
     );
 
     act(() => {

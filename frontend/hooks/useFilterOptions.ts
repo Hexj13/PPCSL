@@ -79,10 +79,10 @@ export function useFilterOptions({
   const getBrandOptions = useCallback(() => {
     const popularBrandsList = getPopularBrands(vehicleType);
     const popularBrands = sortByName(
-      brands.filter((brand) => popularBrandsList.includes(brand.name))
+      brands.filter((brand) => popularBrandsList.includes(brand.name)),
     );
     const otherBrands = sortByName(
-      brands.filter((brand) => !popularBrandsList.includes(brand.name))
+      brands.filter((brand) => !popularBrandsList.includes(brand.name)),
     );
 
     const options: Array<{ value: string; label: string; category?: string }> = [
@@ -160,10 +160,10 @@ export function useFilterOptions({
 
   const getCityOptions = useCallback(() => {
     const popularCities = sortByName(
-      cities.filter((city) => POPULAR_CITY_NAMES_EN.includes(city.nameEn))
+      cities.filter((city) => POPULAR_CITY_NAMES_EN.includes(city.nameEn)),
     );
     const otherCities = sortByName(
-      cities.filter((city) => !POPULAR_CITY_NAMES_EN.includes(city.nameEn))
+      cities.filter((city) => !POPULAR_CITY_NAMES_EN.includes(city.nameEn)),
     );
 
     const options: Array<{ value: string; label: string; category?: string }> = [

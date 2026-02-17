@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class AddDriveTypeToVehicle1767000000000 implements MigrationInterface {
   name = 'AddDriveTypeToVehicle1767000000000';

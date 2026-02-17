@@ -53,14 +53,14 @@ listings/
 
 ## Bounded contexts
 
-| Context    | Responsibility                          | Main aggregate    |
-|-----------|------------------------------------------|-------------------|
-| Listings  | Ads, vehicles, search, promotion, views | Listing → Vehicle |
-| Auth      | Registration, login, JWT, verification  | — (coordinates User) |
-| Users     | Profile, limits, board slug              | User              |
-| Catalog   | Brands and models (reference data)       | Brand → VehicleModel |
-| Favorites | Saved listings                           | Favorite          |
-| SavedFilters | Saved search filters                  | SavedFilter       |
+| Context      | Responsibility                          | Main aggregate       |
+| ------------ | --------------------------------------- | -------------------- |
+| Listings     | Ads, vehicles, search, promotion, views | Listing → Vehicle    |
+| Auth         | Registration, login, JWT, verification  | — (coordinates User) |
+| Users        | Profile, limits, board slug             | User                 |
+| Catalog      | Brands and models (reference data)      | Brand → VehicleModel |
+| Favorites    | Saved listings                          | Favorite             |
+| SavedFilters | Saved search filters                    | SavedFilter          |
 
 ## Related documentation
 

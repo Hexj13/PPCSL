@@ -88,7 +88,7 @@ declare global {
     gtag: (
       _command: 'config' | 'event' | 'js' | 'set' | 'consent',
       _targetId: string | Date | 'default' | 'update',
-      _config?: Record<string, unknown>
+      _config?: Record<string, unknown>,
     ) => void;
     dataLayer: unknown[];
   }

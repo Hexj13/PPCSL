@@ -170,7 +170,7 @@ export function getPopularBrands(vehicleType: 'car' | 'truck' | 'moto' = 'car'):
 }
 
 export function getPopularModelsByBrand(
-  vehicleType: 'car' | 'truck' | 'moto' = 'car'
+  vehicleType: 'car' | 'truck' | 'moto' = 'car',
 ): Record<string, string[]> {
   const config = POPULAR_BRANDS_BY_VEHICLE_TYPE[vehicleType];
   return config?.modelsByBrand || {};

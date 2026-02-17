@@ -47,14 +47,18 @@
 ### База данных
 
 #### Таблица `listings`
+
 Добавлены поля:
+
 - `is_promoted` (boolean, default false) - флаг продвижения
 - `promoted_until` (timestamp, nullable) - дата окончания продвижения (null = бессрочно)
 - `promoted_started_at` (timestamp, nullable) - дата начала продвижения
 - `promoted_paused_at` (timestamp, nullable) - дата входа в паузу (для заморозки времени)
 
 #### Таблица `promotion_history`
+
 Создана для хранения истории продвижений:
+
 - `id` (uuid, primary key)
 - `listing_id` (uuid, foreign key, ON DELETE CASCADE)
 - `user_id` (uuid, foreign key, ON DELETE CASCADE)
@@ -71,21 +75,25 @@
 #### Endpoints для пользователей
 
 **`PATCH /api/listings/:id/promote`**
+
 - Переключение продвижения для своего объявления
 - Требуется авторизация (`JwtAuthGuard`)
 - Валидация: только активные объявления, сроки 1/7/14/30 дней
 - Лимит: `MAX_PROMOTIONS_PER_USER` активных продвижений на пользователя
 
 **`GET /api/listings/promotion-history`**
+
 - Получение истории продвижений текущего пользователя
 - Пагинация: по умолчанию 50 записей на страницу
 - Параметры: `page`, `limit`
 
 **`GET /api/listings/promotion-history/check`**
+
 - Проверка наличия истории продвижений у текущего пользователя
 - Возвращает: `{ hasHistory: boolean }`
 
 **`GET /api/listings/promotion-access`**
+
 - Получение статуса доступа к функциям продвижения
 - Не требует авторизации (`OptionalJwtAuthGuard`)
 - Возвращает: `{ access: 'disabled' | 'admin' | 'all', enabled: boolean, isAdmin: boolean, canPromote: boolean }`
@@ -97,32 +105,38 @@
   - В development админу всегда доступно независимо от `PROMOTION_ACCESS`
 
 **`POST /api/listings/cron/disable-expired-promotions`**
+
 - Cron endpoint для автоматического отключения истёкших продвижений
 - Защищён секретным ключом `CRON_SECRET` (header `x-cron-secret`)
 
 #### Endpoints для администраторов
 
 **`PATCH /api/admin/listings/:id/promote`**
+
 - Управление продвижением любого объявления
 - Требуется авторизация и роль админа (`JwtAuthGuard`, `AdminGuard`)
 - Поддерживает бессрочное продвижение (`days: null`)
 
 **`GET /api/admin/promotions`**
+
 - Получение всех продвижений с пагинацией и фильтрацией
 - Параметры: `page`, `limit`, `listingId`, `userId`, `fromDate`
 - Пагинация: по умолчанию 50 записей на страницу
 
 **`GET /api/admin/listings`**
+
 - Получение всех объявлений с фильтрацией по статусу и промо
 - Параметры: `page`, `limit`, `listingId`, `userId`, `status`, `isPromoted`
 - Серверная пагинация и фильтрация
 
 **`GET /api/admin/users`**
+
 - Получение всех пользователей с поиском и фильтрацией
 - Параметры: `page`, `limit`, `searchQuery`, `roleFilter`
 - Серверная пагинация и поиск
 
 **`GET /api/admin/listings/status-counts`**
+
 - Получение счётчиков объявлений по статусам и промо
 - Используется для отображения чисел на фильтрах
 
@@ -178,11 +192,13 @@ MAX_PROMOTIONS_PER_USER=10
 ### Примеры использования
 
 1. **Отключить функцию для всех (production):**
+
    ```env
    PROMOTION_ACCESS=disabled
    ```
 
 2. **Доступна только админам (production):**
+
    ```env
    PROMOTION_ACCESS=admin
    ```
@@ -192,7 +208,8 @@ MAX_PROMOTIONS_PER_USER=10
    PROMOTION_ACCESS=all
    ```
 
-**Важно:** 
+**Важно:**
+
 - Переменная `PROMOTION_ACCESS` учитывается только в production. В development (`NODE_ENV !== 'production'`) админу всегда доступна функция для удобства разработки и тестирования.
 - Фронтенд получает статус доступа через `GET /api/listings/promotion-access` и показывает/скрывает UI элементы соответственно
 - Визуальное выделение промо объявлений (бордер, лейбл) работает для всех пользователей независимо от `PROMOTION_ACCESS`
@@ -296,7 +313,9 @@ MAX_PROMOTIONS_PER_USER=10
 ## Миграции
 
 ### `1778000000000-AddPromotedField.ts`
+
 Добавляет поля продвижения в таблицу `listings`:
+
 - `is_promoted` (boolean, default false)
 - `promoted_until` (timestamp, nullable)
 - `promoted_started_at` (timestamp, nullable)
@@ -304,7 +323,9 @@ MAX_PROMOTIONS_PER_USER=10
 - Индексы на `is_promoted` и `promoted_until`
 
 ### `1778000000001-CreatePromotionHistory.ts`
+
 Создаёт таблицу `promotion_history`:
+
 - Все необходимые поля для хранения истории
 - Foreign keys с `ON DELETE CASCADE`
 - Индексы для оптимизации запросов
@@ -314,14 +335,18 @@ MAX_PROMOTIONS_PER_USER=10
 ## Entities
 
 ### `Listing`
+
 Добавлены поля:
+
 - `is_promoted: boolean`
 - `promoted_until: Date | null`
 - `promoted_started_at: Date | null`
 - `promoted_paused_at: Date | null`
 
 ### `PromotionHistory`
+
 Новая entity для хранения истории продвижений:
+
 - `id: string`
 - `listing_id: string`
 - `user_id: string`
@@ -336,6 +361,7 @@ MAX_PROMOTIONS_PER_USER=10
 ## Важно: Мультирепозиторий и PPCSL
 
 **При дальнейшей разработке необходимо учитывать:**
+
 - Скоро будет переход на мультирепозиторий с выделением отдельно PPCSL (Platform for Posting Car Sale Listings)
 - PPCSL будет core репозиторием, используемым как git submodule в других проектах
 - При реализации нужно делать код так, чтобы его было удобно переносить в PPCSL

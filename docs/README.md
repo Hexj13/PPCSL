@@ -5,6 +5,7 @@
 ## 📚 Структура документации
 
 ### 🏗️ [`architecture/`](./architecture/)
+
 **Архитектура системы** - как устроена multi-platform система
 
 - **[ARCHITECTURE_OVERVIEW.md](./architecture/ARCHITECTURE_OVERVIEW.md)** ⭐ **НАЧНИ ЗДЕСЬ**
@@ -15,6 +16,7 @@
 - [TECHNICAL.md](./architecture/TECHNICAL.md) - Технические детали
 
 ### 📖 [`guides/`](./guides/)
+
 **Руководства** — создание платформ, деплой, настройка сервисов
 
 - **[PLATFORM_CHECKLIST.md](./guides/PLATFORM_CHECKLIST.md)** ⭐ **Чеклист для новых платформ**
@@ -23,27 +25,32 @@
 - [DEPLOYMENT.md](./guides/DEPLOYMENT.md) — деплой
 - [LOCAL_DEVELOPMENT.md](./guides/LOCAL_DEVELOPMENT.md) — локальная разработка
 - [QUICK_START_RU.md](./guides/QUICK_START_RU.md) — быстрый старт
+- [LINTING.md](./LINTING.md) — линтинг и качество кода (единый источник)
 
 **Порядок:** PLATFORM_CHECKLIST → PLATFORM_GUIDE → DEPLOYMENT. Локально: LOCAL_DEVELOPMENT → QUICK_START_RU.
 
 ### 📊 [`analytics/`](./analytics/)
+
 **Аналитика**
 
 - [GA4_EVENTS.md](./analytics/GA4_EVENTS.md) — события и архитектура GA4 (Sentry — в [guides/SENTRY.md](./guides/SENTRY.md))
 
 ### 🌍 [`platform-plans/`](./platform-plans/)
+
 **Планы конкретных платформ** — при добавлении новой страны можно создать план по образцу существующей платформы (Moldova).
 
 ### 📜 [`scripts/`](./scripts/)
+
 **Скрипты брендов и моделей**
 
 - [BRANDS_MODELS_MASTER_PLAN.md](./scripts/BRANDS_MODELS_MASTER_PLAN.md) - План и production-скрипты (seed-all-brands-complete, порядок, кэш)
 
 ### ✨ [`features/`](./features/)
+
 **Документация фич** - описание компонентов и функциональности
 
 - [SEARCH_TITLE_URL.md](./features/SEARCH_TITLE_URL.md) - URL и заголовок страницы поиска (слаги, диакритика)
-- Approximate price in default currency (≈ EUR) — FXRatesAPI, daily cron, listing enrichment; env: `FXRATESAPI_API_KEY`, `DEFAULT_CURRENCY` (see platform deployment docs)
+- Approximate price in default currency (≈ EUR) — FXRatesAPI, daily cron, listing enrichment, price sorting in default currency; env: `FXRATESAPI_API_KEY`, `DEFAULT_CURRENCY` (see `TECHNICAL.md` §6 Exchange Rates)
 - [IMAGE_PREVIEW.md](./features/IMAGE_PREVIEW.md) - Система превью изображений
 - [LOADING_STATES.md](./features/LOADING_STATES.md) - Loading states
 - [PAID_PROMOTION.md](./features/PAID_PROMOTION.md) - Платное продвижение
@@ -67,21 +74,25 @@
 ## 🚀 Быстрый старт
 
 ### Для Product Manager / Project Manager:
+
 1. [architecture/ARCHITECTURE_OVERVIEW.md](./architecture/ARCHITECTURE_OVERVIEW.md) - Обзор системы
 2. [guides/PLATFORM_CHECKLIST.md](./guides/PLATFORM_CHECKLIST.md) - Чеклист
-3. [platform-plans/](./platform-plans/) - Планы платформ (при добавлении новой страны)
+3. Планы платформ (при добавлении новой страны — по образцу существующей платформы)
 
 ### Для Backend разработчика:
+
 1. [architecture/MULTI_REPOSITORY.md](./architecture/MULTI_REPOSITORY.md)
 2. [architecture/SCRIPTS_ARCHITECTURE.md](./architecture/SCRIPTS_ARCHITECTURE.md) 🔴 **ОБЯЗАТЕЛЬНО**
 3. [guides/LOCAL_DEVELOPMENT.md](./guides/LOCAL_DEVELOPMENT.md)
 
 ### Для Frontend разработчика:
+
 1. [architecture/MULTI_REPOSITORY.md](./architecture/MULTI_REPOSITORY.md)
 2. [architecture/KNOWN_ISSUES.md](./architecture/KNOWN_ISSUES.md)
 3. [guides/LOCAL_DEVELOPMENT.md](./guides/LOCAL_DEVELOPMENT.md)
 
 ### Для DevOps:
+
 1. [guides/DEPLOYMENT.md](./guides/DEPLOYMENT.md)
 2. [guides/PLATFORM_GUIDE.md](./guides/PLATFORM_GUIDE.md)
 

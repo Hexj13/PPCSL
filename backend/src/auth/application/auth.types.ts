@@ -1,4 +1,4 @@
-import { User } from '../../users/entities/user.entity';
+import type { User } from '../../users/entities/user.entity';
 
 type UserDataKeys = Exclude<
   keyof User,

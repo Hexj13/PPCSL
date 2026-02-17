@@ -8,7 +8,7 @@ import { getCountry } from '@/lib/utils';
 import { InfoBlock, HintTooltip } from '@/ui';
 
 import { RequiredAsterisk } from './RequiredAsterisk';
-import { ListingFormSectionProps } from './types';
+import type { ListingFormSectionProps } from './types';
 
 export function BasicInfoSection({
   formData,

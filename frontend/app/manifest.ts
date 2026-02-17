@@ -1,4 +1,4 @@
-import { MetadataRoute } from 'next';
+import type { MetadataRoute } from 'next';
 
 import { getMetadataLocale, getServerTranslations } from '@/lib/i18n';
 import { loadSiteConfigSync } from '@/lib/site-config';

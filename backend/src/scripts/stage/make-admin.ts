@@ -63,4 +63,6 @@ async function makeAdmin() {
   }
 }
 
-makeAdmin();
+makeAdmin().catch(() => {
+  process.exit(1);
+});

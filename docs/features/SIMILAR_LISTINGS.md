@@ -22,6 +22,7 @@ The Similar Listings block is displayed at the bottom of the listing detail page
 ### Loading Strategy
 
 **Single Request**:
+
 - Loads **all 8 listings** on component mount in one request
 - Request starts after 100ms delay (non-blocking priority)
 - Shows 4 skeleton loaders while fetching
@@ -31,12 +32,14 @@ The Similar Listings block is displayed at the bottom of the listing detail page
 ### Navigation
 
 **Desktop (non-touch devices)**:
+
 - Left/Right arrow buttons with position counter between them
 - Clicking scrolls by one card width (250px mobile, 260px desktop) + 16px gap
 - Counter shows: `1/4`, `2/4`, `3/4`, `4/4`
 - Buttons disable when at start/end
 
 **Mobile (touch devices)**:
+
 - Navigation buttons hidden
 - Native touch swipe/scroll
 - 16px gap between cards
@@ -107,6 +110,7 @@ For listings in the same bucket, secondary sorting:
 4. **Freshness** (`last_updated_at DESC`) - newer listings first
 
 This means:
+
 - ✅ Promoted listings always rank higher within their relevance tier
 - ✅ Listings from the same city get a boost
 - ✅ Similar mileage = more relevant (if both have mileage data)
@@ -123,18 +127,22 @@ This means:
 ### Data Filters
 
 **Global SQL Query Filters** (applied before bucket assignment):
+
 - ✅ **Only Active listings** (`status = Active`) - applied globally for all buckets
 - ✅ Excludes current listing (`listing.id != :currentId`)
 
-**Note**: 
+**Note**:
+
 - Promotion status does NOT affect filtering — all Active listings are included. Promotion status only affects sorting within buckets (actively promoted listings rank higher).
 - Vehicle data (year, body_type) is NOT required — listings without this data will fall into bucket 6 (fallback).
 
 **Included**:
+
 - All Active listings (filtered at SQL level)
 - Listings with or without vehicle data
 
 **Excluded**:
+
 - Current listing (the one being viewed)
 - Paused/Closed listings (filtered out by `status = Active`)
 
@@ -171,6 +179,7 @@ SimilarListings
 ### Scroll Behavior
 
 **Button Click Navigation**:
+
 - Calculates card width from DOM: `cards[0].offsetWidth`
 - Scrolls by: `cardWidth + 16px` (gap)
 - Uses `scrollBy({ left: ±distance, behavior: 'smooth' })`
@@ -178,12 +187,14 @@ SimilarListings
 - Position counter maxes at 4
 
 **Touch/Manual Scroll**:
+
 - Natural browser scrolling with 16px gap
 - No forced snap points (removed for smoother UX)
 
 ### Loading States
 
 **Initial Load**:
+
 - Shows 4 `ListingCardSkeleton` components
 - Request delayed by 100ms (non-blocking)
 - Skeletons follow 200ms + 1s pattern via `SkeletonContainer`
@@ -245,9 +256,9 @@ SimilarListings
 ### Constants
 
 ```typescript
-TOTAL_MAX_RESULTS = 8
-LOAD_DELAY = 100  // ms
-CARD_GAP = 16  // px
+TOTAL_MAX_RESULTS = 8;
+LOAD_DELAY = 100; // ms
+CARD_GAP = 16; // px
 ```
 
 ### Feature Detection
@@ -269,15 +280,15 @@ CARD_GAP = 16  // px
 
 ## Edge Cases
 
-| Scenario | Behavior |
-|----------|----------|
-| Current listing not found | Returns empty array, block doesn't render |
-| Current listing inactive | Returns empty array, block doesn't render |
-| Less than 4 results | Shows available count, no second batch |
-| Price is null/0 | Skips price-dependent buckets (2, 3, 4, 5) |
-| All from same seller | Diversification limits to 2, rest filled from next buckets |
-| Rapid scrolling | Single request, no duplicates |
-| API error | Block doesn't render, no error shown to user |
+| Scenario                  | Behavior                                                   |
+| ------------------------- | ---------------------------------------------------------- |
+| Current listing not found | Returns empty array, block doesn't render                  |
+| Current listing inactive  | Returns empty array, block doesn't render                  |
+| Less than 4 results       | Shows available count, no second batch                     |
+| Price is null/0           | Skips price-dependent buckets (2, 3, 4, 5)                 |
+| All from same seller      | Diversification limits to 2, rest filled from next buckets |
+| Rapid scrolling           | Single request, no duplicates                              |
+| API error                 | Block doesn't render, no error shown to user               |
 
 ## Browser Compatibility
 
@@ -289,15 +300,18 @@ CARD_GAP = 16  // px
 ## Files
 
 ### Frontend
+
 - `core/frontend/components/listing/SimilarListings.tsx` - Main component
 - `core/frontend/app/listings/[id]/ListingPageClient.tsx` - Integration
 - `core/frontend/lib/api/` - API client (`getSimilar` method in api.ts)
 - `core/frontend/lib/analytics.ts` - Analytics events
 
 ### Backend
+
 - `core/backend/src/listings/listings.controller.ts` - Endpoint
 - `core/backend/src/listings/listings.service.ts` - Business logic (`findSimilar`, `fetchSimilarCandidates`, `applySellerDiversification`)
 - `core/backend/src/listings/dto/similar-listings.dto.ts` - DTO validation
 
 ### Documentation
+
 - `core/docs/features/SIMILAR_LISTINGS.md` - This file

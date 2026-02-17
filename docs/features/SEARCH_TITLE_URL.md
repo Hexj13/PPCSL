@@ -1,12 +1,13 @@
 # Search Page Title and URL Generation
 
 > **Status:** Implemented. Code fixed, cleanup scripts created.
-> 
+>
 > **Remaining:** Run `fix-brand-duplicates.ts` on local DB and production.
 
 ## Overview
 
 When selecting a brand and model in search filters:
+
 1. URL is formed with `brand` and `model` parameters (slugs without diacritics)
 2. Page title is formed with full names from database (with diacritics)
 
@@ -17,6 +18,7 @@ When selecting a brand and model in search filters:
 ### 1. Data Structure
 
 **Database:**
+
 - `brands` table: contains brands with full names (e.g., "Citroën", "Mercedes-Benz")
 - `vehicle_models` table: contains models with full names (e.g., "C-Elysée", "ë-C4")
 - Each model is linked to ONE brand via `brand_id`
@@ -25,55 +27,62 @@ When selecting a brand and model in search filters:
 ### 2. URL Generation (Frontend)
 
 When selecting in UI:
+
 ```
 Brand: Citroën (id: uuid-123)
 Model: C-Elysée (id: uuid-456)
 ```
 
 URL is formed from slugs (without diacritics):
+
 ```
 /?brand=citroen&model=c-elysee
 ```
 
 **createSlug function:**
+
 ```typescript
 function createSlug(text: string): string {
   return text
     .toLowerCase()
-    .normalize('NFD')                    // decomposes diacritics
-    .replace(/[\u0300-\u036f]/g, '')     // removes diacritics
-    .replace(/[^a-z0-9]+/g, '-')         // replaces special chars with dash
-    .replace(/^-+|-+$/g, '');            // removes leading/trailing dashes
+    .normalize('NFD') // decomposes diacritics
+    .replace(/[\u0300-\u036f]/g, '') // removes diacritics
+    .replace(/[^a-z0-9]+/g, '-') // replaces special chars with dash
+    .replace(/^-+|-+$/g, ''); // removes leading/trailing dashes
 }
 
-createSlug('Citroën')   // → 'citroen'
-createSlug('C-Elysée')  // → 'c-elysee'
-createSlug('ë-C4')      // → 'e-c4'
+createSlug('Citroën'); // → 'citroen'
+createSlug('C-Elysée'); // → 'c-elysee'
+createSlug('ë-C4'); // → 'e-c4'
 ```
 
 ### 3. URL Parsing and Title Generation (Backend)
 
 **Input:**
+
 - `brand=citroen` (slug from URL)
 - `model=c-elysee` (slug from URL)
 
 **Algorithm:**
 
 1. **Find brand by slug:**
+
    ```typescript
-   const brand = brands.find(b => createSlug(b.name) === 'citroen');
+   const brand = brands.find((b) => createSlug(b.name) === 'citroen');
    // Finds: { id: 'uuid-123', name: 'Citroën' }
    ```
 
 2. **Load brand's models:**
+
    ```typescript
    const models = await getModelsByBrand(brand.id);
    // Returns: [{ name: 'C-Elysée' }, { name: 'C3' }, ...]
    ```
 
 3. **Find model by slug:**
+
    ```typescript
-   const model = models.find(m => createSlug(m.name) === 'c-elysee');
+   const model = models.find((m) => createSlug(m.name) === 'c-elysee');
    // Finds: { name: 'C-Elysée' }
    ```
 
@@ -84,6 +93,7 @@ createSlug('ë-C4')      // → 'e-c4'
    ```
 
 **Output:**
+
 ```json
 {
   "title": "Citroën C-Elysée",
@@ -95,6 +105,7 @@ createSlug('ë-C4')      // → 'e-c4'
 ### 4. Title Display (Frontend)
 
 Frontend receives title from API and displays it:
+
 ```html
 <title>Citroën C-Elysée | Kupito</title>
 ```
@@ -171,12 +182,14 @@ Frontend receives title from API and displays it:
 
 **What exists:**
 Two brands exist in database:
-- `{ id: 'uuid-111', name: 'Citroen' }`  ← without diacritics
+
+- `{ id: 'uuid-111', name: 'Citroen' }` ← without diacritics
 - `{ id: 'uuid-222', name: 'Citroën' }` ← with diacritics
 
 Models are linked to `uuid-222` (Citroën with diacritics).
 
 **What happens:**
+
 1. Search by slug `citroen`:
    - `'citroen'.toLowerCase() === 'citroen'` → finds "Citroen" (uuid-111)
    - Models for uuid-111 = [] (empty array)
@@ -188,6 +201,7 @@ Models are linked to `uuid-222` (Citroën with diacritics).
    - Dropdown shows: "C-Elysée"
 
 **Solution:**
+
 - Merge duplicate brands in database
 - Keep only one brand "Citroën" with correct name
 - Reassign all models to this brand
@@ -195,20 +209,23 @@ Models are linked to `uuid-222` (Citroën with diacritics).
 ### Problem 2: Brand Search Order
 
 **Current code:**
+
 ```typescript
-brands.find(b => b.name.toLowerCase() === slug || createSlug(b.name) === slug)
+brands.find((b) => b.name.toLowerCase() === slug || createSlug(b.name) === slug);
 ```
 
 **Problem:**
 `find()` returns FIRST found element. When sorted alphabetically:
+
 - "Citroen" < "Citroën" (by ASCII code)
 - "Citroen" is found first (without models)
 
 **Partial solution (already applied):**
+
 ```typescript
-const bySlug = brands.find(b => createSlug(b.name) === slug);
+const bySlug = brands.find((b) => createSlug(b.name) === slug);
 if (bySlug) return bySlug;
-return brands.find(b => b.name.toLowerCase() === slug);
+return brands.find((b) => b.name.toLowerCase() === slug);
 ```
 
 Prioritize `createSlug()`, but this doesn't fully solve the problem since both brands produce the same slug.
@@ -216,8 +233,9 @@ Prioritize `createSlug()`, but this doesn't fully solve the problem since both b
 ### Problem 3: Fallback via slugToName
 
 **When model is not found:**
+
 ```typescript
-const fallbackModels = modelSlugs.map(s => slugToName(s)).join(', ');
+const fallbackModels = modelSlugs.map((s) => slugToName(s)).join(', ');
 // slugToName('c-elysee') → 'C Elysee' (without diacritics!)
 ```
 
@@ -230,10 +248,12 @@ This fallback shouldn't trigger if DB data is correct.
 ### Problem 4: Redis Caching
 
 **Problem:**
+
 - Redis caches brand and model lists
 - If DB data changed, cache may contain stale data
 
 **Solution:**
+
 - Clear cache after changing DB data
 - Or wait for cache TTL to expire
 
@@ -243,29 +263,31 @@ This fallback shouldn't trigger if DB data is correct.
 
 ### Problem 1: Inconsistent Brand Names in Scripts
 
-| File | Was | Should Be |
-|------|-----|-----------|
-| `stage/add-truck-brands-models.ts:1291` | `Citroen:` | `Citroën:` |
+| File                                         | Was        | Should Be  |
+| -------------------------------------------- | ---------- | ---------- |
+| `stage/add-truck-brands-models.ts:1291`      | `Citroen:` | `Citroën:` |
 | `production/add-truck-brands-models.ts:1291` | `Citroen:` | `Citroën:` |
-| `stage/seed-vehicles-full.ts:1253` | `Mini:` | `MINI:` |
+| `stage/seed-vehicles-full.ts:1253`           | `Mini:`    | `MINI:`    |
 
 **Status:** ✅ Fixed
 
 ### Problem 2: remove-duplicates.ts Doesn't Handle Diacritics
 
 Old code groups by `toLowerCase()`:
+
 ```typescript
 const nameLower = brand.name.toLowerCase().trim();
 // 'citroën' !== 'citroen' - duplicates NOT found!
 ```
 
 Need to use normalize('NFD'):
+
 ```typescript
 function normalizeForComparison(text: string): string {
   return text
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')  // removes diacritics
+    .replace(/[\u0300-\u036f]/g, '') // removes diacritics
     .replace(/[^a-z0-9]+/g, '')
     .trim();
 }
@@ -279,6 +301,7 @@ function normalizeForComparison(text: string): string {
 ### Step 1: Fix Scripts ✅ Done
 
 Files fixed:
+
 - `core/backend/src/scripts/stage/add-truck-brands-models.ts`
 - `core/backend/src/scripts/production/add-truck-brands-models.ts`
 - `core/backend/src/scripts/stage/seed-vehicles-full.ts`
@@ -287,12 +310,14 @@ Files fixed:
 ### Step 2: Fix Brand Search Logic ✅ Done
 
 Files fixed:
+
 - `core/backend/src/brands/brands.service.ts` - prioritize search by `createSlug(name)`
 - `core/frontend/app/page.tsx` - same fix for frontend
 
 ### Step 3: Create Cleanup Scripts ✅ Done
 
 Scripts created:
+
 - `core/backend/src/scripts/stage/fix-brand-duplicates.ts`
 - `core/backend/src/scripts/production/fix-brand-duplicates.ts`
 
@@ -304,6 +329,7 @@ npx ts-node -r tsconfig-paths/register src/scripts/stage/fix-brand-duplicates.ts
 ```
 
 Script automatically:
+
 1. Finds duplicates considering diacritics (Citroen = Citroën)
 2. Merges models and vehicles to correct brand
 3. Deletes duplicate
@@ -313,6 +339,7 @@ Script automatically:
 ### Step 5: Verification
 
 Check URL:
+
 ```
 /?brand=citroen&model=c-elysee
 ```
@@ -331,6 +358,7 @@ NODE_ENV=production npx ts-node -r tsconfig-paths/register src/scripts/productio
 ```
 
 Script automatically:
+
 1. ✅ Finds and merges brand duplicates
 2. ✅ Moves models and vehicles
 3. ✅ Deletes duplicates
@@ -344,25 +372,28 @@ Script automatically:
 ## Files to Change
 
 ### Backend
+
 - `core/backend/src/brands/brands.service.ts` - search and title generation logic
 - `core/backend/src/common/utils/slug.utils.ts` - slug utility functions
 
 ### Frontend
+
 - `core/frontend/app/page.tsx` - `getTitleFromParams()` function (fallback)
 - `core/frontend/lib/utils/utils.ts` - `createSlug()`, `slugToName()` functions (import via `@/lib/utils`)
 
 ### Cleanup Scripts
+
 - Script needed for finding and merging brand duplicates
 
 ---
 
 ## Test Scenarios
 
-| URL | Expected Title |
-|-----|----------------|
-| `/?brand=citroen` | Citroën |
-| `/?brand=citroen&model=c-elysee` | Citroën C-Elysée |
-| `/?brand=citroen&model=e-c4` | Citroën ë-C4 |
-| `/?brand=bmw&model=x5` | BMW X5 |
-| `/?brand=mercedes-benz&model=e-class` | Mercedes-Benz E-Class |
+| URL                                          | Expected Title                |
+| -------------------------------------------- | ----------------------------- |
+| `/?brand=citroen`                            | Citroën                       |
+| `/?brand=citroen&model=c-elysee`             | Citroën C-Elysée              |
+| `/?brand=citroen&model=e-c4`                 | Citroën ë-C4                  |
+| `/?brand=bmw&model=x5`                       | BMW X5                        |
+| `/?brand=mercedes-benz&model=e-class`        | Mercedes-Benz E-Class         |
 | `/?brand=bmw,mercedes-benz&model=x5,e-class` | BMW X5, Mercedes-Benz E-Class |

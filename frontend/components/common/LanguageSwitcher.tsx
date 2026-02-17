@@ -32,7 +32,7 @@ export function LanguageSwitcher({
       { value: 'ro' as Locale, label: getLanguageAbbreviation('ro') },
       { value: 'ru' as Locale, label: getLanguageAbbreviation('ru') },
     ],
-    []
+    [],
   );
 
   const handleLanguageChange = (newLocale: string) => {

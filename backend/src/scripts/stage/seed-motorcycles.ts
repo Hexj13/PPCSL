@@ -4,9 +4,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import { Brand } from '../../brands/entities/brand.entity';
+import type { BodyType } from '../../common/types';
 import {
   BODY_TYPES_BY_VEHICLE_TYPE,
-  BodyType,
   ConditionType,
   Currency,
   FuelType,

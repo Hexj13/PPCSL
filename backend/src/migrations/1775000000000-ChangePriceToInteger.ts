@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class ChangePriceToInteger1775000000000 implements MigrationInterface {
   name = 'ChangePriceToInteger1775000000000';

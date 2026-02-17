@@ -57,19 +57,20 @@ After adding new scripts to the sequence, the same command will run them; no sep
 
 **Scripts to create or edit (summary):**
 
-| Action | Type | Script(s) |
-|--------|------|-----------|
-| Remove Ram Trucks (cars), Dodge Ram from Dodge, merge Ram (cars) | Edit data | add-brands.ts, add-american-brands-models.ts, add-commercial-models.ts, vehicle-classification.ts |
-| Remove Dodge Trucks (trucks), add Ram (trucks) | Edit data | add-truck-brands-models.ts (stage + production), vehicle-classification.ts, check-all-countries-brands.ts |
-| Great Wall → Haval, Tank, Great Wall | Edit data + script | add-brands.ts, vehicle-classification.ts, add-historical-models.ts, cleanup-brands.ts; apply-brand-splits.ts (DB move) |
-| Land Rover → Range Rover | Edit data + script | add-brands.ts, vehicle-classification.ts, add-historical-models.ts, cleanup-brands.ts, seed-vehicles-full.ts; apply-brand-splits.ts |
-| Truck model names (Belarus, BelAZ, GAZ, Kamaz, MAZ, Ural) | Edit data + script | add-truck-brands-models.ts (short names); fix-truck-model-names.ts (UPDATE existing rows) |
-| Moto model names (12 brands) | Edit data + script | vehicle-classification.ts (short names); fix-moto-model-names.ts (UPDATE existing rows) |
-| China: Maextro, Yangwang, Xiaomi YU7 | Edit data | add-missing-car-brands.ts (or add-brands), vehicle-classification.ts |
-| Empty brands check | New script | check-empty-brands:prod (check-empty-brands.ts) |
+| Action                                                           | Type               | Script(s)                                                                                                                           |
+| ---------------------------------------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Remove Ram Trucks (cars), Dodge Ram from Dodge, merge Ram (cars) | Edit data          | add-brands.ts, add-american-brands-models.ts, add-commercial-models.ts, vehicle-classification.ts                                   |
+| Remove Dodge Trucks (trucks), add Ram (trucks)                   | Edit data          | add-truck-brands-models.ts (stage + production), vehicle-classification.ts, check-all-countries-brands.ts                           |
+| Great Wall → Haval, Tank, Great Wall                             | Edit data + script | add-brands.ts, vehicle-classification.ts, add-historical-models.ts, cleanup-brands.ts; apply-brand-splits.ts (DB move)              |
+| Land Rover → Range Rover                                         | Edit data + script | add-brands.ts, vehicle-classification.ts, add-historical-models.ts, cleanup-brands.ts, seed-vehicles-full.ts; apply-brand-splits.ts |
+| Truck model names (Belarus, BelAZ, GAZ, Kamaz, MAZ, Ural)        | Edit data + script | add-truck-brands-models.ts (short names); fix-truck-model-names.ts (UPDATE existing rows)                                           |
+| Moto model names (12 brands)                                     | Edit data + script | vehicle-classification.ts (short names); fix-moto-model-names.ts (UPDATE existing rows)                                             |
+| China: Maextro, Yangwang, Xiaomi YU7                             | Edit data          | add-missing-car-brands.ts (or add-brands), vehicle-classification.ts                                                                |
+| Empty brands check                                               | New script         | check-empty-brands:prod (check-empty-brands.ts)                                                                                     |
 
-**Order in unifying script (production):**  
-1) Base and regional brand scripts (add-brands … add-historical); 2) add-missing-car-brands:prod; 3) add-truck-brands:prod; 4) add-moto-brands:prod; 5) apply-brand-splits:prod, fix-truck-model-names:prod, fix-moto-model-names:prod; 6) duplicate check; 7) optional remove-duplicates:prod; 8) clear cache (brands + brandsModels). Run check-empty-brands:prod separately if needed.
+**Order in unifying script (production):**
+
+1. Base and regional brand scripts (add-brands … add-historical); 2) add-missing-car-brands:prod; 3) add-truck-brands:prod; 4) add-moto-brands:prod; 5) apply-brand-splits:prod, fix-truck-model-names:prod, fix-moto-model-names:prod; 6) duplicate check; 7) optional remove-duplicates:prod; 8) clear cache (brands + brandsModels). Run check-empty-brands:prod separately if needed.
 
 ---
 
@@ -79,10 +80,10 @@ After adding new scripts to the sequence, the same command will run them; no sep
    Each brand has `vehicle_types`: `car`, `truck`, or `moto`. Each model has `vehicle_type`. Do not assign car models to truck-only brands or vice versa. When adding a brand, set the correct type from the first model or from context (e.g. Fuso = truck, Yamaha in our data = moto).
 
 2. **No brand name inside model name**  
-   Model name must be **only the model designation**, not "BrandName ModelName".  
-   - Correct: brand **Haval**, model **H6**. Incorrect: brand Haval, model "Haval H6".  
+   Model name must be **only the model designation**, not "BrandName ModelName".
+   - Correct: brand **Haval**, model **H6**. Incorrect: brand Haval, model "Haval H6".
    - Correct: brand **BelAZ**, model **7530**. Incorrect: brand BelAZ, model "BelAZ-7530".  
-   When adding new brands or models, always use short model names (no brand prefix/suffix).
+     When adding new brands or models, always use short model names (no brand prefix/suffix).
 
 3. **Single source of truth**  
    For each brand, one script (or vehicle-classification) should define the canonical list; other scripts (add-brands, add-missing-car-brands, cleanup-brands, historical, seed-vehicles-full) must stay aligned so that re-seeding does not recreate wrong or duplicate data.
@@ -91,12 +92,12 @@ After adding new scripts to the sequence, the same command will run them; no sep
 
 ## 1. REMOVE (delete or stop creating)
 
-| Action | What | Where / Notes |
-|--------|------|----------------|
-| Remove **Ram Trucks** as a **car** brand | Merge into **Ram** (cars); do not have two car brands "Ram" and "Ram Trucks". | add-brands.ts: delete block for "Ram Trucks". add-american-brands-models.ts, add-commercial-models.ts, vehicle-classification.ts: ensure only "Ram" exists for cars. |
-| Remove **Dodge Trucks** as truck brand | All its models are Ram; move to brand **Ram** (trucks). Remove "Dodge Trucks" from truck scripts and from country check list. | add-truck-brands-models.ts (stage + production): remove "Dodge Trucks" block. check-all-countries-brands.ts: replace or remove "Dodge Trucks" for USA. vehicle-classification.ts: remove Dodge Trucks from truck list if present. |
-| Remove **Ram** models from **Dodge** (cars) | So that Dodge (cars) has only passenger/SUV models. | add-brands.ts, add-american-brands-models.ts, add-commercial-models.ts, vehicle-classification.ts, seed-vehicles-full.ts, add-missing-car-brands (if any): in Dodge car list delete Ram, Ram 1500, Ram 2500, Ram 3500, Ramcharger, Ram 50, etc. |
-| (Optional) Remove empty brands | After all changes, any brand with zero models should be removed or filled. | Implement check-empty-brands.ts (or extend check-models-stats); then delete or add models. |
+| Action                                      | What                                                                                                                          | Where / Notes                                                                                                                                                                                                                                   |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Remove **Ram Trucks** as a **car** brand    | Merge into **Ram** (cars); do not have two car brands "Ram" and "Ram Trucks".                                                 | add-brands.ts: delete block for "Ram Trucks". add-american-brands-models.ts, add-commercial-models.ts, vehicle-classification.ts: ensure only "Ram" exists for cars.                                                                            |
+| Remove **Dodge Trucks** as truck brand      | All its models are Ram; move to brand **Ram** (trucks). Remove "Dodge Trucks" from truck scripts and from country check list. | add-truck-brands-models.ts (stage + production): remove "Dodge Trucks" block. check-all-countries-brands.ts: replace or remove "Dodge Trucks" for USA. vehicle-classification.ts: remove Dodge Trucks from truck list if present.               |
+| Remove **Ram** models from **Dodge** (cars) | So that Dodge (cars) has only passenger/SUV models.                                                                           | add-brands.ts, add-american-brands-models.ts, add-commercial-models.ts, vehicle-classification.ts, seed-vehicles-full.ts, add-missing-car-brands (if any): in Dodge car list delete Ram, Ram 1500, Ram 2500, Ram 3500, Ramcharger, Ram 50, etc. |
+| (Optional) Remove empty brands              | After all changes, any brand with zero models should be removed or filled.                                                    | Implement check-empty-brands.ts (or extend check-models-stats); then delete or add models.                                                                                                                                                      |
 
 ---
 
@@ -142,14 +143,14 @@ After adding new scripts to the sequence, the same command will run them; no sep
 
 Only the **model** part; no brand name prefix.
 
-| Brand | Current (example) | Target (example) |
-|-------|-------------------|------------------|
-| Belarus | Belarus-80, Belarus-82, Belarus-920, … | 80, 82, 920, 952, 1025, 1221, 1523, 2022 |
-| BelAZ | BelAZ-7555, BelAZ-7530, … | 7555, 75710, 7513, 7530, 7540, 7547, 7548, 7549 |
-| GAZ | GAZ-3302, GAZ-3307, GAZon Next, GAZelle Next, … | 3302, 3307, 3308, …, GAZon Next, GAZelle Next, Sobol, Sobol Business (product names without "GAZ-" where it is prefix) |
-| Kamaz | KamAZ-4310, KamAZ-5320, … | 4310, 43118, 5320, 53605, 5490, 65115, 65117, 6520, … |
-| MAZ | MAZ-6312, MAZ-5440, … | 6312, 5440, 6430, 5309, 5336, 5551, 4370, 4371 |
-| Ural | Ural-4320, Ural-6370, Ural Next, … | 4320, 43206, 5323, 6370, 63685, Next, Next 4x4, Next 6x6, Next 8x8 (or keep "Ural Next" as product name) |
+| Brand   | Current (example)                               | Target (example)                                                                                                       |
+| ------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Belarus | Belarus-80, Belarus-82, Belarus-920, …          | 80, 82, 920, 952, 1025, 1221, 1523, 2022                                                                               |
+| BelAZ   | BelAZ-7555, BelAZ-7530, …                       | 7555, 75710, 7513, 7530, 7540, 7547, 7548, 7549                                                                        |
+| GAZ     | GAZ-3302, GAZ-3307, GAZon Next, GAZelle Next, … | 3302, 3307, 3308, …, GAZon Next, GAZelle Next, Sobol, Sobol Business (product names without "GAZ-" where it is prefix) |
+| Kamaz   | KamAZ-4310, KamAZ-5320, …                       | 4310, 43118, 5320, 53605, 5490, 65115, 65117, 6520, …                                                                  |
+| MAZ     | MAZ-6312, MAZ-5440, …                           | 6312, 5440, 6430, 5309, 5336, 5551, 4370, 4371                                                                         |
+| Ural    | Ural-4320, Ural-6370, Ural Next, …              | 4320, 43206, 5323, 6370, 63685, Next, Next 4x4, Next 6x6, Next 8x8 (or keep "Ural Next" as product name)               |
 
 **Files:** add-truck-brands-models.ts (stage + production), add-brands.ts (if these trucks appear), vehicle-classification.ts (if used). **Script:** Either (a) change the data in add-truck-brands-models to short names and implement a script (e.g. `fix-truck-model-names.ts`) that UPDATEs existing vehicle_models for these brands to the new names (to avoid leaving both "BelAZ-7530" and "7530" in DB), then run truck script + fix script; or (b) run truck script with short names and a separate script that removes/merges old model names. Prefer (a) so existing listings that reference old model names can be updated or mapped.
 
@@ -157,20 +158,20 @@ Only the **model** part; no brand name prefix.
 
 Only the **model** part; no brand name prefix.
 
-| Brand | Current (example) | Target (example) |
-|-------|-------------------|------------------|
-| Hualin | Hualin 125, Hualin 150, Hualin 200 | 125, 150, 200 |
-| Maxon | Maxon 125, Maxon 150, Maxon 200 | 125, 150, 200 |
-| Maya Motors | Maya 125, Maya 150, Maya 200 | 125, 150, 200 |
-| Moki | Moki 125, Moki 150, Moki 200 | 125, 150, 200 |
-| Motomax | Motomax 125, Motomax 150, Motomax 200 | 125, 150, 200 |
-| Odes | Odes 250, Odes 400, Odes 500, Odes 650L, Odes 700 | 250, 400, 500, 650L, 700 |
-| Orox | Orox 250, Orox 400, Orox 500 | 250, 400, 500 |
-| Sharmax | Sharmax 125, Sharmax Cross 180 RX, … | 125, 150, 200, Cross 180 RX, Hummer 320 RX LTD, GX-Cruiser 320, Force 1000 |
-| Titan | Titan 125, Titan 150, Titan 200 | 125, 150, 200 |
-| Viper | Viper 125, Viper 150, Viper 200, Viper 250 | 125, 150, 200, 250 |
-| Volta | Volta 125, Volta 150, Volta 200 | 125, 150, 200 |
-| Wolf Motors | Wolf 125, Wolf 150, Wolf 200 | 125, 150, 200 |
+| Brand       | Current (example)                                 | Target (example)                                                           |
+| ----------- | ------------------------------------------------- | -------------------------------------------------------------------------- |
+| Hualin      | Hualin 125, Hualin 150, Hualin 200                | 125, 150, 200                                                              |
+| Maxon       | Maxon 125, Maxon 150, Maxon 200                   | 125, 150, 200                                                              |
+| Maya Motors | Maya 125, Maya 150, Maya 200                      | 125, 150, 200                                                              |
+| Moki        | Moki 125, Moki 150, Moki 200                      | 125, 150, 200                                                              |
+| Motomax     | Motomax 125, Motomax 150, Motomax 200             | 125, 150, 200                                                              |
+| Odes        | Odes 250, Odes 400, Odes 500, Odes 650L, Odes 700 | 250, 400, 500, 650L, 700                                                   |
+| Orox        | Orox 250, Orox 400, Orox 500                      | 250, 400, 500                                                              |
+| Sharmax     | Sharmax 125, Sharmax Cross 180 RX, …              | 125, 150, 200, Cross 180 RX, Hummer 320 RX LTD, GX-Cruiser 320, Force 1000 |
+| Titan       | Titan 125, Titan 150, Titan 200                   | 125, 150, 200                                                              |
+| Viper       | Viper 125, Viper 150, Viper 200, Viper 250        | 125, 150, 200, 250                                                         |
+| Volta       | Volta 125, Volta 150, Volta 200                   | 125, 150, 200                                                              |
+| Wolf Motors | Wolf 125, Wolf 150, Wolf 200                      | 125, 150, 200                                                              |
 
 **Files:** vehicle-classification.ts only (MIXED_BRANDS, `moto` arrays). **Script:** Update vehicle-classification.ts to short names; then either re-run add-moto-brands (which creates/updates models from classification) and implement a script (e.g. `fix-moto-model-names.ts`) that UPDATEs existing moto model names for these 12 brands to the new short names, or ensure add-moto-brands uses classification and run it so DB gets short names. **Caution:** Viper and Titan exist as **car** models (Dodge Viper, Nissan Titan); change only the **moto** entries above.
 
@@ -180,22 +181,22 @@ Only the **model** part; no brand name prefix.
 
 ### 4.1 China — required (from CHINA_BRANDS_CHECK)
 
-| What | Category | Model names (no brand inside) |
-|------|----------|-------------------------------|
-| **Maextro** | car | S800 (and any other Maextro models; short names only) |
-| **Yangwang** | car | U8, U9 (and any other; short names only) |
-| **Xiaomi** — add model | car | Add **YU7** to existing Xiaomi brand (already has SU7). |
+| What                   | Category | Model names (no brand inside)                           |
+| ---------------------- | -------- | ------------------------------------------------------- |
+| **Maextro**            | car      | S800 (and any other Maextro models; short names only)   |
+| **Yangwang**           | car      | U8, U9 (and any other; short names only)                |
+| **Xiaomi** — add model | car      | Add **YU7** to existing Xiaomi brand (already has SU7). |
 
 **Files:** add-missing-car-brands.ts (or add-brands.ts / add-japanese or china-specific script if you prefer). vehicle-classification.ts: add Maextro, Yangwang with car arrays; add YU7 to Xiaomi car array.
 
 ### 4.2 China — optional (add only if needed for listings/search)
 
-- Wey (Great Wall), Arcfox, Stelato, Onvo, Firefly, Rising Auto, Fangchengbao, Deepal.  
+- Wey (Great Wall), Arcfox, Stelato, Onvo, Firefly, Rising Auto, Fangchengbao, Deepal.
 - Same rule: **car** category; model names **without** brand prefix.
 
 ### 4.3 Germany / Italy / Japan — optional
 
-- No mandatory additions from GERMANY_BRANDS_CHECK, ITALY_BRANDS_CHECK, JAPAN_BRANDS_CHECK for core flows.  
+- No mandatory additions from GERMANY_BRANDS_CHECK, ITALY_BRANDS_CHECK, JAPAN_BRANDS_CHECK for core flows.
 - If adding later (e.g. Ruf, Afeela, Nismo as model line under Nissan, Casalini, Pininfarina): always **car** or **truck** or **moto** as appropriate; model names without brand name inside.
 
 ---

@@ -50,7 +50,7 @@ export default async function Image() {
       ),
       {
         ...size,
-      }
+      },
     );
   } catch {
     return new ImageResponse(
@@ -91,7 +91,7 @@ export default async function Image() {
       ),
       {
         ...size,
-      }
+      },
     );
   }
 }

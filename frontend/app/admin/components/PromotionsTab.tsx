@@ -6,7 +6,8 @@ import { useCallback } from 'react';
 import { CopyButton } from '@/components/common/CopyButton';
 import { usePaginatedData } from '@/hooks/usePaginatedData';
 import { useTranslation } from '@/hooks/useTranslation';
-import { adminApi, PromotionHistory } from '@/lib/api';
+import type { PromotionHistory } from '@/lib/api';
+import { adminApi } from '@/lib/api';
 import { formatDateShort } from '@/lib/utils';
 import { Pagination } from '@/ui';
 
@@ -50,7 +51,7 @@ export function PromotionsTab() {
         limitNum,
         listingId,
         userId,
-        fromDate
+        fromDate,
       );
       return {
         data: response.data.data,

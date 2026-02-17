@@ -5,7 +5,7 @@ import { toast } from 'react-hot-toast';
 
 import { Dropdown } from '@/components/common/Dropdown';
 import { MultiSelectDropdown } from '@/components/common/MultiSelectDropdown';
-import { FilterState } from '@/hooks/useSearchFilters';
+import type { FilterState } from '@/hooks/useSearchFilters';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Currency } from '@/lib/constants';
 import { getDoorOptions } from '@/lib/options';
@@ -424,7 +424,7 @@ export function AdvancedFilters({
               t('searchFilters.urgent'),
               FIRE_EMOJI,
               'border-accentSecondary',
-              'before:bg-accentSecondary/10'
+              'before:bg-accentSecondary/10',
             )}
             labelClassName="font-semibold"
           />
@@ -437,7 +437,7 @@ export function AdvancedFilters({
               vehicleType === 'moto' ? t('searchFilters.newMoto') : t('searchFilters.new'),
               SPARKLES_EMOJI,
               'border-newBadge',
-              'before:bg-newBadge/10'
+              'before:bg-newBadge/10',
             )}
             labelClassName="font-semibold"
           />

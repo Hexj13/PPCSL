@@ -34,12 +34,14 @@ The image preview system provides a simple, fast, and efficient way for users to
 ### State Management
 
 **State Variables (4):**
+
 - `currentImageIndex: number` - Current photo index in preview
 - `mainImageLoading: boolean` - Preview loading state
 - `modalImageIndex: number` - Current photo index in modal
 - `modalImageLoading: boolean` - Modal loading state
 
 **Refs (2):**
+
 - `mainImageLoadedRef: Set<number>` - Cache of loaded preview image indices
 - `modalImageLoadedRef: Set<number>` - Cache of loaded modal image indices
 
@@ -48,6 +50,7 @@ The image preview system provides a simple, fast, and efficient way for users to
 ### Key Simplifications
 
 **Removed:**
+
 - ❌ `<link rel="preload">` system with manual management (~200 lines)
 - ❌ Preload queues with priorities
 - ❌ Limits and counters for active preloads
@@ -56,6 +59,7 @@ The image preview system provides a simple, fast, and efficient way for users to
 - ❌ `preloadImageOnHover` function with timeouts
 
 **Kept:**
+
 - ✅ Simple check via `new window.Image()` and `testImg.complete`
 - ✅ Next image preloading (browser manages it)
 - ✅ Flicker protection via `useLoadingState`
@@ -83,6 +87,7 @@ const optimizedUrl = getOptimizedImageUrl(imageUrl, IMAGE_QUALITY, IMAGE_WIDTH);
 ```
 
 **Why this matters:**
+
 - One URL = one server request
 - Browser caches the image once
 - Click on thumbnail → preview displays instantly from cache
@@ -124,7 +129,7 @@ useEffect(() => {
   const imagesList =
     listing.images && listing.images.length > 0 ? listing.images : ['/placeholder-car.jpg'];
   const currentImage = imagesList[currentImageIndex];
-  
+
   if (
     !currentImage ||
     currentImage === '/placeholder-car.jpg' ||
@@ -178,6 +183,7 @@ useEffect(() => {
 ```
 
 **Key points:**
+
 - Simple check via `new window.Image()` and `testImg.complete`
 - If in cache → `setMainImageLoading(false)` immediately
 - If loading → `setMainImageLoading(true)` and wait for `onload`
@@ -198,6 +204,7 @@ const { visible: showMainImageLoader } = useLoadingState({
 ```
 
 **Rule:**
+
 - **If image is in cache** → `mainImageLoading` is immediately `false` → loader not shown
 - **If image is loading** → `mainImageLoading = true` → loader shown for minimum 1 second (prevents flicker)
 
@@ -258,7 +265,7 @@ useEffect(() => {
   const imagesList =
     listing.images && listing.images.length > 0 ? listing.images : ['/placeholder-car.jpg'];
   const currentImage = imagesList[modalImageIndex];
-  
+
   if (
     !currentImage ||
     currentImage === '/placeholder-car.jpg' ||
@@ -308,6 +315,7 @@ const { visible: showModalImageLoader } = useLoadingState({
 ```
 
 **Behavior:**
+
 - If image is in cache → `modalImageLoading` is immediately `false` → loader not shown
 - If image is loading → `modalImageLoading = true` → loader shown for minimum 1 second (prevents flicker)
 
@@ -334,20 +342,24 @@ const { visible: showMainImageLoader } = useLoadingState({
 ```
 
 **Behavior:**
+
 - If `isLoading = true` and `showDelay` (200ms) passed → show loader
 - If `isLoading = false` → hide loader, but not before `minDisplayTime` (1000ms) from start of display
 - If loading completes before `showDelay` → don't show loader at all
 
 **For preview images:**
+
 - If image is in cache → `mainImageLoading` is immediately `false` → loader not shown (instant switch)
 - If image is loading → `mainImageLoading = true` → loader shown for minimum 1 second (readable indicator, prevents flicker)
 
 ### Why minDisplayTime: 1000ms?
 
 From `LOADING_STATES.md`:
+
 > "Loader shown for minimum 1 second (prevents flicker)"
 
 **Important distinction:**
+
 - **Page skeleton:** User waits for load → minimum 1s prevents flicker ✅
 - **Image switching:** Image IN CACHE → showing loader for 1s = artificial delay ❌
 
@@ -438,12 +450,14 @@ onError={(e) => {
 ```
 
 **Race condition prevention:**
+
 - Each image has `data-index={currentImageIndex}` attribute
 - Handlers read the index from `dataset` instead of closure
 - Only update loading state if the index matches current index
 - Prevents old handlers from incorrectly updating state after rapid switching
 
 **Features:**
+
 - Failed images are tracked in `imageErrors` Set
 - Placeholder is shown for failed images
 - Errors don't block other images from loading
@@ -454,14 +468,14 @@ onError={(e) => {
 
 ### Code Reduction
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| **Lines of code** | ~500 | ~100 | **-80%** |
-| **State/refs** | 15 | 6 | **-60%** |
-| **Checks on thumbnail click** | 5 levels | 1 check | **-80%** |
-| **Delay (cache)** | Could be | 0ms | **Instant** |
-| **Delay (network)** | Real + 1000ms | Real | **No artificial delays** |
-| **Complexity** | High | Low | **Easy to maintain** |
+| Metric                        | Before        | After   | Improvement              |
+| ----------------------------- | ------------- | ------- | ------------------------ |
+| **Lines of code**             | ~500          | ~100    | **-80%**                 |
+| **State/refs**                | 15            | 6       | **-60%**                 |
+| **Checks on thumbnail click** | 5 levels      | 1 check | **-80%**                 |
+| **Delay (cache)**             | Could be      | 0ms     | **Instant**              |
+| **Delay (network)**           | Real + 1000ms | Real    | **No artificial delays** |
+| **Complexity**                | High          | Low     | **Easy to maintain**     |
 
 ### Performance Characteristics
 
@@ -524,6 +538,7 @@ onError={(e) => {
 ### What Was Removed
 
 The previous implementation included:
+
 - Complex `<link rel="preload">` system (~200 lines)
 - Preload queues with priorities
 - Limits and counters for active preloads
@@ -558,6 +573,7 @@ The previous implementation included:
 ### For Future Enhancements
 
 If you need to add features:
+
 1. **Keep the simple approach:** Use `new window.Image()` for preloading
 2. **Don't add complex queues:** Browser manages priorities better
 3. **Test thoroughly:** Especially cache behavior

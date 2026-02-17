@@ -2,7 +2,7 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import React from 'react';
 
-import { Listing, PaginationMeta } from '@/lib/api';
+import type { Listing, PaginationMeta } from '@/lib/api';
 import { favoritesApi, listingsApi } from '@/lib/api';
 import { Currency } from '@/lib/constants';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
@@ -15,21 +15,20 @@ jest.mock('next/navigation', () => ({
   usePathname: jest.fn(),
 }));
 
-const mockGetState = jest.fn().mockReturnValue({
-  favorites: [],
-});
-
-const mockSetFavorites = jest.fn();
-
 jest.mock('@/lib/store', () => {
+  const mockGetState = jest.fn().mockReturnValue({ favorites: [] });
+  const mockSetFavorites = jest.fn();
   const mockStore = jest.fn(() => ({
     favorites: [],
     setFavorites: mockSetFavorites,
   }));
-  Object.assign(mockStore, { getState: mockGetState });
+  Object.assign(mockStore, { getState: mockGetState, _setFavorites: mockSetFavorites });
   return {
     useAuthStore: jest.fn(),
-    useFavoritesStore: mockStore as typeof mockStore & { getState: typeof mockGetState },
+    useFavoritesStore: mockStore as typeof mockStore & {
+      getState: typeof mockGetState;
+      _setFavorites: typeof mockSetFavorites;
+    },
   };
 });
 
@@ -156,7 +155,7 @@ describe('ListingGrid', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGetState.mockReturnValue({
+    (useFavoritesStore as unknown as { getState: jest.Mock }).getState.mockReturnValue({
       favorites: [],
     });
     (useRouter as jest.Mock).mockReturnValue({
@@ -170,7 +169,7 @@ describe('ListingGrid', () => {
     });
     (useFavoritesStore as unknown as jest.Mock).mockReturnValue({
       favorites: [],
-      setFavorites: mockSetFavorites,
+      setFavorites: (useFavoritesStore as unknown as { _setFavorites: jest.Mock })._setFavorites,
     });
     mockSearchParams.forEach.mockImplementation((_callback) => {
       _callback('', '');
@@ -248,7 +247,7 @@ describe('ListingGrid', () => {
         data: { 'listing-1': true, 'listing-2': false },
       });
 
-      mockGetState.mockReturnValue({
+      (useFavoritesStore as unknown as { getState: jest.Mock }).getState.mockReturnValue({
         favorites: [],
       });
 
@@ -326,7 +325,7 @@ describe('ListingGrid', () => {
       render(<ListingGrid />);
 
       expect(
-        await screen.findByText('No listings found', {}, { timeout: 5000 })
+        await screen.findByText('No listings found', {}, { timeout: 5000 }),
       ).toBeInTheDocument();
     });
 
@@ -334,7 +333,7 @@ describe('ListingGrid', () => {
       render(<ListingGrid />);
 
       expect(
-        await screen.findByText('View all listings', {}, { timeout: 5000 })
+        await screen.findByText('View all listings', {}, { timeout: 5000 }),
       ).toBeInTheDocument();
     });
 
@@ -351,7 +350,7 @@ describe('ListingGrid', () => {
       expect(dispatchEventSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'resetFiltersFromListingGrid',
-        })
+        }),
       );
     });
 

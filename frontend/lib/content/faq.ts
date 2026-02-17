@@ -52,7 +52,7 @@ export function loadFaqSync(country: string, locale?: string): FAQConfig | null 
     return faqData as FAQConfig;
   } catch {
     console.warn(
-      `FAQ config file not found for ${country}, using fallback FAQ. This is expected in core repository.`
+      `FAQ config file not found for ${country}, using fallback FAQ. This is expected in core repository.`,
     );
     return null;
   }

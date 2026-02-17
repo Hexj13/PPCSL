@@ -1,6 +1,7 @@
 # Sentry — настройка и мониторинг ошибок
 
 ## Дата создания
+
 23 января 2026
 
 ## Связанные документы
@@ -15,6 +16,7 @@ Sentry - это платформа для мониторинга ошибок и
 ## Зачем нужен Sentry
 
 ### Преимущества перед GA4 exception events
+
 - **Детальная информация об ошибках**: полные stack traces, контекст выполнения
 - **Группировка ошибок**: автоматическая группировка похожих ошибок
 - **Уведомления**: мгновенные уведомления о критических ошибках
@@ -24,6 +26,7 @@ Sentry - это платформа для мониторинга ошибок и
 - **Release tracking**: отслеживание ошибок по версиям приложения
 
 ### Что отслеживать
+
 - JavaScript ошибки на клиенте
 - Unhandled promise rejections
 - Ошибки API запросов
@@ -45,12 +48,14 @@ Sentry - это платформа для мониторинга ошибок и
 ### 2. Установка пакетов
 
 #### Фронтенд (Next.js)
+
 ```bash
 cd core/frontend
 npm install @sentry/nextjs
 ```
 
 #### Бэкенд (NestJS)
+
 ```bash
 cd core/backend
 npm install @sentry/node @sentry/profiling-node
@@ -59,6 +64,7 @@ npm install @sentry/node @sentry/profiling-node
 ### 3. Настройка переменных окружения
 
 #### Фронтенд (.env.local)
+
 ```env
 NEXT_PUBLIC_SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
 SENTRY_ORG=your-org
@@ -67,6 +73,7 @@ SENTRY_AUTH_TOKEN=your-auth-token
 ```
 
 #### Бэкенд (.env)
+
 ```env
 SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
 SENTRY_ENVIRONMENT=production
@@ -78,6 +85,7 @@ SENTRY_RELEASE=1.0.0
 ### 1. Инициализация Sentry
 
 Создать файл `core/frontend/sentry.client.config.ts`:
+
 ```typescript
 import * as Sentry from '@sentry/nextjs';
 
@@ -98,6 +106,7 @@ Sentry.init({
 ```
 
 Создать файл `core/frontend/sentry.server.config.ts`:
+
 ```typescript
 import * as Sentry from '@sentry/nextjs';
 
@@ -107,9 +116,11 @@ Sentry.init({
   tracesSampleRate: 0.2,
 });
 ```
+
 На сервере используется 0.2 (20% транзакций), чтобы снизить потребление памяти: при 100% трейсинге каждый health check и запрос создаёт полный trace, что на хостингах с ограниченной памятью (например Render.com) может приводить к OOM без реального трафика.
 
 Создать файл `core/frontend/sentry.edge.config.ts`:
+
 ```typescript
 import * as Sentry from '@sentry/nextjs';
 
@@ -142,13 +153,14 @@ module.exports = withSentryConfig(
     tunnelRoute: '/monitoring',
     hideSourceMaps: true,
     disableLogger: true,
-  }
+  },
 );
 ```
 
 ### 3. Глобальный обработчик ошибок
 
 Обновить `core/frontend/app/layout.tsx`:
+
 ```typescript
 'use client';
 
@@ -200,6 +212,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 ### 4. Обработка ошибок API
 
 Обновить `core/frontend/lib/api/api.ts` (или перехватчик в `lib/api/`):
+
 ```typescript
 import * as Sentry from '@sentry/nextjs';
 
@@ -228,6 +241,7 @@ try {
 ### 5. Контекст пользователя
 
 Добавить в `core/frontend/lib/store/store.ts` (auth store):
+
 ```typescript
 import * as Sentry from '@sentry/nextjs';
 
@@ -235,9 +249,7 @@ import * as Sentry from '@sentry/nextjs';
 Sentry.setUser({
   id: user.id,
   email: user.email,
-  username: user.firstName && user.lastName 
-    ? `${user.firstName} ${user.lastName}` 
-    : undefined,
+  username: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : undefined,
 });
 
 // При выходе
@@ -249,6 +261,7 @@ Sentry.setUser(null);
 ### 1. Инициализация Sentry
 
 Создать файл `core/backend/src/common/sentry.config.ts`:
+
 ```typescript
 import * as Sentry from '@sentry/node';
 import { ProfilingIntegration } from '@sentry/profiling-node';
@@ -258,9 +271,7 @@ Sentry.init({
   environment: process.env.NODE_ENV || 'development',
   tracesSampleRate: 1.0,
   profilesSampleRate: 1.0,
-  integrations: [
-    new ProfilingIntegration(),
-  ],
+  integrations: [new ProfilingIntegration()],
 });
 ```
 
@@ -280,6 +291,7 @@ async function bootstrap() {
 ### 3. Обновление HttpExceptionFilter
 
 Обновить `core/backend/src/common/filters/http-exception.filter.ts`:
+
 ```typescript
 import * as Sentry from '@sentry/node';
 
@@ -315,6 +327,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 ### 4. Контекст запроса
 
 Создать interceptor для добавления контекста:
+
 ```typescript
 import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
 import { Observable } from 'rxjs';
@@ -324,7 +337,7 @@ import * as Sentry from '@sentry/node';
 export class SentryInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
-    
+
     Sentry.configureScope((scope) => {
       scope.setTag('httpMethod', request.method);
       scope.setTag('httpPath', request.url);
@@ -342,6 +355,7 @@ export class SentryInterceptor implements NestInterceptor {
 ```
 
 Добавить в `app.module.ts`:
+
 ```typescript
 import { APP_INTERCEPTOR } from '@nestjs/core';
 
@@ -357,6 +371,7 @@ providers: [
 ## Настройка уведомлений
 
 ### 1. Email уведомления
+
 1. В Sentry: Settings → Notifications
 2. Настроить уведомления для:
    - Новых ошибок
@@ -364,6 +379,7 @@ providers: [
    - Резкого увеличения частоты ошибок
 
 ### 2. Интеграции
+
 - **Slack**: для уведомлений команды
 - **Discord**: альтернатива Slack
 - **PagerDuty**: для критических инцидентов
@@ -374,13 +390,11 @@ providers: [
 ### Игнорирование известных ошибок
 
 #### Фронтенд
+
 ```typescript
 Sentry.init({
   // ... другие настройки
-  ignoreErrors: [
-    'ResizeObserver loop limit exceeded',
-    'Non-Error promise rejection captured',
-  ],
+  ignoreErrors: ['ResizeObserver loop limit exceeded', 'Non-Error promise rejection captured'],
   beforeSend(event, hint) {
     // Фильтрация по типу ошибки
     if (event.exception) {
@@ -395,13 +409,11 @@ Sentry.init({
 ```
 
 #### Бэкенд
+
 ```typescript
 Sentry.init({
   // ... другие настройки
-  ignoreErrors: [
-    'ValidationError',
-    'UnauthorizedException',
-  ],
+  ignoreErrors: ['ValidationError', 'UnauthorizedException'],
   beforeSend(event, hint) {
     // Фильтрация по статусу
     if (event.tags?.httpStatus && event.tags.httpStatus < 500) {
@@ -417,6 +429,7 @@ Sentry.init({
 ### Настройка релизов
 
 #### Фронтенд (package.json)
+
 ```json
 {
   "scripts": {
@@ -427,6 +440,7 @@ Sentry.init({
 ```
 
 #### Бэкенд
+
 ```typescript
 Sentry.init({
   // ... другие настройки
@@ -439,25 +453,24 @@ Sentry.init({
 ### Включение Performance Monitoring
 
 #### Фронтенд
+
 ```typescript
 Sentry.init({
   // ... другие настройки
   tracesSampleRate: 0.2,
-  integrations: [
-    Sentry.browserTracingIntegration(),
-  ],
+  integrations: [Sentry.browserTracingIntegration()],
 });
 ```
+
 На сервере (sentry.server.config.ts) рекомендуется 0.1–0.2 для снижения потребления памяти; на клиенте можно использовать до 1.0 при необходимости.
 
 #### Бэкенд
+
 ```typescript
 Sentry.init({
   // ... другие настройки
   tracesSampleRate: 1.0,
-  integrations: [
-    new ProfilingIntegration(),
-  ],
+  integrations: [new ProfilingIntegration()],
 });
 ```
 
@@ -466,6 +479,7 @@ Sentry.init({
 ### Проверка интеграции
 
 1. **Тестовая ошибка на фронтенде:**
+
 ```typescript
 // В компоненте для тестирования
 const testError = () => {
@@ -474,6 +488,7 @@ const testError = () => {
 ```
 
 2. **Тестовая ошибка на бэкенде:**
+
 ```typescript
 // В контроллере для тестирования
 @Get('test-error')
@@ -490,20 +505,24 @@ testError() {
 ## Best Practices
 
 ### 1. Контекст ошибок
+
 - Всегда добавлять контекст при отправке ошибок
 - Включать информацию о пользователе (если авторизован)
 - Добавлять метаданные о запросе/действии
 
 ### 2. Группировка ошибок
+
 - Использовать fingerprint для кастомной группировки
 - Настраивать правила группировки в Sentry
 
 ### 3. Приватность
+
 - Не отправлять чувствительные данные (пароли, токены)
 - Использовать `beforeSend` для фильтрации данных
 - Настраивать Data Scrubbing в Sentry
 
 ### 4. Производительность
+
 - Использовать sampling для снижения нагрузки
 - Настраивать rate limiting
 - Мониторить влияние Sentry на производительность
@@ -511,6 +530,7 @@ testError() {
 ## Интеграция с GA4
 
 Sentry и GA4 дополняют друг друга:
+
 - **Sentry**: детальное отслеживание ошибок, stack traces, контекст
 - **GA4**: общая статистика ошибок, метрики вовлеченности
 

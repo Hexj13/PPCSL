@@ -405,7 +405,7 @@ const legal: LegalConfig = {
             "• Persoanele fizice (Individual) pot avea maximum 100 de anunțuri active simultan",
             "• Persoanele juridice (Business) pot avea maximum 100 de anunțuri active simultan",
             "• Anunțurile care sunt pauzate temporar (Paused) nu sunt numărate în limita de anunțuri active",
-            "• Anunțurile sunt închise automat după 5 luni de la ultima actualizare",
+            "• Anunțurile sunt închise automat după 90 de zile de la ultima actualizare",
             "Kupito își rezervă dreptul de a șterge, închide, bloca sau ascunde orice anunț sau cont de utilizator care încalcă aceste reguli, conține informații ilegale, este folosit pentru vânzarea de autoturisme furate sau este altfel folosit necorespunzător, fără notificare prealabilă. Aceasta include, dar nu se limitează la: anunțuri cu informații false, anunțuri pentru autoturisme furate, conturi de utilizator folosite pentru fraudă sau activități ilegale și orice altă activitate care încalcă acești Termeni sau legile aplicabile.",
           ],
         },

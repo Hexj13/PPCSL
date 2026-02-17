@@ -1,4 +1,4 @@
-import { Listing, PaginationMeta } from './api';
+import type { Listing, PaginationMeta } from './api';
 
 export interface NormalizedListingResponse {
   data: Listing[];
@@ -13,7 +13,7 @@ export type ListingApiResponse =
 export function normalizeListingResponse(
   responseData: ListingApiResponse,
   page: number = 1,
-  limit: number = 20
+  limit: number = 20,
 ): NormalizedListingResponse {
   if (Array.isArray(responseData)) {
     const total = responseData.length;

@@ -165,8 +165,14 @@ export class ListingsService {
     return this.autoCloseOldListingsUseCase.execute();
   }
 
-  async getUserListings(userId: string, page: number = 1, limit: number = 20) {
-    return this.getUserListingsUseCase.execute(userId, page, limit);
+  async getUserListings(
+    userId: string,
+    page: number = 1,
+    limit: number = 20,
+    status?: string,
+    promoted?: boolean,
+  ) {
+    return this.getUserListingsUseCase.execute(userId, page, limit, status, promoted);
   }
 
   async getActiveUserListings(userId: string): Promise<Listing[]> {

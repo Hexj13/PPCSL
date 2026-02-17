@@ -48,14 +48,14 @@ describe('server-api', () => {
         'http://localhost:4000/api/brands',
         expect.objectContaining({
           next: expect.any(Object),
-        })
+        }),
       );
       expect(global.fetch).toHaveBeenCalledWith(
         'http://localhost:4000/api/listings?page=1&limit=20&vehicleType=car&equipmentMatch=full',
         expect.objectContaining({
           next: { revalidate: 0 },
           cache: 'no-store',
-        })
+        }),
       );
       expect(result).toEqual(mockResponse);
     });
@@ -80,19 +80,19 @@ describe('server-api', () => {
 
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('brand_id=brand-1'),
-        expect.any(Object)
+        expect.any(Object),
       );
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('city=Skopje'),
-        expect.any(Object)
+        expect.any(Object),
       );
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('year_gte=2020'),
-        expect.any(Object)
+        expect.any(Object),
       );
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('price_lte=50000'),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -128,7 +128,7 @@ describe('server-api', () => {
       const calls = (global.fetch as jest.Mock).mock.calls;
       const listingsCall = calls.find(
         (call: [string | Request, RequestInit?]) =>
-          typeof call[0] === 'string' && call[0].includes('/api/listings')
+          typeof call[0] === 'string' && call[0].includes('/api/listings'),
       );
       expect(listingsCall).toBeDefined();
       const url = new URL(listingsCall[0]);
@@ -169,7 +169,7 @@ describe('server-api', () => {
       const calls = (global.fetch as jest.Mock).mock.calls;
       const listingsCall = calls.find(
         (call: [string | Request, RequestInit?]) =>
-          typeof call[0] === 'string' && call[0].includes('/api/listings')
+          typeof call[0] === 'string' && call[0].includes('/api/listings'),
       );
       expect(listingsCall).toBeDefined();
       const url = new URL(listingsCall[0]);
@@ -202,7 +202,7 @@ describe('server-api', () => {
       const calls = (global.fetch as jest.Mock).mock.calls;
       const listingsCall = calls.find(
         (call: [string | Request, RequestInit?]) =>
-          typeof call[0] === 'string' && call[0].includes('/api/listings')
+          typeof call[0] === 'string' && call[0].includes('/api/listings'),
       );
       expect(listingsCall).toBeDefined();
       const url = new URL(listingsCall[0]);
@@ -240,7 +240,7 @@ describe('server-api', () => {
       const calls = (global.fetch as jest.Mock).mock.calls;
       const listingsCall = calls.find(
         (call: [string | Request, RequestInit?]) =>
-          typeof call[0] === 'string' && call[0].includes('/api/listings')
+          typeof call[0] === 'string' && call[0].includes('/api/listings'),
       );
       expect(listingsCall).toBeDefined();
       const url = new URL(listingsCall[0]);
@@ -342,7 +342,7 @@ describe('server-api', () => {
         expect.objectContaining({
           next: { revalidate: 0 },
           cache: 'no-store',
-        })
+        }),
       );
     });
 
@@ -369,7 +369,7 @@ describe('server-api', () => {
         expect.objectContaining({
           next: { revalidate: 30 },
           cache: 'default',
-        })
+        }),
       );
     });
   });

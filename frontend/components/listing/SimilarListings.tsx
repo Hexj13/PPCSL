@@ -7,7 +7,8 @@ import { ListingCard } from '@/components/listing/ListingCard';
 import { ListingCardSkeleton } from '@/components/listing/ListingCardSkeleton';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
-import { listingsApi, Listing } from '@/lib/api';
+import type { Listing } from '@/lib/api';
+import { listingsApi } from '@/lib/api';
 import { useFavoritesStore } from '@/lib/store';
 
 interface SimilarListingsProps {
@@ -37,7 +38,7 @@ function SimilarListingCard({
       analytics.similarFavoriteToggle(
         listingId,
         listing.id,
-        isCurrentlyFavorite ? 'add' : 'remove'
+        isCurrentlyFavorite ? 'add' : 'remove',
       );
     }
     prevFavoriteState.current = isCurrentlyFavorite;
@@ -112,7 +113,7 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
           }
         });
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     observer.observe(sectionRef.current);
@@ -224,7 +225,7 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
     (clickedListingId: string, position: number) => {
       analytics.similarCardClick(listingId, clickedListingId, position);
     },
-    [listingId]
+    [listingId],
   );
 
   useEffect(() => {
@@ -266,7 +267,7 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
       setIsTouchDevice(
         'ontouchstart' in window ||
           navigator.maxTouchPoints > 0 ||
-          ((navigator as Navigator & { msMaxTouchPoints?: number }).msMaxTouchPoints ?? 0) > 0
+          ((navigator as Navigator & { msMaxTouchPoints?: number }).msMaxTouchPoints ?? 0) > 0,
       );
     };
 
@@ -287,12 +288,7 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
   }
 
   return (
-    <section
-      ref={sectionRef}
-      role="region"
-      aria-label={t('similarListings.title')}
-      className="mt-6 md:mt-8"
-    >
+    <section ref={sectionRef} aria-label={t('similarListings.title')} className="mt-6 md:mt-8">
       <div className="surface">
         <div className="flex items-center gap-4 mb-6">
           <h2 className="text-xl md:text-2xl font-bold text-primary-900">

@@ -6,7 +6,8 @@ import { toast } from 'react-hot-toast';
 
 import { SaveFilterModal } from '@/components/modals/SaveFilterModal';
 import { useTranslation } from '@/hooks/useTranslation';
-import { brandsApi, savedFiltersApi, SavedFilter } from '@/lib/api';
+import type { SavedFilter } from '@/lib/api';
+import { brandsApi, savedFiltersApi } from '@/lib/api';
 import { createSlug, formatDateLong } from '@/lib/utils';
 
 interface SavedFiltersListProps {
@@ -66,7 +67,7 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
           onFiltersChange?.(0);
         });
     },
-    [onFiltersChange]
+    [onFiltersChange],
   );
 
   const [filters, setFilters] = useState<SavedFilter[]>(() => {
@@ -129,12 +130,12 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
 
     const brandIds = Array.isArray(filterParams.brand_ids)
       ? (filterParams.brand_ids as string[]).filter(
-          (v) => v !== 'all' && v !== '' && v !== null && v !== undefined
+          (v) => v !== 'all' && v !== '' && v !== null && v !== undefined,
         )
       : [];
     const modelIds = Array.isArray(filterParams.model_ids)
       ? (filterParams.model_ids as string[]).filter(
-          (v) => v !== 'all' && v !== '' && v !== null && v !== undefined
+          (v) => v !== 'all' && v !== '' && v !== null && v !== undefined,
         )
       : [];
 
@@ -219,7 +220,7 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
 
       if (Array.isArray(value)) {
         const filteredArray = value.filter(
-          (v) => v !== 'all' && v !== '' && v !== null && v !== undefined
+          (v) => v !== 'all' && v !== '' && v !== null && v !== undefined,
         );
         if (filteredArray.length > 0) {
           const arrayParams = [
@@ -286,6 +287,16 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
               console.error('Failed to apply filter:', error);
             });
           }}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleApply(filter).catch((error) => {
+                console.error('Failed to apply filter:', error);
+              });
+            }
+          }}
           className="card p-4 md:p-5 cursor-pointer group bg-white rounded-xl border-2 border-primary-700/30 shadow-none transition-all duration-200 hover:border-primary-900 focus-within:border-primary-900 hover:shadow-lg focus-within:shadow-lg"
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -328,7 +339,7 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleDelete(filter.id);
+                  void handleDelete(filter.id);
                 }}
                 disabled={deletingIds.has(filter.id)}
                 className="flex-shrink-0 p-2 text-text-secondary hover:text-red-400 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"

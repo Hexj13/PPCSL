@@ -1,3 +1,4 @@
+/// <reference path="./jest-openapi.d.ts" />
 import * as path from 'path';
 
 import jestOpenAPI from 'jest-openapi';

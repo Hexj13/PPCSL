@@ -42,7 +42,7 @@ export function CopyButton({
         toast.error(t(errorMessageKey));
       }
     },
-    [text, label, t, successMessageKey, errorMessageKey]
+    [text, label, t, successMessageKey, errorMessageKey],
   );
 
   return (

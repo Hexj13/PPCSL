@@ -1,4 +1,4 @@
-import { PromotionRulesConfig } from './promotion-rules.config';
+import type { PromotionRulesConfig } from './promotion-rules.config';
 
 export class PromotionRulesService {
   constructor(private readonly config: PromotionRulesConfig) {}

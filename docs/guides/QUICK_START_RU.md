@@ -20,6 +20,7 @@ docker-compose up -d
 ```
 
 **Проверка, что контейнеры запущены:**
+
 ```bash
 docker ps
 ```
@@ -29,6 +30,7 @@ docker ps
 ### 3. Настройка переменных окружения
 
 **Создайте файл `backend/.env`:**
+
 ```env
 PORT=4000
 DB_HOST=localhost
@@ -51,10 +53,12 @@ REDIS_PORT=6379
 ```
 
 **Создайте файл `frontend/.env.local`:**
+
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:4000
 NEXT_PUBLIC_COUNTRY=<country>
 ```
+
 Замените `<country>` на код страны платформы (например, `md` для Молдовы).
 
 ### 4. Запуск миграций базы данных
@@ -69,6 +73,7 @@ cd ..
 ### 5. Запуск проекта
 
 **Вариант A: Запуск обоих серверов вместе (рекомендуется):**
+
 ```bash
 npm run dev
 ```
@@ -76,12 +81,14 @@ npm run dev
 **Вариант B: Запуск серверов отдельно:**
 
 Терминал 1 (Backend):
+
 ```bash
 cd backend
 npm run start:dev
 ```
 
 Терминал 2 (Frontend):
+
 ```bash
 cd frontend
 npm run dev
@@ -138,6 +145,7 @@ cd ..
 ### 5. Настройка переменных окружения
 
 **Создайте файл `core/backend/.env`:**
+
 ```env
 PORT=4000
 DB_HOST=localhost
@@ -160,11 +168,13 @@ REDIS_PORT=6379
 ```
 
 **Создайте файл `core/frontend/.env.local`:**
+
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:4000
 NEXT_PUBLIC_COUNTRY=<country>
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
+
 Замените `<country>` на код страны платформы (например, `md` для Молдовы).
 
 ### 6. Запуск миграций базы данных
@@ -179,6 +189,7 @@ cd ../..
 ### 7. Запуск проекта
 
 **Вариант A: Запуск обоих серверов вместе:**
+
 ```bash
 cd core
 npm run dev
@@ -187,12 +198,14 @@ npm run dev
 **Вариант B: Запуск серверов отдельно:**
 
 Терминал 1 (Backend):
+
 ```bash
 cd core/backend
 npm run start:dev
 ```
 
 Терминал 2 (Frontend):
+
 ```bash
 cd core/frontend
 npm run dev
@@ -223,11 +236,13 @@ lsof -ti:4000 | xargs kill -9
 ### Docker не запускается
 
 **Проверьте, запущен ли Docker Desktop:**
+
 ```bash
 docker ps
 ```
 
 Если ошибка "Cannot connect to the Docker daemon":
+
 1. Откройте Docker Desktop
 2. Дождитесь полного запуска
 3. Попробуйте снова: `docker-compose up -d`
@@ -235,11 +250,13 @@ docker ps
 ### База данных не подключается
 
 **Проверьте, что контейнер PostgreSQL запущен:**
+
 ```bash
 docker ps | grep postgres
 ```
 
 **Проверьте логи:**
+
 ```bash
 docker logs kupito-postgres
 ```
@@ -249,20 +266,24 @@ docker logs kupito-postgres
 ### Файлы локализации не загружаются (для kupito.club)
 
 Убедитесь, что файлы переводов существуют в корневой директории:
+
 ```bash
 ls locales/ro.json
 ls locales/ru.json
 ls locales/en.json
 ```
+
 Файлы переводов загружаются напрямую из корневой директории.
 
 Убедитесь, что файлы темы и конфигурации скопированы:
+
 ```bash
 ls core/frontend/lib/theme/
 ls core/frontend/lib/config/
 ```
 
 Если файлов нет, скопируйте их снова:
+
 ```bash
 mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/
 cp -r theme core/frontend/lib/
@@ -276,16 +297,19 @@ cp -r config core/frontend/lib/
 ## Полезные команды
 
 ### Остановка Docker контейнеров
+
 ```bash
 docker-compose down
 ```
 
 ### Просмотр логов Docker
+
 ```bash
 docker-compose logs -f
 ```
 
 ### Пересборка проекта
+
 ```bash
 # Backend
 cd backend
@@ -297,6 +321,7 @@ npm run build
 ```
 
 ### Очистка кэша Next.js
+
 ```bash
 cd frontend
 rm -rf .next

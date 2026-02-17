@@ -56,7 +56,7 @@ describe('validation-rules', () => {
 
     it('returns year error key when year_gte > year_lte', () => {
       expect(getFilterRangesValidationError({ year_gte: '2023', year_lte: '2020' })).toBe(
-        'searchFilters.yearFromGreaterThanTo'
+        'searchFilters.yearFromGreaterThanTo',
       );
     });
 
@@ -65,7 +65,7 @@ describe('validation-rules', () => {
         getFilterRangesValidationError({
           price_gte: '500000',
           price_lte: '100000',
-        })
+        }),
       ).toBe('searchFilters.priceFromGreaterThanTo');
     });
 
@@ -74,7 +74,7 @@ describe('validation-rules', () => {
         getFilterRangesValidationError({
           mileage_gte: '200000',
           mileage_lte: '100000',
-        })
+        }),
       ).toBe('searchFilters.mileageFromGreaterThanTo');
     });
 
@@ -83,7 +83,7 @@ describe('validation-rules', () => {
         getFilterRangesValidationError({
           engine_displ_l_gte: '6.0',
           engine_displ_l_lte: '3.0',
-        })
+        }),
       ).toBe('searchFilters.engineFromGreaterThanTo');
     });
 
@@ -92,7 +92,7 @@ describe('validation-rules', () => {
         getFilterRangesValidationError({
           horsepower_gte: '500',
           horsepower_lte: '300',
-        })
+        }),
       ).toBe('searchFilters.horsepowerFromGreaterThanTo');
     });
 

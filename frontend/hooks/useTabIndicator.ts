@@ -1,9 +1,10 @@
-import { RefObject, useLayoutEffect, useRef, useState } from 'react';
+import type { RefObject } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 
 export function useTabIndicator<T extends string>(
   activeTab: T,
   tabRefs: Record<T, RefObject<HTMLButtonElement | null>>,
-  containerRef: RefObject<HTMLDivElement | null>
+  containerRef: RefObject<HTMLDivElement | null>,
 ) {
   const indicatorRef = useRef<HTMLDivElement>(null);
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });

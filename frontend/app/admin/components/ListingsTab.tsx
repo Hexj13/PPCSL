@@ -11,7 +11,8 @@ import { PromotionModal } from '@/components/modals/PromotionModal';
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { usePaginatedData } from '@/hooks/usePaginatedData';
 import { useTranslation } from '@/hooks/useTranslation';
-import { adminApi, Listing } from '@/lib/api';
+import type { Listing } from '@/lib/api';
+import { adminApi } from '@/lib/api';
 import { Pagination } from '@/ui';
 
 interface ListingsTabProps {
@@ -61,7 +62,7 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
         listingId,
         userId,
         status,
-        isPromoted
+        isPromoted,
       );
       return {
         data: response.data.data,
@@ -112,6 +113,14 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
   }, []);
 
   useEffect(() => {
+    if (!initialSearchQuery) return;
+    setFilters((prev) => ({ ...prev, searchQuery: initialSearchQuery }));
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [initialSearchQuery, setFilters]);
+
+  useEffect(() => {
     if (initialSearchQuery && typeof window !== 'undefined') {
       const timer = setTimeout(() => {
         localStorage.removeItem('adminListingsSearchQuery');
@@ -122,7 +131,7 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
   }, [initialSearchQuery]);
 
   useEffect(() => {
-    loadStatusCounts();
+    void loadStatusCounts();
   }, [loadStatusCounts]);
 
   const handleAction = useCallback(
@@ -139,14 +148,14 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
         toast.success(t('admin.listingsTab.statusUpdateSuccess'));
 
         setData((prev) =>
-          prev.map((listing) => (listing.id === id ? { ...listing, status: newStatus } : listing))
+          prev.map((listing) => (listing.id === id ? { ...listing, status: newStatus } : listing)),
         );
-        loadStatusCounts();
+        await loadStatusCounts();
       } catch {
         toast.error(t('admin.listingsTab.statusUpdateError'));
       }
     },
-    [t, loadStatusCounts, setData]
+    [t, loadStatusCounts, setData],
   );
 
   const handleUnpromote = useCallback(
@@ -154,26 +163,26 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
       try {
         await adminApi.toggleListingPromotion(id, false, null);
         toast.success(t('admin.promotionDisabled'));
-        reload();
-        loadStatusCounts();
+        await reload();
+        await loadStatusCounts();
       } catch {
         toast.error(t('admin.promotionError'));
       }
     },
-    [t, reload, loadStatusCounts]
+    [t, reload, loadStatusCounts],
   );
 
   const handlePromoteClick = useCallback(
     (id: string) => {
       const listing = listings.find((l) => l.id === id);
       if (listing?.is_promoted) {
-        handleUnpromote(id);
+        void handleUnpromote(id);
       } else {
         setSelectedListingId(id);
         setPromotionModalOpen(true);
       }
     },
-    [listings, handleUnpromote]
+    [listings, handleUnpromote],
   );
 
   const handlePromotionSelect = useCallback(
@@ -183,8 +192,8 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
       try {
         await adminApi.toggleListingPromotion(selectedListingId, true, days);
         toast.success(t('admin.promotionEnabled'));
-        reload();
-        loadStatusCounts();
+        await reload();
+        await loadStatusCounts();
       } catch {
         toast.error(t('admin.promotionError'));
       } finally {
@@ -192,7 +201,7 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
         setSelectedListingId(null);
       }
     },
-    [selectedListingId, t, reload, loadStatusCounts]
+    [selectedListingId, t, reload, loadStatusCounts],
   );
 
   return (

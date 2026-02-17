@@ -14,7 +14,7 @@ export function getFuelOptions(t: (_key: string) => string): Array<LabeledOption
 
 export function getTransmissionOptions(
   t: (_key: string) => string,
-  _vehicleType?: 'car' | 'truck' | 'moto'
+  _vehicleType?: 'car' | 'truck' | 'moto',
 ): Array<LabeledOption<string>> {
   const allOptions = [
     { value: 'Manual', label: t('vehicleOptions.transmission.Manual') },
@@ -35,7 +35,7 @@ export function getDriveTypeOptions(t: (_key: string) => string): Array<LabeledO
 
 export function getBodyTypeOptions(
   t: (_key: string) => string,
-  vehicleType?: 'car' | 'truck' | 'moto'
+  vehicleType?: 'car' | 'truck' | 'moto',
 ): Array<LabeledOption<string>> {
   const allBodyTypes = [
     { value: 'Sedan', label: t('vehicleOptions.bodyType.Sedan') },
@@ -83,8 +83,8 @@ export function getBodyTypeOptions(
     const allowedTypes = BODY_TYPES_BY_VEHICLE_TYPE[vehicleType];
     return sortOptionsByLabel(
       allBodyTypes.filter((opt) =>
-        allowedTypes.includes(opt.value as (typeof allowedTypes)[number])
-      )
+        allowedTypes.includes(opt.value as (typeof allowedTypes)[number]),
+      ),
     );
   }
 
@@ -159,6 +159,6 @@ export function getColorOptions(t: (_key: string) => string): Array<LabeledOptio
     colors.map((color) => ({
       value: color,
       label: t(`vehicleOptions.color.${color}`),
-    }))
+    })),
   );
 }

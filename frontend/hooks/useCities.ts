@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
-import { citiesApi, City } from '@/lib/api';
+import type { City } from '@/lib/api';
+import { citiesApi } from '@/lib/api';
 import { sortByName } from '@/lib/utils';
 
 let citiesCache: City[] | null = null;
@@ -28,12 +29,18 @@ export function useCities() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchCities().then((data) => {
-      if (!cancelled) {
-        setCities(data);
-        setLoading(false);
-      }
-    });
+    fetchCities()
+      .then((data) => {
+        if (!cancelled) {
+          setCities(data);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
     return () => {
       cancelled = true;
     };

@@ -1,6 +1,6 @@
-import { Brand, City, VehicleModel } from '@/lib/api';
+import type { Brand, City, VehicleModel } from '@/lib/api';
 
-import { ListingFormData } from '../ListingForm';
+import type { ListingFormData } from '../ListingForm';
 
 export interface ListingFormSectionProps {
   formData: ListingFormData;

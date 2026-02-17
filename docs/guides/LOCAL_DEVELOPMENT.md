@@ -29,6 +29,7 @@ Both approaches allow you to develop and test changes locally before pushing to 
 ## Option 1: Working in PPCSL (Core Repository)
 
 Use this approach when:
+
 - Developing core functionality (components, API, business logic)
 - Making changes that affect all platforms
 - Testing core features without platform-specific configurations
@@ -36,17 +37,20 @@ Use this approach when:
 ### Setup
 
 1. **Clone PPCSL repository:**
+
    ```bash
    git clone git@github.com:Hexj13/PPCSL.git
    cd PPCSL
    ```
 
 2. **Install dependencies:**
+
    ```bash
    npm run install:all
    ```
 
 3. **Start Docker containers:**
+
    ```bash
    docker-compose up -d
    ```
@@ -54,6 +58,7 @@ Use this approach when:
 4. **Setup environment variables:**
 
    Create `backend/.env`:
+
    ```env
    PORT=4000
    DB_HOST=localhost
@@ -64,22 +69,24 @@ Use this approach when:
    JWT_SECRET=your-secret-key-change-in-production
    FRONTEND_URL=http://localhost:3000
    NODE_ENV=development
-   
+
    # Twilio SMS Configuration
    TWILIO_ACCOUNT_SID=your-twilio-account-sid
    TWILIO_AUTH_TOKEN=your-twilio-auth-token
    TWILIO_MESSAGING_SERVICE_SID=your-twilio-messaging-service-sid
-   
+
    # Redis Configuration
    REDIS_HOST=localhost
    REDIS_PORT=6379
    ```
 
    Create `frontend/.env.local`:
+
    ```env
    NEXT_PUBLIC_API_URL=http://localhost:4000
    NEXT_PUBLIC_COUNTRY=<country>
    ```
+
    Replace `<country>` with your platform's ISO 3166-1 alpha-2 code (e.g. `md` for Moldova).
 
 5. **Run database migrations:**
@@ -92,11 +99,13 @@ Use this approach when:
 ### Running the Project
 
 **Option A: Run both servers together (recommended):**
+
 ```bash
 npm run dev
 ```
 
 **Option B: Run servers separately:**
+
 ```bash
 # Terminal 1 - Backend
 cd backend
@@ -108,6 +117,7 @@ npm run dev
 ```
 
 **Access:**
+
 - Frontend: http://localhost:3000
 - Backend: http://localhost:4000
 
@@ -130,6 +140,7 @@ npm run dev
 ## Option 2: Working in kupito.club (Platform Repository)
 
 Use this approach when:
+
 - Developing platform-specific features (translations, theme, config)
 - Testing with real locale files
 - Making changes that need platform-specific configurations
@@ -138,17 +149,20 @@ Use this approach when:
 ### Setup
 
 1. **Clone kupito.club repository:**
+
    ```bash
    git clone git@github.com:Hexj13/kupito.club.git
    cd kupito.club
    ```
 
 2. **Initialize and update submodules:**
+
    ```bash
    git submodule update --init --recursive
    ```
 
 3. **Copy platform files to core:**
+
    ```bash
    # Translations are loaded directly from root, but copying provides fallback
    # Theme and config files must be copied as they are TypeScript modules
@@ -158,10 +172,11 @@ Use this approach when:
    ```
 
 4. **Install dependencies:**
+
    ```bash
    # Install root dependencies
    npm install
-   
+
    # Install core dependencies
    cd core
    npm run install:all
@@ -169,6 +184,7 @@ Use this approach when:
    ```
 
 5. **Start Docker containers:**
+
    ```bash
    cd core
    docker-compose up -d
@@ -178,6 +194,7 @@ Use this approach when:
 6. **Setup environment variables:**
 
    Create `core/backend/.env`:
+
    ```env
    PORT=4000
    DB_HOST=localhost
@@ -188,23 +205,25 @@ Use this approach when:
    JWT_SECRET=your-secret-key-change-in-production
    FRONTEND_URL=http://localhost:3000
    NODE_ENV=development
-   
+
    # Twilio SMS Configuration
    TWILIO_ACCOUNT_SID=your-twilio-account-sid
    TWILIO_AUTH_TOKEN=your-twilio-auth-token
    TWILIO_MESSAGING_SERVICE_SID=your-twilio-messaging-service-sid
-   
+
    # Redis Configuration
    REDIS_HOST=localhost
    REDIS_PORT=6379
    ```
 
    Create `core/frontend/.env.local`:
+
    ```env
    NEXT_PUBLIC_API_URL=http://localhost:4000
    NEXT_PUBLIC_COUNTRY=<country>
    NEXT_PUBLIC_SITE_URL=http://localhost:3000
    ```
+
    Replace `<country>` with your platform's ISO 3166-1 alpha-2 code (e.g. `md` for Moldova).
 
 7. **Run database migrations:**
@@ -218,12 +237,14 @@ Use this approach when:
 ### Running the Project
 
 **Option A: Run both servers together:**
+
 ```bash
 cd core
 npm run dev
 ```
 
 **Option B: Run servers separately:**
+
 ```bash
 # Terminal 1 - Backend
 cd core/backend
@@ -235,6 +256,7 @@ npm run dev
 ```
 
 **Access:**
+
 - Frontend: http://localhost:3000 (with real Romanian and Russian translations and theme)
 - Backend: http://localhost:4000
 
@@ -257,11 +279,13 @@ npm run dev
 If you need to make changes to core while working in kupito.club:
 
 1. **Navigate to core:**
+
    ```bash
    cd core
    ```
 
 2. **Create a new branch (recommended):**
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
@@ -271,6 +295,7 @@ If you need to make changes to core while working in kupito.club:
 4. **Test locally** (locale files are already copied)
 
 5. **Commit and push to PPCSL:**
+
    ```bash
    git add .
    git commit -m "feat: your feature description"
@@ -299,12 +324,13 @@ If you need to make changes to core while working in kupito.club:
    - `config/site.ts` - Site configuration
 
 2. **Copy files to core for testing:**
+
    ```bash
    mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/  # Frontend ro/ru + backend locales (loaded from root)
    cp -r theme core/frontend/lib/
    cp -r config core/frontend/lib/
    ```
-   
+
    **Note:** Frontend uses `locales/ro.json`, `locales/ru.json`; backend uses `locales/backend/*.json`. No `backend/` folder is created in `core/frontend/lib/locales/`.
 
 3. **Test locally**
@@ -325,6 +351,7 @@ If you need to make changes to core while working in kupito.club:
 Create a helper script to simplify the workflow:
 
 **`scripts/dev.sh`** (in kupito.club):
+
 ```bash
 #!/bin/bash
 
@@ -340,11 +367,13 @@ npm run dev
 ```
 
 Make it executable:
+
 ```bash
 chmod +x scripts/dev.sh
 ```
 
 Usage:
+
 ```bash
 ./scripts/dev.sh
 ```
@@ -352,6 +381,7 @@ Usage:
 ### Update Core Submodule Script
 
 **`scripts/update-core.sh`** (in kupito.club):
+
 ```bash
 #!/bin/bash
 
@@ -379,6 +409,7 @@ echo "Done! Core updated and locale files copied."
 **When:** You make changes in PPCSL core
 
 **Process:**
+
 1. Commit and push to PPCSL
 2. CI/CD automatically updates submodule in kupito.club
 3. Or manually update in kupito.club:
@@ -394,6 +425,7 @@ echo "Done! Core updated and locale files copied."
 **When:** You need to add core functionality from kupito.club
 
 **Process:**
+
 1. Make changes in `kupito.club/core/`
 2. Test locally
 3. Push to PPCSL:
@@ -410,6 +442,7 @@ echo "Done! Core updated and locale files copied."
 **When:** You change translations, theme, or config in kupito.club
 
 **Process:**
+
 1. Edit files in `kupito.club/locales/`, `theme/`, or `config/`
 2. Copy to core for testing:
    ```bash
@@ -427,6 +460,7 @@ echo "Done! Core updated and locale files copied."
 ### Daily Development Workflow
 
 **Working on core features:**
+
 ```bash
 # 1. Start in PPCSL
 cd PPCSL
@@ -447,6 +481,7 @@ git push origin feature/new-feature
 ```
 
 **Working on platform features:**
+
 ```bash
 # 1. Start in kupito.club
 cd kupito.club
@@ -491,19 +526,21 @@ git push origin main
    cd kupito-test
    ```
 3. **Update core submodule to your local PPCSL (temporary):**
+
    ```bash
    # Option 1: Link to local PPCSL (for testing only)
    cd core
    git remote set-url origin /path/to/PPCSL
    git pull
    cd ..
-   
+
    # Option 2: Use your local branch
    cd core
    git fetch /path/to/PPCSL
    git checkout feature/your-feature
    cd ..
    ```
+
 4. **Copy platform files and test:**
    ```bash
    mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/  # Frontend ro/ru + backend locales
@@ -522,6 +559,7 @@ git push origin main
 **Problem:** `git status` shows `core` as modified even though you didn't change it
 
 **Solution:**
+
 ```bash
 cd core
 git status  # Check what's modified
@@ -534,11 +572,14 @@ git status  # Check what's modified
 **Problem:** Translations, theme, or config not loading
 
 **Solution:**
+
 1. Check that translation files exist in root `locales/` directory:
+
    ```bash
    ls locales/ro.json locales/ru.json
    ls locales/en.json
    ```
+
    Translations are copied to core at prepare:build (frontend ro/ru, backend from locales/backend).
 
 2. Ensure theme and config files are copied to `core/frontend/lib/`:
@@ -546,14 +587,15 @@ git status  # Check what's modified
    ls core/frontend/lib/theme/
    ls core/frontend/lib/config/
    ```
-2. Check `NEXT_PUBLIC_COUNTRY` environment variable
-3. Restart dev server after copying files
+3. Check `NEXT_PUBLIC_COUNTRY` environment variable
+4. Restart dev server after copying files
 
 ### Core Submodule Out of Date
 
 **Problem:** Core submodule is pointing to old commit
 
 **Solution:**
+
 ```bash
 cd core
 git fetch origin
@@ -567,6 +609,7 @@ cd ..
 **Problem:** Trying to push core changes from kupito.club
 
 **Solution:**
+
 - Core changes should be pushed from PPCSL repository
 - If you made changes in `kupito.club/core/`, navigate there and push:
   ```bash
@@ -580,6 +623,7 @@ cd ..
 **Problem:** Port 3000 or 4000 already in use
 
 **Solution:**
+
 ```bash
 # Kill processes on ports
 npm run kill-ports  # If script exists

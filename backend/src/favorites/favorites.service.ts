@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+import { ExchangeRatesService } from '../exchange-rates/exchange-rates.service';
 import { Listing } from '../listings/entities/listing.entity';
 
 import { Favorite } from './entities/favorite.entity';
@@ -13,6 +14,7 @@ export class FavoritesService {
     private favoritesRepository: Repository<Favorite>,
     @InjectRepository(Listing)
     private listingsRepository: Repository<Listing>,
+    private readonly exchangeRatesService: ExchangeRatesService,
   ) {}
 
   async add(userId: string, listingId: string): Promise<Favorite> {
@@ -56,8 +58,17 @@ export class FavoritesService {
     }
   }
 
-  async findAll(userId: string): Promise<Favorite[]> {
-    return this.favoritesRepository.find({
+  async findAll(
+    userId: string,
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<{
+    data: Favorite[];
+    meta: { total: number; page: number; limit: number; totalPages: number };
+  }> {
+    const skip = (page - 1) * limit;
+
+    const [favorites, total] = await this.favoritesRepository.findAndCount({
       where: { user_id: userId },
       relations: [
         'listing',
@@ -67,7 +78,30 @@ export class FavoritesService {
         'listing.user',
       ],
       order: { created_at: 'DESC' },
+      skip,
+      take: limit,
     });
+
+    const listings = favorites.map((f) => f.listing).filter(Boolean);
+    const enriched = await this.exchangeRatesService.enrichListingsWithApproxPrice(listings);
+    const enrichedMap = new Map(enriched.map((l) => [l.id, l]));
+
+    const data = favorites.map((f) => {
+      if (f.listing) {
+        f.listing = enrichedMap.get(f.listing.id) ?? f.listing;
+      }
+      return f;
+    });
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async checkIfFavorite(userId: string, listingId: string): Promise<boolean> {

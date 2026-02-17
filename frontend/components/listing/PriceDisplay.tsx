@@ -9,6 +9,7 @@ interface PriceDisplayProps {
   size?: 'small' | 'medium' | 'large';
   showCurrency?: boolean;
   urgent?: boolean;
+  approxPriceBelow?: boolean;
   className?: string;
   priceClassName?: string;
   currencyClassName?: string;
@@ -23,6 +24,7 @@ export function PriceDisplay({
   size = 'medium',
   showCurrency = true,
   urgent = false,
+  approxPriceBelow = false,
   className = '',
   priceClassName = 'text-primary-700',
   currencyClassName,
@@ -41,9 +43,18 @@ export function PriceDisplay({
     large: 'text-lg md:text-xl',
   };
 
+  const approxBlock = approxPrice != null && defaultCurrencyCode && (
+    <span className="text-sm font-normal" style={{ color: 'rgb(var(--gray-400-rgb))' }}>
+      {t('listings.approxPriceWithCurrency', {
+        price: formatPrice(approxPrice),
+        currency: defaultCurrencyCode,
+      })}
+    </span>
+  );
+
   return (
     <div className={className}>
-      <div className="flex items-baseline gap-2 md:gap-3">
+      <div className="flex items-baseline gap-2 md:gap-3 flex-wrap">
         <span className={`${sizeClasses[size]} font-extrabold ${priceClassName}`}>
           {formatPrice(price, currency)}
         </span>
@@ -55,15 +66,9 @@ export function PriceDisplay({
             {currency}
           </span>
         )}
-        {approxPrice != null && defaultCurrencyCode && (
-          <span className="text-sm font-normal" style={{ color: 'rgb(var(--gray-400-rgb))' }}>
-            {t('listings.approxPriceWithCurrency', {
-              price: formatPrice(approxPrice),
-              currency: defaultCurrencyCode,
-            })}
-          </span>
-        )}
+        {!approxPriceBelow && approxBlock}
       </div>
+      {approxPriceBelow && approxBlock}
       {urgent && (
         <div className="mt-1.5 md:mt-2">
           <span className="inline-flex items-center gap-1 px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-sm font-semibold bg-primary-500/20 border border-primary-500/40 text-primary-300 shadow-sm">

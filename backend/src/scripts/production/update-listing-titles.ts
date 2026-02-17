@@ -84,4 +84,6 @@ async function updateListingTitles() {
   }
 }
 
-updateListingTitles();
+updateListingTitles().catch(() => {
+  process.exit(1);
+});

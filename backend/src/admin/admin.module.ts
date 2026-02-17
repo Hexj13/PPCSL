@@ -5,6 +5,7 @@ import { AuthModule } from '../auth/auth.module';
 import { BrandsModule } from '../brands/brands.module';
 import { Brand } from '../brands/entities/brand.entity';
 import { VehicleModel } from '../brands/entities/vehicle-model.entity';
+import { ExchangeRatesModule } from '../exchange-rates/exchange-rates.module';
 import { Favorite } from '../favorites/entities/favorite.entity';
 import { ListingView } from '../listings/entities/listing-view.entity';
 import { Listing } from '../listings/entities/listing.entity';
@@ -32,6 +33,7 @@ import { DeleteAllBrandsService } from './delete-all-brands.service';
     AuthModule,
     ListingsModule,
     BrandsModule,
+    ExchangeRatesModule,
   ],
   controllers: [AdminController],
   providers: [AdminService, DeleteAllBrandsService],

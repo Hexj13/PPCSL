@@ -60,7 +60,7 @@ export function SmsVerificationModal({
 
     const updatedCode = newCode.join('').trimEnd();
     if (updatedCode.length === 6) {
-      validateAndSubmit(updatedCode);
+      void validateAndSubmit(updatedCode);
     }
   };
 
@@ -89,7 +89,7 @@ export function SmsVerificationModal({
       inputRefs.current[filledIndex]?.focus();
 
       if (digitsOnly.length === 6) {
-        validateAndSubmit(digitsOnly);
+        void validateAndSubmit(digitsOnly);
       }
     }
   };
@@ -123,7 +123,7 @@ export function SmsVerificationModal({
     e.preventDefault();
     const trimmedCode = code.trim();
     if (trimmedCode.length === 6) {
-      validateAndSubmit(trimmedCode);
+      void validateAndSubmit(trimmedCode);
     } else {
       setError(t('smsVerification.enterFullCode'));
     }

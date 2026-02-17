@@ -19,14 +19,12 @@ describe('useLoadingState', () => {
     it('should not show indicator if loading completes before showDelay', () => {
       const { result, rerender } = renderHook(
         ({ isLoading }) => useLoadingState({ isLoading, showDelay: 200 }),
-        { initialProps: { isLoading: false } }
+        { initialProps: { isLoading: false } },
       );
 
       expect(result.current.visible).toBe(false);
 
-      act(() => {
-        rerender({ isLoading: true });
-      });
+      rerender({ isLoading: true });
 
       expect(result.current.visible).toBe(false);
 
@@ -36,9 +34,7 @@ describe('useLoadingState', () => {
 
       expect(result.current.visible).toBe(false);
 
-      act(() => {
-        rerender({ isLoading: false });
-      });
+      rerender({ isLoading: false });
 
       act(() => {
         jest.advanceTimersByTime(100);
@@ -50,12 +46,10 @@ describe('useLoadingState', () => {
     it('should show indicator after showDelay', () => {
       const { result, rerender } = renderHook(
         ({ isLoading }) => useLoadingState({ isLoading, showDelay: 200 }),
-        { initialProps: { isLoading: false } }
+        { initialProps: { isLoading: false } },
       );
 
-      act(() => {
-        rerender({ isLoading: true });
-      });
+      rerender({ isLoading: true });
 
       expect(result.current.visible).toBe(false);
 
@@ -71,12 +65,10 @@ describe('useLoadingState', () => {
     it('should keep indicator visible for minimum minDisplayTime', () => {
       const { result, rerender } = renderHook(
         ({ isLoading }) => useLoadingState({ isLoading, showDelay: 0, minDisplayTime: 1000 }),
-        { initialProps: { isLoading: false } }
+        { initialProps: { isLoading: false } },
       );
 
-      act(() => {
-        rerender({ isLoading: true });
-      });
+      rerender({ isLoading: true });
 
       act(() => {
         jest.advanceTimersByTime(1);
@@ -84,9 +76,7 @@ describe('useLoadingState', () => {
 
       expect(result.current.visible).toBe(true);
 
-      act(() => {
-        rerender({ isLoading: false });
-      });
+      rerender({ isLoading: false });
 
       act(() => {
         jest.advanceTimersByTime(500);
@@ -104,12 +94,10 @@ describe('useLoadingState', () => {
     it('should hide indicator immediately if minDisplayTime has already passed', () => {
       const { result, rerender } = renderHook(
         ({ isLoading }) => useLoadingState({ isLoading, showDelay: 0, minDisplayTime: 1000 }),
-        { initialProps: { isLoading: false } }
+        { initialProps: { isLoading: false } },
       );
 
-      act(() => {
-        rerender({ isLoading: true });
-      });
+      rerender({ isLoading: true });
 
       act(() => {
         jest.advanceTimersByTime(1);
@@ -121,9 +109,7 @@ describe('useLoadingState', () => {
         jest.advanceTimersByTime(1500);
       });
 
-      act(() => {
-        rerender({ isLoading: false });
-      });
+      rerender({ isLoading: false });
 
       act(() => {
         jest.advanceTimersByTime(1);
@@ -137,12 +123,10 @@ describe('useLoadingState', () => {
     it('should show indicator immediately when immediate=true', () => {
       const { result, rerender } = renderHook(
         ({ isLoading }) => useLoadingState({ isLoading, immediate: true, showDelay: 200 }),
-        { initialProps: { isLoading: false } }
+        { initialProps: { isLoading: false } },
       );
 
-      act(() => {
-        rerender({ isLoading: true });
-      });
+      rerender({ isLoading: true });
 
       expect(result.current.visible).toBe(true);
     });
@@ -153,26 +137,20 @@ describe('useLoadingState', () => {
       const callback = jest.fn();
       const { result, rerender } = renderHook(
         ({ isLoading }) => useLoadingState({ isLoading, showDelay: 0, minDisplayTime: 1000 }),
-        { initialProps: { isLoading: false } }
+        { initialProps: { isLoading: false } },
       );
 
-      act(() => {
-        rerender({ isLoading: true });
-      });
+      rerender({ isLoading: true });
 
       act(() => {
         jest.advanceTimersByTime(1);
       });
 
-      act(() => {
-        result.current.afterHidden(callback);
-      });
+      result.current.afterHidden(callback);
 
       expect(callback).not.toHaveBeenCalled();
 
-      act(() => {
-        rerender({ isLoading: false });
-      });
+      rerender({ isLoading: false });
 
       act(() => {
         jest.advanceTimersByTime(1000);
@@ -186,12 +164,10 @@ describe('useLoadingState', () => {
     it('should properly cleanup timers on unmount', () => {
       const { unmount, rerender } = renderHook(
         ({ isLoading }) => useLoadingState({ isLoading, showDelay: 200, minDisplayTime: 1000 }),
-        { initialProps: { isLoading: false } }
+        { initialProps: { isLoading: false } },
       );
 
-      act(() => {
-        rerender({ isLoading: true });
-      });
+      rerender({ isLoading: true });
 
       act(() => {
         jest.advanceTimersByTime(200);

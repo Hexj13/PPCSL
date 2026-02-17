@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class AddEmailVerifiedToUser1763000000000 implements MigrationInterface {
   name = 'AddEmailVerifiedToUser1763000000000';

@@ -1,4 +1,5 @@
-import { useSearchParams, useRouter } from 'next/navigation';
+import type { useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback, startTransition } from 'react';
 
 import { analytics } from '@/lib/analytics';
@@ -65,7 +66,7 @@ export function useVehicleType({
   }, [searchParams]);
 
   const [vehicleType, setVehicleType] = useState<'car' | 'moto' | 'truck'>(() =>
-    getInitialVehicleType()
+    getInitialVehicleType(),
   );
 
   useEffect(() => {
@@ -118,7 +119,7 @@ export function useVehicleType({
         router.replace(`/?${params.toString()}`, { scroll: false });
       });
     },
-    [router, resetFilters, setLastAppliedFilters, setActiveTab, isApplyingQuickFilterRef]
+    [router, resetFilters, setLastAppliedFilters, setActiveTab, isApplyingQuickFilterRef],
   );
 
   return {

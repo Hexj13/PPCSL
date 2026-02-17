@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class AddCompanyWebsiteUrlToUser1787000000000 implements MigrationInterface {
   name = 'AddCompanyWebsiteUrlToUser1787000000000';

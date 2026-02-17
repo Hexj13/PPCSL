@@ -1,5 +1,5 @@
-import { Brand } from '../../entities/brand.entity';
-import { VehicleModel } from '../../entities/vehicle-model.entity';
+import type { Brand } from '../../entities/brand.entity';
+import type { VehicleModel } from '../../entities/vehicle-model.entity';
 
 export const BRANDS_CACHE = Symbol('BRANDS_CACHE');
 

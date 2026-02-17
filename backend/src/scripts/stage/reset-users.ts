@@ -78,4 +78,6 @@ async function resetUsers() {
   }
 }
 
-resetUsers();
+resetUsers().catch(() => {
+  process.exit(1);
+});

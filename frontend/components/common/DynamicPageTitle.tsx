@@ -26,7 +26,7 @@ function getFallbackTitle(
   brandParam: string | null,
   modelParam: string | null,
   vehicleTypeLabel: string,
-  baseTitle: string
+  baseTitle: string,
 ): string {
   if (!brandParam && !modelParam) {
     return vehicleTypeLabel ? `${vehicleTypeLabel} | ${baseTitle}` : baseTitle;
@@ -46,7 +46,7 @@ function getFallbackTitle(
           (m) =>
             m.toLowerCase() === modelSlug ||
             createSlug(m) === modelSlug ||
-            slugMatches(modelSlug, m)
+            slugMatches(modelSlug, m),
         );
         if (model) foundModels.push(`${brandName} ${model}`);
       });

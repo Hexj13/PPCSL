@@ -32,7 +32,7 @@ export function Breadcrumbs({ items, className = '' }: BreadcrumbsProps) {
                 <span className="text-text-secondary" aria-hidden="true">
                   /
                 </span>
-              </li>
+              </li>,
             );
           }
 
@@ -52,7 +52,7 @@ export function Breadcrumbs({ items, className = '' }: BreadcrumbsProps) {
               ) : (
                 <span className="text-text-secondary">{item.label}</span>
               )}
-            </li>
+            </li>,
           );
 
           return elements;

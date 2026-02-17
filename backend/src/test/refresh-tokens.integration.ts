@@ -3,7 +3,7 @@ import request from 'supertest';
 import { getTestRequest } from './setup-integration';
 
 describe('Refresh Tokens Integration', () => {
-  let request: request.SuperTest<request.Test>;
+  let request: ReturnType<typeof getTestRequest>;
   let accessToken: string;
   let refreshToken: string;
   let userId: string;

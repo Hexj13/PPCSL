@@ -2,7 +2,8 @@
 
 import { Dropdown } from '@/components/common/Dropdown';
 import { useI18n } from '@/components/providers/I18nProvider';
-import { Currency, CurrencyEnum } from '@/lib/types';
+import type { Currency } from '@/lib/types';
+import { CurrencyEnum } from '@/lib/types';
 import { sortOptionsByLabel } from '@/lib/utils';
 
 import { RequiredAsterisk } from './RequiredAsterisk';
@@ -94,6 +95,7 @@ export function PriceAndLocationSection({
               min="0"
               max="999999999"
               value={formData.price}
+              data-testid="listing-form-price"
               onChange={(e) => {
                 clearError('price');
                 const value = e.target.value.replace(/[^0-9]/g, '');

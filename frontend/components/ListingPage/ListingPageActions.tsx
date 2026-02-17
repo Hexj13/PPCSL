@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslation } from '@/hooks/useTranslation';
-import { Listing } from '@/lib/api';
+import type { Listing } from '@/lib/api';
 import { LoadingSpinner } from '@/ui';
 
 interface ListingPageActionsProps {

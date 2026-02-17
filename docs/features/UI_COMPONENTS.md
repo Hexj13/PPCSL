@@ -6,10 +6,10 @@ Shared UI components for displaying informational blocks and hint tooltips acros
 
 Two components provide a unified way to show contextual information:
 
-| Component | Purpose | Trigger | Location |
-|-----------|---------|---------|----------|
-| `InfoBlock` | Static informational block with icon | Always visible | `@/ui` |
-| `HintTooltip` | "?" icon that reveals a popover on click | Click | `@/ui` |
+| Component     | Purpose                                  | Trigger        | Location |
+| ------------- | ---------------------------------------- | -------------- | -------- |
+| `InfoBlock`   | Static informational block with icon     | Always visible | `@/ui`   |
+| `HintTooltip` | "?" icon that reveals a popover on click | Click          | `@/ui`   |
 
 ---
 
@@ -25,11 +25,11 @@ import { InfoBlock } from '@/ui';
 
 ### Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `children` | `ReactNode` | — | Content to display |
-| `variant` | `'info' \| 'warning'` | `'info'` | Icon type: info circle or warning triangle |
-| `className` | `string` | `''` | Additional CSS classes |
+| Prop        | Type                  | Default  | Description                                |
+| ----------- | --------------------- | -------- | ------------------------------------------ |
+| `children`  | `ReactNode`           | —        | Content to display                         |
+| `variant`   | `'info' \| 'warning'` | `'info'` | Icon type: info circle or warning triangle |
+| `className` | `string`              | `''`     | Additional CSS classes                     |
 
 ### Usage
 
@@ -73,36 +73,32 @@ import { HintTooltip } from '@/ui';
 
 ### Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `children` | `ReactNode` | — | Tooltip content |
-| `ariaLabel` | `string` | — | Accessible label for the button |
-| `width` | `string` | `'w-64'` | Tailwind width class for the popover |
-| `className` | `string` | `''` | Additional CSS classes |
+| Prop        | Type        | Default  | Description                          |
+| ----------- | ----------- | -------- | ------------------------------------ |
+| `children`  | `ReactNode` | —        | Tooltip content                      |
+| `ariaLabel` | `string`    | —        | Accessible label for the button      |
+| `width`     | `string`    | `'w-64'` | Tailwind width class for the popover |
+| `className` | `string`    | `''`     | Additional CSS classes               |
 
 ### Usage
 
 ```tsx
 <div className="flex items-center gap-1.5 mb-2">
-  <label className="text-sm font-semibold text-primary-500">
-    {t('register.email')}
-  </label>
-  <HintTooltip ariaLabel={t('register.phoneHint')}>
-    {t('register.phoneHint')}
-  </HintTooltip>
+  <label className="text-sm font-semibold text-primary-500">{t('register.email')}</label>
+  <HintTooltip ariaLabel={t('register.phoneHint')}>{t('register.phoneHint')}</HintTooltip>
 </div>
 ```
 
 ### Behavior
 
-| Feature | Description |
-|---------|-------------|
-| **Open** | Click on the "?" icon |
-| **Close** | Click outside, press Escape, scroll, or click the icon again |
+| Feature         | Description                                                                                |
+| --------------- | ------------------------------------------------------------------------------------------ |
+| **Open**        | Click on the "?" icon                                                                      |
+| **Close**       | Click outside, press Escape, scroll, or click the icon again                               |
 | **Positioning** | Automatically opens **above** the icon if there is enough space; otherwise opens **below** |
-| **Animation** | Fade-in/fade-out with slide (150ms ease-out) |
-| **Arrow** | Small triangle indicator pointing to the trigger icon |
-| **z-index** | `1070` (matches `designTokens.zIndex.tooltip`) |
+| **Animation**   | Fade-in/fade-out with slide (150ms ease-out)                                               |
+| **Arrow**       | Small triangle indicator pointing to the trigger icon                                      |
+| **z-index**     | `1070` (matches `designTokens.zIndex.tooltip`)                                             |
 
 ### Styling
 
@@ -133,20 +129,20 @@ import { HintTooltip } from '@/ui';
 
 ### InfoBlock
 
-| Page | File | Purpose |
-|------|------|---------|
-| Create/Edit Listing | `components/ListingForm/BasicInfoSection.tsx` | Brand/model help text |
-| Create/Edit Listing | `components/ListingForm/EquipmentSection.tsx` | Equipment section help |
-| Complete Profile | `app/complete-profile/page.tsx` | Profile completion guidance |
-| Listing Detail | `app/listings/[id]/ListingPageClient.tsx` | VIN not provided warning |
+| Page                | File                                          | Purpose                     |
+| ------------------- | --------------------------------------------- | --------------------------- |
+| Create/Edit Listing | `components/ListingForm/BasicInfoSection.tsx` | Brand/model help text       |
+| Create/Edit Listing | `components/ListingForm/EquipmentSection.tsx` | Equipment section help      |
+| Complete Profile    | `app/complete-profile/page.tsx`               | Profile completion guidance |
+| Listing Detail      | `app/listings/[id]/ListingPageClient.tsx`     | VIN not provided warning    |
 
 ### HintTooltip
 
-| Page | File | Purpose |
-|------|------|---------|
-| Create/Edit Listing | `components/ListingForm/BasicInfoSection.tsx` | VIN field explanation |
-| Complete Profile | `app/complete-profile/page.tsx` | Email field explanation (2 instances) |
-| Listing Detail | `app/listings/[id]/ListingPageClient.tsx` | Vehicle history explanation |
+| Page                | File                                          | Purpose                               |
+| ------------------- | --------------------------------------------- | ------------------------------------- |
+| Create/Edit Listing | `components/ListingForm/BasicInfoSection.tsx` | VIN field explanation                 |
+| Complete Profile    | `app/complete-profile/page.tsx`               | Email field explanation (2 instances) |
+| Listing Detail      | `app/listings/[id]/ListingPageClient.tsx`     | Vehicle history explanation           |
 
 ---
 

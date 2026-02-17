@@ -70,6 +70,14 @@ export function ListingPageImages({
     <div>
       <div
         onClick={() => onImageClick(currentImageIndex)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onImageClick(currentImageIndex);
+          }
+        }}
         className="relative h-64 sm:h-80 md:h-96 bg-bg-darker rounded-xl overflow-hidden mb-4 w-full cursor-pointer border border-transparent hover:border-primary-500/50 transition-colors"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
@@ -86,21 +94,7 @@ export function ListingPageImages({
             const optimizedUrl = getOptimizedImageUrl(currentImage, 75, 1200);
             const isExternal =
               optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://');
-            return isExternal ? (
-              <img
-                src={optimizedUrl}
-                alt={t('listings.imageAltWithTotal', {
-                  title: imageAltTitle,
-                  index: (currentImageIndex + 1).toString(),
-                  total: images.length.toString(),
-                })}
-                className={`w-full h-full object-cover ${showMainImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
-                draggable={false}
-                onLoad={() => handleImageLoad(currentImageIndex)}
-                onError={() => onImageError(currentImageIndex)}
-                data-index={currentImageIndex}
-              />
-            ) : (
+            return (
               <Image
                 src={optimizedUrl}
                 alt={t('listings.imageAltWithTotal', {
@@ -113,6 +107,7 @@ export function ListingPageImages({
                 className={`object-cover ${showMainImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
                 priority
                 draggable={false}
+                unoptimized={isExternal}
                 onLoad={() => handleImageLoad(currentImageIndex)}
                 onError={() => onImageError(currentImageIndex)}
                 data-index={currentImageIndex}
@@ -150,6 +145,14 @@ export function ListingPageImages({
               <div
                 key={index}
                 onClick={() => setCurrentImageIndex(index)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setCurrentImageIndex(index);
+                  }
+                }}
                 className={`relative h-28 sm:h-32 bg-bg-darker rounded-lg overflow-hidden transition-all cursor-pointer ${
                   index === 3 ? 'hidden sm:block' : ''
                 } ${
@@ -165,37 +168,22 @@ export function ListingPageImages({
                       optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://');
                     return (
                       <>
-                        {isExternal ? (
-                          <img
-                            src={optimizedUrl}
-                            alt={t('listings.imageAltWithTotal', {
-                              title: imageAltTitle,
-                              index: (index + 1).toString(),
-                              total: images.length.toString(),
-                            })}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                            draggable={false}
-                            onLoad={() => handleImageLoad(index)}
-                            onError={() => onImageError(index)}
-                          />
-                        ) : (
-                          <Image
-                            src={optimizedUrl}
-                            alt={t('listings.imageAltWithTotal', {
-                              title: imageAltTitle,
-                              index: (index + 1).toString(),
-                              total: images.length.toString(),
-                            })}
-                            fill
-                            sizes="(max-width: 640px) 33vw, 25vw"
-                            className="object-cover"
-                            loading="lazy"
-                            draggable={false}
-                            onLoad={() => handleImageLoad(index)}
-                            onError={() => onImageError(index)}
-                          />
-                        )}
+                        <Image
+                          src={optimizedUrl}
+                          alt={t('listings.imageAltWithTotal', {
+                            title: imageAltTitle,
+                            index: (index + 1).toString(),
+                            total: images.length.toString(),
+                          })}
+                          fill
+                          sizes="(max-width: 640px) 33vw, 25vw"
+                          className="object-cover"
+                          loading="lazy"
+                          draggable={false}
+                          unoptimized={isExternal}
+                          onLoad={() => handleImageLoad(index)}
+                          onError={() => onImageError(index)}
+                        />
                         {isLastThumbnailMobile && hasMoreImagesMobile && (
                           <button
                             onClick={(e) => {

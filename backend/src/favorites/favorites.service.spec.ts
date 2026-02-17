@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository, DeleteResult } from 'typeorm';
 
+import { ExchangeRatesService } from '../exchange-rates/exchange-rates.service';
 import { Listing } from '../listings/entities/listing.entity';
 
 import { Favorite } from './entities/favorite.entity';
@@ -21,11 +22,24 @@ describe('FavoritesService', () => {
     created_at: new Date(),
   } as Favorite;
 
+  const mockExchangeRatesService = {
+    enrichListingsWithApproxPrice: jest.fn((listings) =>
+      Promise.resolve(
+        listings.map((l: Listing) => ({
+          ...l,
+          approxPriceDefaultCurrency: null,
+          defaultCurrencyCode: 'EUR',
+        })),
+      ),
+    ),
+  };
+
   beforeEach(async () => {
     const mockRepository = {
       create: jest.fn(),
       save: jest.fn(),
       find: jest.fn(),
+      findAndCount: jest.fn(),
       findOne: jest.fn(),
       delete: jest.fn(),
       createQueryBuilder: jest.fn(),
@@ -45,6 +59,10 @@ describe('FavoritesService', () => {
         {
           provide: getRepositoryToken(Listing),
           useValue: mockListingsRepository,
+        },
+        {
+          provide: ExchangeRatesService,
+          useValue: mockExchangeRatesService,
         },
       ],
     }).compile();
@@ -114,14 +132,21 @@ describe('FavoritesService', () => {
   });
 
   describe('findAll', () => {
-    it('should return all favorites for user', async () => {
-      const favorites = [mockFavorite];
-      repository.find.mockResolvedValue(favorites);
+    it('should return paginated favorites with enriched listings', async () => {
+      const listing = { id: 'listing-1', price: 1000, currency: 'EUR' } as Listing;
+      const favoriteWithListing = { ...mockFavorite, listing } as Favorite;
+      repository.findAndCount.mockResolvedValue([[favoriteWithListing], 1]);
 
-      const result = await service.findAll('user-1');
+      const result = await service.findAll('user-1', 1, 20);
 
-      expect(result).toEqual(favorites);
-      expect(repository.find).toHaveBeenCalledWith({
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].listing).toHaveProperty('approxPriceDefaultCurrency');
+      expect(result.data[0].listing).toHaveProperty('defaultCurrencyCode', 'EUR');
+      expect(result.meta).toEqual({ total: 1, page: 1, limit: 20, totalPages: 1 });
+      expect(mockExchangeRatesService.enrichListingsWithApproxPrice).toHaveBeenCalledWith([
+        listing,
+      ]);
+      expect(repository.findAndCount).toHaveBeenCalledWith({
         where: { user_id: 'user-1' },
         relations: [
           'listing',
@@ -131,15 +156,18 @@ describe('FavoritesService', () => {
           'listing.user',
         ],
         order: { created_at: 'DESC' },
+        skip: 0,
+        take: 20,
       });
     });
 
-    it('should return empty array when no favorites', async () => {
-      repository.find.mockResolvedValue([]);
+    it('should return empty data and meta when no favorites', async () => {
+      repository.findAndCount.mockResolvedValue([[], 0]);
 
-      const result = await service.findAll('user-1');
+      const result = await service.findAll('user-1', 1, 20);
 
-      expect(result).toEqual([]);
+      expect(result.data).toEqual([]);
+      expect(result.meta).toEqual({ total: 0, page: 1, limit: 20, totalPages: 0 });
     });
   });
 

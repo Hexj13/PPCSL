@@ -6,9 +6,166 @@ import { toast } from 'react-hot-toast';
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
-import { authApi, favoritesApi, listingsApi, savedFiltersApi, UpdateProfileDto } from '@/lib/api';
+import { authApi } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import { Checkbox, LoadingButton, InfoBlock, HintTooltip } from '@/ui';
+
+import { buildUpdateData, getFilledFields, processPendingData } from './utils';
+
+interface CompleteProfileFormFieldsProps {
+  isBusiness: boolean;
+  formData: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    companyWebsiteUrl: string;
+    emailNotifications: boolean;
+  };
+  errors: { firstName: string; lastName: string; email: string; companyWebsiteUrl: string };
+  touched: { firstName: boolean; lastName: boolean; email: boolean; companyWebsiteUrl: boolean };
+  t: (key: string) => string;
+  onFirstNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onLastNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onEmailChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onCompanyWebsiteUrlChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onFirstNameBlur: () => void;
+  onLastNameBlur: () => void;
+  onEmailBlur: () => void;
+  onCompanyWebsiteUrlBlur: () => void;
+  onFormFieldFocus: () => void;
+  onEmailNotificationsChange: (checked: boolean) => void;
+}
+
+function CompleteProfileFormFields({
+  isBusiness,
+  formData,
+  errors,
+  touched,
+  t,
+  onFirstNameChange,
+  onLastNameChange,
+  onEmailChange,
+  onCompanyWebsiteUrlChange,
+  onFirstNameBlur,
+  onLastNameBlur,
+  onEmailBlur,
+  onCompanyWebsiteUrlBlur,
+  onFormFieldFocus,
+  onEmailNotificationsChange,
+}: CompleteProfileFormFieldsProps) {
+  if (isBusiness) {
+    return (
+      <>
+        <div>
+          <label className="block text-sm font-semibold mb-2 text-primary-900">
+            {t('profile.companyWebsiteUrl')}
+          </label>
+          <input
+            type="url"
+            value={formData.companyWebsiteUrl}
+            onChange={onCompanyWebsiteUrlChange}
+            onFocus={onFormFieldFocus}
+            onBlur={onCompanyWebsiteUrlBlur}
+            className={`input-field ${touched.companyWebsiteUrl && errors.companyWebsiteUrl ? 'border-red-500' : ''}`}
+            placeholder={t('profile.companyWebsiteUrlPlaceholder')}
+            autoComplete="url"
+          />
+          {touched.companyWebsiteUrl && errors.companyWebsiteUrl && (
+            <p className="mt-1 text-sm text-red-400">{errors.companyWebsiteUrl}</p>
+          )}
+        </div>
+        <div>
+          <div className="flex items-center gap-1.5 mb-2">
+            <label className="text-sm font-semibold text-primary-900">{t('register.email')}</label>
+            <HintTooltip ariaLabel={t('register.emailHint')}>{t('register.emailHint')}</HintTooltip>
+          </div>
+          <input
+            type="email"
+            value={formData.email}
+            onChange={onEmailChange}
+            onFocus={onFormFieldFocus}
+            onBlur={onEmailBlur}
+            className={`input-field ${touched.email && errors.email ? 'border-red-500' : ''}`}
+            placeholder={t('register.emailPlaceholder')}
+            autoComplete="email"
+          />
+          {touched.email && errors.email && (
+            <p className="mt-1 text-sm text-red-400">{errors.email}</p>
+          )}
+        </div>
+        <Checkbox
+          id="complete-profile-email-notifications"
+          checked={formData.emailNotifications}
+          onChange={(checked) => {
+            onFormFieldFocus();
+            onEmailNotificationsChange(checked);
+          }}
+          label={t('register.emailNotifications')}
+          size="md"
+        />
+      </>
+    );
+  }
+  return (
+    <>
+      <div>
+        <label className="block text-sm font-semibold mb-2 text-primary-900">
+          {t('register.firstName')}
+        </label>
+        <input
+          type="text"
+          value={formData.firstName}
+          onChange={onFirstNameChange}
+          onFocus={onFormFieldFocus}
+          onBlur={onFirstNameBlur}
+          className={`input-field ${touched.firstName && errors.firstName ? 'border-red-500' : ''}`}
+          placeholder={t('register.firstName')}
+          autoComplete="given-name"
+        />
+        {touched.firstName && errors.firstName && (
+          <p className="mt-1 text-sm text-red-400">{errors.firstName}</p>
+        )}
+      </div>
+      <div>
+        <label className="block text-sm font-semibold mb-2 text-primary-900">
+          {t('register.lastName')}
+        </label>
+        <input
+          type="text"
+          value={formData.lastName}
+          onChange={onLastNameChange}
+          onFocus={onFormFieldFocus}
+          onBlur={onLastNameBlur}
+          className={`input-field ${touched.lastName && errors.lastName ? 'border-red-500' : ''}`}
+          placeholder={t('register.lastName')}
+          autoComplete="family-name"
+        />
+        {touched.lastName && errors.lastName && (
+          <p className="mt-1 text-sm text-red-400">{errors.lastName}</p>
+        )}
+      </div>
+      <div>
+        <div className="flex items-center gap-1.5 mb-2">
+          <label className="text-sm font-semibold text-primary-900">{t('register.email')}</label>
+          <HintTooltip ariaLabel={t('register.emailHint')}>{t('register.emailHint')}</HintTooltip>
+        </div>
+        <input
+          type="email"
+          value={formData.email}
+          onChange={onEmailChange}
+          onFocus={onFormFieldFocus}
+          onBlur={onEmailBlur}
+          className={`input-field ${touched.email && errors.email ? 'border-red-500' : ''}`}
+          placeholder={t('register.emailPlaceholder')}
+          autoComplete="email"
+        />
+        {touched.email && errors.email && (
+          <p className="mt-1 text-sm text-red-400">{errors.email}</p>
+        )}
+      </div>
+    </>
+  );
+}
 
 function CompleteProfileContent() {
   const router = useRouter();
@@ -173,126 +330,14 @@ function CompleteProfileContent() {
 
   const hasAnyField = () => {
     if (isBusiness) {
-      return (
-        (formData.companyWebsiteUrl && formData.companyWebsiteUrl.trim()) ||
-        (formData.email && formData.email.trim())
-      );
+      return !!(formData.companyWebsiteUrl?.trim() || formData.email?.trim());
     }
-    return (
-      (formData.firstName && formData.firstName.trim()) ||
-      (formData.lastName && formData.lastName.trim()) ||
-      (formData.email && formData.email.trim())
-    );
+    return !!(formData.firstName?.trim() || formData.lastName?.trim() || formData.email?.trim());
   };
 
   const hasErrors = () => {
-    if (isBusiness) {
-      return !!(errors.companyWebsiteUrl || errors.email);
-    }
+    if (isBusiness) return !!(errors.companyWebsiteUrl || errors.email);
     return !!(errors.firstName || errors.lastName || errors.email);
-  };
-
-  const processPendingData = async () => {
-    if (typeof window === 'undefined' || !user) {
-      return;
-    }
-
-    const pendingFavorites = JSON.parse(localStorage.getItem('pendingFavorites') || '[]');
-    if (pendingFavorites.length > 0) {
-      const validFavorites: string[] = [];
-      for (const listingId of pendingFavorites) {
-        try {
-          const listingRes = await listingsApi.getOne(listingId);
-          const listing = listingRes.data;
-          if (listing.user && listing.user.id !== user.id) {
-            validFavorites.push(listingId);
-          }
-        } catch {
-          // Skip if listing not found or error occurred
-        }
-      }
-      if (validFavorites.length > 0) {
-        const addPromises = validFavorites.map((listingId: string) =>
-          favoritesApi.add(listingId).catch(() => {})
-        );
-        await Promise.all(addPromises);
-      }
-      localStorage.removeItem('pendingFavorites');
-    }
-
-    const pendingComparisons = JSON.parse(localStorage.getItem('pendingComparisons') || '[]');
-    if (pendingComparisons.length > 0) {
-      const { useComparisonStore } = await import('@/lib/store');
-      const comparisonStore = useComparisonStore.getState();
-
-      for (const listingId of pendingComparisons) {
-        try {
-          await listingsApi.getOne(listingId);
-          comparisonStore.add(listingId);
-        } catch {
-          // Ignore errors
-        }
-      }
-
-      if (comparisonStore.comparisons.length > 0) {
-        const storageData = {
-          state: { comparisons: comparisonStore.comparisons },
-          version: 0,
-        };
-        localStorage.setItem('comparison-storage', JSON.stringify(storageData));
-        await new Promise((resolve) => {
-          requestAnimationFrame(() => {
-            localStorage.setItem('comparison-storage', JSON.stringify(storageData));
-            requestAnimationFrame(() => {
-              localStorage.setItem('comparison-storage', JSON.stringify(storageData));
-              setTimeout(resolve, 100);
-            });
-          });
-        });
-      }
-
-      localStorage.removeItem('pendingComparisons');
-    }
-
-    const pendingSavedFilter = localStorage.getItem('pendingSavedFilter');
-    if (pendingSavedFilter) {
-      try {
-        const filters = JSON.parse(pendingSavedFilter);
-        const now = new Date();
-        const day = String(now.getDate()).padStart(2, '0');
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const year = now.getFullYear();
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const filterName = `Филтер ${day}.${month}.${year} ${hours}:${minutes}`;
-        await savedFiltersApi.create(filterName, filters);
-        localStorage.removeItem('pendingSavedFilter');
-        localStorage.removeItem('returnUrl');
-        toast.success(t('login.filterSavedSuccess'));
-        if (typeof window !== 'undefined' && window.location) {
-          window.location.href = '/favorites?tab=filters';
-        }
-        return true;
-      } catch (error: unknown) {
-        const errorMessage =
-          (error && typeof error === 'object' && 'response' in error
-            ? (error.response as { data?: { message?: string } })?.data?.message
-            : null) || t('login.filterSaveError');
-        toast.error(errorMessage);
-        localStorage.removeItem('pendingSavedFilter');
-        const limitErrorText = t('login.filterLimitError');
-        const isLimitError = errorMessage === limitErrorText;
-        if (isLimitError) {
-          localStorage.removeItem('returnUrl');
-          if (typeof window !== 'undefined' && window.location) {
-            window.location.href = '/favorites?tab=filters';
-          }
-          return true;
-        }
-      }
-    }
-
-    return false;
   };
 
   const validateAllFields = () => {
@@ -319,99 +364,40 @@ function CompleteProfileContent() {
   };
 
   const handleSave = async () => {
-    if (!user) {
-      return;
-    }
-
-    const hasValidationErrors = validateAllFields();
-    if (hasValidationErrors) {
+    if (!user) return;
+    if (validateAllFields()) {
       toast.error(t('completeProfile.fixErrors'));
       return;
     }
-
     if (!hasAnyField()) {
       toast.error(t('completeProfile.fillAtLeastOne'));
       return;
     }
-
     setIsSubmitting(true);
-
+    const filledFields = getFilledFields(formData, isBusiness);
     try {
-      const updateData: UpdateProfileDto = {};
-      if (isBusiness) {
-        if (formData.companyWebsiteUrl && formData.companyWebsiteUrl.trim()) {
-          updateData.companyWebsiteUrl = formData.companyWebsiteUrl.trim();
-        } else {
-          updateData.companyWebsiteUrl = '';
-        }
-        if (formData.email && formData.email.trim()) {
-          updateData.email = formData.email.trim();
-        }
-        updateData.emailNotifications = formData.emailNotifications;
-      } else {
-        if (formData.firstName && formData.firstName.trim()) {
-          updateData.firstName = formData.firstName.trim();
-        }
-        if (formData.lastName && formData.lastName.trim()) {
-          updateData.lastName = formData.lastName.trim();
-        }
-        if (formData.email && formData.email.trim()) {
-          updateData.email = formData.email.trim();
-        }
-      }
-
+      const updateData = buildUpdateData(formData, isBusiness);
       const response = await authApi.updateProfile(updateData);
       setAuth(response.data, useAuthStore.getState().token);
 
-      const filledFields: Record<string, boolean> = isBusiness
-        ? {
-            companyWebsiteUrl:
-              !!formData.companyWebsiteUrl && formData.companyWebsiteUrl.trim().length > 0,
-            email: !!formData.email && formData.email.trim().length > 0,
-            emailNotifications: formData.emailNotifications,
-          }
-        : {
-            firstName: !!formData.firstName && formData.firstName.trim().length > 0,
-            lastName: !!formData.lastName && formData.lastName.trim().length > 0,
-            email: !!formData.email && formData.email.trim().length > 0,
-          };
-
-      const redirected = await processPendingData();
+      const redirected = await processPendingData(user, t);
       if (redirected) {
         analytics.formSubmit('complete_profile', true, filledFields);
         return;
       }
-
+      analytics.formSubmit('complete_profile', true, filledFields);
       const returnUrl = typeof window !== 'undefined' ? localStorage.getItem('returnUrl') : null;
       if (returnUrl) {
         localStorage.removeItem('returnUrl');
-        analytics.formSubmit('complete_profile', true, filledFields);
         if (typeof window !== 'undefined' && window.location) {
           localStorage.setItem('showProfileSaveSuccess', 'true');
           window.location.href = returnUrl;
         }
-        return;
-      } else {
-        analytics.formSubmit('complete_profile', true, filledFields);
-        if (typeof window !== 'undefined' && window.location) {
-          localStorage.setItem('showProfileSaveSuccess', 'true');
-          window.location.href = '/';
-        }
-        return;
+      } else if (typeof window !== 'undefined' && window.location) {
+        localStorage.setItem('showProfileSaveSuccess', 'true');
+        window.location.href = '/';
       }
     } catch {
-      const filledFields: Record<string, boolean> = isBusiness
-        ? {
-            companyWebsiteUrl:
-              !!formData.companyWebsiteUrl && formData.companyWebsiteUrl.trim().length > 0,
-            email: !!formData.email && formData.email.trim().length > 0,
-            emailNotifications: formData.emailNotifications,
-          }
-        : {
-            firstName: !!formData.firstName && formData.firstName.trim().length > 0,
-            lastName: !!formData.lastName && formData.lastName.trim().length > 0,
-            email: !!formData.email && formData.email.trim().length > 0,
-          };
       analytics.formSubmit('complete_profile', false, filledFields);
     } finally {
       setIsSubmitting(false);
@@ -419,40 +405,18 @@ function CompleteProfileContent() {
   };
 
   const handleSkip = async () => {
-    analytics.completeProfileSkip(
-      isBusiness
-        ? {
-            companyWebsiteUrl:
-              !!formData.companyWebsiteUrl && formData.companyWebsiteUrl.trim().length > 0,
-            email: !!formData.email && formData.email.trim().length > 0,
-            emailNotifications: formData.emailNotifications,
-          }
-        : {
-            firstName: !!formData.firstName && formData.firstName.trim().length > 0,
-            lastName: !!formData.lastName && formData.lastName.trim().length > 0,
-            email: !!formData.email && formData.email.trim().length > 0,
-          }
-    );
-
+    analytics.completeProfileSkip(getFilledFields(formData, isBusiness));
+    if (!user) return;
     setIsSubmitting(true);
     try {
-      const redirected = await processPendingData();
-      if (redirected) {
-        return;
-      }
-
+      const redirected = await processPendingData(user, t);
+      if (redirected) return;
       const returnUrl = typeof window !== 'undefined' ? localStorage.getItem('returnUrl') : null;
       if (returnUrl) {
         localStorage.removeItem('returnUrl');
-        if (typeof window !== 'undefined' && window.location) {
-          window.location.href = returnUrl;
-        }
-        return;
-      } else {
-        if (typeof window !== 'undefined' && window.location) {
-          window.location.href = '/';
-        }
-        return;
+        if (typeof window !== 'undefined' && window.location) window.location.href = returnUrl;
+      } else if (typeof window !== 'undefined' && window.location) {
+        window.location.href = '/';
       }
     } finally {
       setIsSubmitting(false);
@@ -477,133 +441,29 @@ function CompleteProfileContent() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              handleSave();
+              void handleSave();
             }}
             className="space-y-5"
           >
-            {isBusiness ? (
-              <>
-                <div>
-                  <label className="block text-sm font-semibold mb-2 text-primary-900">
-                    {t('profile.companyWebsiteUrl')}
-                  </label>
-                  <input
-                    type="url"
-                    value={formData.companyWebsiteUrl}
-                    onChange={handleCompanyWebsiteUrlChange}
-                    onFocus={handleFormFieldFocus}
-                    onBlur={handleCompanyWebsiteUrlBlur}
-                    className={`input-field ${touched.companyWebsiteUrl && errors.companyWebsiteUrl ? 'border-red-500' : ''}`}
-                    placeholder={t('profile.companyWebsiteUrlPlaceholder')}
-                    autoComplete="url"
-                  />
-                  {touched.companyWebsiteUrl && errors.companyWebsiteUrl && (
-                    <p className="mt-1 text-sm text-red-400">{errors.companyWebsiteUrl}</p>
-                  )}
-                </div>
-
-                <div>
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <label className="text-sm font-semibold text-primary-900">
-                      {t('register.email')}
-                    </label>
-                    <HintTooltip ariaLabel={t('register.emailHint')}>
-                      {t('register.emailHint')}
-                    </HintTooltip>
-                  </div>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={handleEmailChange}
-                    onFocus={handleFormFieldFocus}
-                    onBlur={handleEmailBlur}
-                    className={`input-field ${touched.email && errors.email ? 'border-red-500' : ''}`}
-                    // eslint-disable-next-line no-hardcoded-text/no-hardcoded-text
-                    placeholder="example@email.com"
-                    autoComplete="email"
-                  />
-                  {touched.email && errors.email && (
-                    <p className="mt-1 text-sm text-red-400">{errors.email}</p>
-                  )}
-                </div>
-
-                <Checkbox
-                  id="complete-profile-email-notifications"
-                  checked={formData.emailNotifications}
-                  onChange={(checked) => {
-                    handleFormFieldFocus();
-                    setFormData({ ...formData, emailNotifications: checked });
-                  }}
-                  label={t('register.emailNotifications')}
-                  size="md"
-                />
-              </>
-            ) : (
-              <>
-                <div>
-                  <label className="block text-sm font-semibold mb-2 text-primary-900">
-                    {t('register.firstName')}
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.firstName}
-                    onChange={handleFirstNameChange}
-                    onFocus={handleFormFieldFocus}
-                    onBlur={handleFirstNameBlur}
-                    className={`input-field ${touched.firstName && errors.firstName ? 'border-red-500' : ''}`}
-                    placeholder={t('register.firstName')}
-                    autoComplete="given-name"
-                  />
-                  {touched.firstName && errors.firstName && (
-                    <p className="mt-1 text-sm text-red-400">{errors.firstName}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold mb-2 text-primary-900">
-                    {t('register.lastName')}
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.lastName}
-                    onChange={handleLastNameChange}
-                    onFocus={handleFormFieldFocus}
-                    onBlur={handleLastNameBlur}
-                    className={`input-field ${touched.lastName && errors.lastName ? 'border-red-500' : ''}`}
-                    placeholder={t('register.lastName')}
-                    autoComplete="family-name"
-                  />
-                  {touched.lastName && errors.lastName && (
-                    <p className="mt-1 text-sm text-red-400">{errors.lastName}</p>
-                  )}
-                </div>
-
-                <div>
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <label className="text-sm font-semibold text-primary-900">
-                      {t('register.email')}
-                    </label>
-                    <HintTooltip ariaLabel={t('register.emailHint')}>
-                      {t('register.emailHint')}
-                    </HintTooltip>
-                  </div>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={handleEmailChange}
-                    onFocus={handleFormFieldFocus}
-                    onBlur={handleEmailBlur}
-                    className={`input-field ${touched.email && errors.email ? 'border-red-500' : ''}`}
-                    // eslint-disable-next-line no-hardcoded-text/no-hardcoded-text
-                    placeholder="example@email.com"
-                    autoComplete="email"
-                  />
-                  {touched.email && errors.email && (
-                    <p className="mt-1 text-sm text-red-400">{errors.email}</p>
-                  )}
-                </div>
-              </>
-            )}
+            <CompleteProfileFormFields
+              isBusiness={isBusiness}
+              formData={formData}
+              errors={errors}
+              touched={touched}
+              t={t}
+              onFirstNameChange={handleFirstNameChange}
+              onLastNameChange={handleLastNameChange}
+              onEmailChange={handleEmailChange}
+              onCompanyWebsiteUrlChange={handleCompanyWebsiteUrlChange}
+              onFirstNameBlur={handleFirstNameBlur}
+              onLastNameBlur={handleLastNameBlur}
+              onEmailBlur={handleEmailBlur}
+              onCompanyWebsiteUrlBlur={handleCompanyWebsiteUrlBlur}
+              onFormFieldFocus={handleFormFieldFocus}
+              onEmailNotificationsChange={(checked) =>
+                setFormData({ ...formData, emailNotifications: checked })
+              }
+            />
 
             <div className="flex gap-3 pt-4">
               <button

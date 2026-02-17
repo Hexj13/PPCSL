@@ -20,6 +20,8 @@ export class GetUserListingsUseCase {
     userId: string,
     page: number = 1,
     limit: number = 20,
+    status?: string,
+    promoted?: boolean,
   ): Promise<{
     data: Listing[];
     meta: {
@@ -32,8 +34,15 @@ export class GetUserListingsUseCase {
     };
   }> {
     const skip = (page - 1) * limit;
+    const where: Record<string, unknown> = { user_id: userId };
+    if (status) {
+      where.status = status;
+    }
+    if (promoted !== undefined) {
+      where.is_promoted = promoted;
+    }
     const [listings, total] = await this.listingsRepository.findAndCount({
-      where: { user_id: userId },
+      where,
       relations: ['vehicle', 'vehicle.brand', 'vehicle.model'],
       order: { created_at: 'DESC' },
       skip,

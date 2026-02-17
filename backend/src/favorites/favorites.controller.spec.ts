@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { Favorite } from './entities/favorite.entity';
 import { CheckBatchDto } from './dto/check-batch.dto';
+import type { AuthenticatedRequest } from '../common/express-augmentation';
+
 import { FavoritesController } from './favorites.controller';
 import { FavoritesService } from './favorites.service';
 
@@ -106,16 +108,33 @@ describe('FavoritesController', () => {
   });
 
   describe('findAll', () => {
-    it('should return all favorites for user', async () => {
+    it('should return paginated favorites for user', async () => {
       const req = { user: mockUser };
-      const mockFavorites = [mockFavorite] as unknown as Favorite[];
+      const mockResponse = {
+        data: [mockFavorite] as unknown as Favorite[],
+        meta: { total: 1, page: 1, limit: 20, totalPages: 1 },
+      };
 
-      service.findAll.mockResolvedValue(mockFavorites);
+      service.findAll.mockResolvedValue(mockResponse);
 
-      const result = await controller.findAll(req);
+      const result = await controller.findAll(req as unknown as AuthenticatedRequest);
 
-      expect(service.findAll).toHaveBeenCalledWith('user-1');
-      expect(result).toEqual(mockFavorites);
+      expect(service.findAll).toHaveBeenCalledWith('user-1', 1, 20);
+      expect(result).toEqual(mockResponse);
+    });
+
+    it('should pass page and limit query params to service', async () => {
+      const req = { user: mockUser };
+      const mockResponse = {
+        data: [],
+        meta: { total: 0, page: 2, limit: 10, totalPages: 0 },
+      };
+
+      service.findAll.mockResolvedValue(mockResponse);
+
+      await controller.findAll(req as unknown as AuthenticatedRequest, '2', '10');
+
+      expect(service.findAll).toHaveBeenCalledWith('user-1', 2, 10);
     });
   });
 
@@ -130,7 +149,7 @@ describe('FavoritesController', () => {
 
       service.checkBatch.mockResolvedValue(mockResult);
 
-      const result = await controller.checkBatch(dto, req);
+      const result = await controller.checkBatch(dto, req as unknown as AuthenticatedRequest);
 
       expect(service.checkBatch).toHaveBeenCalledWith('user-1', dto.listingIds);
       expect(result).toEqual(mockResult);
@@ -144,7 +163,7 @@ describe('FavoritesController', () => {
 
       service.checkIfFavorite.mockResolvedValue(true);
 
-      const result = await controller.check(listingId, req);
+      const result = await controller.check(listingId, req as unknown as AuthenticatedRequest);
 
       expect(service.checkIfFavorite).toHaveBeenCalledWith('user-1', listingId);
       expect(result).toEqual({ isFavorite: true });
@@ -156,7 +175,7 @@ describe('FavoritesController', () => {
 
       service.checkIfFavorite.mockResolvedValue(false);
 
-      const result = await controller.check(listingId, req);
+      const result = await controller.check(listingId, req as unknown as AuthenticatedRequest);
 
       expect(service.checkIfFavorite).toHaveBeenCalledWith('user-1', listingId);
       expect(result).toEqual({ isFavorite: false });
@@ -178,7 +197,7 @@ describe('FavoritesController', () => {
 
       service.add.mockResolvedValue(mockFavorite as unknown as Favorite);
 
-      const result = await controller.add(listingId, req);
+      const result = await controller.add(listingId, req as unknown as AuthenticatedRequest);
 
       expect(service.add).toHaveBeenCalledWith('user-1', listingId);
       expect(result).toEqual(mockFavorite);
@@ -192,7 +211,7 @@ describe('FavoritesController', () => {
 
       service.remove.mockResolvedValue(undefined);
 
-      const result = await controller.remove(listingId, req);
+      const result = await controller.remove(listingId, req as unknown as AuthenticatedRequest);
 
       expect(service.remove).toHaveBeenCalledWith('user-1', listingId);
       expect(result).toBeUndefined();

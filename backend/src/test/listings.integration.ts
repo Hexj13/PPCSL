@@ -3,7 +3,7 @@ import * as supertest from 'supertest';
 import { getTestRequest } from './setup-integration';
 
 describe('Listings API Integration Tests', () => {
-  let request: supertest.SuperTest<supertest.Test>;
+  let request: ReturnType<typeof getTestRequest>;
   let authToken: string;
   let listingId: string;
   let brandId: string;

@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 import { Modal } from '@/components/modals/Modal';
 import { useTranslation } from '@/hooks/useTranslation';
-import { PromotionHistory } from '@/lib/api';
+import type { PromotionHistory } from '@/lib/api';
 import { formatDateShort } from '@/lib/utils';
 
 interface PromotionHistoryModalProps {

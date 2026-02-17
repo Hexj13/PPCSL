@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class AddDatabaseOptimizations1762446639000 implements MigrationInterface {
   name = 'AddDatabaseOptimizations1762446639000';

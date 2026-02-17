@@ -99,13 +99,12 @@ export function SaveFilterModal({
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !saving) {
-                handleSave();
+                void handleSave();
               }
             }}
             maxLength={100}
             className="input-field"
             placeholder={t('saveFilter.nameRequired')}
-            autoFocus
           />
           <p className="text-xs text-text-secondary mt-1">
             {name.length}

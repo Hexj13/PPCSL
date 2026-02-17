@@ -1,4 +1,5 @@
-import { TextareaHTMLAttributes, forwardRef } from 'react';
+import type { TextareaHTMLAttributes } from 'react';
+import { forwardRef } from 'react';
 
 export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
@@ -20,7 +21,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         {helperText && !error && <p className="mt-1 text-sm text-gray-400">{helperText}</p>}
       </div>
     );
-  }
+  },
 );
 
 Textarea.displayName = 'Textarea';

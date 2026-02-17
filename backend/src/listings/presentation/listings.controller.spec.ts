@@ -1,7 +1,10 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
+import type { Request as ExpressRequest } from 'express';
+
 import { Currency, DriveType, ListingStatus } from '../../common/types';
+import type { AuthenticatedRequest } from '../../common/express-augmentation';
 
 import { CreateListingDto } from './dto/create-listing.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
@@ -114,10 +117,62 @@ describe('ListingsController', () => {
 
       service.getUserListings.mockResolvedValue(mockResult);
 
-      const result = await controller.getMyListings(req);
+      const result = await controller.getMyListings(req as unknown as AuthenticatedRequest);
 
-      expect(service.getUserListings).toHaveBeenCalledWith('user-1', 1, 20);
+      expect(service.getUserListings).toHaveBeenCalledWith('user-1', 1, 20, undefined, undefined);
       expect(result).toEqual(mockResult);
+    });
+
+    it('should pass status and promoted filters to service', async () => {
+      const req = { user: mockUser };
+      const mockResult = {
+        data: [],
+        meta: {
+          total: 0,
+          page: 1,
+          limit: 20,
+          totalPages: 0,
+          last_listing_refresh_at: null,
+          refreshCooldownMs: 172800000,
+        },
+      };
+
+      service.getUserListings.mockResolvedValue(mockResult);
+
+      await controller.getMyListings(
+        req as unknown as AuthenticatedRequest,
+        '1',
+        '20',
+        'Active',
+        'true',
+      );
+
+      expect(service.getUserListings).toHaveBeenCalledWith('user-1', 1, 20, 'Active', true);
+    });
+
+    it('should ignore invalid status filter', async () => {
+      const req = { user: mockUser };
+      service.getUserListings.mockResolvedValue({
+        data: [],
+        meta: {
+          total: 0,
+          page: 1,
+          limit: 20,
+          totalPages: 0,
+          last_listing_refresh_at: null,
+          refreshCooldownMs: 172800000,
+        },
+      });
+
+      await controller.getMyListings(
+        req as unknown as AuthenticatedRequest,
+        '1',
+        '20',
+        'InvalidStatus',
+        undefined,
+      );
+
+      expect(service.getUserListings).toHaveBeenCalledWith('user-1', 1, 20, undefined, undefined);
     });
   });
 
@@ -169,7 +224,7 @@ describe('ListingsController', () => {
 
       service.findOne.mockResolvedValue(mockListing);
 
-      const result = await controller.findOne(listingId, req);
+      const result = await controller.findOne(listingId, req as unknown as ExpressRequest);
 
       expect(service.findOne).toHaveBeenCalledWith(listingId, {
         userId: 'user-1',
@@ -190,7 +245,7 @@ describe('ListingsController', () => {
 
       service.findOne.mockResolvedValue(mockListing);
 
-      const result = await controller.findOne(listingId, req);
+      const result = await controller.findOne(listingId, req as unknown as ExpressRequest);
 
       expect(service.findOne).toHaveBeenCalledWith(listingId, {
         userId: null,
@@ -206,7 +261,9 @@ describe('ListingsController', () => {
 
       service.findOne.mockRejectedValue(new NotFoundException('Listing not found'));
 
-      await expect(controller.findOne(listingId, req)).rejects.toThrow(NotFoundException);
+      await expect(controller.findOne(listingId, req as unknown as ExpressRequest)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -232,7 +289,7 @@ describe('ListingsController', () => {
 
       service.create.mockResolvedValue(mockListing);
 
-      const result = await controller.create(createDto, req);
+      const result = await controller.create(createDto, req as unknown as AuthenticatedRequest);
 
       expect(service.create).toHaveBeenCalledWith(createDto, 'user-1');
       expect(result).toEqual(mockListing);
@@ -264,7 +321,7 @@ describe('ListingsController', () => {
       };
       service.create.mockResolvedValue(listingWithEquipment as Listing);
 
-      const result = await controller.create(createDto, req);
+      const result = await controller.create(createDto, req as unknown as AuthenticatedRequest);
 
       expect(service.create).toHaveBeenCalledWith(createDto, 'user-1');
       expect(result.equipment).toEqual(['air_conditioning', 'navigation', 'parking_sensors']);
@@ -283,7 +340,11 @@ describe('ListingsController', () => {
       const updatedListing = { ...mockListing, ...updateDto } as Listing;
       service.update.mockResolvedValue(updatedListing);
 
-      const result = await controller.update(listingId, updateDto, req);
+      const result = await controller.update(
+        listingId,
+        updateDto,
+        req as unknown as AuthenticatedRequest,
+      );
 
       expect(service.update).toHaveBeenCalledWith(listingId, updateDto, 'user-1');
       expect(result).toEqual(updatedListing);
@@ -302,7 +363,11 @@ describe('ListingsController', () => {
       } as Listing;
       service.update.mockResolvedValue(updatedListing);
 
-      const result = await controller.update(listingId, updateDto, req);
+      const result = await controller.update(
+        listingId,
+        updateDto,
+        req as unknown as AuthenticatedRequest,
+      );
 
       expect(service.update).toHaveBeenCalledWith(listingId, updateDto, 'user-1');
       expect(result.equipment).toEqual(['air_conditioning', 'navigation', 'leather_seats']);
@@ -317,7 +382,7 @@ describe('ListingsController', () => {
 
       service.publish.mockResolvedValue(publishedListing);
 
-      const result = await controller.publish(listingId, req);
+      const result = await controller.publish(listingId, req as unknown as AuthenticatedRequest);
 
       expect(service.publish).toHaveBeenCalledWith(listingId, 'user-1');
       expect(result).toEqual(publishedListing);
@@ -332,7 +397,7 @@ describe('ListingsController', () => {
 
       service.pause.mockResolvedValue(pausedListing);
 
-      const result = await controller.pause(listingId, req);
+      const result = await controller.pause(listingId, req as unknown as AuthenticatedRequest);
 
       expect(service.pause).toHaveBeenCalledWith(listingId, 'user-1');
       expect(result).toEqual(pausedListing);
@@ -347,7 +412,7 @@ describe('ListingsController', () => {
 
       service.close.mockResolvedValue(closedListing);
 
-      const result = await controller.close(listingId, req);
+      const result = await controller.close(listingId, req as unknown as AuthenticatedRequest);
 
       expect(service.close).toHaveBeenCalledWith(listingId, 'user-1');
       expect(result).toEqual(closedListing);
@@ -361,7 +426,7 @@ describe('ListingsController', () => {
 
       service.refreshAllDates.mockResolvedValue(mockResult);
 
-      const result = await controller.refreshDates(req);
+      const result = await controller.refreshDates(req as unknown as AuthenticatedRequest);
 
       expect(service.refreshAllDates).toHaveBeenCalledWith('user-1');
       expect(result).toEqual(mockResult);

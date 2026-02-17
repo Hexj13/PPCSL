@@ -39,7 +39,7 @@ export function trackEvent(eventName: string, params?: Record<string, unknown>) 
 export const analytics = {
   viewItem: (
     listingId: string,
-    listing: { title?: string; price?: number; brand?: string; model?: string }
+    listing: { title?: string; price?: number; brand?: string; model?: string },
   ) => {
     trackEvent('view_item', {
       currency: getCurrency(),
@@ -131,7 +131,7 @@ export const analytics = {
   contactSeller: (
     listingId: string,
     method: 'phone' | 'viber' | 'whatsapp' | 'telegram',
-    listing?: { title?: string; price?: number }
+    listing?: { title?: string; price?: number },
   ) => {
     trackEvent('contact_seller', {
       currency: getCurrency(),

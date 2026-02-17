@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LessThan, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
 import * as constants from '../common/constants';
 import { RedisService } from '../common/redis.service';
@@ -85,6 +85,24 @@ export class ExchangeRatesService {
     if (!rate) return null;
 
     return Math.round(price / rate);
+  }
+
+  async getAllRatesMap(): Promise<{
+    defaultCurrency: string;
+    rates: Record<string, number>;
+  }> {
+    const defaultCurrency = constants.getDefaultCurrency();
+    const currencies = (constants.currencies as readonly string[]).filter(
+      (c) => c !== defaultCurrency,
+    );
+    const entries = await Promise.all(
+      currencies.map(async (c) => [c, await this.getRate(c)] as const),
+    );
+    const rates: Record<string, number> = {};
+    for (const [currency, rate] of entries) {
+      if (rate != null) rates[currency] = rate;
+    }
+    return { defaultCurrency, rates };
   }
 
   async enrichListingsWithApproxPrice<
@@ -207,11 +225,21 @@ export class ExchangeRatesService {
       );
     }
 
-    const cutoff = new Date();
-    cutoff.setUTCDate(cutoff.getUTCDate() - RETENTION_DAYS);
-    await this.exchangeRateRepo.delete({
-      rate_date: LessThan(cutoff),
-    });
+    await this.exchangeRateRepo.query(
+      `DELETE FROM exchange_rates
+       WHERE id IN (
+         SELECT id FROM (
+           SELECT id,
+                  ROW_NUMBER() OVER (
+                    PARTITION BY base_currency_code, quote_currency_code
+                    ORDER BY rate_date DESC
+                  ) AS rn
+           FROM exchange_rates
+         ) ranked
+         WHERE rn > $1
+       )`,
+      [RETENTION_DAYS],
+    );
 
     await this.redisService.invalidateByPrefix(CACHE_PREFIX);
     this.logger.log(

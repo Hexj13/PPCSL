@@ -5,6 +5,7 @@
 ## Перед началом
 
 ⚠️ **ВАЖНО:** Прочитайте следующие документы:
+
 - [`MULTI_REPOSITORY.md`](../architecture/MULTI_REPOSITORY.md) - Общая архитектура
 - [`SCRIPTS_ARCHITECTURE.md`](../architecture/SCRIPTS_ARCHITECTURE.md) - Архитектура скриптов
 - [`KNOWN_ISSUES.md`](../architecture/KNOWN_ISSUES.md) - Известные проблемы
@@ -73,6 +74,7 @@ platform-repo/
 ### 5. Графические ресурсы (`assets/`)
 
 #### Frontend (`assets/frontend/public/`)
+
 - [ ] Создан логотип `logo.png`
 - [ ] Создан `logo-desktop.png`
 - [ ] Создан `logo-mobile.png`
@@ -83,6 +85,7 @@ platform-repo/
 - [ ] Создано `opengraph-image.png` (1200x630px)
 
 #### Backend (`assets/backend/watermark/`)
+
 - [ ] Создан логотип водяного знака `logo.png` (PNG с прозрачным фоном, ~200x200px, белый/светлый цвет)
 
 ### 6. Скрипты генерации данных (`scripts/{country}/`)
@@ -113,6 +116,7 @@ platform-repo/
 ### 8. Environment Variables (`.env`)
 
 #### Backend
+
 - [ ] `DATABASE_URL` (PostgreSQL)
 - [ ] `REDIS_URL`
 - [ ] `JWT_SECRET`
@@ -129,6 +133,7 @@ platform-repo/
 - [ ] `TWILIO_MESSAGING_SERVICE_SID` или `TWILIO_PHONE_NUMBER`
 
 #### Frontend
+
 - [ ] `NEXT_PUBLIC_API_URL`
 - [ ] `NEXT_PUBLIC_SITE_URL`
 - [ ] `NEXT_PUBLIC_COUNTRY` (например, `md`)
@@ -138,6 +143,7 @@ platform-repo/
 ### 9. Внешние сервисы
 
 #### Google
+
 - [ ] Создан Google аккаунт для платформы
 - [ ] Настроен Google Analytics
 - [ ] Настроен Google Search Console
@@ -145,18 +151,21 @@ platform-repo/
 - [ ] Получен Verification код
 
 #### Twilio
+
 - [ ] Создан/настроен Twilio аккаунт
 - [ ] Приобретён номер телефона или создан Messaging Service
 - [ ] Получены учётные данные (SID, Auth Token)
 - [ ] Протестирована отправка SMS
 
 #### AWS S3 (если отдельный bucket)
+
 - [ ] Создан S3 bucket
 - [ ] Настроены permissions
 - [ ] Создан CloudFront distribution
 - [ ] Настроен CORS
 
 #### Domain & DNS (Namecheap)
+
 - [ ] Приобретён домен
 - [ ] Настроены DNS записи (A, CNAME)
 

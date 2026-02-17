@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class MakeDriveTypeRequired1768000000000 implements MigrationInterface {
   name = 'MakeDriveTypeRequired1768000000000';

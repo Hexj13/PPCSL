@@ -179,7 +179,19 @@ export function ListingPageImageModal({
   return (
     <div
       className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
-      onClick={onClose}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClose();
+        }
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
     >
       <button
         onClick={(e) => {
@@ -253,7 +265,6 @@ export function ListingPageImageModal({
 
       <div
         className="relative max-w-7xl w-full h-full flex items-center justify-center p-4"
-        onClick={(e) => e.stopPropagation()}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -269,27 +280,7 @@ export function ListingPageImageModal({
             const optimizedUrl = getOptimizedImageUrl(currentImage, 85, 1920);
             const isExternal =
               optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://');
-            return isExternal ? (
-              <img
-                src={optimizedUrl}
-                alt={t('listings.imageAltWithTotal', {
-                  title: imageAltTitle,
-                  index: (currentIndex + 1).toString(),
-                  total: images.length.toString(),
-                })}
-                className={`max-w-full max-h-[90vh] w-auto h-auto object-contain ${showModalImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
-                draggable={false}
-                onLoad={() => {
-                  modalImageLoadedRef.current.add(currentIndex);
-                  setModalImageLoading(false);
-                }}
-                onError={() => {
-                  onIndexChange(currentIndex);
-                  setModalImageLoading(false);
-                }}
-                data-index={currentIndex}
-              />
-            ) : (
+            return (
               <Image
                 src={optimizedUrl}
                 alt={t('listings.imageAltWithTotal', {
@@ -303,6 +294,7 @@ export function ListingPageImageModal({
                 className={`max-w-full max-h-[90vh] w-auto h-auto object-contain ${showModalImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
                 priority={currentIndex === 0}
                 draggable={false}
+                unoptimized={isExternal}
                 onLoad={() => {
                   modalImageLoadedRef.current.add(currentIndex);
                   setModalImageLoading(false);

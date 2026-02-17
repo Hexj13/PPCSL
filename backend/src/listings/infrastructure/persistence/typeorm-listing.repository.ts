@@ -14,6 +14,7 @@ import {
   IListingRepository,
   SearchCriteria,
 } from '../../application/ports/listing.repository.port';
+import { buildPriceInDefaultCurrencyOrderExpression } from '../../application/utils/price-sort.utils';
 import { getVehicleTypeFromBodyType } from '../../domain/utils/vehicle-type.utils';
 import { Listing } from '../../entities/listing.entity';
 import { applyCitiesFilter } from '../utils/query-filters.utils';
@@ -54,6 +55,20 @@ export class TypeOrmListingRepository implements IListingRepository {
       queryBuilder.addOrderBy('vehicle.year', order);
     } else if (sortField === 'views') {
       queryBuilder.addOrderBy('listing.views', order);
+    } else if (
+      sortField === 'price' &&
+      criteria.defaultCurrency !== undefined &&
+      criteria.priceSortRates !== undefined
+    ) {
+      const { expression, params } = buildPriceInDefaultCurrencyOrderExpression(
+        criteria.defaultCurrency,
+        criteria.priceSortRates,
+      );
+      for (const [key, value] of Object.entries(params)) {
+        queryBuilder.setParameter(key, value);
+      }
+      queryBuilder.addSelect(expression, 'price_in_default_currency');
+      queryBuilder.addOrderBy('price_in_default_currency', order);
     } else {
       queryBuilder.addOrderBy(`listing.${sortField}`, order);
     }

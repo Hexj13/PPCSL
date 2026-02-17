@@ -32,7 +32,7 @@ export default function AdminPage() {
   const { indicatorRef, indicatorStyle } = useTabIndicator(
     activeTab,
     { listings: listingsTabRef, users: usersTabRef, promotions: promotionsTabRef },
-    tabsContainerRef
+    tabsContainerRef,
   );
 
   useEffect(() => {

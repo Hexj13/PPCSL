@@ -1,12 +1,22 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 
-import type { Brand, City, Listing, VehicleModel } from '@/lib/api';
+import type { Listing } from '@/lib/api';
 import * as api from '@/lib/api';
-import { Currency } from '@/lib/constants';
-import { useAuthStore } from '@/lib/store';
 
 import { ListingForm } from './ListingForm';
+import {
+  getEngineDisplacementInput,
+  getIsNewCheckbox,
+  getMileageInput,
+  getPhotosFileInput,
+  getPriceInput,
+  getRegisteredCheckbox,
+  getUrgentCheckbox,
+  mockCities,
+  mockListing,
+  setupListingFormMocks,
+} from './ListingForm.test-helpers';
 
 jest.mock('@/lib/api');
 jest.mock('@/lib/store');
@@ -68,86 +78,10 @@ jest.mock('./Dropdown', () => ({
   },
 }));
 
-const mockBrands: Brand[] = [
-  { id: 'brand-1', name: 'Toyota', order: 0 },
-  { id: 'brand-2', name: 'BMW', order: 1 },
-];
-
-const mockModels: VehicleModel[] = [
-  { id: 'model-1', name: 'Camry', brand_id: 'brand-1', order: 0 },
-  { id: 'model-2', name: 'Corolla', brand_id: 'brand-1', order: 1 },
-];
-
-const mockCities: City[] = [
-  { name: 'Chișinău', nameEn: 'Chișinău' },
-  { name: 'Bitola', nameEn: 'Bitola' },
-];
-
-const mockListing = {
-  id: 'listing-1',
-  title: 'Test Car',
-  price: 10000,
-  currency: Currency.EUR,
-  city: 'Chișinău',
-  description: 'Test description',
-  status: 'Active',
-  images: [
-    'http://localhost:4000/uploads/image1.webp',
-    'http://localhost:4000/uploads/image2.webp',
-  ],
-  urgent: false,
-  is_new: false,
-  vin: '1HGBH41JXMN109186',
-  condition: 'Undamaged',
-  registration_type: 'Local',
-  horsepower: 150,
-  is_registered: false,
-  registration_expires_at: undefined,
-  vehicle: {
-    id: 'vehicle-1',
-    brand_id: 'brand-1',
-    model_id: 'model-1',
-    year: 2020,
-    engine_displ_l: 2.0,
-    mileage_km: 50000,
-    fuel: 'Petrol',
-    transmission: 'Manual',
-    drive_type: 'FWD',
-    body_type: 'Sedan',
-    color: 'black',
-    doors: 4,
-    brand: { id: 'brand-1', name: 'Toyota', order: 0 },
-    model: { id: 'model-1', name: 'Camry', brand_id: 'brand-1', order: 0 },
-  },
-  created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z',
-  last_updated_at: '2024-01-01T00:00:00Z',
-  views: 0,
-  user_id: 'user-1',
-};
-
 describe('ListingForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (useAuthStore as unknown as jest.Mock).mockReturnValue({
-      user: { id: 'user-1' },
-      isInitialized: true,
-      token: 'test-token',
-      setAuth: jest.fn(),
-      logout: jest.fn(),
-      initAuth: jest.fn(),
-    });
-    (api.brandsApi.getAll as jest.Mock).mockResolvedValue({ data: mockBrands });
-    (api.citiesApi.getAll as jest.Mock).mockResolvedValue({ data: mockCities });
-    (api.brandsApi.getModels as jest.Mock).mockResolvedValue({ data: mockModels });
-    (api.listingsApi.update as jest.Mock).mockResolvedValue({ data: mockListing as Listing });
-    (api.listingsApi.create as jest.Mock).mockResolvedValue({ data: mockListing as Listing });
-    (api.uploadApi.uploadImage as jest.Mock).mockResolvedValue({
-      data: {
-        url: 'http://localhost:4000/uploads/test-image.webp',
-        path: '/uploads/test-image.webp',
-      },
-    });
+    setupListingFormMocks();
   });
 
   describe('Create mode', () => {
@@ -187,7 +121,7 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={mockListing as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
       await waitFor(() => {
@@ -204,28 +138,28 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={mockListing as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
       await waitFor(
         () => {
           expect(api.brandsApi.getAll).toHaveBeenCalled();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       await waitFor(
         () => {
           expect(api.citiesApi.getAll).toHaveBeenCalled();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       await waitFor(
         () => {
           expect(api.brandsApi.getModels).toHaveBeenCalledWith('brand-1');
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       await waitFor(
@@ -234,11 +168,10 @@ describe('ListingForm', () => {
           expect(screen.getByDisplayValue('2020')).toBeInTheDocument();
           expect(screen.getByDisplayValue('1HGBH41JXMN109186')).toBeInTheDocument();
         },
-        { timeout: 15000 }
+        { timeout: 15000 },
       );
 
-      const engineLabel = screen.getByText(/Запремина на моторот/i);
-      const engineInput = engineLabel.closest('div')?.querySelector('input') as HTMLInputElement;
+      const engineInput = getEngineDisplacementInput(screen) as HTMLInputElement;
       expect(engineInput).toBeInTheDocument();
       expect(engineInput.value).toMatch(/^2\.?0?$/);
 
@@ -257,7 +190,7 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={mockListing as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
       await waitFor(() => {
@@ -275,60 +208,44 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={mockListing as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
       await waitFor(
         () => {
           expect(api.brandsApi.getAll).toHaveBeenCalled();
         },
-        { timeout: 15000 }
+        { timeout: 15000 },
       );
 
       await waitFor(
         () => {
           expect(api.citiesApi.getAll).toHaveBeenCalled();
         },
-        { timeout: 15000 }
+        { timeout: 15000 },
       );
 
       await waitFor(
         () => {
           expect(api.brandsApi.getModels).toHaveBeenCalledWith('brand-1');
         },
-        { timeout: 15000 }
+        { timeout: 15000 },
       );
 
       await waitFor(
         () => {
-          const priceLabels = screen.getAllByText(/цена/i);
-          expect(priceLabels.length).toBeGreaterThan(0);
+          expect(getPriceInput(screen)).toBeInTheDocument();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
-      const priceLabels = screen.getAllByText(/цена/i);
-      const priceLabel =
-        priceLabels.find((label) => label.textContent?.toLowerCase().includes('цена')) ||
-        priceLabels[0];
-      let priceInput = priceLabel
-        .closest('div')
-        ?.querySelector('input[type="text"]') as HTMLInputElement;
-      if (!priceInput) {
-        const inputs = screen.getAllByPlaceholderText(/0/i);
-        priceInput =
-          (inputs.find((input) => {
-            const label = input.closest('div')?.querySelector('label');
-            return label?.textContent?.toLowerCase().includes('цена');
-          }) as HTMLInputElement) || (inputs[0] as HTMLInputElement);
-      }
-      expect(priceInput).toBeInTheDocument();
+      const priceInput = getPriceInput(screen) as HTMLInputElement;
 
       await waitFor(
         () => {
           expect(screen.getByDisplayValue('10000')).toBeInTheDocument();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       fireEvent.change(priceInput, { target: { value: '15000' } });
@@ -337,14 +254,14 @@ describe('ListingForm', () => {
         () => {
           expect(priceInput.value).toBe('15000');
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       await waitFor(
         () => {
           expect(screen.getByDisplayValue('2020')).toBeInTheDocument();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       const submitButton = screen.getByRole('button', { name: /зачувај/i });
@@ -353,14 +270,14 @@ describe('ListingForm', () => {
         () => {
           expect(submitButton).toBeEnabled();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       await waitFor(
         () => {
           expect(screen.getByDisplayValue('Test description')).toBeInTheDocument();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       fireEvent.click(submitButton);
@@ -375,14 +292,14 @@ describe('ListingForm', () => {
           }
           expect(updateSpy).toHaveBeenCalled();
         },
-        { timeout: 15000 }
+        { timeout: 15000 },
       );
 
       await waitFor(
         () => {
           expect(onSuccess).toHaveBeenCalled();
         },
-        { timeout: 5000 }
+        { timeout: 5000 },
       );
     }, 30000);
 
@@ -400,7 +317,7 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={listingWithRegistration as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
       await waitFor(() => {
@@ -417,7 +334,7 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={mockListing as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
       await waitFor(() => {
@@ -433,7 +350,7 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={mockListing as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
       await waitFor(() => {
@@ -452,14 +369,14 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={mockListing as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
       await waitFor(
         () => {
           expect(api.citiesApi.getAll).toHaveBeenCalled();
         },
-        { timeout: 15000 }
+        { timeout: 15000 },
       );
 
       await waitFor(
@@ -469,7 +386,7 @@ describe('ListingForm', () => {
           expect(cityDropdown).toBeDefined();
           expect(cityDropdown?.value).toBe('Chișinău');
         },
-        { timeout: 15000 }
+        { timeout: 15000 },
       );
     }, 30000);
 
@@ -481,7 +398,7 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={mockListing as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
       await waitFor(() => {
@@ -497,7 +414,7 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={mockListing as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
       await waitFor(() => {
@@ -513,7 +430,7 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={mockListing as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
       await waitFor(() => {
@@ -529,7 +446,7 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={mockListing as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
       await waitFor(() => {
@@ -545,7 +462,7 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={mockListing as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
       await waitFor(() => {
@@ -561,7 +478,7 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={mockListing as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
       await waitFor(() => {
@@ -577,7 +494,7 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={mockListing as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
       await waitFor(
@@ -589,7 +506,7 @@ describe('ListingForm', () => {
           });
           expect(colorSelect).toBeInTheDocument();
         },
-        { timeout: 15000 }
+        { timeout: 15000 },
       );
     });
 
@@ -601,7 +518,7 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={mockListing as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
       await waitFor(() => {
@@ -618,17 +535,13 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={urgentListing as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
       await waitFor(() => {
-        const urgentText = screen.getByText(/итно/i);
-        expect(urgentText).toBeInTheDocument();
-        const urgentCheckbox = urgentText
-          .closest('div')
-          ?.querySelector('input[type="checkbox"]') as HTMLInputElement;
-        expect(urgentCheckbox).toBeChecked();
+        expect(getUrgentCheckbox(screen)).toBeInTheDocument();
       });
+      expect(getUrgentCheckbox(screen) as HTMLInputElement).toBeChecked();
     });
 
     it('should update is_new checkbox', async () => {
@@ -640,17 +553,13 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={newListing as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
       await waitFor(() => {
-        const newText = screen.getByText(/ново/i);
-        expect(newText).toBeInTheDocument();
-        const newCheckbox = newText
-          .closest('div')
-          ?.querySelector('input[type="checkbox"]') as HTMLInputElement;
-        expect(newCheckbox).toBeChecked();
+        expect(getIsNewCheckbox(screen)).toBeInTheDocument();
       });
+      expect(getIsNewCheckbox(screen) as HTMLInputElement).toBeChecked();
     });
 
     it('should update is_registered checkbox', async () => {
@@ -666,17 +575,13 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={registeredListing as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
       await waitFor(() => {
-        const registeredText = screen.getByText(/зарегистрирано/i);
-        expect(registeredText).toBeInTheDocument();
-        const registeredCheckbox = registeredText
-          .closest('div')
-          ?.querySelector('input[type="checkbox"]') as HTMLInputElement;
-        expect(registeredCheckbox).toBeChecked();
+        expect(getRegisteredCheckbox(screen)).toBeInTheDocument();
       });
+      expect(getRegisteredCheckbox(screen) as HTMLInputElement).toBeChecked();
     });
   });
 
@@ -689,33 +594,17 @@ describe('ListingForm', () => {
         () => {
           expect(api.brandsApi.getAll).toHaveBeenCalled();
         },
-        { timeout: 15000 }
+        { timeout: 15000 },
       );
 
       await waitFor(
         () => {
-          const priceLabels = screen.getAllByText(/цена/i);
-          expect(priceLabels.length).toBeGreaterThan(0);
+          expect(getPriceInput(screen)).toBeInTheDocument();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
-      const priceLabels = screen.getAllByText(/цена/i);
-      const priceLabel =
-        priceLabels.find((label) => label.textContent?.toLowerCase().includes('цена')) ||
-        priceLabels[0];
-      let priceInput = priceLabel
-        .closest('div')
-        ?.querySelector('input[type="text"]') as HTMLInputElement;
-      if (!priceInput) {
-        const inputs = screen.getAllByPlaceholderText(/0/i);
-        priceInput =
-          (inputs.find((input) => {
-            const label = input.closest('div')?.querySelector('label');
-            return label?.textContent?.toLowerCase().includes('цена');
-          }) as HTMLInputElement) || (inputs[0] as HTMLInputElement);
-      }
-      expect(priceInput).toBeInTheDocument();
+      const priceInput = getPriceInput(screen) as HTMLInputElement;
 
       fireEvent.change(priceInput, { target: { value: '10000.50' } });
 
@@ -725,7 +614,7 @@ describe('ListingForm', () => {
           expect(currentValue).not.toContain('.');
           expect(currentValue).toMatch(/^\d+$/);
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
     }, 30000);
 
@@ -738,26 +627,10 @@ describe('ListingForm', () => {
       });
 
       await waitFor(() => {
-        const priceLabels = screen.getAllByText(/цена/i);
-        expect(priceLabels.length).toBeGreaterThan(0);
+        expect(getPriceInput(screen)).toBeInTheDocument();
       });
 
-      const priceLabels = screen.getAllByText(/цена/i);
-      const priceLabel =
-        priceLabels.find((label) => label.textContent?.toLowerCase().includes('цена')) ||
-        priceLabels[0];
-      let priceInput = priceLabel
-        .closest('div')
-        ?.querySelector('input[type="text"]') as HTMLInputElement;
-      if (!priceInput) {
-        const inputs = screen.getAllByPlaceholderText(/0/i);
-        priceInput =
-          (inputs.find((input) => {
-            const label = input.closest('div')?.querySelector('label');
-            return label?.textContent?.toLowerCase().includes('цена');
-          }) as HTMLInputElement) || (inputs[0] as HTMLInputElement);
-      }
-      expect(priceInput).toBeInTheDocument();
+      const priceInput = getPriceInput(screen) as HTMLInputElement;
 
       fireEvent.change(priceInput, { target: { value: '000' } });
       fireEvent.blur(priceInput);
@@ -766,7 +639,7 @@ describe('ListingForm', () => {
         () => {
           expect(priceInput.value).toBe('0');
         },
-        { timeout: 2000 }
+        { timeout: 2000 },
       );
     });
 
@@ -779,17 +652,17 @@ describe('ListingForm', () => {
           expect(api.brandsApi.getAll).toHaveBeenCalled();
           expect(api.citiesApi.getAll).toHaveBeenCalled();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       await waitFor(
         () => {
-          expect(screen.queryByPlaceholderText(/50000/i)).toBeInTheDocument();
+          expect(getMileageInput(screen)).toBeInTheDocument();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
-      const mileageInput = screen.getByPlaceholderText(/50000/i);
+      const mileageInput = getMileageInput(screen);
       fireEvent.change(mileageInput, { target: { value: '000' } });
       fireEvent.blur(mileageInput);
 
@@ -811,7 +684,7 @@ describe('ListingForm', () => {
           const yearInput = screen.getByPlaceholderText('2020');
           expect(yearInput).toBeInTheDocument();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       const yearInput = screen.getByPlaceholderText('2020') as HTMLInputElement;
@@ -834,7 +707,7 @@ describe('ListingForm', () => {
             expect(parsed).toBe(2020);
           }
         },
-        { timeout: 2000 }
+        { timeout: 2000 },
       );
     });
 
@@ -856,7 +729,7 @@ describe('ListingForm', () => {
           const yearInput = screen.getByPlaceholderText('2020');
           expect(yearInput).toBeInTheDocument();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       const yearInput = screen.getByPlaceholderText('2020') as HTMLInputElement;
@@ -868,7 +741,7 @@ describe('ListingForm', () => {
         () => {
           expect(yearInput.value).toBe('');
         },
-        { timeout: 2000 }
+        { timeout: 2000 },
       );
 
       await waitFor(
@@ -880,7 +753,7 @@ describe('ListingForm', () => {
             }
           }
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
     });
 
@@ -895,14 +768,14 @@ describe('ListingForm', () => {
           expect(api.brandsApi.getAll).toHaveBeenCalled();
           expect(api.citiesApi.getAll).toHaveBeenCalled();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       await waitFor(
         () => {
           expect(screen.getAllByTestId('dropdown').length).toBeGreaterThan(0);
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       const brandDropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
@@ -913,7 +786,7 @@ describe('ListingForm', () => {
         () => {
           expect(api.brandsApi.getModels).toHaveBeenCalledWith('brand-1');
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       const modelDropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
@@ -925,7 +798,7 @@ describe('ListingForm', () => {
           const yearInput = screen.getByPlaceholderText('2020');
           expect(yearInput).toBeInTheDocument();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       const yearInput = screen.getByPlaceholderText('2020') as HTMLInputElement;
@@ -938,7 +811,7 @@ describe('ListingForm', () => {
         () => {
           expect(yearInput.value).toBe('');
         },
-        { timeout: 2000 }
+        { timeout: 2000 },
       );
 
       const engineInput = screen.getByPlaceholderText(/2\.0/i) as HTMLInputElement;
@@ -966,7 +839,7 @@ describe('ListingForm', () => {
         bodyTypeDropdowns.find((d) => d.value === '') || bodyTypeDropdowns[5];
       fireEvent.change(bodyTypeDropdown, { target: { value: 'Sedan' } });
 
-      const priceInput = screen.getAllByPlaceholderText(/0/i)[0] as HTMLInputElement;
+      const priceInput = getPriceInput(screen) as HTMLInputElement;
       fireEvent.change(priceInput, { target: { value: '10000' } });
 
       const hpInput = screen.getByPlaceholderText(/150/i) as HTMLInputElement;
@@ -979,13 +852,13 @@ describe('ListingForm', () => {
 
       await waitFor(
         () => {
-          const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+          const fileInput = getPhotosFileInput(screen) as HTMLInputElement;
           expect(fileInput).toBeInTheDocument();
         },
-        { timeout: 5000 }
+        { timeout: 5000 },
       );
 
-      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const fileInput = getPhotosFileInput(screen) as HTMLInputElement;
       const file1 = new File(['test1'], 'test1.webp', { type: 'image/webp' });
       const file2 = new File(['test2'], 'test2.webp', { type: 'image/webp' });
 
@@ -1000,7 +873,7 @@ describe('ListingForm', () => {
           expect(api.uploadApi.uploadImage).toHaveBeenCalled();
           expect(toast.success).toHaveBeenCalledWith('Фото е успешно прикачено');
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       Object.defineProperty(fileInput, 'files', {
@@ -1012,14 +885,14 @@ describe('ListingForm', () => {
       await waitFor(
         () => {
           expect((api.uploadApi.uploadImage as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(
-            2
+            2,
           );
           const successCalls = (toast.success as jest.Mock).mock.calls.filter(
-            (call: unknown[]) => String(call[0]) === 'Фото е успешно прикачено'
+            (call: unknown[]) => String(call[0]) === 'Фото е успешно прикачено',
           );
           expect(successCalls.length).toBeGreaterThanOrEqual(2);
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       const submitButton = screen.getByRole('button', { name: /креирај/i });
@@ -1028,13 +901,13 @@ describe('ListingForm', () => {
         () => {
           expect(submitButton).toBeEnabled();
         },
-        { timeout: 5000 }
+        { timeout: 5000 },
       );
 
-      const form = submitButton.closest('form');
+      const form = screen.getByRole('form');
       expect(form).toBeInTheDocument();
 
-      fireEvent.submit(form!);
+      fireEvent.submit(form);
 
       await waitFor(
         () => {
@@ -1045,7 +918,7 @@ describe('ListingForm', () => {
           const hasImageError = errorMessages.some((msg: string) => msg.match(/фото|изображен/i));
           expect(hasYearError || hasImageError).toBe(true);
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
     });
 
@@ -1064,7 +937,7 @@ describe('ListingForm', () => {
           const yearInput = screen.getByPlaceholderText('2020');
           expect(yearInput).toBeInTheDocument();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       const yearInput = screen.getByPlaceholderText('2020') as HTMLInputElement;
@@ -1088,14 +961,14 @@ describe('ListingForm', () => {
           expect(api.brandsApi.getAll).toHaveBeenCalled();
           expect(api.citiesApi.getAll).toHaveBeenCalled();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       await waitFor(
         () => {
           expect(screen.getAllByTestId('dropdown').length).toBeGreaterThan(0);
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       const brandDropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
@@ -1106,7 +979,7 @@ describe('ListingForm', () => {
         () => {
           expect(api.brandsApi.getModels).toHaveBeenCalledWith('brand-1');
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       const modelDropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
@@ -1121,7 +994,7 @@ describe('ListingForm', () => {
           const yearInput = screen.getByPlaceholderText('2020');
           expect(yearInput).toBeInTheDocument();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       const yearInput = screen.getByPlaceholderText('2020') as HTMLInputElement;
@@ -1133,7 +1006,7 @@ describe('ListingForm', () => {
         () => {
           expect(yearInput.value).toBe('');
         },
-        { timeout: 2000 }
+        { timeout: 2000 },
       );
 
       const engineInput = screen.getByPlaceholderText(/2\.0/i) as HTMLInputElement;
@@ -1161,7 +1034,7 @@ describe('ListingForm', () => {
         bodyTypeDropdowns.find((d) => d.value === '') || bodyTypeDropdowns[5];
       fireEvent.change(bodyTypeDropdown, { target: { value: 'Sedan' } });
 
-      const priceInput = screen.getAllByPlaceholderText(/0/i)[0] as HTMLInputElement;
+      const priceInput = getPriceInput(screen) as HTMLInputElement;
       fireEvent.change(priceInput, { target: { value: '10000' } });
 
       const hpInput = screen.getByPlaceholderText(/150/i) as HTMLInputElement;
@@ -1174,13 +1047,13 @@ describe('ListingForm', () => {
 
       await waitFor(
         () => {
-          const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+          const fileInput = getPhotosFileInput(screen) as HTMLInputElement;
           expect(fileInput).toBeInTheDocument();
         },
-        { timeout: 5000 }
+        { timeout: 5000 },
       );
 
-      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const fileInput = getPhotosFileInput(screen) as HTMLInputElement;
       const file1 = new File(['test1'], 'test1.webp', { type: 'image/webp' });
       const file2 = new File(['test2'], 'test2.webp', { type: 'image/webp' });
 
@@ -1195,7 +1068,7 @@ describe('ListingForm', () => {
           expect(api.uploadApi.uploadImage).toHaveBeenCalled();
           expect(toast.success).toHaveBeenCalledWith('Фото е успешно прикачено');
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       Object.defineProperty(fileInput, 'files', {
@@ -1207,14 +1080,14 @@ describe('ListingForm', () => {
       await waitFor(
         () => {
           expect((api.uploadApi.uploadImage as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(
-            2
+            2,
           );
           const successCalls = (toast.success as jest.Mock).mock.calls.filter(
-            (call: unknown[]) => String(call[0]) === 'Фото е успешно прикачено'
+            (call: unknown[]) => String(call[0]) === 'Фото е успешно прикачено',
           );
           expect(successCalls.length).toBeGreaterThanOrEqual(2);
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       const submitButton = screen.getByRole('button', { name: /креирај/i });
@@ -1223,13 +1096,13 @@ describe('ListingForm', () => {
         () => {
           expect(submitButton).toBeEnabled();
         },
-        { timeout: 5000 }
+        { timeout: 5000 },
       );
 
-      const form = submitButton.closest('form');
+      const form = screen.getByRole('form');
       expect(form).toBeInTheDocument();
 
-      fireEvent.submit(form!);
+      fireEvent.submit(form);
 
       await waitFor(
         () => {
@@ -1240,7 +1113,7 @@ describe('ListingForm', () => {
           const hasImageError = errorMessages.some((msg: string) => msg.match(/фото|изображен/i));
           expect(hasYearError || hasImageError).toBe(true);
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
     }, 30000);
 
@@ -1252,21 +1125,17 @@ describe('ListingForm', () => {
         () => {
           expect(api.brandsApi.getAll).toHaveBeenCalled();
         },
-        { timeout: 15000 }
+        { timeout: 15000 },
       );
 
       await waitFor(
         () => {
-          const registeredText = screen.getByText(/зарегистрирано/i);
-          expect(registeredText).toBeInTheDocument();
+          expect(getRegisteredCheckbox(screen)).toBeInTheDocument();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
-      const registeredText = screen.getByText(/зарегистрирано/i);
-      const isRegisteredCheckbox = registeredText
-        .closest('div')
-        ?.querySelector('input[type="checkbox"]') as HTMLInputElement;
+      const isRegisteredCheckbox = getRegisteredCheckbox(screen);
       fireEvent.click(isRegisteredCheckbox);
 
       await waitFor(
@@ -1274,7 +1143,7 @@ describe('ListingForm', () => {
           const registrationInput = screen.getByPlaceholderText(/12\.2025/i);
           expect(registrationInput).toBeInTheDocument();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       const registrationInput = screen.getByPlaceholderText(/12\.2025/i);
@@ -1288,7 +1157,7 @@ describe('ListingForm', () => {
             expect(currentValue).toMatch(/\d{2}\.\d{4}/);
           }
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
     }, 30000);
   });
@@ -1302,20 +1171,15 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={mockListing as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
-      await waitFor(() => {
-        const engineLabel = screen.getByText(/Запремина на моторот/i);
-        const engineInput = engineLabel.closest('div')?.querySelector('input') as HTMLInputElement;
-        expect(engineInput).toBeInTheDocument();
-        expect(engineInput.value).toMatch(/^2\.?0?$/);
-        fireEvent.change(engineInput, { target: { value: '2.5' } });
-      });
+      const engineInput = await screen.findByTestId('listing-form-engine-displacement');
+      expect(engineInput).toBeInTheDocument();
+
+      fireEvent.change(engineInput, { target: { value: '2.5' } });
 
       await waitFor(() => {
-        const engineLabel = screen.getByText(/Запремина на моторот/i);
-        const engineInput = engineLabel.closest('div')?.querySelector('input') as HTMLInputElement;
         expect(engineInput.value).toBe('2.5');
       });
     });
@@ -1328,17 +1192,14 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={mockListing as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
-      await waitFor(() => {
-        const mileageInput = screen.getByDisplayValue('50000');
-        fireEvent.change(mileageInput, { target: { value: '60000' } });
-      });
+      const mileageInput = await screen.findByDisplayValue('50000');
+      fireEvent.change(mileageInput, { target: { value: '60000' } });
 
       await waitFor(() => {
-        const mileageInput = screen.getByDisplayValue('60000');
-        expect(mileageInput).toBeInTheDocument();
+        expect(screen.getByDisplayValue('60000')).toBeInTheDocument();
       });
     });
 
@@ -1350,17 +1211,14 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={mockListing as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
-      await waitFor(() => {
-        const yearInput = screen.getByDisplayValue('2020');
-        fireEvent.change(yearInput, { target: { value: '2021' } });
-      });
+      const yearInput = await screen.findByDisplayValue('2020');
+      fireEvent.change(yearInput, { target: { value: '2021' } });
 
       await waitFor(() => {
-        const yearInput = screen.getByDisplayValue('2021');
-        expect(yearInput).toBeInTheDocument();
+        expect(screen.getByDisplayValue('2021')).toBeInTheDocument();
       });
     });
 
@@ -1372,17 +1230,14 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={mockListing as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
-      await waitFor(() => {
-        const hpInput = screen.getByDisplayValue('150');
-        fireEvent.change(hpInput, { target: { value: '200' } });
-      });
+      const hpInput = await screen.findByDisplayValue('150');
+      fireEvent.change(hpInput, { target: { value: '200' } });
 
       await waitFor(() => {
-        const hpInput = screen.getByDisplayValue('200');
-        expect(hpInput).toBeInTheDocument();
+        expect(screen.getByDisplayValue('200')).toBeInTheDocument();
       });
     });
 
@@ -1394,17 +1249,14 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={mockListing as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
-      await waitFor(() => {
-        const hpInput = screen.getByDisplayValue('150');
-        fireEvent.change(hpInput, { target: { value: '200' } });
-      });
+      const hpInput = await screen.findByDisplayValue('150');
+      fireEvent.change(hpInput, { target: { value: '200' } });
 
       await waitFor(() => {
-        const kwInput = screen.getByDisplayValue('147');
-        expect(kwInput).toBeInTheDocument();
+        expect(screen.getByDisplayValue('147')).toBeInTheDocument();
       });
     });
 
@@ -1416,22 +1268,14 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={mockListing as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
-      await waitFor(() => {
-        const kwInputs = screen.getAllByPlaceholderText('110');
-        const kwInput =
-          kwInputs.find((input) => {
-            const label = input.closest('div')?.querySelector('label');
-            return label?.textContent?.includes('kW');
-          }) || kwInputs[0];
-        fireEvent.change(kwInput, { target: { value: '110' } });
-      });
+      const kwInput = await screen.findByDisplayValue('110');
+      fireEvent.change(kwInput, { target: { value: '110' } });
 
       await waitFor(() => {
-        const hpInput = screen.getByDisplayValue('150');
-        expect(hpInput).toBeInTheDocument();
+        expect(screen.getByDisplayValue('150')).toBeInTheDocument();
       });
     });
 
@@ -1447,7 +1291,7 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={listingWithoutKw as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
       await waitFor(() => {
@@ -1468,7 +1312,7 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={listingWithKw as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
       await waitFor(() => {
@@ -1485,28 +1329,28 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={mockListing as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
       await waitFor(
         () => {
           expect(api.brandsApi.getAll).toHaveBeenCalled();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       await waitFor(
         () => {
           expect(api.citiesApi.getAll).toHaveBeenCalled();
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       await waitFor(
         () => {
           expect(api.brandsApi.getModels).toHaveBeenCalledWith('brand-1');
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       await waitFor(
@@ -1514,7 +1358,7 @@ describe('ListingForm', () => {
           const vinInput = screen.getByDisplayValue('1HGBH41JXMN109186');
           expect(vinInput).toBeInTheDocument();
         },
-        { timeout: 15000 }
+        { timeout: 15000 },
       );
 
       const vinInput = screen.getByDisplayValue('1HGBH41JXMN109186') as HTMLInputElement;
@@ -1527,7 +1371,7 @@ describe('ListingForm', () => {
           expect(currentValue.length).toBeLessThanOrEqual(17);
           expect(currentValue.toUpperCase().startsWith('NEWV')).toBe(true);
         },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
     }, 30000);
 
@@ -1539,17 +1383,14 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={mockListing as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
-      await waitFor(() => {
-        const descriptionInput = screen.getByDisplayValue('Test description');
-        fireEvent.change(descriptionInput, { target: { value: 'Updated description' } });
-      });
+      const descriptionInput = await screen.findByDisplayValue('Test description');
+      fireEvent.change(descriptionInput, { target: { value: 'Updated description' } });
 
       await waitFor(() => {
-        const descriptionInput = screen.getByDisplayValue('Updated description');
-        expect(descriptionInput).toBeInTheDocument();
+        expect(screen.getByDisplayValue('Updated description')).toBeInTheDocument();
       });
     });
 
@@ -1566,30 +1407,22 @@ describe('ListingForm', () => {
         expect(equipmentSection).toBeInTheDocument();
       });
 
-      let airConditioningText: HTMLElement;
       let checkbox: HTMLInputElement;
 
       await waitFor(() => {
-        airConditioningText = screen.getByText(/Клима уред/i);
-        expect(airConditioningText).toBeInTheDocument();
-
-        const airConditioningContainer = airConditioningText.closest('div.flex');
-        expect(airConditioningContainer).toBeInTheDocument();
-
-        checkbox = airConditioningContainer?.querySelector(
-          'input[type="checkbox"]'
+        checkbox = screen.getByTestId(
+          'listing-form-equipment-air_conditioning',
         ) as HTMLInputElement;
         expect(checkbox).toBeInTheDocument();
         expect(checkbox).not.toBeChecked();
       });
 
-      fireEvent.click(checkbox!);
+      fireEvent.click(checkbox);
 
       await waitFor(() => {
-        const updatedText = screen.getByText(/Клима уред/i);
-        const updatedCheckbox = updatedText
-          .closest('div.flex')
-          ?.querySelector('input[type="checkbox"]') as HTMLInputElement;
+        const updatedCheckbox = screen.getByTestId(
+          'listing-form-equipment-air_conditioning',
+        ) as HTMLInputElement;
         expect(updatedCheckbox).toBeChecked();
       });
     });
@@ -1606,23 +1439,19 @@ describe('ListingForm', () => {
           listingId="listing-1"
           initialData={listingWithEquipment as Listing}
           onSuccess={onSuccess}
-        />
+        />,
       );
 
       await waitFor(() => {
-        const airConditioningText = screen.getByText(/Клима уред/i);
-        const navigationText = screen.getByText(/Навигација/i);
-        const parkingSensorsText = screen.getByText(/Паркинг сензори/i);
-
-        const airConditioningCheckbox = airConditioningText
-          .closest('div.flex')
-          ?.querySelector('input[type="checkbox"]') as HTMLInputElement;
-        const navigationCheckbox = navigationText
-          .closest('div.flex')
-          ?.querySelector('input[type="checkbox"]') as HTMLInputElement;
-        const parkingSensorsCheckbox = parkingSensorsText
-          .closest('div.flex')
-          ?.querySelector('input[type="checkbox"]') as HTMLInputElement;
+        const airConditioningCheckbox = screen.getByTestId(
+          'listing-form-equipment-air_conditioning',
+        ) as HTMLInputElement;
+        const navigationCheckbox = screen.getByTestId(
+          'listing-form-equipment-navigation',
+        ) as HTMLInputElement;
+        const parkingSensorsCheckbox = screen.getByTestId(
+          'listing-form-equipment-parking_sensors',
+        ) as HTMLInputElement;
 
         expect(airConditioningCheckbox).toBeChecked();
         expect(navigationCheckbox).toBeChecked();
@@ -1648,19 +1477,15 @@ describe('ListingForm', () => {
       let parkingSensorsCheckbox: HTMLInputElement;
 
       await waitFor(() => {
-        const airConditioningText = screen.getByText(/Клима уред/i);
-        const navigationText = screen.getByText(/Навигација/i);
-        const parkingSensorsText = screen.getByText(/Паркинг сензори/i);
-
-        airConditioningCheckbox = airConditioningText
-          .closest('div.flex')
-          ?.querySelector('input[type="checkbox"]') as HTMLInputElement;
-        navigationCheckbox = navigationText
-          .closest('div.flex')
-          ?.querySelector('input[type="checkbox"]') as HTMLInputElement;
-        parkingSensorsCheckbox = parkingSensorsText
-          .closest('div.flex')
-          ?.querySelector('input[type="checkbox"]') as HTMLInputElement;
+        airConditioningCheckbox = screen.getByTestId(
+          'listing-form-equipment-air_conditioning',
+        ) as HTMLInputElement;
+        navigationCheckbox = screen.getByTestId(
+          'listing-form-equipment-navigation',
+        ) as HTMLInputElement;
+        parkingSensorsCheckbox = screen.getByTestId(
+          'listing-form-equipment-parking_sensors',
+        ) as HTMLInputElement;
 
         expect(airConditioningCheckbox).toBeInTheDocument();
         expect(navigationCheckbox).toBeInTheDocument();
@@ -1672,30 +1497,26 @@ describe('ListingForm', () => {
       fireEvent.click(parkingSensorsCheckbox!);
 
       await waitFor(() => {
-        const airConditioningText = screen.getByText(/Клима уред/i);
-        const navigationText = screen.getByText(/Навигација/i);
-        const parkingSensorsText = screen.getByText(/Паркинг сензори/i);
-        const updatedAirConditioningCheckbox = airConditioningText
-          .closest('div.flex')
-          ?.querySelector('input[type="checkbox"]') as HTMLInputElement;
-        const updatedNavigationCheckbox = navigationText
-          .closest('div.flex')
-          ?.querySelector('input[type="checkbox"]') as HTMLInputElement;
-        const updatedParkingSensorsCheckbox = parkingSensorsText
-          .closest('div.flex')
-          ?.querySelector('input[type="checkbox"]') as HTMLInputElement;
+        const updatedAirConditioningCheckbox = screen.getByTestId(
+          'listing-form-equipment-air_conditioning',
+        ) as HTMLInputElement;
+        const updatedNavigationCheckbox = screen.getByTestId(
+          'listing-form-equipment-navigation',
+        ) as HTMLInputElement;
+        const updatedParkingSensorsCheckbox = screen.getByTestId(
+          'listing-form-equipment-parking_sensors',
+        ) as HTMLInputElement;
         expect(updatedAirConditioningCheckbox).toBeChecked();
         expect(updatedNavigationCheckbox).toBeChecked();
         expect(updatedParkingSensorsCheckbox).toBeChecked();
       });
 
-      fireEvent.click(airConditioningCheckbox!);
+      fireEvent.click(airConditioningCheckbox);
 
       await waitFor(() => {
-        const airConditioningText = screen.getByText(/Клима уред/i);
-        const updatedAirConditioningCheckbox = airConditioningText
-          .closest('div.flex')
-          ?.querySelector('input[type="checkbox"]') as HTMLInputElement;
+        const updatedAirConditioningCheckbox = screen.getByTestId(
+          'listing-form-equipment-air_conditioning',
+        ) as HTMLInputElement;
         expect(updatedAirConditioningCheckbox).not.toBeChecked();
       });
     });

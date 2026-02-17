@@ -8,7 +8,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const initAuth = useAuthStore((state) => state.initAuth);
 
   useEffect(() => {
-    initAuth();
+    void initAuth();
   }, [initAuth]);
 
   return <>{children}</>;

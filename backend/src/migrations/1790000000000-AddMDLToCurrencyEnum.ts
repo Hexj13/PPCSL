@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class AddMDLToCurrencyEnum1790000000000 implements MigrationInterface {
   name = 'AddMDLToCurrencyEnum1790000000000';

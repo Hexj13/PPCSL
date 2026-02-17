@@ -90,16 +90,16 @@ export default function BoardPageClient({
         }
       }
     },
-    [nameSlug, sortBy, sortOrder]
+    [nameSlug, sortBy, sortOrder],
   );
 
   useEffect(() => {
-    fetchListings(1, false);
+    void fetchListings(1, false);
   }, [fetchListings]);
 
   const handleLoadMore = useCallback(() => {
     if (loadingMore || !meta || !meta.totalPages || currentPage >= meta.totalPages) return;
-    fetchListings(currentPage + 1, true);
+    void fetchListings(currentPage + 1, true);
   }, [loadingMore, meta, currentPage, fetchListings]);
 
   const { visible: showSkeleton } = useLoadingState({

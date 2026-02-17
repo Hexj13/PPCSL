@@ -21,40 +21,40 @@ GET /sitemaps/:name.xml   → Next.js rewrite → GET /api/sitemaps/:name (backe
 
 ## Sitemap Index and Child Sitemaps
 
-| URL | Content | Priority | changefreq |
-|-----|---------|----------|------------|
-| `/sitemap.xml` | Sitemap index (links to child sitemaps) | — | — |
-| `/sitemaps/pages.xml` | Static pages | 0.2–1.0 | daily/monthly |
-| `/sitemaps/brands.xml` | Brand and brand+model pages | 0.7–0.8 | daily |
-| `/sitemaps/sellers.xml` | Seller board pages (active sellers with ≥1 active listing) | 0.6 | daily |
-| `/sitemaps/listings-YYYY-MM.xml` | Active listings created in that month | 0.9 | hourly |
+| URL                              | Content                                                    | Priority | changefreq    |
+| -------------------------------- | ---------------------------------------------------------- | -------- | ------------- |
+| `/sitemap.xml`                   | Sitemap index (links to child sitemaps)                    | —        | —             |
+| `/sitemaps/pages.xml`            | Static pages                                               | 0.2–1.0  | daily/monthly |
+| `/sitemaps/brands.xml`           | Brand and brand+model pages                                | 0.7–0.8  | daily         |
+| `/sitemaps/sellers.xml`          | Seller board pages (active sellers with ≥1 active listing) | 0.6      | daily         |
+| `/sitemaps/listings-YYYY-MM.xml` | Active listings created in that month                      | 0.9      | hourly        |
 
 Only **Active** listings are included. Seller boards are included only if the user is active, has a `board_slug`, and has at least one Active listing.
 
 ## What's Included
 
-| Type | Included | File | Notes |
-|------|----------|------|-------|
-| Static pages | Yes | pages.xml | `/`, `/listings`, `/terms`, `/privacy`, `/faq`, `/cookie-settings` |
-| Brand pages | Yes | brands.xml | `/?brand=slug`, `/?brand=slug&vehicleType=truck` (etc.) |
-| Brand+Model pages | Yes | brands.xml | `/?brand=slug&model=slug` (with optional vehicleType) |
-| Seller boards | Yes | sellers.xml | `/board/:board_slug` — only active sellers with active listings |
-| Individual listings | Yes | listings-YYYY-MM.xml | `/listings/:id` — Active only, partitioned by month |
-| Body type pages | No | — | Removed; use brand/model and search for discovery |
-| Auth, profile, admin | No | — | Excluded by design |
+| Type                 | Included | File                 | Notes                                                              |
+| -------------------- | -------- | -------------------- | ------------------------------------------------------------------ |
+| Static pages         | Yes      | pages.xml            | `/`, `/listings`, `/terms`, `/privacy`, `/faq`, `/cookie-settings` |
+| Brand pages          | Yes      | brands.xml           | `/?brand=slug`, `/?brand=slug&vehicleType=truck` (etc.)            |
+| Brand+Model pages    | Yes      | brands.xml           | `/?brand=slug&model=slug` (with optional vehicleType)              |
+| Seller boards        | Yes      | sellers.xml          | `/board/:board_slug` — only active sellers with active listings    |
+| Individual listings  | Yes      | listings-YYYY-MM.xml | `/listings/:id` — Active only, partitioned by month                |
+| Body type pages      | No       | —                    | Removed; use brand/model and search for discovery                  |
+| Auth, profile, admin | No       | —                    | Excluded by design                                                 |
 
 ## URL Structure
 
 ### Static Pages (pages.xml)
 
-| URL | Priority | changefreq |
-|-----|----------|------------|
-| `/` | 1.0 | daily |
-| `/listings` | 0.9 | daily |
-| `/terms` | 0.3 | monthly |
-| `/privacy` | 0.3 | monthly |
-| `/faq` | 0.4 | monthly |
-| `/cookie-settings` | 0.2 | monthly |
+| URL                | Priority | changefreq |
+| ------------------ | -------- | ---------- |
+| `/`                | 1.0      | daily      |
+| `/listings`        | 0.9      | daily      |
+| `/terms`           | 0.3      | monthly    |
+| `/privacy`         | 0.3      | monthly    |
+| `/faq`             | 0.4      | monthly    |
+| `/cookie-settings` | 0.2      | monthly    |
 
 ### Brand and Model URLs (brands.xml)
 
@@ -75,11 +75,11 @@ Same rules as before: `vehicleType` param for truck/moto, omitted for cars. All 
 
 ### Files
 
-| File | Description |
-|------|-------------|
-| `core/backend/src/sitemap/sitemap.module.ts` | NestJS module (TypeORM entities, CommonModule) |
+| File                                             | Description                                                          |
+| ------------------------------------------------ | -------------------------------------------------------------------- |
+| `core/backend/src/sitemap/sitemap.module.ts`     | NestJS module (TypeORM entities, CommonModule)                       |
 | `core/backend/src/sitemap/sitemap.controller.ts` | `GET /api/sitemap.xml`, `GET /api/sitemaps/:name`; `@SkipThrottle()` |
-| `core/backend/src/sitemap/sitemap.service.ts` | XML generation, DB queries, Redis cache (TTL 3600s) |
+| `core/backend/src/sitemap/sitemap.service.ts`    | XML generation, DB queries, Redis cache (TTL 3600s)                  |
 
 ### Caching
 
@@ -104,13 +104,13 @@ Google allows the sitemap to be on a different subdomain; URLs inside the sitema
 
 ## Related Files
 
-| File | Description |
-|------|-------------|
-| `core/backend/src/sitemap/*.ts` | Sitemap module, controller, service |
-| `core/backend/src/app.module.ts` | Imports `SitemapModule` |
-| `core/frontend/next.config.js` | `rewrites()` for sitemap |
-| `core/frontend/app/robots.ts` | robots.txt with Sitemap URL |
-| `core/frontend/config/proxy.ts` | Excludes `sitemap.xml` from proxy matcher |
+| File                             | Description                               |
+| -------------------------------- | ----------------------------------------- |
+| `core/backend/src/sitemap/*.ts`  | Sitemap module, controller, service       |
+| `core/backend/src/app.module.ts` | Imports `SitemapModule`                   |
+| `core/frontend/next.config.js`   | `rewrites()` for sitemap                  |
+| `core/frontend/app/robots.ts`    | robots.txt with Sitemap URL               |
+| `core/frontend/config/proxy.ts`  | Excludes `sitemap.xml` from proxy matcher |
 
 ---
 

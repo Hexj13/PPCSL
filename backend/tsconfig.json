@@ -17,7 +17,7 @@
     "skipLibCheck": true,
     "strict": true,
     "strictNullChecks": true,
-    "noImplicitAny": false,
+    "noImplicitAny": true,
     "strictBindCallApply": true,
     "strictPropertyInitialization": false,
     "noUnusedLocals": false,
@@ -34,7 +34,7 @@
       "@common/*": ["src/common/*"]
     }
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts"],
   "exclude": ["node_modules", "dist", "src/test", "**/*.spec.ts", "**/*.test.ts", "**/*.integration.ts"]
 }
 

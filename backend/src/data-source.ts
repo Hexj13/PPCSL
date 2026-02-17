@@ -1,4 +1,5 @@
-import { DataSource, DataSourceOptions } from 'typeorm';
+import type { DataSourceOptions } from 'typeorm';
+import { DataSource } from 'typeorm';
 
 import { RefreshToken } from './auth/entities/refresh-token.entity';
 import { Brand } from './brands/entities/brand.entity';

@@ -1,4 +1,4 @@
-import { Currency } from '../../../common/types';
+import type { Currency } from '../../../common/types';
 
 const VALID_CURRENCIES: Currency[] = ['EUR', 'MDL'];
 const MIN_AMOUNT = 0;

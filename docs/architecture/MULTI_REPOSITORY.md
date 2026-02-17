@@ -11,6 +11,7 @@ This architecture separates the core application code from locale-specific confi
 ### What's in PPCSL Core
 
 **Frontend Core:**
+
 - All React components (Header, Footer, ListingCard, ListingForm, etc.)
 - Pages and routes (home, listings, profile, admin, etc.)
 - API client and server-side API functions
@@ -20,6 +21,7 @@ This architecture separates the core application code from locale-specific confi
 - System interfaces: `lib/i18n.ts`, `lib/theme.ts`, `lib/site-config.ts`
 
 **Backend Core:**
+
 - Complete NestJS backend API
 - Authentication and authorization
 - User management
@@ -40,6 +42,7 @@ This architecture separates the core application code from locale-specific confi
 ### What's in Platform-Specific Repositories
 
 Each platform (e.g., kupito.club) contains only:
+
 1. **Translations** (`locales/ro.json`, `locales/ru.json`, `locales/en.json`, etc.) - All user-facing text in supported languages
 2. **Theme** (`theme/colors.ts`) - Color scheme specific to the platform
 3. **Site Configuration** (`config/site.ts`) - Domain, locale, currency, support email
@@ -57,11 +60,13 @@ Each platform (e.g., kupito.club) contains only:
 ### Current Status
 
 **Core Repository:**
+
 - **PPCSL** - `git@github.com:Hexj13/PPCSL.git`
 - Contains all core functionality
 - Ready for use by platform repositories
 
 **Active Platform:**
+
 - **kupito.club** - Platform for Moldova
 - Uses PPCSL core via Git submodule
 - Has Romanian and Russian translations, theme, and configuration
@@ -153,14 +158,17 @@ kupito.club/
 ### 1. Translation System (i18n)
 
 **In PPCSL:**
+
 - `frontend/lib/i18n.ts` - Interface and translation loading functions
 - `frontend/components/providers/I18nProvider.tsx` - React Context Provider
 - `frontend/hooks/useTranslation.ts` - Hook for using translations
 
 **In platform repositories:**
+
 - `locales/{country}.json` - Translation files (e.g., `locales/ro.json`, `locales/ru.json`, `locales/en.json`)
 
 **Usage:**
+
 ```typescript
 const { t } = useTranslation();
 return <h1>{t('header.addListing')}</h1>;
@@ -169,18 +177,22 @@ return <h1>{t('header.addListing')}</h1>;
 ### 2. Theme System
 
 **In PPCSL:**
+
 - `frontend/lib/theme.ts` - Interface and theme loading functions
 - `frontend/tailwind.config.js` - Uses theme for color generation
 
 **In platform repositories:**
+
 - `theme/colors.ts` - Color scheme file
 
 ### 3. Site Configuration
 
 **In PPCSL:**
+
 - `frontend/lib/site-config.ts` - Interface and configuration loading functions
 
 **In platform repositories:**
+
 - `config/site.ts` - Configuration (domain, locale, currency, support email)
 
 ---
@@ -209,10 +221,12 @@ For complete CI/CD documentation, see **[Technical Documentation - CI/CD Configu
 ### Quick Overview
 
 **PPCSL (core):**
+
 - Runs tests, linters, type checking
 - Updates submodules in platform repositories on success
 
 **Platform repositories:**
+
 - Copies locale files to core
 - Builds and deploys with platform-specific configuration
 
@@ -221,6 +235,7 @@ For complete CI/CD documentation, see **[Technical Documentation - CI/CD Configu
 ## Workflow
 
 For detailed workflow documentation, see:
+
 - **[Platform Guide - Development Workflows](../guides/PLATFORM_GUIDE.md#3-development-workflows)** - Complete workflow guide with examples
 - **[Local Development Guide - Common Workflows](../guides/LOCAL_DEVELOPMENT.md#common-workflows)** - Daily development workflows
 
@@ -235,6 +250,7 @@ For detailed workflow documentation, see:
 ## Troubleshooting
 
 For detailed troubleshooting guides, see:
+
 - **[Platform Guide - Troubleshooting](../guides/PLATFORM_GUIDE.md#5-troubleshooting)** - Platform setup issues
 - **[Local Development Guide - Troubleshooting](../guides/LOCAL_DEVELOPMENT.md#troubleshooting)** - Local development issues
 - **[Deployment Guide - Troubleshooting](../guides/DEPLOYMENT.md#7-troubleshooting)** - Deployment issues
@@ -242,12 +258,14 @@ For detailed troubleshooting guides, see:
 ### Quick Fixes
 
 **Submodule not updating:**
+
 ```bash
 git submodule update --init --recursive
 git submodule update --remote --merge core
 ```
 
 **Build can't find translations:**
+
 - Ensure locale files are copied before build
 - Check paths in CI/CD workflow
 
@@ -274,8 +292,10 @@ This architecture provides:
 ✅ **Flexibility** - Each platform can have custom configurations
 
 **Current Platform:**
+
 - **kupito.club** - Platform for Moldova
 
 **Core Repository:**
+
 - **PPCSL** (ppcsl) - Platform for posting car sale listings
 - Repository: `git@github.com:Hexj13/PPCSL.git`

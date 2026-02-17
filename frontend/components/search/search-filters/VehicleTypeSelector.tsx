@@ -199,7 +199,7 @@ export function VehicleTypeSelector({
                   <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-[5px] border-r-[5px] border-t-[5px] border-t-primary-500/50 border-l-transparent border-r-transparent" />
                 </div>
               </div>,
-              document.body
+              document.body,
             )}
         </span>
         <div

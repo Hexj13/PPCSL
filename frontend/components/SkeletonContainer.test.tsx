@@ -19,7 +19,7 @@ describe('SkeletonContainer', () => {
     render(
       <SkeletonContainer isLoading={true}>
         <div data-testid="skeleton">Skeleton content</div>
-      </SkeletonContainer>
+      </SkeletonContainer>,
     );
 
     expect(screen.queryByTestId('skeleton')).not.toBeInTheDocument();
@@ -35,7 +35,7 @@ describe('SkeletonContainer', () => {
     render(
       <SkeletonContainer isLoading={true} immediate={true} showDelay={0}>
         <div data-testid="skeleton">Skeleton content</div>
-      </SkeletonContainer>
+      </SkeletonContainer>,
     );
 
     expect(screen.getByTestId('skeleton')).toBeInTheDocument();
@@ -45,7 +45,7 @@ describe('SkeletonContainer', () => {
     const { rerender } = render(
       <SkeletonContainer isLoading={true} minDisplayTime={1000} immediate={true} showDelay={0}>
         <div data-testid="skeleton">Skeleton content</div>
-      </SkeletonContainer>
+      </SkeletonContainer>,
     );
 
     expect(screen.getByTestId('skeleton')).toBeInTheDocument();
@@ -53,7 +53,7 @@ describe('SkeletonContainer', () => {
     rerender(
       <SkeletonContainer isLoading={false} minDisplayTime={1000}>
         <div data-testid="skeleton">Skeleton content</div>
-      </SkeletonContainer>
+      </SkeletonContainer>,
     );
 
     act(() => {
@@ -73,7 +73,7 @@ describe('SkeletonContainer', () => {
     render(
       <SkeletonContainer isLoading={false}>
         <div data-testid="skeleton">Skeleton content</div>
-      </SkeletonContainer>
+      </SkeletonContainer>,
     );
 
     expect(screen.queryByTestId('skeleton')).not.toBeInTheDocument();

@@ -1,6 +1,6 @@
 'use client';
 
-import { ComponentProps } from 'react';
+import type { ComponentProps } from 'react';
 
 import { TranslatedText } from '@/components/common/TranslatedText';
 import { useTranslation } from '@/hooks/useTranslation';

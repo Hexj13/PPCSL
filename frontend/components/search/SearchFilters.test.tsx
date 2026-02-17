@@ -72,8 +72,10 @@ const searchFiltersTranslations: Record<string, string> = {
   'searchFilters.priceFromPlaceholder': '0',
   'searchFilters.priceToPlaceholder': '0',
   'searchFilters.priceFromTitle': 'Enter price (integers only, 0-999999999)',
+  'searchFilters.priceToTitle': 'Enter price (integers only, 0-999999999)',
   'searchFilters.mileageFromTitle': 'Enter mileage in kilometers (0-9999999)',
   'searchFilters.horsepowerFromTitle': 'Enter horsepower (1-9999)',
+  'searchFilters.formAriaLabel': 'Search filters',
 };
 
 jest.mock('@/hooks/useTranslation', () => ({
@@ -83,7 +85,7 @@ jest.mock('@/hooks/useTranslation', () => ({
       if (params) {
         return Object.entries(params).reduce(
           (acc, [k, v]) => acc.replace(new RegExp(`\\{\\{${k}\\}\\}`, 'g'), v),
-          s
+          s,
         );
       }
       return s;
@@ -188,7 +190,7 @@ jest.mock('@/components/common/MultiSelectDropdown', () => {
         onChange={(e) => {
           const selectedValues = Array.from(
             (e.target as HTMLSelectElement).selectedOptions,
-            (opt) => opt.value
+            (opt) => opt.value,
           );
           onChange(selectedValues);
         }}
@@ -399,7 +401,7 @@ describe('SearchFilters', () => {
         expect(brandsApi.getAll).toHaveBeenCalled();
         expect(citiesApi.getAll).toHaveBeenCalled();
       },
-      { timeout: 3000 }
+      { timeout: 3000 },
     );
   });
 
@@ -434,19 +436,15 @@ describe('SearchFilters', () => {
       expect(brandsApi.getAll).toHaveBeenCalled();
     });
 
-    const form = screen.getByText('Basic criteria').closest('form');
-    expect(form).toBeInTheDocument();
+    const form = screen.getByRole('form', { name: /search filters/i });
+    fireEvent.submit(form);
 
-    if (form) {
-      fireEvent.submit(form);
-
-      await waitFor(
-        () => {
-          expect(mockReplace).toHaveBeenCalled();
-        },
-        { timeout: 3000 }
-      );
-    }
+    await waitFor(
+      () => {
+        expect(mockReplace).toHaveBeenCalled();
+      },
+      { timeout: 3000 },
+    );
   });
 
   it('should handle reset', async () => {
@@ -465,7 +463,7 @@ describe('SearchFilters', () => {
         () => {
           expect(mockReplace).toHaveBeenCalled();
         },
-        { timeout: 3000 }
+        { timeout: 3000 },
       );
     }
   });
@@ -498,23 +496,18 @@ describe('SearchFilters', () => {
         expect(brandsApi.getAll).toHaveBeenCalled();
       });
 
-      const priceFromInput = screen.getByTitle(
-        'Enter price (integers only, 0-999999999)'
-      ) as HTMLInputElement;
-      const priceSection = priceFromInput.closest('div.flex');
-      const priceToInput = priceSection?.querySelector('input.paired-right') as HTMLInputElement;
+      const priceInputs = screen.getAllByTitle(/Enter price/i);
+      const priceFromInput = priceInputs[0] as HTMLInputElement;
+      const priceToInput = priceInputs[1] as HTMLInputElement;
 
       fireEvent.change(priceFromInput, { target: { value: '500000' } });
       fireEvent.change(priceToInput, { target: { value: '100000' } });
 
-      const form = screen.getByText('Basic criteria').closest('form');
-      if (form) {
-        fireEvent.submit(form);
-      }
+      fireEvent.submit(screen.getByRole('form', { name: /search filters/i }));
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(
-          expect.stringContaining('Price "from" cannot be greater than price "to"')
+          expect.stringContaining('Price "from" cannot be greater than price "to"'),
         );
       });
     });
@@ -542,7 +535,7 @@ describe('SearchFilters', () => {
       if (priceInput.value && parseInt(priceInput.value, 10) > 999999999) {
         await waitFor(() => {
           expect(toast.error).toHaveBeenCalledWith(
-            expect.stringContaining('Price must be between 0 and 999999999')
+            expect.stringContaining('Price must be between 0 and 999999999'),
           );
         });
       }
@@ -666,13 +659,10 @@ describe('SearchFilters', () => {
           const searchButton = within(actions).getByRole('button', { name: /Search/i });
           expect(searchButton).not.toBeDisabled();
         },
-        { timeout: 3000 }
+        { timeout: 3000 },
       );
 
-      const form = screen.getByText('Basic criteria').closest('form');
-      if (form) {
-        fireEvent.submit(form);
-      }
+      fireEvent.submit(screen.getByRole('form', { name: /search filters/i }));
 
       await waitFor(() => {
         expect(mockReplace).toHaveBeenCalled();
@@ -709,7 +699,7 @@ describe('SearchFilters', () => {
           expect(saveButton).toBeInTheDocument();
           expect(saveButton).not.toBeDisabled();
         },
-        { timeout: 3000 }
+        { timeout: 3000 },
       );
     });
 
@@ -720,7 +710,7 @@ describe('SearchFilters', () => {
         expect(brandsApi.getAll).toHaveBeenCalled();
       });
 
-      const saveButton = screen.getByText('Log in').closest('button');
+      const saveButton = screen.getByRole('button', { name: /log in/i });
       await waitFor(() => {
         expect(saveButton).toBeDisabled();
       });
@@ -779,13 +769,13 @@ describe('SearchFilters', () => {
         expect(mockPush).toHaveBeenCalledWith('/login');
         expect(window.localStorage.setItem).toHaveBeenCalledWith(
           'pendingSavedFilter',
-          expect.any(String)
-        );
-        expect(window.localStorage.setItem).toHaveBeenCalledWith(
-          'returnUrl',
-          '/favorites?tab=filters'
+          expect.any(String),
         );
       });
+      expect(window.localStorage.setItem).toHaveBeenCalledWith(
+        'returnUrl',
+        '/favorites?tab=filters',
+      );
     });
 
     it('should show correct button text for authenticated user', async () => {

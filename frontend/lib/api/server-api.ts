@@ -2,7 +2,7 @@ import { cache } from 'react';
 
 import { createBrandResolver, createModelResolver, parseSearchParams } from '@/lib/search';
 
-import { Listing, PaginationMeta, Brand, VehicleModel } from './api';
+import type { Listing, PaginationMeta, Brand, VehicleModel } from './api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -29,14 +29,14 @@ export const fetchSearchMetadata = cache(
         `${API_URL}/api/brands/search-metadata${query ? `?${query}` : ''}`,
         {
           next: { revalidate: 3600 },
-        }
+        },
       );
       if (!response.ok) return { title: null };
       return response.json();
     } catch {
       return { title: null };
     }
-  }
+  },
 );
 
 export const fetchBrands = cache(async (): Promise<Brand[]> => {
@@ -66,12 +66,12 @@ export const fetchModelsByBrands = cache(
     } catch {
       return {};
     }
-  }
+  },
 );
 
 export const getListings = cache(
   async (
-    searchParams: Record<string, string | string[] | undefined> = {}
+    searchParams: Record<string, string | string[] | undefined> = {},
   ): Promise<{ data: Listing[]; meta: PaginationMeta }> => {
     const brands = await fetchBrands();
     const brandResolver = createBrandResolver(brands);
@@ -126,5 +126,5 @@ export const getListings = cache(
       }
       return { data: [], meta: { page: 1, limit: 20, total: 0, totalPages: 0 } };
     }
-  }
+  },
 );

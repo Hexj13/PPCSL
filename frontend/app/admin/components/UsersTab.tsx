@@ -8,7 +8,8 @@ import { EmptyState } from '@/components/common/EmptyState';
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { usePaginatedData } from '@/hooks/usePaginatedData';
 import { useTranslation } from '@/hooks/useTranslation';
-import { adminApi, User } from '@/lib/api';
+import type { User } from '@/lib/api';
+import { adminApi } from '@/lib/api';
 import { Pagination } from '@/ui';
 
 interface UsersTabProps {
@@ -18,6 +19,140 @@ interface UsersTabProps {
 interface UsersFilters {
   searchQuery: string;
   roleFilter: 'All' | 'Individual' | 'Business' | 'Admin';
+}
+
+function getDisplayName(user: User): string {
+  if (user.firstName) {
+    return user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName;
+  }
+  return user.companyName || user.email || user.phone || '';
+}
+
+function getTypeBadgeClass(userType: string): string {
+  if (userType === 'Admin') return 'bg-purple-500/20';
+  if (userType === 'Business') return 'bg-blue-500/20';
+  return 'bg-primary-700/20';
+}
+
+function getTypeLabelKey(userType: string): string {
+  if (userType === 'Admin') return 'admin.usersTab.admin';
+  if (userType === 'Business') return 'admin.usersTab.business';
+  return 'admin.usersTab.individual';
+}
+
+function hasContactInfo(user: User): boolean {
+  return !!(user.firstName || user.lastName || user.companyName || user.email || user.phone);
+}
+
+interface AdminUserCardProps {
+  user: User;
+  t: (key: string, values?: Record<string, number>) => string;
+  onViewListings: (user: User) => void;
+  onToggleStatus: (userId: string) => void;
+}
+
+function AdminUserCard({ user, t, onViewListings, onToggleStatus }: AdminUserCardProps) {
+  const displayName = getDisplayName(user) || t('admin.usersTab.deletedUser');
+  const listingCount = user.listings?.length ?? 0;
+
+  return (
+    <div className="card p-4 md:p-5">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 md:gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="mb-2">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <span className="text-sm md:text-base text-text-secondary font-mono break-all">
+                {t('admin.usersTab.id')} {user.id}
+              </span>
+              <CopyButton text={user.id} label="ID" />
+            </div>
+            <h3 className="text-sm md:text-base font-bold text-text-primary break-words">
+              {displayName}
+            </h3>
+            {user.companyName && (
+              <p
+                className="text-sm md:text-base mt-1 break-words"
+                style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+              >
+                {user.companyName}
+              </p>
+            )}
+          </div>
+          <div
+            className="space-y-1 text-sm md:text-base"
+            style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+          >
+            {user.email ? (
+              <div className="break-words">
+                <span className="text-primary-700">{t('admin.usersTab.email')}</span> {user.email}
+              </div>
+            ) : (
+              <div>
+                <span className="text-primary-700">{t('admin.usersTab.email')}</span>{' '}
+                <span className="text-text-secondary">{t('admin.usersTab.unavailable')}</span>
+              </div>
+            )}
+            {user.phone ? (
+              <div>
+                <span className="text-primary-700">{t('admin.usersTab.phone')}</span> {user.phone}
+              </div>
+            ) : (
+              <div>
+                <span className="text-primary-700">{t('admin.usersTab.phone')}</span>{' '}
+                <span className="text-text-secondary">{t('admin.usersTab.unavailable')}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-primary-700">{t('admin.usersTab.type')}</span>
+              <span
+                className={`px-2 py-1 rounded text-sm md:text-base font-semibold text-text-secondary ${getTypeBadgeClass(user.type)}`}
+              >
+                {t(getTypeLabelKey(user.type))}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-primary-700">{t('admin.usersTab.status')}</span>
+              <span
+                className={`px-2 py-1 rounded text-sm md:text-base font-semibold text-text-secondary ${
+                  user.active !== false ? 'bg-green-500/20' : 'bg-red-500/20'
+                }`}
+              >
+                {user.active !== false ? t('admin.usersTab.active') : t('admin.usersTab.inactive')}
+              </span>
+            </div>
+            <div>
+              <span className="text-primary-700">{t('admin.usersTab.listings')}</span>{' '}
+              {listingCount}
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-row lg:flex-col gap-2 flex-shrink-0">
+          {listingCount > 0 && (
+            <button
+              onClick={() => onViewListings(user)}
+              className="text-primary-700 font-medium text-xs md:text-sm lg:text-base hover:text-primary-900 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-700 hover:border-primary-900 bg-primary-500/10 select-none flex-1 lg:flex-none lg:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
+            >
+              {t('admin.usersTab.viewListings', { count: listingCount })}
+            </button>
+          )}
+          {hasContactInfo(user) && (
+            <button
+              onClick={() => onToggleStatus(user.id)}
+              className={`font-medium text-xs md:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 select-none flex-1 lg:flex-none lg:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px] ${
+                user.active !== false
+                  ? 'text-text-secondary hover:text-text-primary border-red-500/40 hover:border-red-500/60 bg-red-500/20 hover:bg-red-500/30'
+                  : 'text-primary-700 hover:text-primary-900 border-primary-700 hover:border-primary-900 bg-primary-500/10'
+              }`}
+            >
+              {user.active !== false
+                ? t('admin.usersTab.deactivate')
+                : t('admin.usersTab.activate')}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function UsersTab({ onViewUserListings }: UsersTabProps) {
@@ -86,7 +221,7 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
   }, []);
 
   useEffect(() => {
-    loadRoleCounts();
+    void loadRoleCounts();
   }, [loadRoleCounts]);
 
   const handleToggleStatus = useCallback(
@@ -96,31 +231,31 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
 
       setData((prev) =>
         prev.map((user) =>
-          user.id === userId ? { ...user, active: user.active === false ? true : false } : user
-        )
+          user.id === userId ? { ...user, active: user.active === false ? true : false } : user,
+        ),
       );
 
       try {
         await adminApi.toggleUserStatus(userId);
         toast.success(t('admin.usersTab.userStatusUpdateSuccess'));
-        loadRoleCounts();
+        await loadRoleCounts();
       } catch {
         if (previousActive !== undefined) {
           setData((prev) =>
-            prev.map((user) => (user.id === userId ? { ...user, active: previousActive } : user))
+            prev.map((user) => (user.id === userId ? { ...user, active: previousActive } : user)),
           );
         }
         toast.error(t('admin.usersTab.statusUpdateError'));
       }
     },
-    [users, t, loadRoleCounts, setData]
+    [users, t, loadRoleCounts, setData],
   );
 
   const handleViewListings = useCallback(
     (user: User) => {
       onViewUserListings(user.id);
     },
-    [onViewUserListings]
+    [onViewUserListings],
   );
 
   return (
@@ -222,135 +357,13 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
             <>
               <div className="space-y-3 md:space-y-4">
                 {users.map((user) => (
-                  <div key={user.id} className="card p-4 md:p-5">
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 md:gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="mb-2">
-                          <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <span className="text-sm md:text-base text-text-secondary font-mono break-all">
-                              {t('admin.usersTab.id')} {user.id}
-                            </span>
-                            <CopyButton text={user.id} label="ID" />
-                          </div>
-                          <h3 className="text-sm md:text-base font-bold text-text-primary break-words">
-                            {user.firstName
-                              ? user.lastName
-                                ? `${user.firstName} ${user.lastName}`
-                                : user.firstName
-                              : user.companyName ||
-                                user.email ||
-                                user.phone ||
-                                t('admin.usersTab.deletedUser')}
-                          </h3>
-                          {user.companyName && (
-                            <p
-                              className="text-sm md:text-base mt-1 break-words"
-                              style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-                            >
-                              {user.companyName}
-                            </p>
-                          )}
-                        </div>
-                        <div
-                          className="space-y-1 text-sm md:text-base"
-                          style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-                        >
-                          {user.email ? (
-                            <div className="break-words">
-                              <span className="text-primary-700">{t('admin.usersTab.email')}</span>{' '}
-                              {user.email}
-                            </div>
-                          ) : (
-                            <div>
-                              <span className="text-primary-700">{t('admin.usersTab.email')}</span>{' '}
-                              <span className="text-text-secondary">
-                                {t('admin.usersTab.unavailable')}
-                              </span>
-                            </div>
-                          )}
-                          {user.phone ? (
-                            <div>
-                              <span className="text-primary-700">{t('admin.usersTab.phone')}</span>{' '}
-                              {user.phone}
-                            </div>
-                          ) : (
-                            <div>
-                              <span className="text-primary-700">{t('admin.usersTab.phone')}</span>{' '}
-                              <span className="text-text-secondary">
-                                {t('admin.usersTab.unavailable')}
-                              </span>
-                            </div>
-                          )}
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-primary-700">{t('admin.usersTab.type')}</span>
-                            <span
-                              className={`px-2 py-1 rounded text-sm md:text-base font-semibold text-text-secondary ${
-                                user.type === 'Admin'
-                                  ? 'bg-purple-500/20'
-                                  : user.type === 'Business'
-                                    ? 'bg-blue-500/20'
-                                    : 'bg-primary-700/20'
-                              }`}
-                            >
-                              {user.type === 'Admin'
-                                ? t('admin.usersTab.admin')
-                                : user.type === 'Business'
-                                  ? t('admin.usersTab.business')
-                                  : t('admin.usersTab.individual')}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-primary-700">{t('admin.usersTab.status')}</span>
-                            <span
-                              className={`px-2 py-1 rounded text-sm md:text-base font-semibold text-text-secondary ${
-                                user.active !== false ? 'bg-green-500/20' : 'bg-red-500/20'
-                              }`}
-                            >
-                              {user.active !== false
-                                ? t('admin.usersTab.active')
-                                : t('admin.usersTab.inactive')}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-primary-700">{t('admin.usersTab.listings')}</span>{' '}
-                            {user.listings?.length || 0}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex flex-row lg:flex-col gap-2 flex-shrink-0">
-                        {(user.listings?.length || 0) > 0 && (
-                          <button
-                            onClick={() => handleViewListings(user)}
-                            className="text-primary-700 font-medium text-xs md:text-sm lg:text-base hover:text-primary-900 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-700 hover:border-primary-900 bg-primary-500/10 select-none flex-1 lg:flex-none lg:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
-                          >
-                            {t('admin.usersTab.viewListings', {
-                              count: user.listings?.length || 0,
-                            })}
-                          </button>
-                        )}
-                        {!(
-                          user.firstName ||
-                          user.lastName ||
-                          user.companyName ||
-                          user.email ||
-                          user.phone
-                        ) ? null : (
-                          <button
-                            onClick={() => handleToggleStatus(user.id)}
-                            className={`font-medium text-xs md:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 select-none flex-1 lg:flex-none lg:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px] ${
-                              user.active !== false
-                                ? 'text-text-secondary hover:text-text-primary border-red-500/40 hover:border-red-500/60 bg-red-500/20 hover:bg-red-500/30'
-                                : 'text-primary-700 hover:text-primary-900 border-primary-700 hover:border-primary-900 bg-primary-500/10'
-                            }`}
-                          >
-                            {user.active !== false
-                              ? t('admin.usersTab.deactivate')
-                              : t('admin.usersTab.activate')}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                  <AdminUserCard
+                    key={user.id}
+                    user={user}
+                    t={t}
+                    onViewListings={handleViewListings}
+                    onToggleStatus={handleToggleStatus}
+                  />
                 ))}
               </div>
 

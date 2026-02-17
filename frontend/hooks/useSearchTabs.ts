@@ -3,6 +3,37 @@ import { useEffect, useRef, useState } from 'react';
 
 type SearchTab = 'basic' | 'advanced' | 'equipment' | 'popular';
 
+const BASIC_PARAM_KEYS = [
+  'brand',
+  'model',
+  'year_gte',
+  'year_lte',
+  'price_gte',
+  'price_lte',
+  'fuels',
+  'body_types',
+  'transmissions',
+  'drive_types',
+  'mileage_gte',
+  'mileage_lte',
+] as const;
+
+const ADVANCED_PARAM_KEYS = [
+  'cities',
+  'currency',
+  'engine_displ_l_gte',
+  'engine_displ_l_lte',
+  'horsepower_gte',
+  'horsepower_lte',
+  'colors',
+  'doors',
+  'conditions',
+  'registration_types',
+  'is_registered',
+  'urgent',
+  'is_new',
+] as const;
+
 interface UseSearchTabsParams {
   hasBasicFilters: boolean;
   hasAdvancedFiltersActive: boolean;
@@ -17,48 +48,9 @@ export function useSearchTabs({
   const searchParams = useSearchParams();
 
   const getInitialTab = (): SearchTab => {
-    const hasBasicParams =
-      searchParams.get('brand') ||
-      searchParams.get('model') ||
-      searchParams.get('year_gte') ||
-      searchParams.get('year_lte') ||
-      searchParams.get('price_gte') ||
-      searchParams.get('price_lte') ||
-      searchParams.get('fuels') ||
-      searchParams.get('body_types') ||
-      searchParams.get('transmissions') ||
-      searchParams.get('drive_types') ||
-      searchParams.get('mileage_gte') ||
-      searchParams.get('mileage_lte');
-
-    if (hasBasicParams) {
-      return 'basic';
-    }
-
-    const hasAdvancedParams =
-      searchParams.get('cities') ||
-      searchParams.get('currency') ||
-      searchParams.get('engine_displ_l_gte') ||
-      searchParams.get('engine_displ_l_lte') ||
-      searchParams.get('horsepower_gte') ||
-      searchParams.get('horsepower_lte') ||
-      searchParams.get('colors') ||
-      searchParams.get('doors') ||
-      searchParams.get('conditions') ||
-      searchParams.get('registration_types') ||
-      searchParams.get('is_registered') ||
-      searchParams.get('urgent') ||
-      searchParams.get('is_new');
-
-    if (hasAdvancedParams) {
-      return 'advanced';
-    }
-
-    const hasEquipmentParams = searchParams.get('equipment');
-    if (hasEquipmentParams) {
-      return 'equipment';
-    }
-
+    if (BASIC_PARAM_KEYS.some((key) => searchParams.get(key))) return 'basic';
+    if (ADVANCED_PARAM_KEYS.some((key) => searchParams.get(key))) return 'advanced';
+    if (searchParams.get('equipment')) return 'equipment';
     return 'basic';
   };
 

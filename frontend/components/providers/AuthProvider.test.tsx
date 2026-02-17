@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { useAuthStore } from '@/lib/store';
@@ -26,20 +26,20 @@ describe('AuthProvider', () => {
     render(
       <AuthProvider>
         <div>Test</div>
-      </AuthProvider>
+      </AuthProvider>,
     );
 
     expect(mockInitAuth).toHaveBeenCalledTimes(1);
   });
 
   it('should render children', () => {
-    const { getByText } = render(
+    render(
       <AuthProvider>
         <div>Test Content</div>
-      </AuthProvider>
+      </AuthProvider>,
     );
 
-    expect(getByText('Test Content')).toBeInTheDocument();
+    expect(screen.getByText('Test Content')).toBeInTheDocument();
   });
 
   it('should use initAuth from store', () => {
@@ -54,7 +54,7 @@ describe('AuthProvider', () => {
     render(
       <AuthProvider>
         <div>Test</div>
-      </AuthProvider>
+      </AuthProvider>,
     );
 
     expect(mockInitAuthFromStore).toHaveBeenCalledTimes(1);

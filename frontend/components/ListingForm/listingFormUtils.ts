@@ -13,6 +13,79 @@ function getDefaultCurrency(): Currency {
   return (allowed.includes(config.currency) ? config.currency : allowed[0]) as Currency;
 }
 
+const EMPTY_VEHICLE_FORM = {
+  brand_id: '',
+  model_id: '',
+  year: '',
+  engine_displ_l: '',
+  mileage_km: '',
+  fuel: '',
+  transmission: '',
+  drive_type: '',
+  body_type: '',
+  color: '',
+  doors: '',
+};
+
+function getEmptyFormData(): ListingFormData {
+  return {
+    price: '',
+    currency: getDefaultCurrency(),
+    city: '',
+    description: '',
+    status: ListingStatusEnum.Active,
+    images: [],
+    urgent: false,
+    is_new: false,
+    vin: '',
+    condition: ConditionTypeEnum.Undamaged,
+    registration_type: RegistrationTypeEnum.Local,
+    horsepower: '',
+    power_kw: '',
+    is_registered: false,
+    registration_expires_at: '',
+    equipment: [],
+    vehicle: { ...EMPTY_VEHICLE_FORM },
+  };
+}
+
+function formatRegistrationExpiresAt(value: string | undefined): string {
+  if (!value) return '';
+  const date = new Date(value);
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  return `${month}.${year}`;
+}
+
+function formatEngineDisplL(raw: string | number | null | undefined): string {
+  if (raw == null || (typeof raw === 'string' && raw === '')) return '';
+  const num = Number(String(raw));
+  return Number.isFinite(num) ? num.toString() : '';
+}
+
+function getInitialPowerKw(listing: Listing): string {
+  if (listing.power_kw != null) return Math.floor(listing.power_kw).toString();
+  if (listing.horsepower != null) return horsepowerToKw(listing.horsepower).toString();
+  return '';
+}
+
+function getInitialVehicleFormData(vehicle: Listing['vehicle']): ListingFormData['vehicle'] {
+  if (!vehicle) return { ...EMPTY_VEHICLE_FORM };
+  return {
+    brand_id: vehicle.brand_id || '',
+    model_id: vehicle.model_id || '',
+    year: vehicle.year?.toString() || '',
+    engine_displ_l: formatEngineDisplL(vehicle.engine_displ_l),
+    mileage_km: vehicle.mileage_km?.toString() || '',
+    fuel: vehicle.fuel || '',
+    transmission: vehicle.transmission || '',
+    drive_type: vehicle.drive_type || '',
+    body_type: vehicle.body_type || '',
+    color: vehicle.color || '',
+    doors: vehicle.doors?.toString() || '',
+  };
+}
+
 export function getInitialVehicleType(initialData?: Listing): 'car' | 'truck' | 'moto' {
   const bodyType = initialData?.vehicle?.body_type;
   if (bodyType && VEHICLE_TYPE_BY_BODY_TYPE[bodyType]) return VEHICLE_TYPE_BY_BODY_TYPE[bodyType];
@@ -24,48 +97,7 @@ export function getInitialVehicleType(initialData?: Listing): 'car' | 'truck' | 
 type TranslationFunction = (_key: string, _params?: Record<string, string | number>) => string;
 
 export function getInitialFormData(initialData?: Listing): ListingFormData {
-  if (!initialData) {
-    return {
-      price: '',
-      currency: getDefaultCurrency(),
-      city: '',
-      description: '',
-      status: ListingStatusEnum.Active,
-      images: [],
-      urgent: false,
-      is_new: false,
-      vin: '',
-      condition: ConditionTypeEnum.Undamaged,
-      registration_type: RegistrationTypeEnum.Local,
-      horsepower: '',
-      power_kw: '',
-      is_registered: false,
-      registration_expires_at: '',
-      equipment: [],
-      vehicle: {
-        brand_id: '',
-        model_id: '',
-        year: '',
-        engine_displ_l: '',
-        mileage_km: '',
-        fuel: '',
-        transmission: '',
-        drive_type: '',
-        body_type: '',
-        color: '',
-        doors: '',
-      },
-    };
-  }
-
-  const registrationExpiresAtFormatted = initialData.registration_expires_at
-    ? (() => {
-        const date = new Date(initialData.registration_expires_at);
-        const month = date.getMonth() + 1;
-        const year = date.getFullYear();
-        return `${month.toString().padStart(2, '0')}.${year}`;
-      })()
-    : '';
+  if (!initialData) return getEmptyFormData();
 
   return {
     price: initialData.price ? Math.floor(initialData.price).toString() : '',
@@ -80,33 +112,11 @@ export function getInitialFormData(initialData?: Listing): ListingFormData {
     condition: initialData.condition || ConditionTypeEnum.Undamaged,
     registration_type: initialData.registration_type || RegistrationTypeEnum.Local,
     horsepower: initialData.horsepower?.toString() || '',
-    power_kw: initialData.power_kw
-      ? Math.floor(initialData.power_kw).toString()
-      : initialData.horsepower
-        ? horsepowerToKw(initialData.horsepower).toString()
-        : '',
+    power_kw: getInitialPowerKw(initialData),
     is_registered: initialData.is_registered || false,
-    registration_expires_at: registrationExpiresAtFormatted,
+    registration_expires_at: formatRegistrationExpiresAt(initialData.registration_expires_at),
     equipment: initialData.equipment || [],
-    vehicle: {
-      brand_id: initialData.vehicle?.brand_id || '',
-      model_id: initialData.vehicle?.model_id || '',
-      year: initialData.vehicle?.year?.toString() || '',
-      engine_displ_l: (() => {
-        const raw = initialData.vehicle?.engine_displ_l;
-        if (raw == null || (typeof raw === 'string' && raw === '')) return '';
-        const num = Number(String(raw));
-        if (!Number.isFinite(num)) return '';
-        return num.toString();
-      })(),
-      mileage_km: initialData.vehicle?.mileage_km?.toString() || '',
-      fuel: initialData.vehicle?.fuel || '',
-      transmission: initialData.vehicle?.transmission || '',
-      drive_type: initialData.vehicle?.drive_type || '',
-      body_type: initialData.vehicle?.body_type || '',
-      color: initialData.vehicle?.color || '',
-      doors: initialData.vehicle?.doors?.toString() || '',
-    },
+    vehicle: getInitialVehicleFormData(initialData.vehicle),
   };
 }
 

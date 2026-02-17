@@ -44,7 +44,7 @@ export const isListingSortKey = (value: string): value is ListingSortKey => valu
 
 export const resolveListingSortKey = (
   sortByParam: string | null,
-  sortOrderParam: string | null
+  sortOrderParam: string | null,
 ): ListingSortKey => {
   if (sortByParam && sortOrderParam) {
     const candidate = `${sortByParam}_${sortOrderParam}`;

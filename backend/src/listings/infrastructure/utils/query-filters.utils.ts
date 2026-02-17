@@ -1,4 +1,4 @@
-import { ObjectLiteral, SelectQueryBuilder } from 'typeorm';
+import type { ObjectLiteral, SelectQueryBuilder } from 'typeorm';
 
 export function applyCitiesFilter<T extends ObjectLiteral>(
   queryBuilder: SelectQueryBuilder<T>,

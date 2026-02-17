@@ -1,4 +1,4 @@
-import { ListingStatus } from '../types';
+import type { ListingStatus } from '../types';
 
 export interface StatusConfig {
   labelKey: string;

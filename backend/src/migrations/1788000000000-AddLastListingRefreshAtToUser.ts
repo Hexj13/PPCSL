@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class AddLastListingRefreshAtToUser1788000000000 implements MigrationInterface {
   name = 'AddLastListingRefreshAtToUser1788000000000';

@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 import { CheckIcon } from './icons';
 
@@ -13,6 +13,7 @@ export interface CheckboxProps {
   className?: string;
   labelClassName?: string;
   size?: 'sm' | 'md';
+  'data-testid'?: string;
 }
 
 const sizeClasses = {
@@ -29,14 +30,8 @@ export function Checkbox({
   className = '',
   labelClassName = '',
   size = 'sm',
+  'data-testid': dataTestId,
 }: CheckboxProps) {
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (!disabled) {
-      onChange(!checked);
-    }
-  };
-
   const checkboxId = id || `checkbox-${Math.random().toString(36).substr(2, 9)}`;
 
   return (
@@ -46,6 +41,7 @@ export function Checkbox({
           type="checkbox"
           id={checkboxId}
           checked={checked}
+          data-testid={dataTestId}
           onChange={(e) => {
             if (!disabled) {
               onChange(e.target.checked);
@@ -54,8 +50,8 @@ export function Checkbox({
           disabled={disabled}
           className="sr-only"
         />
-        <div
-          onClick={handleClick}
+        <label
+          htmlFor={checkboxId}
           className={`${sizeClasses[size].box} rounded border-2 transition-all duration-200 flex items-center justify-center ${
             disabled ? 'cursor-not-allowed' : 'cursor-pointer'
           } ${
@@ -65,7 +61,7 @@ export function Checkbox({
           }`}
         >
           {checked && <CheckIcon className={`${sizeClasses[size].icon} text-primary-900`} />}
-        </div>
+        </label>
       </div>
       {label && (
         <label

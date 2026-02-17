@@ -45,7 +45,7 @@ export function ServiceWorkerRegistration() {
       }
     };
 
-    registerServiceWorker();
+    void registerServiceWorker();
   }, []);
 
   const updateServiceWorker = async () => {

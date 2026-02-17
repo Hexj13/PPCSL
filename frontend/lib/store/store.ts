@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-import { authApi, User } from '@/lib/api';
+import type { User } from '@/lib/api';
+import { authApi } from '@/lib/api';
 
 interface AuthState {
   user: User | null;
@@ -102,8 +103,8 @@ export const useAuthStore = create<AuthState>()(
         token: state.token,
         refreshToken: state.refreshToken,
       }),
-    }
-  )
+    },
+  ),
 );
 
 interface FavoritesState {
@@ -128,8 +129,8 @@ export const useFavoritesStore = create<FavoritesState>()(
     {
       name: 'favorites-storage',
       storage: typeof window !== 'undefined' ? createJSONStorage(() => localStorage) : undefined,
-    }
-  )
+    },
+  ),
 );
 
 interface ComparisonState {
@@ -193,6 +194,6 @@ export const useComparisonStore = create<ComparisonState>()(
     {
       name: 'comparison-storage',
       storage: typeof window !== 'undefined' ? createJSONStorage(() => localStorage) : undefined,
-    }
-  )
+    },
+  ),
 );

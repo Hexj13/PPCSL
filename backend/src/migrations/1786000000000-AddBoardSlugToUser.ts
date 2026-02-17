@@ -1,4 +1,5 @@
-import { MigrationInterface, QueryRunner, TableUnique } from 'typeorm';
+import type { MigrationInterface, QueryRunner } from 'typeorm';
+import { TableUnique } from 'typeorm';
 
 export class AddBoardSlugToUser1786000000000 implements MigrationInterface {
   name = 'AddBoardSlugToUser1786000000000';

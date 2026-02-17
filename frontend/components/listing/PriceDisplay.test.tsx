@@ -23,7 +23,7 @@ describe('PriceDisplay', () => {
 
   it('should show approx price when approxPrice and defaultCurrencyCode are provided', () => {
     render(
-      <PriceDisplay price={12500} currency="MDL" approxPrice={650} defaultCurrencyCode="EUR" />
+      <PriceDisplay price={12500} currency="MDL" approxPrice={650} defaultCurrencyCode="EUR" />,
     );
     expect(screen.getByText('12 500')).toBeInTheDocument();
     expect(screen.getByText('MDL')).toBeInTheDocument();
@@ -32,7 +32,7 @@ describe('PriceDisplay', () => {
 
   it('should not show approx price when approxPrice is null', () => {
     render(
-      <PriceDisplay price={12500} currency="MDL" approxPrice={null} defaultCurrencyCode="EUR" />
+      <PriceDisplay price={12500} currency="MDL" approxPrice={null} defaultCurrencyCode="EUR" />,
     );
     expect(screen.queryByText(/≈/)).not.toBeInTheDocument();
   });

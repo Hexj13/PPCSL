@@ -34,7 +34,7 @@ export function PhotosSection({
         }
 
         if (onFileUpload) {
-          onFileUpload(file);
+          void onFileUpload(file);
         }
       } else {
         toast.error(t('listings.imageMaxCountError'));
@@ -56,6 +56,7 @@ export function PhotosSection({
           disabled={uploading || formData.images.length >= 20}
           id="image-upload"
           className="hidden"
+          data-testid="listing-form-photos-input"
         />
         <label
           htmlFor="image-upload"

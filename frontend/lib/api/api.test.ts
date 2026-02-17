@@ -1,6 +1,6 @@
 import { Currency } from '../constants';
 
-import { Listing } from './api';
+import type { Listing } from './api';
 
 const mockAxiosInstance = {
   get: jest.fn(),
@@ -50,7 +50,7 @@ describe('listingsApi', () => {
 
       mockAxiosInstance.get.mockResolvedValue({ data: mockListings });
 
-      const result = await listingsApi.getByVin(vin);
+      const result = listingsApi.getByVin(vin);
 
       expect(mockAxiosInstance.get).toHaveBeenCalledWith(`/api/listings/vin/${vin}`, {
         params: {},
@@ -65,7 +65,7 @@ describe('listingsApi', () => {
 
       mockAxiosInstance.get.mockResolvedValue({ data: mockListings });
 
-      await listingsApi.getByVin(vin, excludeId);
+      listingsApi.getByVin(vin, excludeId);
 
       expect(mockAxiosInstance.get).toHaveBeenCalledWith(`/api/listings/vin/${vin}`, {
         params: { excludeId },
@@ -76,7 +76,7 @@ describe('listingsApi', () => {
       const vin = 'NONEXISTENTVIN';
       mockAxiosInstance.get.mockResolvedValue({ data: [] });
 
-      const result = await listingsApi.getByVin(vin);
+      const result = listingsApi.getByVin(vin);
 
       expect(result.data).toEqual([]);
     });

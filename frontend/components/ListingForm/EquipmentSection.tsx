@@ -8,7 +8,7 @@ import {
 import { sortOptionsByLabel } from '@/lib/utils';
 import { Checkbox, InfoBlock } from '@/ui';
 
-import { ListingFormSectionProps } from './types';
+import type { ListingFormSectionProps } from './types';
 
 export function EquipmentSection({
   formData,
@@ -24,7 +24,7 @@ export function EquipmentSection({
       keysInCategory.map((key) => ({
         value: key,
         label: t(`vehicleOptions.equipment.${key}`),
-      }))
+      })),
     ).map((opt) => opt.value);
     return { category, keys: sortedKeys };
   }).filter((group) => group.keys.length > 0);
@@ -71,6 +71,7 @@ export function EquipmentSection({
                       checked={formData.equipment.includes(key)}
                       onChange={(checked) => handleChange(key, checked)}
                       label={t(`vehicleOptions.equipment.${key}`)}
+                      data-testid={`listing-form-equipment-${key}`}
                     />
                   ))}
                 </div>
@@ -82,6 +83,7 @@ export function EquipmentSection({
                       checked={formData.equipment.includes(key)}
                       onChange={(checked) => handleChange(key, checked)}
                       label={t(`vehicleOptions.equipment.${key}`)}
+                      data-testid={`listing-form-equipment-${key}`}
                     />
                   ))}
                 </div>

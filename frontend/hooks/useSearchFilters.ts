@@ -16,7 +16,7 @@ type UrlParseContext = {
 const resolveArrayFromStorageOrUrl = (
   ctx: UrlParseContext,
   storageKey: string,
-  urlKeys: string[]
+  urlKeys: string[],
 ): string[] => {
   if (Array.isArray(ctx.storedFilters?.[storageKey])) {
     return ctx.storedFilters[storageKey] as string[];
@@ -114,11 +114,11 @@ export function useSearchFilters() {
     const hasModelParam = !!searchParams.get('model');
     const brandIdsFromUrl = parseArrayParam(
       searchParams.get('brand_ids') || searchParams.get('brand_id') || null,
-      hasEncodedArrays
+      hasEncodedArrays,
     );
     const modelIdsFromUrl = parseArrayParam(
       searchParams.get('model_ids') || searchParams.get('model_id') || null,
-      hasEncodedArrays
+      hasEncodedArrays,
     );
 
     const resolveBrandIds = () => {
@@ -191,11 +191,11 @@ export function useSearchFilters() {
     const hasModelParam = !!searchParams.get('model');
     const brandIdsFromUrl = parseArrayParam(
       searchParams.get('brand_ids') || searchParams.get('brand_id') || null,
-      hasEncodedArrays
+      hasEncodedArrays,
     );
     const modelIdsFromUrl = parseArrayParam(
       searchParams.get('model_ids') || searchParams.get('model_id') || null,
-      hasEncodedArrays
+      hasEncodedArrays,
     );
     const resolveBrandIds = (): string[] | undefined => {
       if (hasBrandParam) return undefined;

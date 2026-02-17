@@ -8,6 +8,7 @@ import {
   ListingStatus as ListingStatusEnum,
   UserType as UserTypeEnum,
 } from '../common/types';
+import { ExchangeRatesService } from '../exchange-rates/exchange-rates.service';
 import { IListingCache, LISTING_CACHE } from '../listings/application/ports/listing-cache.port';
 import { Listing } from '../listings/entities/listing.entity';
 import { PromotionHistory } from '../listings/entities/promotion-history.entity';
@@ -25,6 +26,7 @@ export class AdminService {
     private promotionHistoryRepository: Repository<PromotionHistory>,
     private refreshTokenService: RefreshTokenService,
     private listingsService: ListingsService,
+    private exchangeRatesService: ExchangeRatesService,
     @Inject(LISTING_CACHE)
     private listingCache: IListingCache,
   ) {}
@@ -209,10 +211,13 @@ export class AdminService {
       return listing;
     });
 
+    const enrichedListings =
+      await this.exchangeRatesService.enrichListingsWithApproxPrice(processedListings);
+
     const totalPages = Math.ceil(total / limit);
 
     return {
-      data: processedListings,
+      data: enrichedListings,
       meta: {
         total,
         page,

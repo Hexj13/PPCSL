@@ -20,7 +20,7 @@ export function isInRange(value: number, range: NumericRange): boolean {
 export function validateMinMax(
   min: number | null,
   max: number | null,
-  range: NumericRange
+  range: NumericRange,
 ): { min: number | null; max: number | null } {
   if (min === null && max === null) return { min: null, max: null };
   const clampedMin = min !== null ? clampToRange(min, range) : null;
@@ -74,7 +74,7 @@ function getRangeKeys(): Array<{
 }
 
 export function getFilterRangesValidationError(
-  filters: Record<string, string | undefined>
+  filters: Record<string, string | undefined>,
 ): string | null {
   for (const { gte, lte, errorKey, parse } of getRangeKeys()) {
     const gteVal = filters[gte];

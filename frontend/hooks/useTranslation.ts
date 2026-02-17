@@ -37,7 +37,7 @@ export function useTranslation() {
 
       return value;
     },
-    [translations]
+    [translations],
   );
 
   return { t, isLoading, translations: translations as Translations };

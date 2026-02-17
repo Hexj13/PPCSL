@@ -11,7 +11,7 @@ interface UsePaginatedDataOptions<T, F> {
   fetchFn: (
     _page: number,
     _limit: number,
-    _filters: F
+    _filters: F,
   ) => Promise<{
     data: T[];
     meta: PaginationMeta;
@@ -39,7 +39,7 @@ interface UsePaginatedDataReturn<T, F> {
 }
 
 export function usePaginatedData<T, F>(
-  options: UsePaginatedDataOptions<T, F>
+  options: UsePaginatedDataOptions<T, F>,
 ): UsePaginatedDataReturn<T, F> {
   const {
     fetchFn,
@@ -100,10 +100,10 @@ export function usePaginatedData<T, F>(
         if (append) {
           setData((prev) => {
             const existingIds = new Set(
-              prev.map((item) => (item as { id?: string }).id).filter((id): id is string => !!id)
+              prev.map((item) => (item as { id?: string }).id).filter((id): id is string => !!id),
             );
             const uniqueNewItems = transformedData.filter(
-              (item) => !existingIds.has((item as { id?: string }).id as string)
+              (item) => !existingIds.has((item as { id?: string }).id as string),
             );
             return [...prev, ...uniqueNewItems];
           });
@@ -129,7 +129,7 @@ export function usePaginatedData<T, F>(
         loadingMoreRef.current = false;
       }
     },
-    [fetchFn, limit, debouncedFilters, showLoadingDelay, onDataTransform]
+    [fetchFn, limit, debouncedFilters, showLoadingDelay, onDataTransform],
   );
 
   const setFilters = useCallback((newFilters: F | ((_prev: F) => F)) => {
@@ -143,7 +143,7 @@ export function usePaginatedData<T, F>(
   useEffect(() => {
     if (!hasInitializedRef.current) {
       hasInitializedRef.current = true;
-      load(1, false, initialFilters);
+      void load(1, false, initialFilters);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -181,27 +181,27 @@ export function usePaginatedData<T, F>(
     if (!hasInitializedRef.current) return;
     hasDataRef.current = false;
     setPage(1);
-    load(1, false, debouncedFilters);
+    void load(1, false, debouncedFilters);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedFilters]);
 
   const loadMore = useCallback(() => {
     if (meta && page < meta.totalPages && !loadingMore) {
-      load(page + 1, true);
+      void load(page + 1, true);
     }
   }, [meta, page, loadingMore, load]);
 
   const reload = useCallback(() => {
     hasDataRef.current = false;
     hasInitializedRef.current = false;
-    load(1, false, debouncedFilters);
+    void load(1, false, debouncedFilters);
   }, [load, debouncedFilters]);
 
   const handleSetPage = useCallback(
     (newPage: number) => {
-      load(newPage, false, debouncedFilters);
+      void load(newPage, false, debouncedFilters);
     },
-    [load, debouncedFilters]
+    [load, debouncedFilters],
   );
 
   return {

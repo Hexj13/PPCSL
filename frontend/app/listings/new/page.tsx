@@ -51,7 +51,7 @@ const ListingForm = dynamic(
   () => import('@/components/ListingForm').then((mod) => ({ default: mod.ListingForm })),
   {
     ssr: false,
-  }
+  },
 );
 
 export default function NewListingPage() {

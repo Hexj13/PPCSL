@@ -51,4 +51,6 @@ async function checkUser() {
   }
 }
 
-checkUser();
+checkUser().catch(() => {
+  process.exit(1);
+});

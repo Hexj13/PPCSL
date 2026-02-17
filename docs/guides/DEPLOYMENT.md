@@ -21,6 +21,7 @@ Complete deployment guide for the PPCSL platform on different hosting environmen
 ### Deployment Options
 
 This guide covers deployment on:
+
 - **VPS (Ubuntu/Debian)** - Full control, recommended for production
 - **Render.com** - Cloud platform, good for automatic deployments
 
@@ -452,6 +453,7 @@ Complete guide for deploying PPCSL backend on Render.com.
 #### Database Connection Details
 
 After creation, Render will show:
+
 - **Internal Database URL** (for services in same region)
 - **External Database URL** (for external connections)
 - **Host, Port, Database name, Username, Password**
@@ -468,6 +470,7 @@ After creation, Render will show:
 4. Configure service:
 
 **Basic Settings:**
+
 - **Name:** `ppcsl-backend`
 - **Region:** Same as database (recommended)
 - **Branch:** `main`
@@ -477,6 +480,7 @@ After creation, Render will show:
 - **Start Command:** `cd core/backend && npm run start:prod`
 
 **Advanced Settings:**
+
 - **Auto-Deploy:** `Yes` (deploys on every push to main)
 - **Health Check Path:** `/health` (optional)
 
@@ -489,6 +493,7 @@ After creation, Render will show:
 Add these in Render Dashboard → Your Service → **Environment**:
 
 **Database Configuration:**
+
 ```env
 DB_HOST=<your-database-host>
 DB_PORT=5432
@@ -498,6 +503,7 @@ DB_PASSWORD=<your-database-password>
 ```
 
 **Application Configuration:**
+
 ```env
 NODE_ENV=production
 PORT=10000
@@ -506,16 +512,19 @@ PORT=10000
 **Note:** Render automatically sets `PORT` environment variable. Your app should use `process.env.PORT || 4000`.
 
 **Authentication (REQUIRED):**
+
 ```env
 JWT_SECRET=<generate-secure-random-key>
 ```
 
 **Generate JWT_SECRET:**
+
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
 **CORS Configuration:**
+
 ```env
 FRONTEND_URL=https://your-frontend-domain.com
 API_URL=https://your-backend-domain.onrender.com
@@ -526,6 +535,7 @@ API_URL=https://your-backend-domain.onrender.com
 **⚠️ Important:** On Render.com, the file system is ephemeral. Files saved to disk are lost on restart or redeploy. You **must** use S3 for file storage in production.
 
 **Required variables:**
+
 ```env
 AWS_ACCESS_KEY_ID=<your-aws-access-key-id>
 AWS_SECRET_ACCESS_KEY=<your-aws-secret-access-key>
@@ -534,11 +544,13 @@ AWS_REGION=eu-north-1
 ```
 
 **Optional (if using CloudFront CDN):**
+
 ```env
 AWS_CLOUDFRONT_URL=https://cdn.kupito.club
 ```
 
 **Setup instructions:**
+
 1. Create S3 bucket in AWS Console
 2. Configure CORS for S3 bucket
 3. Configure Bucket Policy for public read access
@@ -549,6 +561,7 @@ AWS_CLOUDFRONT_URL=https://cdn.kupito.club
 ### 3.5. Build Configuration
 
 **Build Settings:**
+
 1. **Root Directory:** Set to `backend` in service settings
 2. **Build Command:** `npm ci && npm run build`
 3. **Start Command:** `npm run start:prod`
@@ -559,6 +572,7 @@ After first deployment, run migrations:
 
 1. Go to Render Dashboard → Your Service → **Shell**
 2. Run:
+
 ```bash
 npm run migration:run
 ```
@@ -569,6 +583,7 @@ After migrations, you need to load brands and models into the database.
 
 1. Go to Render Dashboard → Your Service → **Shell**
 2. Run:
+
 ```bash
 npm run seed:all-brands
 ```
@@ -580,6 +595,7 @@ This will load all brands and models and automatically clear the Redis cache.
 **IMPORTANT:** Create an admin user to access the admin panel.
 
 1. In Render Shell, run:
+
 ```bash
 npm run make-admin:prod -- --email your-email@example.com --password your-secure-password
 ```
@@ -598,7 +614,7 @@ The application has a built-in cron job that automatically closes listings older
    - Configure:
      - **Name:** `close-old-listings`
      - **Schedule:** `0 0 * * *` (runs daily at midnight UTC)
-     - **Command:** 
+     - **Command:**
        ```bash
        curl -X POST https://your-backend.onrender.com/api/listings/cron/close-old -H "x-cron-secret: $CRON_SECRET"
        ```
@@ -617,6 +633,7 @@ If you deploy the frontend as a separate service on Render.com:
    - **Publish Directory:** `.next` (for Static Site)
 
 **Environment Variables:**
+
 ```env
 NEXT_PUBLIC_API_URL=https://your-backend.onrender.com
 NEXT_PUBLIC_SITE_URL=https://your-frontend-domain.com
@@ -625,21 +642,25 @@ NEXT_PUBLIC_SITE_URL=https://your-frontend-domain.com
 ### 3.11. Troubleshooting
 
 **Application Not Starting:**
+
 - Check logs in Render Dashboard → Your Service → **Logs**
 - Check environment variables are set correctly
 - Verify database is running and accessible
 
 **502 Bad Gateway:**
+
 - Check application is running
 - Check ports are open
 - Check Nginx/proxy configuration
 
 **Database Connection Failed:**
+
 - Check PostgreSQL is running
 - Verify password in environment variables
 - Use Internal Database URL if services are in same region
 
 **Environment Variables Not Applied:**
+
 - Verify in Dashboard → Environment tab
 - Redeploy after adding/changing variables
 - Check variable names match exactly (case-sensitive)
@@ -647,6 +668,7 @@ NEXT_PUBLIC_SITE_URL=https://your-frontend-domain.com
 ### 3.12. Post-Deployment Checklist
 
 After deployment:
+
 - [ ] Service status is "Live" in Render Dashboard
 - [ ] Database is running and accessible
 - [ ] Migrations executed successfully
@@ -678,6 +700,7 @@ After deployment:
 #### For Backend API (if using subdomain)
 
 Add A Record or CNAME:
+
 - **Type:** A Record (or CNAME if using subdomain)
 - **Host:** `api` (or your preferred subdomain)
 - **Value:** Render.com service IP or hostname
@@ -686,6 +709,7 @@ Add A Record or CNAME:
 #### For Frontend
 
 Add A Record or CNAME:
+
 - **Type:** A Record (or CNAME)
 - **Host:** `@` (for root domain) or `www` (for www subdomain)
 - **Value:** Render.com service IP or hostname
@@ -694,6 +718,7 @@ Add A Record or CNAME:
 ### Step 2: SSL Certificate
 
 Render.com automatically provisions SSL certificates via Let's Encrypt when you:
+
 1. Add custom domain in Render Dashboard
 2. Configure DNS records correctly
 3. Wait for DNS propagation (can take up to 48 hours)
@@ -711,11 +736,13 @@ Render.com automatically provisions SSL certificates via Let's Encrypt when you:
 After domain is configured, update environment variables:
 
 **Backend:**
+
 ```env
 FRONTEND_URL=https://your-domain.com
 ```
 
 **Frontend:**
+
 ```env
 NEXT_PUBLIC_API_URL=https://api.your-domain.com
 NEXT_PUBLIC_SITE_URL=https://your-domain.com
@@ -735,11 +762,13 @@ cat ~/.ssh/ppcsl_key.pub
 ### Add Key to Server
 
 1. Copy your public key:
+
 ```bash
 cat ~/.ssh/ppcsl_key.pub
 ```
 
 2. Add the public key to your server's `~/.ssh/authorized_keys` file:
+
 ```bash
 # On the server
 mkdir -p ~/.ssh
@@ -827,17 +856,20 @@ Before deploying to production:
 ### Application Not Starting
 
 1. Check logs:
+
 ```bash
 pm2 logs ppcsl-backend --err
 pm2 logs ppcsl-frontend --err
 ```
 
 2. Check environment variables:
+
 ```bash
 cat backend/.env
 ```
 
 3. Check database is running:
+
 ```bash
 sudo systemctl status postgresql
 ```
@@ -845,17 +877,20 @@ sudo systemctl status postgresql
 ### 502 Bad Gateway
 
 1. Check application is running:
+
 ```bash
 pm2 status
 ```
 
 2. Check ports are open:
+
 ```bash
 sudo netstat -tlnp | grep :4000
 sudo netstat -tlnp | grep :3000
 ```
 
 3. Check Nginx logs:
+
 ```bash
 sudo tail -f /var/log/nginx/ppcsl-api-error.log
 ```
@@ -863,11 +898,13 @@ sudo tail -f /var/log/nginx/ppcsl-api-error.log
 ### Database Connection Failed
 
 1. Check PostgreSQL is running:
+
 ```bash
 sudo systemctl status postgresql
 ```
 
 2. Test connection:
+
 ```bash
 sudo -u postgres psql -d ppcsl -U ppcsl
 ```
@@ -877,11 +914,13 @@ sudo -u postgres psql -d ppcsl -U ppcsl
 ### SSL Certificate Issues
 
 1. Check DNS records:
+
 ```bash
 nslookup your-domain.com
 ```
 
 2. Renew certificate manually:
+
 ```bash
 sudo certbot renew
 sudo systemctl reload nginx

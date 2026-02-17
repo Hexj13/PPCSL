@@ -1,15 +1,20 @@
 import js from '@eslint/js';
 import typescriptParser from '@typescript-eslint/parser';
 import typescriptPlugin from '@typescript-eslint/eslint-plugin';
+import nextPlugin from '@next/eslint-plugin-next';
+import jsxA11y from 'eslint-plugin-jsx-a11y';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import reactPlugin from 'eslint-plugin-react';
 import importPlugin from 'eslint-plugin-import';
 import prettierConfig from 'eslint-config-prettier';
 import globals from 'globals';
+import testingLibrary from 'eslint-plugin-testing-library';
 import noHardcodedTextPlugin from './eslint/eslint-plugin-no-hardcoded-text.mjs';
 
 export default [
   js.configs.recommended,
+  nextPlugin.configs['core-web-vitals'],
+  jsxA11y.flatConfigs.recommended,
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
     languageOptions: {
@@ -77,6 +82,16 @@ export default [
         'error',
         {
           argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
+      '@typescript-eslint/no-floating-promises': 'warn',
+      '@typescript-eslint/consistent-type-imports': [
+        'warn',
+        {
+          prefer: 'type-imports',
+          fixStyle: 'separate-type-imports',
         },
       ],
       'react-hooks/rules-of-hooks': 'error',
@@ -88,20 +103,16 @@ export default [
           allow: ['warn', 'error'],
         },
       ],
-      'no-unused-vars': [
-        'error',
-        {
-          argsIgnorePattern: '^_',
-          varsIgnorePattern: '^_',
-          caughtErrorsIgnorePattern: '^_',
-        },
-      ],
+      'no-unused-vars': 'off',
+      'jsx-a11y/click-events-have-key-events': 'warn',
+      'jsx-a11y/no-static-element-interactions': 'warn',
+      'jsx-a11y/no-autofocus': 'warn',
       'no-empty': ['error', { allowEmptyCatch: true }],
       'no-useless-escape': 'warn',
       'max-lines': [
         'warn',
         {
-          max: 1500,
+          max: 600,
           skipBlankLines: true,
           skipComments: true,
         },
@@ -115,6 +126,12 @@ export default [
     },
   },
   {
+    files: ['lib/**/*.ts'],
+    rules: {
+      '@next/next/no-assign-module-variable': 'off',
+    },
+  },
+  {
     files: ['**/*.{ts,tsx}'],
     plugins: {
       import: importPlugin,
@@ -124,12 +141,12 @@ export default [
       'max-lines-per-function': [
         'warn',
         {
-          max: 1500,
+          max: 400,
           skipBlankLines: true,
           skipComments: true,
         },
       ],
-      complexity: ['warn', { max: 75 }],
+      complexity: ['warn', { max: 25 }],
       'sort-imports': 'off',
       'import/order': [
         'error',
@@ -193,6 +210,27 @@ export default [
             'Test descriptions must be in English. Cyrillic characters are not allowed in test names.',
         },
       ],
+    },
+  },
+  {
+    ...testingLibrary.configs['flat/react'],
+    files: [
+      '**/*.test.{ts,tsx}',
+      '**/*.spec.{ts,tsx}',
+      '**/__tests__/**/*.{ts,tsx}',
+    ],
+    rules: {
+      ...testingLibrary.configs['flat/react'].rules,
+      'max-lines': 'off',
+      'max-lines-per-function': 'off',
+      'testing-library/no-node-access': 'warn',
+      'testing-library/no-unnecessary-act': 'warn',
+      'testing-library/no-wait-for-side-effects': 'warn',
+      'testing-library/no-container': 'warn',
+      'testing-library/no-await-sync-queries': 'warn',
+      'testing-library/prefer-presence-queries': 'warn',
+      'testing-library/prefer-screen-queries': 'warn',
+      'testing-library/no-wait-for-multiple-assertions': 'warn',
     },
   },
   {

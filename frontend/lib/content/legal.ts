@@ -41,7 +41,7 @@ export function loadLegalConfigSync(country: string): LegalConfig | null {
     return (module?.default || null) as LegalConfig | null;
   } catch {
     console.warn(
-      `Legal config file not found for ${country}, using built-in legal pages. This is expected in core repository.`
+      `Legal config file not found for ${country}, using built-in legal pages. This is expected in core repository.`,
     );
     return null;
   }

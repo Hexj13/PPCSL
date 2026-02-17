@@ -64,4 +64,6 @@ Allow: /
   }
 }
 
-uploadRobotsTxt();
+uploadRobotsTxt().catch(() => {
+  process.exit(1);
+});

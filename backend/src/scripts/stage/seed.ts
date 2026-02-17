@@ -6,9 +6,9 @@ import * as path from 'path';
 import * as bcrypt from 'bcrypt';
 
 import { Brand } from '../../brands/entities/brand.entity';
-import { VehicleModel } from '../../brands/entities/vehicle-model.entity';
+import type { VehicleModel } from '../../brands/entities/vehicle-model.entity';
+import type { BodyType } from '../../common/types';
 import {
-  BodyType,
   ConditionType,
   Currency,
   DriveType,
@@ -644,18 +644,18 @@ export async function seed() {
 
 if (require.main === module) {
   seed()
-    .then(() => {
+    .then(async () => {
       if (AppDataSource.isInitialized) {
-        AppDataSource.destroy();
+        await AppDataSource.destroy();
         console.log('🔌 Database connection closed');
       }
       console.log('✅ Script completed successfully');
       process.exit(0);
     })
-    .catch((error) => {
+    .catch(async (error) => {
       console.error('❌ Error:', error);
       if (AppDataSource.isInitialized) {
-        AppDataSource.destroy();
+        await AppDataSource.destroy();
       }
       process.exit(1);
     });

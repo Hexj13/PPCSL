@@ -6,7 +6,8 @@ import { useEffect, useState, useCallback, useRef, useMemo, startTransition } fr
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
-import { brandsApi, favoritesApi, listingsApi, Listing, PaginationMeta } from '@/lib/api';
+import type { Listing, PaginationMeta } from '@/lib/api';
+import { brandsApi, favoritesApi, listingsApi } from '@/lib/api';
 import { createBrandResolver, createModelResolver, parseSearchParams } from '@/lib/search';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
 
@@ -53,6 +54,72 @@ const loadGridState = (): {
   return null;
 };
 
+function getVehicleTypeFromParams(searchParamsString: string): 'car' | 'truck' | 'moto' {
+  const params = new URLSearchParams(searchParamsString);
+  const vehicleTypeParam = params.get('vehicleType') as 'car' | 'truck' | 'moto' | null;
+  return vehicleTypeParam && ['car', 'truck', 'moto'].includes(vehicleTypeParam)
+    ? vehicleTypeParam
+    : 'car';
+}
+
+async function getParsedSearchParams(
+  searchParamsString: string,
+  vehicleType: 'car' | 'truck' | 'moto',
+): Promise<Record<string, string | number | boolean>> {
+  const currentSearchParams = new URLSearchParams(searchParamsString);
+  try {
+    let brands;
+    try {
+      brands = await brandsApi.getAll(vehicleType);
+    } catch {
+      brands = await brandsApi.getAll();
+    }
+    const fallbackBrands = brands.data.length === 0 ? await brandsApi.getAll() : brands;
+    const brandResolver = createBrandResolver(fallbackBrands.data);
+
+    const parsed = await parseSearchParams(currentSearchParams, {
+      brandResolver: async (slugs) => brandResolver(slugs),
+      modelResolver: async (brandIds, slugs) => {
+        let modelsByBrand;
+        try {
+          modelsByBrand = await brandsApi.getModelsBatch(brandIds, vehicleType);
+        } catch {
+          modelsByBrand = await brandsApi.getModelsBatch(brandIds);
+        }
+        const fallbackModels =
+          Object.keys(modelsByBrand.data).length === 0
+            ? await brandsApi.getModelsBatch(brandIds)
+            : modelsByBrand;
+        const modelResolver = createModelResolver(fallbackModels.data);
+        return modelResolver(brandIds, slugs);
+      },
+    });
+    return parsed as Record<string, string | number | boolean>;
+  } catch {
+    return { page: 1, limit: 20 };
+  }
+}
+
+async function fetchListingsPage(
+  params: Record<string, string | number | boolean>,
+  page: number,
+  limit: number,
+): Promise<{ data: Listing[]; meta: PaginationMeta }> {
+  const res = await listingsApi.getAll({ ...params, page, limit });
+  return { data: res.data.data, meta: res.data.meta };
+}
+
+function mergePageResults(
+  firstRes: { data: Listing[]; meta: PaginationMeta },
+  secondRes: { data: Listing[]; meta: PaginationMeta } | null,
+  page: number,
+): { allNewListings: Listing[]; finalMeta: PaginationMeta; finalPage: number } {
+  const allNewListings = secondRes ? [...firstRes.data, ...secondRes.data] : firstRes.data;
+  const finalMeta = secondRes?.meta ?? firstRes.meta;
+  const finalPage = secondRes ? page + 1 : page;
+  return { allNewListings, finalMeta, finalPage };
+}
+
 export function ListingGrid({ initialData }: ListingGridProps) {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
@@ -87,7 +154,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
         setFavorites(Array.from(updatedFavorites));
       } catch {}
     },
-    [user, setFavorites]
+    [user, setFavorites],
   );
 
   const fetchListings = useCallback(
@@ -95,60 +162,14 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       page: number,
       append: boolean = false,
       limit: number = 20,
-      loadTwoPages: boolean = false
+      loadTwoPages: boolean = false,
     ) => {
-      const currentSearchParams = new URLSearchParams(searchParamsString);
-      const vehicleTypeParam = currentSearchParams.get('vehicleType') as
-        | 'car'
-        | 'truck'
-        | 'moto'
-        | null;
-      const vehicleType =
-        vehicleTypeParam && ['car', 'truck', 'moto'].includes(vehicleTypeParam)
-          ? vehicleTypeParam
-          : 'car'; // Default to 'car' if not specified
-
-      let parsedParams;
-      try {
-        let brands;
-        try {
-          brands = await brandsApi.getAll(vehicleType);
-        } catch (error) {
-          console.error('ListingGrid: failed to get brands for vehicleType', vehicleType, error);
-          brands = await brandsApi.getAll();
-        }
-
-        const fallbackBrands = brands.data.length === 0 ? await brandsApi.getAll() : brands;
-        const brandResolver = createBrandResolver(fallbackBrands.data);
-
-        parsedParams = await parseSearchParams(currentSearchParams, {
-          brandResolver: async (slugs) => {
-            return brandResolver(slugs);
-          },
-          modelResolver: async (brandIds, slugs) => {
-            let modelsByBrand;
-            try {
-              modelsByBrand = await brandsApi.getModelsBatch(brandIds, vehicleType);
-            } catch (error) {
-              console.error(
-                'ListingGrid: failed to get models for vehicleType',
-                vehicleType,
-                error
-              );
-              modelsByBrand = await brandsApi.getModelsBatch(brandIds); // Fallback
-            }
-            const fallbackModels =
-              Object.keys(modelsByBrand.data).length === 0
-                ? await brandsApi.getModelsBatch(brandIds)
-                : modelsByBrand;
-            const modelResolver = createModelResolver(fallbackModels.data);
-            return modelResolver(brandIds, slugs);
-          },
-        });
-      } catch (error) {
-        console.error('Failed to parse search params:', error);
-        parsedParams = { page: 1, limit: 20 };
-      }
+      const vehicleType = getVehicleTypeFromParams(searchParamsString);
+      const parsedParams = await getParsedSearchParams(searchParamsString, vehicleType);
+      const params: Record<string, string | number | boolean> = {
+        ...parsedParams,
+        vehicleType,
+      };
 
       if (append) {
         setLoadingMore(true);
@@ -158,51 +179,17 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       }
 
       try {
-        const params: Record<string, string | number | boolean> = {
-          ...parsedParams,
+        const firstRes = await fetchListingsPage(params, page, limit);
+        const shouldFetchSecond = loadTwoPages && meta?.totalPages && page + 1 <= meta.totalPages;
+        const secondRes = shouldFetchSecond
+          ? await fetchListingsPage(params, page + 1, limit)
+          : null;
+
+        const { allNewListings, finalMeta, finalPage } = mergePageResults(
+          firstRes,
+          secondRes,
           page,
-          limit,
-        };
-
-        params.vehicleType = vehicleType;
-
-        const requests: Array<
-          Promise<{ data: { data: Listing[]; meta: PaginationMeta } }> | Promise<null>
-        > = [listingsApi.getAll(params)];
-
-        if (loadTwoPages && meta && meta.totalPages && page + 1 <= meta.totalPages) {
-          const secondParams: Record<string, string | number | boolean> = {
-            ...parsedParams,
-            page: page + 1,
-            limit,
-          };
-          secondParams.vehicleType = vehicleType;
-          requests.push(listingsApi.getAll(secondParams));
-        } else {
-          requests.push(Promise.resolve(null));
-        }
-
-        const [firstRes, secondRes] = await Promise.all(requests);
-
-        if (!firstRes) {
-          throw new Error('Failed to fetch listings');
-        }
-
-        const firstListings = firstRes.data.data;
-        const secondListings =
-          secondRes && secondRes !== null && 'data' in secondRes ? secondRes.data.data : null;
-        const allNewListings = secondListings
-          ? [...firstListings, ...secondListings]
-          : firstListings;
-
-        const finalMeta =
-          secondRes && secondRes !== null && 'data' in secondRes && secondRes.data?.meta
-            ? secondRes.data.meta
-            : firstRes.data.meta;
-        const finalPage =
-          secondRes && secondRes !== null && 'data' in secondRes && secondRes.data?.meta
-            ? page + 1
-            : page;
+        );
 
         startTransition(() => {
           if (append) {
@@ -211,9 +198,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
               listingsRef.current = updated;
               setCurrentPage(finalPage);
               setMeta(finalMeta);
-              if (loadTwoPages) {
-                saveGridState(updated, finalPage, finalMeta);
-              }
+              if (loadTwoPages) saveGridState(updated, finalPage, finalMeta);
               return updated;
             });
           } else {
@@ -225,22 +210,20 @@ export function ListingGrid({ initialData }: ListingGridProps) {
             setMeta(finalMeta);
             setError(null);
             setHasLoadedWithFilters(true);
-
             if (allNewListings.length > 0) {
               analytics.viewItemList(
                 allNewListings.map((listing) => ({
                   id: listing.id,
                   title: listing.title,
                   price: listing.price,
-                }))
+                })),
               );
             }
           }
         });
 
         await checkFavorites(allNewListings.map((l) => l.id));
-      } catch (error) {
-        console.error('ListingGrid: fetchListings failed', error);
+      } catch {
         if (!append) {
           setListings([]);
           setError(t('listings.loadError'));
@@ -254,8 +237,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
         }
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [searchParamsString, setFavorites, user, t, checkFavorites, meta]
+    [searchParamsString, t, checkFavorites, meta],
   );
 
   useEffect(() => {
@@ -284,7 +266,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       setError(null);
       sessionStorage.removeItem(GRID_STATE_KEY);
       sessionStorage.removeItem('homeScrollTimestamp');
-      fetchListings(1, false);
+      void fetchListings(1, false);
     }
   }, [fetchListings, searchParamsString]);
 
@@ -310,7 +292,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
           id: listing.id,
           title: listing.title,
           price: listing.price,
-        }))
+        })),
       );
     }
   }, [initialData, user, setFavorites]);
@@ -334,10 +316,10 @@ export function ListingGrid({ initialData }: ListingGridProps) {
           const nextPage = currentPage + 1;
           setCurrentPage(nextPage);
           setAutoLoadCount((prev) => prev + 1);
-          fetchListings(nextPage, true);
+          void fetchListings(nextPage, true);
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     const currentTarget = observerTarget.current;

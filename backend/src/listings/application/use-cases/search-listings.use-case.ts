@@ -48,7 +48,8 @@ export class SearchListingsUseCase {
       };
     }
 
-    const { data: listings, total } = await this.listingRepo.search(criteria);
+    const searchCriteria = await this.ensurePriceSortRates(criteria);
+    const { data: listings, total } = await this.listingRepo.search(searchCriteria);
     const masked = this.maskListings(listings);
     const enriched = await this.exchangeRatesService.enrichListingsWithApproxPrice(masked);
 
@@ -62,6 +63,18 @@ export class SearchListingsUseCase {
         limit,
         totalPages: Math.ceil(total / limit),
       },
+    };
+  }
+
+  private async ensurePriceSortRates(criteria: SearchCriteria): Promise<SearchCriteria> {
+    const sortBy = criteria.sortBy ?? 'created_at';
+    if (sortBy !== 'price') return criteria;
+
+    const { defaultCurrency, rates } = await this.exchangeRatesService.getAllRatesMap();
+    return {
+      ...criteria,
+      defaultCurrency,
+      priceSortRates: rates,
     };
   }
 

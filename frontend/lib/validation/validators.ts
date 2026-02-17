@@ -97,7 +97,7 @@ export function validateField<T>(
   fieldName: string,
   value: T,
   validator: Validator<T>,
-  formData?: Record<string, unknown>
+  formData?: Record<string, unknown>,
 ): { isValid: boolean; errorKey?: string; errorParams?: Record<string, string | number> } {
   const result = validator(value, formData);
   return {

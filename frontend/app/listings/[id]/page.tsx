@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
-import { Listing } from '@/lib/api';
+import type { Listing } from '@/lib/api';
 import { getMetadataLocale, getServerTranslations, getTFromTranslations } from '@/lib/i18n';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import {
@@ -37,112 +37,126 @@ async function getListing(id: string): Promise<Listing | null> {
   }
 }
 
-function buildListingJsonLd(listing: Listing): Record<string, unknown> {
+function getListingImages(listing: Listing): string[] {
+  if (listing.images && listing.images.length > 0) {
+    return listing.images.map((img) => getOptimizedImageUrl(img));
+  }
+  return [`${siteUrl}/placeholder-car.jpg`];
+}
+
+function getVehicleJsonLdPart(listing: Listing): Record<string, unknown> {
   const vehicle = listing.vehicle;
-  const brandName = vehicle?.brand?.name || '';
-  const modelName = vehicle?.model?.name || '';
+  if (!vehicle) return {};
+
   const year = vehicle?.year;
-
-  const images =
-    listing.images && listing.images.length > 0
-      ? listing.images.map((img) => getOptimizedImageUrl(img))
-      : [`${siteUrl}/placeholder-car.jpg`];
-
   return {
-    '@context': 'https://schema.org',
-    '@type': 'Vehicle',
-    name: listing.title,
-    description: listing.description
-      ? listing.description.replace(/<[^>]*>/g, '').substring(0, 500)
-      : listing.title,
-    image: images,
-    brand: brandName
+    vehicleIdentificationNumber: listing.vin || undefined,
+    modelDate: year ? `${year}-01-01` : undefined,
+    mileageFromOdometer: vehicle.mileage_km
       ? {
-          '@type': 'Brand',
-          name: brandName,
+          '@type': 'QuantitativeValue',
+          value: vehicle.mileage_km,
+          unitCode: 'KMT',
         }
       : undefined,
-    model: modelName || undefined,
-    ...(vehicle && {
-      vehicleIdentificationNumber: listing.vin || undefined,
-      modelDate: year ? `${year}-01-01` : undefined,
-      mileageFromOdometer: vehicle.mileage_km
-        ? {
+    vehicleEngine: vehicle.engine_displ_l
+      ? {
+          '@type': 'EngineSpecification',
+          engineDisplacement: {
             '@type': 'QuantitativeValue',
-            value: vehicle.mileage_km,
-            unitCode: 'KMT',
-          }
-        : undefined,
-      vehicleEngine: vehicle.engine_displ_l
-        ? {
-            '@type': 'EngineSpecification',
-            engineDisplacement: {
-              '@type': 'QuantitativeValue',
-              value: vehicle.engine_displ_l,
-              unitCode: 'LTR',
-            },
-          }
-        : undefined,
-      vehicleConfiguration: vehicle.body_type || undefined,
-    }),
-    offers: {
-      '@type': 'Offer',
-      ...(listing.price !== undefined &&
-        listing.price !== null && {
+            value: vehicle.engine_displ_l,
+            unitCode: 'LTR',
+          },
+        }
+      : undefined,
+    vehicleConfiguration: vehicle.body_type || undefined,
+  };
+}
+
+function getOffersJsonLd(listing: Listing): Record<string, unknown> {
+  const priceFields =
+    listing.price !== undefined && listing.price !== null
+      ? {
           price: listing.price.toString(),
           priceCurrency: listing.currency || siteConfig.currency,
           priceValidUntil: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
             .toISOString()
             .split('T')[0],
-        }),
-      availability:
-        listing.status === 'Active'
-          ? 'https://schema.org/InStock'
-          : 'https://schema.org/OutOfStock',
-      url: `${siteUrl}/listings/${listing.id}`,
-      hasMerchantReturnPolicy: {
-        '@type': 'MerchantReturnPolicy',
-        applicableCountry: siteConfig.countryCode,
-        returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
+        }
+      : {};
+
+  return {
+    '@type': 'Offer',
+    ...priceFields,
+    availability:
+      listing.status === 'Active' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+    url: `${siteUrl}/listings/${listing.id}`,
+    hasMerchantReturnPolicy: {
+      '@type': 'MerchantReturnPolicy',
+      applicableCountry: siteConfig.countryCode,
+      returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
+    },
+    shippingDetails: {
+      '@type': 'OfferShippingDetails',
+      shippingDestination: {
+        '@type': 'DefinedRegion',
+        addressCountry: siteConfig.countryCode,
       },
-      shippingDetails: {
-        '@type': 'OfferShippingDetails',
-        shippingDestination: {
-          '@type': 'DefinedRegion',
-          addressCountry: siteConfig.countryCode,
+      deliveryTime: {
+        '@type': 'ShippingDeliveryTime',
+        handlingTime: {
+          '@type': 'QuantitativeValue',
+          minValue: 0,
+          maxValue: 0,
+          unitCode: 'DAY',
         },
-        deliveryTime: {
-          '@type': 'ShippingDeliveryTime',
-          handlingTime: {
-            '@type': 'QuantitativeValue',
-            minValue: 0,
-            maxValue: 0,
-            unitCode: 'DAY',
-          },
-          transitTime: {
-            '@type': 'QuantitativeValue',
-            minValue: 0,
-            maxValue: 0,
-            unitCode: 'DAY',
-          },
+        transitTime: {
+          '@type': 'QuantitativeValue',
+          minValue: 0,
+          maxValue: 0,
+          unitCode: 'DAY',
         },
-        shippingRate: {
-          '@type': 'MonetaryAmount',
-          value: '0',
-          currency: siteConfig.currency,
-        },
+      },
+      shippingRate: {
+        '@type': 'MonetaryAmount',
+        value: '0',
+        currency: siteConfig.currency,
       },
     },
-    seller: listing.user
-      ? {
-          '@type': listing.user.type === 'Business' ? 'Organization' : 'Person',
-          name:
-            listing.user.type === 'Business'
-              ? listing.user.companyName || listing.user.email
-              : `${listing.user.firstName || ''} ${listing.user.lastName || ''}`.trim() ||
-                listing.user.email,
-        }
-      : undefined,
+  };
+}
+
+function getSellerJsonLd(listing: Listing): Record<string, unknown> | undefined {
+  const user = listing.user;
+  if (!user) return undefined;
+  const type = user.type === 'Business' ? 'Organization' : 'Person';
+  const name =
+    user.type === 'Business'
+      ? user.companyName || user.email
+      : `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
+  return { '@type': type, name };
+}
+
+function buildListingJsonLd(listing: Listing): Record<string, unknown> {
+  const vehicle = listing.vehicle;
+  const brandName = vehicle?.brand?.name || '';
+  const modelName = vehicle?.model?.name || '';
+  const description = listing.description
+    ? listing.description.replace(/<[^>]*>/g, '').substring(0, 500)
+    : listing.title;
+  const seller = getSellerJsonLd(listing);
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Vehicle',
+    name: listing.title,
+    description,
+    image: getListingImages(listing),
+    brand: brandName ? { '@type': 'Brand', name: brandName } : undefined,
+    model: modelName || undefined,
+    ...getVehicleJsonLdPart(listing),
+    offers: getOffersJsonLd(listing),
+    ...(seller && { seller }),
     url: `${siteUrl}/listings/${listing.id}`,
   };
 }
@@ -150,7 +164,7 @@ function buildListingJsonLd(listing: Listing): Record<string, unknown> {
 function buildListingBreadcrumbJsonLd(
   listing: Listing,
   homeLabel: string,
-  listingDisplayTitle: string
+  listingDisplayTitle: string,
 ): Record<string, unknown> {
   return {
     '@context': 'https://schema.org',
@@ -282,7 +296,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
   const breadcrumbJsonLd = buildListingBreadcrumbJsonLd(
     listing,
     t.listingDetail.home,
-    displayTitle
+    displayTitle,
   );
   const listingJsonLd = buildListingJsonLd(listing);
 

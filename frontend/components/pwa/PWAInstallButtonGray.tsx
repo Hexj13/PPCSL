@@ -91,7 +91,7 @@ function highlightKeywords(text: string): React.ReactNode {
     parts.push(
       <span key={`highlight-${index}`} className="text-primary-400 font-semibold">
         {part.keyword}
-      </span>
+      </span>,
     );
     lastIndex = part.end;
   });
@@ -121,7 +121,7 @@ export function PWAInstallButtonGray({ fullWidth = false }: PWAInstallButtonGray
       setActiveTab('ios');
       setShowModal(true);
     } else {
-      handleAndroidInstall();
+      void handleAndroidInstall();
     }
   };
 

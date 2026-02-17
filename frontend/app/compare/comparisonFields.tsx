@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { Listing } from '@/lib/api';
+import type { Listing } from '@/lib/api';
 import { getColorLabel } from '@/lib/options';
 import {
   formatPrice,
@@ -22,13 +22,13 @@ export interface ComparisonField {
   renderCell: (
     _listing: Listing,
     _t: (_key: string) => string,
-    _siteConfig?: { currency: string }
+    _siteConfig?: { currency: string },
   ) => React.ReactNode;
 }
 
 const getValue = (
   value: string | number | null | undefined,
-  t: (_key: string) => string
+  t: (_key: string) => string,
 ): string => {
   if (value === null || value === undefined || value === '') {
     return t('compare.notAvailable');
@@ -64,11 +64,14 @@ export const comparisonFields: ComparisonField[] = [
                   </svg>
                 </div>
               ) : isExternal ? (
-                <img
+                <Image
                   src={imageUrl}
                   alt={listing.title}
-                  className="w-full h-full object-cover"
+                  fill
+                  sizes="96px"
+                  className="object-cover"
                   draggable={false}
+                  unoptimized
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.style.display = 'none';

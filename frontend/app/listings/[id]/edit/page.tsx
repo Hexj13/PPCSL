@@ -7,7 +7,8 @@ import { toast } from 'react-hot-toast';
 
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTranslation } from '@/hooks/useTranslation';
-import { api, listingsApi, Listing } from '@/lib/api';
+import type { Listing } from '@/lib/api';
+import { api, listingsApi } from '@/lib/api';
 
 const ListingForm = dynamic(
   () => import('@/components/ListingForm').then((mod) => ({ default: mod.ListingForm })),
@@ -20,7 +21,7 @@ const ListingForm = dynamic(
       </div>
     ),
     ssr: false,
-  }
+  },
 );
 
 export default function EditListingPage() {
@@ -84,7 +85,7 @@ export default function EditListingPage() {
     setListing(null);
     setLoadingListing(true);
     setFormKey(0);
-    fetchListing(shouldRefresh);
+    void fetchListing(shouldRefresh);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, isAuthorized, listingId]);
 

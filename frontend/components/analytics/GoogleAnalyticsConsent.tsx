@@ -4,7 +4,7 @@ export function GoogleAnalyticsConsent() {
   return (
     <Script
       id="google-analytics-consent"
-      strategy="beforeInteractive"
+      strategy="afterInteractive"
       dangerouslySetInnerHTML={{
         __html: `
           (function() {

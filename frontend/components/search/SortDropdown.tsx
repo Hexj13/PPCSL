@@ -29,7 +29,7 @@ export function SortDropdown({ basePath = '/', isInternalSearchRef }: SortDropdo
 
   const currentSortKey = useMemo(
     () => resolveListingSortKey(searchParams.get('sortBy'), searchParams.get('sortOrder')),
-    [searchParams]
+    [searchParams],
   );
 
   const sortOptions = useMemo(() => {
@@ -66,7 +66,7 @@ export function SortDropdown({ basePath = '/', isInternalSearchRef }: SortDropdo
         }
       });
     },
-    [searchParams, router, basePath, isInternalSearchRef]
+    [searchParams, router, basePath, isInternalSearchRef],
   );
 
   return (

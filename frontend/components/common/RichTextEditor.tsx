@@ -74,7 +74,7 @@ export function RichTextEditor({
             node = node.parentNode;
           }
           setIsListButtonActive(
-            node !== null && (node.nodeName === 'UL' || node.nodeName === 'LI')
+            node !== null && (node.nodeName === 'UL' || node.nodeName === 'LI'),
           );
         } else {
           setIsListButtonActive(false);
@@ -318,6 +318,9 @@ export function RichTextEditor({
       <div
         ref={editorRef}
         contentEditable
+        role="textbox"
+        tabIndex={0}
+        aria-multiline="true"
         onInput={handleInput}
         onKeyDown={(e) => {
           let isInList = false;

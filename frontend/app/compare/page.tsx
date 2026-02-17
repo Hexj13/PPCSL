@@ -7,7 +7,8 @@ import { Breadcrumbs } from '@/components/layout/Breadcrumbs';
 import { LoadMoreButton } from '@/components/listing/LoadMoreButton';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTranslation } from '@/hooks/useTranslation';
-import { listingsApi, Listing } from '@/lib/api';
+import type { Listing } from '@/lib/api';
+import { listingsApi } from '@/lib/api';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { useComparisonStore } from '@/lib/store';
 import { getCountry } from '@/lib/utils';
@@ -109,7 +110,7 @@ export default function ComparePage() {
       }
     };
 
-    rehydrateAndFetch();
+    void rehydrateAndFetch();
   }, [comparisons, rehydrate, t, finishWithMinSkeleton]);
 
   if (isLoading || !isAuthorized) {

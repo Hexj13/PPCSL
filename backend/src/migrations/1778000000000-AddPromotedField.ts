@@ -1,4 +1,5 @@
-import { MigrationInterface, QueryRunner, TableIndex } from 'typeorm';
+import type { MigrationInterface, QueryRunner } from 'typeorm';
+import { TableIndex } from 'typeorm';
 
 export class AddPromotedField1778000000000 implements MigrationInterface {
   name = 'AddPromotedField1778000000000';

@@ -5,30 +5,39 @@
 ## ✅ Полностью реализовано
 
 ### 1. Configuration (`config/site.ts`)
+
 Platform-specific конфигурация сайта: название, домен, валюта, locale.
 
 ### 2. Translations (`locales/*.json`)
+
 Переводы интерфейса и метаданных на языке платформы.
 
 ### 3. Theme (`theme/colors.ts`)
+
 Цветовая схема, включая PWA цвета (`pwa.backgroundColor`, `pwa.themeColor`).
 
 ### 4. Assets (`assets/`)
+
 Логотипы, favicon, OG-изображения, watermark для фотографий.
 
 ### 5. SEO Keywords
+
 Вынесены в `locales/*.json` → `metadata.site.keywords`.
 
 ### 6. Default Metadata
+
 Вынесены в `locales/*.json` → `metadata.site.defaultTitle/defaultDescription`.
 
 ### 7. OpenGraph
+
 `app/opengraph-image.tsx` и `app/page.tsx` используют config и locales.
 
 ### 8. PWA Manifest
+
 `app/manifest.ts` использует `theme.pwa` для цветов.
 
 ### 9. Platform-specific скрипты
+
 Все скрипты в core с системой `checkPlatform()` и `getPlatformConfig()`.
 Конфиги платформ: `core/backend/src/scripts/platforms/{country}/config.ts` (например, `md` для Молдовы).
 

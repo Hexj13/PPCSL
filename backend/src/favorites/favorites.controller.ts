@@ -1,7 +1,25 @@
-import { Body, Controller, Delete, Get, Param, Post, Request, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Query,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import { JwtAuthGuard } from '../auth/infrastructure/guards/jwt-auth.guard';
+import type { AuthenticatedRequest } from '../common/express-augmentation';
 
 import { CheckBatchDto } from './dto/check-batch.dto';
 import { FavoritesService } from './favorites.service';
@@ -11,16 +29,29 @@ import { FavoritesService } from './favorites.service';
 export class FavoritesController {
   constructor(private readonly favoritesService: FavoritesService) {}
 
-  @ApiOperation({ summary: 'Get favorites list' })
+  @ApiOperation({ summary: 'Get favorites list (paginated)' })
   @ApiBearerAuth('JWT-auth')
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({
     status: 200,
-    description: 'List of favorite listings',
+    description: 'Paginated list of favorite listings',
     content: {
       'application/json': {
         schema: {
-          type: 'array',
-          items: { type: 'object' },
+          type: 'object',
+          properties: {
+            data: { type: 'array', items: { type: 'object' } },
+            meta: {
+              type: 'object',
+              properties: {
+                total: { type: 'number' },
+                page: { type: 'number' },
+                limit: { type: 'number' },
+                totalPages: { type: 'number' },
+              },
+            },
+          },
         },
       },
     },
@@ -44,8 +75,35 @@ export class FavoritesController {
   })
   @Get()
   @UseGuards(JwtAuthGuard)
-  findAll(@Request() req) {
-    return this.favoritesService.findAll(req.user.id);
+  findAll(
+    @Request() req: AuthenticatedRequest,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const pageNum = page && Number.isFinite(parseInt(page, 10)) ? parseInt(page, 10) : 1;
+    const limitNum = limit && Number.isFinite(parseInt(limit, 10)) ? parseInt(limit, 10) : 20;
+    return this.favoritesService.findAll(req.user.id, pageNum, limitNum);
+  }
+
+  @Get('ids')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get all favorite listing IDs' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of favorite listing IDs',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: { listingIds: { type: 'array', items: { type: 'string' } } },
+        },
+      },
+    },
+  })
+  getIds(@Request() req: AuthenticatedRequest) {
+    return this.favoritesService.getUserFavoriteIds(req.user.id).then((listingIds) => ({
+      listingIds,
+    }));
   }
 
   @ApiOperation({ summary: 'Check if multiple listings are in favorites' })
@@ -98,7 +156,7 @@ export class FavoritesController {
   })
   @Post('check-batch')
   @UseGuards(JwtAuthGuard)
-  async checkBatch(@Body() dto: CheckBatchDto, @Request() req) {
+  async checkBatch(@Body() dto: CheckBatchDto, @Request() req: AuthenticatedRequest) {
     const result = await this.favoritesService.checkBatch(req.user.id, dto.listingIds);
     return result;
   }
@@ -143,7 +201,7 @@ export class FavoritesController {
   })
   @Get('check/:id')
   @UseGuards(JwtAuthGuard)
-  async check(@Param('id') listingId: string, @Request() req) {
+  async check(@Param('id') listingId: string, @Request() req: AuthenticatedRequest) {
     const isFavorite = await this.favoritesService.checkIfFavorite(req.user.id, listingId);
     return { isFavorite };
   }
@@ -185,7 +243,7 @@ export class FavoritesController {
   })
   @Post(':id')
   @UseGuards(JwtAuthGuard)
-  add(@Param('id') listingId: string, @Request() req) {
+  add(@Param('id') listingId: string, @Request() req: AuthenticatedRequest) {
     return this.favoritesService.add(req.user.id, listingId);
   }
 
@@ -219,7 +277,7 @@ export class FavoritesController {
   })
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  remove(@Param('id') listingId: string, @Request() req) {
+  remove(@Param('id') listingId: string, @Request() req: AuthenticatedRequest) {
     return this.favoritesService.remove(req.user.id, listingId);
   }
 }

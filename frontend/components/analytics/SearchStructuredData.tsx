@@ -4,6 +4,170 @@ import { getMetadataLocale, getServerTranslations } from '@/lib/i18n';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { createSlug, getCountry, toSafeJsonLdHtml } from '@/lib/utils';
 
+type BreadcrumbItem = { '@type': string; position: number; name: string; item: string };
+type SearchActionItem = {
+  '@type': string;
+  target: { '@type': string; urlTemplate: string; inLanguage: string };
+  result: { '@type': string; name: string };
+};
+
+function buildBreadcrumbItemList(
+  brandParam: string | null,
+  modelParam: string | null,
+  siteUrl: string,
+  t: ReturnType<typeof getServerTranslations>,
+): BreadcrumbItem[] {
+  const items: BreadcrumbItem[] = [
+    { '@type': 'ListItem', position: 1, name: t.breadcrumbs.home, item: siteUrl },
+    { '@type': 'ListItem', position: 2, name: t.home.title, item: `${siteUrl}/` },
+  ];
+  if (brandParam) {
+    const brandName =
+      POPULAR_BRANDS.find((b) => createSlug(b) === brandParam.toLowerCase()) || brandParam;
+    items.push({
+      '@type': 'ListItem',
+      position: items.length + 1,
+      name: brandName,
+      item: `${siteUrl}/?brand=${brandParam}`,
+    });
+  }
+  if (modelParam && brandParam) {
+    const brandName =
+      POPULAR_BRANDS.find((b) => createSlug(b) === brandParam.toLowerCase()) || brandParam;
+    const models = POPULAR_MODELS_BY_BRAND[brandName] || [];
+    const modelName = models.find((m) => createSlug(m) === modelParam.toLowerCase()) || modelParam;
+    items.push({
+      '@type': 'ListItem',
+      position: items.length + 1,
+      name: modelName,
+      item: `${siteUrl}/?brand=${brandParam}&model=${modelParam}`,
+    });
+  }
+  return items;
+}
+
+function buildPotentialActions(
+  brandParam: string | null,
+  modelParam: string | null,
+  siteUrl: string,
+  localeTag: `${string}-${string}`,
+  t: ReturnType<typeof getServerTranslations>,
+): SearchActionItem[] {
+  const actions: SearchActionItem[] = [];
+  if (!brandParam) {
+    POPULAR_BRANDS.forEach((brand) => {
+      actions.push({
+        '@type': 'SearchAction',
+        target: {
+          '@type': 'EntryPoint',
+          urlTemplate: `${siteUrl}/?brand=${createSlug(brand)}`,
+          inLanguage: localeTag,
+        },
+        result: { '@type': 'ItemList', name: `${brand} ${t.home.title}` },
+      });
+    });
+    return actions;
+  }
+  if (!modelParam) {
+    const brandName = POPULAR_BRANDS.find((b) => createSlug(b) === brandParam.toLowerCase());
+    if (brandName) {
+      const models = POPULAR_MODELS_BY_BRAND[brandName] || [];
+      models.forEach((model) => {
+        actions.push({
+          '@type': 'SearchAction',
+          target: {
+            '@type': 'EntryPoint',
+            urlTemplate: `${siteUrl}/?brand=${brandParam}&model=${createSlug(model)}`,
+            inLanguage: localeTag,
+          },
+          result: { '@type': 'ItemList', name: `${brandName} ${model}` },
+        });
+      });
+    }
+  }
+  return actions;
+}
+
+function buildItemListSchema(
+  listings: Listing[] | undefined,
+  maxItems: number,
+  siteUrl: string,
+): {
+  '@context': string;
+  '@type': string;
+  numberOfItems: number;
+  itemListElement: Array<{ '@type': string; position: number; url: string; name: string }>;
+} | null {
+  if (!listings || listings.length === 0) return null;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    numberOfItems: Math.min(listings.length, maxItems),
+    itemListElement: listings.slice(0, maxItems).map((listing, idx) => ({
+      '@type': 'ListItem',
+      position: idx + 1,
+      url: `${siteUrl}/listings/${listing.id}`,
+      name: listing.title || `${siteUrl}/listings/${listing.id}`,
+    })),
+  };
+}
+
+function buildCollectionPageSchema(
+  brandParam: string | null,
+  modelParam: string | null,
+  breadcrumbSchema: { '@context': string; '@type': string; itemListElement: BreadcrumbItem[] },
+  itemListSchema: {
+    itemListElement: Array<{ '@type': string; position: number; url: string; name: string }>;
+  } | null,
+  siteUrl: string,
+  t: ReturnType<typeof getServerTranslations>,
+): Record<string, unknown> | null {
+  if (!brandParam && !modelParam) return null;
+  const brandName = brandParam
+    ? POPULAR_BRANDS.find((b) => createSlug(b) === brandParam.toLowerCase()) || brandParam
+    : null;
+  const modelName =
+    modelParam && brandName
+      ? POPULAR_MODELS_BY_BRAND[brandName]?.find(
+          (m) => createSlug(m) === modelParam.toLowerCase(),
+        ) || modelParam
+      : null;
+
+  let pageTitle = t.metadata.site.defaultTitle;
+  let pageDescription = t.metadata.site.defaultDescription;
+  if (modelName && brandName) {
+    pageTitle = `${brandName} ${modelName} - ${t.metadata.site.defaultTitle}`;
+    pageDescription = t.metadata.site.homePageDescriptionWithBrandModel
+      .replace('{brand}', brandName)
+      .replace('{model}', modelName);
+  } else if (brandName) {
+    pageTitle = `${brandName} - ${t.metadata.site.defaultTitle}`;
+    pageDescription = t.metadata.site.homePageDescriptionWithBrand.replace('{brand}', brandName);
+  }
+
+  const url =
+    brandParam && modelParam
+      ? `${siteUrl}/?brand=${brandParam}&model=${modelParam}`
+      : brandParam
+        ? `${siteUrl}/?brand=${brandParam}`
+        : siteUrl;
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: pageTitle,
+    description: pageDescription,
+    url,
+    breadcrumb: breadcrumbSchema,
+    mainEntity: {
+      '@type': 'ItemList',
+      name: pageTitle,
+      description: pageDescription,
+      itemListElement: itemListSchema?.itemListElement,
+    },
+  };
+}
+
 export async function SearchStructuredData({
   brand,
   model,
@@ -24,107 +188,14 @@ export async function SearchStructuredData({
   const modelParam = model || null;
   const localeTag = `${locale}-${siteConfig.locale.split('-')[1] || 'MD'}` as `${string}-${string}`;
 
-  const itemListElements: Array<{
-    '@type': string;
-    position: number;
-    name: string;
-    item: string;
-  }> = [
-    {
-      '@type': 'ListItem',
-      position: 1,
-      name: t.breadcrumbs.home,
-      item: siteUrl,
-    },
-    {
-      '@type': 'ListItem',
-      position: 2,
-      name: t.home.title,
-      item: `${siteUrl}/`,
-    },
-  ];
-
-  if (brandParam) {
-    const brandName =
-      POPULAR_BRANDS.find((b) => createSlug(b) === brandParam.toLowerCase()) || brandParam;
-    itemListElements.push({
-      '@type': 'ListItem',
-      position: itemListElements.length + 1,
-      name: brandName,
-      item: `${siteUrl}/?brand=${brandParam}`,
-    });
-  }
-
-  if (modelParam && brandParam) {
-    const brandName =
-      POPULAR_BRANDS.find((b) => createSlug(b) === brandParam.toLowerCase()) || brandParam;
-    const models = POPULAR_MODELS_BY_BRAND[brandName] || [];
-    const modelName = models.find((m) => createSlug(m) === modelParam.toLowerCase()) || modelParam;
-    itemListElements.push({
-      '@type': 'ListItem',
-      position: itemListElements.length + 1,
-      name: modelName,
-      item: `${siteUrl}/?brand=${brandParam}&model=${modelParam}`,
-    });
-  }
-
+  const itemListElements = buildBreadcrumbItemList(brandParam, modelParam, siteUrl, t);
   const breadcrumbSchema = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: itemListElements,
   };
 
-  const potentialActions: Array<{
-    '@type': string;
-    target: {
-      '@type': string;
-      urlTemplate: string;
-      inLanguage: string;
-    };
-    result: {
-      '@type': string;
-      name: string;
-    };
-  }> = [];
-
-  if (!brandParam) {
-    POPULAR_BRANDS.forEach((brand) => {
-      const brandSlug = createSlug(brand);
-      potentialActions.push({
-        '@type': 'SearchAction',
-        target: {
-          '@type': 'EntryPoint',
-          urlTemplate: `${siteUrl}/?brand=${brandSlug}`,
-          inLanguage: localeTag,
-        },
-        result: {
-          '@type': 'ItemList',
-          name: `${brand} ${t.home.title}`,
-        },
-      });
-    });
-  } else if (!modelParam) {
-    const brandName = POPULAR_BRANDS.find((b) => createSlug(b) === brandParam.toLowerCase());
-    if (brandName) {
-      const models = POPULAR_MODELS_BY_BRAND[brandName] || [];
-      models.forEach((model) => {
-        const modelSlug = createSlug(model);
-        potentialActions.push({
-          '@type': 'SearchAction',
-          target: {
-            '@type': 'EntryPoint',
-            urlTemplate: `${siteUrl}/?brand=${brandParam}&model=${modelSlug}`,
-            inLanguage: localeTag,
-          },
-          result: {
-            '@type': 'ItemList',
-            name: `${brandName} ${model}`,
-          },
-        });
-      });
-    }
-  }
-
+  const potentialActions = buildPotentialActions(brandParam, modelParam, siteUrl, localeTag, t);
   const websiteSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
@@ -133,76 +204,15 @@ export async function SearchStructuredData({
     potentialAction: potentialActions.length > 0 ? potentialActions : undefined,
   };
 
-  const itemListSchema: {
-    '@context': 'https://schema.org';
-    '@type': 'ItemList';
-    numberOfItems: number;
-    itemListElement: Array<{
-      '@type': 'ListItem';
-      position: number;
-      url: string;
-      name: string;
-    }>;
-  } | null =
-    listings && listings.length > 0
-      ? {
-          '@context': 'https://schema.org',
-          '@type': 'ItemList',
-          numberOfItems: Math.min(listings.length, maxItems),
-          itemListElement: listings.slice(0, maxItems).map((listing, idx) => ({
-            '@type': 'ListItem',
-            position: idx + 1,
-            url: `${siteUrl}/listings/${listing.id}`,
-            name: listing.title || `${siteUrl}/listings/${listing.id}`,
-          })),
-        }
-      : null;
-
-  let collectionPageSchema: Record<string, unknown> | null = null;
-  if (brandParam || modelParam) {
-    const brandName = brandParam
-      ? POPULAR_BRANDS.find((b) => createSlug(b) === brandParam.toLowerCase()) || brandParam
-      : null;
-    const modelName =
-      modelParam && brandName
-        ? POPULAR_MODELS_BY_BRAND[brandName]?.find(
-            (m) => createSlug(m) === modelParam.toLowerCase()
-          ) || modelParam
-        : null;
-
-    let pageTitle = t.metadata.site.defaultTitle;
-    let pageDescription = t.metadata.site.defaultDescription;
-
-    if (modelName && brandName) {
-      pageTitle = `${brandName} ${modelName} - ${t.metadata.site.defaultTitle}`;
-      pageDescription = t.metadata.site.homePageDescriptionWithBrandModel
-        .replace('{brand}', brandName)
-        .replace('{model}', modelName);
-    } else if (brandName) {
-      pageTitle = `${brandName} - ${t.metadata.site.defaultTitle}`;
-      pageDescription = t.metadata.site.homePageDescriptionWithBrand.replace('{brand}', brandName);
-    }
-
-    collectionPageSchema = {
-      '@context': 'https://schema.org',
-      '@type': 'CollectionPage',
-      name: pageTitle,
-      description: pageDescription,
-      url:
-        brandParam && modelParam
-          ? `${siteUrl}/?brand=${brandParam}&model=${modelParam}`
-          : brandParam
-            ? `${siteUrl}/?brand=${brandParam}`
-            : siteUrl,
-      breadcrumb: breadcrumbSchema,
-      mainEntity: {
-        '@type': 'ItemList',
-        name: pageTitle,
-        description: pageDescription,
-        itemListElement: itemListSchema?.itemListElement,
-      },
-    };
-  }
+  const itemListSchema = buildItemListSchema(listings, maxItems, siteUrl);
+  const collectionPageSchema = buildCollectionPageSchema(
+    brandParam,
+    modelParam,
+    breadcrumbSchema,
+    itemListSchema,
+    siteUrl,
+    t,
+  );
 
   return (
     <>

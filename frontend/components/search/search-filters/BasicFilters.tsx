@@ -5,7 +5,7 @@ import { toast } from 'react-hot-toast';
 
 import { Dropdown } from '@/components/common/Dropdown';
 import { MultiSelectDropdown } from '@/components/common/MultiSelectDropdown';
-import { FilterState } from '@/hooks/useSearchFilters';
+import type { FilterState } from '@/hooks/useSearchFilters';
 import { useTranslation } from '@/hooks/useTranslation';
 import {
   getBodyTypeOptions,
@@ -168,11 +168,11 @@ export function BasicFilters({
 
   const formattedPriceGte = useMemo(
     () => formatPriceWithSpaces(filters.price_gte),
-    [filters.price_gte]
+    [filters.price_gte],
   );
   const formattedPriceLte = useMemo(
     () => formatPriceWithSpaces(filters.price_lte),
-    [filters.price_lte]
+    [filters.price_lte],
   );
 
   const yearOptions = useMemo(() => getYearOptions(), []);
@@ -180,7 +180,7 @@ export function BasicFilters({
   const bodyTypeOptions = useMemo(() => getBodyTypeOptions(t, vehicleType), [t, vehicleType]);
   const transmissionOptions = useMemo(
     () => getTransmissionOptions(t, vehicleType),
-    [t, vehicleType]
+    [t, vehicleType],
   );
   const driveTypeOptions = useMemo(() => getDriveTypeOptions(t), [t]);
 
