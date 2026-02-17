@@ -4,6 +4,9 @@ import type { UserType } from './types';
 
 declare global {
   namespace Express {
+    interface Request {
+      user?: User;
+    }
     interface User {
       id: string;
       email?: string;

@@ -134,8 +134,8 @@ export class ListingsController {
     @Query('status') status?: string,
     @Query('promoted') promoted?: string,
   ) {
-    const pageNum = page ? parseInt(page, 10) : 1;
-    const limitNum = limit ? parseInt(limit, 10) : 20;
+    const pageNum = page && Number.isFinite(parseInt(page, 10)) ? parseInt(page, 10) : 1;
+    const limitNum = limit && Number.isFinite(parseInt(limit, 10)) ? parseInt(limit, 10) : 20;
     const validStatuses = ['Active', 'Paused', 'Closed'];
     const statusFilter = status && validStatuses.includes(status) ? status : undefined;
     const promotedFilter = promoted === 'true' ? true : promoted === 'false' ? false : undefined;
@@ -192,8 +192,10 @@ export class ListingsController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    const pageNum = page ? Math.max(1, parseInt(page, 10)) : 1;
-    const limitNum = limit ? Math.min(100, Math.max(1, parseInt(limit, 10))) : 50;
+    const parsedPage = page ? parseInt(page, 10) : 1;
+    const parsedLimit = limit ? parseInt(limit, 10) : 50;
+    const pageNum = Number.isFinite(parsedPage) ? Math.max(1, parsedPage) : 1;
+    const limitNum = Number.isFinite(parsedLimit) ? Math.min(100, Math.max(1, parsedLimit)) : 50;
     return this.listingsService.getPromotionHistory(req.user.id, pageNum, limitNum);
   }
 

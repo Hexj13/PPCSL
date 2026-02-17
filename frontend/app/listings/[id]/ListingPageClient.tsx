@@ -29,6 +29,22 @@ import { LoadingSpinner, Spinner, InfoBlock, HintTooltip } from '@/ui';
 
 import { useListingPageClient, type UseListingPageClientReturn } from './useListingPageClient';
 
+function getShowPromoteButton(listing: Listing, userId: string | undefined): boolean {
+  return !!(
+    userId &&
+    listing.user &&
+    userId === listing.user.id &&
+    listing.status === 'Active' &&
+    !listing.is_promoted
+  );
+}
+
+function getBoardSlug(listing: Listing): string | null {
+  if (!listing.user) return null;
+  const u = listing.user as { board_slug?: string; boardSlug?: string };
+  return u.board_slug ?? u.boardSlug ?? null;
+}
+
 function ListingPageListingInfoSection({
   listing,
   closingDate,
@@ -453,6 +469,8 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
     closeImageModal,
   } = props;
 
+  if (!listing) return null;
+
   const images =
     listing.images && listing.images.length > 0 ? listing.images : ['/placeholder-car.jpg'];
   const vehicle = listing.vehicle;
@@ -500,15 +518,7 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
               isFavorite={isFavorite}
               isOwnListing={isOwnListing}
               canPromote={canPromote}
-              showPromoteButton={
-                !!(
-                  user &&
-                  listing.user &&
-                  user.id === listing.user.id &&
-                  listing.status === 'Active' &&
-                  !listing.is_promoted
-                )
-              }
+              showPromoteButton={getShowPromoteButton(listing, user?.id)}
               onToggleComparison={handleToggleComparison}
               onToggleFavorite={handleToggleFavorite}
               onPromoteClick={handlePromoteClick}
@@ -548,13 +558,7 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
               listing={listing}
               listingId={id}
               activeListingsCount={activeListingsCount}
-              boardSlug={
-                listing?.user
-                  ? ((listing.user as { board_slug?: string; boardSlug?: string }).board_slug ??
-                    (listing.user as { boardSlug?: string }).boardSlug ??
-                    null)
-                  : null
-              }
+              boardSlug={getBoardSlug(listing)}
             />
 
             <ListingPageListingInfoSection
