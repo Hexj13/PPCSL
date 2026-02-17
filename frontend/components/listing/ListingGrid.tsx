@@ -94,7 +94,7 @@ async function getParsedSearchParams(
         return modelResolver(brandIds, slugs);
       },
     });
-    return parsed as Record<string, string | number | boolean>;
+    return parsed as unknown as Record<string, string | number | boolean>;
   } catch {
     return { page: 1, limit: 20 };
   }

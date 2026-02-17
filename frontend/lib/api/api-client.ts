@@ -6,7 +6,8 @@ interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
 }
 
 import { getDefaultLocale, loadTranslations, type Translations } from '../i18n';
-import type { User } from '../types';
+
+import type { User } from './api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -192,7 +193,7 @@ const getErrorMessage = (error: AxiosError): string => {
 async function handle429Retry(
   error: AxiosError,
   originalRequest: ExtendedAxiosRequestConfig | undefined,
-): Promise<unknown> | undefined {
+): Promise<unknown> {
   if (error.response?.status !== 429 || !originalRequest || originalRequest._retry)
     return undefined;
   originalRequest._retry = true;

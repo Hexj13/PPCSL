@@ -70,7 +70,7 @@ async function processPendingComparisons(): Promise<void> {
 async function processPendingSavedFilter(
   pendingSavedFilter: string | null,
   t: (k: string) => string,
-  loginMethod: string,
+  loginMethod: 'email' | 'phone',
   filledFields: Record<string, boolean>,
   savedReturnUrl: string | null,
 ): Promise<boolean> {
@@ -113,7 +113,7 @@ async function processPendingSavedFilter(
 
 function applyLoginSuccessRedirect(
   returnUrl: string,
-  loginMethod: string,
+  loginMethod: 'email' | 'phone',
   filledFields: Record<string, boolean>,
 ): void {
   localStorage.removeItem('returnUrl');

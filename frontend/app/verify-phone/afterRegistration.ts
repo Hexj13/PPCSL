@@ -1,11 +1,11 @@
 import { toast } from 'react-hot-toast';
 
-import type { RegisterDto } from '@/lib/api';
+import type { RegisterDto, User } from '@/lib/api';
 import { authApi, favoritesApi, listingsApi, savedFiltersApi } from '@/lib/api';
 
 type LoginResponse = {
   data: {
-    user: { id: string };
+    user: User;
     access_token: string;
     refresh_token: string;
   };
@@ -14,7 +14,7 @@ type LoginResponse = {
 export async function runAfterRegistration(
   _formData: RegisterDto,
   loginRes: LoginResponse,
-  setAuth: (user: unknown, accessToken: string, refreshToken: string) => void,
+  setAuth: (user: User | null, accessToken: string | null, refreshToken?: string | null) => void,
   t: (key: string) => string,
 ): Promise<void> {
   setAuth(loginRes.data.user, loginRes.data.access_token, loginRes.data.refresh_token);

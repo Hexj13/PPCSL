@@ -338,7 +338,7 @@ export async function parseSearchParams(
   const storedFilters = hasStorageFlag ? loadFiltersFromStorage() : null;
 
   if (storedFilters) {
-    applyStoredFilters(params as Record<string, unknown>, storedFilters);
+    applyStoredFilters(params as unknown as Record<string, unknown>, storedFilters);
   }
 
   const vehicleTypeParam = getValue('vehicleType');
@@ -384,7 +384,7 @@ export async function parseSearchParams(
   if (title) params.title = title;
 
   if (!(urlParams instanceof URLSearchParams)) {
-    applyLegacyParams(params as Record<string, unknown>, urlParams);
+    applyLegacyParams(params as unknown as Record<string, unknown>, urlParams);
   }
 
   return params as ParsedSearchParams;

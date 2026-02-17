@@ -369,7 +369,7 @@ function ListingCardComponent({
     [favoriteDisabled, isFavorite, isOwnListing],
   );
 
-  const showImage = imageUrl && imageUrl !== '/placeholder-car.jpg' && !imageError;
+  const showImage = Boolean(imageUrl && imageUrl !== '/placeholder-car.jpg' && !imageError);
 
   return (
     <Link href={`/listings/${listing.id}`} onClick={handleClick}>
