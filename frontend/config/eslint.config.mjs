@@ -234,6 +234,12 @@ export default [
     },
   },
   {
+    files: ['lib/api/api.test.ts'],
+    rules: {
+      'testing-library/no-await-sync-queries': 'off',
+    },
+  },
+  {
     ignores: [
       'node_modules/**',
       '.next/**',
