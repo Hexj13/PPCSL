@@ -50,7 +50,7 @@ describe('listingsApi', () => {
 
       mockAxiosInstance.get.mockResolvedValue({ data: mockListings });
 
-      const result = listingsApi.getByVin(vin);
+      const result = await listingsApi.getByVin(vin);
 
       expect(mockAxiosInstance.get).toHaveBeenCalledWith(`/api/listings/vin/${vin}`, {
         params: {},
@@ -76,7 +76,7 @@ describe('listingsApi', () => {
       const vin = 'NONEXISTENTVIN';
       mockAxiosInstance.get.mockResolvedValue({ data: [] });
 
-      const result = listingsApi.getByVin(vin);
+      const result = await listingsApi.getByVin(vin);
 
       expect(result.data).toEqual([]);
     });
