@@ -87,7 +87,7 @@ async function processPendingSavedFilter(
     await savedFiltersApi.create(filterName, filters);
     localStorage.removeItem('pendingSavedFilter');
     localStorage.removeItem('returnUrl');
-    analytics.login(loginMethod);
+    analytics.login(loginMethod as 'email' | 'phone');
     analytics.formSubmit('login', true, filledFields);
     toast.success(t('login.filterSavedSuccess'));
     if (typeof window !== 'undefined' && window.location) {
@@ -104,7 +104,7 @@ async function processPendingSavedFilter(
       ? '/favorites?tab=filters'
       : savedReturnUrl || localStorage.getItem('returnUrl') || '/';
     if (isLimitError) localStorage.removeItem('returnUrl');
-    analytics.login(loginMethod);
+    analytics.login(loginMethod as 'email' | 'phone');
     analytics.formSubmit('login', true, filledFields);
     if (typeof window !== 'undefined' && window.location) window.location.href = url;
     return true;
@@ -117,7 +117,7 @@ function applyLoginSuccessRedirect(
   filledFields: Record<string, boolean>,
 ): void {
   localStorage.removeItem('returnUrl');
-  analytics.login(loginMethod);
+  analytics.login(loginMethod as 'email' | 'phone');
   analytics.formSubmit('login', true, filledFields);
   if (typeof window !== 'undefined' && (window as Window).location) {
     (window as Window).location.href = returnUrl;
@@ -226,7 +226,7 @@ export default function LoginPage() {
       const savedReturnUrl =
         typeof window !== 'undefined' ? localStorage.getItem('returnUrl') : null;
       if (typeof window === 'undefined') {
-        analytics.login(loginMethod);
+        analytics.login(loginMethod as 'email' | 'phone');
         analytics.formSubmit('login', true, filledFields);
         return;
       }
