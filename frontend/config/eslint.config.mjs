@@ -52,7 +52,7 @@ export default [
     languageOptions: {
       parser: typescriptParser,
       parserOptions: {
-        project: './tsconfig.json',
+        project: './tsconfig.eslint.json',
       },
     },
     plugins: {
@@ -69,7 +69,7 @@ export default [
       'import/resolver': {
         typescript: {
           alwaysTryTypes: true,
-          project: './tsconfig.json',
+          project: './tsconfig.eslint.json',
         },
         node: {
           extensions: ['.js', '.jsx', '.ts', '.tsx'],

@@ -41,6 +41,9 @@
     "stories.backup",
     "**/*.stories.tsx",
     "**/*.stories.ts",
+    "**/*.test-helpers.ts",
+    "**/*.test.ts",
+    "**/*.spec.ts",
     "vitest.config.ts",
     "config/vitest.config.ts"
   ]
