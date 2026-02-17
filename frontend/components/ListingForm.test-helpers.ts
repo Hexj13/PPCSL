@@ -61,21 +61,37 @@ export const mockListing = {
   user_id: 'user-1',
 };
 
+type MockLike = {
+  mockReturnValue: (value: unknown) => MockLike;
+  mockResolvedValue: (value: unknown) => MockLike;
+};
+
+function getJestFn(): () => void {
+  return typeof globalThis !== 'undefined' &&
+    (globalThis as { jest?: { fn: () => () => void } }).jest?.fn
+    ? (globalThis as { jest: { fn: () => () => void } }).jest.fn()
+    : () => {};
+}
+
 export function setupListingFormMocks(): void {
-  (useAuthStore as unknown as jest.Mock).mockReturnValue({
+  (useAuthStore as unknown as MockLike).mockReturnValue({
     user: { id: 'user-1' },
     isInitialized: true,
     token: 'test-token',
-    setAuth: jest.fn(),
-    logout: jest.fn(),
-    initAuth: jest.fn(),
+    setAuth: getJestFn(),
+    logout: getJestFn(),
+    initAuth: getJestFn(),
   });
-  (api.brandsApi.getAll as jest.Mock).mockResolvedValue({ data: mockBrands });
-  (api.citiesApi.getAll as jest.Mock).mockResolvedValue({ data: mockCities });
-  (api.brandsApi.getModels as jest.Mock).mockResolvedValue({ data: mockModels });
-  (api.listingsApi.update as jest.Mock).mockResolvedValue({ data: mockListing as Listing });
-  (api.listingsApi.create as jest.Mock).mockResolvedValue({ data: mockListing as Listing });
-  (api.uploadApi.uploadImage as jest.Mock).mockResolvedValue({
+  (api.brandsApi.getAll as unknown as MockLike).mockResolvedValue({ data: mockBrands });
+  (api.citiesApi.getAll as unknown as MockLike).mockResolvedValue({ data: mockCities });
+  (api.brandsApi.getModels as unknown as MockLike).mockResolvedValue({ data: mockModels });
+  (api.listingsApi.update as unknown as MockLike).mockResolvedValue({
+    data: mockListing as Listing,
+  });
+  (api.listingsApi.create as unknown as MockLike).mockResolvedValue({
+    data: mockListing as Listing,
+  });
+  (api.uploadApi.uploadImage as unknown as MockLike).mockResolvedValue({
     data: {
       url: 'http://localhost:4000/uploads/test-image.webp',
       path: '/uploads/test-image.webp',

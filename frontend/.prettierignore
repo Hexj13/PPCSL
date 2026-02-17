@@ -9,4 +9,5 @@ next-env.d.ts
 
 lib/config
 lib/theme
+lib/theme.json
 lib/locales
