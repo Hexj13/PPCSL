@@ -197,6 +197,7 @@
     "messengers": "Available messengers",
     "optional": "(optional)",
     "email": "Email",
+    "emailPlaceholder": "Enter email address",
     "emailRequired": "Email is required",
     "emailInvalid": "Invalid email address",
     "password": "Password",
