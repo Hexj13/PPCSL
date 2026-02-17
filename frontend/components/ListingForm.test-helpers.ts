@@ -67,10 +67,8 @@ type MockLike = {
 };
 
 function getJestFn(): () => void {
-  return typeof globalThis !== 'undefined' &&
-    (globalThis as { jest?: { fn: () => () => void } }).jest?.fn
-    ? (globalThis as { jest: { fn: () => () => void } }).jest.fn()
-    : () => {};
+  const g = globalThis as unknown as { jest?: { fn: () => () => void } };
+  return g.jest?.fn ? g.jest.fn() : () => {};
 }
 
 export function setupListingFormMocks(): void {
