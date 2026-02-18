@@ -140,6 +140,7 @@ function ResetPasswordCodeStep({
                   className={inputClass}
                   style={digitStyle}
                   autoComplete={index === 0 ? 'one-time-code' : 'off'}
+                  autoFocus={index === 0} // eslint-disable-line jsx-a11y/no-autofocus
                 />
                 {!code[index] && (
                   <span

@@ -40,6 +40,7 @@
     "smsSendError": "Eroare la trimiterea SMS",
     "verificationCodeExpired": "Codul de verificare a expirat",
     "invalidVerificationCode": "Cod de verificare invalid",
+    "invalidCode": "Cod invalid. Încercați din nou.",
     "maxVerificationAttemptsReached": "Numărul maxim de încercări de verificare a fost atins",
     "passwordResetCodeExpired": "Codul de resetare a parolei a expirat",
     "invalidPasswordResetCode": "Cod de resetare a parolei invalid",

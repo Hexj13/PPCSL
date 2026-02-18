@@ -64,7 +64,10 @@ export function useSearchTabs({
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
   const tabsContainerRef = useRef<HTMLDivElement>(null);
   const [showFade, setShowFade] = useState(true);
+  const [fadeOpacity, setFadeOpacity] = useState(1);
   const buttonsContainerRef = useRef<HTMLDivElement>(null);
+
+  const FADE_OUT_SCROLL_THRESHOLD = 48;
 
   useEffect(() => {
     const updateIndicator = () => {
@@ -90,25 +93,27 @@ export function useSearchTabs({
       }
     };
 
-    const checkScrollability = () => {
+    const updateFade = () => {
       if (!tabsContainerRef.current) return;
       const { scrollLeft, scrollWidth, clientWidth } = tabsContainerRef.current;
       const isAtEnd = scrollLeft >= scrollWidth - clientWidth - 1;
       setShowFade(!isAtEnd);
+      const opacity = isAtEnd ? 0 : Math.max(0, 1 - scrollLeft / FADE_OUT_SCROLL_THRESHOLD);
+      setFadeOpacity(opacity);
     };
 
     const handleResize = () => {
       updateIndicator();
-      checkScrollability();
+      updateFade();
     };
 
     const handleScroll = () => {
       updateIndicator();
-      checkScrollability();
+      updateFade();
     };
 
     updateIndicator();
-    checkScrollability();
+    updateFade();
 
     const container = tabsContainerRef.current;
     if (container) {
@@ -138,6 +143,7 @@ export function useSearchTabs({
     indicatorStyle,
     tabsContainerRef,
     showFade,
+    fadeOpacity,
     buttonsContainerRef,
   };
 }

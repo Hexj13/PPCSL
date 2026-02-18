@@ -139,7 +139,7 @@ export function VehicleTypeSelector({
           className={`h-12 w-16 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap flex items-center justify-center ${
             vehicleType === 'car'
               ? 'bg-primary-500/10 rounded-t-lg'
-              : 'hover:bg-primary-500/10 hover:rounded-t-lg'
+              : 'hover-only:hover:bg-primary-500/10 hover-only:hover:rounded-t-lg'
           }`}
         >
           <CarIcon className="w-12 h-12 transition-colors duration-300 scale-x-[-1] text-primary-900" />
@@ -151,7 +151,7 @@ export function VehicleTypeSelector({
           className={`h-12 w-16 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap flex items-center justify-center ${
             vehicleType === 'truck'
               ? 'bg-primary-500/10 rounded-t-lg'
-              : 'hover:bg-primary-500/10 hover:rounded-t-lg'
+              : 'hover-only:hover:bg-primary-500/10 hover-only:hover:rounded-t-lg'
           }`}
         >
           <TruckIcon className="w-12 h-12 transition-colors duration-300 scale-x-[-1] text-primary-900" />
@@ -163,7 +163,7 @@ export function VehicleTypeSelector({
           className={`h-12 w-16 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap flex items-center justify-center ${
             vehicleType === 'moto'
               ? 'bg-primary-500/10 rounded-t-lg'
-              : 'hover:bg-primary-500/10 hover:rounded-t-lg'
+              : 'hover-only:hover:bg-primary-500/10 hover-only:hover:rounded-t-lg'
           }`}
         >
           <MotoIcon className="w-12 h-12 transition-colors duration-300 scale-x-[-1] text-primary-900" />

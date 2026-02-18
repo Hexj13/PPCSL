@@ -45,7 +45,7 @@ function SellerMessengerLinks({
             onClick={() => track('viber')}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-purple-500/20 text-purple-700 border border-purple-500/30 hover:bg-purple-500/30 hover:border-purple-500/50 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-purple-500/20 text-purple-700 border border-purple-500/30 hover-only:hover:bg-purple-500/30 hover-only:hover:border-purple-500/50 transition-colors cursor-pointer"
           >
             {/* eslint-disable-next-line no-hardcoded-text/no-hardcoded-text */}
             <span>Viber</span>
@@ -71,7 +71,7 @@ function SellerMessengerLinks({
             onClick={() => track('whatsapp')}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-primary-500/20 text-primary-700 border border-primary-500/30 hover:bg-primary-500/30 hover:border-primary-500/50 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-primary-500/20 text-primary-700 border border-primary-500/30 hover-only:hover:bg-primary-500/30 hover-only:hover:border-primary-500/50 transition-colors cursor-pointer"
           >
             {/* eslint-disable-next-line no-hardcoded-text/no-hardcoded-text */}
             <span>WhatsApp</span>
@@ -97,7 +97,7 @@ function SellerMessengerLinks({
             onClick={() => track('telegram')}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-500/20 text-blue-700 border border-blue-500/30 hover:bg-blue-500/30 hover:border-blue-500/50 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-500/20 text-blue-700 border border-blue-500/30 hover-only:hover:bg-blue-500/30 hover-only:hover:border-blue-500/50 transition-colors cursor-pointer"
           >
             {/* eslint-disable-next-line no-hardcoded-text/no-hardcoded-text */}
             <span>Telegram</span>
@@ -161,7 +161,7 @@ function SellerBoardLink({
       href={`/board/${boardSlug}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover:text-primary-900 hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 !bg-primary-500/10 select-none"
+      className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 !bg-primary-500/10 select-none"
     >
       {icon}
       <span>{label}</span>
@@ -233,7 +233,7 @@ export function ListingPageSeller({
               href={user.companyWebsiteUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="min-w-0 truncate hover:text-primary-300 transition-colors underline"
+              className="min-w-0 truncate hover-only:hover:text-primary-300 transition-colors underline"
               style={secondaryStyle}
               title={user.companyWebsiteUrl}
             >
@@ -269,7 +269,7 @@ export function ListingPageSeller({
                 </span>
                 <a
                   href={`mailto:${user.email}`}
-                  className="ml-2 hover:text-primary-300 transition-colors underline break-all min-w-0"
+                  className="ml-2 hover-only:hover:text-primary-300 transition-colors underline break-all min-w-0"
                   style={secondaryStyle}
                 >
                   {user.email}
@@ -298,7 +298,7 @@ export function ListingPageSeller({
                       price: listing.price,
                     })
                   }
-                  className="ml-2 hover:text-primary-300 transition-colors underline break-all min-w-0"
+                  className="ml-2 hover-only:hover:text-primary-300 transition-colors underline break-all min-w-0"
                   style={secondaryStyle}
                 >
                   {user.phone}

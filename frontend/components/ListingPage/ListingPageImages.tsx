@@ -78,7 +78,7 @@ export function ListingPageImages({
             onImageClick(currentImageIndex);
           }
         }}
-        className="relative h-64 sm:h-80 md:h-96 bg-bg-darker rounded-xl overflow-hidden mb-4 w-full cursor-pointer border border-transparent hover:border-primary-500/50 transition-colors"
+        className="relative h-64 sm:h-80 md:h-96 bg-bg-darker rounded-xl overflow-hidden mb-4 w-full cursor-pointer border border-transparent hover-only:hover:border-primary-500/50 transition-colors"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -158,7 +158,7 @@ export function ListingPageImages({
                 } ${
                   currentImageIndex === index
                     ? 'ring-2 ring-primary-500 shadow-md'
-                    : 'hover:ring-2 hover:ring-primary-300'
+                    : 'hover-only:hover:ring-2 hover-only:hover:ring-primary-300'
                 }`}
               >
                 {img !== '/placeholder-car.jpg' && !imageErrors.has(index) ? (
@@ -191,7 +191,7 @@ export function ListingPageImages({
                               setCurrentImageIndex(index);
                               onImageClick(index);
                             }}
-                            className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center sm:hidden cursor-pointer hover:bg-opacity-70 transition-opacity"
+                            className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center sm:hidden cursor-pointer hover-only:hover:bg-opacity-70 transition-opacity"
                           >
                             <span className="text-white text-lg font-bold">
                               +{remainingCountMobile}
@@ -205,7 +205,7 @@ export function ListingPageImages({
                               setCurrentImageIndex(index);
                               onImageClick(index);
                             }}
-                            className="absolute inset-0 bg-black bg-opacity-60 hidden sm:flex items-center justify-center cursor-pointer hover:bg-opacity-70 transition-opacity"
+                            className="absolute inset-0 bg-black bg-opacity-60 hidden sm:flex items-center justify-center cursor-pointer hover-only:hover:bg-opacity-70 transition-opacity"
                           >
                             <span className="text-white text-lg sm:text-xl font-bold">
                               +{remainingCountDesktop}

@@ -40,6 +40,7 @@ interface UseVehicleTypeParams {
   setLastAppliedFilters: React.Dispatch<React.SetStateAction<FilterState | null>>;
   setActiveTab: (_tab: 'basic' | 'advanced' | 'equipment' | 'popular') => void;
   isApplyingQuickFilterRef: React.MutableRefObject<boolean>;
+  scrollTabsToStart?: () => void;
 }
 
 export function useVehicleType({
@@ -48,6 +49,7 @@ export function useVehicleType({
   setLastAppliedFilters,
   setActiveTab,
   isApplyingQuickFilterRef,
+  scrollTabsToStart,
 }: UseVehicleTypeParams) {
   const router = useRouter();
 
@@ -116,10 +118,18 @@ export function useVehicleType({
         resetFilters();
         setLastAppliedFilters(null);
         setActiveTab('basic');
+        scrollTabsToStart?.();
         router.replace(`/?${params.toString()}`, { scroll: false });
       });
     },
-    [router, resetFilters, setLastAppliedFilters, setActiveTab, isApplyingQuickFilterRef],
+    [
+      router,
+      resetFilters,
+      setLastAppliedFilters,
+      setActiveTab,
+      isApplyingQuickFilterRef,
+      scrollTabsToStart,
+    ],
   );
 
   return {

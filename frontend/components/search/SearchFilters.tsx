@@ -67,12 +67,17 @@ export function SearchFilters() {
     hasEquipmentFiltersActive,
   });
 
+  const scrollTabsToStart = useCallback(() => {
+    tabs.tabsContainerRef.current?.scrollTo({ left: 0, behavior: 'smooth' });
+  }, [tabs.tabsContainerRef]);
+
   const { vehicleType, setVehicleTypeWithStorage, handleVehicleTypeChange } = useVehicleType({
     searchParams,
     resetFilters,
     setLastAppliedFilters,
     setActiveTab: tabs.setActiveTab,
     isApplyingQuickFilterRef,
+    scrollTabsToStart,
   });
 
   const {
@@ -303,6 +308,7 @@ export function SearchFilters() {
             indicatorStyle={tabs.indicatorStyle}
             tabsContainerRef={tabs.tabsContainerRef}
             showFade={tabs.showFade}
+            fadeOpacity={tabs.fadeOpacity}
           />
         </div>
       </div>

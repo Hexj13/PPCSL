@@ -176,6 +176,7 @@ export function SmsVerificationModal({
                     : 'border-divider focus:border-primary-700'
                 } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-text'} text-white`}
                 autoComplete={index === 0 ? 'one-time-code' : 'off'}
+                autoFocus={index === 0} // eslint-disable-line jsx-a11y/no-autofocus
               />
             ))}
           </div>

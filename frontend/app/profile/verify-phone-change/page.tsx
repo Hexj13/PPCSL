@@ -294,6 +294,7 @@ function VerifyPhoneChangeContent() {
                       letterSpacing: '0.05em',
                     }}
                     autoComplete={index === 0 ? 'one-time-code' : 'off'}
+                    autoFocus={index === 0} // eslint-disable-line jsx-a11y/no-autofocus
                   />
                   {!code[index] && (
                     <span

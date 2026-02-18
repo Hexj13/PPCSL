@@ -146,7 +146,7 @@ function ListingPageListingInfoSection({
       <div className="mt-4 pt-4 border-t border-primary-500/20 space-y-2">
         <button
           onClick={onCopyLink}
-          className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover:text-primary-900 hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 !bg-primary-500/10 select-none"
+          className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 !bg-primary-500/10 select-none"
         >
           <svg
             className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
@@ -166,7 +166,7 @@ function ListingPageListingInfoSection({
         {canShare && (
           <button
             onClick={onShare}
-            className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover:text-primary-900 hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 !bg-primary-500/10 select-none"
+            className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 !bg-primary-500/10 select-none"
           >
             <svg
               className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
@@ -361,7 +361,7 @@ function ListingPageHistorySection({
               {previousListings.map((prevListing) => (
                 <tr
                   key={prevListing.id}
-                  className="border-b border-primary-500/10 hover:bg-bg-darker/50 transition-colors cursor-pointer"
+                  className="border-b border-primary-500/10 hover-only:hover:bg-bg-darker/50 transition-colors cursor-pointer"
                   onClick={() => router.push(`/listings/${prevListing.id}`)}
                 >
                   <td
@@ -379,7 +379,7 @@ function ListingPageHistorySection({
                     {formatDate(prevListing.updated_at)}
                   </td>
                   <td className="py-3 px-2 sm:px-3 text-left sm:text-right">
-                    <span className="text-primary-700 hover:text-primary-900 transition-colors text-xs font-medium">
+                    <span className="text-primary-700 hover-only:hover:text-primary-900 transition-colors text-xs font-medium">
                       {t('listingDetail.open')}
                     </span>
                   </td>

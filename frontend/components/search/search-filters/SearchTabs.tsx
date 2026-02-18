@@ -16,6 +16,7 @@ interface SearchTabsProps {
   indicatorStyle: { left: number; width: number };
   tabsContainerRef: React.RefObject<HTMLDivElement | null>;
   showFade: boolean;
+  fadeOpacity: number;
 }
 
 export function SearchTabs({
@@ -32,6 +33,7 @@ export function SearchTabs({
   indicatorStyle,
   tabsContainerRef,
   showFade,
+  fadeOpacity,
 }: SearchTabsProps) {
   const { t } = useTranslation();
 
@@ -50,7 +52,7 @@ export function SearchTabs({
             className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap ${
               activeTab === 'basic'
                 ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
-                : 'text-primary-900 hover:bg-primary-500/10'
+                : 'text-primary-900 hover-only:hover:bg-primary-500/10'
             }`}
             suppressHydrationWarning
           >
@@ -66,7 +68,7 @@ export function SearchTabs({
             className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap ${
               activeTab === 'advanced'
                 ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
-                : 'text-primary-900 hover:bg-primary-500/10'
+                : 'text-primary-900 hover-only:hover:bg-primary-500/10'
             }`}
             suppressHydrationWarning
           >
@@ -82,7 +84,7 @@ export function SearchTabs({
             className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap ${
               activeTab === 'equipment'
                 ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
-                : 'text-primary-900 hover:bg-primary-500/10'
+                : 'text-primary-900 hover-only:hover:bg-primary-500/10'
             }`}
             suppressHydrationWarning
           >
@@ -98,7 +100,7 @@ export function SearchTabs({
             className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap ${
               activeTab === 'popular'
                 ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
-                : 'text-primary-900 hover:bg-primary-500/10'
+                : 'text-primary-900 hover-only:hover:bg-primary-500/10'
             }`}
             suppressHydrationWarning
           >
@@ -116,8 +118,9 @@ export function SearchTabs({
       </div>
       {showFade && (
         <div
-          className="lg:hidden absolute top-0 -right-px bottom-0 w-16 pointer-events-none z-20"
+          className="lg:hidden absolute top-0 -right-px bottom-0 w-14 pointer-events-none z-20 transition-opacity duration-200"
           style={{
+            opacity: fadeOpacity,
             background:
               'linear-gradient(to left, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 50%, rgba(255, 255, 255, 0.5) 100%)',
           }}

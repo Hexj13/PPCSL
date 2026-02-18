@@ -40,6 +40,7 @@
     "smsSendError": "Ошибка отправки SMS",
     "verificationCodeExpired": "Код верификации истек",
     "invalidVerificationCode": "Неверный код верификации",
+    "invalidCode": "Неверный код. Попробуйте снова.",
     "maxVerificationAttemptsReached": "Достигнуто максимальное количество попыток верификации",
     "passwordResetCodeExpired": "Код сброса пароля истек",
     "invalidPasswordResetCode": "Неверный код сброса пароля",
