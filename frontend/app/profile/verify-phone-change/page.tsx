@@ -82,6 +82,19 @@ function VerifyPhoneChangeContent() {
   }
 
   const handleCodeChange = (index: number, value: string) => {
+    const digitsOnly = value.replace(/\D/g, '');
+    if (digitsOnly.length > 1) {
+      const digits = digitsOnly.slice(0, 6).split('');
+      const newCode = Array(6).fill('');
+      digits.forEach((d, i) => {
+        newCode[i] = d;
+      });
+      setCode(newCode);
+      setError('');
+      const focusIndex = Math.min(digits.length, 5);
+      inputRefs.current[focusIndex]?.focus();
+      return;
+    }
     if (!/^\d*$/.test(value)) {
       return;
     }
@@ -126,8 +139,8 @@ function VerifyPhoneChangeContent() {
       setCode(newCode);
       setError('');
 
-      const filledIndex = Math.min(digitsOnly.length - 1, 5);
-      inputRefs.current[filledIndex]?.focus();
+      const focusIndex = Math.min(digitsOnly.length, 5);
+      inputRefs.current[focusIndex]?.focus();
     }
   };
 
@@ -268,7 +281,7 @@ function VerifyPhoneChangeContent() {
                     value={code[index] || ''}
                     onChange={(e) => handleCodeChange(index, e.target.value)}
                     onKeyDown={(e) => handleKeyDown(index, e)}
-                    onPaste={index === 0 ? handlePaste : undefined}
+                    onPaste={handlePaste}
                     disabled={loading}
                     className={`w-12 h-14 md:w-14 md:h-16 text-center text-2xl md:text-3xl font-bold bg-bg-secondary border-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-700 focus:border-primary-700 ${
                       error
@@ -280,7 +293,7 @@ function VerifyPhoneChangeContent() {
                       fontFamily: "'Digital-7', monospace",
                       letterSpacing: '0.05em',
                     }}
-                    autoComplete="off"
+                    autoComplete={index === 0 ? 'one-time-code' : 'off'}
                   />
                   {!code[index] && (
                     <span

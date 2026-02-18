@@ -37,6 +37,18 @@ export function SmsVerificationModal({
   }, [isOpen]);
 
   const handleCodeChange = (index: number, value: string) => {
+    const digitsOnly = value.replace(/\D/g, '');
+    if (digitsOnly.length > 1) {
+      const digits = digitsOnly.slice(0, 6);
+      setCode(digits.padEnd(6, ' ').slice(0, 6));
+      setError('');
+      const focusIndex = Math.min(digits.length, 5);
+      inputRefs.current[focusIndex]?.focus();
+      if (digits.length === 6) {
+        void validateAndSubmit(digits);
+      }
+      return;
+    }
     if (!/^\d*$/.test(value)) {
       return;
     }
@@ -85,8 +97,8 @@ export function SmsVerificationModal({
       setCode(digitsOnly.padEnd(6, ' ').slice(0, 6));
       setError('');
 
-      const filledIndex = Math.min(digitsOnly.length - 1, 5);
-      inputRefs.current[filledIndex]?.focus();
+      const focusIndex = Math.min(digitsOnly.length, 5);
+      inputRefs.current[focusIndex]?.focus();
 
       if (digitsOnly.length === 6) {
         void validateAndSubmit(digitsOnly);
@@ -156,14 +168,14 @@ export function SmsVerificationModal({
                 value={code[index] || ''}
                 onChange={(e) => handleCodeChange(index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(index, e)}
-                onPaste={index === 0 ? handlePaste : undefined}
+                onPaste={handlePaste}
                 disabled={isSubmitting}
                 className={`w-12 h-14 md:w-14 md:h-16 text-center text-2xl md:text-3xl font-bold bg-bg-secondary border-2 rounded-lg transition-all duration-200 focus:outline-none focus:border-primary-700 ${
                   error
                     ? 'border-red-500 focus:border-red-500'
                     : 'border-divider focus:border-primary-700'
                 } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-text'} text-white`}
-                autoComplete="off"
+                autoComplete={index === 0 ? 'one-time-code' : 'off'}
               />
             ))}
           </div>

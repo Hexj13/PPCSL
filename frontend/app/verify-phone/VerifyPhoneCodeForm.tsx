@@ -63,7 +63,7 @@ export function VerifyPhoneCodeForm({
                   value={code[index] || ''}
                   onChange={(e) => onCodeChange(index, e.target.value)}
                   onKeyDown={(e) => onKeyDown(index, e)}
-                  onPaste={index === 0 ? onPaste : undefined}
+                  onPaste={onPaste}
                   disabled={isSubmitting}
                   className={`w-12 h-14 md:w-14 md:h-16 text-center text-2xl md:text-3xl font-bold bg-bg-secondary border-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-700 focus:border-primary-700 ${
                     error
@@ -75,7 +75,7 @@ export function VerifyPhoneCodeForm({
                     fontFamily: "'Digital-7', monospace",
                     letterSpacing: '0.05em',
                   }}
-                  autoComplete="off"
+                  autoComplete={index === 0 ? 'one-time-code' : 'off'}
                 />
                 {!code[index] && (
                   <span

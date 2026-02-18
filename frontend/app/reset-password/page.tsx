@@ -135,11 +135,11 @@ function ResetPasswordCodeStep({
                   value={code[index] || ''}
                   onChange={(e) => onCodeChange(index, e.target.value)}
                   onKeyDown={(e) => onKeyDown(index, e)}
-                  onPaste={index === 0 ? onPaste : undefined}
+                  onPaste={onPaste}
                   disabled={loading}
                   className={inputClass}
                   style={digitStyle}
-                  autoComplete="off"
+                  autoComplete={index === 0 ? 'one-time-code' : 'off'}
                 />
                 {!code[index] && (
                   <span

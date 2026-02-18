@@ -95,6 +95,19 @@ export function useResetPasswordPage() {
 
   const handleCodeChange = useCallback(
     (index: number, value: string) => {
+      const digitsOnly = value.replace(/\D/g, '');
+      if (digitsOnly.length > 1) {
+        const digits = digitsOnly.slice(0, 6).split('');
+        const newCode = Array(6).fill('');
+        digits.forEach((d, i) => {
+          newCode[i] = d;
+        });
+        setCode(newCode);
+        setErrors((prev) => ({ ...prev, code: undefined }));
+        const focusIndex = Math.min(digits.length, 5);
+        inputRefs.current[focusIndex]?.focus();
+        return;
+      }
       if (!/^\d*$/.test(value)) return;
       const newCode = [...code];
       if (value.length === 1) {
@@ -128,8 +141,8 @@ export function useResetPasswordPage() {
       const newCode = digitsOnly.split('').concat(Array(6 - digitsOnly.length).fill(''));
       setCode(newCode);
       setErrors((prev) => ({ ...prev, code: undefined }));
-      const filledIndex = Math.min(digitsOnly.length - 1, 5);
-      inputRefs.current[filledIndex]?.focus();
+      const focusIndex = Math.min(digitsOnly.length, 5);
+      inputRefs.current[focusIndex]?.focus();
     }
   }, []);
 
