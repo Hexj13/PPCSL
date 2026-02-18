@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
+
 import { useComparisonStore } from '@/lib/store';
 
 import { DesktopNav } from './Header/DesktopNav';
@@ -9,6 +11,7 @@ import { MobileToolbar } from './Header/MobileToolbar';
 import { useHeaderState } from './Header/useHeaderState';
 
 export function Header() {
+  const headerRef = useRef<HTMLElement>(null);
   const comparisonCount = useComparisonStore((state) => state.count());
   const {
     user,
@@ -26,8 +29,21 @@ export function Header() {
     t,
   } = useHeaderState();
 
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (headerRef.current && !headerRef.current.contains(target)) {
+        handleMobileMenuClose();
+      }
+    };
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [isMobileMenuOpen, handleMobileMenuClose]);
+
   return (
     <header
+      ref={headerRef}
       className="bg-primary-700 shadow-lg border-b-2 border-primary-500/20 sticky top-0 z-50 backdrop-blur-sm h-[72px]"
       suppressHydrationWarning
     >

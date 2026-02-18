@@ -36,6 +36,7 @@ export function ListingPageImageModal({
   const modalImageLoadedRef = useRef<Set<number>>(new Set());
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
+  const swipeHandledRef = useRef(false);
 
   const { visible: showModalImageLoader } = useLoadingState({
     isLoading: modalImageLoading,
@@ -61,10 +62,18 @@ export function ListingPageImageModal({
     const isRightSwipe = distance < -minSwipeDistance;
 
     if (isLeftSwipe && images.length > 1) {
+      swipeHandledRef.current = true;
       onNext();
+      setTimeout(() => {
+        swipeHandledRef.current = false;
+      }, 400);
     }
     if (isRightSwipe && images.length > 1) {
+      swipeHandledRef.current = true;
       onPrev();
+      setTimeout(() => {
+        swipeHandledRef.current = false;
+      }, 400);
     }
   };
 
@@ -265,9 +274,26 @@ export function ListingPageImageModal({
 
       <div
         className="relative max-w-7xl w-full h-full flex items-center justify-center p-4"
+        role="button"
+        tabIndex={0}
+        aria-label={t('listings.closeImageModal')}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
+        onClick={(e) => {
+          if (e.target !== e.currentTarget) return;
+          if (swipeHandledRef.current) {
+            swipeHandledRef.current = false;
+            return;
+          }
+          onClose();
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClose();
+          }
+        }}
       >
         {showModalImageLoader && (
           <div className="absolute inset-0 flex items-center justify-center z-10">

@@ -327,6 +327,7 @@
     "defaultTitle": "Car for sale",
     "imageAlt": "{title} - Image {index}",
     "imageAltWithTotal": "{title} - Image {index} of {total}",
+    "closeImageModal": "Close photo view",
     "notFoundTitle": "Listing not found",
     "notFoundDescription": "The listing does not exist or is not available.",
     "addToFavorites": "Added to favorites",

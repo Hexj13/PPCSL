@@ -216,7 +216,7 @@ export function PopularBodyTypesFilter({
                   ${
                     isSelected
                       ? 'border-2 border-primary-700'
-                      : 'border-2 border-primary-700/30 hover:border-primary-700 transition-colors duration-200'
+                      : 'border-2 border-primary-700/30 [@media(hover:hover)]:hover:border-primary-700 transition-colors duration-200'
                   }
                 `}
                   onMouseDown={(e) => {
