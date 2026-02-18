@@ -586,6 +586,7 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
         onNext={nextImage}
         onPrev={prevImage}
         onIndexChange={setModalImageIndex}
+        onImageError={(index) => setImageErrors((prev) => new Set(prev).add(index))}
       />
 
       <PromotionModal

@@ -6,7 +6,11 @@ Complete documentation for the image preview and photo viewer system on listing 
 
 The image preview system provides a simple, fast, and efficient way for users to view and switch between listing photos. The implementation follows the principle of "trust the browser" - leveraging built-in browser caching and image loading capabilities instead of complex custom preloading systems.
 
-**Location:** `core/frontend/app/listings/[id]/ListingPageClient.tsx`
+**Locations:**
+
+- Page state and thumbnail logic: `core/frontend/app/listings/[id]/useListingPageClient.ts`, `ListingPageClient.tsx`
+- Thumbnail block and preload: `core/frontend/components/ListingPage/ListingPageImages.tsx`, `core/frontend/hooks/useListingImages.ts`
+- Photo viewer modal: `core/frontend/components/ListingPage/ListingPageImageModal.tsx`
 
 ---
 
@@ -33,19 +37,22 @@ The image preview system provides a simple, fast, and efficient way for users to
 
 ### State Management
 
-**State Variables (4):**
+**Page / thumbnail state (in page hook and `useListingImages`):**
 
-- `currentImageIndex: number` - Current photo index in preview
-- `mainImageLoading: boolean` - Preview loading state
-- `modalImageIndex: number` - Current photo index in modal
-- `modalImageLoading: boolean` - Modal loading state
+- `currentImageIndex`, `mainImageLoading` — preview
+- `modalImageIndex`, `isImageModalOpen` — which photo the modal is on and whether it is open
+- `imageErrors: Set<number>` — failed indices (shared; modal updates via `onImageError`)
 
-**Refs (2):**
+**Modal component state (inside `ListingPageImageModal`):**
 
-- `mainImageLoadedRef: Set<number>` - Cache of loaded preview image indices
-- `modalImageLoadedRef: Set<number>` - Cache of loaded modal image indices
+- `visibleIndex` — last successfully shown image (confirmed layer); may lag behind `currentIndex` while pending loads
+- `modalImageLoading`, `showSpinner` — loading and delayed spinner
+- `targetImageWidth`, `imageQuality`, `isMobileViewport` — from viewport/network
 
-**Total: 6 variables** (down from 15 in previous implementation)
+**Refs:**
+
+- `mainImageLoadedRef: Set<number>` — cache of loaded preview image indices (`useListingImages`)
+- `modalImageLoadedRef: Set<string>` — cache of loaded modal image URLs (URL-keyed for correct cache hits when width/quality change)
 
 ### Key Simplifications
 
@@ -62,8 +69,9 @@ The image preview system provides a simple, fast, and efficient way for users to
 
 - ✅ Simple check via `new window.Image()` and `testImg.complete`
 - ✅ Next image preloading (browser manages it)
-- ✅ Flicker protection via `useLoadingState`
-- ✅ Cache of loaded indices (`mainImageLoadedRef`, `modalImageLoadedRef`)
+- ✅ Preview: flicker protection via `useLoadingState` (thumbnail block)
+- ✅ Modal: two-layer rendering (confirmed + pending), spinner after 300ms delay, no duplicate handlers/preload in page hook
+- ✅ Cache: indices for preview (`mainImageLoadedRef`), URL-keyed for modal (`modalImageLoadedRef`)
 
 ---
 
@@ -217,122 +225,59 @@ const { visible: showMainImageLoader } = useLoadingState({
 
 ## Photo Viewer Modal
 
+**Component:** `core/frontend/components/ListingPage/ListingPageImageModal.tsx`. All modal behaviour (keyboard, scroll lock, preload, two-layer rendering) lives here; the page hook only holds `isImageModalOpen`, `modalImageIndex`, `setModalImageIndex`, and passes `onImageError` to sync failed indices.
+
 ### How It Works
 
-1. **Opening modal** → Shows current photo, preloads next in background
-2. **Switching to next photo** → Shows it (if preloaded - instant), preloads next in background
-3. **Loader** → Only shown while photo is loading, no delays
+1. **Two-layer rendering** — "Confirmed" layer shows the last successfully loaded image; "Pending" layer loads the target image with `opacity-0` until `onLoad`. No blank frame when swiping.
+2. **Preloading** — Next, previous, and (on mobile) second-next images are preloaded inside the modal with the same adaptive width/quality used for display. No preload in `useListingPageClient`.
+3. **Spinner** — Shown only after 300ms of loading; previous image stays visible until the new one is ready or the spinner appears.
+4. **Scroll lock** — On open, `window.scrollY` is saved and `body` gets `top: -scrollY` so the page does not jump; on close, scroll position is restored (fixes iOS Safari).
 
-### Next Image Preloading
+### Rendering
 
-When opening modal and when switching to a new photo:
+- **Confirmed layer:** `<Image>` with `visibleIndex`, always visible (`opacity-100`). `onLoad` adds URL to cache and clears loading.
+- **Pending layer:** `<Image>` with `currentIndex`, `opacity-0`, only when `pendingUrl !== confirmedUrl`. `onLoad` adds URL to cache, sets `visibleIndex = currentIndex`, clears loading. `key={`pending-${currentIndex}`}` so rapid swipes unmount the previous pending image.
+- **Errors:** `onImageError(index)` is called from both layers; parent updates `imageErrors` so the broken index is not retried.
 
-```typescript
-useEffect(() => {
-  if (!isImageModalOpen || !listing || typeof window === 'undefined') return;
+### Loading Check and Cache
 
-  const images =
-    listing.images && listing.images.length > 0 ? listing.images : ['/placeholder-car.jpg'];
+- Loading is driven by an effect that checks the current image URL (adaptive `targetImageWidth` and `imageQuality` from viewport and network hints). Cache is URL-keyed (`modalImageLoadedRef: Set<string>`).
+- If URL is already in cache → `setModalImageLoading(false)` and `setVisibleIndex(currentIndex)`.
+- Otherwise a `new window.Image()` is used to load; `onload`/`onerror` update cache and state. Stale callbacks are cleared when the effect re-runs.
 
-  if (images.length <= 1) return;
+### Preloading (inside modal)
 
-  const nextIndex = (modalImageIndex + 1) % images.length;
-  const nextImageUrl = images[nextIndex];
-
-  if (!nextImageUrl || nextImageUrl === '/placeholder-car.jpg' || imageErrors.has(nextIndex)) {
-    return;
-  }
-
-  const optimizedUrl = getOptimizedImageUrl(nextImageUrl, 85, 1920);
-  const img = new window.Image();
-  img.src = optimizedUrl;
-}, [modalImageIndex, isImageModalOpen, listing, imageErrors]);
-```
-
-- Uses simple `new window.Image()` - reliable and visible in Network tab
-- Browser manages caching automatically
-
-### Loading Check Logic
-
-```typescript
-useEffect(() => {
-  if (!isImageModalOpen || !listing) {
-    setModalImageLoading(false);
-    modalImageLoadedRef.current.clear();
-    return;
-  }
-
-  const imagesList =
-    listing.images && listing.images.length > 0 ? listing.images : ['/placeholder-car.jpg'];
-  const currentImage = imagesList[modalImageIndex];
-
-  if (
-    !currentImage ||
-    currentImage === '/placeholder-car.jpg' ||
-    imageErrors.has(modalImageIndex)
-  ) {
-    setModalImageLoading(false);
-    return;
-  }
-
-  if (modalImageLoadedRef.current.has(modalImageIndex)) {
-    setModalImageLoading(false);
-    return;
-  }
-
-  const optimizedUrl = getOptimizedImageUrl(currentImage, 85, 1920);
-  const testImg = new window.Image();
-  testImg.src = optimizedUrl;
-
-  if (testImg.complete && testImg.naturalWidth > 0) {
-    modalImageLoadedRef.current.add(modalImageIndex);
-    setModalImageLoading(false);
-    return;
-  }
-
-  setModalImageLoading(true);
-
-  testImg.onload = () => {
-    modalImageLoadedRef.current.add(modalImageIndex);
-    setModalImageLoading(false);
-  };
-
-  testImg.onerror = () => {
-    setModalImageLoading(false);
-  };
-}, [modalImageIndex, isImageModalOpen, listing, imageErrors]);
-```
+- Next image: preload immediately.
+- Previous image: preload after 120ms.
+- On mobile, for the first couple of navigations, second-next is also preloaded (after 40ms).
+- All use `getOptimizedImageUrl(..., imageQuality, targetImageWidth)` so preload and display share the same URL and benefit from browser cache.
 
 ### Loader
 
-Loader uses `useLoadingState` with `minDisplayTime: 1000` (same as preview):
+- `showSpinner` is set to `true` after 300ms while `modalImageLoading` is true, and cleared when loading finishes. No `useLoadingState` in the modal.
+- Spinner is rendered above both image layers (`z-20`).
 
-```typescript
-const { visible: showModalImageLoader } = useLoadingState({
-  isLoading: modalImageLoading,
-  minDisplayTime: 1000,
-});
-```
+### Viewport and network
 
-**Behavior:**
-
-- If image is in cache → `modalImageLoading` is immediately `false` → loader not shown
-- If image is loading → `modalImageLoading = true` → loader shown for minimum 1 second (prevents flicker)
+- On open/resize, `targetImageWidth` and `imageQuality` are computed from viewport and (where available) `navigator.connection`. Width changes smaller than 50px are ignored to avoid churn from mobile address bar.
+- iOS Safari does not support `navigator.connection`; those users get the default (faster) profile.
 
 ### Controls
 
-- **Escape** - Closes modal
-- **ArrowLeft/ArrowRight** - Switches photos
-- **Click on overlay** - Closes modal
-- **Swipe gestures** - Switches photos on mobile
+- **Escape / Enter / Space** — Close modal.
+- **ArrowLeft / ArrowRight** — Previous/next photo (handled only in the modal; no duplicate handler in the page hook).
+- **Click on overlay** — Close modal.
+- **Swipe** — Next/previous on touch.
+- **Scroll** — Locked while modal is open; position restored on close.
 
 ---
 
 ## Loading States
 
-### useLoadingState Hook
+### Preview (thumbnail block)
 
-The system uses `useLoadingState` hook for consistent loading state management:
+The **preview** uses `useLoadingState` in `useListingImages`:
 
 ```typescript
 const { visible: showMainImageLoader } = useLoadingState({
@@ -341,16 +286,15 @@ const { visible: showMainImageLoader } = useLoadingState({
 });
 ```
 
-**Behavior:**
+- If image is in cache → loader not shown (instant switch).
+- If image is loading → loader shown for minimum 1 second (readable indicator, prevents flicker).
 
-- If `isLoading = true` and `showDelay` (200ms) passed → show loader
-- If `isLoading = false` → hide loader, but not before `minDisplayTime` (1000ms) from start of display
-- If loading completes before `showDelay` → don't show loader at all
+### Modal
 
-**For preview images:**
+The **modal** does not use `useLoadingState`. It uses a simple delay:
 
-- If image is in cache → `mainImageLoading` is immediately `false` → loader not shown (instant switch)
-- If image is loading → `mainImageLoading = true` → loader shown for minimum 1 second (readable indicator, prevents flicker)
+- `showSpinner` becomes true 300ms after `modalImageLoading` becomes true, and is cleared when loading ends.
+- The confirmed image stays visible until the new image is ready or the spinner appears, so there is no black gap.
 
 ### Why minDisplayTime: 1000ms?
 
@@ -378,14 +322,13 @@ From `LOADING_STATES.md`:
 
 ### Modal Images
 
-- **Quality:** 85%
-- **Max width:** 1920px
-- **URL:** `getOptimizedImageUrl(imageUrl, 85, 1920)`
+- **Adaptive:** Quality and max width depend on viewport and network (e.g. mobile + slow network → lower quality and width; desktop → up to 85%, 1920px). Computed in the modal on open and on resize (with a 50px width threshold to avoid address-bar churn).
+- **URL:** `getOptimizedImageUrl(imageUrl, imageQuality, targetImageWidth)` with the same params used for preload so the browser cache is shared.
 
 ### Why Different Quality?
 
-- **Preview (75%, 1200px):** Balance between quality and file size for main view
-- **Modal (85%, 1920px):** Higher quality for full-screen viewing experience
+- **Preview (75%, 1200px):** Balance between quality and file size for main view; same URL for thumbnails and main preview.
+- **Modal (adaptive):** Full-screen viewer optimised for mobile (lighter on slow networks) and desktop (higher quality when possible).
 
 ---
 
@@ -436,31 +379,9 @@ From `LOADING_STATES.md`:
 
 ### Error Handling
 
-```typescript
-const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
+**Preview:** `useListingImages` exposes `handleImageError(index)`; the parent passes `onImageError` so that failed indices are added to the shared `imageErrors` Set. Placeholder is shown for failed images.
 
-// On image error - uses data-index to prevent race conditions
-onError={(e) => {
-  const imgIndex = parseInt(e.currentTarget.dataset.index || '0', 10);
-  setImageErrors((prev) => new Set(prev).add(imgIndex));
-  if (imgIndex === currentImageIndex) {
-    setMainImageLoading(false);
-  }
-}}
-```
-
-**Race condition prevention:**
-
-- Each image has `data-index={currentImageIndex}` attribute
-- Handlers read the index from `dataset` instead of closure
-- Only update loading state if the index matches current index
-- Prevents old handlers from incorrectly updating state after rapid switching
-
-**Features:**
-
-- Failed images are tracked in `imageErrors` Set
-- Placeholder is shown for failed images
-- Errors don't block other images from loading
+**Modal:** The modal receives `onImageError: (index: number) => void` and calls it from both the confirmed and pending `<Image>` `onError` handlers (with the correct index). The parent updates `imageErrors`; the modal does not call `onIndexChange` on error (that would retry the same broken index). Failed images show the placeholder and do not block others.
 
 ---
 
@@ -479,10 +400,9 @@ onError={(e) => {
 
 ### Performance Characteristics
 
-- **Cache hit:** 0ms switch (instant)
-- **Cache miss:** Real network time + 1s minimum loader display (readable, no flicker)
-- **Preloading:** Browser-managed, no manual overhead
-- **Memory:** Minimal (only 2 Sets for loaded indices)
+- **Preview:** Cache hit → 0ms switch; cache miss → real network time + up to 1s loader. Preloading via `useListingImages` (next image only).
+- **Modal:** Two layers (confirmed + pending), max 2 decoded images. Spinner after 300ms if still loading. Preload next/prev/second-next with same URL as display. No duplicate preload or keydown logic in the page hook.
+- **Memory:** Preview: one Set (indices). Modal: one Set (URLs). Minimal refs and state.
 
 ### Browser Compatibility
 
@@ -518,10 +438,12 @@ onError={(e) => {
   - Image loads correctly
 
 - ✅ **Modal:**
-  - Opens correctly
-  - Next image preloaded
-  - Smooth transitions
-  - Keyboard navigation works
+  - Opens correctly; scroll position preserved on close (including iOS Safari)
+  - One arrow keypress moves exactly one photo (no double handler)
+  - Next/prev (and on mobile, second-next) preloaded with same URL as display
+  - No black frame or blink on first-pass swipe; two-layer rendering
+  - Broken image shows placeholder and calls `onImageError` (no infinite retry)
+  - Keyboard and swipe work; spinner only after ~300ms when loading
 
 ### Edge Cases
 
@@ -588,5 +510,5 @@ If you need to add features:
 
 ---
 
-**Last Updated:** 2026-01-16  
-**Version:** 2.0 (Simplified)
+**Last Updated:** 2026-02-18  
+**Version:** 3.0 (Modal: two-layer rendering, URL cache, adaptive params, no duplicate handlers)

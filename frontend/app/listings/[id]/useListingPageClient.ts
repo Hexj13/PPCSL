@@ -14,12 +14,7 @@ import { analytics } from '@/lib/analytics';
 import type { Listing } from '@/lib/api';
 import { listingsApi, favoritesApi } from '@/lib/api';
 import { useAuthStore, useFavoritesStore, useComparisonStore } from '@/lib/store';
-import {
-  getCityName,
-  getListingDisplayTitle,
-  getOptimizedImageUrl,
-  sortOptionsByLabel,
-} from '@/lib/utils';
+import { getCityName, getListingDisplayTitle, sortOptionsByLabel } from '@/lib/utils';
 
 function getClosingDate(lastUpdatedAt: string): Date {
   const date = new Date(lastUpdatedAt);
@@ -306,37 +301,6 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
 
   const closeImageModal = useCallback(() => setIsImageModalOpen(false), []);
 
-  const imagesLength = listing?.images?.length || 1;
-
-  useEffect(() => {
-    if (!isImageModalOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setIsImageModalOpen(false);
-      if (e.key === 'ArrowLeft') {
-        setModalImageIndex((prev) => (prev - 1 + imagesLength) % imagesLength);
-      }
-      if (e.key === 'ArrowRight') {
-        setModalImageIndex((prev) => (prev + 1) % imagesLength);
-      }
-    };
-    const preventScroll = (e: TouchEvent) => {
-      if (e.touches.length > 1) return;
-      e.preventDefault();
-    };
-    document.body.style.overflow = 'hidden';
-    document.body.style.position = 'fixed';
-    document.body.style.width = '100%';
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('touchmove', preventScroll, { passive: false });
-    return () => {
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('touchmove', preventScroll);
-    };
-  }, [isImageModalOpen, imagesLength]);
-
   useEffect(() => {
     if (isImageModalOpen || !listing) return;
     const images =
@@ -358,34 +322,6 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isImageModalOpen, listing]);
-
-  useEffect(() => {
-    if (!listing || typeof window === 'undefined') return;
-    const images =
-      listing.images && listing.images.length > 0 ? listing.images : ['/placeholder-car.jpg'];
-    if (images.length <= 1) return;
-    const nextIndex = (currentImageIndex + 1) % images.length;
-    const nextImageUrl = images[nextIndex];
-    if (!nextImageUrl || nextImageUrl === '/placeholder-car.jpg' || imageErrors.has(nextIndex)) {
-      return;
-    }
-    const img = new window.Image();
-    img.src = getOptimizedImageUrl(nextImageUrl, 75, 1200);
-  }, [currentImageIndex, listing, imageErrors]);
-
-  useEffect(() => {
-    if (!isImageModalOpen || !listing || typeof window === 'undefined') return;
-    const images =
-      listing.images && listing.images.length > 0 ? listing.images : ['/placeholder-car.jpg'];
-    if (images.length <= 1) return;
-    const nextIndex = (modalImageIndex + 1) % images.length;
-    const nextImageUrl = images[nextIndex];
-    if (!nextImageUrl || nextImageUrl === '/placeholder-car.jpg' || imageErrors.has(nextIndex)) {
-      return;
-    }
-    const img = new window.Image();
-    img.src = getOptimizedImageUrl(nextImageUrl, 85, 1920);
-  }, [modalImageIndex, isImageModalOpen, listing, imageErrors]);
 
   return {
     router,

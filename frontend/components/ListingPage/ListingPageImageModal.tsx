@@ -3,7 +3,6 @@
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 
-import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
 import { getOptimizedImageUrl } from '@/lib/utils';
 import { Spinner } from '@/ui';
@@ -18,8 +17,10 @@ interface ListingPageImageModalProps {
   onNext: () => void;
   onPrev: () => void;
   onIndexChange: (_index: number) => void;
+  onImageError: (_index: number) => void;
 }
 
+/* eslint-disable max-lines-per-function -- modal has two-layer image stack, scroll lock, preload, viewport logic */
 export function ListingPageImageModal({
   isOpen,
   images,
@@ -29,23 +30,46 @@ export function ListingPageImageModal({
   onClose,
   onNext,
   onPrev,
-  onIndexChange,
+  onIndexChange: _onIndexChange,
+  onImageError,
 }: ListingPageImageModalProps) {
   const { t } = useTranslation();
   const [modalImageLoading, setModalImageLoading] = useState(false);
   const [visibleIndex, setVisibleIndex] = useState(currentIndex);
-  const modalImageLoadedRef = useRef<Set<number>>(new Set());
+  const [targetImageWidth, setTargetImageWidth] = useState(1920);
+  const [imageQuality, setImageQuality] = useState(85);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const modalImageLoadedRef = useRef<Set<string>>(new Set());
   const swipeContainerRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
   const swipeHandledRef = useRef(false);
   const swipeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const savedScrollYRef = useRef(0);
   const prevIsOpenRef = useRef(false);
+  const wasOpenRef = useRef(false);
+  const lastNavigatedIndexRef = useRef(currentIndex);
+  const navigationCountRef = useRef(0);
 
-  const { visible: showModalImageLoader } = useLoadingState({
-    isLoading: modalImageLoading,
-    minDisplayTime: 1000,
-  });
+  const [showSpinner, setShowSpinner] = useState(false);
+  const spinnerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (modalImageLoading) {
+      spinnerTimeoutRef.current = setTimeout(() => setShowSpinner(true), 300);
+    } else {
+      if (spinnerTimeoutRef.current) {
+        clearTimeout(spinnerTimeoutRef.current);
+        spinnerTimeoutRef.current = null;
+      }
+      setShowSpinner(false);
+    }
+    return () => {
+      if (spinnerTimeoutRef.current) {
+        clearTimeout(spinnerTimeoutRef.current);
+      }
+    };
+  }, [modalImageLoading]);
 
   useEffect(() => {
     if (isOpen && !prevIsOpenRef.current) {
@@ -53,6 +77,69 @@ export function ListingPageImageModal({
     }
     prevIsOpenRef.current = isOpen;
   }, [isOpen, currentIndex]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      wasOpenRef.current = false;
+      return;
+    }
+
+    if (!wasOpenRef.current) {
+      navigationCountRef.current = 0;
+      lastNavigatedIndexRef.current = currentIndex;
+      wasOpenRef.current = true;
+      return;
+    }
+
+    if (lastNavigatedIndexRef.current !== currentIndex) {
+      navigationCountRef.current += 1;
+      lastNavigatedIndexRef.current = currentIndex;
+    }
+  }, [isOpen, currentIndex]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const updateViewportSettings = () => {
+      type NetworkConnection = {
+        effectiveType?: string;
+        saveData?: boolean;
+      };
+
+      const viewportWidth = window.innerWidth;
+      const isMobile = viewportWidth <= 768;
+      const connection = (navigator as Navigator & { connection?: NetworkConnection }).connection;
+      const hasSlowNetwork =
+        connection?.saveData === true ||
+        ['slow-2g', '2g', '3g'].includes(connection?.effectiveType ?? '');
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, isMobile ? 2.2 : 3);
+      const widthMultiplier = isMobile ? 1 : 1.2;
+      const minWidth = isMobile ? 640 : 900;
+      const maxWidth = isMobile ? (hasSlowNetwork ? 1200 : 1440) : 1920;
+      const quality = isMobile ? (hasSlowNetwork ? 68 : 75) : 85;
+      const computedTargetWidth = Math.min(
+        maxWidth,
+        Math.max(minWidth, Math.round(viewportWidth * pixelRatio * widthMultiplier)),
+      );
+      const normalizationStep = isMobile ? 80 : 120;
+      const normalizedTargetWidth =
+        Math.round(computedTargetWidth / normalizationStep) * normalizationStep;
+
+      setTargetImageWidth((prev) => {
+        if (Math.abs(prev - normalizedTargetWidth) < 50) return prev;
+        return normalizedTargetWidth;
+      });
+      setIsMobileViewport(isMobile);
+      setImageQuality((prev) => (prev === quality ? prev : quality));
+    };
+
+    updateViewportSettings();
+    window.addEventListener('resize', updateViewportSettings);
+
+    return () => {
+      window.removeEventListener('resize', updateViewportSettings);
+    };
+  }, [isOpen]);
 
   const minSwipeDistance = 50;
   const onNextRef = useRef(onNext);
@@ -137,8 +224,10 @@ export function ListingPageImageModal({
       e.preventDefault();
     };
 
+    savedScrollYRef.current = window.scrollY;
     document.body.style.overflow = 'hidden';
     document.body.style.position = 'fixed';
+    document.body.style.top = `-${savedScrollYRef.current}px`;
     document.body.style.width = '100%';
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('touchmove', preventScroll, { passive: false });
@@ -146,7 +235,9 @@ export function ListingPageImageModal({
     return () => {
       document.body.style.overflow = '';
       document.body.style.position = '';
+      document.body.style.top = '';
       document.body.style.width = '';
+      window.scrollTo(0, savedScrollYRef.current);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('touchmove', preventScroll);
       if (swipeTimeoutRef.current) {
@@ -160,7 +251,6 @@ export function ListingPageImageModal({
   useEffect(() => {
     if (!isOpen) {
       setModalImageLoading(false);
-      modalImageLoadedRef.current.clear();
       return;
     }
 
@@ -173,19 +263,22 @@ export function ListingPageImageModal({
       return;
     }
 
-    if (modalImageLoadedRef.current.has(currentIndex)) {
+    const optimizedUrl = getOptimizedImageUrl(currentImage, imageQuality, targetImageWidth);
+
+    if (modalImageLoadedRef.current.has(optimizedUrl)) {
       setModalImageLoading(false);
       setVisibleIndex(currentIndex);
       return;
     }
 
-    const optimizedUrl = getOptimizedImageUrl(currentImage, 85, 1920);
+    const loadStartTime = performance.now();
+    const wasCached = modalImageLoadedRef.current.has(optimizedUrl);
     const testImg = new window.Image();
     testImg.src = optimizedUrl;
     const imgIndex = currentIndex;
 
     if (testImg.complete && testImg.naturalWidth > 0) {
-      modalImageLoadedRef.current.add(imgIndex);
+      modalImageLoadedRef.current.add(optimizedUrl);
       setModalImageLoading(false);
       setVisibleIndex(imgIndex);
       return;
@@ -194,7 +287,14 @@ export function ListingPageImageModal({
     setModalImageLoading(true);
 
     testImg.onload = () => {
-      modalImageLoadedRef.current.add(imgIndex);
+      const loadTime = performance.now() - loadStartTime;
+      if (process.env.NODE_ENV === 'development') {
+        // eslint-disable-next-line no-console -- dev instrumentation
+        console.debug(
+          `[ImageModal] Image ${imgIndex} loaded in ${loadTime.toFixed(0)}ms, cache: ${wasCached}`,
+        );
+      }
+      modalImageLoadedRef.current.add(optimizedUrl);
       if (imgIndex === currentIndex) {
         setModalImageLoading(false);
         setVisibleIndex(currentIndex);
@@ -212,7 +312,13 @@ export function ListingPageImageModal({
       testImg.onload = null;
       testImg.onerror = null;
     };
-  }, [currentIndex, isOpen, images, imageErrors]);
+  }, [currentIndex, isOpen, images, imageErrors, targetImageWidth, imageQuality]);
+
+  const imagesCacheKey = images.join('|');
+
+  useEffect(() => {
+    modalImageLoadedRef.current.clear();
+  }, [imagesCacheKey]);
 
   useEffect(() => {
     if (!isOpen || images.length <= 1) return;
@@ -220,35 +326,82 @@ export function ListingPageImageModal({
     const nextIndex = (currentIndex + 1) % images.length;
     const prevIndex = (currentIndex - 1 + images.length) % images.length;
     const preloadImages: HTMLImageElement[] = [];
+    const preloadTimeouts: Array<ReturnType<typeof setTimeout>> = [];
+    const shouldWarmSecondNext = isMobileViewport && navigationCountRef.current < 2;
+    const secondNextIndex = (currentIndex + 2) % images.length;
 
-    for (const index of [nextIndex, prevIndex]) {
-      if (modalImageLoadedRef.current.has(index)) continue;
+    const preloadByIndex = (index: number, delay = 0) => {
       const url = images[index];
-      if (!url || url === '/placeholder-car.jpg' || imageErrors.has(index)) continue;
-      const optimizedUrl = getOptimizedImageUrl(url, 85, 1920);
-      const img = new window.Image();
-      const capturedIndex = index;
-      img.onload = () => {
-        modalImageLoadedRef.current.add(capturedIndex);
+      if (!url || url === '/placeholder-car.jpg' || imageErrors.has(index)) return;
+      const optimizedUrl = getOptimizedImageUrl(url, imageQuality, targetImageWidth);
+      if (modalImageLoadedRef.current.has(optimizedUrl)) {
+        if (process.env.NODE_ENV === 'development') {
+          // eslint-disable-next-line no-console -- dev instrumentation
+          console.debug(`[ImageModal] Preload cache hit for index ${index}`);
+        }
+        return;
+      }
+      const startPreload = () => {
+        const img = new window.Image();
+        img.onload = () => {
+          modalImageLoadedRef.current.add(optimizedUrl);
+        };
+        img.src = optimizedUrl;
+        preloadImages.push(img);
       };
-      img.src = optimizedUrl;
-      preloadImages.push(img);
+
+      if (delay > 0) {
+        const timeout = setTimeout(startPreload, delay);
+        preloadTimeouts.push(timeout);
+        return;
+      }
+
+      startPreload();
+    };
+
+    preloadByIndex(nextIndex);
+    preloadByIndex(prevIndex, 120);
+
+    if (
+      shouldWarmSecondNext &&
+      images.length > 2 &&
+      secondNextIndex !== nextIndex &&
+      secondNextIndex !== prevIndex
+    ) {
+      preloadByIndex(secondNextIndex, 40);
     }
 
     return () => {
+      for (const timeout of preloadTimeouts) {
+        clearTimeout(timeout);
+      }
       for (const img of preloadImages) {
         img.onload = null;
       }
     };
-  }, [currentIndex, isOpen, images, imageErrors]);
+  }, [currentIndex, isOpen, images, imageErrors, isMobileViewport, targetImageWidth, imageQuality]);
 
   if (!isOpen) return null;
 
   const imagesList = images.length > 0 ? images : ['/placeholder-car.jpg'];
-  const displayImage = imagesList[visibleIndex];
-  const hasValidImage =
-    displayImage && displayImage !== '/placeholder-car.jpg' && !imageErrors.has(visibleIndex);
-  const isDisplayImageLoading = showModalImageLoader && visibleIndex === currentIndex;
+  const hasValidImageAt = (index: number) => {
+    const img = imagesList[index];
+    return img && img !== '/placeholder-car.jpg' && !imageErrors.has(index);
+  };
+  const confirmedUrl = hasValidImageAt(visibleIndex)
+    ? getOptimizedImageUrl(imagesList[visibleIndex], imageQuality, targetImageWidth)
+    : '';
+  const pendingUrl = hasValidImageAt(currentIndex)
+    ? getOptimizedImageUrl(imagesList[currentIndex], imageQuality, targetImageWidth)
+    : '';
+  const hasValidImage = !!confirmedUrl || !!pendingUrl;
+  const shouldShowLoader = showSpinner && modalImageLoading && visibleIndex === currentIndex;
+  const imageAltText = t('listings.imageAltWithTotal', {
+    title: imageAltTitle,
+    index: (currentIndex + 1).toString(),
+    total: images.length.toString(),
+  });
+  const isExternalUrl = (url: string) => url.startsWith('http://') || url.startsWith('https://');
 
   return (
     <div
@@ -345,44 +498,63 @@ export function ListingPageImageModal({
         ref={swipeContainerRef}
         className="relative max-w-7xl w-full h-full flex items-center justify-center p-4"
       >
-        {isDisplayImageLoading && (
-          <div className="absolute inset-0 flex items-center justify-center z-10">
+        {shouldShowLoader && (
+          <div className="absolute inset-0 flex items-center justify-center z-20">
             <Spinner size="lg" />
           </div>
         )}
 
         {hasValidImage ? (
-          (() => {
-            const optimizedUrl = getOptimizedImageUrl(displayImage, 85, 1920);
-            const isExternal =
-              optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://');
-            return (
+          <>
+            {confirmedUrl && (
               <Image
-                src={optimizedUrl}
-                alt={t('listings.imageAltWithTotal', {
-                  title: imageAltTitle,
-                  index: (visibleIndex + 1).toString(),
-                  total: images.length.toString(),
-                })}
+                key={`confirmed-${visibleIndex}`}
+                src={confirmedUrl}
+                alt={imageAltText}
                 width={1200}
                 height={900}
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 95vw, 90vw"
-                className={`max-w-full max-h-[90vh] w-auto h-auto object-contain ${isDisplayImageLoading ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
-                priority={visibleIndex === 0}
+                className="absolute inset-0 m-auto max-w-full max-h-[90vh] w-auto h-auto object-contain opacity-100"
+                loading="eager"
                 draggable={false}
-                unoptimized={isExternal}
+                unoptimized={isExternalUrl(confirmedUrl)}
                 onLoad={() => {
-                  modalImageLoadedRef.current.add(visibleIndex);
+                  modalImageLoadedRef.current.add(confirmedUrl);
                   setModalImageLoading(false);
                 }}
                 onError={() => {
-                  onIndexChange(visibleIndex);
+                  onImageError(visibleIndex);
                   setModalImageLoading(false);
                 }}
-                data-index={visibleIndex}
+                data-layer="confirmed"
               />
-            );
-          })()
+            )}
+            {pendingUrl && pendingUrl !== confirmedUrl && (
+              <Image
+                key={`pending-${currentIndex}`}
+                src={pendingUrl}
+                alt={imageAltText}
+                width={1200}
+                height={900}
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 95vw, 90vw"
+                className="absolute inset-0 m-auto max-w-full max-h-[90vh] w-auto h-auto object-contain opacity-0"
+                loading="eager"
+                draggable={false}
+                unoptimized={isExternalUrl(pendingUrl)}
+                onLoad={() => {
+                  modalImageLoadedRef.current.add(pendingUrl);
+                  setModalImageLoading(false);
+                  setVisibleIndex(currentIndex);
+                }}
+                onError={() => {
+                  onImageError(currentIndex);
+                  setModalImageLoading(false);
+                  setVisibleIndex(currentIndex);
+                }}
+                data-layer="pending"
+              />
+            )}
+          </>
         ) : (
           <div
             className="w-full h-full flex items-center justify-center"
