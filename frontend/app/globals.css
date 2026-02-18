@@ -410,7 +410,7 @@ label {
     @apply resize-y;
   }
 
-  div[contentEditable].input-field {
+  div[contenteditable].input-field {
     height: auto !important;
     min-height: 6rem;
     max-height: none !important;
@@ -420,6 +420,10 @@ label {
     padding: 12px 16px !important;
     white-space: pre-wrap !important;
     overflow-wrap: break-word !important;
+  }
+
+  .listing-description-editor {
+    min-height: 12rem !important;
   }
 
   .input-field.dropdown-button {

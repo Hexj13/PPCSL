@@ -10,6 +10,7 @@ interface RichTextEditorProps {
   placeholder?: string;
   maxLength?: number;
   rows?: number;
+  editorClassName?: string;
 }
 
 const normalizeContent = (html: string): string => {
@@ -55,6 +56,7 @@ export function RichTextEditor({
   placeholder = '',
   maxLength = 5000,
   rows = 4,
+  editorClassName,
 }: RichTextEditorProps) {
   const { t } = useTranslation();
   const editorRef = useRef<HTMLDivElement>(null);
@@ -354,7 +356,7 @@ export function RichTextEditor({
           document.execCommand('insertText', false, text);
           handleInput();
         }}
-        className="input-field overflow-y-auto scrollbar-custom"
+        className={`input-field overflow-y-auto scrollbar-custom ${editorClassName ?? ''}`.trim()}
         style={{
           minHeight: `${rows * 1.5}rem`,
         }}

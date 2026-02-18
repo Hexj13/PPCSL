@@ -88,7 +88,7 @@ export function PriceAndLocationSection({
             {t('listings.priceLabel')}
             <RequiredAsterisk filled={!!formData.price.trim()} />
           </label>
-          <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex flex-row flex-nowrap gap-2">
             <input
               type="text"
               required
@@ -111,7 +111,7 @@ export function PriceAndLocationSection({
                 }
               }}
               onWheel={handleWheel}
-              className={`input-field flex-1 h-[48px] ${errors['price'] ? 'border-red-500 focus:border-red-500 ' : ''}`}
+              className={`input-field flex-1 min-w-0 h-[48px] ${errors['price'] ? 'border-red-500 focus:border-red-500 ' : ''}`}
               placeholder={t('listings.pricePlaceholder')}
               title={t('listings.priceTitle')}
             />

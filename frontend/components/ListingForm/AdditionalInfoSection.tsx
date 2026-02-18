@@ -126,7 +126,8 @@ export function AdditionalInfoSection({
           onChange={(value) => setFormData((prev) => ({ ...prev, description: value }))}
           placeholder={t('listings.descriptionPlaceholder')}
           maxLength={5000}
-          rows={4}
+          rows={14}
+          editorClassName="listing-description-editor"
         />
       </div>
     </div>
