@@ -17,11 +17,12 @@ export function useHeaderState() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isErrorPage, setIsErrorPage] = useState(false);
 
-  const { visible: showSkeleton } = useLoadingState({
+  const { visible: loadingStateVisible } = useLoadingState({
     isLoading: !isInitialized,
     showDelay: 200,
     minDisplayTime: 1000,
   });
+  const showSkeleton = !isInitialized || loadingStateVisible;
 
   const isAuthPage = AUTH_PATHS.includes(pathname);
 

@@ -171,7 +171,7 @@ const nextConfig = {
 };
 
 const sentryWebpackPluginOptions = {
-  silent: !process.env.CI,
+  silent: !process.env.SENTRY_AUTH_TOKEN || process.env.CI === 'true',
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
   authToken: process.env.SENTRY_AUTH_TOKEN,
