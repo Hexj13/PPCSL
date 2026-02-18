@@ -303,15 +303,30 @@ function MultiSelectDropdownComponent({
             <div className="border-t border-divider px-2 py-1.5 flex justify-end gap-1.5 bg-white">
               <button
                 type="button"
+                disabled={tempValues.length === 0}
                 onClick={() => {
                   setTempValues([]);
                   onChange([]);
                   setIsOpen(false);
                   setSearchQuery('');
                 }}
-                className="px-3 py-1.5 text-sm text-text-primary font-medium hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40"
+                className="p-2 text-text-primary font-medium hover:text-primary-500 transition-colors duration-200 flex items-center justify-center rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-text-primary"
+                aria-label={t('common.reset')}
               >
-                {t('common.reset')}
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
               </button>
               <button
                 type="button"

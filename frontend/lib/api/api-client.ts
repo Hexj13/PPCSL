@@ -208,6 +208,10 @@ function isLoginOrRegisterRequest(url: string | undefined): boolean {
   return !!url?.includes('/api/auth/login') || !!url?.includes('/api/auth/register');
 }
 
+function isRefreshRequest(url: string | undefined): boolean {
+  return !!url?.includes('/api/auth/refresh');
+}
+
 async function showToastForError(error: AxiosError): Promise<void> {
   if (typeof window === 'undefined') return;
   const errorMessage = getErrorMessage(error);
@@ -266,7 +270,7 @@ api.interceptors.response.use(
     if (retry429 !== undefined) return retry429;
 
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
-      if (isLoginOrRegisterRequest(originalRequest.url)) {
+      if (isLoginOrRegisterRequest(originalRequest.url) || isRefreshRequest(originalRequest.url)) {
         if (error.config && !error.config.headers['X-Skip-Error-Handling']) {
           await showToastForError(error);
         }

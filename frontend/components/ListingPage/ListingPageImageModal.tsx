@@ -33,55 +33,95 @@ export function ListingPageImageModal({
 }: ListingPageImageModalProps) {
   const { t } = useTranslation();
   const [modalImageLoading, setModalImageLoading] = useState(false);
+  const [visibleIndex, setVisibleIndex] = useState(currentIndex);
   const modalImageLoadedRef = useRef<Set<number>>(new Set());
+  const swipeContainerRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
   const swipeHandledRef = useRef(false);
+  const swipeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prevIsOpenRef = useRef(false);
 
   const { visible: showModalImageLoader } = useLoadingState({
     isLoading: modalImageLoading,
     minDisplayTime: 1000,
   });
 
+  useEffect(() => {
+    if (isOpen && !prevIsOpenRef.current) {
+      setVisibleIndex(currentIndex);
+    }
+    prevIsOpenRef.current = isOpen;
+  }, [isOpen, currentIndex]);
+
   const minSwipeDistance = 50;
+  const onNextRef = useRef(onNext);
+  const onPrevRef = useRef(onPrev);
+  onNextRef.current = onNext;
+  onPrevRef.current = onPrev;
+  const imagesLengthRef = useRef(images.length);
+  imagesLengthRef.current = images.length;
 
-  const onTouchStart = (e: React.TouchEvent) => {
-    touchEndX.current = null;
-    touchStartX.current = e.targetTouches[0].clientX;
-  };
+  useEffect(() => {
+    const container = swipeContainerRef.current;
+    if (!isOpen || !container) return;
 
-  const onTouchMove = (e: React.TouchEvent) => {
-    e.preventDefault();
-    touchEndX.current = e.targetTouches[0].clientX;
-  };
+    const handleTouchStart = (e: TouchEvent) => {
+      touchEndX.current = null;
+      touchStartX.current = e.touches[0].clientX;
+    };
 
-  const onTouchEnd = () => {
-    if (!touchStartX.current || !touchEndX.current) return;
-    const distance = touchStartX.current - touchEndX.current;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
+    const handleTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+      touchEndX.current = e.touches[0].clientX;
+    };
 
-    if (isLeftSwipe && images.length > 1) {
-      swipeHandledRef.current = true;
-      onNext();
-      setTimeout(() => {
-        swipeHandledRef.current = false;
-      }, 400);
-    }
-    if (isRightSwipe && images.length > 1) {
-      swipeHandledRef.current = true;
-      onPrev();
-      setTimeout(() => {
-        swipeHandledRef.current = false;
-      }, 400);
-    }
-  };
+    const handleTouchEnd = () => {
+      if (!touchStartX.current || !touchEndX.current) return;
+      const distance = touchStartX.current - touchEndX.current;
+      const isLeftSwipe = distance > minSwipeDistance;
+      const isRightSwipe = distance < -minSwipeDistance;
+
+      if (isLeftSwipe && imagesLengthRef.current > 1) {
+        swipeHandledRef.current = true;
+        onNextRef.current();
+        if (swipeTimeoutRef.current) clearTimeout(swipeTimeoutRef.current);
+        swipeTimeoutRef.current = setTimeout(() => {
+          swipeHandledRef.current = false;
+        }, 400);
+      }
+      if (isRightSwipe && imagesLengthRef.current > 1) {
+        swipeHandledRef.current = true;
+        onPrevRef.current();
+        if (swipeTimeoutRef.current) clearTimeout(swipeTimeoutRef.current);
+        swipeTimeoutRef.current = setTimeout(() => {
+          swipeHandledRef.current = false;
+        }, 400);
+      }
+    };
+
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    container.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const isInteractive = target.closest('button, [href]');
       if (e.key === 'Escape') {
+        onClose();
+      }
+      if ((e.key === 'Enter' || e.key === ' ') && !isInteractive) {
+        e.preventDefault();
         onClose();
       }
       if (e.key === 'ArrowLeft') {
@@ -109,6 +149,11 @@ export function ListingPageImageModal({
       document.body.style.width = '';
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('touchmove', preventScroll);
+      if (swipeTimeoutRef.current) {
+        clearTimeout(swipeTimeoutRef.current);
+        swipeTimeoutRef.current = null;
+      }
+      swipeHandledRef.current = false;
     };
   }, [isOpen, onClose, onNext, onPrev]);
 
@@ -124,11 +169,13 @@ export function ListingPageImageModal({
 
     if (!currentImage || currentImage === '/placeholder-car.jpg' || imageErrors.has(currentIndex)) {
       setModalImageLoading(false);
+      setVisibleIndex(currentIndex);
       return;
     }
 
     if (modalImageLoadedRef.current.has(currentIndex)) {
       setModalImageLoading(false);
+      setVisibleIndex(currentIndex);
       return;
     }
 
@@ -140,6 +187,7 @@ export function ListingPageImageModal({
     if (testImg.complete && testImg.naturalWidth > 0) {
       modalImageLoadedRef.current.add(imgIndex);
       setModalImageLoading(false);
+      setVisibleIndex(imgIndex);
       return;
     }
 
@@ -149,12 +197,14 @@ export function ListingPageImageModal({
       modalImageLoadedRef.current.add(imgIndex);
       if (imgIndex === currentIndex) {
         setModalImageLoading(false);
+        setVisibleIndex(currentIndex);
       }
     };
 
     testImg.onerror = () => {
       if (imgIndex === currentIndex) {
         setModalImageLoading(false);
+        setVisibleIndex(currentIndex);
       }
     };
 
@@ -168,22 +218,37 @@ export function ListingPageImageModal({
     if (!isOpen || images.length <= 1) return;
 
     const nextIndex = (currentIndex + 1) % images.length;
-    const nextImageUrl = images[nextIndex];
+    const prevIndex = (currentIndex - 1 + images.length) % images.length;
+    const preloadImages: HTMLImageElement[] = [];
 
-    if (!nextImageUrl || nextImageUrl === '/placeholder-car.jpg' || imageErrors.has(nextIndex)) {
-      return;
+    for (const index of [nextIndex, prevIndex]) {
+      if (modalImageLoadedRef.current.has(index)) continue;
+      const url = images[index];
+      if (!url || url === '/placeholder-car.jpg' || imageErrors.has(index)) continue;
+      const optimizedUrl = getOptimizedImageUrl(url, 85, 1920);
+      const img = new window.Image();
+      const capturedIndex = index;
+      img.onload = () => {
+        modalImageLoadedRef.current.add(capturedIndex);
+      };
+      img.src = optimizedUrl;
+      preloadImages.push(img);
     }
 
-    const optimizedUrl = getOptimizedImageUrl(nextImageUrl, 85, 1920);
-    const img = new window.Image();
-    img.src = optimizedUrl;
+    return () => {
+      for (const img of preloadImages) {
+        img.onload = null;
+      }
+    };
   }, [currentIndex, isOpen, images, imageErrors]);
 
   if (!isOpen) return null;
 
-  const currentImage = images[currentIndex];
+  const imagesList = images.length > 0 ? images : ['/placeholder-car.jpg'];
+  const displayImage = imagesList[visibleIndex];
   const hasValidImage =
-    currentImage && currentImage !== '/placeholder-car.jpg' && !imageErrors.has(currentIndex);
+    displayImage && displayImage !== '/placeholder-car.jpg' && !imageErrors.has(visibleIndex);
+  const isDisplayImageLoading = showModalImageLoader && visibleIndex === currentIndex;
 
   return (
     <div
@@ -197,9 +262,13 @@ export function ListingPageImageModal({
         }
       }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          onClose();
+        const target = e.target as HTMLElement;
+        if (target.closest('button, img')) return;
+        if (swipeHandledRef.current) {
+          swipeHandledRef.current = false;
+          return;
         }
+        onClose();
       }}
     >
       <button
@@ -207,10 +276,10 @@ export function ListingPageImageModal({
           e.stopPropagation();
           onClose();
         }}
-        className="absolute top-2 right-2 sm:top-4 sm:right-4 text-primary-700 hover:text-primary-900 transition-colors z-10 p-2"
+        className="absolute top-3 right-3 sm:top-4 sm:right-4 text-primary-700 hover:text-primary-900 transition-colors z-10 p-2"
       >
         <svg
-          className="w-6 h-6 sm:w-8 sm:h-8"
+          className="w-11 h-11 sm:w-12 sm:h-12"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -231,7 +300,7 @@ export function ListingPageImageModal({
               e.stopPropagation();
               onPrev();
             }}
-            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 text-primary-900 transition-all z-10 bg-primary-500 rounded-full p-3 sm:p-4 border-2 border-primary-900 shadow-lg hidden sm:block"
+            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 text-primary-900 transition-all duration-200 z-10 bg-primary-500 rounded-full p-3 sm:p-4 border-2 border-primary-900 shadow-lg hidden sm:block hover:scale-110"
           >
             <svg
               className="w-8 h-8 sm:w-10 sm:h-10"
@@ -253,7 +322,7 @@ export function ListingPageImageModal({
               e.stopPropagation();
               onNext();
             }}
-            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 text-primary-900 transition-all z-10 bg-primary-500 rounded-full p-3 sm:p-4 border-2 border-primary-900 shadow-lg hidden sm:block"
+            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 text-primary-900 transition-all duration-200 z-10 bg-primary-500 rounded-full p-3 sm:p-4 border-2 border-primary-900 shadow-lg hidden sm:block hover:scale-110"
           >
             <svg
               className="w-8 h-8 sm:w-10 sm:h-10"
@@ -273,29 +342,10 @@ export function ListingPageImageModal({
       )}
 
       <div
+        ref={swipeContainerRef}
         className="relative max-w-7xl w-full h-full flex items-center justify-center p-4"
-        role="button"
-        tabIndex={0}
-        aria-label={t('listings.closeImageModal')}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-        onClick={(e) => {
-          if (e.target !== e.currentTarget) return;
-          if (swipeHandledRef.current) {
-            swipeHandledRef.current = false;
-            return;
-          }
-          onClose();
-        }}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            onClose();
-          }
-        }}
       >
-        {showModalImageLoader && (
+        {isDisplayImageLoading && (
           <div className="absolute inset-0 flex items-center justify-center z-10">
             <Spinner size="lg" />
           </div>
@@ -303,7 +353,7 @@ export function ListingPageImageModal({
 
         {hasValidImage ? (
           (() => {
-            const optimizedUrl = getOptimizedImageUrl(currentImage, 85, 1920);
+            const optimizedUrl = getOptimizedImageUrl(displayImage, 85, 1920);
             const isExternal =
               optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://');
             return (
@@ -311,25 +361,25 @@ export function ListingPageImageModal({
                 src={optimizedUrl}
                 alt={t('listings.imageAltWithTotal', {
                   title: imageAltTitle,
-                  index: (currentIndex + 1).toString(),
+                  index: (visibleIndex + 1).toString(),
                   total: images.length.toString(),
                 })}
                 width={1200}
                 height={900}
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 95vw, 90vw"
-                className={`max-w-full max-h-[90vh] w-auto h-auto object-contain ${showModalImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
-                priority={currentIndex === 0}
+                className={`max-w-full max-h-[90vh] w-auto h-auto object-contain ${isDisplayImageLoading ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
+                priority={visibleIndex === 0}
                 draggable={false}
                 unoptimized={isExternal}
                 onLoad={() => {
-                  modalImageLoadedRef.current.add(currentIndex);
+                  modalImageLoadedRef.current.add(visibleIndex);
                   setModalImageLoading(false);
                 }}
                 onError={() => {
-                  onIndexChange(currentIndex);
+                  onIndexChange(visibleIndex);
                   setModalImageLoading(false);
                 }}
-                data-index={currentIndex}
+                data-index={visibleIndex}
               />
             );
           })()
@@ -351,7 +401,7 @@ export function ListingPageImageModal({
 
         {images.length > 1 && (
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-primary-500 text-lg sm:text-xl font-semibold bg-black bg-opacity-50 px-4 py-2 rounded-full">
-            {currentIndex + 1} / {images.length}
+            {visibleIndex + 1} / {images.length}
           </div>
         )}
       </div>

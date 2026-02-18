@@ -60,10 +60,7 @@ export function BasicInfoSection({
             searchable={true}
             placeholder={t('listings.selectBrand')}
             error={!!errors['vehicle.brand_id']}
-            options={[
-              { value: '', label: t('listings.selectBrand') },
-              ...brands.map((brand) => ({ value: brand.id, label: brand.name })),
-            ]}
+            options={brands.map((brand) => ({ value: brand.id, label: brand.name }))}
           />
           {errors['vehicle.brand_id'] && (
             <p className="mt-1 text-sm text-red-500">{t('listings.brandRequired')}</p>
@@ -88,10 +85,7 @@ export function BasicInfoSection({
             searchable={true}
             placeholder={loadingModels ? t('common.loading') : t('listings.selectModel')}
             error={!!errors['vehicle.model_id']}
-            options={[
-              { value: '', label: t('listings.selectModel') },
-              ...models.map((model) => ({ value: model.id, label: model.name })),
-            ]}
+            options={models.map((model) => ({ value: model.id, label: model.name }))}
           />
           {errors['vehicle.model_id'] && (
             <p className="mt-1 text-sm text-red-500">{t('listings.modelRequired')}</p>

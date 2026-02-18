@@ -465,12 +465,12 @@ function CompleteProfileContent() {
               }
             />
 
-            <div className="flex gap-3 pt-4">
+            <div className="flex flex-col sm:flex-row gap-3 pt-4">
               <button
                 type="button"
                 onClick={handleSkip}
                 disabled={isSubmitting}
-                className="flex-1 btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-gray-500/40 hover:border-gray-500/60 bg-gray-500/20 text-text-secondary font-semibold text-base hover:text-text-primary transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {t('completeProfile.skip')}
               </button>
@@ -478,7 +478,7 @@ function CompleteProfileContent() {
                 type="submit"
                 loading={isSubmitting}
                 disabled={!hasAnyField() || hasErrors()}
-                className="flex-1 text-primary-700 font-medium text-sm md:text-base hover:text-primary-900 hover:border-primary-900 active:text-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+                className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-primary-600 hover:border-primary-700 bg-primary-500/20 text-primary-800 font-semibold text-base hover:bg-primary-500/30 transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {t('completeProfile.save')}
               </LoadingButton>

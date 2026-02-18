@@ -129,15 +129,20 @@ function MyListingsModals({
           </div>
           <div className="flex flex-col sm:flex-row gap-3 justify-end">
             <button
+              type="button"
               onClick={() => {
                 setIsCloseConfirmOpen(false);
                 setListingToClose(null);
               }}
-              className="flex-1 sm:flex-none btn-secondary"
+              className="close-confirm-btn flex-1 min-h-[48px] h-12 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-gray-500/40 hover:border-gray-500/60 bg-gray-500/20 text-text-secondary font-semibold text-base hover:text-text-primary transition-colors duration-200 select-none"
             >
               {t('myListings.closeConfirmCancel')}
             </button>
-            <button onClick={handleCloseConfirm} className="flex-1 sm:flex-none btn-primary">
+            <button
+              type="button"
+              onClick={handleCloseConfirm}
+              className="close-confirm-btn flex-1 min-h-[48px] h-12 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-primary-600 hover:border-primary-700 bg-primary-500/20 text-primary-800 font-semibold text-base hover:bg-primary-500/30 transition-colors duration-200 select-none"
+            >
               {t('myListings.closeConfirmOk')}
             </button>
           </div>

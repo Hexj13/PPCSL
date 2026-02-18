@@ -116,6 +116,23 @@ label {
     color: #1b1b1b !important;
   }
 
+  .close-confirm-btn {
+    height: 48px !important;
+    min-height: 48px !important;
+    max-height: 48px !important;
+    box-sizing: border-box !important;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .saved-filter-card:hover,
+    .saved-filter-card:focus-within {
+      border-color: #1a4534;
+      box-shadow:
+        0 10px 15px -3px rgb(0 0 0 / 0.1),
+        0 4px 6px -2px rgb(0 0 0 / 0.05);
+    }
+  }
+
   .btn-outline {
     box-sizing: border-box !important;
     height: 52px !important;

@@ -297,7 +297,7 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
               });
             }
           }}
-          className="card p-4 md:p-5 cursor-pointer group bg-white rounded-xl border-2 border-primary-700/30 shadow-none transition-all duration-200 hover:border-primary-900 focus-within:border-primary-900 hover:shadow-lg focus-within:shadow-lg"
+          className="saved-filter-card card p-4 md:p-5 cursor-pointer group bg-white rounded-xl border-2 border-primary-700/30 shadow-none transition-all duration-200"
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex-1">

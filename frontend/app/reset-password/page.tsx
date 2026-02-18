@@ -157,12 +157,12 @@ function ResetPasswordCodeStep({
               <p className="text-sm text-red-400">{errors.code}</p>
             </div>
           )}
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col sm:flex-row gap-3 pt-4">
             <button
               type="button"
               onClick={onBack}
               disabled={loading}
-              className="flex-1 btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+              className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-gray-500/40 hover:border-gray-500/60 bg-gray-500/20 text-text-secondary font-semibold text-base hover:text-text-primary transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {t('common.back')}
             </button>
@@ -171,7 +171,7 @@ function ResetPasswordCodeStep({
               loading={loading}
               loadingText={t('resetPassword.verifying')}
               disabled={code.join('').trim().length !== 6 || isVerificationBlocked}
-              className={btnPrimaryClass}
+              className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-primary-600 hover:border-primary-700 bg-primary-500/20 text-primary-800 font-semibold text-base hover:bg-primary-500/30 transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isVerificationBlocked ? t('resetPassword.blocked') : t('resetPassword.verify')}
             </LoadingButton>
@@ -356,12 +356,12 @@ function ResetPasswordPasswordStep({
           <p className="mt-1 text-sm text-red-400">{errors.confirmPassword}</p>
         )}
       </div>
-      <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row gap-3">
         <button
           type="button"
           onClick={onBack}
           disabled={loading}
-          className="flex-1 btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+          className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-gray-500/40 hover:border-gray-500/60 bg-gray-500/20 text-text-secondary font-semibold text-base hover:text-text-primary transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {t('common.back')}
         </button>
@@ -370,7 +370,7 @@ function ResetPasswordPasswordStep({
           loading={loading}
           loadingText={t('common.loading')}
           disabled={!isFormValid}
-          className={btnPrimaryClass}
+          className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-primary-600 hover:border-primary-700 bg-primary-500/20 text-primary-800 font-semibold text-base hover:bg-primary-500/30 transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {t('resetPassword.resetButton')}
         </LoadingButton>
