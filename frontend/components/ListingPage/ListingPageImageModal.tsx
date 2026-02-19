@@ -54,6 +54,16 @@ export function ListingPageImageModal({
   const [showSpinner, setShowSpinner] = useState(false);
   const spinnerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const [pinchScale, setPinchScale] = useState(1);
+  const initialPinchDistanceRef = useRef<number>(0);
+  const pinchStartScaleRef = useRef(1);
+  const isPinchingRef = useRef(false);
+  const pinchScaleRef = useRef(1);
+  pinchScaleRef.current = pinchScale;
+
+  const getPinchDistance = (t1: Touch, t2: Touch) =>
+    Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+
   useEffect(() => {
     if (modalImageLoading) {
       spinnerTimeoutRef.current = setTimeout(() => setShowSpinner(true), 300);
@@ -77,6 +87,10 @@ export function ListingPageImageModal({
     }
     prevIsOpenRef.current = isOpen;
   }, [isOpen, currentIndex]);
+
+  useEffect(() => {
+    if (!isOpen) setPinchScale(1);
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -156,14 +170,38 @@ export function ListingPageImageModal({
     const handleTouchStart = (e: TouchEvent) => {
       touchEndX.current = null;
       touchStartX.current = e.touches[0].clientX;
+      if (isMobileViewport && e.touches.length === 2) {
+        isPinchingRef.current = true;
+        initialPinchDistanceRef.current = getPinchDistance(e.touches[0], e.touches[1]);
+        pinchStartScaleRef.current = pinchScaleRef.current;
+      }
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      e.preventDefault();
-      touchEndX.current = e.touches[0].clientX;
+      if (isMobileViewport && e.touches.length === 2 && isPinchingRef.current) {
+        e.preventDefault();
+        const dist = getPinchDistance(e.touches[0], e.touches[1]);
+        const scale = Math.min(
+          4,
+          Math.max(1, (pinchStartScaleRef.current * dist) / initialPinchDistanceRef.current),
+        );
+        setPinchScale(scale);
+        return;
+      }
+      touchEndX.current = e.touches[0]?.clientX ?? null;
     };
 
-    const handleTouchEnd = () => {
+    const resetPinchIfNeeded = (e: TouchEvent) => {
+      if (e.touches.length < 2 && isPinchingRef.current) {
+        isPinchingRef.current = false;
+        setPinchScale(1);
+        return true;
+      }
+      return false;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (resetPinchIfNeeded(e)) return;
       if (!touchStartX.current || !touchEndX.current) return;
       const distance = touchStartX.current - touchEndX.current;
       const isLeftSwipe = distance > minSwipeDistance;
@@ -187,16 +225,22 @@ export function ListingPageImageModal({
       }
     };
 
+    const handleTouchCancel = (e: TouchEvent) => {
+      resetPinchIfNeeded(e);
+    };
+
     container.addEventListener('touchstart', handleTouchStart, { passive: true });
     container.addEventListener('touchmove', handleTouchMove, { passive: false });
     container.addEventListener('touchend', handleTouchEnd, { passive: true });
+    container.addEventListener('touchcancel', handleTouchCancel, { passive: true });
 
     return () => {
       container.removeEventListener('touchstart', handleTouchStart);
       container.removeEventListener('touchmove', handleTouchMove);
       container.removeEventListener('touchend', handleTouchEnd);
+      container.removeEventListener('touchcancel', handleTouchCancel);
     };
-  }, [isOpen]);
+  }, [isOpen, isMobileViewport]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -498,78 +542,90 @@ export function ListingPageImageModal({
         ref={swipeContainerRef}
         className="relative max-w-7xl w-full h-full flex items-center justify-center p-4"
       >
-        {shouldShowLoader && (
-          <div className="absolute inset-0 flex items-center justify-center z-20">
-            <Spinner size="lg" />
-          </div>
-        )}
+        <div
+          className="relative w-full h-full flex items-center justify-center"
+          style={
+            isMobileViewport
+              ? {
+                  transform: `scale(${pinchScale})`,
+                  transformOrigin: 'center center',
+                }
+              : undefined
+          }
+        >
+          {shouldShowLoader && (
+            <div className="absolute inset-0 flex items-center justify-center z-20">
+              <Spinner size="lg" />
+            </div>
+          )}
 
-        {hasValidImage ? (
-          <>
-            {confirmedUrl && (
-              <Image
-                key={`confirmed-${visibleIndex}`}
-                src={confirmedUrl}
-                alt={imageAltText}
-                width={1200}
-                height={900}
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 95vw, 90vw"
-                className="absolute inset-0 m-auto max-w-full max-h-[90vh] w-auto h-auto object-contain opacity-100"
-                loading="eager"
-                draggable={false}
-                unoptimized={isExternalUrl(confirmedUrl)}
-                onLoad={() => {
-                  modalImageLoadedRef.current.add(confirmedUrl);
-                  setModalImageLoading(false);
-                }}
-                onError={() => {
-                  onImageError(visibleIndex);
-                  setModalImageLoading(false);
-                }}
-                data-layer="confirmed"
-              />
-            )}
-            {pendingUrl && pendingUrl !== confirmedUrl && (
-              <Image
-                key={`pending-${currentIndex}`}
-                src={pendingUrl}
-                alt={imageAltText}
-                width={1200}
-                height={900}
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 95vw, 90vw"
-                className="absolute inset-0 m-auto max-w-full max-h-[90vh] w-auto h-auto object-contain opacity-0"
-                loading="eager"
-                draggable={false}
-                unoptimized={isExternalUrl(pendingUrl)}
-                onLoad={() => {
-                  modalImageLoadedRef.current.add(pendingUrl);
-                  setModalImageLoading(false);
-                  setVisibleIndex(currentIndex);
-                }}
-                onError={() => {
-                  onImageError(currentIndex);
-                  setModalImageLoading(false);
-                  setVisibleIndex(currentIndex);
-                }}
-                data-layer="pending"
-              />
-            )}
-          </>
-        ) : (
-          <div
-            className="w-full h-full flex items-center justify-center"
-            style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-          >
-            <svg className="w-48 h-48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"
-              />
-            </svg>
-          </div>
-        )}
+          {hasValidImage ? (
+            <>
+              {confirmedUrl && (
+                <Image
+                  key={`confirmed-${visibleIndex}`}
+                  src={confirmedUrl}
+                  alt={imageAltText}
+                  width={1200}
+                  height={900}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 95vw, 90vw"
+                  className="absolute inset-0 m-auto max-w-full max-h-[90vh] w-auto h-auto object-contain opacity-100"
+                  loading="eager"
+                  draggable={false}
+                  unoptimized={isExternalUrl(confirmedUrl)}
+                  onLoad={() => {
+                    modalImageLoadedRef.current.add(confirmedUrl);
+                    setModalImageLoading(false);
+                  }}
+                  onError={() => {
+                    onImageError(visibleIndex);
+                    setModalImageLoading(false);
+                  }}
+                  data-layer="confirmed"
+                />
+              )}
+              {pendingUrl && pendingUrl !== confirmedUrl && (
+                <Image
+                  key={`pending-${currentIndex}`}
+                  src={pendingUrl}
+                  alt={imageAltText}
+                  width={1200}
+                  height={900}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 95vw, 90vw"
+                  className="absolute inset-0 m-auto max-w-full max-h-[90vh] w-auto h-auto object-contain opacity-0"
+                  loading="eager"
+                  draggable={false}
+                  unoptimized={isExternalUrl(pendingUrl)}
+                  onLoad={() => {
+                    modalImageLoadedRef.current.add(pendingUrl);
+                    setModalImageLoading(false);
+                    setVisibleIndex(currentIndex);
+                  }}
+                  onError={() => {
+                    onImageError(currentIndex);
+                    setModalImageLoading(false);
+                    setVisibleIndex(currentIndex);
+                  }}
+                  data-layer="pending"
+                />
+              )}
+            </>
+          ) : (
+            <div
+              className="w-full h-full flex items-center justify-center"
+              style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+            >
+              <svg className="w-48 h-48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"
+                />
+              </svg>
+            </div>
+          )}
+        </div>
 
         {images.length > 1 && (
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-primary-500 text-lg sm:text-xl font-semibold bg-black bg-opacity-50 px-4 py-2 rounded-full">
