@@ -59,6 +59,31 @@ export class SitemapService {
     return xml;
   }
 
+  async getSitemapText(): Promise<string> {
+    const cached = await this.getFromCache('txt');
+    if (cached) return cached;
+
+    const months = await this.getActiveListingMonths();
+    const xmlSitemaps: string[] = [
+      await this.getPagesSitemap(),
+      await this.getBrandsSitemap(),
+      await this.getSellersSitemap(),
+    ];
+
+    for (const month of months) {
+      const xml = await this.getListingsSitemap(month);
+      if (xml) {
+        xmlSitemaps.push(xml);
+      }
+    }
+
+    const urls = xmlSitemaps.flatMap((xml) => this.extractLocValues(xml));
+    const txt = `${Array.from(new Set(urls)).join('\n')}\n`;
+
+    await this.saveToCache('txt', txt);
+    return txt;
+  }
+
   async getPagesSitemap(): Promise<string> {
     const cached = await this.getFromCache('pages');
     if (cached) return cached;
@@ -209,6 +234,20 @@ export class SitemapService {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&apos;');
+  }
+
+  private unescapeXml(str: string): string {
+    return str
+      .replace(/&apos;/g, "'")
+      .replace(/&quot;/g, '"')
+      .replace(/&gt;/g, '>')
+      .replace(/&lt;/g, '<')
+      .replace(/&amp;/g, '&');
+  }
+
+  private extractLocValues(xml: string): string[] {
+    const matches = xml.matchAll(/<loc>(.*?)<\/loc>/g);
+    return Array.from(matches, (match) => this.unescapeXml(match[1].trim()));
   }
 
   private buildSitemapIndex(sitemaps: { loc: string; lastmod: string }[]): string {

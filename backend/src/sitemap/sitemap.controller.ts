@@ -9,6 +9,14 @@ import { SitemapService } from './sitemap.service';
 export class SitemapController {
   constructor(private readonly sitemapService: SitemapService) {}
 
+  @Get('sitemap.txt')
+  @Header('Content-Type', 'text/plain; charset=utf-8')
+  @Header('Cache-Control', 'public, max-age=3600, s-maxage=3600')
+  async getSitemapText(@Res() res: Response) {
+    const txt = await this.sitemapService.getSitemapText();
+    res.send(txt);
+  }
+
   @Get('sitemap.xml')
   @Header('Content-Type', 'application/xml; charset=utf-8')
   @Header('Cache-Control', 'public, max-age=3600, s-maxage=3600')
