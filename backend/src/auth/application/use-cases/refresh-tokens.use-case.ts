@@ -29,7 +29,7 @@ export class RefreshTokensUseCase {
 
     await this.refreshTokenService.revokeToken(refreshTokenDto.refresh_token);
     const newRefreshToken = await this.refreshTokenService.generateToken(user.id);
-    const boardSlug = await this.usersService.ensureBoardSlug(user.id);
+    const boardSlug = await this.usersService.ensureBoardSlug(user.id, user);
 
     return {
       access_token: accessToken,

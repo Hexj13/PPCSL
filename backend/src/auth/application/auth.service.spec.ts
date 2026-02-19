@@ -336,7 +336,7 @@ describe('AuthService', () => {
       expect(result).toHaveProperty('type');
       expect(result).toHaveProperty('boardSlug', 'test-slug');
       expect(usersService.findOneById).toHaveBeenCalledWith('1');
-      expect(usersService.ensureBoardSlug).toHaveBeenCalledWith('1');
+      expect(usersService.ensureBoardSlug).toHaveBeenCalledWith('1', expect.anything());
     });
   });
 

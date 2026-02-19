@@ -10,7 +10,7 @@ export class GetUserProfileUseCase {
 
   async execute(userId: string): Promise<UserProfileResponse> {
     const user = await this.usersService.findOneById(userId);
-    const boardSlug = await this.usersService.ensureBoardSlug(userId);
+    const boardSlug = await this.usersService.ensureBoardSlug(userId, user);
     const result = removePasswordFromUser(user);
     const { board_slug: _s, ...rest } = result;
     void _s;

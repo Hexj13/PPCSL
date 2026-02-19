@@ -93,8 +93,8 @@ export class UsersService {
     });
   }
 
-  async ensureBoardSlug(userId: string): Promise<string> {
-    const user = await this.findOneById(userId);
+  async ensureBoardSlug(userId: string, preloadedUser?: User): Promise<string> {
+    const user = preloadedUser ?? (await this.findOneById(userId));
     if (user.board_slug) {
       return user.board_slug;
     }
