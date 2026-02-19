@@ -283,10 +283,11 @@ export class ListingsController {
     description: 'Listing UUID',
   })
   @ApiResponse({ status: 200, description: 'Listing details' })
+  @ApiResponse({ status: 400, description: 'Invalid UUID format' })
   @ApiResponse({ status: 404, description: 'Listing not found' })
   @UseGuards(OptionalJwtAuthGuard)
   @Get(':id')
-  async findOne(@Param('id') id: string, @Request() req: ExpressRequest) {
+  async findOne(@Param('id', ParseUUIDPipe) id: string, @Request() req: ExpressRequest) {
     try {
       const ip =
         req.ip ||
