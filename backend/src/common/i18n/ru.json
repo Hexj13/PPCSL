@@ -69,7 +69,9 @@
     "widthMustBeNumber": "Ширина должна быть числом от 1 до 5000",
     "imageNotFound": "Изображение не найдено",
     "uploadDirectoryNotConfigured": "Каталог загрузки не настроен",
-    "unknownError": "Неизвестная ошибка"
+    "unknownError": "Неизвестная ошибка",
+    "plateMaskFailed": "Не удалось обработать маскировку номеров",
+    "plateDetectionTimeout": "Время обнаружения номеров истекло"
   },
   "vehicleOptions": {
     "transmission": {

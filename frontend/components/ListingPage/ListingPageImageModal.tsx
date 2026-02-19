@@ -54,6 +54,16 @@ export function ListingPageImageModal({
   const [showSpinner, setShowSpinner] = useState(false);
   const spinnerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const [pinchScale, setPinchScale] = useState(1);
+  const initialPinchDistanceRef = useRef<number>(0);
+  const pinchStartScaleRef = useRef(1);
+  const isPinchingRef = useRef(false);
+  const pinchScaleRef = useRef(1);
+  pinchScaleRef.current = pinchScale;
+
+  const getPinchDistance = (t1: Touch, t2: Touch) =>
+    Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+
   useEffect(() => {
     if (modalImageLoading) {
       spinnerTimeoutRef.current = setTimeout(() => setShowSpinner(true), 300);
@@ -77,6 +87,10 @@ export function ListingPageImageModal({
     }
     prevIsOpenRef.current = isOpen;
   }, [isOpen, currentIndex]);
+
+  useEffect(() => {
+    if (!isOpen) setPinchScale(1);
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -156,14 +170,38 @@ export function ListingPageImageModal({
     const handleTouchStart = (e: TouchEvent) => {
       touchEndX.current = null;
       touchStartX.current = e.touches[0].clientX;
+      if (isMobileViewport && e.touches.length === 2) {
+        isPinchingRef.current = true;
+        initialPinchDistanceRef.current = getPinchDistance(e.touches[0], e.touches[1]);
+        pinchStartScaleRef.current = pinchScaleRef.current;
+      }
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      e.preventDefault();
-      touchEndX.current = e.touches[0].clientX;
+      if (isMobileViewport && e.touches.length === 2 && isPinchingRef.current) {
+        e.preventDefault();
+        const dist = getPinchDistance(e.touches[0], e.touches[1]);
+        const scale = Math.min(
+          4,
+          Math.max(1, (pinchStartScaleRef.current * dist) / initialPinchDistanceRef.current),
+        );
+        setPinchScale(scale);
+        return;
+      }
+      touchEndX.current = e.touches[0]?.clientX ?? null;
     };
 
-    const handleTouchEnd = () => {
+    const resetPinchIfNeeded = (e: TouchEvent) => {
+      if (e.touches.length < 2 && isPinchingRef.current) {
+        isPinchingRef.current = false;
+        setPinchScale(1);
+        return true;
+      }
+      return false;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (resetPinchIfNeeded(e)) return;
       if (!touchStartX.current || !touchEndX.current) return;
       const distance = touchStartX.current - touchEndX.current;
       const isLeftSwipe = distance > minSwipeDistance;
@@ -187,16 +225,22 @@ export function ListingPageImageModal({
       }
     };
 
+    const handleTouchCancel = (e: TouchEvent) => {
+      resetPinchIfNeeded(e);
+    };
+
     container.addEventListener('touchstart', handleTouchStart, { passive: true });
     container.addEventListener('touchmove', handleTouchMove, { passive: false });
     container.addEventListener('touchend', handleTouchEnd, { passive: true });
+    container.addEventListener('touchcancel', handleTouchCancel, { passive: true });
 
     return () => {
       container.removeEventListener('touchstart', handleTouchStart);
       container.removeEventListener('touchmove', handleTouchMove);
       container.removeEventListener('touchend', handleTouchEnd);
+      container.removeEventListener('touchcancel', handleTouchCancel);
     };
-  }, [isOpen]);
+  }, [isOpen, isMobileViewport]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -498,13 +542,24 @@ export function ListingPageImageModal({
         ref={swipeContainerRef}
         className="relative max-w-7xl w-full h-full flex items-center justify-center p-4"
       >
-        {shouldShowLoader && (
-          <div className="absolute inset-0 flex items-center justify-center z-20">
-            <Spinner size="lg" />
-          </div>
-        )}
+        <div
+          className="relative w-full h-full flex items-center justify-center"
+          style={
+            isMobileViewport
+              ? {
+                  transform: `scale(${pinchScale})`,
+                  transformOrigin: 'center center',
+                }
+              : undefined
+          }
+        >
+          {shouldShowLoader && (
+            <div className="absolute inset-0 flex items-center justify-center z-20">
+              <Spinner size="lg" />
+            </div>
+          )}
 
-        {hasValidImage ? (
+          {hasValidImage ? (
           <>
             {confirmedUrl && (
               <Image
@@ -570,6 +625,8 @@ export function ListingPageImageModal({
             </svg>
           </div>
         )}
+
+        </div>
 
         {images.length > 1 && (
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-primary-500 text-lg sm:text-xl font-semibold bg-black bg-opacity-50 px-4 py-2 rounded-full">

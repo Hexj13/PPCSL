@@ -69,7 +69,9 @@
     "widthMustBeNumber": "Lățimea trebuie să fie un număr între 1 și 5000",
     "imageNotFound": "Imaginea nu a fost găsită",
     "uploadDirectoryNotConfigured": "Directorul pentru încărcare nu este configurat",
-    "unknownError": "Eroare necunoscută"
+    "unknownError": "Eroare necunoscută",
+    "plateMaskFailed": "Nu am reușit procesarea măștii plăcuțelor",
+    "plateDetectionTimeout": "Detectarea plăcuțelor a expirat"
   },
   "vehicleOptions": {
     "transmission": {

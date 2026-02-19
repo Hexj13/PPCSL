@@ -326,10 +326,17 @@ export const boardApi = {
 };
 
 export const uploadApi = {
-  uploadImage: (file: File) => {
+  uploadImage: (file: File, hidePlates?: boolean) => {
     const formData = new FormData();
     formData.append('file', file);
-    return api.post<{ url: string; path: string }>('/api/upload/image', formData);
+    if (hidePlates !== undefined) {
+      formData.append('hidePlates', String(hidePlates));
+    }
+    return api.post<{
+      url: string;
+      path: string;
+      plateMaskResult?: string | null;
+    }>('/api/upload/image', formData);
   },
 };
 

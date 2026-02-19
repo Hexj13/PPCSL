@@ -78,7 +78,9 @@
     "widthMustBeNumber": "Width must be a number between 1 and 5000",
     "imageNotFound": "Image not found",
     "uploadDirectoryNotConfigured": "Upload directory not configured",
-    "unknownError": "Unknown error"
+    "unknownError": "Unknown error",
+    "plateMaskFailed": "Failed to process plate masking",
+    "plateDetectionTimeout": "Plate detection timed out"
   },
   "vehicleOptions": {
     "transmission": {

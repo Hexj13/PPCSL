@@ -15,6 +15,16 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { handleUploadError } from '../common/utils/error-handling.utils';
 
+import { PlateDetectorService } from './plate-detector.service';
+import { PlateMaskService } from './plate-mask.service';
+
+export type PlateMaskResult = 'mask_applied' | 'not_found' | null;
+
+export interface SaveFileResult {
+  path: string;
+  plateMaskResult?: PlateMaskResult;
+}
+
 @Injectable()
 export class UploadService {
   private readonly logger = new Logger(UploadService.name);
@@ -22,8 +32,8 @@ export class UploadService {
   private readonly bucketName: string;
   private readonly useS3: boolean;
   private readonly uploadDir?: string;
-  private readonly maxWidth = 1920;
-  private readonly quality = 75;
+  private readonly maxWidth = 2048;
+  private readonly quality = 85;
   private readonly watermarkPath: string;
   private readonly watermarkDomain: string;
 
@@ -43,7 +53,11 @@ export class UploadService {
     ],
   };
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private plateDetector: PlateDetectorService,
+    private plateMask: PlateMaskService,
+  ) {
     const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
     const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
     const region = process.env.AWS_REGION || 'eu-north-1';
@@ -220,7 +234,10 @@ export class UploadService {
     }
   }
 
-  async saveFile(file: Express.Multer.File): Promise<string> {
+  async saveFile(
+    file: Express.Multer.File,
+    hidePlates?: boolean,
+  ): Promise<SaveFileResult> {
     this.logger.debug(
       `Validating file signature. Buffer size: ${file.buffer.length}, mimetype: ${file.mimetype}`,
     );
@@ -236,11 +253,12 @@ export class UploadService {
 
     const fileName = `${uuidv4()}.webp`;
     const s3Key = `uploads/${fileName}`;
+    let plateMaskResult: PlateMaskResult = null;
 
     try {
       this.logger.debug('Starting Sharp image processing');
-      const image = sharp(file.buffer);
-      const metadata = await image.metadata();
+      let image = sharp(file.buffer);
+      let metadata = await image.metadata();
       this.logger.debug(
         `Image metadata: width=${metadata.width}, height=${metadata.height}, format=${metadata.format}`,
       );
@@ -253,56 +271,70 @@ export class UploadService {
         throw new BadRequestException('errors.fileTooLargePixels|10000');
       }
 
-      let processedImage = image;
-      let finalWidth = metadata.width;
-      let finalHeight = metadata.height;
+      const rotated = await image.rotate().toBuffer({ resolveWithObject: true });
+      image = sharp(rotated.data);
+      metadata = await image.metadata();
+      let finalWidth = metadata.width ?? 0;
+      let finalHeight = metadata.height ?? 0;
 
-      if (metadata.width && metadata.width > this.maxWidth) {
+      if (finalWidth > this.maxWidth || finalHeight > this.maxWidth) {
         const resizedResult = await image
-          .resize(this.maxWidth, null, {
+          .resize(this.maxWidth, this.maxWidth, {
             withoutEnlargement: true,
             fit: 'inside',
           })
           .toBuffer({ resolveWithObject: true });
 
-        if (resizedResult.info && resizedResult.info.width && resizedResult.info.height) {
+        if (resizedResult.info?.width && resizedResult.info?.height) {
           finalWidth = resizedResult.info.width;
           finalHeight = resizedResult.info.height;
         }
-        processedImage = sharp(resizedResult.data);
+        image = sharp(resizedResult.data);
+      }
+
+      if (hidePlates) {
+        try {
+          const imageBuffer = await image.png().toBuffer();
+          const detections = await this.plateDetector.detect(
+            imageBuffer,
+            finalWidth,
+            finalHeight,
+          );
+          plateMaskResult = detections.length > 0 ? 'mask_applied' : 'not_found';
+          if (detections.length > 0) {
+            const composites = this.plateMask.createMaskOverlays(
+              detections,
+              finalWidth,
+              finalHeight,
+            );
+            image = image.composite(composites);
+          }
+        } catch (plateError) {
+          if (plateError instanceof BadRequestException) {
+            throw plateError;
+          }
+          throw new BadRequestException('errors.plateMaskFailed');
+        }
       }
 
       this.logger.debug('Applying watermark');
-      processedImage = await this.applyWatermark(processedImage, finalWidth, finalHeight);
+      image = await this.applyWatermark(image, finalWidth, finalHeight);
 
       this.logger.debug('Converting image to WebP');
-      const compressedBuffer = await processedImage
+      const compressedBuffer = await image
         .webp({ quality: this.quality, effort: 4 })
         .toBuffer();
       this.logger.debug(`Image converted to WebP. Compressed size: ${compressedBuffer.length}`);
 
-      if (this.useS3 && this.s3Client) {
-        this.logger.debug(`Uploading to S3. Bucket: ${this.bucketName}, Key: ${s3Key}`);
-        const command = new PutObjectCommand({
-          Bucket: this.bucketName,
-          Key: s3Key,
-          Body: compressedBuffer,
-          ContentType: 'image/webp',
-        });
+      const pathResult = this.useS3 && this.s3Client
+        ? await this.uploadToS3(s3Key, compressedBuffer)
+        : this.uploadToLocal(fileName, compressedBuffer);
 
-        await this.s3Client.send(command);
-        this.logger.debug(`File uploaded to S3 successfully: ${s3Key}`);
-
-        return `/${s3Key}`;
-      } else {
-        if (!this.uploadDir) {
-          throw new BadRequestException('errors.uploadDirectoryNotConfigured');
-        }
-        const filePath = path.join(this.uploadDir, fileName);
-        fs.writeFileSync(filePath, compressedBuffer);
-        return `/uploads/${fileName}`;
-      }
+      return { path: pathResult, plateMaskResult };
     } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
       handleUploadError(
         error,
         this.logger,
@@ -310,6 +342,26 @@ export class UploadService {
         `errors.imageProcessingError|${error instanceof Error ? error.message : 'errors.unknownError'}`,
       );
     }
+  }
+
+  private async uploadToS3(s3Key: string, body: Buffer): Promise<string> {
+    if (!this.s3Client) throw new BadRequestException('errors.uploadDirectoryNotConfigured');
+    const command = new PutObjectCommand({
+      Bucket: this.bucketName,
+      Key: s3Key,
+      Body: body,
+      ContentType: 'image/webp',
+    });
+    await this.s3Client.send(command);
+    this.logger.debug(`File uploaded to S3 successfully: ${s3Key}`);
+    return `/${s3Key}`;
+  }
+
+  private uploadToLocal(fileName: string, buffer: Buffer): string {
+    if (!this.uploadDir) throw new BadRequestException('errors.uploadDirectoryNotConfigured');
+    const filePath = path.join(this.uploadDir, fileName);
+    fs.writeFileSync(filePath, buffer);
+    return `/uploads/${fileName}`;
   }
 
   async deleteFile(filePath: string): Promise<void> {

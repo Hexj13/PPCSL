@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Get,
   Logger,
@@ -112,7 +113,10 @@ export class UploadController {
       },
     }),
   )
-  async uploadImage(@UploadedFile() file: Express.Multer.File) {
+  async uploadImage(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('hidePlates') hidePlatesRaw?: string,
+  ) {
     this.logger.debug(
       `Upload request received. File: ${file ? `${file.originalname}, size: ${file.size}, mimetype: ${file.mimetype}` : 'null'}`,
     );
@@ -129,10 +133,12 @@ export class UploadController {
       throw new BadRequestException('errors.fileEmpty');
     }
 
-    this.logger.debug(`File buffer size: ${file.buffer.length}, mimetype: ${file.mimetype}`);
+    const hidePlates = hidePlatesRaw === 'true';
+    this.logger.debug(`File buffer size: ${file.buffer.length}, mimetype: ${file.mimetype}, hidePlates: ${hidePlates}`);
 
     try {
-      const filePath = await this.uploadService.saveFile(file);
+      const result = await this.uploadService.saveFile(file, hidePlates);
+      const filePath = result.path;
       this.logger.debug(`File saved successfully: ${filePath}`);
 
       let url: string;
@@ -154,6 +160,7 @@ export class UploadController {
       return {
         url,
         path: filePath,
+        plateMaskResult: result.plateMaskResult ?? null,
       };
     } catch (error) {
       handleUploadError(error, this.logger, 'Upload failed');

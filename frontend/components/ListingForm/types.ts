@@ -18,4 +18,6 @@ export interface ListingFormSectionProps {
   onFormFieldFocus?: () => void;
   uploading?: boolean;
   onFileUpload?: (_file: File) => Promise<void>;
+  hidePlates?: boolean;
+  onHidePlatesChange?: (_value: boolean) => void;
 }

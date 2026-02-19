@@ -3,6 +3,8 @@
 import Image from 'next/image';
 import { toast } from 'react-hot-toast';
 
+import { Checkbox } from '@/ui';
+
 import type { ListingFormSectionProps } from './types';
 
 export function PhotosSection({
@@ -11,6 +13,8 @@ export function PhotosSection({
   t,
   uploading = false,
   onFileUpload,
+  hidePlates = true,
+  onHidePlatesChange,
 }: ListingFormSectionProps) {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -47,6 +51,22 @@ export function PhotosSection({
       <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-900">
         {t('listings.photos')}
       </h2>
+      {onHidePlatesChange && (
+        <div className="mb-4">
+          <Checkbox
+            checked={hidePlates}
+            onChange={onHidePlatesChange}
+            label={
+              <div>
+                <span>{t('listings.hidePlates')}</span>
+                <span className="block text-xs text-text-secondary mt-0.5">
+                  {t('listings.hidePlatesHelper')}
+                </span>
+              </div>
+            }
+          />
+        </div>
+      )}
       <div className="mb-4">
         <input
           type="file"

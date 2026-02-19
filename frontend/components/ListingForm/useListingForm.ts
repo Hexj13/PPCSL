@@ -47,6 +47,7 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
     minDisplayTime: 1000,
   });
   const [uploading, setUploading] = useState(false);
+  const [hidePlates, setHidePlates] = useState(true);
   const [formData, setFormData] = useState<ListingFormData>(() => getInitialFormData(initialData));
   const [errors, setErrors] = useState<Record<string, boolean>>({});
   const [vehicleType, setVehicleType] = useState<'car' | 'truck' | 'moto'>(() =>
@@ -156,7 +157,7 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
     async (file: File) => {
       setUploading(true);
       try {
-        const response = await uploadApi.uploadImage(file);
+        const response = await uploadApi.uploadImage(file, hidePlates);
         let imageUrl = response.data.url;
         if (isBrowser && window.location.protocol === 'https:' && imageUrl.startsWith('http://')) {
           imageUrl = imageUrl.replace('http://', 'https://');
@@ -164,12 +165,16 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
         setFormData((prev) => ({ ...prev, images: [...prev.images, imageUrl] }));
         toast.success(t('listings.photoUploaded'));
       } catch {
-        toast.error(t('listings.photoUploadError'));
+        if (hidePlates) {
+          toast.error(t('listings.plateMaskError'));
+        } else {
+          toast.error(t('listings.photoUploadError'));
+        }
       } finally {
         setUploading(false);
       }
     },
-    [t],
+    [t, hidePlates],
   );
 
   const handleWheel = useCallback((e: React.WheelEvent<HTMLInputElement>) => {
@@ -378,6 +383,8 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
     isChangingType,
     loading,
     uploading,
+    hidePlates,
+    setHidePlates,
     handleVehicleTypeChange,
     handleFileUpload,
     handleWheel,
