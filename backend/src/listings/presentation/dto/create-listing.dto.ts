@@ -150,7 +150,7 @@ export class CreateListingDto {
     description: 'Registration type',
   })
   @IsEnum(RegistrationType, {
-    message: 'Типот на регистрација мора да биде Local, Foreign или Cleared',
+    message: 'validation.registrationType',
   })
   registration_type: RegistrationType;
 
@@ -176,25 +176,6 @@ export class CreateListingDto {
   @Min(1)
   @Max(9999)
   power_kw?: number;
-
-  @ApiPropertyOptional({
-    example: true,
-    description: 'Is vehicle registered',
-  })
-  @IsOptional()
-  @IsBoolean()
-  is_registered?: boolean;
-
-  @ApiPropertyOptional({
-    example: '2025-12-31',
-    description: 'Registration expiration date (YYYY-MM-DD)',
-  })
-  @IsOptional()
-  @IsString()
-  @Matches(/^\d{4}-\d{2}-\d{2}$/, {
-    message: 'Датата мора да биде во формат YYYY-MM-DD',
-  })
-  registration_expires_at?: string;
 
   @ApiPropertyOptional({
     example: ['air_conditioning', 'navigation', 'parking_sensors'],

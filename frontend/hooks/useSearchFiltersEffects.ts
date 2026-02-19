@@ -29,7 +29,6 @@ const QUICK_FILTER_ONLY_PARAM_KEYS = [
   'body_types',
   'urgent',
   'is_new',
-  'is_registered',
   'sortBy',
 ] as const;
 

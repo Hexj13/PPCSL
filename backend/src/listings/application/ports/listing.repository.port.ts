@@ -43,7 +43,6 @@ export interface SearchCriteria {
   registration_types?: string[];
   horsepower_gte?: number;
   horsepower_lte?: number;
-  is_registered?: boolean;
   defaultCurrency?: string;
   priceSortRates?: Record<string, number>;
 }

@@ -51,7 +51,7 @@ export interface ThemeColors {
 
 let theme: ThemeColors | null = null;
 
-export async function loadTheme(country: string): Promise<ThemeColors> {
+export async function loadTheme(_country: string): Promise<ThemeColors> {
   if (theme) {
     return theme;
   }
@@ -66,9 +66,6 @@ export async function loadTheme(country: string): Promise<ThemeColors> {
     }
     throw new Error('Module not found');
   } catch {
-    console.warn(
-      `Theme file not found for ${country}, using default theme. This is expected in core repository.`,
-    );
     return defaultTheme;
   }
 }
@@ -131,14 +128,11 @@ const defaultTheme: ThemeColors = {
   },
 };
 
-export function loadThemeSync(country: string): ThemeColors {
+export function loadThemeSync(_country: string): ThemeColors {
   try {
     const themeModule = require(`./theme/colors`);
     return themeModule.default;
   } catch {
-    console.warn(
-      `Theme file not found for ${country}, using default theme. This is expected in core repository.`,
-    );
     return defaultTheme;
   }
 }

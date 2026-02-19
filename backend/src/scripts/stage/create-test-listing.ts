@@ -116,9 +116,6 @@ async function createTestListing() {
 
     const savedVehicle = await vehicleRepo.save(vehicle);
 
-    const registrationExpiresAt = new Date();
-    registrationExpiresAt.setMonth(registrationExpiresAt.getMonth() + 12);
-
     const listing = listingRepo.create({
       title: `${brand.name} ${model.name} ${currentYear - 2} - Test with many images`,
       price: 25000,
@@ -134,8 +131,6 @@ async function createTestListing() {
       condition: ConditionType.Undamaged,
       registration_type: RegistrationType.Local,
       horsepower: 200,
-      is_registered: true,
-      registration_expires_at: registrationExpiresAt,
       last_updated_at: new Date(),
     });
 

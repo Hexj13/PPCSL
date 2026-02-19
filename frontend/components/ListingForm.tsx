@@ -27,8 +27,6 @@ export interface ListingFormData {
   registration_type: RegistrationType;
   horsepower: string;
   power_kw: string;
-  is_registered: boolean;
-  registration_expires_at: string;
   equipment: string[];
   vehicle: {
     brand_id: string;

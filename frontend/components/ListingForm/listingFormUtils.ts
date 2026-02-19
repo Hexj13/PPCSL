@@ -42,19 +42,9 @@ function getEmptyFormData(): ListingFormData {
     registration_type: RegistrationTypeEnum.Local,
     horsepower: '',
     power_kw: '',
-    is_registered: false,
-    registration_expires_at: '',
     equipment: [],
     vehicle: { ...EMPTY_VEHICLE_FORM },
   };
-}
-
-function formatRegistrationExpiresAt(value: string | undefined): string {
-  if (!value) return '';
-  const date = new Date(value);
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const year = date.getFullYear();
-  return `${month}.${year}`;
 }
 
 function formatEngineDisplL(raw: string | number | null | undefined): string {
@@ -113,8 +103,6 @@ export function getInitialFormData(initialData?: Listing): ListingFormData {
     registration_type: initialData.registration_type || RegistrationTypeEnum.Local,
     horsepower: initialData.horsepower?.toString() || '',
     power_kw: getInitialPowerKw(initialData),
-    is_registered: initialData.is_registered || false,
-    registration_expires_at: formatRegistrationExpiresAt(initialData.registration_expires_at),
     equipment: initialData.equipment || [],
     vehicle: getInitialVehicleFormData(initialData.vehicle),
   };
@@ -141,6 +129,10 @@ export function getRegistrationTypeOptions(t: TranslationFunction) {
     {
       value: RegistrationTypeEnum.Cleared,
       label: t('searchFilters.registrationTypeOptions.Cleared'),
+    },
+    {
+      value: RegistrationTypeEnum.NotCleared,
+      label: t('searchFilters.registrationTypeOptions.NotCleared'),
     },
   ]);
 }

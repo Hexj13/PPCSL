@@ -79,7 +79,6 @@ export interface FilterState {
   drive_types: string[];
   equipment: string[];
   equipment_match_mode: 'full' | 'partial';
-  is_registered: boolean | undefined;
   sortBy: string;
   sortOrder: 'ASC' | 'DESC';
 }
@@ -132,13 +131,6 @@ export function useSearchFilters() {
       return modelIdsFromUrl;
     };
 
-    const resolveIsRegistered = () => {
-      const val = searchParams.get('is_registered');
-      if (val === 'true') return true;
-      if (val === 'false') return false;
-      return undefined;
-    };
-
     return {
       brand_ids: resolveBrandIds(),
       model_ids: resolveModelIds(),
@@ -171,7 +163,6 @@ export function useSearchFilters() {
       drive_types: resolveArrayFromStorageOrUrl(ctx, 'drive_types', ['drive_types']),
       equipment: resolveArrayFromStorageOrUrl(ctx, 'equipment', ['equipment']),
       equipment_match_mode: searchParams.get('equipmentMatch') === 'partial' ? 'partial' : 'full',
-      is_registered: resolveIsRegistered(),
       sortBy: searchParams.get('sortBy') || 'created_at',
       sortOrder: (searchParams.get('sortOrder') || 'DESC') as 'ASC' | 'DESC',
     };
@@ -223,12 +214,6 @@ export function useSearchFilters() {
       currency: searchParams.get('currency') || '',
       urgent: searchParams.get('urgent') === 'true',
       is_new: searchParams.get('is_new') === 'true',
-      is_registered:
-        searchParams.get('is_registered') === 'true'
-          ? true
-          : searchParams.get('is_registered') === 'false'
-            ? false
-            : undefined,
       fuels: resolveArrayFromStorageOrUrl(ctx, 'fuels', ['fuels', 'fuel']),
       transmissions: resolveArrayFromStorageOrUrl(ctx, 'transmissions', [
         'transmissions',

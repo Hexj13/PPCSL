@@ -65,7 +65,7 @@ export const bodyTypes = [
 
 export const conditionTypes = ['Undamaged', 'Damaged', 'ForParts'] as const;
 
-export const registrationTypes = ['Local', 'Foreign', 'Cleared'] as const;
+export const registrationTypes = ['Local', 'Foreign', 'Cleared', 'NotCleared'] as const;
 
 export const UserType = {
   Individual: userTypes[0],
@@ -216,4 +216,5 @@ export const RegistrationType = {
   Local: registrationTypes[0],
   Foreign: registrationTypes[1],
   Cleared: registrationTypes[2],
+  NotCleared: registrationTypes[3],
 } as const;

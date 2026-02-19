@@ -105,12 +105,6 @@ export class Listing {
   @Column({ type: 'integer', nullable: true })
   power_kw: number | null;
 
-  @Column({ type: 'boolean', nullable: true })
-  is_registered: boolean | null;
-
-  @Column({ type: 'date', nullable: true })
-  registration_expires_at: Date | null;
-
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   last_updated_at: Date;
 

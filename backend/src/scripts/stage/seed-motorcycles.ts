@@ -165,15 +165,6 @@ async function seedMotorcycles(activeCount: number = 50) {
     const condition = getRandomElement(conditionTypes);
     const registrationType = getRandomElement(registrationTypes);
     const horsepower = getRandomInt(10, 200);
-    const isRegistered = Math.random() > 0.4;
-    const registrationExpiresAt = isRegistered
-      ? (() => {
-          const monthsAhead = getRandomInt(1, 24);
-          const date = new Date();
-          date.setMonth(date.getMonth() + monthsAhead);
-          return date;
-        })()
-      : null;
 
     const imageCount = getRandomInt(2, 5);
     let images: string[];
@@ -226,8 +217,6 @@ async function seedMotorcycles(activeCount: number = 50) {
       registration_type: registrationType,
       horsepower,
       power_kw: Math.round(horsepower * 0.735499),
-      is_registered: isRegistered,
-      registration_expires_at: registrationExpiresAt,
       equipment: [],
       created_at: createdDate,
       updated_at: createdDate,

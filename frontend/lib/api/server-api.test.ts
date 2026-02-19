@@ -163,7 +163,6 @@ describe('server-api', () => {
       await getListings({
         urgent: 'true',
         is_new: 'true',
-        is_registered: 'false',
       });
 
       const calls = (global.fetch as jest.Mock).mock.calls;
@@ -175,7 +174,6 @@ describe('server-api', () => {
       const url = new URL(listingsCall[0]);
       expect(url.searchParams.get('urgent')).toBe('true');
       expect(url.searchParams.get('is_new')).toBe('true');
-      expect(url.searchParams.get('is_registered')).toBe('false');
     });
 
     it('should handle array params', async () => {

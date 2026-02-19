@@ -144,7 +144,6 @@ export class TypeOrmListingRepository implements IListingRepository {
         'listing.views',
         'listing.condition',
         'listing.registration_type',
-        'listing.is_registered',
         'listing.equipment',
         'listing.created_at',
         'listing.last_updated_at',
@@ -243,7 +242,6 @@ export class TypeOrmListingRepository implements IListingRepository {
     applyTextSearchFilter(qb, 'listing', 'title', searchDto.title);
     applyBooleanFilter(qb, 'listing', 'urgent', searchDto.urgent);
     applyBooleanFilter(qb, 'listing', 'is_new', searchDto.is_new);
-    applyBooleanFilter(qb, 'listing', 'is_registered', searchDto.is_registered);
 
     if (searchDto.conditions && searchDto.conditions.length > 0) {
       qb.andWhere('listing.condition IN (:...conditions)', {

@@ -35,7 +35,6 @@ const ALLOWED_FILTER_KEYS = [
   'drive_types',
   'equipment',
   'equipment_match_mode',
-  'is_registered',
   'sortBy',
   'sortOrder',
   'vehicleType',
@@ -80,7 +79,7 @@ export class IsValidFilterObjectConstraint implements ValidatorConstraintInterfa
         ) {
           return false;
         }
-      } else if (key === 'urgent' || key === 'is_new' || key === 'is_registered') {
+      } else if (key === 'urgent' || key === 'is_new') {
         if (val !== true && val !== false && val !== undefined) {
           return false;
         }

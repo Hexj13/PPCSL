@@ -15,9 +15,14 @@ import {
 interface SortDropdownProps {
   basePath?: string;
   isInternalSearchRef?: React.MutableRefObject<boolean>;
+  onSortChange?: (sortBy: string, sortOrder: 'ASC' | 'DESC') => void;
 }
 
-export function SortDropdown({ basePath = '/', isInternalSearchRef }: SortDropdownProps) {
+export function SortDropdown({
+  basePath = '/',
+  isInternalSearchRef,
+  onSortChange,
+}: SortDropdownProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useTranslation();
@@ -38,6 +43,10 @@ export function SortDropdown({ basePath = '/', isInternalSearchRef }: SortDropdo
 
   const updateSortParams = useCallback(
     (sortBy: string, sortOrder: 'ASC' | 'DESC') => {
+      if (onSortChange) {
+        onSortChange(sortBy, sortOrder);
+        return;
+      }
       const currentParams = new URLSearchParams(searchParams.toString());
       currentParams.delete('sortBy');
       currentParams.delete('sortOrder');
@@ -66,7 +75,7 @@ export function SortDropdown({ basePath = '/', isInternalSearchRef }: SortDropdo
         }
       });
     },
-    [searchParams, router, basePath, isInternalSearchRef],
+    [searchParams, router, basePath, isInternalSearchRef, onSortChange],
   );
 
   return (

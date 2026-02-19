@@ -16,6 +16,7 @@ interface SearchFormActionsProps {
   canSaveFilter: boolean;
   buttonsContainerRef: React.RefObject<HTMLDivElement | null>;
   isInternalSearchRef?: React.MutableRefObject<boolean>;
+  onSortChange?: (sortBy: string, sortOrder: 'ASC' | 'DESC') => void;
 }
 
 export function SearchFormActions({
@@ -28,6 +29,7 @@ export function SearchFormActions({
   canSaveFilter,
   buttonsContainerRef,
   isInternalSearchRef,
+  onSortChange,
 }: SearchFormActionsProps) {
   const { t } = useTranslation();
   const { user, isInitialized } = useAuthStore();
@@ -126,7 +128,7 @@ export function SearchFormActions({
           </div>
         </div>
         <div className="w-full border-t border-primary-500/20 pt-3 lg:border-t-0 lg:pt-0 lg:w-auto flex-shrink-0 relative">
-          <SortDropdown isInternalSearchRef={isInternalSearchRef} />
+          <SortDropdown isInternalSearchRef={isInternalSearchRef} onSortChange={onSortChange} />
         </div>
       </div>
     </div>

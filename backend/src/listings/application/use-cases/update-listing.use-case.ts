@@ -14,7 +14,6 @@ import { I18nService } from '../../../common/i18n/i18n.service';
 import { removePasswordFromUser } from '../../../common/utils/error-handling.utils';
 import { normalizeDescriptionHtml, sanitizeHtml } from '../../../common/utils/html-sanitizer';
 import { ListingTitleService } from '../../domain/services/listing-title.service';
-import { validateRegistrationDate } from '../../domain/utils/validation.utils';
 import { Listing } from '../../entities/listing.entity';
 import { Vehicle } from '../../entities/vehicle.entity';
 import { UpdateListingDto } from '../../presentation/dto/update-listing.dto';
@@ -37,8 +36,6 @@ export class UpdateListingUseCase {
   ) {}
 
   async execute(id: string, updateListingDto: UpdateListingDto, userId: string): Promise<Listing> {
-    validateRegistrationDate(updateListingDto.registration_expires_at);
-
     const listing = await this.listingsRepository.findOne({
       where: { id },
       relations: ['vehicle'],
@@ -96,8 +93,7 @@ export class UpdateListingUseCase {
       throw new NotFoundException('errors.vehicleNotFound');
     }
 
-    const { registration_expires_at, ...rest } = updateListingDto;
-    const listingFields = { ...rest };
+    const listingFields = { ...updateListingDto };
     delete (listingFields as Record<string, unknown>).vehicle;
     const listingUpdateData: Partial<Listing> = {
       ...(listingFields as Partial<Listing>),
@@ -107,11 +103,6 @@ export class UpdateListingUseCase {
       last_edited_at: new Date(),
       title: await this.generateTitle(updatedVehicle),
     };
-
-    if (registration_expires_at !== undefined) {
-      listingUpdateData.registration_expires_at =
-        registration_expires_at === null ? null : new Date(registration_expires_at);
-    }
 
     await this.listingsRepository.update(id, listingUpdateData);
     await this.listingsRepository.manager.connection.queryResultCache?.remove([`listing_${id}`]);

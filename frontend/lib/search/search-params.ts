@@ -68,7 +68,6 @@ export interface BuildSearchQueryFilters {
   drive_types: string[];
   equipment: string[];
   equipment_match_mode: 'full' | 'partial';
-  is_registered: boolean | undefined;
   sortBy: string;
   sortOrder: string;
 }

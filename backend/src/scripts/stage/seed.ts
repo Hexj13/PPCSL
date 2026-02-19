@@ -305,15 +305,6 @@ async function seedListingsByType(
       horsepowerRanges[vehicleType].min,
       horsepowerRanges[vehicleType].max,
     );
-    const isRegistered = Math.random() > 0.3;
-    const registrationExpiresAt = isRegistered
-      ? (() => {
-          const monthsAhead = getRandomInt(1, 24);
-          const date = new Date();
-          date.setMonth(date.getMonth() + monthsAhead);
-          return date;
-        })()
-      : null;
 
     const imageCount = getRandomInt(2, 5);
     let images: string[];
@@ -385,8 +376,6 @@ async function seedListingsByType(
       condition,
       registration_type: registrationType,
       horsepower,
-      is_registered: isRegistered,
-      registration_expires_at: registrationExpiresAt,
       last_updated_at: new Date(),
     });
 
@@ -517,15 +506,6 @@ async function createVinHistory(
       horsepowerRanges[vehicleType].min,
       horsepowerRanges[vehicleType].max,
     );
-    const isRegistered = Math.random() > 0.3;
-    const registrationExpiresAt = isRegistered
-      ? (() => {
-          const monthsAhead = getRandomInt(1, 24);
-          const date = new Date();
-          date.setMonth(date.getMonth() + monthsAhead);
-          return date;
-        })()
-      : null;
 
     const imageCount = getRandomInt(2, 4);
     let images: string[];
@@ -597,8 +577,6 @@ async function createVinHistory(
       condition,
       registration_type: registrationType,
       horsepower,
-      is_registered: isRegistered,
-      registration_expires_at: registrationExpiresAt,
       last_updated_at: historyDate,
       created_at: historyDate,
       updated_at: historyDate,

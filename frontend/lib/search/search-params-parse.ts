@@ -27,7 +27,6 @@ export interface DefaultFiltersShape {
   drive_types: string[];
   equipment: string[];
   equipment_match_mode: 'full' | 'partial';
-  is_registered: boolean | undefined;
   sortBy: string;
   sortOrder: 'ASC' | 'DESC';
 }
@@ -60,7 +59,6 @@ export function getDefaultFilters(currentYear: string): DefaultFiltersShape {
     drive_types: [],
     equipment: [],
     equipment_match_mode: 'full',
-    is_registered: undefined,
     sortBy: 'created_at',
     sortOrder: 'DESC',
   };
@@ -95,7 +93,6 @@ export interface ParsedSearchParams {
   horsepower_lte?: number;
   urgent?: boolean;
   is_new?: boolean;
-  is_registered?: boolean;
   currency?: string;
   sortBy?: string;
   sortOrder?: string;
@@ -131,7 +128,7 @@ const NUMBER_PARAMS = [
 
 const FLOAT_PARAMS = ['engine_displ_l_gte', 'engine_displ_l_lte'] as const;
 
-const BOOLEAN_PARAMS = ['urgent', 'is_new', 'is_registered'] as const;
+const BOOLEAN_PARAMS = ['urgent', 'is_new'] as const;
 
 export function decodeBase64Array(encoded: string): string[] {
   if (!encoded) return [];

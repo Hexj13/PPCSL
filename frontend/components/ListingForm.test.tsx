@@ -11,7 +11,6 @@ import {
   getMileageInput,
   getPhotosFileInput,
   getPriceInput,
-  getRegisteredCheckbox,
   getUrgentCheckbox,
   mockCities,
   mockListing,
@@ -303,29 +302,6 @@ describe('ListingForm', () => {
       );
     }, 30000);
 
-    it('should format registration date correctly', async () => {
-      const listingWithRegistration = {
-        ...mockListing,
-        is_registered: true,
-        registration_expires_at: '2025-05-15T00:00:00.000Z',
-      };
-
-      const onSuccess = jest.fn();
-      render(
-        <ListingForm
-          mode="edit"
-          listingId="listing-1"
-          initialData={listingWithRegistration as Listing}
-          onSuccess={onSuccess}
-        />,
-      );
-
-      await waitFor(() => {
-        const registrationInput = screen.getByDisplayValue('05.2025');
-        expect(registrationInput).toBeInTheDocument();
-      });
-    });
-
     it('should update brand selection', async () => {
       const onSuccess = jest.fn();
       render(
@@ -560,28 +536,6 @@ describe('ListingForm', () => {
         expect(getIsNewCheckbox(screen)).toBeInTheDocument();
       });
       expect(getIsNewCheckbox(screen) as HTMLInputElement).toBeChecked();
-    });
-
-    it('should update is_registered checkbox', async () => {
-      const onSuccess = jest.fn();
-      const registeredListing = {
-        ...mockListing,
-        is_registered: true,
-        registration_expires_at: '2025-12-31T00:00:00.000Z',
-      };
-      render(
-        <ListingForm
-          mode="edit"
-          listingId="listing-1"
-          initialData={registeredListing as Listing}
-          onSuccess={onSuccess}
-        />,
-      );
-
-      await waitFor(() => {
-        expect(getRegisteredCheckbox(screen)).toBeInTheDocument();
-      });
-      expect(getRegisteredCheckbox(screen) as HTMLInputElement).toBeChecked();
     });
   });
 
@@ -1112,50 +1066,6 @@ describe('ListingForm', () => {
           const hasYearError = errorMessages.some((msg: string) => msg.match(/година/i));
           const hasImageError = errorMessages.some((msg: string) => msg.match(/фото|изображен/i));
           expect(hasYearError || hasImageError).toBe(true);
-        },
-        { timeout: 10000 },
-      );
-    }, 30000);
-
-    it('should validate registration date format (month must be 2 digits)', async () => {
-      const onSuccess = jest.fn();
-      render(<ListingForm mode="create" onSuccess={onSuccess} />);
-
-      await waitFor(
-        () => {
-          expect(api.brandsApi.getAll).toHaveBeenCalled();
-        },
-        { timeout: 15000 },
-      );
-
-      await waitFor(
-        () => {
-          expect(getRegisteredCheckbox(screen)).toBeInTheDocument();
-        },
-        { timeout: 10000 },
-      );
-
-      const isRegisteredCheckbox = getRegisteredCheckbox(screen);
-      fireEvent.click(isRegisteredCheckbox);
-
-      await waitFor(
-        () => {
-          const registrationInput = screen.getByPlaceholderText(/12\.2025/i);
-          expect(registrationInput).toBeInTheDocument();
-        },
-        { timeout: 10000 },
-      );
-
-      const registrationInput = screen.getByPlaceholderText(/12\.2025/i);
-      fireEvent.change(registrationInput, { target: { value: '5.2025' } });
-      fireEvent.blur(registrationInput);
-
-      await waitFor(
-        () => {
-          const currentValue = (registrationInput as HTMLInputElement).value;
-          if (currentValue && currentValue.length > 0) {
-            expect(currentValue).toMatch(/\d{2}\.\d{4}/);
-          }
         },
         { timeout: 10000 },
       );

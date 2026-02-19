@@ -7,13 +7,7 @@ import type { City } from '@/lib/api';
 import { ConditionType, RegistrationType } from '@/lib/constants';
 import { getPopularBrands } from '@/lib/content/popular-brands';
 import { getColorOptions } from '@/lib/options';
-import {
-  compareNames,
-  getCountry,
-  sortByName,
-  sortOptionsByLabel,
-  type LabeledOption,
-} from '@/lib/utils';
+import { compareNames, getCountry, sortByName, sortOptionsByLabel } from '@/lib/utils';
 
 import type { FilterState } from './useSearchFilters';
 
@@ -68,13 +62,12 @@ export function useFilterOptions({
         value: RegistrationType.Cleared,
         label: t('searchFilters.registrationTypeOptions.Cleared'),
       },
+      {
+        value: RegistrationType.NotCleared,
+        label: t('searchFilters.registrationTypeOptions.NotCleared'),
+      },
     ]);
   }, [t]);
-
-  const REGISTRATION_OPTIONS: Array<LabeledOption> = sortOptionsByLabel([
-    { value: 'true', label: t('searchFilters.registered') },
-    { value: 'false', label: t('searchFilters.notRegistered') },
-  ]);
 
   const getBrandOptions = useCallback(() => {
     const popularBrandsList = getPopularBrands(vehicleType);
@@ -217,7 +210,6 @@ export function useFilterOptions({
     COLOR_OPTIONS,
     getConditionOptions,
     getRegistrationTypeOptions,
-    REGISTRATION_OPTIONS,
     getBrandOptions,
     getModelOptions,
     getCityOptions,

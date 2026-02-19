@@ -3,23 +3,15 @@
 import { useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 
-import { Dropdown } from '@/components/common/Dropdown';
 import { MultiSelectDropdown } from '@/components/common/MultiSelectDropdown';
 import type { FilterState } from '@/hooks/useSearchFilters';
 import { useTranslation } from '@/hooks/useTranslation';
-import { Currency } from '@/lib/constants';
 import { getDoorOptions } from '@/lib/options';
-import { sortOptionsByLabel, type LabeledOption } from '@/lib/utils';
 import { clampToRange, ENGINE_RANGE, isInRange, POWER_RANGE } from '@/lib/validation';
 import { Checkbox } from '@/ui';
 
 const FIRE_EMOJI = '🔥';
 const SPARKLES_EMOJI = '\u2728';
-
-const CURRENCY_OPTIONS: Array<LabeledOption> = sortOptionsByLabel([
-  { value: Currency.EUR, label: Currency.EUR },
-  { value: Currency.MDL, label: Currency.MDL },
-]);
 
 const sanitizeEngineInput = (raw: string): string | null => {
   let value = raw.replace(',', '.');
@@ -56,7 +48,6 @@ interface AdvancedFiltersProps {
   colorOptions: Array<{ value: string; label: string }>;
   getConditionOptions: () => Array<{ value: string; label: string }>;
   getRegistrationTypeOptions: () => Array<{ value: string; label: string }>;
-  registrationOptions: Array<{ value: string; label: string }>;
   vehicleType?: 'car' | 'truck' | 'moto';
 }
 
@@ -70,7 +61,6 @@ export function AdvancedFilters({
   colorOptions,
   getConditionOptions,
   getRegistrationTypeOptions,
-  registrationOptions,
   vehicleType = 'car',
 }: AdvancedFiltersProps) {
   const { t } = useTranslation();
@@ -118,145 +108,54 @@ export function AdvancedFilters({
   return (
     <div className="mb-5">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-5">
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label
-              className="block text-sm font-semibold mb-2 text-primary-900 flex items-center gap-2 overflow-hidden"
-              title={t('searchFilters.city')}
+        <div className="min-w-0">
+          <label
+            className="block text-sm font-semibold mb-2 text-primary-900 flex items-center gap-2 overflow-hidden"
+            title={t('searchFilters.city')}
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              className="flex-shrink-0"
+              xmlns="http://www.w3.org/2000/svg"
             >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                className="flex-shrink-0"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M5.7 15C4.03377 15.6353 3 16.5205 3 17.4997C3 19.4329 7.02944 21 12 21C16.9706 21 21 19.4329 21 17.4997C21 16.5205 19.9662 15.6353 18.3 15M12 9H12.01M18 9C18 13.0637 13.5 15 12 18C10.5 15 6 13.0637 6 9C6 5.68629 8.68629 3 12 3C15.3137 3 18 5.68629 18 9ZM13 9C13 9.55228 12.5523 10 12 10C11.4477 10 11 9.55228 11 9C11 8.44772 11.4477 8 12 8C12.5523 8 13 8.44772 13 9Z"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span className="truncate">{t('searchFilters.city')}</span>
-            </label>
-            <MultiSelectDropdown
-              values={filters.cities}
-              onChange={(values) => onMultiSelectChange('cities', values)}
-              searchable={true}
-              placeholder={t('searchFilters.selectCities')}
-              showActionButtons={true}
-              options={cityOptions}
-            />
-          </div>
-          <div>
-            <label
-              className="block text-sm font-semibold mb-2 text-primary-900 flex items-center gap-2 overflow-hidden"
-              title={t('searchFilters.currency')}
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                className="flex-shrink-0"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <circle
-                  cx="12.04"
-                  cy="12"
-                  r="2.87"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeMiterlimit="10"
-                  strokeWidth="1.92"
-                  strokeLinecap="square"
-                />
-                <path
-                  d="M22.58,6.25v9.58a2.87,2.87,0,0,1-2.87,2.88H7.25l3.83,3.83"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeMiterlimit="10"
-                  strokeWidth="1.92"
-                />
-                <line
-                  x1="4.38"
-                  y1="12"
-                  x2="6.29"
-                  y2="12"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeMiterlimit="10"
-                  strokeWidth="1.92"
-                />
-                <line
-                  x1="17.79"
-                  y1="12"
-                  x2="19.71"
-                  y2="12"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeMiterlimit="10"
-                  strokeWidth="1.92"
-                />
-                <path
-                  d="M1.5,17.75V8.17A2.88,2.88,0,0,1,4.38,5.29H16.83L13,1.46"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeMiterlimit="10"
-                  strokeWidth="1.92"
-                />
-              </svg>
-              <span className="truncate">{t('searchFilters.currency')}</span>
-            </label>
-            <Dropdown
-              value={filters.currency}
-              onChange={(value) => onFilterChange('currency', value)}
-              placeholder={t('searchFilters.selectCurrency')}
-              options={CURRENCY_OPTIONS}
-            />
-          </div>
+              <path
+                d="M5.7 15C4.03377 15.6353 3 16.5205 3 17.4997C3 19.4329 7.02944 21 12 21C16.9706 21 21 19.4329 21 17.4997C21 16.5205 19.9662 15.6353 18.3 15M12 9H12.01M18 9C18 13.0637 13.5 15 12 18C10.5 15 6 13.0637 6 9C6 5.68629 8.68629 3 12 3C15.3137 3 18 5.68629 18 9ZM13 9C13 9.55228 12.5523 10 12 10C11.4477 10 11 9.55228 11 9C11 8.44772 11.4477 8 12 8C12.5523 8 13 8.44772 13 9Z"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <span className="truncate">{t('searchFilters.city')}</span>
+          </label>
+          <MultiSelectDropdown
+            values={filters.cities}
+            onChange={(values) => onMultiSelectChange('cities', values)}
+            searchable={true}
+            placeholder={t('searchFilters.selectCities')}
+            showActionButtons={true}
+            options={cityOptions}
+          />
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label
-              className="block text-sm font-semibold mb-2 text-primary-900 truncate"
-              title={t('searchFilters.registration')}
-            >
-              {t('searchFilters.registration')}
-            </label>
-            <Dropdown
-              value={
-                filters.is_registered === true
-                  ? 'true'
-                  : filters.is_registered === false
-                    ? 'false'
-                    : ''
-              }
-              onChange={(value) => onFilterChange('is_registered', value)}
-              placeholder={t('searchFilters.selectRegistration')}
-              options={registrationOptions}
-            />
-          </div>
-          <div>
-            <label
-              className="block text-sm font-semibold mb-2 text-primary-900 truncate"
-              title={t('searchFilters.registrationTypeLabel')}
-            >
-              {t('searchFilters.registrationTypeLabel')}
-            </label>
-            <MultiSelectDropdown
-              values={filters.registration_types}
-              onChange={(values) => onMultiSelectChange('registration_types', values)}
-              placeholder={t('searchFilters.selectRegistrationType')}
-              searchable={false}
-              showActionButtons={true}
-              options={getRegistrationTypeOptions()}
-            />
-          </div>
+        <div className="min-w-0">
+          <label
+            className="block text-sm font-semibold mb-2 text-primary-900 truncate"
+            title={t('searchFilters.registrationTypeLabel')}
+          >
+            {t('searchFilters.registrationTypeLabel')}
+          </label>
+          <MultiSelectDropdown
+            values={filters.registration_types}
+            onChange={(values) => onMultiSelectChange('registration_types', values)}
+            placeholder={t('searchFilters.selectRegistrationType')}
+            searchable={false}
+            showActionButtons={true}
+            options={getRegistrationTypeOptions()}
+          />
         </div>
 
         <div>

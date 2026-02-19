@@ -17,12 +17,6 @@ export function getFilledFields(formData: ListingFormData): Record<string, boole
   };
 }
 
-function registrationExpiresAtForApi(formData: ListingFormData): string | undefined {
-  if (!formData.is_registered || !formData.registration_expires_at) return undefined;
-  const [month, year] = formData.registration_expires_at.split('.');
-  return `${year}-${month.padStart(2, '0')}-01`;
-}
-
 export function buildListingPayload(
   formData: ListingFormData,
   vehicleType: 'car' | 'truck' | 'moto',
@@ -41,8 +35,6 @@ export function buildListingPayload(
     registration_type: formData.registration_type,
     horsepower: parseInt(formData.horsepower),
     power_kw: formData.power_kw ? parseInt(formData.power_kw) : undefined,
-    is_registered: formData.is_registered || undefined,
-    registration_expires_at: registrationExpiresAtForApi(formData),
     equipment: formData.equipment.length > 0 ? formData.equipment : undefined,
     vehicle: {
       brand_id: formData.vehicle.brand_id,

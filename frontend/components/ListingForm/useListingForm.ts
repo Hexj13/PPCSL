@@ -265,9 +265,6 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
       ...validators.required(val as string),
       errorKey: 'powerKwRequired',
     }));
-    checkField('registration_expires_at', formData.registration_expires_at, (val) =>
-      validators.registrationDate(val as string | undefined, formData.is_registered),
-    );
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;

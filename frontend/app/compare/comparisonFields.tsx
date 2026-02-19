@@ -326,23 +326,6 @@ export const comparisonFields: ComparisonField[] = [
     ),
   },
   {
-    key: 'registration',
-    labelKey: 'compare.registration',
-    renderCell: (listing, t) => (
-      <td
-        key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
-        style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-      >
-        {listing.is_registered !== undefined
-          ? listing.is_registered
-            ? t('compare.registered')
-            : t('compare.notRegistered')
-          : t('compare.notAvailable')}
-      </td>
-    ),
-  },
-  {
     key: 'price',
     labelKey: 'compare.price',
     renderCell: (listing, t, siteConfig) => (

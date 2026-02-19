@@ -30,8 +30,6 @@ export interface Listing {
   registration_type: RegistrationType;
   horsepower: number;
   power_kw?: number;
-  is_registered?: boolean;
-  registration_expires_at?: string;
   views?: number;
   equipment?: string[];
   vehicle?: Vehicle;
@@ -139,7 +137,6 @@ export interface SearchParams {
   horsepower_gte?: number;
   horsepower_lte?: number;
   drive_types?: string[];
-  is_registered?: boolean;
   page?: number;
   limit?: number;
   sortBy?: string;
@@ -161,8 +158,6 @@ export interface CreateListingDto {
   registration_type: RegistrationType;
   horsepower: number;
   power_kw?: number;
-  is_registered?: boolean;
-  registration_expires_at?: string;
   equipment?: string[];
   vehicle: {
     brand_id: string;

@@ -186,6 +186,8 @@ export function formatRegistrationType(
       return t('searchFilters.registrationTypeOptions.Foreign');
     case 'Cleared':
       return t('searchFilters.registrationTypeOptions.Cleared');
+    case 'NotCleared':
+      return t('searchFilters.registrationTypeOptions.NotCleared');
     default:
       return registrationType;
   }

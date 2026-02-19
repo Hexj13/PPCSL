@@ -67,10 +67,7 @@ export function useFilterHandlers({
 
   const handleChange = useCallback(
     (key: keyof typeof filters, value: string) => {
-      if (key === 'is_registered') {
-        const boolValue = value === 'true' ? true : value === 'false' ? false : undefined;
-        updateFilter(key, boolValue);
-      } else if (
+      if (
         key === 'brand_ids' ||
         key === 'model_ids' ||
         key === 'cities' ||
@@ -211,18 +208,17 @@ export function useFilterHandlers({
     }
   }, []);
 
-  const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
-      e.preventDefault();
-
+  const applySearchWithOverrides = useCallback(
+    (overrides: Partial<FilterState>) => {
       if (isSearching) return;
       if (!validateRanges()) return;
 
+      const merged = { ...filters, ...overrides };
       setIsSearching(true);
       isInternalSearchRef.current = true;
-      setLastAppliedFilters({ ...filters });
+      setLastAppliedFilters({ ...merged });
 
-      const result = buildSearchQuery(filters, brands, models, cities, {
+      const result = buildSearchQuery(merged, brands, models, cities, {
         currentYear,
         vehicleType,
         searchParams,
@@ -234,23 +230,23 @@ export function useFilterHandlers({
         clearFiltersFromStorage();
       }
 
-      const validBrandIds = filters.brand_ids.filter(
+      const validBrandIds = merged.brand_ids.filter(
         (id) => id !== 'all' && id !== '' && !id.startsWith('__category__'),
       );
-      const validModelIds = filters.model_ids.filter(
+      const validModelIds = merged.model_ids.filter(
         (id) => id !== 'all' && id !== '' && !id.startsWith('__category__'),
       );
-      const validCities = filters.cities.filter(
+      const validCities = merged.cities.filter(
         (city) => city !== 'all' && city !== '' && !city.startsWith('__category__'),
       );
       const searchFilters: Record<string, unknown> = {};
       if (validBrandIds.length > 0) searchFilters.brand_ids_count = validBrandIds.length;
       if (validModelIds.length > 0) searchFilters.model_ids_count = validModelIds.length;
       if (validCities.length > 0) searchFilters.cities_count = validCities.length;
-      if (filters.price_gte) searchFilters.price_min = filters.price_gte;
-      if (filters.price_lte) searchFilters.price_max = filters.price_lte;
-      if (filters.year_gte) searchFilters.year_min = filters.year_gte;
-      if (filters.year_lte) searchFilters.year_max = filters.year_lte;
+      if (merged.price_gte) searchFilters.price_min = merged.price_gte;
+      if (merged.price_lte) searchFilters.price_max = merged.price_lte;
+      if (merged.year_gte) searchFilters.year_min = merged.year_gte;
+      if (merged.year_lte) searchFilters.year_max = merged.year_lte;
       analytics.search(undefined, searchFilters);
 
       const newUrl = `/?${result.urlString}`;
@@ -291,6 +287,14 @@ export function useFilterHandlers({
       setLastAppliedFilters,
       isInternalSearchRef,
     ],
+  );
+
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      applySearchWithOverrides({});
+    },
+    [applySearchWithOverrides],
   );
 
   const handleReset = useCallback(
@@ -374,6 +378,7 @@ export function useFilterHandlers({
     validateRanges,
     handleWheel,
     handleSubmit,
+    applySearchWithOverrides,
     handleReset,
     hasFiltersChanged,
   };

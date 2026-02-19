@@ -23,6 +23,7 @@ export interface TranslationsPart2 {
       Local: string;
       Foreign: string;
       Cleared: string;
+      NotCleared: string;
     };
     yearFromTitle: string;
     yearToTitle: string;

@@ -36,8 +36,6 @@ export const mockListing = {
   condition: 'Undamaged',
   registration_type: 'Local',
   horsepower: 150,
-  is_registered: false,
-  registration_expires_at: undefined,
   vehicle: {
     id: 'vehicle-1',
     brand_id: 'brand-1',
@@ -117,10 +115,6 @@ export function getHorsepowerInput(screen: ScreenLike): HTMLElement {
 
 export function getPowerKwInput(screen: ScreenLike): HTMLElement {
   return screen.getByTestId('listing-form-power-kw');
-}
-
-export function getRegisteredCheckbox(screen: ScreenLike): HTMLElement {
-  return screen.getByTestId('listing-form-is-registered');
 }
 
 export function getUrgentCheckbox(screen: ScreenLike): HTMLElement {

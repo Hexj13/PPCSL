@@ -29,7 +29,6 @@ const ADVANCED_PARAM_KEYS = [
   'doors',
   'conditions',
   'registration_types',
-  'is_registered',
   'urgent',
   'is_new',
 ] as const;

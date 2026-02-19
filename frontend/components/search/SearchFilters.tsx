@@ -341,7 +341,6 @@ export function SearchFilters() {
           colorOptions={filterOptions.COLOR_OPTIONS}
           getConditionOptions={filterOptions.getConditionOptions}
           getRegistrationTypeOptions={filterOptions.getRegistrationTypeOptions}
-          registrationOptions={filterOptions.REGISTRATION_OPTIONS}
           vehicleType={vehicleType}
         />
       )}
@@ -385,6 +384,9 @@ export function SearchFilters() {
         canSaveFilter={canSaveFilter()}
         buttonsContainerRef={tabs.buttonsContainerRef}
         isInternalSearchRef={isInternalSearchRef}
+        onSortChange={(sortBy, sortOrder) =>
+          handlers.applySearchWithOverrides({ sortBy, sortOrder })
+        }
       />
 
       <SaveFilterModal

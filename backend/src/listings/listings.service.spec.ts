@@ -549,57 +549,6 @@ describe('ListingsService', () => {
   });
 
   describe('create', () => {
-    it('should throw BadRequestException when registration_expires_at is in the past', async () => {
-      const currentDate = new Date();
-      const pastDate = new Date(currentDate);
-      pastDate.setMonth(pastDate.getMonth() - 2);
-      const pastDateString = pastDate.toISOString().split('T')[0];
-
-      const createDto = {
-        price: 10000,
-        currency: Currency.EUR,
-        city: 'Skopje',
-        vehicle: {
-          brand_id: 'brand-1',
-          model_id: 'model-1',
-          year: 2020,
-        },
-        registration_expires_at: pastDateString,
-      };
-
-      mockCreateListingUseCase.execute.mockRejectedValue(
-        new BadRequestException('errors.registrationExpired'),
-      );
-
-      await expect(
-        service.create(createDto as Partial<CreateListingDto> as CreateListingDto, 'user-1'),
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it('should allow registration_expires_at in current or future month', async () => {
-      const currentDate = new Date();
-      const futureDate = new Date(currentDate);
-      futureDate.setMonth(futureDate.getMonth() + 1);
-
-      const createDto = {
-        price: 10000,
-        currency: Currency.EUR,
-        city: 'Skopje',
-        vehicle: {
-          brand_id: 'brand-1',
-          model_id: 'model-1',
-          year: 2020,
-        },
-        registration_expires_at: futureDate.toISOString(),
-      };
-
-      mockCreateListingUseCase.execute.mockResolvedValue(mockListing as Listing);
-
-      await service.create(createDto as Partial<CreateListingDto> as CreateListingDto, 'user-1');
-
-      expect(mockCreateListingUseCase.execute).toHaveBeenCalledWith(createDto, 'user-1');
-    });
-
     it('should set last_published_at when creating listing with Active status', async () => {
       const createDto = {
         price: 10000,
@@ -712,55 +661,6 @@ describe('ListingsService', () => {
   });
 
   describe('update', () => {
-    it('should throw BadRequestException when registration_expires_at is in the past', async () => {
-      const currentDate = new Date();
-      const pastDate = new Date(currentDate);
-      pastDate.setMonth(pastDate.getMonth() - 2);
-      const pastDateString = pastDate.toISOString().split('T')[0];
-
-      const updateDto = {
-        registration_expires_at: pastDateString,
-      };
-
-      mockUpdateListingUseCase.execute.mockRejectedValue(
-        new BadRequestException('errors.registrationDateInvalid'),
-      );
-
-      await expect(
-        service.update(
-          'listing-1',
-          updateDto as Partial<UpdateListingDto> as UpdateListingDto,
-          'user-1',
-        ),
-      ).rejects.toThrow(BadRequestException);
-      expect(mockUpdateListingUseCase.execute).toHaveBeenCalledWith(
-        'listing-1',
-        updateDto,
-        'user-1',
-      );
-    });
-
-    it('should allow registration_expires_at in current or future month', async () => {
-      const futureDate = new Date();
-      futureDate.setMonth(futureDate.getMonth() + 1);
-      const updateDto = {
-        registration_expires_at: futureDate.toISOString(),
-      };
-      mockUpdateListingUseCase.execute.mockResolvedValue(mockListing as Listing);
-
-      await service.update(
-        'listing-1',
-        updateDto as Partial<UpdateListingDto> as UpdateListingDto,
-        'user-1',
-      );
-
-      expect(mockUpdateListingUseCase.execute).toHaveBeenCalledWith(
-        'listing-1',
-        updateDto,
-        'user-1',
-      );
-    });
-
     it('should update last_edited_at when listing is edited', async () => {
       const updateDto = { price: 15000, description: 'Updated description' };
       const updatedListing = { ...mockListing, last_edited_at: new Date() };

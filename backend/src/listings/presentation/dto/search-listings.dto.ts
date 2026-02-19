@@ -598,13 +598,4 @@ export class SearchListingsDto {
   @IsOptional()
   @IsIn(['full', 'partial'])
   equipmentMatch?: 'full' | 'partial';
-
-  @ApiPropertyOptional({
-    example: true,
-    description: 'Filter by registered vehicles',
-  })
-  @IsOptional()
-  @Type(() => Boolean)
-  @IsBoolean()
-  is_registered?: boolean;
 }

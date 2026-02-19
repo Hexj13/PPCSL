@@ -7,7 +7,6 @@ import { ListingStatus as ListingStatusEnum } from '../../../common/types';
 import { normalizeDescriptionHtml, sanitizeHtml } from '../../../common/utils/html-sanitizer';
 import { UsersService } from '../../../users/application/users.service';
 import { ListingTitleService } from '../../domain/services/listing-title.service';
-import { validateRegistrationDate } from '../../domain/utils/validation.utils';
 import { Listing } from '../../entities/listing.entity';
 import { Vehicle } from '../../entities/vehicle.entity';
 import { CreateListingDto } from '../../presentation/dto/create-listing.dto';
@@ -28,8 +27,6 @@ export class CreateListingUseCase {
   ) {}
 
   async execute(dto: CreateListingDto, userId: string): Promise<Listing> {
-    validateRegistrationDate(dto.registration_expires_at);
-
     const vehicle = Object.assign(new Vehicle(), dto.vehicle);
     const title = await this.generateTitle(vehicle);
 
@@ -57,9 +54,6 @@ export class CreateListingUseCase {
       user_id: userId,
       last_updated_at: new Date(),
       last_published_at: status === ListingStatusEnum.Active ? new Date() : null,
-      registration_expires_at: dto.registration_expires_at
-        ? new Date(dto.registration_expires_at)
-        : null,
     });
     listing.vehicle = vehicle;
 

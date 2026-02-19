@@ -38,8 +38,7 @@ export function useSearchFilterFlags(
         filters.colors.length > 0 ||
         filters.doors.length > 0 ||
         filters.conditions.length > 0 ||
-        filters.registration_types.length > 0 ||
-        filters.is_registered !== undefined,
+        filters.registration_types.length > 0,
 
       hasEquipmentFiltersActive: filters.equipment.length > 0,
     }),

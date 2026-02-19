@@ -237,16 +237,8 @@ function ListingPageConditionRegistrationSection({
   t: (k: string) => string;
   formatRegistrationType: (v: string, t: (k: string) => string) => string;
 }) {
-  const hasAny =
-    listing.condition || listing.registration_type || listing.is_registered !== undefined;
+  const hasAny = listing.condition || listing.registration_type;
   if (!hasAny) return null;
-  const regExpires =
-    listing.is_registered && listing.registration_expires_at
-      ? (() => {
-          const date = new Date(listing.registration_expires_at);
-          return `${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()}`;
-        })()
-      : null;
   return (
     <div className="surface overflow-hidden">
       <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-900">
@@ -268,28 +260,6 @@ function ListingPageConditionRegistrationSection({
             </span>
             <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
               {formatRegistrationType(listing.registration_type, t)}
-            </span>
-          </div>
-        )}
-        {listing.is_registered !== undefined && (
-          <div>
-            <span className="text-primary-700 font-semibold">
-              {t('listingDetail.registration')}:
-            </span>
-            <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
-              {listing.is_registered
-                ? t('listingDetail.registered')
-                : t('listingDetail.notRegistered')}
-            </span>
-          </div>
-        )}
-        {regExpires && (
-          <div>
-            <span className="text-primary-700 font-semibold">
-              {t('listingDetail.registeredUntil')}:
-            </span>
-            <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
-              {regExpires}
             </span>
           </div>
         )}

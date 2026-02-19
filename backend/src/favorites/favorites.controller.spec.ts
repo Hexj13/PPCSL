@@ -56,8 +56,6 @@ describe('FavoritesController', () => {
     registration_type: 'Local' as const,
     horsepower: 100,
     power_kw: null,
-    is_registered: true,
-    registration_expires_at: null,
     equipment: null,
     last_updated_at: new Date(),
     last_edited_at: null,

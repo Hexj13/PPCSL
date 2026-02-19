@@ -187,15 +187,6 @@ async function generateListingsForAllModels() {
     const condition = getRandomElement(conditionTypes);
     const registrationType = getRandomElement(registrationTypes);
     const horsepower = getRandomInt(50, 500);
-    const isRegistered = Math.random() > 0.3;
-    const registrationExpiresAt = isRegistered
-      ? (() => {
-          const monthsAhead = getRandomInt(1, 24);
-          const date = new Date();
-          date.setMonth(date.getMonth() + monthsAhead);
-          return date;
-        })()
-      : null;
 
     const imageCount = getRandomInt(2, 5);
     let images: string[];
@@ -256,8 +247,6 @@ async function generateListingsForAllModels() {
       condition,
       registration_type: registrationType,
       horsepower,
-      is_registered: isRegistered,
-      registration_expires_at: registrationExpiresAt,
       last_updated_at: new Date(),
     });
 
