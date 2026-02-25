@@ -34,7 +34,7 @@ export const faqRo: FAQConfig = {
       answer: [
         'Pentru a publica un anunț de vânzare pentru un autoturism:',
         '1. Conectați-vă la profilul dvs.',
-        '2. Faceți clic pe "Adaugă anunț" din meniul de sus (sau mergeți la "Anunțurile mele" și faceți clic pe "Creează anunț")',
+        '2. Faceți clic pe "Plasează anunț" din meniul de sus (sau mergeți la "Anunțurile mele" și faceți clic pe "Creează anunț")',
         '3. Completați toate informațiile necesare despre autoturism:',
         '   - Marca și modelul',
         '   - Anul de fabricație',
@@ -244,7 +244,7 @@ export const faqRo: FAQConfig = {
       title: 'Scenariul 1: Publicarea unui anunț nou',
       steps: [
         'Înregistrați-vă sau conectați-vă la profilul dvs.',
-        'Faceți clic pe "Adaugă anunț" din meniul de sus (sau mergeți la "Anunțurile mele" și faceți clic pe "Creează anunț")',
+        'Faceți clic pe "Plasează anunț" din meniul de sus (sau mergeți la "Anunțurile mele" și faceți clic pe "Creează anunț")',
         'Completați toate informațiile necesare despre autoturism',
         'Adăugați fotografii (minimum 2, maximum 20)',
         'Selectați statusul anunțului (implicit este "Publicat")',

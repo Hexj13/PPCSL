@@ -56,9 +56,9 @@ Platform-specific конфигурация сайта: название, дом�
 
 **Статус:** ✅ Вынесено в platform-level config
 
-- Контент FAQ хранится в `config/faq.ts`
-- `app/faq/page.tsx` читает конфиг через `loadFaqSync()` с fallback
-- Email и домен подставляются из `config/site.ts` (через `loadSiteConfigSync`)
+- Контент FAQ: в platform repo — `config/faq.ts` (агрегирует `config/faq-data-ro.ts`, `config/faq-data-ru.ts` по языкам); при сборке копируется в `core/frontend/lib/config/`
+- Страница `app/faq/page.tsx` загружает конфиг через `loadFaqSync(country, locale)` из `@/lib/content/faq`
+- Поддержка: блок вопросов-ответов (`items`) и сценариев для пользователей (`scenarios`); email и домен подставляются из `config/site.ts` (через `loadSiteConfigSync`)
 
 ### 3. Legal Documents (`app/terms/`, `app/privacy/`)
 
@@ -83,7 +83,13 @@ Platform-specific конфигурация сайта: название, дом�
 ├── theme/
 │   └── colors.ts            # Цвета и pwa
 ├── config/
-│   └── site.ts              # Конфигурация сайта
+│   ├── site.ts              # Конфигурация сайта (домен, email, название)
+│   ├── faq.ts               # FAQ: агрегатор (faq-data-ro, faq-data-ru)
+│   ├── faq-data-ro.ts       # Контент FAQ на румынском
+│   ├── faq-data-ru.ts       # Контент FAQ на русском
+│   ├── faq-types.ts         # Типы FAQConfig, FAQItem, FAQScenario
+│   ├── legal.ts             # Тексты Terms/Privacy по языкам
+│   └── popular-brands.ts    # Опционально: популярные бренды платформы
 ├── assets/
 │   ├── frontend/public/     # Логотипы, favicon, OG
 │   └── backend/watermark/   # Watermark для фото
