@@ -28,12 +28,6 @@ function getDisplayName(user: User): string {
   return user.companyName || user.email || user.phone || '';
 }
 
-function getTypeBadgeClass(userType: string): string {
-  if (userType === 'Admin') return 'bg-purple-500/20';
-  if (userType === 'Business') return 'bg-blue-500/20';
-  return 'bg-primary-700/20';
-}
-
 function getTypeLabelKey(userType: string): string {
   if (userType === 'Admin') return 'admin.usersTab.admin';
   if (userType === 'Business') return 'admin.usersTab.business';
@@ -102,13 +96,9 @@ function AdminUserCard({ user, t, onViewListings, onToggleStatus }: AdminUserCar
                 <span className="text-text-secondary">{t('admin.usersTab.unavailable')}</span>
               </div>
             )}
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-primary-700">{t('admin.usersTab.type')}</span>
-              <span
-                className={`px-2 py-1 rounded text-sm md:text-base font-semibold text-text-secondary ${getTypeBadgeClass(user.type)}`}
-              >
-                {t(getTypeLabelKey(user.type))}
-              </span>
+            <div>
+              <span className="text-primary-700">{t('admin.usersTab.type')}</span>{' '}
+              {t(getTypeLabelKey(user.type))}
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-primary-700">{t('admin.usersTab.status')}</span>

@@ -196,6 +196,12 @@ export class AdminController {
     description: 'Search by user ID',
   })
   @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Search by listing ID or user ID (single field, OR match)',
+  })
+  @ApiQuery({
     name: 'status',
     required: false,
     enum: ListingStatus,
@@ -214,6 +220,7 @@ export class AdminController {
     @Query('userId') userId?: string,
     @Query('status') status?: ListingStatus,
     @Query('isPromoted') isPromoted?: string,
+    @Query('search') search?: string,
   ) {
     const pageNum = page ? Math.max(1, parseInt(page, 10)) : 1;
     const limitNum = limit ? Math.min(100, Math.max(1, parseInt(limit, 10))) : 20;
@@ -226,6 +233,7 @@ export class AdminController {
       userId,
       status,
       isPromotedBool,
+      search,
     );
   }
 
@@ -248,8 +256,30 @@ export class AdminController {
       },
     },
   })
-  getListingsStatusCounts() {
-    return this.adminService.getListingsStatusCounts();
+  @ApiQuery({
+    name: 'listingId',
+    required: false,
+    type: String,
+    description: 'Filter by listing ID',
+  })
+  @ApiQuery({
+    name: 'userId',
+    required: false,
+    type: String,
+    description: 'Filter by user ID',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Search by listing ID or user ID (single field, OR match)',
+  })
+  getListingsStatusCounts(
+    @Query('listingId') listingId?: string,
+    @Query('userId') userId?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.adminService.getListingsStatusCounts(listingId, userId, search);
   }
 
   @ApiOperation({ summary: 'Get statistics' })

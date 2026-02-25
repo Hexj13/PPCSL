@@ -512,15 +512,20 @@ export const adminApi = {
     userId?: string,
     status?: ListingStatus,
     isPromoted?: boolean,
+    search?: string,
   ) => {
     const params = new URLSearchParams();
     params.set('page', page.toString());
     params.set('limit', limit.toString());
-    if (listingId) {
-      params.set('listingId', listingId);
-    }
-    if (userId) {
-      params.set('userId', userId);
+    if (search?.trim()) {
+      params.set('search', search.trim());
+    } else {
+      if (listingId) {
+        params.set('listingId', listingId);
+      }
+      if (userId) {
+        params.set('userId', userId);
+      }
     }
     if (status) {
       params.set('status', status);
@@ -531,9 +536,14 @@ export const adminApi = {
     const query = params.toString();
     return api.get<{ data: Listing[]; meta: PaginationMeta }>(`/api/admin/listings?${query}`);
   },
-  getListingsStatusCounts: () => {
+  getListingsStatusCounts: (search?: string) => {
+    const params = new URLSearchParams();
+    if (search?.trim()) {
+      params.set('search', search.trim());
+    }
+    const query = params.toString();
     return api.get<{ Active: number; Paused: number; Closed: number; Promoted: number }>(
-      '/api/admin/listings/status-counts',
+      `/api/admin/listings/status-counts${query ? `?${query}` : ''}`,
     );
   },
   updateListingStatus: (id: string, status: ListingStatus) =>

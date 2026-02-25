@@ -21,6 +21,7 @@ import {
   formatFuel,
   formatDateShort,
   formatDateRelative,
+  formatViewsCompact,
   getOptimizedImageUrl,
   getCityName,
   getListingDisplayTitle,
@@ -432,14 +433,14 @@ function ListingCardComponent({
             {listing.vehicle && <ListingCardVehicleSpecs vehicle={listing.vehicle} t={t} />}
           </div>
           <div
-            className="flex justify-between items-center text-sm font-medium mt-auto pt-3 border-t border-primary-500/20"
+            className="flex justify-between items-center gap-2 text-sm font-medium mt-auto pt-3 border-t border-primary-500/20"
             style={{ color: 'rgb(var(--text-secondary-rgb))' }}
           >
-            <span>{getCityName(listing.city, locale, cities)}</span>
-            <div className="flex items-center gap-3">
+            <span className="min-w-0 truncate">{getCityName(listing.city, locale, cities)}</span>
+            <div className="flex items-center gap-3 shrink-0">
               {listing.views !== undefined && listing.views > 0 && (
                 <>
-                  <span className="flex items-center gap-1 text-sm">
+                  <span className="flex items-center gap-1 text-sm shrink-0">
                     <svg
                       className="w-3.5 h-3.5"
                       fill="none"
@@ -459,9 +460,9 @@ function ListingCardComponent({
                         d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                       />
                     </svg>
-                    {listing.views}
+                    {formatViewsCompact(listing.views)}
                   </span>
-                  <span className="h-4 w-px bg-primary-500/20" />
+                  <span className="h-4 w-px bg-primary-500/20 shrink-0" />
                 </>
               )}
               <span suppressHydrationWarning>

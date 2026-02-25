@@ -41,9 +41,9 @@ export function CreateListingButton({
 
   const variantClasses = isMobile
     ? 'text-sm gap-1.5 px-2.5 py-2 rounded-lg w-full'
-    : 'h-10 text-xs md:text-xs lg:text-xs xl:text-sm gap-1.5 md:gap-2 px-2 md:px-2.5 lg:px-2.5 xl:px-3 rounded-lg';
+    : 'h-10 text-sm gap-1.5 md:gap-2 px-2.5 md:px-3 rounded-lg';
 
-  const iconSize = isMobile ? 'w-4 h-4' : 'w-3 h-3 md:w-3.5 md:h-3.5';
+  const iconSize = isMobile ? 'w-4 h-4' : 'w-3.5 h-3.5 md:w-4 md:h-4';
 
   const href = user ? '/listings/new' : '/login';
 

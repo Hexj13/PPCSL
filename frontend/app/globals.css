@@ -21,6 +21,10 @@
   --gray-400-rgb: 156, 163, 175;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-start-rgb));

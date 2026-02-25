@@ -56,6 +56,8 @@ export interface TranslationsPart1 {
     yes: string;
     no: string;
     search: string;
+    choose: string;
+    selectedCount: string;
     requiredAsterisk: string;
     filter: string;
     reset: string;

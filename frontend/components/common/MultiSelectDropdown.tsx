@@ -26,7 +26,7 @@ function MultiSelectDropdownComponent({
   onChange,
   options,
   disabled = false,
-  placeholder = 'Избери...',
+  placeholder,
   className = '',
   searchable = false,
   showActionButtons = false,
@@ -83,11 +83,11 @@ function MultiSelectDropdownComponent({
   const displayText = useMemo(
     () =>
       selectedOptions.length === 0
-        ? placeholder
+        ? (placeholder ?? t('common.choose'))
         : selectedOptions.length === 1
           ? selectedOptions[0].label
-          : `Избрани ${selectedOptions.length}`,
-    [selectedOptions, placeholder],
+          : t('common.selectedCount', { count: selectedOptions.length }),
+    [selectedOptions, placeholder, t],
   );
 
   const filteredOptions = useMemo(
@@ -164,7 +164,7 @@ function MultiSelectDropdownComponent({
             onChange={handleInputChange}
             onFocus={handleInputFocus}
             disabled={disabled}
-            placeholder={isOpen ? '' : placeholder}
+            placeholder={isOpen ? '' : (placeholder ?? t('common.choose'))}
             className="input-field"
             style={{ paddingRight: '52px' }}
           />

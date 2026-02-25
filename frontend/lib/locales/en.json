@@ -24,7 +24,8 @@
     "loginShort": "Login",
     "register": "Register",
     "brandName": "Kupito",
-    "toggleMenu": "Toggle Menu"
+    "toggleMenu": "Toggle Menu",
+    "more": "More"
   },
   "home": {
     "title": "Cars in Moldova",
@@ -59,6 +60,8 @@
     "yes": "Yes",
     "no": "No",
     "search": "Search",
+    "choose": "Choose...",
+    "selectedCount": "Selected {count}",
     "requiredAsterisk": "*",
     "apiErrors": {
       "timeout": "Connection timeout. Please try again.",
@@ -560,7 +563,7 @@
   },
   "listingDetail": {
     "home": "Home",
-    "addToFavorites": "Add to favorites",
+    "addToFavorites": "To favorites",
     "removeFromFavorites": "Remove from favorites",
     "yourListing": "Your listing",
     "cannotAddOwnListing": "You cannot add your own listing to favorites",
@@ -846,7 +849,7 @@
       "statusUpdateError": "Error updating status",
       "copySuccess": "{label} copied",
       "copyError": "Error copying",
-      "searchByIdPlaceholder": "Enter listing ID",
+      "searchByIdPlaceholder": "Listing ID / User ID",
       "searchByCreatorPlaceholder": "Enter name, email or company",
       "searchByCreator": "Search by user",
       "searchById": "Search by ID",
@@ -892,7 +895,7 @@
       "status": "Status:",
       "listings": "Listings:",
       "unavailable": "Unavailable",
-      "searchPlaceholder": "Search by ID, email, phone, name, last name or company"
+      "searchPlaceholder": "ID / email / phone / name / company"
     },
     "promotionEnabled": "Promotion activated",
     "promotionDisabled": "Promotion deactivated",
@@ -900,7 +903,7 @@
     "promotionsTabLabel": "Promotions",
     "promotionsTab": {
       "loadError": "Error loading promotions",
-      "searchPlaceholder": "Search by ID",
+      "searchPlaceholder": "Listing ID / User ID",
       "searchByListingId": "By listing ID",
       "searchByUserId": "By user ID",
       "noPromotions": "No promotions",

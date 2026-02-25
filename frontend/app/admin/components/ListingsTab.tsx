@@ -53,16 +53,16 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
         filtersData.promotedFilter === 'All'
           ? undefined
           : filtersData.promotedFilter === 'Promoted';
-      const listingId = filtersData.searchQuery.trim() ? filtersData.searchQuery.trim() : undefined;
-      const userId = filtersData.searchQuery.trim() ? filtersData.searchQuery.trim() : undefined;
+      const search = filtersData.searchQuery.trim() ? filtersData.searchQuery.trim() : undefined;
 
       const response = await adminApi.getAllListings(
         pageNum,
         limitNum,
-        listingId,
-        userId,
+        undefined,
+        undefined,
         status,
         isPromoted,
+        search,
       );
       return {
         data: response.data.data,
@@ -103,12 +103,12 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
     minDisplayTime: 1000,
   });
 
-  const loadStatusCounts = useCallback(async () => {
+  const loadStatusCounts = useCallback(async (search?: string) => {
     try {
-      const response = await adminApi.getListingsStatusCounts();
+      const response = await adminApi.getListingsStatusCounts(search);
       setStatusCounts(response.data);
     } catch {
-      // Ignore errors for status counts
+      // ignore
     }
   }, []);
 
@@ -131,8 +131,8 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
   }, [initialSearchQuery]);
 
   useEffect(() => {
-    void loadStatusCounts();
-  }, [loadStatusCounts]);
+    void loadStatusCounts(filters.searchQuery);
+  }, [loadStatusCounts, filters.searchQuery]);
 
   const handleAction = useCallback(
     async (id: string, action: 'publish' | 'pause' | 'close') => {
@@ -150,12 +150,12 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
         setData((prev) =>
           prev.map((listing) => (listing.id === id ? { ...listing, status: newStatus } : listing)),
         );
-        await loadStatusCounts();
+        await loadStatusCounts(filters.searchQuery);
       } catch {
         toast.error(t('admin.listingsTab.statusUpdateError'));
       }
     },
-    [t, loadStatusCounts, setData],
+    [t, loadStatusCounts, setData, filters.searchQuery],
   );
 
   const handleUnpromote = useCallback(
@@ -164,12 +164,12 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
         await adminApi.toggleListingPromotion(id, false, null);
         toast.success(t('admin.promotionDisabled'));
         await reload();
-        await loadStatusCounts();
+        await loadStatusCounts(filters.searchQuery);
       } catch {
         toast.error(t('admin.promotionError'));
       }
     },
-    [t, reload, loadStatusCounts],
+    [t, reload, loadStatusCounts, filters.searchQuery],
   );
 
   const handlePromoteClick = useCallback(
@@ -193,7 +193,7 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
         await adminApi.toggleListingPromotion(selectedListingId, true, days);
         toast.success(t('admin.promotionEnabled'));
         await reload();
-        await loadStatusCounts();
+        await loadStatusCounts(filters.searchQuery);
       } catch {
         toast.error(t('admin.promotionError'));
       } finally {
@@ -201,7 +201,7 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
         setSelectedListingId(null);
       }
     },
-    [selectedListingId, t, reload, loadStatusCounts],
+    [selectedListingId, t, reload, loadStatusCounts, filters.searchQuery],
   );
 
   return (

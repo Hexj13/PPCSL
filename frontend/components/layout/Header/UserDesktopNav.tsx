@@ -6,6 +6,7 @@ import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { CreateListingButton } from '@/components/listing/CreateListingButton';
 import type { User } from '@/lib/api';
 
+import { HeaderMoreDropdown } from './HeaderMoreDropdown';
 import { DocumentsIcon, HeartIcon, ScaleIcon, ShieldIcon, UserIcon, LogoutIcon } from './icons';
 
 type UserDesktopNavProps = {
@@ -34,53 +35,43 @@ export function UserDesktopNav({
       <CreateListingButton variant="desktop" />
       <Link href="/my-listings" className={navLinkClasses}>
         <DocumentsIcon />
-        <span className="hidden xl:inline" suppressHydrationWarning>
-          {t('header.myListings')}
-        </span>
-        <span className="xl:hidden" suppressHydrationWarning>
-          {t('header.myListingsShort')}
-        </span>
+        <span suppressHydrationWarning>{t('header.myListings')}</span>
       </Link>
       <Link href="/favorites" className={navLinkClasses}>
         <HeartIcon />
-        <span className="hidden lg:inline" suppressHydrationWarning>
-          {t('header.favorites')}
-        </span>
-        <span className="lg:hidden" suppressHydrationWarning>
-          {t('header.favorites')}
-        </span>
+        <span suppressHydrationWarning>{t('header.favorites')}</span>
       </Link>
-      <Link href="/compare" className={navLinkClasses}>
+      <div className="xl:hidden">
+        <HeaderMoreDropdown
+          user={user}
+          comparisonCount={comparisonCount}
+          navLinkClasses={navLinkClasses}
+          t={t}
+        />
+      </div>
+      <Link href="/compare" className={`${navLinkClasses} hidden xl:flex`}>
         <ScaleIcon />
-        <span className="hidden lg:inline" suppressHydrationWarning>
-          {t('header.compare')}
-        </span>
-        <span className="lg:hidden" suppressHydrationWarning>
-          {t('header.compare')}
-        </span>
+        <span suppressHydrationWarning>{t('header.compare')}</span>
         {comparisonCount > 0 && (
-          <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500 border border-primary-300 text-white text-xs">
+          <span className="ml-2 rounded-full border border-primary-300 bg-primary-500 px-2 py-0.5 text-xs text-white">
             {comparisonCount}
           </span>
         )}
       </Link>
-      {user.type === 'Admin' && <AdminDesktopLink navLinkClasses={navLinkClasses} t={t} />}
-      <Link href="/profile" className={navLinkClasses}>
+      <Link href="/profile" className={`${navLinkClasses} hidden xl:flex`}>
         <UserIcon />
         <span suppressHydrationWarning>{t('header.profile')}</span>
       </Link>
+      {user.type === 'Admin' && (
+        <AdminDesktopLink navLinkClasses={navLinkClasses} t={t} className="hidden xl:flex" />
+      )}
       <button onClick={onLogout} className={navLinkClasses}>
         <LogoutIcon />
-        <span className="hidden xl:inline" suppressHydrationWarning>
-          {t('header.logout')}
-        </span>
-        <span className="xl:hidden" suppressHydrationWarning>
-          {t('header.logoutShort')}
-        </span>
+        <span suppressHydrationWarning>{t('header.logout')}</span>
       </button>
       {showLang && (
         <>
-          <div className="h-6 w-px bg-white/20 mx-1"></div>
+          <div className="mx-1 h-6 w-px bg-white/20" />
           <LanguageSwitcher variant="desktop" context="header" />
         </>
       )}
@@ -91,19 +82,16 @@ export function UserDesktopNav({
 export function AdminDesktopLink({
   navLinkClasses,
   t,
+  className = '',
 }: {
   navLinkClasses: string;
   t: (key: string) => string;
+  className?: string;
 }) {
   return (
-    <Link href="/admin" className={navLinkClasses}>
+    <Link href="/admin" className={`${navLinkClasses} ${className}`}>
       <ShieldIcon />
-      <span className="hidden lg:inline" suppressHydrationWarning>
-        {t('header.admin')}
-      </span>
-      <span className="lg:hidden" suppressHydrationWarning>
-        {t('header.admin')}
-      </span>
+      <span suppressHydrationWarning>{t('header.admin')}</span>
     </Link>
   );
 }

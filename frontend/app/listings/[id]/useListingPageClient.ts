@@ -353,6 +353,7 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
     loadingPrevious,
     activeListingsCount,
     listingRef,
+    comparisonCount,
     handleToggleFavorite,
     handleToggleComparison,
     handlePromoteClick,

@@ -53,16 +53,16 @@ export function UserMobileNav({
           </span>
         )}
       </Link>
+      <Link href="/profile" {...linkProps}>
+        <UserIcon className={iconClass} />
+        <span suppressHydrationWarning>{t('header.profile')}</span>
+      </Link>
       {user.type === 'Admin' && (
         <Link href="/admin" {...linkProps}>
           <ShieldIcon className={iconClass} />
           <span suppressHydrationWarning>{t('header.admin')}</span>
         </Link>
       )}
-      <Link href="/profile" {...linkProps}>
-        <UserIcon className={iconClass} />
-        <span suppressHydrationWarning>{t('header.profile')}</span>
-      </Link>
       <button type="button" onClick={onLogout} className={mobileNavLinkClasses}>
         <LogoutIcon className={iconClass} />
         <span suppressHydrationWarning>{t('header.logout')}</span>

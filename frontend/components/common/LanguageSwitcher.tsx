@@ -8,7 +8,7 @@ import { setStoredLocale, type Locale } from '@/lib/i18n';
 import { Dropdown } from './Dropdown';
 
 const headerFooterStyle =
-  'header-language-switcher !bg-transparent !text-white font-medium text-xs md:text-xs lg:text-xs xl:text-sm hover:!text-primary-100 active:!text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 rounded-lg select-none [&_span]:!text-white [&_span]:hover:!text-primary-100 [&_svg]:!text-white [&_svg]:hover:!text-primary-100';
+  'header-language-switcher !bg-transparent !text-white font-medium text-sm hover:!text-primary-100 active:!text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 rounded-lg select-none [&_span]:!text-white [&_span]:hover:!text-primary-100 [&_svg]:!text-white [&_svg]:hover:!text-primary-100';
 
 const getLanguageAbbreviation = (locale: Locale): string => {
   const abbreviations: Record<Locale, string> = {

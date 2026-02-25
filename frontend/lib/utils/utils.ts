@@ -138,6 +138,12 @@ export function formatMileage(mileage: number): string {
   return mileage.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 }
 
+export function formatViewsCompact(views: number): string {
+  if (views < 1000) return views.toString();
+  const k = Math.floor(views / 100) / 10;
+  return `${k}k`;
+}
+
 export function formatTransmission(
   transmission: string | undefined,
   t: (_key: string) => string,
