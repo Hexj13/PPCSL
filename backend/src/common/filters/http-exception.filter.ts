@@ -29,6 +29,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = this.i18nService.translate('errors.serverError', locale);
+    let code: string | undefined;
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
@@ -37,7 +38,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
       if (typeof exceptionResponse === 'string') {
         message = this.translateMessage(exceptionResponse, locale);
       } else if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
-        const responseObj = exceptionResponse as { message?: string | string[] };
+        const responseObj = exceptionResponse as {
+          message?: string | string[];
+          code?: string;
+        };
         if (responseObj.message) {
           if (Array.isArray(responseObj.message)) {
             message = responseObj.message
@@ -47,6 +51,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
             message = this.translateMessage(responseObj.message, locale);
           }
         }
+        code = responseObj.code;
       }
     } else if (exception instanceof Error) {
       this.logger.error(`Unhandled exception: ${exception.message}`, exception.stack);
@@ -95,6 +100,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       timestamp: new Date().toISOString(),
       path: request.url,
       message,
+      ...(code && { code }),
     });
   }
 

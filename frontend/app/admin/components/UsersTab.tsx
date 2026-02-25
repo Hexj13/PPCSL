@@ -51,7 +51,7 @@ function AdminUserCard({ user, t, onViewListings, onToggleStatus }: AdminUserCar
 
   return (
     <div className="card p-4 md:p-5">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 md:gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="mb-2">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -116,11 +116,11 @@ function AdminUserCard({ user, t, onViewListings, onToggleStatus }: AdminUserCar
             </div>
           </div>
         </div>
-        <div className="flex flex-row lg:flex-col gap-2 flex-shrink-0">
+        <div className="flex flex-col xl:flex-row items-stretch xl:items-center gap-2 w-full xl:w-auto flex-shrink-0">
           {listingCount > 0 && (
             <button
               onClick={() => onViewListings(user)}
-              className="text-primary-700 font-medium text-xs md:text-sm lg:text-base hover:text-primary-900 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-700 hover:border-primary-900 bg-primary-500/10 select-none flex-1 lg:flex-none lg:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
+              className="text-primary-700 font-medium text-base hover:text-primary-900 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-700 hover:border-primary-900 bg-primary-500/10 select-none w-full xl:w-auto h-[48px]"
             >
               {t('admin.usersTab.viewListings', { count: listingCount })}
             </button>
@@ -128,7 +128,7 @@ function AdminUserCard({ user, t, onViewListings, onToggleStatus }: AdminUserCar
           {hasContactInfo(user) && (
             <button
               onClick={() => onToggleStatus(user.id)}
-              className={`font-medium text-xs md:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 select-none flex-1 lg:flex-none lg:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px] ${
+              className={`font-medium text-base transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 select-none w-full xl:w-auto h-[48px] ${
                 user.active !== false
                   ? 'text-text-secondary hover:text-text-primary border-red-500/40 hover:border-red-500/60 bg-red-500/20 hover:bg-red-500/30'
                   : 'text-primary-700 hover:text-primary-900 border-primary-700 hover:border-primary-900 bg-primary-500/10'
@@ -252,7 +252,7 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
     <>
       {showSkeleton && (
         <div>
-          <div className="mb-4 md:mb-6 flex flex-col gap-3 md:gap-4">
+          <div className="mb-4 md:mb-6 flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1 h-[48px] md:h-[52px] bg-bg-secondary/30 rounded-lg animate-pulse" />
             </div>
@@ -269,7 +269,7 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
           <div className="space-y-3 md:space-y-4">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="card p-4 md:p-5">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 md:gap-4">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                   <div className="flex-1 space-y-2 md:space-y-3">
                     <div className="h-3 md:h-4 bg-bg-secondary/30 rounded w-28 md:w-32 animate-pulse" />
                     <div className="h-5 md:h-6 bg-bg-secondary/40 rounded w-3/4 animate-pulse" />
@@ -292,7 +292,7 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
 
       {!showSkeleton && (
         <div>
-          <div className="mb-4 md:mb-6 flex flex-col gap-3 md:gap-4">
+          <div className="mb-4 md:mb-6 flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row gap-3">
               <input
                 type="text"

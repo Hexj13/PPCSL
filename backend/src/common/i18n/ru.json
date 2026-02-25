@@ -69,7 +69,16 @@
     "widthMustBeNumber": "Ширина должна быть числом от 1 до 5000",
     "imageNotFound": "Изображение не найдено",
     "uploadDirectoryNotConfigured": "Каталог загрузки не настроен",
-    "unknownError": "Неизвестная ошибка"
+    "unknownError": "Неизвестная ошибка",
+    "brandDuplicateName": "Марка с таким названием уже существует",
+    "modelDuplicateName": "Модель с таким названием уже существует для этой марки",
+    "brandDuplicateNameActiveExists": "Активная марка с таким названием уже существует",
+    "modelDuplicateNameActiveExists": "Активная модель с таким названием уже существует для этой марки",
+    "hasActiveListings": "Нельзя архивировать: есть активные объявления, использующие эту марку/модель",
+    "archivedCannotBeActive": "Архивный элемент нельзя активировать",
+    "modelCategoryOutsideBrand": "Категория модели должна входить в категории марки",
+    "brandNotFound": "Марка не найдена",
+    "modelNotFound": "Модель не найдена"
   },
   "vehicleOptions": {
     "transmission": {

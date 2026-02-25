@@ -101,7 +101,7 @@ export class TypeOrmListingRepository implements IListingRepository {
     const { vehicle } = listing;
     const { id: currentId } = listing;
     const body_type = vehicle?.body_type;
-    let vehicle_type = vehicle?.model?.vehicle_type;
+    let vehicle_type = vehicle?.model?.vehicle_types?.[0];
 
     if (!vehicle_type && body_type) {
       vehicle_type = getVehicleTypeFromBodyType(body_type);
@@ -117,8 +117,9 @@ export class TypeOrmListingRepository implements IListingRepository {
       .andWhere('listing.id != :currentId', { currentId });
 
     if (vehicle_type) {
+      const key = vehicle_type as 'car' | 'truck' | 'moto';
       queryBuilder.andWhere('vehicle.body_type IN (:...bodyTypes)', {
-        bodyTypes: BODY_TYPES_BY_VEHICLE_TYPE[vehicle_type],
+        bodyTypes: BODY_TYPES_BY_VEHICLE_TYPE[key],
       });
     }
 
@@ -164,7 +165,7 @@ export class TypeOrmListingRepository implements IListingRepository {
       .leftJoin('vehicle.brand', 'brand')
       .addSelect(['brand.id', 'brand.name', 'brand.logoUrl'])
       .leftJoin('vehicle.model', 'model')
-      .addSelect(['model.id', 'model.name', 'model.vehicle_type'])
+      .addSelect(['model.id', 'model.name', 'model.vehicle_types'])
       .leftJoin('listing.user', 'user')
       .addSelect([
         'user.id',

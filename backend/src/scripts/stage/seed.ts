@@ -212,7 +212,7 @@ async function seedListingsByType(
 
   const validBrands = brandsWithModels.filter((b) => {
     if (!b.models || b.models.length === 0) return false;
-    return b.models.some((m) => m.vehicle_type === vehicleType);
+    return b.models.some((m) => m.vehicle_types?.includes(vehicleType));
   });
 
   if (validBrands.length === 0) {
@@ -274,7 +274,7 @@ async function seedListingsByType(
   for (let i = 0; i < activeCount; i++) {
     const user = getRandomElement(users);
     const brand = getRandomElement(validBrands);
-    const typeModels = brand.models.filter((m) => m.vehicle_type === vehicleType);
+    const typeModels = brand.models.filter((m) => m.vehicle_types?.includes(vehicleType));
     if (typeModels.length === 0) {
       console.warn(`⚠️  Brand ${brand.name} has no ${vehicleType} models, skipping...`);
       continue;

@@ -430,14 +430,35 @@ GET  /api/upload/image/:filename      # Get optimized image version
 
 ### Admin
 
+Admin panel (role `Admin` only, `JwtAuthGuard` + `AdminGuard`). Tabs: Users, Brands/Models, Listings, Promotions.
+
+**Users & Listings:**
+
 ```http
-GET   /api/admin/users                # Get all users
-GET   /api/admin/listings             # Get all listings
+GET   /api/admin/users                # Get all users (paginated)
+GET   /api/admin/listings             # Get all listings (paginated)
 GET   /api/admin/stats                # Get statistics
 PATCH /api/admin/listings/:id/status  # Change listing status
-PATCH /api/admin/users/:id/toggle-status # Enable/disable user
-                                      # When deactivating, all user's refresh tokens are revoked
+PATCH /api/admin/users/:id/toggle-status # Enable/disable user (revokes refresh tokens when deactivating)
 ```
+
+**Brands / Models** — catalog management (soft delete via archive; no `is_active`):
+
+```http
+GET   /api/admin/brands-models        # Paginated brands with models; query: page, limit, query (search), vehicleType (car|truck|moto)
+POST  /api/admin/brands               # Create brand (name, vehicleTypes)
+PATCH /api/admin/brands/:id           # Update brand
+POST  /api/admin/models               # Create model (brandId, name, vehicleTypes)
+PATCH /api/admin/models/:id           # Update model
+PATCH /api/admin/brands/:id/archive   # Archive brand (and all its models); 409 if active listings exist
+PATCH /api/admin/models/:id/archive  # Archive model; 409 if active listings exist
+PATCH /api/admin/brands/:id/unarchive # Unarchive brand (409 if non-archived brand with same name exists)
+PATCH /api/admin/models/:id/unarchive # Unarchive model
+```
+
+Entities: `brands` and `vehicle_models` have `is_archived`, `name_normalized`, `vehicle_types` (array). Public catalog endpoints exclude archived records. Audit: `admin_audit_log` for create/update/archive/unarchive. After mutations, brands cache is invalidated.
+
+**Frontend (Brands/Models tab):** Container `BrandsModelsTab` uses `usePaginatedData`, renders `BrandsModelsFilters` (search, vehicle type filter, Add Brand / Add Model), `BrandsModelsTable` (expandable rows, archive/unarchive buttons, edit icons, copy ID), `ArchiveConfirmModal`, `BrandFormModal`, `ModelFormModal`. Model form uses searchable brand dropdown with `renderMenuInPortal` so the list is not clipped by the modal. Duplicate name errors show inline (no global toast); API returns `code: 'DUPLICATE_NAME'` with 409.
 
 ### Health
 

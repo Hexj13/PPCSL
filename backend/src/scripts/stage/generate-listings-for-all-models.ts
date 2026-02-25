@@ -220,7 +220,7 @@ async function generateListingsForAllModels() {
     const baseTitle = `${brand.name} ${model.name} ${year}`;
     let title = baseTitle;
 
-    if (model.vehicle_type !== 'moto') {
+    if (!model.vehicle_types?.includes('moto')) {
       const transmissionStr =
         transmission === 'Automatic'
           ? 'Автоматска'

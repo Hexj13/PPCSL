@@ -232,7 +232,7 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
 
       {!showSkeleton && (
         <div>
-          <div className="mb-4 md:mb-6">
+          <div className="mb-4 md:mb-6 flex flex-col gap-4">
             <input
               type="text"
               value={filters.searchQuery}
@@ -245,34 +245,35 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
               placeholder={t('admin.listingsTab.searchByIdPlaceholder')}
               className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-secondary border-2 border-primary-700 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-primary-900 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
             />
-          </div>
 
-          <div className="mb-4 md:mb-6 pt-4 border-t border-primary-500/20 sm:border-t-0 sm:pt-0">
-            <StatusFilterButtons
-              currentFilter={filters.statusFilter}
-              onFilterChange={(status) => {
-                setFilters((prev) => {
-                  if (prev.promotedFilter !== 'All') {
-                    return { ...prev, statusFilter: status, promotedFilter: 'All' };
-                  }
-                  return { ...prev, statusFilter: status };
-                });
-              }}
-              counts={statusCounts}
-              showPromoted={true}
-              promotedCount={statusCounts.Promoted}
-              promotedActive={filters.promotedFilter === 'Promoted'}
-              onPromotedClick={() => {
-                setFilters((prev) => {
-                  const newPromotedFilter = prev.promotedFilter === 'Promoted' ? 'All' : 'Promoted';
-                  if (newPromotedFilter === 'Promoted') {
-                    return { ...prev, promotedFilter: newPromotedFilter, statusFilter: 'All' };
-                  }
-                  return { ...prev, promotedFilter: newPromotedFilter };
-                });
-              }}
-              translationPrefix="admin.listingsTab"
-            />
+            <div className="pt-4 border-t border-primary-500/20 sm:border-t-0 sm:pt-0">
+              <StatusFilterButtons
+                currentFilter={filters.statusFilter}
+                onFilterChange={(status) => {
+                  setFilters((prev) => {
+                    if (prev.promotedFilter !== 'All') {
+                      return { ...prev, statusFilter: status, promotedFilter: 'All' };
+                    }
+                    return { ...prev, statusFilter: status };
+                  });
+                }}
+                counts={statusCounts}
+                showPromoted={true}
+                promotedCount={statusCounts.Promoted}
+                promotedActive={filters.promotedFilter === 'Promoted'}
+                onPromotedClick={() => {
+                  setFilters((prev) => {
+                    const newPromotedFilter =
+                      prev.promotedFilter === 'Promoted' ? 'All' : 'Promoted';
+                    if (newPromotedFilter === 'Promoted') {
+                      return { ...prev, promotedFilter: newPromotedFilter, statusFilter: 'All' };
+                    }
+                    return { ...prev, promotedFilter: newPromotedFilter };
+                  });
+                }}
+                translationPrefix="admin.listingsTab"
+              />
+            </div>
           </div>
 
           {listings.length === 0 ? (

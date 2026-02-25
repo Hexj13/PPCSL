@@ -1,6 +1,15 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState, useDeferredValue } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useDeferredValue,
+} from 'react';
+import { createPortal } from 'react-dom';
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { Button } from '@/ui';
@@ -22,8 +31,11 @@ interface DropdownProps {
   showActionButtons?: boolean;
   error?: boolean;
   autoPosition?: boolean;
+  renderMenuInPortal?: boolean;
   rightIcon?: React.ReactNode;
 }
+
+const PORTAL_MENU_MAX_HEIGHT = 384;
 
 function DropdownComponent({
   value,
@@ -37,6 +49,7 @@ function DropdownComponent({
   showActionButtons = false,
   error = false,
   autoPosition = false,
+  renderMenuInPortal = false,
   rightIcon,
 }: DropdownProps) {
   const { t } = useTranslation();
@@ -46,6 +59,13 @@ function DropdownComponent({
   const [tempValue, setTempValue] = useState<string>(value);
   const [openUpwards, setOpenUpwards] = useState(false);
   const [isPositioned, setIsPositioned] = useState(false);
+  const [portalPosition, setPortalPosition] = useState<{
+    top: number;
+    bottom: number;
+    left: number;
+    width: number;
+    openUp: boolean;
+  } | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -60,10 +80,45 @@ function DropdownComponent({
     }
   }, [isOpen, value, showActionButtons]);
 
-  useEffect(() => {
+  const updatePortalPosition = useCallback(() => {
+    if (!dropdownRef.current || !isOpen) return;
+    const rect = dropdownRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const spaceBelow = viewportHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    const openUp =
+      (autoPosition || renderMenuInPortal) &&
+      spaceBelow < PORTAL_MENU_MAX_HEIGHT &&
+      spaceAbove > spaceBelow;
+    setPortalPosition({
+      top: rect.top,
+      bottom: rect.bottom,
+      left: rect.left,
+      width: rect.width,
+      openUp,
+    });
+    if (renderMenuInPortal) {
+      setOpenUpwards(openUp);
+      setIsPositioned(true);
+    }
+  }, [isOpen, autoPosition, renderMenuInPortal]);
+
+  useLayoutEffect(() => {
     if (!isOpen) {
       setIsPositioned(false);
+      setPortalPosition(null);
       return;
+    }
+
+    if (renderMenuInPortal) {
+      updatePortalPosition();
+      const scrollParent = dropdownRef.current?.closest('.overflow-y-auto, .overflow-auto');
+      window.addEventListener('resize', updatePortalPosition);
+      scrollParent?.addEventListener('scroll', updatePortalPosition, true);
+      return () => {
+        window.removeEventListener('resize', updatePortalPosition);
+        scrollParent?.removeEventListener('scroll', updatePortalPosition, true);
+      };
     }
 
     if (autoPosition && dropdownRef.current && menuRef.current) {
@@ -90,11 +145,14 @@ function DropdownComponent({
       setOpenUpwards(false);
       setIsPositioned(true);
     }
-  }, [autoPosition, isOpen, options.length]);
+  }, [autoPosition, isOpen, options.length, renderMenuInPortal, updatePortalPosition]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const inTrigger = dropdownRef.current?.contains(target);
+      const inMenu = renderMenuInPortal && menuRef.current?.contains(target);
+      if (!inTrigger && !inMenu) {
         setIsOpen(false);
         setSearchQuery('');
       }
@@ -116,7 +174,7 @@ function DropdownComponent({
     } else {
       document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [isOpen, searchable]);
+  }, [isOpen, searchable, renderMenuInPortal]);
 
   const selectedOption = useMemo(
     () => options.find((opt) => opt.value === value) || null,
@@ -206,21 +264,49 @@ function DropdownComponent({
         onInputFocus={handleInputFocus}
         onToggle={handleToggleOpen}
       />
-      {isOpen && !disabled && (
-        <DropdownMenu
-          menuRef={menuRef}
-          openUpwards={openUpwards}
-          isPositioned={isPositioned}
-          filteredOptions={filteredOptions}
-          value={value}
-          tempValue={tempValue}
-          showActionButtons={showActionButtons}
-          onSelect={handleSelect}
-          onReset={handleReset}
-          onConfirm={handleConfirm}
-          t={t}
-        />
-      )}
+      {isOpen &&
+        !disabled &&
+        (renderMenuInPortal && portalPosition && typeof document !== 'undefined'
+          ? createPortal(
+              <DropdownMenu
+                menuRef={menuRef}
+                openUpwards={openUpwards}
+                isPositioned={isPositioned}
+                filteredOptions={filteredOptions}
+                value={value}
+                tempValue={tempValue}
+                showActionButtons={showActionButtons}
+                onSelect={handleSelect}
+                onReset={handleReset}
+                onConfirm={handleConfirm}
+                t={t}
+                portalStyle={{
+                  position: 'fixed',
+                  left: portalPosition.left,
+                  width: portalPosition.width,
+                  ...(portalPosition.openUp
+                    ? { bottom: window.innerHeight - portalPosition.top + 4 }
+                    : { top: portalPosition.bottom + 4 }),
+                  zIndex: 10050,
+                }}
+              />,
+              document.body,
+            )
+          : !renderMenuInPortal && (
+              <DropdownMenu
+                menuRef={menuRef}
+                openUpwards={openUpwards}
+                isPositioned={isPositioned}
+                filteredOptions={filteredOptions}
+                value={value}
+                tempValue={tempValue}
+                showActionButtons={showActionButtons}
+                onSelect={handleSelect}
+                onReset={handleReset}
+                onConfirm={handleConfirm}
+                t={t}
+              />
+            ))}
     </div>
   );
 }
@@ -319,6 +405,7 @@ interface DropdownMenuProps {
   onReset: () => void;
   onConfirm: () => void;
   t: (_key: string) => string;
+  portalStyle?: React.CSSProperties;
 }
 
 function DropdownMenu({
@@ -333,13 +420,18 @@ function DropdownMenu({
   onReset,
   onConfirm,
   t,
+  portalStyle,
 }: DropdownMenuProps) {
+  const isPortaled = !!portalStyle;
   return (
     <div
       ref={menuRef}
-      className={`absolute z-[100] w-full bg-white border-2 border-primary-500/30 rounded-lg shadow-xl ${
-        openUpwards ? 'bottom-full mb-1' : 'top-full mt-1'
+      className={`bg-white border-2 border-primary-500/30 rounded-lg shadow-xl ${
+        isPortaled
+          ? ''
+          : `absolute z-[100] w-full ${openUpwards ? 'bottom-full mb-1' : 'top-full mt-1'}`
       } ${!isPositioned ? 'opacity-0 pointer-events-none' : ''}`}
+      style={portalStyle}
     >
       <div className="max-h-96 overflow-auto scrollbar-custom">
         {filteredOptions.length > 0 ? (

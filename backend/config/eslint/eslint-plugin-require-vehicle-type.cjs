@@ -23,7 +23,7 @@ module.exports = {
         ],
         messages: {
           missingVehicleTypes: 'Brand entity must include vehicle_types field when creating. Example: { name: "...", vehicle_types: ["car"] }',
-          missingVehicleType: 'VehicleModel entity must include vehicle_type field when creating. Example: { name: "...", brand_id: "...", vehicle_type: "car" }',
+          missingVehicleType: 'VehicleModel entity must include vehicle_types field when creating. Example: { name: "...", brand_id: "...", vehicle_types: ["car"] }',
         },
       },
       create(context) {
@@ -95,7 +95,7 @@ module.exports = {
             (prop) =>
               prop.type === 'Property' &&
               prop.key.type === 'Identifier' &&
-              prop.key.name === 'vehicle_type'
+              (prop.key.name === 'vehicle_type' || prop.key.name === 'vehicle_types')
           );
         }
 

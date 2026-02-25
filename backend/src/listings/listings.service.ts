@@ -90,7 +90,7 @@ export class ListingsService {
     const savedListing = await this.createListingUseCase.execute(createListingDto, userId);
     const Sentry = await import('@sentry/node');
     const vehicle_type =
-      savedListing.vehicle?.model?.vehicle_type ||
+      savedListing.vehicle?.model?.vehicle_types?.[0] ||
       (savedListing.vehicle?.body_type
         ? getVehicleTypeFromBodyType(savedListing.vehicle.body_type)
         : undefined) ||

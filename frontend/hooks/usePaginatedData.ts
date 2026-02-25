@@ -193,7 +193,6 @@ export function usePaginatedData<T, F>(
 
   const reload = useCallback(() => {
     hasDataRef.current = false;
-    hasInitializedRef.current = false;
     void load(1, false, debouncedFilters);
   }, [load, debouncedFilters]);
 

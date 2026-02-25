@@ -41,7 +41,7 @@ async function checkChineseTruckBrands() {
     });
 
     if (brand) {
-      const truckModels = brand.models?.filter((m) => m.vehicle_type === 'truck') || [];
+      const truckModels = brand.models?.filter((m) => m.vehicle_types?.includes('truck')) || [];
       const allModels = brand.models || [];
 
       console.log(`✅ ${brandName}:`);
@@ -85,7 +85,7 @@ async function checkChineseTruckBrands() {
   if (foundBrands.length > 0) {
     console.log('\n✅ Brands with truck models:');
     foundBrands.forEach((brand) => {
-      const truckModels = brand.models?.filter((m) => m.vehicle_type === 'truck') || [];
+      const truckModels = brand.models?.filter((m) => m.vehicle_types?.includes('truck')) || [];
       console.log(`   - ${brand.name}: ${truckModels.length} truck models`);
     });
   }

@@ -12,12 +12,17 @@ import { VehicleModel } from './vehicle-model.entity';
 @Entity('brands')
 @Index(['order'])
 @Index(['vehicle_types'])
+@Index(['is_archived'])
+@Index(['is_archived', 'name_normalized'])
 export class Brand {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true })
+  @Column()
   name: string;
+
+  @Column({ type: 'varchar', length: 160, nullable: true })
+  name_normalized: string | null;
 
   @Column({ nullable: true })
   logoUrl: string;
@@ -27,6 +32,9 @@ export class Brand {
 
   @Column('simple-array', { nullable: true })
   vehicle_types: ('car' | 'truck' | 'moto')[];
+
+  @Column({ default: false })
+  is_archived: boolean;
 
   @CreateDateColumn()
   created_at: Date;

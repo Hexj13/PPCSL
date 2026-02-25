@@ -59,7 +59,7 @@ async function addOtherModel() {
         name: 'Друго',
         brand_id: brand.id,
         order: maxOrder + 1,
-        vehicle_type: 'car',
+        vehicle_types: ['car'],
       });
 
       await modelRepo.save(otherModel);

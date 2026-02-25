@@ -79,7 +79,8 @@ function getInitialVehicleFormData(vehicle: Listing['vehicle']): ListingFormData
 export function getInitialVehicleType(initialData?: Listing): 'car' | 'truck' | 'moto' {
   const bodyType = initialData?.vehicle?.body_type;
   if (bodyType && VEHICLE_TYPE_BY_BODY_TYPE[bodyType]) return VEHICLE_TYPE_BY_BODY_TYPE[bodyType];
-  const modelType = initialData?.vehicle?.model?.vehicle_type;
+  const modelTypes = initialData?.vehicle?.model?.vehicle_types;
+  const modelType = modelTypes?.[0];
   if (modelType === 'truck' || modelType === 'moto') return modelType;
   return 'car';
 }

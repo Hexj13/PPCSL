@@ -78,7 +78,15 @@
     "widthMustBeNumber": "Width must be a number between 1 and 5000",
     "imageNotFound": "Image not found",
     "uploadDirectoryNotConfigured": "Upload directory not configured",
-    "unknownError": "Unknown error"
+    "unknownError": "Unknown error",
+    "brandDuplicateName": "A brand with this name already exists",
+    "modelDuplicateName": "A model with this name already exists for this brand",
+    "brandDuplicateNameActiveExists": "An active brand with this name already exists",
+    "modelDuplicateNameActiveExists": "An active model with this name already exists for this brand",
+    "hasActiveListings": "Cannot archive: there are active listings using this brand/model",
+    "archivedCannotBeActive": "An archived item cannot be activated",
+    "modelCategoryOutsideBrand": "Model category must be within brand categories",
+    "modelNotFound": "Model not found"
   },
   "vehicleOptions": {
     "transmission": {

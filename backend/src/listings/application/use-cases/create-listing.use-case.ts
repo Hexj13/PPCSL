@@ -77,7 +77,7 @@ export class CreateListingUseCase {
         brandId
           ? this.brandsService
               .getModelsByBrand(brandId)
-              .then((models) => models.find((m) => m.id === modelId)?.vehicle_type ?? null)
+              .then((models) => models.find((m) => m.id === modelId)?.vehicle_types?.[0] ?? null)
           : Promise.resolve(null),
       getTransmissionLabel: (key: string) => Promise.resolve(this.i18nService.translate(key)),
     };

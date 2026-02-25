@@ -472,8 +472,9 @@ export function kwToHorsepower(kw: number): number {
 }
 
 export function getVehicleType(listing: Listing): 'car' | 'truck' | 'moto' {
-  if (listing.vehicle?.model?.vehicle_type) {
-    return listing.vehicle.model.vehicle_type;
+  const modelTypes = listing.vehicle?.model?.vehicle_types;
+  if (modelTypes?.[0]) {
+    return modelTypes[0];
   }
   if (listing.vehicle?.body_type) {
     return VEHICLE_TYPE_BY_BODY_TYPE[listing.vehicle.body_type] || 'car';

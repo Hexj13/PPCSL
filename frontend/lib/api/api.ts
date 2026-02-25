@@ -10,6 +10,7 @@ import type {
   UserType,
 } from '../types';
 
+import { adminBrandsModelsApi } from './admin-brands-models';
 import { api } from './api-client';
 
 export { api };
@@ -61,7 +62,7 @@ export interface VehicleModel {
   name: string;
   brand_id: string;
   order: number;
-  vehicle_type?: 'car' | 'truck' | 'moto';
+  vehicle_types?: ('car' | 'truck' | 'moto')[];
   brand?: Brand;
 }
 
@@ -213,6 +214,15 @@ export interface PromotionHistory {
   created_at: string;
   listing_status?: ListingStatus;
 }
+
+export type {
+  AdminBrand,
+  AdminModel,
+  CreateBrandPayload,
+  UpdateBrandPayload,
+  CreateModelPayload,
+  UpdateModelPayload,
+} from './admin-brands-models';
 
 export interface AdminStats {
   users: {
@@ -590,4 +600,5 @@ export const adminApi = {
       meta: { total: number; page: number; limit: number; totalPages: number };
     }>(`/api/admin/promotions?${params.toString()}`);
   },
+  ...adminBrandsModelsApi,
 };

@@ -69,7 +69,16 @@
     "widthMustBeNumber": "Lățimea trebuie să fie un număr între 1 și 5000",
     "imageNotFound": "Imaginea nu a fost găsită",
     "uploadDirectoryNotConfigured": "Directorul pentru încărcare nu este configurat",
-    "unknownError": "Eroare necunoscută"
+    "unknownError": "Eroare necunoscută",
+    "brandDuplicateName": "O marcă cu acest nume există deja",
+    "modelDuplicateName": "Un model cu acest nume există deja pentru această marcă",
+    "brandDuplicateNameActiveExists": "Există deja o marcă activă cu acest nume",
+    "modelDuplicateNameActiveExists": "Există deja un model activ cu acest nume pentru această marcă",
+    "hasActiveListings": "Nu se poate arhiva: există anunțuri active care folosesc această marcă/model",
+    "archivedCannotBeActive": "Un element arhivat nu poate fi activat",
+    "modelCategoryOutsideBrand": "Categoria modelului trebuie să facă parte din categoriile mărcii",
+    "brandNotFound": "Marca nu a fost găsită",
+    "modelNotFound": "Modelul nu a fost găsit"
   },
   "vehicleOptions": {
     "transmission": {

@@ -41,11 +41,12 @@ export class BrandsService {
 
     const queryBuilder = this.brandsRepository
       .createQueryBuilder('brand')
-      .select(['brand.id', 'brand.name', 'brand.logoUrl', 'brand.order', 'brand.vehicle_types']);
+      .select(['brand.id', 'brand.name', 'brand.logoUrl', 'brand.order', 'brand.vehicle_types'])
+      .where('brand.is_archived = :archived', { archived: false });
 
     if (vehicleType) {
-      queryBuilder.where(
-        `(brand.vehicle_types IS NOT NULL AND (brand.vehicle_types::text LIKE :pattern1 OR brand.vehicle_types::text LIKE :pattern2 OR brand.vehicle_types::text LIKE :pattern3 OR brand.vehicle_types::text = :vehicleType)) OR EXISTS (SELECT 1 FROM vehicle_models WHERE vehicle_models.brand_id = brand.id AND vehicle_models.vehicle_type::text = :vehicleType)`,
+      queryBuilder.andWhere(
+        `(brand.vehicle_types IS NOT NULL AND (brand.vehicle_types::text LIKE :pattern1 OR brand.vehicle_types::text LIKE :pattern2 OR brand.vehicle_types::text LIKE :pattern3 OR brand.vehicle_types::text = :vehicleType)) OR EXISTS (SELECT 1 FROM vehicle_models vm WHERE vm.brand_id = brand.id AND vm.is_archived = false AND (vm.vehicle_types::text = :vehicleType OR vm.vehicle_types::text LIKE :pattern1 OR vm.vehicle_types::text LIKE :pattern2 OR vm.vehicle_types::text LIKE :pattern3))`,
         {
           vehicleType,
           pattern1: `%,${vehicleType},%`,
@@ -93,10 +94,19 @@ export class BrandsService {
     const queryBuilder = this.modelsRepository
       .createQueryBuilder('model')
       .where('model.brand_id = :brandId', { brandId })
+      .andWhere('model.is_archived = :archived', { archived: false })
       .leftJoinAndSelect('model.brand', 'brand');
 
     if (vehicleType) {
-      queryBuilder.andWhere('model.vehicle_type = :vehicleType', { vehicleType });
+      queryBuilder.andWhere(
+        `(model.vehicle_types::text = :vehicleType OR model.vehicle_types::text LIKE :pattern1 OR model.vehicle_types::text LIKE :pattern2 OR model.vehicle_types::text LIKE :pattern3)`,
+        {
+          vehicleType,
+          pattern1: `${vehicleType},%`,
+          pattern2: `%,${vehicleType},%`,
+          pattern3: `%,${vehicleType}`,
+        },
+      );
     }
 
     const models = await queryBuilder
@@ -142,10 +152,19 @@ export class BrandsService {
       const queryBuilder = this.modelsRepository
         .createQueryBuilder('model')
         .where('model.brand_id IN (:...brandIds)', { brandIds: uncachedBrandIds })
+        .andWhere('model.is_archived = :archived', { archived: false })
         .leftJoinAndSelect('model.brand', 'brand');
 
       if (vehicleType) {
-        queryBuilder.andWhere('model.vehicle_type = :vehicleType', { vehicleType });
+        queryBuilder.andWhere(
+          `(model.vehicle_types::text = :vehicleType OR model.vehicle_types::text LIKE :pattern1 OR model.vehicle_types::text LIKE :pattern2 OR model.vehicle_types::text LIKE :pattern3)`,
+          {
+            vehicleType,
+            pattern1: `${vehicleType},%`,
+            pattern2: `%,${vehicleType},%`,
+            pattern3: `%,${vehicleType}`,
+          },
+        );
       }
 
       const models = await queryBuilder
@@ -339,10 +358,13 @@ export class BrandsService {
       const existingModel = existingModels.find((m) => m.name.toLowerCase() === modelNameLower);
 
       if (!existingModel) {
+        const vehicleTypes: ('car' | 'truck' | 'moto')[] =
+          brand.vehicle_types && brand.vehicle_types.length > 0 ? [brand.vehicle_types[0]] : [];
         const model = this.modelsRepository.create({
           name: modelName,
           brand_id: brand.id,
           order: maxOrder + i + 1,
+          vehicle_types: vehicleTypes.length > 0 ? vehicleTypes : undefined,
         });
         await this.modelsRepository.save(model);
         added++;

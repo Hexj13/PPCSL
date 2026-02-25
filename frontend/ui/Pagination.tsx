@@ -22,8 +22,8 @@ export function Pagination({
   }
 
   const handlePageChange = (newPage: number) => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
     onPageChange(newPage);
+    window.scrollTo({ top: 0, behavior: 'auto' });
   };
 
   return (

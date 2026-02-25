@@ -7,7 +7,9 @@ import {
   Param,
   ParseUUIDPipe,
   Patch,
+  Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -20,14 +22,20 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { Request } from 'express';
 
 import { AdminGuard } from '../auth/infrastructure/guards/admin.guard';
 import { JwtAuthGuard } from '../auth/infrastructure/guards/jwt-auth.guard';
 import { ListingStatus } from '../common/types';
 import { TogglePromotionDto } from '../listings/presentation/dto/toggle-promotion.dto';
 
+import { AdminBrandsModelsService } from './admin-brands-models.service';
 import { AdminService } from './admin.service';
 import { DeleteAllBrandsService } from './delete-all-brands.service';
+import { CreateBrandDto } from './dto/create-brand.dto';
+import { CreateModelDto } from './dto/create-model.dto';
+import { UpdateBrandDto } from './dto/update-brand.dto';
+import { UpdateModelDto } from './dto/update-model.dto';
 
 @ApiTags('admin')
 @ApiBearerAuth('JWT-auth')
@@ -37,6 +45,7 @@ export class AdminController {
   constructor(
     private readonly adminService: AdminService,
     private readonly deleteAllBrandsService: DeleteAllBrandsService,
+    private readonly adminBrandsModelsService: AdminBrandsModelsService,
   ) {}
 
   @ApiOperation({ summary: 'Get all users' })
@@ -598,5 +607,130 @@ export class AdminController {
     const limitNum = limit ? Math.min(100, Math.max(1, parseInt(limit, 10))) : 50;
     const fromDateObj = fromDate ? new Date(fromDate) : undefined;
     return this.adminService.getAllPromotions(pageNum, limitNum, listingId, userId, fromDateObj);
+  }
+
+  @Get('brands-models')
+  @ApiOperation({ summary: 'Get brands and models (paginated)' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'query', required: false, type: String })
+  @ApiQuery({ name: 'vehicleType', required: false, enum: ['car', 'truck', 'moto'] })
+  getBrandsModels(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('query') query?: string,
+    @Query('vehicleType') vehicleType?: string,
+  ) {
+    const pageNum = page ? Math.max(1, parseInt(page, 10)) : 1;
+    const limitNum = limit ? Math.min(2000, Math.max(1, parseInt(limit, 10))) : 100;
+    const type =
+      vehicleType === 'car' || vehicleType === 'truck' || vehicleType === 'moto'
+        ? vehicleType
+        : undefined;
+    return this.adminBrandsModelsService.getBrandsModels(pageNum, limitNum, query, type);
+  }
+
+  @Post('brands')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @ApiOperation({ summary: 'Create brand' })
+  createBrand(@Body() dto: CreateBrandDto, @Req() req: Request) {
+    const user = req.user as { id: string };
+    return this.adminBrandsModelsService.createBrand(dto, {
+      actorUserId: user.id,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+  }
+
+  @Patch('brands/:id')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @ApiOperation({ summary: 'Update brand' })
+  updateBrand(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateBrandDto,
+    @Req() req: Request,
+  ) {
+    const user = req.user as { id: string };
+    return this.adminBrandsModelsService.updateBrand(id, dto, {
+      actorUserId: user.id,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+  }
+
+  @Post('models')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @ApiOperation({ summary: 'Create model' })
+  createModel(@Body() dto: CreateModelDto, @Req() req: Request) {
+    const user = req.user as { id: string };
+    return this.adminBrandsModelsService.createModel(dto, {
+      actorUserId: user.id,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+  }
+
+  @Patch('models/:id')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @ApiOperation({ summary: 'Update model' })
+  updateModel(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateModelDto,
+    @Req() req: Request,
+  ) {
+    const user = req.user as { id: string };
+    return this.adminBrandsModelsService.updateModel(id, dto, {
+      actorUserId: user.id,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+  }
+
+  @Patch('brands/:id/archive')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @ApiOperation({ summary: 'Archive brand' })
+  archiveBrand(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+    const user = req.user as { id: string };
+    return this.adminBrandsModelsService.archiveBrand(id, {
+      actorUserId: user.id,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+  }
+
+  @Patch('models/:id/archive')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @ApiOperation({ summary: 'Archive model' })
+  archiveModel(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+    const user = req.user as { id: string };
+    return this.adminBrandsModelsService.archiveModel(id, {
+      actorUserId: user.id,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+  }
+
+  @Patch('brands/:id/unarchive')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @ApiOperation({ summary: 'Unarchive brand' })
+  unarchiveBrand(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+    const user = req.user as { id: string };
+    return this.adminBrandsModelsService.unarchiveBrand(id, {
+      actorUserId: user.id,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+  }
+
+  @Patch('models/:id/unarchive')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @ApiOperation({ summary: 'Unarchive model' })
+  unarchiveModel(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+    const user = req.user as { id: string };
+    return this.adminBrandsModelsService.unarchiveModel(id, {
+      actorUserId: user.id,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
   }
 }

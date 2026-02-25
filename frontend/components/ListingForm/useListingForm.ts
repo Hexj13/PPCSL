@@ -100,8 +100,9 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
   useEffect(() => {
     if (mode === 'edit' && models.length > 0 && formData.vehicle.model_id) {
       const selectedModel = models.find((m) => m.id === formData.vehicle.model_id);
-      if (selectedModel?.vehicle_type && selectedModel.vehicle_type !== vehicleType) {
-        setVehicleType(selectedModel.vehicle_type);
+      const modelType = selectedModel?.vehicle_types?.[0];
+      if (modelType && modelType !== vehicleType) {
+        setVehicleType(modelType);
       }
     }
   }, [models, formData.vehicle.model_id, mode, vehicleType]);

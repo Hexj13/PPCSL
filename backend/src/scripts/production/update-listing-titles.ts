@@ -46,7 +46,7 @@ async function updateListingTitles() {
       const baseTitle = titleParts.join(' ');
 
       let newTitle = baseTitle;
-      if (model?.vehicle_type !== 'moto') {
+      if (!model?.vehicle_types?.includes('moto')) {
         const transmissionStr =
           vehicle.transmission === 'Automatic'
             ? 'Автоматска'

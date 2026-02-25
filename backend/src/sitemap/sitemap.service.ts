@@ -140,7 +140,7 @@ export class SitemapService {
       const modelSlug = createSlug(model.name);
       if (!brandSlug || !modelSlug) continue;
 
-      const vt = model.vehicle_type;
+      const vt = model.vehicle_types?.[0];
       const param = vt && vt !== 'car' ? `&vehicleType=${vt}` : '';
       urls.push({
         loc: `${SITE_URL}/?brand=${brandSlug}&model=${modelSlug}${param}`,

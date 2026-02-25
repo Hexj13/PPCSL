@@ -184,10 +184,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               position="top-right"
               containerStyle={{
                 top: '80px',
+                zIndex: 10000,
               }}
               toastOptions={{
                 style: {
-                  zIndex: 40,
+                  zIndex: 10000,
                   minWidth: '320px',
                   maxWidth: '400px',
                   width: '100%',

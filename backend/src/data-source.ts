@@ -1,6 +1,7 @@
 import type { DataSourceOptions } from 'typeorm';
 import { DataSource } from 'typeorm';
 
+import { AdminAuditLog } from './admin/entities/admin-audit-log.entity';
 import { RefreshToken } from './auth/entities/refresh-token.entity';
 import { Brand } from './brands/entities/brand.entity';
 import { VehicleModel } from './brands/entities/vehicle-model.entity';
@@ -33,6 +34,7 @@ export const dataSourceOptions: DataSourceOptions = {
     RefreshToken,
     SavedFilter,
     ExchangeRate,
+    AdminAuditLog,
   ],
   synchronize: process.env.DB_SYNC === 'true' || process.env.NODE_ENV !== 'production',
   logging: process.env.NODE_ENV === 'development',
