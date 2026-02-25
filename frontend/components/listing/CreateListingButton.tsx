@@ -7,12 +7,14 @@ import { useAuthStore } from '@/lib/store';
 
 interface CreateListingButtonProps {
   variant?: 'mobile' | 'desktop';
+  shortLabel?: boolean;
   className?: string;
   onClick?: () => void;
 }
 
 export function CreateListingButton({
   variant = 'desktop',
+  shortLabel = false,
   className = '',
   onClick,
 }: CreateListingButtonProps) {
@@ -62,7 +64,7 @@ export function CreateListingButton({
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
       </svg>
       {isMobile ? (
-        <span>{t('header.createListing')}</span>
+        <span>{shortLabel ? t('header.createListingShort') : t('header.createListing')}</span>
       ) : (
         <>
           <span className="hidden lg:inline">{t('header.createListing')}</span>

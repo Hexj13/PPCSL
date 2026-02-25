@@ -44,7 +44,7 @@ export function Header() {
   return (
     <header
       ref={headerRef}
-      className="bg-primary-700 shadow-lg border-b-2 border-primary-500/20 sticky top-0 z-50 backdrop-blur-sm h-[72px]"
+      className="bg-primary-700 shadow-lg border-b-2 border-primary-500/20 sticky top-0 z-50 h-[72px] [transform:translateZ(0)]"
       suppressHydrationWarning
     >
       <div className="container mx-auto px-3 sm:px-4 h-full" suppressHydrationWarning>

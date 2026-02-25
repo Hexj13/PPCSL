@@ -22,7 +22,7 @@ export function MobileToolbar({
       {showSkeleton ? (
         <div className="h-9 w-20 bg-white/20 rounded animate-pulse" />
       ) : (
-        !isMobileMenuOpen && <CreateListingButton variant="mobile" />
+        !isMobileMenuOpen && <CreateListingButton variant="mobile" shortLabel />
       )}
       <button
         onClick={onToggle}

@@ -52,9 +52,11 @@ export function GuestMobileNav({
       )}
       {!isAuthPage && (
         <>
-          <div className="h-px bg-white/20 my-2"></div>
-          <div className="flex justify-center">
-            <LanguageSwitcher variant="mobile" context="header" />
+          <div className="-mt-2">
+            <div className="h-px bg-white/20 my-2"></div>
+            <div className="flex justify-center">
+              <LanguageSwitcher variant="mobile" context="header" />
+            </div>
           </div>
         </>
       )}
