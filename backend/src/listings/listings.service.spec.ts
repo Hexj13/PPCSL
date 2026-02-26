@@ -572,6 +572,7 @@ describe('ListingsService', () => {
       const result = await service.create(
         createDto as Partial<CreateListingDto> as CreateListingDto,
         'user-1',
+        'Individual',
       );
 
       expect(result.status).toBe(ListingStatus.Active);
@@ -601,6 +602,7 @@ describe('ListingsService', () => {
       const result = await service.create(
         createDto as Partial<CreateListingDto> as CreateListingDto,
         'user-1',
+        'Individual',
       );
 
       expect(result.status).toBe(ListingStatus.Paused);
@@ -629,6 +631,7 @@ describe('ListingsService', () => {
       const result = await service.create(
         createDto as Partial<CreateListingDto> as CreateListingDto,
         'user-1',
+        'Individual',
       );
 
       expect(result.equipment).toEqual(['air_conditioning', 'navigation', 'parking_sensors']);
@@ -654,6 +657,7 @@ describe('ListingsService', () => {
       const result = await service.create(
         createDto as Partial<CreateListingDto> as CreateListingDto,
         'user-1',
+        'Individual',
       );
 
       expect(result.equipment).toBeUndefined();

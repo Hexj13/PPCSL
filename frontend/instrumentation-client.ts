@@ -3,7 +3,9 @@ import * as Sentry from '@sentry/nextjs';
 const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
 const isProduction = process.env.NODE_ENV === 'production';
 
-if (dsn && isProduction) {
+function initSentry() {
+  if (!dsn || !isProduction) return;
+  const isMobileViewport = typeof window !== 'undefined' && window.innerWidth < 768;
   Sentry.init({
     dsn,
     environment: 'production',
@@ -12,7 +14,7 @@ if (dsn && isProduction) {
     debug: false,
     enableLogs: true,
     replaysOnErrorSampleRate: 1.0,
-    replaysSessionSampleRate: 0.1,
+    replaysSessionSampleRate: isMobileViewport ? 0.05 : 0.1,
     integrations: [
       Sentry.browserTracingIntegration({
         enableInp: true,
@@ -28,6 +30,14 @@ if (dsn && isProduction) {
       }),
     ],
   });
+}
+
+if (dsn && isProduction) {
+  const schedule =
+    typeof requestAnimationFrame !== 'undefined'
+      ? requestAnimationFrame
+      : (fn: () => void) => setTimeout(fn, 0);
+  schedule(() => initSentry());
 }
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

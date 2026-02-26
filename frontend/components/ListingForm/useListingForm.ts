@@ -267,6 +267,15 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
       errorKey: 'powerKwRequired',
     }));
 
+    const assignedUserIdTrimmed = formData.assignedUserId?.trim();
+    if (assignedUserIdTrimmed) {
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(assignedUserIdTrimmed)) {
+        toast.error(t('listings.invalidUserId'));
+        newErrors['assignedUserId'] = true;
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }, [formData, vehicleType, t]);
@@ -325,9 +334,33 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
       } catch (error: unknown) {
         setLoading(false);
         reportFormSubmit(analytics, mode, false, filledFields);
-        afterHidden(() => {
-          toast.error(getSubmitErrorMessage(error, mode, t));
-        });
+
+        const axiosError = error as {
+          response?: { data?: { message?: string; errorKey?: string } };
+        };
+        const backendMessage =
+          typeof axiosError?.response?.data?.message === 'string'
+            ? axiosError.response.data.message
+            : '';
+        const backendErrorKey = axiosError?.response?.data?.errorKey;
+        const assignedUserErrors = [
+          'errors.userNotFound',
+          'errors.assignedUserDeactivated',
+          'errors.activeListingsLimitExceeded',
+          'errors.invalidUserId',
+        ];
+        const isAssignError =
+          formData.assignedUserId?.trim() &&
+          (typeof backendErrorKey === 'string'
+            ? assignedUserErrors.includes(backendErrorKey)
+            : assignedUserErrors.some((key) => backendMessage.includes(key)));
+
+        if (isAssignError) {
+          setErrors((prev) => ({ ...prev, assignedUserId: true }));
+          afterHidden(() => toast.error(backendMessage || getSubmitErrorMessage(error, mode, t)));
+        } else {
+          afterHidden(() => toast.error(getSubmitErrorMessage(error, mode, t)));
+        }
       }
     },
     [

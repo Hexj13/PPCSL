@@ -98,7 +98,9 @@ jest.mock('@/lib/analytics', () => ({
     searchFiltersView: jest.fn(),
     searchFiltersApply: jest.fn(),
     selectContent: jest.fn(),
+    selectContentDeferred: jest.fn(),
     search: jest.fn(),
+    searchDeferred: jest.fn(),
   },
 }));
 

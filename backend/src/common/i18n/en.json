@@ -28,6 +28,8 @@
     "listingAccessDenied": "You do not have access to this listing",
     "listingAlreadyActive": "Listing is already active",
     "activeListingsLimitExceeded": "Active listings limit exceeded. Maximum: {max}",
+    "invalidUserId": "Invalid user ID",
+    "assignedUserDeactivated": "User is deactivated",
     "userAlreadyExists": "User with these data already exists",
     "imageProcessingError": "Error processing image: {error}",
     "invalidLoginCredentials": "Invalid login credentials",

@@ -68,6 +68,10 @@ export function useSearchTabs({
 
   const FADE_OUT_SCROLL_THRESHOLD = 48;
 
+  const lastIndicatorRef = useRef({ left: 0, width: 0 });
+  const lastFadeRef = useRef({ show: true, opacity: 1 });
+  const rafIdRef = useRef(0);
+
   useEffect(() => {
     const updateIndicator = () => {
       const activeRef =
@@ -84,11 +88,12 @@ export function useSearchTabs({
         const container = tabsContainerRef.current;
         const containerRect = container.getBoundingClientRect();
         const scrollLeft = container.scrollLeft;
-
-        setIndicatorStyle({
-          left: rect.left - containerRect.left + scrollLeft,
-          width: rect.width,
-        });
+        const left = rect.left - containerRect.left + scrollLeft;
+        const width = rect.width;
+        if (lastIndicatorRef.current.left !== left || lastIndicatorRef.current.width !== width) {
+          lastIndicatorRef.current = { left, width };
+          setIndicatorStyle({ left, width });
+        }
       }
     };
 
@@ -96,9 +101,19 @@ export function useSearchTabs({
       if (!tabsContainerRef.current) return;
       const { scrollLeft, scrollWidth, clientWidth } = tabsContainerRef.current;
       const isAtEnd = scrollLeft >= scrollWidth - clientWidth - 1;
-      setShowFade(!isAtEnd);
+      const show = !isAtEnd;
       const opacity = isAtEnd ? 0 : Math.max(0, 1 - scrollLeft / FADE_OUT_SCROLL_THRESHOLD);
-      setFadeOpacity(opacity);
+      if (lastFadeRef.current.show !== show || lastFadeRef.current.opacity !== opacity) {
+        lastFadeRef.current = { show, opacity };
+        setShowFade(show);
+        setFadeOpacity(opacity);
+      }
+    };
+
+    const runUpdates = () => {
+      updateIndicator();
+      updateFade();
+      rafIdRef.current = 0;
     };
 
     const handleResize = () => {
@@ -107,8 +122,9 @@ export function useSearchTabs({
     };
 
     const handleScroll = () => {
-      updateIndicator();
-      updateFade();
+      if (rafIdRef.current === 0) {
+        rafIdRef.current = requestAnimationFrame(runUpdates);
+      }
     };
 
     updateIndicator();
@@ -116,7 +132,7 @@ export function useSearchTabs({
 
     const container = tabsContainerRef.current;
     if (container) {
-      container.addEventListener('scroll', handleScroll);
+      container.addEventListener('scroll', handleScroll, { passive: true });
       const resizeObserver = new ResizeObserver(handleResize);
       resizeObserver.observe(container);
       window.addEventListener('resize', handleResize);
@@ -125,6 +141,7 @@ export function useSearchTabs({
         container.removeEventListener('scroll', handleScroll);
         resizeObserver.disconnect();
         window.removeEventListener('resize', handleResize);
+        if (rafIdRef.current !== 0) cancelAnimationFrame(rafIdRef.current);
       };
     }
 

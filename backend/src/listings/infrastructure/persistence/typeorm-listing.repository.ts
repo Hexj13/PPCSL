@@ -49,14 +49,15 @@ export class TypeOrmListingRepository implements IListingRepository {
     const validSortFields = ['created_at', 'price', 'year', 'views'];
     const sortField = validSortFields.includes(sortBy) ? sortBy : 'created_at';
     const order = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+    const dateSortColumn = sortField === 'created_at' ? 'last_updated_at' : sortField;
 
     queryBuilder.orderBy('listing.is_promoted', 'DESC');
-    if (sortField === 'year') {
+    if (dateSortColumn === 'year') {
       queryBuilder.addOrderBy('vehicle.year', order);
-    } else if (sortField === 'views') {
+    } else if (dateSortColumn === 'views') {
       queryBuilder.addOrderBy('listing.views', order);
     } else if (
-      sortField === 'price' &&
+      dateSortColumn === 'price' &&
       criteria.defaultCurrency !== undefined &&
       criteria.priceSortRates !== undefined
     ) {
@@ -70,7 +71,7 @@ export class TypeOrmListingRepository implements IListingRepository {
       queryBuilder.addSelect(expression, 'price_in_default_currency');
       queryBuilder.addOrderBy('price_in_default_currency', order);
     } else {
-      queryBuilder.addOrderBy(`listing.${sortField}`, order);
+      queryBuilder.addOrderBy(`listing.${dateSortColumn}`, order);
     }
 
     const [data, total] = await queryBuilder.skip(skip).take(limit).getManyAndCount();

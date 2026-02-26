@@ -28,6 +28,8 @@
     "listingAccessDenied": "У вас нет доступа к этому объявлению",
     "listingAlreadyActive": "Объявление уже активно",
     "activeListingsLimitExceeded": "Превышен лимит активных объявлений. Максимум: {max}",
+    "invalidUserId": "Некорректный ID пользователя",
+    "assignedUserDeactivated": "Пользователь деактивирован",
     "userAlreadyExists": "Пользователь с такими данными уже существует",
     "imageProcessingError": "Ошибка обработки изображения: {error}",
     "invalidLoginCredentials": "Неверные учетные данные",

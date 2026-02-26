@@ -173,6 +173,7 @@ export interface CreateListingDto {
     color?: string;
     doors?: number;
   };
+  assignedUserId?: string;
 }
 
 export interface UpdateListingDto extends Partial<CreateListingDto> {}
@@ -573,6 +574,18 @@ export const adminApi = {
     return api.get<{ data: User[]; meta: PaginationMeta }>(`/api/admin/users?${query}`);
   },
   getUserListings: (userId: string) => api.get<Listing[]>(`/api/admin/users/${userId}/listings`),
+  validateAssignUser: (userId: string) =>
+    api.get<{
+      valid: boolean;
+      user?: {
+        id: string;
+        displayName: string;
+        type: string;
+        activeListings: number;
+        listingLimit: number;
+      };
+      error?: string;
+    }>(`/api/admin/validate-assign-user/${userId}`),
   toggleUserStatus: (userId: string) => api.patch(`/api/admin/users/${userId}/toggle-status`),
   toggleListingPromotion: (id: string, isPromoted: boolean, days?: number | null) =>
     api.patch(`/api/admin/listings/${id}/promote`, { is_promoted: isPromoted, days }),

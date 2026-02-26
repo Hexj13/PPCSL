@@ -13,6 +13,7 @@ import { PromotionHistory } from '../listings/entities/promotion-history.entity'
 import { Vehicle } from '../listings/entities/vehicle.entity';
 import { ListingsModule } from '../listings/listings.module';
 import { User } from '../users/entities/user.entity';
+import { UsersModule } from '../users/users.module';
 
 import { AdminAuditService } from './admin-audit.service';
 import { AdminBrandsModelsService } from './admin-brands-models.service';
@@ -38,6 +39,7 @@ import { AdminAuditLog } from './entities/admin-audit-log.entity';
     ListingsModule,
     BrandsModule,
     ExchangeRatesModule,
+    UsersModule,
   ],
   controllers: [AdminController],
   providers: [AdminService, DeleteAllBrandsService, AdminAuditService, AdminBrandsModelsService],

@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Inject, Injectable } from '@nestjs/common';
 
 import { BrandsService } from '../../../brands/brands.service';
 import { getDefaultCurrency } from '../../../common/constants';
@@ -26,22 +26,35 @@ export class CreateListingUseCase {
     private readonly i18nService: I18nService,
   ) {}
 
-  async execute(dto: CreateListingDto, userId: string): Promise<Listing> {
+  async execute(dto: CreateListingDto, userId: string, userType?: string): Promise<Listing> {
+    let ownerId = userId;
+
+    if (dto.assignedUserId) {
+      if (userType !== 'Admin') {
+        throw new ForbiddenException('errors.accessDenied');
+      }
+      const targetUser = await this.usersService.findOneById(dto.assignedUserId);
+      if (!targetUser.active) {
+        throw new BadRequestException('errors.assignedUserDeactivated');
+      }
+      ownerId = targetUser.id;
+    }
+
     const vehicle = Object.assign(new Vehicle(), dto.vehicle);
     const title = await this.generateTitle(vehicle);
 
     const status = dto.status || ListingStatusEnum.Active;
     if (status === ListingStatusEnum.Active) {
-      const activeCount = await this.listingRepo.countActiveByUser(userId);
-      const limit = await this.usersService.getListingLimit(userId);
+      const activeCount = await this.listingRepo.countActiveByUser(ownerId);
+      const limit = await this.usersService.getListingLimit(ownerId);
       if (activeCount >= limit) {
         throw new BadRequestException(`errors.activeListingsLimitExceeded|${limit}`);
       }
     }
 
     const listingFields = Object.fromEntries(
-      Object.entries(dto).filter(([key]) => key !== 'vehicle'),
-    ) as Omit<CreateListingDto, 'vehicle'>;
+      Object.entries(dto).filter(([key]) => !['vehicle', 'assignedUserId'].includes(key)),
+    ) as Omit<CreateListingDto, 'vehicle' | 'assignedUserId'>;
     const listing = new Listing();
     Object.assign(listing, {
       ...listingFields,
@@ -51,7 +64,7 @@ export class CreateListingUseCase {
       title,
       status,
       currency: dto.currency || getDefaultCurrency(),
-      user_id: userId,
+      user_id: ownerId,
       last_updated_at: new Date(),
       last_published_at: status === ListingStatusEnum.Active ? new Date() : null,
     });

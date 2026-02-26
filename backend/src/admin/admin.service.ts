@@ -13,6 +13,7 @@ import { IListingCache, LISTING_CACHE } from '../listings/application/ports/list
 import { Listing } from '../listings/entities/listing.entity';
 import { PromotionHistory } from '../listings/entities/promotion-history.entity';
 import { ListingsService } from '../listings/listings.service';
+import { UsersService } from '../users/application/users.service';
 import { User } from '../users/entities/user.entity';
 
 @Injectable()
@@ -29,6 +30,7 @@ export class AdminService {
     private exchangeRatesService: ExchangeRatesService,
     @Inject(LISTING_CACHE)
     private listingCache: IListingCache,
+    private usersService: UsersService,
   ) {}
 
   async getAllUsers(
@@ -99,6 +101,51 @@ export class AdminService {
       throw new NotFoundException('errors.userNotFound');
     }
     return user.listings || [];
+  }
+
+  async validateAssignUser(userId: string): Promise<{
+    valid: boolean;
+    user?: {
+      id: string;
+      displayName: string;
+      type: string;
+      activeListings: number;
+      listingLimit: number;
+    };
+    error?: string;
+  }> {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      return { valid: false, error: 'errors.userNotFound' };
+    }
+
+    if (!user.active) {
+      return { valid: false, error: 'errors.assignedUserDeactivated' };
+    }
+
+    const activeListings = await this.listingsRepository.count({
+      where: { user_id: userId, status: ListingStatusEnum.Active },
+    });
+    const listingLimit = await this.usersService.getListingLimit(userId);
+
+    if (activeListings >= listingLimit) {
+      return { valid: false, error: 'errors.activeListingsLimitExceeded' };
+    }
+
+    const displayName =
+      user.getDisplayName()?.trim() || user.email?.trim() || user.phone?.trim() || user.id;
+
+    return {
+      valid: true,
+      user: {
+        id: user.id,
+        displayName,
+        type: user.type,
+        activeListings,
+        listingLimit,
+      },
+    };
   }
 
   async toggleUserStatus(userId: string) {

@@ -345,6 +345,14 @@ export class AdminController {
     ]).then(([users, listings]) => ({ users, listings }));
   }
 
+  @Get('validate-assign-user/:userId')
+  @ApiOperation({ summary: 'Validate user for listing assignment' })
+  @ApiParam({ name: 'userId', description: 'Target user UUID' })
+  @ApiResponse({ status: 200, description: 'Validation result' })
+  validateAssignUser(@Param('userId', ParseUUIDPipe) userId: string) {
+    return this.adminService.validateAssignUser(userId);
+  }
+
   @ApiOperation({ summary: 'Update listing status' })
   @ApiParam({
     name: 'id',

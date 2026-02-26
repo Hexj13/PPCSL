@@ -86,8 +86,16 @@ export class ListingsService {
     private readonly autoCloseOldListingsUseCase: AutoCloseOldListingsUseCase,
   ) {}
 
-  async create(createListingDto: CreateListingDto, userId: string): Promise<Listing> {
-    const savedListing = await this.createListingUseCase.execute(createListingDto, userId);
+  async create(
+    createListingDto: CreateListingDto,
+    userId: string,
+    userType?: string,
+  ): Promise<Listing> {
+    const savedListing = await this.createListingUseCase.execute(
+      createListingDto,
+      userId,
+      userType,
+    );
     const Sentry = await import('@sentry/node');
     const vehicle_type =
       savedListing.vehicle?.model?.vehicle_types?.[0] ||

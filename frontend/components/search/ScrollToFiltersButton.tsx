@@ -65,6 +65,19 @@ export function ScrollToFiltersButton() {
   }, [searchParams]);
 
   useEffect(() => {
+    let rafId = 0;
+    let lastVisible = false;
+    let lastShowBack = false;
+
+    const updateState = (visible: boolean, showBack: boolean) => {
+      if (visible !== lastVisible || showBack !== lastShowBack) {
+        lastVisible = visible;
+        lastShowBack = showBack;
+        setIsVisible(visible);
+        setShowBackButton(showBack);
+      }
+    };
+
     const handleScroll = () => {
       if (typeof window === 'undefined') return;
 
@@ -81,44 +94,50 @@ export function ScrollToFiltersButton() {
       const isScrolledPastFilters = scrollY > filtersBottom + 100;
       const isNearFilters = scrollY >= filtersTop - 200 && scrollY <= filtersBottom + 100;
 
-      if (isScrolledPastFilters) {
-        if (!hasScrolledToFiltersRef.current) {
-          setIsVisible(true);
-          setShowBackButton(false);
-        } else if (isNearFilters) {
-          setIsVisible(true);
-          setShowBackButton(true);
-        } else {
-          setIsVisible(true);
-          setShowBackButton(false);
-        }
-      } else if (
-        isNearFilters &&
-        hasScrolledToFiltersRef.current &&
-        scrollPositionRef.current > 0
-      ) {
-        setIsVisible(true);
-        setShowBackButton(true);
-      } else if (
+      if (
         scrollY < scrollPositionRef.current - 100 &&
         scrollPositionRef.current > 0 &&
         !hasScrolledToFiltersRef.current
       ) {
         scrollPositionRef.current = 0;
         hasScrolledToFiltersRef.current = false;
-        setIsVisible(false);
-        setShowBackButton(false);
-      } else if (!isScrolledPastFilters && scrollPositionRef.current === 0) {
-        setIsVisible(false);
-        setShowBackButton(false);
+      }
+
+      let visible = false;
+      let showBack = false;
+
+      if (isScrolledPastFilters) {
+        visible = true;
+        showBack = hasScrolledToFiltersRef.current && isNearFilters;
+      } else if (
+        isNearFilters &&
+        hasScrolledToFiltersRef.current &&
+        scrollPositionRef.current > 0
+      ) {
+        visible = true;
+        showBack = true;
+      }
+
+      updateState(visible, showBack);
+    };
+
+    const tick = () => {
+      handleScroll();
+      rafId = 0;
+    };
+
+    const onScroll = () => {
+      if (rafId === 0) {
+        rafId = window.requestAnimationFrame(tick);
       }
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('scroll', onScroll, { passive: true });
     handleScroll();
 
     return () => {
-      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('scroll', onScroll);
+      if (rafId !== 0) window.cancelAnimationFrame(rafId);
     };
   }, []);
 

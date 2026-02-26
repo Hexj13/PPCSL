@@ -54,6 +54,9 @@ const loadGridState = (): {
   return null;
 };
 
+const PARSED_PARAMS_CACHE_MAX = 32;
+const parsedParamsCache = new Map<string, Record<string, string | number | boolean>>();
+
 function getVehicleTypeFromParams(searchParamsString: string): 'car' | 'truck' | 'moto' {
   const params = new URLSearchParams(searchParamsString);
   const vehicleTypeParam = params.get('vehicleType') as 'car' | 'truck' | 'moto' | null;
@@ -62,10 +65,21 @@ function getVehicleTypeFromParams(searchParamsString: string): 'car' | 'truck' |
     : 'car';
 }
 
+function getParsedSearchParamsCacheKey(
+  searchParamsString: string,
+  vehicleType: 'car' | 'truck' | 'moto',
+): string {
+  return `${searchParamsString}|${vehicleType}`;
+}
+
 async function getParsedSearchParams(
   searchParamsString: string,
   vehicleType: 'car' | 'truck' | 'moto',
 ): Promise<Record<string, string | number | boolean>> {
+  const cacheKey = getParsedSearchParamsCacheKey(searchParamsString, vehicleType);
+  const cached = parsedParamsCache.get(cacheKey);
+  if (cached) return cached;
+
   const currentSearchParams = new URLSearchParams(searchParamsString);
   try {
     let brands;
@@ -94,7 +108,13 @@ async function getParsedSearchParams(
         return modelResolver(brandIds, slugs);
       },
     });
-    return parsed as unknown as Record<string, string | number | boolean>;
+    const result = parsed as unknown as Record<string, string | number | boolean>;
+    if (parsedParamsCache.size >= PARSED_PARAMS_CACHE_MAX) {
+      const firstKey = parsedParamsCache.keys().next().value;
+      if (firstKey !== undefined) parsedParamsCache.delete(firstKey);
+    }
+    parsedParamsCache.set(cacheKey, result);
+    return result;
   } catch {
     return { page: 1, limit: 20 };
   }
@@ -211,13 +231,16 @@ export function ListingGrid({ initialData }: ListingGridProps) {
             setError(null);
             setHasLoadedWithFilters(true);
             if (allNewListings.length > 0) {
-              analytics.viewItemList(
-                allNewListings.map((listing) => ({
-                  id: listing.id,
-                  title: listing.title,
-                  price: listing.price,
-                })),
-              );
+              const items = allNewListings.map((listing) => ({
+                id: listing.id,
+                title: listing.title,
+                price: listing.price,
+              }));
+              if (typeof requestIdleCallback !== 'undefined') {
+                requestIdleCallback(() => analytics.viewItemList(items), { timeout: 500 });
+              } else {
+                setTimeout(() => analytics.viewItemList(items), 0);
+              }
             }
           }
         });

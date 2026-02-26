@@ -30,12 +30,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = this.i18nService.translate('errors.serverError', locale);
     let code: string | undefined;
+    let errorKey: string | undefined;
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
 
       if (typeof exceptionResponse === 'string') {
+        errorKey = this.getErrorKey(exceptionResponse);
         message = this.translateMessage(exceptionResponse, locale);
       } else if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
         const responseObj = exceptionResponse as {
@@ -44,10 +46,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
         };
         if (responseObj.message) {
           if (Array.isArray(responseObj.message)) {
+            const firstMsg = responseObj.message[0];
+            errorKey = typeof firstMsg === 'string' ? this.getErrorKey(firstMsg) : undefined;
             message = responseObj.message
               .map((msg) => this.translateMessage(msg, locale))
               .join('; ');
           } else {
+            errorKey = this.getErrorKey(responseObj.message);
             message = this.translateMessage(responseObj.message, locale);
           }
         }
@@ -101,7 +106,19 @@ export class HttpExceptionFilter implements ExceptionFilter {
       path: request.url,
       message,
       ...(code && { code }),
+      ...(errorKey && { errorKey }),
     });
+  }
+
+  private getErrorKey(message: string): string | undefined {
+    if (
+      typeof message !== 'string' ||
+      !(message.startsWith('validation.') || message.startsWith('errors.'))
+    ) {
+      return undefined;
+    }
+    const [key] = message.split('|');
+    return key;
   }
 
   private translateMessage(message: string, locale: string): string {

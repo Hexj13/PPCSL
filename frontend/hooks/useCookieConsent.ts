@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
+import { invalidateConsentCache } from '@/lib/analytics';
+
 type ConsentStatus = 'granted' | 'denied' | null;
 
 const CONSENT_STORAGE_KEY = 'cookie_consent';
@@ -49,6 +51,7 @@ export function useCookieConsent() {
 
     try {
       localStorage.setItem(CONSENT_STORAGE_KEY, JSON.stringify(preferences));
+      invalidateConsentCache();
       setConsent(preferences);
 
       const analyticsStorage = analytics === 'granted' ? 'granted' : 'denied';

@@ -365,7 +365,7 @@ export class ListingsController {
   @Post()
   @UseGuards(JwtAuthGuard)
   create(@Body() createListingDto: CreateListingDto, @Request() req: AuthenticatedRequest) {
-    return this.listingsService.create(createListingDto, req.user.id);
+    return this.listingsService.create(createListingDto, req.user.id, req.user.type);
   }
 
   @ApiOperation({ summary: 'Update listing' })

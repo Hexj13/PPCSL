@@ -44,6 +44,7 @@ function getEmptyFormData(): ListingFormData {
     power_kw: '',
     equipment: [],
     vehicle: { ...EMPTY_VEHICLE_FORM },
+    assignedUserId: '',
   };
 }
 
@@ -106,6 +107,7 @@ export function getInitialFormData(initialData?: Listing): ListingFormData {
     power_kw: getInitialPowerKw(initialData),
     equipment: initialData.equipment || [],
     vehicle: getInitialVehicleFormData(initialData.vehicle),
+    assignedUserId: '',
   };
 }
 

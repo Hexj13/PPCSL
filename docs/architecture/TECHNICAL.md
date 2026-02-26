@@ -375,6 +375,8 @@ DELETE /api/favorites/:id             # Remove from favorites
 GET    /api/favorites/check/:id       # Check if listing is in favorites
 ```
 
+**Favorites sort order:** Listings are ordered by `listing.is_promoted DESC`, then `listing.last_updated_at DESC` (promoted first, then by freshness). Saved filters tab lists filters by `created_at DESC`.
+
 **Note:** Favorites page includes tab counters showing the number of listings and saved filters.
 
 ### Car Comparison
@@ -484,11 +486,12 @@ GET /health                          # Health check (database, Redis)
 
 **Listing Date Fields:**
 
-- `created_at` - Date when listing was created (automatic, never changes)
+- `created_at` - Date when listing was created (automatic, never changes). Used for "My listings" and admin listings sort (newest first).
 - `last_updated_at` - Updated only when:
   - Listing is created
   - User clicks "Refresh dates" button (updates all active listings)
   - Used for automatic closing after 90 days
+  - Used for "newest/oldest" sort on main search, board, and favorites (so sort order matches the date shown on listing cards)
 - `last_edited_at` - Updated when listing content is edited (price, description, images, etc.)
 - `last_published_at` - Updated when listing status changes to Active:
   - When listing is created with Active status
@@ -967,7 +970,8 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
 
 - Comprehensive indexing strategy with partial and composite indexes
 - **Search query optimization:**
-  - Composite indexes for search sorting: `(is_promoted DESC, created_at DESC)`, `(is_promoted DESC, price ASC)`, `(is_promoted DESC, views DESC)` with `WHERE status = 'Active'`
+  - Main search and board: when user selects "newest/oldest" (`sortBy=created_at`), results are ordered by `is_promoted DESC`, then `last_updated_at DESC` (to match the date shown on listing cards). Other sort options use `created_at`, `price`, `year`, or `views` with the same promoted-first rule.
+  - Composite indexes for search: `(status, is_promoted, created_at)` with `WHERE status = 'Active'`; sorting by date in UI uses `last_updated_at` for consistency with card display.
   - Index on `vehicles.year DESC` for year-based sorting
   - Selective field selection in queries to reduce data transfer by ~25-40%
 - Triggers for automatic updates and cleanup
@@ -1010,6 +1014,7 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
   - Favorite toggle button disabled during operation with visual feedback
   - Ref-based guards to prevent concurrent requests
 - Third-party scripts optimization (Google Analytics, Google Tag Manager) using `lazyOnload` strategy to reduce Total Blocking Time (TBT)
+- **INP (Interaction to Next Paint) optimizations for mobile:** Deferred analytics (search/select_content) via requestIdleCallback; single rAF for scroll restore after router.replace; rAF-throttled scroll handlers with state guards (ScrollToFiltersButton, useSearchTabs, BackgroundDecorations, usePageScroll); GTM/Tawk loaded after idle or first interaction; parse cache for ListingGrid search params; chunked dropdown render and precomputed lowerLabel for filter options. See [INP_VALIDATION.md](../performance/INP_VALIDATION.md) for post-deploy validation.
 - **Resource hints optimization:**
   - Static preconnect to API domain in `layout.tsx` for faster image loading (server-rendered, no JS required)
   - DNS-prefetch and preconnect for Google Tag Manager (server-rendered in `layout.tsx`)
@@ -1452,6 +1457,14 @@ cd backend && npm run test -- listings.service.spec.ts
   - Enhanced component memoization: React.memo for ListingCard, useCallback for all event handlers
   - Fixed race conditions in favorite toggle with loading states and request guards
   - Optimized SearchFilters: Complete refactoring into 5 hooks and 3 components, reducing from 1796 to 473 lines (73% reduction), improved maintainability and testability
+- **INP mobile follow-up (2026-02):**
+  - Deferred analytics (searchDeferred, selectContentDeferred, pageScrollDeferred) and memoized consent/currency in analytics.ts
+  - Single requestAnimationFrame for scroll restore after filter/sort navigation (useFilterHandlers, SearchFilters, SortDropdown)
+  - rAF-throttled scroll handlers with early-exit on unchanged state (ScrollToFiltersButton, useSearchTabs, BackgroundDecorations, usePageScroll)
+  - GTM load after requestIdleCallback (2.5s), Tawk after first interaction or 4s; lower Sentry replay sampling on mobile viewport
+  - ListingGrid: parsed search params cache (keyed by searchParamsString + vehicleType), deferred viewItemList; ListingCard prefetch
+  - MultiSelectDropdown/Dropdown: precomputed lowerLabel for options, chunked render (first 50 then rAF to full list)
+  - KPI and validation: lib/performance/inp-kpi.ts (targets, observer), [INP_VALIDATION.md](../performance/INP_VALIDATION.md) for GSC validation steps
 - **Performance Optimizations (2025-01):**
   - Migrated initial data fetching to Server Components for improved SEO and initial page load
   - Optimized third-party scripts (Google Analytics, Google Tag Manager) with `lazyOnload` strategy

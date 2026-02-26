@@ -163,7 +163,7 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
       try {
         await adminApi.toggleListingPromotion(id, false, null);
         toast.success(t('admin.promotionDisabled'));
-        await reload();
+        await reload(true);
         await loadStatusCounts(filters.searchQuery);
       } catch {
         toast.error(t('admin.promotionError'));
@@ -192,7 +192,7 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
       try {
         await adminApi.toggleListingPromotion(selectedListingId, true, days);
         toast.success(t('admin.promotionEnabled'));
-        await reload();
+        await reload(true);
         await loadStatusCounts(filters.searchQuery);
       } catch {
         toast.error(t('admin.promotionError'));

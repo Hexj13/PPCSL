@@ -41,6 +41,7 @@ export interface ListingFormData {
     color: string;
     doors: string;
   };
+  assignedUserId: string;
 }
 
 interface ListingFormProps {

@@ -198,11 +198,7 @@ export function SearchFilters() {
         if (isBrowser) {
           requestAnimationFrame(() => {
             window.scrollTo({ top: scrollY, behavior: 'instant' });
-            requestAnimationFrame(() => {
-              requestAnimationFrame(() => {
-                sessionStorage.removeItem('scrollPreserved');
-              });
-            });
+            sessionStorage.removeItem('scrollPreserved');
           });
         }
       });

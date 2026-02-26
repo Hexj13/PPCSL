@@ -115,11 +115,11 @@ export function formatDateRelative(
   }
 }
 
-export function formatDateLong(date: string | Date): string {
+export function formatDateLong(date: string | Date, locale?: string): string {
   const d = new Date(date);
   if (Number.isNaN(d.getTime())) return '';
-  const siteConfig = loadSiteConfigSync(getCountry());
-  return d.toLocaleDateString(siteConfig.locale, {
+  const currentLocale = locale || getLocale();
+  return d.toLocaleDateString(currentLocale, {
     year: 'numeric',
     month: 'long',
     day: 'numeric',

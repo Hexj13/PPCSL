@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { SaveFilterModal } from '@/components/modals/SaveFilterModal';
+import { useI18n } from '@/components/providers/I18nProvider';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { SavedFilter } from '@/lib/api';
 import { brandsApi, savedFiltersApi } from '@/lib/api';
@@ -30,6 +31,7 @@ export function clearSavedFiltersCache() {
 export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}) {
   const router = useRouter();
   const { t } = useTranslation();
+  const { locale } = useI18n();
   const hasLoadedRef = useRef(moduleHasLoaded);
   const cachedFiltersRef = useRef<SavedFilter[] | null>(moduleCache);
 
@@ -308,7 +310,7 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
                 </h3>
               </div>
               <p className="text-sm text-text-secondary">
-                {t('savedFiltersList.created')}: {formatDateLong(filter.created_at)}
+                {t('savedFiltersList.created')}: {formatDateLong(filter.created_at, locale)}
               </p>
             </div>
             <div className="flex gap-2">

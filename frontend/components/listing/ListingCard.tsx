@@ -373,7 +373,7 @@ function ListingCardComponent({
   const showImage = Boolean(imageUrl && imageUrl !== '/placeholder-car.jpg' && !imageError);
 
   return (
-    <Link href={`/listings/${listing.id}`} onClick={handleClick}>
+    <Link href={`/listings/${listing.id}`} prefetch={true} onClick={handleClick}>
       <div className="card overflow-hidden cursor-pointer h-full flex flex-col group">
         <div
           className="relative w-full bg-bg-darker flex-shrink-0 overflow-hidden"

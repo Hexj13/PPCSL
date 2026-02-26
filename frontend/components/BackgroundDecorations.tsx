@@ -1,25 +1,39 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
 export function BackgroundDecorations() {
   const [mounted, setMounted] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
+  const lastVisibleRef = useRef(true);
+  const rafIdRef = useRef(0);
 
   useEffect(() => {
     setMounted(true);
 
-    const handleScroll = () => {
+    const tick = () => {
       const scrollY = window.scrollY || window.pageYOffset;
-      setIsVisible(scrollY < 100);
+      const visible = scrollY < 100;
+      if (lastVisibleRef.current !== visible) {
+        lastVisibleRef.current = visible;
+        setIsVisible(visible);
+      }
+      rafIdRef.current = 0;
+    };
+
+    const handleScroll = () => {
+      if (rafIdRef.current === 0) {
+        rafIdRef.current = requestAnimationFrame(tick);
+      }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
+    tick();
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
+      if (rafIdRef.current !== 0) cancelAnimationFrame(rafIdRef.current);
     };
   }, []);
 

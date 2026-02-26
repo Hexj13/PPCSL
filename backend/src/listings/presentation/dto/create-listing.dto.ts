@@ -10,6 +10,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsUUID,
   Length,
   Matches,
   Max,
@@ -190,6 +191,14 @@ export class CreateListingDto {
     message: 'Максимум 40 опции',
   })
   equipment?: string[];
+
+  @ApiPropertyOptional({
+    example: '550e8400-e29b-41d4-a716-446655440000',
+    description: 'Assign listing to a different user (admin only)',
+  })
+  @IsOptional()
+  @IsUUID('4', { message: 'errors.invalidUserId' })
+  assignedUserId?: string;
 
   @ApiProperty({
     type: () => CreateVehicleDto,

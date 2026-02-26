@@ -36,6 +36,7 @@ export function buildListingPayload(
     horsepower: parseInt(formData.horsepower),
     power_kw: formData.power_kw ? parseInt(formData.power_kw) : undefined,
     equipment: formData.equipment.length > 0 ? formData.equipment : undefined,
+    assignedUserId: formData.assignedUserId?.trim() || undefined,
     vehicle: {
       brand_id: formData.vehicle.brand_id,
       model_id: formData.vehicle.model_id,

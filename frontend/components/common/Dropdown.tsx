@@ -185,15 +185,32 @@ function DropdownComponent({
     [selectedOption, placeholder],
   );
 
-  const filteredOptions = useMemo(
-    () =>
-      searchable && deferredSearchQuery
-        ? options.filter((option) =>
-            option.label.toLowerCase().includes(deferredSearchQuery.toLowerCase()),
-          )
-        : options,
-    [options, searchable, deferredSearchQuery],
+  const optionsWithLower = useMemo(
+    () => options.map((opt) => ({ ...opt, lowerLabel: opt.label.toLowerCase() })),
+    [options],
   );
+  const filteredOptions = useMemo(() => {
+    if (!searchable || !deferredSearchQuery) return optionsWithLower;
+    const q = deferredSearchQuery.toLowerCase();
+    return optionsWithLower.filter((opt) => opt.lowerLabel.includes(q));
+  }, [optionsWithLower, searchable, deferredSearchQuery]);
+
+  const RENDER_CHUNK = 50;
+  const [visibleCount, setVisibleCount] = useState(RENDER_CHUNK);
+  const optionsToRender =
+    filteredOptions.length <= RENDER_CHUNK
+      ? filteredOptions
+      : filteredOptions.slice(0, visibleCount);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setVisibleCount(RENDER_CHUNK);
+      return;
+    }
+    if (filteredOptions.length <= RENDER_CHUNK) return;
+    const id = requestAnimationFrame(() => setVisibleCount(filteredOptions.length));
+    return () => cancelAnimationFrame(id);
+  }, [isOpen, filteredOptions.length]);
 
   const handleSelect = useCallback(
     (optionValue: string) => {
@@ -272,7 +289,7 @@ function DropdownComponent({
                 menuRef={menuRef}
                 openUpwards={openUpwards}
                 isPositioned={isPositioned}
-                filteredOptions={filteredOptions}
+                filteredOptions={optionsToRender}
                 value={value}
                 tempValue={tempValue}
                 showActionButtons={showActionButtons}
@@ -297,7 +314,7 @@ function DropdownComponent({
                 menuRef={menuRef}
                 openUpwards={openUpwards}
                 isPositioned={isPositioned}
-                filteredOptions={filteredOptions}
+                filteredOptions={optionsToRender}
                 value={value}
                 tempValue={tempValue}
                 showActionButtons={showActionButtons}

@@ -74,6 +74,15 @@ function MultiSelectDropdownComponent({
     }
   }, [isOpen, searchable, showActionButtons, tempValues, onChange]);
 
+  const optionsWithLower = useMemo(
+    () =>
+      options.map((opt) => ({
+        ...opt,
+        lowerLabel: opt.label.toLowerCase(),
+      })),
+    [options],
+  );
+
   const valuesSet = useMemo(() => new Set(values), [values]);
   const tempValuesSet = useMemo(() => new Set(tempValues), [tempValues]);
   const selectedOptions = useMemo(
@@ -90,15 +99,30 @@ function MultiSelectDropdownComponent({
     [selectedOptions, placeholder, t],
   );
 
-  const filteredOptions = useMemo(
-    () =>
-      searchable && deferredSearchQuery
-        ? options.filter((option) =>
-            option.label.toLowerCase().includes(deferredSearchQuery.toLowerCase()),
-          )
-        : options,
-    [options, searchable, deferredSearchQuery],
-  );
+  const filteredOptions = useMemo(() => {
+    if (!searchable || !deferredSearchQuery) return optionsWithLower;
+    const q = deferredSearchQuery.toLowerCase();
+    return optionsWithLower.filter((option) => option.lowerLabel.includes(q));
+  }, [optionsWithLower, searchable, deferredSearchQuery]);
+
+  const RENDER_CHUNK = 50;
+  const [visibleCount, setVisibleCount] = useState(RENDER_CHUNK);
+  const optionsToRender =
+    filteredOptions.length <= RENDER_CHUNK
+      ? filteredOptions
+      : filteredOptions.slice(0, visibleCount);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setVisibleCount(RENDER_CHUNK);
+      return;
+    }
+    if (filteredOptions.length <= RENDER_CHUNK) return;
+    const id = requestAnimationFrame(() => {
+      setVisibleCount(filteredOptions.length);
+    });
+    return () => cancelAnimationFrame(id);
+  }, [isOpen, filteredOptions.length]);
 
   const handleToggle = useCallback(
     (optionValue: string) => {
@@ -233,13 +257,13 @@ function MultiSelectDropdownComponent({
         <div className="absolute z-[100] w-full mt-1 top-full bg-white border-2 border-primary-500/30 rounded-lg shadow-xl overflow-hidden">
           <div className="max-h-96 overflow-auto scrollbar-custom">
             {filteredOptions.length > 0 ? (
-              filteredOptions.map((option, index) => {
+              optionsToRender.map((option, index) => {
                 const isSelected = showActionButtons
                   ? tempValuesSet.has(option.value)
                   : valuesSet.has(option.value);
                 const isCategory =
                   option.category && (!option.value || option.value.startsWith('__category__'));
-                const prevOption = index > 0 ? filteredOptions[index - 1] : null;
+                const prevOption = index > 0 ? optionsToRender[index - 1] : null;
                 const showCategoryHeader =
                   option.category && prevOption?.category !== option.category && !isCategory;
                 const isFirstCategory = showCategoryHeader && index === 0;
