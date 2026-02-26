@@ -148,11 +148,11 @@ function SellerBoardLink({
   if (listing.status === 'Closed') {
     return (
       <span
-        className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium flex items-center justify-center gap-2 bg-bg-darker text-text-secondary border-2 border-divider cursor-not-allowed opacity-50"
+        className="w-full min-h-12 px-4 md:px-8 py-2 md:py-2.5 text-sm md:text-base rounded-lg font-medium flex items-center justify-center gap-2 bg-bg-darker text-text-secondary border-2 border-divider cursor-not-allowed opacity-50"
         title={t('listingDetail.unavailableForClosed')}
       >
         {icon}
-        <span>{label}</span>
+        <span className="whitespace-nowrap">{label}</span>
       </span>
     );
   }
@@ -161,10 +161,10 @@ function SellerBoardLink({
       href={`/board/${boardSlug}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 !bg-primary-500/10 select-none"
+      className="w-full min-h-12 px-4 md:px-8 py-2 md:py-2.5 text-sm md:text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 !bg-primary-500/10 select-none"
     >
       {icon}
-      <span>{label}</span>
+      <span className="whitespace-nowrap">{label}</span>
     </a>
   );
 }
