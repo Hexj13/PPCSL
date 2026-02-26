@@ -40,7 +40,8 @@ export class CreateListingUseCase {
       ownerId = targetUser.id;
     }
 
-    const vehicle = Object.assign(new Vehicle(), dto.vehicle);
+    const vehicle = Object.assign(new Vehicle(), dto.vehicle) as Vehicle;
+    if (vehicle.fuel === 'Electric') vehicle.engine_displ_l = null;
     const title = await this.generateTitle(vehicle);
 
     const status = dto.status || ListingStatusEnum.Active;

@@ -37,7 +37,7 @@ export class Vehicle {
   year: number;
 
   @Column('decimal', { precision: 5, scale: 3, nullable: true })
-  engine_displ_l: number;
+  engine_displ_l: number | null;
 
   @Column('int', { nullable: true })
   mileage_km: number;

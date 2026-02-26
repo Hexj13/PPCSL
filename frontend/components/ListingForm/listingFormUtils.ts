@@ -62,11 +62,12 @@ function getInitialPowerKw(listing: Listing): string {
 
 function getInitialVehicleFormData(vehicle: Listing['vehicle']): ListingFormData['vehicle'] {
   if (!vehicle) return { ...EMPTY_VEHICLE_FORM };
+  const isElectric = vehicle.fuel === 'Electric';
   return {
     brand_id: vehicle.brand_id || '',
     model_id: vehicle.model_id || '',
     year: vehicle.year?.toString() || '',
-    engine_displ_l: formatEngineDisplL(vehicle.engine_displ_l),
+    engine_displ_l: isElectric ? '' : formatEngineDisplL(vehicle.engine_displ_l),
     mileage_km: vehicle.mileage_km?.toString() || '',
     fuel: vehicle.fuel || '',
     transmission: vehicle.transmission || '',

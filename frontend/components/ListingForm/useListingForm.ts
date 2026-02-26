@@ -214,10 +214,12 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
       errorKey: 'modelRequired',
     }));
     checkField('vehicle.year', formData.vehicle.year, (val) => validators.year(val as string));
-    checkField('vehicle.engine_displ_l', formData.vehicle.engine_displ_l, (val) => ({
-      ...validators.required(val as string),
-      errorKey: 'engineRequired',
-    }));
+    if (formData.vehicle.fuel !== 'Electric') {
+      checkField('vehicle.engine_displ_l', formData.vehicle.engine_displ_l, (val) => ({
+        ...validators.required(val as string),
+        errorKey: 'engineRequired',
+      }));
+    }
     checkField('vehicle.mileage_km', formData.vehicle.mileage_km, (val) => ({
       ...validators.required(val as string),
       errorKey: 'mileageRequired',

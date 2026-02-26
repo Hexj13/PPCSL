@@ -121,6 +121,48 @@ describe('CreateListingUseCase', () => {
       );
     });
 
+    it('should create listing with Electric fuel and without engine_displ_l', async () => {
+      const { useCase, listingRepo } = createUseCase({});
+      (listingRepo.save as jest.Mock).mockImplementation((listing: Listing) =>
+        Promise.resolve({ ...listing, id: 'listing-1' }),
+      );
+      const dto: CreateListingDto = {
+        ...minimalDto,
+        vehicle: {
+          ...minimalDto.vehicle,
+          fuel: 'Electric',
+        },
+      };
+
+      const result = await useCase.execute(dto, 'user-1');
+
+      expect(result.id).toBe('listing-1');
+      const savedListing = (listingRepo.save as jest.Mock).mock.calls[0][0];
+      expect(savedListing.vehicle.fuel).toBe('Electric');
+      expect(savedListing.vehicle.engine_displ_l).toBeNull();
+    });
+
+    it('should clear engine_displ_l when Electric fuel is sent with engine value', async () => {
+      const { useCase, listingRepo } = createUseCase({});
+      (listingRepo.save as jest.Mock).mockImplementation((listing: Listing) =>
+        Promise.resolve({ ...listing, id: 'listing-1' }),
+      );
+      const dto: CreateListingDto = {
+        ...minimalDto,
+        vehicle: {
+          ...minimalDto.vehicle,
+          fuel: 'Electric',
+          engine_displ_l: 2.0,
+        },
+      };
+
+      await useCase.execute(dto, 'user-1');
+
+      const savedListing = (listingRepo.save as jest.Mock).mock.calls[0][0];
+      expect(savedListing.vehicle.fuel).toBe('Electric');
+      expect(savedListing.vehicle.engine_displ_l).toBeNull();
+    });
+
     it('should create listing with caller as owner when assignedUserId is empty and userType omitted', async () => {
       const { useCase, listingRepo } = createUseCase({});
       (listingRepo.save as jest.Mock).mockImplementation((listing: Listing) =>
