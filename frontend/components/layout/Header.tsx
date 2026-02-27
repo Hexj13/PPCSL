@@ -47,7 +47,7 @@ export function Header() {
       className="bg-primary-700 shadow-lg border-b-2 border-primary-500/20 sticky top-0 z-50 h-[72px] transform-[translateZ(0)]"
       suppressHydrationWarning
     >
-      <div className="container mx-auto px-3 sm:px-4 h-full" suppressHydrationWarning>
+      <div className="container mx-auto px-3 sm:px-4 h-full relative z-10" suppressHydrationWarning>
         <div className="flex justify-between items-center h-full" suppressHydrationWarning>
           <HeaderLogo brandAlt={t('header.brandName')} />
 

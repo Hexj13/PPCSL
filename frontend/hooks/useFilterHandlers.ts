@@ -249,6 +249,7 @@ export function useFilterHandlers({
       const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('scrollPreserved', 'true');
+        sessionStorage.setItem('scrollToResultsAfterLoad', 'true');
       }
       startTransition(() => {
         router.replace(newUrl, { scroll: false });

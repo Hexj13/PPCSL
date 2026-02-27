@@ -1310,5 +1310,5 @@ header.sticky::before {
   right: 0;
   height: 100px;
   background: inherit;
-  z-index: -1;
+  z-index: 0;
 }

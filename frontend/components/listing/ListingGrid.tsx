@@ -378,6 +378,21 @@ export function ListingGrid({ initialData }: ListingGridProps) {
 
   const showContent = !showSkeleton;
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || listings.length === 0 || !showContent) return;
+    const shouldScroll = sessionStorage.getItem('scrollToResultsAfterLoad');
+    if (!shouldScroll) return;
+    sessionStorage.removeItem('scrollToResultsAfterLoad');
+    if (window.innerWidth >= 1024) return;
+    const headerOffset = 110;
+    requestAnimationFrame(() => {
+      const el = document.getElementById('listings-results');
+      if (!el) return;
+      const targetTop = el.getBoundingClientRect().top + window.scrollY - headerOffset;
+      window.scrollTo({ top: targetTop, behavior: 'smooth' });
+    });
+  }, [listings, showContent]);
+
   return (
     <>
       {showSkeleton && (
@@ -429,7 +444,10 @@ export function ListingGrid({ initialData }: ListingGridProps) {
 
           {!error && listings.length > 0 && (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
+              <div
+                id="listings-results"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch"
+              >
                 {listings.map((listing, index) => (
                   <ListingCard key={listing.id} listing={listing} priority={index < 8} />
                 ))}
