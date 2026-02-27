@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Readable } from 'stream';
@@ -11,7 +12,6 @@ import {
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import sharp from 'sharp';
-import { v4 as uuidv4 } from 'uuid';
 
 import { handleUploadError } from '../common/utils/error-handling.utils';
 
@@ -234,7 +234,7 @@ export class UploadService {
 
     this.logger.debug('File signature validation passed');
 
-    const fileName = `${uuidv4()}.webp`;
+    const fileName = `${crypto.randomUUID()}.webp`;
     const s3Key = `uploads/${fileName}`;
 
     try {
