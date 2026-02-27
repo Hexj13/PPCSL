@@ -48,7 +48,7 @@ function ColorSwatch({
         className="h-32 w-full min-w-0 rounded-lg border-2 border-primary-500/20 shadow-lg relative overflow-hidden"
         style={{ backgroundColor: value }}
       >
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10" />
+        <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-black/10" />
       </div>
       <div className="mt-3 min-w-0 overflow-hidden p-2 rounded-lg border border-primary-500/20 bg-bg-secondary">
         <div className="truncate font-semibold text-sm text-text-primary mb-1" title={name}>
@@ -73,7 +73,7 @@ function ColorGroup({
 }) {
   return (
     <div className={`mb-8 ${className}`}>
-      <h2 className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent mb-6">
+      <h2 className="text-2xl font-bold bg-linear-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent mb-6">
         {title}
       </h2>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-10 gap-4 [&>div]:min-w-0">
@@ -96,7 +96,7 @@ export default function ColorPalettePage() {
     <div className="min-h-screen py-8 px-4">
       <div className="max-w-7xl mx-auto">
         <div className="mb-10 card p-6 md:p-8">
-          <h1 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent mb-3">
+          <h1 className="text-4xl md:text-5xl font-extrabold bg-linear-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent mb-3">
             Color Palette
           </h1>
           <p className="text-text-secondary text-lg">Current project color palette</p>
@@ -119,7 +119,7 @@ export default function ColorPalettePage() {
         {theme.pwa && <ColorGroup title="PWA Colors" colors={theme.pwa} />}
 
         <div className="mt-12 card p-6 md:p-8">
-          <h3 className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent mb-6">
+          <h3 className="text-2xl font-bold bg-linear-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent mb-6">
             Color Usage Reference
           </h3>
 
@@ -293,7 +293,7 @@ export default function ColorPalettePage() {
         </div>
 
         <div className="mt-12 card p-6 md:p-8">
-          <h3 className="text-xl font-bold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent mb-4">
+          <h3 className="text-xl font-bold bg-linear-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent mb-4">
             JSON Export
           </h3>
           <pre className="text-xs text-text-primary overflow-x-auto bg-bg-darker p-4 rounded-lg border border-primary-500/20 font-mono">

@@ -27,68 +27,64 @@ export default async function Image() {
     const base64Image = imageBuffer.toString('base64');
 
     return new ImageResponse(
-      (
-        <div
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <img
+          src={`data:image/png;base64,${base64Image}`}
+          alt={alt}
           style={{
             width: '100%',
             height: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            objectFit: 'cover',
           }}
-        >
-          <img
-            src={`data:image/png;base64,${base64Image}`}
-            alt={alt}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-            }}
-          />
-        </div>
-      ),
+        />
+      </div>,
       {
         ...size,
       },
     );
   } catch {
     return new ImageResponse(
-      (
+      <div
+        style={{
+          fontSize: 128,
+          background: 'linear-gradient(135deg, #2E6F51 0%, #40916B 100%)',
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white',
+          fontFamily: 'system-ui',
+        }}
+      >
         <div
           style={{
-            fontSize: 128,
-            background: 'linear-gradient(135deg, #2E6F51 0%, #40916B 100%)',
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            fontFamily: 'system-ui',
+            fontSize: 72,
+            fontWeight: 'bold',
+            marginBottom: 32,
           }}
         >
-          <div
-            style={{
-              fontSize: 72,
-              fontWeight: 'bold',
-              marginBottom: 32,
-            }}
-          >
-            {siteConfig.name}
-          </div>
-          <div
-            style={{
-              fontSize: 48,
-              textAlign: 'center',
-              padding: '0 40px',
-            }}
-          >
-            {t.metadata.site.defaultDescription}
-          </div>
+          {siteConfig.name}
         </div>
-      ),
+        <div
+          style={{
+            fontSize: 48,
+            textAlign: 'center',
+            padding: '0 40px',
+          }}
+        >
+          {t.metadata.site.defaultDescription}
+        </div>
+      </div>,
       {
         ...size,
       },

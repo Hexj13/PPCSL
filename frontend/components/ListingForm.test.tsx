@@ -572,7 +572,7 @@ describe('ListingForm', () => {
       );
     }, 30000);
 
-    it('should normalize price with only zeros to "0" on blur', async () => {
+    it('should normalize price with only zeros to "0" on blur-sm', async () => {
       const onSuccess = jest.fn();
       render(<ListingForm mode="create" onSuccess={onSuccess} />);
 
@@ -597,7 +597,7 @@ describe('ListingForm', () => {
       );
     });
 
-    it('should normalize mileage with only zeros to "0" on blur', async () => {
+    it('should normalize mileage with only zeros to "0" on blur-sm', async () => {
       const onSuccess = jest.fn();
       render(<ListingForm mode="create" onSuccess={onSuccess} />);
 

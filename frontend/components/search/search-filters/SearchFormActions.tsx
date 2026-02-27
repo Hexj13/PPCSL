@@ -46,13 +46,13 @@ export function SearchFormActions({
                 loading={showSearchLoader}
                 loadingText={t('searchFilters.searching')}
                 disabled={Boolean(!hasFiltersChanged || isSyncingFromUrl)}
-                className={`w-full btn-secondary flex items-center justify-center gap-2 !text-primary-900 ${
-                  !hasFiltersChanged || isSyncingFromUrl ? '' : '!border-primary-500'
+                className={`w-full btn-secondary flex items-center justify-center gap-2 text-primary-900! ${
+                  !hasFiltersChanged || isSyncingFromUrl ? '' : 'border-primary-500!'
                 }`}
               >
                 <span className="inline-flex items-center gap-2">
                   <svg
-                    className="w-4 h-4 flex-shrink-0"
+                    className="w-4 h-4 shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -71,10 +71,10 @@ export function SearchFormActions({
                 type="button"
                 onClick={onReset}
                 disabled={Boolean(!hasActiveFilters)}
-                className="w-full btn-secondary flex items-center justify-center gap-2 whitespace-nowrap !text-primary-900"
+                className="w-full btn-secondary flex items-center justify-center gap-2 whitespace-nowrap text-primary-900!"
               >
                 <svg
-                  className="w-5 h-5 flex-shrink-0"
+                  className="w-5 h-5 shrink-0"
                   viewBox="0 0 15 15"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
@@ -92,9 +92,9 @@ export function SearchFormActions({
                 <button
                   type="button"
                   disabled
-                  className="w-full btn-secondary flex items-center justify-center gap-2 opacity-50 !px-3 lg:!px-6 !text-primary-900"
+                  className="w-full btn-secondary flex items-center justify-center gap-2 opacity-50 px-3! lg:px-6! text-primary-900!"
                 >
-                  <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-primary-300 border-t-transparent rounded-full animate-spin flex-shrink-0"></div>
+                  <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-primary-300 border-t-transparent rounded-full animate-spin shrink-0"></div>
                   <span className="whitespace-nowrap text-base">{t('common.loading')}</span>
                 </button>
               ) : (
@@ -102,11 +102,11 @@ export function SearchFormActions({
                   type="button"
                   onClick={onSaveClick}
                   disabled={Boolean(!canSaveFilter)}
-                  className="w-full btn-secondary flex items-center justify-center gap-2 !px-3 lg:!px-6 !text-primary-900"
+                  className="w-full btn-secondary flex items-center justify-center gap-2 px-3! lg:px-6! text-primary-900!"
                   title={!userForUi ? t('common.loginRequired') : ''}
                 >
                   <svg
-                    className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0"
+                    className="w-4 h-4 sm:w-5 sm:h-5 shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -127,7 +127,7 @@ export function SearchFormActions({
             </div>
           </div>
         </div>
-        <div className="w-full border-t border-primary-500/20 pt-3 lg:border-t-0 lg:pt-0 lg:w-auto flex-shrink-0 relative">
+        <div className="w-full border-t border-primary-500/20 pt-3 lg:border-t-0 lg:pt-0 lg:w-auto shrink-0 relative">
           <SortDropdown isInternalSearchRef={isInternalSearchRef} onSortChange={onSortChange} />
         </div>
       </div>

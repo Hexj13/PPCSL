@@ -50,16 +50,16 @@ export function ListingPageDescription({ descriptionHtml }: ListingPageDescripti
   if (!descriptionHtml) {
     return (
       <div className="surface" style={{ height: '400px' }}>
-        <div className="h-10 bg-primary-500/10 rounded mb-4 animate-pulse w-32" />
+        <div className="h-10 bg-primary-500/10 rounded-sm mb-4 animate-pulse w-32" />
         <div className="space-y-3">
-          <div className="h-4 bg-primary-500/10 rounded animate-pulse" />
-          <div className="h-4 bg-primary-500/10 rounded animate-pulse w-5/6" />
-          <div className="h-4 bg-primary-500/10 rounded animate-pulse" />
-          <div className="h-4 bg-primary-500/10 rounded animate-pulse w-4/5" />
-          <div className="h-4 bg-primary-500/10 rounded animate-pulse" />
-          <div className="h-4 bg-primary-500/10 rounded animate-pulse w-11/12" />
-          <div className="h-4 bg-primary-500/10 rounded animate-pulse" />
-          <div className="h-4 bg-primary-500/10 rounded animate-pulse w-3/4" />
+          <div className="h-4 bg-primary-500/10 rounded-sm animate-pulse" />
+          <div className="h-4 bg-primary-500/10 rounded-sm animate-pulse w-5/6" />
+          <div className="h-4 bg-primary-500/10 rounded-sm animate-pulse" />
+          <div className="h-4 bg-primary-500/10 rounded-sm animate-pulse w-4/5" />
+          <div className="h-4 bg-primary-500/10 rounded-sm animate-pulse" />
+          <div className="h-4 bg-primary-500/10 rounded-sm animate-pulse w-11/12" />
+          <div className="h-4 bg-primary-500/10 rounded-sm animate-pulse" />
+          <div className="h-4 bg-primary-500/10 rounded-sm animate-pulse w-3/4" />
         </div>
       </div>
     );
@@ -117,7 +117,7 @@ export function ListingPageDescription({ descriptionHtml }: ListingPageDescripti
             {isExpanded ? (
               <>
                 <svg
-                  className="w-4 h-4 flex-shrink-0"
+                  className="w-4 h-4 shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -140,7 +140,7 @@ export function ListingPageDescription({ descriptionHtml }: ListingPageDescripti
             ) : (
               <>
                 <svg
-                  className="w-4 h-4 flex-shrink-0"
+                  className="w-4 h-4 shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"

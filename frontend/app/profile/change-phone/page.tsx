@@ -127,7 +127,7 @@ export default function ChangePhonePage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full text-primary-700 font-medium text-sm md:text-base hover:text-primary-900 hover:border-primary-900 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full text-primary-700 font-medium text-sm md:text-base hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? t('profile.changePhone.sending') : t('profile.changePhone.sendCode')}
         </button>
@@ -136,7 +136,7 @@ export default function ChangePhonePage() {
           <button
             type="button"
             onClick={() => router.push('/profile')}
-            className="text-primary-700 font-semibold hover:text-primary-900 underline transition-colors"
+            className="text-primary-700 font-semibold hover-only:hover:text-primary-900 underline transition-colors"
           >
             {t('profile.changePhone.backToProfile')}
           </button>

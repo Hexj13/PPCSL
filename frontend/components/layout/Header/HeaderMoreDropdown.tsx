@@ -45,21 +45,21 @@ export function HeaderMoreDropdown({
       >
         <span suppressHydrationWarning>{t('header.more')}</span>
         <ChevronDownIcon
-          className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
       {isOpen && (
         <div
-          className="absolute right-0 top-full z-[100] mt-1 min-w-[180px] rounded-lg border-2 border-primary-500/30 bg-white py-1 shadow-xl"
+          className="absolute right-0 top-full z-100 mt-1 min-w-[180px] rounded-lg border-2 border-primary-500/30 bg-white py-1 shadow-xl"
           role="menu"
         >
           <Link
             href="/compare"
             role="menuitem"
             onClick={close}
-            className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-text-primary transition-colors hover:bg-primary-500/10"
+            className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-text-primary transition-colors hover-only:hover:bg-primary-500/10"
           >
-            <ScaleIcon className="w-4 h-4 flex-shrink-0 text-primary-700" />
+            <ScaleIcon className="w-4 h-4 shrink-0 text-primary-700" />
             <span>{t('header.compare')}</span>
             {comparisonCount > 0 && (
               <span className="ml-auto rounded-full bg-primary-500 px-2 py-0.5 text-xs text-white">
@@ -71,9 +71,9 @@ export function HeaderMoreDropdown({
             href="/profile"
             role="menuitem"
             onClick={close}
-            className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-text-primary transition-colors hover:bg-primary-500/10"
+            className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-text-primary transition-colors hover-only:hover:bg-primary-500/10"
           >
-            <UserIcon className="w-4 h-4 flex-shrink-0 text-primary-700" />
+            <UserIcon className="w-4 h-4 shrink-0 text-primary-700" />
             <span>{t('header.profile')}</span>
           </Link>
           {user.type === 'Admin' && (
@@ -81,9 +81,9 @@ export function HeaderMoreDropdown({
               href="/admin"
               role="menuitem"
               onClick={close}
-              className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-text-primary transition-colors hover:bg-primary-500/10"
+              className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-text-primary transition-colors hover-only:hover:bg-primary-500/10"
             >
-              <ShieldIcon className="w-4 h-4 flex-shrink-0 text-primary-700" />
+              <ShieldIcon className="w-4 h-4 shrink-0 text-primary-700" />
               <span>{t('header.admin')}</span>
             </Link>
           )}

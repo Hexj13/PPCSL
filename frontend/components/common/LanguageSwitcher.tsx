@@ -8,7 +8,7 @@ import { setStoredLocale, type Locale } from '@/lib/i18n';
 import { Dropdown } from './Dropdown';
 
 const headerFooterStyle =
-  'header-language-switcher !bg-transparent !text-white font-medium text-sm hover:!text-primary-100 active:!text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 rounded-lg select-none [&_span]:!text-white [&_span]:hover:!text-primary-100 [&_svg]:!text-white [&_svg]:hover:!text-primary-100';
+  'header-language-switcher bg-transparent! text-white! font-medium text-sm hover-only:hover:text-primary-100! active:text-primary-300! transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 rounded-lg select-none [&_span]:text-white! hover-only:hover:[&_span]:text-primary-100! [&_svg]:text-white! hover-only:hover:[&_svg]:text-primary-100!';
 
 const getLanguageAbbreviation = (locale: Locale): string => {
   const abbreviations: Record<Locale, string> = {
@@ -47,14 +47,14 @@ export function LanguageSwitcher({
 
   const mobileButtonClassName =
     variant === 'mobile'
-      ? 'header-language-switcher-mobile !bg-transparent !text-white font-medium text-base hover:!text-primary-100 active:!text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-3.5 rounded-lg select-none [&_span]:!text-white [&_span]:hover:!text-primary-100 [&_svg]:!text-white [&_svg]:hover:!text-primary-100'
+      ? 'header-language-switcher-mobile bg-transparent! text-white! font-medium text-base hover-only:hover:text-primary-100! active:text-primary-300! transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-3.5 rounded-lg select-none [&_span]:text-white! hover-only:hover:[&_span]:text-primary-100! [&_svg]:text-white! hover-only:hover:[&_svg]:text-primary-100!'
       : buttonClassName;
 
   const currentLanguageAbbr = getLanguageAbbreviation(locale);
 
   const languageIcon = (
     <svg
-      className="w-4 h-4 text-white flex-shrink-0"
+      className="w-4 h-4 text-white shrink-0"
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"

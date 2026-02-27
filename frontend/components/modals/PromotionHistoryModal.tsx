@@ -70,7 +70,7 @@ export function PromotionHistoryModal({
                   <td className="py-3 px-4 text-sm">
                     <Link
                       href={`/listings/${item.listing_id}`}
-                      className="text-primary-700 hover:text-primary-900 hover:underline transition-colors"
+                      className="text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:underline transition-colors"
                     >
                       {item.listing_title}
                     </Link>
@@ -122,7 +122,7 @@ export function PromotionHistoryModal({
           <button
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage === 1 || loading}
-            className="px-4 py-2 rounded-lg text-sm font-semibold bg-primary-500/10 border-2 border-primary-700 text-primary-700 hover:text-primary-900 hover:border-primary-900 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 rounded-lg text-sm font-semibold bg-primary-500/10 border-2 border-primary-700 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('common.previous')}
           </button>
@@ -132,7 +132,7 @@ export function PromotionHistoryModal({
           <button
             onClick={() => onPageChange(currentPage + 1)}
             disabled={currentPage >= meta.totalPages || loading}
-            className="px-4 py-2 rounded-lg text-sm font-semibold bg-primary-500/10 border-2 border-primary-700 text-primary-700 hover:text-primary-900 hover:border-primary-900 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 rounded-lg text-sm font-semibold bg-primary-500/10 border-2 border-primary-700 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('common.next')}
           </button>

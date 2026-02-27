@@ -81,7 +81,7 @@ export function PromotionsTab() {
             }))
           }
           placeholder={t('admin.promotionsTab.searchPlaceholder')}
-          className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-secondary border-2 border-primary-700 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-primary-900 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
+          className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-secondary border-2 border-primary-700 text-text-primary placeholder:text-text-secondary focus:outline-hidden focus:border-primary-900 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
         />
 
         <div className="pt-4 border-t border-primary-500/20 sm:border-t-0 sm:pt-0">
@@ -98,7 +98,7 @@ export function PromotionsTab() {
                 className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-base transition-colors ${
                   filters.timeFilter === filter
                     ? 'bg-primary-500/10 border-2 border-primary-700 text-primary-700'
-                    : 'bg-bg-secondary hover:bg-bg-base border-2 border-primary-700 text-primary-700 hover:text-primary-900 hover:border-primary-900'
+                    : 'bg-bg-secondary hover-only:hover:bg-bg-base border-2 border-primary-700 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900'
                 }`}
               >
                 {filter === 'All'
@@ -161,7 +161,7 @@ export function PromotionsTab() {
                     <td className="py-3 px-4 text-sm">
                       <Link
                         href={`/listings/${promotion.listing_id}`}
-                        className="text-primary-700 hover:text-primary-900 hover:underline transition-colors"
+                        className="text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:underline transition-colors"
                       >
                         {promotion.listing_title}
                       </Link>

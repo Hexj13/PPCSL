@@ -6,9 +6,9 @@ export class RequestPasswordResetDto {
     example: '+37370123456',
     description: 'Phone number in international format',
   })
-  @IsString({ message: 'Телефонскиот број мора да биде стринг' })
+  @IsString({ message: 'validation.string' })
   @Matches(/^[+]?[0-9\s()-]{8,}$/, {
-    message: 'Невалиден формат на телефонски број',
+    message: 'validation.phone',
   })
   phone: string;
 }

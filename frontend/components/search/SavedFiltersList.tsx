@@ -263,8 +263,8 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
       <div className="space-y-4">
         {[...Array(3)].map((_, i) => (
           <div key={i} className="card p-4 animate-pulse">
-            <div className="h-6 bg-gray-700 rounded w-1/3 mb-2"></div>
-            <div className="h-4 bg-gray-700 rounded w-1/4"></div>
+            <div className="h-6 bg-gray-700 rounded-sm w-1/3 mb-2"></div>
+            <div className="h-4 bg-gray-700 rounded-sm w-1/4"></div>
           </div>
         ))}
       </div>
@@ -320,7 +320,7 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
                   setEditingFilterId(filter.id);
                   setShowEditModal(true);
                 }}
-                className="flex-shrink-0 p-2 text-primary-700 hover:text-primary-900 transition-colors duration-200"
+                className="shrink-0 p-2 text-primary-700 hover-only:hover:text-primary-900 transition-colors duration-200"
                 title={t('common.edit')}
               >
                 <svg
@@ -344,7 +344,7 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
                   void handleDelete(filter.id);
                 }}
                 disabled={deletingIds.has(filter.id)}
-                className="flex-shrink-0 p-2 text-text-secondary hover:text-red-400 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="shrink-0 p-2 text-text-secondary hover-only:hover:text-red-400 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 title={t('common.delete')}
               >
                 {deletingIds.has(filter.id) ? (

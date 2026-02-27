@@ -11,7 +11,7 @@ export function HeaderLogo({ brandAlt }: HeaderLogoProps) {
   return (
     <Link
       href="/"
-      className="flex shrink-0 items-center hover:opacity-90 transition-opacity duration-200 select-none mr-4 lg:mr-6"
+      className="flex shrink-0 items-center hover-only:hover:opacity-90 transition-opacity duration-200 select-none mr-4 lg:mr-6"
     >
       <Image
         src="/logo-desktop.svg"

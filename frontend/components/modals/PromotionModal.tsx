@@ -61,7 +61,7 @@ export function PromotionModal({
               className={`aspect-square min-w-0 px-4 py-3 rounded-lg border-2 transition-colors flex items-center justify-center overflow-hidden ${
                 selectedDays === option.days
                   ? 'bg-primary-500/10 border-primary-700 text-primary-700'
-                  : 'bg-bg-secondary border-primary-700/30 hover:border-primary-700 text-primary-900'
+                  : 'bg-bg-secondary border-primary-700/30 hover-only:hover:border-primary-700 text-primary-900'
               }`}
             >
               <div
@@ -79,7 +79,7 @@ export function PromotionModal({
               className={`aspect-square min-w-0 px-4 py-3 rounded-lg border-2 transition-colors flex items-center justify-center overflow-hidden ${
                 selectedDays === null && hasSelection
                   ? 'bg-primary-500/10 border-primary-700 text-primary-700'
-                  : 'bg-bg-secondary border-primary-700/30 hover:border-primary-700 text-primary-900'
+                  : 'bg-bg-secondary border-primary-700/30 hover-only:hover:border-primary-700 text-primary-900'
               }`}
             >
               <div
@@ -96,7 +96,7 @@ export function PromotionModal({
           <button
             onClick={handleConfirm}
             disabled={!hasSelection}
-            className="px-8 py-2 md:py-2.5 text-xs md:text-sm lg:text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover:text-primary-900 hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-8 py-2 md:py-2.5 text-xs md:text-sm lg:text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('common.confirm')}
           </button>

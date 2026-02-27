@@ -240,7 +240,7 @@ function MultiSelectDropdownComponent({
             {displayText}
           </span>
           <svg
-            className={`absolute top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-900 group-hover:text-primary-700 transition-colors duration-200 flex-shrink-0 ${
+            className={`absolute top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-900 group-hover:text-primary-700 transition-colors duration-200 shrink-0 ${
               isOpen ? 'rotate-180' : ''
             }`}
             fill="none"
@@ -254,7 +254,7 @@ function MultiSelectDropdownComponent({
       )}
 
       {isOpen && !disabled && (
-        <div className="absolute z-[100] w-full mt-1 top-full bg-white border-2 border-primary-500/30 rounded-lg shadow-xl overflow-hidden">
+        <div className="absolute z-100 w-full mt-1 top-full bg-white border-2 border-primary-500/30 rounded-lg shadow-xl overflow-hidden">
           <div className="max-h-96 overflow-auto scrollbar-custom">
             {filteredOptions.length > 0 ? (
               optionsToRender.map((option, index) => {

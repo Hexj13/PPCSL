@@ -65,10 +65,10 @@ export default function AdminPage() {
               ref={usersTabRef}
               type="button"
               onClick={() => setActiveTab('users')}
-              className={`flex-shrink-0 px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 whitespace-nowrap flex items-center ${
+              className={`shrink-0 px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 whitespace-nowrap flex items-center ${
                 activeTab === 'users'
                   ? 'text-primary-700 bg-primary-500/10 rounded-t-lg'
-                  : 'text-primary-700 hover:text-primary-900 hover:bg-primary-500/10'
+                  : 'text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:bg-primary-500/10'
               }`}
             >
               {t('admin.usersTabLabel')}
@@ -77,10 +77,10 @@ export default function AdminPage() {
               ref={brandsModelsTabRef}
               type="button"
               onClick={() => setActiveTab('brandsModels')}
-              className={`flex-shrink-0 px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 whitespace-nowrap flex items-center ${
+              className={`shrink-0 px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 whitespace-nowrap flex items-center ${
                 activeTab === 'brandsModels'
                   ? 'text-primary-700 bg-primary-500/10 rounded-t-lg'
-                  : 'text-primary-700 hover:text-primary-900 hover:bg-primary-500/10'
+                  : 'text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:bg-primary-500/10'
               }`}
             >
               {t('admin.brandsModelsTabLabel')}
@@ -89,10 +89,10 @@ export default function AdminPage() {
               ref={listingsTabRef}
               type="button"
               onClick={() => setActiveTab('listings')}
-              className={`flex-shrink-0 px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 whitespace-nowrap flex items-center ${
+              className={`shrink-0 px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 whitespace-nowrap flex items-center ${
                 activeTab === 'listings'
                   ? 'text-primary-700 bg-primary-500/10 rounded-t-lg'
-                  : 'text-primary-700 hover:text-primary-900 hover:bg-primary-500/10'
+                  : 'text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:bg-primary-500/10'
               }`}
             >
               {t('admin.listingsTabLabel')}
@@ -101,10 +101,10 @@ export default function AdminPage() {
               ref={promotionsTabRef}
               type="button"
               onClick={() => setActiveTab('promotions')}
-              className={`flex-shrink-0 px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 whitespace-nowrap flex items-center ${
+              className={`shrink-0 px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 whitespace-nowrap flex items-center ${
                 activeTab === 'promotions'
                   ? 'text-primary-700 bg-primary-500/10 rounded-t-lg'
-                  : 'text-primary-700 hover:text-primary-900 hover:bg-primary-500/10'
+                  : 'text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:bg-primary-500/10'
               }`}
             >
               {t('admin.promotionsTabLabel')}

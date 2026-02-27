@@ -65,7 +65,7 @@ export function VerifyPhoneCodeForm({
                   onKeyDown={(e) => onKeyDown(index, e)}
                   onPaste={onPaste}
                   disabled={isSubmitting}
-                  className={`w-12 h-14 md:w-14 md:h-16 text-center text-2xl md:text-3xl font-bold bg-bg-secondary border-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-700 focus:border-primary-700 ${
+                  className={`w-12 h-14 md:w-14 md:h-16 text-center text-2xl md:text-3xl font-bold bg-bg-secondary border-2 rounded-lg transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-primary-700 focus:border-primary-700 ${
                     error
                       ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
                       : 'border-primary-700/30 focus:border-primary-700'
@@ -104,7 +104,7 @@ export function VerifyPhoneCodeForm({
               type="button"
               onClick={onBack}
               disabled={isSubmitting}
-              className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-gray-500/40 hover:border-gray-500/60 bg-gray-500/20 text-text-secondary font-semibold text-base hover:text-text-primary transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+              className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-gray-500/40 hover-only:hover:border-gray-500/60 bg-gray-500/20 text-text-secondary font-semibold text-base hover-only:hover:text-text-primary transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {t('common.back')}
             </button>
@@ -112,7 +112,7 @@ export function VerifyPhoneCodeForm({
               type="submit"
               loading={isSubmitting}
               disabled={code.join('').trim().length !== 6 || isVerificationBlocked}
-              className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-primary-600 hover:border-primary-700 bg-primary-500/20 text-primary-800 font-semibold text-base hover:bg-primary-500/30 transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+              className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-primary-600 hover-only:hover:border-primary-700 bg-primary-500/20 text-primary-800 font-semibold text-base hover-only:hover:bg-primary-500/30 transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isVerificationBlocked ? t('smsVerification.blocked') : t('smsVerification.verify')}
             </LoadingButton>
@@ -124,7 +124,7 @@ export function VerifyPhoneCodeForm({
             type="button"
             onClick={onResend}
             disabled={isSubmitting || resendCooldown > 0 || resendAttempts >= 3}
-            className="text-sm text-primary-700 hover:text-primary-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="text-sm text-primary-700 hover-only:hover:text-primary-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {resendAttempts >= 3
               ? t('smsVerification.maxResendAttempts')

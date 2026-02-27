@@ -32,7 +32,7 @@ export default function NotFound() {
               draggable={false}
             />
           </div>
-          <h1 className="text-6xl md:text-7xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent mb-4">
+          <h1 className="text-6xl md:text-7xl font-extrabold bg-linear-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent mb-4">
             {translations.notFound.title}
           </h1>
           <h2 className="text-2xl md:text-3xl font-bold text-text-primary mb-4">
@@ -44,7 +44,7 @@ export default function NotFound() {
         <div className="flex justify-center">
           <Link
             href="/"
-            className="text-primary-600 font-medium text-sm md:text-base hover:text-primary-700 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-6 py-2.5 text-base rounded-lg border-2 border-primary-500 hover:border-primary-600 bg-primary-50 hover:bg-primary-100"
+            className="text-primary-600 font-medium text-sm md:text-base hover-only:hover:text-primary-700 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-6 py-2.5 text-base rounded-lg border-2 border-primary-500 hover-only:hover:border-primary-600 bg-primary-50 hover-only:hover:bg-primary-100"
           >
             {translations.notFound.backToHome}
           </Link>

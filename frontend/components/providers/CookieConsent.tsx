@@ -42,7 +42,7 @@ export function CookieConsent() {
     >
       <button
         onClick={handleClose}
-        className="absolute top-2 right-2 sm:top-3 sm:right-3 text-primary-700 hover:text-primary-900 transition-colors p-1 touch-manipulation"
+        className="absolute top-2 right-2 sm:top-3 sm:right-3 text-primary-700 hover-only:hover:text-primary-900 transition-colors p-1 touch-manipulation"
         aria-label={t('common.closeCookies')}
       >
         <svg
@@ -66,14 +66,14 @@ export function CookieConsent() {
           {t('common.cookieConsentMessage')}{' '}
           <Link
             href="/cookie-settings"
-            className="text-primary-700 hover:text-primary-900 underline transition-colors"
+            className="text-primary-700 hover-only:hover:text-primary-900 underline transition-colors"
           >
             {t('common.cookieConsentSettings')}
           </Link>
           {' · '}
           <Link
             href="/privacy"
-            className="text-primary-700 hover:text-primary-900 underline transition-colors"
+            className="text-primary-700 hover-only:hover:text-primary-900 underline transition-colors"
           >
             {t('common.cookieConsentMoreInfo')}
           </Link>
@@ -82,7 +82,7 @@ export function CookieConsent() {
 
       <button
         onClick={handleAccept}
-        className="w-full px-4 py-2 sm:py-2.5 text-primary-700 font-semibold text-sm sm:text-base rounded-lg border-2 border-primary-700 bg-primary-500/10 hover:text-primary-900 hover:border-primary-900 transition-all duration-200 touch-manipulation"
+        className="w-full px-4 py-2 sm:py-2.5 text-primary-700 font-semibold text-sm sm:text-base rounded-lg border-2 border-primary-700 bg-primary-500/10 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 transition-all duration-200 touch-manipulation"
       >
         {t('common.cookieConsentAccept')}
       </button>

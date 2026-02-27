@@ -48,7 +48,7 @@ export function ListingPageHeader({ listing, title }: ListingPageHeaderProps) {
         </div>
         <div className="flex items-center gap-2">
           {listing.status === 'Closed' && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold bg-red-500/20 border border-red-500/40 text-text-secondary shadow-sm">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold bg-red-500/20 border border-red-500/40 text-text-secondary shadow-xs">
               <span>🔒</span>
               <span>{t('listingDetail.closed')}</span>
             </span>
@@ -56,7 +56,7 @@ export function ListingPageHeader({ listing, title }: ListingPageHeaderProps) {
           {listing.is_promoted && (
             <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-accent text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-accent/10 before:pointer-events-none">
               <svg
-                className="w-4 h-4 flex-shrink-0"
+                className="w-4 h-4 shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"

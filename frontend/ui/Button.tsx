@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'yellow' | 'green-dark';
+  variant?: 'primary' | 'secondary' | 'outline' | 'outline-solid' | 'yellow' | 'green-dark';
   size?: 'xs' | 'sm' | 'md' | 'lg';
   fullWidth?: boolean;
   children: ReactNode;
@@ -21,15 +21,12 @@ export function Button({
 
   const variantClasses = {
     primary:
-      'text-white font-semibold rounded-lg transition-all duration-200 select-none text-center border-none cursor-pointer hover:text-primary-100',
-    secondary:
-      'bg-bg-secondary border-2 border-primary-500/30 text-white hover:border-primary-500 hover:text-primary-100',
-    outline:
-      'bg-transparent border-2 border-primary-500 text-primary-500 hover:border-primary-400 hover:text-primary-400',
-    yellow:
-      'bg-gradient-to-r from-accent to-accent text-white shadow-lg hover:shadow-xl hover:text-accent/90',
-    'green-dark':
-      'bg-gradient-to-r from-primary-700 to-primary-800 text-white shadow-lg hover:shadow-xl hover:text-primary-200',
+      'text-white font-semibold rounded-lg transition-all duration-200 select-none text-center border-none cursor-pointer',
+    secondary: 'bg-bg-secondary border-2 border-primary-500/30 text-white',
+    outline: 'bg-transparent border-2 border-primary-500 text-primary-500',
+    'outline-solid': 'bg-transparent border-2 border-primary-500 text-primary-500',
+    yellow: 'bg-linear-to-r from-accent to-accent text-white shadow-lg',
+    'green-dark': 'bg-linear-to-r from-primary-700 to-primary-800 text-white shadow-lg',
   };
 
   const sizeClasses = {
@@ -83,6 +80,7 @@ export function Button({
 
   return (
     <button
+      data-button-variant={variant}
       className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${fullWidth ? 'w-full' : ''} ${disabledClasses} ${className}`}
       style={primaryStyle}
       onMouseEnter={handleMouseEnter}

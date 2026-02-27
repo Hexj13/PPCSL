@@ -13,7 +13,7 @@ type GuestDesktopNavProps = {
 };
 
 const loginLinkClasses =
-  'text-white font-medium h-10 text-xs md:text-xs lg:text-sm xl:text-sm hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-2 md:px-2.5 lg:px-2.5 xl:px-3 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none';
+  'text-white font-medium h-10 text-xs md:text-xs lg:text-sm xl:text-sm hover-only:hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-2 md:px-2.5 lg:px-2.5 xl:px-3 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none';
 
 export function GuestDesktopNav({
   isAuthPage,

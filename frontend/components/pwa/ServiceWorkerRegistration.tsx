@@ -67,13 +67,13 @@ export function ServiceWorkerRegistration() {
       <div className="flex gap-2">
         <button
           onClick={updateServiceWorker}
-          className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded transition-colors text-sm"
+          className="bg-primary-500 hover-only:hover:bg-primary-600 text-white px-4 py-2 rounded-sm transition-colors text-sm"
         >
           {t('pwa.updateNow')}
         </button>
         <button
           onClick={() => setUpdateAvailable(false)}
-          className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded transition-colors text-sm"
+          className="bg-gray-600 hover-only:hover:bg-gray-700 text-white px-4 py-2 rounded-sm transition-colors text-sm"
         >
           {t('pwa.updateLater')}
         </button>

@@ -390,7 +390,7 @@ function DropdownTrigger({
       suppressHydrationWarning
     >
       {rightIcon && (
-        <span className="flex-shrink-0" suppressHydrationWarning>
+        <span className="shrink-0" suppressHydrationWarning>
           {rightIcon}
         </span>
       )}
@@ -403,7 +403,7 @@ function DropdownTrigger({
       </span>
       <DropdownChevron
         isOpen={isOpen}
-        className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-900 group-hover:text-primary-700 transition-colors duration-200 flex-shrink-0 pointer-events-none"
+        className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-900 group-hover:text-primary-700 transition-colors duration-200 shrink-0 pointer-events-none"
         style={{ right: '16px' }}
       />
     </button>
@@ -446,7 +446,7 @@ function DropdownMenu({
       className={`bg-white border-2 border-primary-500/30 rounded-lg shadow-xl ${
         isPortaled
           ? ''
-          : `absolute z-[100] w-full ${openUpwards ? 'bottom-full mb-1' : 'top-full mt-1'}`
+          : `absolute z-100 w-full ${openUpwards ? 'bottom-full mb-1' : 'top-full mt-1'}`
       } ${!isPositioned ? 'opacity-0 pointer-events-none' : ''}`}
       style={portalStyle}
     >
@@ -461,7 +461,7 @@ function DropdownMenu({
                 key={option.value}
                 type="button"
                 onClick={() => onSelect(option.value)}
-                className={`w-full px-4 py-3 text-left text-sm text-text-primary hover:bg-primary-500/10 transition-colors duration-150 flex items-center justify-between ${
+                className={`w-full px-4 py-3 text-left text-sm text-text-primary hover-only:hover:bg-primary-500/10 transition-colors duration-150 flex items-center justify-between ${
                   isSelected ? 'bg-primary-500/20 font-semibold' : ''
                 }`}
               >
@@ -480,7 +480,7 @@ function DropdownMenu({
           <button
             type="button"
             onClick={onReset}
-            className="px-3 py-1.5 text-sm text-text-primary hover:text-primary-500 transition-colors duration-150"
+            className="px-3 py-1.5 text-sm text-text-primary hover-only:hover:text-primary-500 transition-colors duration-150"
           >
             {t('common.reset')}
           </button>

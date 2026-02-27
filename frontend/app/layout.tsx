@@ -175,7 +175,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <div className="min-h-screen flex flex-col">
               <Header />
               <OfflineBanner />
-              <main className="flex-grow container mx-auto px-3 sm:px-4 py-6 md:py-8 register-page-main">
+              <main className="grow container mx-auto px-3 sm:px-4 py-6 md:py-8 register-page-main">
                 {children}
               </main>
               <Footer />

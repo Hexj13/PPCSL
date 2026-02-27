@@ -3,7 +3,11 @@
     "name": "Câmpul poate conține doar litere, spații, cratime și liniuțe",
     "phone": "Numărul de telefon trebuie să fie în format +cod țară (1-4 cifre) + număr (6-15 cifre)",
     "password": "Parola trebuie să conțină cel puțin o literă mare și o literă mică",
-    "registrationType": "Tipul de înmatriculare trebuie să fie Local, Foreign, Cleared sau NotCleared"
+    "registrationType": "Tipul de înmatriculare trebuie să fie Local, Foreign, Cleared sau NotCleared",
+    "string": "Valoarea trebuie să fie un șir de caractere",
+    "codeLength": "Codul trebuie să conțină exact 6 cifre",
+    "codeDigits": "Codul trebuie să conțină doar cifre",
+    "passwordMinLength": "Parola trebuie să conțină cel puțin 8 caractere"
   },
   "errors": {
     "serverError": "Eroare pe server. Încercați mai târziu.",

@@ -283,7 +283,7 @@ function VerifyPhoneChangeContent() {
                     onKeyDown={(e) => handleKeyDown(index, e)}
                     onPaste={handlePaste}
                     disabled={loading}
-                    className={`w-12 h-14 md:w-14 md:h-16 text-center text-2xl md:text-3xl font-bold bg-bg-secondary border-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-700 focus:border-primary-700 ${
+                    className={`w-12 h-14 md:w-14 md:h-16 text-center text-2xl md:text-3xl font-bold bg-bg-secondary border-2 rounded-lg transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-primary-700 focus:border-primary-700 ${
                       error
                         ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
                         : 'border-primary-700/30 focus:border-primary-700'
@@ -330,7 +330,7 @@ function VerifyPhoneChangeContent() {
                 type="submit"
                 loading={loading}
                 disabled={code.join('').trim().length !== 6 || isVerificationBlocked}
-                className="flex-1 text-primary-700 font-medium text-sm md:text-base hover:text-primary-900 hover:border-primary-900 transition-colors duration-200 whitespace-nowrap px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 text-primary-700 font-medium text-sm md:text-base hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 transition-colors duration-200 whitespace-nowrap px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isVerificationBlocked
                   ? t('profile.verifyPhoneChange.blocked')
@@ -344,7 +344,7 @@ function VerifyPhoneChangeContent() {
               type="button"
               onClick={handleResendCode}
               disabled={loading || resendCooldown > 0}
-              className="text-sm text-primary-700 hover:text-primary-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-sm text-primary-700 hover-only:hover:text-primary-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {resendCooldown > 0
                 ? t('profile.verifyPhoneChange.resendCodeWithCooldown', {

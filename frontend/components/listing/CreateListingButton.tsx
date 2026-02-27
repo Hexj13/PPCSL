@@ -39,7 +39,7 @@ export function CreateListingButton({
   const isMobile = variant === 'mobile';
 
   const baseClasses =
-    'text-white font-medium transition-all duration-200 whitespace-nowrap flex items-center justify-center border-2 border-accent select-none hover:text-accent-100 active:text-accent-100';
+    'text-white font-medium transition-all duration-200 whitespace-nowrap flex items-center justify-center border-2 border-accent select-none hover-only:hover:text-accent-100 active:text-accent-100';
 
   const variantClasses = isMobile
     ? 'text-sm gap-1.5 px-2.5 py-2 rounded-lg w-full'
@@ -55,12 +55,7 @@ export function CreateListingButton({
       onClick={handleClick}
       className={`${baseClasses} ${variantClasses} ${className}`}
     >
-      <svg
-        className={`${iconSize} flex-shrink-0`}
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
+      <svg className={`${iconSize} shrink-0`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
       </svg>
       {isMobile ? (

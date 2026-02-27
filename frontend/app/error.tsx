@@ -49,7 +49,7 @@ function ErrorContent({
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
           <button
             onClick={reset}
-            className="text-primary-600 font-medium text-sm md:text-base hover:text-primary-700 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-6 py-2.5 text-base rounded-lg border-2 border-primary-500 hover:border-primary-600 bg-primary-50 hover:bg-primary-100"
+            className="text-primary-600 font-medium text-sm md:text-base hover-only:hover:text-primary-700 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-6 py-2.5 text-base rounded-lg border-2 border-primary-500 hover-only:hover:border-primary-600 bg-primary-50 hover-only:hover:bg-primary-100"
           >
             {t('error.tryAgain')}
           </button>

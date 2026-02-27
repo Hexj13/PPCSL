@@ -221,7 +221,7 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
               ))}
             </div>
           </div>
-          <div className="mb-3 md:mb-4 h-4 md:h-5 bg-bg-secondary/30 rounded w-40 md:w-48 animate-pulse" />
+          <div className="mb-3 md:mb-4 h-4 md:h-5 bg-bg-secondary/30 rounded-sm w-40 md:w-48 animate-pulse" />
           <div className="space-y-3 md:space-y-4">
             {[...Array(3)].map((_, i) => (
               <ListingManagementCardSkeleton key={i} />
@@ -243,7 +243,7 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
                 }))
               }
               placeholder={t('admin.listingsTab.searchByIdPlaceholder')}
-              className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-secondary border-2 border-primary-700 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-primary-900 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
+              className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-secondary border-2 border-primary-700 text-text-primary placeholder:text-text-secondary focus:outline-hidden focus:border-primary-900 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
             />
 
             <div className="pt-4 border-t border-primary-500/20 sm:border-t-0 sm:pt-0">

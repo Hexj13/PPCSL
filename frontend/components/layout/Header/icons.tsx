@@ -20,7 +20,7 @@ export function CloseIcon({ className = 'w-6 h-6' }: { className?: string }) {
 }
 
 export function DocumentsIcon({
-  className = 'w-3 h-3 md:w-3.5 md:h-3.5 flex-shrink-0',
+  className = 'w-3 h-3 md:w-3.5 md:h-3.5 shrink-0',
 }: {
   className?: string;
 }) {
@@ -37,7 +37,7 @@ export function DocumentsIcon({
 }
 
 export function HeartIcon({
-  className = 'w-3 h-3 md:w-3.5 md:h-3.5 flex-shrink-0',
+  className = 'w-3 h-3 md:w-3.5 md:h-3.5 shrink-0',
 }: {
   className?: string;
 }) {
@@ -54,7 +54,7 @@ export function HeartIcon({
 }
 
 export function ScaleIcon({
-  className = 'w-3 h-3 md:w-3.5 md:h-3.5 flex-shrink-0',
+  className = 'w-3 h-3 md:w-3.5 md:h-3.5 shrink-0',
 }: {
   className?: string;
 }) {
@@ -71,7 +71,7 @@ export function ScaleIcon({
 }
 
 export function ShieldIcon({
-  className = 'w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0',
+  className = 'w-3.5 h-3.5 md:w-4 md:h-4 shrink-0',
 }: {
   className?: string;
 }) {
@@ -88,7 +88,7 @@ export function ShieldIcon({
 }
 
 export function UserIcon({
-  className = 'w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0',
+  className = 'w-3.5 h-3.5 md:w-4 md:h-4 shrink-0',
 }: {
   className?: string;
 }) {
@@ -111,7 +111,7 @@ export function UserIcon({
 }
 
 export function LogoutIcon({
-  className = 'w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0',
+  className = 'w-3.5 h-3.5 md:w-4 md:h-4 shrink-0',
 }: {
   className?: string;
 }) {

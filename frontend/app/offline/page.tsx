@@ -14,12 +14,15 @@ export default function OfflinePage() {
         <p className="text-text-secondary mb-6">{t('pwa.offlineMessage')}</p>
         <button
           onClick={() => window.location.reload()}
-          className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg transition-colors font-medium"
+          className="bg-primary-600 hover-only:hover:bg-primary-700 text-white px-6 py-3 rounded-lg transition-colors font-medium"
         >
           {t('pwa.retry')}
         </button>
         <div className="mt-6">
-          <Link href="/" className="text-primary-600 hover:text-primary-700 underline font-medium">
+          <Link
+            href="/"
+            className="text-primary-600 hover-only:hover:text-primary-700 underline font-medium"
+          >
             {t('common.goToHome')}
           </Link>
         </div>

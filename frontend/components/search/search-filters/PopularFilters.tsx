@@ -53,7 +53,7 @@ export function PopularFilters({
           className={`relative px-3 py-2 rounded-full border-2 text-primary-900 transition-all text-sm ${
             isBrandActive
               ? 'border-primary-900 bg-primary-500/10'
-              : 'border-primary-700 bg-bg-secondary hover:border-primary-900 hover:bg-primary-500/10'
+              : 'border-primary-700 bg-bg-secondary hover-only:hover:border-primary-900 hover-only:hover:bg-primary-500/10'
           }`}
         >
           {brand}
@@ -106,7 +106,7 @@ export function PopularFilters({
                 className={`relative px-3 py-2 rounded-full border-2 text-primary-900 transition-all text-sm ${
                   isModelActive
                     ? 'border-primary-900 bg-primary-500/10'
-                    : 'border-primary-500 bg-bg-secondary hover:border-primary-900 hover:bg-primary-500/10'
+                    : 'border-primary-500 bg-bg-secondary hover-only:hover:border-primary-900 hover-only:hover:bg-primary-500/10'
                 }`}
               >
                 {brand} {model}

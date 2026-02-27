@@ -111,7 +111,7 @@ function ManagementCardBadges({
       {listing.is_promoted && (
         <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-base font-semibold bg-white/90 border-2 border-accent text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-accent/10 before:pointer-events-none">
           <svg
-            className="relative z-10 w-4 h-4 flex-shrink-0"
+            className="relative z-10 w-4 h-4 shrink-0"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -190,22 +190,22 @@ function ManagementCardActionBar({
   return (
     <div className="mt-auto pt-3 border-t border-primary-500/20">
       <div className="flex flex-col xl:flex-row xl:justify-between items-start xl:items-center gap-2 lg:gap-3 min-w-0 max-w-full">
-        <div className="inline-flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
+        <div className="inline-flex items-center gap-1 sm:gap-1.5 shrink-0">
           <div className="text-base font-semibold text-primary-900">{t('listings.status')}</div>
           <div className={getStatusClassName(status)}>{getStatusLabel(status, t)}</div>
         </div>
         <div
-          className={`flex flex-col lg:flex-col xl:flex-row xl:flex-wrap xl:justify-end items-stretch xl:items-center gap-2 w-full lg:w-full lg:flex-shrink-0 lg:max-w-full xl:flex-1 xl:flex-shrink xl:min-w-0 xl:max-w-full${status !== 'Closed' ? ' min-h-[48px]' : ''}`}
+          className={`flex flex-col lg:flex-col xl:flex-row xl:flex-wrap xl:justify-end items-stretch xl:items-center gap-2 w-full lg:w-full lg:shrink-0 lg:max-w-full xl:flex-1 xl:shrink xl:min-w-0 xl:max-w-full${status !== 'Closed' ? ' min-h-[48px]' : ''}`}
         >
           {onAction && (
             <>
               {showPromoteMyListings && (
                 <button
                   onClick={() => onPromoteClick?.(listing.id)}
-                  className="text-text-secondary font-medium text-base hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-accent/40 hover:border-accent/60 bg-accent/20 select-none w-full xl:w-auto h-[48px]"
+                  className="text-text-secondary font-medium text-base hover-only:hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-accent/40 hover-only:hover:border-accent/60 bg-accent/20 select-none w-full xl:w-auto h-[48px]"
                 >
                   <svg
-                    className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+                    className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -223,14 +223,14 @@ function ManagementCardActionBar({
               {showPromoteAdmin && (
                 <button
                   onClick={() => onPromoteClick?.(listing.id)}
-                  className={`font-medium text-base transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 select-none w-full xl:w-auto h-[48px] text-text-secondary hover:text-text-primary ${
+                  className={`font-medium text-base transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 select-none w-full xl:w-auto h-[48px] text-text-secondary hover-only:hover:text-text-primary ${
                     listing.is_promoted
-                      ? 'bg-[#f069be33] border-[#f069be]/40 hover:border-[#f069be]/60'
-                      : 'bg-accent/20 border-accent/40 hover:border-accent/60'
+                      ? 'bg-[#f069be33] border-[#f069be]/40 hover-only:hover:border-[#f069be]/60'
+                      : 'bg-accent/20 border-accent/40 hover-only:hover:border-accent/60'
                   }`}
                 >
                   <svg
-                    className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+                    className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -250,7 +250,7 @@ function ManagementCardActionBar({
               {showPublish && (
                 <button
                   onClick={() => onAction(listing.id, 'publish')}
-                  className="text-text-secondary font-medium text-base hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-500/40 hover:border-primary-500/60 bg-primary-500/20 select-none w-full xl:w-auto h-[48px]"
+                  className="text-text-secondary font-medium text-base hover-only:hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-500/40 hover-only:hover:border-primary-500/60 bg-primary-500/20 select-none w-full xl:w-auto h-[48px]"
                 >
                   {t('listings.publishAction')}
                 </button>
@@ -258,7 +258,7 @@ function ManagementCardActionBar({
               {showPause && (
                 <button
                   onClick={() => onAction(listing.id, 'pause')}
-                  className="text-text-secondary font-medium text-base hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-blue-500/40 hover:border-blue-500/60 bg-blue-500/20 select-none w-full xl:w-auto h-[48px]"
+                  className="text-text-secondary font-medium text-base hover-only:hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-blue-500/40 hover-only:hover:border-blue-500/60 bg-blue-500/20 select-none w-full xl:w-auto h-[48px]"
                 >
                   {t('listings.pauseAction')}
                 </button>
@@ -266,7 +266,7 @@ function ManagementCardActionBar({
               {showClose && (
                 <button
                   onClick={() => onAction(listing.id, 'close')}
-                  className="text-text-secondary font-medium text-base hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-gray-500/40 hover:border-gray-500/60 bg-gray-500/20 select-none w-full xl:w-auto h-[48px]"
+                  className="text-text-secondary font-medium text-base hover-only:hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-gray-500/40 hover-only:hover:border-gray-500/60 bg-gray-500/20 select-none w-full xl:w-auto h-[48px]"
                 >
                   {t('common.close')}
                 </button>
@@ -276,12 +276,12 @@ function ManagementCardActionBar({
           {showEdit && (
             <Link
               href={`/listings/${listing.id}/edit`}
-              className="text-primary-700 font-medium text-base hover:text-primary-900 hover:border-primary-900 active:text-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none w-full xl:w-auto h-[48px]"
+              className="text-primary-700 font-medium text-base hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none w-full xl:w-auto h-[48px]"
               title={t('common.editListing')}
               onClick={(e) => e.stopPropagation()}
             >
               <svg
-                className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0 text-inherit"
+                className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0 text-inherit"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -326,7 +326,7 @@ export function ListingManagementCard({
   return (
     <div className="card overflow-visible group">
       <div className="grid grid-cols-1 lg:grid-cols-[450px_1fr] gap-0 lg:gap-6 lg:items-stretch">
-        <Link href={`/listings/${listing.id}`} className="flex-shrink-0">
+        <Link href={`/listings/${listing.id}`} className="shrink-0">
           <div className="relative w-full h-[200px] sm:h-[250px] lg:h-full lg:min-h-[250px] bg-bg-darker overflow-hidden rounded-t-xl lg:rounded-tl-xl lg:rounded-bl-xl lg:rounded-tr-none lg:rounded-br-none">
             {hasImage ? (
               <Image
@@ -366,7 +366,7 @@ export function ListingManagementCard({
                     {displayTitle}
                   </h3>
                   <svg
-                    className="w-5 h-5 opacity-60 lg:group-hover:opacity-100 lg:group-hover:text-primary-600 flex-shrink-0 mt-0.5 transition-all duration-200"
+                    className="w-5 h-5 opacity-60 lg:group-hover:opacity-100 lg:group-hover:text-primary-600 shrink-0 mt-0.5 transition-all duration-200"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"

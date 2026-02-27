@@ -181,7 +181,7 @@ export function ScrollToFiltersButton() {
     <div className="fixed bottom-4 right-4 z-40 md:bottom-6 md:right-6">
       <button
         onClick={showBackButton ? scrollBack : scrollToFilters}
-        className="group relative flex items-center justify-center w-14 h-14 md:w-16 md:h-16 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95 touch-manipulation p-0 m-0"
+        className="group relative flex items-center justify-center w-14 h-14 md:w-16 md:h-16 rounded-full shadow-lg hover-only:hover:shadow-xl transition-all duration-300 transform hover-only:hover:scale-105 active:scale-95 touch-manipulation p-0 m-0"
         style={{
           backgroundColor: '#40916B',
           boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
@@ -200,7 +200,7 @@ export function ScrollToFiltersButton() {
       >
         {showBackButton ? (
           <svg
-            className="w-6 h-6 md:w-7 md:h-7 text-white transition-transform group-hover:translate-y-[1px] flex-shrink-0"
+            className="w-6 h-6 md:w-7 md:h-7 text-white transition-transform group-hover:translate-y-px shrink-0"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -216,7 +216,7 @@ export function ScrollToFiltersButton() {
           </svg>
         ) : (
           <svg
-            className="w-6 h-6 md:w-7 md:h-7 text-white transition-transform group-hover:translate-y-[1px] flex-shrink-0"
+            className="w-6 h-6 md:w-7 md:h-7 text-white transition-transform group-hover:translate-y-px shrink-0"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"

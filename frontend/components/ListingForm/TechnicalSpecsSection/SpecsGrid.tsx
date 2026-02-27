@@ -35,7 +35,7 @@ export function SpecsGrid({
               height="16"
               viewBox="0 0 512.002 512.002"
               fill="currentColor"
-              className="flex-shrink-0"
+              className="shrink-0"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -210,7 +210,7 @@ export function SpecsGrid({
               height="16"
               viewBox="0 0 512 512"
               fill="currentColor"
-              className="flex-shrink-0"
+              className="shrink-0"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -255,7 +255,7 @@ export function SpecsGrid({
                 height="16"
                 viewBox="0 0 491.532 491.532"
                 fill="currentColor"
-                className="flex-shrink-0"
+                className="shrink-0"
                 xmlns="http://www.w3.org/2000/svg"
               >
                 <path
@@ -300,7 +300,7 @@ export function SpecsGrid({
               height="16"
               viewBox="0 0 512 512"
               fill="currentColor"
-              className="flex-shrink-0"
+              className="shrink-0"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -343,7 +343,7 @@ export function SpecsGrid({
               height="16"
               viewBox="0 0 512.009 512.009"
               fill="currentColor"
-              className="flex-shrink-0"
+              className="shrink-0"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path

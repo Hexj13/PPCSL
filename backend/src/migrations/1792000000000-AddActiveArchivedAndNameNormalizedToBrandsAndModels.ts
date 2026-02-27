@@ -2,9 +2,7 @@ import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 import { normalizeForComparison } from '../common/utils/slug.utils';
 
-export class AddActiveArchivedAndNameNormalizedToBrandsAndModels1792000000000
-  implements MigrationInterface
-{
+export class AddActiveArchivedAndNameNormalizedToBrandsAndModels1792000000000 implements MigrationInterface {
   name = 'AddActiveArchivedAndNameNormalizedToBrandsAndModels1792000000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

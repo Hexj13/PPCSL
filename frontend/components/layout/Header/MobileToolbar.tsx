@@ -20,7 +20,7 @@ export function MobileToolbar({
   return (
     <div className="flex items-center lg:hidden gap-3">
       {showSkeleton ? (
-        <div className="h-9 w-20 bg-white/20 rounded animate-pulse" />
+        <div className="h-9 w-20 bg-white/20 rounded-sm animate-pulse" />
       ) : (
         !isMobileMenuOpen && <CreateListingButton variant="mobile" shortLabel />
       )}

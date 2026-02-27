@@ -139,7 +139,7 @@ export function PWAInstallButtonGray({ fullWidth = false }: PWAInstallButtonGray
         <div className={fullWidth ? 'w-full' : 'flex justify-center items-center'}>
           <button
             onClick={handleInstall}
-            className={`text-white font-medium text-sm md:text-base hover:text-primary-100 active:text-primary-500 transition-all duration-200 whitespace-nowrap flex items-center gap-2 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none ${fullWidth ? 'w-full justify-center' : ''}`}
+            className={`text-white font-medium text-sm md:text-base hover-only:hover:text-primary-100 active:text-primary-500 transition-all duration-200 whitespace-nowrap flex items-center gap-2 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none ${fullWidth ? 'w-full justify-center' : ''}`}
             aria-label={t('pwa.mobileApp')}
           >
             <svg
@@ -187,7 +187,7 @@ export function PWAInstallButtonGray({ fullWidth = false }: PWAInstallButtonGray
                   className={`px-4 py-2 font-medium transition-colors duration-200 border-b-2 ${
                     activeTab === 'ios'
                       ? 'text-primary-400 border-primary-400'
-                      : 'text-text-secondary border-transparent hover:text-text-secondary'
+                      : 'text-text-secondary border-transparent hover-only:hover:text-text-secondary'
                   }`}
                 >
                   {t('pwa.iosTab')}
@@ -197,7 +197,7 @@ export function PWAInstallButtonGray({ fullWidth = false }: PWAInstallButtonGray
                   className={`px-4 py-2 font-medium transition-colors duration-200 border-b-2 ${
                     activeTab === 'android'
                       ? 'text-primary-400 border-primary-400'
-                      : 'text-text-secondary border-transparent hover:text-text-secondary'
+                      : 'text-text-secondary border-transparent hover-only:hover:text-text-secondary'
                   }`}
                 >
                   {t('pwa.androidTab')}

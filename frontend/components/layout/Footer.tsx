@@ -10,7 +10,7 @@ export function Footer() {
   const { t } = useTranslation();
 
   return (
-    <footer className="bg-primary-700 shadow-lg text-white mt-auto border-t-2 border-primary-500/20 backdrop-blur-sm">
+    <footer className="bg-primary-700 shadow-lg text-white mt-auto border-t-2 border-primary-500/20 backdrop-blur-xs">
       <div className="container mx-auto px-3 sm:px-4 py-6 md:py-8">
         <div className="text-center">
           <div
@@ -27,7 +27,7 @@ export function Footer() {
           >
             <Link
               href="/faq"
-              className="text-white hover:text-primary-100 active:text-primary-300 transition-colors duration-200 underline"
+              className="text-white hover-only:hover:text-primary-100 active:text-primary-300 transition-colors duration-200 underline"
               suppressHydrationWarning
             >
               {t('footer.faq')}
@@ -37,7 +37,7 @@ export function Footer() {
             </span>
             <Link
               href="/terms"
-              className="text-white hover:text-primary-100 active:text-primary-300 transition-colors duration-200 underline"
+              className="text-white hover-only:hover:text-primary-100 active:text-primary-300 transition-colors duration-200 underline"
               suppressHydrationWarning
             >
               {t('footer.terms')}
@@ -47,7 +47,7 @@ export function Footer() {
             </span>
             <Link
               href="/privacy"
-              className="text-white hover:text-primary-100 active:text-primary-300 transition-colors duration-200 underline"
+              className="text-white hover-only:hover:text-primary-100 active:text-primary-300 transition-colors duration-200 underline"
               suppressHydrationWarning
             >
               {t('footer.privacy')}
@@ -57,7 +57,7 @@ export function Footer() {
             </span>
             <Link
               href="/cookie-settings"
-              className="text-white hover:text-primary-100 active:text-primary-300 transition-colors duration-200 underline"
+              className="text-white hover-only:hover:text-primary-100 active:text-primary-300 transition-colors duration-200 underline"
               suppressHydrationWarning
             >
               {t('footer.cookieSettings')}

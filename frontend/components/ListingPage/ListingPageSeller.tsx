@@ -136,7 +136,7 @@ function SellerBoardLink({
   if (!listing.user || activeListingsCount <= 1 || !boardSlug) return null;
   const icon = (
     <svg
-      className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+      className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0"
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"
@@ -161,7 +161,7 @@ function SellerBoardLink({
       href={`/board/${boardSlug}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="w-full min-h-12 px-4 md:px-8 py-2 md:py-2.5 text-sm md:text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 !bg-primary-500/10 select-none"
+      className="w-full min-h-12 px-4 md:px-8 py-2 md:py-2.5 text-sm md:text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10! select-none"
     >
       {icon}
       <span className="whitespace-nowrap">{label}</span>
@@ -198,7 +198,7 @@ export function ListingPageSeller({
       <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-900">
         {t('listingDetail.contactInfo')}
       </h2>
-      <div className="space-y-4 break-words">
+      <div className="space-y-4 wrap-break-word">
         <div>
           <span className="font-semibold text-primary-700">{t('listingDetail.sellerType')}:</span>
           <span className="ml-2" style={secondaryStyle}>
@@ -226,7 +226,7 @@ export function ListingPageSeller({
 
         {!isClosed && isBusiness && user.companyWebsiteUrl && (
           <div className="flex items-center min-w-0 gap-2">
-            <span className="font-semibold text-primary-700 flex-shrink-0">
+            <span className="font-semibold text-primary-700 shrink-0">
               {t('listingDetail.companyWebsite')}:
             </span>
             <a
@@ -264,7 +264,7 @@ export function ListingPageSeller({
           <>
             {user.email && (
               <div className="flex items-center min-w-0">
-                <span className="font-semibold text-primary-700 flex-shrink-0">
+                <span className="font-semibold text-primary-700 shrink-0">
                   {t('listingDetail.email')}:
                 </span>
                 <a
@@ -287,7 +287,7 @@ export function ListingPageSeller({
             )}
             {user.phone && (
               <div className="flex items-center min-w-0">
-                <span className="font-semibold text-primary-700 flex-shrink-0">
+                <span className="font-semibold text-primary-700 shrink-0">
                   {t('listingDetail.phone')}:
                 </span>
                 <a

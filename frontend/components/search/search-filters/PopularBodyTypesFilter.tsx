@@ -135,7 +135,7 @@ export function PopularBodyTypesFilter({
           height="16"
           viewBox="0 0 512 512"
           fill="currentColor"
-          className="flex-shrink-0"
+          className="shrink-0"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -160,7 +160,7 @@ export function PopularBodyTypesFilter({
           <button
             type="button"
             onClick={scrollLeft}
-            className="hidden lg:flex absolute left-0 top-[55px] -translate-y-1/2 -translate-x-4 z-10 w-10 h-10 items-center justify-center bg-bg-secondary border-2 border-primary-500/50 rounded-full hover:bg-primary-500/10 hover:border-primary-500 transition-colors duration-200 shadow-lg"
+            className="hidden lg:flex absolute left-0 top-[55px] -translate-y-1/2 -translate-x-4 z-10 w-10 h-10 items-center justify-center bg-bg-secondary border-2 border-primary-500/50 rounded-full hover-only:hover:bg-primary-500/10 hover-only:hover:border-primary-500 transition-colors duration-200 shadow-lg"
             aria-label={t('common.scrollLeft')}
           >
             <svg
@@ -182,7 +182,7 @@ export function PopularBodyTypesFilter({
           <button
             type="button"
             onClick={scrollRight}
-            className="hidden lg:flex absolute right-0 top-[55px] -translate-y-1/2 translate-x-4 z-10 w-10 h-10 items-center justify-center bg-bg-secondary border-2 border-primary-500/50 rounded-full hover:bg-primary-500/10 hover:border-primary-500 transition-colors duration-200 shadow-lg"
+            className="hidden lg:flex absolute right-0 top-[55px] -translate-y-1/2 translate-x-4 z-10 w-10 h-10 items-center justify-center bg-bg-secondary border-2 border-primary-500/50 rounded-full hover-only:hover:bg-primary-500/10 hover-only:hover:border-primary-500 transition-colors duration-200 shadow-lg"
             aria-label={t('common.scrollRight')}
           >
             <svg
@@ -205,18 +205,18 @@ export function PopularBodyTypesFilter({
             return (
               <div
                 key={`${vehicleType}-${value}`}
-                className="flex flex-col items-center gap-2 w-full min-w-0 min-h-[135px] lg:min-h-[152px] lg:flex-shrink-0 lg:w-[180px] lg:flex-1 lg:min-w-0 lg:max-w-[210px]"
+                className="flex flex-col items-center gap-2 w-full min-w-0 min-h-[135px] lg:min-h-[152px] lg:shrink-0 lg:w-[180px] lg:flex-1 lg:min-w-0 lg:max-w-[210px]"
               >
                 <button
                   type="button"
                   onClick={() => handleTileClick(value)}
                   className={`
                   relative w-full h-[95px] lg:h-[110px] flex items-center justify-center p-2 rounded-lg
-                  outline-none select-none ${value === 'ATV' ? 'overflow-hidden' : ''}
+                  outline-hidden select-none ${value === 'ATV' ? 'overflow-hidden' : ''}
                   ${
                     isSelected
                       ? 'border-2 border-primary-700'
-                      : 'border-2 border-primary-700/30 [@media(hover:hover)]:hover:border-primary-700 transition-colors duration-200'
+                      : 'border-2 border-primary-700/30 hover-only:hover:border-primary-700 transition-colors duration-200'
                   }
                 `}
                   onMouseDown={(e) => {

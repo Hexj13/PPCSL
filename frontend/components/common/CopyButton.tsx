@@ -48,7 +48,7 @@ export function CopyButton({
   return (
     <button
       onClick={handleCopy}
-      className={`p-1 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors flex-shrink-0 ${className}`}
+      className={`p-1 text-primary-400 hover-only:hover:text-primary-300 hover-only:hover:bg-primary-500/10 rounded-sm transition-colors shrink-0 ${className}`}
       title={title || t('common.copyId')}
     >
       <CopyIcon className={iconClassName} />

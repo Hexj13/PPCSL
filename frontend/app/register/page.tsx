@@ -56,7 +56,7 @@ export default function RegisterPage() {
           type="submit"
           loading={loading}
           loadingText={t('register.registering')}
-          className="w-full text-primary-700 font-medium text-sm md:text-base hover:text-primary-900 hover:border-primary-900 active:text-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full text-primary-700 font-medium text-sm md:text-base hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {t('register.registerButton')}
         </LoadingButton>
@@ -65,7 +65,7 @@ export default function RegisterPage() {
           {t('register.alreadyHaveAccount')}{' '}
           <a
             href="/login"
-            className="text-primary-700 font-semibold hover:text-primary-900 underline transition-colors"
+            className="text-primary-700 font-semibold hover-only:hover:text-primary-900 underline transition-colors"
           >
             {t('header.login')}
           </a>

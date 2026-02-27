@@ -55,7 +55,7 @@ export function StatusFilterButtons({
           className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-base transition-colors ${
             currentFilter === status
               ? 'bg-primary-500/10 border-2 border-primary-700 text-primary-700'
-              : 'bg-bg-secondary hover:bg-bg-base border-2 border-primary-700 text-primary-700 hover:text-primary-900 hover:border-primary-900'
+              : 'bg-bg-secondary hover-only:hover:bg-bg-base border-2 border-primary-700 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900'
           }`}
         >
           {getLabel(status)}
@@ -73,7 +73,7 @@ export function StatusFilterButtons({
           className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-base transition-colors ${
             promotedActive
               ? 'bg-primary-500/10 border-2 border-primary-700 text-primary-700'
-              : 'bg-bg-secondary hover:bg-bg-base border-2 border-primary-700 text-primary-700 hover:text-primary-900 hover:border-primary-900'
+              : 'bg-bg-secondary hover-only:hover:bg-bg-base border-2 border-primary-700 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900'
           }`}
         >
           {t('myListings.promoted')}

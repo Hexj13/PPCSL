@@ -7,9 +7,9 @@ export class VerifySmsDto {
     description: '6-digit verification code',
   })
   @IsNotEmpty({ message: 'errors.codeRequired' })
-  @IsString({ message: 'Кодот мора да биде стринг' })
-  @Length(6, 6, { message: 'Кодот мора да содржи точно 6 цифри' })
-  @Matches(/^\d{6}$/, { message: 'Кодот мора да содржи само цифри' })
+  @IsString({ message: 'validation.string' })
+  @Length(6, 6, { message: 'validation.codeLength' })
+  @Matches(/^\d{6}$/, { message: 'validation.codeDigits' })
   code: string;
 
   @ApiProperty({
@@ -17,6 +17,6 @@ export class VerifySmsDto {
     description: 'Phone number',
   })
   @IsNotEmpty({ message: 'errors.phoneRequired' })
-  @IsString({ message: 'Телефонскиот број мора да биде стринг' })
+  @IsString({ message: 'validation.string' })
   phone: string;
 }

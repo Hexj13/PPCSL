@@ -102,10 +102,10 @@ function FavoritesContent() {
         : [];
 
   const tabButtonClass = (isActive: boolean) =>
-    `flex-shrink-0 px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 whitespace-nowrap flex items-center gap-2 ${
+    `shrink-0 px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 whitespace-nowrap flex items-center gap-2 ${
       isActive
         ? 'text-primary-700 bg-primary-500/10 rounded-t-lg'
-        : 'text-primary-700 hover:text-primary-900 hover:bg-primary-500/10'
+        : 'text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:bg-primary-500/10'
     }`;
 
   return (

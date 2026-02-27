@@ -148,7 +148,7 @@ export default function BoardPageClient({
             ))}
           </div>
 
-          <div className="min-h-[5rem] flex flex-col items-center justify-center py-8">
+          <div className="min-h-20 flex flex-col items-center justify-center py-8">
             {loadingMore && (
               <>
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />

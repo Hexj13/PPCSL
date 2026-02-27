@@ -30,7 +30,7 @@ export function RegisterFormTerms({ formData, setFormData }: RegisterFormTermsPr
               e.preventDefault();
               setFormData({ ...formData, termsAccepted: !formData.termsAccepted });
             }}
-            className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer flex-shrink-0 ${
+            className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer shrink-0 ${
               formData.termsAccepted
                 ? 'bg-primary-500/10 border-primary-700'
                 : 'border-primary-700/50 bg-bg-secondary group-hover:border-primary-700'
@@ -59,7 +59,7 @@ export function RegisterFormTerms({ formData, setFormData }: RegisterFormTermsPr
             href="/terms"
             target="_blank"
             onClick={(e) => e.stopPropagation()}
-            className="text-primary-700 hover:text-primary-900 underline font-semibold"
+            className="text-primary-700 hover-only:hover:text-primary-900 underline font-semibold"
           >
             {t('register.termsLink')}
           </Link>

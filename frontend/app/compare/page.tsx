@@ -135,8 +135,8 @@ export default function ComparePage() {
         </h1>
         <div className="surface py-12 animate-pulse">
           <div className="w-24 h-24 mx-auto rounded-full bg-primary-500/10 mb-4" />
-          <div className="h-8 w-64 mx-auto bg-primary-500/10 rounded mb-2" />
-          <div className="h-4 w-80 mx-auto bg-primary-500/10 rounded" />
+          <div className="h-8 w-64 mx-auto bg-primary-500/10 rounded-sm mb-2" />
+          <div className="h-4 w-80 mx-auto bg-primary-500/10 rounded-sm" />
         </div>
       </div>
     );
@@ -205,7 +205,7 @@ export default function ComparePage() {
             }
             toast.success(t('compare.allRemoved'));
           }}
-          className="px-8 py-2 md:py-2.5 text-sm md:text-sm lg:text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover:text-primary-900 hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10 select-none"
+          className="px-8 py-2 md:py-2.5 text-sm md:text-sm lg:text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10 select-none"
         >
           {t('compare.clearAll')}
         </button>
@@ -226,7 +226,7 @@ export default function ComparePage() {
                   <div className="flex justify-center items-center">
                     <button
                       onClick={() => handleRemove(listing.id)}
-                      className="p-2 text-text-secondary hover:text-red-400 transition-colors"
+                      className="p-2 text-text-secondary hover-only:hover:text-red-400 transition-colors"
                       title={t('common.removeFromComparison')}
                     >
                       <svg

@@ -83,7 +83,7 @@ export function EquipmentFilters({
             className={`px-3 py-2 rounded-full text-sm border-2 transition-all ${
               equipmentMatchMode === 'full'
                 ? 'bg-primary-500/5 border-primary-500 text-text-secondary'
-                : 'bg-primary-500/5 border-primary-500/20 text-text-secondary hover:bg-primary-500/15 hover:border-primary-500/30'
+                : 'bg-primary-500/5 border-primary-500/20 text-text-secondary hover-only:hover:bg-primary-500/15 hover-only:hover:border-primary-500/30'
             }`}
             aria-pressed={equipmentMatchMode === 'full'}
           >
@@ -95,7 +95,7 @@ export function EquipmentFilters({
             className={`px-3 py-2 rounded-full text-sm border-2 transition-all ${
               equipmentMatchMode === 'partial'
                 ? 'bg-primary-500/5 border-primary-500 text-text-secondary'
-                : 'bg-primary-500/5 border-primary-500/20 text-text-secondary hover:bg-primary-500/15 hover:border-primary-500/30'
+                : 'bg-primary-500/5 border-primary-500/20 text-text-secondary hover-only:hover:bg-primary-500/15 hover-only:hover:border-primary-500/30'
             }`}
             aria-pressed={equipmentMatchMode === 'partial'}
           >

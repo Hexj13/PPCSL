@@ -73,7 +73,7 @@ export default function PrivacyPage() {
             <button
               key={item.id}
               onClick={() => scrollToSection(item.id)}
-              className="block w-full text-left px-4 py-2 text-text-primary hover:text-primary-900 hover:bg-primary-500/10 rounded-lg transition-all duration-200"
+              className="block w-full text-left px-4 py-2 text-text-primary hover-only:hover:text-primary-900 hover-only:hover:bg-primary-500/10 rounded-lg transition-all duration-200"
             >
               {normalizeText(item.title)}
             </button>

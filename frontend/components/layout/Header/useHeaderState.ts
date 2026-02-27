@@ -53,7 +53,7 @@ export function useHeaderState() {
   }, []);
 
   const navLinkClasses =
-    'text-white font-medium text-sm hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 rounded select-none';
+    'text-white font-medium text-sm hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 rounded-sm select-none';
 
   const mobileNavLinkClasses =
     'text-white font-medium hover:text-primary-100 active:text-primary-300 transition-colors duration-200 py-2 pl-4 flex items-center gap-2 select-none';

@@ -39,7 +39,7 @@ export function RegisterFormPassword({
         <button
           type="button"
           onClick={onTogglePassword}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-primary-900 hover:text-primary-700 transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-primary-900 hover-only:hover:text-primary-700 transition-colors"
           tabIndex={-1}
         >
           {showPassword ? (
@@ -86,7 +86,7 @@ export function RegisterFormPassword({
           <div key={index} className="flex items-center gap-2">
             {rule.isValid ? (
               <svg
-                className="w-3 h-3 text-primary-900 flex-shrink-0"
+                className="w-3 h-3 text-primary-900 shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -101,7 +101,7 @@ export function RegisterFormPassword({
               </svg>
             ) : (
               <svg
-                className="w-3 h-3 text-gray-400 flex-shrink-0"
+                className="w-3 h-3 text-gray-400 shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"

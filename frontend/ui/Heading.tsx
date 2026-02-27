@@ -25,7 +25,7 @@ export function Heading({
   };
 
   const gradientClasses = gradient
-    ? 'bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent'
+    ? 'bg-linear-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent'
     : 'text-text-primary';
 
   return (

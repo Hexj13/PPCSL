@@ -58,7 +58,7 @@ function BrandRow({
             <button
               type="button"
               onClick={onToggleExpand}
-              className="p-1 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors flex-shrink-0"
+              className="p-1 text-primary-400 hover-only:hover:text-primary-300 hover-only:hover:bg-primary-500/10 rounded-sm transition-colors shrink-0"
               aria-label={isExpanded ? 'Collapse' : 'Expand'}
             >
               <span
@@ -76,7 +76,7 @@ function BrandRow({
             <button
               type="button"
               onClick={onEditBrand}
-              className="p-1 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors flex-shrink-0"
+              className="p-1 text-primary-400 hover-only:hover:text-primary-300 hover-only:hover:bg-primary-500/10 rounded-sm transition-colors shrink-0"
               aria-label={t('common.edit')}
             >
               <EditIcon className="w-4 h-4" />
@@ -136,7 +136,7 @@ function BrandRow({
                 <button
                   type="button"
                   onClick={() => onEditModel(model)}
-                  className="p-1 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors flex-shrink-0"
+                  className="p-1 text-primary-400 hover-only:hover:text-primary-300 hover-only:hover:bg-primary-500/10 rounded-sm transition-colors shrink-0"
                   aria-label={t('common.edit')}
                 >
                   <EditIcon className="w-4 h-4" />
