@@ -191,7 +191,7 @@ export function ListingPageImages({
                               setCurrentImageIndex(index);
                               onImageClick(index);
                             }}
-                            className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center sm:hidden cursor-pointer hover-only:hover:bg-opacity-70 transition-opacity"
+                            className="absolute inset-0 bg-black/60 flex items-center justify-center sm:hidden cursor-pointer hover-only:hover:bg-black/70 transition-opacity"
                           >
                             <span className="text-white text-lg font-bold">
                               +{remainingCountMobile}
@@ -205,7 +205,7 @@ export function ListingPageImages({
                               setCurrentImageIndex(index);
                               onImageClick(index);
                             }}
-                            className="absolute inset-0 bg-black bg-opacity-60 hidden sm:flex items-center justify-center cursor-pointer hover-only:hover:bg-opacity-70 transition-opacity"
+                            className="absolute inset-0 bg-black/60 hidden sm:flex items-center justify-center cursor-pointer hover-only:hover:bg-black/70 transition-opacity"
                           >
                             <span className="text-white text-lg sm:text-xl font-bold">
                               +{remainingCountDesktop}
