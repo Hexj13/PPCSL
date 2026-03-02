@@ -1301,14 +1301,3 @@ body.register-page .register-page-main {
   padding-top: 0 !important;
   padding-bottom: 0 !important;
 }
-
-header.sticky::before {
-  content: '';
-  position: absolute;
-  top: -100px;
-  left: 0;
-  right: 0;
-  height: 100px;
-  background: inherit;
-  z-index: 0;
-}

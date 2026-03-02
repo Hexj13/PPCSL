@@ -197,7 +197,7 @@ export function PopularBodyTypesFilter({
         )}
         <div
           ref={scrollContainerRef}
-          className="grid grid-cols-2 gap-3 lg:flex lg:gap-4 lg:overflow-x-auto lg:scrollbar-hide lg:justify-between"
+          className="grid grid-cols-2 md:grid-cols-3 gap-3 lg:flex lg:gap-4 lg:overflow-x-auto lg:scrollbar-hide lg:justify-between"
         >
           {POPULAR_BODY_TYPES.map(({ value, image }) => {
             const isSelected = selectedBodyTypes.includes(value);

@@ -186,7 +186,7 @@ export function BasicFilters({
 
   return (
     <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="block text-sm font-semibold mb-2 text-primary-900">
@@ -289,9 +289,7 @@ export function BasicFilters({
             />
           </div>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
         <div>
           <label className="block text-sm font-semibold mb-2 text-primary-900 flex items-center gap-2">
             <svg

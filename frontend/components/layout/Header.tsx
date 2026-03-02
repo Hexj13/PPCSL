@@ -41,13 +41,33 @@ export function Header() {
     return () => document.removeEventListener('click', handleClick);
   }, [isMobileMenuOpen, handleMobileMenuClose]);
 
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const sync = () => {
+      if (!headerRef.current) return;
+      headerRef.current.style.transform = `translateY(${vv.offsetTop}px) translateZ(0)`;
+    };
+
+    vv.addEventListener('scroll', sync);
+    vv.addEventListener('resize', sync);
+    sync();
+
+    return () => {
+      vv.removeEventListener('scroll', sync);
+      vv.removeEventListener('resize', sync);
+    };
+  }, []);
+
   return (
     <header
       ref={headerRef}
-      className="bg-primary-700 shadow-lg border-b-2 border-primary-500/20 sticky top-0 z-50 h-[72px] transform-[translateZ(0)]"
+      style={{ transform: 'translateZ(0)' }}
+      className="bg-primary-700 shadow-lg border-b-2 border-primary-500/20 sticky top-0 z-50 h-[72px]"
       suppressHydrationWarning
     >
-      <div className="container mx-auto px-3 sm:px-4 h-full relative z-10" suppressHydrationWarning>
+      <div className="container mx-auto px-3 sm:px-4 h-full" suppressHydrationWarning>
         <div className="flex justify-between items-center h-full" suppressHydrationWarning>
           <HeaderLogo brandAlt={t('header.brandName')} />
 

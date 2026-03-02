@@ -107,7 +107,7 @@ export function AdvancedFilters({
 
   return (
     <div className="mb-5">
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-5">
         <div className="min-w-0">
           <label
             className="block text-sm font-semibold mb-2 text-primary-900 flex items-center gap-2 overflow-hidden"
@@ -174,9 +174,7 @@ export function AdvancedFilters({
             options={getConditionOptions()}
           />
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-5">
         <div>
           <label
             className="block text-sm font-semibold mb-2 text-primary-900 truncate"
