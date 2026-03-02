@@ -1,5 +1,5 @@
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 type SearchTab = 'basic' | 'advanced' | 'equipment' | 'popular';
 
@@ -37,23 +37,38 @@ interface UseSearchTabsParams {
   hasBasicFilters: boolean;
   hasAdvancedFiltersActive: boolean;
   hasEquipmentFiltersActive: boolean;
+  isInternalSearchRef?: React.MutableRefObject<boolean>;
+  preserveTabOnNextSyncRef?: React.MutableRefObject<boolean>;
 }
 
 export function useSearchTabs({
   hasBasicFilters: _hasBasicFilters,
   hasAdvancedFiltersActive: _hasAdvancedFiltersActive,
   hasEquipmentFiltersActive: _hasEquipmentFiltersActive,
+  isInternalSearchRef,
+  preserveTabOnNextSyncRef,
 }: UseSearchTabsParams) {
   const searchParams = useSearchParams();
 
-  const getInitialTab = (): SearchTab => {
+  const getInitialTab = useCallback((): SearchTab => {
     if (BASIC_PARAM_KEYS.some((key) => searchParams.get(key))) return 'basic';
     if (ADVANCED_PARAM_KEYS.some((key) => searchParams.get(key))) return 'advanced';
     if (searchParams.get('equipment')) return 'equipment';
     return 'basic';
-  };
+  }, [searchParams]);
 
   const [activeTab, setActiveTab] = useState<SearchTab>(() => getInitialTab());
+
+  useEffect(() => {
+    if (preserveTabOnNextSyncRef?.current) {
+      preserveTabOnNextSyncRef.current = false;
+      return;
+    }
+    if (isInternalSearchRef?.current) {
+      return;
+    }
+    setActiveTab(getInitialTab());
+  }, [searchParams, isInternalSearchRef, preserveTabOnNextSyncRef, getInitialTab]);
 
   const basicTabRef = useRef<HTMLButtonElement>(null);
   const advancedTabRef = useRef<HTMLButtonElement>(null);

@@ -6,42 +6,6 @@ import { createSlug, sortByName } from '@/lib/utils';
 
 import type { FilterState } from './useSearchFilters';
 
-const QUICK_FILTER_ONLY_PARAM_KEYS = [
-  'year_gte',
-  'year_lte',
-  'price_gte',
-  'price_lte',
-  'cities',
-  'transmissions',
-  'fuels',
-  'colors',
-  'doors',
-  'conditions',
-  'registration_types',
-  'mileage_gte',
-  'mileage_lte',
-  'engine_displ_l_gte',
-  'engine_displ_l_lte',
-  'horsepower_gte',
-  'horsepower_lte',
-  'drive_types',
-  'equipment',
-  'body_types',
-  'urgent',
-  'is_new',
-  'sortBy',
-] as const;
-
-function hasOnlyQuickFilterParams(searchParams: URLSearchParams): boolean {
-  const brandParam = searchParams.get('brand');
-  if (!brandParam) return false;
-  for (const key of QUICK_FILTER_ONLY_PARAM_KEYS) {
-    if (searchParams.get(key)) return false;
-  }
-  if (searchParams.get('sortOrder') === 'ASC') return false;
-  return true;
-}
-
 export function useVehicleTypeFromUrl(
   searchParams: URLSearchParams,
   brands: Brand[],
@@ -102,27 +66,4 @@ export function useModelsForBrands(
   }, [brandIds, vehicleType, setModels, setFilters]);
 
   return loadingModels;
-}
-
-export function useQuickFilterAppliedEffect(
-  searchParams: URLSearchParams,
-  filters: FilterState,
-  brands: Brand[],
-  isApplyingQuickFilterRef: React.MutableRefObject<boolean>,
-  setLastAppliedFilters: React.Dispatch<React.SetStateAction<FilterState | null>>,
-) {
-  useEffect(() => {
-    if (!isApplyingQuickFilterRef.current) return;
-
-    const onlyQuick = hasOnlyQuickFilterParams(searchParams);
-    if (onlyQuick && brands.length > 0 && filters.brand_ids.length > 0) {
-      const timeoutId = setTimeout(() => {
-        setLastAppliedFilters({ ...filters });
-        isApplyingQuickFilterRef.current = false;
-      }, 300);
-      return () => clearTimeout(timeoutId);
-    }
-    if (!onlyQuick) isApplyingQuickFilterRef.current = false;
-    return undefined;
-  }, [searchParams, filters, brands, setLastAppliedFilters, isApplyingQuickFilterRef]);
 }

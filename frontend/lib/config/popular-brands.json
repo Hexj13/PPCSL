@@ -1,0 +1,102 @@
+{
+  "market": "Moldova",
+  "segment": "used_cars",
+  "brands": [
+    {
+      "brand": "Dacia",
+      "top_models": [
+        { "model": "Logan", "most_popular": true },
+        { "model": "Sandero", "most_popular": false },
+        { "model": "Duster", "most_popular": false }
+      ]
+    },
+    {
+      "brand": "Toyota",
+      "top_models": [
+        { "model": "Corolla", "most_popular": true },
+        { "model": "RAV4", "most_popular": false },
+        { "model": "Yaris", "most_popular": false }
+      ]
+    },
+    {
+      "brand": "Škoda",
+      "top_models": [
+        { "model": "Octavia", "most_popular": true },
+        { "model": "Fabia", "most_popular": false },
+        { "model": "Superb", "most_popular": false }
+      ]
+    },
+    {
+      "brand": "Kia",
+      "top_models": [
+        { "model": "Sportage", "most_popular": true },
+        { "model": "Ceed", "most_popular": false },
+        { "model": "Rio", "most_popular": false }
+      ]
+    },
+    {
+      "brand": "BMW",
+      "top_models": [
+        { "model": "5 Series", "most_popular": true },
+        { "model": "3 Series", "most_popular": false },
+        { "model": "X5", "most_popular": false }
+      ]
+    },
+    {
+      "brand": "Renault",
+      "top_models": [
+        { "model": "Logan", "most_popular": true },
+        { "model": "Megane", "most_popular": false },
+        { "model": "Kadjar", "most_popular": false }
+      ]
+    },
+    {
+      "brand": "Volkswagen",
+      "top_models": [
+        { "model": "Golf", "most_popular": true },
+        { "model": "Passat", "most_popular": false },
+        { "model": "Polo", "most_popular": false }
+      ]
+    },
+    {
+      "brand": "Opel",
+      "top_models": [
+        { "model": "Astra", "most_popular": true },
+        { "model": "Corsa", "most_popular": false },
+        { "model": "Insignia", "most_popular": false }
+      ]
+    },
+    {
+      "brand": "Hyundai",
+      "top_models": [
+        { "model": "Tucson", "most_popular": true },
+        { "model": "i30", "most_popular": false },
+        { "model": "Santa Fe", "most_popular": false }
+      ]
+    },
+    {
+      "brand": "Suzuki",
+      "top_models": [
+        { "model": "Vitara", "most_popular": true },
+        { "model": "Swift", "most_popular": false },
+        { "model": "SX4", "most_popular": false }
+      ]
+    },
+    {
+      "brand": "Nissan",
+      "top_models": [
+        { "model": "Qashqai", "most_popular": true },
+        { "model": "X-Trail", "most_popular": false },
+        { "model": "Juke", "most_popular": false }
+      ]
+    },
+    {
+      "brand": "Peugeot",
+      "top_models": [
+        { "model": "3008", "most_popular": true },
+        { "model": "308", "most_popular": false },
+        { "model": "208", "most_popular": false }
+      ]
+    }
+  ]
+}

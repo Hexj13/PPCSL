@@ -45,12 +45,17 @@ Platform-specific конфигурация сайта: название, дом�
 
 ## 📋 Опционально (можно улучшить)
 
-### 1. Popular Brands (`lib/popular-brands.ts`)
+### 1. Popular Brands (`lib/content/popular-brands.ts`)
 
 **Статус:** ✅ Реализована platform-override архитектура
 
-- По умолчанию используются универсальные бренды (BMW, Mercedes, Audi и т.д.)
-- При необходимости платформа может переопределить список через `config/popular-brands.ts`
+- Loader в `core/frontend/lib/content/popular-brands.ts` загружает данные по типам ТС (car, truck, moto).
+- **Предпочтительный формат:** JSON в `config/` с полями `market`, `segment`, `brands` (массив `{ brand, top_models: [{ model, most_popular }] }`):
+  - `config/popular-brands.json` — легковые (segment `used_cars`);
+  - `config/popular-brands-truck.json` — грузовики (`commercial_transport_used`);
+  - `config/popular-brands-moto.json` — мото (`motorcycles_used`).
+- Если JSON нет или невалиден, для car используется `config/popular-brands.ts` (export default `{ brands, modelsByBrand }`). Для truck/moto — встроенный fallback в коде.
+- При сборке `config/` копируется в `core/frontend/lib/config/`.
 
 ### 2. FAQ (`app/faq/page.tsx`)
 
@@ -89,7 +94,10 @@ Platform-specific конфигурация сайта: название, дом�
 │   ├── faq-data-ru.ts       # Контент FAQ на русском
 │   ├── faq-types.ts         # Типы FAQConfig, FAQItem, FAQScenario
 │   ├── legal.ts             # Тексты Terms/Privacy по языкам
-│   └── popular-brands.ts    # Опционально: популярные бренды платформы
+│   ├── popular-brands.json  # Популярные марки/модели — легковые (приоритет)
+│   ├── popular-brands-truck.json  # Грузовики (опционально)
+│   ├── popular-brands-moto.json   # Мото (опционально)
+│   └── popular-brands.ts   # Fallback для легковых, если JSON нет
 ├── assets/
 │   ├── frontend/public/     # Логотипы, favicon, OG
 │   └── backend/watermark/   # Watermark для фото

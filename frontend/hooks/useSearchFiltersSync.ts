@@ -14,7 +14,7 @@ interface UseSearchFiltersSyncParams {
   models: VehicleModel[];
   setLastAppliedFilters: React.Dispatch<React.SetStateAction<FilterState | null>>;
   hasActiveFilters: boolean;
-  isApplyingQuickFilterRef: React.MutableRefObject<boolean>;
+  isInternalSearchRef?: React.MutableRefObject<boolean>;
 }
 
 export function useSearchFiltersSync({
@@ -25,12 +25,13 @@ export function useSearchFiltersSync({
   models,
   setLastAppliedFilters,
   hasActiveFilters,
-  isApplyingQuickFilterRef,
+  isInternalSearchRef: isInternalSearchRefParam,
 }: UseSearchFiltersSyncParams) {
   const [isSyncingFromUrl, setIsSyncingFromUrl] = useState(false);
 
   const prevUrlForSyncRef = useRef<string>('');
-  const isInternalSearchRef = useRef(false);
+  const internalRef = useRef(false);
+  const isInternalSearchRef = isInternalSearchRefParam ?? internalRef;
   const hasInitializedRef = useRef(false);
   const processedBrandParamRef = useRef<string | null>(null);
   const processedModelParamRef = useRef<string | null>(null);
@@ -113,6 +114,7 @@ export function useSearchFiltersSync({
     hasActiveFilters,
     isSyncingFromUrl,
     setLastAppliedFilters,
+    isInternalSearchRef,
   ]);
 
   useEffect(() => {
@@ -153,20 +155,16 @@ export function useSearchFiltersSync({
             return prev;
           }
           processedModelParamRef.current = null;
-          const newFilters = {
+          return {
             ...prev,
             brand_ids: foundBrandIds,
             model_ids: [],
           };
-          if (isApplyingQuickFilterRef.current) {
-            setLastAppliedFilters({ ...newFilters });
-          }
-          return newFilters;
         });
       }
       processedBrandParamRef.current = brandParam;
     }
-  }, [brands, searchParams, setFilters, setLastAppliedFilters, isApplyingQuickFilterRef]);
+  }, [brands, searchParams, setFilters]);
 
   useEffect(() => {
     const modelParam = searchParams.get('model');
@@ -221,6 +219,5 @@ export function useSearchFiltersSync({
   return {
     isSyncingFromUrl,
     setIsSyncingFromUrl,
-    isInternalSearchRef,
   };
 }

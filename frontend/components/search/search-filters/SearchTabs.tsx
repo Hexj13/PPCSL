@@ -48,7 +48,7 @@ export function SearchTabs({
           <button
             ref={basicTabRef}
             type="button"
-            onClick={() => onTabChange('basic')}
+            onClick={() => activeTab !== 'basic' && onTabChange('basic')}
             className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap ${
               activeTab === 'basic'
                 ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
@@ -64,7 +64,7 @@ export function SearchTabs({
           <button
             ref={advancedTabRef}
             type="button"
-            onClick={() => onTabChange('advanced')}
+            onClick={() => activeTab !== 'advanced' && onTabChange('advanced')}
             className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap ${
               activeTab === 'advanced'
                 ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
@@ -80,7 +80,7 @@ export function SearchTabs({
           <button
             ref={equipmentTabRef}
             type="button"
-            onClick={() => onTabChange('equipment')}
+            onClick={() => activeTab !== 'equipment' && onTabChange('equipment')}
             className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap ${
               activeTab === 'equipment'
                 ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
@@ -96,7 +96,7 @@ export function SearchTabs({
           <button
             ref={popularTabRef}
             type="button"
-            onClick={() => onTabChange('popular')}
+            onClick={() => activeTab !== 'popular' && onTabChange('popular')}
             className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap ${
               activeTab === 'popular'
                 ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'

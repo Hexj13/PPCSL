@@ -135,7 +135,7 @@ export function VehicleTypeSelector({
         <button
           ref={carRef}
           type="button"
-          onClick={() => onVehicleTypeChange('car')}
+          onClick={() => vehicleType !== 'car' && onVehicleTypeChange('car')}
           className={`h-12 w-16 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap flex items-center justify-center ${
             vehicleType === 'car'
               ? 'bg-primary-500/10 rounded-t-lg'
@@ -147,7 +147,7 @@ export function VehicleTypeSelector({
         <button
           ref={truckRef}
           type="button"
-          onClick={() => onVehicleTypeChange('truck')}
+          onClick={() => vehicleType !== 'truck' && onVehicleTypeChange('truck')}
           className={`h-12 w-16 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap flex items-center justify-center ${
             vehicleType === 'truck'
               ? 'bg-primary-500/10 rounded-t-lg'
@@ -159,7 +159,7 @@ export function VehicleTypeSelector({
         <button
           ref={motoRef}
           type="button"
-          onClick={() => onVehicleTypeChange('moto')}
+          onClick={() => vehicleType !== 'moto' && onVehicleTypeChange('moto')}
           className={`h-12 w-16 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap flex items-center justify-center ${
             vehicleType === 'moto'
               ? 'bg-primary-500/10 rounded-t-lg'

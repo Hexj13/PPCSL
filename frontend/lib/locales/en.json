@@ -666,6 +666,11 @@
   "searchFilters": {
     "popular": "Popular",
     "popularFilters": "Popular Models",
+    "popularModels": "Popular models",
+    "showMore": "Show more",
+    "showLess": "Show less",
+    "youSelected": "You selected:",
+    "noPopularBrands": "No popular brands for this category",
     "equipmentSortMode": "Sort mode:",
     "equipmentSortModeFull": "Full match",
     "equipmentSortModePartial": "Partial match",
