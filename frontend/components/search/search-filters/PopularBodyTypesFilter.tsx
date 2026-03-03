@@ -205,7 +205,7 @@ export function PopularBodyTypesFilter({
             return (
               <div
                 key={`${vehicleType}-${value}`}
-                className="flex flex-col items-center gap-2 w-full min-w-0 min-h-[135px] lg:min-h-[152px] lg:shrink-0 lg:w-[180px] lg:flex-1 lg:min-w-0 lg:max-w-[210px]"
+                className="flex flex-col items-center gap-1 w-full min-w-0 min-h-[135px] lg:min-h-[152px] lg:shrink-0 lg:w-[180px] lg:flex-1 lg:min-w-0 lg:max-w-[210px]"
               >
                 <button
                   type="button"
@@ -286,30 +286,33 @@ export function PopularBodyTypesFilter({
                     )}
                   </div>
                   {isSelected && (
-                    <div
-                      className="absolute inset-0 flex items-center justify-center rounded-lg pointer-events-none"
-                      style={{
-                        borderRadius: 'inherit',
-                        background:
-                          'radial-gradient(circle, rgba(64, 145, 107, 0.25) 0%, rgba(64, 145, 107, 0.15) 40%, rgba(64, 145, 107, 0.05) 100%)',
-                      }}
-                    >
-                      <div className="w-8 h-8 md:w-10 md:h-10 bg-primary-500 rounded-full flex items-center justify-center shadow-lg border-2 border-primary-900">
-                        <svg
-                          className="w-5 h-5 md:w-6 md:h-6 text-primary-900"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={3}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
+                    <>
+                      <div
+                        className="absolute inset-0 rounded-lg pointer-events-none"
+                        style={{
+                          borderRadius: 'inherit',
+                          background:
+                            'radial-gradient(ellipse 100% 80% at 50% 100%, rgba(64, 145, 107, 0.25) 0%, rgba(64, 145, 107, 0.15) 40%, rgba(64, 145, 107, 0.05) 100%)',
+                        }}
+                      />
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 pointer-events-none">
+                        <div className="w-5 h-5 bg-primary-500 rounded-full flex items-center justify-center shadow-lg border-2 border-primary-900">
+                          <svg
+                            className="w-3 h-3 text-primary-900"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={3}
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                        </div>
                       </div>
-                    </div>
+                    </>
                   )}
                 </button>
                 <span className="text-xs md:text-sm font-medium text-primary-900 text-center select-none h-[32px] flex items-center justify-center">

@@ -456,6 +456,16 @@ export class ListingsController {
     return { message: 'Old listings closed successfully', result };
   }
 
+  @ApiOperation({ summary: 'Expire promotions (cron job endpoint)' })
+  @ApiResponse({ status: 200, description: 'Expired promotions processed' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Invalid secret key' })
+  @Post('cron/expire-promotions')
+  @UseGuards(CronSecretGuard)
+  async expirePromotions() {
+    const result = await this.listingsService.expirePromotions();
+    return { message: 'Expired promotions processed', result };
+  }
+
   @Patch(':id/promote')
   @UseGuards(JwtAuthGuard)
   @Throttle({ default: { limit: 10, ttl: 60000 } })

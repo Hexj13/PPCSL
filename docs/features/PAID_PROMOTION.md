@@ -104,10 +104,11 @@
   - `PROMOTION_ACCESS=disabled` → `canPromote=false` для всех
   - В development админу всегда доступно независимо от `PROMOTION_ACCESS`
 
-**`POST /api/listings/cron/disable-expired-promotions`**
+**`POST /api/listings/cron/expire-promotions`**
 
-- Cron endpoint для автоматического отключения истёкших продвижений
+- Cron endpoint для сброса истёкших продвижений (`is_promoted = false` при `promoted_until < NOW()`)
 - Защищён секретным ключом `CRON_SECRET` (header `x-cron-secret`)
+- Рекомендуемый график: раз в час (например `0 * * * *`), см. DEPLOYMENT.md § 3.9
 
 #### Endpoints для администраторов
 
@@ -241,7 +242,7 @@ MAX_PROMOTIONS_PER_USER=10
 
 ### Защита cron endpoints
 
-- Endpoint `disableExpiredPromotions` защищён секретным ключом `CRON_SECRET`
+- Endpoint `POST /api/listings/cron/expire-promotions` защищён секретным ключом `CRON_SECRET`
 - Проверка через header `x-cron-secret`
 
 ### Лимиты на количество продвижений

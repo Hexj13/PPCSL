@@ -87,6 +87,23 @@ export function useSearchTabs({
   const lastFadeRef = useRef({ show: true, opacity: 1 });
   const rafIdRef = useRef(0);
 
+  const scrollTabToStart = useCallback((tab: SearchTab) => {
+    const container = tabsContainerRef.current;
+    if (!container || container.scrollWidth <= container.clientWidth) return;
+    const tabRef =
+      tab === 'basic'
+        ? basicTabRef
+        : tab === 'advanced'
+          ? advancedTabRef
+          : tab === 'equipment'
+            ? equipmentTabRef
+            : popularTabRef;
+    const el = tabRef.current;
+    if (!el) return;
+    const targetScrollLeft = Math.min(el.offsetLeft, container.scrollWidth - container.clientWidth);
+    container.scrollTo({ left: targetScrollLeft, behavior: 'smooth' });
+  }, []);
+
   useEffect(() => {
     const updateIndicator = () => {
       const activeRef =
@@ -166,6 +183,7 @@ export function useSearchTabs({
   return {
     activeTab,
     setActiveTab,
+    scrollTabToStart,
     basicTabRef,
     advancedTabRef,
     equipmentTabRef,

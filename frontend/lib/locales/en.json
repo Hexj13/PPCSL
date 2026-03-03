@@ -666,6 +666,7 @@
   "searchFilters": {
     "popular": "Popular",
     "popularFilters": "Popular Models",
+    "popularBrands": "Popular brands",
     "popularModels": "Popular models",
     "showMore": "Show more",
     "showLess": "Show less",

@@ -184,8 +184,7 @@ export class TypeOrmListingRepository implements IListingRepository {
       ])
       .where('listing.status = :status', { status: ListingStatusEnum.Active });
 
-    applyInOrEqualFilter(qb, 'vehicle', 'brand_id', searchDto.brand_ids, searchDto.brand_id);
-    applyInOrEqualFilter(qb, 'vehicle', 'model_id', searchDto.model_ids, searchDto.model_id);
+    this.applyBrandModelFilter(qb, searchDto);
 
     if (searchDto.vehicleType) {
       qb.andWhere('vehicle.body_type IN (:...bodyTypes)', {
@@ -287,5 +286,29 @@ export class TypeOrmListingRepository implements IListingRepository {
     );
 
     return qb;
+  }
+
+  private applyBrandModelFilter(
+    qb: ReturnType<Repository<Listing>['createQueryBuilder']>,
+    searchDto: SearchCriteria,
+  ): void {
+    const hasBrandIds = searchDto.brand_ids && searchDto.brand_ids.length > 0;
+    const hasModelIds = searchDto.model_ids && searchDto.model_ids.length > 0;
+
+    if (hasBrandIds && hasModelIds) {
+      qb.andWhere(
+        '(vehicle.model_id IN (:...bm_model_ids) OR ' +
+          '(vehicle.brand_id IN (:...bm_brand_ids) AND vehicle.brand_id NOT IN ' +
+          '(SELECT DISTINCT vm.brand_id FROM vehicle_models vm WHERE vm.id IN (:...bm_model_ids_sub))))',
+        {
+          bm_model_ids: searchDto.model_ids,
+          bm_brand_ids: searchDto.brand_ids,
+          bm_model_ids_sub: searchDto.model_ids,
+        },
+      );
+    } else {
+      applyInOrEqualFilter(qb, 'vehicle', 'brand_id', searchDto.brand_ids, searchDto.brand_id);
+      applyInOrEqualFilter(qb, 'vehicle', 'model_id', searchDto.model_ids, searchDto.model_id);
+    }
   }
 }

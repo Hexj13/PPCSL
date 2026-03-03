@@ -221,7 +221,10 @@ export function SearchFilters() {
           />
           <SearchTabs
             activeTab={tabs.activeTab}
-            onTabChange={tabs.setActiveTab}
+            onTabChange={(tab) => {
+              tabs.setActiveTab(tab);
+              tabs.scrollTabToStart(tab);
+            }}
             hasBasicFilters={hasBasicFilters}
             hasAdvancedFiltersActive={hasAdvancedFiltersActive}
             hasEquipmentFiltersActive={hasEquipmentFiltersActive}

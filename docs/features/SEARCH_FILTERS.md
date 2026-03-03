@@ -116,9 +116,11 @@ Only one tab’s content is rendered at a time (`activeTab === 'basic' | 'advanc
 
 **Component:** `PopularFilters.tsx`.
 
-- Shows popular brands (and optionally models per brand) from `lib/content/popular-brands.ts`, depending on `vehicleType`.
-- Clicking a brand (or brand+model) applies that filter and runs search; clicking again clears it (reset).
-- Uses slug-based URLs (e.g. `/?brand=citroen`) and `createSlug` for consistency with [SEARCH_TITLE_URL.md](./SEARCH_TITLE_URL.md).
+- **Popular brands block:** Grid of brand tiles (logo + name), multi-select. Shown **only for cars** (`vehicleType === 'car'`); hidden for truck and moto. Data from `lib/content/popular-brands.ts` (and `getPopularBrands(vehicleType)`). Selection syncs with Basic criteria; affects “You selected” and search when applied.
+- **Popular models block:** Chips for “most popular” model per brand, then “Show more” reveals additional models. Multi-select. Mutual exclusion: selecting a brand tile clears that brand’s model chips; selecting a model chip clears that brand’s tile. Clicking an active brand tile that has models selected switches to brand-only (removes models, keeps brand). “You selected” lists brand-only items as brand name only, model items as “Brand Model”.
+- **Apply behaviour:** Selections update filter state and “You selected” immediately; search runs only when the user clicks Search (same as other filters).
+- **Mobile:** When collapsing the expanded model list (“Show less”), the page scrolls to the start of the “Popular models” block with `scroll-mt-20` so the fixed header is accounted for.
+- **URL:** Slug-based (`?brand=...&model=...`), built via `createSlug`; see [SEARCH_TITLE_URL.md](./SEARCH_TITLE_URL.md). When multiple models share the same name (e.g. Dacia Logan, Renault Logan), the URL stores a single slug (e.g. `logan`); parsing resolves to all matching model IDs per selected brands.
 
 ---
 
@@ -149,6 +151,7 @@ Only one tab’s content is rendered at a time (`activeTab === 'basic' | 'advanc
 - **Options:** `useFilterOptions` — brand/model options (with popular/other categories), city options, colors, doors, condition, registration type, registration yes/no, currency list.
 - **Tabs:** `useSearchTabs` — active tab, refs for indicator and scroll.
 - **Vehicle type:** `useVehicleType` — from URL or default `car`.
+- **Popular tab:** `usePopularModels` — toggleBrand, toggleModel, isBrandExplicitlySelected, isModelSelected, selectedItems, clearAll; syncs with `filters.brand_ids` and `filters.model_ids`.
 
 ---
 
@@ -165,6 +168,7 @@ Only one tab’s content is rendered at a time (`activeTab === 'basic' | 'advanc
 | `search-filters/SearchFormActions.tsx`      | Search, Reset, Save, Log in buttons                                                        |
 | `search-filters/VehicleTypeSelector.tsx`    | Car / Truck / Moto selector                                                                |
 | `search-filters/PopularBodyTypesFilter.tsx` | Body type chips under Basic filters                                                        |
+| `hooks/usePopularModels.ts`                 | Popular tab: brand/model selection, mutual exclusion, selectedItems                         |
 | `app/globals.css`                           | `.paired-left`, `.paired-right`, `.input-field` padding/truncation                         |
 
 ---
@@ -178,4 +182,4 @@ Only one tab’s content is rendered at a time (`activeTab === 'basic' | 'advanc
 
 ---
 
-**Last updated:** 2026-02-13
+**Last updated:** 2026-03-03

@@ -189,14 +189,19 @@ export function useSearchFiltersSync({
     ) {
       const modelSlugs = modelParam.split(',').map((s) => s.trim().toLowerCase());
       const modelsMatchBrand = models.every((m) => filters.brand_ids.includes(m.brand_id));
-      const foundModelIds = modelSlugs
-        .map((slug) => {
-          const model = models.find(
-            (m) => m.name.toLowerCase() === slug || createSlug(m.name) === slug,
-          );
-          return model && filters.brand_ids.includes(model.brand_id) ? model.id : undefined;
-        })
-        .filter((id): id is string => id !== undefined);
+      const foundModelIds: string[] = [];
+      for (const slug of modelSlugs) {
+        const matching = models.filter(
+          (m) =>
+            (m.name.toLowerCase() === slug || createSlug(m.name) === slug) &&
+            filters.brand_ids.includes(m.brand_id),
+        );
+        for (const model of matching) {
+          if (!foundModelIds.includes(model.id)) {
+            foundModelIds.push(model.id);
+          }
+        }
+      }
 
       const shouldMarkProcessed =
         foundModelIds.length > 0 || (foundModelIds.length === 0 && modelsMatchBrand);

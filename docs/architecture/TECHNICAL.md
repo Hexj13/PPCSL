@@ -344,7 +344,8 @@ POST   /api/listings/:id/close        # Close listing
 GET    /api/listings/my               # Get user's listings; query: page, limit, status (Active|Paused|Closed), promoted (true|false); meta: last_listing_refresh_at, refreshCooldownMs for 48h timer
 GET    /api/listings/vin/:vin         # Find listings by VIN
 POST   /api/listings/refresh-dates    # Refresh all user's listing dates (max once per 48h; returns 400 if too soon)
-POST   /api/listings/cron/close-old   # Close old listings (cron job, requires x-cron-secret header)
+POST   /api/listings/cron/close-old            # Close old listings (cron job, requires x-cron-secret header)
+POST   /api/listings/cron/expire-promotions   # Expire promotions (cron job, requires x-cron-secret header)
 PATCH  /api/listings/:id/promote      # Toggle listing promotion (user, JWT required)
 GET    /api/listings/promotion-history # Get user's promotion history (JWT required)
 GET    /api/listings/promotion-history/check # Check if user has promotion history (JWT required)
@@ -359,12 +360,14 @@ GET    /api/listings/promotion-access  # Get promotion access status (no auth re
   - Slug parameters are converted to `brand_ids` and `model_ids` on the **frontend** (in `parseSearchParams` via `brandResolver`) before the API request; the API receives only UUIDs.
   - If a brand slug from the URL is not found (e.g. no such brand in the catalog), the search returns **0 listings** (no fallback to “all brands”).
   - Other filter parameters remain unchanged (price, year, city, etc.)
+- When both `brand_ids` and `model_ids` are sent, the backend uses **OR** logic so that “brand-only” selections still return results: a listing matches if its `model_id` is in the list **or** its `brand_id` is in the list and that brand has no selected models (e.g. “all Škoda” + specific models for other brands returns all Škoda listings plus the chosen models). Implementation: `TypeOrmListingRepository.applyBrandModelFilter`.
 - `?equipment=air_conditioning,navigation` - Filter by equipment keys (comma-separated). Options depend on `vehicleType` (car/truck/moto). See `vehicle-equipment.ts` for keys and categories.
 - `?equipmentMatch=full|partial` - Equipment match mode (optional; default `full`). **Full:** listing must contain all selected equipment (AND). **Partial:** listing must contain at least one selected option (OR).
 - Example URLs:
   - `/?brand=toyota` - All Toyota listings
   - `/?brand=toyota&model=yaris` - Toyota Yaris listings
   - `/?brand=toyota,bmw&model=yaris,3-series` - Multiple brands and models
+  - `/?brand=skoda,toyota&model=corolla` - All Škoda listings plus Toyota Corolla (brand-only + specific model)
 
 ### Favorites
 

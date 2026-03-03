@@ -19,6 +19,8 @@ interface UsePopularModelsParams {
 interface UsePopularModelsReturn {
   toggleModel: (brandName: string, modelName: string) => void;
   isModelSelected: (brandName: string, modelName: string) => boolean;
+  toggleBrand: (brandName: string) => void;
+  isBrandExplicitlySelected: (brandName: string) => boolean;
   selectedItems: Array<{ brand: string; model: string }>;
   clearAll: () => void;
 }
@@ -60,21 +62,17 @@ export function usePopularModels({
           const newModelIds = has
             ? prev.model_ids.filter((id) => id !== resolvedModel.id)
             : [...prev.model_ids, resolvedModel.id];
-          const newBrandIds =
-            newModelIds.length === 0
-              ? prev.brand_ids.filter((id) => id !== brand.id)
-              : prev.brand_ids.includes(brand.id)
-                ? prev.brand_ids
-                : [...prev.brand_ids, brand.id];
           const modelIdsForBrand = newModelIds.filter((mid) => {
             const m = models.find((x) => x.id === mid);
             return m?.brand_id === brand.id;
           });
-          const brandIds =
+          const newBrandIds =
             modelIdsForBrand.length === 0
-              ? newBrandIds.filter((id) => id !== brand.id)
-              : newBrandIds;
-          return { ...prev, brand_ids: brandIds, model_ids: newModelIds };
+              ? prev.brand_ids.filter((id) => id !== brand.id)
+              : prev.brand_ids.includes(brand.id)
+                ? prev.brand_ids
+                : [...prev.brand_ids, brand.id];
+          return { ...prev, brand_ids: newBrandIds, model_ids: newModelIds };
         });
         return;
       }
@@ -147,6 +145,59 @@ export function usePopularModels({
     }
   }, [filters.brand_ids.length, filters.model_ids.length]);
 
+  const toggleBrand = useCallback(
+    (brandName: string) => {
+      const brand = brandByName.get(brandName);
+      if (!brand) return;
+
+      const isCurrentlySelected = filters.brand_ids.includes(brand.id);
+      const hasModelsSelected =
+        filters.model_ids.some((mid) => models.find((m) => m.id === mid)?.brand_id === brand.id) ||
+        pendingModels.some((p) => p.brand === brandName);
+
+      if (isCurrentlySelected && hasModelsSelected) {
+        // Switch from model-level to brand-only: remove models, keep brand
+        setFilters((prev) => {
+          const modelIdsForBrand = prev.model_ids.filter(
+            (mid) => models.find((m) => m.id === mid)?.brand_id === brand.id,
+          );
+          const newModelIds = prev.model_ids.filter((id) => !modelIdsForBrand.includes(id));
+          return { ...prev, model_ids: newModelIds };
+        });
+        setPendingModels((prev) => prev.filter((p) => p.brand !== brandName));
+      } else if (isCurrentlySelected) {
+        // Brand-only active → deselect completely
+        setFilters((prev) => {
+          const newBrandIds = prev.brand_ids.filter((id) => id !== brand.id);
+          return { ...prev, brand_ids: newBrandIds };
+        });
+      } else {
+        setFilters((prev) => {
+          const modelIdsForBrand = prev.model_ids.filter(
+            (mid) => models.find((m) => m.id === mid)?.brand_id === brand.id,
+          );
+          const newModelIds = prev.model_ids.filter((id) => !modelIdsForBrand.includes(id));
+          const newBrandIds = [...prev.brand_ids, brand.id];
+          return { ...prev, brand_ids: newBrandIds, model_ids: newModelIds };
+        });
+        setPendingModels((prev) => prev.filter((p) => p.brand !== brandName));
+      }
+    },
+    [brandByName, filters.brand_ids, filters.model_ids, models, pendingModels, setFilters],
+  );
+
+  const isBrandExplicitlySelected = useCallback(
+    (brandName: string) => {
+      const brand = brandByName.get(brandName);
+      if (!brand || !filters.brand_ids.includes(brand.id)) return false;
+      const hasModels =
+        filters.model_ids.some((mid) => models.find((m) => m.id === mid)?.brand_id === brand.id) ||
+        pendingModels.some((p) => p.brand === brandName);
+      return !hasModels;
+    },
+    [brandByName, filters.brand_ids, filters.model_ids, models, pendingModels],
+  );
+
   const isModelSelected = useCallback(
     (brandName: string, modelName: string) => {
       if (pendingModels.some((p) => p.brand === brandName && p.model === modelName)) {
@@ -169,14 +220,22 @@ export function usePopularModels({
         if (brand) fromFilters.push({ brand: brand.name, model: model.name });
       }
     });
-    const combined = [...fromFilters, ...pendingModels];
+    const brandsWithModels = new Set([...fromFilters, ...pendingModels].map((i) => i.brand));
+    const brandOnly: Array<{ brand: string; model: string }> = [];
+    filters.brand_ids.forEach((brandId) => {
+      const brand = brands.find((b) => b.id === brandId);
+      if (brand && !brandsWithModels.has(brand.name)) {
+        brandOnly.push({ brand: brand.name, model: '' });
+      }
+    });
+    const combined = [...fromFilters, ...pendingModels, ...brandOnly];
     combined.sort((a, b) => {
-      const keyA = `${a.brand} ${a.model}`;
-      const keyB = `${b.brand} ${b.model}`;
+      const keyA = `${a.brand} ${a.model}`.trim();
+      const keyB = `${b.brand} ${b.model}`.trim();
       return keyA.localeCompare(keyB, undefined, { sensitivity: 'base' });
     });
     return combined;
-  }, [brands, filters.model_ids, models, pendingModels]);
+  }, [brands, filters.brand_ids, filters.model_ids, models, pendingModels]);
 
   const clearAll = useCallback(() => {
     setPendingModels([]);
@@ -185,6 +244,8 @@ export function usePopularModels({
   return {
     toggleModel,
     isModelSelected,
+    toggleBrand,
+    isBrandExplicitlySelected,
     selectedItems,
     clearAll,
   };

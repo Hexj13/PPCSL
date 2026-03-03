@@ -34,7 +34,9 @@ export function LoadMoreButton({
 
   const inner = (
     <span className="relative inline-flex items-center justify-center">
-      <span className={loading ? 'invisible' : ''}>{label}</span>
+      <span className={`inline-flex items-center gap-2 ${loading ? 'invisible' : ''}`}>
+        {label}
+      </span>
       {loading && (
         <span className="absolute inset-0 flex items-center justify-center">
           <span className="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-current" />
