@@ -155,9 +155,7 @@ export function useFilterOptions({
       cities.filter((city) => !POPULAR_CITY_NAMES_EN.includes(city.nameEn)),
     );
 
-    const options: Array<{ value: string; label: string; category?: string }> = [
-      { value: 'all', label: t('searchFilters.allCities') },
-    ];
+    const options: Array<{ value: string; label: string; category?: string }> = [];
 
     if (popularCities.length > 0) {
       const popularLabel = t('searchFilters.popular');

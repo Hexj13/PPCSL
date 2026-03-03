@@ -8,6 +8,7 @@ interface SearchTabsProps {
   hasBasicFilters: boolean;
   hasAdvancedFiltersActive: boolean;
   hasEquipmentFiltersActive: boolean;
+  hasPopularFiltersActive: boolean;
   basicTabRef: React.RefObject<HTMLButtonElement | null>;
   advancedTabRef: React.RefObject<HTMLButtonElement | null>;
   equipmentTabRef: React.RefObject<HTMLButtonElement | null>;
@@ -25,6 +26,7 @@ export function SearchTabs({
   hasBasicFilters,
   hasAdvancedFiltersActive,
   hasEquipmentFiltersActive,
+  hasPopularFiltersActive,
   basicTabRef,
   advancedTabRef,
   equipmentTabRef,
@@ -105,6 +107,9 @@ export function SearchTabs({
             suppressHydrationWarning
           >
             <span suppressHydrationWarning>{t('searchFilters.popularFilters')}</span>
+            {hasPopularFiltersActive && (
+              <span className="absolute right-2 top-2 w-2 h-2 rounded-full bg-accent" />
+            )}
           </button>
           <div
             ref={indicatorRef}

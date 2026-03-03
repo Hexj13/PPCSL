@@ -54,8 +54,12 @@ export function SearchFilters() {
     setFilters,
   } = useSearchFilters();
 
-  const { hasBasicFilters, hasAdvancedFiltersActive, hasEquipmentFiltersActive } =
-    useSearchFilterFlags(filters, currentYear);
+  const {
+    hasBasicFilters,
+    hasAdvancedFiltersActive,
+    hasEquipmentFiltersActive,
+    hasPopularFiltersActive,
+  } = useSearchFilterFlags(filters, currentYear);
 
   const tabs = useSearchTabs({
     hasBasicFilters,
@@ -228,6 +232,7 @@ export function SearchFilters() {
             hasBasicFilters={hasBasicFilters}
             hasAdvancedFiltersActive={hasAdvancedFiltersActive}
             hasEquipmentFiltersActive={hasEquipmentFiltersActive}
+            hasPopularFiltersActive={hasPopularFiltersActive}
             basicTabRef={tabs.basicTabRef}
             advancedTabRef={tabs.advancedTabRef}
             equipmentTabRef={tabs.equipmentTabRef}
