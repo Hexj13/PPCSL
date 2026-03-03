@@ -35,6 +35,7 @@ export function useSearchFiltersSync({
   const hasInitializedRef = useRef(false);
   const processedBrandParamRef = useRef<string | null>(null);
   const processedModelParamRef = useRef<string | null>(null);
+  const lastModelEffectUrlRef = useRef<string>('');
   const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const SYNC_TIMEOUT_MS = 5000;
@@ -168,14 +169,18 @@ export function useSearchFiltersSync({
 
   useEffect(() => {
     const modelParam = searchParams.get('model');
+    const currentUrl = searchParams.toString();
 
     if (!modelParam) {
-      if (processedModelParamRef.current !== null) {
+      const urlChanged = currentUrl !== lastModelEffectUrlRef.current;
+      if (urlChanged && processedModelParamRef.current !== null) {
+        lastModelEffectUrlRef.current = currentUrl;
         processedModelParamRef.current = null;
         setFilters((prev) => ({ ...prev, model_ids: [] }));
       }
       return;
     }
+    lastModelEffectUrlRef.current = currentUrl;
 
     if (
       models.length > 0 &&

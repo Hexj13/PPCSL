@@ -149,10 +149,13 @@ export function usePopularModels({
 
   const isModelSelected = useCallback(
     (brandName: string, modelName: string) => {
+      if (pendingModels.some((p) => p.brand === brandName && p.model === modelName)) {
+        return true;
+      }
       const key = `${brandName}\0${modelName}`;
       const m = modelByBrandAndName.get(key);
       if (m) return filters.model_ids.includes(m.id);
-      return pendingModels.some((p) => p.brand === brandName && p.model === modelName);
+      return false;
     },
     [filters.model_ids, modelByBrandAndName, pendingModels],
   );

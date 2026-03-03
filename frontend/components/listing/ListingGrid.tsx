@@ -2,6 +2,7 @@
 
 import { useSearchParams, usePathname } from 'next/navigation';
 import { useEffect, useState, useCallback, useRef, useMemo, startTransition } from 'react';
+import { flushSync } from 'react-dom';
 
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -161,6 +162,15 @@ export function ListingGrid({ initialData }: ListingGridProps) {
 
   const searchParamsString = useMemo(() => searchParams.toString(), [searchParams]);
 
+  const uniqueListings = useMemo(() => {
+    const seen = new Set<string>();
+    return listings.filter((listing) => {
+      if (seen.has(listing.id)) return false;
+      seen.add(listing.id);
+      return true;
+    });
+  }, [listings]);
+
   const checkFavorites = useCallback(
     async (listingIds: string[]) => {
       if (!user || listingIds.length === 0) return;
@@ -191,8 +201,11 @@ export function ListingGrid({ initialData }: ListingGridProps) {
         vehicleType,
       };
 
+      let loadMoreStartedAt = 0;
+      let appendDeferred = false;
       if (append) {
-        setLoadingMore(true);
+        flushSync(() => setLoadingMore(true));
+        loadMoreStartedAt = Date.now();
       } else {
         setLoading(true);
         setError(null);
@@ -211,17 +224,10 @@ export function ListingGrid({ initialData }: ListingGridProps) {
           page,
         );
 
-        startTransition(() => {
-          if (append) {
-            setListings((prev) => {
-              const updated = [...prev, ...allNewListings];
-              listingsRef.current = updated;
-              setCurrentPage(finalPage);
-              setMeta(finalMeta);
-              if (loadTwoPages) saveGridState(updated, finalPage, finalMeta);
-              return updated;
-            });
-          } else {
+        await checkFavorites(allNewListings.map((l) => l.id));
+
+        if (!append) {
+          startTransition(() => {
             setListings(allNewListings);
             listingsRef.current = allNewListings;
             setCurrentPage(1);
@@ -242,10 +248,25 @@ export function ListingGrid({ initialData }: ListingGridProps) {
                 setTimeout(() => analytics.viewItemList(items), 0);
               }
             }
-          }
-        });
-
-        await checkFavorites(allNewListings.map((l) => l.id));
+          });
+        } else {
+          appendDeferred = true;
+          const elapsed = Date.now() - loadMoreStartedAt;
+          const remaining = Math.max(0, 1000 - elapsed);
+          setTimeout(() => {
+            startTransition(() => {
+              setListings((prev) => {
+                const updated = [...prev, ...allNewListings];
+                listingsRef.current = updated;
+                setCurrentPage(finalPage);
+                setMeta(finalMeta);
+                if (loadTwoPages) saveGridState(updated, finalPage, finalMeta);
+                return updated;
+              });
+              setLoadingMore(false);
+            });
+          }, remaining);
+        }
       } catch {
         if (!append) {
           setListings([]);
@@ -253,8 +274,12 @@ export function ListingGrid({ initialData }: ListingGridProps) {
           setHasLoadedWithFilters(true);
         }
       } finally {
-        setLoadingMore(false);
-        setLoading(false);
+        if (!appendDeferred) {
+          setLoadingMore(false);
+        }
+        if (!append) {
+          setLoading(false);
+        }
         if (!append && typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('searchComplete'));
         }
@@ -448,19 +473,10 @@ export function ListingGrid({ initialData }: ListingGridProps) {
                 id="listings-results"
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch"
               >
-                {listings.map((listing, index) => (
+                {uniqueListings.map((listing, index) => (
                   <ListingCard key={listing.id} listing={listing} priority={index < 8} />
                 ))}
               </div>
-
-              {loadingMore && (
-                <div className="text-center py-8">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-                  <p className="mt-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
-                    {t('common.loading')}
-                  </p>
-                </div>
-              )}
 
               {(() => {
                 const hasMore = meta && meta.totalPages && currentPage < meta.totalPages;
@@ -468,11 +484,15 @@ export function ListingGrid({ initialData }: ListingGridProps) {
 
                 return (
                   <>
-                    {showLoadMoreButton && !loadingMore && (
-                      <LoadMoreButton onClick={handleLoadMore} />
+                    {(showLoadMoreButton || loadingMore) && (
+                      <LoadMoreButton
+                        onClick={handleLoadMore}
+                        loading={loadingMore}
+                        disabled={loadingMore}
+                      />
                     )}
 
-                    {!hasMore && listings.length > 0 && (
+                    {!hasMore && uniqueListings.length > 0 && !loadingMore && (
                       <div className="text-center pt-8 pb-0">
                         <p style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
                           {t('listings.noMoreListings')}

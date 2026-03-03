@@ -78,6 +78,7 @@ export class FavoritesService {
       .where('favorite.user_id = :userId', { userId })
       .orderBy('listing.is_promoted', 'DESC')
       .addOrderBy('listing.last_updated_at', 'DESC')
+      .addOrderBy('listing.id', 'ASC')
       .skip(skip)
       .take(limit)
       .getManyAndCount();

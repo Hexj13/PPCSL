@@ -161,7 +161,9 @@ export function PopularFilters({
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const collapseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const blockRef = useRef<HTMLDivElement>(null);
+  const scrollThenHideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const HIDE_DURATION_MS = 300;
+  const SCROLL_DURATION_MS = 400;
   const { toggleModel, isModelSelected, selectedItems } = usePopularModels({
     brands,
     models,
@@ -193,6 +195,9 @@ export function PopularFilters({
       if (collapseTimeoutRef.current) {
         clearTimeout(collapseTimeoutRef.current);
       }
+      if (scrollThenHideRef.current) {
+        clearTimeout(scrollThenHideRef.current);
+      }
     };
   }, []);
 
@@ -222,28 +227,42 @@ export function PopularFilters({
       clearTimeout(hideTimeoutRef.current);
       hideTimeoutRef.current = null;
     }
+    if (scrollThenHideRef.current) {
+      clearTimeout(scrollThenHideRef.current);
+      scrollThenHideRef.current = null;
+    }
     if (collapseTimeoutRef.current) {
       clearTimeout(collapseTimeoutRef.current);
       collapseTimeoutRef.current = null;
     }
-    setIsHiding(true);
-    hideTimeoutRef.current = setTimeout(() => {
-      setShowMore(false);
-      setExpandAnimating(false);
-      setIsHiding(false);
-      setCollapseAnimating(true);
-      collapseTimeoutRef.current = setTimeout(() => {
-        setCollapseAnimating(false);
-        collapseTimeoutRef.current = null;
-      }, 350);
-      if (typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches) {
-        blockRef.current?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start',
-        });
-      }
-      hideTimeoutRef.current = null;
-    }, HIDE_DURATION_MS);
+    const startHideAnimation = () => {
+      setIsHiding(true);
+      hideTimeoutRef.current = setTimeout(() => {
+        setShowMore(false);
+        setExpandAnimating(false);
+        setIsHiding(false);
+        setCollapseAnimating(true);
+        collapseTimeoutRef.current = setTimeout(() => {
+          setCollapseAnimating(false);
+          collapseTimeoutRef.current = null;
+        }, 350);
+        hideTimeoutRef.current = null;
+      }, HIDE_DURATION_MS);
+    };
+    const isMobile =
+      typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches;
+    if (isMobile) {
+      blockRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+      scrollThenHideRef.current = setTimeout(() => {
+        scrollThenHideRef.current = null;
+        startHideAnimation();
+      }, SCROLL_DURATION_MS);
+    } else {
+      startHideAnimation();
+    }
   };
 
   return (

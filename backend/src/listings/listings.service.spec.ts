@@ -16,6 +16,7 @@ import { BRANDS_CACHE } from '../brands/application/ports/brands-cache.port';
 import { AutoCloseOldListingsUseCase } from './application/use-cases/auto-close-old-listings.use-case';
 import { CloseAllUserListingsUseCase } from './application/use-cases/close-all-user-listings.use-case';
 import { CreateListingUseCase } from './application/use-cases/create-listing.use-case';
+import { ExpirePromotionsUseCase } from './application/use-cases/expire-promotions.use-case';
 import { CloseListingUseCase } from './application/use-cases/close-listing.use-case';
 import { CreatePromotionHistoryUseCase } from './application/use-cases/create-promotion-history.use-case';
 import { FindByVinUseCase } from './application/use-cases/find-by-vin.use-case';
@@ -104,6 +105,7 @@ describe('ListingsService', () => {
   let mockUpdatePromotionHistoryEndDateUseCase: { execute: jest.Mock };
   let mockCloseAllUserListingsUseCase: { execute: jest.Mock };
   let mockAutoCloseOldListingsUseCase: { execute: jest.Mock };
+  let mockExpirePromotionsUseCase: { execute: jest.Mock };
 
   const mockVehicle: Vehicle = {
     id: 'vehicle-1',
@@ -223,6 +225,7 @@ describe('ListingsService', () => {
     mockUpdatePromotionHistoryEndDateUseCase = { execute: jest.fn().mockResolvedValue(undefined) };
     mockCloseAllUserListingsUseCase = { execute: jest.fn() };
     mockAutoCloseOldListingsUseCase = { execute: jest.fn().mockResolvedValue({ closed: 0 }) };
+    mockExpirePromotionsUseCase = { execute: jest.fn().mockResolvedValue({ expired: 0 }) };
 
     const mockI18nService = {
       translate: jest.fn((key: string) => key),
@@ -276,6 +279,7 @@ describe('ListingsService', () => {
         },
         { provide: CloseAllUserListingsUseCase, useValue: mockCloseAllUserListingsUseCase },
         { provide: AutoCloseOldListingsUseCase, useValue: mockAutoCloseOldListingsUseCase },
+        { provide: ExpirePromotionsUseCase, useValue: mockExpirePromotionsUseCase },
         {
           provide: getRepositoryToken(Listing),
           useValue: mockListingsRepository,

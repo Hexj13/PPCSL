@@ -51,7 +51,11 @@ export class TypeOrmListingRepository implements IListingRepository {
     const order = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
     const dateSortColumn = sortField === 'created_at' ? 'last_updated_at' : sortField;
 
-    queryBuilder.orderBy('listing.is_promoted', 'DESC');
+    queryBuilder.addSelect(
+      `(CASE WHEN listing.is_promoted = true AND (listing.promoted_until IS NULL OR listing.promoted_until > NOW()) THEN 1 ELSE 0 END)`,
+      'actively_promoted',
+    );
+    queryBuilder.orderBy('actively_promoted', 'DESC');
     if (dateSortColumn === 'year') {
       queryBuilder.addOrderBy('vehicle.year', order);
     } else if (dateSortColumn === 'views') {
@@ -73,6 +77,7 @@ export class TypeOrmListingRepository implements IListingRepository {
     } else {
       queryBuilder.addOrderBy(`listing.${dateSortColumn}`, order);
     }
+    queryBuilder.addOrderBy('listing.id', 'ASC');
 
     const [data, total] = await queryBuilder.skip(skip).take(limit).getManyAndCount();
     return { data, total };
@@ -278,7 +283,7 @@ export class TypeOrmListingRepository implements IListingRepository {
     }
 
     qb.andWhere(
-      '(listing.is_promoted = false OR (listing.is_promoted = true AND (listing.promoted_until IS NULL OR listing.promoted_until > NOW())))',
+      '(listing.is_promoted = false OR listing.promoted_until IS NULL OR listing.promoted_until > NOW())',
     );
 
     return qb;

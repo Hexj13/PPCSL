@@ -49,7 +49,11 @@ export class GetBoardListingsUseCase {
       .leftJoinAndSelect('listing.user', 'user')
       .where('listing.user_id = :userId', { userId: user.id })
       .andWhere('listing.status = :status', { status: ListingStatusEnum.Active })
-      .orderBy('listing.is_promoted', 'DESC');
+      .addSelect(
+        `(CASE WHEN listing.is_promoted = true AND (listing.promoted_until IS NULL OR listing.promoted_until > NOW()) THEN 1 ELSE 0 END)`,
+        'actively_promoted',
+      )
+      .orderBy('actively_promoted', 'DESC');
 
     if (dateSortColumn === 'year') {
       queryBuilder.addOrderBy('vehicle.year', order);
@@ -69,6 +73,7 @@ export class GetBoardListingsUseCase {
     } else {
       queryBuilder.addOrderBy(`listing.${dateSortColumn}`, order);
     }
+    queryBuilder.addOrderBy('listing.id', 'ASC');
 
     const [listings, total] = await queryBuilder.skip(skip).take(limit).getManyAndCount();
 

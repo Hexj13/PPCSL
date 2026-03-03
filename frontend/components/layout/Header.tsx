@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useComparisonStore } from '@/lib/store';
 
@@ -12,6 +12,7 @@ import { useHeaderState } from './Header/useHeaderState';
 
 export function Header() {
   const headerRef = useRef<HTMLElement>(null);
+  const [isTelegramWebView, setIsTelegramWebView] = useState(false);
   const comparisonCount = useComparisonStore((state) => state.count());
   const {
     user,
@@ -42,29 +43,39 @@ export function Header() {
   }, [isMobileMenuOpen, handleMobileMenuClose]);
 
   useEffect(() => {
+    setIsTelegramWebView('TelegramWebviewProxy' in window);
+  }, []);
+
+  useEffect(() => {
+    if (isTelegramWebView) return;
     const vv = window.visualViewport;
     if (!vv) return;
 
-    const sync = () => {
-      if (!headerRef.current) return;
-      headerRef.current.style.transform = `translateY(${vv.offsetTop}px) translateZ(0)`;
+    const handleViewportChange = () => {
+      if (headerRef.current) {
+        headerRef.current.style.transform = `translateZ(0) translateY(${vv.offsetTop}px)`;
+      }
     };
 
-    vv.addEventListener('scroll', sync);
-    vv.addEventListener('resize', sync);
-    sync();
+    handleViewportChange();
+    vv.addEventListener('scroll', handleViewportChange);
+    vv.addEventListener('resize', handleViewportChange);
 
+    const headerEl = headerRef.current;
     return () => {
-      vv.removeEventListener('scroll', sync);
-      vv.removeEventListener('resize', sync);
+      if (headerEl) {
+        headerEl.style.transform = 'translateZ(0)';
+      }
+      vv.removeEventListener('scroll', handleViewportChange);
+      vv.removeEventListener('resize', handleViewportChange);
     };
-  }, []);
+  }, [isTelegramWebView]);
 
   return (
     <header
       ref={headerRef}
       style={{ transform: 'translateZ(0)' }}
-      className="bg-primary-700 shadow-lg border-b-2 border-primary-500/20 sticky top-0 z-50 h-[72px]"
+      className={`bg-primary-700 shadow-lg border-b-2 border-primary-500/20 h-[72px] z-50 ${isTelegramWebView ? 'relative' : 'sticky top-0'}`}
       suppressHydrationWarning
     >
       <div className="container mx-auto px-3 sm:px-4 h-full" suppressHydrationWarning>
