@@ -212,7 +212,7 @@ const legal: LegalConfig = {
           title: '10. Service Termination',
           content: [
             'Kupito reserves the right to terminate, suspend, ban, delete, or hide access to the Platform, user accounts, or listings for any user who violates these Terms, posts unlawful information, uses the Platform for selling stolen vehicles, or otherwise uses it inappropriately, without prior notice.',
-            'Users may terminate their profile at any time by contacting Kupito support.',
+            'Users may terminate their profile at any time themselves via the Profile page (Danger zone → Delete account).',
             'Upon account termination, all data associated with the account may be deleted in accordance with the Privacy Policy.',
             'Kupito actively monitors user activities and listings to ensure everyone complies with these Terms and applicable laws. In case of detection of unlawful activities, Kupito will take appropriate measures, including immediate removal of content and blocking of user accounts.',
           ],
@@ -471,7 +471,7 @@ const legal: LegalConfig = {
           title: '10. Întreruperea serviciului',
           content: [
             'Kupito își rezervă dreptul de a întrerupe, suspenda, bloca, șterge sau ascunde accesul la Platformă, conturile de utilizator sau anunțurile pentru orice utilizator care încalcă acești Termeni, publică informații ilegale, folosește Platforma pentru vânzarea de autoturisme furate sau o folosește altfel necorespunzător, fără notificare prealabilă.',
-            'Utilizatorii pot închide profilul lor în orice moment contactând suportul Kupito.',
+            'Utilizatorii pot închide profilul lor în orice moment singuri, din pagina Profil (Zona de pericol → Șterge cont).',
             'După închiderea contului, toate datele asociate cu contul pot fi șterse în conformitate cu Politica de confidențialitate.',
             'Kupito monitorizează activ activitățile utilizatorilor și anunțurile pentru a se asigura că toată lumea respectă acești Termeni și legile aplicabile. În cazul detectării activităților ilegale, Kupito va lua măsuri corespunzătoare, inclusiv eliminarea imediată a conținutului și blocarea conturilor de utilizator.',
           ],
@@ -727,7 +727,7 @@ const legal: LegalConfig = {
           title: '10. Прекращение услуги',
           content: [
             'Kupito оставляет за собой право прекратить, приостановить, заблокировать, удалить или скрыть доступ к Платформе, аккаунтам пользователей или объявлениям для любого пользователя, который нарушает эти Условия, размещает незаконную информацию, использует Платформу для продажи краденых автомобилей или иным образом использует её ненадлежащим образом, без предварительного уведомления.',
-            'Пользователи могут закрыть свой профиль в любое время, связавшись со службой поддержки Kupito.',
+            'Пользователи могут закрыть свой профиль в любое время самостоятельно на странице «Профиль» (раздел «Опасная зона» → «Удалить аккаунт»).',
             'После закрытия аккаунта все данные, связанные с аккаунтом, могут быть удалены в соответствии с Политикой конфиденциальности.',
             'Kupito активно отслеживает действия пользователей и объявления, чтобы убедиться, что все соблюдают эти Условия и применимые законы. В случае обнаружения незаконной деятельности Kupito примет соответствующие меры, включая немедленное удаление контента и блокировку аккаунтов пользователей.',
           ],

@@ -134,8 +134,14 @@ export const faqRo: FAQConfig = {
     {
       id: '15',
       question: 'Cum îmi șterg profilul?',
-      answer:
-        'Pentru a vă șterge profilul, vă rugăm să ne contactați la support@kupito.club. După ștergerea profilului, toate datele dvs. personale vor fi șterse, iar anunțurile dvs. vor rămâne pe platformă, dar fără informații de contact.',
+      answer: [
+        'Puteți șterge profilul singur, fără a ne contacta:',
+        '1. Conectați-vă la profilul dvs.',
+        '2. Mergeți la "Profil"',
+        '3. Derulați până la secțiunea "Zona de pericol"',
+        '4. Faceți clic pe "Șterge cont" și confirmați în fereastra care se deschide',
+        'După ștergere, toate datele dvs. personale vor fi șterse, iar anunțurile dvs. vor rămâne pe platformă, dar fără informații de contact.',
+      ],
     },
     {
       id: '16',
