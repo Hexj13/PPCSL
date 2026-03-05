@@ -46,29 +46,9 @@ export function Header() {
     setIsTelegramWebView('TelegramWebviewProxy' in window);
   }, []);
 
-  useEffect(() => {
-    if (isTelegramWebView) return;
-
-    const handleScroll = () => {
-      if (!headerRef.current) return;
-      const scrollY = window.scrollY;
-      headerRef.current.style.transform =
-        scrollY < 0 ? `translateY(${-scrollY}px) translateZ(0)` : 'translateZ(0)';
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-
-    const headerEl = headerRef.current;
-    return () => {
-      if (headerEl) headerEl.style.transform = '';
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [isTelegramWebView]);
-
   return (
     <header
       ref={headerRef}
-      style={isTelegramWebView ? undefined : { transform: 'translateZ(0)' }}
       className={`bg-primary-700 shadow-lg border-b-2 border-primary-500/20 h-[72px] z-50 ${isTelegramWebView ? 'relative' : 'sticky top-0'}`}
       suppressHydrationWarning
     >
