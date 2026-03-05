@@ -102,6 +102,8 @@ If the frontend rewrite does not work (e.g. GSC still cannot fetch the sitemap):
 
 Google allows the sitemap to be on a different subdomain; URLs inside the sitemap must point to the verified property (e.g. `https://kupito.club/...`).
 
+For diagnosing Google Search Console sitemap errors and re-submission steps, see [Sitemap and GSC Runbook](../guides/SITEMAP_GSC_RUNBOOK.md).
+
 ## Related Files
 
 | File                             | Description                               |
