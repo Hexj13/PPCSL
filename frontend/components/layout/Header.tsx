@@ -48,25 +48,20 @@ export function Header() {
 
   useEffect(() => {
     if (isTelegramWebView) return;
-    const vv = window.visualViewport;
-    if (!vv) return;
 
-    const handleViewportChange = () => {
+    const handleScroll = () => {
       if (!headerRef.current) return;
-      const headerTop = headerRef.current.getBoundingClientRect().top;
-      const translateY = headerTop >= 0 ? vv.offsetTop : 0;
-      headerRef.current.style.transform = `translateZ(0) translateY(${translateY}px)`;
+      const scrollY = window.scrollY;
+      headerRef.current.style.transform =
+        scrollY < 0 ? `translateY(${-scrollY}px) translateZ(0)` : 'translateZ(0)';
     };
 
-    handleViewportChange();
-    vv.addEventListener('scroll', handleViewportChange);
-    vv.addEventListener('resize', handleViewportChange);
+    window.addEventListener('scroll', handleScroll, { passive: true });
 
     const headerEl = headerRef.current;
     return () => {
       if (headerEl) headerEl.style.transform = '';
-      vv.removeEventListener('scroll', handleViewportChange);
-      vv.removeEventListener('resize', handleViewportChange);
+      window.removeEventListener('scroll', handleScroll);
     };
   }, [isTelegramWebView]);
 

@@ -63,7 +63,7 @@ node -e "console.log('API_URL set:', !!process.env.NEXT_PUBLIC_API_URL); console
 1. Open [Google Search Console](https://search.google.com/search-console) → property **kupito.club** (domain or URL-prefix).
 2. Go to **Indexing** → **Sitemaps**.
 3. Remove the failing sitemap entry for `https://kupito.club/sitemap.xml` if there is an option to remove or ignore.
-4. In "Add a new sitemap", enter: `sitemap.xml` (or full URL `https://kupito.club/sitemap.xml`) → **Submit**.
+4. In "Add a new sitemap", enter: `sitemap.xml` (or full URL `https://kupito.club/sitemap.xml`). Do **not** use a trailing slash (`sitemap.xml/`) → **Submit**.
 5. Use **URL Inspection** for `https://kupito.club/sitemap.xml`: run "Test live URL" and then "Request indexing" if available.
 6. Optionally request indexing for one child sitemap, e.g. `https://kupito.club/sitemaps/pages.xml`, to trigger a fresh crawl.
 
