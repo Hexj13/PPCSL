@@ -142,7 +142,8 @@ function handleModelIdsInBuildQuery(ctx: BuildQueryContext): void {
       return model ? createSlug(model.name) : null;
     })
     .filter((slug): slug is string => slug !== null);
-  if (modelSlugs.length > 0) ctx.params.set('model', modelSlugs.join(','));
+  const uniqueSlugs = [...new Set(modelSlugs)];
+  if (uniqueSlugs.length > 0) ctx.params.set('model', uniqueSlugs.join(','));
 }
 
 function handleArrayFilterInBuildQuery(ctx: BuildQueryContext, key: string, value: unknown): void {
@@ -320,16 +321,22 @@ export function createModelResolver(
 ): (_brandIds: string[], _slugs: string[]) => Promise<string[]> {
   return async (brandIds: string[], slugs: string[]) => {
     const allModels = Object.values(modelsByBrand).flat();
-    return slugs
-      .map((slug) => {
-        const model = allModels.find(
-          (m) =>
-            m.name.toLowerCase() === slug.toLowerCase() ||
-            createSlug(m.name) === slug.toLowerCase() ||
-            slugMatches(slug, m.name),
-        );
-        return model && brandIds.includes(model.brand_id) ? model.id : undefined;
-      })
-      .filter((id): id is string => id !== undefined);
+    const ids: string[] = [];
+    for (const slug of slugs) {
+      const slugLower = slug.toLowerCase();
+      const matching = allModels.filter(
+        (m) =>
+          (m.name.toLowerCase() === slugLower ||
+            createSlug(m.name) === slugLower ||
+            slugMatches(slug, m.name)) &&
+          brandIds.includes(m.brand_id),
+      );
+      for (const model of matching) {
+        if (!ids.includes(model.id)) {
+          ids.push(model.id);
+        }
+      }
+    }
+    return ids;
   };
 }

@@ -13,6 +13,7 @@ import { CloseAllUserListingsUseCase } from './application/use-cases/close-all-u
 import { CloseListingUseCase } from './application/use-cases/close-listing.use-case';
 import { CreateListingUseCase } from './application/use-cases/create-listing.use-case';
 import { CreatePromotionHistoryUseCase } from './application/use-cases/create-promotion-history.use-case';
+import { ExpirePromotionsUseCase } from './application/use-cases/expire-promotions.use-case';
 import { FindByVinUseCase } from './application/use-cases/find-by-vin.use-case';
 import { FindSimilarUseCase } from './application/use-cases/find-similar.use-case';
 import { GetActiveUserListingsUseCase } from './application/use-cases/get-active-user-listings.use-case';
@@ -84,13 +85,22 @@ export class ListingsService {
     private readonly updatePromotionHistoryEndDateUseCase: UpdatePromotionHistoryEndDateUseCase,
     private readonly closeAllUserListingsUseCase: CloseAllUserListingsUseCase,
     private readonly autoCloseOldListingsUseCase: AutoCloseOldListingsUseCase,
+    private readonly expirePromotionsUseCase: ExpirePromotionsUseCase,
   ) {}
 
-  async create(createListingDto: CreateListingDto, userId: string): Promise<Listing> {
-    const savedListing = await this.createListingUseCase.execute(createListingDto, userId);
+  async create(
+    createListingDto: CreateListingDto,
+    userId: string,
+    userType?: string,
+  ): Promise<Listing> {
+    const savedListing = await this.createListingUseCase.execute(
+      createListingDto,
+      userId,
+      userType,
+    );
     const Sentry = await import('@sentry/node');
     const vehicle_type =
-      savedListing.vehicle?.model?.vehicle_type ||
+      savedListing.vehicle?.model?.vehicle_types?.[0] ||
       (savedListing.vehicle?.body_type
         ? getVehicleTypeFromBodyType(savedListing.vehicle.body_type)
         : undefined) ||
@@ -163,6 +173,11 @@ export class ListingsService {
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async autoCloseOldListings(): Promise<{ closed: number }> {
     return this.autoCloseOldListingsUseCase.execute();
+  }
+
+  @Cron(CronExpression.EVERY_HOUR)
+  async expirePromotions(): Promise<{ expired: number }> {
+    return this.expirePromotionsUseCase.execute();
   }
 
   async getUserListings(

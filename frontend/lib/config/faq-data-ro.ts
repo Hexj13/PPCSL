@@ -34,7 +34,7 @@ export const faqRo: FAQConfig = {
       answer: [
         'Pentru a publica un anunț de vânzare pentru un autoturism:',
         '1. Conectați-vă la profilul dvs.',
-        '2. Faceți clic pe "Adaugă anunț" din meniul de sus (sau mergeți la "Anunțurile mele" și faceți clic pe "Creează anunț")',
+        '2. Faceți clic pe "Plasează anunț" din meniul de sus (sau mergeți la "Anunțurile mele" și faceți clic pe "Creează anunț")',
         '3. Completați toate informațiile necesare despre autoturism:',
         '   - Marca și modelul',
         '   - Anul de fabricație',
@@ -134,8 +134,14 @@ export const faqRo: FAQConfig = {
     {
       id: '15',
       question: 'Cum îmi șterg profilul?',
-      answer:
-        'Pentru a vă șterge profilul, vă rugăm să ne contactați la support@kupito.club. După ștergerea profilului, toate datele dvs. personale vor fi șterse, iar anunțurile dvs. vor rămâne pe platformă, dar fără informații de contact.',
+      answer: [
+        'Puteți șterge profilul singur, fără a ne contacta:',
+        '1. Conectați-vă la profilul dvs.',
+        '2. Mergeți la "Profil"',
+        '3. Derulați până la secțiunea "Zona de pericol"',
+        '4. Faceți clic pe "Șterge cont" și confirmați în fereastra care se deschide',
+        'După ștergere, toate datele dvs. personale vor fi șterse, iar anunțurile dvs. vor rămâne pe platformă, dar fără informații de contact.',
+      ],
     },
     {
       id: '16',
@@ -244,7 +250,7 @@ export const faqRo: FAQConfig = {
       title: 'Scenariul 1: Publicarea unui anunț nou',
       steps: [
         'Înregistrați-vă sau conectați-vă la profilul dvs.',
-        'Faceți clic pe "Adaugă anunț" din meniul de sus (sau mergeți la "Anunțurile mele" și faceți clic pe "Creează anunț")',
+        'Faceți clic pe "Plasează anunț" din meniul de sus (sau mergeți la "Anunțurile mele" și faceți clic pe "Creează anunț")',
         'Completați toate informațiile necesare despre autoturism',
         'Adăugați fotografii (minimum 2, maximum 20)',
         'Selectați statusul anunțului (implicit este "Publicat")',

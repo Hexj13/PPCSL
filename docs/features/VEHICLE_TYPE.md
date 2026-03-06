@@ -818,13 +818,17 @@ CREATE INDEX idx_vehicles_model_type ON vehicles(model_id)
 - `core/frontend/public/icons/truck.svg` - SVG иконка грузового авто
 - `core/frontend/public/icons/moto.svg` - SVG иконка мотоцикла
 
+### Listing form (create/edit) — engine displacement and Electric fuel
+
+When **Fuel = Electric**, the **Engine displacement** field is optional and disabled for all vehicle types (car, truck, moto). If the user had already entered a value and then selects Electric, the field is cleared so that no engine volume is sent to the API. The placeholder shows "—" when Electric is selected and "2.0" otherwise. On listing cards, the engine block is not shown when `engine_displ_l` is empty. Implementation: `SpecsGrid.tsx` (form), `useListingForm.ts` (validation), backend `CreateVehicleDto` has `engine_displ_l` as optional.
+
 ### Backend
 
 - `core/backend/src/brands/entities/brand.entity.ts` - сущность марки (обновлена - добавлено поле `vehicle_types`)
 - `core/backend/src/brands/entities/vehicle-model.entity.ts` - сущность модели (обновлена - добавлено поле `vehicle_type`)
 - `core/backend/src/brands/brands.service.ts` - сервис марок (обновлен - добавлена фильтрация по `vehicleType`)
 - `core/backend/src/listings/listings.service.ts` - сервис объявлений (обновлен - добавлена фильтрация и условная логика)
-- `core/backend/src/listings/dto/create-vehicle.dto.ts` - DTO создания транспорта (обновлен - `drive_type` опциональный)
+- `core/backend/src/listings/dto/create-vehicle.dto.ts` - DTO создания транспорта (обновлен - `drive_type` опциональный, `engine_displ_l` опциональный при топливе Electric)
 
 ### Скрипты
 

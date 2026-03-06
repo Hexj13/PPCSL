@@ -102,7 +102,7 @@ function ProfileContactSection({
           />
           <Link
             href="/profile/change-phone"
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-primary-700 hover:text-primary-900 transition-colors duration-200 p-1"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-primary-700 hover-only:hover:text-primary-900 transition-colors duration-200 p-1"
             title={t('common.changePhone')}
           >
             <svg
@@ -127,7 +127,7 @@ function ProfileContactSection({
             {user?.boardSlug ? (
               <Link
                 href={`/board/${user.boardSlug}`}
-                className="text-primary-700 underline hover:text-primary-900"
+                className="text-primary-700 underline hover-only:hover:text-primary-900"
               >
                 {t('myListings.myBoard')}
               </Link>
@@ -385,7 +385,7 @@ function ProfileActions({
           type="submit"
           loading={loading}
           loadingText={t('profile.saving')}
-          className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover:text-primary-900 hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {t('profile.saveChanges')}
         </LoadingButton>
@@ -398,7 +398,7 @@ function ProfileActions({
         <button
           type="button"
           onClick={onDeleteClick}
-          className="w-full min-h-12 bg-transparent hover:bg-red-600/15 text-red-600 hover:text-red-700 font-semibold text-base rounded-lg px-4 py-2.5 border-2 border-red-600/50 hover:border-red-700/60 transition-all duration-200 flex items-center justify-center"
+          className="w-full min-h-12 bg-transparent hover-only:hover:bg-red-600/15 text-red-600 hover-only:hover:text-red-700 font-semibold text-base rounded-lg px-4 py-2.5 border-2 border-red-600/50 hover-only:hover:border-red-700/60 transition-all duration-200 flex items-center justify-center"
         >
           {t('profile.deleteAccount')}
         </button>
@@ -441,7 +441,7 @@ function ProfileDeleteModal({
             type="button"
             onClick={onClose}
             disabled={deleting}
-            className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-gray-500/40 hover:border-gray-500/60 bg-gray-500/20 text-text-secondary font-semibold text-base hover:text-text-primary transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+            className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-gray-500/40 hover-only:hover:border-gray-500/60 bg-gray-500/20 text-text-secondary font-semibold text-base hover-only:hover:text-text-primary transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('common.cancel')}
           </button>
@@ -449,7 +449,7 @@ function ProfileDeleteModal({
             type="button"
             onClick={onConfirm}
             disabled={deleting}
-            className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-red-600/50 hover:border-red-700/60 bg-red-600/15 hover:bg-red-600/25 text-red-600 font-semibold text-base hover:text-red-700 transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+            className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-red-600/50 hover-only:hover:border-red-700/60 bg-red-600/15 hover-only:hover:bg-red-600/25 text-red-600 font-semibold text-base hover-only:hover:text-red-700 transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {deleting ? t('profile.deleting') : t('profile.deleteAccount')}
           </button>

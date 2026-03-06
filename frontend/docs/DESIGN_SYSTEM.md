@@ -54,7 +54,7 @@ import { Button, Input, Card, Badge } from '@/ui';
 </Button>
 ```
 
-Variants: `primary`, `secondary`, `outline`, `yellow`, `green-dark`
+Variants: `primary`, `secondary`, `outline-solid`, `yellow`, `green-dark`
 Sizes: `sm`, `md`, `lg`
 
 #### LoadingButton

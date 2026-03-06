@@ -115,7 +115,7 @@ async function seedMotorcycles(activeCount: number = 50) {
 
   const validBrands = brandsWithModels.filter((b) => {
     if (!b.models || b.models.length === 0) return false;
-    return b.models.some((m) => m.vehicle_type === 'moto');
+    return b.models.some((m) => m.vehicle_types?.includes('moto'));
   });
 
   if (validBrands.length === 0) {
@@ -143,7 +143,7 @@ async function seedMotorcycles(activeCount: number = 50) {
   for (let i = 0; i < activeCount; i++) {
     const user = getRandomElement(users);
     const brand = getRandomElement(validBrands);
-    const motoModels = brand.models.filter((m) => m.vehicle_type === 'moto');
+    const motoModels = brand.models.filter((m) => m.vehicle_types?.includes('moto'));
     if (motoModels.length === 0) {
       skippedCount++;
       continue;

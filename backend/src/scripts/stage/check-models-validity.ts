@@ -83,7 +83,7 @@ async function checkModelsValidity() {
   const modelRepo = AppDataSource.getRepository(VehicleModel);
 
   const brands = await brandRepo.find({ select: ['id', 'name'] });
-  const models = await modelRepo.find({ select: ['id', 'name', 'brand_id', 'vehicle_type'] });
+  const models = await modelRepo.find({ select: ['id', 'name', 'brand_id', 'vehicle_types'] });
 
   const brandNameById = new Map<string, string>();
   for (const brand of brands) {

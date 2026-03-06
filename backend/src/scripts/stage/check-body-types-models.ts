@@ -261,11 +261,14 @@ async function checkBodyTypesModels() {
     .select(['brand.id', 'brand.name', 'brand.vehicle_types'])
     .getMany();
 
-  const allModels = await modelRepo.find({
-    where: { vehicle_type: 'truck' },
-    select: ['id', 'name', 'brand_id', 'vehicle_type'],
-    relations: ['brand'],
-  });
+  const allModels = await modelRepo
+    .createQueryBuilder('model')
+    .where(
+      "model.vehicle_types = 'truck' OR model.vehicle_types LIKE 'truck,%' OR model.vehicle_types LIKE '%,truck,%' OR model.vehicle_types LIKE '%,truck'",
+    )
+    .select(['model.id', 'model.name', 'model.brand_id', 'model.vehicle_types'])
+    .leftJoinAndSelect('model.brand', 'brand')
+    .getMany();
 
   const modelsByBrand = new Map<string, VehicleModel[]>();
   for (const model of allModels) {

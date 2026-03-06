@@ -66,6 +66,7 @@ export class UpdateListingUseCase {
         vehicleUpdateData.engine_displ_l = vehicleDto.engine_displ_l;
       if (vehicleDto.mileage_km !== undefined) vehicleUpdateData.mileage_km = vehicleDto.mileage_km;
       if (vehicleDto.fuel !== undefined) vehicleUpdateData.fuel = vehicleDto.fuel;
+      if (vehicleDto.fuel === 'Electric') vehicleUpdateData.engine_displ_l = null;
       if (vehicleDto.transmission !== undefined)
         vehicleUpdateData.transmission = vehicleDto.transmission;
       if (vehicleDto.drive_type !== undefined) vehicleUpdateData.drive_type = vehicleDto.drive_type;
@@ -150,7 +151,7 @@ export class UpdateListingUseCase {
         brandId
           ? this.brandsService
               .getModelsByBrand(brandId)
-              .then((models) => models.find((m) => m.id === modelId)?.vehicle_type ?? null)
+              .then((models) => models.find((m) => m.id === modelId)?.vehicle_types?.[0] ?? null)
           : Promise.resolve(null),
       getTransmissionLabel: (key: string) =>
         Promise.resolve(this.i18nService.translate(key, locale)),

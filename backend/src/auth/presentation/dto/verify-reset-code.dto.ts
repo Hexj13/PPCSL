@@ -7,9 +7,9 @@ export class VerifyResetCodeDto {
     description: 'Phone number in international format',
   })
   @IsNotEmpty({ message: 'errors.phoneRequired' })
-  @IsString({ message: 'Телефонскиот број мора да биде стринг' })
+  @IsString({ message: 'validation.string' })
   @Matches(/^[+]?[0-9\s()-]{8,}$/, {
-    message: 'Невалиден формат на телефонски број',
+    message: 'validation.phone',
   })
   phone: string;
 
@@ -18,9 +18,9 @@ export class VerifyResetCodeDto {
     description: '6-digit verification code',
   })
   @IsNotEmpty({ message: 'errors.codeRequired' })
-  @IsString({ message: 'Кодот мора да биде стринг' })
+  @IsString({ message: 'validation.string' })
   @Matches(/^\d{6}$/, {
-    message: 'Кодот мора да содржи точно 6 цифри',
+    message: 'validation.codeLength',
   })
   code: string;
 }

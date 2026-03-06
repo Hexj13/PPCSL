@@ -13,6 +13,7 @@ import { IListingCache, LISTING_CACHE } from '../listings/application/ports/list
 import { Listing } from '../listings/entities/listing.entity';
 import { PromotionHistory } from '../listings/entities/promotion-history.entity';
 import { ListingsService } from '../listings/listings.service';
+import { UsersService } from '../users/application/users.service';
 import { User } from '../users/entities/user.entity';
 
 @Injectable()
@@ -29,6 +30,7 @@ export class AdminService {
     private exchangeRatesService: ExchangeRatesService,
     @Inject(LISTING_CACHE)
     private listingCache: IListingCache,
+    private usersService: UsersService,
   ) {}
 
   async getAllUsers(
@@ -101,6 +103,51 @@ export class AdminService {
     return user.listings || [];
   }
 
+  async validateAssignUser(userId: string): Promise<{
+    valid: boolean;
+    user?: {
+      id: string;
+      displayName: string;
+      type: string;
+      activeListings: number;
+      listingLimit: number;
+    };
+    error?: string;
+  }> {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      return { valid: false, error: 'errors.userNotFound' };
+    }
+
+    if (!user.active) {
+      return { valid: false, error: 'errors.assignedUserDeactivated' };
+    }
+
+    const activeListings = await this.listingsRepository.count({
+      where: { user_id: userId, status: ListingStatusEnum.Active },
+    });
+    const listingLimit = await this.usersService.getListingLimit(userId);
+
+    if (activeListings >= listingLimit) {
+      return { valid: false, error: 'errors.activeListingsLimitExceeded' };
+    }
+
+    const displayName =
+      user.getDisplayName()?.trim() || user.email?.trim() || user.phone?.trim() || user.id;
+
+    return {
+      valid: true,
+      user: {
+        id: user.id,
+        displayName,
+        type: user.type,
+        activeListings,
+        listingLimit,
+      },
+    };
+  }
+
   async toggleUserStatus(userId: string) {
     const user = await this.usersRepository.findOne({
       where: { id: userId },
@@ -136,6 +183,7 @@ export class AdminService {
     userId?: string,
     status?: ListingStatus,
     isPromoted?: boolean,
+    search?: string,
   ): Promise<{
     data: Listing[];
     meta: { total: number; page: number; limit: number; totalPages: number };
@@ -152,7 +200,11 @@ export class AdminService {
     const conditions: string[] = [];
     const params: Record<string, unknown> = {};
 
-    if (listingId && userId) {
+    const searchTrimmed = search?.trim();
+    if (searchTrimmed) {
+      conditions.push('(listing.id = :search OR listing.user_id = :search)');
+      params.search = searchTrimmed;
+    } else if (listingId && userId) {
       conditions.push('(listing.id = :listingId OR listing.user_id = :userId)');
       params.listingId = listingId;
       params.userId = userId;
@@ -227,19 +279,43 @@ export class AdminService {
     };
   }
 
-  async getListingsStatusCounts(): Promise<{
+  async getListingsStatusCounts(
+    listingId?: string,
+    userId?: string,
+    search?: string,
+  ): Promise<{
     Active: number;
     Paused: number;
     Closed: number;
     Promoted: number;
   }> {
+    const searchTrimmed = search?.trim();
+    const buildBase = () => {
+      const qb = this.listingsRepository.createQueryBuilder('listing');
+      if (searchTrimmed) {
+        qb.where('(listing.id = :search OR listing.user_id = :search)', { search: searchTrimmed });
+      } else if (listingId && userId) {
+        qb.where('(listing.id = :listingId OR listing.user_id = :userId)', { listingId, userId });
+      } else if (listingId) {
+        qb.where('listing.id = :listingId', { listingId });
+      } else if (userId) {
+        qb.where('listing.user_id = :userId', { userId });
+      }
+      return qb;
+    };
+
     const [active, paused, closed, promoted] = await Promise.all([
-      this.listingsRepository.count({ where: { status: ListingStatusEnum.Active } }),
-      this.listingsRepository.count({ where: { status: ListingStatusEnum.Paused } }),
-      this.listingsRepository.count({ where: { status: ListingStatusEnum.Closed } }),
-      this.listingsRepository
-        .createQueryBuilder('listing')
-        .where('listing.is_promoted = :isPromoted', { isPromoted: true })
+      buildBase()
+        .andWhere('listing.status = :status', { status: ListingStatusEnum.Active })
+        .getCount(),
+      buildBase()
+        .andWhere('listing.status = :status', { status: ListingStatusEnum.Paused })
+        .getCount(),
+      buildBase()
+        .andWhere('listing.status = :status', { status: ListingStatusEnum.Closed })
+        .getCount(),
+      buildBase()
+        .andWhere('listing.is_promoted = :isPromoted', { isPromoted: true })
         .andWhere('(listing.promoted_until IS NULL OR listing.promoted_until > :now)', {
           now: new Date(),
         })

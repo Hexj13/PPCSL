@@ -135,7 +135,7 @@ export function PopularBodyTypesFilter({
           height="16"
           viewBox="0 0 512 512"
           fill="currentColor"
-          className="flex-shrink-0"
+          className="shrink-0"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -160,7 +160,7 @@ export function PopularBodyTypesFilter({
           <button
             type="button"
             onClick={scrollLeft}
-            className="hidden lg:flex absolute left-0 top-[55px] -translate-y-1/2 -translate-x-4 z-10 w-10 h-10 items-center justify-center bg-bg-secondary border-2 border-primary-500/50 rounded-full hover:bg-primary-500/10 hover:border-primary-500 transition-colors duration-200 shadow-lg"
+            className="hidden lg:flex absolute left-0 top-[55px] -translate-y-1/2 -translate-x-4 z-10 w-10 h-10 items-center justify-center bg-bg-secondary border-2 border-primary-500/50 rounded-full hover-only:hover:bg-primary-500/10 hover-only:hover:border-primary-500 transition-colors duration-200 shadow-lg"
             aria-label={t('common.scrollLeft')}
           >
             <svg
@@ -182,7 +182,7 @@ export function PopularBodyTypesFilter({
           <button
             type="button"
             onClick={scrollRight}
-            className="hidden lg:flex absolute right-0 top-[55px] -translate-y-1/2 translate-x-4 z-10 w-10 h-10 items-center justify-center bg-bg-secondary border-2 border-primary-500/50 rounded-full hover:bg-primary-500/10 hover:border-primary-500 transition-colors duration-200 shadow-lg"
+            className="hidden lg:flex absolute right-0 top-[55px] -translate-y-1/2 translate-x-4 z-10 w-10 h-10 items-center justify-center bg-bg-secondary border-2 border-primary-500/50 rounded-full hover-only:hover:bg-primary-500/10 hover-only:hover:border-primary-500 transition-colors duration-200 shadow-lg"
             aria-label={t('common.scrollRight')}
           >
             <svg
@@ -197,7 +197,7 @@ export function PopularBodyTypesFilter({
         )}
         <div
           ref={scrollContainerRef}
-          className="grid grid-cols-2 gap-3 lg:flex lg:gap-4 lg:overflow-x-auto lg:scrollbar-hide lg:justify-between"
+          className="grid grid-cols-2 md:grid-cols-3 gap-3 lg:flex lg:gap-4 lg:overflow-x-auto lg:scrollbar-hide lg:justify-between"
         >
           {POPULAR_BODY_TYPES.map(({ value, image }) => {
             const isSelected = selectedBodyTypes.includes(value);
@@ -205,18 +205,19 @@ export function PopularBodyTypesFilter({
             return (
               <div
                 key={`${vehicleType}-${value}`}
-                className="flex flex-col items-center gap-2 w-full min-w-0 min-h-[135px] lg:min-h-[152px] lg:flex-shrink-0 lg:w-[180px] lg:flex-1 lg:min-w-0 lg:max-w-[210px]"
+                className="flex flex-col items-center gap-1 w-full min-w-0 min-h-[135px] lg:min-h-[152px] lg:shrink-0 lg:w-[180px] lg:flex-1 lg:min-w-0 lg:max-w-[210px]"
               >
                 <button
                   type="button"
                   onClick={() => handleTileClick(value)}
                   className={`
                   relative w-full h-[95px] lg:h-[110px] flex items-center justify-center p-2 rounded-lg
-                  outline-none select-none ${value === 'ATV' ? 'overflow-hidden' : ''}
+                  outline-hidden select-none ${value === 'ATV' ? 'overflow-hidden' : ''}
+                  ${vehicleType === 'moto' && value !== 'ATV' ? 'md:overflow-hidden xl:overflow-visible' : ''}
                   ${
                     isSelected
                       ? 'border-2 border-primary-700'
-                      : 'border-2 border-primary-700/30 [@media(hover:hover)]:hover:border-primary-700 transition-colors duration-200'
+                      : 'border-2 border-primary-700/30 hover-only:hover:border-primary-700 transition-colors duration-200'
                   }
                 `}
                   onMouseDown={(e) => {
@@ -230,7 +231,7 @@ export function PopularBodyTypesFilter({
                   aria-label={`${t(`vehicleOptions.bodyType.${value}`)}${isSelected ? ', selected' : ''}`}
                 >
                   <div
-                    className={`relative w-full h-full flex items-center justify-center ${value === 'ATV' ? 'overflow-hidden' : ''}`}
+                    className={`relative w-full h-full flex items-center justify-center ${value === 'ATV' ? 'overflow-hidden' : ''} ${vehicleType === 'moto' && value !== 'ATV' ? 'md:overflow-hidden xl:overflow-visible' : ''}`}
                   >
                     {image ? (
                       <Image
@@ -239,7 +240,7 @@ export function PopularBodyTypesFilter({
                         alt={t(`vehicleOptions.bodyType.${value}`)}
                         width={value === 'ATV' ? 260 : 180}
                         height={value === 'ATV' ? 260 : 180}
-                        className={`object-contain select-none transition-opacity duration-200 ${value === 'Wagon' ? 'object-top -mt-4' : ''} ${value === 'ATV' ? 'max-w-full max-h-full scale-125' : ''} ${value === 'Minivan' ? 'scale-[1.15] mt-2' : ''} ${vehicleType === 'car' && value !== 'Convertible' && value !== 'Minivan' ? 'scale-[1.2]' : ''}`}
+                        className={`object-contain select-none transition-opacity duration-200 ${value === 'Wagon' ? 'object-top -mt-4' : ''} ${value === 'ATV' ? 'max-w-full max-h-full scale-125' : ''} ${value === 'Minivan' ? 'scale-[1.15] mt-2' : ''} ${vehicleType === 'car' && value !== 'Convertible' && value !== 'Minivan' ? 'scale-[1.2]' : ''} ${vehicleType === 'moto' && value !== 'ATV' ? 'md:max-w-full md:max-h-full md:scale-125 lg:scale-110 xl:max-w-none xl:max-h-none xl:scale-100' : ''}`}
                         sizes={
                           value === 'ATV'
                             ? '(max-width: 768px) 260px, (max-width: 1024px) 280px, 300px'
@@ -285,30 +286,33 @@ export function PopularBodyTypesFilter({
                     )}
                   </div>
                   {isSelected && (
-                    <div
-                      className="absolute inset-0 flex items-center justify-center rounded-lg pointer-events-none"
-                      style={{
-                        borderRadius: 'inherit',
-                        background:
-                          'radial-gradient(circle, rgba(64, 145, 107, 0.25) 0%, rgba(64, 145, 107, 0.15) 40%, rgba(64, 145, 107, 0.05) 100%)',
-                      }}
-                    >
-                      <div className="w-8 h-8 md:w-10 md:h-10 bg-primary-500 rounded-full flex items-center justify-center shadow-lg border-2 border-primary-900">
-                        <svg
-                          className="w-5 h-5 md:w-6 md:h-6 text-primary-900"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={3}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
+                    <>
+                      <div
+                        className="absolute inset-0 rounded-lg pointer-events-none"
+                        style={{
+                          borderRadius: 'inherit',
+                          background:
+                            'radial-gradient(ellipse 100% 80% at 50% 100%, rgba(64, 145, 107, 0.25) 0%, rgba(64, 145, 107, 0.15) 40%, rgba(64, 145, 107, 0.05) 100%)',
+                        }}
+                      />
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 pointer-events-none">
+                        <div className="w-5 h-5 bg-primary-500 rounded-full flex items-center justify-center shadow-lg border-2 border-primary-900">
+                          <svg
+                            className="w-3 h-3 text-primary-900"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={3}
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                        </div>
                       </div>
-                    </div>
+                    </>
                   )}
                 </button>
                 <span className="text-xs md:text-sm font-medium text-primary-900 text-center select-none h-[32px] flex items-center justify-center">

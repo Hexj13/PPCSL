@@ -128,7 +128,9 @@ async function checkTruckModels() {
   });
 
   const truckBrands = allBrands.filter((b) => {
-    return b.vehicle_types?.includes('truck') || b.models.some((m) => m.vehicle_type === 'truck');
+    return (
+      b.vehicle_types?.includes('truck') || b.models.some((m) => m.vehicle_types?.includes('truck'))
+    );
   });
 
   console.log(`📊 Total brands with type 'truck': ${truckBrands.length}\n`);
@@ -140,7 +142,7 @@ async function checkTruckModels() {
   const otherTruckModels: Array<{ brand: string; model: string }> = [];
 
   for (const brand of truckBrands) {
-    const truckModels = brand.models.filter((m) => m.vehicle_type === 'truck');
+    const truckModels = brand.models.filter((m) => m.vehicle_types?.includes('truck'));
 
     for (const model of truckModels) {
       const modelNameLower = model.name.toLowerCase();

@@ -34,10 +34,10 @@ const PRIMARY_COLORS = [
 
 function DesignSystemNotFound() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-bg-dark to-bg-darker flex items-center justify-center px-4">
+    <div className="min-h-screen bg-linear-to-br from-bg-dark to-bg-darker flex items-center justify-center px-4">
       <div className="text-center max-w-2xl w-full">
         <div className="mb-8">
-          <h1 className="text-9xl md:text-[12rem] font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent mb-4">
+          <h1 className="text-9xl md:text-[12rem] font-extrabold bg-linear-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent mb-4">
             404
           </h1>
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
@@ -145,13 +145,13 @@ export default function DesignSystemPage() {
   if (isProduction) return <DesignSystemNotFound />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-bg-dark to-bg-darker">
-      <div className="sticky top-0 z-50 bg-bg-base/95 backdrop-blur-sm border-b border-primary-500/20">
+    <div className="min-h-screen bg-linear-to-br from-bg-dark to-bg-darker">
+      <div className="sticky top-0 z-50 bg-bg-base/95 backdrop-blur-xs border-b border-primary-500/20">
         <div className="container mx-auto px-4 py-4 max-w-7xl">
           <div className="flex items-center justify-between">
             <Link
               href="/"
-              className="text-2xl font-extrabold bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent"
+              className="text-2xl font-extrabold bg-linear-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent"
             >
               Kupito
             </Link>

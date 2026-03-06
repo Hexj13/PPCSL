@@ -83,7 +83,7 @@ export function PhotosSection({
           className={`inline-flex items-center justify-center gap-2 md:gap-2.5 min-h-12 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 font-medium text-base transition-colors duration-200 whitespace-nowrap select-none ${
             uploading || formData.images.length >= 20
               ? 'text-primary-700/50 border-primary-700/30 bg-primary-500/10 cursor-not-allowed'
-              : 'text-primary-700 hover:text-primary-900 border-primary-700/30 hover:border-primary-700 bg-primary-500/10 cursor-pointer'
+              : 'text-primary-700 hover-only:hover:text-primary-900 border-primary-700/30 hover-only:hover:border-primary-700 bg-primary-500/10 cursor-pointer'
           }`}
         >
           {uploading ? t('common.loading') : t('listings.addPhotos')}
@@ -102,11 +102,11 @@ export function PhotosSection({
                   })}
                   width={200}
                   height={96}
-                  className="w-full h-24 object-cover rounded"
+                  className="w-full h-24 object-cover rounded-sm"
                   draggable={false}
                   unoptimized
                 />
-                <div className="absolute inset-0 bg-black/40 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity rounded flex items-center justify-center gap-1">
+                <div className="absolute inset-0 bg-black/40 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity rounded-sm flex items-center justify-center gap-1">
                   <button
                     type="button"
                     onClick={() => {
@@ -122,7 +122,7 @@ export function PhotosSection({
                       }
                     }}
                     disabled={index === 0}
-                    className="bg-primary-600 hover:text-primary-100 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded p-1.5 transition-colors"
+                    className="bg-primary-600 hover-only:hover:text-primary-100 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-sm p-1.5 transition-colors"
                     title={t('listings.moveUp')}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,7 +149,7 @@ export function PhotosSection({
                       }
                     }}
                     disabled={index === formData.images.length - 1}
-                    className="bg-primary-600 hover:text-primary-100 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded p-1.5 transition-colors"
+                    className="bg-primary-600 hover-only:hover:text-primary-100 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-sm p-1.5 transition-colors"
                     title={t('listings.moveDown')}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,12 +171,12 @@ export function PhotosSection({
                     images: prev.images.filter((_, i) => i !== index),
                   }));
                 }}
-                className="absolute top-1 right-1 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center hover:shadow-md transition-all z-10"
+                className="absolute top-1 right-1 bg-linear-to-r from-red-500 to-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center hover-only:hover:shadow-md transition-all z-10"
                 title={t('listings.deleteImage')}
               >
                 ×
               </button>
-              <div className="absolute bottom-1 left-1 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded">
+              <div className="absolute bottom-1 left-1 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded-sm">
                 {index + 1}
               </div>
             </div>

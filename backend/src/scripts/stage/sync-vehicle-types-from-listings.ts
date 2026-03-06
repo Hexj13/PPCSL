@@ -38,13 +38,13 @@ async function syncVehicleTypesFromListings() {
 
   const modelsWithoutType = await modelRepo
     .createQueryBuilder('model')
-    .where('model.vehicle_type IS NULL')
+    .where("(model.vehicle_types IS NULL OR model.vehicle_types = '')")
     .getMany();
 
-  console.log(`📦 Found ${modelsWithoutType.length} models without vehicle_type\n`);
+  console.log(`📦 Found ${modelsWithoutType.length} models without vehicle_types\n`);
 
   if (modelsWithoutType.length === 0) {
-    console.log('✅ All models already have vehicle_type');
+    console.log('✅ All models already have vehicle_types');
     await AppDataSource.destroy();
     return;
   }
@@ -88,7 +88,7 @@ async function syncVehicleTypesFromListings() {
       const brand = await brandRepo.findOne({ where: { id: model.brand_id } });
       if (brand) {
         const vehicleType = determineVehicleType(model.name, brand.name);
-        model.vehicle_type = vehicleType;
+        model.vehicle_types = [vehicleType];
         await modelRepo.save(model);
         modelsUpdated++;
         stats.fromClassification++;
@@ -115,7 +115,7 @@ async function syncVehicleTypesFromListings() {
       const brand = await brandRepo.findOne({ where: { id: model.brand_id } });
       if (brand) {
         const vehicleType = determineVehicleType(model.name, brand.name);
-        model.vehicle_type = vehicleType;
+        model.vehicle_types = [vehicleType];
         await modelRepo.save(model);
         modelsUpdated++;
         stats.fromClassification++;
@@ -130,7 +130,7 @@ async function syncVehicleTypesFromListings() {
 
     if (vehicleTypesFromBodyTypes.size === 1) {
       const vehicleType = Array.from(vehicleTypesFromBodyTypes.keys())[0];
-      model.vehicle_type = vehicleType;
+      model.vehicle_types = [vehicleType];
       await modelRepo.save(model);
       modelsUpdated++;
       stats.fromBodyType++;
@@ -147,7 +147,7 @@ async function syncVehicleTypesFromListings() {
       const secondMostCommonCount = sortedTypes[1][1];
 
       if (mostCommonCount > secondMostCommonCount * 2) {
-        model.vehicle_type = mostCommonType;
+        model.vehicle_types = [mostCommonType];
         await modelRepo.save(model);
         modelsUpdated++;
         stats.fromBodyType++;
@@ -160,7 +160,7 @@ async function syncVehicleTypesFromListings() {
         const brand = await brandRepo.findOne({ where: { id: model.brand_id } });
         if (brand) {
           const vehicleType = determineVehicleType(model.name, brand.name);
-          model.vehicle_type = vehicleType;
+          model.vehicle_types = [vehicleType];
           await modelRepo.save(model);
           modelsUpdated++;
           stats.fromClassification++;
@@ -196,9 +196,8 @@ async function syncVehicleTypesFromListings() {
       const types = new Set<'car' | 'truck' | 'moto'>();
 
       for (const model of models) {
-        if (model.vehicle_type) {
-          types.add(model.vehicle_type);
-        }
+        const t = model.vehicle_types?.[0];
+        if (t) types.add(t);
       }
 
       const brandTypes = Array.from(types).sort();

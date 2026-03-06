@@ -38,7 +38,7 @@ export function AdditionalInfoSection({
                 className={`w-6 h-6 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
                   formData.urgent
                     ? 'border-primary-700 bg-primary-500/10'
-                    : 'border-primary-700/50 bg-bg-secondary hover:border-primary-700'
+                    : 'border-primary-700/50 bg-bg-secondary hover-only:hover:border-primary-700'
                 }`}
               >
                 {formData.urgent && (
@@ -60,7 +60,7 @@ export function AdditionalInfoSection({
             </div>
             <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-accentSecondary text-text-secondary whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-accentSecondary/10 before:pointer-events-none">
               <span
-                className="relative z-10 flex-shrink-0 text-text-secondary"
+                className="relative z-10 shrink-0 text-text-secondary"
                 style={{ filter: 'grayscale(1) brightness(0.5)' }}
               >
                 {FIRE_EMOJI}
@@ -84,7 +84,7 @@ export function AdditionalInfoSection({
                 className={`w-6 h-6 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
                   formData.is_new
                     ? 'border-primary-700 bg-primary-500/10'
-                    : 'border-primary-700/50 bg-bg-secondary hover:border-primary-700'
+                    : 'border-primary-700/50 bg-bg-secondary hover-only:hover:border-primary-700'
                 }`}
               >
                 {formData.is_new && (
@@ -106,7 +106,7 @@ export function AdditionalInfoSection({
             </div>
             <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-newBadge text-text-secondary whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-newBadge/10 before:pointer-events-none">
               <span
-                className="relative z-10 flex-shrink-0 text-text-secondary"
+                className="relative z-10 shrink-0 text-text-secondary"
                 style={{ filter: 'grayscale(1) brightness(0.5)' }}
               >
                 {SPARKLES_EMOJI}

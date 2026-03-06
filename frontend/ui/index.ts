@@ -17,6 +17,7 @@ export {
   EditIcon,
   TrashIcon,
   ChevronDownIcon,
+  ChevronRightIcon,
   StarIcon,
   CarIcon,
   MotoIcon,

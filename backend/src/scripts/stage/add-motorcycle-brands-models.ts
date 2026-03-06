@@ -102,18 +102,18 @@ async function addMotorcycleBrandsAndModels() {
           name: modelName,
           brand_id: brand.id,
           order: i + 1,
-          vehicle_type: 'moto',
+          vehicle_types: ['moto'],
         });
         await modelRepo.save(model);
         modelsAdded++;
         console.log(`   ✅ Added model: ${modelName}`);
       } else {
-        if (existingModel.vehicle_type !== 'moto') {
-          existingModel.vehicle_type = 'moto';
+        if (!existingModel.vehicle_types?.includes('moto')) {
+          existingModel.vehicle_types = ['moto'];
           existingModel.order = i + 1;
           await modelRepo.save(existingModel);
           modelsUpdated++;
-          console.log(`   ♻️  Updated model: ${modelName} (set vehicle_type to moto)`);
+          console.log(`   ♻️  Updated model: ${modelName} (set vehicle_types to moto)`);
         } else if (existingModel.order !== i + 1) {
           existingModel.order = i + 1;
           await modelRepo.save(existingModel);
@@ -126,8 +126,8 @@ async function addMotorcycleBrandsAndModels() {
       where: { brand_id: brand.id },
     });
     for (const model of allBrandModels) {
-      if (model.vehicle_type) {
-        vehicleTypes.add(model.vehicle_type);
+      if (model.vehicle_types?.[0]) {
+        vehicleTypes.add(model.vehicle_types[0]);
       }
     }
     if (vehicleTypes.size > 0) {

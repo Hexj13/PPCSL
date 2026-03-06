@@ -161,10 +161,10 @@ export function RichTextEditor({
         <button
           type="button"
           onClick={() => execCommand('bold')}
-          className={`w-9 h-9 flex items-center justify-center flex-shrink-0 rounded transition-colors ${
+          className={`w-9 h-9 flex items-center justify-center shrink-0 rounded transition-colors ${
             isActive('bold')
               ? 'bg-primary-600 text-white'
-              : 'bg-bg-secondary text-primary-500 hover:bg-primary-500/30 hover:text-primary-600'
+              : 'bg-bg-secondary text-primary-500 hover-only:hover:bg-primary-500/30 hover-only:hover:text-primary-600'
           }`}
           title={t('common.bold')}
         >
@@ -175,10 +175,10 @@ export function RichTextEditor({
         <button
           type="button"
           onClick={() => execCommand('italic')}
-          className={`w-9 h-9 flex items-center justify-center flex-shrink-0 rounded transition-colors ${
+          className={`w-9 h-9 flex items-center justify-center shrink-0 rounded transition-colors ${
             isActive('italic')
               ? 'bg-primary-600 text-white'
-              : 'bg-bg-secondary text-primary-500 hover:bg-primary-500/30 hover:text-primary-600'
+              : 'bg-bg-secondary text-primary-500 hover-only:hover:bg-primary-500/30 hover-only:hover:text-primary-600'
           }`}
           title={t('common.italic')}
         >
@@ -189,10 +189,10 @@ export function RichTextEditor({
         <button
           type="button"
           onClick={() => execCommand('underline')}
-          className={`w-9 h-9 flex items-center justify-center flex-shrink-0 rounded transition-colors ${
+          className={`w-9 h-9 flex items-center justify-center shrink-0 rounded transition-colors ${
             isActive('underline')
               ? 'bg-primary-600 text-white'
-              : 'bg-bg-secondary text-primary-500 hover:bg-primary-500/30 hover:text-primary-600'
+              : 'bg-bg-secondary text-primary-500 hover-only:hover:bg-primary-500/30 hover-only:hover:text-primary-600'
           }`}
           title={t('common.underline')}
         >
@@ -275,10 +275,10 @@ export function RichTextEditor({
               }, 10);
             }
           }}
-          className={`w-9 h-9 flex items-center justify-center flex-shrink-0 rounded transition-colors ${
+          className={`w-9 h-9 flex items-center justify-center shrink-0 rounded transition-colors ${
             isListButtonActive
               ? 'bg-primary-600 text-white'
-              : 'bg-bg-secondary text-primary-500 hover:bg-primary-500/30 hover:text-primary-600'
+              : 'bg-bg-secondary text-primary-500 hover-only:hover:bg-primary-500/30 hover-only:hover:text-primary-600'
           }`}
           title={t('common.list')}
         >
@@ -295,7 +295,7 @@ export function RichTextEditor({
         <button
           type="button"
           onClick={() => execCommand('fontSize', '2')}
-          className="w-9 h-9 flex items-center justify-center flex-shrink-0 rounded bg-bg-secondary text-primary-500 hover:bg-primary-500/30 hover:text-primary-600 transition-colors text-sm font-semibold"
+          className="w-9 h-9 flex items-center justify-center shrink-0 rounded-sm bg-bg-secondary text-primary-500 hover-only:hover:bg-primary-500/30 hover-only:hover:text-primary-600 transition-colors text-sm font-semibold"
           title={t('common.small')}
         >
           A
@@ -303,7 +303,7 @@ export function RichTextEditor({
         <button
           type="button"
           onClick={() => execCommand('fontSize', '3')}
-          className="w-9 h-9 flex items-center justify-center flex-shrink-0 rounded bg-bg-secondary text-primary-500 hover:bg-primary-500/30 hover:text-primary-600 transition-colors text-base font-semibold"
+          className="w-9 h-9 flex items-center justify-center shrink-0 rounded-sm bg-bg-secondary text-primary-500 hover-only:hover:bg-primary-500/30 hover-only:hover:text-primary-600 transition-colors text-base font-semibold"
           title={t('common.normal')}
         >
           A
@@ -311,7 +311,7 @@ export function RichTextEditor({
         <button
           type="button"
           onClick={() => execCommand('fontSize', '5')}
-          className="w-9 h-9 flex items-center justify-center flex-shrink-0 rounded bg-bg-secondary text-primary-500 hover:bg-primary-500/30 hover:text-primary-600 transition-colors text-lg font-semibold"
+          className="w-9 h-9 flex items-center justify-center shrink-0 rounded-sm bg-bg-secondary text-primary-500 hover-only:hover:bg-primary-500/30 hover-only:hover:text-primary-600 transition-colors text-lg font-semibold"
           title={t('common.large')}
         >
           A

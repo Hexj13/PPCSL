@@ -118,21 +118,17 @@ export function useFilterHandlers({
       const previousValues = (filters[key] as string[]) || [];
       const newValues = filteredValues.filter((v) => !previousValues.includes(v));
 
+      const optionsSnapshot =
+        key === 'brand_ids'
+          ? getBrandOptions()
+          : key === 'model_ids'
+            ? getModelOptions()
+            : key === 'cities'
+              ? getCityOptions()
+              : [];
       newValues.forEach((value) => {
-        let option: { value: string; label: string; category?: string } | undefined;
-
-        if (key === 'brand_ids') {
-          const brandOptions = getBrandOptions();
-          option = brandOptions.find((opt) => opt.value === value);
-        } else if (key === 'model_ids') {
-          const modelOptions = getModelOptions();
-          option = modelOptions.find((opt) => opt.value === value);
-        } else if (key === 'cities') {
-          const cityOptions = getCityOptions();
-          option = cityOptions.find((opt) => opt.value === value);
-        }
-
-        analytics.selectContent(contentType, value, option?.category);
+        const option = optionsSnapshot.find((opt) => opt.value === value);
+        analytics.selectContentDeferred(contentType, value, option?.category);
       });
 
       updateFilter(key, filteredValues);
@@ -247,23 +243,20 @@ export function useFilterHandlers({
       if (merged.price_lte) searchFilters.price_max = merged.price_lte;
       if (merged.year_gte) searchFilters.year_min = merged.year_gte;
       if (merged.year_lte) searchFilters.year_max = merged.year_lte;
-      analytics.search(undefined, searchFilters);
+      analytics.searchDeferred(undefined, searchFilters);
 
       const newUrl = `/?${result.urlString}`;
       const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('scrollPreserved', 'true');
+        sessionStorage.setItem('scrollToResultsAfterLoad', 'true');
       }
       startTransition(() => {
         router.replace(newUrl, { scroll: false });
         if (typeof window !== 'undefined') {
           requestAnimationFrame(() => {
             window.scrollTo({ top: scrollY, behavior: 'instant' });
-            requestAnimationFrame(() => {
-              requestAnimationFrame(() => {
-                sessionStorage.removeItem('scrollPreserved');
-              });
-            });
+            sessionStorage.removeItem('scrollPreserved');
           });
         }
         if (result.clearBrandIds) setFilters((prev) => ({ ...prev, brand_ids: [] }));
@@ -318,11 +311,7 @@ export function useFilterHandlers({
               window.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
               window.scrollTo({ top: scrollY, behavior: 'instant' });
-              requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                  sessionStorage.removeItem('scrollPreserved');
-                });
-              });
+              sessionStorage.removeItem('scrollPreserved');
             }
           });
         }

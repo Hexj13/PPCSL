@@ -65,6 +65,19 @@ export function ScrollToFiltersButton() {
   }, [searchParams]);
 
   useEffect(() => {
+    let rafId = 0;
+    let lastVisible = false;
+    let lastShowBack = false;
+
+    const updateState = (visible: boolean, showBack: boolean) => {
+      if (visible !== lastVisible || showBack !== lastShowBack) {
+        lastVisible = visible;
+        lastShowBack = showBack;
+        setIsVisible(visible);
+        setShowBackButton(showBack);
+      }
+    };
+
     const handleScroll = () => {
       if (typeof window === 'undefined') return;
 
@@ -81,44 +94,50 @@ export function ScrollToFiltersButton() {
       const isScrolledPastFilters = scrollY > filtersBottom + 100;
       const isNearFilters = scrollY >= filtersTop - 200 && scrollY <= filtersBottom + 100;
 
-      if (isScrolledPastFilters) {
-        if (!hasScrolledToFiltersRef.current) {
-          setIsVisible(true);
-          setShowBackButton(false);
-        } else if (isNearFilters) {
-          setIsVisible(true);
-          setShowBackButton(true);
-        } else {
-          setIsVisible(true);
-          setShowBackButton(false);
-        }
-      } else if (
-        isNearFilters &&
-        hasScrolledToFiltersRef.current &&
-        scrollPositionRef.current > 0
-      ) {
-        setIsVisible(true);
-        setShowBackButton(true);
-      } else if (
+      if (
         scrollY < scrollPositionRef.current - 100 &&
         scrollPositionRef.current > 0 &&
         !hasScrolledToFiltersRef.current
       ) {
         scrollPositionRef.current = 0;
         hasScrolledToFiltersRef.current = false;
-        setIsVisible(false);
-        setShowBackButton(false);
-      } else if (!isScrolledPastFilters && scrollPositionRef.current === 0) {
-        setIsVisible(false);
-        setShowBackButton(false);
+      }
+
+      let visible = false;
+      let showBack = false;
+
+      if (isScrolledPastFilters) {
+        visible = true;
+        showBack = hasScrolledToFiltersRef.current && isNearFilters;
+      } else if (
+        isNearFilters &&
+        hasScrolledToFiltersRef.current &&
+        scrollPositionRef.current > 0
+      ) {
+        visible = true;
+        showBack = true;
+      }
+
+      updateState(visible, showBack);
+    };
+
+    const tick = () => {
+      handleScroll();
+      rafId = 0;
+    };
+
+    const onScroll = () => {
+      if (rafId === 0) {
+        rafId = window.requestAnimationFrame(tick);
       }
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('scroll', onScroll, { passive: true });
     handleScroll();
 
     return () => {
-      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('scroll', onScroll);
+      if (rafId !== 0) window.cancelAnimationFrame(rafId);
     };
   }, []);
 
@@ -162,7 +181,7 @@ export function ScrollToFiltersButton() {
     <div className="fixed bottom-4 right-4 z-40 md:bottom-6 md:right-6">
       <button
         onClick={showBackButton ? scrollBack : scrollToFilters}
-        className="group relative flex items-center justify-center w-14 h-14 md:w-16 md:h-16 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95 touch-manipulation p-0 m-0"
+        className="group relative flex items-center justify-center w-14 h-14 md:w-16 md:h-16 rounded-full shadow-lg hover-only:hover:shadow-xl transition-all duration-300 transform hover-only:hover:scale-105 active:scale-95 touch-manipulation p-0 m-0"
         style={{
           backgroundColor: '#40916B',
           boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
@@ -181,7 +200,7 @@ export function ScrollToFiltersButton() {
       >
         {showBackButton ? (
           <svg
-            className="w-6 h-6 md:w-7 md:h-7 text-white transition-transform group-hover:translate-y-[1px] flex-shrink-0"
+            className="w-6 h-6 md:w-7 md:h-7 text-white transition-transform group-hover:translate-y-px shrink-0"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -197,7 +216,7 @@ export function ScrollToFiltersButton() {
           </svg>
         ) : (
           <svg
-            className="w-6 h-6 md:w-7 md:h-7 text-white transition-transform group-hover:translate-y-[1px] flex-shrink-0"
+            className="w-6 h-6 md:w-7 md:h-7 text-white transition-transform group-hover:translate-y-px shrink-0"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"

@@ -1339,7 +1339,7 @@ async function addTruckBrandsAndModels() {
 
     const existingModels = await modelRepo.find({
       where: { brand_id: brand.id },
-      select: ['id', 'name', 'order', 'vehicle_type'],
+      select: ['id', 'name', 'order', 'vehicle_types'],
     });
 
     const maxOrder =
@@ -1361,8 +1361,8 @@ async function addTruckBrandsAndModels() {
       const modelName = models[i];
       const modelNameLower = modelName.toLowerCase();
       const existingList = existingModelsByName.get(modelNameLower) ?? [];
-      const existingTruck = existingList.find((m) => m.vehicle_type === 'truck');
-      const existingCar = existingList.find((m) => m.vehicle_type === 'car');
+      const existingTruck = existingList.find((m) => m.vehicle_types?.includes('truck'));
+      const existingCar = existingList.find((m) => m.vehicle_types?.includes('car'));
 
       if (existingTruck) {
         existingTruck.order = nextOrder++;
@@ -1373,15 +1373,15 @@ async function addTruckBrandsAndModels() {
           name: modelName,
           brand_id: brand.id,
           order: nextOrder++,
-          vehicle_type: 'truck',
+          vehicle_types: ['truck'],
         });
         modelsToCreate.push(truckModel);
         newModels++;
       } else if (existingList.length > 0) {
         const existingModel = existingList[0];
         existingModel.order = nextOrder++;
-        if (!existingModel.vehicle_type || existingModel.vehicle_type !== 'truck') {
-          existingModel.vehicle_type = 'truck';
+        if (!existingModel.vehicle_types?.includes('truck')) {
+          existingModel.vehicle_types = ['truck'];
         }
         modelsToUpdate.push(existingModel);
         updatedModels++;
@@ -1390,7 +1390,7 @@ async function addTruckBrandsAndModels() {
           name: modelName,
           brand_id: brand.id,
           order: nextOrder++,
-          vehicle_type: 'truck',
+          vehicle_types: ['truck'],
         });
         modelsToCreate.push(model);
         newModels++;

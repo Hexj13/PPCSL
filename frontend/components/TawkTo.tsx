@@ -3,6 +3,8 @@
 import Script from 'next/script';
 import { useEffect, useState } from 'react';
 
+import { useDeferredLoadAfterInteraction } from '@/hooks/useDeferredThirdParty';
+
 const TAWK_PROPERTY_ID = '69830de3fd3ee61c36a89a48';
 const TAWK_WIDGET_ID = '1jgjusgv7';
 
@@ -33,16 +35,19 @@ const getProductionHostname = () => {
 };
 
 export function TawkTo() {
-  const [shouldLoad, setShouldLoad] = useState(false);
+  const [isProd, setIsProd] = useState(false);
   const productionHostname = getProductionHostname();
+  const deferredReady = useDeferredLoadAfterInteraction(4000);
 
   useEffect(() => {
     if (productionHostname) {
-      setShouldLoad(isProductionHostname(window.location.hostname));
+      setIsProd(isProductionHostname(window.location.hostname));
     } else {
-      setShouldLoad(isProduction());
+      setIsProd(isProduction());
     }
   }, [productionHostname]);
+
+  const shouldLoad = isProd && deferredReady;
 
   if (!shouldLoad) return null;
 

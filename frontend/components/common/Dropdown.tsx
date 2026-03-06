@@ -1,6 +1,15 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState, useDeferredValue } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useDeferredValue,
+} from 'react';
+import { createPortal } from 'react-dom';
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { Button } from '@/ui';
@@ -22,8 +31,11 @@ interface DropdownProps {
   showActionButtons?: boolean;
   error?: boolean;
   autoPosition?: boolean;
+  renderMenuInPortal?: boolean;
   rightIcon?: React.ReactNode;
 }
+
+const PORTAL_MENU_MAX_HEIGHT = 384;
 
 function DropdownComponent({
   value,
@@ -37,6 +49,7 @@ function DropdownComponent({
   showActionButtons = false,
   error = false,
   autoPosition = false,
+  renderMenuInPortal = false,
   rightIcon,
 }: DropdownProps) {
   const { t } = useTranslation();
@@ -46,6 +59,13 @@ function DropdownComponent({
   const [tempValue, setTempValue] = useState<string>(value);
   const [openUpwards, setOpenUpwards] = useState(false);
   const [isPositioned, setIsPositioned] = useState(false);
+  const [portalPosition, setPortalPosition] = useState<{
+    top: number;
+    bottom: number;
+    left: number;
+    width: number;
+    openUp: boolean;
+  } | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -60,10 +80,45 @@ function DropdownComponent({
     }
   }, [isOpen, value, showActionButtons]);
 
-  useEffect(() => {
+  const updatePortalPosition = useCallback(() => {
+    if (!dropdownRef.current || !isOpen) return;
+    const rect = dropdownRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const spaceBelow = viewportHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    const openUp =
+      (autoPosition || renderMenuInPortal) &&
+      spaceBelow < PORTAL_MENU_MAX_HEIGHT &&
+      spaceAbove > spaceBelow;
+    setPortalPosition({
+      top: rect.top,
+      bottom: rect.bottom,
+      left: rect.left,
+      width: rect.width,
+      openUp,
+    });
+    if (renderMenuInPortal) {
+      setOpenUpwards(openUp);
+      setIsPositioned(true);
+    }
+  }, [isOpen, autoPosition, renderMenuInPortal]);
+
+  useLayoutEffect(() => {
     if (!isOpen) {
       setIsPositioned(false);
+      setPortalPosition(null);
       return;
+    }
+
+    if (renderMenuInPortal) {
+      updatePortalPosition();
+      const scrollParent = dropdownRef.current?.closest('.overflow-y-auto, .overflow-auto');
+      window.addEventListener('resize', updatePortalPosition);
+      scrollParent?.addEventListener('scroll', updatePortalPosition, true);
+      return () => {
+        window.removeEventListener('resize', updatePortalPosition);
+        scrollParent?.removeEventListener('scroll', updatePortalPosition, true);
+      };
     }
 
     if (autoPosition && dropdownRef.current && menuRef.current) {
@@ -90,11 +145,14 @@ function DropdownComponent({
       setOpenUpwards(false);
       setIsPositioned(true);
     }
-  }, [autoPosition, isOpen, options.length]);
+  }, [autoPosition, isOpen, options.length, renderMenuInPortal, updatePortalPosition]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const inTrigger = dropdownRef.current?.contains(target);
+      const inMenu = renderMenuInPortal && menuRef.current?.contains(target);
+      if (!inTrigger && !inMenu) {
         setIsOpen(false);
         setSearchQuery('');
       }
@@ -116,7 +174,7 @@ function DropdownComponent({
     } else {
       document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [isOpen, searchable]);
+  }, [isOpen, searchable, renderMenuInPortal]);
 
   const selectedOption = useMemo(
     () => options.find((opt) => opt.value === value) || null,
@@ -127,15 +185,32 @@ function DropdownComponent({
     [selectedOption, placeholder],
   );
 
-  const filteredOptions = useMemo(
-    () =>
-      searchable && deferredSearchQuery
-        ? options.filter((option) =>
-            option.label.toLowerCase().includes(deferredSearchQuery.toLowerCase()),
-          )
-        : options,
-    [options, searchable, deferredSearchQuery],
+  const optionsWithLower = useMemo(
+    () => options.map((opt) => ({ ...opt, lowerLabel: opt.label.toLowerCase() })),
+    [options],
   );
+  const filteredOptions = useMemo(() => {
+    if (!searchable || !deferredSearchQuery) return optionsWithLower;
+    const q = deferredSearchQuery.toLowerCase();
+    return optionsWithLower.filter((opt) => opt.lowerLabel.includes(q));
+  }, [optionsWithLower, searchable, deferredSearchQuery]);
+
+  const RENDER_CHUNK = 50;
+  const [visibleCount, setVisibleCount] = useState(RENDER_CHUNK);
+  const optionsToRender =
+    filteredOptions.length <= RENDER_CHUNK
+      ? filteredOptions
+      : filteredOptions.slice(0, visibleCount);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setVisibleCount(RENDER_CHUNK);
+      return;
+    }
+    if (filteredOptions.length <= RENDER_CHUNK) return;
+    const id = requestAnimationFrame(() => setVisibleCount(filteredOptions.length));
+    return () => cancelAnimationFrame(id);
+  }, [isOpen, filteredOptions.length]);
 
   const handleSelect = useCallback(
     (optionValue: string) => {
@@ -206,21 +281,49 @@ function DropdownComponent({
         onInputFocus={handleInputFocus}
         onToggle={handleToggleOpen}
       />
-      {isOpen && !disabled && (
-        <DropdownMenu
-          menuRef={menuRef}
-          openUpwards={openUpwards}
-          isPositioned={isPositioned}
-          filteredOptions={filteredOptions}
-          value={value}
-          tempValue={tempValue}
-          showActionButtons={showActionButtons}
-          onSelect={handleSelect}
-          onReset={handleReset}
-          onConfirm={handleConfirm}
-          t={t}
-        />
-      )}
+      {isOpen &&
+        !disabled &&
+        (renderMenuInPortal && portalPosition && typeof document !== 'undefined'
+          ? createPortal(
+              <DropdownMenu
+                menuRef={menuRef}
+                openUpwards={openUpwards}
+                isPositioned={isPositioned}
+                filteredOptions={optionsToRender}
+                value={value}
+                tempValue={tempValue}
+                showActionButtons={showActionButtons}
+                onSelect={handleSelect}
+                onReset={handleReset}
+                onConfirm={handleConfirm}
+                t={t}
+                portalStyle={{
+                  position: 'fixed',
+                  left: portalPosition.left,
+                  width: portalPosition.width,
+                  ...(portalPosition.openUp
+                    ? { bottom: window.innerHeight - portalPosition.top + 4 }
+                    : { top: portalPosition.bottom + 4 }),
+                  zIndex: 10050,
+                }}
+              />,
+              document.body,
+            )
+          : !renderMenuInPortal && (
+              <DropdownMenu
+                menuRef={menuRef}
+                openUpwards={openUpwards}
+                isPositioned={isPositioned}
+                filteredOptions={optionsToRender}
+                value={value}
+                tempValue={tempValue}
+                showActionButtons={showActionButtons}
+                onSelect={handleSelect}
+                onReset={handleReset}
+                onConfirm={handleConfirm}
+                t={t}
+              />
+            ))}
     </div>
   );
 }
@@ -287,7 +390,7 @@ function DropdownTrigger({
       suppressHydrationWarning
     >
       {rightIcon && (
-        <span className="flex-shrink-0" suppressHydrationWarning>
+        <span className="shrink-0" suppressHydrationWarning>
           {rightIcon}
         </span>
       )}
@@ -300,7 +403,7 @@ function DropdownTrigger({
       </span>
       <DropdownChevron
         isOpen={isOpen}
-        className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-900 group-hover:text-primary-700 transition-colors duration-200 flex-shrink-0 pointer-events-none"
+        className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-900 group-hover:text-primary-700 transition-colors duration-200 shrink-0 pointer-events-none"
         style={{ right: '16px' }}
       />
     </button>
@@ -319,6 +422,7 @@ interface DropdownMenuProps {
   onReset: () => void;
   onConfirm: () => void;
   t: (_key: string) => string;
+  portalStyle?: React.CSSProperties;
 }
 
 function DropdownMenu({
@@ -333,13 +437,18 @@ function DropdownMenu({
   onReset,
   onConfirm,
   t,
+  portalStyle,
 }: DropdownMenuProps) {
+  const isPortaled = !!portalStyle;
   return (
     <div
       ref={menuRef}
-      className={`absolute z-[100] w-full bg-white border-2 border-primary-500/30 rounded-lg shadow-xl ${
-        openUpwards ? 'bottom-full mb-1' : 'top-full mt-1'
+      className={`bg-white border-2 border-primary-500/30 rounded-lg shadow-xl ${
+        isPortaled
+          ? ''
+          : `absolute z-100 w-full ${openUpwards ? 'bottom-full mb-1' : 'top-full mt-1'}`
       } ${!isPositioned ? 'opacity-0 pointer-events-none' : ''}`}
+      style={portalStyle}
     >
       <div className="max-h-96 overflow-auto scrollbar-custom">
         {filteredOptions.length > 0 ? (
@@ -352,7 +461,7 @@ function DropdownMenu({
                 key={option.value}
                 type="button"
                 onClick={() => onSelect(option.value)}
-                className={`w-full px-4 py-3 text-left text-sm text-text-primary hover:bg-primary-500/10 transition-colors duration-150 flex items-center justify-between ${
+                className={`w-full px-4 py-3 text-left text-sm text-text-primary hover-only:hover:bg-primary-500/10 transition-colors duration-150 flex items-center justify-between ${
                   isSelected ? 'bg-primary-500/20 font-semibold' : ''
                 }`}
               >
@@ -371,7 +480,7 @@ function DropdownMenu({
           <button
             type="button"
             onClick={onReset}
-            className="px-3 py-1.5 text-sm text-text-primary hover:text-primary-500 transition-colors duration-150"
+            className="px-3 py-1.5 text-sm text-text-primary hover-only:hover:text-primary-500 transition-colors duration-150"
           >
             {t('common.reset')}
           </button>

@@ -134,14 +134,14 @@ function MyListingsModals({
                 setIsCloseConfirmOpen(false);
                 setListingToClose(null);
               }}
-              className="close-confirm-btn flex-1 min-h-[48px] h-12 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-gray-500/40 hover:border-gray-500/60 bg-gray-500/20 text-text-secondary font-semibold text-base hover:text-text-primary transition-colors duration-200 select-none"
+              className="close-confirm-btn flex-1 min-h-[48px] h-12 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-gray-500/40 hover-only:hover:border-gray-500/60 bg-gray-500/20 text-text-secondary font-semibold text-base hover-only:hover:text-text-primary transition-colors duration-200 select-none"
             >
               {t('myListings.closeConfirmCancel')}
             </button>
             <button
               type="button"
               onClick={handleCloseConfirm}
-              className="close-confirm-btn flex-1 min-h-[48px] h-12 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-primary-600 hover:border-primary-700 bg-primary-500/20 text-primary-800 font-semibold text-base hover:bg-primary-500/30 transition-colors duration-200 select-none"
+              className="close-confirm-btn flex-1 min-h-[48px] h-12 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-primary-600 hover-only:hover:border-primary-700 bg-primary-500/20 text-primary-800 font-semibold text-base hover-only:hover:bg-primary-500/30 transition-colors duration-200 select-none"
             >
               {t('myListings.closeConfirmOk')}
             </button>
@@ -336,13 +336,13 @@ function MyListingsContent(props: ContentProps) {
           >
             {isRefreshing ? (
               <>
-                <div className="w-3.5 h-3.5 md:w-4 md:h-4 border-2 border-primary-700 border-t-transparent rounded-full animate-spin flex-shrink-0"></div>
+                <div className="w-3.5 h-3.5 md:w-4 md:h-4 border-2 border-primary-700 border-t-transparent rounded-full animate-spin shrink-0"></div>
                 {t('myListings.refreshing')}
               </>
             ) : (
               <>
                 <svg
-                  className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+                  className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -365,28 +365,30 @@ function MyListingsContent(props: ContentProps) {
           {showBoardLink && user?.boardSlug && (
             <Link
               href={`/board/${user.boardSlug}`}
-              className="w-full sm:w-auto h-[48px] text-primary-700 font-medium text-base hover:text-primary-900 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 rounded-lg border-2 border-primary-700 hover:border-primary-900 bg-primary-500/10 select-none inline-block"
+              className="w-full sm:w-auto min-w-0 h-[48px] text-primary-700 font-medium text-base hover-only:hover:text-primary-900 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 rounded-lg border-2 border-primary-700 hover-only:hover:border-primary-900 bg-primary-500/10 select-none overflow-hidden"
             >
-              <svg
-                className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                />
-              </svg>
+              <span className="flex items-center justify-center shrink-0 w-5 h-5 md:w-6 md:h-6">
+                <svg
+                  className="w-3.5 h-3.5 md:w-4 md:h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
+                </svg>
+              </span>
               {t('myListings.myBoard')}
             </Link>
           )}
@@ -401,7 +403,7 @@ function MyListingsContent(props: ContentProps) {
               className="w-full sm:w-auto"
             >
               <svg
-                className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+                className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -419,10 +421,10 @@ function MyListingsContent(props: ContentProps) {
           {showCreateLink && (
             <Link
               href="/listings/new"
-              className="w-full sm:w-auto h-[48px] text-primary-700 font-medium text-base hover:text-primary-900 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 rounded-lg border-2 border-primary-700 hover:border-primary-900 bg-primary-500/10 select-none inline-block text-center"
+              className="w-full sm:w-auto h-[48px] text-primary-700 font-medium text-base hover-only:hover:text-primary-900 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 rounded-lg border-2 border-primary-700 hover-only:hover:border-primary-900 bg-primary-500/10 select-none inline-block text-center"
             >
               <svg
-                className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+                className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"

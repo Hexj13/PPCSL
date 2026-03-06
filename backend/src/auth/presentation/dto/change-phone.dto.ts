@@ -8,7 +8,7 @@ export class ChangePhoneRequestDto {
     example: '+37370123456',
     description: 'New phone number',
   })
-  @IsString({ message: 'Телефонскиот број е задолжителен' })
+  @IsString({ message: 'errors.phoneRequired' })
   @IsPhone()
   phone: string;
 }
@@ -18,13 +18,13 @@ export class ChangePhoneVerifyDto {
     example: '+37370123456',
     description: 'New phone number',
   })
-  @IsString({ message: 'Телефонскиот број е задолжителен' })
+  @IsString({ message: 'errors.phoneRequired' })
   phone: string;
 
   @ApiProperty({
     example: '123456',
     description: 'SMS verification code',
   })
-  @IsString({ message: 'Кодот е задолжителен' })
+  @IsString({ message: 'errors.codeRequired' })
   code: string;
 }

@@ -34,7 +34,7 @@ async function checkTractorBrands() {
     });
 
     if (brand) {
-      const truckModels = brand.models?.filter((m) => m.vehicle_type === 'truck') || [];
+      const truckModels = brand.models?.filter((m) => m.vehicle_types?.includes('truck')) || [];
       console.log(`✅ ${brandName}:`);
       console.log(`   - vehicle_types: ${JSON.stringify(brand.vehicle_types)}`);
       console.log(`   - Total models: ${brand.models?.length || 0}`);

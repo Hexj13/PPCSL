@@ -3,6 +3,7 @@
 import Script from 'next/script';
 import { useEffect, useState } from 'react';
 
+import { useDeferredLoadAfterIdle } from '@/hooks/useDeferredThirdParty';
 import { useTranslation } from '@/hooks/useTranslation';
 
 const GTM_ID = 'GTM-K527X5WK';
@@ -34,16 +35,19 @@ const getProductionHostname = () => {
 };
 
 export function GoogleTagManager() {
-  const [shouldLoad, setShouldLoad] = useState(false);
+  const [isProd, setIsProd] = useState(false);
   const productionHostname = getProductionHostname();
+  const deferredReady = useDeferredLoadAfterIdle(2500);
 
   useEffect(() => {
     if (productionHostname) {
-      setShouldLoad(isProductionHostname(window.location.hostname));
+      setIsProd(isProductionHostname(window.location.hostname));
     } else {
-      setShouldLoad(isProduction());
+      setIsProd(isProduction());
     }
   }, [productionHostname]);
+
+  const shouldLoad = isProd && deferredReady;
 
   return (
     <div suppressHydrationWarning>

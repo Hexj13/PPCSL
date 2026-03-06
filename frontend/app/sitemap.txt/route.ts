@@ -1,29 +1,27 @@
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000').replace(/\/$/, '');
+import { fetchSitemapUpstream } from '../sitemap-upstream';
+
+const UPSTREAM_UNAVAILABLE = 'Upstream sitemap unavailable';
 
 export async function GET() {
-  try {
-    const response = await fetch(`${API_URL}/api/sitemap.txt`, {
-      cache: 'no-store',
-      headers: { Accept: 'text/plain' },
+  const response = await fetchSitemapUpstream('/api/sitemap.txt', 'text/plain');
+
+  if (!response || !response.ok) {
+    return new Response(UPSTREAM_UNAVAILABLE, {
+      status: 502,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
     });
-
-    if (!response.ok) {
-      return new Response('', { status: 502 });
-    }
-
-    const txt = await response.text();
-
-    return new Response(txt, {
-      status: 200,
-      headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-        'Cache-Control': 'public, max-age=3600, s-maxage=3600',
-      },
-    });
-  } catch {
-    return new Response('', { status: 502 });
   }
+
+  const txt = await response.text();
+
+  return new Response(txt, {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+    },
+  });
 }

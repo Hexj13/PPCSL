@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, startTransition, useCallback, useRef } from 'react';
 
+import { RESET_SEARCH_EVENT } from '@/components/layout/Header/HeaderLogo';
 import { SaveFilterModal } from '@/components/modals/SaveFilterModal';
 import { useBrandsAndModels } from '@/hooks/useBrandsAndModels';
 import { useCities } from '@/hooks/useCities';
@@ -11,19 +12,14 @@ import { useFilterOptions } from '@/hooks/useFilterOptions';
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { useSearchFilterFlags } from '@/hooks/useSearchFilterFlags';
 import { useSearchFilters, type FilterState } from '@/hooks/useSearchFilters';
-import {
-  useModelsForBrands,
-  useQuickFilterAppliedEffect,
-  useVehicleTypeFromUrl,
-} from '@/hooks/useSearchFiltersEffects';
+import { useModelsForBrands, useVehicleTypeFromUrl } from '@/hooks/useSearchFiltersEffects';
 import { useSearchFiltersSync } from '@/hooks/useSearchFiltersSync';
 import { useSearchTabs } from '@/hooks/useSearchTabs';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useVehicleType } from '@/hooks/useVehicleType';
-import { analytics } from '@/lib/analytics';
 import type { User } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
-import { createSlug, isBrowser } from '@/lib/utils';
+import { isBrowser } from '@/lib/utils';
 
 import { AdvancedFilters } from './search-filters/AdvancedFilters';
 import { BasicFilters } from './search-filters/BasicFilters';
@@ -43,8 +39,8 @@ export function SearchFilters() {
   const [isSearching, setIsSearching] = useState(false);
   const prevSearchParamsRef = useRef<string>('');
   const [lastAppliedFilters, setLastAppliedFilters] = useState<FilterState | null>(null);
-  const isApplyingQuickFilterRef = useRef(false);
-  const [isApplyingQuickFilter, setIsApplyingQuickFilter] = useState(false);
+  const isInternalSearchRef = useRef(false);
+  const preserveTabOnResetRef = useRef(false);
   const prevUserRef = useRef<User | null>(user);
   const [showSaveModal, setShowSaveModal] = useState(false);
 
@@ -58,13 +54,19 @@ export function SearchFilters() {
     setFilters,
   } = useSearchFilters();
 
-  const { hasBasicFilters, hasAdvancedFiltersActive, hasEquipmentFiltersActive } =
-    useSearchFilterFlags(filters, currentYear);
+  const {
+    hasBasicFilters,
+    hasAdvancedFiltersActive,
+    hasEquipmentFiltersActive,
+    hasPopularFiltersActive,
+  } = useSearchFilterFlags(filters, currentYear);
 
   const tabs = useSearchTabs({
     hasBasicFilters,
     hasAdvancedFiltersActive,
     hasEquipmentFiltersActive,
+    isInternalSearchRef,
+    preserveTabOnNextSyncRef: preserveTabOnResetRef,
   });
 
   const scrollTabsToStart = useCallback(() => {
@@ -76,9 +78,20 @@ export function SearchFilters() {
     resetFilters,
     setLastAppliedFilters,
     setActiveTab: tabs.setActiveTab,
-    isApplyingQuickFilterRef,
     scrollTabsToStart,
   });
+
+  useEffect(() => {
+    const handler = () => {
+      resetFilters();
+      setLastAppliedFilters(null);
+      tabs.setActiveTab('basic');
+      setVehicleTypeWithStorage('car');
+      scrollTabsToStart();
+    };
+    window.addEventListener(RESET_SEARCH_EVENT, handler);
+    return () => window.removeEventListener(RESET_SEARCH_EVENT, handler);
+  }, [resetFilters, tabs, setVehicleTypeWithStorage, scrollTabsToStart]);
 
   const {
     brands,
@@ -94,15 +107,7 @@ export function SearchFilters() {
     setModelsFromHook,
     setFilters,
   );
-  useQuickFilterAppliedEffect(
-    searchParams,
-    filters,
-    brands,
-    isApplyingQuickFilterRef,
-    setLastAppliedFilters,
-  );
-
-  const { isSyncingFromUrl, isInternalSearchRef } = useSearchFiltersSync({
+  const { isSyncingFromUrl } = useSearchFiltersSync({
     searchParams,
     filters,
     setFilters,
@@ -110,11 +115,11 @@ export function SearchFilters() {
     models,
     setLastAppliedFilters,
     hasActiveFilters,
-    isApplyingQuickFilterRef,
+    isInternalSearchRef,
   });
 
   const { visible: showSearchLoader } = useLoadingState({
-    isLoading: isSearching || (isSyncingFromUrl && !isApplyingQuickFilter),
+    isLoading: isSearching || isSyncingFromUrl,
   });
 
   const filterOptions = useFilterOptions({
@@ -162,55 +167,6 @@ export function SearchFilters() {
   }, [searchParams, isSearching]);
 
   useEffect(() => {
-    if (!isSyncingFromUrl) {
-      isApplyingQuickFilterRef.current = false;
-      setIsApplyingQuickFilter(false);
-    }
-  }, [isSyncingFromUrl]);
-
-  const applyPopularFilter = useCallback(
-    (brandName: string, modelName?: string) => {
-      analytics.quickFilter(brandName, modelName);
-
-      const brandSlug = createSlug(brandName);
-      const modelSlug = modelName ? createSlug(modelName) : undefined;
-
-      const params = new URLSearchParams();
-      if (vehicleType !== 'car') {
-        params.set('vehicleType', vehicleType);
-      }
-      params.set('brand', brandSlug);
-      if (modelSlug) {
-        params.set('model', modelSlug);
-      }
-
-      isApplyingQuickFilterRef.current = true;
-      setIsApplyingQuickFilter(true);
-
-      const newUrl = `/?${params.toString()}`;
-      const scrollY = isBrowser ? window.scrollY : 0;
-      if (isBrowser) {
-        sessionStorage.setItem('scrollPreserved', 'true');
-      }
-
-      startTransition(() => {
-        router.replace(newUrl, { scroll: false });
-        if (isBrowser) {
-          requestAnimationFrame(() => {
-            window.scrollTo({ top: scrollY, behavior: 'instant' });
-            requestAnimationFrame(() => {
-              requestAnimationFrame(() => {
-                sessionStorage.removeItem('scrollPreserved');
-              });
-            });
-          });
-        }
-      });
-    },
-    [router, vehicleType],
-  );
-
-  useEffect(() => {
     const prevUser = prevUserRef.current;
     prevUserRef.current = user;
 
@@ -254,33 +210,6 @@ export function SearchFilters() {
     return { ...filters, vehicleType: vehicleType || 'car' };
   };
 
-  const isQuickFilterActive = useCallback(
-    (brandName: string, modelName?: string) => {
-      const brandParam = searchParams.get('brand');
-      const modelParam = searchParams.get('model');
-
-      if (!brandParam) return false;
-
-      const brandSlug = createSlug(brandName);
-      const brandSlugs = brandParam.split(',').map((s) => s.trim().toLowerCase());
-
-      const brandMatches =
-        brandSlugs.includes(brandSlug) || brandSlugs.includes(brandName.toLowerCase());
-
-      if (!brandMatches) return false;
-
-      if (modelName) {
-        if (!modelParam) return false;
-        const modelSlug = createSlug(modelName);
-        const modelSlugs = modelParam.split(',').map((s) => s.trim().toLowerCase());
-        return modelSlugs.includes(modelSlug) || modelSlugs.includes(modelName.toLowerCase());
-      }
-
-      return !modelParam || modelParam === '';
-    },
-    [searchParams],
-  );
-
   return (
     <form
       id="search-filters"
@@ -296,10 +225,14 @@ export function SearchFilters() {
           />
           <SearchTabs
             activeTab={tabs.activeTab}
-            onTabChange={tabs.setActiveTab}
+            onTabChange={(tab) => {
+              tabs.setActiveTab(tab);
+              tabs.scrollTabToStart(tab);
+            }}
             hasBasicFilters={hasBasicFilters}
             hasAdvancedFiltersActive={hasAdvancedFiltersActive}
             hasEquipmentFiltersActive={hasEquipmentFiltersActive}
+            hasPopularFiltersActive={hasPopularFiltersActive}
             basicTabRef={tabs.basicTabRef}
             advancedTabRef={tabs.advancedTabRef}
             equipmentTabRef={tabs.equipmentTabRef}
@@ -357,15 +290,20 @@ export function SearchFilters() {
 
       <div className={tabs.activeTab === 'popular' ? '' : 'hidden'}>
         <PopularFilters
-          isQuickFilterActive={isQuickFilterActive}
-          onApplyFilter={applyPopularFilter}
-          onReset={() => handlers.handleReset(false)}
+          key={vehicleType}
+          brands={brands}
+          models={models}
+          filters={filters}
+          setFilters={setFilters}
           vehicleType={vehicleType}
         />
       </div>
 
       <SearchFormActions
-        onReset={() => handlers.handleReset(false)}
+        onReset={() => {
+          preserveTabOnResetRef.current = true;
+          handlers.handleReset(false);
+        }}
         onSaveClick={() => {
           if (userForUi) {
             setShowSaveModal(true);

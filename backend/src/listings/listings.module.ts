@@ -16,6 +16,7 @@ import { CloseAllUserListingsUseCase } from './application/use-cases/close-all-u
 import { CloseListingUseCase } from './application/use-cases/close-listing.use-case';
 import { CreateListingUseCase } from './application/use-cases/create-listing.use-case';
 import { CreatePromotionHistoryUseCase } from './application/use-cases/create-promotion-history.use-case';
+import { ExpirePromotionsUseCase } from './application/use-cases/expire-promotions.use-case';
 import { FindByVinUseCase } from './application/use-cases/find-by-vin.use-case';
 import { FindSimilarUseCase } from './application/use-cases/find-similar.use-case';
 import { GetActiveUserListingsUseCase } from './application/use-cases/get-active-user-listings.use-case';
@@ -95,6 +96,7 @@ import { ListingsController } from './presentation/listings.controller';
     UpdatePromotionHistoryEndDateUseCase,
     CloseAllUserListingsUseCase,
     AutoCloseOldListingsUseCase,
+    ExpirePromotionsUseCase,
     CronSecretGuard,
   ],
   exports: [ListingsService, LISTING_CACHE],

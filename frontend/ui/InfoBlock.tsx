@@ -26,7 +26,7 @@ export function InfoBlock({ children, title, variant = 'info', className = '' }:
 function InfoIcon() {
   return (
     <svg
-      className="w-5 h-5 text-primary-900 flex-shrink-0 mt-0.5"
+      className="w-5 h-5 text-primary-900 shrink-0 mt-0.5"
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"
@@ -44,7 +44,7 @@ function InfoIcon() {
 function WarningIcon() {
   return (
     <svg
-      className="w-5 h-5 text-primary-900 flex-shrink-0 mt-0.5"
+      className="w-5 h-5 text-primary-900 shrink-0 mt-0.5"
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"

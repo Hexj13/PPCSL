@@ -60,7 +60,7 @@ async function checkAllCountriesBrands() {
   });
 
   const allModels = await modelRepo.find({
-    select: ['id', 'name', 'brand_id', 'vehicle_type'],
+    select: ['id', 'name', 'brand_id', 'vehicle_types'],
     relations: ['brand'],
   });
 
@@ -98,7 +98,7 @@ async function checkAllCountriesBrands() {
         totalFound++;
         const brandId = typeof brand.id === 'string' ? parseInt(brand.id, 10) : brand.id;
         const models = modelsByBrand.get(brandId) || [];
-        const truckModels = models.filter((m) => m.vehicle_type === 'truck');
+        const truckModels = models.filter((m) => m.vehicle_types?.includes('truck'));
         const hasTruckType = brand.vehicle_types?.includes('truck') || false;
 
         if (!hasTruckType && truckModels.length === 0) {

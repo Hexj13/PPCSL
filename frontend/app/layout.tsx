@@ -175,7 +175,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <div className="min-h-screen flex flex-col">
               <Header />
               <OfflineBanner />
-              <main className="flex-grow container mx-auto px-3 sm:px-4 py-6 md:py-8 register-page-main">
+              <main className="grow container mx-auto px-3 sm:px-4 py-6 md:py-8 register-page-main">
                 {children}
               </main>
               <Footer />
@@ -184,10 +184,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               position="top-right"
               containerStyle={{
                 top: '80px',
+                zIndex: 10000,
               }}
               toastOptions={{
                 style: {
-                  zIndex: 40,
+                  zIndex: 10000,
                   minWidth: '320px',
                   maxWidth: '400px',
                   width: '100%',

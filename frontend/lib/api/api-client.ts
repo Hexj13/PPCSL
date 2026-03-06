@@ -219,8 +219,15 @@ async function showToastForError(error: AxiosError): Promise<void> {
   toast.error(errorMessage);
 }
 
+function isDuplicateNameError(error: AxiosError): boolean {
+  const status = error.response?.status;
+  const code = error.response?.data && (error.response.data as { code?: string }).code;
+  return status === 409 || code === 'DUPLICATE_NAME' || code === 'DUPLICATE_NAME_ACTIVE_EXISTS';
+}
+
 async function showErrorToastAndSentry(error: AxiosError): Promise<void> {
   if (error.config?.headers['X-Skip-Error-Handling']) return;
+  if (isDuplicateNameError(error)) return;
   await showToastForError(error);
   if (typeof window === 'undefined') return;
   if (error.response?.status && error.response.status >= 500) {

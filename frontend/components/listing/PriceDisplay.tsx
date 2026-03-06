@@ -71,7 +71,7 @@ export function PriceDisplay({
       {approxPriceBelow && approxBlock}
       {urgent && (
         <div className="mt-1.5 md:mt-2">
-          <span className="inline-flex items-center gap-1 px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-sm font-semibold bg-primary-500/20 border border-primary-500/40 text-primary-300 shadow-sm">
+          <span className="inline-flex items-center gap-1 px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-sm font-semibold bg-primary-500/20 border border-primary-500/40 text-primary-300 shadow-xs">
             <span>🔥</span>
             <span>{t('listings.urgent')}</span>
           </span>

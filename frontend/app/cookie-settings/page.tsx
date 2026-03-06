@@ -150,7 +150,7 @@ export default function CookieSettingsPage() {
           {t('cookieSettings.moreInfo.description')}{' '}
           <Link
             href="/privacy"
-            className="text-primary-900 hover:text-primary-600 underline transition-colors"
+            className="text-primary-900 hover-only:hover:text-primary-600 underline transition-colors"
           >
             {t('cookieSettings.privacyPolicy')}
           </Link>

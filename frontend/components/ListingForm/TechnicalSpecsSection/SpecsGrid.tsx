@@ -21,6 +21,7 @@ export function SpecsGrid({
   vehicleType = 'car',
   handleWheel,
 }: ListingFormSectionProps) {
+  const isElectric = formData.vehicle.fuel === 'Electric';
   return (
     <div className="border-t border-primary-700/30 pt-6 mb-6">
       <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-900">
@@ -34,7 +35,7 @@ export function SpecsGrid({
               height="16"
               viewBox="0 0 512.002 512.002"
               fill="currentColor"
-              className="flex-shrink-0"
+              className="shrink-0"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -64,9 +65,14 @@ export function SpecsGrid({
             value={formData.vehicle.fuel}
             onChange={(value) => {
               clearError('vehicle.fuel');
+              if (value === 'Electric') clearError('vehicle.engine_displ_l');
               setFormData((prev) => ({
                 ...prev,
-                vehicle: { ...prev.vehicle, fuel: value },
+                vehicle: {
+                  ...prev.vehicle,
+                  fuel: value,
+                  ...(value === 'Electric' ? { engine_displ_l: '' } : {}),
+                },
               }));
             }}
             placeholder={t('searchFilters.selectFuel')}
@@ -78,15 +84,16 @@ export function SpecsGrid({
         <div>
           <label className="block text-sm font-semibold mb-2 text-primary-700 whitespace-nowrap">
             {t('listings.engineDisplacementLabel')}
-            <RequiredAsterisk filled={!!formData.vehicle.engine_displ_l.trim()} />
+            {!isElectric && <RequiredAsterisk filled={!!formData.vehicle.engine_displ_l.trim()} />}
           </label>
           <input
             type="text"
-            required
+            required={!isElectric}
             step="0.1"
             min="0"
             max="99"
             value={formData.vehicle.engine_displ_l}
+            disabled={isElectric}
             data-testid="listing-form-engine-displacement"
             onChange={(e) => {
               clearError('vehicle.engine_displ_l');
@@ -125,7 +132,7 @@ export function SpecsGrid({
               }
             }}
             className={`input-field h-[48px] ${errors['vehicle.engine_displ_l'] ? 'border-red-500 focus:border-red-500 ' : ''}`}
-            placeholder={t('listings.engineDisplacementPlaceholder')}
+            placeholder={isElectric ? '—' : t('listings.engineDisplacementPlaceholder')}
             title={t('listings.engineDisplacementTitle')}
           />
         </div>
@@ -203,7 +210,7 @@ export function SpecsGrid({
               height="16"
               viewBox="0 0 512 512"
               fill="currentColor"
-              className="flex-shrink-0"
+              className="shrink-0"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -248,7 +255,7 @@ export function SpecsGrid({
                 height="16"
                 viewBox="0 0 491.532 491.532"
                 fill="currentColor"
-                className="flex-shrink-0"
+                className="shrink-0"
                 xmlns="http://www.w3.org/2000/svg"
               >
                 <path
@@ -293,7 +300,7 @@ export function SpecsGrid({
               height="16"
               viewBox="0 0 512 512"
               fill="currentColor"
-              className="flex-shrink-0"
+              className="shrink-0"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -336,7 +343,7 @@ export function SpecsGrid({
               height="16"
               viewBox="0 0 512.009 512.009"
               fill="currentColor"
-              className="flex-shrink-0"
+              className="shrink-0"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path

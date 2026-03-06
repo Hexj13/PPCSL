@@ -21,12 +21,17 @@ export function Pagination({
     return null;
   }
 
+  const handlePageChange = (newPage: number) => {
+    onPageChange(newPage);
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  };
+
   return (
     <div className="flex justify-center items-center gap-4 mt-6 md:mt-8">
       <button
-        onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+        onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
         disabled={currentPage === 1 || disabled}
-        className="px-4 py-2 rounded-lg bg-primary-500/10 border-2 border-primary-700 text-primary-700 hover:text-primary-900 hover:border-primary-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="px-4 py-2 rounded-lg bg-primary-500/10 border-2 border-primary-700 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         {t('common.previous')}
       </button>
@@ -34,9 +39,9 @@ export function Pagination({
         {t('common.pageOf', { page: currentPage, totalPages })}
       </span>
       <button
-        onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+        onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
         disabled={currentPage === totalPages || disabled}
-        className="px-4 py-2 rounded-lg bg-primary-500/10 border-2 border-primary-700 text-primary-700 hover:text-primary-900 hover:border-primary-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="px-4 py-2 rounded-lg bg-primary-500/10 border-2 border-primary-700 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         {t('common.next')}
       </button>

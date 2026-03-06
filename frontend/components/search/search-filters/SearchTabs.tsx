@@ -8,6 +8,7 @@ interface SearchTabsProps {
   hasBasicFilters: boolean;
   hasAdvancedFiltersActive: boolean;
   hasEquipmentFiltersActive: boolean;
+  hasPopularFiltersActive: boolean;
   basicTabRef: React.RefObject<HTMLButtonElement | null>;
   advancedTabRef: React.RefObject<HTMLButtonElement | null>;
   equipmentTabRef: React.RefObject<HTMLButtonElement | null>;
@@ -25,6 +26,7 @@ export function SearchTabs({
   hasBasicFilters,
   hasAdvancedFiltersActive,
   hasEquipmentFiltersActive,
+  hasPopularFiltersActive,
   basicTabRef,
   advancedTabRef,
   equipmentTabRef,
@@ -48,8 +50,8 @@ export function SearchTabs({
           <button
             ref={basicTabRef}
             type="button"
-            onClick={() => onTabChange('basic')}
-            className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap ${
+            onClick={() => activeTab !== 'basic' && onTabChange('basic')}
+            className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap ${
               activeTab === 'basic'
                 ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
                 : 'text-primary-900 hover-only:hover:bg-primary-500/10'
@@ -64,8 +66,8 @@ export function SearchTabs({
           <button
             ref={advancedTabRef}
             type="button"
-            onClick={() => onTabChange('advanced')}
-            className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap ${
+            onClick={() => activeTab !== 'advanced' && onTabChange('advanced')}
+            className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap ${
               activeTab === 'advanced'
                 ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
                 : 'text-primary-900 hover-only:hover:bg-primary-500/10'
@@ -80,8 +82,8 @@ export function SearchTabs({
           <button
             ref={equipmentTabRef}
             type="button"
-            onClick={() => onTabChange('equipment')}
-            className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap ${
+            onClick={() => activeTab !== 'equipment' && onTabChange('equipment')}
+            className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap ${
               activeTab === 'equipment'
                 ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
                 : 'text-primary-900 hover-only:hover:bg-primary-500/10'
@@ -96,8 +98,8 @@ export function SearchTabs({
           <button
             ref={popularTabRef}
             type="button"
-            onClick={() => onTabChange('popular')}
-            className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap ${
+            onClick={() => activeTab !== 'popular' && onTabChange('popular')}
+            className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap ${
               activeTab === 'popular'
                 ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
                 : 'text-primary-900 hover-only:hover:bg-primary-500/10'
@@ -105,6 +107,9 @@ export function SearchTabs({
             suppressHydrationWarning
           >
             <span suppressHydrationWarning>{t('searchFilters.popularFilters')}</span>
+            {hasPopularFiltersActive && (
+              <span className="absolute right-2 top-2 w-2 h-2 rounded-full bg-accent" />
+            )}
           </button>
           <div
             ref={indicatorRef}

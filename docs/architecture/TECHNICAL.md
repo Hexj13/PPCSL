@@ -344,7 +344,8 @@ POST   /api/listings/:id/close        # Close listing
 GET    /api/listings/my               # Get user's listings; query: page, limit, status (Active|Paused|Closed), promoted (true|false); meta: last_listing_refresh_at, refreshCooldownMs for 48h timer
 GET    /api/listings/vin/:vin         # Find listings by VIN
 POST   /api/listings/refresh-dates    # Refresh all user's listing dates (max once per 48h; returns 400 if too soon)
-POST   /api/listings/cron/close-old   # Close old listings (cron job, requires x-cron-secret header)
+POST   /api/listings/cron/close-old            # Close old listings (cron job, requires x-cron-secret header)
+POST   /api/listings/cron/expire-promotions   # Expire promotions (cron job, requires x-cron-secret header)
 PATCH  /api/listings/:id/promote      # Toggle listing promotion (user, JWT required)
 GET    /api/listings/promotion-history # Get user's promotion history (JWT required)
 GET    /api/listings/promotion-history/check # Check if user has promotion history (JWT required)
@@ -359,12 +360,14 @@ GET    /api/listings/promotion-access  # Get promotion access status (no auth re
   - Slug parameters are converted to `brand_ids` and `model_ids` on the **frontend** (in `parseSearchParams` via `brandResolver`) before the API request; the API receives only UUIDs.
   - If a brand slug from the URL is not found (e.g. no such brand in the catalog), the search returns **0 listings** (no fallback to “all brands”).
   - Other filter parameters remain unchanged (price, year, city, etc.)
+- When both `brand_ids` and `model_ids` are sent, the backend uses **OR** logic so that “brand-only” selections still return results: a listing matches if its `model_id` is in the list **or** its `brand_id` is in the list and that brand has no selected models (e.g. “all Škoda” + specific models for other brands returns all Škoda listings plus the chosen models). Implementation: `TypeOrmListingRepository.applyBrandModelFilter`.
 - `?equipment=air_conditioning,navigation` - Filter by equipment keys (comma-separated). Options depend on `vehicleType` (car/truck/moto). See `vehicle-equipment.ts` for keys and categories.
 - `?equipmentMatch=full|partial` - Equipment match mode (optional; default `full`). **Full:** listing must contain all selected equipment (AND). **Partial:** listing must contain at least one selected option (OR).
 - Example URLs:
   - `/?brand=toyota` - All Toyota listings
   - `/?brand=toyota&model=yaris` - Toyota Yaris listings
   - `/?brand=toyota,bmw&model=yaris,3-series` - Multiple brands and models
+  - `/?brand=skoda,toyota&model=corolla` - All Škoda listings plus Toyota Corolla (brand-only + specific model)
 
 ### Favorites
 
@@ -374,6 +377,8 @@ POST   /api/favorites/:id             # Add to favorites
 DELETE /api/favorites/:id             # Remove from favorites
 GET    /api/favorites/check/:id       # Check if listing is in favorites
 ```
+
+**Favorites sort order:** Listings are ordered by `listing.is_promoted DESC`, then `listing.last_updated_at DESC` (promoted first, then by freshness). Saved filters tab lists filters by `created_at DESC`.
 
 **Note:** Favorites page includes tab counters showing the number of listings and saved filters.
 
@@ -430,14 +435,35 @@ GET  /api/upload/image/:filename      # Get optimized image version
 
 ### Admin
 
+Admin panel (role `Admin` only, `JwtAuthGuard` + `AdminGuard`). Tabs: Users, Brands/Models, Listings, Promotions.
+
+**Users & Listings:**
+
 ```http
-GET   /api/admin/users                # Get all users
-GET   /api/admin/listings             # Get all listings
+GET   /api/admin/users                # Get all users (paginated)
+GET   /api/admin/listings             # Get all listings (paginated)
 GET   /api/admin/stats                # Get statistics
 PATCH /api/admin/listings/:id/status  # Change listing status
-PATCH /api/admin/users/:id/toggle-status # Enable/disable user
-                                      # When deactivating, all user's refresh tokens are revoked
+PATCH /api/admin/users/:id/toggle-status # Enable/disable user (revokes refresh tokens when deactivating)
 ```
+
+**Brands / Models** — catalog management (soft delete via archive; no `is_active`):
+
+```http
+GET   /api/admin/brands-models        # Paginated brands with models; query: page, limit, query (search), vehicleType (car|truck|moto)
+POST  /api/admin/brands               # Create brand (name, vehicleTypes)
+PATCH /api/admin/brands/:id           # Update brand
+POST  /api/admin/models               # Create model (brandId, name, vehicleTypes)
+PATCH /api/admin/models/:id           # Update model
+PATCH /api/admin/brands/:id/archive   # Archive brand (and all its models); 409 if active listings exist
+PATCH /api/admin/models/:id/archive  # Archive model; 409 if active listings exist
+PATCH /api/admin/brands/:id/unarchive # Unarchive brand (409 if non-archived brand with same name exists)
+PATCH /api/admin/models/:id/unarchive # Unarchive model
+```
+
+Entities: `brands` and `vehicle_models` have `is_archived`, `name_normalized`, `vehicle_types` (array). Public catalog endpoints exclude archived records. Audit: `admin_audit_log` for create/update/archive/unarchive. After mutations, brands cache is invalidated.
+
+**Frontend (Brands/Models tab):** Container `BrandsModelsTab` uses `usePaginatedData`, renders `BrandsModelsFilters` (search, vehicle type filter, Add Brand / Add Model), `BrandsModelsTable` (expandable rows, archive/unarchive buttons, edit icons, copy ID), `ArchiveConfirmModal`, `BrandFormModal`, `ModelFormModal`. Model form uses searchable brand dropdown with `renderMenuInPortal` so the list is not clipped by the modal. Duplicate name errors show inline (no global toast); API returns `code: 'DUPLICATE_NAME'` with 409.
 
 ### Health
 
@@ -463,11 +489,12 @@ GET /health                          # Health check (database, Redis)
 
 **Listing Date Fields:**
 
-- `created_at` - Date when listing was created (automatic, never changes)
+- `created_at` - Date when listing was created (automatic, never changes). Used for "My listings" and admin listings sort (newest first).
 - `last_updated_at` - Updated only when:
   - Listing is created
   - User clicks "Refresh dates" button (updates all active listings)
   - Used for automatic closing after 90 days
+  - Used for "newest/oldest" sort on main search, board, and favorites (so sort order matches the date shown on listing cards)
 - `last_edited_at` - Updated when listing content is edited (price, description, images, etc.)
 - `last_published_at` - Updated when listing status changes to Active:
   - When listing is created with Active status
@@ -946,7 +973,8 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
 
 - Comprehensive indexing strategy with partial and composite indexes
 - **Search query optimization:**
-  - Composite indexes for search sorting: `(is_promoted DESC, created_at DESC)`, `(is_promoted DESC, price ASC)`, `(is_promoted DESC, views DESC)` with `WHERE status = 'Active'`
+  - Main search and board: when user selects "newest/oldest" (`sortBy=created_at`), results are ordered by `is_promoted DESC`, then `last_updated_at DESC` (to match the date shown on listing cards). Other sort options use `created_at`, `price`, `year`, or `views` with the same promoted-first rule.
+  - Composite indexes for search: `(status, is_promoted, created_at)` with `WHERE status = 'Active'`; sorting by date in UI uses `last_updated_at` for consistency with card display.
   - Index on `vehicles.year DESC` for year-based sorting
   - Selective field selection in queries to reduce data transfer by ~25-40%
 - Triggers for automatic updates and cleanup
@@ -989,6 +1017,7 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
   - Favorite toggle button disabled during operation with visual feedback
   - Ref-based guards to prevent concurrent requests
 - Third-party scripts optimization (Google Analytics, Google Tag Manager) using `lazyOnload` strategy to reduce Total Blocking Time (TBT)
+- **INP (Interaction to Next Paint) optimizations for mobile:** Deferred analytics (search/select_content) via requestIdleCallback; single rAF for scroll restore after router.replace; rAF-throttled scroll handlers with state guards (ScrollToFiltersButton, useSearchTabs, BackgroundDecorations, usePageScroll); GTM/Tawk loaded after idle or first interaction; parse cache for ListingGrid search params; chunked dropdown render and precomputed lowerLabel for filter options. See [INP_VALIDATION.md](../performance/INP_VALIDATION.md) for post-deploy validation.
 - **Resource hints optimization:**
   - Static preconnect to API domain in `layout.tsx` for faster image loading (server-rendered, no JS required)
   - DNS-prefetch and preconnect for Google Tag Manager (server-rendered in `layout.tsx`)
@@ -1431,6 +1460,14 @@ cd backend && npm run test -- listings.service.spec.ts
   - Enhanced component memoization: React.memo for ListingCard, useCallback for all event handlers
   - Fixed race conditions in favorite toggle with loading states and request guards
   - Optimized SearchFilters: Complete refactoring into 5 hooks and 3 components, reducing from 1796 to 473 lines (73% reduction), improved maintainability and testability
+- **INP mobile follow-up (2026-02):**
+  - Deferred analytics (searchDeferred, selectContentDeferred, pageScrollDeferred) and memoized consent/currency in analytics.ts
+  - Single requestAnimationFrame for scroll restore after filter/sort navigation (useFilterHandlers, SearchFilters, SortDropdown)
+  - rAF-throttled scroll handlers with early-exit on unchanged state (ScrollToFiltersButton, useSearchTabs, BackgroundDecorations, usePageScroll)
+  - GTM load after requestIdleCallback (2.5s), Tawk after first interaction or 4s; lower Sentry replay sampling on mobile viewport
+  - ListingGrid: parsed search params cache (keyed by searchParamsString + vehicleType), deferred viewItemList; ListingCard prefetch
+  - MultiSelectDropdown/Dropdown: precomputed lowerLabel for options, chunked render (first 50 then rAF to full list)
+  - KPI and validation: lib/performance/inp-kpi.ts (targets, observer), [INP_VALIDATION.md](../performance/INP_VALIDATION.md) for GSC validation steps
 - **Performance Optimizations (2025-01):**
   - Migrated initial data fetching to Server Components for improved SEO and initial page load
   - Optimized third-party scripts (Google Analytics, Google Tag Manager) with `lazyOnload` strategy

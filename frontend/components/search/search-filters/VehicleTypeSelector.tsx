@@ -127,7 +127,7 @@ export function VehicleTypeSelector({
         suppressHydrationWarning
       >
         <span
-          className="hidden lg:inline text-base font-bold text-primary-900 flex-shrink-0 flex items-center mr-2 xl:mr-2"
+          className="hidden lg:inline text-base font-bold text-primary-900 shrink-0 flex items-center mr-2 xl:mr-2"
           suppressHydrationWarning
         >
           {t('searchFilters.categoryLabel')}
@@ -135,8 +135,8 @@ export function VehicleTypeSelector({
         <button
           ref={carRef}
           type="button"
-          onClick={() => onVehicleTypeChange('car')}
-          className={`h-12 w-16 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap flex items-center justify-center ${
+          onClick={() => vehicleType !== 'car' && onVehicleTypeChange('car')}
+          className={`h-12 w-16 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap flex items-center justify-center ${
             vehicleType === 'car'
               ? 'bg-primary-500/10 rounded-t-lg'
               : 'hover-only:hover:bg-primary-500/10 hover-only:hover:rounded-t-lg'
@@ -147,8 +147,8 @@ export function VehicleTypeSelector({
         <button
           ref={truckRef}
           type="button"
-          onClick={() => onVehicleTypeChange('truck')}
-          className={`h-12 w-16 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap flex items-center justify-center ${
+          onClick={() => vehicleType !== 'truck' && onVehicleTypeChange('truck')}
+          className={`h-12 w-16 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap flex items-center justify-center ${
             vehicleType === 'truck'
               ? 'bg-primary-500/10 rounded-t-lg'
               : 'hover-only:hover:bg-primary-500/10 hover-only:hover:rounded-t-lg'
@@ -159,8 +159,8 @@ export function VehicleTypeSelector({
         <button
           ref={motoRef}
           type="button"
-          onClick={() => onVehicleTypeChange('moto')}
-          className={`h-12 w-16 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap flex items-center justify-center ${
+          onClick={() => vehicleType !== 'moto' && onVehicleTypeChange('moto')}
+          className={`h-12 w-16 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap flex items-center justify-center ${
             vehicleType === 'moto'
               ? 'bg-primary-500/10 rounded-t-lg'
               : 'hover-only:hover:bg-primary-500/10 hover-only:hover:rounded-t-lg'
@@ -172,7 +172,7 @@ export function VehicleTypeSelector({
           ref={comingSoonRef}
           role="img"
           aria-label={t('searchFilters.comingSoonHint')}
-          className="h-12 w-16 text-base font-semibold transition-all duration-300 relative z-10 flex-shrink-0 whitespace-nowrap flex items-center justify-center cursor-default"
+          className="h-12 w-16 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap flex items-center justify-center cursor-default"
           onMouseEnter={() => setShowComingSoonHint(true)}
           onMouseLeave={() => setShowComingSoonHint(false)}
         >
@@ -186,7 +186,7 @@ export function VehicleTypeSelector({
           {showComingSoonHint &&
             createPortal(
               <div
-                className="fixed z-[9999] w-48"
+                className="fixed z-9999 w-48"
                 style={{
                   top: hintPosition.top - 56,
                   left: hintPosition.left,
@@ -211,7 +211,7 @@ export function VehicleTypeSelector({
         />
       </div>
       {showVehicleFade && (
-        <div className="xl:hidden absolute -right-px top-0 bottom-0 w-16 pointer-events-none bg-gradient-to-l from-bg-light/95 via-bg-light/70 to-transparent z-20" />
+        <div className="xl:hidden absolute -right-px top-0 bottom-0 w-16 pointer-events-none bg-linear-to-l from-bg-light/95 via-bg-light/70 to-transparent z-20" />
       )}
     </div>
   );

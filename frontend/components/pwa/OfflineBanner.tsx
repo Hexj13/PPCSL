@@ -31,7 +31,7 @@ export function OfflineBanner() {
   }
 
   return (
-    <div className="bg-[#40916B] text-white text-center py-2 px-4 text-sm font-medium sticky top-[64px] md:top-[72px] z-40">
+    <div className="bg-primary-600 text-white text-center py-2 px-4 text-sm font-medium sticky top-[64px] md:top-[72px] z-40">
       {t('pwa.offlineMode')}
     </div>
   );

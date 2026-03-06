@@ -45,6 +45,12 @@
 
 - [BRANDS_MODELS_MASTER_PLAN.md](./scripts/BRANDS_MODELS_MASTER_PLAN.md) - План и production-скрипты (seed-all-brands-complete, порядок, кэш)
 
+### ⚡ [`performance/`](./performance/)
+
+**Производительность и Core Web Vitals**
+
+- [INP_VALIDATION.md](./performance/INP_VALIDATION.md) — проверка INP после изменений (критерии приёмки, профилирование, GSC)
+
 ### ✨ [`features/`](./features/)
 
 **Документация фич** - описание компонентов и функциональности
@@ -54,6 +60,7 @@
 - [IMAGE_PREVIEW.md](./features/IMAGE_PREVIEW.md) - Система превью изображений
 - [LOADING_STATES.md](./features/LOADING_STATES.md) - Loading states
 - [PAID_PROMOTION.md](./features/PAID_PROMOTION.md) - Платное продвижение
+- Assign listing to user (admin) — на `/listings/new` админ может указать UUID владельца объявления; real-time валидация (GET `/api/admin/validate-assign-user/:userId`), проверки бэкенда (существование, active, лимит объявлений)
 - [SEARCH_FILTERS.md](./features/SEARCH_FILTERS.md) - Форма поиска и фильтров (вкладки, поля, вёрстка)
 - [SELLER_LISTINGS_BOARD.md](./features/SELLER_LISTINGS_BOARD.md) - Доска объявлений продавца
 - [SIMILAR_LISTINGS.md](./features/SIMILAR_LISTINGS.md) - Похожие объявления

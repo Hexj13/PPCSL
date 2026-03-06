@@ -26,7 +26,7 @@ function MultiSelectDropdownComponent({
   onChange,
   options,
   disabled = false,
-  placeholder = 'Избери...',
+  placeholder,
   className = '',
   searchable = false,
   showActionButtons = false,
@@ -74,6 +74,15 @@ function MultiSelectDropdownComponent({
     }
   }, [isOpen, searchable, showActionButtons, tempValues, onChange]);
 
+  const optionsWithLower = useMemo(
+    () =>
+      options.map((opt) => ({
+        ...opt,
+        lowerLabel: opt.label.toLowerCase(),
+      })),
+    [options],
+  );
+
   const valuesSet = useMemo(() => new Set(values), [values]);
   const tempValuesSet = useMemo(() => new Set(tempValues), [tempValues]);
   const selectedOptions = useMemo(
@@ -83,22 +92,37 @@ function MultiSelectDropdownComponent({
   const displayText = useMemo(
     () =>
       selectedOptions.length === 0
-        ? placeholder
+        ? (placeholder ?? t('common.choose'))
         : selectedOptions.length === 1
           ? selectedOptions[0].label
-          : `Избрани ${selectedOptions.length}`,
-    [selectedOptions, placeholder],
+          : t('common.selectedCount', { count: selectedOptions.length }),
+    [selectedOptions, placeholder, t],
   );
 
-  const filteredOptions = useMemo(
-    () =>
-      searchable && deferredSearchQuery
-        ? options.filter((option) =>
-            option.label.toLowerCase().includes(deferredSearchQuery.toLowerCase()),
-          )
-        : options,
-    [options, searchable, deferredSearchQuery],
-  );
+  const filteredOptions = useMemo(() => {
+    if (!searchable || !deferredSearchQuery) return optionsWithLower;
+    const q = deferredSearchQuery.toLowerCase();
+    return optionsWithLower.filter((option) => option.lowerLabel.includes(q));
+  }, [optionsWithLower, searchable, deferredSearchQuery]);
+
+  const RENDER_CHUNK = 50;
+  const [visibleCount, setVisibleCount] = useState(RENDER_CHUNK);
+  const optionsToRender =
+    filteredOptions.length <= RENDER_CHUNK
+      ? filteredOptions
+      : filteredOptions.slice(0, visibleCount);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setVisibleCount(RENDER_CHUNK);
+      return;
+    }
+    if (filteredOptions.length <= RENDER_CHUNK) return;
+    const id = requestAnimationFrame(() => {
+      setVisibleCount(filteredOptions.length);
+    });
+    return () => cancelAnimationFrame(id);
+  }, [isOpen, filteredOptions.length]);
 
   const handleToggle = useCallback(
     (optionValue: string) => {
@@ -164,7 +188,7 @@ function MultiSelectDropdownComponent({
             onChange={handleInputChange}
             onFocus={handleInputFocus}
             disabled={disabled}
-            placeholder={isOpen ? '' : placeholder}
+            placeholder={isOpen ? '' : (placeholder ?? t('common.choose'))}
             className="input-field"
             style={{ paddingRight: '52px' }}
           />
@@ -216,7 +240,7 @@ function MultiSelectDropdownComponent({
             {displayText}
           </span>
           <svg
-            className={`absolute top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-900 group-hover:text-primary-700 transition-colors duration-200 flex-shrink-0 ${
+            className={`absolute top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-900 group-hover:text-primary-700 transition-colors duration-200 shrink-0 ${
               isOpen ? 'rotate-180' : ''
             }`}
             fill="none"
@@ -230,16 +254,16 @@ function MultiSelectDropdownComponent({
       )}
 
       {isOpen && !disabled && (
-        <div className="absolute z-[100] w-full mt-1 top-full bg-white border-2 border-primary-500/30 rounded-lg shadow-xl overflow-hidden">
+        <div className="absolute z-100 w-full mt-1 top-full bg-white border-2 border-primary-500/30 rounded-lg shadow-xl overflow-hidden">
           <div className="max-h-96 overflow-auto scrollbar-custom">
             {filteredOptions.length > 0 ? (
-              filteredOptions.map((option, index) => {
+              optionsToRender.map((option, index) => {
                 const isSelected = showActionButtons
                   ? tempValuesSet.has(option.value)
                   : valuesSet.has(option.value);
                 const isCategory =
                   option.category && (!option.value || option.value.startsWith('__category__'));
-                const prevOption = index > 0 ? filteredOptions[index - 1] : null;
+                const prevOption = index > 0 ? optionsToRender[index - 1] : null;
                 const showCategoryHeader =
                   option.category && prevOption?.category !== option.category && !isCategory;
                 const isFirstCategory = showCategoryHeader && index === 0;

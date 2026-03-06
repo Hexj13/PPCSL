@@ -70,7 +70,7 @@ export function PromotionsTab() {
 
   return (
     <div>
-      <div className="mb-4 md:mb-6">
+      <div className="mb-4 md:mb-6 flex flex-col gap-4">
         <input
           type="text"
           value={filters.searchQuery}
@@ -81,36 +81,36 @@ export function PromotionsTab() {
             }))
           }
           placeholder={t('admin.promotionsTab.searchPlaceholder')}
-          className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-secondary border-2 border-primary-700 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-primary-900 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
+          className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-secondary border-2 border-primary-700 text-text-primary placeholder:text-text-secondary focus:outline-hidden focus:border-primary-900 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
         />
-      </div>
 
-      <div className="mb-4 md:mb-6 pt-4 border-t border-primary-500/20 sm:border-t-0 sm:pt-0">
-        <div className="flex flex-wrap gap-2 md:gap-3">
-          {(['All', 'day', 'week', 'month'] as const).map((filter) => (
-            <button
-              key={filter}
-              onClick={() =>
-                setFilters((prev) => ({
-                  ...prev,
-                  timeFilter: filter,
-                }))
-              }
-              className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-base transition-colors ${
-                filters.timeFilter === filter
-                  ? 'bg-primary-500/10 border-2 border-primary-700 text-primary-700'
-                  : 'bg-bg-secondary hover:bg-bg-base border-2 border-primary-700 text-primary-700 hover:text-primary-900 hover:border-primary-900'
-              }`}
-            >
-              {filter === 'All'
-                ? t('admin.promotionsTab.allTime')
-                : filter === 'day'
-                  ? t('admin.promotionsTab.lastDay')
-                  : filter === 'week'
-                    ? t('admin.promotionsTab.lastWeek')
-                    : t('admin.promotionsTab.lastMonth')}
-            </button>
-          ))}
+        <div className="pt-4 border-t border-primary-500/20 sm:border-t-0 sm:pt-0">
+          <div className="flex flex-wrap gap-2 md:gap-3">
+            {(['All', 'day', 'week', 'month'] as const).map((filter) => (
+              <button
+                key={filter}
+                onClick={() =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    timeFilter: filter,
+                  }))
+                }
+                className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-base transition-colors ${
+                  filters.timeFilter === filter
+                    ? 'bg-primary-500/10 border-2 border-primary-700 text-primary-700'
+                    : 'bg-bg-secondary hover-only:hover:bg-bg-base border-2 border-primary-700 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900'
+                }`}
+              >
+                {filter === 'All'
+                  ? t('admin.promotionsTab.allTime')
+                  : filter === 'day'
+                    ? t('admin.promotionsTab.lastDay')
+                    : filter === 'week'
+                      ? t('admin.promotionsTab.lastWeek')
+                      : t('admin.promotionsTab.lastMonth')}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -161,7 +161,7 @@ export function PromotionsTab() {
                     <td className="py-3 px-4 text-sm">
                       <Link
                         href={`/listings/${promotion.listing_id}`}
-                        className="text-primary-700 hover:text-primary-900 hover:underline transition-colors"
+                        className="text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:underline transition-colors"
                       >
                         {promotion.listing_title}
                       </Link>

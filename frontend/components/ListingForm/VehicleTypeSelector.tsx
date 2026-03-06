@@ -21,7 +21,7 @@ export function VehicleTypeSelector({ vehicleType, onTypeChange, t }: VehicleTyp
           className={`flex-1 h-14 px-4 text-base font-semibold transition-colors duration-300 rounded-lg flex items-center justify-center ${
             vehicleType === 'car'
               ? 'bg-primary-500/10 border-2 border-primary-700 text-primary-700'
-              : 'bg-bg-secondary border-2 border-primary-700/30 text-primary-900 hover:border-primary-700 hover:text-primary-700'
+              : 'bg-bg-secondary border-2 border-primary-700/30 text-primary-900 hover-only:hover:border-primary-700 hover-only:hover:text-primary-700'
           }`}
         >
           <CarIcon className="w-12 h-12 text-current" />
@@ -32,7 +32,7 @@ export function VehicleTypeSelector({ vehicleType, onTypeChange, t }: VehicleTyp
           className={`flex-1 h-14 px-4 text-base font-semibold transition-colors duration-300 rounded-lg flex items-center justify-center ${
             vehicleType === 'truck'
               ? 'bg-primary-500/10 border-2 border-primary-700 text-primary-700'
-              : 'bg-bg-secondary border-2 border-primary-700/30 text-primary-900 hover:border-primary-700 hover:text-primary-700'
+              : 'bg-bg-secondary border-2 border-primary-700/30 text-primary-900 hover-only:hover:border-primary-700 hover-only:hover:text-primary-700'
           }`}
         >
           <TruckIcon className="w-12 h-12 text-current" />
@@ -43,7 +43,7 @@ export function VehicleTypeSelector({ vehicleType, onTypeChange, t }: VehicleTyp
           className={`flex-1 h-14 px-4 text-base font-semibold transition-colors duration-300 rounded-lg flex items-center justify-center ${
             vehicleType === 'moto'
               ? 'bg-primary-500/10 border-2 border-primary-700 text-primary-700'
-              : 'bg-bg-secondary border-2 border-primary-700/30 text-primary-900 hover:border-primary-700 hover:text-primary-700'
+              : 'bg-bg-secondary border-2 border-primary-700/30 text-primary-900 hover-only:hover:border-primary-700 hover-only:hover:text-primary-700'
           }`}
         >
           <MotoIcon className="w-12 h-12 text-current" />

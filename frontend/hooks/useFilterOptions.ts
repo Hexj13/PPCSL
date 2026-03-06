@@ -78,9 +78,7 @@ export function useFilterOptions({
       brands.filter((brand) => !popularBrandsList.includes(brand.name)),
     );
 
-    const options: Array<{ value: string; label: string; category?: string }> = [
-      { value: 'all', label: t('searchFilters.allBrands') },
-    ];
+    const options: Array<{ value: string; label: string; category?: string }> = [];
 
     if (popularBrands.length > 0) {
       const popularLabel = t('searchFilters.popular');
@@ -102,9 +100,7 @@ export function useFilterOptions({
   }, [brands, vehicleType, t]);
 
   const getModelOptions = useCallback(() => {
-    const options: Array<{ value: string; label: string; category?: string }> = [
-      { value: 'all', label: t('searchFilters.allModels') },
-    ];
+    const options: Array<{ value: string; label: string; category?: string }> = [];
 
     if (filters.brand_ids.length >= 2) {
       const brandsMap = new Map(brands.map((b) => [b.id, b]));
@@ -149,7 +145,7 @@ export function useFilterOptions({
     }
 
     return options;
-  }, [models, brands, filters.brand_ids, t]);
+  }, [models, brands, filters.brand_ids]);
 
   const getCityOptions = useCallback(() => {
     const popularCities = sortByName(
@@ -159,9 +155,7 @@ export function useFilterOptions({
       cities.filter((city) => !POPULAR_CITY_NAMES_EN.includes(city.nameEn)),
     );
 
-    const options: Array<{ value: string; label: string; category?: string }> = [
-      { value: 'all', label: t('searchFilters.allCities') },
-    ];
+    const options: Array<{ value: string; label: string; category?: string }> = [];
 
     if (popularCities.length > 0) {
       const popularLabel = t('searchFilters.popular');

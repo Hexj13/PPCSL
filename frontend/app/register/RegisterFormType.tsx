@@ -23,7 +23,7 @@ export function RegisterFormType({ formData, setFormData }: RegisterFormTypeProp
           className={`flex-1 py-2 px-4 rounded-md font-semibold text-sm transition-all duration-200 ${
             formData.type === 'Individual'
               ? 'bg-primary-500/10 text-primary-700 border border-primary-700'
-              : 'text-primary-900 hover:text-primary-700'
+              : 'text-primary-900 hover-only:hover:text-primary-700'
           }`}
         >
           {t('register.individual')}
@@ -34,7 +34,7 @@ export function RegisterFormType({ formData, setFormData }: RegisterFormTypeProp
           className={`flex-1 py-2 px-4 rounded-md font-semibold text-sm transition-all duration-200 ${
             formData.type === 'Business'
               ? 'bg-primary-500/10 text-primary-700 border border-primary-700'
-              : 'text-primary-900 hover:text-primary-700'
+              : 'text-primary-900 hover-only:hover:text-primary-700'
           }`}
         >
           {t('register.business')}

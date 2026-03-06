@@ -67,11 +67,11 @@ function ListingPageListingInfoSection({
       <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-900">
         {t('listingDetail.listingInfo')}
       </h2>
-      <div className="space-y-3 break-words">
+      <div className="space-y-3 wrap-break-word">
         {listing.views !== undefined && listing.views > 0 && (
           <div className="flex items-center gap-2 text-base min-w-0">
             <svg
-              className="w-4 h-4 text-primary-400 flex-shrink-0"
+              className="w-4 h-4 text-primary-400 shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -89,11 +89,11 @@ function ListingPageListingInfoSection({
                 d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
               />
             </svg>
-            <span className="font-semibold text-primary-700 flex-shrink-0">
+            <span className="font-semibold text-primary-700 shrink-0">
               {t('listingDetail.views')}:
             </span>
             <span
-              className="min-w-0 break-words"
+              className="min-w-0 wrap-break-word"
               style={{ color: 'rgb(var(--text-secondary-rgb))' }}
             >
               {listing.views}
@@ -102,7 +102,7 @@ function ListingPageListingInfoSection({
         )}
         <div className="flex items-center gap-2 text-base min-w-0">
           <svg
-            className="w-4 h-4 text-primary-400 flex-shrink-0"
+            className="w-4 h-4 text-primary-400 shrink-0"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -114,16 +114,19 @@ function ListingPageListingInfoSection({
               d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
             />
           </svg>
-          <span className="font-semibold text-primary-700 flex-shrink-0">
+          <span className="font-semibold text-primary-700 shrink-0">
             {t('listingDetail.updated')}:
           </span>
-          <span className="min-w-0 break-words" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
+          <span
+            className="min-w-0 wrap-break-word"
+            style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+          >
             {formatDate(listing.last_updated_at)}
           </span>
         </div>
         <div className="flex items-center gap-2 text-base min-w-0">
           <svg
-            className="w-4 h-4 text-primary-400 flex-shrink-0"
+            className="w-4 h-4 text-primary-400 shrink-0"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -135,10 +138,13 @@ function ListingPageListingInfoSection({
               d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
             />
           </svg>
-          <span className="font-semibold text-primary-700 flex-shrink-0">
+          <span className="font-semibold text-primary-700 shrink-0">
             {t('listingDetail.willClose')}:
           </span>
-          <span className="min-w-0 break-words" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
+          <span
+            className="min-w-0 wrap-break-word"
+            style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+          >
             {formatDate(closingDate)}
           </span>
         </div>
@@ -146,10 +152,10 @@ function ListingPageListingInfoSection({
       <div className="mt-4 pt-4 border-t border-primary-500/20 space-y-2">
         <button
           onClick={onCopyLink}
-          className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 !bg-primary-500/10 select-none"
+          className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10! select-none"
         >
           <svg
-            className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+            className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -166,10 +172,10 @@ function ListingPageListingInfoSection({
         {canShare && (
           <button
             onClick={onShare}
-            className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 !bg-primary-500/10 select-none"
+            className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10! select-none"
           >
             <svg
-              className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+              className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -288,7 +294,7 @@ function ListingPageHistorySection({
   return (
     <div className="surface overflow-visible">
       <div className="flex items-center gap-2 mb-4 min-w-0">
-        <h2 className="text-xl md:text-2xl font-bold text-primary-900 min-w-0 break-words">
+        <h2 className="text-xl md:text-2xl font-bold text-primary-900 min-w-0 wrap-break-word">
           {listing.vin ? t('listingDetail.previousListings') : t('listingDetail.vehicleHistory')}
         </h2>
         {listing.vin && (
@@ -408,6 +414,7 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
     user,
     isInitialized,
     isInComparison,
+    comparisonCount,
     isFavorite,
     isOwnListing,
     equipmentColumns,
@@ -485,6 +492,7 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
               listing={listing}
               isInitialized={isInitialized}
               isInComparison={isInComparison}
+              comparisonCount={comparisonCount}
               isFavorite={isFavorite}
               isOwnListing={isOwnListing}
               canPromote={canPromote}

@@ -13,10 +13,14 @@ import { PromotionHistory } from '../listings/entities/promotion-history.entity'
 import { Vehicle } from '../listings/entities/vehicle.entity';
 import { ListingsModule } from '../listings/listings.module';
 import { User } from '../users/entities/user.entity';
+import { UsersModule } from '../users/users.module';
 
+import { AdminAuditService } from './admin-audit.service';
+import { AdminBrandsModelsService } from './admin-brands-models.service';
 import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 import { DeleteAllBrandsService } from './delete-all-brands.service';
+import { AdminAuditLog } from './entities/admin-audit-log.entity';
 
 @Module({
   imports: [
@@ -29,13 +33,15 @@ import { DeleteAllBrandsService } from './delete-all-brands.service';
       Vehicle,
       ListingView,
       Favorite,
+      AdminAuditLog,
     ]),
     AuthModule,
     ListingsModule,
     BrandsModule,
     ExchangeRatesModule,
+    UsersModule,
   ],
   controllers: [AdminController],
-  providers: [AdminService, DeleteAllBrandsService],
+  providers: [AdminService, DeleteAllBrandsService, AdminAuditService, AdminBrandsModelsService],
 })
 export class AdminModule {}

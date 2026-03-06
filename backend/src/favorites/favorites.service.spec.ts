@@ -132,10 +132,24 @@ describe('FavoritesService', () => {
   });
 
   describe('findAll', () => {
+    const mockQueryBuilder = {
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(),
+      take: jest.fn().mockReturnThis(),
+      getManyAndCount: jest.fn(),
+    };
+
+    beforeEach(() => {
+      repository.createQueryBuilder.mockReturnValue(mockQueryBuilder as never);
+    });
+
     it('should return paginated favorites with enriched listings', async () => {
       const listing = { id: 'listing-1', price: 1000, currency: 'EUR' } as Listing;
       const favoriteWithListing = { ...mockFavorite, listing } as Favorite;
-      repository.findAndCount.mockResolvedValue([[favoriteWithListing], 1]);
+      mockQueryBuilder.getManyAndCount.mockResolvedValue([[favoriteWithListing], 1]);
 
       const result = await service.findAll('user-1', 1, 20);
 
@@ -146,23 +160,16 @@ describe('FavoritesService', () => {
       expect(mockExchangeRatesService.enrichListingsWithApproxPrice).toHaveBeenCalledWith([
         listing,
       ]);
-      expect(repository.findAndCount).toHaveBeenCalledWith({
-        where: { user_id: 'user-1' },
-        relations: [
-          'listing',
-          'listing.vehicle',
-          'listing.vehicle.brand',
-          'listing.vehicle.model',
-          'listing.user',
-        ],
-        order: { created_at: 'DESC' },
-        skip: 0,
-        take: 20,
+      expect(repository.createQueryBuilder).toHaveBeenCalledWith('favorite');
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith('favorite.user_id = :userId', {
+        userId: 'user-1',
       });
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('listing.is_promoted', 'DESC');
+      expect(mockQueryBuilder.addOrderBy).toHaveBeenCalledWith('listing.last_updated_at', 'DESC');
     });
 
     it('should return empty data and meta when no favorites', async () => {
-      repository.findAndCount.mockResolvedValue([[], 0]);
+      mockQueryBuilder.getManyAndCount.mockResolvedValue([[], 0]);
 
       const result = await service.findAll('user-1', 1, 20);
 

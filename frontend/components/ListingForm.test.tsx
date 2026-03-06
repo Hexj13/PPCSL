@@ -572,7 +572,7 @@ describe('ListingForm', () => {
       );
     }, 30000);
 
-    it('should normalize price with only zeros to "0" on blur', async () => {
+    it('should normalize price with only zeros to "0" on blur-sm', async () => {
       const onSuccess = jest.fn();
       render(<ListingForm mode="create" onSuccess={onSuccess} />);
 
@@ -597,7 +597,7 @@ describe('ListingForm', () => {
       );
     });
 
-    it('should normalize mileage with only zeros to "0" on blur', async () => {
+    it('should normalize mileage with only zeros to "0" on blur-sm', async () => {
       const onSuccess = jest.fn();
       render(<ListingForm mode="create" onSuccess={onSuccess} />);
 
@@ -1430,5 +1430,210 @@ describe('ListingForm', () => {
         expect(updatedAirConditioningCheckbox).not.toBeChecked();
       });
     });
+  });
+
+  describe('Electric fuel', () => {
+    it('should disable engine displacement field when fuel is Electric', async () => {
+      const onSuccess = jest.fn();
+      render(
+        <ListingForm
+          mode="edit"
+          listingId="listing-1"
+          initialData={mockListing as Listing}
+          onSuccess={onSuccess}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(api.brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const engineInput = (await screen.findByTestId(
+        'listing-form-engine-displacement',
+      )) as HTMLInputElement;
+      expect(engineInput).not.toBeDisabled();
+
+      const dropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
+      const fuelDropdown = dropdowns.find((d) =>
+        Array.from(d.options).some((opt) => opt.value === 'Electric'),
+      );
+      expect(fuelDropdown).toBeDefined();
+      fireEvent.change(fuelDropdown!, { target: { value: 'Electric' } });
+
+      await waitFor(() => {
+        const engineAfter = screen.getByTestId(
+          'listing-form-engine-displacement',
+        ) as HTMLInputElement;
+        expect(engineAfter).toBeDisabled();
+      });
+    });
+
+    it('should clear engine displacement when switching fuel to Electric', async () => {
+      const onSuccess = jest.fn();
+      render(
+        <ListingForm
+          mode="edit"
+          listingId="listing-1"
+          initialData={mockListing as Listing}
+          onSuccess={onSuccess}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(api.brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const engineInput = (await screen.findByTestId(
+        'listing-form-engine-displacement',
+      )) as HTMLInputElement;
+      fireEvent.change(engineInput, { target: { value: '2.5' } });
+
+      await waitFor(() => {
+        expect(
+          (screen.getByTestId('listing-form-engine-displacement') as HTMLInputElement).value,
+        ).toBe('2.5');
+      });
+
+      const dropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
+      const fuelDropdown = dropdowns.find((d) =>
+        Array.from(d.options).some((opt) => opt.value === 'Electric'),
+      );
+      fireEvent.change(fuelDropdown!, { target: { value: 'Electric' } });
+
+      await waitFor(() => {
+        const engineAfter = screen.getByTestId(
+          'listing-form-engine-displacement',
+        ) as HTMLInputElement;
+        expect(engineAfter.value).toBe('');
+      });
+    });
+
+    it('should submit create form with Electric fuel and empty engine', async () => {
+      const onSuccess = jest.fn();
+      const createSpy = api.listingsApi.create as jest.Mock;
+      render(<ListingForm mode="create" onSuccess={onSuccess} />);
+
+      await waitFor(() => {
+        expect(api.brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const brandDropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
+      const brandDropdown = brandDropdowns.find((d) =>
+        Array.from(d.options).some((opt) => opt.value === 'brand-1'),
+      );
+      fireEvent.change(brandDropdown!, { target: { value: 'brand-1' } });
+
+      await waitFor(() => {
+        expect(api.brandsApi.getModels).toHaveBeenCalledWith('brand-1');
+      });
+
+      const modelDropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
+      const modelDropdown = modelDropdowns.find((d) =>
+        Array.from(d.options).some((opt) => opt.value === 'model-1'),
+      );
+      fireEvent.change(modelDropdown!, { target: { value: 'model-1' } });
+
+      const yearDropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
+      const yearDropdown = yearDropdowns.find((d) =>
+        Array.from(d.options).some((opt) => opt.value === '2020'),
+      );
+      fireEvent.change(yearDropdown!, { target: { value: '2020' } });
+
+      const mileageInput = await screen.findByTestId('listing-form-mileage');
+      fireEvent.change(mileageInput, { target: { value: '50000' } });
+
+      const allDropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
+      const fuelDropdown = allDropdowns.find((d) =>
+        Array.from(d.options).some((opt) => opt.value === 'Electric'),
+      );
+      fireEvent.change(fuelDropdown!, { target: { value: 'Electric' } });
+
+      const transmissionDropdown = allDropdowns.find((d) =>
+        Array.from(d.options).some((opt) => opt.value === 'Manual'),
+      );
+      fireEvent.change(transmissionDropdown!, { target: { value: 'Manual' } });
+
+      const driveTypeDropdown = allDropdowns.find((d) =>
+        Array.from(d.options).some((opt) => opt.value === 'FWD'),
+      );
+      fireEvent.change(driveTypeDropdown!, { target: { value: 'FWD' } });
+
+      const bodyTypeDropdown = allDropdowns.find((d) =>
+        Array.from(d.options).some((opt) => opt.value === 'Sedan'),
+      );
+      fireEvent.change(bodyTypeDropdown!, { target: { value: 'Sedan' } });
+
+      const priceInput = getPriceInput(screen) as HTMLInputElement;
+      fireEvent.change(priceInput, { target: { value: '10000' } });
+
+      const hpInput = screen.getByTestId('listing-form-horsepower') as HTMLInputElement;
+      fireEvent.change(hpInput, { target: { value: '150' } });
+
+      const cityDropdown = allDropdowns.find((d) =>
+        Array.from(d.options).some((opt) => opt.value === 'Chișinău'),
+      );
+      fireEvent.change(cityDropdown!, { target: { value: 'Chișinău' } });
+
+      await waitFor(() => {
+        expect(getPhotosFileInput(screen)).toBeInTheDocument();
+      });
+
+      const fileInput = getPhotosFileInput(screen) as HTMLInputElement;
+      const file1 = new File(['x'], 'test1.webp', { type: 'image/webp' });
+      const file2 = new File(['y'], 'test2.webp', { type: 'image/webp' });
+      Object.defineProperty(fileInput, 'files', {
+        value: [file1],
+        writable: false,
+        configurable: true,
+      });
+      fireEvent.change(fileInput);
+      await waitFor(
+        () => {
+          expect(api.uploadApi.uploadImage).toHaveBeenCalled();
+        },
+        { timeout: 10000 },
+      );
+      Object.defineProperty(fileInput, 'files', {
+        value: [file2],
+        writable: false,
+        configurable: true,
+      });
+      fireEvent.change(fileInput);
+      await waitFor(
+        () => {
+          expect((api.uploadApi.uploadImage as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(
+            2,
+          );
+        },
+        { timeout: 10000 },
+      );
+
+      const submitButton = screen.getByRole('button', { name: /креирај/i });
+      await waitFor(
+        () => {
+          expect(submitButton).toBeEnabled();
+        },
+        { timeout: 5000 },
+      );
+
+      fireEvent.click(submitButton);
+
+      await waitFor(
+        () => {
+          expect(createSpy).toHaveBeenCalled();
+          const payload = createSpy.mock.calls[0][0];
+          expect(payload.vehicle.fuel).toBe('Electric');
+          expect(payload.vehicle.engine_displ_l).toBeUndefined();
+        },
+        { timeout: 10000 },
+      );
+
+      await waitFor(
+        () => {
+          expect(onSuccess).toHaveBeenCalled();
+        },
+        { timeout: 5000 },
+      );
+    }, 30000);
   });
 });

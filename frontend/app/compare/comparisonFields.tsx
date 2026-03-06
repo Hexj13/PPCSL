@@ -101,7 +101,7 @@ export const comparisonFields: ComparisonField[] = [
       <td key={listing.id} className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base">
         <Link
           href={`/listings/${listing.id}`}
-          className="text-text-primary hover:text-primary-700 transition-colors underline font-medium inline-flex items-center gap-1.5"
+          className="text-text-primary hover-only:hover:text-primary-700 transition-colors underline font-medium inline-flex items-center gap-1.5"
         >
           {getValue(listing.title, t)}
           <svg

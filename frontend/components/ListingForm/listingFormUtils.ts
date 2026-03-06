@@ -44,6 +44,7 @@ function getEmptyFormData(): ListingFormData {
     power_kw: '',
     equipment: [],
     vehicle: { ...EMPTY_VEHICLE_FORM },
+    assignedUserId: '',
   };
 }
 
@@ -61,11 +62,12 @@ function getInitialPowerKw(listing: Listing): string {
 
 function getInitialVehicleFormData(vehicle: Listing['vehicle']): ListingFormData['vehicle'] {
   if (!vehicle) return { ...EMPTY_VEHICLE_FORM };
+  const isElectric = vehicle.fuel === 'Electric';
   return {
     brand_id: vehicle.brand_id || '',
     model_id: vehicle.model_id || '',
     year: vehicle.year?.toString() || '',
-    engine_displ_l: formatEngineDisplL(vehicle.engine_displ_l),
+    engine_displ_l: isElectric ? '' : formatEngineDisplL(vehicle.engine_displ_l),
     mileage_km: vehicle.mileage_km?.toString() || '',
     fuel: vehicle.fuel || '',
     transmission: vehicle.transmission || '',
@@ -79,7 +81,8 @@ function getInitialVehicleFormData(vehicle: Listing['vehicle']): ListingFormData
 export function getInitialVehicleType(initialData?: Listing): 'car' | 'truck' | 'moto' {
   const bodyType = initialData?.vehicle?.body_type;
   if (bodyType && VEHICLE_TYPE_BY_BODY_TYPE[bodyType]) return VEHICLE_TYPE_BY_BODY_TYPE[bodyType];
-  const modelType = initialData?.vehicle?.model?.vehicle_type;
+  const modelTypes = initialData?.vehicle?.model?.vehicle_types;
+  const modelType = modelTypes?.[0];
   if (modelType === 'truck' || modelType === 'moto') return modelType;
   return 'car';
 }
@@ -105,6 +108,7 @@ export function getInitialFormData(initialData?: Listing): ListingFormData {
     power_kw: getInitialPowerKw(initialData),
     equipment: initialData.equipment || [],
     vehicle: getInitialVehicleFormData(initialData.vehicle),
+    assignedUserId: '',
   };
 }
 

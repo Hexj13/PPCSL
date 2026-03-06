@@ -115,12 +115,12 @@ export function HintTooltip({
       <button
         type="button"
         onClick={toggle}
-        className="focus:outline-none p-0.5 -m-0.5 rounded"
+        className="focus:outline-hidden p-0.5 -m-0.5 rounded-sm"
         aria-expanded={isOpen}
         aria-label={ariaLabel}
       >
         <svg
-          className="w-4 h-4 text-primary-500 hover:text-primary-700 cursor-pointer transition-colors"
+          className="w-4 h-4 text-primary-500 hover-only:hover:text-primary-700 cursor-pointer transition-colors"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -136,7 +136,7 @@ export function HintTooltip({
       {isOpen && (
         <div
           ref={popoverRef}
-          className={`absolute ${horizontalClasses} ${verticalClasses} z-[1070] ${width} transition-all duration-150 ease-out ${
+          className={`absolute ${horizontalClasses} ${verticalClasses} z-1070 ${width} transition-all duration-150 ease-out ${
             isVisible
               ? 'opacity-100 translate-y-0'
               : placement === 'top'

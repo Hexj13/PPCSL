@@ -28,12 +28,6 @@ function getDisplayName(user: User): string {
   return user.companyName || user.email || user.phone || '';
 }
 
-function getTypeBadgeClass(userType: string): string {
-  if (userType === 'Admin') return 'bg-purple-500/20';
-  if (userType === 'Business') return 'bg-blue-500/20';
-  return 'bg-primary-700/20';
-}
-
 function getTypeLabelKey(userType: string): string {
   if (userType === 'Admin') return 'admin.usersTab.admin';
   if (userType === 'Business') return 'admin.usersTab.business';
@@ -57,7 +51,7 @@ function AdminUserCard({ user, t, onViewListings, onToggleStatus }: AdminUserCar
 
   return (
     <div className="card p-4 md:p-5">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 md:gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="mb-2">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -66,12 +60,12 @@ function AdminUserCard({ user, t, onViewListings, onToggleStatus }: AdminUserCar
               </span>
               <CopyButton text={user.id} label="ID" />
             </div>
-            <h3 className="text-sm md:text-base font-bold text-text-primary break-words">
+            <h3 className="text-sm md:text-base font-bold text-text-primary wrap-break-word">
               {displayName}
             </h3>
             {user.companyName && (
               <p
-                className="text-sm md:text-base mt-1 break-words"
+                className="text-sm md:text-base mt-1 wrap-break-word"
                 style={{ color: 'rgb(var(--text-secondary-rgb))' }}
               >
                 {user.companyName}
@@ -83,7 +77,7 @@ function AdminUserCard({ user, t, onViewListings, onToggleStatus }: AdminUserCar
             style={{ color: 'rgb(var(--text-secondary-rgb))' }}
           >
             {user.email ? (
-              <div className="break-words">
+              <div className="wrap-break-word">
                 <span className="text-primary-700">{t('admin.usersTab.email')}</span> {user.email}
               </div>
             ) : (
@@ -102,13 +96,9 @@ function AdminUserCard({ user, t, onViewListings, onToggleStatus }: AdminUserCar
                 <span className="text-text-secondary">{t('admin.usersTab.unavailable')}</span>
               </div>
             )}
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-primary-700">{t('admin.usersTab.type')}</span>
-              <span
-                className={`px-2 py-1 rounded text-sm md:text-base font-semibold text-text-secondary ${getTypeBadgeClass(user.type)}`}
-              >
-                {t(getTypeLabelKey(user.type))}
-              </span>
+            <div>
+              <span className="text-primary-700">{t('admin.usersTab.type')}</span>{' '}
+              {t(getTypeLabelKey(user.type))}
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-primary-700">{t('admin.usersTab.status')}</span>
@@ -126,11 +116,11 @@ function AdminUserCard({ user, t, onViewListings, onToggleStatus }: AdminUserCar
             </div>
           </div>
         </div>
-        <div className="flex flex-row lg:flex-col gap-2 flex-shrink-0">
+        <div className="flex flex-col xl:flex-row items-stretch xl:items-center gap-2 w-full xl:w-auto shrink-0">
           {listingCount > 0 && (
             <button
               onClick={() => onViewListings(user)}
-              className="text-primary-700 font-medium text-xs md:text-sm lg:text-base hover:text-primary-900 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-700 hover:border-primary-900 bg-primary-500/10 select-none flex-1 lg:flex-none lg:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px]"
+              className="text-primary-700 font-medium text-base hover-only:hover:text-primary-900 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-700 hover-only:hover:border-primary-900 bg-primary-500/10 select-none w-full xl:w-auto h-[48px]"
             >
               {t('admin.usersTab.viewListings', { count: listingCount })}
             </button>
@@ -138,10 +128,10 @@ function AdminUserCard({ user, t, onViewListings, onToggleStatus }: AdminUserCar
           {hasContactInfo(user) && (
             <button
               onClick={() => onToggleStatus(user.id)}
-              className={`font-medium text-xs md:text-sm lg:text-base transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 select-none flex-1 lg:flex-none lg:w-auto min-h-[40px] md:min-h-[44px] lg:min-h-[48px] ${
+              className={`font-medium text-base transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 select-none w-full xl:w-auto h-[48px] ${
                 user.active !== false
-                  ? 'text-text-secondary hover:text-text-primary border-red-500/40 hover:border-red-500/60 bg-red-500/20 hover:bg-red-500/30'
-                  : 'text-primary-700 hover:text-primary-900 border-primary-700 hover:border-primary-900 bg-primary-500/10'
+                  ? 'text-text-secondary hover-only:hover:text-text-primary border-red-500/40 hover-only:hover:border-red-500/60 bg-red-500/20 hover-only:hover:bg-red-500/30'
+                  : 'text-primary-700 hover-only:hover:text-primary-900 border-primary-700 hover-only:hover:border-primary-900 bg-primary-500/10'
               }`}
             >
               {user.active !== false
@@ -262,7 +252,7 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
     <>
       {showSkeleton && (
         <div>
-          <div className="mb-4 md:mb-6 flex flex-col gap-3 md:gap-4">
+          <div className="mb-4 md:mb-6 flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1 h-[48px] md:h-[52px] bg-bg-secondary/30 rounded-lg animate-pulse" />
             </div>
@@ -275,23 +265,23 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
               ))}
             </div>
           </div>
-          <div className="mb-3 md:mb-4 h-4 md:h-5 bg-bg-secondary/30 rounded w-40 md:w-48 animate-pulse" />
+          <div className="mb-3 md:mb-4 h-4 md:h-5 bg-bg-secondary/30 rounded-sm w-40 md:w-48 animate-pulse" />
           <div className="space-y-3 md:space-y-4">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="card p-4 md:p-5">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 md:gap-4">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                   <div className="flex-1 space-y-2 md:space-y-3">
-                    <div className="h-3 md:h-4 bg-bg-secondary/30 rounded w-28 md:w-32 animate-pulse" />
-                    <div className="h-5 md:h-6 bg-bg-secondary/40 rounded w-3/4 animate-pulse" />
+                    <div className="h-3 md:h-4 bg-bg-secondary/30 rounded-sm w-28 md:w-32 animate-pulse" />
+                    <div className="h-5 md:h-6 bg-bg-secondary/40 rounded-sm w-3/4 animate-pulse" />
                     <div className="space-y-2">
-                      <div className="h-3 md:h-4 bg-bg-secondary/30 rounded w-full animate-pulse" />
-                      <div className="h-3 md:h-4 bg-bg-secondary/30 rounded w-5/6 animate-pulse" />
-                      <div className="h-3 md:h-4 bg-bg-secondary/30 rounded w-4/6 animate-pulse" />
+                      <div className="h-3 md:h-4 bg-bg-secondary/30 rounded-sm w-full animate-pulse" />
+                      <div className="h-3 md:h-4 bg-bg-secondary/30 rounded-sm w-5/6 animate-pulse" />
+                      <div className="h-3 md:h-4 bg-bg-secondary/30 rounded-sm w-4/6 animate-pulse" />
                     </div>
                   </div>
                   <div className="flex flex-row lg:flex-col gap-2">
-                    <div className="h-8 md:h-10 bg-bg-secondary/30 rounded flex-1 lg:flex-none lg:w-32 animate-pulse" />
-                    <div className="h-8 md:h-10 bg-bg-secondary/30 rounded flex-1 lg:flex-none lg:w-28 animate-pulse" />
+                    <div className="h-8 md:h-10 bg-bg-secondary/30 rounded-sm flex-1 lg:flex-none lg:w-32 animate-pulse" />
+                    <div className="h-8 md:h-10 bg-bg-secondary/30 rounded-sm flex-1 lg:flex-none lg:w-28 animate-pulse" />
                   </div>
                 </div>
               </div>
@@ -302,7 +292,7 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
 
       {!showSkeleton && (
         <div>
-          <div className="mb-4 md:mb-6 flex flex-col gap-3 md:gap-4">
+          <div className="mb-4 md:mb-6 flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row gap-3">
               <input
                 type="text"
@@ -314,7 +304,7 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
                   }))
                 }
                 placeholder={t('admin.usersTab.searchPlaceholder')}
-                className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-secondary border-2 border-primary-700 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-primary-900 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
+                className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-secondary border-2 border-primary-700 text-text-primary placeholder:text-text-secondary focus:outline-hidden focus:border-primary-900 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
               />
             </div>
 
@@ -331,7 +321,7 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
                   className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-base transition-colors ${
                     filters.roleFilter === role
                       ? 'bg-primary-500/10 border-2 border-primary-700 text-primary-700'
-                      : 'bg-bg-secondary hover:bg-bg-base border-2 border-primary-700 text-primary-700 hover:text-primary-900 hover:border-primary-900'
+                      : 'bg-bg-secondary hover-only:hover:bg-bg-base border-2 border-primary-700 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900'
                   }`}
                 >
                   {role === 'All'

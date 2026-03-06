@@ -3,7 +3,11 @@
     "name": "Поле может содержать только буквы, пробелы, дефисы и тире",
     "phone": "Номер телефона должен быть в формате +код страны (1-4 цифры) + номер (6-15 цифр)",
     "password": "Пароль должен содержать хотя бы одну заглавную букву и одну строчную букву",
-    "registrationType": "Тип регистрации должен быть Local, Foreign, Cleared или NotCleared"
+    "registrationType": "Тип регистрации должен быть Local, Foreign, Cleared или NotCleared",
+    "string": "Значение должно быть строкой",
+    "codeLength": "Код должен содержать ровно 6 цифр",
+    "codeDigits": "Код должен содержать только цифры",
+    "passwordMinLength": "Пароль должен содержать не менее 8 символов"
   },
   "errors": {
     "serverError": "Ошибка на сервере. Попробуйте позже.",
@@ -28,6 +32,8 @@
     "listingAccessDenied": "У вас нет доступа к этому объявлению",
     "listingAlreadyActive": "Объявление уже активно",
     "activeListingsLimitExceeded": "Превышен лимит активных объявлений. Максимум: {max}",
+    "invalidUserId": "Некорректный ID пользователя",
+    "assignedUserDeactivated": "Пользователь деактивирован",
     "userAlreadyExists": "Пользователь с такими данными уже существует",
     "imageProcessingError": "Ошибка обработки изображения: {error}",
     "invalidLoginCredentials": "Неверные учетные данные",
@@ -70,8 +76,18 @@
     "imageNotFound": "Изображение не найдено",
     "uploadDirectoryNotConfigured": "Каталог загрузки не настроен",
     "unknownError": "Неизвестная ошибка",
+    "brandDuplicateName": "Марка с таким названием уже существует",
+    "modelDuplicateName": "Модель с таким названием уже существует для этой марки",
+    "brandDuplicateNameActiveExists": "Активная марка с таким названием уже существует",
+    "modelDuplicateNameActiveExists": "Активная модель с таким названием уже существует для этой марки",
+    "hasActiveListings": "Нельзя архивировать: есть активные объявления, использующие эту марку/модель",
+    "archivedCannotBeActive": "Архивный элемент нельзя активировать",
+    "modelCategoryOutsideBrand": "Категория модели должна входить в категории марки",
+    "brandNotFound": "Марка не найдена",
+    "modelNotFound": "Модель не найдена",
     "plateMaskFailed": "Не удалось обработать маскировку номеров",
-    "plateDetectionTimeout": "Время обнаружения номеров истекло"
+    "plateDetectionTimeout": "Время обнаружения номеров истекло",
+    "animatedImagesNotSupported": "Анимированные изображения не поддерживаются. Загрузите статичное изображение."
   },
   "vehicleOptions": {
     "transmission": {

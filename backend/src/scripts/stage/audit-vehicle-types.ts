@@ -56,7 +56,7 @@ async function auditVehicleTypes(fix: boolean = false) {
     for (const model of models) {
       stats.totalModels++;
       const expectedType = determineVehicleType(model.name, brand.name);
-      const currentType = model.vehicle_type;
+      const currentType = model.vehicle_types?.[0];
 
       stats.byType[expectedType].total++;
 
@@ -73,7 +73,7 @@ async function auditVehicleTypes(fix: boolean = false) {
         });
 
         if (fix) {
-          model.vehicle_type = expectedType;
+          model.vehicle_types = [expectedType];
           modelsToFix.push(model);
         }
       } else {
@@ -134,9 +134,8 @@ async function auditVehicleTypes(fix: boolean = false) {
       const types = new Set<'car' | 'truck' | 'moto'>();
 
       for (const model of updatedModels) {
-        if (model.vehicle_type) {
-          types.add(model.vehicle_type);
-        }
+        const t = model.vehicle_types?.[0];
+        if (t) types.add(t);
       }
 
       const brandTypes = Array.from(types).sort();

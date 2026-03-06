@@ -28,7 +28,7 @@ export function StatusBadge({
 
   return (
     <div
-      className={`${showLabel ? 'bg-bg-base/95 backdrop-blur-sm px-2 py-2 rounded-lg border border-primary-500/30 inline-flex items-center gap-1.5' : ''} ${className}`}
+      className={`${showLabel ? 'bg-bg-base/95 backdrop-blur-xs px-2 py-2 rounded-lg border border-primary-500/30 inline-flex items-center gap-1.5' : ''} ${className}`}
     >
       {showLabel && (
         <div className="text-xs font-semibold text-gray-200">{t('statusBadge.status')}</div>

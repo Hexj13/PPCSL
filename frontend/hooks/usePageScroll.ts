@@ -26,8 +26,8 @@ export function usePageScroll() {
 
       SCROLL_THRESHOLDS.forEach((threshold) => {
         if (percentScrolled >= threshold && !trackedThresholdsRef.current.has(threshold)) {
-          analytics.pageScroll(threshold);
           trackedThresholdsRef.current.add(threshold);
+          analytics.pageScrollDeferred(threshold);
         }
       });
     };

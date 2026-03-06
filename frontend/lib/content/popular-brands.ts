@@ -9,6 +9,46 @@ type PopularBrandsByVehicleType = {
   moto: PopularBrandsConfig;
 };
 
+type PopularBrandsJsonItem = {
+  brand: string;
+  top_models: Array<{ model: string; most_popular: boolean }>;
+};
+
+type PopularBrandsJson = {
+  market: string;
+  segment: string;
+  brands: PopularBrandsJsonItem[];
+};
+
+function isPopularBrandsJson(data: unknown): data is PopularBrandsJson {
+  if (
+    typeof data !== 'object' ||
+    data === null ||
+    !Array.isArray((data as PopularBrandsJson).brands)
+  )
+    return false;
+  const brands = (data as PopularBrandsJson).brands;
+  return brands.every((b) => typeof b.brand === 'string' && Array.isArray(b.top_models));
+}
+
+function carConfigFromJson(data: PopularBrandsJson): PopularBrandsConfig {
+  return {
+    brands: data.brands.map((b) => b.brand),
+    modelsByBrand: Object.fromEntries(
+      data.brands.map((b) => [b.brand, b.top_models.map((m) => m.model)]),
+    ),
+  };
+}
+
+function mostPopularFromJson(data: PopularBrandsJson): Record<string, string> {
+  return Object.fromEntries(
+    data.brands.flatMap((b) => {
+      const m = b.top_models.find((x) => x.most_popular);
+      return m ? [[b.brand, m.model]] : [];
+    }),
+  );
+}
+
 const fallback: PopularBrandsByVehicleType = {
   car: {
     brands: [
@@ -44,7 +84,20 @@ const fallback: PopularBrandsByVehicleType = {
       ],
       Opel: ['Astra', 'Corsa', 'Crossland', 'Grandland', 'Insignia', 'Mokka', 'Vivaro', 'Zafira'],
       Peugeot: ['2008', '208', '3008', '308', '5008', '508', 'Partner', 'Traveller'],
-      Renault: ['Captur', 'Clio', 'Duster', 'Kadjar', 'Megane', 'Scenic', 'Talisman', 'Twingo'],
+      Renault: [
+        'Captur',
+        'Clio',
+        'Duster',
+        'Duster Adventure',
+        'Kadjar',
+        'Logan',
+        'Megane',
+        'Sandero',
+        'Scenic',
+        'Symbol',
+        'Talisman',
+        'Twingo',
+      ],
       Toyota: ['Auris', 'C-HR', 'Corolla', 'Prius', 'RAV4', 'Yaris', 'Aygo', 'Land Cruiser'],
       Volkswagen: ['Golf', 'Jetta', 'Passat', 'Polo', 'Tiguan', 'Touareg', 'Touran', 'T-Cross'],
     },
@@ -136,27 +189,58 @@ const fallback: PopularBrandsByVehicleType = {
   },
 };
 
+let mostPopularModelByBrandCar: Record<string, string> = {};
+let mostPopularModelByBrandTruck: Record<string, string> = {};
+let mostPopularModelByBrandMoto: Record<string, string> = {};
+
+function safeParseJson(data: unknown): PopularBrandsJson | null {
+  return isPopularBrandsJson(data) ? data : null;
+}
+
 function loadPopularBrandsConfig(): PopularBrandsByVehicleType {
+  let car: PopularBrandsConfig = fallback.car;
   try {
-    const module = require(`../config/popular-brands`);
-    const config = module?.default || fallback;
-    if (config.car && config.truck && config.moto) {
-      return config as PopularBrandsByVehicleType;
+    const carJson = safeParseJson(require('../config/popular-brands.json'));
+    if (carJson) {
+      car = carConfigFromJson(carJson);
+      mostPopularModelByBrandCar = mostPopularFromJson(carJson);
     }
-    return {
-      car: config as PopularBrandsConfig,
-      truck: fallback.truck,
-      moto: fallback.moto,
-    };
   } catch {
-    return fallback;
+    // keep fallback
   }
+
+  let truck: PopularBrandsConfig = fallback.truck;
+  try {
+    const truckJson = safeParseJson(require('../config/popular-brands-truck.json'));
+    if (truckJson) {
+      truck = carConfigFromJson(truckJson);
+      mostPopularModelByBrandTruck = mostPopularFromJson(truckJson);
+    }
+  } catch {
+    // keep fallback
+  }
+
+  let moto: PopularBrandsConfig = fallback.moto;
+  try {
+    const motoJson = safeParseJson(require('../config/popular-brands-moto.json'));
+    if (motoJson) {
+      moto = carConfigFromJson(motoJson);
+      mostPopularModelByBrandMoto = mostPopularFromJson(motoJson);
+    }
+  } catch {
+    // keep fallback
+  }
+
+  return { car, truck, moto };
 }
 
 const config = loadPopularBrandsConfig();
 
 export const POPULAR_BRANDS = config.car.brands;
 export const POPULAR_MODELS_BY_BRAND = config.car.modelsByBrand;
+export const MOST_POPULAR_MODEL_BY_BRAND = mostPopularModelByBrandCar;
+export const MOST_POPULAR_MODEL_BY_BRAND_TRUCK = mostPopularModelByBrandTruck;
+export const MOST_POPULAR_MODEL_BY_BRAND_MOTO = mostPopularModelByBrandMoto;
 
 export const POPULAR_BRANDS_BY_VEHICLE_TYPE = {
   car: config.car,
@@ -174,4 +258,13 @@ export function getPopularModelsByBrand(
 ): Record<string, string[]> {
   const config = POPULAR_BRANDS_BY_VEHICLE_TYPE[vehicleType];
   return config?.modelsByBrand || {};
+}
+
+export function getMostPopularModel(
+  brand: string,
+  vehicleType: 'car' | 'truck' | 'moto' = 'car',
+): string | undefined {
+  if (vehicleType === 'truck') return mostPopularModelByBrandTruck[brand];
+  if (vehicleType === 'moto') return mostPopularModelByBrandMoto[brand];
+  return mostPopularModelByBrandCar[brand];
 }

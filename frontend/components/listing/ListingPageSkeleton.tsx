@@ -7,9 +7,9 @@ export function BreadcrumbsSkeleton() {
       className="flex items-center space-x-2 text-sm mb-6"
       aria-label={t('breadcrumbs.ariaLabel')}
     >
-      <div className="h-4 bg-bg-secondary/30 rounded w-20 animate-pulse" />
+      <div className="h-4 bg-bg-secondary/30 rounded-sm w-20 animate-pulse" />
       <span className="text-gray-500">/</span>
-      <div className="h-4 bg-bg-secondary/30 rounded w-48 animate-pulse" />
+      <div className="h-4 bg-bg-secondary/30 rounded-sm w-48 animate-pulse" />
     </nav>
   );
 }
@@ -33,8 +33,8 @@ export function ThumbnailsSkeleton() {
 export function PriceSkeleton() {
   return (
     <div className="flex items-baseline gap-3 flex-wrap mb-5">
-      <div className="h-12 bg-bg-secondary/30 rounded w-48 animate-pulse" />
-      <div className="h-6 bg-bg-secondary/30 rounded w-16 animate-pulse" />
+      <div className="h-12 bg-bg-secondary/30 rounded-sm w-48 animate-pulse" />
+      <div className="h-6 bg-bg-secondary/30 rounded-sm w-16 animate-pulse" />
     </div>
   );
 }
@@ -46,13 +46,13 @@ export function FavoriteButtonSkeleton() {
 export function InfoBlockSkeleton() {
   return (
     <div className="bg-bg-secondary p-4 md:p-6 rounded-xl border border-primary-500/20">
-      <div className="h-7 bg-bg-secondary/30 rounded w-40 mb-6 animate-pulse" />
+      <div className="h-7 bg-bg-secondary/30 rounded-sm w-40 mb-6 animate-pulse" />
       <div className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="space-y-2">
-              <div className="h-4 bg-bg-secondary/30 rounded w-20 animate-pulse" />
-              <div className="h-4 bg-bg-secondary/30 rounded w-32 animate-pulse" />
+              <div className="h-4 bg-bg-secondary/30 rounded-sm w-20 animate-pulse" />
+              <div className="h-4 bg-bg-secondary/30 rounded-sm w-32 animate-pulse" />
             </div>
           ))}
         </div>
@@ -60,8 +60,8 @@ export function InfoBlockSkeleton() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="space-y-2">
-                <div className="h-4 bg-bg-secondary/30 rounded w-20 animate-pulse" />
-                <div className="h-4 bg-bg-secondary/30 rounded w-32 animate-pulse" />
+                <div className="h-4 bg-bg-secondary/30 rounded-sm w-20 animate-pulse" />
+                <div className="h-4 bg-bg-secondary/30 rounded-sm w-32 animate-pulse" />
               </div>
             ))}
           </div>
@@ -74,7 +74,7 @@ export function InfoBlockSkeleton() {
 export function TitleSkeleton() {
   return (
     <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-6">
-      <span className="inline-block h-10 bg-bg-secondary/30 rounded w-3/4 animate-pulse" />
+      <span className="inline-block h-10 bg-bg-secondary/30 rounded-sm w-3/4 animate-pulse" />
     </h1>
   );
 }

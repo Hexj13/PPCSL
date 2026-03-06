@@ -37,7 +37,7 @@ export function PriceAndLocationSection({
               height="16"
               viewBox="0 0 24 24"
               fill="none"
-              className="flex-shrink-0"
+              className="shrink-0"
               xmlns="http://www.w3.org/2000/svg"
             >
               <circle
@@ -120,7 +120,7 @@ export function PriceAndLocationSection({
               onChange={(value) =>
                 setFormData((prev) => ({ ...prev, currency: value as Currency }))
               }
-              className="w-32 flex-shrink-0"
+              className="w-32 shrink-0"
               placeholder={t('searchFilters.allCurrencies')}
               options={CURRENCY_OPTIONS}
             />
@@ -134,7 +134,7 @@ export function PriceAndLocationSection({
               height="16"
               viewBox="0 0 24 24"
               fill="none"
-              className="flex-shrink-0"
+              className="shrink-0"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path

@@ -12,7 +12,7 @@ import { LoadingButton } from '@/ui';
 type TranslationFn = ReturnType<typeof useResetPasswordPage>['t'];
 
 const btnPrimaryClass =
-  'w-full text-primary-700 font-medium text-sm md:text-base hover:text-primary-900 hover:border-primary-900 active:text-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed';
+  'w-full text-primary-700 font-medium text-sm md:text-base hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed';
 
 function ResetPasswordPhoneStep({
   phone,
@@ -61,7 +61,7 @@ function ResetPasswordPhoneStep({
       <p className="mt-6 text-center text-sm text-gray-300">
         <Link
           href="/login"
-          className="text-primary-700 font-semibold hover:text-primary-900 underline transition-colors"
+          className="text-primary-700 font-semibold hover-only:hover:text-primary-900 underline transition-colors"
         >
           {t('resetPassword.backToLogin')}
         </Link>
@@ -101,7 +101,7 @@ function ResetPasswordCodeStep({
   onBack: () => void;
   t: TranslationFn;
 }) {
-  const inputClass = `w-12 h-14 md:w-14 md:h-16 text-center text-2xl md:text-3xl font-bold bg-bg-secondary border-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+  const inputClass = `w-12 h-14 md:w-14 md:h-16 text-center text-2xl md:text-3xl font-bold bg-bg-secondary border-2 rounded-lg transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
     errors.code
       ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
       : 'border-primary-500/30 focus:border-primary-500'
@@ -163,7 +163,7 @@ function ResetPasswordCodeStep({
               type="button"
               onClick={onBack}
               disabled={loading}
-              className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-gray-500/40 hover:border-gray-500/60 bg-gray-500/20 text-text-secondary font-semibold text-base hover:text-text-primary transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+              className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-gray-500/40 hover-only:hover:border-gray-500/60 bg-gray-500/20 text-text-secondary font-semibold text-base hover-only:hover:text-text-primary transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {t('common.back')}
             </button>
@@ -172,7 +172,7 @@ function ResetPasswordCodeStep({
               loading={loading}
               loadingText={t('resetPassword.verifying')}
               disabled={code.join('').trim().length !== 6 || isVerificationBlocked}
-              className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-primary-600 hover:border-primary-700 bg-primary-500/20 text-primary-800 font-semibold text-base hover:bg-primary-500/30 transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+              className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-primary-600 hover-only:hover:border-primary-700 bg-primary-500/20 text-primary-800 font-semibold text-base hover-only:hover:bg-primary-500/30 transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isVerificationBlocked ? t('resetPassword.blocked') : t('resetPassword.verify')}
             </LoadingButton>
@@ -183,7 +183,7 @@ function ResetPasswordCodeStep({
             type="button"
             onClick={onResend}
             disabled={loading || resendCooldown > 0}
-            className="text-sm text-primary-500 hover:text-primary-500 active:text-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="text-sm text-primary-500 hover-only:hover:text-primary-500 active:text-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {resendCooldown > 0
               ? `${t('resetPassword.resendCode')} (${resendCooldown}с)`
@@ -281,7 +281,7 @@ function ResetPasswordPasswordStep({
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary-400 transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover-only:hover:text-primary-400 transition-colors"
             tabIndex={-1}
           >
             <PasswordVisibilityIcon show={showPassword} />
@@ -292,7 +292,7 @@ function ResetPasswordPasswordStep({
             <div key={index} className="flex items-center gap-2">
               {rule.isValid ? (
                 <svg
-                  className="w-3 h-3 text-primary-900 flex-shrink-0"
+                  className="w-3 h-3 text-primary-900 shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -306,7 +306,7 @@ function ResetPasswordPasswordStep({
                 </svg>
               ) : (
                 <svg
-                  className="w-3 h-3 text-gray-400 flex-shrink-0"
+                  className="w-3 h-3 text-gray-400 shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -347,7 +347,7 @@ function ResetPasswordPasswordStep({
           <button
             type="button"
             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary-400 transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover-only:hover:text-primary-400 transition-colors"
             tabIndex={-1}
           >
             <PasswordVisibilityIcon show={showConfirmPassword} />
@@ -362,7 +362,7 @@ function ResetPasswordPasswordStep({
           type="button"
           onClick={onBack}
           disabled={loading}
-          className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-gray-500/40 hover:border-gray-500/60 bg-gray-500/20 text-text-secondary font-semibold text-base hover:text-text-primary transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+          className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-gray-500/40 hover-only:hover:border-gray-500/60 bg-gray-500/20 text-text-secondary font-semibold text-base hover-only:hover:text-text-primary transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {t('common.back')}
         </button>
@@ -371,7 +371,7 @@ function ResetPasswordPasswordStep({
           loading={loading}
           loadingText={t('common.loading')}
           disabled={!isFormValid}
-          className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-primary-600 hover:border-primary-700 bg-primary-500/20 text-primary-800 font-semibold text-base hover:bg-primary-500/30 transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+          className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-primary-600 hover-only:hover:border-primary-700 bg-primary-500/20 text-primary-800 font-semibold text-base hover-only:hover:bg-primary-500/30 transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {t('resetPassword.resetButton')}
         </LoadingButton>

@@ -602,23 +602,35 @@ npm run make-admin:prod -- --email your-email@example.com --password your-secure
 
 ### 3.9. Setting Up Cron Jobs
 
-The application has a built-in cron job that automatically closes listings older than 90 days (non-promoted listings only; promoted listings close automatically after promotion expires). However, on Render's free tier, services can sleep after inactivity.
+The application has built-in cron logic for closing old listings and expiring promotions. On Render's free tier, services can sleep after inactivity, so these tasks may not run on schedule.
 
-**Solution: Use Render Cron Job Service**
+**Solution: Use an external cron service** (e.g. Render Cron Jobs, cron-job.org) to call the HTTP endpoints.
 
 1. **Set Environment Variable in Backend Service:**
    - Add: `CRON_SECRET=<generate-secure-random-key>`
 
-2. **Create Cron Job in Render Dashboard:**
-   - Go to Render Dashboard → Your Project → **"CREATE NEW"** → **Cron Job**
-   - Configure:
-     - **Name:** `close-old-listings`
-     - **Schedule:** `0 0 * * *` (runs daily at midnight UTC)
-     - **Command:**
-       ```bash
-       curl -X POST https://your-backend.onrender.com/api/listings/cron/close-old -H "x-cron-secret: $CRON_SECRET"
-       ```
-     - **Environment:** Same environment as your backend service
+2. **Create cron jobs** (one per endpoint):
+
+   **Close old listings** (daily at midnight UTC):
+   - **URL:** `POST https://your-backend.onrender.com/api/listings/cron/close-old`
+   - **Header:** `x-cron-secret: <CRON_SECRET>`
+   - **Schedule:** `0 0 * * *`
+
+   **Expire promotions** (hourly; resets `is_promoted` for listings with `promoted_until` in the past):
+   - **URL:** `POST https://your-backend.onrender.com/api/listings/cron/expire-promotions`
+   - **Header:** `x-cron-secret: <CRON_SECRET>`
+   - **Schedule:** `0 * * * *` (every hour)
+
+   **Exchange rates** (if using the cron endpoint instead of the in-app schedule):
+   - **URL:** `POST https://your-backend.onrender.com/api/exchange-rates/cron/fetch`
+   - **Header:** `x-cron-secret: <CRON_SECRET>`
+   - **Schedule:** e.g. `30 2 * * *` (daily at 02:30 UTC)
+
+   Example with curl (Render Cron Job or shell):
+   ```bash
+   curl -X POST https://your-backend.onrender.com/api/listings/cron/close-old -H "x-cron-secret: $CRON_SECRET"
+   curl -X POST https://your-backend.onrender.com/api/listings/cron/expire-promotions -H "x-cron-secret: $CRON_SECRET"
+   ```
 
 ### 3.10. Frontend Service Setup (if deployed separately)
 

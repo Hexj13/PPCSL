@@ -172,7 +172,9 @@ export class ExchangeRatesService {
 
     const apiKey = process.env.FXRATESAPI_API_KEY;
     if (!apiKey) {
-      this.logger.error('FXRATESAPI_API_KEY not set; cannot fetch exchange rates.');
+      if (process.env.NODE_ENV !== 'test') {
+        this.logger.error('FXRATESAPI_API_KEY not set; cannot fetch exchange rates.');
+      }
       throw new Error('FXRATESAPI_API_KEY is not set');
     }
     await this.doFetchRatesFromFXRatesAPI(quoteCurrencies, apiKey);

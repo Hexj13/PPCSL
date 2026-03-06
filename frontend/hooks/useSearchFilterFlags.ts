@@ -9,9 +9,12 @@ export function useSearchFilterFlags(
   hasBasicFilters: boolean;
   hasAdvancedFiltersActive: boolean;
   hasEquipmentFiltersActive: boolean;
+  hasPopularFiltersActive: boolean;
 } {
   return useMemo(
     () => ({
+      hasPopularFiltersActive: filters.brand_ids.length > 0 || filters.model_ids.length > 0,
+
       hasBasicFilters:
         filters.brand_ids.length > 0 ||
         filters.model_ids.length > 0 ||

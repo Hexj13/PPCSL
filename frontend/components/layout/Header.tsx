@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useComparisonStore } from '@/lib/store';
 
@@ -12,6 +12,7 @@ import { useHeaderState } from './Header/useHeaderState';
 
 export function Header() {
   const headerRef = useRef<HTMLElement>(null);
+  const [isTelegramWebView, setIsTelegramWebView] = useState(false);
   const comparisonCount = useComparisonStore((state) => state.count());
   const {
     user,
@@ -41,10 +42,14 @@ export function Header() {
     return () => document.removeEventListener('click', handleClick);
   }, [isMobileMenuOpen, handleMobileMenuClose]);
 
+  useEffect(() => {
+    setIsTelegramWebView('TelegramWebviewProxy' in window);
+  }, []);
+
   return (
     <header
       ref={headerRef}
-      className="bg-primary-700 shadow-lg border-b-2 border-primary-500/20 sticky top-0 z-50 backdrop-blur-sm h-[72px]"
+      className={`bg-primary-700 shadow-lg border-b-2 border-primary-500/20 h-[72px] z-50 ${isTelegramWebView ? 'relative' : 'sticky top-0'}`}
       suppressHydrationWarning
     >
       <div className="container mx-auto px-3 sm:px-4 h-full" suppressHydrationWarning>

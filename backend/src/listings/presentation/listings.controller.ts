@@ -365,7 +365,7 @@ export class ListingsController {
   @Post()
   @UseGuards(JwtAuthGuard)
   create(@Body() createListingDto: CreateListingDto, @Request() req: AuthenticatedRequest) {
-    return this.listingsService.create(createListingDto, req.user.id);
+    return this.listingsService.create(createListingDto, req.user.id, req.user.type);
   }
 
   @ApiOperation({ summary: 'Update listing' })
@@ -454,6 +454,16 @@ export class ListingsController {
   async closeOldListings() {
     const result = await this.listingsService.autoCloseOldListings();
     return { message: 'Old listings closed successfully', result };
+  }
+
+  @ApiOperation({ summary: 'Expire promotions (cron job endpoint)' })
+  @ApiResponse({ status: 200, description: 'Expired promotions processed' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Invalid secret key' })
+  @Post('cron/expire-promotions')
+  @UseGuards(CronSecretGuard)
+  async expirePromotions() {
+    const result = await this.listingsService.expirePromotions();
+    return { message: 'Expired promotions processed', result };
   }
 
   @Patch(':id/promote')

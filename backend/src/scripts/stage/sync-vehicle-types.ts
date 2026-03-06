@@ -48,18 +48,19 @@ async function syncVehicleTypes(forceReset: boolean = false) {
     const brandCategory = getBrandCategory(brand.name);
 
     for (const model of models) {
-      const shouldUpdate = forceReset || !model.vehicle_type;
+      const currentType = model.vehicle_types?.[0];
+      const shouldUpdate = forceReset || !currentType;
 
       if (shouldUpdate) {
         const vehicleType = determineVehicleType(model.name, brand.name);
-        model.vehicle_type = vehicleType;
+        model.vehicle_types = [vehicleType];
         modelTypes.add(vehicleType);
         modelsToUpdate.push(model);
         modelsNeedUpdate = true;
         stats[vehicleType]++;
       } else {
-        modelTypes.add(model.vehicle_type);
-        stats[model.vehicle_type]++;
+        modelTypes.add(currentType);
+        stats[currentType]++;
       }
     }
 
@@ -108,7 +109,7 @@ async function syncVehicleTypes(forceReset: boolean = false) {
 
   const modelsWithoutTypes = await modelRepo
     .createQueryBuilder('model')
-    .where('model.vehicle_type IS NULL')
+    .where("(model.vehicle_types IS NULL OR model.vehicle_types = '')")
     .getCount();
 
   if (brandsWithoutTypes > 0 || modelsWithoutTypes > 0) {

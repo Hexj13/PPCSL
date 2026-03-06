@@ -38,6 +38,7 @@ export class GetBoardListingsUseCase {
     const validSortFields = ['created_at', 'price', 'year', 'views'];
     const sortField = validSortFields.includes(sortBy) ? sortBy : 'created_at';
     const order = sortOrder === 'ASC' ? 'ASC' : 'DESC';
+    const dateSortColumn = sortField === 'created_at' ? 'last_updated_at' : sortField;
     const skip = (page - 1) * limit;
 
     const queryBuilder = this.listingsRepository
@@ -48,13 +49,17 @@ export class GetBoardListingsUseCase {
       .leftJoinAndSelect('listing.user', 'user')
       .where('listing.user_id = :userId', { userId: user.id })
       .andWhere('listing.status = :status', { status: ListingStatusEnum.Active })
-      .orderBy('listing.is_promoted', 'DESC');
+      .addSelect(
+        `(CASE WHEN listing.is_promoted = true AND (listing.promoted_until IS NULL OR listing.promoted_until > NOW()) THEN 1 ELSE 0 END)`,
+        'actively_promoted',
+      )
+      .orderBy('actively_promoted', 'DESC');
 
-    if (sortField === 'year') {
+    if (dateSortColumn === 'year') {
       queryBuilder.addOrderBy('vehicle.year', order);
-    } else if (sortField === 'views') {
+    } else if (dateSortColumn === 'views') {
       queryBuilder.addOrderBy('listing.views', order);
-    } else if (sortField === 'price') {
+    } else if (dateSortColumn === 'price') {
       const { defaultCurrency, rates } = await this.exchangeRatesService.getAllRatesMap();
       const { expression, params } = buildPriceInDefaultCurrencyOrderExpression(
         defaultCurrency,
@@ -66,8 +71,9 @@ export class GetBoardListingsUseCase {
       queryBuilder.addSelect(expression, 'price_in_default_currency');
       queryBuilder.addOrderBy('price_in_default_currency', order);
     } else {
-      queryBuilder.addOrderBy(`listing.${sortField}`, order);
+      queryBuilder.addOrderBy(`listing.${dateSortColumn}`, order);
     }
+    queryBuilder.addOrderBy('listing.id', 'ASC');
 
     const [listings, total] = await queryBuilder.skip(skip).take(limit).getManyAndCount();
 

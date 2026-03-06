@@ -2,6 +2,7 @@
 
 import { useSearchParams, usePathname } from 'next/navigation';
 import { useEffect, useState, useCallback, useRef, useMemo, startTransition } from 'react';
+import { flushSync } from 'react-dom';
 
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -54,6 +55,9 @@ const loadGridState = (): {
   return null;
 };
 
+const PARSED_PARAMS_CACHE_MAX = 32;
+const parsedParamsCache = new Map<string, Record<string, string | number | boolean>>();
+
 function getVehicleTypeFromParams(searchParamsString: string): 'car' | 'truck' | 'moto' {
   const params = new URLSearchParams(searchParamsString);
   const vehicleTypeParam = params.get('vehicleType') as 'car' | 'truck' | 'moto' | null;
@@ -62,10 +66,21 @@ function getVehicleTypeFromParams(searchParamsString: string): 'car' | 'truck' |
     : 'car';
 }
 
+function getParsedSearchParamsCacheKey(
+  searchParamsString: string,
+  vehicleType: 'car' | 'truck' | 'moto',
+): string {
+  return `${searchParamsString}|${vehicleType}`;
+}
+
 async function getParsedSearchParams(
   searchParamsString: string,
   vehicleType: 'car' | 'truck' | 'moto',
 ): Promise<Record<string, string | number | boolean>> {
+  const cacheKey = getParsedSearchParamsCacheKey(searchParamsString, vehicleType);
+  const cached = parsedParamsCache.get(cacheKey);
+  if (cached) return cached;
+
   const currentSearchParams = new URLSearchParams(searchParamsString);
   try {
     let brands;
@@ -94,7 +109,13 @@ async function getParsedSearchParams(
         return modelResolver(brandIds, slugs);
       },
     });
-    return parsed as unknown as Record<string, string | number | boolean>;
+    const result = parsed as unknown as Record<string, string | number | boolean>;
+    if (parsedParamsCache.size >= PARSED_PARAMS_CACHE_MAX) {
+      const firstKey = parsedParamsCache.keys().next().value;
+      if (firstKey !== undefined) parsedParamsCache.delete(firstKey);
+    }
+    parsedParamsCache.set(cacheKey, result);
+    return result;
   } catch {
     return { page: 1, limit: 20 };
   }
@@ -141,6 +162,15 @@ export function ListingGrid({ initialData }: ListingGridProps) {
 
   const searchParamsString = useMemo(() => searchParams.toString(), [searchParams]);
 
+  const uniqueListings = useMemo(() => {
+    const seen = new Set<string>();
+    return listings.filter((listing) => {
+      if (seen.has(listing.id)) return false;
+      seen.add(listing.id);
+      return true;
+    });
+  }, [listings]);
+
   const checkFavorites = useCallback(
     async (listingIds: string[]) => {
       if (!user || listingIds.length === 0) return;
@@ -171,8 +201,11 @@ export function ListingGrid({ initialData }: ListingGridProps) {
         vehicleType,
       };
 
+      let loadMoreStartedAt = 0;
+      let appendDeferred = false;
       if (append) {
-        setLoadingMore(true);
+        flushSync(() => setLoadingMore(true));
+        loadMoreStartedAt = Date.now();
       } else {
         setLoading(true);
         setError(null);
@@ -191,17 +224,10 @@ export function ListingGrid({ initialData }: ListingGridProps) {
           page,
         );
 
-        startTransition(() => {
-          if (append) {
-            setListings((prev) => {
-              const updated = [...prev, ...allNewListings];
-              listingsRef.current = updated;
-              setCurrentPage(finalPage);
-              setMeta(finalMeta);
-              if (loadTwoPages) saveGridState(updated, finalPage, finalMeta);
-              return updated;
-            });
-          } else {
+        await checkFavorites(allNewListings.map((l) => l.id));
+
+        if (!append) {
+          startTransition(() => {
             setListings(allNewListings);
             listingsRef.current = allNewListings;
             setCurrentPage(1);
@@ -211,18 +237,36 @@ export function ListingGrid({ initialData }: ListingGridProps) {
             setError(null);
             setHasLoadedWithFilters(true);
             if (allNewListings.length > 0) {
-              analytics.viewItemList(
-                allNewListings.map((listing) => ({
-                  id: listing.id,
-                  title: listing.title,
-                  price: listing.price,
-                })),
-              );
+              const items = allNewListings.map((listing) => ({
+                id: listing.id,
+                title: listing.title,
+                price: listing.price,
+              }));
+              if (typeof requestIdleCallback !== 'undefined') {
+                requestIdleCallback(() => analytics.viewItemList(items), { timeout: 500 });
+              } else {
+                setTimeout(() => analytics.viewItemList(items), 0);
+              }
             }
-          }
-        });
-
-        await checkFavorites(allNewListings.map((l) => l.id));
+          });
+        } else {
+          appendDeferred = true;
+          const elapsed = Date.now() - loadMoreStartedAt;
+          const remaining = Math.max(0, 1000 - elapsed);
+          setTimeout(() => {
+            startTransition(() => {
+              setListings((prev) => {
+                const updated = [...prev, ...allNewListings];
+                listingsRef.current = updated;
+                setCurrentPage(finalPage);
+                setMeta(finalMeta);
+                if (loadTwoPages) saveGridState(updated, finalPage, finalMeta);
+                return updated;
+              });
+              setLoadingMore(false);
+            });
+          }, remaining);
+        }
       } catch {
         if (!append) {
           setListings([]);
@@ -230,8 +274,12 @@ export function ListingGrid({ initialData }: ListingGridProps) {
           setHasLoadedWithFilters(true);
         }
       } finally {
-        setLoadingMore(false);
-        setLoading(false);
+        if (!appendDeferred) {
+          setLoadingMore(false);
+        }
+        if (!append) {
+          setLoading(false);
+        }
         if (!append && typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('searchComplete'));
         }
@@ -355,6 +403,21 @@ export function ListingGrid({ initialData }: ListingGridProps) {
 
   const showContent = !showSkeleton;
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || listings.length === 0 || !showContent) return;
+    const shouldScroll = sessionStorage.getItem('scrollToResultsAfterLoad');
+    if (!shouldScroll) return;
+    sessionStorage.removeItem('scrollToResultsAfterLoad');
+    if (window.innerWidth >= 1024) return;
+    const headerOffset = 110;
+    requestAnimationFrame(() => {
+      const el = document.getElementById('listings-results');
+      if (!el) return;
+      const targetTop = el.getBoundingClientRect().top + window.scrollY - headerOffset;
+      window.scrollTo({ top: targetTop, behavior: 'smooth' });
+    });
+  }, [listings, showContent]);
+
   return (
     <>
       {showSkeleton && (
@@ -396,7 +459,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
                       window.location.href = '/';
                     }
                   }}
-                  className="text-primary-400 font-medium text-sm md:text-base hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-6 py-3 text-base rounded-lg border-2 border-primary-400/20 hover:border-primary-400/40 bg-primary-500/10 hover:bg-primary-500/20"
+                  className="text-primary-400 font-medium text-sm md:text-base hover-only:hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-6 py-3 text-base rounded-lg border-2 border-primary-400/20 hover-only:hover:border-primary-400/40 bg-primary-500/10 hover-only:hover:bg-primary-500/20"
                 >
                   {t('listings.viewAllListings')}
                 </button>
@@ -406,20 +469,14 @@ export function ListingGrid({ initialData }: ListingGridProps) {
 
           {!error && listings.length > 0 && (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
-                {listings.map((listing, index) => (
+              <div
+                id="listings-results"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch"
+              >
+                {uniqueListings.map((listing, index) => (
                   <ListingCard key={listing.id} listing={listing} priority={index < 8} />
                 ))}
               </div>
-
-              {loadingMore && (
-                <div className="text-center py-8">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-                  <p className="mt-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
-                    {t('common.loading')}
-                  </p>
-                </div>
-              )}
 
               {(() => {
                 const hasMore = meta && meta.totalPages && currentPage < meta.totalPages;
@@ -427,11 +484,15 @@ export function ListingGrid({ initialData }: ListingGridProps) {
 
                 return (
                   <>
-                    {showLoadMoreButton && !loadingMore && (
-                      <LoadMoreButton onClick={handleLoadMore} />
+                    {(showLoadMoreButton || loadingMore) && (
+                      <LoadMoreButton
+                        onClick={handleLoadMore}
+                        loading={loadingMore}
+                        disabled={loadingMore}
+                      />
                     )}
 
-                    {!hasMore && listings.length > 0 && (
+                    {!hasMore && uniqueListings.length > 0 && !loadingMore && (
                       <div className="text-center pt-8 pb-0">
                         <p style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
                           {t('listings.noMoreListings')}

@@ -51,12 +51,12 @@ export default function FAQPage() {
             <div key={item.id} className="surface">
               <button
                 onClick={() => toggleItem(item.id)}
-                className="w-full text-left flex justify-between items-center p-4 hover:bg-primary-500/10 transition-colors duration-200 rounded-lg"
+                className="w-full text-left flex justify-between items-center p-4 hover-only:hover:bg-primary-500/10 transition-colors duration-200 rounded-lg"
               >
                 <h2 className="text-lg md:text-xl font-semibold text-primary-900 pr-4">
                   {normalizeText(item.question)}
                 </h2>
-                <span className="text-primary-400 text-2xl font-bold flex-shrink-0">
+                <span className="text-primary-400 text-2xl font-bold shrink-0">
                   {isOpen ? '−' : '+'}
                 </span>
               </button>
@@ -98,9 +98,7 @@ export default function FAQPage() {
               <ol className="space-y-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
                 {scenario.steps.map((step, index) => (
                   <li key={index} className="flex items-start">
-                    <span className="font-bold text-primary-400 mr-2 flex-shrink-0">
-                      {index + 1}.
-                    </span>
+                    <span className="font-bold text-primary-400 mr-2 shrink-0">{index + 1}.</span>
                     <span className="text-base md:text-lg">{normalizeText(step)}</span>
                   </li>
                 ))}
@@ -115,7 +113,7 @@ export default function FAQPage() {
           {t('faq.contact.description')}{' '}
           <a
             href={`mailto:${siteConfig.supportEmail}`}
-            className="text-primary-400 hover:text-primary-300 underline"
+            className="text-primary-400 hover-only:hover:text-primary-300 underline"
           >
             {siteConfig.supportEmail}
           </a>

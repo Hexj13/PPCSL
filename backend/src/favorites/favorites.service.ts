@@ -68,19 +68,20 @@ export class FavoritesService {
   }> {
     const skip = (page - 1) * limit;
 
-    const [favorites, total] = await this.favoritesRepository.findAndCount({
-      where: { user_id: userId },
-      relations: [
-        'listing',
-        'listing.vehicle',
-        'listing.vehicle.brand',
-        'listing.vehicle.model',
-        'listing.user',
-      ],
-      order: { created_at: 'DESC' },
-      skip,
-      take: limit,
-    });
+    const [favorites, total] = await this.favoritesRepository
+      .createQueryBuilder('favorite')
+      .leftJoinAndSelect('favorite.listing', 'listing')
+      .leftJoinAndSelect('listing.vehicle', 'vehicle')
+      .leftJoinAndSelect('vehicle.brand', 'brand')
+      .leftJoinAndSelect('vehicle.model', 'model')
+      .leftJoinAndSelect('listing.user', 'user')
+      .where('favorite.user_id = :userId', { userId })
+      .orderBy('listing.is_promoted', 'DESC')
+      .addOrderBy('listing.last_updated_at', 'DESC')
+      .addOrderBy('listing.id', 'ASC')
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
 
     const listings = favorites.map((f) => f.listing).filter(Boolean);
     const enriched = await this.exchangeRatesService.enrichListingsWithApproxPrice(listings);

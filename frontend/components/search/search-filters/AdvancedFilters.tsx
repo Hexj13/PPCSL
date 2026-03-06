@@ -72,7 +72,7 @@ export function AdvancedFilters({
       className={`relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 ${borderColor} text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg ${bgColor} before:pointer-events-none`}
     >
       <span
-        className="relative z-10 flex-shrink-0 text-text-secondary"
+        className="relative z-10 shrink-0 text-text-secondary"
         style={{ filter: 'grayscale(1) brightness(0.5)' }}
       >
         {emoji}
@@ -107,7 +107,7 @@ export function AdvancedFilters({
 
   return (
     <div className="mb-5">
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-5">
         <div className="min-w-0">
           <label
             className="block text-sm font-semibold mb-2 text-primary-900 flex items-center gap-2 overflow-hidden"
@@ -118,7 +118,7 @@ export function AdvancedFilters({
               height="16"
               viewBox="0 0 24 24"
               fill="none"
-              className="flex-shrink-0"
+              className="shrink-0"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -174,9 +174,7 @@ export function AdvancedFilters({
             options={getConditionOptions()}
           />
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-5">
         <div>
           <label
             className="block text-sm font-semibold mb-2 text-primary-900 truncate"

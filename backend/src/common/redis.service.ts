@@ -37,7 +37,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   async onModuleDestroy() {
     if (this.client && this.client.isOpen) {
       try {
-        await this.client.quit();
+        await this.client.close();
       } catch {
         // Ignore errors during cleanup
       }
@@ -114,15 +114,15 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     }
     try {
       const keys: string[] = [];
-      let cursor = 0;
+      let cursor = '0';
       do {
         const result = await this.client.scan(cursor, {
           MATCH: pattern,
           COUNT: 100,
         });
-        cursor = result.cursor;
+        cursor = String(result.cursor);
         keys.push(...result.keys);
-      } while (cursor !== 0);
+      } while (cursor !== '0');
 
       if (keys.length > 0) {
         await this.client.del(keys);
@@ -139,15 +139,15 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     try {
       const pattern = `${prefix}*`;
       const keys: string[] = [];
-      let cursor = 0;
+      let cursor = '0';
       do {
         const result = await this.client.scan(cursor, {
           MATCH: pattern,
           COUNT: 100,
         });
-        cursor = result.cursor;
+        cursor = String(result.cursor);
         keys.push(...result.keys);
-      } while (cursor !== 0);
+      } while (cursor !== '0');
 
       if (keys.length > 0) {
         await this.client.del(keys);

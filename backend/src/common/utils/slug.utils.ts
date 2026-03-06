@@ -19,3 +19,12 @@ export function slugToName(slug: string): string {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 }
+
+export function normalizeForComparison(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '')
+    .trim();
+}

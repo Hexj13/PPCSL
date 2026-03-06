@@ -1,5 +1,5 @@
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 type SearchTab = 'basic' | 'advanced' | 'equipment' | 'popular';
 
@@ -37,23 +37,38 @@ interface UseSearchTabsParams {
   hasBasicFilters: boolean;
   hasAdvancedFiltersActive: boolean;
   hasEquipmentFiltersActive: boolean;
+  isInternalSearchRef?: React.MutableRefObject<boolean>;
+  preserveTabOnNextSyncRef?: React.MutableRefObject<boolean>;
 }
 
 export function useSearchTabs({
   hasBasicFilters: _hasBasicFilters,
   hasAdvancedFiltersActive: _hasAdvancedFiltersActive,
   hasEquipmentFiltersActive: _hasEquipmentFiltersActive,
+  isInternalSearchRef,
+  preserveTabOnNextSyncRef,
 }: UseSearchTabsParams) {
   const searchParams = useSearchParams();
 
-  const getInitialTab = (): SearchTab => {
+  const getInitialTab = useCallback((): SearchTab => {
     if (BASIC_PARAM_KEYS.some((key) => searchParams.get(key))) return 'basic';
     if (ADVANCED_PARAM_KEYS.some((key) => searchParams.get(key))) return 'advanced';
     if (searchParams.get('equipment')) return 'equipment';
     return 'basic';
-  };
+  }, [searchParams]);
 
   const [activeTab, setActiveTab] = useState<SearchTab>(() => getInitialTab());
+
+  useEffect(() => {
+    if (preserveTabOnNextSyncRef?.current) {
+      preserveTabOnNextSyncRef.current = false;
+      return;
+    }
+    if (isInternalSearchRef?.current) {
+      return;
+    }
+    setActiveTab(getInitialTab());
+  }, [searchParams, isInternalSearchRef, preserveTabOnNextSyncRef, getInitialTab]);
 
   const basicTabRef = useRef<HTMLButtonElement>(null);
   const advancedTabRef = useRef<HTMLButtonElement>(null);
@@ -67,6 +82,27 @@ export function useSearchTabs({
   const buttonsContainerRef = useRef<HTMLDivElement>(null);
 
   const FADE_OUT_SCROLL_THRESHOLD = 48;
+
+  const lastIndicatorRef = useRef({ left: 0, width: 0 });
+  const lastFadeRef = useRef({ show: true, opacity: 1 });
+  const rafIdRef = useRef(0);
+
+  const scrollTabToStart = useCallback((tab: SearchTab) => {
+    const container = tabsContainerRef.current;
+    if (!container || container.scrollWidth <= container.clientWidth) return;
+    const tabRef =
+      tab === 'basic'
+        ? basicTabRef
+        : tab === 'advanced'
+          ? advancedTabRef
+          : tab === 'equipment'
+            ? equipmentTabRef
+            : popularTabRef;
+    const el = tabRef.current;
+    if (!el) return;
+    const targetScrollLeft = Math.min(el.offsetLeft, container.scrollWidth - container.clientWidth);
+    container.scrollTo({ left: targetScrollLeft, behavior: 'smooth' });
+  }, []);
 
   useEffect(() => {
     const updateIndicator = () => {
@@ -84,11 +120,12 @@ export function useSearchTabs({
         const container = tabsContainerRef.current;
         const containerRect = container.getBoundingClientRect();
         const scrollLeft = container.scrollLeft;
-
-        setIndicatorStyle({
-          left: rect.left - containerRect.left + scrollLeft,
-          width: rect.width,
-        });
+        const left = rect.left - containerRect.left + scrollLeft;
+        const width = rect.width;
+        if (lastIndicatorRef.current.left !== left || lastIndicatorRef.current.width !== width) {
+          lastIndicatorRef.current = { left, width };
+          setIndicatorStyle({ left, width });
+        }
       }
     };
 
@@ -96,9 +133,19 @@ export function useSearchTabs({
       if (!tabsContainerRef.current) return;
       const { scrollLeft, scrollWidth, clientWidth } = tabsContainerRef.current;
       const isAtEnd = scrollLeft >= scrollWidth - clientWidth - 1;
-      setShowFade(!isAtEnd);
+      const show = !isAtEnd;
       const opacity = isAtEnd ? 0 : Math.max(0, 1 - scrollLeft / FADE_OUT_SCROLL_THRESHOLD);
-      setFadeOpacity(opacity);
+      if (lastFadeRef.current.show !== show || lastFadeRef.current.opacity !== opacity) {
+        lastFadeRef.current = { show, opacity };
+        setShowFade(show);
+        setFadeOpacity(opacity);
+      }
+    };
+
+    const runUpdates = () => {
+      updateIndicator();
+      updateFade();
+      rafIdRef.current = 0;
     };
 
     const handleResize = () => {
@@ -107,8 +154,9 @@ export function useSearchTabs({
     };
 
     const handleScroll = () => {
-      updateIndicator();
-      updateFade();
+      if (rafIdRef.current === 0) {
+        rafIdRef.current = requestAnimationFrame(runUpdates);
+      }
     };
 
     updateIndicator();
@@ -116,7 +164,7 @@ export function useSearchTabs({
 
     const container = tabsContainerRef.current;
     if (container) {
-      container.addEventListener('scroll', handleScroll);
+      container.addEventListener('scroll', handleScroll, { passive: true });
       const resizeObserver = new ResizeObserver(handleResize);
       resizeObserver.observe(container);
       window.addEventListener('resize', handleResize);
@@ -125,6 +173,7 @@ export function useSearchTabs({
         container.removeEventListener('scroll', handleScroll);
         resizeObserver.disconnect();
         window.removeEventListener('resize', handleResize);
+        if (rafIdRef.current !== 0) cancelAnimationFrame(rafIdRef.current);
       };
     }
 
@@ -134,6 +183,7 @@ export function useSearchTabs({
   return {
     activeTab,
     setActiveTab,
+    scrollTabToStart,
     basicTabRef,
     advancedTabRef,
     equipmentTabRef,

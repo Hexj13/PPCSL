@@ -740,14 +740,14 @@ async function addAmericanBrandsModels() {
           name: modelName,
           brand_id: brand.id,
           order: maxOrder + i + 1,
-          vehicle_type: vehicleType,
+          vehicle_types: [vehicleType],
         });
         modelsToCreate.push(model);
         totalAdded++;
       } else {
         existingModel.order = maxOrder + i + 1;
-        if (!existingModel.vehicle_type) {
-          existingModel.vehicle_type = determineVehicleType(modelName, brandName);
+        if (!existingModel.vehicle_types?.[0]) {
+          existingModel.vehicle_types = [determineVehicleType(modelName, brandName)];
         }
         modelsToUpdate.push(existingModel);
         totalUpdated++;
@@ -772,12 +772,12 @@ async function addAmericanBrandsModels() {
 
     const allModelsForBrand = await modelRepo.find({
       where: { brand_id: brand.id },
-      select: ['vehicle_type'],
+      select: ['vehicle_types'],
     });
     const vehicleTypes = new Set<'car' | 'truck' | 'moto'>();
     for (const model of allModelsForBrand) {
-      if (model.vehicle_type) {
-        vehicleTypes.add(model.vehicle_type);
+      if (model.vehicle_types?.[0]) {
+        vehicleTypes.add(model.vehicle_types[0]);
       }
     }
     if (vehicleTypes.size > 0) {

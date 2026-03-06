@@ -34,7 +34,7 @@ interface UsePaginatedDataReturn<T, F> {
   setFilters: (_filters: F | ((_prev: F) => F)) => void;
   setPage: (_page: number) => void;
   loadMore: () => void;
-  reload: () => void;
+  reload: (_keepPage?: boolean) => void;
   setData: React.Dispatch<React.SetStateAction<T[]>>;
 }
 
@@ -191,11 +191,14 @@ export function usePaginatedData<T, F>(
     }
   }, [meta, page, loadingMore, load]);
 
-  const reload = useCallback(() => {
-    hasDataRef.current = false;
-    hasInitializedRef.current = false;
-    void load(1, false, debouncedFilters);
-  }, [load, debouncedFilters]);
+  const reload = useCallback(
+    (keepPage = false) => {
+      hasDataRef.current = false;
+      const targetPage = keepPage ? page : 1;
+      void load(targetPage, false, debouncedFilters);
+    },
+    [load, debouncedFilters, page],
+  );
 
   const handleSetPage = useCallback(
     (newPage: number) => {

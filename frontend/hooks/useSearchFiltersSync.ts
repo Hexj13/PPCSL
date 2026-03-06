@@ -14,7 +14,7 @@ interface UseSearchFiltersSyncParams {
   models: VehicleModel[];
   setLastAppliedFilters: React.Dispatch<React.SetStateAction<FilterState | null>>;
   hasActiveFilters: boolean;
-  isApplyingQuickFilterRef: React.MutableRefObject<boolean>;
+  isInternalSearchRef?: React.MutableRefObject<boolean>;
 }
 
 export function useSearchFiltersSync({
@@ -25,15 +25,17 @@ export function useSearchFiltersSync({
   models,
   setLastAppliedFilters,
   hasActiveFilters,
-  isApplyingQuickFilterRef,
+  isInternalSearchRef: isInternalSearchRefParam,
 }: UseSearchFiltersSyncParams) {
   const [isSyncingFromUrl, setIsSyncingFromUrl] = useState(false);
 
   const prevUrlForSyncRef = useRef<string>('');
-  const isInternalSearchRef = useRef(false);
+  const internalRef = useRef(false);
+  const isInternalSearchRef = isInternalSearchRefParam ?? internalRef;
   const hasInitializedRef = useRef(false);
   const processedBrandParamRef = useRef<string | null>(null);
   const processedModelParamRef = useRef<string | null>(null);
+  const lastModelEffectUrlRef = useRef<string>('');
   const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const SYNC_TIMEOUT_MS = 5000;
@@ -113,6 +115,7 @@ export function useSearchFiltersSync({
     hasActiveFilters,
     isSyncingFromUrl,
     setLastAppliedFilters,
+    isInternalSearchRef,
   ]);
 
   useEffect(() => {
@@ -153,31 +156,31 @@ export function useSearchFiltersSync({
             return prev;
           }
           processedModelParamRef.current = null;
-          const newFilters = {
+          return {
             ...prev,
             brand_ids: foundBrandIds,
             model_ids: [],
           };
-          if (isApplyingQuickFilterRef.current) {
-            setLastAppliedFilters({ ...newFilters });
-          }
-          return newFilters;
         });
       }
       processedBrandParamRef.current = brandParam;
     }
-  }, [brands, searchParams, setFilters, setLastAppliedFilters, isApplyingQuickFilterRef]);
+  }, [brands, searchParams, setFilters]);
 
   useEffect(() => {
     const modelParam = searchParams.get('model');
+    const currentUrl = searchParams.toString();
 
     if (!modelParam) {
-      if (processedModelParamRef.current !== null) {
+      const urlChanged = currentUrl !== lastModelEffectUrlRef.current;
+      if (urlChanged && processedModelParamRef.current !== null) {
+        lastModelEffectUrlRef.current = currentUrl;
         processedModelParamRef.current = null;
         setFilters((prev) => ({ ...prev, model_ids: [] }));
       }
       return;
     }
+    lastModelEffectUrlRef.current = currentUrl;
 
     if (
       models.length > 0 &&
@@ -186,14 +189,19 @@ export function useSearchFiltersSync({
     ) {
       const modelSlugs = modelParam.split(',').map((s) => s.trim().toLowerCase());
       const modelsMatchBrand = models.every((m) => filters.brand_ids.includes(m.brand_id));
-      const foundModelIds = modelSlugs
-        .map((slug) => {
-          const model = models.find(
-            (m) => m.name.toLowerCase() === slug || createSlug(m.name) === slug,
-          );
-          return model && filters.brand_ids.includes(model.brand_id) ? model.id : undefined;
-        })
-        .filter((id): id is string => id !== undefined);
+      const foundModelIds: string[] = [];
+      for (const slug of modelSlugs) {
+        const matching = models.filter(
+          (m) =>
+            (m.name.toLowerCase() === slug || createSlug(m.name) === slug) &&
+            filters.brand_ids.includes(m.brand_id),
+        );
+        for (const model of matching) {
+          if (!foundModelIds.includes(model.id)) {
+            foundModelIds.push(model.id);
+          }
+        }
+      }
 
       const shouldMarkProcessed =
         foundModelIds.length > 0 || (foundModelIds.length === 0 && modelsMatchBrand);
@@ -221,6 +229,5 @@ export function useSearchFiltersSync({
   return {
     isSyncingFromUrl,
     setIsSyncingFromUrl,
-    isInternalSearchRef,
   };
 }

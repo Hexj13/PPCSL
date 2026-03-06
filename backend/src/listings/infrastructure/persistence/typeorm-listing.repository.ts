@@ -49,14 +49,19 @@ export class TypeOrmListingRepository implements IListingRepository {
     const validSortFields = ['created_at', 'price', 'year', 'views'];
     const sortField = validSortFields.includes(sortBy) ? sortBy : 'created_at';
     const order = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+    const dateSortColumn = sortField === 'created_at' ? 'last_updated_at' : sortField;
 
-    queryBuilder.orderBy('listing.is_promoted', 'DESC');
-    if (sortField === 'year') {
+    queryBuilder.addSelect(
+      `(CASE WHEN listing.is_promoted = true AND (listing.promoted_until IS NULL OR listing.promoted_until > NOW()) THEN 1 ELSE 0 END)`,
+      'actively_promoted',
+    );
+    queryBuilder.orderBy('actively_promoted', 'DESC');
+    if (dateSortColumn === 'year') {
       queryBuilder.addOrderBy('vehicle.year', order);
-    } else if (sortField === 'views') {
+    } else if (dateSortColumn === 'views') {
       queryBuilder.addOrderBy('listing.views', order);
     } else if (
-      sortField === 'price' &&
+      dateSortColumn === 'price' &&
       criteria.defaultCurrency !== undefined &&
       criteria.priceSortRates !== undefined
     ) {
@@ -70,8 +75,9 @@ export class TypeOrmListingRepository implements IListingRepository {
       queryBuilder.addSelect(expression, 'price_in_default_currency');
       queryBuilder.addOrderBy('price_in_default_currency', order);
     } else {
-      queryBuilder.addOrderBy(`listing.${sortField}`, order);
+      queryBuilder.addOrderBy(`listing.${dateSortColumn}`, order);
     }
+    queryBuilder.addOrderBy('listing.id', 'ASC');
 
     const [data, total] = await queryBuilder.skip(skip).take(limit).getManyAndCount();
     return { data, total };
@@ -101,7 +107,7 @@ export class TypeOrmListingRepository implements IListingRepository {
     const { vehicle } = listing;
     const { id: currentId } = listing;
     const body_type = vehicle?.body_type;
-    let vehicle_type = vehicle?.model?.vehicle_type;
+    let vehicle_type = vehicle?.model?.vehicle_types?.[0];
 
     if (!vehicle_type && body_type) {
       vehicle_type = getVehicleTypeFromBodyType(body_type);
@@ -117,8 +123,9 @@ export class TypeOrmListingRepository implements IListingRepository {
       .andWhere('listing.id != :currentId', { currentId });
 
     if (vehicle_type) {
+      const key = vehicle_type as 'car' | 'truck' | 'moto';
       queryBuilder.andWhere('vehicle.body_type IN (:...bodyTypes)', {
-        bodyTypes: BODY_TYPES_BY_VEHICLE_TYPE[vehicle_type],
+        bodyTypes: BODY_TYPES_BY_VEHICLE_TYPE[key],
       });
     }
 
@@ -164,7 +171,7 @@ export class TypeOrmListingRepository implements IListingRepository {
       .leftJoin('vehicle.brand', 'brand')
       .addSelect(['brand.id', 'brand.name', 'brand.logoUrl'])
       .leftJoin('vehicle.model', 'model')
-      .addSelect(['model.id', 'model.name', 'model.vehicle_type'])
+      .addSelect(['model.id', 'model.name', 'model.vehicle_types'])
       .leftJoin('listing.user', 'user')
       .addSelect([
         'user.id',
@@ -177,8 +184,7 @@ export class TypeOrmListingRepository implements IListingRepository {
       ])
       .where('listing.status = :status', { status: ListingStatusEnum.Active });
 
-    applyInOrEqualFilter(qb, 'vehicle', 'brand_id', searchDto.brand_ids, searchDto.brand_id);
-    applyInOrEqualFilter(qb, 'vehicle', 'model_id', searchDto.model_ids, searchDto.model_id);
+    this.applyBrandModelFilter(qb, searchDto);
 
     if (searchDto.vehicleType) {
       qb.andWhere('vehicle.body_type IN (:...bodyTypes)', {
@@ -276,9 +282,33 @@ export class TypeOrmListingRepository implements IListingRepository {
     }
 
     qb.andWhere(
-      '(listing.is_promoted = false OR (listing.is_promoted = true AND (listing.promoted_until IS NULL OR listing.promoted_until > NOW())))',
+      '(listing.is_promoted = false OR listing.promoted_until IS NULL OR listing.promoted_until > NOW())',
     );
 
     return qb;
+  }
+
+  private applyBrandModelFilter(
+    qb: ReturnType<Repository<Listing>['createQueryBuilder']>,
+    searchDto: SearchCriteria,
+  ): void {
+    const hasBrandIds = searchDto.brand_ids && searchDto.brand_ids.length > 0;
+    const hasModelIds = searchDto.model_ids && searchDto.model_ids.length > 0;
+
+    if (hasBrandIds && hasModelIds) {
+      qb.andWhere(
+        '(vehicle.model_id IN (:...bm_model_ids) OR ' +
+          '(vehicle.brand_id IN (:...bm_brand_ids) AND vehicle.brand_id NOT IN ' +
+          '(SELECT DISTINCT vm.brand_id FROM vehicle_models vm WHERE vm.id IN (:...bm_model_ids_sub))))',
+        {
+          bm_model_ids: searchDto.model_ids,
+          bm_brand_ids: searchDto.brand_ids,
+          bm_model_ids_sub: searchDto.model_ids,
+        },
+      );
+    } else {
+      applyInOrEqualFilter(qb, 'vehicle', 'brand_id', searchDto.brand_ids, searchDto.brand_id);
+      applyInOrEqualFilter(qb, 'vehicle', 'model_id', searchDto.model_ids, searchDto.model_id);
+    }
   }
 }

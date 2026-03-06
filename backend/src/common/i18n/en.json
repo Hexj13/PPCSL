@@ -3,7 +3,11 @@
     "name": "Field can only contain letters, spaces, hyphens and dashes",
     "phone": "Phone number must be in format +country code (1-4 digits) + number (6-15 digits)",
     "password": "Password must contain at least one uppercase letter and one lowercase letter",
-    "registrationType": "Registration type must be Local, Foreign, Cleared, or NotCleared"
+    "registrationType": "Registration type must be Local, Foreign, Cleared, or NotCleared",
+    "string": "Value must be a string",
+    "codeLength": "Code must contain exactly 6 digits",
+    "codeDigits": "Code must contain only digits",
+    "passwordMinLength": "Password must be at least 8 characters"
   },
   "errors": {
     "serverError": "Server error. Please try again later.",
@@ -28,6 +32,8 @@
     "listingAccessDenied": "You do not have access to this listing",
     "listingAlreadyActive": "Listing is already active",
     "activeListingsLimitExceeded": "Active listings limit exceeded. Maximum: {max}",
+    "invalidUserId": "Invalid user ID",
+    "assignedUserDeactivated": "User is deactivated",
     "userAlreadyExists": "User with these data already exists",
     "imageProcessingError": "Error processing image: {error}",
     "invalidLoginCredentials": "Invalid login credentials",
@@ -79,8 +85,17 @@
     "imageNotFound": "Image not found",
     "uploadDirectoryNotConfigured": "Upload directory not configured",
     "unknownError": "Unknown error",
+    "brandDuplicateName": "A brand with this name already exists",
+    "modelDuplicateName": "A model with this name already exists for this brand",
+    "brandDuplicateNameActiveExists": "An active brand with this name already exists",
+    "modelDuplicateNameActiveExists": "An active model with this name already exists for this brand",
+    "hasActiveListings": "Cannot archive: there are active listings using this brand/model",
+    "archivedCannotBeActive": "An archived item cannot be activated",
+    "modelCategoryOutsideBrand": "Model category must be within brand categories",
+    "modelNotFound": "Model not found",
     "plateMaskFailed": "Failed to process plate masking",
-    "plateDetectionTimeout": "Plate detection timed out"
+    "plateDetectionTimeout": "Plate detection timed out",
+    "animatedImagesNotSupported": "Animated images are not supported. Please upload a static image."
   },
   "vehicleOptions": {
     "transmission": {

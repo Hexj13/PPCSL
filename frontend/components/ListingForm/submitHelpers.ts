@@ -36,13 +36,17 @@ export function buildListingPayload(
     horsepower: parseInt(formData.horsepower),
     power_kw: formData.power_kw ? parseInt(formData.power_kw) : undefined,
     equipment: formData.equipment.length > 0 ? formData.equipment : undefined,
+    assignedUserId: formData.assignedUserId?.trim() || undefined,
     vehicle: {
       brand_id: formData.vehicle.brand_id,
       model_id: formData.vehicle.model_id,
       year: parseInt(formData.vehicle.year),
-      engine_displ_l: formData.vehicle.engine_displ_l
-        ? Number(formData.vehicle.engine_displ_l)
-        : undefined,
+      engine_displ_l:
+        formData.vehicle.fuel === 'Electric'
+          ? undefined
+          : formData.vehicle.engine_displ_l
+            ? Number(formData.vehicle.engine_displ_l)
+            : undefined,
       mileage_km: formData.vehicle.mileage_km ? parseInt(formData.vehicle.mileage_km) : undefined,
       fuel: (formData.vehicle.fuel || undefined) as CreateListingDto['vehicle']['fuel'],
       transmission: (formData.vehicle.transmission ||

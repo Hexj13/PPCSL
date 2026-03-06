@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 export default function DesignSystemLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col">
-      <main className="flex-grow">{children}</main>
+      <main className="grow">{children}</main>
     </div>
   );
 }

@@ -34,7 +34,7 @@ export function DesktopNav({
   if (!showNav) return null;
 
   return (
-    <nav className="hidden lg:flex gap-1.5 lg:gap-2 xl:gap-4 items-center">
+    <nav className="hidden lg:flex gap-2 xl:gap-4 items-center">
       {showSkeleton ? (
         <NavSkeleton variant="desktop" />
       ) : user ? (

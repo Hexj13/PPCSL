@@ -167,7 +167,7 @@ async function seedTrucks(activeCount: number = 50) {
   const validBrands = brandsWithModels.filter((b) => {
     if (!b.models || b.models.length === 0) return false;
     return b.models.some((m) => {
-      if (m.vehicle_type !== 'truck') return false;
+      if (!m.vehicle_types?.includes('truck')) return false;
       const modelName = m.name.toLowerCase();
       return TRUCK_MODEL_KEYWORDS.some((keyword) => modelName.includes(keyword.toLowerCase()));
     });
@@ -200,7 +200,7 @@ async function seedTrucks(activeCount: number = 50) {
     const user = getRandomElement(users);
     const brand = getRandomElement(validBrands);
     const truckModels = brand.models.filter((m) => {
-      if (m.vehicle_type !== 'truck') return false;
+      if (!m.vehicle_types?.includes('truck')) return false;
       const modelName = m.name.toLowerCase();
       return TRUCK_MODEL_KEYWORDS.some((keyword) => modelName.includes(keyword.toLowerCase()));
     });

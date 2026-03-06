@@ -60,7 +60,7 @@ async function addModelsToBrands() {
           name: modelName,
           brand_id: brand.id,
           order: maxOrder + i + 1,
-          vehicle_type: vehicleType,
+          vehicle_types: [vehicleType],
         });
         await modelRepo.save(model);
         added++;
@@ -75,12 +75,12 @@ async function addModelsToBrands() {
 
     const allModelsForBrand = await modelRepo.find({
       where: { brand_id: brand.id },
-      select: ['vehicle_type'],
+      select: ['vehicle_types'],
     });
     const vehicleTypes = new Set<'car' | 'truck' | 'moto'>();
     for (const model of allModelsForBrand) {
-      if (model.vehicle_type) {
-        vehicleTypes.add(model.vehicle_type);
+      if (model.vehicle_types?.[0]) {
+        vehicleTypes.add(model.vehicle_types[0]);
       }
     }
     if (vehicleTypes.size > 0) {

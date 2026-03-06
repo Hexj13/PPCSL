@@ -3,7 +3,11 @@
     "name": "Câmpul poate conține doar litere, spații, cratime și liniuțe",
     "phone": "Numărul de telefon trebuie să fie în format +cod țară (1-4 cifre) + număr (6-15 cifre)",
     "password": "Parola trebuie să conțină cel puțin o literă mare și o literă mică",
-    "registrationType": "Tipul de înmatriculare trebuie să fie Local, Foreign, Cleared sau NotCleared"
+    "registrationType": "Tipul de înmatriculare trebuie să fie Local, Foreign, Cleared sau NotCleared",
+    "string": "Valoarea trebuie să fie un șir de caractere",
+    "codeLength": "Codul trebuie să conțină exact 6 cifre",
+    "codeDigits": "Codul trebuie să conțină doar cifre",
+    "passwordMinLength": "Parola trebuie să conțină cel puțin 8 caractere"
   },
   "errors": {
     "serverError": "Eroare pe server. Încercați mai târziu.",
@@ -28,6 +32,8 @@
     "listingAccessDenied": "Nu aveți acces la acest anunț",
     "listingAlreadyActive": "Anunțul este deja activ",
     "activeListingsLimitExceeded": "Limita de anunțuri active a fost depășită. Maximum: {max}",
+    "invalidUserId": "ID utilizator invalid",
+    "assignedUserDeactivated": "Utilizatorul este dezactivat",
     "userAlreadyExists": "Utilizator cu aceste date există deja",
     "imageProcessingError": "Eroare la procesarea imaginii: {error}",
     "invalidLoginCredentials": "Date de autentificare invalide",
@@ -70,8 +76,18 @@
     "imageNotFound": "Imaginea nu a fost găsită",
     "uploadDirectoryNotConfigured": "Directorul pentru încărcare nu este configurat",
     "unknownError": "Eroare necunoscută",
+    "brandDuplicateName": "O marcă cu acest nume există deja",
+    "modelDuplicateName": "Un model cu acest nume există deja pentru această marcă",
+    "brandDuplicateNameActiveExists": "Există deja o marcă activă cu acest nume",
+    "modelDuplicateNameActiveExists": "Există deja un model activ cu acest nume pentru această marcă",
+    "hasActiveListings": "Nu se poate arhiva: există anunțuri active care folosesc această marcă/model",
+    "archivedCannotBeActive": "Un element arhivat nu poate fi activat",
+    "modelCategoryOutsideBrand": "Categoria modelului trebuie să facă parte din categoriile mărcii",
+    "brandNotFound": "Marca nu a fost găsită",
+    "modelNotFound": "Modelul nu a fost găsit",
     "plateMaskFailed": "Nu am reușit procesarea măștii plăcuțelor",
-    "plateDetectionTimeout": "Detectarea plăcuțelor a expirat"
+    "plateDetectionTimeout": "Detectarea plăcuțelor a expirat",
+    "animatedImagesNotSupported": "Imaginile animate nu sunt acceptate. Încărcați o imagine statică."
   },
   "vehicleOptions": {
     "transmission": {

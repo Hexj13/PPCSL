@@ -101,8 +101,9 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
   useEffect(() => {
     if (mode === 'edit' && models.length > 0 && formData.vehicle.model_id) {
       const selectedModel = models.find((m) => m.id === formData.vehicle.model_id);
-      if (selectedModel?.vehicle_type && selectedModel.vehicle_type !== vehicleType) {
-        setVehicleType(selectedModel.vehicle_type);
+      const modelType = selectedModel?.vehicle_types?.[0];
+      if (modelType && modelType !== vehicleType) {
+        setVehicleType(modelType);
       }
     }
   }, [models, formData.vehicle.model_id, mode, vehicleType]);
@@ -218,10 +219,12 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
       errorKey: 'modelRequired',
     }));
     checkField('vehicle.year', formData.vehicle.year, (val) => validators.year(val as string));
-    checkField('vehicle.engine_displ_l', formData.vehicle.engine_displ_l, (val) => ({
-      ...validators.required(val as string),
-      errorKey: 'engineRequired',
-    }));
+    if (formData.vehicle.fuel !== 'Electric') {
+      checkField('vehicle.engine_displ_l', formData.vehicle.engine_displ_l, (val) => ({
+        ...validators.required(val as string),
+        errorKey: 'engineRequired',
+      }));
+    }
     checkField('vehicle.mileage_km', formData.vehicle.mileage_km, (val) => ({
       ...validators.required(val as string),
       errorKey: 'mileageRequired',
@@ -270,6 +273,15 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
       ...validators.required(val as string),
       errorKey: 'powerKwRequired',
     }));
+
+    const assignedUserIdTrimmed = formData.assignedUserId?.trim();
+    if (assignedUserIdTrimmed) {
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(assignedUserIdTrimmed)) {
+        toast.error(t('listings.invalidUserId'));
+        newErrors['assignedUserId'] = true;
+      }
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -329,9 +341,33 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
       } catch (error: unknown) {
         setLoading(false);
         reportFormSubmit(analytics, mode, false, filledFields);
-        afterHidden(() => {
-          toast.error(getSubmitErrorMessage(error, mode, t));
-        });
+
+        const axiosError = error as {
+          response?: { data?: { message?: string; errorKey?: string } };
+        };
+        const backendMessage =
+          typeof axiosError?.response?.data?.message === 'string'
+            ? axiosError.response.data.message
+            : '';
+        const backendErrorKey = axiosError?.response?.data?.errorKey;
+        const assignedUserErrors = [
+          'errors.userNotFound',
+          'errors.assignedUserDeactivated',
+          'errors.activeListingsLimitExceeded',
+          'errors.invalidUserId',
+        ];
+        const isAssignError =
+          formData.assignedUserId?.trim() &&
+          (typeof backendErrorKey === 'string'
+            ? assignedUserErrors.includes(backendErrorKey)
+            : assignedUserErrors.some((key) => backendMessage.includes(key)));
+
+        if (isAssignError) {
+          setErrors((prev) => ({ ...prev, assignedUserId: true }));
+          afterHidden(() => toast.error(backendMessage || getSubmitErrorMessage(error, mode, t)));
+        } else {
+          afterHidden(() => toast.error(getSubmitErrorMessage(error, mode, t)));
+        }
       }
     },
     [

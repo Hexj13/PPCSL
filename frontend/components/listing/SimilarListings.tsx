@@ -300,11 +300,11 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
                 type="button"
                 onClick={handleScrollLeft}
                 disabled={!canScrollLeft}
-                className="bg-bg-darker/90 hover:bg-bg-darker border-2 border-primary-700 hover:border-primary-900 rounded-full p-2 transition-all shadow-lg backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed group"
+                className="bg-bg-darker/90 hover-only:hover:bg-bg-darker border-2 border-primary-700 hover-only:hover:border-primary-900 rounded-full p-2 transition-all shadow-lg backdrop-blur-xs disabled:opacity-50 disabled:cursor-not-allowed group"
                 aria-label={t('similarListings.scrollLeft')}
               >
                 <svg
-                  className="w-5 h-5 text-primary-700 group-hover:text-primary-900 transition-colors"
+                  className="w-5 h-5 text-primary-700 lg:group-hover:text-primary-900 transition-colors"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -317,18 +317,18 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
                   />
                 </svg>
               </button>
-              <div className="text-sm font-medium text-primary-700 min-w-[3rem] text-center">
+              <div className="text-sm font-medium text-primary-700 min-w-12 text-center">
                 {currentPosition}/{totalPositions}
               </div>
               <button
                 type="button"
                 onClick={handleScrollRight}
                 disabled={!canScrollRight}
-                className="bg-bg-darker/90 hover:bg-bg-darker border-2 border-primary-700 hover:border-primary-900 rounded-full p-2 transition-all shadow-lg backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed group"
+                className="bg-bg-darker/90 hover-only:hover:bg-bg-darker border-2 border-primary-700 hover-only:hover:border-primary-900 rounded-full p-2 transition-all shadow-lg backdrop-blur-xs disabled:opacity-50 disabled:cursor-not-allowed group"
                 aria-label={t('similarListings.scrollRight')}
               >
                 <svg
-                  className="w-5 h-5 text-primary-700 group-hover:text-primary-900 transition-colors"
+                  className="w-5 h-5 text-primary-700 lg:group-hover:text-primary-900 transition-colors"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -362,7 +362,7 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
                     <div
                       key={`skeleton-${i}`}
                       role="listitem"
-                      className="flex-shrink-0 w-[250px] md:w-[260px] flex"
+                      className="shrink-0 w-[250px] md:w-[260px] flex"
                     >
                       <div className="w-full h-full">
                         <ListingCardSkeleton />
@@ -375,7 +375,7 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
                 <div
                   key={listing.id}
                   role="listitem"
-                  className="flex-shrink-0 w-[250px] md:w-[260px] flex"
+                  className="shrink-0 w-[250px] md:w-[260px] flex"
                 >
                   <div className="w-full h-full">
                     <SimilarListingCard

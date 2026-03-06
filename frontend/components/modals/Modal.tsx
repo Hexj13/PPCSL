@@ -32,18 +32,25 @@ export function Modal({
 
     document.addEventListener('keydown', handleEscape);
 
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-    const originalBodyOverflow = document.body.style.overflow;
-    const originalBodyPaddingRight = document.body.style.paddingRight;
-    const computedBodyPaddingRight = window.getComputedStyle(document.body).paddingRight;
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const originalPosition = body.style.position;
+    const originalTop = body.style.top;
+    const originalWidth = body.style.width;
+    const originalLeft = body.style.left;
 
-    document.body.style.overflow = 'hidden';
-    document.body.style.paddingRight = `calc(${computedBodyPaddingRight} + ${scrollbarWidth}px)`;
+    body.style.position = 'fixed';
+    body.style.top = `-${scrollY}px`;
+    body.style.left = '0';
+    body.style.width = '100%';
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = originalBodyOverflow;
-      document.body.style.paddingRight = originalBodyPaddingRight;
+      body.style.position = originalPosition;
+      body.style.top = originalTop;
+      body.style.width = originalWidth;
+      body.style.left = originalLeft;
+      window.scrollTo(0, scrollY);
     };
   }, [isOpen]);
 
@@ -62,11 +69,16 @@ export function Modal({
 
   const modalContent = (
     <div
-      className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-4 sm:p-6 md:p-8"
+      className="fixed inset-0 bg-black/70 flex items-center justify-center z-9999 p-4 sm:p-6 md:p-8"
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
-        if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          onCloseRef.current();
+          return;
+        }
+        if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) {
           e.preventDefault();
           onCloseRef.current();
         }
@@ -85,7 +97,7 @@ export function Modal({
             <h2 className="text-2xl font-bold text-primary-900">{title}</h2>
             <button
               onClick={() => onCloseRef.current()}
-              className="text-primary-700 hover:text-primary-900 text-4xl transition-colors"
+              className="text-primary-700 hover-only:hover:text-primary-900 text-4xl transition-colors"
             >
               ×
             </button>

@@ -66,11 +66,7 @@ export function SortDropdown({
         if (typeof window !== 'undefined') {
           requestAnimationFrame(() => {
             window.scrollTo({ top: scrollY, behavior: 'instant' });
-            requestAnimationFrame(() => {
-              requestAnimationFrame(() => {
-                sessionStorage.removeItem('scrollPreserved');
-              });
-            });
+            sessionStorage.removeItem('scrollPreserved');
           });
         }
       });
@@ -82,7 +78,7 @@ export function SortDropdown({
     <div className="w-full sm:min-w-[200px]">
       <Dropdown
         value={currentSortKey}
-        buttonClassName="!h-[52px] !min-h-[52px] !max-h-[52px]"
+        buttonClassName="h-[52px]! min-h-[52px]! max-h-[52px]!"
         onChange={(value) => {
           if (!isListingSortKey(value) || value === currentSortKey) {
             return;

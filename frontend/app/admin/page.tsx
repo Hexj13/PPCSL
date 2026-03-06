@@ -6,11 +6,12 @@ import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTabIndicator } from '@/hooks/useTabIndicator';
 import { useTranslation } from '@/hooks/useTranslation';
 
+import { BrandsModelsTab } from './components/BrandsModelsTab';
 import { ListingsTab } from './components/ListingsTab';
 import { PromotionsTab } from './components/PromotionsTab';
 import { UsersTab } from './components/UsersTab';
 
-type AdminTab = 'listings' | 'users' | 'promotions';
+type AdminTab = 'listings' | 'users' | 'promotions' | 'brandsModels';
 
 export default function AdminPage() {
   const { isLoading, isAuthorized } = useRequireAuth({ requiredRole: 'Admin' });
@@ -18,20 +19,26 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<AdminTab>(() => {
     if (typeof window !== 'undefined') {
       const savedTab = localStorage.getItem('adminActiveTab') as AdminTab | null;
-      if (savedTab && ['listings', 'users', 'promotions'].includes(savedTab)) {
+      if (savedTab && ['listings', 'users', 'promotions', 'brandsModels'].includes(savedTab)) {
         return savedTab;
       }
     }
-    return 'listings';
+    return 'users';
   });
 
   const listingsTabRef = useRef<HTMLButtonElement>(null);
   const usersTabRef = useRef<HTMLButtonElement>(null);
   const promotionsTabRef = useRef<HTMLButtonElement>(null);
+  const brandsModelsTabRef = useRef<HTMLButtonElement>(null);
   const tabsContainerRef = useRef<HTMLDivElement>(null);
   const { indicatorRef, indicatorStyle } = useTabIndicator(
     activeTab,
-    { listings: listingsTabRef, users: usersTabRef, promotions: promotionsTabRef },
+    {
+      users: usersTabRef,
+      brandsModels: brandsModelsTabRef,
+      listings: listingsTabRef,
+      promotions: promotionsTabRef,
+    },
     tabsContainerRef,
   );
 
@@ -55,37 +62,49 @@ export default function AdminPage() {
         <div ref={tabsContainerRef} className="relative overflow-x-auto scrollbar-hide">
           <div className="relative flex gap-1 min-w-max">
             <button
-              ref={listingsTabRef}
-              type="button"
-              onClick={() => setActiveTab('listings')}
-              className={`flex-shrink-0 px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 whitespace-nowrap flex items-center ${
-                activeTab === 'listings'
-                  ? 'text-primary-700 bg-primary-500/10 rounded-t-lg'
-                  : 'text-primary-700 hover:text-primary-900 hover:bg-primary-500/10'
-              }`}
-            >
-              {t('admin.listingsTabLabel')}
-            </button>
-            <button
               ref={usersTabRef}
               type="button"
               onClick={() => setActiveTab('users')}
-              className={`flex-shrink-0 px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 whitespace-nowrap flex items-center ${
+              className={`shrink-0 px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 whitespace-nowrap flex items-center ${
                 activeTab === 'users'
                   ? 'text-primary-700 bg-primary-500/10 rounded-t-lg'
-                  : 'text-primary-700 hover:text-primary-900 hover:bg-primary-500/10'
+                  : 'text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:bg-primary-500/10'
               }`}
             >
               {t('admin.usersTabLabel')}
             </button>
             <button
+              ref={brandsModelsTabRef}
+              type="button"
+              onClick={() => setActiveTab('brandsModels')}
+              className={`shrink-0 px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 whitespace-nowrap flex items-center ${
+                activeTab === 'brandsModels'
+                  ? 'text-primary-700 bg-primary-500/10 rounded-t-lg'
+                  : 'text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:bg-primary-500/10'
+              }`}
+            >
+              {t('admin.brandsModelsTabLabel')}
+            </button>
+            <button
+              ref={listingsTabRef}
+              type="button"
+              onClick={() => setActiveTab('listings')}
+              className={`shrink-0 px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 whitespace-nowrap flex items-center ${
+                activeTab === 'listings'
+                  ? 'text-primary-700 bg-primary-500/10 rounded-t-lg'
+                  : 'text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:bg-primary-500/10'
+              }`}
+            >
+              {t('admin.listingsTabLabel')}
+            </button>
+            <button
               ref={promotionsTabRef}
               type="button"
               onClick={() => setActiveTab('promotions')}
-              className={`flex-shrink-0 px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 whitespace-nowrap flex items-center ${
+              className={`shrink-0 px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 whitespace-nowrap flex items-center ${
                 activeTab === 'promotions'
                   ? 'text-primary-700 bg-primary-500/10 rounded-t-lg'
-                  : 'text-primary-700 hover:text-primary-900 hover:bg-primary-500/10'
+                  : 'text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:bg-primary-500/10'
               }`}
             >
               {t('admin.promotionsTabLabel')}
@@ -129,6 +148,12 @@ export default function AdminPage() {
         aria-hidden={activeTab !== 'promotions'}
       >
         <PromotionsTab />
+      </div>
+      <div
+        className={activeTab !== 'brandsModels' ? 'hidden' : undefined}
+        aria-hidden={activeTab !== 'brandsModels'}
+      >
+        <BrandsModelsTab />
       </div>
     </div>
   );

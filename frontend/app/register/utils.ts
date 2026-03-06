@@ -12,10 +12,15 @@ export function validatePhone(phone: string, t: (key: string) => string): string
   return '';
 }
 
+const BACKEND_ERROR_KEY_TO_FRONTEND: Record<string, string> = {
+  'validation.phone': 'register.phoneFormat',
+  'errors.phoneAlreadyExists': 'register.phoneExists',
+};
+
 type AxiosErrorLike = {
   response?: {
     status?: number;
-    data?: { message?: string | string[] };
+    data?: { message?: string | string[]; errorKey?: string };
   };
   message?: string;
   code?: string;
@@ -40,30 +45,20 @@ function getMessageFromNetworkError(
 
 function getMessageFromResponse(
   status: number | undefined,
-  data: { message?: string | string[] } | undefined,
+  data: { message?: string | string[]; errorKey?: string } | undefined,
   t: (key: string) => string,
 ): string {
-  const defaultMsg = t('register.phoneExists');
+  const frontendKey = data?.errorKey && BACKEND_ERROR_KEY_TO_FRONTEND[data.errorKey];
+  if (frontendKey) {
+    return t(frontendKey);
+  }
   if (status === 400) {
-    if (data?.message) {
-      return Array.isArray(data.message) ? data.message[0] || defaultMsg : data.message;
-    }
-    return t('register.phoneExists');
+    return t('register.phoneFormat');
   }
   if (status === 404) return t('register.serviceUnavailable');
-  if (status === 422) {
-    if (data?.message) {
-      return Array.isArray(data.message)
-        ? data.message[0] || t('register.invalidPhoneFormat')
-        : data.message;
-    }
-    return t('register.invalidPhoneFormat');
-  }
+  if (status === 422) return t('register.phoneFormat');
   if (status && status >= 500) return t('register.serverError');
-  return (
-    (data?.message && (Array.isArray(data.message) ? data.message[0] : data.message)) ||
-    t('register.phoneCheckError')
-  );
+  return t('register.phoneCheckError');
 }
 
 export function getRegisterSubmitErrorMessage(

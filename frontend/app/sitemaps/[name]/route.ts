@@ -1,7 +1,9 @@
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000').replace(/\/$/, '');
+import { fetchSitemapUpstream } from '../../sitemap-upstream';
+
+const UPSTREAM_UNAVAILABLE = 'Upstream sitemap unavailable';
 
 export async function GET(_request: Request, { params }: { params: Promise<{ name: string }> }) {
   const { name } = await params;
@@ -10,26 +12,26 @@ export async function GET(_request: Request, { params }: { params: Promise<{ nam
     return new Response('', { status: 404 });
   }
 
-  try {
-    const response = await fetch(`${API_URL}/api/sitemaps/${name}`, {
-      cache: 'no-store',
-      headers: { Accept: 'application/xml' },
+  const response = await fetchSitemapUpstream(`/api/sitemaps/${name}`, 'application/xml');
+
+  if (!response) {
+    return new Response(UPSTREAM_UNAVAILABLE, {
+      status: 502,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
     });
-
-    if (!response.ok) {
-      return new Response('', { status: response.status });
-    }
-
-    const xml = await response.text();
-
-    return new Response(xml, {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/xml; charset=utf-8',
-        'Cache-Control': 'public, max-age=3600, s-maxage=3600',
-      },
-    });
-  } catch {
-    return new Response('', { status: 502 });
   }
+
+  if (!response.ok) {
+    return new Response('', { status: response.status });
+  }
+
+  const xml = await response.text();
+
+  return new Response(xml, {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/xml; charset=utf-8',
+      'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+    },
+  });
 }

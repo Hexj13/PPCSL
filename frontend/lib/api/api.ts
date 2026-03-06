@@ -10,6 +10,7 @@ import type {
   UserType,
 } from '../types';
 
+import { adminBrandsModelsApi } from './admin-brands-models';
 import { api } from './api-client';
 
 export { api };
@@ -61,7 +62,7 @@ export interface VehicleModel {
   name: string;
   brand_id: string;
   order: number;
-  vehicle_type?: 'car' | 'truck' | 'moto';
+  vehicle_types?: ('car' | 'truck' | 'moto')[];
   brand?: Brand;
 }
 
@@ -172,6 +173,7 @@ export interface CreateListingDto {
     color?: string;
     doors?: number;
   };
+  assignedUserId?: string;
 }
 
 export interface UpdateListingDto extends Partial<CreateListingDto> {}
@@ -213,6 +215,15 @@ export interface PromotionHistory {
   created_at: string;
   listing_status?: ListingStatus;
 }
+
+export type {
+  AdminBrand,
+  AdminModel,
+  CreateBrandPayload,
+  UpdateBrandPayload,
+  CreateModelPayload,
+  UpdateModelPayload,
+} from './admin-brands-models';
 
 export interface AdminStats {
   users: {
@@ -519,15 +530,20 @@ export const adminApi = {
     userId?: string,
     status?: ListingStatus,
     isPromoted?: boolean,
+    search?: string,
   ) => {
     const params = new URLSearchParams();
     params.set('page', page.toString());
     params.set('limit', limit.toString());
-    if (listingId) {
-      params.set('listingId', listingId);
-    }
-    if (userId) {
-      params.set('userId', userId);
+    if (search?.trim()) {
+      params.set('search', search.trim());
+    } else {
+      if (listingId) {
+        params.set('listingId', listingId);
+      }
+      if (userId) {
+        params.set('userId', userId);
+      }
     }
     if (status) {
       params.set('status', status);
@@ -538,9 +554,14 @@ export const adminApi = {
     const query = params.toString();
     return api.get<{ data: Listing[]; meta: PaginationMeta }>(`/api/admin/listings?${query}`);
   },
-  getListingsStatusCounts: () => {
+  getListingsStatusCounts: (search?: string) => {
+    const params = new URLSearchParams();
+    if (search?.trim()) {
+      params.set('search', search.trim());
+    }
+    const query = params.toString();
     return api.get<{ Active: number; Paused: number; Closed: number; Promoted: number }>(
-      '/api/admin/listings/status-counts',
+      `/api/admin/listings/status-counts${query ? `?${query}` : ''}`,
     );
   },
   updateListingStatus: (id: string, status: ListingStatus) =>
@@ -560,6 +581,18 @@ export const adminApi = {
     return api.get<{ data: User[]; meta: PaginationMeta }>(`/api/admin/users?${query}`);
   },
   getUserListings: (userId: string) => api.get<Listing[]>(`/api/admin/users/${userId}/listings`),
+  validateAssignUser: (userId: string) =>
+    api.get<{
+      valid: boolean;
+      user?: {
+        id: string;
+        displayName: string;
+        type: string;
+        activeListings: number;
+        listingLimit: number;
+      };
+      error?: string;
+    }>(`/api/admin/validate-assign-user/${userId}`),
   toggleUserStatus: (userId: string) => api.patch(`/api/admin/users/${userId}/toggle-status`),
   toggleListingPromotion: (id: string, isPromoted: boolean, days?: number | null) =>
     api.patch(`/api/admin/listings/${id}/promote`, { is_promoted: isPromoted, days }),
@@ -587,4 +620,5 @@ export const adminApi = {
       meta: { total: number; page: number; limit: number; totalPages: number };
     }>(`/api/admin/promotions?${params.toString()}`);
   },
+  ...adminBrandsModelsApi,
 };

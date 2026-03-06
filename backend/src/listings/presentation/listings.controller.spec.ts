@@ -43,6 +43,7 @@ describe('ListingsController', () => {
   const mockUser = {
     id: 'user-1',
     email: 'test@example.com',
+    type: 'Individual',
   };
 
   beforeEach(async () => {
@@ -291,7 +292,7 @@ describe('ListingsController', () => {
 
       const result = await controller.create(createDto, req as unknown as AuthenticatedRequest);
 
-      expect(service.create).toHaveBeenCalledWith(createDto, 'user-1');
+      expect(service.create).toHaveBeenCalledWith(createDto, 'user-1', 'Individual');
       expect(result).toEqual(mockListing);
     });
 
@@ -323,7 +324,7 @@ describe('ListingsController', () => {
 
       const result = await controller.create(createDto, req as unknown as AuthenticatedRequest);
 
-      expect(service.create).toHaveBeenCalledWith(createDto, 'user-1');
+      expect(service.create).toHaveBeenCalledWith(createDto, 'user-1', 'Individual');
       expect(result.equipment).toEqual(['air_conditioning', 'navigation', 'parking_sensors']);
     });
   });

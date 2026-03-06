@@ -3,25 +3,50 @@
 import { loadSiteConfigSync } from './site-config';
 import { getCountry } from './utils';
 
+let consentCache: boolean | null = null;
+
+export function invalidateConsentCache(): void {
+  consentCache = null;
+}
+
 function checkConsent(): boolean {
   if (typeof window === 'undefined') return false;
+  if (consentCache !== null) return consentCache;
 
   const consentKey = 'cookie_consent';
   const stored = localStorage.getItem(consentKey);
-  if (!stored) return false;
+  if (!stored) {
+    consentCache = false;
+    return false;
+  }
 
   try {
     const parsed = JSON.parse(stored);
-    return parsed.analytics === 'granted';
+    consentCache = parsed.analytics === 'granted';
+    return consentCache;
   } catch {
+    consentCache = false;
     return false;
   }
 }
 
+let currencyCache: string | null = null;
+
 function getCurrency(): string {
+  if (currencyCache !== null) return currencyCache;
   const country = getCountry();
   const siteConfig = loadSiteConfigSync(country);
-  return siteConfig.currency;
+  currencyCache = siteConfig.currency;
+  return currencyCache;
+}
+
+function scheduleDeferred(fn: () => void): void {
+  if (typeof window === 'undefined') return;
+  if (typeof requestIdleCallback !== 'undefined') {
+    requestIdleCallback(fn, { timeout: 300 });
+  } else {
+    setTimeout(fn, 0);
+  }
 }
 
 export function trackEvent(eventName: string, params?: Record<string, unknown>) {
@@ -34,6 +59,10 @@ export function trackEvent(eventName: string, params?: Record<string, unknown>) 
   }
 
   window.gtag('event', eventName, params);
+}
+
+export function trackEventDeferred(eventName: string, params?: Record<string, unknown>) {
+  scheduleDeferred(() => trackEvent(eventName, params));
 }
 
 export const analytics = {
@@ -71,6 +100,13 @@ export const analytics = {
 
   search: (searchTerm?: string, filters?: Record<string, unknown>) => {
     trackEvent('search', {
+      search_term: searchTerm,
+      ...filters,
+    });
+  },
+
+  searchDeferred: (searchTerm?: string, filters?: Record<string, unknown>) => {
+    trackEventDeferred('search', {
       search_term: searchTerm,
       ...filters,
     });
@@ -232,6 +268,12 @@ export const analytics = {
     });
   },
 
+  pageScrollDeferred: (percent: number) => {
+    trackEventDeferred('scroll', {
+      percent_scrolled: percent,
+    });
+  },
+
   formStart: (formName: string) => {
     trackEvent('form_start', {
       form_name: formName,
@@ -269,6 +311,14 @@ export const analytics = {
 
   selectContent: (contentType: string, contentId: string, category?: string) => {
     trackEvent('select_content', {
+      content_type: contentType,
+      content_id: contentId,
+      ...(category && { item_category: category }),
+    });
+  },
+
+  selectContentDeferred: (contentType: string, contentId: string, category?: string) => {
+    trackEventDeferred('select_content', {
       content_type: contentType,
       content_id: contentId,
       ...(category && { item_category: category }),

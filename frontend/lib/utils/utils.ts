@@ -115,11 +115,11 @@ export function formatDateRelative(
   }
 }
 
-export function formatDateLong(date: string | Date): string {
+export function formatDateLong(date: string | Date, locale?: string): string {
   const d = new Date(date);
   if (Number.isNaN(d.getTime())) return '';
-  const siteConfig = loadSiteConfigSync(getCountry());
-  return d.toLocaleDateString(siteConfig.locale, {
+  const currentLocale = locale || getLocale();
+  return d.toLocaleDateString(currentLocale, {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -136,6 +136,12 @@ export function formatEngineVolume(volume: number): string {
 
 export function formatMileage(mileage: number): string {
   return mileage.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+}
+
+export function formatViewsCompact(views: number): string {
+  if (views < 1000) return views.toString();
+  const k = Math.floor(views / 100) / 10;
+  return `${k}k`;
 }
 
 export function formatTransmission(
@@ -466,8 +472,9 @@ export function kwToHorsepower(kw: number): number {
 }
 
 export function getVehicleType(listing: Listing): 'car' | 'truck' | 'moto' {
-  if (listing.vehicle?.model?.vehicle_type) {
-    return listing.vehicle.model.vehicle_type;
+  const modelTypes = listing.vehicle?.model?.vehicle_types;
+  if (modelTypes?.[0]) {
+    return modelTypes[0];
   }
   if (listing.vehicle?.body_type) {
     return VEHICLE_TYPE_BY_BODY_TYPE[listing.vehicle.body_type] || 'car';
