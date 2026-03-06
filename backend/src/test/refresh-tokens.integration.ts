@@ -19,24 +19,33 @@ describe('Refresh Tokens Integration', () => {
   beforeAll(async () => {
     await new Promise((resolve) => setTimeout(resolve, 500));
 
+    const uniquePhone = () =>
+      `+38970${String(Date.now() + Math.floor(Math.random() * 1000)).slice(-6)}`;
+
     let registerResponse = await request.post('/api/auth/register').send({
       email: testEmail,
       password: testPassword,
       type: 'Individual',
-      phone: `+389701234${Math.floor(Math.random() * 10000)}`,
+      phone: uniquePhone(),
       firstName: 'Test',
       lastName: 'User',
       termsAccepted: true,
     });
 
     let retries = 0;
-    while (registerResponse.status === 429 && retries < 3) {
+    while (
+      (registerResponse.status === 429 ||
+        (registerResponse.status === 400 &&
+          registerResponse.body?.errorKey === 'errors.phoneAlreadyExists')) &&
+      retries < 5
+    ) {
       await new Promise((resolve) => setTimeout(resolve, 2000 * (retries + 1)));
+      const retryEmail = retries > 0 ? `test${Date.now() + retries}@example.com` : testEmail;
       registerResponse = await request.post('/api/auth/register').send({
-        email: `test${Date.now() + retries}@example.com`,
+        email: retryEmail,
         password: testPassword,
         type: 'Individual',
-        phone: `+389701234${Math.floor(Math.random() * 10000)}`,
+        phone: uniquePhone(),
         firstName: 'Test',
         lastName: 'User',
         termsAccepted: true,
