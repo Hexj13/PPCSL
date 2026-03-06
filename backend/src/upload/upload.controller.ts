@@ -1,12 +1,16 @@
 import {
   BadRequestException,
+  Body,
   Controller,
+  Delete,
+  ForbiddenException,
   Get,
   Logger,
   NotFoundException,
   Param,
   Post,
   Query,
+  Req,
   Res,
   UploadedFile,
   UseGuards,
@@ -23,7 +27,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { memoryStorage } from 'multer';
 
 import { JwtAuthGuard } from '../auth/infrastructure/guards/jwt-auth.guard';
@@ -112,7 +116,11 @@ export class UploadController {
       },
     }),
   )
-  async uploadImage(@UploadedFile() file: Express.Multer.File) {
+  async uploadImage(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('hidePlates') hidePlatesRaw?: string,
+    @Req() req?: Request & { user?: { id: string } },
+  ) {
     this.logger.debug(
       `Upload request received. File: ${file ? `${file.originalname}, size: ${file.size}, mimetype: ${file.mimetype}` : 'null'}`,
     );
@@ -129,10 +137,14 @@ export class UploadController {
       throw new BadRequestException('errors.fileEmpty');
     }
 
-    this.logger.debug(`File buffer size: ${file.buffer.length}, mimetype: ${file.mimetype}`);
+    const hidePlates = hidePlatesRaw === 'true';
+    this.logger.debug(
+      `File buffer size: ${file.buffer.length}, mimetype: ${file.mimetype}, hidePlates: ${hidePlates}`,
+    );
 
     try {
-      const filePath = await this.uploadService.saveFile(file);
+      const result = await this.uploadService.saveFile(file, hidePlates);
+      const filePath = result.path;
       this.logger.debug(`File saved successfully: ${filePath}`);
 
       let url: string;
@@ -154,10 +166,45 @@ export class UploadController {
       return {
         url,
         path: filePath,
+        plateMaskResult: result.plateMaskResult ?? null,
+        deleteToken: req?.user?.id
+          ? this.uploadService.generateDeleteToken(req.user.id, filePath)
+          : null,
       };
     } catch (error) {
       handleUploadError(error, this.logger, 'Upload failed');
     }
+  }
+
+  @ApiOperation({ summary: 'Delete uploaded image by path' })
+  @ApiBearerAuth('JWT-auth')
+  @ApiResponse({ status: 200, description: 'Image deleted successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid delete request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Invalid delete token' })
+  @Throttle(getThrottleLimit(50, 1000))
+  @Delete('image')
+  @UseGuards(JwtAuthGuard)
+  async deleteImage(
+    @Body('path') filePathRaw: string,
+    @Body('deleteToken') deleteToken: string,
+    @Req() req: Request & { user: { id: string } },
+  ) {
+    if (!filePathRaw || !deleteToken) {
+      throw new BadRequestException('errors.invalidFilename');
+    }
+
+    const filePath = this.uploadService.normalizeUploadPath(filePathRaw);
+    if (!filePath) {
+      throw new BadRequestException('errors.invalidFilename');
+    }
+
+    if (!this.uploadService.verifyDeleteToken(req.user.id, filePath, deleteToken)) {
+      throw new ForbiddenException('errors.listingAccessDenied');
+    }
+
+    await this.uploadService.deleteFile(filePath);
+    return { success: true };
   }
 
   @ApiOperation({ summary: 'Get optimized image' })

@@ -17,5 +17,15 @@ export interface ListingFormSectionProps {
   vehicleType?: 'car' | 'truck' | 'moto';
   onFormFieldFocus?: () => void;
   uploading?: boolean;
-  onFileUpload?: (_file: File) => Promise<void>;
+  onFileUpload?: (_files: File[]) => void;
+  onImageDelete?: (_url: string) => void | Promise<void>;
+  hidePlates?: boolean;
+  onHidePlatesChange?: (_value: boolean) => void;
+  deletingImageUrls?: string[];
+  uploadSlots?: Array<{
+    id: string;
+    status: 'queued' | 'uploading';
+    file: File;
+    previewUrl: string;
+  }>;
 }

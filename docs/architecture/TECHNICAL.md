@@ -424,6 +424,7 @@ GET  /api/upload/image/:filename      # Get optimized image version
 **Watermark Details:**
 
 - Watermark is automatically applied to all uploaded images
+- License plate masking is optional in the listing form; when the user enables it, backend detects plates with an ONNX model and overlays a gray mask. Animated images are rejected; see [LICENSE_PLATE_MASK.md](../features/LICENSE_PLATE_MASK.md)
 - Logo file location: `backend/assets/watermark/logo.png`
 - Watermark includes: logo (15% of image size) + domain text below
 - Watermark domain is configurable via `WATERMARK_DOMAIN` environment variable

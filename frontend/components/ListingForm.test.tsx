@@ -109,6 +109,44 @@ describe('ListingForm', () => {
         expect(onSuccess).not.toHaveBeenCalled();
       });
     });
+
+    it('should show backend upload error message for animated images', async () => {
+      const onSuccess = jest.fn();
+      const { toast } = require('react-hot-toast');
+      (api.uploadApi.uploadImage as jest.Mock).mockRejectedValueOnce({
+        response: {
+          status: 400,
+          data: {
+            message:
+              'Анимированные изображения не поддерживаются. Загрузите статичное изображение.',
+          },
+        },
+      });
+
+      render(<ListingForm mode="create" onSuccess={onSuccess} />);
+
+      await waitFor(() => {
+        expect(api.brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const fileInput = await waitFor(() => getPhotosFileInput(screen) as HTMLInputElement);
+      const file = new File(['animated'], 'animated.webp', { type: 'image/webp' });
+
+      Object.defineProperty(fileInput, 'files', {
+        value: [file],
+        writable: false,
+        configurable: true,
+      });
+
+      fireEvent.change(fileInput);
+
+      await waitFor(() => {
+        expect(api.uploadApi.uploadImage).toHaveBeenCalled();
+        expect(toast.error).toHaveBeenCalledWith(
+          'Анимированные изображения не поддерживаются. Загрузите статичное изображение.',
+        );
+      });
+    });
   });
 
   describe('Edit mode', () => {

@@ -1,4 +1,4 @@
-import * as crypto from 'crypto';
+import { createHmac, randomUUID, timingSafeEqual } from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Readable } from 'stream';
@@ -9,23 +9,48 @@ import {
   GetObjectCommand,
   DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import sharp from 'sharp';
 
 import { handleUploadError } from '../common/utils/error-handling.utils';
 
+import { PlateDetectorService } from './plate-detector.service';
+import { PlateMaskService } from './plate-mask.service';
+import { ProcessingSemaphore } from './processing-semaphore';
+
+const MAX_CONCURRENT_DETECTIONS = 2;
+const DETECTION_QUEUE_WARNING = 10;
+const DETECTION_QUEUE_OVERFLOW = 20;
+const RETRY_MAX_ATTEMPTS = 3;
+const RETRY_BASE_DELAY_MS = 500;
+const DELETE_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
+
+export type PlateMaskResult = 'mask_applied' | 'not_found' | null;
+
+export interface SaveFileResult {
+  path: string;
+  plateMaskResult?: PlateMaskResult;
+}
+
 @Injectable()
 export class UploadService {
   private readonly logger = new Logger(UploadService.name);
+  private readonly detectionSemaphore = new ProcessingSemaphore(MAX_CONCURRENT_DETECTIONS);
   private readonly s3Client: S3Client | null;
   private readonly bucketName: string;
   private readonly useS3: boolean;
   private readonly uploadDir?: string;
-  private readonly maxWidth = 1920;
-  private readonly quality = 75;
+  private readonly maxWidth = 2048;
+  private readonly quality = 85;
   private readonly watermarkPath: string;
   private readonly watermarkDomain: string;
+  private readonly deleteTokenSecret: string;
 
   private readonly imageMagicNumbers: { [key: string]: Buffer[] } = {
     'image/jpeg': [
@@ -43,7 +68,11 @@ export class UploadService {
     ],
   };
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private plateDetector: PlateDetectorService,
+    private plateMask: PlateMaskService,
+  ) {
     const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
     const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
     const region = process.env.AWS_REGION || 'eu-north-1';
@@ -82,6 +111,9 @@ export class UploadService {
         this.watermarkDomain = 'kupito.club';
       }
     }
+
+    this.deleteTokenSecret =
+      this.configService.get<string>('JWT_SECRET') || 'kupito-upload-delete-fallback';
   }
 
   private validateFileSignature(buffer: Buffer, mimetype: string): boolean {
@@ -105,14 +137,63 @@ export class UploadService {
     });
   }
 
-  private async applyWatermark(
-    image: sharp.Sharp,
+  private async withRetry<T>(
+    operation: () => Promise<T>,
+    maxAttempts: number,
+    baseDelayMs: number,
+    logContext: string,
+  ): Promise<T> {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        return await operation();
+      } catch (error) {
+        if (attempt === maxAttempts) throw error;
+        const delay = baseDelayMs * Math.pow(2, attempt - 1);
+        this.logger.warn(
+          `${logContext} attempt ${attempt}/${maxAttempts} failed, retrying in ${delay}ms: ${error instanceof Error ? error.message : String(error)}`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+    throw new Error('Unreachable');
+  }
+
+  private validateOutputBuffer(buffer: Buffer, uploadId: string): void {
+    if (!buffer || buffer.length === 0) {
+      throw new BadRequestException('errors.imageProcessingError');
+    }
+    const isWebP =
+      buffer.length >= 12 &&
+      buffer[0] === 0x52 &&
+      buffer[1] === 0x49 &&
+      buffer[2] === 0x46 &&
+      buffer[3] === 0x46 &&
+      buffer[8] === 0x57 &&
+      buffer[9] === 0x45 &&
+      buffer[10] === 0x42 &&
+      buffer[11] === 0x50;
+    if (!isWebP) {
+      this.logger.error(`[${uploadId}] [OUTPUT] buffer is not valid WebP`);
+      throw new BadRequestException('errors.imageProcessingError');
+    }
+  }
+
+  private validateAnimatedInput(metadata: sharp.Metadata, uploadId: string): void {
+    if ((metadata.pages ?? 1) <= 1) {
+      return;
+    }
+
+    this.logger.warn(`[${uploadId}] [VALIDATE] animated image rejected, pages=${metadata.pages}`);
+    throw new BadRequestException('errors.animatedImagesNotSupported');
+  }
+
+  private async getWatermarkComposites(
     width: number,
     height: number,
-  ): Promise<sharp.Sharp> {
+  ): Promise<sharp.OverlayOptions[]> {
     if (!fs.existsSync(this.watermarkPath)) {
       this.logger.warn(`Watermark file not found at ${this.watermarkPath}, skipping watermark`);
-      return image;
+      return [];
     }
 
     try {
@@ -125,7 +206,7 @@ export class UploadService {
 
       if (!watermarkMetadata.width || !watermarkMetadata.height) {
         this.logger.warn('Could not read watermark metadata, skipping watermark');
-        return image;
+        return [];
       }
 
       const watermarkAspectRatio = watermarkMetadata.width / watermarkMetadata.height;
@@ -146,14 +227,13 @@ export class UploadService {
 
       if (!resizedWatermarkMetadata.width || !resizedWatermarkMetadata.height) {
         this.logger.warn('Could not read resized watermark metadata, skipping watermark');
-        return image;
+        return [];
       }
 
       const actualWatermarkWidth = resizedWatermarkMetadata.width;
       const actualWatermarkHeight = resizedWatermarkMetadata.height;
 
       const watermarkData = await resizedWatermarkImage.raw().toBuffer({ resolveWithObject: true });
-
       const pixels = watermarkData.data;
       for (let i = 3; i < pixels.length; i += 4) {
         pixels[i] = Math.round(pixels[i] * opacity);
@@ -191,14 +271,13 @@ export class UploadService {
       `;
 
       const textBuffer = Buffer.from(textSvg);
-
       const textX = Math.round(width - textWidth - padding);
       const textCenterX = textX + textWidth / 2;
       const logoX = Math.round(textCenterX - actualWatermarkWidth / 2);
       const logoY = Math.round(height - actualWatermarkHeight - textHeight - textSpacing - padding);
       const textY = Math.round(height - textHeight - padding);
 
-      return image.composite([
+      return [
         {
           input: watermarkWithOpacity,
           top: logoY,
@@ -211,98 +290,130 @@ export class UploadService {
           left: textX,
           blend: 'over',
         },
-      ]);
+      ];
     } catch (error) {
       this.logger.warn(
-        `Error applying watermark: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Error building watermark composites: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
-      return image;
+      return [];
     }
   }
 
-  async saveFile(file: Express.Multer.File): Promise<string> {
-    this.logger.debug(
-      `Validating file signature. Buffer size: ${file.buffer.length}, mimetype: ${file.mimetype}`,
-    );
+  async saveFile(file: Express.Multer.File, hidePlates?: boolean): Promise<SaveFileResult> {
+    const uploadId = randomUUID();
+    const fileName = `${uploadId}.webp`;
+    const s3Key = `uploads/${fileName}`;
+    const log = (step: string, msg: string) => this.logger.debug(`[${uploadId}] [${step}] ${msg}`);
 
+    log(
+      'VALIDATE',
+      `size=${file.buffer.length}, mimetype=${file.mimetype}, hidePlates=${hidePlates}`,
+    );
     if (!this.validateFileSignature(file.buffer, file.mimetype)) {
-      this.logger.warn(
-        `File signature validation failed. Buffer size: ${file.buffer.length}, mimetype: ${file.mimetype}`,
-      );
+      this.logger.warn(`[${uploadId}] [VALIDATE] signature failed`);
       throw new BadRequestException('errors.invalidFileType');
     }
 
-    this.logger.debug('File signature validation passed');
-
-    const fileName = `${crypto.randomUUID()}.webp`;
-    const s3Key = `uploads/${fileName}`;
+    let plateMaskResult: PlateMaskResult = null;
 
     try {
-      this.logger.debug('Starting Sharp image processing');
-      const image = sharp(file.buffer);
-      const metadata = await image.metadata();
-      this.logger.debug(
-        `Image metadata: width=${metadata.width}, height=${metadata.height}, format=${metadata.format}`,
-      );
-
-      if (!metadata || !metadata.width || !metadata.height) {
+      log('ROTATE', 'starting');
+      let image = sharp(file.buffer);
+      let metadata = await image.metadata();
+      if (!metadata?.width || !metadata?.height) {
         throw new BadRequestException('errors.invalidImage');
       }
-
+      this.validateAnimatedInput(metadata, uploadId);
       if (metadata.width > 10000 || metadata.height > 10000) {
         throw new BadRequestException('errors.fileTooLargePixels|10000');
       }
 
-      let processedImage = image;
-      let finalWidth = metadata.width;
-      let finalHeight = metadata.height;
+      const rotated = await image.rotate().toBuffer({ resolveWithObject: true });
+      let resizedBuffer: Buffer = rotated.data;
+      image = sharp(rotated.data);
+      metadata = await image.metadata();
+      let finalWidth = metadata.width ?? 0;
+      let finalHeight = metadata.height ?? 0;
 
-      if (metadata.width && metadata.width > this.maxWidth) {
+      if (finalWidth > this.maxWidth || finalHeight > this.maxWidth) {
+        log('RESIZE', `from ${finalWidth}x${finalHeight} to max ${this.maxWidth}`);
         const resizedResult = await image
-          .resize(this.maxWidth, null, {
+          .resize(this.maxWidth, this.maxWidth, {
             withoutEnlargement: true,
             fit: 'inside',
           })
           .toBuffer({ resolveWithObject: true });
-
-        if (resizedResult.info && resizedResult.info.width && resizedResult.info.height) {
+        if (resizedResult.info?.width && resizedResult.info?.height) {
           finalWidth = resizedResult.info.width;
           finalHeight = resizedResult.info.height;
         }
-        processedImage = sharp(resizedResult.data);
+        resizedBuffer = resizedResult.data;
+        image = sharp(resizedBuffer);
       }
 
-      this.logger.debug('Applying watermark');
-      processedImage = await this.applyWatermark(processedImage, finalWidth, finalHeight);
+      const allComposites: sharp.OverlayOptions[] = [];
 
-      this.logger.debug('Converting image to WebP');
-      const compressedBuffer = await processedImage
-        .webp({ quality: this.quality, effort: 4 })
-        .toBuffer();
-      this.logger.debug(`Image converted to WebP. Compressed size: ${compressedBuffer.length}`);
-
-      if (this.useS3 && this.s3Client) {
-        this.logger.debug(`Uploading to S3. Bucket: ${this.bucketName}, Key: ${s3Key}`);
-        const command = new PutObjectCommand({
-          Bucket: this.bucketName,
-          Key: s3Key,
-          Body: compressedBuffer,
-          ContentType: 'image/webp',
-        });
-
-        await this.s3Client.send(command);
-        this.logger.debug(`File uploaded to S3 successfully: ${s3Key}`);
-
-        return `/${s3Key}`;
-      } else {
-        if (!this.uploadDir) {
-          throw new BadRequestException('errors.uploadDirectoryNotConfigured');
+      if (hidePlates) {
+        if (!this.plateDetector.isReady()) {
+          this.logger.error(
+            `[${uploadId}] [DETECT] plate detector model is not loaded; masking cannot be performed`,
+          );
+          throw new ServiceUnavailableException('errors.serviceUnavailable');
         }
-        const filePath = path.join(this.uploadDir, fileName);
-        fs.writeFileSync(filePath, compressedBuffer);
-        return `/uploads/${fileName}`;
+        if (this.detectionSemaphore.queueLength > DETECTION_QUEUE_OVERFLOW) {
+          this.logger.warn(
+            `[${uploadId}] [QUEUE] depth=${this.detectionSemaphore.queueLength} exceeds overflow threshold`,
+          );
+          throw new ServiceUnavailableException('errors.serviceUnavailable');
+        }
+        if (this.detectionSemaphore.queueLength > DETECTION_QUEUE_WARNING) {
+          this.logger.warn(`[${uploadId}] [QUEUE] depth=${this.detectionSemaphore.queueLength}`);
+        }
+        await this.detectionSemaphore.acquire();
+        try {
+          const detections = await this.withRetry(
+            () => this.plateDetector.detect(resizedBuffer, finalWidth, finalHeight),
+            RETRY_MAX_ATTEMPTS,
+            RETRY_BASE_DELAY_MS,
+            `[${uploadId}] [DETECT]`,
+          );
+          plateMaskResult = detections.length > 0 ? 'mask_applied' : 'not_found';
+          log('DETECT', `found=${detections.length} plates`);
+          if (detections.length > 0) {
+            const maskOverlays = this.plateMask.createMaskOverlays(
+              detections,
+              finalWidth,
+              finalHeight,
+            );
+            allComposites.push(...maskOverlays);
+          }
+        } finally {
+          this.detectionSemaphore.release();
+        }
       }
+
+      const watermarkComposites = await this.getWatermarkComposites(finalWidth, finalHeight);
+      allComposites.push(...watermarkComposites);
+      if (allComposites.length > 0) {
+        image = image.composite(allComposites);
+      }
+
+      log('ENCODE', 'converting to WebP');
+      const compressedBuffer = await image.webp({ quality: this.quality, effort: 4 }).toBuffer();
+      log('ENCODE', `webp size=${compressedBuffer.length}`);
+      this.validateOutputBuffer(compressedBuffer, uploadId);
+
+      const pathResult =
+        this.useS3 && this.s3Client
+          ? await this.uploadToS3(s3Key, compressedBuffer)
+          : this.uploadToLocal(fileName, compressedBuffer);
+      log('UPLOAD', `path=${pathResult}`);
+
+      return { path: pathResult, plateMaskResult };
     } catch (error) {
+      if (error instanceof BadRequestException || error instanceof ServiceUnavailableException) {
+        throw error;
+      }
       handleUploadError(
         error,
         this.logger,
@@ -310,6 +421,26 @@ export class UploadService {
         `errors.imageProcessingError|${error instanceof Error ? error.message : 'errors.unknownError'}`,
       );
     }
+  }
+
+  private async uploadToS3(s3Key: string, body: Buffer): Promise<string> {
+    if (!this.s3Client) throw new BadRequestException('errors.uploadDirectoryNotConfigured');
+    const command = new PutObjectCommand({
+      Bucket: this.bucketName,
+      Key: s3Key,
+      Body: body,
+      ContentType: 'image/webp',
+    });
+    await this.s3Client.send(command);
+    this.logger.debug(`File uploaded to S3 successfully: ${s3Key}`);
+    return `/${s3Key}`;
+  }
+
+  private uploadToLocal(fileName: string, buffer: Buffer): string {
+    if (!this.uploadDir) throw new BadRequestException('errors.uploadDirectoryNotConfigured');
+    const filePath = path.join(this.uploadDir, fileName);
+    fs.writeFileSync(filePath, buffer);
+    return `/uploads/${fileName}`;
   }
 
   async deleteFile(filePath: string): Promise<void> {
@@ -331,6 +462,49 @@ export class UploadService {
         fs.unlinkSync(fullPath);
       }
     }
+  }
+
+  generateDeleteToken(userId: string, filePath: string): string {
+    const expiresAt = Date.now() + DELETE_TOKEN_TTL_MS;
+    const signature = this.signDeletePayload(userId, filePath, expiresAt);
+    return `${expiresAt}.${signature}`;
+  }
+
+  verifyDeleteToken(userId: string, filePath: string, token: string): boolean {
+    const [expiresAtRaw, signature] = token.split('.');
+    const expiresAt = Number(expiresAtRaw);
+
+    if (!expiresAtRaw || !signature || !Number.isFinite(expiresAt) || expiresAt < Date.now()) {
+      return false;
+    }
+
+    const expectedSignature = this.signDeletePayload(userId, filePath, expiresAt);
+    const providedBuffer = Buffer.from(signature);
+    const expectedBuffer = Buffer.from(expectedSignature);
+
+    if (providedBuffer.length !== expectedBuffer.length) {
+      return false;
+    }
+
+    return timingSafeEqual(providedBuffer, expectedBuffer);
+  }
+
+  normalizeUploadPath(filePath: string): string | null {
+    if (!filePath.startsWith('/uploads/')) {
+      return null;
+    }
+
+    if (filePath.includes('..') || filePath.includes('\\')) {
+      return null;
+    }
+
+    return filePath;
+  }
+
+  private signDeletePayload(userId: string, filePath: string, expiresAt: number): string {
+    return createHmac('sha256', this.deleteTokenSecret)
+      .update(`${userId}:${filePath}:${expiresAt}`)
+      .digest('base64url');
   }
 
   async getOptimizedImage(

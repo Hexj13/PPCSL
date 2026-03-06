@@ -9,6 +9,7 @@ import {
   getInitialFormData,
   getInitialVehicleType,
 } from '@/components/ListingForm/listingFormUtils';
+import { runListingFormValidation } from '@/components/ListingForm/listingFormValidation';
 import {
   buildListingPayload,
   getFilledFields,
@@ -21,14 +22,15 @@ import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import type { Listing } from '@/lib/api';
-import { listingsApi, uploadApi } from '@/lib/api';
+import { listingsApi } from '@/lib/api';
 import type { VehicleEquipmentKey } from '@/lib/options';
 import { getEquipmentKeysByVehicleType } from '@/lib/options';
 import { loadSiteConfigSync } from '@/lib/site-config';
-import { getCountry, isBrowser } from '@/lib/utils';
-import { validators } from '@/lib/validation';
+import { getCountry } from '@/lib/utils';
 
 import type { ListingFormData } from '../ListingForm';
+
+import { useListingFormImages } from './useListingFormImages';
 
 export interface UseListingFormProps {
   mode: 'create' | 'edit';
@@ -46,7 +48,6 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
     showDelay: 200,
     minDisplayTime: 1000,
   });
-  const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState<ListingFormData>(() => getInitialFormData(initialData));
   const [errors, setErrors] = useState<Record<string, boolean>>({});
   const [vehicleType, setVehicleType] = useState<'car' | 'truck' | 'moto'>(() =>
@@ -76,6 +77,19 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
   const formRef = useRef<HTMLFormElement>(null);
   const changeTypeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const formStartSentRef = useRef(false);
+  const {
+    uploading,
+    hidePlates,
+    setHidePlates,
+    deletingImageUrls,
+    uploadSlots,
+    handleFileUpload: handleFileUploadWithQueue,
+    handleImageDelete,
+    resetUploadedImagesState,
+  } = useListingFormImages({
+    t,
+    setFormData,
+  });
 
   useEffect(() => {
     if (!isInitialLoading && isMounted) {
@@ -94,8 +108,9 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
       initialDataRef.current = listingId;
       setFormData(getInitialFormData(initialData));
       setVehicleType(getInitialVehicleType(initialData));
+      resetUploadedImagesState();
     }
-  }, [initialData, listingId]);
+  }, [initialData, listingId, resetUploadedImagesState]);
 
   useEffect(() => {
     if (mode === 'edit' && models.length > 0 && formData.vehicle.model_id) {
@@ -154,23 +169,10 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
   );
 
   const handleFileUpload = useCallback(
-    async (file: File) => {
-      setUploading(true);
-      try {
-        const response = await uploadApi.uploadImage(file);
-        let imageUrl = response.data.url;
-        if (isBrowser && window.location.protocol === 'https:' && imageUrl.startsWith('http://')) {
-          imageUrl = imageUrl.replace('http://', 'https://');
-        }
-        setFormData((prev) => ({ ...prev, images: [...prev.images, imageUrl] }));
-        toast.success(t('listings.photoUploaded'));
-      } catch {
-        toast.error(t('listings.photoUploadError'));
-      } finally {
-        setUploading(false);
-      }
+    (files: File[]) => {
+      handleFileUploadWithQueue(files, formData.images.length);
     },
-    [t],
+    [formData.images.length, handleFileUploadWithQueue],
   );
 
   const handleWheel = useCallback((e: React.WheelEvent<HTMLInputElement>) => {
@@ -187,99 +189,14 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
   }, []);
 
   const validateForm = useCallback((): boolean => {
-    const newErrors: Record<string, boolean> = {};
-    const checkField = (
-      fieldName: string,
-      value: unknown,
-      validator: (_val: unknown) => {
-        isValid: boolean;
-        errorKey?: string;
-        errorParams?: Record<string, string | number>;
-      },
-    ) => {
-      const result = validator(value);
-      if (!result.isValid) {
-        const errorKey = result.errorKey ? `listings.${result.errorKey}` : 'listings.required';
-        toast.error(t(errorKey, result.errorParams));
-        newErrors[fieldName] = true;
-      }
-    };
-
-    checkField('vehicle.brand_id', formData.vehicle.brand_id, (val) => ({
-      ...validators.required(val as string),
-      errorKey: 'brandRequired',
-    }));
-    checkField('vehicle.model_id', formData.vehicle.model_id, (val) => ({
-      ...validators.required(val as string),
-      errorKey: 'modelRequired',
-    }));
-    checkField('vehicle.year', formData.vehicle.year, (val) => validators.year(val as string));
-    if (formData.vehicle.fuel !== 'Electric') {
-      checkField('vehicle.engine_displ_l', formData.vehicle.engine_displ_l, (val) => ({
-        ...validators.required(val as string),
-        errorKey: 'engineRequired',
-      }));
-    }
-    checkField('vehicle.mileage_km', formData.vehicle.mileage_km, (val) => ({
-      ...validators.required(val as string),
-      errorKey: 'mileageRequired',
-    }));
-    checkField('vehicle.fuel', formData.vehicle.fuel, (val) => ({
-      ...validators.required(val as string),
-      errorKey: 'fuelRequired',
-    }));
-    checkField('vehicle.transmission', formData.vehicle.transmission, (val) => ({
-      ...validators.required(val as string),
-      errorKey: 'transmissionRequired',
-    }));
-    checkField('vehicle.body_type', formData.vehicle.body_type, (val) => ({
-      ...validators.required(val as string),
-      errorKey: 'bodyTypeRequired',
-    }));
-    if (vehicleType !== 'moto') {
-      checkField('vehicle.drive_type', formData.vehicle.drive_type, (val) => ({
-        ...validators.required(val as string),
-        errorKey: 'driveTypeRequired',
-      }));
-    }
-    checkField('price', formData.price, (val) => ({
-      ...validators.required(val as string),
-      errorKey: 'priceRequired',
-    }));
-    checkField('city', formData.city, (val) => ({
-      ...validators.required(val as string),
-      errorKey: 'cityRequired',
-    }));
-    checkField('images', formData.images, (val) => validators.images(val as string[]));
-    checkField('vin', formData.vin, (val) => validators.vin(val as string | undefined));
-    checkField('condition', formData.condition, (val) => ({
-      ...validators.required(val as string),
-      errorKey: 'conditionRequired',
-    }));
-    checkField('registration_type', formData.registration_type, (val) => ({
-      ...validators.required(val as string),
-      errorKey: 'registrationTypeRequired',
-    }));
-    checkField('horsepower', formData.horsepower, (val) => ({
-      ...validators.required(val as string),
-      errorKey: 'horsepowerRequired',
-    }));
-    checkField('power_kw', formData.power_kw, (val) => ({
-      ...validators.required(val as string),
-      errorKey: 'powerKwRequired',
-    }));
-
-    const assignedUserIdTrimmed = formData.assignedUserId?.trim();
-    if (assignedUserIdTrimmed) {
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(assignedUserIdTrimmed)) {
-        toast.error(t('listings.invalidUserId'));
-        newErrors['assignedUserId'] = true;
-      }
-    }
-
+    const { isValid, errors: newErrors } = runListingFormValidation(
+      formData,
+      vehicleType,
+      t,
+      toast,
+    );
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return isValid;
   }, [formData, vehicleType, t]);
 
   const handleFormFieldFocus = useCallback(() => {
@@ -311,6 +228,7 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
 
         if (mode === 'create') {
           const res = await listingsApi.create(payload);
+          resetUploadedImagesState();
           analytics.createListing(res.data.id, { title: res.data.title, price: res.data.price });
           reportFormSubmit(analytics, 'create', true, filledFields);
           setLoading(false);
@@ -326,6 +244,7 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
         const result = await listingsApi.update(listingId, payload);
         sessionStorage.setItem(`refreshListing_${listingId}`, 'true');
         if (result.data) {
+          resetUploadedImagesState();
           setFormData(getInitialFormData(result.data));
           if (result.data.vehicle?.brand_id) loadModels(result.data.vehicle.brand_id);
         }
@@ -376,6 +295,7 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
       loadModels,
       afterHidden,
       onSuccess,
+      resetUploadedImagesState,
     ],
   );
 
@@ -396,6 +316,7 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
     handleWheel,
     siteConfig,
     onFormFieldFocus: handleFormFieldFocus,
+    uploadSlots,
   };
 
   return {
@@ -414,13 +335,18 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
     isChangingType,
     loading,
     uploading,
+    hidePlates,
+    setHidePlates,
     handleVehicleTypeChange,
     handleFileUpload,
+    uploadSlots,
     handleWheel,
     clearError,
     handleFormFieldFocus,
     handleSubmit,
     sectionProps,
+    deletingImageUrls,
+    handleImageDelete,
     t,
   };
 }

@@ -26,7 +26,7 @@ This architecture separates the core application code from locale-specific confi
 - Authentication and authorization
 - User management
 - Listing management
-- Image upload and watermarking
+- Image upload, watermarking, and optional license plate masking
 - Search functionality
 - Admin panel
 - Database models and migrations
