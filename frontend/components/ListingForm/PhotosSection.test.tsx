@@ -73,6 +73,7 @@ const defaultFormData = {
   horsepower: '',
   power_kw: '',
   equipment: [],
+  assignedUserId: '',
 };
 
 const defaultProps: ListingFormSectionProps = {
