@@ -63,8 +63,10 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
     uploading,
     hidePlates,
     setHidePlates,
+    deletingImageUrls,
     handleVehicleTypeChange,
     handleFileUpload,
+    handleImageDelete,
     handleSubmit,
     sectionProps,
     t,
@@ -105,8 +107,10 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
         {...sectionProps}
         uploading={uploading}
         onFileUpload={handleFileUpload}
+        onImageDelete={handleImageDelete}
         hidePlates={hidePlates}
         onHidePlatesChange={setHidePlates}
+        deletingImageUrls={deletingImageUrls}
       />
       <PriceAndLocationSection {...sectionProps} />
       <ListingSettingsSection {...sectionProps} mode={mode} />

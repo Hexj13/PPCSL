@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -13,6 +14,7 @@ import { BrandsService } from '../../../brands/brands.service';
 import { I18nService } from '../../../common/i18n/i18n.service';
 import { removePasswordFromUser } from '../../../common/utils/error-handling.utils';
 import { normalizeDescriptionHtml, sanitizeHtml } from '../../../common/utils/html-sanitizer';
+import { UploadService } from '../../../upload/upload.service';
 import { ListingTitleService } from '../../domain/services/listing-title.service';
 import { Listing } from '../../entities/listing.entity';
 import { Vehicle } from '../../entities/vehicle.entity';
@@ -21,6 +23,8 @@ import { IListingCache, LISTING_CACHE } from '../ports/listing-cache.port';
 
 @Injectable()
 export class UpdateListingUseCase {
+  private readonly logger = new Logger(UpdateListingUseCase.name);
+
   constructor(
     @InjectRepository(Listing)
     private readonly listingsRepository: Repository<Listing>,
@@ -29,6 +33,7 @@ export class UpdateListingUseCase {
     private readonly brandsService: BrandsService,
     private readonly i18nService: I18nService,
     private readonly listingTitleService: ListingTitleService,
+    private readonly uploadService: UploadService,
     @Inject(LISTING_CACHE)
     private readonly listingCache: IListingCache,
     @Inject(BRANDS_CACHE)
@@ -94,6 +99,24 @@ export class UpdateListingUseCase {
       throw new NotFoundException('errors.vehicleNotFound');
     }
 
+    if (updateListingDto.images) {
+      const oldImages = listing.images ?? [];
+      const newImages = updateListingDto.images;
+      const removedImages = oldImages.filter((img) => !newImages.includes(img));
+      for (const imageUrl of removedImages) {
+        const filePath = this.extractPathFromUrl(imageUrl);
+        if (filePath) {
+          try {
+            await this.uploadService.deleteFile(filePath);
+          } catch (err) {
+            this.logger.warn(
+              `Failed to delete orphaned image ${filePath}: ${err instanceof Error ? err.message : String(err)}`,
+            );
+          }
+        }
+      }
+    }
+
     const listingFields = { ...updateListingDto };
     delete (listingFields as Record<string, unknown>).vehicle;
     const listingUpdateData: Partial<Listing> = {
@@ -135,6 +158,18 @@ export class UpdateListingUseCase {
     }
 
     return freshListing;
+  }
+
+  private extractPathFromUrl(url: string): string | null {
+    try {
+      const urlObj = new URL(url);
+      const path = urlObj.pathname;
+      if (path.startsWith('/uploads/')) return path;
+      return null;
+    } catch {
+      if (url.startsWith('/uploads/')) return url;
+      return null;
+    }
   }
 
   private async generateTitle(vehicle: Vehicle, locale?: string): Promise<string> {

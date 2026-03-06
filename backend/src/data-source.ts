@@ -36,7 +36,7 @@ export const dataSourceOptions: DataSourceOptions = {
     ExchangeRate,
     AdminAuditLog,
   ],
-  synchronize: process.env.DB_SYNC === 'true' || process.env.NODE_ENV !== 'production',
+  synchronize: process.env.DB_SYNC === 'true' || process.env.NODE_ENV === 'test',
   logging: process.env.NODE_ENV === 'development',
   migrations: process.env.NODE_ENV === 'test' ? [] : ['dist/migrations/*.js'],
   extra: {

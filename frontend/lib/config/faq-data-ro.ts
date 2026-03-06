@@ -243,6 +243,14 @@ export const faqRo: FAQConfig = {
         '• Nu este necesar să o descărcați din App Store sau Google Play - instalarea este direct de pe site-ul web',
       ],
     },
+    {
+      id: '24',
+      question: 'Pot ascunde numerele de înmatriculare pe fotografiile anunțului?',
+      answer: [
+        'Da. La încărcarea fotografiilor în formularul de creare sau editare anunț, puteți bifa opțiunea "Ascunde plăcuțele". Când aceasta este activată, platforma detectează automat plăcuțele de înmatriculare din fotografii și le acoperă cu o mască permanentă (dreptunghi cu textul site-ului). Mascarea se aplică pe server înainte de publicarea fotografiilor; datele numerelor nu sunt stocate.',
+        'Sunt acceptate doar imagini statice (JPG, PNG, WebP). Imaginile animate (ex. GIF) nu sunt acceptate la încărcare.',
+      ],
+    },
   ],
   scenarios: [
     {

@@ -7,10 +7,18 @@ import sharp from 'sharp';
 
 import type { PlateDetection } from './plate-detector.types';
 
-const MODEL_INPUT_SIZE = 640;
+const MODEL_INPUT_SIZE = 384;
 const DETECTION_TIMEOUT_MS = 10000;
-const MIN_CONFIDENCE = 0.4;
+const MIN_CONFIDENCE = 0.25;
 const MIN_PLATE_WIDTH_PX = 40;
+const LETTERBOX_PAD = { r: 114, g: 114, b: 114 };
+
+interface PreprocessResult {
+  tensor: ort.Tensor;
+  scale: number;
+  dw: number;
+  dh: number;
+}
 
 @Injectable()
 export class PlateDetectorService implements OnModuleInit {
@@ -50,23 +58,19 @@ export class PlateDetectorService implements OnModuleInit {
       throw new BadRequestException('errors.plateMaskFailed');
     }
     const run = async (): Promise<PlateDetection[]> => {
-      const inputTensor = await this.preprocess(imageBuffer);
+      const { tensor, scale, dw, dh } = await this.preprocess(imageBuffer, imageWidth, imageHeight);
       const inputName = this.session!.inputNames[0];
+      const outputName = this.session!.outputNames[0];
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('Plate detection timed out')), DETECTION_TIMEOUT_MS),
       );
-      const runPromise = this.session!.run({ [inputName]: inputTensor });
+      const runPromise = this.session!.run({ [inputName]: tensor });
       const outputs = await Promise.race([runPromise, timeoutPromise]);
-      const outputName = this.session!.outputNames[0];
       const outputTensor = outputs[outputName];
       if (!outputTensor || !('dims' in outputTensor)) {
         return [];
       }
-      return this.postprocess(
-        outputTensor as ort.Tensor,
-        imageWidth,
-        imageHeight,
-      );
+      return this.postprocess(outputTensor as ort.Tensor, scale, dw, dh);
     };
     try {
       return await run();
@@ -85,65 +89,79 @@ export class PlateDetectorService implements OnModuleInit {
     }
   }
 
-  private async preprocess(imageBuffer: Buffer): Promise<ort.Tensor> {
-    const resized = await sharp(imageBuffer)
-      .resize(MODEL_INPUT_SIZE, MODEL_INPUT_SIZE, { fit: 'fill' })
+  isReady(): boolean {
+    return this.session !== null;
+  }
+
+  private async preprocess(
+    imageBuffer: Buffer,
+    imageWidth: number,
+    imageHeight: number,
+  ): Promise<PreprocessResult> {
+    const scale = Math.min(MODEL_INPUT_SIZE / imageHeight, MODEL_INPUT_SIZE / imageWidth);
+    const newW = Math.round(imageWidth * scale);
+    const newH = Math.round(imageHeight * scale);
+    const dw = (MODEL_INPUT_SIZE - newW) / 2;
+    const dh = (MODEL_INPUT_SIZE - newH) / 2;
+    const padTop = Math.floor(dh);
+    const padBottom = Math.ceil(dh);
+    const padLeft = Math.floor(dw);
+    const padRight = Math.ceil(dw);
+
+    const rawPixels = await sharp(imageBuffer)
+      .resize(newW, newH)
+      .extend({
+        top: padTop,
+        bottom: padBottom,
+        left: padLeft,
+        right: padRight,
+        background: LETTERBOX_PAD,
+      })
+      .removeAlpha()
       .raw()
-      .toBuffer({ resolveWithObject: true });
-    const { data, info } = resized;
-    const { width, height, channels } = info;
-    const float32 = new Float32Array(1 * 3 * MODEL_INPUT_SIZE * MODEL_INPUT_SIZE);
-    const mean = [0, 0, 0];
-    const std = [255, 255, 255];
+      .toBuffer();
+
+    const float32 = new Float32Array(3 * MODEL_INPUT_SIZE * MODEL_INPUT_SIZE);
     for (let c = 0; c < 3; c++) {
-      for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-          const srcIdx = (y * width + x) * channels + c;
+      for (let y = 0; y < MODEL_INPUT_SIZE; y++) {
+        for (let x = 0; x < MODEL_INPUT_SIZE; x++) {
+          const srcIdx = (y * MODEL_INPUT_SIZE + x) * 3 + c;
           const dstIdx = c * (MODEL_INPUT_SIZE * MODEL_INPUT_SIZE) + y * MODEL_INPUT_SIZE + x;
-          float32[dstIdx] = (data[srcIdx] - mean[c]) / std[c];
+          float32[dstIdx] = rawPixels[srcIdx] / 255.0;
         }
       }
     }
-    return new ort.Tensor('float32', float32, [1, 3, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE]);
+
+    const tensor = new ort.Tensor('float32', float32, [1, 3, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE]);
+    return { tensor, scale, dw, dh };
   }
 
-  private postprocess(
-    output: ort.Tensor,
-    imageWidth: number,
-    imageHeight: number,
-  ): PlateDetection[] {
+  private postprocess(output: ort.Tensor, scale: number, dw: number, dh: number): PlateDetection[] {
     const data = output.data as Float32Array;
     const dims = output.dims;
-    if (dims.length !== 3) {
+    if (dims.length !== 2 || dims[1] !== 7) {
       return [];
     }
-    const [, numRows, numCols] = dims;
-    const numClasses = numRows - 4;
-    const scaleX = imageWidth / MODEL_INPUT_SIZE;
-    const scaleY = imageHeight / MODEL_INPUT_SIZE;
+    const numDetections = dims[0];
     const results: PlateDetection[] = [];
-    for (let i = 0; i < numCols; i++) {
-      const cx = data[0 * numCols + i];
-      const cy = data[1 * numCols + i];
-      const w = data[2 * numCols + i];
-      const h = data[3 * numCols + i];
-      let maxConf = 0;
-      for (let c = 0; c < numClasses; c++) {
-        const conf = data[(4 + c) * numCols + i];
-        if (conf > maxConf) maxConf = conf;
-      }
-      if (maxConf < MIN_CONFIDENCE) continue;
-      const widthPx = w * scaleX;
-      if (widthPx < MIN_PLATE_WIDTH_PX) continue;
-      const x = (cx - w / 2) * scaleX;
-      const y = (cy - h / 2) * scaleY;
-      const heightPx = h * scaleY;
+
+    for (let i = 0; i < numDetections; i++) {
+      const score = data[i * 7 + 6];
+      if (score < MIN_CONFIDENCE) continue;
+
+      const x1 = (data[i * 7 + 1] - dw) / scale;
+      const y1 = (data[i * 7 + 2] - dh) / scale;
+      const x2 = (data[i * 7 + 3] - dw) / scale;
+      const y2 = (data[i * 7 + 4] - dh) / scale;
+      const width = x2 - x1;
+      if (width < MIN_PLATE_WIDTH_PX) continue;
+
       results.push({
-        x: Math.max(0, Math.round(x)),
-        y: Math.max(0, Math.round(y)),
-        width: Math.round(widthPx),
-        height: Math.round(heightPx),
-        confidence: maxConf,
+        x: Math.max(0, Math.round(x1)),
+        y: Math.max(0, Math.round(y1)),
+        width: Math.round(width),
+        height: Math.round(y2 - y1),
+        confidence: score,
       });
     }
     return results;

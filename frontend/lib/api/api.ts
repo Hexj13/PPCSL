@@ -347,8 +347,20 @@ export const uploadApi = {
       url: string;
       path: string;
       plateMaskResult?: string | null;
-    }>('/api/upload/image', formData);
+      deleteToken?: string | null;
+    }>('/api/upload/image', formData, {
+      headers: {
+        'X-Skip-Error-Handling': 'true',
+      },
+    });
   },
+  deleteImage: (path: string, deleteToken: string) =>
+    api.delete<{ success: boolean }>('/api/upload/image', {
+      data: { path, deleteToken },
+      headers: {
+        'X-Skip-Error-Handling': 'true',
+      },
+    }),
 };
 
 export interface VerifySmsDto {

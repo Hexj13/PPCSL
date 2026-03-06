@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { Logger } from '@nestjs/common';
 import { Repository } from 'typeorm';
 
 import { RedisService } from '../common/redis.service';
@@ -188,7 +189,9 @@ describe('ExchangeRatesService', () => {
     it('should throw when FXRATESAPI_API_KEY is not set', async () => {
       const orig = process.env.FXRATESAPI_API_KEY;
       delete process.env.FXRATESAPI_API_KEY;
+      const loggerSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation();
       await expect(service.doFetchRates()).rejects.toThrow('FXRATESAPI_API_KEY is not set');
+      loggerSpy.mockRestore();
       if (orig !== undefined) process.env.FXRATESAPI_API_KEY = orig;
     });
   });
