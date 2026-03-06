@@ -2,12 +2,12 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
-import { toast } from 'react-hot-toast';
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { authApi, favoritesApi, listingsApi, savedFiltersApi } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
+import { toast } from '@/lib/toast';
 import { LoadingButton } from '@/ui';
 
 const isValidEmail = (value: string): boolean => {

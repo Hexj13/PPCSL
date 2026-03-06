@@ -215,7 +215,7 @@ function isRefreshRequest(url: string | undefined): boolean {
 async function showToastForError(error: AxiosError): Promise<void> {
   if (typeof window === 'undefined') return;
   const errorMessage = getErrorMessage(error);
-  const { toast } = await import('react-hot-toast');
+  const { toast } = await import('@/lib/toast');
   toast.error(errorMessage);
 }
 

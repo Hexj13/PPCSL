@@ -1,12 +1,12 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import toast from 'react-hot-toast';
 
 import { usePaginatedData } from '@/hooks/usePaginatedData';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { AdminBrand, AdminModel } from '@/lib/api';
 import { adminApi } from '@/lib/api';
+import { toast } from '@/lib/toast';
 
 import type { ArchiveTarget } from './ArchiveConfirmModal';
 import { ArchiveConfirmModal } from './ArchiveConfirmModal';

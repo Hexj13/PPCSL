@@ -1,7 +1,6 @@
-import { toast } from 'react-hot-toast';
-
 import type { UpdateProfileDto, User } from '@/lib/api';
 import { favoritesApi, listingsApi, savedFiltersApi } from '@/lib/api';
+import { toast } from '@/lib/toast';
 
 export async function processPendingFavorites(userId: string): Promise<void> {
   const pendingFavorites = JSON.parse(localStorage.getItem('pendingFavorites') || '[]');

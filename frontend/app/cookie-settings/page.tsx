@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { toast } from 'react-hot-toast';
 
 import { useCookieConsent } from '@/hooks/useCookieConsent';
 import { useTranslation } from '@/hooks/useTranslation';
+import { toast } from '@/lib/toast';
 
 export default function CookieSettingsPage() {
   const { t } = useTranslation();

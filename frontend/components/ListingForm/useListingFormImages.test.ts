@@ -102,4 +102,81 @@ describe('useListingFormImages', () => {
 
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:test-preview');
   });
+
+  it('should delete uploaded images from server on unmount when form was not submitted', async () => {
+    const deferred = createDeferred<{
+      data: { url: string; path: string; deleteToken: string };
+    }>();
+    (uploadApi.uploadImage as jest.Mock).mockReturnValue(deferred.promise);
+    (uploadApi.deleteImage as jest.Mock).mockResolvedValue(undefined);
+
+    const setFormData = jest.fn();
+    const formSubmittedSuccessfullyRef = { current: false };
+    const { result, unmount } = renderHook(() =>
+      useListingFormImages({
+        t: mockT,
+        setFormData: setFormData as unknown as Dispatch<SetStateAction<ListingFormData>>,
+        formSubmittedSuccessfullyRef,
+      }),
+    );
+
+    await act(async () => {
+      result.current.handleFileUpload([new File(['x'], 'test.jpg', { type: 'image/jpeg' })], 0);
+    });
+
+    await act(async () => {
+      deferred.resolve({
+        data: {
+          url: 'https://cdn.example.com/uploads/abc.jpg',
+          path: '/uploads/abc.jpg',
+          deleteToken: 'token-123',
+        },
+      });
+    });
+
+    expect(uploadApi.deleteImage).not.toHaveBeenCalled();
+
+    unmount();
+
+    expect(uploadApi.deleteImage).toHaveBeenCalledTimes(1);
+    expect(uploadApi.deleteImage).toHaveBeenCalledWith('/uploads/abc.jpg', 'token-123');
+  });
+
+  it('should not delete uploaded images on unmount when form was submitted successfully', async () => {
+    const deferred = createDeferred<{
+      data: { url: string; path: string; deleteToken: string };
+    }>();
+    (uploadApi.uploadImage as jest.Mock).mockReturnValue(deferred.promise);
+    (uploadApi.deleteImage as jest.Mock).mockResolvedValue(undefined);
+
+    const setFormData = jest.fn();
+    const formSubmittedSuccessfullyRef = { current: true };
+    const { result, unmount } = renderHook(() =>
+      useListingFormImages({
+        t: mockT,
+        setFormData: setFormData as unknown as Dispatch<SetStateAction<ListingFormData>>,
+        formSubmittedSuccessfullyRef,
+      }),
+    );
+
+    await act(async () => {
+      result.current.handleFileUpload([new File(['x'], 'test.jpg', { type: 'image/jpeg' })], 0);
+    });
+
+    await act(async () => {
+      deferred.resolve({
+        data: {
+          url: 'https://cdn.example.com/uploads/xyz.jpg',
+          path: '/uploads/xyz.jpg',
+          deleteToken: 'token-456',
+        },
+      });
+    });
+
+    const deleteBeforeUnmount = (uploadApi.deleteImage as jest.Mock).mock.calls.length;
+    unmount();
+    const deleteAfterUnmount = (uploadApi.deleteImage as jest.Mock).mock.calls.length;
+
+    expect(deleteAfterUnmount).toBe(deleteBeforeUnmount);
+  });
 });

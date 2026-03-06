@@ -278,7 +278,7 @@ export function useMyListingsPage() {
         setPromotionHistoryMeta(res.data.meta);
         setPromotionHistoryPage(page);
       } catch {
-        const { toast } = await import('react-hot-toast');
+        const { toast } = await import('@/lib/toast');
         toast.error(t('promotion.history.loadError'));
       } finally {
         setLoadingHistory(false);

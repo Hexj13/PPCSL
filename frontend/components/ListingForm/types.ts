@@ -27,5 +27,7 @@ export interface ListingFormSectionProps {
     status: 'queued' | 'uploading';
     file: File;
     previewUrl: string;
+    uploadedUrl?: string;
   }>;
+  onUploadedImageLoaded?: (_slotId: string) => void;
 }

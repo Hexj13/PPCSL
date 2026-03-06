@@ -3,7 +3,6 @@
 import createDOMPurify from 'dompurify';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { toast } from 'react-hot-toast';
 
 import { useI18n } from '@/components/providers/I18nProvider';
 import { useCities } from '@/hooks/useCities';
@@ -14,6 +13,7 @@ import { analytics } from '@/lib/analytics';
 import type { Listing } from '@/lib/api';
 import { listingsApi, favoritesApi } from '@/lib/api';
 import { useAuthStore, useFavoritesStore, useComparisonStore } from '@/lib/store';
+import { toast } from '@/lib/toast';
 import { getCityName, getListingDisplayTitle, sortOptionsByLabel } from '@/lib/utils';
 
 function getClosingDate(lastUpdatedAt: string): Date {

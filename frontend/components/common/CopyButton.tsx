@@ -1,9 +1,9 @@
 'use client';
 
 import { useCallback } from 'react';
-import { toast } from 'react-hot-toast';
 
 import { useTranslation } from '@/hooks/useTranslation';
+import { toast } from '@/lib/toast';
 import { CopyIcon } from '@/ui';
 
 interface CopyButtonProps {

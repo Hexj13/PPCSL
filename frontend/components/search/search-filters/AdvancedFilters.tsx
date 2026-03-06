@@ -1,12 +1,12 @@
 'use client';
 
 import { useMemo } from 'react';
-import { toast } from 'react-hot-toast';
 
 import { MultiSelectDropdown } from '@/components/common/MultiSelectDropdown';
 import type { FilterState } from '@/hooks/useSearchFilters';
 import { useTranslation } from '@/hooks/useTranslation';
 import { getDoorOptions } from '@/lib/options';
+import { toast } from '@/lib/toast';
 import { clampToRange, ENGINE_RANGE, isInRange, POWER_RANGE } from '@/lib/validation';
 import { Checkbox } from '@/ui';
 

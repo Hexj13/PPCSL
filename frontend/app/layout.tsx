@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { cookies } from 'next/headers';
-import { Toaster } from 'react-hot-toast';
 
 import { PageScrollTracker } from '@/components/PageScrollTracker';
 import { ProfileSaveSuccessToast } from '@/components/ProfileSaveSuccessToast';
@@ -25,6 +24,7 @@ import { OfflineBanner } from '@/components/pwa/OfflineBanner';
 import { ServiceWorkerRegistration } from '@/components/pwa/ServiceWorkerRegistration';
 import { getServerTranslations, type Locale } from '@/lib/i18n';
 import { loadSiteConfig } from '@/lib/site-config';
+import { Toaster } from '@/lib/toast';
 import { getCountry } from '@/lib/utils';
 import './globals.css';
 

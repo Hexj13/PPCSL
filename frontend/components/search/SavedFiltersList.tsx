@@ -2,13 +2,13 @@
 
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { toast } from 'react-hot-toast';
 
 import { SaveFilterModal } from '@/components/modals/SaveFilterModal';
 import { useI18n } from '@/components/providers/I18nProvider';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { SavedFilter } from '@/lib/api';
 import { brandsApi, savedFiltersApi } from '@/lib/api';
+import { toast } from '@/lib/toast';
 import { createSlug, formatDateLong } from '@/lib/utils';
 
 interface SavedFiltersListProps {

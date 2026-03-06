@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
-import { toast } from 'react-hot-toast';
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { listingsApi, type Listing } from '@/lib/api';
+import { toast } from '@/lib/toast';
 
 export interface ListingActionsConfig {
   refreshCooldownMs: number;

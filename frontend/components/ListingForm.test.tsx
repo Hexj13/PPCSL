@@ -24,11 +24,12 @@ jest.mock('next/navigation', () => ({
     push: jest.fn(),
   }),
 }));
-jest.mock('react-hot-toast', () => ({
+jest.mock('@/lib/toast', () => ({
   toast: {
-    success: jest.fn(),
-    error: jest.fn(),
+    success: jest.fn(() => 'id'),
+    error: jest.fn(() => 'id'),
   },
+  Toaster: () => null,
 }));
 jest.mock('./RichTextEditor', () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -112,7 +113,7 @@ describe('ListingForm', () => {
 
     it('should show backend upload error message for animated images', async () => {
       const onSuccess = jest.fn();
-      const { toast } = require('react-hot-toast');
+      const { toast } = require('@/lib/toast');
       (api.uploadApi.uploadImage as jest.Mock).mockRejectedValueOnce({
         response: {
           status: 400,
@@ -321,7 +322,7 @@ describe('ListingForm', () => {
 
       await waitFor(
         () => {
-          const { toast } = require('react-hot-toast');
+          const { toast } = require('@/lib/toast');
           const errorCalls = (toast.error as jest.Mock).mock.calls;
           if (errorCalls.length > 0) {
             const errorMessages = errorCalls.map((call: unknown[]) => String(call[0]));
@@ -705,7 +706,7 @@ describe('ListingForm', () => {
 
     it('should validate year is not greater than current year', async () => {
       const onSuccess = jest.fn();
-      const { toast } = require('react-hot-toast');
+      const { toast } = require('@/lib/toast');
       render(<ListingForm mode="create" onSuccess={onSuccess} />);
 
       await waitFor(() => {
@@ -751,7 +752,7 @@ describe('ListingForm', () => {
 
     it('should validate year is not less than 1900', async () => {
       const onSuccess = jest.fn();
-      const { toast } = require('react-hot-toast');
+      const { toast } = require('@/lib/toast');
 
       render(<ListingForm mode="create" onSuccess={onSuccess} />);
 
@@ -944,7 +945,7 @@ describe('ListingForm', () => {
 
     it('should validate year on form submit', async () => {
       const onSuccess = jest.fn();
-      const { toast } = require('react-hot-toast');
+      const { toast } = require('@/lib/toast');
 
       render(<ListingForm mode="create" onSuccess={onSuccess} />);
 

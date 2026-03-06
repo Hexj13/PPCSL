@@ -3,7 +3,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import React, { useCallback, useMemo, startTransition } from 'react';
-import { toast } from 'react-hot-toast';
 
 import { PriceDisplay } from '@/components/listing/PriceDisplay';
 import { useI18n } from '@/components/providers/I18nProvider';
@@ -13,6 +12,7 @@ import { analytics } from '@/lib/analytics';
 import type { Listing } from '@/lib/api';
 import { favoritesApi } from '@/lib/api';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
+import { toast } from '@/lib/toast';
 import {
   formatEngineVolume,
   formatMileage,

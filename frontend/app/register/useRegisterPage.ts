@@ -2,7 +2,6 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
-import { toast } from 'react-hot-toast';
 
 import { getPasswordValidationRules, validatePassword } from '@/app/reset-password/utils';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -10,6 +9,7 @@ import { analytics } from '@/lib/analytics';
 import type { RegisterDto } from '@/lib/api';
 import { authApi } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
+import { toast } from '@/lib/toast';
 
 import { getRegisterSubmitErrorMessage, validatePhone } from './utils';
 

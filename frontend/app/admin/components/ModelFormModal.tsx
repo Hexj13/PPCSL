@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import toast from 'react-hot-toast';
 
 import { Dropdown } from '@/components/common/Dropdown';
 import { Modal } from '@/components/modals/Modal';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { AdminBrand, AdminModel, CreateModelPayload, UpdateModelPayload } from '@/lib/api';
 import { adminApi } from '@/lib/api';
+import { toast } from '@/lib/toast';
 import { Checkbox } from '@/ui';
 
 const VEHICLE_TYPES = ['car', 'truck', 'moto'] as const;

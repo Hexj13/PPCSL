@@ -3,7 +3,6 @@
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { flushSync } from 'react-dom';
-import { toast } from 'react-hot-toast';
 
 import {
   getInitialFormData,
@@ -26,6 +25,7 @@ import { listingsApi } from '@/lib/api';
 import type { VehicleEquipmentKey } from '@/lib/options';
 import { getEquipmentKeysByVehicleType } from '@/lib/options';
 import { loadSiteConfigSync } from '@/lib/site-config';
+import { toast } from '@/lib/toast';
 import { getCountry } from '@/lib/utils';
 
 import type { ListingFormData } from '../ListingForm';
@@ -77,6 +77,7 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
   const formRef = useRef<HTMLFormElement>(null);
   const changeTypeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const formStartSentRef = useRef(false);
+  const formSubmittedSuccessfullyRef = useRef(false);
   const {
     uploading,
     hidePlates,
@@ -85,10 +86,12 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
     uploadSlots,
     handleFileUpload: handleFileUploadWithQueue,
     handleImageDelete,
+    onUploadedImageLoaded,
     resetUploadedImagesState,
   } = useListingFormImages({
     t,
     setFormData,
+    formSubmittedSuccessfullyRef,
   });
 
   useEffect(() => {
@@ -228,6 +231,7 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
 
         if (mode === 'create') {
           const res = await listingsApi.create(payload);
+          formSubmittedSuccessfullyRef.current = true;
           resetUploadedImagesState();
           analytics.createListing(res.data.id, { title: res.data.title, price: res.data.price });
           reportFormSubmit(analytics, 'create', true, filledFields);
@@ -244,6 +248,7 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
         const result = await listingsApi.update(listingId, payload);
         sessionStorage.setItem(`refreshListing_${listingId}`, 'true');
         if (result.data) {
+          formSubmittedSuccessfullyRef.current = true;
           resetUploadedImagesState();
           setFormData(getInitialFormData(result.data));
           if (result.data.vehicle?.brand_id) loadModels(result.data.vehicle.brand_id);
@@ -317,6 +322,7 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
     siteConfig,
     onFormFieldFocus: handleFormFieldFocus,
     uploadSlots,
+    onUploadedImageLoaded,
   };
 
   return {

@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { toast } from 'react-hot-toast';
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { savedFiltersApi } from '@/lib/api';
+import { toast } from '@/lib/toast';
 
 import { Modal } from './Modal';
 

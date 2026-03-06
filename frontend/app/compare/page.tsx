@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { toast } from 'react-hot-toast';
 
 import { Breadcrumbs } from '@/components/layout/Breadcrumbs';
 import { LoadMoreButton } from '@/components/listing/LoadMoreButton';
@@ -11,6 +10,7 @@ import type { Listing } from '@/lib/api';
 import { listingsApi } from '@/lib/api';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { useComparisonStore } from '@/lib/store';
+import { toast } from '@/lib/toast';
 import { getCountry } from '@/lib/utils';
 
 import { getComparisonFieldsForListings } from './comparisonFields';

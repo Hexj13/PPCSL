@@ -2,11 +2,11 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState } from 'react';
-import { toast } from 'react-hot-toast';
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { authApi } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
+import { toast } from '@/lib/toast';
 import { LoadingButton } from '@/ui';
 
 function VerifyPhoneChangeContent() {

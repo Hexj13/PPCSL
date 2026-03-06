@@ -1,9 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { toast } from 'react-hot-toast';
 
 import { uploadApi } from '@/lib/api';
+import { toast } from '@/lib/toast';
 import { isBrowser } from '@/lib/utils';
 
 import type { ListingFormData } from '../ListingForm';
@@ -20,16 +20,22 @@ export interface UploadSlot {
   status: 'queued' | 'uploading';
   file: File;
   previewUrl: string;
+  uploadedUrl?: string;
 }
 
 interface UseListingFormImagesParams {
   t: TranslationFunction;
   setFormData: React.Dispatch<React.SetStateAction<ListingFormData>>;
+  formSubmittedSuccessfullyRef?: React.MutableRefObject<boolean>;
 }
 
 const MAX_CONCURRENT_UPLOADS = 2;
 
-export function useListingFormImages({ t, setFormData }: UseListingFormImagesParams) {
+export function useListingFormImages({
+  t,
+  setFormData,
+  formSubmittedSuccessfullyRef,
+}: UseListingFormImagesParams) {
   const [uploading, setUploading] = useState(false);
   const [hidePlates, setHidePlates] = useState(false);
   const [deletingImageUrls, setDeletingImageUrls] = useState<string[]>([]);
@@ -74,12 +80,19 @@ export function useListingFormImages({ t, setFormData }: UseListingFormImagesPar
 
   useEffect(() => {
     mountedRef.current = true;
+    const submittedRef = formSubmittedSuccessfullyRef;
+    const metaRef = uploadedImageDeleteMetaRef;
 
     return () => {
       mountedRef.current = false;
+      if (submittedRef === undefined || !submittedRef.current) {
+        metaRef.current.forEach(({ path, deleteToken }) => {
+          void uploadApi.deleteImage(path, deleteToken).catch(() => {});
+        });
+      }
       clearUploadState(false);
     };
-  }, [clearUploadState]);
+  }, [clearUploadState, formSubmittedSuccessfullyRef]);
 
   const processQueue = useCallback(() => {
     if (
@@ -126,10 +139,9 @@ export function useListingFormImages({ t, setFormData }: UseListingFormImagesPar
         }
 
         setFormData((prev) => ({ ...prev, images: [...prev.images, imageUrl] }));
-        setUploadSlots((prev) => {
-          revokeSlotPreviewUrl(slotId);
-          return prev.filter((currentSlot) => currentSlot.id !== slotId);
-        });
+        setUploadSlots((prev) =>
+          prev.map((s) => (s.id === slotId ? { ...s, uploadedUrl: imageUrl } : s)),
+        );
         toast.success(t('listings.photoUploaded'));
       })
       .catch((error: { response?: { status?: number; data?: { message?: unknown } } }) => {
@@ -169,6 +181,18 @@ export function useListingFormImages({ t, setFormData }: UseListingFormImagesPar
   }, [hidePlates, revokeSlotPreviewUrl, setFormData, t]);
 
   processQueueRef.current = processQueue;
+
+  const onUploadedImageLoaded = useCallback(
+    (slotId: string) => {
+      setUploadSlots((prev) => {
+        const slot = prev.find((s) => s.id === slotId);
+        if (!slot?.uploadedUrl) return prev;
+        revokeSlotPreviewUrl(slotId);
+        return prev.filter((s) => s.id !== slotId);
+      });
+    },
+    [revokeSlotPreviewUrl],
+  );
 
   const handleImageDelete = useCallback(
     async (imageUrl: string) => {
@@ -272,6 +296,7 @@ export function useListingFormImages({ t, setFormData }: UseListingFormImagesPar
     uploadSlots,
     handleFileUpload,
     handleImageDelete,
+    onUploadedImageLoaded,
     resetUploadedImagesState,
   };
 }

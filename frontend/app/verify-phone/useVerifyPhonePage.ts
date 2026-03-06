@@ -2,7 +2,6 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
-import { toast } from 'react-hot-toast';
 
 import { runAfterRegistration } from '@/app/verify-phone/afterRegistration';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -10,6 +9,7 @@ import { analytics } from '@/lib/analytics';
 import type { RegisterDto } from '@/lib/api';
 import { authApi } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
+import { toast } from '@/lib/toast';
 
 function getLoginValue(formData: RegisterDto): string | null {
   if (formData.type === 'Individual') {

@@ -20,6 +20,127 @@ import { Checkbox, ChevronDownIcon, HintTooltip, TrashIcon } from '@/ui';
 
 import type { ListingFormSectionProps } from './types';
 
+const MOBILE_BREAKPOINT = 768;
+
+function useIsMobile(): boolean {
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+    return window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`).matches;
+  });
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
+    const handler = () => setIsMobile(mql.matches);
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, []);
+  return isMobile;
+}
+
+interface PhotoCardProps {
+  url: string;
+  index: number;
+  isMain: boolean;
+  t: ListingFormSectionProps['t'];
+  onPreview: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  onDelete: () => void;
+  deleting: boolean;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+}
+
+function PhotoCard({
+  url,
+  index,
+  isMain,
+  t,
+  onPreview,
+  onMoveUp,
+  onMoveDown,
+  onDelete,
+  deleting,
+  canMoveUp,
+  canMoveDown,
+}: PhotoCardProps) {
+  return (
+    <div className="flex flex-col">
+      <div
+        className="relative aspect-[4/3] rounded-lg overflow-hidden cursor-pointer touch-pan-y select-none"
+        onClick={onPreview}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onPreview();
+          }
+        }}
+      >
+        <Image
+          src={url}
+          alt={t('listings.imageAlt', {
+            title: t('listings.defaultTitle'),
+            index: String(index + 1),
+          })}
+          fill
+          className="object-cover"
+          draggable={false}
+          unoptimized
+          sizes="(max-width: 767px) 50vw, 33vw"
+        />
+        {isMain && (
+          <span className="absolute top-1 left-1 bg-primary-600 text-white text-xs px-1.5 py-0.5 rounded">
+            {t('listings.mainPhoto')}
+          </span>
+        )}
+      </div>
+      <div className="mt-2 flex items-center justify-center gap-2">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onMoveUp();
+          }}
+          disabled={!canMoveUp}
+          className="inline-flex items-center justify-center rounded-full p-2 text-text-secondary transition-colors duration-200 enabled:hover:text-primary-700 enabled:active:text-primary-900 disabled:cursor-not-allowed disabled:opacity-35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-700/40"
+          title={t('listings.moveUp')}
+          aria-label={t('listings.moveUp')}
+        >
+          <ChevronDownIcon className="h-5 w-5 rotate-180" />
+        </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          disabled={deleting}
+          className="inline-flex items-center justify-center rounded-full p-2 text-text-secondary transition-colors duration-200 enabled:hover:text-red-400 enabled:active:text-red-500 disabled:cursor-not-allowed disabled:opacity-35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/60"
+          title={t('listings.deleteImage')}
+          aria-label={t('listings.deleteImage')}
+        >
+          <TrashIcon className="h-5 w-5" />
+        </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onMoveDown();
+          }}
+          disabled={!canMoveDown}
+          className="inline-flex items-center justify-center rounded-full p-2 text-text-secondary transition-colors duration-200 enabled:hover:text-primary-700 enabled:active:text-primary-900 disabled:cursor-not-allowed disabled:opacity-35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-700/40"
+          title={t('listings.moveDown')}
+          aria-label={t('listings.moveDown')}
+        >
+          <ChevronDownIcon className="h-5 w-5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function SortablePhotoCard({
   id,
   url,
@@ -177,6 +298,7 @@ export function PhotosSection({
   uploading = false,
   onFileUpload,
   onImageDelete,
+  onUploadedImageLoaded,
   hidePlates = false,
   onHidePlatesChange,
   deletingImageUrls = [],
@@ -184,6 +306,7 @@ export function PhotosSection({
 }: ListingFormSectionProps) {
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [previewImageErrors, setPreviewImageErrors] = useState<Set<number>>(new Set());
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (previewIndex === null) return;
@@ -227,6 +350,48 @@ export function PhotosSection({
   };
 
   const imageIds = formData.images;
+  const slotByUploadedUrl = new Map(
+    uploadSlots
+      .filter((s): s is typeof s & { uploadedUrl: string } => !!s.uploadedUrl)
+      .map((s) => [s.uploadedUrl, s]),
+  );
+  const renderUploadSlot = (slot: (typeof uploadSlots)[number]) => (
+    <div key={slot.id} className="flex flex-col">
+      <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-primary-700/20 flex items-center justify-center">
+        {slot.uploadedUrl ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element -- server URL, load then replace slot */}
+            <img
+              src={slot.uploadedUrl}
+              alt={t('common.loading')}
+              className="absolute inset-0 w-full h-full object-cover"
+              onLoad={() => onUploadedImageLoaded?.(slot.id)}
+              onError={() => onUploadedImageLoaded?.(slot.id)}
+            />
+            <div className="absolute inset-0 flex items-center justify-center bg-primary-900/30">
+              <span className="text-primary-100 text-sm">{t('common.loading')}</span>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element -- blob URL from createObjectURL */}
+            <img
+              src={slot.previewUrl}
+              alt={t('common.loading')}
+              className="absolute inset-0 w-full h-full object-cover opacity-40"
+            />
+            <div
+              className={`absolute inset-0 flex items-center justify-center bg-primary-900/30 ${
+                slot.status === 'queued' ? 'animate-pulse' : ''
+              }`}
+            >
+              <span className="text-primary-100 text-sm">{t('common.loading')}</span>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
   const moveImage = (fromIndex: number, toIndex: number) => {
     if (toIndex < 0 || toIndex >= formData.images.length || fromIndex === toIndex) return;
     setFormData((prev) => ({
@@ -280,59 +445,80 @@ export function PhotosSection({
       </div>
       {(formData.images.length > 0 || uploadSlots.length > 0) && (
         <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-3" data-testid="photos-grid">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext items={imageIds} strategy={rectSortingStrategy}>
-              {formData.images.map((url, index) => (
-                <SortablePhotoCard
-                  key={url}
-                  id={url}
-                  url={url}
-                  index={index}
-                  isMain={index === 0}
-                  t={t}
-                  onPreview={() => setPreviewIndex(index)}
-                  onMoveUp={() => moveImage(index, index - 1)}
-                  onMoveDown={() => moveImage(index, index + 1)}
-                  onDelete={() => {
-                    if (onImageDelete) {
-                      void onImageDelete(url);
-                      return;
-                    }
-                    setFormData((prev) => ({
-                      ...prev,
-                      images: prev.images.filter((_, i) => i !== index),
-                    }));
-                  }}
-                  deleting={deletingImageUrls.includes(url)}
-                  canMoveUp={index > 0}
-                  canMoveDown={index < formData.images.length - 1}
-                />
-              ))}
-            </SortableContext>
-            {uploadSlots.map((slot) => (
-              <div key={slot.id} className="flex flex-col">
-                <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-primary-700/20 flex items-center justify-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- blob URL from createObjectURL */}
-                  <img
-                    src={slot.previewUrl}
-                    alt={t('common.loading')}
-                    className="absolute inset-0 w-full h-full object-cover opacity-40"
+          {isMobile ? (
+            <>
+              {formData.images.map((url, index) => {
+                const slot = slotByUploadedUrl.get(url);
+                if (slot) return renderUploadSlot(slot);
+                return (
+                  <PhotoCard
+                    key={url}
+                    url={url}
+                    index={index}
+                    isMain={index === 0}
+                    t={t}
+                    onPreview={() => setPreviewIndex(index)}
+                    onMoveUp={() => moveImage(index, index - 1)}
+                    onMoveDown={() => moveImage(index, index + 1)}
+                    onDelete={() => {
+                      if (onImageDelete) {
+                        void onImageDelete(url);
+                        return;
+                      }
+                      setFormData((prev) => ({
+                        ...prev,
+                        images: prev.images.filter((_, i) => i !== index),
+                      }));
+                    }}
+                    deleting={deletingImageUrls.includes(url)}
+                    canMoveUp={index > 0}
+                    canMoveDown={index < formData.images.length - 1}
                   />
-                  <div
-                    className={`absolute inset-0 flex items-center justify-center bg-primary-900/30 ${
-                      slot.status === 'queued' ? 'animate-pulse' : ''
-                    }`}
-                  >
-                    <span className="text-primary-100 text-sm">{t('common.loading')}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </DndContext>
+                );
+              })}
+              {uploadSlots.filter((s) => !s.uploadedUrl).map((slot) => renderUploadSlot(slot))}
+            </>
+          ) : (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext items={imageIds} strategy={rectSortingStrategy}>
+                {formData.images.map((url, index) => {
+                  const slot = slotByUploadedUrl.get(url);
+                  if (slot) return renderUploadSlot(slot);
+                  return (
+                    <SortablePhotoCard
+                      key={url}
+                      id={url}
+                      url={url}
+                      index={index}
+                      isMain={index === 0}
+                      t={t}
+                      onPreview={() => setPreviewIndex(index)}
+                      onMoveUp={() => moveImage(index, index - 1)}
+                      onMoveDown={() => moveImage(index, index + 1)}
+                      onDelete={() => {
+                        if (onImageDelete) {
+                          void onImageDelete(url);
+                          return;
+                        }
+                        setFormData((prev) => ({
+                          ...prev,
+                          images: prev.images.filter((_, i) => i !== index),
+                        }));
+                      }}
+                      deleting={deletingImageUrls.includes(url)}
+                      canMoveUp={index > 0}
+                      canMoveDown={index < formData.images.length - 1}
+                    />
+                  );
+                })}
+                {uploadSlots.filter((s) => !s.uploadedUrl).map((slot) => renderUploadSlot(slot))}
+              </SortableContext>
+            </DndContext>
+          )}
         </div>
       )}
       <ListingPageImageModal

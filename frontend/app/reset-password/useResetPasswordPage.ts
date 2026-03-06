@@ -2,7 +2,6 @@
 
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'react-hot-toast';
 
 import {
   isValidPhone,
@@ -11,6 +10,7 @@ import {
 } from '@/app/reset-password/utils';
 import { useTranslation } from '@/hooks/useTranslation';
 import { authApi } from '@/lib/api';
+import { toast } from '@/lib/toast';
 
 export type ResetPasswordStep = 'phone' | 'code' | 'password';
 

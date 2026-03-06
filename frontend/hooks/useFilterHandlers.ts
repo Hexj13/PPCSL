@@ -1,12 +1,12 @@
 import type { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, startTransition } from 'react';
-import { toast } from 'react-hot-toast';
 
 import type { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import type { Brand, VehicleModel, City } from '@/lib/api';
 import { buildSearchQuery, clearFiltersFromStorage, saveFiltersToStorage } from '@/lib/search';
+import { toast } from '@/lib/toast';
 import {
   getFilterRangesValidationError,
   getYearRange,

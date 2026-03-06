@@ -1,7 +1,6 @@
-import { toast } from 'react-hot-toast';
-
 import type { RegisterDto, User } from '@/lib/api';
 import { authApi, favoritesApi, listingsApi, savedFiltersApi } from '@/lib/api';
+import { toast } from '@/lib/toast';
 
 type LoginResponse = {
   data: {

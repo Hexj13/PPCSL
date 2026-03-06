@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { toast } from 'react-hot-toast';
 
 import { EmptyState } from '@/components/common/EmptyState';
 import { ListingManagementCard } from '@/components/listing/ListingManagementCard';
@@ -13,6 +12,7 @@ import { usePaginatedData } from '@/hooks/usePaginatedData';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
 import { adminApi } from '@/lib/api';
+import { toast } from '@/lib/toast';
 import { Pagination } from '@/ui';
 
 interface ListingsTabProps {

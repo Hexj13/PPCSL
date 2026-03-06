@@ -8,11 +8,12 @@ import { useAuthStore } from '@/lib/store';
 
 import { SearchFilters } from './SearchFilters';
 
-jest.mock('react-hot-toast', () => ({
+jest.mock('@/lib/toast', () => ({
   toast: {
-    success: jest.fn(),
-    error: jest.fn(),
+    success: jest.fn(() => 'id'),
+    error: jest.fn(() => 'id'),
   },
+  Toaster: () => null,
 }));
 
 jest.mock('next/navigation', () => ({
@@ -491,7 +492,7 @@ describe('SearchFilters', () => {
     });
 
     it('should validate price range (from <= to)', async () => {
-      const { toast } = require('react-hot-toast');
+      const { toast } = require('@/lib/toast');
       render(<SearchFilters />);
 
       await waitFor(() => {
@@ -515,7 +516,7 @@ describe('SearchFilters', () => {
     });
 
     it('should validate price is within valid range (0-999999999)', async () => {
-      const { toast } = require('react-hot-toast');
+      const { toast } = require('@/lib/toast');
       render(<SearchFilters />);
 
       await waitFor(() => {

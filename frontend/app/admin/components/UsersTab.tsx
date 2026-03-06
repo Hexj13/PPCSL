@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { toast } from 'react-hot-toast';
 
 import { CopyButton } from '@/components/common/CopyButton';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -10,6 +9,7 @@ import { usePaginatedData } from '@/hooks/usePaginatedData';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { User } from '@/lib/api';
 import { adminApi } from '@/lib/api';
+import { toast } from '@/lib/toast';
 import { Pagination } from '@/ui';
 
 interface UsersTabProps {

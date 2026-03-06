@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo } from 'react';
-import { toast } from 'react-hot-toast';
 
 import { Dropdown } from '@/components/common/Dropdown';
 import { MultiSelectDropdown } from '@/components/common/MultiSelectDropdown';
@@ -14,6 +13,7 @@ import {
   getTransmissionOptions,
   getYearOptions,
 } from '@/lib/options';
+import { toast } from '@/lib/toast';
 import { isInRange, MILEAGE_RANGE } from '@/lib/validation';
 
 import PopularBodyTypesFilter from './PopularBodyTypesFilter';

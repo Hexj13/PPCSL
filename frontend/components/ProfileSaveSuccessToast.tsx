@@ -2,9 +2,9 @@
 
 import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import { toast } from 'react-hot-toast';
 
 import { useTranslation } from '@/hooks/useTranslation';
+import { toast } from '@/lib/toast';
 
 export function ProfileSaveSuccessToast() {
   const pathname = usePathname();
