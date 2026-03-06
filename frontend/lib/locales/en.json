@@ -424,7 +424,7 @@
     "imageEmptyError": "File is empty",
     "imageMaxCountError": "Maximum 20 photos",
     "hidePlates": "Hide license plates on photos",
-    "hidePlatesHelper": "We will automatically cover the plates with a mask.",
+    "hidePlatesHelper": "We will automatically cover the plates with a mask. Enable this option before uploading photos.",
     "plateMaskError": "Failed to process photo. Try uploading again or disable license plate hiding.",
     "serverBusyError": "Server is busy. Try again in a minute.",
     "basicInfo": "Basic Information",
