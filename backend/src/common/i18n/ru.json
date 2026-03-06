@@ -59,7 +59,6 @@
     "filterLimitExceeded": "Вы достигли лимита сохраненных фильтров. Максимум: {max}",
     "maxSavedFiltersReached": "Вы можете сохранить максимум {max} фильтров. Пожалуйста, удалите один из существующих фильтров.",
     "invalidImageFormat": "Неверный формат изображения",
-    "animatedImagesNotSupported": "Анимированные изображения не поддерживаются. Загрузите статичное изображение.",
     "imageTooLarge": "Изображение слишком большое. Максимальный размер: {max}MB",
     "tooManyImages": "Слишком много изображений. Максимальное количество: {max}",
     "unsupportedVehicleType": "Неподдерживаемый тип транспортного средства",
@@ -85,9 +84,7 @@
     "archivedCannotBeActive": "Архивный элемент нельзя активировать",
     "modelCategoryOutsideBrand": "Категория модели должна входить в категории марки",
     "brandNotFound": "Марка не найдена",
-    "modelNotFound": "Модель не найдена",
-    "plateMaskFailed": "Не удалось обработать маскировку номеров",
-    "plateDetectionTimeout": "Время обнаружения номеров истекло"
+    "modelNotFound": "Модель не найдена"
   },
   "vehicleOptions": {
     "transmission": {

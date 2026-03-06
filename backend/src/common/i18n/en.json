@@ -63,7 +63,6 @@
     "filterNotFound": "Filter not found",
     "maxSavedFiltersReached": "You can save a maximum of {max} filters. Please delete one of the existing filters.",
     "invalidFileType": "Invalid file type. File is not a valid image.",
-    "animatedImagesNotSupported": "Animated images are not supported. Please upload a static image.",
     "invalidImage": "Invalid image. Cannot read image metadata.",
     "fileTooLarge": "Image is too large. Maximum size: {max}MB",
     "fileTooLargePixels": "Image is too large. Maximum dimension: {max}x{max} pixels.",
@@ -93,9 +92,7 @@
     "hasActiveListings": "Cannot archive: there are active listings using this brand/model",
     "archivedCannotBeActive": "An archived item cannot be activated",
     "modelCategoryOutsideBrand": "Model category must be within brand categories",
-    "modelNotFound": "Model not found",
-    "plateMaskFailed": "Failed to process plate masking",
-    "plateDetectionTimeout": "Plate detection timed out"
+    "modelNotFound": "Model not found"
   },
   "vehicleOptions": {
     "transmission": {

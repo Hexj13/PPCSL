@@ -59,7 +59,6 @@
     "filterLimitExceeded": "Ați atins limita de filtre salvate. Maximum: {max}",
     "maxSavedFiltersReached": "Puteți salva maximum {max} filtre. Vă rugăm să ștergeți unul dintre filtrele existente.",
     "invalidImageFormat": "Format imagine invalid",
-    "animatedImagesNotSupported": "Imaginile animate nu sunt acceptate. Încărcați o imagine statică.",
     "imageTooLarge": "Imaginea este prea mare. Dimensiunea maximă: {max}MB",
     "tooManyImages": "Prea multe imagini. Numărul maxim: {max}",
     "unsupportedVehicleType": "Tip vehicul neacceptat",
@@ -85,9 +84,7 @@
     "archivedCannotBeActive": "Un element arhivat nu poate fi activat",
     "modelCategoryOutsideBrand": "Categoria modelului trebuie să facă parte din categoriile mărcii",
     "brandNotFound": "Marca nu a fost găsită",
-    "modelNotFound": "Modelul nu a fost găsit",
-    "plateMaskFailed": "Nu am reușit procesarea măștii plăcuțelor",
-    "plateDetectionTimeout": "Detectarea plăcuțelor a expirat"
+    "modelNotFound": "Modelul nu a fost găsit"
   },
   "vehicleOptions": {
     "transmission": {

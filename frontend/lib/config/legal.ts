@@ -4,7 +4,7 @@ const legal: LegalConfig = {
   terms: {
     en: {
       title: 'Terms and Conditions',
-      lastUpdated: 'Last updated: March 5, 2026',
+      lastUpdated: 'Last updated: February 3, 2026',
       languageToggle: 'Switch language',
       dictionary: {
         title: 'Glossary of Terms',
@@ -131,7 +131,6 @@ const legal: LegalConfig = {
             '• Use only photographs that accurately depict the vehicle being sold',
             '• Photographs are stored on AWS S3 (Amazon Web Services) and delivered via AWS CloudFront CDN',
             '• Images are automatically processed and converted to WebP format for improved performance',
-            '• You may optionally enable automatic masking of license plates on uploaded photos; when enabled, we process images on our servers to overlay a non-removable mask on detected plates. Only static images are accepted; animated images (e.g. GIF) are not supported.',
             '• Not post duplicate listings for the same vehicle',
             '• Not post content that is illegal, offensive, defamatory, sexually explicit, violent, or otherwise inappropriate',
             '• Respect the intellectual property of others',
@@ -258,7 +257,7 @@ const legal: LegalConfig = {
     },
     ro: {
       title: 'Termeni și condiții',
-      lastUpdated: 'Ultima actualizare: 5 martie 2026',
+      lastUpdated: 'Ultima actualizare: 3 februarie 2026',
       languageToggle: 'Schimbă limba',
       dictionary: {
         title: 'Glosar de termeni',
@@ -391,7 +390,6 @@ const legal: LegalConfig = {
             '• Folosiți doar fotografii care descriu cu exactitate autoturismul care se vinde',
             '• Fotografiile sunt stocate pe AWS S3 (Amazon Web Services) și livrate prin AWS CloudFront CDN',
             '• Imaginile sunt procesate automat și convertite în format WebP pentru performanță îmbunătățită',
-            '• Puteți activa opțional mascarea automată a plăcuțelor de înmatriculare pe fotografiile încărcate; când este activată, procesăm imaginile pe serverele noastre pentru a suprapune o mască permanentă pe plăcuțele detectate. Sunt acceptate doar imagini statice; imaginile animate (ex. GIF) nu sunt acceptate.',
             '• Nu publicați anunțuri duplicate pentru același autoturism',
             '• Nu publicați conținut care este ilegal, ofensator, defăimător, explicit sexual, violent sau altfel nepotrivit',
             '• Respectați proprietatea intelectuală a altora',
@@ -518,7 +516,7 @@ const legal: LegalConfig = {
     },
     ru: {
       title: 'Условия использования',
-      lastUpdated: 'Последнее обновление: 5 марта 2026',
+      lastUpdated: 'Последнее обновление: 3 февраля 2026',
       languageToggle: 'Переключить язык',
       dictionary: {
         title: 'Глоссарий терминов',
@@ -648,7 +646,6 @@ const legal: LegalConfig = {
             '• Использовать только фотографии, которые точно изображают продаваемый автомобиль',
             '• Фотографии хранятся на AWS S3 (Amazon Web Services) и доставляются через AWS CloudFront CDN',
             '• Изображения автоматически обрабатываются и конвертируются в формат WebP для улучшения производительности',
-            '• Вы можете по желанию включить автоматическую маскировку номерных знаков на загружаемых фото; при включении мы обрабатываем изображения на наших серверах и наносим постоянную маску на обнаруженные номера. Принимаются только статичные изображения; анимированные (например GIF) не поддерживаются.',
             '• Не размещать дублирующиеся объявления для одного и того же автомобиля',
             '• Не размещать контент, который является незаконным, оскорбительным, клеветническим, сексуально откровенным, насильственным или иным образом неуместным',
             '• Уважать интеллектуальную собственность других',
@@ -777,7 +774,7 @@ const legal: LegalConfig = {
   privacy: {
     ro: {
       title: 'Politica de confidențialitate',
-      lastUpdated: 'Ultima actualizare: 5 martie 2026',
+      lastUpdated: 'Ultima actualizare: 3 februarie 2026',
       languageToggle: 'Schimbă limba',
       dictionary: {
         title: 'Glosar de termeni',
@@ -1010,7 +1007,6 @@ const legal: LegalConfig = {
             '8.4. Fotografii și imagini:',
             '• Fotografiile din anunțuri sunt stocate pe AWS S3 (Amazon Web Services) și livrate prin AWS CloudFront CDN',
             '• Imaginile sunt procesate și convertite în format WebP pentru performanță îmbunătățită',
-            '• Când activați "Ascunde plăcuțele", procesăm fotografiile pe serverele noastre pentru a detecta plăcuțele și a suprapune o mască permanentă; nu stocăm datele plăcuțelor detectate.',
             '• La ștergerea anunțului, imaginile corespunzătoare sunt șterse de pe AWS S3',
             '• Imaginile sunt păstrate cât timp anunțul este activ sau până când utilizatorul șterge anunțul',
             '8.5. Filtre de căutare salvate:',
@@ -1177,7 +1173,7 @@ const legal: LegalConfig = {
     },
     en: {
       title: 'Privacy Policy',
-      lastUpdated: 'Last updated: March 5, 2026',
+      lastUpdated: 'Last updated: February 3, 2026',
       languageToggle: 'Switch language',
       dictionary: {
         title: 'Glossary of Terms',
@@ -1410,7 +1406,6 @@ const legal: LegalConfig = {
             '8.4. Photos and images:',
             '• Photos from listings are stored on AWS S3 (Amazon Web Services) and delivered via AWS CloudFront CDN',
             '• Images are processed and converted to WebP format for improved performance',
-            '• When you enable "hide license plates", we process photos on our servers to detect license plates and overlay a permanent mask; we do not store the detected plate data.',
             '• When a listing is deleted, corresponding images are deleted from AWS S3',
             '• Images are stored while the listing is active or until the user deletes the listing',
             '8.5. Saved search filters:',
@@ -1577,7 +1572,7 @@ const legal: LegalConfig = {
     },
     ru: {
       title: 'Политика конфиденциальности',
-      lastUpdated: 'Последнее обновление: 5 марта 2026',
+      lastUpdated: 'Последнее обновление: 3 февраля 2026',
       languageToggle: 'Переключить язык',
       dictionary: {
         title: 'Глоссарий терминов',
@@ -1810,7 +1805,6 @@ const legal: LegalConfig = {
             '8.4. Фотографии и изображения:',
             '• Фотографии из объявлений хранятся на AWS S3 (Amazon Web Services) и доставляются через AWS CloudFront CDN',
             '• Изображения обрабатываются и конвертируются в формат WebP для улучшения производительности',
-            '• При включении опции «Скрыть номера» мы обрабатываем фото на наших серверах для обнаружения номерных знаков и нанесения постоянной маски; данные обнаруженных номеров не сохраняются.',
             '• При удалении объявления соответствующие изображения удаляются с AWS S3',
             '• Изображения хранятся, пока объявление активно или пока пользователь не удалит объявление',
             '8.5. Сохраненные фильтры поиска:',
