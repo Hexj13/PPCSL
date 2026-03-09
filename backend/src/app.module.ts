@@ -21,6 +21,7 @@ import { FavoritesModule } from './favorites/favorites.module';
 import { ListingsModule } from './listings/listings.module';
 import { SavedFiltersModule } from './saved-filters/saved-filters.module';
 import { SitemapModule } from './sitemap/sitemap.module';
+import { TelegramModule } from './telegram/telegram.module';
 import { UploadModule } from './upload/upload.module';
 import { UsersModule } from './users/users.module';
 
@@ -50,6 +51,7 @@ import { UsersModule } from './users/users.module';
     UploadModule,
     CitiesModule,
     SitemapModule,
+    TelegramModule,
   ],
   controllers: [AppController],
   providers: [

@@ -103,5 +103,12 @@
       "homePageDescriptionWithBrand": "Cumpără autoturisme {brand} pe Kupito! Găsește cele mai bune prețuri și selecție de autoturisme {brand} în Moldova.",
       "homePageDescriptionWithBrandModel": "Cumpără {brand} {model} pe Kupito! Găsește cele mai bune prețuri și selecție de autoturisme {brand} {model} în Moldova."
     }
+  },
+  "telegram": {
+    "welcome": "Bună. Aici poți trimite un mesaj despre o eroare sau problemă pe site. Descrie ce s-a întâmplat și, dacă e posibil, adaugă un link către pagină.",
+    "confirmation": "Mulțumim. Mesajul despre problemă a fost primit.",
+    "sendError": "Nu s-a putut trimite mesajul. Te rugăm să încerci din nou mai târziu.",
+    "emptyMessage": "Te rugăm să scrii textul mesajului.",
+    "unsupportedType": "Momentan acceptăm doar text și poze."
   }
 }

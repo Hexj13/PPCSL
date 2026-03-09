@@ -111,5 +111,12 @@
       "homePageDescriptionWithBrand": "Buy {brand} cars on Kupito! Find the best prices and selection of {brand} cars in Moldova.",
       "homePageDescriptionWithBrandModel": "Buy {brand} {model} on Kupito! Find the best prices and selection of {brand} {model} cars in Moldova."
     }
+  },
+  "telegram": {
+    "welcome": "Hi. You can send a message about a bug or issue on the site here. Describe what happened and add a link to the page if possible.",
+    "confirmation": "Thank you. Your message has been received.",
+    "sendError": "Failed to send your message. Please try again later.",
+    "emptyMessage": "Please type your message.",
+    "unsupportedType": "Only text and photos are supported for now."
   }
 }
