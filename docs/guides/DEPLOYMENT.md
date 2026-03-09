@@ -632,7 +632,27 @@ The application has built-in cron logic for closing old listings and expiring pr
    curl -X POST https://your-backend.onrender.com/api/listings/cron/expire-promotions -H "x-cron-secret: $CRON_SECRET"
    ```
 
-### 3.10. Frontend Service Setup (if deployed separately)
+### 3.10. Telegram support bot (optional)
+
+Bug-report bot: users write to the bot in Telegram; messages are forwarded to a support chat. Requires Redis (for rate limit).
+
+**Environment variables (backend):**
+
+- `TELEGRAM_BOT_TOKEN` — token from [@BotFather](https://t.me/BotFather)
+- `TELEGRAM_SUPPORT_CHAT_ID` — ID of the group/channel for reports (e.g. `-1001234567890`). Add the bot to the group and get the ID (e.g. with [@userinfobot](https://t.me/userinfobot)).
+
+**Webhook registration (after API is deployed and reachable):**
+
+```bash
+curl -X POST "https://api.telegram.org/bot<TOKEN>/setWebhook" \
+  -d "url=https://api.your-domain.com/api/telegram/webhook"
+```
+
+Use POST (GET returns 404). To remove: `curl -X POST "https://api.telegram.org/bot<TOKEN>/deleteWebhook"`.
+
+**Behaviour:** POST `/api/telegram/webhook` receives Telegram updates. Replies to the user are in Romanian + Russian (one message, separator `—`). Rate limit: 20 messages per hour per user (Redis key `telegram:ratelimit:{userId}`). If `TELEGRAM_BOT_TOKEN` or `TELEGRAM_SUPPORT_CHAT_ID` are not set, the bot does nothing and the webhook still returns 200.
+
+### 3.11. Frontend Service Setup (if deployed separately)
 
 If you deploy the frontend as a separate service on Render.com:
 
@@ -651,7 +671,7 @@ NEXT_PUBLIC_API_URL=https://your-backend.onrender.com
 NEXT_PUBLIC_SITE_URL=https://your-frontend-domain.com
 ```
 
-### 3.11. Troubleshooting
+### 3.12. Troubleshooting
 
 **Application Not Starting:**
 
@@ -677,7 +697,7 @@ NEXT_PUBLIC_SITE_URL=https://your-frontend-domain.com
 - Redeploy after adding/changing variables
 - Check variable names match exactly (case-sensitive)
 
-### 3.12. Post-Deployment Checklist
+### 3.13. Post-Deployment Checklist
 
 After deployment:
 

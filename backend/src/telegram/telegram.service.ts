@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { I18nService } from '../common/i18n/i18n.service';
+import { RedisService } from '../common/redis.service';
 
 import type { TelegramUpdate } from './types/telegram.types';
 import { formatSupportCaption, formatSupportMessage } from './utils/message-formatter';
@@ -9,6 +10,9 @@ import { formatSupportCaption, formatSupportMessage } from './utils/message-form
 const TELEGRAM_API_BASE = 'https://api.telegram.org/bot';
 const MAX_TEXT_LENGTH = 3000;
 const USER_MESSAGE_SEPARATOR = '\n\n—\n\n';
+const RATE_LIMIT_PREFIX = 'telegram:ratelimit:';
+const RATE_LIMIT_MAX = 20;
+const RATE_LIMIT_TTL_SEC = 3600;
 
 @Injectable()
 export class TelegramService {
@@ -24,6 +28,7 @@ export class TelegramService {
   constructor(
     private readonly configService: ConfigService,
     private readonly i18nService: I18nService,
+    private readonly redisService: RedisService,
   ) {}
 
   private getToken(): string | undefined {
@@ -91,6 +96,16 @@ export class TelegramService {
     return this.request('getMe', {});
   }
 
+  private async checkRateLimit(userId: number): Promise<boolean> {
+    try {
+      const key = `${RATE_LIMIT_PREFIX}${userId}`;
+      const count = await this.redisService.rateLimitIncr(key, RATE_LIMIT_TTL_SEC);
+      return count <= RATE_LIMIT_MAX;
+    } catch {
+      return true;
+    }
+  }
+
   async handleUpdate(update: TelegramUpdate): Promise<void> {
     if (!this.ensureConfig()) return;
 
@@ -99,6 +114,13 @@ export class TelegramService {
 
     const from = message.from;
     const chatId = message.chat?.id;
+    if (!from || chatId == null) return;
+
+    const allowed = await this.checkRateLimit(from.id);
+    if (!allowed) {
+      await this.sendMessage(chatId, this.messageRoRu('telegram.rateLimit'));
+      return;
+    }
 
     if (message.text) {
       const trimmed = message.text.trim();
@@ -111,7 +133,6 @@ export class TelegramService {
         return;
       }
       const text = trimmed.length > MAX_TEXT_LENGTH ? trimmed.slice(0, MAX_TEXT_LENGTH) : trimmed;
-      if (!from) return;
       const receivedAt = new Date().toISOString();
       const supportText = formatSupportMessage(from, text, receivedAt);
       const supportChatId = this.getSupportChatId();
@@ -126,7 +147,6 @@ export class TelegramService {
     }
 
     if (message.photo && message.photo.length > 0) {
-      if (!from) return;
       const receivedAt = new Date().toISOString();
       const caption = (message.caption || '').trim();
       const supportCaption = formatSupportCaption(from, caption, receivedAt);

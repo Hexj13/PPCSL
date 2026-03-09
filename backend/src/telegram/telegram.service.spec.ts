@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 
 import { I18nService } from '../common/i18n/i18n.service';
+import { RedisService } from '../common/redis.service';
 
 import { TelegramService } from './telegram.service';
 import type { TelegramUpdate } from './types/telegram.types';
@@ -12,6 +13,7 @@ describe('TelegramService', () => {
   let service: TelegramService;
   let configService: jest.Mocked<ConfigService>;
   let i18nService: jest.Mocked<I18nService>;
+  let redisService: jest.Mocked<RedisService>;
   let fetchMock: jest.SpyInstance;
 
   const token = 'test-token';
@@ -21,6 +23,7 @@ describe('TelegramService', () => {
   const sendErrorText = 'Try again later';
   const emptyMessageText = 'Please type your message';
   const unsupportedTypeText = 'Only text and photos';
+  const rateLimitText = 'Rate limit exceeded';
 
   function messageRoRu(ro: string, ru: string): string {
     return `${ro}${RO_RU_SEPARATOR}${ru}`;
@@ -82,9 +85,14 @@ describe('TelegramService', () => {
           'telegram.sendError': sendErrorText,
           'telegram.emptyMessage': emptyMessageText,
           'telegram.unsupportedType': unsupportedTypeText,
+          'telegram.rateLimit': rateLimitText,
         };
         return map[key] ?? key;
       }),
+    };
+
+    const mockRedisService = {
+      rateLimitIncr: jest.fn().mockResolvedValue(1),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -92,12 +100,14 @@ describe('TelegramService', () => {
         TelegramService,
         { provide: ConfigService, useValue: mockConfigService },
         { provide: I18nService, useValue: mockI18nService },
+        { provide: RedisService, useValue: mockRedisService },
       ],
     }).compile();
 
     service = module.get<TelegramService>(TelegramService);
     configService = module.get(ConfigService);
     i18nService = module.get(I18nService);
+    redisService = module.get(RedisService);
 
     delete process.env.TELEGRAM_BOT_TOKEN;
     delete process.env.TELEGRAM_SUPPORT_CHAT_ID;
@@ -227,6 +237,57 @@ describe('TelegramService', () => {
       await service.handleUpdate(update);
 
       expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it('should send rateLimit and not forward when user exceeds 20 messages per hour', async () => {
+      redisService.rateLimitIncr.mockResolvedValue(21);
+
+      const update = createUpdate();
+
+      await service.handleUpdate(update);
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+      expect(callBody.chat_id).toBe(456);
+      expect(callBody.text).toBe(messageRoRu(rateLimitText, rateLimitText));
+      expect(callBody.text).not.toContain('New bug report');
+    });
+
+    it('should send rateLimit on /start when user exceeds 20 messages per hour', async () => {
+      redisService.rateLimitIncr.mockResolvedValue(21);
+
+      const update = createUpdate({
+        message: {
+          ...createUpdate().message!,
+          text: '/start',
+        },
+      });
+
+      await service.handleUpdate(update);
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+      expect(callBody.text).toBe(messageRoRu(rateLimitText, rateLimitText));
+      expect(callBody.text).not.toContain(welcomeText);
+    });
+
+    it('should send rateLimit on unsupported type when user exceeds 20 messages per hour', async () => {
+      redisService.rateLimitIncr.mockResolvedValue(21);
+
+      const update = createUpdate({
+        message: {
+          message_id: 1,
+          from: baseFrom,
+          chat: { id: 456, type: 'private' },
+          date: Math.floor(Date.now() / 1000),
+        },
+      });
+
+      await service.handleUpdate(update);
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+      expect(callBody.text).toBe(messageRoRu(rateLimitText, rateLimitText));
     });
 
     it('should forward photo with caption to support and send confirmation', async () => {

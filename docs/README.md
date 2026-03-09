@@ -22,7 +22,7 @@
 - **[PLATFORM_CHECKLIST.md](./guides/PLATFORM_CHECKLIST.md)** ⭐ **Чеклист для новых платформ**
 - [PLATFORM_GUIDE.md](./guides/PLATFORM_GUIDE.md) — настройка и разработка (включая GA, GTM, Sentry)
 - [SENTRY.md](./guides/SENTRY.md) — настройка и мониторинг Sentry
-- [DEPLOYMENT.md](./guides/DEPLOYMENT.md) — деплой
+- [DEPLOYMENT.md](./guides/DEPLOYMENT.md) — деплой (включая опциональный Telegram support bot)
 - [LOCAL_DEVELOPMENT.md](./guides/LOCAL_DEVELOPMENT.md) — локальная разработка
 - [QUICK_START_RU.md](./guides/QUICK_START_RU.md) — быстрый старт
 - [LINTING.md](./LINTING.md) — линтинг и качество кода (единый источник)

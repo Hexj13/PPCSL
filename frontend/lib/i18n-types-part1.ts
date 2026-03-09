@@ -6,6 +6,7 @@ export interface TranslationsPart1 {
     terms: string;
     privacy: string;
     cookieSettings: string;
+    contacts: string;
   };
   header: {
     addListing: string;

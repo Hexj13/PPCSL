@@ -325,6 +325,14 @@ export interface TranslationsPart2 {
       email: string;
     };
   };
+  contacts: {
+    title: string;
+    intro: string;
+    email: string;
+    telegram: string;
+    whatsapp: string;
+    whatsappValue: string;
+  };
   verifyEmail: {
     title: string;
     pleaseWait: string;
@@ -355,6 +363,13 @@ export interface TranslationsPart2 {
       keywords: string[];
     };
     faq: {
+      title: string;
+      description: string;
+      ogTitle: string;
+      ogDescription: string;
+      ogAlt: string;
+    };
+    contacts: {
       title: string;
       description: string;
       ogTitle: string;

@@ -109,6 +109,7 @@
     "confirmation": "Mulțumim. Mesajul despre problemă a fost primit.",
     "sendError": "Nu s-a putut trimite mesajul. Te rugăm să încerci din nou mai târziu.",
     "emptyMessage": "Te rugăm să scrii textul mesajului.",
-    "unsupportedType": "Momentan acceptăm doar text și poze."
+    "unsupportedType": "Momentan acceptăm doar text și poze.",
+    "rateLimit": "Ai depășit limita de 20 de mesaje pe oră. Te rugăm să încerci mai târziu."
   }
 }

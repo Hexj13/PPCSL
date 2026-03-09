@@ -816,7 +816,7 @@ All scripts are located in `backend/src/scripts/` and can be executed via npm co
 - **Static meta tags for key pages**:
   - Homepage (`/`): Static OG tags with platform description
   - Auth pages (`/login`, `/register`, `/reset-password`): Page-specific descriptions
-  - Legal pages (`/terms`, `/privacy`, `/faq`): Content-specific descriptions
+  - Legal and info pages (`/terms`, `/privacy`, `/faq`, `/contacts`): Content-specific descriptions
 - **Meta description length**: All descriptions are optimized to 110-160 characters (Open Graph recommendation)
 - **H1 tags**: All pages have proper `<h1>` tags:
   - Listing pages: Dynamic H1 from vehicle info (brand + model + year) with fallback
@@ -834,7 +834,7 @@ All scripts are located in `backend/src/scripts/` and can be executed via npm co
 
 - **Robots.txt** - Proper crawling instructions
 - **Sitemap** - Backend-generated XML sitemap index at `/sitemap.xml` (proxied from frontend) with child sitemaps:
-  - Static pages (homepage, listings, terms, privacy, FAQ, cookie-settings)
+  - Static pages (homepage, listings, terms, privacy, FAQ, contacts, cookie-settings)
   - Brand and brand+model landing pages (`/?brand={slug}`, `/?brand={slug}&model={slug}`)
   - Seller board pages (`/board/{slug}`) for active sellers with active listings
   - Active listings by month (`/listings/{id}`) in `listings-YYYY-MM.xml`

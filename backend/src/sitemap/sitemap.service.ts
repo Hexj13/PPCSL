@@ -95,6 +95,7 @@ export class SitemapService {
       { loc: `${SITE_URL}/terms`, lastmod: now, changefreq: 'monthly', priority: 0.3 },
       { loc: `${SITE_URL}/privacy`, lastmod: now, changefreq: 'monthly', priority: 0.3 },
       { loc: `${SITE_URL}/faq`, lastmod: now, changefreq: 'monthly', priority: 0.4 },
+      { loc: `${SITE_URL}/contacts`, lastmod: now, changefreq: 'monthly', priority: 0.3 },
       { loc: `${SITE_URL}/cookie-settings`, lastmod: now, changefreq: 'monthly', priority: 0.2 },
     ];
 

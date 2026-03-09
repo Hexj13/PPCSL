@@ -62,6 +62,16 @@ export function Footer() {
             >
               {t('footer.cookieSettings')}
             </Link>
+            <span className="hidden md:inline text-white" suppressHydrationWarning>
+              |
+            </span>
+            <Link
+              href="/contacts"
+              className="text-white hover-only:hover:text-primary-100 active:text-primary-300 transition-colors duration-200 underline"
+              suppressHydrationWarning
+            >
+              {t('footer.contacts')}
+            </Link>
           </div>
           <p className="text-xs sm:text-sm" suppressHydrationWarning>
             <span className="font-medium text-white" suppressHydrationWarning>

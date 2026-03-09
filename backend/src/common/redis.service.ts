@@ -212,4 +212,38 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       return false;
     }
   }
+
+  async incr(key: string): Promise<number> {
+    if (!this.client?.isOpen) {
+      throw new Error('Redis client is not connected');
+    }
+    return await this.client.incr(key);
+  }
+
+  async expire(key: string, seconds: number): Promise<void> {
+    if (!this.client?.isOpen) {
+      throw new Error('Redis client is not connected');
+    }
+    await this.client.expire(key, seconds);
+  }
+
+  async rateLimitIncr(key: string, ttlSeconds: number): Promise<number> {
+    if (!this.client?.isOpen) {
+      throw new Error('Redis client is not connected');
+    }
+    const multi = this.client.multi();
+    multi.incr(key);
+    multi.expire(key, ttlSeconds);
+    const results = await multi.exec();
+    if (!results || results.length < 1) {
+      throw new Error('Redis rateLimitIncr failed');
+    }
+    const first = results[0] as unknown;
+    if (Array.isArray(first)) {
+      const [err, count] = first as [Error | null, number];
+      if (err) throw err;
+      return count;
+    }
+    return first as number;
+  }
 }

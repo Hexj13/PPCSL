@@ -5,7 +5,8 @@
     "faq": "Frequently Asked Questions",
     "terms": "Terms of Use",
     "privacy": "Privacy Policy",
-    "cookieSettings": "Cookie Settings"
+    "cookieSettings": "Cookie Settings",
+    "contacts": "Contacts"
   },
   "header": {
     "addListing": "Add Listing",
@@ -1278,6 +1279,14 @@
       "email": "support@kupito.club"
     }
   },
+  "contacts": {
+    "title": "Contacts",
+    "intro": "We are the kupito.club development team and we are always ready to help. Contact us through any of the channels below.",
+    "email": "Email",
+    "telegram": "Telegram bot",
+    "whatsapp": "WhatsApp Business Kupito.club",
+    "whatsappValue": "Kupito.club (business account)"
+  },
   "verifyEmail": {
     "title": "Email Verification",
     "pleaseWait": "Please wait...",
@@ -1384,6 +1393,13 @@
       "ogTitle": "Frequently Asked Questions (FAQ) - Kupito",
       "ogDescription": "Find answers to the most common questions about Kupito. Learn how to post a listing, manage your listings, search and compare cars, and more.",
       "ogAlt": "Kupito - FAQ"
+    },
+    "contacts": {
+      "title": "Contacts - kupito.club",
+      "description": "Contact the kupito.club team. Email, Telegram bot and WhatsApp Business.",
+      "ogTitle": "Contacts - kupito.club",
+      "ogDescription": "Contact the kupito.club development team. We are ready to help via email, Telegram or WhatsApp.",
+      "ogAlt": "kupito.club - Contacts"
     },
     "cookieSettings": {
       "title": "Cookie Settings",

@@ -117,6 +117,7 @@
     "confirmation": "Thank you. Your message has been received.",
     "sendError": "Failed to send your message. Please try again later.",
     "emptyMessage": "Please type your message.",
-    "unsupportedType": "Only text and photos are supported for now."
+    "unsupportedType": "Only text and photos are supported for now.",
+    "rateLimit": "Rate limit exceeded: 20 messages per hour. Please try again later."
   }
 }

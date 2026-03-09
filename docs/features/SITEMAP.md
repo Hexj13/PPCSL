@@ -36,7 +36,7 @@ Only **Active** listings are included. Seller boards are included only if the us
 
 | Type                 | Included | File                 | Notes                                                              |
 | -------------------- | -------- | -------------------- | ------------------------------------------------------------------ |
-| Static pages         | Yes      | pages.xml            | `/`, `/listings`, `/terms`, `/privacy`, `/faq`, `/cookie-settings` |
+| Static pages         | Yes      | pages.xml            | `/`, `/listings`, `/terms`, `/privacy`, `/faq`, `/contacts`, `/cookie-settings` |
 | Brand pages          | Yes      | brands.xml           | `/?brand=slug`, `/?brand=slug&vehicleType=truck` (etc.)            |
 | Brand+Model pages    | Yes      | brands.xml           | `/?brand=slug&model=slug` (with optional vehicleType)              |
 | Seller boards        | Yes      | sellers.xml          | `/board/:board_slug` — only active sellers with active listings    |
@@ -55,6 +55,7 @@ Only **Active** listings are included. Seller boards are included only if the us
 | `/terms`           | 0.3      | monthly    |
 | `/privacy`         | 0.3      | monthly    |
 | `/faq`             | 0.4      | monthly    |
+| `/contacts`        | 0.3      | monthly    |
 | `/cookie-settings` | 0.2      | monthly    |
 
 ### Brand and Model URLs (brands.xml)
