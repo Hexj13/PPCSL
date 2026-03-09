@@ -332,6 +332,9 @@ export interface TranslationsPart2 {
     telegram: string;
     whatsapp: string;
     whatsappValue: string;
+    copyTitle: string;
+    openInNewTab: string;
+    openEmail: string;
   };
   verifyEmail: {
     title: string;

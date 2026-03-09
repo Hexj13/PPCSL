@@ -1284,8 +1284,11 @@
     "intro": "We are the kupito.club development team and we are always ready to help. Contact us through any of the channels below.",
     "email": "Email",
     "telegram": "Telegram bot",
-    "whatsapp": "WhatsApp Business Kupito.club",
-    "whatsappValue": "Kupito.club (business account)"
+    "whatsapp": "WhatsApp Business",
+    "whatsappValue": "Kupito.club (business account)",
+    "copyTitle": "Copy",
+    "openInNewTab": "Open in new tab",
+    "openEmail": "Open email client"
   },
   "verifyEmail": {
     "title": "Email Verification",
