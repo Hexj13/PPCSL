@@ -70,6 +70,7 @@ export function ListingCardImageArea({
 export function ListingCardImageCarousel({
   images,
   currentImageIndex,
+  direction: externalDirection,
   imageErrors,
   onImageError,
   imageAltTitle,
@@ -78,6 +79,7 @@ export function ListingCardImageCarousel({
 }: {
   images: string[];
   currentImageIndex: number;
+  direction?: 'next' | 'prev';
   imageErrors: Set<number>;
   onImageError: (index: number) => void;
   imageAltTitle: string;
@@ -93,6 +95,39 @@ export function ListingCardImageCarousel({
   const prevIndexRef = React.useRef(currentImageIndex);
   const rafRef = React.useRef<number | undefined>(undefined);
   const timerRef = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const preloadedRef = React.useRef<Set<string>>(new Set());
+
+  React.useEffect(() => {
+    const preload = (idx: number) => {
+      const src = images[idx];
+      if (!src || src === '/placeholder-car.jpg' || imageErrors.has(idx)) return;
+      const url = getOptimizedImageUrl(src, 65, 800);
+      if (preloadedRef.current.has(url)) return;
+      preloadedRef.current.add(url);
+      const img = new window.Image();
+      img.src = url;
+    };
+    const next = (currentImageIndex + 1) % images.length;
+    const prev = (currentImageIndex - 1 + images.length) % images.length;
+    preload(next);
+    if (prev !== next) preload(prev);
+  }, [currentImageIndex, images, imageErrors]);
+
+  React.useEffect(() => {
+    if (images.length <= 1) return;
+    const timer = setTimeout(() => {
+      const src = images[1];
+      if (!src || src === '/placeholder-car.jpg') return;
+      const url = getOptimizedImageUrl(src, 65, 800);
+      if (!preloadedRef.current.has(url)) {
+        preloadedRef.current.add(url);
+        const img = new window.Image();
+        img.src = url;
+      }
+    }, 1500);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   React.useLayoutEffect(() => {
     const from = prevIndexRef.current;
@@ -100,9 +135,15 @@ export function ListingCardImageCarousel({
     if (from === to) return;
     prevIndexRef.current = to;
 
-    const len = images.length;
-    const isNext = to - from === 1 || (from === len - 1 && to === 0);
-    const dir: 'next' | 'prev' = isNext ? 'next' : 'prev';
+    let dir: 'next' | 'prev';
+    if (externalDirection) {
+      dir = externalDirection;
+    } else {
+      const len = images.length;
+      const fwd = (to - from + len) % len;
+      const bwd = (from - to + len) % len;
+      dir = fwd <= bwd ? 'next' : 'prev';
+    }
 
     if (rafRef.current !== undefined) cancelAnimationFrame(rafRef.current);
     if (timerRef.current !== undefined) clearTimeout(timerRef.current);
@@ -117,7 +158,7 @@ export function ListingCardImageCarousel({
         }, IMAGE_SLIDE_DURATION_MS + 30);
       });
     });
-  }, [currentImageIndex, images.length]);
+  }, [currentImageIndex, images.length, externalDirection]);
 
   React.useEffect(
     () => () => {
@@ -172,38 +213,48 @@ export function ListingCardImageCarousel({
     );
   };
 
-  if (!animState) {
-    return <div className="absolute inset-0 overflow-hidden">{renderSlide(currentImageIndex)}</div>;
-  }
+  const isAnimating = animState !== null;
+  const dir = animState?.direction ?? 'next';
+  const isRunning = animState?.phase === 'running';
+  const enterFrom = dir === 'next' ? '100%' : '-100%';
+  const exitTo = dir === 'next' ? '-100%' : '100%';
 
-  const { fromIndex, toIndex, direction, phase } = animState;
-  const isRunning = phase === 'running';
-  const transitionStyle = isRunning ? `transform ${IMAGE_SLIDE_DURATION_MS}ms ease-out` : 'none';
-  const enterOffset = direction === 'next' ? '100%' : '-100%';
-  const leaveTarget = direction === 'next' ? '-100%' : '100%';
+  const slideBase: React.CSSProperties = {
+    position: 'absolute',
+    inset: 0,
+    backfaceVisibility: 'hidden',
+    WebkitBackfaceVisibility: 'hidden',
+  };
 
   return (
     <div className="absolute inset-0 overflow-hidden">
       <div
         style={{
-          position: 'absolute',
-          inset: 0,
-          transform: isRunning ? `translateX(${leaveTarget})` : 'translateX(0%)',
-          transition: transitionStyle,
+          ...slideBase,
+          transform: isAnimating
+            ? isRunning
+              ? 'translateX(0%)'
+              : `translateX(${enterFrom})`
+            : 'translateX(0%)',
+          transition:
+            isAnimating && isRunning ? `transform ${IMAGE_SLIDE_DURATION_MS}ms ease-out` : 'none',
+          willChange: isAnimating ? 'transform' : 'auto',
         }}
       >
-        {renderSlide(fromIndex, true)}
+        {renderSlide(currentImageIndex, isAnimating)}
       </div>
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          transform: isRunning ? 'translateX(0%)' : `translateX(${enterOffset})`,
-          transition: transitionStyle,
-        }}
-      >
-        {renderSlide(toIndex, true)}
-      </div>
+      {isAnimating && (
+        <div
+          style={{
+            ...slideBase,
+            transform: isRunning ? `translateX(${exitTo})` : 'translateX(0%)',
+            transition: isRunning ? `transform ${IMAGE_SLIDE_DURATION_MS}ms ease-out` : 'none',
+            willChange: 'transform',
+          }}
+        >
+          {renderSlide(animState.fromIndex, true)}
+        </div>
+      )}
     </div>
   );
 }

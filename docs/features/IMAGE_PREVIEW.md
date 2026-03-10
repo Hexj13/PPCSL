@@ -8,7 +8,7 @@ The image preview system provides a simple, fast, and efficient way for users to
 
 **Locations:**
 
-- **Listing card (homepage):** `core/frontend/components/listing/ListingCard.tsx` — 2-slot photo carousel with prev/next buttons, preload on hover, reset-to-first on hover leave
+- **Listing card (homepage):** `core/frontend/components/listing/ListingCard.tsx` — 2-slot photo carousel with prev/next buttons; preload on hover and on navigation; delayed preload of second image for mobile; reset-to-first on hover leave
 - **Listing page:** Page state and thumbnail logic: `core/frontend/app/listings/[id]/useListingPageClient.ts`, `ListingPageClient.tsx`
 - **Listing page preview block:** `core/frontend/components/ListingPage/ListingPageImages.tsx`, `core/frontend/hooks/useListingImages.ts` — main preview with buttons, swipe, 2-slot slide animation, reset-to-first
 - **Photo viewer modal:** `core/frontend/components/ListingPage/ListingPageImageModal.tsx`
@@ -85,7 +85,7 @@ On the homepage, each listing card can show multiple photos in a carousel when t
 
 ### Behaviour
 
-- **Carousel:** When `listing.images.length > 1`, photos are shown with a **2-slot slide animation**: at rest only the current image is in the DOM; when changing photo, two slots (from / to) are rendered and animated with CSS `transform: translateX(...)` and `transition` (220ms). This keeps at most 2 images in the DOM and allows lazy loading to work correctly (no loading all photos of all cards).
+- **Carousel:** When `listing.images.length > 1`, photos are shown with a **2-slot slide animation**: a **primary** slot always shows the current image; when changing photo, a **secondary** slot (outgoing image) is added and both animate with CSS `transform: translateX(...)` and `transition` (220ms). When the transition ends, only the primary remains (no DOM restructure), which avoids flicker on mobile. GPU compositing hints (`backfaceVisibility`, `willChange: transform`) are used during animation for smooth rendering.
 - **Prev/Next buttons:** Two round buttons (same size and style as the “add to favorites” heart), placed at the bottom of the image area (`bottom-3 left-3` and `bottom-3 right-3`). Shown only when there are multiple photos.
 - **Button visibility:**
   - **Mobile:** Buttons are always visible with `opacity-60`; `hover-only:hover:opacity-100` when the user hovers the button.
@@ -95,8 +95,8 @@ On the homepage, each listing card can show multiple photos in a carousel when t
 
 ### Implementation details
 
-- **2-slot animation:** `ListingCardImageCarousel` uses animation state (`fromIndex`, `toIndex`, `direction`, `phase: 'setup' | 'running'`). On index change, `useLayoutEffect` runs before browser paint and sets the setup phase (both slots positioned); then a double `requestAnimationFrame` triggers the running phase so the browser has painted the initial positions before the CSS transition starts. This ensures the slide animation runs reliably on mobile as well as desktop.
-- **Preload on hover:** When the user hovers the card (`onMouseEnter`), the next image (by index) is preloaded via `new window.Image()` with the same optimized URL used for display, so the first prev/next click can show the image from cache.
+- **2-slot animation:** `ListingCardImageCarousel` uses animation state (`fromIndex`, `toIndex`, `direction`, `phase: 'setup' | 'running'`). The **direction** is passed explicitly from the card (`direction` prop) so that with 2 photos, "prev" and "next" animate in the correct direction (no always-right bug). On index change, `useLayoutEffect` runs before browser paint and sets the setup phase; then a double `requestAnimationFrame` triggers the running phase so the CSS transition runs reliably on mobile and desktop.
+- **Preloading:** (1) On card hover (`onMouseEnter`), the next image is preloaded via `new window.Image()`. (2) On every navigation, the carousel preloads the next and previous indices so subsequent switches use cache. (3) For mobile (no hover), the second image is preloaded 1.5s after mount so the first tap can show it quickly. All use the same optimized URL as display.
 - Timer/rewind state is held in refs (`resetToFirstTimerRef`, `rewindIntervalRef`); cleanup on unmount and when re-entering the card or using the buttons.
 - Constants: `IMAGE_SLIDE_DURATION_MS = 220`, `REWIND_STEP_MS = 220`.
 
@@ -440,7 +440,7 @@ From `LOADING_STATES.md`:
 
 ### Performance Characteristics
 
-- **Listing card (homepage):** At most 2 images in the DOM per card (current + entering during transition). First image can use `priority`/lazy; next image preloaded on card hover. Avoids loading all photos of all cards and keeps LCP/FCP healthy.
+- **Listing card (homepage):** At most 2 images in the DOM per card (primary current + secondary outgoing during transition). First image can use `priority`/lazy; next/prev preloaded on hover and on each navigation; second image also preloaded after 1.5s for mobile. Avoids loading all photos of all cards and keeps LCP/FCP healthy; no flicker on transition end (stable primary slot).
 - **Preview (listing page):** At most 2 images in the DOM (current + entering during transition). Cache hit → 0ms switch; cache miss → real network time + up to 1s loader. Preloading via `useListingImages` (next image only).
 - **Modal:** Two layers (confirmed + pending), max 2 decoded images. Spinner after 300ms if still loading. Preload next/prev/second-next with same URL as display. No duplicate preload or keydown logic in the page hook.
 - **Memory:** Preview: one Set (indices). Modal: one Set (URLs). Minimal refs and state.
@@ -460,9 +460,10 @@ From `LOADING_STATES.md`:
 
 - ✅ **Listing card (homepage):**
   - Multiple photos: prev/next buttons at bottom of image; on desktop buttons appear on card hover only
-  - Buttons switch photo with sliding animation (220ms); at most 2 images in DOM (2-slot animation)
+  - Buttons switch photo with sliding animation (220ms); at most 2 images in DOM (primary + secondary during transition); no flicker when animation ends (primary slot stable)
+  - With 2 photos: "prev" slides from left, "next" slides from right (direction passed from card)
   - Mouse leave: after 10s carousel rewinds to first photo; re-entering or clicking buttons cancels
-  - On mobile and desktop: animation runs on every prev/next (useLayoutEffect + double RAF)
+  - On mobile and desktop: animation runs on every prev/next (useLayoutEffect + double RAF); preload on navigation and delayed second-image preload for faster switching
 
 - ✅ **Listing page preview:**
   - Multiple photos: prev/next buttons (vertically centered); same visibility rules as card
@@ -564,4 +565,4 @@ If you need to add features:
 ---
 
 **Last Updated:** 2026-03-10  
-**Version:** 3.2 (2-slot slide animation on card and preview, max 2 images in DOM; useLayoutEffect for reliable animation on mobile; preload next image on card hover)
+**Version:** 3.3 (card carousel: stable primary slot to avoid flicker on mobile; explicit direction for 2-photo case; preload on navigation + delayed second-image preload; GPU compositing hints)

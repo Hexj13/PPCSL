@@ -186,6 +186,7 @@ function ListingCardComponent({
   const [isHydrated, setIsHydrated] = React.useState(false);
   const resetToFirstTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const rewindIntervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+  const directionRef = React.useRef<'next' | 'prev'>('next');
 
   React.useEffect(() => setIsHydrated(true), []);
 
@@ -246,11 +247,13 @@ function ListingCardComponent({
 
   const goPrevPhoto = useCallback(() => {
     clearResetToFirstTimer();
+    directionRef.current = 'prev';
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   }, [images.length, clearResetToFirstTimer]);
 
   const goNextPhoto = useCallback(() => {
     clearResetToFirstTimer();
+    directionRef.current = 'next';
     setCurrentImageIndex((prev) => (prev + 1) % images.length);
   }, [images.length, clearResetToFirstTimer]);
 
@@ -318,6 +321,7 @@ function ListingCardComponent({
     resetToFirstTimerRef.current = setTimeout(() => {
       resetToFirstTimerRef.current = null;
       rewindIntervalRef.current = setInterval(() => {
+        directionRef.current = 'prev';
         setCurrentImageIndex((prev) => {
           if (prev <= 0) {
             if (rewindIntervalRef.current) {
@@ -368,6 +372,7 @@ function ListingCardComponent({
             <ListingCardImageCarousel
               images={images}
               currentImageIndex={currentImageIndex}
+              direction={directionRef.current}
               imageErrors={imageErrors}
               onImageError={(index) => setImageErrors((prev) => new Set([...prev, index]))}
               imageAltTitle={imageAltTitle}
