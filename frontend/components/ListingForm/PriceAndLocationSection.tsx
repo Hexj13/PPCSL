@@ -5,6 +5,7 @@ import { useI18n } from '@/components/providers/I18nProvider';
 import type { Currency } from '@/lib/types';
 import { CurrencyEnum } from '@/lib/types';
 import { sortOptionsByLabel } from '@/lib/utils';
+import { Checkbox } from '@/ui';
 
 import { RequiredAsterisk } from './RequiredAsterisk';
 import type { ListingFormSectionProps } from './types';
@@ -129,51 +130,21 @@ export function PriceAndLocationSection({
           </div>
         </div>
 
-        <div className="flex items-center gap-3 sm:row-start-2 sm:col-span-1">
-          <div className="relative">
-            <input
-              id="listing-available-in-credit"
-              type="checkbox"
-              checked={formData.available_in_credit}
-              data-testid="listing-form-available-in-credit"
-              onChange={(e) => {
-                const checked = e.target.checked;
-                setFormData((prev) => ({
-                  ...prev,
-                  available_in_credit: checked,
-                  ...(checked ? {} : { down_payment_amount: '' }),
-                }));
-              }}
-              className="sr-only"
-            />
-            <label
-              htmlFor="listing-available-in-credit"
-              className={`w-6 h-6 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
-                formData.available_in_credit
-                  ? 'border-primary-700 bg-primary-500/10'
-                  : 'border-primary-700/50 bg-bg-secondary hover-only:hover:border-primary-700'
-              }`}
-            >
-              {formData.available_in_credit && (
-                <svg
-                  className="w-4 h-4 text-primary-900"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={3}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              )}
-            </label>
-          </div>
-          <span className="text-sm font-semibold text-primary-700">
-            {t('listings.availableInCredit')}
-          </span>
+        <div className="sm:row-start-2 sm:col-span-1">
+          <Checkbox
+            id="listing-available-in-credit"
+            size="md"
+            checked={formData.available_in_credit}
+            onChange={(checked) => {
+              setFormData((prev) => ({
+                ...prev,
+                available_in_credit: checked,
+                ...(checked ? {} : { down_payment_amount: '' }),
+              }));
+            }}
+            label={t('listings.availableInCredit')}
+            data-testid="listing-form-available-in-credit"
+          />
         </div>
 
         <div className="sm:row-start-3 sm:col-span-1">

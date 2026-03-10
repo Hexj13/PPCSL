@@ -61,6 +61,7 @@ export function ListingPageImageModal(props: ListingPageImageModalProps) {
       }}
     >
       <button
+        type="button"
         onClick={(e) => {
           e.stopPropagation();
           onClose();
@@ -85,6 +86,7 @@ export function ListingPageImageModal(props: ListingPageImageModalProps) {
       {images.length > 1 && (
         <>
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               onPrev();
@@ -107,6 +109,7 @@ export function ListingPageImageModal(props: ListingPageImageModalProps) {
           </button>
 
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               onNext();

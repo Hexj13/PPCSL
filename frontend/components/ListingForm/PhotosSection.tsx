@@ -440,7 +440,27 @@ export function PhotosSection({
               : 'text-primary-700 hover-only:hover:text-primary-900 border-primary-700/30 hover-only:hover:border-primary-700 bg-primary-500/10 cursor-pointer'
           }`}
         >
-          {uploading ? t('common.loading') : t('listings.addPhotos')}
+          {uploading ? (
+            t('common.loading')
+          ) : (
+            <>
+              <svg
+                className="w-5 h-5 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2.5}
+                  d="M12 4.5v15m7.5-7.5h-15"
+                />
+              </svg>
+              {t('listings.addPhotos')}
+            </>
+          )}
         </label>
       </div>
       {(formData.images.length > 0 || uploadSlots.length > 0) && (
