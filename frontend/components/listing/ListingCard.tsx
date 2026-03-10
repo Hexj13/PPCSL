@@ -191,7 +191,7 @@ function CarouselNavButtons({
         type="button"
         onClick={onPrev}
         onTouchStart={onPrevTouch}
-        disabled={disabled}
+        aria-disabled={disabled || undefined}
         className={`bottom-3 left-3 ${baseClass} ${btnClass}`}
         aria-label={prevLabel}
       >
@@ -208,7 +208,7 @@ function CarouselNavButtons({
         type="button"
         onClick={onNext}
         onTouchStart={onNextTouch}
-        disabled={disabled}
+        aria-disabled={disabled || undefined}
         className={`bottom-3 right-3 ${baseClass} ${btnClass}`}
         aria-label={nextLabel}
       >

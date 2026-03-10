@@ -151,6 +151,7 @@ export const ListingCardImageCarousel = React.forwardRef<
   const preloadingRef = useRef<Set<number>>(new Set());
   const rafRef = useRef<number | undefined>(undefined);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const [coverIndex, setCoverIndex] = useState<number | null>(null);
   const onIndexChangeRef = useRef(onIndexChange);
   const onBusyChangeRef = useRef(onBusyChange);
   onIndexChangeRef.current = onIndexChange;
@@ -171,9 +172,19 @@ export const ListingCardImageCarousel = React.forwardRef<
     }
   }, [isIdle, idleIndex]);
 
+  useEffect(() => {
+    if (coverIndex === null) return;
+    const timer = setTimeout(() => setCoverIndex(null), 500);
+    return () => clearTimeout(timer);
+  }, [coverIndex]);
+
   const markLoaded = useCallback((index: number) => {
     loadedRef.current.add(index);
     preloadingRef.current.delete(index);
+  }, []);
+
+  const clearCover = useCallback((index: number) => {
+    setCoverIndex((prev) => (prev === index ? null : prev));
   }, []);
 
   const isTargetReady = useCallback(
@@ -189,6 +200,7 @@ export const ListingCardImageCarousel = React.forwardRef<
     (fromIndex: number, toIndex: number, direction: 'next' | 'prev') => {
       if (rafRef.current !== undefined) cancelAnimationFrame(rafRef.current);
       if (timerRef.current !== undefined) clearTimeout(timerRef.current);
+      setCoverIndex(null);
 
       setState({
         type: 'animating',
@@ -202,6 +214,7 @@ export const ListingCardImageCarousel = React.forwardRef<
         requestAnimationFrame(() => {
           setState((s) => (s.type === 'animating' ? { ...s, phase: 'running' as const } : s));
           timerRef.current = setTimeout(() => {
+            setCoverIndex(toIndex);
             setState({ type: 'idle', index: toIndex });
             if (timerRef.current !== undefined) {
               clearTimeout(timerRef.current);
@@ -406,13 +419,29 @@ export const ListingCardImageCarousel = React.forwardRef<
           loading={priority && index === 0 ? undefined : 'lazy'}
           priority={priority && index === 0}
           draggable={false}
-          onLoad={() => markLoaded(index)}
-          onError={() => onImageError(index)}
+          onLoad={() => {
+            markLoaded(index);
+            requestAnimationFrame(() => clearCover(index));
+          }}
+          onError={() => {
+            onImageError(index);
+            clearCover(index);
+          }}
           unoptimized={isLocalhostImage && process.env.NODE_ENV === 'development'}
         />
       );
     },
-    [images, imageErrors, imageAltTitle, priority, t, markLoaded, onImageError, errorPlaceholder],
+    [
+      images,
+      imageErrors,
+      imageAltTitle,
+      priority,
+      t,
+      markLoaded,
+      clearCover,
+      onImageError,
+      errorPlaceholder,
+    ],
   );
 
   const renderNativeSlide = useCallback(
@@ -484,6 +513,9 @@ export const ListingCardImageCarousel = React.forwardRef<
       >
         {renderSlide(isAnimating ? state.fromIndex : visibleIndex)}
       </div>
+      {coverIndex !== null && !isAnimating && (
+        <div style={slideBase}>{renderNativeSlide(coverIndex)}</div>
+      )}
       {isAnimating && (
         <div
           style={{
