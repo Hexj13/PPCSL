@@ -211,7 +211,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 ### 4. Обработка ошибок API
 
-Обновить `core/frontend/lib/api/api.ts` (или перехватчик в `lib/api/`):
+Обновить перехватчик в `core/frontend/lib/api/api-client.ts` (или другой модуль в `lib/api/`):
 
 ```typescript
 import * as Sentry from '@sentry/nextjs';

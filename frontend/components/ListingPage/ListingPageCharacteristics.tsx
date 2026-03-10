@@ -1,10 +1,15 @@
 'use client';
 
-import { CopyButton } from '@/components/common/CopyButton';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
+
 import { useTranslation } from '@/hooks/useTranslation';
-import type { Listing } from '@/lib/api';
-import type { Vehicle } from '@/lib/api';
+import { analytics } from '@/lib/analytics';
+import type { Listing, Vehicle } from '@/lib/api';
+import { listingsApi } from '@/lib/api';
 import { getColorLabel } from '@/lib/options';
+import { useAuthStore } from '@/lib/store';
+import { toast } from '@/lib/toast';
 import {
   formatEngineVolume,
   formatTransmission,
@@ -15,8 +20,11 @@ import {
   formatMileage,
   getVehicleType,
 } from '@/lib/utils';
+import { CopyIcon, EyeIcon, EyeSlashIcon } from '@/ui';
 
 const SECONDARY_STYLE = { color: 'rgb(var(--text-secondary-rgb))' as const };
+const BTN_CLASS =
+  'p-1 text-primary-400 hover-only:hover:text-primary-300 hover-only:hover:bg-primary-500/10 rounded-sm transition-colors shrink-0';
 
 function CharRow({
   label,
@@ -44,10 +52,97 @@ function BrandModelYearVinSection({
 }: {
   vehicle: Vehicle;
   listing: Listing;
-  t: (k: string) => string;
+  t: (k: string, p?: Record<string, string | number>) => string;
 }) {
+  const router = useRouter();
+  const user = useAuthStore((s) => s.user);
+  const [cachedFullVin, setCachedFullVin] = useState<string | null>(null);
+  const [showFullVin, setShowFullVin] = useState(false);
+  const [loading, setLoading] = useState<'reveal' | 'copy' | null>(null);
+
+  useEffect(() => {
+    setCachedFullVin(null);
+    setShowFullVin(false);
+  }, [listing.id]);
+
+  const handleReveal = useCallback(() => {
+    if (!user) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('returnUrl', `/listings/${listing.id}`);
+      }
+      router.push('/login');
+      return;
+    }
+    if (cachedFullVin) {
+      setShowFullVin(true);
+      return;
+    }
+    analytics.vinRevealClick(listing.id);
+    setLoading('reveal');
+    listingsApi
+      .getVin(listing.id, 'reveal')
+      .then((res) => {
+        setCachedFullVin(res.data.vin);
+        setShowFullVin(true);
+      })
+      .catch((err: { response?: { status?: number; data?: { message?: string } } }) => {
+        const msg =
+          err?.response?.status === 429
+            ? (err?.response?.data?.message?.startsWith('errors.')
+                ? t('listingDetail.vinRateLimitExceeded')
+                : err?.response?.data?.message) || t('listingDetail.vinRateLimitExceeded')
+            : t('listingDetail.vinLoadError');
+        toast.error(msg);
+      })
+      .finally(() => setLoading(null));
+  }, [user, listing.id, cachedFullVin, t, router]);
+
+  const handleHide = useCallback(() => {
+    setShowFullVin(false);
+  }, []);
+
+  const handleCopy = useCallback(() => {
+    if (!user) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('returnUrl', `/listings/${listing.id}`);
+      }
+      router.push('/login');
+      return;
+    }
+    if (cachedFullVin) {
+      analytics.vinCopyClick(listing.id);
+      navigator.clipboard.writeText(cachedFullVin).then(
+        () => toast.success(t('listingDetail.copied', { label: t('listingDetail.vin') })),
+        () => toast.error(t('listingDetail.copyError')),
+      );
+      return;
+    }
+    analytics.vinCopyClick(listing.id);
+    setLoading('copy');
+    listingsApi
+      .getVin(listing.id, 'copy')
+      .then((res) => {
+        setCachedFullVin(res.data.vin);
+        navigator.clipboard.writeText(res.data.vin).then(
+          () => toast.success(t('listingDetail.copied', { label: t('listingDetail.vin') })),
+          () => toast.error(t('listingDetail.copyError')),
+        );
+      })
+      .catch((err: { response?: { status?: number; data?: { message?: string } } }) => {
+        const msg =
+          err?.response?.status === 429
+            ? (err?.response?.data?.message?.startsWith('errors.')
+                ? t('listingDetail.vinRateLimitExceeded')
+                : err?.response?.data?.message) || t('listingDetail.vinRateLimitExceeded')
+            : t('listingDetail.vinLoadError');
+        toast.error(msg);
+      })
+      .finally(() => setLoading(null));
+  }, [user, listing.id, cachedFullVin, t, router]);
+
   const hasAny = vehicle.brand?.name || vehicle.model?.name || vehicle.year || listing.vin;
   if (!hasAny) return null;
+  const displayVin = showFullVin && cachedFullVin ? cachedFullVin : (listing.vin ?? '');
   return (
     <div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -59,20 +154,43 @@ function BrandModelYearVinSection({
         )}
         {vehicle.year && <CharRow label={t('listingDetail.year')} value={String(vehicle.year)} />}
         {listing.vin && (
-          <div className="flex items-center">
+          <div className="flex items-center gap-1">
             <span className="text-primary-700 font-semibold">{t('listingDetail.vin')}:</span>
             <span className="ml-2" style={SECONDARY_STYLE}>
-              {listing.vin}
+              {displayVin}
             </span>
-            <CopyButton
-              text={listing.vin}
-              label={t('listingDetail.vin')}
-              successMessageKey="listingDetail.copied"
-              errorMessageKey="listingDetail.copyError"
+            {showFullVin && cachedFullVin ? (
+              <button
+                type="button"
+                onClick={handleHide}
+                className={BTN_CLASS}
+                title={t('listingDetail.hideVin')}
+                aria-label={t('listingDetail.hideVin')}
+              >
+                <EyeSlashIcon className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleReveal}
+                disabled={!!loading}
+                className={BTN_CLASS}
+                title={t('listingDetail.revealVin')}
+                aria-label={t('listingDetail.revealVin')}
+              >
+                <EyeIcon className="w-4 h-4" />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={handleCopy}
+              disabled={!!loading}
+              className={BTN_CLASS}
               title={t('listingDetail.copyVin')}
-              className="ml-2"
-              iconClassName="w-4 h-4"
-            />
+              aria-label={t('listingDetail.copyVin')}
+            >
+              <CopyIcon className="w-4 h-4" />
+            </button>
           </div>
         )}
       </div>

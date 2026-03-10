@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 
 import type { Listing } from '@/lib/api';
 import { loadSiteConfigSync } from '@/lib/site-config';
-import { getCountry, getOptimizedImageUrl } from '@/lib/utils';
+import { getCountry, getOptimizedImageUrl, isVinMasked } from '@/lib/utils';
 
 interface StructuredDataProps {
   listing: Listing;
@@ -55,8 +55,10 @@ function getVehicleExtras(listing: Listing): Record<string, unknown> | undefined
         },
       }
     : undefined;
+  const vinForSchema =
+    listing.vin?.trim() && !isVinMasked(listing.vin) ? listing.vin.trim() : undefined;
   return {
-    vehicleIdentificationNumber: listing.vin || undefined,
+    vehicleIdentificationNumber: vinForSchema,
     productionDate: vehicle.year ? `${vehicle.year}-01-01` : undefined,
     mileageFromOdometer: mileage,
     vehicleEngine,

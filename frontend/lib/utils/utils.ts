@@ -5,6 +5,12 @@ import { loadSiteConfigSync } from '../site-config';
 
 export const isBrowser = typeof window !== 'undefined';
 
+const VIN_MASKED_REGEX = /^[A-HJ-NPR-Z0-9]{4}\*{9}[A-HJ-NPR-Z0-9]{4}$/i;
+
+export function isVinMasked(vin: string | undefined): boolean {
+  return !!vin?.trim() && VIN_MASKED_REGEX.test(vin.trim());
+}
+
 export function getCountry(): string {
   return process.env.COUNTRY || process.env.NEXT_PUBLIC_COUNTRY || 'md';
 }

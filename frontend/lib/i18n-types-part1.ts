@@ -435,6 +435,12 @@ export interface TranslationsPart1 {
     description: string;
     previousListings: string;
     vehicleHistory: string;
+    historyAndReport: string;
+    checkVehicleHistory: string;
+    externalReports: string;
+    externalReportsHint: string;
+    orderReport: string;
+    sampleReport: string;
     historyHint: string;
     vinNotProvided: string;
     vinNotProvidedDescription: string;

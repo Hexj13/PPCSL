@@ -303,7 +303,7 @@ CARD_GAP = 16; // px
 
 - `core/frontend/components/listing/SimilarListings.tsx` - Main component
 - `core/frontend/app/listings/[id]/ListingPageClient.tsx` - Integration
-- `core/frontend/lib/api/` - API client (`getSimilar` method in api.ts)
+- `core/frontend/lib/api/` - API client (`listingsApi.getSimilar` in api-listings.ts; import via `@/lib/api`)
 - `core/frontend/lib/analytics.ts` - Analytics events
 
 ### Backend

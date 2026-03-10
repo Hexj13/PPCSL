@@ -77,6 +77,7 @@
     "onlyImagesSupported": "Only images are supported",
     "vehicleNotFound": "Vehicle not found",
     "vehicleNotFoundForListing": "Vehicle not found for listing",
+    "vinRateLimitExceeded": "You can request VIN no more than 5 times per hour. Please try again later.",
     "vehicleIdNotFound": "Vehicle ID not found",
     "brandNotFoundById": "Brand not found",
     "invalidSecretKey": "Invalid secret key",

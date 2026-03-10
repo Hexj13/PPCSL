@@ -8,6 +8,7 @@ import {
   getCountry,
   getListingDisplayTitle,
   getOptimizedImageUrl,
+  isVinMasked,
   toSafeJsonLdHtml,
 } from '@/lib/utils';
 
@@ -49,8 +50,10 @@ function getVehicleJsonLdPart(listing: Listing): Record<string, unknown> {
   if (!vehicle) return {};
 
   const year = vehicle?.year;
+  const vinForSchema =
+    listing.vin?.trim() && !isVinMasked(listing.vin) ? listing.vin.trim() : undefined;
   return {
-    vehicleIdentificationNumber: listing.vin || undefined,
+    vehicleIdentificationNumber: vinForSchema,
     modelDate: year ? `${year}-01-01` : undefined,
     mileageFromOdometer: vehicle.mileage_km
       ? {

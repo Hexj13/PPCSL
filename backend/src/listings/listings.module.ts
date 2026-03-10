@@ -22,9 +22,12 @@ import { FindByVinUseCase } from './application/use-cases/find-by-vin.use-case';
 import { FindSimilarUseCase } from './application/use-cases/find-similar.use-case';
 import { GetActiveUserListingsUseCase } from './application/use-cases/get-active-user-listings.use-case';
 import { GetBoardListingsUseCase } from './application/use-cases/get-board-listings.use-case';
+import { GetListingHistoryUseCase } from './application/use-cases/get-listing-history.use-case';
+import { GetListingVinUseCase } from './application/use-cases/get-listing-vin.use-case';
 import { GetListingUseCase } from './application/use-cases/get-listing.use-case';
 import { GetPromotionAccessUseCase } from './application/use-cases/get-promotion-access.use-case';
 import { GetPromotionHistoryUseCase } from './application/use-cases/get-promotion-history.use-case';
+import { GetReportUrlUseCase } from './application/use-cases/get-report-url.use-case';
 import { GetUserListingsUseCase } from './application/use-cases/get-user-listings.use-case';
 import { HasPromotionHistoryUseCase } from './application/use-cases/has-promotion-history.use-case';
 import { PauseListingUseCase } from './application/use-cases/pause-listing.use-case';
@@ -90,6 +93,9 @@ import { ListingsController } from './presentation/listings.controller';
     GetActiveUserListingsUseCase,
     GetBoardListingsUseCase,
     FindByVinUseCase,
+    GetListingVinUseCase,
+    GetListingHistoryUseCase,
+    GetReportUrlUseCase,
     RefreshAllDatesUseCase,
     GetPromotionHistoryUseCase,
     HasPromotionHistoryUseCase,

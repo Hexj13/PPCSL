@@ -250,7 +250,7 @@ PPCSL/
 │   ├── components/   # React components (layout/, listing/, search/, modals/, analytics/, providers/, pwa/, common/)
 │   ├── config/       # Tool configs (ESLint, Jest, Sentry, Stylelint, Vitest, proxy)
 │   └── lib/          # Utilities and API clients
-│       ├── api/      # Client API (api.ts), server API (server-api.ts), api-utils
+│       ├── api/      # Client API (api.ts barrel, api-types, api-*.ts modules), server API (server-api.ts), api-utils
 │       ├── search/   # search-params, listingSort
 │       ├── utils/    # utils.ts, status-utils
 │       ├── validation/, options/, content/, store/
@@ -291,7 +291,7 @@ PPCSL/
 
 - Interactive components (forms, modals, infinite scroll) remain as Client Components
 - State management handled by Zustand stores
-- API calls for subsequent data loads use Axios client (`lib/api` → api.ts)
+- API calls for subsequent data loads use Axios client (`lib/api`; barrel `api.ts` re-exports from `api-listings.ts`, `api-auth.ts`, etc.)
 
 ### Shared UI Components
 
@@ -343,6 +343,9 @@ POST   /api/listings/:id/pause        # Pause listing
 POST   /api/listings/:id/close        # Close listing
 GET    /api/listings/my               # Get user's listings; query: page, limit, status (Active|Paused|Closed), promoted (true|false); meta: last_listing_refresh_at, refreshCooldownMs for 48h timer
 GET    /api/listings/vin/:vin         # Find listings by VIN
+GET    /api/listings/:id/vin          # Get full VIN (JWT required; rate limit 5/hour; query action=reveal|copy)
+GET    /api/listings/:id/history      # Previous listings with same VIN
+GET    /api/listings/:id/report-url   # Signed Infocar report URL (HMAC-SHA256 of VIN)
 POST   /api/listings/refresh-dates    # Refresh all user's listing dates (max once per 48h; returns 400 if too soon)
 POST   /api/listings/cron/close-old            # Close old listings (cron job, requires x-cron-secret header)
 POST   /api/listings/cron/expire-promotions   # Expire promotions (cron job, requires x-cron-secret header)
@@ -701,7 +704,7 @@ cd frontend && npm test
 **Guards:** ✅ JwtAuthGuard, AdminGuard, IpBlockGuard tested
 **Frontend Components:** ✅ Core components tested (AuthProvider)
 **Frontend Server API:** ✅ Server-side data fetching functions tested (`lib/api/server-api.test.ts`)
-**Frontend API:** ✅ Client-side API functions tested (`lib/api/api.test.ts`)
+**Frontend API:** ✅ Client-side API functions tested (`lib/api/api.test.ts`; modules: api-types, api-listings, api-auth, etc.)
 **Frontend Utilities:** ✅ Utility functions tested (`lib/utils/utils.test.ts`)
 
 **Test Statistics:**

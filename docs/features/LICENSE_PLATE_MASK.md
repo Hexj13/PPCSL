@@ -42,7 +42,7 @@ Automatic license plate masking on listing photo upload. When the user uploads p
 - **Model family:** YOLOv9 end-to-end plate detector (`384x384`)
 - **Input:** letterboxed `384x384`, RGB, float32, normalized by `/255`
 - **Output:** `[N, 7]` rows with box coordinates and score
-- **Thresholds:** `MIN_CONFIDENCE = 0.25`, `MIN_PLATE_WIDTH_PX = 40`
+- **Thresholds:** `MIN_CONFIDENCE = 0.5`, `MIN_PLATE_WIDTH_PX = 40`
 - **Startup behavior:** if the model file is missing, backend still starts, but masking requests fail when used
 
 ### Plate mask (`PlateMaskService`)

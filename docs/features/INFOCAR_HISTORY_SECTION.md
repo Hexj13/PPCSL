@@ -1,0 +1,68 @@
+# History and Report section (Infocar integration)
+
+## Overview
+
+The "History and Report" section is displayed on the listing detail page. It has two sub-sections: in-site history (previous listings for the same VIN) and external report CTAs (Infocar.md).
+
+**Location**: Listing detail page, main column below "Condition and registration", above the seller block.
+
+**Purpose**: Build trust and add value by surfacing vehicle history on the site and by redirecting users to partners for paid reports; the platform uses the referral parameter `from=kupito`.
+
+## Section structure
+
+- **Main title**: `listingDetail.historyAndReport` — e.g. "История и отчёт" (ru), "Istoric și raport" (ro), "History and report" (en).
+
+### Sub-section 1: Site history
+
+- **Sub-heading**: `listingDetail.vehicleHistory` — e.g. "История на сайте".
+- **Hint** (when VIN is present): `listingDetail.historyHint` — tooltip next to the sub-heading explaining that previous listings for the same VIN are shown.
+- **Content**:
+  - No VIN: `InfoBlock` with `listingDetail.vinNotProvided` and `listingDetail.vinNotProvidedDescription`.
+  - VIN present, loading: spinner.
+  - VIN present, has data: table of previous listings (title, mileage, closed date, link).
+  - VIN present, no previous listings: `InfoBlock` with `listingDetail.noPreviousListings` (e.g. "Нет предыдущих объявлений для данного авто на нашем сайте").
+
+### Sub-section 2: Report (only for Active listings with VIN)
+
+- **Sub-heading**: `listingDetail.externalReports` — e.g. "Отчёт об данном авто".
+- **Hint**: `listingDetail.externalReportsHint` — tooltip next to the sub-heading: users are redirected to partners who compile the report from various sources; details and terms are on the partner’s site.
+- **Two buttons** (same card style, with icons):
+  1. **Order report** — `listingDetail.orderReport` (e.g. "Заказать отчёт"). Icon: `CoinsIcon`. On click: calls `GET /api/listings/:id/report-url` (returns signed Infocar URL); on success opens that URL in a new tab; on error opens fallback `https://infocar.md/?from=kupito` without showing an error toast. Fires `analytics.infocarCheck(...)` on click. Request uses `X-Skip-Error-Handling: true`.
+  2. **Sample report** — `listingDetail.sampleReport` (e.g. "Пример отчёта"). Icon: `EyeIcon`. Direct link: `https://infocar.md/demo?from=kupito` (constant `INFOCAR_DEMO_URL`). No analytics event.
+
+Visibility: the whole "Report" sub-section is rendered only when `listing.status === 'Active'` and `listing.vin` is present and non-empty (helper `shouldShowInfocarButton(listing)`).
+
+## URLs and helpers
+
+- **Order report**: Backend `GET /api/listings/:id/report-url` returns `{ url: string }` (signed Infocar URL). Frontend `listingsApi.getReportUrl(id)`; on error opens `INFOCAR_BASE_URL` (`https://infocar.md/?from=kupito`).
+- **Sample report URL**: `INFOCAR_DEMO_URL` = `https://infocar.md/demo?from=kupito`.
+- **Visibility**: `shouldShowInfocarButton(listing)` returns `listing.status === 'Active' && !!listing.vin?.trim()`.
+- **Helper** `getInfocarUrl(listing)` in `listingPageInfocar.ts`: builds base URL with optional `&vin=` when VIN is present and not masked (for reference/fallback).
+
+All links open in a new tab (`target="_blank"`, `rel="noopener noreferrer"`). Button styling reuses the existing CTA link style (border, rounded-lg, theme colours).
+
+## VIN field hint (create/edit listing)
+
+The VIN field on the listing form (create and edit) uses `listings.vinHint`. The text states that the field is optional, that VIN is used to build history on the site, and that it is also used for the external vehicle report via partners; useful for all parties to the transaction. See `BasicInfoSection.tsx`.
+
+## Analytics
+
+- **Event**: `click_infocar_check`
+- **Method**: `analytics.infocarCheck(listingId, hasVin, brand?, model?, year?)`
+- **When**: On click on the "Order report" link only (before navigation).
+- **Parameters**: `listing_id`, `has_vin`, optional `brand`, `model`, `year`.
+- See [GA4_EVENTS.md](../analytics/GA4_EVENTS.md#click_infocar_check).
+
+## Implementation
+
+- **Component**: `ListingPageHistorySection` in `core/frontend/app/listings/[id]/ListingPageHistorySection.tsx`. Used by `ListingPageClient.tsx`.
+- **Helpers**: `getInfocarUrl(listing)`, `shouldShowInfocarButton(listing)`, `INFOCAR_BASE_URL`, `INFOCAR_DEMO_URL` in `core/frontend/app/listings/[id]/listingPageInfocar.ts`.
+- **Tests**: `core/frontend/app/listings/[id]/ListingPageClient.infocar.test.ts` — `getInfocarUrl` URL building and `shouldShowInfocarButton` visibility (Active with VIN / without VIN, Closed, Paused).
+- **Backend**:
+  - `GET /api/listings/:id/report-url` — returns signed Infocar URL (`INFOCAR_SECRET_KEY`, HMAC-SHA256 of VIN, base64url). If `INFOCAR_SECRET_KEY` is not set, returns 404 (frontend opens fallback URL without showing error toast).
+  - `GET /api/listings/:id/history` — returns previous listings with the same VIN (for the site history table).
+  - VIN on listing detail: `GET /api/listings/:id` returns masked VIN (4+9+4). Full VIN: `GET /api/listings/:id/vin` (JWT required, rate limit 5 per user per hour; query `action=reveal|copy` for logging). See listing characteristics section for Show/Hide/Copy VIN.
+
+## Partner tracking
+
+The query parameter `from=kupito` is used by Infocar.md to attribute the user and future report purchases to the kupito.club partner account.

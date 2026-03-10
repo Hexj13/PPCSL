@@ -9,7 +9,7 @@ import type { PlateDetection } from './plate-detector.types';
 
 const MODEL_INPUT_SIZE = 384;
 const DETECTION_TIMEOUT_MS = 10000;
-const MIN_CONFIDENCE = 0.25;
+const MIN_CONFIDENCE = 0.5;
 const MIN_PLATE_WIDTH_PX = 40;
 const LETTERBOX_PAD = { r: 114, g: 114, b: 114 };
 

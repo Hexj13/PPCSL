@@ -68,6 +68,7 @@
     "invalidModel": "Неверная модель",
     "vehicleNotFound": "Транспортное средство не найдено",
     "vehicleNotFoundForListing": "Транспортное средство для объявления не найдено",
+    "vinRateLimitExceeded": "Запрашивать VIN можно не более 5 раз в час. Попробуйте позже.",
     "vehicleIdNotFound": "ID транспортного средства не найден",
     "brandNotFoundById": "Марка не найдена",
     "invalidSecretKey": "Неверный секретный ключ",

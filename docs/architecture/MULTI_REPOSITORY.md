@@ -112,7 +112,7 @@ ppcsl/
 │   │   ├── i18n.ts            # Translation system interface
 │   │   ├── theme.ts           # Theme system interface
 │   │   ├── site-config.ts     # Site config interface
-│   │   ├── api.ts             # API client
+│   │   ├── api/                # API client (api.ts barrel, api-types, api-listings, api-auth, …)
 │   │   └── types.ts           # TypeScript types
 │   ├── hooks/                 # React hooks
 │   ├── ui/                    # Design system components

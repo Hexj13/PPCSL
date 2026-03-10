@@ -23,6 +23,9 @@ export {
   MotoIcon,
   TruckIcon,
   ExternalLinkIcon,
+  CoinsIcon,
+  EyeIcon,
+  EyeSlashIcon,
 } from './icons';
 export { InfoBlock, type InfoBlockProps } from './InfoBlock';
 export { HintTooltip, type HintTooltipProps } from './HintTooltip';

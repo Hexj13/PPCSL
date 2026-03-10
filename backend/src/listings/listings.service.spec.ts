@@ -23,8 +23,11 @@ import { FindByVinUseCase } from './application/use-cases/find-by-vin.use-case';
 import { FindSimilarUseCase } from './application/use-cases/find-similar.use-case';
 import { GetActiveUserListingsUseCase } from './application/use-cases/get-active-user-listings.use-case';
 import { GetBoardListingsUseCase } from './application/use-cases/get-board-listings.use-case';
+import { GetListingHistoryUseCase } from './application/use-cases/get-listing-history.use-case';
 import { GetListingUseCase } from './application/use-cases/get-listing.use-case';
+import { GetListingVinUseCase } from './application/use-cases/get-listing-vin.use-case';
 import { GetPromotionAccessUseCase } from './application/use-cases/get-promotion-access.use-case';
+import { GetReportUrlUseCase } from './application/use-cases/get-report-url.use-case';
 import { GetPromotionHistoryUseCase } from './application/use-cases/get-promotion-history.use-case';
 import { GetUserListingsUseCase } from './application/use-cases/get-user-listings.use-case';
 import { HasPromotionHistoryUseCase } from './application/use-cases/has-promotion-history.use-case';
@@ -97,6 +100,9 @@ describe('ListingsService', () => {
   let mockGetActiveUserListingsUseCase: { execute: jest.Mock };
   let mockGetBoardListingsUseCase: { execute: jest.Mock };
   let mockFindByVinUseCase: { execute: jest.Mock };
+  let mockGetListingVinUseCase: { execute: jest.Mock };
+  let mockGetListingHistoryUseCase: { execute: jest.Mock };
+  let mockGetReportUrlUseCase: { execute: jest.Mock };
   let mockRefreshAllDatesUseCase: { execute: jest.Mock };
   let mockGetPromotionHistoryUseCase: { execute: jest.Mock };
   let mockHasPromotionHistoryUseCase: { execute: jest.Mock };
@@ -217,6 +223,9 @@ describe('ListingsService', () => {
     mockGetActiveUserListingsUseCase = { execute: jest.fn() };
     mockGetBoardListingsUseCase = { execute: jest.fn() };
     mockFindByVinUseCase = { execute: jest.fn() };
+    mockGetListingVinUseCase = { execute: jest.fn() };
+    mockGetListingHistoryUseCase = { execute: jest.fn() };
+    mockGetReportUrlUseCase = { execute: jest.fn() };
     mockRefreshAllDatesUseCase = { execute: jest.fn() };
     mockGetPromotionHistoryUseCase = { execute: jest.fn() };
     mockHasPromotionHistoryUseCase = { execute: jest.fn() };
@@ -268,6 +277,9 @@ describe('ListingsService', () => {
         { provide: GetActiveUserListingsUseCase, useValue: mockGetActiveUserListingsUseCase },
         { provide: GetBoardListingsUseCase, useValue: mockGetBoardListingsUseCase },
         { provide: FindByVinUseCase, useValue: mockFindByVinUseCase },
+        { provide: GetListingVinUseCase, useValue: mockGetListingVinUseCase },
+        { provide: GetListingHistoryUseCase, useValue: mockGetListingHistoryUseCase },
+        { provide: GetReportUrlUseCase, useValue: mockGetReportUrlUseCase },
         { provide: RefreshAllDatesUseCase, useValue: mockRefreshAllDatesUseCase },
         { provide: GetPromotionHistoryUseCase, useValue: mockGetPromotionHistoryUseCase },
         { provide: HasPromotionHistoryUseCase, useValue: mockHasPromotionHistoryUseCase },

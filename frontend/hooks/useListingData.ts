@@ -115,26 +115,25 @@ export function useListingData({
 
           if (hasVin) {
             setLoadingPrevious(true);
-          }
-
-          if (hasVin && listingRes.data.vin) {
             listingsApi
-              .getByVin(listingRes.data.vin, currentId)
-              .then((vinRes) => {
-                if (hasLoadedRef.current && currentId === id) {
-                  setPreviousListings(vinRes.data);
+              .getHistoryByListingId(currentId)
+              .then((res) => {
+                if (currentId === id) {
+                  setPreviousListings(res.data);
                 }
               })
               .catch(() => {
-                if (hasLoadedRef.current && currentId === id) {
+                if (currentId === id) {
                   setPreviousListings([]);
                 }
               })
               .finally(() => {
-                if (hasLoadedRef.current && currentId === id) {
+                if (currentId === id) {
                   setLoadingPrevious(false);
                 }
               });
+          } else {
+            setLoadingPrevious(false);
           }
 
           if (needsRefresh) {

@@ -18,9 +18,12 @@ import { FindByVinUseCase } from './application/use-cases/find-by-vin.use-case';
 import { FindSimilarUseCase } from './application/use-cases/find-similar.use-case';
 import { GetActiveUserListingsUseCase } from './application/use-cases/get-active-user-listings.use-case';
 import { GetBoardListingsUseCase } from './application/use-cases/get-board-listings.use-case';
+import { GetListingHistoryUseCase } from './application/use-cases/get-listing-history.use-case';
+import { GetListingVinUseCase } from './application/use-cases/get-listing-vin.use-case';
 import { GetListingUseCase } from './application/use-cases/get-listing.use-case';
 import { GetPromotionAccessUseCase } from './application/use-cases/get-promotion-access.use-case';
 import { GetPromotionHistoryUseCase } from './application/use-cases/get-promotion-history.use-case';
+import { GetReportUrlUseCase } from './application/use-cases/get-report-url.use-case';
 import { GetUserListingsUseCase } from './application/use-cases/get-user-listings.use-case';
 import { HasPromotionHistoryUseCase } from './application/use-cases/has-promotion-history.use-case';
 import { PauseListingUseCase } from './application/use-cases/pause-listing.use-case';
@@ -77,6 +80,9 @@ export class ListingsService {
     private readonly getActiveUserListingsUseCase: GetActiveUserListingsUseCase,
     private readonly getBoardListingsUseCase: GetBoardListingsUseCase,
     private readonly findByVinUseCase: FindByVinUseCase,
+    private readonly getListingVinUseCase: GetListingVinUseCase,
+    private readonly getListingHistoryUseCase: GetListingHistoryUseCase,
+    private readonly getReportUrlUseCase: GetReportUrlUseCase,
     private readonly refreshAllDatesUseCase: RefreshAllDatesUseCase,
     private readonly getPromotionHistoryUseCase: GetPromotionHistoryUseCase,
     private readonly hasPromotionHistoryUseCase: HasPromotionHistoryUseCase,
@@ -207,6 +213,18 @@ export class ListingsService {
 
   async findByVin(vin: string, excludeId?: string): Promise<Listing[]> {
     return this.findByVinUseCase.execute(vin, excludeId);
+  }
+
+  async getListingVin(listingId: string, userId: string, action: string): Promise<{ vin: string }> {
+    return this.getListingVinUseCase.execute(listingId, userId, action);
+  }
+
+  async getListingHistory(listingId: string): Promise<Listing[]> {
+    return this.getListingHistoryUseCase.execute(listingId);
+  }
+
+  async getReportUrl(listingId: string): Promise<{ url: string }> {
+    return this.getReportUrlUseCase.execute(listingId);
   }
 
   async closeAllUserListings(userId: string): Promise<number> {

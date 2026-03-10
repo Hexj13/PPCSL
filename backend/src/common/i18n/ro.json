@@ -68,6 +68,7 @@
     "invalidModel": "Model invalid",
     "vehicleNotFound": "Vehiculul nu a fost găsit",
     "vehicleNotFoundForListing": "Vehiculul nu a fost găsit pentru anunț",
+    "vinRateLimitExceeded": "Puteți solicita VIN de maximum 5 ori pe oră. Încercați mai târziu.",
     "vehicleIdNotFound": "ID vehicul negăsit",
     "brandNotFoundById": "Marca nu a fost găsită",
     "invalidSecretKey": "Cheie secretă invalidă",

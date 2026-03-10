@@ -85,6 +85,11 @@ export class GetListingUseCase {
       this.recordView(id, userId, visitorId).catch(() => {});
     }
 
+    if (listing.vin && listing.vin.length === 17) {
+      (listing as Partial<Listing>).vin =
+        listing.vin.slice(0, 4) + '*'.repeat(9) + listing.vin.slice(-4);
+    }
+
     const defaultCurrency = constants.getDefaultCurrency();
     let approxPriceDefaultCurrency: number | null = null;
     if (listing.price !== undefined && listing.currency && listing.currency !== defaultCurrency) {

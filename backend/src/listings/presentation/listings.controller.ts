@@ -276,6 +276,42 @@ export class ListingsController {
     return this.listingsService.findSimilar(id, query.limit, query.offset);
   }
 
+  @ApiOperation({ summary: 'Get full VIN for listing (authenticated)' })
+  @ApiBearerAuth('JWT-auth')
+  @ApiParam({ name: 'id', description: 'Listing UUID' })
+  @ApiQuery({ name: 'action', required: false, description: 'reveal or copy' })
+  @ApiResponse({ status: 200, description: 'Full VIN' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Listing not found or no VIN' })
+  @ApiResponse({ status: 429, description: 'Too many VIN requests. Max 5 per hour.' })
+  @UseGuards(JwtAuthGuard)
+  @Get(':id/vin')
+  async getListingVin(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: AuthenticatedRequest,
+    @Query('action') action?: string,
+  ) {
+    return this.listingsService.getListingVin(id, req.user.id, action || 'unknown');
+  }
+
+  @ApiOperation({ summary: 'Get listing history by VIN' })
+  @ApiParam({ name: 'id', description: 'Listing UUID' })
+  @ApiResponse({ status: 200, description: 'Previous listings with same VIN' })
+  @ApiResponse({ status: 404, description: 'Listing not found' })
+  @Get(':id/history')
+  async getListingHistory(@Param('id', ParseUUIDPipe) id: string) {
+    return this.listingsService.getListingHistory(id);
+  }
+
+  @ApiOperation({ summary: 'Get Infocar report URL with signed VIN' })
+  @ApiParam({ name: 'id', description: 'Listing UUID' })
+  @ApiResponse({ status: 200, description: 'Report URL' })
+  @ApiResponse({ status: 404, description: 'Listing not found or no VIN' })
+  @Get(':id/report-url')
+  async getReportUrl(@Param('id', ParseUUIDPipe) id: string) {
+    return this.listingsService.getReportUrl(id);
+  }
+
   @ApiOperation({ summary: 'Get listing details' })
   @ApiParam({
     name: 'id',

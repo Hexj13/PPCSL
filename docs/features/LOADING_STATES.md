@@ -13,7 +13,7 @@
 - **Route-level загрузка**: сегментные `loading.tsx` и Suspense fallback-и
 - **Page-level загрузка**: локальные `loading`/`isInitialLoading`/`showSkeleton` в страницах и компонентах
 - **Component-level загрузка**: лоудеры на кнопках, модалках, “load more”
-- **Network-level ошибки**: `toast.error` из Axios-интерцептора (`core/frontend/lib/api/api.ts`)
+- **Network-level ошибки**: `toast.error` из Axios-интерцептора (`core/frontend/lib/api/api-client.ts`)
 
 Требование документа — привести поведение к единым правилам для каждого уровня и исключить конфликт между уровнями (например, когда route-level fallback вызывает мигание layout, а page-level тут же перестраивает контент).
 
@@ -226,7 +226,7 @@
 
 **Требование 5.2 (MVP‑подход, обязательный):** безопасно не показывать toast из интерцептора там, где есть явный лоудер
 
-Сейчас `core/frontend/lib/api/api.ts` может показывать `toast.error()` самостоятельно. Это может конфликтовать с любым активным лоудером/скелетоном.
+Сейчас Axios-интерцептор в `core/frontend/lib/api/api-client.ts` может показывать `toast.error()` самостоятельно. Это может конфликтовать с любым активным лоудером/скелетоном.
 
 Требования для MVP‑реализации:
 

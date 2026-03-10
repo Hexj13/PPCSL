@@ -19,7 +19,7 @@ Frontend-specific documentation for PPCSL Next.js application.
 ### Data Fetching
 - **Server Components:** Initial data loaded on server (SEO)
 - **Server API:** `lib/api/server-api.ts` - Server-side fetching
-- **Client API:** `lib/api/api.ts` (import via `@/lib/api`) - Client-side Axios client
+- **Client API:** `lib/api/` - Client-side Axios client; import via `@/lib/api`. Entry point is `api.ts` (barrel); implementation is split into `api-types.ts` (shared types), `api-client.ts` (Axios instance), and domain modules (`api-listings.ts`, `api-auth.ts`, `api-board.ts`, `api-upload.ts`, `api-favorites.ts`, `api-brands.ts`, `api-cities.ts`, `api-saved-filters.ts`, `api-admin.ts`).
 - **Hybrid approach:** Server + Client for optimal UX
 
 ### URL Parameters & SEO

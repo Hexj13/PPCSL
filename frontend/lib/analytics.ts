@@ -331,4 +331,28 @@ export const analytics = {
       ...(linkText && { link_text: linkText }),
     });
   },
+
+  infocarCheck: (
+    listingId: string,
+    hasVin: boolean,
+    brand?: string,
+    model?: string,
+    year?: number,
+  ) => {
+    trackEvent('click_infocar_check', {
+      listing_id: listingId,
+      has_vin: hasVin,
+      ...(brand && { brand }),
+      ...(model && { model }),
+      ...(year !== undefined && year !== null && { year }),
+    });
+  },
+
+  vinRevealClick: (listingId: string) => {
+    trackEvent('vin_reveal_click', { listing_id: listingId });
+  },
+
+  vinCopyClick: (listingId: string) => {
+    trackEvent('vin_copy_click', { listing_id: listingId });
+  },
 };

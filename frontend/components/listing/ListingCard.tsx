@@ -344,13 +344,22 @@ function ListingCardComponent({
     }
   }, [clearResetToFirstTimer, images, currentImageIndex]);
 
+  const cardUrl = `/listings/${listing.id}`;
+
   return (
-    <Link href={`/listings/${listing.id}`} prefetch={true} onClick={handleClick}>
-      <div
-        className="card overflow-hidden cursor-pointer h-full flex flex-col group"
-        onMouseLeave={handleCardMouseLeave}
-        onMouseEnter={handleCardMouseEnter}
-      >
+    <div
+      className="card relative overflow-hidden cursor-pointer h-full flex flex-col group"
+      onMouseLeave={handleCardMouseLeave}
+      onMouseEnter={handleCardMouseEnter}
+    >
+      <Link
+        href={cardUrl}
+        prefetch={true}
+        onClick={handleClick}
+        aria-label={displayTitle}
+        className="absolute inset-0 z-0"
+      />
+      <div className="relative z-[1] flex h-full flex-col pointer-events-none">
         <div
           className="relative w-full bg-bg-darker shrink-0 overflow-hidden"
           style={{ aspectRatio: '16/9', minHeight: '240px' }}
@@ -383,7 +392,7 @@ function ListingCardComponent({
                 type="button"
                 onClick={handlePrevPhoto}
                 onTouchStart={handlePrevPhotoTouchStart}
-                className="absolute bottom-3 left-3 w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center transition-all shadow-lg z-10 text-white opacity-60 lg:opacity-0 lg:group-hover:opacity-60 hover-only:hover:opacity-100 touch-manipulation"
+                className="absolute bottom-3 left-3 w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center transition-all shadow-lg z-10 text-white opacity-60 lg:opacity-0 lg:group-hover:opacity-60 hover-only:hover:opacity-100 touch-manipulation pointer-events-auto"
                 aria-label={t('listings.previousPhoto')}
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -399,7 +408,7 @@ function ListingCardComponent({
                 type="button"
                 onClick={handleNextPhoto}
                 onTouchStart={handleNextPhotoTouchStart}
-                className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center transition-all shadow-lg z-10 text-white opacity-60 lg:opacity-0 lg:group-hover:opacity-60 hover-only:hover:opacity-100 touch-manipulation"
+                className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center transition-all shadow-lg z-10 text-white opacity-60 lg:opacity-0 lg:group-hover:opacity-60 hover-only:hover:opacity-100 touch-manipulation pointer-events-auto"
                 aria-label={t('listings.nextPhoto')}
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -416,7 +425,7 @@ function ListingCardComponent({
           <button
             onClick={handleToggleFavorite}
             disabled={favoriteDisabled}
-            className={`absolute top-3 right-3 w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center transition-all shadow-lg z-10 ${favoriteButtonClass}`}
+            className={`absolute top-3 right-3 w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center transition-all shadow-lg z-10 pointer-events-auto ${favoriteButtonClass}`}
             aria-label={favoriteAriaLabel}
           >
             <svg
@@ -498,7 +507,7 @@ function ListingCardComponent({
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
 
