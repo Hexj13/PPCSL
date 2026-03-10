@@ -331,6 +331,36 @@ export interface ParseOptions {
   modelResolver?: (_brandIds: string[], _slugs: string[]) => Promise<string[]>;
 }
 
+function getSingleValue(urlParams: UrlParamsInput, key: string): string | undefined {
+  const v = getParamValue(urlParams, key);
+  return typeof v === 'string' ? v : Array.isArray(v) ? v[0] : undefined;
+}
+
+function applyDownPaymentPageLimitSortAndTitle(
+  params: ParsedSearchParams,
+  urlParams: UrlParamsInput,
+): void {
+  const getVal = (k: string) => getSingleValue(urlParams, k);
+  const downPaymentGte = getVal(DOWN_PAYMENT_PARAM);
+  if (downPaymentGte) {
+    const num = parseInt(downPaymentGte, 10);
+    if (!Number.isNaN(num) && num >= 0) params.down_payment_amount_gte = num;
+  }
+  const page = getVal('page');
+  if (page) params.page = Math.max(1, parseInt(page, 10) || 1);
+  const limit = getVal('limit');
+  if (limit) params.limit = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+  const currency = getVal('currency');
+  if (currency?.trim()) params.currency = currency;
+  const sortBy = getVal('sortBy');
+  if (sortBy) params.sortBy = sortBy;
+  const sortOrder = getVal('sortOrder');
+  if (sortOrder) params.sortOrder = sortOrder as 'ASC' | 'DESC';
+  params.equipmentMatch = getVal('equipmentMatch') === 'partial' ? 'partial' : 'full';
+  const title = getVal('title');
+  if (title) params.title = title;
+}
+
 export async function parseSearchParams(
   urlParams: URLSearchParams | Record<string, string | string[] | undefined>,
   options?: ParseOptions,
@@ -371,27 +401,7 @@ export async function parseSearchParams(
   applyNumberParamsToParsed(params, urlParams);
   applyFloatParamsToParsed(params, urlParams);
   applyBooleanParamsToParsed(params, urlParams);
-  const downPaymentGte = getValue(DOWN_PAYMENT_PARAM);
-  if (downPaymentGte) {
-    const num = parseInt(downPaymentGte, 10);
-    if (!Number.isNaN(num) && num >= 0) params.down_payment_amount_gte = num;
-  }
-
-  const page = getValue('page');
-  if (page) params.page = Math.max(1, parseInt(page, 10) || 1);
-  const limit = getValue('limit');
-  if (limit) params.limit = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
-
-  const currency = getValue('currency');
-  if (currency?.trim()) params.currency = currency;
-  const sortBy = getValue('sortBy');
-  if (sortBy) params.sortBy = sortBy;
-  const sortOrder = getValue('sortOrder');
-  if (sortOrder) params.sortOrder = sortOrder as 'ASC' | 'DESC';
-
-  params.equipmentMatch = getValue('equipmentMatch') === 'partial' ? 'partial' : 'full';
-  const title = getValue('title');
-  if (title) params.title = title;
+  applyDownPaymentPageLimitSortAndTitle(params, urlParams);
 
   if (!(urlParams instanceof URLSearchParams)) {
     applyLegacyParams(params as unknown as Record<string, unknown>, urlParams);

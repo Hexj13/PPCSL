@@ -74,6 +74,8 @@ const defaultFormData = {
   power_kw: '',
   equipment: [],
   assignedUserId: '',
+  available_in_credit: false,
+  down_payment_amount: '',
 };
 
 const defaultProps: ListingFormSectionProps = {

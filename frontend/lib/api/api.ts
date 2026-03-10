@@ -624,15 +624,9 @@ export const adminApi = {
     const params = new URLSearchParams();
     params.set('page', page.toString());
     params.set('limit', limit.toString());
-    if (listingId) {
-      params.set('listingId', listingId);
-    }
-    if (userId) {
-      params.set('userId', userId);
-    }
-    if (fromDate) {
-      params.set('fromDate', fromDate.toISOString());
-    }
+    if (listingId) params.set('listingId', listingId);
+    if (userId) params.set('userId', userId);
+    if (fromDate) params.set('fromDate', fromDate.toISOString());
     return api.get<{
       data: PromotionHistory[];
       meta: { total: number; page: number; limit: number; totalPages: number };

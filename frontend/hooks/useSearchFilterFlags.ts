@@ -11,13 +11,12 @@ export function useSearchFilterFlags(
   hasEquipmentFiltersActive: boolean;
   hasPopularFiltersActive: boolean;
 } {
-  return useMemo(
-    () => ({
-      hasPopularFiltersActive: filters.brand_ids.length > 0 || filters.model_ids.length > 0,
-
+  return useMemo(() => {
+    const hasBrandOrModel = filters.brand_ids.length > 0 || filters.model_ids.length > 0;
+    return {
+      hasPopularFiltersActive: hasBrandOrModel,
       hasBasicFilters:
-        filters.brand_ids.length > 0 ||
-        filters.model_ids.length > 0 ||
+        hasBrandOrModel ||
         filters.transmissions.length > 0 ||
         filters.drive_types.length > 0 ||
         filters.mileage_gte !== '' ||
@@ -46,7 +45,6 @@ export function useSearchFilterFlags(
         filters.registration_types.length > 0,
 
       hasEquipmentFiltersActive: filters.equipment.length > 0,
-    }),
-    [filters, currentYear],
-  );
+    };
+  }, [filters, currentYear]);
 }
