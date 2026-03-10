@@ -18,6 +18,50 @@ export const IMAGE_SLIDE_DURATION_MS = 220;
 
 const SPARKLES_EMOJI = '\u2728';
 
+function bindImageReadiness(img: HTMLImageElement, onReady: () => void, onFailure: () => void) {
+  let settled = false;
+
+  const handleReady = () => {
+    if (settled) return;
+    settled = true;
+    onReady();
+  };
+
+  const handleFailure = () => {
+    if (settled) return;
+    settled = true;
+    onFailure();
+  };
+
+  const resolveReadiness = () => {
+    if (typeof img.decode === 'function') {
+      void img
+        .decode()
+        .then(handleReady)
+        .catch(() => {
+          if (img.complete && img.naturalWidth > 0) {
+            handleReady();
+            return;
+          }
+          handleFailure();
+        });
+      return;
+    }
+
+    if (img.complete && img.naturalWidth > 0) {
+      handleReady();
+      return;
+    }
+
+    handleFailure();
+  };
+
+  img.onload = resolveReadiness;
+  img.onerror = handleFailure;
+
+  return resolveReadiness;
+}
+
 export function ListingCardImageArea({
   showImage,
   imageUrl,
@@ -185,22 +229,21 @@ export const ListingCardImageCarousel = React.forwardRef<
       const url = getOptimizedImageUrl(src, 65, 800);
       const img = new window.Image();
       preloadingRef.current.add(toIndex);
+      const resolveReadiness = bindImageReadiness(
+        img,
+        () => {
+          markLoaded(toIndex);
+          startAnimating(fromIndex, toIndex, direction);
+        },
+        () => {
+          preloadingRef.current.delete(toIndex);
+          startAnimating(fromIndex, toIndex, direction);
+        },
+      );
       img.src = url;
-
-      if (img.complete && img.naturalWidth > 0) {
-        markLoaded(toIndex);
-        startAnimating(fromIndex, toIndex, direction);
-        return;
+      if (img.complete) {
+        resolveReadiness();
       }
-
-      img.onload = () => {
-        markLoaded(toIndex);
-        startAnimating(fromIndex, toIndex, direction);
-      };
-      img.onerror = () => {
-        preloadingRef.current.delete(toIndex);
-        startAnimating(fromIndex, toIndex, direction);
-      };
     },
     [images, imageErrors, markLoaded, startAnimating],
   );
@@ -252,9 +295,15 @@ export const ListingCardImageCarousel = React.forwardRef<
         const url = getOptimizedImageUrl(images[next], 65, 800);
         const img = new window.Image();
         preloadingRef.current.add(next);
+        const resolveReadiness = bindImageReadiness(
+          img,
+          () => markLoaded(next),
+          () => preloadingRef.current.delete(next),
+        );
         img.src = url;
-        img.onload = () => markLoaded(next);
-        img.onerror = () => preloadingRef.current.delete(next);
+        if (img.complete) {
+          resolveReadiness();
+        }
       }
     }
     if (
@@ -267,9 +316,15 @@ export const ListingCardImageCarousel = React.forwardRef<
         const url = getOptimizedImageUrl(images[prev], 65, 800);
         const img = new window.Image();
         preloadingRef.current.add(prev);
+        const resolveReadiness = bindImageReadiness(
+          img,
+          () => markLoaded(prev),
+          () => preloadingRef.current.delete(prev),
+        );
         img.src = url;
-        img.onload = () => markLoaded(prev);
-        img.onerror = () => preloadingRef.current.delete(prev);
+        if (img.complete) {
+          resolveReadiness();
+        }
       }
     }
   }, [currentIndex, images, imageErrors, markLoaded]);
@@ -287,9 +342,15 @@ export const ListingCardImageCarousel = React.forwardRef<
         const url = getOptimizedImageUrl(images[idx], 65, 800);
         const img = new window.Image();
         preloadingRef.current.add(idx);
+        const resolveReadiness = bindImageReadiness(
+          img,
+          () => markLoaded(idx),
+          () => preloadingRef.current.delete(idx),
+        );
         img.src = url;
-        img.onload = () => markLoaded(idx);
-        img.onerror = () => preloadingRef.current.delete(idx);
+        if (img.complete) {
+          resolveReadiness();
+        }
       }
     }, 1500);
     return () => clearTimeout(t);
@@ -303,27 +364,30 @@ export const ListingCardImageCarousel = React.forwardRef<
     [],
   );
 
+  const errorPlaceholder = React.useMemo(
+    () => (
+      <div
+        className="w-full h-full flex items-center justify-center"
+        style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+      >
+        <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"
+          />
+        </svg>
+      </div>
+    ),
+    [],
+  );
+
   const renderSlide = useCallback(
-    (index: number, eager?: boolean) => {
+    (index: number) => {
       const src = images[index];
       if (!src) return null;
-      if (imageErrors.has(index)) {
-        return (
-          <div
-            className="w-full h-full flex items-center justify-center"
-            style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-          >
-            <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"
-              />
-            </svg>
-          </div>
-        );
-      }
+      if (imageErrors.has(index)) return errorPlaceholder;
       const imageUrl = src === '/placeholder-car.jpg' ? src : getOptimizedImageUrl(src, 65, 800);
       const isLocalhostImage =
         imageUrl.startsWith('http://localhost:') || imageUrl.startsWith('http://127.0.0.1:');
@@ -338,8 +402,8 @@ export const ListingCardImageCarousel = React.forwardRef<
           })}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-          className="object-cover lg:group-hover:scale-105 transition-transform duration-300"
-          loading={priority && index === 0 ? undefined : eager ? 'eager' : 'lazy'}
+          className="object-cover"
+          loading={priority && index === 0 ? undefined : 'lazy'}
           priority={priority && index === 0}
           draggable={false}
           onLoad={() => markLoaded(index)}
@@ -348,7 +412,39 @@ export const ListingCardImageCarousel = React.forwardRef<
         />
       );
     },
-    [images, imageErrors, imageAltTitle, priority, t, markLoaded, onImageError],
+    [images, imageErrors, imageAltTitle, priority, t, markLoaded, onImageError, errorPlaceholder],
+  );
+
+  const renderNativeSlide = useCallback(
+    (index: number) => {
+      const src = images[index];
+      if (!src) return null;
+      if (imageErrors.has(index)) return errorPlaceholder;
+      const imageUrl = src === '/placeholder-car.jpg' ? src : getOptimizedImageUrl(src, 65, 800);
+      return (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          key={`card-native-${index}`}
+          src={imageUrl}
+          alt={t('listings.imageAltWithTotal', {
+            title: imageAltTitle,
+            index: String(index + 1),
+            total: String(images.length),
+          })}
+          decoding="sync"
+          draggable={false}
+          onError={() => onImageError(index)}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+          }}
+        />
+      );
+    },
+    [images, imageErrors, imageAltTitle, t, onImageError, errorPlaceholder],
   );
 
   const slideBase: React.CSSProperties = {
@@ -363,11 +459,11 @@ export const ListingCardImageCarousel = React.forwardRef<
   const isAnimating = state.type === 'animating';
   const dir = isAnimating ? state.direction : 'next';
   const isRunning = isAnimating && state.phase === 'running';
-  const enterFrom = dir === 'next' ? '100%' : '-100%';
-  const exitTo = dir === 'next' ? '-100%' : '100%';
+  const enterFrom = dir === 'next' ? 'translate3d(100%, 0, 0)' : 'translate3d(-100%, 0, 0)';
+  const exitTo = dir === 'next' ? 'translate3d(-100%, 0, 0)' : 'translate3d(100%, 0, 0)';
 
   return (
-    <div className="absolute inset-0 overflow-hidden">
+    <div className="absolute inset-0 overflow-hidden" style={{ isolation: 'isolate' }}>
       {isPreloading && (
         <div className="absolute inset-0 z-[2] flex items-center justify-center bg-black/10 pointer-events-none">
           <Spinner size="sm" inline />
@@ -378,26 +474,26 @@ export const ListingCardImageCarousel = React.forwardRef<
           ...slideBase,
           transform: isAnimating
             ? isRunning
-              ? `translateX(${exitTo})`
-              : 'translateX(0%)'
-            : 'translateX(0%)',
+              ? exitTo
+              : 'translate3d(0%, 0, 0)'
+            : 'translate3d(0%, 0, 0)',
           transition:
             isAnimating && isRunning ? `transform ${IMAGE_SLIDE_DURATION_MS}ms ease-out` : 'none',
           willChange: isAnimating ? 'transform' : 'auto',
         }}
       >
-        {renderSlide(isAnimating ? state.fromIndex : visibleIndex, isAnimating)}
+        {renderSlide(isAnimating ? state.fromIndex : visibleIndex)}
       </div>
       {isAnimating && (
         <div
           style={{
             ...slideBase,
-            transform: isRunning ? 'translateX(0%)' : `translateX(${enterFrom})`,
+            transform: isRunning ? 'translate3d(0%, 0, 0)' : enterFrom,
             transition: isRunning ? `transform ${IMAGE_SLIDE_DURATION_MS}ms ease-out` : 'none',
             willChange: 'transform',
           }}
         >
-          {renderSlide(state.toIndex, true)}
+          {renderNativeSlide(state.toIndex)}
         </div>
       )}
     </div>
