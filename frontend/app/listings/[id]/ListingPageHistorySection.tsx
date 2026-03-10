@@ -7,7 +7,7 @@ import type { Listing } from '@/lib/api';
 import { listingsApi } from '@/lib/api';
 import { LoadingSpinner, InfoBlock, HintTooltip, CoinsIcon, EyeIcon } from '@/ui';
 
-import { INFOCAR_BASE_URL, INFOCAR_DEMO_URL, shouldShowInfocarButton } from './listingPageInfocar';
+import { INFOCAR_BASE_URL, INFOCAR_DEMO_URL, shouldShowInfocarSection } from './listingPageInfocar';
 
 const LINK_BUTTON_CLASS =
   'w-full min-h-12 px-4 md:px-8 py-2 md:py-2.5 text-sm md:text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10! select-none';
@@ -142,7 +142,7 @@ export function ListingPageHistorySection({
         <InfoBlock>{t('listingDetail.noPreviousListings')}</InfoBlock>
       )}
 
-      {shouldShowInfocarButton(listing) && (
+      {shouldShowInfocarSection(listing) && (
         <>
           <div className="flex items-center gap-2 mt-6 mb-3">
             <h3 className="text-base md:text-lg font-semibold text-primary-900">

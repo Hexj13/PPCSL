@@ -8,6 +8,8 @@ The "History and Report" section is displayed on the listing detail page. It has
 
 **Purpose**: Build trust and add value by surfacing vehicle history on the site and by redirecting users to partners for paid reports; the platform uses the referral parameter `from=kupito`.
 
+**Effect of VIN (presence or absence):** VIN only affects (1) whether the VIN field is shown in the listing characteristics block; (2) whether the "History on site" sub-section shows the table of previous listings (with VIN) or the "VIN not provided" message (without VIN); (3) whether the partner link is full (signed URL with VIN) or fallback (`from=kupito` only). The Report sub-section (Order report, Sample report) is always shown for active listings regardless of VIN.
+
 ## Section structure
 
 - **Main title**: `listingDetail.historyAndReport` — e.g. "История и отчёт" (ru), "Istoric și raport" (ro), "History and report" (en).
@@ -22,7 +24,7 @@ The "History and Report" section is displayed on the listing detail page. It has
   - VIN present, has data: table of previous listings (title, mileage, closed date, link).
   - VIN present, no previous listings: `InfoBlock` with `listingDetail.noPreviousListings` (e.g. "Нет предыдущих объявлений для данного авто на нашем сайте").
 
-### Sub-section 2: Report (only for Active listings with VIN)
+### Sub-section 2: Report (for Active listings)
 
 - **Sub-heading**: `listingDetail.externalReports` — e.g. "Отчёт об данном авто".
 - **Hint**: `listingDetail.externalReportsHint` — tooltip next to the sub-heading: users are redirected to partners who compile the report from various sources; details and terms are on the partner’s site.
@@ -30,13 +32,13 @@ The "History and Report" section is displayed on the listing detail page. It has
   1. **Order report** — `listingDetail.orderReport` (e.g. "Заказать отчёт"). Icon: `CoinsIcon`. On click: calls `GET /api/listings/:id/report-url` (returns signed Infocar URL); on success opens that URL in a new tab; on error opens fallback `https://infocar.md/?from=kupito` without showing an error toast. Fires `analytics.infocarCheck(...)` on click. Request uses `X-Skip-Error-Handling: true`.
   2. **Sample report** — `listingDetail.sampleReport` (e.g. "Пример отчёта"). Icon: `EyeIcon`. Direct link: `https://infocar.md/demo?from=kupito` (constant `INFOCAR_DEMO_URL`). No analytics event.
 
-Visibility: the whole "Report" sub-section is rendered only when `listing.status === 'Active'` and `listing.vin` is present and non-empty (helper `shouldShowInfocarButton(listing)`).
+Visibility: the whole "Report" sub-section (both "Order report" and "Sample report" buttons) is rendered for all active listings (`shouldShowInfocarSection(listing)` = `listing.status === 'Active'`), regardless of whether VIN is provided. If the user clicks "Order report" without VIN, the API returns an error and the frontend opens the fallback Infocar URL.
 
 ## URLs and helpers
 
 - **Order report**: Backend `GET /api/listings/:id/report-url` returns `{ url: string }` (signed Infocar URL). Frontend `listingsApi.getReportUrl(id)`; on error opens `INFOCAR_BASE_URL` (`https://infocar.md/?from=kupito`).
 - **Sample report URL**: `INFOCAR_DEMO_URL` = `https://infocar.md/demo?from=kupito`.
-- **Visibility**: `shouldShowInfocarButton(listing)` returns `listing.status === 'Active' && !!listing.vin?.trim()`.
+- **Section visibility**: `shouldShowInfocarSection(listing)` returns `listing.status === 'Active'`. Both buttons are always shown in the section.
 - **Helper** `getInfocarUrl(listing)` in `listingPageInfocar.ts`: builds base URL with optional `&vin=` when VIN is present and not masked (for reference/fallback).
 
 All links open in a new tab (`target="_blank"`, `rel="noopener noreferrer"`). Button styling reuses the existing CTA link style (border, rounded-lg, theme colours).

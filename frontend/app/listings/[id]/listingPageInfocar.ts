@@ -13,6 +13,6 @@ export function getInfocarUrl(listing: Listing): string {
   return base;
 }
 
-export function shouldShowInfocarButton(listing: Listing): boolean {
-  return listing.status === 'Active' && !!listing.vin?.trim();
+export function shouldShowInfocarSection(listing: Listing): boolean {
+  return listing.status === 'Active';
 }

@@ -1,6 +1,6 @@
 import type { Listing } from '@/lib/api';
 
-import { getInfocarUrl, shouldShowInfocarButton } from './listingPageInfocar';
+import { getInfocarUrl, shouldShowInfocarSection } from './listingPageInfocar';
 
 function listing(overrides: Partial<Listing> & { status: Listing['status'] }): Listing {
   return {
@@ -55,29 +55,25 @@ describe('getInfocarUrl', () => {
   });
 });
 
-describe('shouldShowInfocarButton', () => {
+describe('shouldShowInfocarSection', () => {
   it('should return true for Active listing with VIN', () => {
-    expect(shouldShowInfocarButton(listing({ status: 'Active', vin: 'WBA21FL020CV09474' }))).toBe(
+    expect(shouldShowInfocarSection(listing({ status: 'Active', vin: 'WBA21FL020CV09474' }))).toBe(
       true,
     );
   });
 
-  it('should return false for Active listing without VIN', () => {
-    expect(shouldShowInfocarButton(listing({ status: 'Active' }))).toBe(false);
+  it('should return true for Active listing without VIN', () => {
+    expect(shouldShowInfocarSection(listing({ status: 'Active' }))).toBe(true);
   });
 
-  it('should return false for Active listing with empty VIN', () => {
-    expect(shouldShowInfocarButton(listing({ status: 'Active', vin: '  ' }))).toBe(false);
-  });
-
-  it('should return false for Closed listing with VIN', () => {
-    expect(shouldShowInfocarButton(listing({ status: 'Closed', vin: 'WBA21FL020CV09474' }))).toBe(
+  it('should return false for Closed listing', () => {
+    expect(shouldShowInfocarSection(listing({ status: 'Closed', vin: 'WBA21FL020CV09474' }))).toBe(
       false,
     );
   });
 
-  it('should return false for Paused listing with VIN', () => {
-    expect(shouldShowInfocarButton(listing({ status: 'Paused', vin: 'WBA21FL020CV09474' }))).toBe(
+  it('should return false for Paused listing', () => {
+    expect(shouldShowInfocarSection(listing({ status: 'Paused', vin: 'WBA21FL020CV09474' }))).toBe(
       false,
     );
   });
