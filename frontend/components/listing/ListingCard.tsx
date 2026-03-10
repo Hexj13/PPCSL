@@ -4,10 +4,10 @@ import Link from 'next/link';
 import React, { useCallback, useMemo, startTransition } from 'react';
 
 import {
-  IMAGE_SLIDE_DURATION_MS,
   ListingCardBadges,
   ListingCardImageArea,
   ListingCardImageCarousel,
+  type ListingCardImageCarouselHandle,
   ListingCardVehicleSpecs,
 } from '@/components/listing/ListingCardParts';
 import { PriceDisplay } from '@/components/listing/PriceDisplay';
@@ -141,6 +141,132 @@ function useListingCardFavorite(
   };
 }
 
+const RESET_TO_FIRST_DELAY_MS = 10000;
+const REWIND_STEP_MS = 400;
+
+function getFavoriteButtonProps(
+  favoriteDisabled: boolean,
+  isFavorite: boolean,
+  isOwnListing: boolean,
+) {
+  const favoriteButtonClass = favoriteDisabled
+    ? 'opacity-30 cursor-not-allowed'
+    : isFavorite
+      ? 'opacity-100 hover-only:hover:border-primary-400'
+      : 'opacity-60 hover-only:hover:opacity-100 hover-only:hover:border-primary-400';
+  const favoriteAriaLabel =
+    !isFavorite && isOwnListing
+      ? 'Не можете да додадете ваше објавување во омилени'
+      : isFavorite
+        ? 'Отстрани од омилени'
+        : 'Додади во омилени';
+  return { favoriteButtonClass, favoriteAriaLabel };
+}
+
+function CarouselNavButtons({
+  disabled,
+  onPrev,
+  onNext,
+  onPrevTouch,
+  onNextTouch,
+  prevLabel,
+  nextLabel,
+}: {
+  disabled: boolean;
+  onPrev: (e: React.MouseEvent) => void;
+  onNext: (e: React.MouseEvent) => void;
+  onPrevTouch: (e: React.TouchEvent) => void;
+  onNextTouch: (e: React.TouchEvent) => void;
+  prevLabel: string;
+  nextLabel: string;
+}) {
+  const btnClass = disabled
+    ? 'opacity-40 cursor-wait'
+    : 'opacity-60 lg:opacity-0 lg:group-hover:opacity-60 hover-only:hover:opacity-100';
+  const baseClass =
+    'absolute w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center transition-all shadow-lg z-10 text-white touch-manipulation pointer-events-auto';
+  return (
+    <>
+      <button
+        type="button"
+        onClick={onPrev}
+        onTouchStart={onPrevTouch}
+        disabled={disabled}
+        className={`bottom-3 left-3 ${baseClass} ${btnClass}`}
+        aria-label={prevLabel}
+      >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2.5}
+            d="M15 19l-7-7 7-7"
+          />
+        </svg>
+      </button>
+      <button
+        type="button"
+        onClick={onNext}
+        onTouchStart={onNextTouch}
+        disabled={disabled}
+        className={`bottom-3 right-3 ${baseClass} ${btnClass}`}
+        aria-label={nextLabel}
+      >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+    </>
+  );
+}
+
+function useCardCarouselRewind(
+  images: string[],
+  carouselIndex: number,
+  carouselRef: React.RefObject<ListingCardImageCarouselHandle | null>,
+) {
+  const resetToFirstTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rewindIntervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const clearRewind = useCallback(() => {
+    if (resetToFirstTimerRef.current) {
+      clearTimeout(resetToFirstTimerRef.current);
+      resetToFirstTimerRef.current = null;
+    }
+    if (rewindIntervalRef.current) {
+      clearInterval(rewindIntervalRef.current);
+      rewindIntervalRef.current = null;
+    }
+  }, []);
+
+  React.useEffect(() => () => clearRewind(), [clearRewind]);
+
+  const onMouseLeave = useCallback(() => {
+    clearRewind();
+    if (images.length <= 1 || carouselIndex === 0) return;
+    resetToFirstTimerRef.current = setTimeout(() => {
+      resetToFirstTimerRef.current = null;
+      rewindIntervalRef.current = setInterval(() => {
+        if (carouselRef.current?.isBusy()) return;
+        carouselRef.current?.goPrev();
+      }, REWIND_STEP_MS);
+    }, RESET_TO_FIRST_DELAY_MS);
+  }, [images.length, carouselIndex, clearRewind, carouselRef]);
+
+  const onMouseEnter = useCallback(() => {
+    clearRewind();
+    if (images.length > 1 && typeof window !== 'undefined') {
+      const nextIndex = (carouselIndex + 1) % images.length;
+      const nextSrc = images[nextIndex];
+      if (nextSrc && nextSrc !== '/placeholder-car.jpg') {
+        const preloadImg = new window.Image();
+        preloadImg.src = getOptimizedImageUrl(nextSrc, 65, 800);
+      }
+    }
+  }, [clearRewind, images, carouselIndex]);
+  return { onMouseLeave, onMouseEnter, clearRewind };
+}
+
 function ListingCardComponent({
   listing,
   forceFavorite = false,
@@ -153,19 +279,6 @@ function ListingCardComponent({
   const images = useMemo(
     () => (listing.images?.length ? listing.images : ['/placeholder-car.jpg']),
     [listing.images],
-  );
-  const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
-  const originalImageUrl = useMemo(
-    () => images[currentImageIndex] || '/placeholder-car.jpg',
-    [images, currentImageIndex],
-  );
-  const imageUrl = useMemo(() => {
-    if (originalImageUrl === '/placeholder-car.jpg') return originalImageUrl;
-    return getOptimizedImageUrl(originalImageUrl, 65, 800);
-  }, [originalImageUrl]);
-  const isLocalhostImage = useMemo(
-    () => imageUrl.startsWith('http://localhost:') || imageUrl.startsWith('http://127.0.0.1:'),
-    [imageUrl],
   );
   const vehicleType = getVehicleType(listing);
   const newLabel = vehicleType === 'moto' ? t('listings.newMoto') : t('listings.new');
@@ -184,24 +297,29 @@ function ListingCardComponent({
 
   const [imageErrors, setImageErrors] = React.useState<Set<number>>(() => new Set());
   const [isHydrated, setIsHydrated] = React.useState(false);
-  const resetToFirstTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-  const rewindIntervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
-  const directionRef = React.useRef<'next' | 'prev'>('next');
+  const [isCarouselBusy, setIsCarouselBusy] = React.useState(false);
+  const [carouselIndex, setCarouselIndex] = React.useState(0);
+  const carouselRef = React.useRef<ListingCardImageCarouselHandle>(null);
 
   React.useEffect(() => setIsHydrated(true), []);
 
-  const clearResetToFirstTimer = useCallback(() => {
-    if (resetToFirstTimerRef.current) {
-      clearTimeout(resetToFirstTimerRef.current);
-      resetToFirstTimerRef.current = null;
-    }
-    if (rewindIntervalRef.current) {
-      clearInterval(rewindIntervalRef.current);
-      rewindIntervalRef.current = null;
-    }
-  }, []);
+  const {
+    onMouseLeave: handleCardMouseLeave,
+    onMouseEnter: handleCardMouseEnter,
+    clearRewind,
+  } = useCardCarouselRewind(images, carouselIndex, carouselRef);
 
-  React.useEffect(() => () => clearResetToFirstTimer(), [clearResetToFirstTimer]);
+  const handleCarouselIndexChange = useCallback(
+    (index: number) => {
+      setCarouselIndex(index);
+      if (index === 0) clearRewind();
+    },
+    [clearRewind],
+  );
+
+  const handleCarouselBusyChange = useCallback((busy: boolean) => {
+    setIsCarouselBusy(busy);
+  }, []);
 
   const handleClick = useCallback(() => {
     if (typeof window !== 'undefined' && window.location.pathname === '/') {
@@ -213,142 +331,48 @@ function ListingCardComponent({
   }, []);
 
   const favoriteDisabled = (!isFavorite && isOwnListing) || isToggling;
-  const { favoriteButtonClass, favoriteAriaLabel } = useMemo(
-    () => ({
-      favoriteButtonClass: favoriteDisabled
-        ? 'opacity-30 cursor-not-allowed'
-        : isFavorite
-          ? 'opacity-100 hover-only:hover:border-primary-400'
-          : 'opacity-60 hover-only:hover:opacity-100 hover-only:hover:border-primary-400',
-      favoriteAriaLabel:
-        !isFavorite && isOwnListing
-          ? 'Не можете да додадете ваше објавување во омилени'
-          : isFavorite
-            ? 'Отстрани од омилени'
-            : 'Додади во омилени',
-    }),
-    [favoriteDisabled, isFavorite, isOwnListing],
+  const { favoriteButtonClass, favoriteAriaLabel } = getFavoriteButtonProps(
+    favoriteDisabled,
+    isFavorite,
+    isOwnListing,
   );
 
-  const showImage = Boolean(
-    imageUrl && imageUrl !== '/placeholder-car.jpg' && !imageErrors.has(currentImageIndex),
-  );
-
-  const photoButtonHandledRef = React.useRef(false);
-  const photoButtonResetTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const clearPhotoButtonHandledState = useCallback(() => {
-    if (photoButtonResetTimerRef.current) {
-      clearTimeout(photoButtonResetTimerRef.current);
-      photoButtonResetTimerRef.current = null;
-    }
-    photoButtonHandledRef.current = false;
+  const handlePrevPhoto = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    carouselRef.current?.goPrev();
   }, []);
 
-  const goPrevPhoto = useCallback(() => {
-    clearResetToFirstTimer();
-    directionRef.current = 'prev';
-    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
-  }, [images.length, clearResetToFirstTimer]);
+  const handleNextPhoto = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    carouselRef.current?.goNext();
+  }, []);
 
-  const goNextPhoto = useCallback(() => {
-    clearResetToFirstTimer();
-    directionRef.current = 'next';
-    setCurrentImageIndex((prev) => (prev + 1) % images.length);
-  }, [images.length, clearResetToFirstTimer]);
+  const handlePrevPhotoTouchStart = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    carouselRef.current?.goPrev();
+  }, []);
 
-  React.useEffect(() => () => clearPhotoButtonHandledState(), [clearPhotoButtonHandledState]);
-
-  const handlePrevPhoto = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (e.type === 'click' && photoButtonHandledRef.current) {
-        clearPhotoButtonHandledState();
-        return;
-      }
-      goPrevPhoto();
-    },
-    [clearPhotoButtonHandledState, goPrevPhoto],
-  );
-
-  const handleNextPhoto = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (e.type === 'click' && photoButtonHandledRef.current) {
-        clearPhotoButtonHandledState();
-        return;
-      }
-      goNextPhoto();
-    },
-    [clearPhotoButtonHandledState, goNextPhoto],
-  );
-
-  const handlePrevPhotoTouchStart = useCallback(
-    (e: React.TouchEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      clearPhotoButtonHandledState();
-      photoButtonHandledRef.current = true;
-      goPrevPhoto();
-      photoButtonResetTimerRef.current = setTimeout(() => {
-        photoButtonHandledRef.current = false;
-        photoButtonResetTimerRef.current = null;
-      }, 400);
-    },
-    [clearPhotoButtonHandledState, goPrevPhoto],
-  );
-
-  const handleNextPhotoTouchStart = useCallback(
-    (e: React.TouchEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      clearPhotoButtonHandledState();
-      photoButtonHandledRef.current = true;
-      goNextPhoto();
-      photoButtonResetTimerRef.current = setTimeout(() => {
-        photoButtonHandledRef.current = false;
-        photoButtonResetTimerRef.current = null;
-      }, 400);
-    },
-    [clearPhotoButtonHandledState, goNextPhoto],
-  );
-
-  const handleCardMouseLeave = useCallback(() => {
-    clearResetToFirstTimer();
-    if (images.length <= 1 || currentImageIndex === 0) return;
-    resetToFirstTimerRef.current = setTimeout(() => {
-      resetToFirstTimerRef.current = null;
-      rewindIntervalRef.current = setInterval(() => {
-        directionRef.current = 'prev';
-        setCurrentImageIndex((prev) => {
-          if (prev <= 0) {
-            if (rewindIntervalRef.current) {
-              clearInterval(rewindIntervalRef.current);
-              rewindIntervalRef.current = null;
-            }
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, IMAGE_SLIDE_DURATION_MS);
-    }, 10000);
-  }, [images.length, currentImageIndex, clearResetToFirstTimer]);
-
-  const handleCardMouseEnter = useCallback(() => {
-    clearResetToFirstTimer();
-    if (images.length > 1 && typeof window !== 'undefined') {
-      const nextIndex = (currentImageIndex + 1) % images.length;
-      const nextSrc = images[nextIndex];
-      if (nextSrc && nextSrc !== '/placeholder-car.jpg') {
-        const preloadImg = new window.Image();
-        preloadImg.src = getOptimizedImageUrl(nextSrc, 65, 800);
-      }
-    }
-  }, [clearResetToFirstTimer, images, currentImageIndex]);
+  const handleNextPhotoTouchStart = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    carouselRef.current?.goNext();
+  }, []);
 
   const cardUrl = `/listings/${listing.id}`;
+
+  const singleImageUrl =
+    images[0] && images[0] !== '/placeholder-car.jpg'
+      ? getOptimizedImageUrl(images[0], 65, 800)
+      : '/placeholder-car.jpg';
+  const isLocalhostImage =
+    singleImageUrl.startsWith('http://localhost:') ||
+    singleImageUrl.startsWith('http://127.0.0.1:');
+  const showImage =
+    images.length <= 1 &&
+    Boolean(singleImageUrl && singleImageUrl !== '/placeholder-car.jpg' && !imageErrors.has(0));
 
   return (
     <div
@@ -370,11 +394,12 @@ function ListingCardComponent({
         >
           {images.length > 1 ? (
             <ListingCardImageCarousel
+              ref={carouselRef}
               images={images}
-              currentImageIndex={currentImageIndex}
-              direction={directionRef.current}
               imageErrors={imageErrors}
               onImageError={(index) => setImageErrors((prev) => new Set([...prev, index]))}
+              onBusyChange={handleCarouselBusyChange}
+              onIndexChange={handleCarouselIndexChange}
               imageAltTitle={imageAltTitle}
               priority={priority}
               t={t}
@@ -382,50 +407,25 @@ function ListingCardComponent({
           ) : (
             <ListingCardImageArea
               showImage={showImage}
-              imageUrl={imageUrl}
+              imageUrl={singleImageUrl}
               imageAltTitle={imageAltTitle}
               priority={priority}
               isLocalhostImage={isLocalhostImage}
-              onError={() => setImageErrors((prev) => new Set([...prev, currentImageIndex]))}
+              onError={() => setImageErrors((prev) => new Set([...prev, 0]))}
               t={t}
             />
           )}
           <ListingCardBadges listing={listing} newLabel={newLabel} t={t} />
           {images.length > 1 && (
-            <>
-              <button
-                type="button"
-                onClick={handlePrevPhoto}
-                onTouchStart={handlePrevPhotoTouchStart}
-                className="absolute bottom-3 left-3 w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center transition-all shadow-lg z-10 text-white opacity-60 lg:opacity-0 lg:group-hover:opacity-60 hover-only:hover:opacity-100 touch-manipulation pointer-events-auto"
-                aria-label={t('listings.previousPhoto')}
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-              </button>
-              <button
-                type="button"
-                onClick={handleNextPhoto}
-                onTouchStart={handleNextPhotoTouchStart}
-                className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center transition-all shadow-lg z-10 text-white opacity-60 lg:opacity-0 lg:group-hover:opacity-60 hover-only:hover:opacity-100 touch-manipulation pointer-events-auto"
-                aria-label={t('listings.nextPhoto')}
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </button>
-            </>
+            <CarouselNavButtons
+              disabled={isCarouselBusy}
+              onPrev={handlePrevPhoto}
+              onNext={handleNextPhoto}
+              onPrevTouch={handlePrevPhotoTouchStart}
+              onNextTouch={handleNextPhotoTouchStart}
+              prevLabel={t('listings.previousPhoto')}
+              nextLabel={t('listings.nextPhoto')}
+            />
           )}
           <button
             onClick={handleToggleFavorite}

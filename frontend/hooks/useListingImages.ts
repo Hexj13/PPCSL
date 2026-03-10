@@ -6,12 +6,21 @@ import { getOptimizedImageUrl } from '@/lib/utils';
 interface UseListingImagesProps {
   images: string[];
   currentImageIndex: number;
+  imageErrors: Set<number>;
 }
 
-export function useListingImages({ images, currentImageIndex }: UseListingImagesProps) {
+const PREVIEW_IMAGE_QUALITY = 75;
+const PREVIEW_IMAGE_WIDTH = 1200;
+
+export function useListingImages({
+  images,
+  currentImageIndex,
+  imageErrors,
+}: UseListingImagesProps) {
   const [mainImageLoading, setMainImageLoading] = useState(false);
-  const mainImageLoadedRef = useRef<Set<number>>(new Set());
-  const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
+  const mainImageLoadedRef = useRef<Set<string>>(new Set());
+  const navigationCountRef = useRef(0);
+  const lastNavigatedIndexRef = useRef(currentImageIndex);
 
   const { visible: showMainImageLoader } = useLoadingState({
     isLoading: mainImageLoading,
@@ -19,18 +28,76 @@ export function useListingImages({ images, currentImageIndex }: UseListingImages
   });
 
   useEffect(() => {
-    if (images.length <= 1) return;
+    if (lastNavigatedIndexRef.current !== currentImageIndex) {
+      navigationCountRef.current += 1;
+      lastNavigatedIndexRef.current = currentImageIndex;
+    }
+  }, [currentImageIndex]);
+
+  useEffect(() => {
+    if (images.length <= 1 || typeof window === 'undefined') return;
 
     const nextIndex = (currentImageIndex + 1) % images.length;
-    const nextImageUrl = images[nextIndex];
+    const prevIndex = (currentImageIndex - 1 + images.length) % images.length;
+    const secondNextIndex = (currentImageIndex + 2) % images.length;
+    const preloadImages: HTMLImageElement[] = [];
+    const preloadTimeouts: Array<ReturnType<typeof setTimeout>> = [];
+    const isMobileViewport = window.innerWidth <= 768;
+    const shouldWarmSecondNext = isMobileViewport && navigationCountRef.current < 2;
 
-    if (!nextImageUrl || nextImageUrl === '/placeholder-car.jpg' || imageErrors.has(nextIndex)) {
-      return;
+    const preloadByIndex = (index: number, delay = 0) => {
+      const imageUrl = images[index];
+      if (!imageUrl || imageUrl === '/placeholder-car.jpg' || imageErrors.has(index)) {
+        return;
+      }
+
+      const optimizedUrl = getOptimizedImageUrl(
+        imageUrl,
+        PREVIEW_IMAGE_QUALITY,
+        PREVIEW_IMAGE_WIDTH,
+      );
+      if (mainImageLoadedRef.current.has(optimizedUrl)) {
+        return;
+      }
+
+      const startPreload = () => {
+        const img = new window.Image();
+        img.onload = () => {
+          mainImageLoadedRef.current.add(optimizedUrl);
+        };
+        img.src = optimizedUrl;
+        preloadImages.push(img);
+      };
+
+      if (delay > 0) {
+        const timeout = setTimeout(startPreload, delay);
+        preloadTimeouts.push(timeout);
+        return;
+      }
+
+      startPreload();
+    };
+
+    preloadByIndex(nextIndex);
+    preloadByIndex(prevIndex, 120);
+
+    if (
+      shouldWarmSecondNext &&
+      images.length > 2 &&
+      secondNextIndex !== nextIndex &&
+      secondNextIndex !== prevIndex
+    ) {
+      preloadByIndex(secondNextIndex, 40);
     }
 
-    const optimizedUrl = getOptimizedImageUrl(nextImageUrl, 75, 1200);
-    const img = new window.Image();
-    img.src = optimizedUrl;
+    return () => {
+      for (const timeout of preloadTimeouts) {
+        clearTimeout(timeout);
+      }
+      for (const img of preloadImages) {
+        img.onload = null;
+      }
+    };
   }, [currentImageIndex, images, imageErrors]);
 
   useEffect(() => {
@@ -51,18 +118,23 @@ export function useListingImages({ images, currentImageIndex }: UseListingImages
       return;
     }
 
-    if (mainImageLoadedRef.current.has(currentImageIndex)) {
+    const optimizedUrl = getOptimizedImageUrl(
+      currentImage,
+      PREVIEW_IMAGE_QUALITY,
+      PREVIEW_IMAGE_WIDTH,
+    );
+
+    if (mainImageLoadedRef.current.has(optimizedUrl)) {
       setMainImageLoading(false);
       return;
     }
 
-    const optimizedUrl = getOptimizedImageUrl(currentImage, 75, 1200);
     const testImg = new window.Image();
     testImg.src = optimizedUrl;
-    const imgIndex = currentImageIndex;
+    const imageIndex = currentImageIndex;
 
     if (testImg.complete && testImg.naturalWidth > 0) {
-      mainImageLoadedRef.current.add(imgIndex);
+      mainImageLoadedRef.current.add(optimizedUrl);
       setMainImageLoading(false);
       return;
     }
@@ -70,14 +142,14 @@ export function useListingImages({ images, currentImageIndex }: UseListingImages
     setMainImageLoading(true);
 
     testImg.onload = () => {
-      mainImageLoadedRef.current.add(imgIndex);
-      if (imgIndex === currentImageIndex) {
+      mainImageLoadedRef.current.add(optimizedUrl);
+      if (imageIndex === currentImageIndex) {
         setMainImageLoading(false);
       }
     };
 
     testImg.onerror = () => {
-      if (imgIndex === currentImageIndex) {
+      if (imageIndex === currentImageIndex) {
         setMainImageLoading(false);
       }
     };
@@ -89,14 +161,10 @@ export function useListingImages({ images, currentImageIndex }: UseListingImages
   }, [currentImageIndex, images, imageErrors]);
 
   const handleImageLoad = (index: number) => {
-    mainImageLoadedRef.current.add(index);
-    if (index === currentImageIndex) {
-      setMainImageLoading(false);
-    }
-  };
-
-  const handleImageError = (index: number) => {
-    setImageErrors((prev) => new Set(prev).add(index));
+    const imageUrl = images[index];
+    if (!imageUrl || imageUrl === '/placeholder-car.jpg') return;
+    const optimizedUrl = getOptimizedImageUrl(imageUrl, PREVIEW_IMAGE_QUALITY, PREVIEW_IMAGE_WIDTH);
+    mainImageLoadedRef.current.add(optimizedUrl);
     if (index === currentImageIndex) {
       setMainImageLoading(false);
     }
@@ -105,10 +173,7 @@ export function useListingImages({ images, currentImageIndex }: UseListingImages
   return {
     mainImageLoading,
     showMainImageLoader,
-    imageErrors,
-    setImageErrors,
     mainImageLoadedRef,
     handleImageLoad,
-    handleImageError,
   };
 }

@@ -256,6 +256,7 @@ export function ListingPageImages({
   const { showMainImageLoader, handleImageLoad } = useListingImages({
     images,
     currentImageIndex,
+    imageErrors,
   });
 
   const [animState, setAnimState] = useState<{
