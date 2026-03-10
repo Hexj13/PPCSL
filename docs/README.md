@@ -35,21 +35,11 @@
 
 - [GA4_EVENTS.md](./analytics/GA4_EVENTS.md) — события и архитектура GA4 (Sentry — в [guides/SENTRY.md](./guides/SENTRY.md))
 
-### 🌍 [`platform-plans/`](./platform-plans/)
-
-**Планы конкретных платформ** — при добавлении новой страны можно создать план по образцу существующей платформы (Moldova).
-
 ### 📜 [`scripts/`](./scripts/)
 
 **Скрипты брендов и моделей**
 
 - [BRANDS_MODELS_MASTER_PLAN.md](./scripts/BRANDS_MODELS_MASTER_PLAN.md) - План и production-скрипты (seed-all-brands-complete, порядок, кэш)
-
-### ⚡ [`performance/`](./performance/)
-
-**Производительность и Core Web Vitals**
-
-- [INP_VALIDATION.md](./performance/INP_VALIDATION.md) — проверка INP после изменений (критерии приёмки, профилирование, GSC)
 
 ### ✨ [`features/`](./features/)
 
@@ -58,7 +48,6 @@
 - [SEARCH_TITLE_URL.md](./features/SEARCH_TITLE_URL.md) - URL и заголовок страницы поиска (слаги, диакритика)
 - Approximate price in default currency (≈ EUR) — FXRatesAPI, daily cron, listing enrichment, price sorting in default currency; env: `FXRATESAPI_API_KEY`, `DEFAULT_CURRENCY` (see `TECHNICAL.md` §6 Exchange Rates)
 - [IMAGE_PREVIEW.md](./features/IMAGE_PREVIEW.md) - Система превью изображений
-- [LICENSE_PLATE_MASK.md](./features/LICENSE_PLATE_MASK.md) - Маскировка номеров на фото (текущая реализация)
 - [LOADING_STATES.md](./features/LOADING_STATES.md) - Loading states
 - [PAID_PROMOTION.md](./features/PAID_PROMOTION.md) - Платное продвижение
 - Assign listing to user (admin) — на `/listings/new` админ может указать UUID владельца объявления; real-time валидация (GET `/api/admin/validate-assign-user/:userId`), проверки бэкенда (существование, active, лимит объявлений)
@@ -85,7 +74,7 @@
 
 1. [architecture/ARCHITECTURE_OVERVIEW.md](./architecture/ARCHITECTURE_OVERVIEW.md) - Обзор системы
 2. [guides/PLATFORM_CHECKLIST.md](./guides/PLATFORM_CHECKLIST.md) - Чеклист
-3. Планы платформ (при добавлении новой страны — по образцу существующей платформы)
+3. [guides/PLATFORM_GUIDE.md](./guides/PLATFORM_GUIDE.md) — создание новой платформы по образцу
 
 ### Для Backend разработчика:
 
@@ -122,7 +111,7 @@
 
 ## 📞 Поддержка
 
-1. Документация в нужной секции (архитектура, guides, features, platform-plans)
+1. Документация в нужной секции (архитектура, guides, features)
 2. [KNOWN_ISSUES.md](./architecture/KNOWN_ISSUES.md) — известные проблемы
 3. Обращение в команду
 
@@ -132,4 +121,4 @@
 
 При новой фиче: создать док в `features/`, описать архитектуру/API/UI, обновить список в разделе «features» выше.
 
-**Последнее обновление:** 2026-01
+**Последнее обновление:** 2026-03

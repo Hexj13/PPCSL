@@ -60,6 +60,26 @@ export class UpdateListingDto {
   city?: string;
 
   @ApiPropertyOptional({
+    example: false,
+    description: 'Available in credit or installment',
+  })
+  @IsOptional()
+  @IsBoolean()
+  available_in_credit?: boolean;
+
+  @ApiPropertyOptional({
+    example: 5000,
+    description: 'Down payment amount',
+    minimum: 0,
+    maximum: 999999999,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(999999999)
+  down_payment_amount?: number | null;
+
+  @ApiPropertyOptional({
     example: 'Updated description with new information.',
     description: 'Listing description',
   })

@@ -1,7 +1,9 @@
 'use client';
 
 import React, {
+  createContext,
   useCallback,
+  useContext,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -13,6 +15,47 @@ import { createPortal } from 'react-dom';
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { Button } from '@/ui';
+
+const HEADER_OFFSET_PX = 108;
+const MOBILE_BREAKPOINT_PX = 768;
+
+export const ScrollDropdownIntoViewContext = createContext(false);
+
+function getDropdownTargetScrollY(el: HTMLElement) {
+  const rect = el.getBoundingClientRect();
+  return Math.max(0, window.scrollY + rect.top - HEADER_OFFSET_PX);
+}
+
+function smoothScrollTriggerBelowHeader(
+  el: HTMLElement,
+  onFrame: (_frameId: number | null) => void,
+): Promise<void> {
+  const targetScrollY = getDropdownTargetScrollY(el);
+
+  if (Math.abs(window.scrollY - targetScrollY) < 2) {
+    return Promise.resolve();
+  }
+
+  window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
+
+  return new Promise((resolve) => {
+    const startedAt = performance.now();
+
+    const checkScroll = () => {
+      if (Math.abs(window.scrollY - targetScrollY) < 2 || performance.now() - startedAt > 500) {
+        onFrame(null);
+        resolve();
+        return;
+      }
+
+      const frameId = requestAnimationFrame(checkScroll);
+      onFrame(frameId);
+    };
+
+    const frameId = requestAnimationFrame(checkScroll);
+    onFrame(frameId);
+  });
+}
 
 interface DropdownOption {
   value: string;
@@ -55,6 +98,7 @@ function DropdownComponent({
   menuMaxHeight,
 }: DropdownProps) {
   const { t } = useTranslation();
+  const scrollIntoViewOnOpen = useContext(ScrollDropdownIntoViewContext);
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const deferredSearchQuery = useDeferredValue(searchQuery);
@@ -71,6 +115,8 @@ function DropdownComponent({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const scrollWaitFrameRef = useRef<number | null>(null);
+  const openRequestIdRef = useRef(0);
 
   useEffect(() => {
     setTempValue(value);
@@ -81,6 +127,15 @@ function DropdownComponent({
       setTempValue(value);
     }
   }, [isOpen, value, showActionButtons]);
+
+  useEffect(
+    () => () => {
+      if (scrollWaitFrameRef.current !== null) {
+        cancelAnimationFrame(scrollWaitFrameRef.current);
+      }
+    },
+    [],
+  );
 
   const updatePortalPosition = useCallback(() => {
     if (!dropdownRef.current || !isOpen) return;
@@ -227,17 +282,48 @@ function DropdownComponent({
     [showActionButtons, onChange],
   );
 
+  const openDropdown = useCallback(async () => {
+    const requestId = openRequestIdRef.current + 1;
+    openRequestIdRef.current = requestId;
+
+    if (
+      scrollIntoViewOnOpen &&
+      typeof window !== 'undefined' &&
+      window.innerWidth <= MOBILE_BREAKPOINT_PX &&
+      dropdownRef.current
+    ) {
+      if (scrollWaitFrameRef.current !== null) {
+        cancelAnimationFrame(scrollWaitFrameRef.current);
+      }
+
+      await smoothScrollTriggerBelowHeader(dropdownRef.current, (frameId) => {
+        scrollWaitFrameRef.current = frameId;
+      });
+
+      if (openRequestIdRef.current !== requestId) {
+        return;
+      }
+
+      setIsOpen(true);
+      return;
+    }
+
+    setIsOpen(true);
+  }, [scrollIntoViewOnOpen]);
+
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setSearchQuery(e.target.value);
-      if (!isOpen) setIsOpen(true);
+      if (!isOpen) void openDropdown();
     },
-    [isOpen],
+    [isOpen, openDropdown],
   );
 
   const handleInputFocus = useCallback(() => {
-    if (!disabled) setIsOpen(true);
-  }, [disabled]);
+    if (disabled) return;
+    if (isOpen) return;
+    void openDropdown();
+  }, [disabled, isOpen, openDropdown]);
 
   const handleToggleOpen = useCallback(
     (e: React.MouseEvent) => {
@@ -247,9 +333,13 @@ function DropdownComponent({
         onChange(tempValue);
         setSearchQuery('');
       }
-      setIsOpen((prev) => !prev);
+      if (!isOpen) {
+        void openDropdown();
+        return;
+      }
+      setIsOpen(false);
     },
-    [disabled, isOpen, showActionButtons, tempValue, onChange],
+    [disabled, isOpen, showActionButtons, tempValue, onChange, openDropdown],
   );
 
   const handleReset = useCallback(() => {

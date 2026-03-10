@@ -31,6 +31,8 @@ const ADVANCED_PARAM_KEYS = [
   'registration_types',
   'urgent',
   'is_new',
+  'available_in_credit',
+  'down_payment_amount_gte',
 ] as const;
 
 interface UseSearchTabsParams {

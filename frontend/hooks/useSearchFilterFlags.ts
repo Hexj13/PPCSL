@@ -34,6 +34,8 @@ export function useSearchFilterFlags(
         filters.currency !== '' ||
         filters.urgent === true ||
         filters.is_new === true ||
+        filters.available_in_credit === true ||
+        filters.down_payment_amount_gte !== '' ||
         filters.engine_displ_l_gte !== '' ||
         filters.engine_displ_l_lte !== '' ||
         filters.horsepower_gte !== '' ||

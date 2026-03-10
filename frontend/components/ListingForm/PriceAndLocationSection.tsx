@@ -29,8 +29,8 @@ export function PriceAndLocationSection({
       <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-900">
         {t('listings.priceAndLocation')}
       </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:auto-rows-min">
+        <div className="sm:row-start-1 sm:col-span-1">
           <label className="block text-sm font-semibold mb-2 text-primary-700 flex items-center gap-2">
             <svg
               width="16"
@@ -129,7 +129,85 @@ export function PriceAndLocationSection({
           </div>
         </div>
 
-        <div>
+        <div className="flex items-center gap-3 sm:row-start-2 sm:col-span-1">
+          <div className="relative">
+            <input
+              id="listing-available-in-credit"
+              type="checkbox"
+              checked={formData.available_in_credit}
+              data-testid="listing-form-available-in-credit"
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setFormData((prev) => ({
+                  ...prev,
+                  available_in_credit: checked,
+                  ...(checked ? {} : { down_payment_amount: '' }),
+                }));
+              }}
+              className="sr-only"
+            />
+            <label
+              htmlFor="listing-available-in-credit"
+              className={`w-6 h-6 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer ${
+                formData.available_in_credit
+                  ? 'border-primary-700 bg-primary-500/10'
+                  : 'border-primary-700/50 bg-bg-secondary hover-only:hover:border-primary-700'
+              }`}
+            >
+              {formData.available_in_credit && (
+                <svg
+                  className="w-4 h-4 text-primary-900"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={3}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              )}
+            </label>
+          </div>
+          <span className="text-sm font-semibold text-primary-700">
+            {t('listings.availableInCredit')}
+          </span>
+        </div>
+
+        <div className="sm:row-start-3 sm:col-span-1">
+          <label className="block text-sm font-semibold mb-2 text-primary-700">
+            {t('listings.downPaymentFrom')}{' '}
+            <span className="text-text-secondary">{t('listings.optionalShort')}</span>
+          </label>
+          <input
+            type="text"
+            min="0"
+            max="999999999"
+            value={formData.down_payment_amount}
+            disabled={!formData.available_in_credit}
+            data-testid="listing-form-down-payment"
+            onChange={(e) => {
+              const value = e.target.value.replace(/[^0-9]/g, '');
+              setFormData((prev) => ({ ...prev, down_payment_amount: value }));
+            }}
+            onBlur={(e) => {
+              const value = e.target.value.trim();
+              if (value && /^0+$/.test(value)) {
+                setFormData((prev) => ({
+                  ...prev,
+                  down_payment_amount: '0',
+                }));
+              }
+            }}
+            onWheel={handleWheel}
+            className="input-field h-[48px] w-full max-w-[200px] disabled:opacity-50 disabled:cursor-not-allowed"
+            placeholder={t('listings.pricePlaceholder')}
+          />
+        </div>
+
+        <div className="sm:row-start-4 sm:col-span-1">
           <label className="block text-sm font-semibold mb-2 text-primary-700 flex items-center gap-2">
             <svg
               width="16"

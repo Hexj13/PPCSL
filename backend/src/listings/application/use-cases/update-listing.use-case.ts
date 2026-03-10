@@ -127,6 +127,9 @@ export class UpdateListingUseCase {
       last_edited_at: new Date(),
       title: await this.generateTitle(updatedVehicle),
     };
+    if (listingUpdateData.available_in_credit === false) {
+      listingUpdateData.down_payment_amount = null;
+    }
 
     await this.listingsRepository.update(id, listingUpdateData);
     await this.listingsRepository.manager.connection.queryResultCache?.remove([`listing_${id}`]);

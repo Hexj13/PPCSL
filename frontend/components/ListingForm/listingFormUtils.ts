@@ -32,6 +32,8 @@ function getEmptyFormData(): ListingFormData {
     price: '',
     currency: getDefaultCurrency(),
     city: '',
+    available_in_credit: false,
+    down_payment_amount: '',
     description: '',
     status: ListingStatusEnum.Active,
     images: [],
@@ -96,6 +98,11 @@ export function getInitialFormData(initialData?: Listing): ListingFormData {
     price: initialData.price ? Math.floor(initialData.price).toString() : '',
     currency: initialData.currency ?? getDefaultCurrency(),
     city: initialData.city || '',
+    available_in_credit: initialData.available_in_credit ?? false,
+    down_payment_amount:
+      initialData.down_payment_amount != null && initialData.down_payment_amount > 0
+        ? Math.floor(initialData.down_payment_amount).toString()
+        : '',
     description: initialData.description || '',
     status: initialData.status || ListingStatusEnum.Active,
     images: initialData.images || [],

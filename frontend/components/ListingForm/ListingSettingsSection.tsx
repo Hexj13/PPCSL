@@ -42,7 +42,7 @@ export function ListingSettingsSection({
       <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-900">
         {t('listings.listingSettings')}
       </h2>
-      <div>
+      <div className="sm:max-w-[50%]">
         <label className="block text-sm font-semibold mb-2 text-primary-700">
           {t('listings.statusLabel')}
         </label>

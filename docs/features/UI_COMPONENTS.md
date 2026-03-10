@@ -138,11 +138,12 @@ import { HintTooltip } from '@/ui';
 
 ### HintTooltip
 
-| Page                | File                                          | Purpose                               |
-| ------------------- | --------------------------------------------- | ------------------------------------- |
-| Create/Edit Listing | `components/ListingForm/BasicInfoSection.tsx` | VIN field explanation                 |
-| Complete Profile    | `app/complete-profile/page.tsx`               | Email field explanation (2 instances) |
-| Listing Detail      | `app/listings/[id]/ListingPageClient.tsx`     | Vehicle history explanation           |
+| Page                | File                                              | Purpose                               |
+| ------------------- | ------------------------------------------------- | ------------------------------------- |
+| Create/Edit Listing | `components/ListingForm/BasicInfoSection.tsx`     | VIN field explanation                 |
+| Create/Edit Listing | `components/ListingForm/ListingSettingsSection.tsx` | Assign listing to user (admin)      |
+| Complete Profile    | `app/complete-profile/page.tsx`                   | Email field explanation (2 instances) |
+| Listing Detail      | `app/listings/[id]/ListingPageClient.tsx`        | Vehicle history explanation           |
 
 ---
 
@@ -173,4 +174,4 @@ When you need to show contextual help or information:
 
 ---
 
-**Last Updated:** 2026-02-11
+**Last Updated:** 2026-03-10

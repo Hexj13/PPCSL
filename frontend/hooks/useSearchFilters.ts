@@ -79,6 +79,8 @@ export interface FilterState {
   drive_types: string[];
   equipment: string[];
   equipment_match_mode: 'full' | 'partial';
+  available_in_credit: boolean;
+  down_payment_amount_gte: string;
   sortBy: string;
   sortOrder: 'ASC' | 'DESC';
 }
@@ -163,6 +165,8 @@ export function useSearchFilters() {
       drive_types: resolveArrayFromStorageOrUrl(ctx, 'drive_types', ['drive_types']),
       equipment: resolveArrayFromStorageOrUrl(ctx, 'equipment', ['equipment']),
       equipment_match_mode: searchParams.get('equipmentMatch') === 'partial' ? 'partial' : 'full',
+      available_in_credit: searchParams.get('available_in_credit') === 'true',
+      down_payment_amount_gte: searchParams.get('down_payment_amount_gte') || '',
       sortBy: searchParams.get('sortBy') || 'created_at',
       sortOrder: (searchParams.get('sortOrder') || 'DESC') as 'ASC' | 'DESC',
     };
@@ -229,6 +233,8 @@ export function useSearchFilters() {
       drive_types: resolveArrayFromStorageOrUrl(ctx, 'drive_types', ['drive_types']),
       equipment: resolveArrayFromStorageOrUrl(ctx, 'equipment', ['equipment']),
       equipment_match_mode: searchParams.get('equipmentMatch') === 'partial' ? 'partial' : 'full',
+      available_in_credit: searchParams.get('available_in_credit') === 'true',
+      down_payment_amount_gte: searchParams.get('down_payment_amount_gte') || '',
       sortBy: searchParams.get('sortBy') || 'created_at',
       sortOrder: (searchParams.get('sortOrder') || 'DESC') as 'ASC' | 'DESC',
     };

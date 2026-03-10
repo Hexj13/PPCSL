@@ -51,6 +51,12 @@ export class Listing {
   @Column()
   city: string;
 
+  @Column({ type: 'boolean', default: false })
+  available_in_credit: boolean;
+
+  @Column({ type: 'integer', nullable: true })
+  down_payment_amount: number | null;
+
   @Column({
     type: 'enum',
     enum: constants.listingStatuses,

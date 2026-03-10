@@ -248,6 +248,13 @@ export class TypeOrmListingRepository implements IListingRepository {
     applyTextSearchFilter(qb, 'listing', 'title', searchDto.title);
     applyBooleanFilter(qb, 'listing', 'urgent', searchDto.urgent);
     applyBooleanFilter(qb, 'listing', 'is_new', searchDto.is_new);
+    applyBooleanFilter(qb, 'listing', 'available_in_credit', searchDto.available_in_credit);
+    if (searchDto.down_payment_amount_gte != null && searchDto.down_payment_amount_gte >= 0) {
+      qb.andWhere(
+        'listing.available_in_credit = true AND listing.down_payment_amount IS NOT NULL AND listing.down_payment_amount >= :down_payment_amount_gte',
+        { down_payment_amount_gte: searchDto.down_payment_amount_gte },
+      );
+    }
 
     if (searchDto.conditions && searchDto.conditions.length > 0) {
       qb.andWhere('listing.condition IN (:...conditions)', {

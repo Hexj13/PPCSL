@@ -1,18 +1,177 @@
 'use client';
 
 import Image from 'next/image';
-import { useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { useListingImages } from '@/hooks/useListingImages';
 import { useTranslation } from '@/hooks/useTranslation';
 import { getOptimizedImageUrl } from '@/lib/utils';
 import { Spinner } from '@/ui';
 
+const RESET_TO_FIRST_DELAY_MS = 10000;
+const REWIND_STEP_MS = 220;
+const IMAGE_SLIDE_DURATION_MS = 220;
+
+const PLACEHOLDER_SVG = (
+  <svg className="w-24 h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={1.5}
+      d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"
+    />
+  </svg>
+);
+
+function renderPreviewImage(
+  index: number,
+  params: {
+    images: string[];
+    imageErrors: Set<number>;
+    imageAltTitle: string;
+    currentImageIndex: number;
+    showMainImageLoader: boolean;
+    handleImageLoad: (_idx: number) => void;
+    onImageError: (_idx: number) => void;
+    eager: boolean;
+    t: (_key: string, _params?: Record<string, string>) => string;
+  },
+) {
+  const {
+    images,
+    imageErrors,
+    imageAltTitle,
+    currentImageIndex,
+    showMainImageLoader,
+    handleImageLoad,
+    onImageError,
+    eager,
+    t,
+  } = params;
+  const src = images[index];
+  const hasError = imageErrors.has(index);
+
+  if (!src || src === '/placeholder-car.jpg' || hasError) {
+    return (
+      <div
+        className="w-full h-full flex items-center justify-center"
+        style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+      >
+        {PLACEHOLDER_SVG}
+      </div>
+    );
+  }
+
+  const optimizedUrl = getOptimizedImageUrl(src, 75, 1200);
+  const isExternal = optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://');
+  const isCurrent = index === currentImageIndex;
+
+  return (
+    <Image
+      key={`preview-slide-${index}`}
+      src={optimizedUrl}
+      alt={t('listings.imageAltWithTotal', {
+        title: imageAltTitle,
+        index: String(index + 1),
+        total: String(images.length),
+      })}
+      fill
+      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 65vw"
+      className={`object-cover ${isCurrent && showMainImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
+      loading={index === 0 ? undefined : eager ? 'eager' : 'lazy'}
+      priority={index === 0}
+      draggable={false}
+      unoptimized={isExternal}
+      onLoad={() => handleImageLoad(index)}
+      onError={() => onImageError(index)}
+    />
+  );
+}
+
+function renderPreviewSlides(params: {
+  animState: {
+    fromIndex: number;
+    toIndex: number;
+    direction: 'next' | 'prev';
+    phase: 'setup' | 'running';
+  } | null;
+  currentImageIndex: number;
+  images: string[];
+  imageErrors: Set<number>;
+  imageAltTitle: string;
+  showMainImageLoader: boolean;
+  handleImageLoad: (_idx: number) => void;
+  onImageError: (_idx: number) => void;
+  t: (_key: string, _params?: Record<string, string>) => string;
+}) {
+  const {
+    animState,
+    currentImageIndex,
+    images,
+    imageErrors,
+    imageAltTitle,
+    showMainImageLoader,
+    handleImageLoad,
+    onImageError,
+    t,
+  } = params;
+
+  const slideParams = {
+    images,
+    imageErrors,
+    imageAltTitle,
+    currentImageIndex,
+    showMainImageLoader,
+    handleImageLoad,
+    onImageError,
+    t,
+  };
+
+  if (!animState) {
+    return (
+      <div className="absolute inset-0 overflow-hidden">
+        {renderPreviewImage(currentImageIndex, { ...slideParams, eager: false })}
+      </div>
+    );
+  }
+
+  const { fromIndex, toIndex, direction, phase } = animState;
+  const isRunning = phase === 'running';
+  const transitionStyle = isRunning ? `transform ${IMAGE_SLIDE_DURATION_MS}ms ease-out` : 'none';
+  const enterOffset = direction === 'next' ? '100%' : '-100%';
+  const leaveTarget = direction === 'next' ? '-100%' : '100%';
+
+  return (
+    <div className="absolute inset-0 overflow-hidden">
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          transform: isRunning ? `translateX(${leaveTarget})` : 'translateX(0%)',
+          transition: transitionStyle,
+        }}
+      >
+        {renderPreviewImage(fromIndex, { ...slideParams, eager: true })}
+      </div>
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          transform: isRunning ? 'translateX(0%)' : `translateX(${enterOffset})`,
+          transition: transitionStyle,
+        }}
+      >
+        {renderPreviewImage(toIndex, { ...slideParams, eager: true })}
+      </div>
+    </div>
+  );
+}
+
 interface ListingPageImagesProps {
   images: string[];
   imageAltTitle: string;
   currentImageIndex: number;
-  setCurrentImageIndex: (_index: number) => void;
+  setCurrentImageIndex: React.Dispatch<React.SetStateAction<number>>;
   imageErrors: Set<number>;
   onImageError: (_index: number) => void;
   onImageClick: (_index: number) => void;
@@ -29,47 +188,191 @@ export function ListingPageImages({
 }: ListingPageImagesProps) {
   const { t } = useTranslation();
   const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
+  const touchEndY = useRef<number | null>(null);
+  const horizontalSwipeRef = useRef(false);
+  const suppressPreviewClickRef = useRef(false);
+  const resetToFirstTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rewindIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const clearResetToFirstTimer = useCallback(() => {
+    if (resetToFirstTimerRef.current) {
+      clearTimeout(resetToFirstTimerRef.current);
+      resetToFirstTimerRef.current = null;
+    }
+    if (rewindIntervalRef.current) {
+      clearInterval(rewindIntervalRef.current);
+      rewindIntervalRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => () => clearResetToFirstTimer(), [clearResetToFirstTimer]);
+
+  const handlePreviewMouseLeave = useCallback(() => {
+    clearResetToFirstTimer();
+    if (images.length <= 1 || currentImageIndex === 0) return;
+    resetToFirstTimerRef.current = setTimeout(() => {
+      resetToFirstTimerRef.current = null;
+      rewindIntervalRef.current = setInterval(() => {
+        setCurrentImageIndex((prev) => {
+          if (prev <= 0) {
+            if (rewindIntervalRef.current) {
+              clearInterval(rewindIntervalRef.current);
+              rewindIntervalRef.current = null;
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, REWIND_STEP_MS);
+    }, RESET_TO_FIRST_DELAY_MS);
+  }, [images.length, currentImageIndex, setCurrentImageIndex, clearResetToFirstTimer]);
+
+  const handlePreviewMouseEnter = useCallback(() => {
+    clearResetToFirstTimer();
+  }, [clearResetToFirstTimer]);
+
+  const handlePrev = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      clearResetToFirstTimer();
+      setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+    },
+    [images.length, setCurrentImageIndex, clearResetToFirstTimer],
+  );
+
+  const handleNext = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      clearResetToFirstTimer();
+      setCurrentImageIndex((prev) => (prev + 1) % images.length);
+    },
+    [images.length, setCurrentImageIndex, clearResetToFirstTimer],
+  );
 
   const { showMainImageLoader, handleImageLoad } = useListingImages({
     images,
     currentImageIndex,
   });
 
+  const [animState, setAnimState] = useState<{
+    fromIndex: number;
+    toIndex: number;
+    direction: 'next' | 'prev';
+    phase: 'setup' | 'running';
+  } | null>(null);
+  const prevImgIndexRef = useRef(currentImageIndex);
+  const imgRafRef = useRef<number | undefined>(undefined);
+  const imgTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useLayoutEffect(() => {
+    const from = prevImgIndexRef.current;
+    const to = currentImageIndex;
+    if (from === to) return;
+    prevImgIndexRef.current = to;
+
+    const len = images.length;
+    const isNext = to - from === 1 || (from === len - 1 && to === 0);
+    const dir: 'next' | 'prev' = isNext ? 'next' : 'prev';
+
+    if (imgRafRef.current !== undefined) cancelAnimationFrame(imgRafRef.current);
+    if (imgTimerRef.current !== undefined) clearTimeout(imgTimerRef.current);
+
+    setAnimState({ fromIndex: from, toIndex: to, direction: dir, phase: 'setup' });
+
+    imgRafRef.current = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setAnimState((s) => (s ? { ...s, phase: 'running' } : null));
+        imgTimerRef.current = setTimeout(() => {
+          setAnimState(null);
+        }, IMAGE_SLIDE_DURATION_MS + 30);
+      });
+    });
+  }, [currentImageIndex, images.length]);
+
+  useEffect(
+    () => () => {
+      if (imgRafRef.current !== undefined) cancelAnimationFrame(imgRafRef.current);
+      if (imgTimerRef.current !== undefined) clearTimeout(imgTimerRef.current);
+    },
+    [],
+  );
+
   const minSwipeDistance = 50;
+  const swipeIntentThreshold = 12;
 
-  const onTouchStart = (e: React.TouchEvent) => {
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
     touchEndX.current = null;
+    touchEndY.current = null;
+    horizontalSwipeRef.current = false;
     touchStartX.current = e.targetTouches[0].clientX;
-  };
+    touchStartY.current = e.targetTouches[0].clientY;
+  }, []);
 
-  const onTouchMove = (e: React.TouchEvent) => {
-    e.preventDefault();
-    touchEndX.current = e.targetTouches[0].clientX;
-  };
+  const onTouchMove = useCallback((e: React.TouchEvent) => {
+    const nextX = e.targetTouches[0].clientX;
+    const nextY = e.targetTouches[0].clientY;
+    touchEndX.current = nextX;
+    touchEndY.current = nextY;
 
-  const onTouchEnd = () => {
-    if (!touchStartX.current || !touchEndX.current) return;
+    if (touchStartX.current === null || touchStartY.current === null) return;
+
+    const deltaX = nextX - touchStartX.current;
+    const deltaY = nextY - touchStartY.current;
+    const isHorizontalIntent =
+      Math.abs(deltaX) > swipeIntentThreshold && Math.abs(deltaX) > Math.abs(deltaY);
+
+    if (isHorizontalIntent) {
+      horizontalSwipeRef.current = true;
+      e.preventDefault();
+    }
+  }, []);
+
+  const onTouchEnd = useCallback(() => {
+    const resetTouchState = () => {
+      horizontalSwipeRef.current = false;
+      touchStartX.current = null;
+      touchStartY.current = null;
+      touchEndX.current = null;
+      touchEndY.current = null;
+    };
+
+    if (touchStartX.current === null || touchEndX.current === null || !horizontalSwipeRef.current) {
+      resetTouchState();
+      return;
+    }
+
     const distance = touchStartX.current - touchEndX.current;
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
 
     if (isLeftSwipe && images.length > 1) {
-      setCurrentImageIndex((currentImageIndex + 1) % images.length);
+      suppressPreviewClickRef.current = true;
+      clearResetToFirstTimer();
+      setCurrentImageIndex((prev) => (prev + 1) % images.length);
     }
     if (isRightSwipe && images.length > 1) {
-      setCurrentImageIndex((currentImageIndex - 1 + images.length) % images.length);
+      suppressPreviewClickRef.current = true;
+      clearResetToFirstTimer();
+      setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
     }
-  };
 
-  const currentImage = images[currentImageIndex];
-  const hasValidImage =
-    currentImage && currentImage !== '/placeholder-car.jpg' && !imageErrors.has(currentImageIndex);
+    resetTouchState();
+  }, [images.length, setCurrentImageIndex, clearResetToFirstTimer]);
 
   return (
     <div>
       <div
-        onClick={() => onImageClick(currentImageIndex)}
+        onClick={() => {
+          if (suppressPreviewClickRef.current) {
+            suppressPreviewClickRef.current = false;
+            return;
+          }
+          onImageClick(currentImageIndex);
+        }}
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {
@@ -78,57 +381,64 @@ export function ListingPageImages({
             onImageClick(currentImageIndex);
           }
         }}
-        className="relative h-64 sm:h-80 md:h-96 bg-bg-darker rounded-xl overflow-hidden mb-4 w-full cursor-pointer border border-transparent hover-only:hover:border-primary-500/50 transition-colors"
+        className="relative h-64 sm:h-80 md:h-96 bg-bg-darker rounded-xl overflow-hidden mb-4 w-full cursor-pointer border border-transparent hover-only:hover:border-primary-500/50 transition-colors group touch-pan-y"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
+        onMouseLeave={handlePreviewMouseLeave}
+        onMouseEnter={handlePreviewMouseEnter}
       >
+        {images.length > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={handlePrev}
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center transition-all shadow-lg z-10 text-white opacity-60 lg:opacity-0 lg:group-hover:opacity-60 hover-only:hover:opacity-100 touch-manipulation"
+              aria-label={t('listings.previousPhoto')}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2.5}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={handleNext}
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center transition-all shadow-lg z-10 text-white opacity-60 lg:opacity-0 lg:group-hover:opacity-60 hover-only:hover:opacity-100 touch-manipulation"
+              aria-label={t('listings.nextPhoto')}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2.5}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </button>
+          </>
+        )}
         {showMainImageLoader && (
           <div className="absolute inset-0 flex items-center justify-center z-10">
             <Spinner size="lg" />
           </div>
         )}
 
-        {hasValidImage ? (
-          (() => {
-            const optimizedUrl = getOptimizedImageUrl(currentImage, 75, 1200);
-            const isExternal =
-              optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://');
-            return (
-              <Image
-                src={optimizedUrl}
-                alt={t('listings.imageAltWithTotal', {
-                  title: imageAltTitle,
-                  index: (currentImageIndex + 1).toString(),
-                  total: images.length.toString(),
-                })}
-                fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 65vw"
-                className={`object-cover ${showMainImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
-                priority
-                draggable={false}
-                unoptimized={isExternal}
-                onLoad={() => handleImageLoad(currentImageIndex)}
-                onError={() => onImageError(currentImageIndex)}
-                data-index={currentImageIndex}
-              />
-            );
-          })()
-        ) : (
-          <div
-            className="w-full h-full flex items-center justify-center"
-            style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-          >
-            <svg className="w-24 h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"
-              />
-            </svg>
-          </div>
-        )}
+        {renderPreviewSlides({
+          animState,
+          currentImageIndex,
+          images,
+          imageErrors,
+          imageAltTitle,
+          showMainImageLoader,
+          handleImageLoad,
+          onImageError,
+          t,
+        })}
       </div>
 
       {images.length > 1 && (

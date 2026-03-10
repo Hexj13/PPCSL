@@ -304,41 +304,59 @@ export function AdvancedFilters({
         )}
       </div>
 
-      <div>
-        <h3
-          className="text-sm font-semibold mb-2 text-primary-900 truncate"
-          title={t('searchFilters.labels')}
-        >
-          {t('searchFilters.labels')}
-        </h3>
-        <div className="flex flex-wrap gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <h3
+            className="text-sm font-semibold mb-2 text-primary-900 truncate"
+            title={t('searchFilters.labels')}
+          >
+            {t('searchFilters.labels')}
+          </h3>
+          <div className="flex flex-wrap gap-4">
+            <Checkbox
+              size="md"
+              id="urgent"
+              checked={filters.urgent}
+              onChange={(checked) => onCheckboxChange('urgent', checked)}
+              label={renderLabelBadge(
+                t('searchFilters.urgent'),
+                FIRE_EMOJI,
+                'border-accentSecondary',
+                'before:bg-accentSecondary/10',
+              )}
+              labelClassName="font-semibold"
+            />
+            <Checkbox
+              size="md"
+              id="is_new"
+              checked={filters.is_new}
+              onChange={(checked) => onCheckboxChange('is_new', checked)}
+              label={renderLabelBadge(
+                vehicleType === 'moto' ? t('searchFilters.newMoto') : t('searchFilters.new'),
+                SPARKLES_EMOJI,
+                'border-newBadge',
+                'before:bg-newBadge/10',
+              )}
+              labelClassName="font-semibold"
+            />
+          </div>
+        </div>
+        <div>
+          <h3
+            className="text-sm font-semibold mb-2 text-primary-900 truncate"
+            title={t('searchFilters.creditSection')}
+          >
+            {t('searchFilters.creditSection')}
+          </h3>
           <Checkbox
             size="md"
-            id="urgent"
-            checked={filters.urgent}
-            onChange={(checked) => onCheckboxChange('urgent', checked)}
-            label={renderLabelBadge(
-              t('searchFilters.urgent'),
-              FIRE_EMOJI,
-              'border-accentSecondary',
-              'before:bg-accentSecondary/10',
-            )}
-            labelClassName="font-semibold"
-          />
-          <Checkbox
-            size="md"
-            id="is_new"
-            checked={filters.is_new}
-            onChange={(checked) => onCheckboxChange('is_new', checked)}
-            label={renderLabelBadge(
-              vehicleType === 'moto' ? t('searchFilters.newMoto') : t('searchFilters.new'),
-              SPARKLES_EMOJI,
-              'border-newBadge',
-              'before:bg-newBadge/10',
-            )}
-            labelClassName="font-semibold"
+            id="available_in_credit"
+            checked={filters.available_in_credit}
+            onChange={(checked) => onCheckboxChange('available_in_credit', checked)}
+            label={t('listings.availableInCredit')}
           />
         </div>
+        <div />
       </div>
     </div>
   );

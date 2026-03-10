@@ -27,6 +27,8 @@ export interface DefaultFiltersShape {
   drive_types: string[];
   equipment: string[];
   equipment_match_mode: 'full' | 'partial';
+  available_in_credit: boolean;
+  down_payment_amount_gte: string;
   sortBy: string;
   sortOrder: 'ASC' | 'DESC';
 }
@@ -59,6 +61,8 @@ export function getDefaultFilters(currentYear: string): DefaultFiltersShape {
     drive_types: [],
     equipment: [],
     equipment_match_mode: 'full',
+    available_in_credit: false,
+    down_payment_amount_gte: '',
     sortBy: 'created_at',
     sortOrder: 'DESC',
   };
@@ -93,6 +97,8 @@ export interface ParsedSearchParams {
   horsepower_lte?: number;
   urgent?: boolean;
   is_new?: boolean;
+  available_in_credit?: boolean;
+  down_payment_amount_gte?: number;
   currency?: string;
   sortBy?: string;
   sortOrder?: string;
@@ -128,7 +134,9 @@ const NUMBER_PARAMS = [
 
 const FLOAT_PARAMS = ['engine_displ_l_gte', 'engine_displ_l_lte'] as const;
 
-const BOOLEAN_PARAMS = ['urgent', 'is_new'] as const;
+const BOOLEAN_PARAMS = ['urgent', 'is_new', 'available_in_credit'] as const;
+
+const DOWN_PAYMENT_PARAM = 'down_payment_amount_gte';
 
 export function decodeBase64Array(encoded: string): string[] {
   if (!encoded) return [];
@@ -363,6 +371,11 @@ export async function parseSearchParams(
   applyNumberParamsToParsed(params, urlParams);
   applyFloatParamsToParsed(params, urlParams);
   applyBooleanParamsToParsed(params, urlParams);
+  const downPaymentGte = getValue(DOWN_PAYMENT_PARAM);
+  if (downPaymentGte) {
+    const num = parseInt(downPaymentGte, 10);
+    if (!Number.isNaN(num) && num >= 0) params.down_payment_amount_gte = num;
+  }
 
   const page = getValue('page');
   if (page) params.page = Math.max(1, parseInt(page, 10) || 1);

@@ -21,6 +21,8 @@ export interface Listing {
   price?: number;
   currency?: Currency;
   city: string;
+  available_in_credit?: boolean;
+  down_payment_amount?: number | null;
   status: ListingStatus;
   description?: string;
   images?: string[];
@@ -149,6 +151,8 @@ export interface CreateListingDto {
   price: number;
   currency?: Currency;
   city: string;
+  available_in_credit?: boolean;
+  down_payment_amount?: number;
   description?: string;
   images?: string[];
   status?: ListingStatus;
@@ -176,7 +180,9 @@ export interface CreateListingDto {
   assignedUserId?: string;
 }
 
-export interface UpdateListingDto extends Partial<CreateListingDto> {}
+export type UpdateListingDto = Omit<Partial<CreateListingDto>, 'down_payment_amount'> & {
+  down_payment_amount?: number | null;
+};
 
 export interface RegisterDto {
   email?: string;

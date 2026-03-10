@@ -69,6 +69,9 @@ export class CreateListingUseCase {
       last_updated_at: new Date(),
       last_published_at: status === ListingStatusEnum.Active ? new Date() : null,
     });
+    if (!listing.available_in_credit) {
+      listing.down_payment_amount = null;
+    }
     listing.vehicle = vehicle;
 
     const saved = await this.listingRepo.save(listing);

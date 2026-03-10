@@ -61,6 +61,8 @@ export interface BuildSearchQueryFilters {
   currency: string;
   urgent: boolean;
   is_new: boolean;
+  available_in_credit: boolean;
+  down_payment_amount_gte: string;
   conditions: string[];
   registration_types: string[];
   horsepower_gte: string;

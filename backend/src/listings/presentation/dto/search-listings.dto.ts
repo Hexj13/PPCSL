@@ -485,6 +485,28 @@ export class SearchListingsDto {
   is_new?: boolean;
 
   @ApiPropertyOptional({
+    example: true,
+    description: 'Filter by available in credit or installment',
+  })
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  available_in_credit?: boolean;
+
+  @ApiPropertyOptional({
+    example: 5000,
+    description: 'Minimum down payment amount (when available_in_credit is true)',
+    minimum: 0,
+    maximum: 999999999,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @Max(999999999)
+  down_payment_amount_gte?: number;
+
+  @ApiPropertyOptional({
     example: ['Undamaged', 'Damaged'],
     enum: ['Undamaged', 'Damaged', 'ForParts'],
     description: 'Condition types (comma-separated or array)',

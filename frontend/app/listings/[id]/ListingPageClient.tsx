@@ -488,6 +488,11 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
 
           <div className="space-y-6 min-w-0">
             <ListingPageHeader listing={listing} title={h1Title} />
+            {(listing.available_in_credit ||
+              listing.status === 'Closed' ||
+              listing.is_promoted ||
+              listing.is_new ||
+              listing.urgent) && <div className="border-t border-primary-500/20" />}
             <ListingPageActions
               listing={listing}
               isInitialized={isInitialized}
