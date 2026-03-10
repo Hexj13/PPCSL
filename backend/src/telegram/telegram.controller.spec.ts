@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { TelegramController } from './telegram.controller';
@@ -7,6 +8,7 @@ import type { TelegramUpdate } from './types/telegram.types';
 describe('TelegramController', () => {
   let controller: TelegramController;
   let service: jest.Mocked<TelegramService>;
+  let loggerErrorSpy: jest.SpyInstance;
 
   const mockUpdate: TelegramUpdate = {
     update_id: 1,
@@ -26,6 +28,8 @@ describe('TelegramController', () => {
   };
 
   beforeEach(async () => {
+    loggerErrorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
+
     const mockTelegramService = {
       handleUpdate: jest.fn().mockResolvedValue(undefined),
     };
@@ -42,6 +46,10 @@ describe('TelegramController', () => {
 
     controller = module.get<TelegramController>(TelegramController);
     service = module.get(TelegramService);
+  });
+
+  afterEach(() => {
+    loggerErrorSpy?.mockRestore();
   });
 
   it('should be defined', () => {

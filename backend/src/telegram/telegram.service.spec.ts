@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 
@@ -15,6 +16,7 @@ describe('TelegramService', () => {
   let i18nService: jest.Mocked<I18nService>;
   let redisService: jest.Mocked<RedisService>;
   let fetchMock: jest.SpyInstance;
+  let loggerErrorSpy: jest.SpyInstance;
 
   const token = 'test-token';
   const supportChatId = '-1001234567890';
@@ -66,6 +68,7 @@ describe('TelegramService', () => {
   }
 
   beforeEach(async () => {
+    loggerErrorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
     fetchMock = jest.spyOn(globalThis, 'fetch').mockImplementation(createOkResponse);
 
     const mockConfigService = {
@@ -116,6 +119,7 @@ describe('TelegramService', () => {
 
   afterEach(() => {
     fetchMock.mockRestore();
+    loggerErrorSpy?.mockRestore();
   });
 
   it('should be defined', () => {

@@ -122,6 +122,8 @@ export function PriceAndLocationSection({
               }
               className="w-32 shrink-0"
               placeholder={t('searchFilters.allCurrencies')}
+              autoPosition={true}
+              menuMaxHeight={300}
               options={CURRENCY_OPTIONS}
             />
           </div>
@@ -157,6 +159,8 @@ export function PriceAndLocationSection({
             searchable={true}
             placeholder={t('listings.selectCity')}
             error={!!errors['city']}
+            autoPosition={true}
+            menuMaxHeight={300}
             options={cities.map((city) => {
               let label: string;
               if (locale === 'ro') {

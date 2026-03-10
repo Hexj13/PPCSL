@@ -633,7 +633,7 @@
     "expand": "Expand",
     "collapse": "Collapse",
     "previousListings": "Previous listings for this vehicle",
-    "vehicleHistory": "Vehicle History",
+    "vehicleHistory": "History on the site",
     "historyHint": "We show previous listings for this vehicle with the same VIN. For privacy protection, price and personal data of authors are hidden for closed listings.",
     "vinNotProvided": "VIN code was not provided by the seller",
     "vinNotProvidedDescription": "Without it, we cannot identify previous listings for this vehicle.",

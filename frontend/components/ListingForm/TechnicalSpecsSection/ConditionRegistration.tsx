@@ -36,6 +36,8 @@ export function ConditionRegistration({
             }}
             placeholder={t('searchFilters.selectCondition')}
             error={!!errors['condition']}
+            autoPosition={true}
+            menuMaxHeight={300}
             options={getConditionOptions(t)}
           />
         </div>
@@ -56,6 +58,8 @@ export function ConditionRegistration({
             }}
             placeholder={t('searchFilters.selectRegistrationType')}
             error={!!errors['registration_type']}
+            autoPosition={true}
+            menuMaxHeight={300}
             options={getRegistrationTypeOptions(t)}
           />
         </div>

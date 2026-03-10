@@ -52,6 +52,8 @@ export function ListingSettingsSection({
             setFormData((prev) => ({ ...prev, status: value as 'Active' | 'Paused' }))
           }
           placeholder={t('listings.statusLabel')}
+          autoPosition={true}
+          menuMaxHeight={300}
           options={[
             { value: 'Active', label: t('listings.publishedStatus') },
             { value: 'Paused', label: t('listings.pausedStatus') },

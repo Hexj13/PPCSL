@@ -1,451 +1,43 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useRef, useState } from 'react';
 
-import { useTranslation } from '@/hooks/useTranslation';
-import { getOptimizedImageUrl } from '@/lib/utils';
 import { Spinner } from '@/ui';
 
-interface ListingPageImageModalProps {
-  isOpen: boolean;
-  images: string[];
-  currentIndex: number;
-  imageAltTitle: string;
-  imageErrors: Set<number>;
-  onClose: () => void;
-  onNext: () => void;
-  onPrev: () => void;
-  onIndexChange: (_index: number) => void;
-  onImageError: (_index: number) => void;
-}
+import {
+  useListingPageImageModal,
+  type ListingPageImageModalProps,
+} from './useListingPageImageModal';
 
-/* eslint-disable max-lines-per-function -- modal has two-layer image stack, scroll lock, preload, viewport logic */
-export function ListingPageImageModal({
-  isOpen,
-  images,
-  currentIndex,
-  imageAltTitle,
-  imageErrors,
-  onClose,
-  onNext,
-  onPrev,
-  onIndexChange: _onIndexChange,
-  onImageError,
-}: ListingPageImageModalProps) {
-  const { t } = useTranslation();
-  const [modalImageLoading, setModalImageLoading] = useState(false);
-  const [visibleIndex, setVisibleIndex] = useState(currentIndex);
-  const [targetImageWidth, setTargetImageWidth] = useState(1920);
-  const [imageQuality, setImageQuality] = useState(85);
-  const [isMobileViewport, setIsMobileViewport] = useState(false);
-  const modalImageLoadedRef = useRef<Set<string>>(new Set());
-  const swipeContainerRef = useRef<HTMLDivElement>(null);
-  const touchStartX = useRef<number | null>(null);
-  const touchEndX = useRef<number | null>(null);
-  const swipeHandledRef = useRef(false);
-  const swipeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const savedScrollYRef = useRef(0);
-  const prevIsOpenRef = useRef(false);
-  const wasOpenRef = useRef(false);
-  const lastNavigatedIndexRef = useRef(currentIndex);
-  const navigationCountRef = useRef(0);
+export type { ListingPageImageModalProps };
 
-  const [showSpinner, setShowSpinner] = useState(false);
-  const spinnerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+export function ListingPageImageModal(props: ListingPageImageModalProps) {
+  const state = useListingPageImageModal(props);
 
-  const [pinchScale, setPinchScale] = useState(1);
-  const initialPinchDistanceRef = useRef<number>(0);
-  const pinchStartScaleRef = useRef(1);
-  const isPinchingRef = useRef(false);
-  const pinchScaleRef = useRef(1);
-  pinchScaleRef.current = pinchScale;
+  if (!state.isOpen) return null;
 
-  const getPinchDistance = (t1: Touch, t2: Touch) =>
-    Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-
-  useEffect(() => {
-    if (modalImageLoading) {
-      spinnerTimeoutRef.current = setTimeout(() => setShowSpinner(true), 300);
-    } else {
-      if (spinnerTimeoutRef.current) {
-        clearTimeout(spinnerTimeoutRef.current);
-        spinnerTimeoutRef.current = null;
-      }
-      setShowSpinner(false);
-    }
-    return () => {
-      if (spinnerTimeoutRef.current) {
-        clearTimeout(spinnerTimeoutRef.current);
-      }
-    };
-  }, [modalImageLoading]);
-
-  useEffect(() => {
-    if (isOpen && !prevIsOpenRef.current) {
-      setVisibleIndex(currentIndex);
-    }
-    prevIsOpenRef.current = isOpen;
-  }, [isOpen, currentIndex]);
-
-  useEffect(() => {
-    if (!isOpen) setPinchScale(1);
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      wasOpenRef.current = false;
-      return;
-    }
-
-    if (!wasOpenRef.current) {
-      navigationCountRef.current = 0;
-      lastNavigatedIndexRef.current = currentIndex;
-      wasOpenRef.current = true;
-      return;
-    }
-
-    if (lastNavigatedIndexRef.current !== currentIndex) {
-      navigationCountRef.current += 1;
-      lastNavigatedIndexRef.current = currentIndex;
-    }
-  }, [isOpen, currentIndex]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const updateViewportSettings = () => {
-      type NetworkConnection = {
-        effectiveType?: string;
-        saveData?: boolean;
-      };
-
-      const viewportWidth = window.innerWidth;
-      const isMobile = viewportWidth <= 768;
-      const connection = (navigator as Navigator & { connection?: NetworkConnection }).connection;
-      const hasSlowNetwork =
-        connection?.saveData === true ||
-        ['slow-2g', '2g', '3g'].includes(connection?.effectiveType ?? '');
-      const pixelRatio = Math.min(window.devicePixelRatio || 1, isMobile ? 2.2 : 3);
-      const widthMultiplier = isMobile ? 1 : 1.2;
-      const minWidth = isMobile ? 640 : 900;
-      const maxWidth = isMobile ? (hasSlowNetwork ? 1200 : 1440) : 1920;
-      const quality = isMobile ? (hasSlowNetwork ? 68 : 75) : 85;
-      const computedTargetWidth = Math.min(
-        maxWidth,
-        Math.max(minWidth, Math.round(viewportWidth * pixelRatio * widthMultiplier)),
-      );
-      const normalizationStep = isMobile ? 80 : 120;
-      const normalizedTargetWidth =
-        Math.round(computedTargetWidth / normalizationStep) * normalizationStep;
-
-      setTargetImageWidth((prev) => {
-        if (Math.abs(prev - normalizedTargetWidth) < 50) return prev;
-        return normalizedTargetWidth;
-      });
-      setIsMobileViewport(isMobile);
-      setImageQuality((prev) => (prev === quality ? prev : quality));
-    };
-
-    updateViewportSettings();
-    window.addEventListener('resize', updateViewportSettings);
-
-    return () => {
-      window.removeEventListener('resize', updateViewportSettings);
-    };
-  }, [isOpen]);
-
-  const minSwipeDistance = 50;
-  const onNextRef = useRef(onNext);
-  const onPrevRef = useRef(onPrev);
-  onNextRef.current = onNext;
-  onPrevRef.current = onPrev;
-  const imagesLengthRef = useRef(images.length);
-  imagesLengthRef.current = images.length;
-
-  useEffect(() => {
-    const container = swipeContainerRef.current;
-    if (!isOpen || !container) return;
-
-    const handleTouchStart = (e: TouchEvent) => {
-      touchEndX.current = null;
-      touchStartX.current = e.touches[0].clientX;
-      if (isMobileViewport && e.touches.length === 2) {
-        isPinchingRef.current = true;
-        initialPinchDistanceRef.current = getPinchDistance(e.touches[0], e.touches[1]);
-        pinchStartScaleRef.current = pinchScaleRef.current;
-      }
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (isMobileViewport && e.touches.length === 2 && isPinchingRef.current) {
-        e.preventDefault();
-        const dist = getPinchDistance(e.touches[0], e.touches[1]);
-        const scale = Math.min(
-          4,
-          Math.max(1, (pinchStartScaleRef.current * dist) / initialPinchDistanceRef.current),
-        );
-        setPinchScale(scale);
-        return;
-      }
-      touchEndX.current = e.touches[0]?.clientX ?? null;
-    };
-
-    const resetPinchIfNeeded = (e: TouchEvent) => {
-      if (e.touches.length < 2 && isPinchingRef.current) {
-        isPinchingRef.current = false;
-        setPinchScale(1);
-        return true;
-      }
-      return false;
-    };
-
-    const handleTouchEnd = (e: TouchEvent) => {
-      if (resetPinchIfNeeded(e)) return;
-      if (!touchStartX.current || !touchEndX.current) return;
-      const distance = touchStartX.current - touchEndX.current;
-      const isLeftSwipe = distance > minSwipeDistance;
-      const isRightSwipe = distance < -minSwipeDistance;
-
-      if (isLeftSwipe && imagesLengthRef.current > 1) {
-        swipeHandledRef.current = true;
-        onNextRef.current();
-        if (swipeTimeoutRef.current) clearTimeout(swipeTimeoutRef.current);
-        swipeTimeoutRef.current = setTimeout(() => {
-          swipeHandledRef.current = false;
-        }, 400);
-      }
-      if (isRightSwipe && imagesLengthRef.current > 1) {
-        swipeHandledRef.current = true;
-        onPrevRef.current();
-        if (swipeTimeoutRef.current) clearTimeout(swipeTimeoutRef.current);
-        swipeTimeoutRef.current = setTimeout(() => {
-          swipeHandledRef.current = false;
-        }, 400);
-      }
-    };
-
-    const handleTouchCancel = (e: TouchEvent) => {
-      resetPinchIfNeeded(e);
-    };
-
-    container.addEventListener('touchstart', handleTouchStart, { passive: true });
-    container.addEventListener('touchmove', handleTouchMove, { passive: false });
-    container.addEventListener('touchend', handleTouchEnd, { passive: true });
-    container.addEventListener('touchcancel', handleTouchCancel, { passive: true });
-
-    return () => {
-      container.removeEventListener('touchstart', handleTouchStart);
-      container.removeEventListener('touchmove', handleTouchMove);
-      container.removeEventListener('touchend', handleTouchEnd);
-      container.removeEventListener('touchcancel', handleTouchCancel);
-    };
-  }, [isOpen, isMobileViewport]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-      const isInteractive = target.closest('button, [href]');
-      if (e.key === 'Escape') {
-        onClose();
-      }
-      if ((e.key === 'Enter' || e.key === ' ') && !isInteractive) {
-        e.preventDefault();
-        onClose();
-      }
-      if (e.key === 'ArrowLeft') {
-        onPrev();
-      }
-      if (e.key === 'ArrowRight') {
-        onNext();
-      }
-    };
-
-    const preventScroll = (e: TouchEvent) => {
-      if (e.touches.length > 1) return;
-      e.preventDefault();
-    };
-
-    savedScrollYRef.current = window.scrollY;
-    document.body.style.overflow = 'hidden';
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${savedScrollYRef.current}px`;
-    document.body.style.width = '100%';
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('touchmove', preventScroll, { passive: false });
-
-    return () => {
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      window.scrollTo(0, savedScrollYRef.current);
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('touchmove', preventScroll);
-      if (swipeTimeoutRef.current) {
-        clearTimeout(swipeTimeoutRef.current);
-        swipeTimeoutRef.current = null;
-      }
-      swipeHandledRef.current = false;
-    };
-  }, [isOpen, onClose, onNext, onPrev]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      setModalImageLoading(false);
-      return;
-    }
-
-    const imagesList = images.length > 0 ? images : ['/placeholder-car.jpg'];
-    const currentImage = imagesList[currentIndex];
-
-    if (!currentImage || currentImage === '/placeholder-car.jpg' || imageErrors.has(currentIndex)) {
-      setModalImageLoading(false);
-      setVisibleIndex(currentIndex);
-      return;
-    }
-
-    const optimizedUrl = getOptimizedImageUrl(currentImage, imageQuality, targetImageWidth);
-
-    if (modalImageLoadedRef.current.has(optimizedUrl)) {
-      setModalImageLoading(false);
-      setVisibleIndex(currentIndex);
-      return;
-    }
-
-    const loadStartTime = performance.now();
-    const wasCached = modalImageLoadedRef.current.has(optimizedUrl);
-    const testImg = new window.Image();
-    testImg.src = optimizedUrl;
-    const imgIndex = currentIndex;
-
-    if (testImg.complete && testImg.naturalWidth > 0) {
-      modalImageLoadedRef.current.add(optimizedUrl);
-      setModalImageLoading(false);
-      setVisibleIndex(imgIndex);
-      return;
-    }
-
-    setModalImageLoading(true);
-
-    testImg.onload = () => {
-      const loadTime = performance.now() - loadStartTime;
-      if (process.env.NODE_ENV === 'development') {
-        // eslint-disable-next-line no-console -- dev instrumentation
-        console.debug(
-          `[ImageModal] Image ${imgIndex} loaded in ${loadTime.toFixed(0)}ms, cache: ${wasCached}`,
-        );
-      }
-      modalImageLoadedRef.current.add(optimizedUrl);
-      if (imgIndex === currentIndex) {
-        setModalImageLoading(false);
-        setVisibleIndex(currentIndex);
-      }
-    };
-
-    testImg.onerror = () => {
-      if (imgIndex === currentIndex) {
-        setModalImageLoading(false);
-        setVisibleIndex(currentIndex);
-      }
-    };
-
-    return () => {
-      testImg.onload = null;
-      testImg.onerror = null;
-    };
-  }, [currentIndex, isOpen, images, imageErrors, targetImageWidth, imageQuality]);
-
-  const imagesCacheKey = images.join('|');
-
-  useEffect(() => {
-    modalImageLoadedRef.current.clear();
-  }, [imagesCacheKey]);
-
-  useEffect(() => {
-    if (!isOpen || images.length <= 1) return;
-
-    const nextIndex = (currentIndex + 1) % images.length;
-    const prevIndex = (currentIndex - 1 + images.length) % images.length;
-    const preloadImages: HTMLImageElement[] = [];
-    const preloadTimeouts: Array<ReturnType<typeof setTimeout>> = [];
-    const shouldWarmSecondNext = isMobileViewport && navigationCountRef.current < 2;
-    const secondNextIndex = (currentIndex + 2) % images.length;
-
-    const preloadByIndex = (index: number, delay = 0) => {
-      const url = images[index];
-      if (!url || url === '/placeholder-car.jpg' || imageErrors.has(index)) return;
-      const optimizedUrl = getOptimizedImageUrl(url, imageQuality, targetImageWidth);
-      if (modalImageLoadedRef.current.has(optimizedUrl)) {
-        if (process.env.NODE_ENV === 'development') {
-          // eslint-disable-next-line no-console -- dev instrumentation
-          console.debug(`[ImageModal] Preload cache hit for index ${index}`);
-        }
-        return;
-      }
-      const startPreload = () => {
-        const img = new window.Image();
-        img.onload = () => {
-          modalImageLoadedRef.current.add(optimizedUrl);
-        };
-        img.src = optimizedUrl;
-        preloadImages.push(img);
-      };
-
-      if (delay > 0) {
-        const timeout = setTimeout(startPreload, delay);
-        preloadTimeouts.push(timeout);
-        return;
-      }
-
-      startPreload();
-    };
-
-    preloadByIndex(nextIndex);
-    preloadByIndex(prevIndex, 120);
-
-    if (
-      shouldWarmSecondNext &&
-      images.length > 2 &&
-      secondNextIndex !== nextIndex &&
-      secondNextIndex !== prevIndex
-    ) {
-      preloadByIndex(secondNextIndex, 40);
-    }
-
-    return () => {
-      for (const timeout of preloadTimeouts) {
-        clearTimeout(timeout);
-      }
-      for (const img of preloadImages) {
-        img.onload = null;
-      }
-    };
-  }, [currentIndex, isOpen, images, imageErrors, isMobileViewport, targetImageWidth, imageQuality]);
-
-  if (!isOpen) return null;
-
-  const imagesList = images.length > 0 ? images : ['/placeholder-car.jpg'];
-  const hasValidImageAt = (index: number) => {
-    const img = imagesList[index];
-    return img && img !== '/placeholder-car.jpg' && !imageErrors.has(index);
-  };
-  const confirmedUrl = hasValidImageAt(visibleIndex)
-    ? getOptimizedImageUrl(imagesList[visibleIndex], imageQuality, targetImageWidth)
-    : '';
-  const pendingUrl = hasValidImageAt(currentIndex)
-    ? getOptimizedImageUrl(imagesList[currentIndex], imageQuality, targetImageWidth)
-    : '';
-  const hasValidImage = !!confirmedUrl || !!pendingUrl;
-  const shouldShowLoader = showSpinner && modalImageLoading && visibleIndex === currentIndex;
-  const imageAltText = t('listings.imageAltWithTotal', {
-    title: imageAltTitle,
-    index: (currentIndex + 1).toString(),
-    total: images.length.toString(),
-  });
-  const isExternalUrl = (url: string) => url.startsWith('http://') || url.startsWith('https://');
+  const {
+    swipeContainerRef,
+    zoom,
+    isMobileViewport,
+    swipeHandledRef,
+    modalImageLoadedRef,
+    setModalImageLoading,
+    setVisibleIndex,
+    onClose,
+    onNext,
+    onPrev,
+    onImageError,
+    images,
+    confirmedUrl,
+    pendingUrl,
+    hasValidImage,
+    shouldShowLoader,
+    imageAltText,
+    isExternalUrl,
+    visibleIndex,
+    currentIndex,
+  } = state;
 
   return (
     <div
@@ -547,8 +139,8 @@ export function ListingPageImageModal({
           style={
             isMobileViewport
               ? {
-                  transform: `scale(${pinchScale})`,
-                  transformOrigin: 'center center',
+                  transform: `translate(${zoom.x}px, ${zoom.y}px) scale(${zoom.scale})`,
+                  transformOrigin: '0 0',
                 }
               : undefined
           }

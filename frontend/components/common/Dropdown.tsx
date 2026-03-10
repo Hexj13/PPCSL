@@ -33,6 +33,7 @@ interface DropdownProps {
   autoPosition?: boolean;
   renderMenuInPortal?: boolean;
   rightIcon?: React.ReactNode;
+  menuMaxHeight?: number;
 }
 
 const PORTAL_MENU_MAX_HEIGHT = 384;
@@ -51,6 +52,7 @@ function DropdownComponent({
   autoPosition = false,
   renderMenuInPortal = false,
   rightIcon,
+  menuMaxHeight,
 }: DropdownProps) {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
@@ -306,6 +308,7 @@ function DropdownComponent({
                     : { top: portalPosition.bottom + 4 }),
                   zIndex: 10050,
                 }}
+                menuMaxHeight={menuMaxHeight}
               />,
               document.body,
             )
@@ -322,6 +325,7 @@ function DropdownComponent({
                 onReset={handleReset}
                 onConfirm={handleConfirm}
                 t={t}
+                menuMaxHeight={menuMaxHeight}
               />
             ))}
     </div>
@@ -423,6 +427,7 @@ interface DropdownMenuProps {
   onConfirm: () => void;
   t: (_key: string) => string;
   portalStyle?: React.CSSProperties;
+  menuMaxHeight?: number;
 }
 
 function DropdownMenu({
@@ -438,8 +443,14 @@ function DropdownMenu({
   onConfirm,
   t,
   portalStyle,
+  menuMaxHeight,
 }: DropdownMenuProps) {
   const isPortaled = !!portalStyle;
+  const scrollStyle = menuMaxHeight != null ? { maxHeight: menuMaxHeight } : undefined;
+  const scrollClass =
+    menuMaxHeight != null
+      ? 'overflow-auto scrollbar-custom'
+      : 'max-h-96 overflow-auto scrollbar-custom';
   return (
     <div
       ref={menuRef}
@@ -450,7 +461,7 @@ function DropdownMenu({
       } ${!isPositioned ? 'opacity-0 pointer-events-none' : ''}`}
       style={portalStyle}
     >
-      <div className="max-h-96 overflow-auto scrollbar-custom">
+      <div className={scrollClass} style={scrollStyle}>
         {filteredOptions.length > 0 ? (
           filteredOptions.map((option) => {
             const isSelected = showActionButtons

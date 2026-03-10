@@ -33,6 +33,8 @@ export function ExteriorFields({
             }
             placeholder={t('searchFilters.selectColor')}
             searchable={true}
+            autoPosition={true}
+            menuMaxHeight={300}
             options={colorOptions}
           />
         </div>
@@ -51,6 +53,8 @@ export function ExteriorFields({
                 }))
               }
               placeholder={t('searchFilters.selectDoors')}
+              autoPosition={true}
+              menuMaxHeight={300}
               options={getDoorOptions(t)}
             />
           </div>

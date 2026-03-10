@@ -60,6 +60,8 @@ export function BasicInfoSection({
             searchable={true}
             placeholder={t('listings.selectBrand')}
             error={!!errors['vehicle.brand_id']}
+            autoPosition={true}
+            menuMaxHeight={300}
             options={brands.map((brand) => ({ value: brand.id, label: brand.name }))}
           />
           {errors['vehicle.brand_id'] && (
@@ -85,6 +87,8 @@ export function BasicInfoSection({
             searchable={true}
             placeholder={loadingModels ? t('common.loading') : t('listings.selectModel')}
             error={!!errors['vehicle.model_id']}
+            autoPosition={true}
+            menuMaxHeight={300}
             options={models.map((model) => ({ value: model.id, label: model.name }))}
           />
           {errors['vehicle.model_id'] && (
@@ -111,6 +115,8 @@ export function BasicInfoSection({
             searchable={true}
             placeholder={t('searchFilters.selectYear')}
             error={!!errors['vehicle.year']}
+            autoPosition={true}
+            menuMaxHeight={300}
             options={getYearOptions()}
           />
         </div>

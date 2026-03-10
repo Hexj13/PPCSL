@@ -77,6 +77,8 @@ export function SpecsGrid({
             }}
             placeholder={t('searchFilters.selectFuel')}
             error={!!errors['vehicle.fuel']}
+            autoPosition={true}
+            menuMaxHeight={300}
             options={getFuelOptions(t)}
           />
         </div>
@@ -243,6 +245,8 @@ export function SpecsGrid({
             }}
             placeholder={t('searchFilters.selectTransmission')}
             error={!!errors['vehicle.transmission']}
+            autoPosition={true}
+            menuMaxHeight={300}
             options={getTransmissionOptions(t, vehicleType)}
           />
         </div>
@@ -288,6 +292,8 @@ export function SpecsGrid({
               }}
               placeholder={t('searchFilters.selectDriveType')}
               error={!!errors['vehicle.drive_type']}
+              autoPosition={true}
+              menuMaxHeight={300}
               options={getDriveTypeOptions(t)}
             />
           </div>
@@ -332,6 +338,8 @@ export function SpecsGrid({
             placeholder={t('searchFilters.selectBodyType')}
             error={!!errors['vehicle.body_type']}
             searchable={true}
+            autoPosition={true}
+            menuMaxHeight={300}
             options={getBodyTypeOptions(t, vehicleType)}
           />
         </div>
