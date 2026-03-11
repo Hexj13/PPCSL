@@ -183,6 +183,9 @@ TWILIO_ACCOUNT_SID=your-twilio-account-sid
 TWILIO_AUTH_TOKEN=your-twilio-auth-token
 TWILIO_MESSAGING_SERVICE_SID=your-twilio-messaging-service-sid
 
+# Infocar partner (optional; for signed report URL)
+INFOCAR_SECRET_KEY=<secret-from-infocar>
+
 # SMTP Email Configuration
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587

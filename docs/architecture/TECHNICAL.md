@@ -193,6 +193,10 @@ SMTP_FROM=noreply@your-domain.com
 # Internationalization (optional)
 DEFAULT_LOCALE=<locale>
 # Supported locales depend on platform (e.g. ro, ru for Moldova)
+
+# Infocar partner integration (optional)
+INFOCAR_SECRET_KEY=<secret-from-infocar>
+# Required for signed report URL (GET /api/listings/:id/report-url). If unset, endpoint returns 404.
 ```
 
 ### Frontend (`frontend/.env.local`)

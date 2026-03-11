@@ -55,13 +55,23 @@ The VIN field on the listing form (create and edit) uses `listings.vinHint`. The
 - **Parameters**: `listing_id`, `has_vin`, optional `brand`, `model`, `year`.
 - See [GA4_EVENTS.md](../analytics/GA4_EVENTS.md#click_infocar_check).
 
+## Environment
+
+**Backend** (required for signed “Order report” URL):
+
+| Variable | Description |
+|----------|-------------|
+| `INFOCAR_SECRET_KEY` | Secret key from Infocar.md partner agreement. Used to sign VIN: `BASE64URL(HMAC-SHA256(VIN, SECRET_KEY))`. If unset, `GET /api/listings/:id/report-url` returns 404 and the frontend opens the fallback URL (Infocar base without VIN). |
+
+Optional overrides: `INFOCAR_BASE_URL` (default `https://infocar.md`), `INFOCAR_PARTNER_FROM` (default `kupito`). See also [TECHNICAL.md](../architecture/TECHNICAL.md#3-environment-variables) and [PLATFORM_CHECKLIST.md](../guides/PLATFORM_CHECKLIST.md).
+
 ## Implementation
 
 - **Component**: `ListingPageHistorySection` in `core/frontend/app/listings/[id]/ListingPageHistorySection.tsx`. Used by `ListingPageClient.tsx`.
 - **Helpers**: `getInfocarUrl(listing)`, `shouldShowInfocarButton(listing)`, `INFOCAR_BASE_URL`, `INFOCAR_DEMO_URL` in `core/frontend/app/listings/[id]/listingPageInfocar.ts`.
 - **Tests**: `core/frontend/app/listings/[id]/ListingPageClient.infocar.test.ts` — `getInfocarUrl` URL building and `shouldShowInfocarButton` visibility (Active with VIN / without VIN, Closed, Paused).
 - **Backend**:
-  - `GET /api/listings/:id/report-url` — returns signed Infocar URL (`INFOCAR_SECRET_KEY`, HMAC-SHA256 of VIN, base64url). If `INFOCAR_SECRET_KEY` is not set, returns 404 (frontend opens fallback URL without showing error toast).
+  - `GET /api/listings/:id/report-url` — returns signed Infocar URL using `INFOCAR_SECRET_KEY` (HMAC-SHA256 of VIN, base64url). If `INFOCAR_SECRET_KEY` is not set, returns 404 (frontend opens fallback URL without showing error toast).
   - `GET /api/listings/:id/history` — returns previous listings with the same VIN (for the site history table).
   - VIN on listing detail: `GET /api/listings/:id` returns masked VIN (4+9+4). Full VIN: `GET /api/listings/:id/vin` (JWT required, rate limit 5 per user per hour; query `action=reveal|copy` for logging). See listing characteristics section for Show/Hide/Copy VIN.
 

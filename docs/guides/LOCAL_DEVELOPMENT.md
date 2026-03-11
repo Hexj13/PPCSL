@@ -78,6 +78,9 @@ Use this approach when:
    # Redis Configuration
    REDIS_HOST=localhost
    REDIS_PORT=6379
+
+   # Infocar partner (optional; for signed report URL)
+   # INFOCAR_SECRET_KEY=<secret-from-infocar>
    ```
 
    Create `frontend/.env.local`:
@@ -214,6 +217,9 @@ Use this approach when:
    # Redis Configuration
    REDIS_HOST=localhost
    REDIS_PORT=6379
+
+   # Infocar partner (optional; for signed report URL)
+   # INFOCAR_SECRET_KEY=<secret-from-infocar>
    ```
 
    Create `core/frontend/.env.local`:

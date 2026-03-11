@@ -50,6 +50,9 @@ TWILIO_MESSAGING_SERVICE_SID=your-twilio-messaging-service-sid
 # Redis Configuration
 REDIS_HOST=localhost
 REDIS_PORT=6379
+
+# Infocar (опционально; для подписанной ссылки на отчёт)
+# INFOCAR_SECRET_KEY=<секрет-от-infocar>
 ```
 
 **Создайте файл `frontend/.env.local`:**
@@ -165,6 +168,9 @@ TWILIO_MESSAGING_SERVICE_SID=your-twilio-messaging-service-sid
 # Redis Configuration
 REDIS_HOST=localhost
 REDIS_PORT=6379
+
+# Infocar (опционально; для подписанной ссылки на отчёт)
+# INFOCAR_SECRET_KEY=<секрет-от-infocar>
 ```
 
 **Создайте файл `core/frontend/.env.local`:**

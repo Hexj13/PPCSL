@@ -131,6 +131,7 @@ platform-repo/
 - [ ] `TWILIO_ACCOUNT_SID`
 - [ ] `TWILIO_AUTH_TOKEN`
 - [ ] `TWILIO_MESSAGING_SERVICE_SID` или `TWILIO_PHONE_NUMBER`
+- [ ] `INFOCAR_SECRET_KEY` (optional; for Infocar signed report URL, see [INFOCAR_HISTORY_SECTION.md](../features/INFOCAR_HISTORY_SECTION.md))
 
 #### Frontend
 
