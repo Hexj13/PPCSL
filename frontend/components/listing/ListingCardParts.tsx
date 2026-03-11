@@ -480,7 +480,7 @@ export const ListingCardImageCarousel = React.forwardRef<
             willChange: 'transform',
           }}
         >
-          {renderNativeSlide(state.toIndex)}
+          {state.toIndex === 0 && priority ? renderSlide(0) : renderNativeSlide(state.toIndex)}
         </div>
       )}
     </div>

@@ -181,4 +181,34 @@ describe('ListingCardImageCarousel', () => {
       expect(ref.current?.isBusy()).toBe(false);
     });
   });
+
+  it('should wrap last to first on goNext and first to last on goPrev with 3 photos', async () => {
+    const threeImages = ['/placeholder-car.jpg', '/placeholder-car.jpg', '/placeholder-car.jpg'];
+    const ref = React.createRef<ListingCardImageCarouselHandle>();
+    const onIndexChange = jest.fn();
+    render(
+      <CarouselHarness images={threeImages} carouselRef={ref} onIndexChange={onIndexChange} />,
+    );
+
+    await waitFor(() => expect(ref.current).not.toBeNull());
+    expect(ref.current?.getIndex()).toBe(0);
+
+    fireEvent.click(screen.getByTestId('go-next'));
+    await act(async () => jest.advanceTimersByTime(IMAGE_SLIDE_DURATION_MS + 30));
+    await waitFor(() => expect(ref.current?.getIndex()).toBe(1));
+
+    fireEvent.click(screen.getByTestId('go-next'));
+    await act(async () => jest.advanceTimersByTime(IMAGE_SLIDE_DURATION_MS + 30));
+    await waitFor(() => expect(ref.current?.getIndex()).toBe(2));
+
+    fireEvent.click(screen.getByTestId('go-next'));
+    await act(async () => jest.advanceTimersByTime(IMAGE_SLIDE_DURATION_MS + 30));
+    await waitFor(() => expect(ref.current?.getIndex()).toBe(0));
+    expect(onIndexChange).toHaveBeenLastCalledWith(0);
+
+    fireEvent.click(screen.getByTestId('go-prev'));
+    await act(async () => jest.advanceTimersByTime(IMAGE_SLIDE_DURATION_MS + 30));
+    await waitFor(() => expect(ref.current?.getIndex()).toBe(2));
+    expect(onIndexChange).toHaveBeenLastCalledWith(2);
+  });
 });
