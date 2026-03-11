@@ -58,29 +58,40 @@ export function ListingPageHeader({ listing, title }: ListingPageHeaderProps) {
             />
           )}
         </div>
-        {(listing.available_in_credit ||
+        {(listing.negotiable ||
+          listing.available_in_credit ||
           listing.status === 'Closed' ||
           listing.is_promoted ||
           listing.is_new ||
           listing.urgent) && (
           <div className="mt-4 space-y-4">
-            {listing.available_in_credit && (
+            {(listing.negotiable || listing.available_in_credit) && (
               <div className="flex flex-col gap-1.5 text-primary-900 text-[14px] leading-relaxed">
-                <div className="flex items-center gap-2">
-                  <CheckIcon className="w-4 h-4 shrink-0 text-primary-500" />
-                  <span className="font-medium">{t('listingDetail.availableInCredit')}</span>
-                </div>
-                {listing.down_payment_amount != null && listing.down_payment_amount > 0 && (
+                {listing.negotiable && (
                   <div className="flex items-center gap-2">
                     <CheckIcon className="w-4 h-4 shrink-0 text-primary-500" />
-                    <span className="font-medium">
-                      {t('listingDetail.downPaymentFromLabel', {
-                        amount: formatPrice(listing.down_payment_amount),
-                        currency: listing.currency ?? listing.defaultCurrencyCode ?? 'EUR',
-                      })}
-                    </span>
+                    <span className="font-medium">{t('listingDetail.negotiable')}</span>
                   </div>
                 )}
+                {listing.available_in_credit && (
+                  <div className="flex items-center gap-2">
+                    <CheckIcon className="w-4 h-4 shrink-0 text-primary-500" />
+                    <span className="font-medium">{t('listingDetail.availableInCredit')}</span>
+                  </div>
+                )}
+                {listing.available_in_credit &&
+                  listing.down_payment_amount != null &&
+                  listing.down_payment_amount > 0 && (
+                    <div className="flex items-center gap-2">
+                      <CheckIcon className="w-4 h-4 shrink-0 text-primary-500" />
+                      <span className="font-medium">
+                        {t('listingDetail.downPaymentFromLabel', {
+                          amount: formatPrice(listing.down_payment_amount),
+                          currency: listing.currency ?? listing.defaultCurrencyCode ?? 'EUR',
+                        })}
+                      </span>
+                    </div>
+                  )}
               </div>
             )}
             <div className="flex items-center gap-2 flex-wrap">

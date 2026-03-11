@@ -39,6 +39,15 @@ export function useResetPasswordPage() {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const cooldownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const resolveApiMessage = useCallback(
+    (message: string | undefined, fallbackKey: string): string => {
+      if (!message) return t(fallbackKey);
+      const translatedMessage = t(message);
+      return translatedMessage !== message ? translatedMessage : message;
+    },
+    [t],
+  );
+
   useEffect(() => {
     if (resendCooldown > 0) {
       cooldownTimerRef.current = setInterval(() => {
@@ -85,12 +94,14 @@ export function useResetPasswordPage() {
         setResendCooldown(60);
       } catch (err: unknown) {
         const axiosError = err as { response?: { data?: { message?: string } } };
-        setErrors({ phone: axiosError.response?.data?.message || t('resetPassword.sendError') });
+        setErrors({
+          phone: resolveApiMessage(axiosError.response?.data?.message, 'resetPassword.sendError'),
+        });
       } finally {
         setLoading(false);
       }
     },
-    [phone, t],
+    [phone, resolveApiMessage, t],
   );
 
   const handleCodeChange = useCallback(
@@ -256,9 +267,9 @@ export function useResetPasswordPage() {
       toast.success(t('resetPassword.codeResent'));
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { message?: string } } };
-      toast.error(axiosError.response?.data?.message || t('resetPassword.sendError'));
+      toast.error(resolveApiMessage(axiosError.response?.data?.message, 'resetPassword.sendError'));
     }
-  }, [phone, resendCooldown, t]);
+  }, [phone, resendCooldown, resolveApiMessage, t]);
 
   const handleBack = useCallback(() => {
     setLoading(false);

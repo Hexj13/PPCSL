@@ -16,6 +16,7 @@ export interface Listing {
   price?: number;
   currency?: Currency;
   city: string;
+  negotiable?: boolean;
   available_in_credit?: boolean;
   down_payment_amount?: number | null;
   status: ListingStatus;
@@ -146,6 +147,7 @@ export interface CreateListingDto {
   price: number;
   currency?: Currency;
   city: string;
+  negotiable?: boolean;
   available_in_credit?: boolean;
   down_payment_amount?: number;
   description?: string;

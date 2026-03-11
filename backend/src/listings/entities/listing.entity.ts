@@ -52,6 +52,9 @@ export class Listing {
   city: string;
 
   @Column({ type: 'boolean', default: false })
+  negotiable: boolean;
+
+  @Column({ type: 'boolean', default: false })
   available_in_credit: boolean;
 
   @Column({ type: 'integer', nullable: true })

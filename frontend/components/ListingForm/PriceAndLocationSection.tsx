@@ -132,6 +132,22 @@ export function PriceAndLocationSection({
 
         <div className="sm:row-start-2 sm:col-span-1">
           <Checkbox
+            id="listing-negotiable"
+            size="md"
+            checked={formData.negotiable}
+            onChange={(checked) => {
+              setFormData((prev) => ({
+                ...prev,
+                negotiable: checked,
+              }));
+            }}
+            label={t('listings.negotiable')}
+            data-testid="listing-form-negotiable"
+          />
+        </div>
+
+        <div className="sm:row-start-3 sm:col-span-1">
+          <Checkbox
             id="listing-available-in-credit"
             size="md"
             checked={formData.available_in_credit}
@@ -147,7 +163,7 @@ export function PriceAndLocationSection({
           />
         </div>
 
-        <div className="sm:row-start-3 sm:col-span-1">
+        <div className="sm:row-start-4 sm:col-span-1">
           <label className="block text-sm font-semibold mb-2 text-primary-700">
             {t('listings.downPaymentFrom')}{' '}
             <span className="text-text-secondary">{t('listings.optionalShort')}</span>
@@ -178,7 +194,7 @@ export function PriceAndLocationSection({
           />
         </div>
 
-        <div className="sm:row-start-4 sm:col-span-1">
+        <div className="sm:row-start-5 sm:col-span-1">
           <label className="block text-sm font-semibold mb-2 text-primary-700 flex items-center gap-2">
             <svg
               width="16"

@@ -25,6 +25,7 @@ export function buildListingPayload(
     price: parseInt(formData.price, 10),
     currency: formData.currency,
     city: formData.city,
+    negotiable: formData.negotiable,
     available_in_credit: formData.available_in_credit,
     down_payment_amount:
       formData.available_in_credit && formData.down_payment_amount.trim() !== ''

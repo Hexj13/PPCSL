@@ -18,6 +18,7 @@ export interface ListingFormData {
   price: string;
   currency: Currency;
   city: string;
+  negotiable: boolean;
   available_in_credit: boolean;
   down_payment_amount: string;
   description: string;

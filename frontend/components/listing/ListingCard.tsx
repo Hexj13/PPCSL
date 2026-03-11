@@ -163,6 +163,83 @@ function getFavoriteButtonProps(
   return { favoriteButtonClass, favoriteAriaLabel };
 }
 
+function ListingCardBody({
+  listing,
+  displayTitle,
+  locale,
+  cities,
+  isHydrated,
+  t,
+}: {
+  listing: Listing;
+  displayTitle: string;
+  locale: string;
+  cities: ReturnType<typeof useCities>['cities'];
+  isHydrated: boolean;
+  t: (key: string, params?: Record<string, string | number>) => string;
+}) {
+  return (
+    <div className="p-4 md:p-5 grow flex flex-col">
+      <h3 className="font-bold text-base md:text-lg mb-3 line-clamp-2 text-primary-900">
+        {displayTitle}
+      </h3>
+      <div className="flex items-baseline gap-2 mb-3 flex-wrap">
+        {listing.price !== undefined ? (
+          <PriceDisplay
+            price={listing.price}
+            currency={listing.currency ?? listing.defaultCurrencyCode ?? 'EUR'}
+            approxPrice={listing.approxPriceDefaultCurrency}
+            defaultCurrencyCode={listing.defaultCurrencyCode}
+            size="small"
+            priceClassName="text-primary-500"
+            currencyStyle={{ color: 'rgb(var(--text-secondary-rgb))' }}
+          />
+        ) : (
+          <span className="text-xl md:text-2xl font-extrabold text-primary-400">••••</span>
+        )}
+      </div>
+      <div className="grow mb-3">
+        {listing.vehicle && <ListingCardVehicleSpecs vehicle={listing.vehicle} t={t} />}
+      </div>
+      <div
+        className="flex justify-between items-center gap-2 text-sm font-medium mt-auto pt-3 border-t border-primary-500/20"
+        style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+      >
+        <span className="min-w-0 truncate">{getCityName(listing.city, locale, cities)}</span>
+        <div className="flex items-center gap-3 shrink-0">
+          {listing.views !== undefined && listing.views > 0 && (
+            <>
+              <span className="flex items-center gap-1 text-sm shrink-0">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
+                </svg>
+                {formatViewsCompact(listing.views)}
+              </span>
+              <span className="h-4 w-px bg-primary-500/20 shrink-0" />
+            </>
+          )}
+          <span suppressHydrationWarning>
+            {isHydrated
+              ? formatDateRelative(listing.last_updated_at, t, locale)
+              : formatDateShort(listing.last_updated_at)}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CarouselNavButtons({
   disabled,
   onPrev,
@@ -230,9 +307,12 @@ function useCardCarouselRewind(
   images: string[],
   carouselIndex: number,
   carouselRef: React.RefObject<ListingCardImageCarouselHandle | null>,
+  cardRef: React.RefObject<HTMLDivElement | null>,
 ) {
   const resetToFirstTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const rewindIntervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+  const [isMobileOrTablet, setIsMobileOrTablet] = React.useState(false);
+  const [isAutoRewinding, setIsAutoRewinding] = React.useState(false);
 
   const clearRewind = useCallback(() => {
     if (resetToFirstTimerRef.current) {
@@ -243,24 +323,58 @@ function useCardCarouselRewind(
       clearInterval(rewindIntervalRef.current);
       rewindIntervalRef.current = null;
     }
+    setIsAutoRewinding(false);
   }, []);
 
   React.useEffect(() => () => clearRewind(), [clearRewind]);
 
+  React.useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+    const mql = window.matchMedia('(max-width: 1024px)');
+    const update = (event?: MediaQueryListEvent) => {
+      setIsMobileOrTablet(event ? event.matches : mql.matches);
+    };
+    update();
+    mql.addEventListener('change', update);
+    return () => {
+      mql.removeEventListener('change', update);
+    };
+  }, []);
+
+  const startRewindTimer = useCallback(
+    (restart: boolean) => {
+      if (restart) {
+        clearRewind();
+      }
+      if (images.length <= 1 || carouselIndex === 0) return;
+      if (
+        resetToFirstTimerRef.current ||
+        rewindIntervalRef.current ||
+        (isAutoRewinding && !restart)
+      ) {
+        return;
+      }
+      resetToFirstTimerRef.current = setTimeout(() => {
+        resetToFirstTimerRef.current = null;
+        setIsAutoRewinding(true);
+        rewindIntervalRef.current = setInterval(() => {
+          if (carouselRef.current?.isBusy()) return;
+          carouselRef.current?.goPrev();
+        }, REWIND_STEP_MS);
+      }, RESET_TO_FIRST_DELAY_MS);
+    },
+    [images.length, carouselIndex, clearRewind, carouselRef, isAutoRewinding],
+  );
+
   const onMouseLeave = useCallback(() => {
-    clearRewind();
-    if (images.length <= 1 || carouselIndex === 0) return;
-    resetToFirstTimerRef.current = setTimeout(() => {
-      resetToFirstTimerRef.current = null;
-      rewindIntervalRef.current = setInterval(() => {
-        if (carouselRef.current?.isBusy()) return;
-        carouselRef.current?.goPrev();
-      }, REWIND_STEP_MS);
-    }, RESET_TO_FIRST_DELAY_MS);
-  }, [images.length, carouselIndex, clearRewind, carouselRef]);
+    if (isMobileOrTablet) return;
+    startRewindTimer(true);
+  }, [isMobileOrTablet, startRewindTimer]);
 
   const onMouseEnter = useCallback(() => {
-    clearRewind();
+    if (!isMobileOrTablet) {
+      clearRewind();
+    }
     if (images.length > 1 && typeof window !== 'undefined') {
       const nextIndex = (carouselIndex + 1) % images.length;
       const nextSrc = images[nextIndex];
@@ -269,8 +383,27 @@ function useCardCarouselRewind(
         preloadImg.src = getOptimizedImageUrl(nextSrc, 65, 800);
       }
     }
-  }, [clearRewind, images, carouselIndex]);
-  return { onMouseLeave, onMouseEnter, clearRewind };
+  }, [clearRewind, images, carouselIndex, isMobileOrTablet]);
+
+  React.useEffect(() => {
+    if (!isMobileOrTablet) return;
+    const node = cardRef.current;
+    if (!node || typeof IntersectionObserver === 'undefined') return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) {
+          startRewindTimer(false);
+        }
+      },
+      { threshold: 0.01 },
+    );
+    observer.observe(node);
+    return () => {
+      observer.disconnect();
+    };
+  }, [isMobileOrTablet, cardRef, startRewindTimer]);
+
+  return { onMouseLeave, onMouseEnter, clearRewind, isAutoRewinding };
 }
 
 function ListingCardComponent({
@@ -306,6 +439,7 @@ function ListingCardComponent({
   const [isCarouselBusy, setIsCarouselBusy] = React.useState(false);
   const [carouselIndex, setCarouselIndex] = React.useState(0);
   const carouselRef = React.useRef<ListingCardImageCarouselHandle>(null);
+  const cardRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => setIsHydrated(true), []);
 
@@ -313,7 +447,8 @@ function ListingCardComponent({
     onMouseLeave: handleCardMouseLeave,
     onMouseEnter: handleCardMouseEnter,
     clearRewind,
-  } = useCardCarouselRewind(images, carouselIndex, carouselRef);
+    isAutoRewinding,
+  } = useCardCarouselRewind(images, carouselIndex, carouselRef, cardRef);
 
   const handleCarouselIndexChange = useCallback(
     (index: number) => {
@@ -343,29 +478,53 @@ function ListingCardComponent({
     isOwnListing,
   );
 
-  const handlePrevPhoto = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const goCarouselPrev = useCallback(() => {
+    if (isAutoRewinding) return;
+    clearRewind();
     carouselRef.current?.goPrev();
-  }, []);
+  }, [isAutoRewinding, clearRewind]);
 
-  const handleNextPhoto = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const goCarouselNext = useCallback(() => {
+    if (isAutoRewinding) return;
+    clearRewind();
     carouselRef.current?.goNext();
-  }, []);
+  }, [isAutoRewinding, clearRewind]);
 
-  const handlePrevPhotoTouchStart = useCallback((e: React.TouchEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    carouselRef.current?.goPrev();
-  }, []);
+  const handlePrevPhoto = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      goCarouselPrev();
+    },
+    [goCarouselPrev],
+  );
 
-  const handleNextPhotoTouchStart = useCallback((e: React.TouchEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    carouselRef.current?.goNext();
-  }, []);
+  const handleNextPhoto = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      goCarouselNext();
+    },
+    [goCarouselNext],
+  );
+
+  const handlePrevPhotoTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      goCarouselPrev();
+    },
+    [goCarouselPrev],
+  );
+
+  const handleNextPhotoTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      goCarouselNext();
+    },
+    [goCarouselNext],
+  );
 
   const cardUrl = `/listings/${listing.id}`;
 
@@ -382,6 +541,7 @@ function ListingCardComponent({
 
   return (
     <div
+      ref={cardRef}
       className="card relative overflow-hidden cursor-pointer h-full flex flex-col group"
       onMouseLeave={handleCardMouseLeave}
       onMouseEnter={handleCardMouseEnter}
@@ -424,7 +584,7 @@ function ListingCardComponent({
           <ListingCardBadges listing={listing} newLabel={newLabel} t={t} />
           {images.length > 1 && (
             <CarouselNavButtons
-              disabled={isCarouselBusy}
+              disabled={isCarouselBusy || isAutoRewinding}
               onPrev={handlePrevPhoto}
               onNext={handleNextPhoto}
               onPrevTouch={handlePrevPhotoTouchStart}
@@ -454,69 +614,14 @@ function ListingCardComponent({
             </svg>
           </button>
         </div>
-        <div className="p-4 md:p-5 grow flex flex-col">
-          <h3 className="font-bold text-base md:text-lg mb-3 line-clamp-2 text-primary-900">
-            {displayTitle}
-          </h3>
-          <div className="flex items-baseline gap-2 mb-3 flex-wrap">
-            {listing.price !== undefined ? (
-              <PriceDisplay
-                price={listing.price}
-                currency={listing.currency ?? listing.defaultCurrencyCode ?? 'EUR'}
-                approxPrice={listing.approxPriceDefaultCurrency}
-                defaultCurrencyCode={listing.defaultCurrencyCode}
-                size="small"
-                priceClassName="text-primary-500"
-                currencyStyle={{ color: 'rgb(var(--text-secondary-rgb))' }}
-              />
-            ) : (
-              <span className="text-xl md:text-2xl font-extrabold text-primary-400">••••</span>
-            )}
-          </div>
-          <div className="grow mb-3">
-            {listing.vehicle && <ListingCardVehicleSpecs vehicle={listing.vehicle} t={t} />}
-          </div>
-          <div
-            className="flex justify-between items-center gap-2 text-sm font-medium mt-auto pt-3 border-t border-primary-500/20"
-            style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-          >
-            <span className="min-w-0 truncate">{getCityName(listing.city, locale, cities)}</span>
-            <div className="flex items-center gap-3 shrink-0">
-              {listing.views !== undefined && listing.views > 0 && (
-                <>
-                  <span className="flex items-center gap-1 text-sm shrink-0">
-                    <svg
-                      className="w-3.5 h-3.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                      />
-                    </svg>
-                    {formatViewsCompact(listing.views)}
-                  </span>
-                  <span className="h-4 w-px bg-primary-500/20 shrink-0" />
-                </>
-              )}
-              <span suppressHydrationWarning>
-                {isHydrated
-                  ? formatDateRelative(listing.last_updated_at, t, locale)
-                  : formatDateShort(listing.last_updated_at)}
-              </span>
-            </div>
-          </div>
-        </div>
+        <ListingCardBody
+          listing={listing}
+          displayTitle={displayTitle}
+          locale={locale}
+          cities={cities}
+          isHydrated={isHydrated}
+          t={t}
+        />
       </div>
     </div>
   );

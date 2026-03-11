@@ -158,7 +158,7 @@ function ResetPasswordCodeStep({
               <p className="text-sm text-red-400">{errors.code}</p>
             </div>
           )}
-          <div className="flex flex-col sm:flex-row gap-3 pt-4">
+          <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
             <button
               type="button"
               onClick={onBack}
@@ -357,7 +357,7 @@ function ResetPasswordPasswordStep({
           <p className="mt-1 text-sm text-red-400">{errors.confirmPassword}</p>
         )}
       </div>
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col-reverse sm:flex-row gap-3">
         <button
           type="button"
           onClick={onBack}

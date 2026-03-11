@@ -61,6 +61,14 @@ export class UpdateListingDto {
 
   @ApiPropertyOptional({
     example: false,
+    description: 'Price is negotiable',
+  })
+  @IsOptional()
+  @IsBoolean()
+  negotiable?: boolean;
+
+  @ApiPropertyOptional({
+    example: false,
     description: 'Available in credit or installment',
   })
   @IsOptional()

@@ -192,7 +192,12 @@ export const ListingCardImageCarousel = React.forwardRef<
   }, [images, imageErrors, markLoaded]);
 
   const startAnimating = useCallback(
-    (fromIndex: number, toIndex: number, direction: 'next' | 'prev') => {
+    (
+      fromIndex: number,
+      toIndex: number,
+      direction: 'next' | 'prev',
+      markAsLoadedOnCommit = false,
+    ) => {
       if (rafRef.current !== undefined) cancelAnimationFrame(rafRef.current);
       if (timerRef.current !== undefined) clearTimeout(timerRef.current);
 
@@ -208,6 +213,10 @@ export const ListingCardImageCarousel = React.forwardRef<
         requestAnimationFrame(() => {
           setState((s) => (s.type === 'animating' ? { ...s, phase: 'running' as const } : s));
           timerRef.current = setTimeout(() => {
+            if (markAsLoadedOnCommit) {
+              loadedRef.current.add(toIndex);
+            }
+            preloadingRef.current.delete(toIndex);
             setState({ type: 'idle', index: toIndex });
             if (timerRef.current !== undefined) {
               clearTimeout(timerRef.current);
@@ -228,7 +237,7 @@ export const ListingCardImageCarousel = React.forwardRef<
         return;
       }
       if (loadedRef.current.has(toIndex)) {
-        startAnimating(fromIndex, toIndex, direction);
+        startAnimating(fromIndex, toIndex, direction, true);
         return;
       }
 
@@ -240,7 +249,7 @@ export const ListingCardImageCarousel = React.forwardRef<
         img,
         () => {
           markLoaded(toIndex);
-          startAnimating(fromIndex, toIndex, direction);
+          startAnimating(fromIndex, toIndex, direction, true);
         },
         () => {
           preloadingRef.current.delete(toIndex);
@@ -265,7 +274,7 @@ export const ListingCardImageCarousel = React.forwardRef<
     }
     const toIndex = (fromIndex + 1) % len;
     if (isTargetReady(toIndex)) {
-      startAnimating(fromIndex, toIndex, 'next');
+      startAnimating(fromIndex, toIndex, 'next', loadedRef.current.has(toIndex));
     } else {
       setState({ type: 'preloading', fromIndex, toIndex, direction: 'next' });
       loadTargetThenAnimate(fromIndex, toIndex, 'next');
@@ -289,7 +298,7 @@ export const ListingCardImageCarousel = React.forwardRef<
     }
     const toIndex = (fromIndex - 1 + len) % len;
     if (isTargetReady(toIndex)) {
-      startAnimating(fromIndex, toIndex, 'prev');
+      startAnimating(fromIndex, toIndex, 'prev', loadedRef.current.has(toIndex));
     } else {
       setState({ type: 'preloading', fromIndex, toIndex, direction: 'prev' });
       loadTargetThenAnimate(fromIndex, toIndex, 'prev');

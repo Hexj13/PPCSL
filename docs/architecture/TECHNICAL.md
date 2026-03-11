@@ -513,6 +513,9 @@ GET /health                          # Health check (database, Redis)
 **Listings Table Fields:**
 
 - `price` - Integer (stored as integer, no decimal places)
+- `negotiable` - Boolean, default false (price is negotiable; shown on listing page under price)
+- `available_in_credit` - Boolean, default false (available in credit/installment)
+- `down_payment_amount` - Integer, nullable (minimum down payment when available_in_credit is true)
 - `power_kw` - Integer, nullable (power in kilowatts)
 - `equipment` - Simple array, nullable (max 40 items). Array of equipment keys; the available set depends on vehicle type (car / truck / moto). Keys and categories are defined in `core/frontend/lib/options/vehicle-equipment.ts`. Create/edit form groups options by category (Comfort, Safety, Lighting, Multimedia, Driver assistance, Other). Translations: `vehicleOptions.equipment.<key>` and `vehicleOptions.equipmentCategories.<category>` in frontend locales.
 
