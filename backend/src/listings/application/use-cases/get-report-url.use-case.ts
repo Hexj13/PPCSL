@@ -49,7 +49,7 @@ export class GetReportUrlUseCase {
     const baseUrl = this.configService.get<string>('INFOCAR_BASE_URL') || INFOCAR_BASE_URL;
     const from = this.configService.get<string>('INFOCAR_PARTNER_FROM') || INFOCAR_PARTNER_FROM;
     const separator = baseUrl.includes('?') ? '&' : '?';
-    const url = `${baseUrl}${separator}from=${encodeURIComponent(from)}&vin_enc=${encodeURIComponent(encoded)}`;
+    const url = `${baseUrl}${separator}from=${encodeURIComponent(from)}&vin=${encodeURIComponent(encoded)}`;
     return { url };
   }
 }
