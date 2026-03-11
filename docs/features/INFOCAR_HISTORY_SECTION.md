@@ -8,7 +8,7 @@ The "History and Report" section is displayed on the listing detail page. It has
 
 **Purpose**: Build trust and add value by surfacing vehicle history on the site and by redirecting users to partners for paid reports; the platform uses the referral parameter `from=kupito`.
 
-**Effect of VIN (presence or absence):** VIN only affects (1) whether the VIN field is shown in the listing characteristics block; (2) whether the "History on site" sub-section shows the table of previous listings (with VIN) or the "VIN not provided" message (without VIN); (3) whether the partner link is full (signed URL with VIN) or fallback (`from=kupito` only). The Report sub-section (Order report, Sample report) is always shown for active listings regardless of VIN.
+**Effect of VIN (presence or absence):** VIN only affects (1) whether the VIN field is shown in the listing characteristics block; (2) whether the "History on site" sub-section shows the table of previous listings (with VIN) or the "VIN not provided" message (without VIN); (3) whether the partner link is full (URL with encrypted VIN, `vin_enc`) or fallback (`from=kupito` only). The Report sub-section (Order report, Sample report) is always shown for active listings regardless of VIN.
 
 ## Section structure
 
@@ -29,14 +29,14 @@ The "History and Report" section is displayed on the listing detail page. It has
 - **Sub-heading**: `listingDetail.externalReports` — e.g. "Отчёт об данном авто".
 - **Hint**: `listingDetail.externalReportsHint` — tooltip next to the sub-heading: users are redirected to partners who compile the report from various sources; details and terms are on the partner’s site.
 - **Two buttons** (same card style, with icons):
-  1. **Order report** — `listingDetail.orderReport` (e.g. "Заказать отчёт"). Icon: `CoinsIcon`. On click: calls `GET /api/listings/:id/report-url` (returns signed Infocar URL); on success opens that URL in a new tab; on error opens fallback `https://infocar.md/?from=kupito` without showing an error toast. Fires `analytics.infocarCheck(...)` on click. Request uses `X-Skip-Error-Handling: true`.
+  1. **Order report** — `listingDetail.orderReport` (e.g. "Заказать отчёт"). Icon: `CoinsIcon`. On click: calls `GET /api/listings/:id/report-url` (returns Infocar URL with encrypted VIN, param `vin_enc`); on success opens that URL in a new tab; on error opens fallback `https://infocar.md/?from=kupito` without showing an error toast. Fires `analytics.infocarCheck(...)` on click. Request uses `X-Skip-Error-Handling: true`.
   2. **Sample report** — `listingDetail.sampleReport` (e.g. "Пример отчёта"). Icon: `EyeIcon`. Direct link: `https://infocar.md/demo?from=kupito` (constant `INFOCAR_DEMO_URL`). No analytics event.
 
 Visibility: the whole "Report" sub-section (both "Order report" and "Sample report" buttons) is rendered for all active listings (`shouldShowInfocarSection(listing)` = `listing.status === 'Active'`), regardless of whether VIN is provided. If the user clicks "Order report" without VIN, the API returns an error and the frontend opens the fallback Infocar URL.
 
 ## URLs and helpers
 
-- **Order report**: Backend `GET /api/listings/:id/report-url` returns `{ url: string }` (signed Infocar URL). Frontend `listingsApi.getReportUrl(id)`; on error opens `INFOCAR_BASE_URL` (`https://infocar.md/?from=kupito`).
+- **Order report**: Backend `GET /api/listings/:id/report-url` returns `{ url: string }` (Infocar URL with `vin_enc`). Frontend `listingsApi.getReportUrl(id)`; on error opens `INFOCAR_BASE_URL` (`https://infocar.md/?from=kupito`).
 - **Sample report URL**: `INFOCAR_DEMO_URL` = `https://infocar.md/demo?from=kupito`.
 - **Section visibility**: `shouldShowInfocarSection(listing)` returns `listing.status === 'Active'`. Both buttons are always shown in the section.
 - **Helper** `getInfocarUrl(listing)` in `listingPageInfocar.ts`: builds base URL with optional `&vin=` when VIN is present and not masked (for reference/fallback).
@@ -61,7 +61,7 @@ The VIN field on the listing form (create and edit) uses `listings.vinHint`. The
 
 | Variable | Description |
 |----------|-------------|
-| `INFOCAR_SECRET_KEY` | Secret key from Infocar.md partner agreement. Used to sign VIN: `BASE64URL(HMAC-SHA256(VIN, SECRET_KEY))`. If unset, `GET /api/listings/:id/report-url` returns 404 and the frontend opens the fallback URL (Infocar base without VIN). |
+| `INFOCAR_SECRET_KEY` | Secret key from Infocar.md partner agreement. Used to encrypt VIN (AES-256-CBC, key = SHA256(secret), IV 16 bytes random, output base64url(IV \|\| ciphertext)). If unset, `GET /api/listings/:id/report-url` returns 404 and the frontend opens the fallback URL (Infocar base without VIN). |
 
 Optional overrides: `INFOCAR_BASE_URL` (default `https://infocar.md`), `INFOCAR_PARTNER_FROM` (default `kupito`). See also [TECHNICAL.md](../architecture/TECHNICAL.md#3-environment-variables) and [PLATFORM_CHECKLIST.md](../guides/PLATFORM_CHECKLIST.md).
 
@@ -71,7 +71,7 @@ Optional overrides: `INFOCAR_BASE_URL` (default `https://infocar.md`), `INFOCAR_
 - **Helpers**: `getInfocarUrl(listing)`, `shouldShowInfocarButton(listing)`, `INFOCAR_BASE_URL`, `INFOCAR_DEMO_URL` in `core/frontend/app/listings/[id]/listingPageInfocar.ts`.
 - **Tests**: `core/frontend/app/listings/[id]/ListingPageClient.infocar.test.ts` — `getInfocarUrl` URL building and `shouldShowInfocarButton` visibility (Active with VIN / without VIN, Closed, Paused).
 - **Backend**:
-  - `GET /api/listings/:id/report-url` — returns signed Infocar URL using `INFOCAR_SECRET_KEY` (HMAC-SHA256 of VIN, base64url). If `INFOCAR_SECRET_KEY` is not set, returns 404 (frontend opens fallback URL without showing error toast).
+  - `GET /api/listings/:id/report-url` — returns Infocar URL with encrypted VIN using `INFOCAR_SECRET_KEY` (AES-256-CBC, param `vin_enc`). If `INFOCAR_SECRET_KEY` is not set, returns 404 (frontend opens fallback URL without showing error toast).
   - `GET /api/listings/:id/history` — returns previous listings with the same VIN (for the site history table).
   - VIN on listing detail: `GET /api/listings/:id` returns masked VIN (4+9+4). Full VIN: `GET /api/listings/:id/vin` (JWT required, rate limit 5 per user per hour; query `action=reveal|copy` for logging). See listing characteristics section for Show/Hide/Copy VIN.
 
@@ -79,30 +79,30 @@ Optional overrides: `INFOCAR_BASE_URL` (default `https://infocar.md`), `INFOCAR_
 
 The query parameter `from=kupito` is used by Infocar.md to attribute the user and future report purchases to the kupito.club partner account.
 
-## Partner verification (VIN signing)
+## Partner verification (VIN encryption)
 
-For debugging link decoding on the partner side, our exact algorithm:
+Reversible encryption (AES-256-CBC) so Infocar can recover the VIN. Format: `https://infocar.md/?from=kupito&vin_enc=<encoded>`.
 
-- **Input**: VIN string as stored (after trim; we store uppercase from the form). Secret key: `INFOCAR_SECRET_KEY` as a UTF-8 string.
-- **Algorithm**: `signature = BASE64URL( HMAC-SHA256(secretKey, vin) )` — in Node.js terms: key is the first argument to `createHmac`, message is what we pass to `.update()`.
-- **Output**: Query param `vin=<signature>`, with `signature` encoded via `encodeURIComponent` (so base64url alphabet is URL-safe; no extra encoding of `-`/`_` if their decoder expects raw base64url).
+- **Input**: VIN string (trimmed; we store uppercase from the form). Secret key: `INFOCAR_SECRET_KEY` as UTF-8 string.
+- **Key derivation**: AES key = SHA256(secretKey), 32 bytes.
+- **Algorithm**: AES-256-CBC with random 16-byte IV; payload = IV || ciphertext; output = base64url(payload), no padding.
+- **Output**: Query param `vin_enc=<encoded>`, with `encoded` passed through `encodeURIComponent`.
 
-Minimal Node.js snippet (same as in `GetReportUrlUseCase`):
+Node.js snippet (same as in `GetReportUrlUseCase`):
 
 ```js
 const crypto = require('crypto');
 
-function signVinForInfocar(vin, secretKey) {
-  const vinNormalized = vin.trim();
-  const hmac = crypto.createHmac('sha256', secretKey).update(vinNormalized).digest('base64url');
-  return hmac;
+function base64urlEncode(buffer) {
+  return buffer.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 }
 
-const testVin = 'WBA3A5G59CNP12345';
-const testSecret = 'YOUR_SECRET_KEY';
-const signed = signVinForInfocar(testVin, testSecret);
-console.log('vin param:', signed);
-// URL: https://infocar.md/?from=kupito&vin=<signed>
+function encryptVin(vin, secretKey) {
+  const vinNormalized = vin.trim();
+  const key = crypto.createHash('sha256').update(secretKey).digest();
+  const iv = crypto.randomBytes(16);
+  const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+  const encrypted = Buffer.concat([cipher.update(vinNormalized, 'utf8'), cipher.final()]);
+  return base64urlEncode(Buffer.concat([iv, encrypted]));
+}
 ```
-
-Common mismatch points on the decoder side: (1) secret key encoding — we use the key as UTF-8 string, not hex/base64; (2) base64url is unpadded and uses `-` and `_`; (3) VIN is the raw 17-character string (we do not hash the VIN itself, only HMAC it with the key).

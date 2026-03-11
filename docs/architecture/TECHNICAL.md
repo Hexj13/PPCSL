@@ -196,7 +196,7 @@ DEFAULT_LOCALE=<locale>
 
 # Infocar partner integration (optional)
 INFOCAR_SECRET_KEY=<secret-from-infocar>
-# Required for signed report URL (GET /api/listings/:id/report-url). If unset, endpoint returns 404.
+# Required for report URL with encrypted VIN (GET /api/listings/:id/report-url). If unset, endpoint returns 404.
 ```
 
 ### Frontend (`frontend/.env.local`)
@@ -349,7 +349,7 @@ GET    /api/listings/my               # Get user's listings; query: page, limit,
 GET    /api/listings/vin/:vin         # Find listings by VIN
 GET    /api/listings/:id/vin          # Get full VIN (JWT required; rate limit 5/hour; query action=reveal|copy)
 GET    /api/listings/:id/history      # Previous listings with same VIN
-GET    /api/listings/:id/report-url   # Signed Infocar report URL (HMAC-SHA256 of VIN)
+GET    /api/listings/:id/report-url   # Infocar report URL (AES-256-CBC encrypted VIN, param vin_enc)
 POST   /api/listings/refresh-dates    # Refresh all user's listing dates (max once per 48h; returns 400 if too soon)
 POST   /api/listings/cron/close-old            # Close old listings (cron job, requires x-cron-secret header)
 POST   /api/listings/cron/expire-promotions   # Expire promotions (cron job, requires x-cron-secret header)
