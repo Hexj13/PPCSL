@@ -1,3 +1,4 @@
+/// <reference path="./jest-openapi.d.ts" />
 import * as supertest from 'supertest';
 
 import { getTestRequest } from './setup-integration';
@@ -11,18 +12,22 @@ describe('Listings API Integration Tests', () => {
 
   beforeAll(async () => {
     request = getTestRequest();
-    const testEmail = `test${Date.now()}@example.com`;
+    const ts = Date.now();
+    const testEmail = `test${ts}@example.com`;
     const testPassword = 'Test123!@#';
 
-    await request.post('/api/auth/register').send({
+    const registerRes = await request.post('/api/auth/register').send({
       email: testEmail,
       password: testPassword,
       type: 'Individual',
-      phone: `+3897012345${Math.floor(Math.random() * 1000)}`,
+      phone: `+38970${String(ts).slice(-7)}`,
       firstName: 'Test',
       lastName: 'User',
       termsAccepted: true,
     });
+    if (registerRes.status !== 201) {
+      throw new Error(`Registration failed: ${JSON.stringify(registerRes.body)}`);
+    }
 
     const loginResponse = await request.post('/api/auth/login').send({
       login: testEmail,

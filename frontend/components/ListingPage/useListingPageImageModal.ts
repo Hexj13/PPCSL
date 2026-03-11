@@ -50,6 +50,7 @@ export function useListingPageImageModal({
   const wasOpenRef = useRef(false);
   const lastNavigatedIndexRef = useRef(currentIndex);
   const navigationCountRef = useRef(0);
+  const imagesCacheRef = useRef<HTMLImageElement[]>([]);
 
   const [showSpinner, setShowSpinner] = useState(false);
   const spinnerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -376,6 +377,7 @@ export function useListingPageImageModal({
     const loadStartTime = performance.now();
     const wasCached = modalImageLoadedRef.current.has(optimizedUrl);
     const testImg = new window.Image();
+    imagesCacheRef.current.push(testImg);
     testImg.src = optimizedUrl;
     const imgIndex = currentIndex;
 
@@ -420,6 +422,11 @@ export function useListingPageImageModal({
 
   useEffect(() => {
     modalImageLoadedRef.current.clear();
+    for (const img of imagesCacheRef.current) {
+      img.onload = null;
+      img.onerror = null;
+    }
+    imagesCacheRef.current = [];
   }, [imagesCacheKey]);
 
   useEffect(() => {
@@ -445,6 +452,7 @@ export function useListingPageImageModal({
       }
       const startPreload = () => {
         const img = new window.Image();
+        imagesCacheRef.current.push(img);
         img.onload = () => {
           modalImageLoadedRef.current.add(optimizedUrl);
         };

@@ -102,6 +102,7 @@ export const ListingCardImageCarousel = React.forwardRef<
   const rafRef = useRef<number | undefined>(undefined);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const hasPreloadedAllRef = useRef(false);
+  const imagesCacheRef = useRef<HTMLImageElement[]>([]);
   const imagesSignature = images.join('\u0001');
   const onIndexChangeRef = useRef(onIndexChange);
   const onBusyChangeRef = useRef(onBusyChange);
@@ -127,6 +128,11 @@ export const ListingCardImageCarousel = React.forwardRef<
     hasPreloadedAllRef.current = false;
     loadedRef.current.clear();
     preloadingRef.current.clear();
+    for (const img of imagesCacheRef.current) {
+      img.onload = null;
+      img.onerror = null;
+    }
+    imagesCacheRef.current = [];
     if (rafRef.current !== undefined) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = undefined;
@@ -167,6 +173,7 @@ export const ListingCardImageCarousel = React.forwardRef<
 
       const url = getOptimizedImageUrl(src, 65, 800);
       const img = new window.Image();
+      imagesCacheRef.current.push(img);
       preloadingRef.current.add(index);
       const resolveReadiness = bindImageReadiness(
         img,
@@ -227,6 +234,7 @@ export const ListingCardImageCarousel = React.forwardRef<
 
       const url = getOptimizedImageUrl(src, 65, 800);
       const img = new window.Image();
+      imagesCacheRef.current.push(img);
       preloadingRef.current.add(toIndex);
       const resolveReadiness = bindImageReadiness(
         img,
@@ -313,6 +321,7 @@ export const ListingCardImageCarousel = React.forwardRef<
     markLoaded,
     loadedRef,
     preloadingRef,
+    imagesCacheRef,
   );
 
   useEffect(

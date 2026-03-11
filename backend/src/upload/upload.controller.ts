@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import {
   BadRequestException,
   Body,
@@ -43,7 +45,25 @@ const getThrottleLimit = (prodLimit: number, devLimit: number = prodLimit * 50) 
 @ApiTags('upload')
 @Controller('api/upload')
 export class UploadController {
+  private static readonly IMAGE_CACHE_CONTROL =
+    'public, max-age=31536000, immutable, stale-while-revalidate=604800';
+
   private readonly logger = new Logger(UploadController.name);
+
+  private static matchesIfNoneMatch(
+    ifNoneMatchHeader: string | string[] | undefined,
+    currentEtag: string,
+  ): boolean {
+    if (!ifNoneMatchHeader) return false;
+    const headerValue = Array.isArray(ifNoneMatchHeader)
+      ? ifNoneMatchHeader.join(',')
+      : ifNoneMatchHeader;
+    const normalizedCurrent = currentEtag.replace(/^W\//, '');
+    return headerValue
+      .split(',')
+      .map((tag) => tag.trim())
+      .some((tag) => tag === '*' || tag.replace(/^W\//, '') === normalizedCurrent);
+  }
 
   constructor(private readonly uploadService: UploadService) {}
 
@@ -300,16 +320,23 @@ export class UploadController {
       const widthValue = width ? parseInt(width, 10) : undefined;
 
       const buffer = await this.uploadService.getOptimizedImage(filePath, qualityValue, widthValue);
+      const etag = `"${createHash('sha1').update(buffer).digest('hex')}"`;
+      const ifNoneMatch = res.req?.headers['if-none-match'];
 
       res.set({
         'Content-Type': 'image/webp',
-        'Cache-Control': 'public, max-age=2592000, stale-while-revalidate=86400',
+        ETag: etag,
+        'Cache-Control': UploadController.IMAGE_CACHE_CONTROL,
         'Access-Control-Allow-Origin': frontendUrl,
         'Access-Control-Allow-Credentials': 'true',
         'Access-Control-Allow-Methods': 'GET, OPTIONS, HEAD',
         'Access-Control-Allow-Headers': 'Content-Type, Range',
         'Cross-Origin-Resource-Policy': 'cross-origin',
       });
+
+      if (UploadController.matchesIfNoneMatch(ifNoneMatch, etag)) {
+        return res.status(304).end();
+      }
 
       res.send(buffer);
     } catch (error) {

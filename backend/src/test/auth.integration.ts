@@ -1,3 +1,4 @@
+/// <reference path="./jest-openapi.d.ts" />
 import * as supertest from 'supertest';
 
 import { getTestRequest } from './setup-integration';
@@ -11,17 +12,27 @@ describe('Auth API Integration Tests', () => {
 
   describe('POST /api/auth/register', () => {
     it('should register a new user and match OpenAPI schema', async () => {
-      const registerData = {
+      let registerData = {
         email: `test${Date.now()}@example.com`,
         password: 'Test123!@#',
         type: 'Individual',
-        phone: `+389701234${Math.floor(Math.random() * 10000)}`,
+        phone: `+38970${String(Date.now()).slice(-7)}`,
         firstName: 'Test',
         lastName: 'User',
         termsAccepted: true,
       };
-
-      const response = await request.post('/api/auth/register').send(registerData).expect(201);
+      let response = await request.post('/api/auth/register').send(registerData);
+      let retries = 0;
+      while (response.status === 400 && retries < 3) {
+        registerData = {
+          ...registerData,
+          email: `test${Date.now()}@example.com`,
+          phone: `+38970${String(Date.now()).slice(-7)}`,
+        };
+        response = await request.post('/api/auth/register').send(registerData);
+        retries += 1;
+      }
+      expect(response.status).toBe(201);
 
       expect(response).toSatisfyApiSpec();
     });

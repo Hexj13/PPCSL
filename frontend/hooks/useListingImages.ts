@@ -22,6 +22,7 @@ export function useListingImages({
   const navigationCountRef = useRef(0);
   const lastNavigatedIndexRef = useRef(currentImageIndex);
   const hasPreloadedAllRef = useRef(false);
+  const imagesCacheRef = useRef<HTMLImageElement[]>([]);
   const imagesSignature = images.join('\u0001');
 
   const { visible: showMainImageLoader } = useLoadingState({
@@ -34,6 +35,11 @@ export function useListingImages({
     navigationCountRef.current = 0;
     lastNavigatedIndexRef.current = currentImageIndex;
     hasPreloadedAllRef.current = false;
+    for (const img of imagesCacheRef.current) {
+      img.onload = null;
+      img.onerror = null;
+    }
+    imagesCacheRef.current = [];
     setMainImageLoading(false);
     // Intentionally depend only on imagesSignature so reset runs when listing changes, not on every index change
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -69,11 +75,12 @@ export function useListingImages({
 
       const startPreload = () => {
         const img = new window.Image();
+        imagesCacheRef.current.push(img);
+        preloadImages.push(img);
         img.onload = () => {
           mainImageLoadedRef.current.add(optimizedUrl);
         };
         img.src = optimizedUrl;
-        preloadImages.push(img);
       };
 
       if (delay > 0) {

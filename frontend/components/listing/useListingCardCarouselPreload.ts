@@ -59,6 +59,7 @@ export function useListingCardCarouselPreload(
   markLoaded: (index: number) => void,
   loadedRef: React.MutableRefObject<Set<number>>,
   preloadingRef: React.MutableRefObject<Set<number>>,
+  imagesCacheRef: React.MutableRefObject<HTMLImageElement[]>,
 ) {
   useEffect(() => {
     const next = (currentIndex + 1) % images.length;
@@ -67,6 +68,7 @@ export function useListingCardCarouselPreload(
       if (!loadedRef.current.has(next) && !preloadingRef.current.has(next)) {
         const url = getOptimizedImageUrl(images[next], 65, 800);
         const img = new window.Image();
+        imagesCacheRef.current.push(img);
         preloadingRef.current.add(next);
         const resolveReadiness = bindImageReadiness(
           img,
@@ -88,6 +90,7 @@ export function useListingCardCarouselPreload(
       if (!loadedRef.current.has(prev) && !preloadingRef.current.has(prev)) {
         const url = getOptimizedImageUrl(images[prev], 65, 800);
         const img = new window.Image();
+        imagesCacheRef.current.push(img);
         preloadingRef.current.add(prev);
         const resolveReadiness = bindImageReadiness(
           img,
@@ -100,7 +103,7 @@ export function useListingCardCarouselPreload(
         }
       }
     }
-  }, [currentIndex, images, imageErrors, markLoaded, loadedRef, preloadingRef]);
+  }, [currentIndex, images, imageErrors, markLoaded, loadedRef, preloadingRef, imagesCacheRef]);
 
   useEffect(() => {
     if (images.length <= 1) return;
@@ -114,6 +117,7 @@ export function useListingCardCarouselPreload(
       ) {
         const url = getOptimizedImageUrl(images[idx], 65, 800);
         const img = new window.Image();
+        imagesCacheRef.current.push(img);
         preloadingRef.current.add(idx);
         const resolveReadiness = bindImageReadiness(
           img,
@@ -127,5 +131,5 @@ export function useListingCardCarouselPreload(
       }
     }, 1500);
     return () => clearTimeout(t);
-  }, [images, markLoaded, loadedRef, preloadingRef]);
+  }, [images, markLoaded, loadedRef, preloadingRef, imagesCacheRef]);
 }

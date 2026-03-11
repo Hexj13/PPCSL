@@ -1,3 +1,4 @@
+/// <reference path="./jest-openapi.d.ts" />
 import * as supertest from 'supertest';
 
 import { getTestRequest } from './setup-integration';

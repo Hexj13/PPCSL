@@ -422,6 +422,7 @@ POST /api/upload/image                # Upload and optimize image
                                       # Images are resized, watermarked, and converted to WebP
 GET  /api/upload/image/:filename      # Get optimized image version
                                      # Query params: ?quality=X&width=Y
+                                     # Response: Cache-Control: public, max-age=31536000, immutable, stale-while-revalidate=604800; ETag for 304 Not Modified
 ```
 
 **Watermark Details:**
