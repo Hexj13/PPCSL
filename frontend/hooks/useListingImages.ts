@@ -11,6 +11,8 @@ interface UseListingImagesProps {
 
 const PREVIEW_IMAGE_QUALITY = 75;
 const PREVIEW_IMAGE_WIDTH = 1200;
+const PRELOAD_NEXT_DELAY_MS = 220;
+const PRELOAD_THIRD_AHEAD_DELAY_MS = 450;
 
 export function useListingImages({
   images,
@@ -94,25 +96,22 @@ export function useListingImages({
 
     const nextIndex = (currentImageIndex + 1) % images.length;
     const prevIndex = (currentImageIndex - 1 + images.length) % images.length;
+    const secondAheadIndex = (currentImageIndex + 2) % images.length;
+    const thirdAheadIndex = (currentImageIndex + 3) % images.length;
 
     preloadByIndex(nextIndex);
     preloadByIndex(prevIndex, 120);
+    if (images.length > 2) {
+      preloadByIndex(secondAheadIndex, PRELOAD_NEXT_DELAY_MS);
+    }
+    if (images.length > 3) {
+      preloadByIndex(thirdAheadIndex, PRELOAD_THIRD_AHEAD_DELAY_MS);
+    }
 
     if (navigationCountRef.current >= 1 && !hasPreloadedAllRef.current) {
       hasPreloadedAllRef.current = true;
       for (let i = 0; i < images.length; i += 1) {
         preloadByIndex(i);
-      }
-    }
-
-    if (navigationCountRef.current === 0) {
-      preloadByIndex(1);
-      preloadByIndex(2);
-      if (images.length > 3) {
-        preloadByIndex(3, 300);
-      }
-      if (images.length > 4) {
-        preloadByIndex(4, 300);
       }
     }
 

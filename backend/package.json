@@ -22,6 +22,7 @@
     "test:integration:watch": "NODE_OPTIONS='--experimental-vm-modules --no-deprecation' jest --config config/jest-integration.config.cjs --watch",
     "migration:generate": "typeorm-ts-node-commonjs migration:generate -d src/data-source.ts",
     "migration:run": "typeorm-ts-node-commonjs migration:run -d src/data-source.ts",
+    "migration:run:prod": "node node_modules/typeorm/cli.js migration:run -d dist/data-source.js",
     "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/data-source.ts",
     "seed": "ts-node -r tsconfig-paths/register src/scripts/stage/seed.ts",
     "reset-and-seed": "ts-node -r tsconfig-paths/register src/scripts/stage/reset-and-seed.ts",

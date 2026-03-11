@@ -13,6 +13,7 @@ import {
 import { PriceDisplay } from '@/components/listing/PriceDisplay';
 import { useI18n } from '@/components/providers/I18nProvider';
 import { useCities } from '@/hooks/useCities';
+import { useListingCardImageError } from '@/hooks/useListingCardImageError';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import type { Listing } from '@/lib/api';
@@ -539,6 +540,13 @@ function ListingCardComponent({
     images.length <= 1 &&
     Boolean(singleImageUrl && singleImageUrl !== '/placeholder-car.jpg' && !imageErrors.has(0));
 
+  const handleImageError = useListingCardImageError(
+    listing.id,
+    images,
+    imageErrors,
+    setImageErrors,
+  );
+
   return (
     <div
       ref={cardRef}
@@ -563,7 +571,7 @@ function ListingCardComponent({
               ref={carouselRef}
               images={images}
               imageErrors={imageErrors}
-              onImageError={(index) => setImageErrors((prev) => new Set([...prev, index]))}
+              onImageError={handleImageError}
               onBusyChange={handleCarouselBusyChange}
               onIndexChange={handleCarouselIndexChange}
               imageAltTitle={imageAltTitle}
@@ -577,7 +585,7 @@ function ListingCardComponent({
               imageAltTitle={imageAltTitle}
               priority={priority}
               isLocalhostImage={isLocalhostImage}
-              onError={() => setImageErrors((prev) => new Set([...prev, 0]))}
+              onError={() => handleImageError(0)}
               t={t}
             />
           )}

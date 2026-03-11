@@ -28,7 +28,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
 import { memoryStorage } from 'multer';
 
@@ -277,6 +277,7 @@ export class UploadController {
       },
     },
   })
+  @SkipThrottle()
   @Get('image/:filename')
   async getOptimizedImage(
     @Param('filename') filename: string,

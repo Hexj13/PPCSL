@@ -439,6 +439,10 @@ From `LOADING_STATES.md`:
 
 **Modal:** The modal receives `onImageError: (index: number) => void` and calls it from both the confirmed and pending `<Image>` `onError` handlers (with the correct index). The parent updates `imageErrors`; the modal does not call `onIndexChange` on error (that would retry the same broken index). Failed images show the placeholder and do not block others.
 
+**Retry:** When an image fails to load, the UI shows a placeholder and automatic retries run in the background via `useImageRetry` (see `core/frontend/hooks/useImageRetry.ts`). Up to 3 retries with delays 3s, 8s, 15s; on success the index is removed from `imageErrors` and the image is shown. Used on the listing card (via `useListingCardImageError`) and on the listing page (preview and modal).
+
+**Failure reporting (Sentry):** When the placeholder is shown for a failed image, `reportImageLoadFailure` (from `core/frontend/lib/image-failure-monitor.ts`) sends a non-exception event to Sentry with scope (`listing_card`, `listing_page`, or `listing_modal`), listingId, imageUrl, index, pathname, userAgent, viewport, and network info (effectiveType, downlink, rtt, saveData). Events are deduplicated and rate-limited. This helps diagnose issues such as rate limiting or network failures on mobile.
+
 ---
 
 ## Performance Metrics
@@ -582,4 +586,4 @@ If you need to add features:
 ---
 
 **Last Updated:** 2026-03-12  
-**Version:** 3.9 (card: mark toIndex as loaded on animation commit to avoid repeated gray block on cyclic swipes; incoming slide for index 0 uses same render as idle to avoid rewind flicker)
+**Version:** 3.10 (Error handling: retry with backoff via useImageRetry; Sentry failure reporting via image-failure-monitor)

@@ -626,6 +626,8 @@ Backups are saved to `backend/backups/` by default with format: `ppcsl_backup_YY
 - `POST /api/auth/send-sms`: 3 requests per minute
 - `POST /api/upload/image`: 20 requests per minute
 
+**Excluded from global limit:** `GET /api/upload/image/:filename` (image delivery) uses `@SkipThrottle()` so viewing listing photos does not count toward the 100 req/min per-IP quota.
+
 #### SMS Verification
 
 - IP-based brute force protection (40 attempts per IP, 1-hour block)

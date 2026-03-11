@@ -22,8 +22,10 @@ import {
 import { SimilarListings } from '@/components/listing/SimilarListings';
 import { PromotionModal } from '@/components/modals/PromotionModal';
 import { useI18n } from '@/components/providers/I18nProvider';
+import { useImageRetry } from '@/hooks/useImageRetry';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
+import { reportImageLoadFailure } from '@/lib/image-failure-monitor';
 import { formatDate, formatMileage, formatRegistrationType } from '@/lib/utils';
 import { Spinner } from '@/ui';
 
@@ -348,10 +350,18 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
     closeImageModal,
   } = props;
 
+  const images =
+    listing?.images && listing.images.length > 0 ? listing.images : ['/placeholder-car.jpg'];
+  const { onImageError: retryImageError } = useImageRetry(
+    images,
+    imageErrors,
+    setImageErrors,
+    75,
+    1200,
+  );
+
   if (!listing) return null;
 
-  const images =
-    listing.images && listing.images.length > 0 ? listing.images : ['/placeholder-car.jpg'];
   const vehicle = listing.vehicle;
   const closingDate = getClosingDate(listing.last_updated_at);
   const brand = vehicle?.brand?.name || '';
@@ -362,6 +372,26 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
 
   const nextImage = () => setModalImageIndex((prev) => (prev + 1) % images.length);
   const prevImage = () => setModalImageIndex((prev) => (prev - 1 + images.length) % images.length);
+  const handlePageImageError = (index: number) => {
+    retryImageError(index);
+    void reportImageLoadFailure({
+      scope: 'listing_page',
+      listingId: listing.id,
+      imageUrl: images[index] ?? '',
+      imageIndex: index,
+      imagesTotal: images.length,
+    });
+  };
+  const handleModalImageError = (index: number) => {
+    retryImageError(index);
+    void reportImageLoadFailure({
+      scope: 'listing_modal',
+      listingId: listing.id,
+      imageUrl: images[index] ?? '',
+      imageIndex: index,
+      imagesTotal: images.length,
+    });
+  };
 
   return (
     <>
@@ -381,9 +411,7 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
               currentImageIndex={currentImageIndex}
               setCurrentImageIndex={setCurrentImageIndex}
               imageErrors={imageErrors}
-              onImageError={(index) => {
-                setImageErrors((prev) => new Set(prev).add(index));
-              }}
+              onImageError={handlePageImageError}
               onImageClick={openImageModal}
             />
           </div>
@@ -471,7 +499,7 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
         onNext={nextImage}
         onPrev={prevImage}
         onIndexChange={setModalImageIndex}
-        onImageError={(index) => setImageErrors((prev) => new Set(prev).add(index))}
+        onImageError={handleModalImageError}
       />
 
       <PromotionModal
