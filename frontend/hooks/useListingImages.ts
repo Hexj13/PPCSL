@@ -21,11 +21,23 @@ export function useListingImages({
   const mainImageLoadedRef = useRef<Set<string>>(new Set());
   const navigationCountRef = useRef(0);
   const lastNavigatedIndexRef = useRef(currentImageIndex);
+  const hasPreloadedAllRef = useRef(false);
+  const imagesSignature = images.join('\u0001');
 
   const { visible: showMainImageLoader } = useLoadingState({
     isLoading: mainImageLoading,
     minDisplayTime: 1000,
   });
+
+  useEffect(() => {
+    mainImageLoadedRef.current.clear();
+    navigationCountRef.current = 0;
+    lastNavigatedIndexRef.current = currentImageIndex;
+    hasPreloadedAllRef.current = false;
+    setMainImageLoading(false);
+    // Intentionally depend only on imagesSignature so reset runs when listing changes, not on every index change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [imagesSignature]);
 
   useEffect(() => {
     if (lastNavigatedIndexRef.current !== currentImageIndex) {
@@ -37,13 +49,8 @@ export function useListingImages({
   useEffect(() => {
     if (images.length <= 1 || typeof window === 'undefined') return;
 
-    const nextIndex = (currentImageIndex + 1) % images.length;
-    const prevIndex = (currentImageIndex - 1 + images.length) % images.length;
-    const secondNextIndex = (currentImageIndex + 2) % images.length;
     const preloadImages: HTMLImageElement[] = [];
     const preloadTimeouts: Array<ReturnType<typeof setTimeout>> = [];
-    const isMobileViewport = window.innerWidth <= 768;
-    const shouldWarmSecondNext = isMobileViewport && navigationCountRef.current < 2;
 
     const preloadByIndex = (index: number, delay = 0) => {
       const imageUrl = images[index];
@@ -78,16 +85,28 @@ export function useListingImages({
       startPreload();
     };
 
+    const nextIndex = (currentImageIndex + 1) % images.length;
+    const prevIndex = (currentImageIndex - 1 + images.length) % images.length;
+
     preloadByIndex(nextIndex);
     preloadByIndex(prevIndex, 120);
 
-    if (
-      shouldWarmSecondNext &&
-      images.length > 2 &&
-      secondNextIndex !== nextIndex &&
-      secondNextIndex !== prevIndex
-    ) {
-      preloadByIndex(secondNextIndex, 40);
+    if (navigationCountRef.current >= 1 && !hasPreloadedAllRef.current) {
+      hasPreloadedAllRef.current = true;
+      for (let i = 0; i < images.length; i += 1) {
+        preloadByIndex(i);
+      }
+    }
+
+    if (navigationCountRef.current === 0) {
+      preloadByIndex(1);
+      preloadByIndex(2);
+      if (images.length > 3) {
+        preloadByIndex(3, 300);
+      }
+      if (images.length > 4) {
+        preloadByIndex(4, 300);
+      }
     }
 
     return () => {

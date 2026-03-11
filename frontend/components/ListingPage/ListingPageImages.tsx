@@ -33,7 +33,7 @@ function renderPreviewImage(
     showMainImageLoader: boolean;
     handleImageLoad: (_idx: number) => void;
     onImageError: (_idx: number) => void;
-    eager: boolean;
+    isAnimating: boolean;
     t: (_key: string, _params?: Record<string, string>) => string;
   },
 ) {
@@ -45,7 +45,7 @@ function renderPreviewImage(
     showMainImageLoader,
     handleImageLoad,
     onImageError,
-    eager,
+    isAnimating,
     t,
   } = params;
   const src = images[index];
@@ -65,6 +65,34 @@ function renderPreviewImage(
   const optimizedUrl = getOptimizedImageUrl(src, 75, 1200);
   const isExternal = optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://');
   const isCurrent = index === currentImageIndex;
+  const useNextImage = index === 0 && !isAnimating;
+
+  if (!useNextImage) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        key={`preview-native-${index}`}
+        src={optimizedUrl}
+        alt={t('listings.imageAltWithTotal', {
+          title: imageAltTitle,
+          index: String(index + 1),
+          total: String(images.length),
+        })}
+        decoding="sync"
+        draggable={false}
+        onLoad={() => handleImageLoad(index)}
+        onError={() => onImageError(index)}
+        className={`object-cover ${isCurrent && showMainImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+        }}
+      />
+    );
+  }
 
   return (
     <Image
@@ -78,8 +106,8 @@ function renderPreviewImage(
       fill
       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 65vw"
       className={`object-cover ${isCurrent && showMainImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
-      loading={index === 0 ? undefined : eager ? 'eager' : 'lazy'}
-      priority={index === 0}
+      loading={undefined}
+      priority={true}
       draggable={false}
       unoptimized={isExternal}
       onLoad={() => handleImageLoad(index)}
@@ -130,7 +158,7 @@ function renderPreviewSlides(params: {
   if (!animState) {
     return (
       <div className="absolute inset-0 overflow-hidden">
-        {renderPreviewImage(currentImageIndex, { ...slideParams, eager: false })}
+        {renderPreviewImage(currentImageIndex, { ...slideParams, isAnimating: false })}
       </div>
     );
   }
@@ -151,7 +179,7 @@ function renderPreviewSlides(params: {
           transition: transitionStyle,
         }}
       >
-        {renderPreviewImage(fromIndex, { ...slideParams, eager: true })}
+        {renderPreviewImage(fromIndex, { ...slideParams, isAnimating: true })}
       </div>
       <div
         style={{
@@ -161,7 +189,7 @@ function renderPreviewSlides(params: {
           transition: transitionStyle,
         }}
       >
-        {renderPreviewImage(toIndex, { ...slideParams, eager: true })}
+        {renderPreviewImage(toIndex, { ...slideParams, isAnimating: true })}
       </div>
     </div>
   );

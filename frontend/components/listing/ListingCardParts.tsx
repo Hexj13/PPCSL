@@ -3,64 +3,14 @@
 import Image from 'next/image';
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
-import type { Listing } from '@/lib/api';
-import { getOptimizedImageUrl } from '@/lib/utils';
 import {
-  formatBodyType,
-  formatDriveType,
-  formatEngineVolume,
-  formatFuel,
-  formatMileage,
-} from '@/lib/utils';
+  bindImageReadiness,
+  useListingCardCarouselPreload,
+} from '@/components/listing/useListingCardCarouselPreload';
+import { getOptimizedImageUrl } from '@/lib/utils';
 import { Spinner } from '@/ui';
 
 export const IMAGE_SLIDE_DURATION_MS = 220;
-
-const SPARKLES_EMOJI = '\u2728';
-
-function bindImageReadiness(img: HTMLImageElement, onReady: () => void, onFailure: () => void) {
-  let settled = false;
-
-  const handleReady = () => {
-    if (settled) return;
-    settled = true;
-    onReady();
-  };
-
-  const handleFailure = () => {
-    if (settled) return;
-    settled = true;
-    onFailure();
-  };
-
-  const resolveReadiness = () => {
-    if (typeof img.decode === 'function') {
-      void img
-        .decode()
-        .then(handleReady)
-        .catch(() => {
-          if (img.complete && img.naturalWidth > 0) {
-            handleReady();
-            return;
-          }
-          handleFailure();
-        });
-      return;
-    }
-
-    if (img.complete && img.naturalWidth > 0) {
-      handleReady();
-      return;
-    }
-
-    handleFailure();
-  };
-
-  img.onload = resolveReadiness;
-  img.onerror = handleFailure;
-
-  return resolveReadiness;
-}
 
 export function ListingCardImageArea({
   showImage,
@@ -151,7 +101,8 @@ export const ListingCardImageCarousel = React.forwardRef<
   const preloadingRef = useRef<Set<number>>(new Set());
   const rafRef = useRef<number | undefined>(undefined);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const [coverIndex, setCoverIndex] = useState<number | null>(null);
+  const hasPreloadedAllRef = useRef(false);
+  const imagesSignature = images.join('\u0001');
   const onIndexChangeRef = useRef(onIndexChange);
   const onBusyChangeRef = useRef(onBusyChange);
   onIndexChangeRef.current = onIndexChange;
@@ -172,13 +123,24 @@ export const ListingCardImageCarousel = React.forwardRef<
     }
   }, [isIdle, idleIndex]);
 
+  useEffect(() => {
+    hasPreloadedAllRef.current = false;
+    loadedRef.current.clear();
+    preloadingRef.current.clear();
+    if (rafRef.current !== undefined) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = undefined;
+    }
+    if (timerRef.current !== undefined) {
+      clearTimeout(timerRef.current);
+      timerRef.current = undefined;
+    }
+    setState({ type: 'idle', index: 0 });
+  }, [imagesSignature]);
+
   const markLoaded = useCallback((index: number) => {
     loadedRef.current.add(index);
     preloadingRef.current.delete(index);
-  }, []);
-
-  const clearCover = useCallback((index: number) => {
-    setCoverIndex((prev) => (prev === index ? null : prev));
   }, []);
 
   const isTargetReady = useCallback(
@@ -190,11 +152,42 @@ export const ListingCardImageCarousel = React.forwardRef<
     [images, imageErrors],
   );
 
+  const preloadAllRemaining = useCallback(() => {
+    if (hasPreloadedAllRef.current || images.length <= 1) return;
+    hasPreloadedAllRef.current = true;
+
+    for (let index = 0; index < images.length; index += 1) {
+      const src = images[index];
+      if (!src || src === '/placeholder-car.jpg' || imageErrors.has(index)) {
+        continue;
+      }
+      if (loadedRef.current.has(index) || preloadingRef.current.has(index)) {
+        continue;
+      }
+
+      const url = getOptimizedImageUrl(src, 65, 800);
+      const img = new window.Image();
+      preloadingRef.current.add(index);
+      const resolveReadiness = bindImageReadiness(
+        img,
+        () => {
+          markLoaded(index);
+        },
+        () => {
+          preloadingRef.current.delete(index);
+        },
+      );
+      img.src = url;
+      if (img.complete) {
+        resolveReadiness();
+      }
+    }
+  }, [images, imageErrors, markLoaded]);
+
   const startAnimating = useCallback(
     (fromIndex: number, toIndex: number, direction: 'next' | 'prev') => {
       if (rafRef.current !== undefined) cancelAnimationFrame(rafRef.current);
       if (timerRef.current !== undefined) clearTimeout(timerRef.current);
-      setCoverIndex(null);
 
       setState({
         type: 'animating',
@@ -208,7 +201,6 @@ export const ListingCardImageCarousel = React.forwardRef<
         requestAnimationFrame(() => {
           setState((s) => (s.type === 'animating' ? { ...s, phase: 'running' as const } : s));
           timerRef.current = setTimeout(() => {
-            setCoverIndex(toIndex);
             setState({ type: 'idle', index: toIndex });
             if (timerRef.current !== undefined) {
               clearTimeout(timerRef.current);
@@ -260,6 +252,9 @@ export const ListingCardImageCarousel = React.forwardRef<
     const fromIndex = state.index;
     const len = images.length;
     if (len <= 1) return;
+    if (!hasPreloadedAllRef.current) {
+      preloadAllRemaining();
+    }
     const toIndex = (fromIndex + 1) % len;
     if (isTargetReady(toIndex)) {
       startAnimating(fromIndex, toIndex, 'next');
@@ -267,13 +262,23 @@ export const ListingCardImageCarousel = React.forwardRef<
       setState({ type: 'preloading', fromIndex, toIndex, direction: 'next' });
       loadTargetThenAnimate(fromIndex, toIndex, 'next');
     }
-  }, [images.length, state, isTargetReady, startAnimating, loadTargetThenAnimate]);
+  }, [
+    images.length,
+    state,
+    isTargetReady,
+    startAnimating,
+    loadTargetThenAnimate,
+    preloadAllRemaining,
+  ]);
 
   const goPrev = useCallback(() => {
     if (state.type !== 'idle') return;
     const fromIndex = state.index;
     const len = images.length;
     if (len <= 1) return;
+    if (!hasPreloadedAllRef.current) {
+      preloadAllRemaining();
+    }
     const toIndex = (fromIndex - 1 + len) % len;
     if (isTargetReady(toIndex)) {
       startAnimating(fromIndex, toIndex, 'prev');
@@ -281,7 +286,14 @@ export const ListingCardImageCarousel = React.forwardRef<
       setState({ type: 'preloading', fromIndex, toIndex, direction: 'prev' });
       loadTargetThenAnimate(fromIndex, toIndex, 'prev');
     }
-  }, [images.length, state, isTargetReady, startAnimating, loadTargetThenAnimate]);
+  }, [
+    images.length,
+    state,
+    isTargetReady,
+    startAnimating,
+    loadTargetThenAnimate,
+    preloadAllRemaining,
+  ]);
 
   useImperativeHandle(
     ref,
@@ -294,74 +306,14 @@ export const ListingCardImageCarousel = React.forwardRef<
     [goNext, goPrev, state],
   );
 
-  useEffect(() => {
-    const next = (currentIndex + 1) % images.length;
-    const prev = (currentIndex - 1 + images.length) % images.length;
-    if (images[next] && images[next] !== '/placeholder-car.jpg' && !imageErrors.has(next)) {
-      if (!loadedRef.current.has(next) && !preloadingRef.current.has(next)) {
-        const url = getOptimizedImageUrl(images[next], 65, 800);
-        const img = new window.Image();
-        preloadingRef.current.add(next);
-        const resolveReadiness = bindImageReadiness(
-          img,
-          () => markLoaded(next),
-          () => preloadingRef.current.delete(next),
-        );
-        img.src = url;
-        if (img.complete) {
-          resolveReadiness();
-        }
-      }
-    }
-    if (
-      prev !== next &&
-      images[prev] &&
-      images[prev] !== '/placeholder-car.jpg' &&
-      !imageErrors.has(prev)
-    ) {
-      if (!loadedRef.current.has(prev) && !preloadingRef.current.has(prev)) {
-        const url = getOptimizedImageUrl(images[prev], 65, 800);
-        const img = new window.Image();
-        preloadingRef.current.add(prev);
-        const resolveReadiness = bindImageReadiness(
-          img,
-          () => markLoaded(prev),
-          () => preloadingRef.current.delete(prev),
-        );
-        img.src = url;
-        if (img.complete) {
-          resolveReadiness();
-        }
-      }
-    }
-  }, [currentIndex, images, imageErrors, markLoaded]);
-
-  useEffect(() => {
-    if (images.length <= 1) return;
-    const t = setTimeout(() => {
-      const idx = 1;
-      if (
-        images[idx] &&
-        images[idx] !== '/placeholder-car.jpg' &&
-        !loadedRef.current.has(idx) &&
-        !preloadingRef.current.has(idx)
-      ) {
-        const url = getOptimizedImageUrl(images[idx], 65, 800);
-        const img = new window.Image();
-        preloadingRef.current.add(idx);
-        const resolveReadiness = bindImageReadiness(
-          img,
-          () => markLoaded(idx),
-          () => preloadingRef.current.delete(idx),
-        );
-        img.src = url;
-        if (img.complete) {
-          resolveReadiness();
-        }
-      }
-    }, 1500);
-    return () => clearTimeout(t);
-  }, [images, markLoaded]);
+  useListingCardCarouselPreload(
+    currentIndex,
+    images,
+    imageErrors,
+    markLoaded,
+    loadedRef,
+    preloadingRef,
+  );
 
   useEffect(
     () => () => {
@@ -390,55 +342,6 @@ export const ListingCardImageCarousel = React.forwardRef<
     [],
   );
 
-  const renderSlide = useCallback(
-    (index: number, eager: boolean) => {
-      const src = images[index];
-      if (!src) return null;
-      if (imageErrors.has(index)) return errorPlaceholder;
-      const imageUrl = src === '/placeholder-car.jpg' ? src : getOptimizedImageUrl(src, 65, 800);
-      const isLocalhostImage =
-        imageUrl.startsWith('http://localhost:') || imageUrl.startsWith('http://127.0.0.1:');
-      const isFirst = priority && index === 0;
-      return (
-        <Image
-          key={`card-slide-${index}`}
-          src={imageUrl}
-          alt={t('listings.imageAltWithTotal', {
-            title: imageAltTitle,
-            index: String(index + 1),
-            total: String(images.length),
-          })}
-          fill
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-          className="object-cover"
-          loading={isFirst ? undefined : eager ? 'eager' : 'lazy'}
-          priority={isFirst}
-          draggable={false}
-          onLoad={() => {
-            markLoaded(index);
-            requestAnimationFrame(() => clearCover(index));
-          }}
-          onError={() => {
-            onImageError(index);
-            clearCover(index);
-          }}
-          unoptimized={isLocalhostImage && process.env.NODE_ENV === 'development'}
-        />
-      );
-    },
-    [
-      images,
-      imageErrors,
-      imageAltTitle,
-      priority,
-      t,
-      markLoaded,
-      clearCover,
-      onImageError,
-      errorPlaceholder,
-    ],
-  );
-
   const renderNativeSlide = useCallback(
     (index: number) => {
       const src = images[index];
@@ -457,6 +360,7 @@ export const ListingCardImageCarousel = React.forwardRef<
           })}
           decoding="sync"
           draggable={false}
+          onLoad={() => markLoaded(index)}
           onError={() => onImageError(index)}
           style={{
             position: 'absolute',
@@ -468,7 +372,57 @@ export const ListingCardImageCarousel = React.forwardRef<
         />
       );
     },
-    [images, imageErrors, imageAltTitle, t, onImageError, errorPlaceholder],
+    [images, imageErrors, imageAltTitle, t, markLoaded, onImageError, errorPlaceholder],
+  );
+
+  const renderSlide = useCallback(
+    (index: number) => {
+      const src = images[index];
+      if (!src) return null;
+      if (imageErrors.has(index)) return errorPlaceholder;
+      const imageUrl = src === '/placeholder-car.jpg' ? src : getOptimizedImageUrl(src, 65, 800);
+      const isFirst = priority && index === 0;
+      if (!isFirst) {
+        return renderNativeSlide(index);
+      }
+      const isLocalhostImage =
+        imageUrl.startsWith('http://localhost:') || imageUrl.startsWith('http://127.0.0.1:');
+      return (
+        <Image
+          key={`card-slide-${index}`}
+          src={imageUrl}
+          alt={t('listings.imageAltWithTotal', {
+            title: imageAltTitle,
+            index: String(index + 1),
+            total: String(images.length),
+          })}
+          fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+          className="object-cover"
+          loading={undefined}
+          priority={isFirst}
+          draggable={false}
+          onLoad={() => {
+            markLoaded(index);
+          }}
+          onError={() => {
+            onImageError(index);
+          }}
+          unoptimized={isLocalhostImage && process.env.NODE_ENV === 'development'}
+        />
+      );
+    },
+    [
+      images,
+      imageErrors,
+      imageAltTitle,
+      priority,
+      t,
+      markLoaded,
+      onImageError,
+      errorPlaceholder,
+      renderNativeSlide,
+    ],
   );
 
   const slideBase: React.CSSProperties = {
@@ -506,11 +460,8 @@ export const ListingCardImageCarousel = React.forwardRef<
           willChange: isAnimating ? 'transform' : 'auto',
         }}
       >
-        {renderSlide(isAnimating ? state.fromIndex : visibleIndex, coverIndex !== null)}
+        {renderSlide(isAnimating ? state.fromIndex : visibleIndex)}
       </div>
-      {coverIndex !== null && !isAnimating && (
-        <div style={slideBase}>{renderNativeSlide(coverIndex)}</div>
-      )}
       {isAnimating && (
         <div
           style={{
@@ -527,113 +478,4 @@ export const ListingCardImageCarousel = React.forwardRef<
   );
 });
 
-export function ListingCardBadges({
-  listing,
-  newLabel,
-  t,
-}: {
-  listing: Listing;
-  newLabel: string;
-  t: (_key: string) => string;
-}) {
-  const compact = !!(listing.is_promoted && listing.is_new && listing.urgent);
-  const badgeCollapseClass = compact
-    ? 'px-3 py-1.5 gap-1.5 lg:px-1.5 lg:py-1.5 lg:gap-0 lg:group-hover:px-3 lg:group-hover:gap-1.5'
-    : 'px-3 py-1.5 gap-1.5';
-  const labelCollapseClass = compact
-    ? 'w-auto opacity-100 lg:w-0 lg:opacity-0 lg:overflow-hidden lg:group-hover:w-auto lg:group-hover:opacity-100'
-    : 'w-auto opacity-100';
-
-  return (
-    <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
-      {listing.is_promoted && (
-        <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-accent text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-accent/10 before:pointer-events-none">
-          <svg
-            className="relative z-10 w-4 h-4 shrink-0"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
-            />
-          </svg>
-          <span className="relative z-10">{t('listings.promoted')}</span>
-        </span>
-      )}
-      {listing.is_new && (
-        <span
-          className={`relative inline-flex items-center overflow-hidden rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-newBadge text-text-secondary shadow-lg whitespace-nowrap transition-all duration-300 w-fit before:absolute before:inset-0 before:rounded-lg before:bg-newBadge/10 before:pointer-events-none ${badgeCollapseClass}`}
-        >
-          <span
-            className="relative z-10 shrink-0 text-text-secondary"
-            style={{ filter: 'grayscale(1) brightness(0.5)' }}
-            aria-label={newLabel}
-          >
-            {SPARKLES_EMOJI}
-          </span>
-          <span className={`relative z-10 transition-all duration-300 ${labelCollapseClass}`}>
-            {newLabel}
-          </span>
-        </span>
-      )}
-      {listing.urgent && (
-        <span
-          className={`relative inline-flex items-center overflow-hidden rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-accentSecondary text-text-secondary shadow-lg whitespace-nowrap transition-all duration-300 w-fit before:absolute before:inset-0 before:rounded-lg before:bg-accentSecondary/10 before:pointer-events-none ${badgeCollapseClass}`}
-        >
-          <span
-            className="relative z-10 shrink-0 text-text-secondary"
-            style={{ filter: 'grayscale(1) brightness(0.5)' }}
-          >
-            🔥
-          </span>
-          <span className={`relative z-10 transition-all duration-300 ${labelCollapseClass}`}>
-            {t('listings.urgent')}
-          </span>
-        </span>
-      )}
-    </div>
-  );
-}
-
-export function ListingCardVehicleSpecs({
-  vehicle,
-  t,
-}: {
-  vehicle: NonNullable<Listing['vehicle']>;
-  t: (_key: string) => string;
-}) {
-  return (
-    <div className="text-sm space-y-1.5" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
-      {vehicle.engine_displ_l != null && (
-        <div>
-          {t('userListings.engine')}: {formatEngineVolume(vehicle.engine_displ_l)}{' '}
-          {t('listings.liters')}
-        </div>
-      )}
-      {vehicle.fuel && (
-        <div>
-          {t('userListings.fuel')}: {formatFuel(vehicle.fuel, t)}
-        </div>
-      )}
-      {vehicle.mileage_km !== null && vehicle.mileage_km !== undefined && (
-        <div>
-          {t('userListings.mileage')}: {formatMileage(vehicle.mileage_km)} {t('listings.km')}
-        </div>
-      )}
-      {vehicle.drive_type && (
-        <div>
-          {t('userListings.driveType')}: {formatDriveType(vehicle.drive_type, t)}
-        </div>
-      )}
-      {vehicle.body_type && (
-        <div>
-          {t('userListings.bodyType')}: {formatBodyType(vehicle.body_type, t)}
-        </div>
-      )}
-    </div>
-  );
-}
+export { ListingCardBadges, ListingCardVehicleSpecs } from './ListingCardBadgesAndSpecs';
