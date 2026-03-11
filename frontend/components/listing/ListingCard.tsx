@@ -183,8 +183,10 @@ function CarouselNavButtons({
   const btnClass = disabled
     ? 'opacity-40 cursor-wait'
     : 'opacity-60 lg:opacity-0 lg:group-hover:opacity-60 hover-only:hover:opacity-100';
-  const baseClass =
-    'absolute w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center transition-all shadow-lg z-10 text-white touch-manipulation pointer-events-auto';
+  const hitAreaClass =
+    'absolute w-14 h-14 flex z-10 touch-manipulation pointer-events-auto lg:w-10 lg:h-10';
+  const iconWrapClass =
+    'w-10 h-10 shrink-0 rounded-full bg-primary-500 flex items-center justify-center transition-all shadow-lg text-white';
   return (
     <>
       <button
@@ -192,29 +194,33 @@ function CarouselNavButtons({
         onClick={onPrev}
         onTouchStart={onPrevTouch}
         aria-disabled={disabled || undefined}
-        className={`bottom-3 left-3 ${baseClass} ${btnClass}`}
+        className={`bottom-3 left-3 ${hitAreaClass} justify-start items-end lg:justify-center lg:items-center`}
         aria-label={prevLabel}
       >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2.5}
-            d="M15 19l-7-7 7-7"
-          />
-        </svg>
+        <span className={`${iconWrapClass} ${btnClass}`}>
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2.5}
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+        </span>
       </button>
       <button
         type="button"
         onClick={onNext}
         onTouchStart={onNextTouch}
         aria-disabled={disabled || undefined}
-        className={`bottom-3 right-3 ${baseClass} ${btnClass}`}
+        className={`bottom-3 right-3 ${hitAreaClass} justify-end items-end lg:justify-center lg:items-center`}
         aria-label={nextLabel}
       >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-        </svg>
+        <span className={`${iconWrapClass} ${btnClass}`}>
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+          </svg>
+        </span>
       </button>
     </>
   );
