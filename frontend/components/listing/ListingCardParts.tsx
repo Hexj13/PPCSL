@@ -172,12 +172,6 @@ export const ListingCardImageCarousel = React.forwardRef<
     }
   }, [isIdle, idleIndex]);
 
-  useEffect(() => {
-    if (coverIndex === null) return;
-    const timer = setTimeout(() => setCoverIndex(null), 500);
-    return () => clearTimeout(timer);
-  }, [coverIndex]);
-
   const markLoaded = useCallback((index: number) => {
     loadedRef.current.add(index);
     preloadingRef.current.delete(index);
@@ -397,13 +391,14 @@ export const ListingCardImageCarousel = React.forwardRef<
   );
 
   const renderSlide = useCallback(
-    (index: number) => {
+    (index: number, eager: boolean) => {
       const src = images[index];
       if (!src) return null;
       if (imageErrors.has(index)) return errorPlaceholder;
       const imageUrl = src === '/placeholder-car.jpg' ? src : getOptimizedImageUrl(src, 65, 800);
       const isLocalhostImage =
         imageUrl.startsWith('http://localhost:') || imageUrl.startsWith('http://127.0.0.1:');
+      const isFirst = priority && index === 0;
       return (
         <Image
           key={`card-slide-${index}`}
@@ -416,8 +411,8 @@ export const ListingCardImageCarousel = React.forwardRef<
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
           className="object-cover"
-          loading={priority && index === 0 ? undefined : 'lazy'}
-          priority={priority && index === 0}
+          loading={isFirst ? undefined : eager ? 'eager' : 'lazy'}
+          priority={isFirst}
           draggable={false}
           onLoad={() => {
             markLoaded(index);
@@ -511,7 +506,7 @@ export const ListingCardImageCarousel = React.forwardRef<
           willChange: isAnimating ? 'transform' : 'auto',
         }}
       >
-        {renderSlide(isAnimating ? state.fromIndex : visibleIndex)}
+        {renderSlide(isAnimating ? state.fromIndex : visibleIndex, coverIndex !== null)}
       </div>
       {coverIndex !== null && !isAnimating && (
         <div style={slideBase}>{renderNativeSlide(coverIndex)}</div>
