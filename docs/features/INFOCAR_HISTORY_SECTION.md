@@ -78,3 +78,31 @@ Optional overrides: `INFOCAR_BASE_URL` (default `https://infocar.md`), `INFOCAR_
 ## Partner tracking
 
 The query parameter `from=kupito` is used by Infocar.md to attribute the user and future report purchases to the kupito.club partner account.
+
+## Partner verification (VIN signing)
+
+For debugging link decoding on the partner side, our exact algorithm:
+
+- **Input**: VIN string as stored (after trim; we store uppercase from the form). Secret key: `INFOCAR_SECRET_KEY` as a UTF-8 string.
+- **Algorithm**: `signature = BASE64URL( HMAC-SHA256(secretKey, vin) )` — in Node.js terms: key is the first argument to `createHmac`, message is what we pass to `.update()`.
+- **Output**: Query param `vin=<signature>`, with `signature` encoded via `encodeURIComponent` (so base64url alphabet is URL-safe; no extra encoding of `-`/`_` if their decoder expects raw base64url).
+
+Minimal Node.js snippet (same as in `GetReportUrlUseCase`):
+
+```js
+const crypto = require('crypto');
+
+function signVinForInfocar(vin, secretKey) {
+  const vinNormalized = vin.trim();
+  const hmac = crypto.createHmac('sha256', secretKey).update(vinNormalized).digest('base64url');
+  return hmac;
+}
+
+const testVin = 'WBA3A5G59CNP12345';
+const testSecret = 'YOUR_SECRET_KEY';
+const signed = signVinForInfocar(testVin, testSecret);
+console.log('vin param:', signed);
+// URL: https://infocar.md/?from=kupito&vin=<signed>
+```
+
+Common mismatch points on the decoder side: (1) secret key encoding — we use the key as UTF-8 string, not hex/base64; (2) base64url is unpadded and uses `-` and `_`; (3) VIN is the raw 17-character string (we do not hash the VIN itself, only HMAC it with the key).
