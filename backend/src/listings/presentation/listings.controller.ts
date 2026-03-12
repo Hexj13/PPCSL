@@ -10,6 +10,7 @@ import {
   Post,
   Query,
   Request,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -21,7 +22,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import type { Request as ExpressRequest } from 'express';
+import type { Request as ExpressRequest, Response } from 'express';
 
 import { JwtAuthGuard } from '../../auth/infrastructure/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../../auth/infrastructure/guards/optional-jwt-auth.guard';
@@ -312,6 +313,20 @@ export class ListingsController {
     return this.listingsService.getReportUrl(id);
   }
 
+  @ApiOperation({ summary: 'Redirect to Infocar report (for direct link, iOS Safari)' })
+  @ApiParam({ name: 'id', description: 'Listing UUID' })
+  @ApiResponse({ status: 302, description: 'Redirect to Infocar' })
+  @Get(':id/report-redirect')
+  async getReportRedirect(@Param('id', ParseUUIDPipe) id: string, @Res() res: Response) {
+    const fallbackUrl = 'https://infocar.md/?from=kupito';
+    try {
+      const { url } = await this.listingsService.getReportUrl(id);
+      res.redirect(302, url);
+    } catch {
+      res.redirect(302, fallbackUrl);
+    }
+  }
+
   @ApiOperation({ summary: 'Get listing details' })
   @ApiParam({
     name: 'id',
@@ -321,9 +336,18 @@ export class ListingsController {
   @ApiResponse({ status: 200, description: 'Listing details' })
   @ApiResponse({ status: 400, description: 'Invalid UUID format' })
   @ApiResponse({ status: 404, description: 'Listing not found' })
+  @ApiQuery({
+    name: 'includeFullVin',
+    required: false,
+    description: 'Return full VIN for listing owner only',
+  })
   @UseGuards(OptionalJwtAuthGuard)
   @Get(':id')
-  async findOne(@Param('id', ParseUUIDPipe) id: string, @Request() req: ExpressRequest) {
+  async findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: ExpressRequest,
+    @Query('includeFullVin') includeFullVin?: string,
+  ) {
     try {
       const ip =
         req.ip ||
@@ -334,6 +358,7 @@ export class ListingsController {
         userId: req.user?.id ?? null,
         ip,
         userAgent: (req.headers['user-agent'] as string) || 'unknown',
+        includeFullVin: includeFullVin === '1' || includeFullVin === 'true',
       });
     } catch (error) {
       if (!(error instanceof NotFoundException)) {

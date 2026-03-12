@@ -177,7 +177,26 @@ export interface CreateListingDto {
   assignedUserId?: string;
 }
 
-export type UpdateListingDto = Omit<Partial<CreateListingDto>, 'down_payment_amount'> & {
+export type UpdateListingDto = Omit<
+  Partial<CreateListingDto>,
+  'down_payment_amount' | 'vin' | 'description' | 'power_kw' | 'equipment' | 'vehicle'
+> & {
+  vin?: string | null;
+  description?: string | null;
+  power_kw?: number | null;
+  equipment?: string[] | null;
+  vehicle?: Omit<
+    Partial<CreateListingDto['vehicle']>,
+    'engine_displ_l' | 'mileage_km' | 'fuel' | 'transmission' | 'drive_type' | 'color' | 'doors'
+  > & {
+    engine_displ_l?: number | null;
+    mileage_km?: number | null;
+    fuel?: CreateListingDto['vehicle']['fuel'] | null;
+    transmission?: CreateListingDto['vehicle']['transmission'] | null;
+    drive_type?: CreateListingDto['vehicle']['drive_type'] | null;
+    color?: string | null;
+    doors?: number | null;
+  };
   down_payment_amount?: number | null;
 };
 

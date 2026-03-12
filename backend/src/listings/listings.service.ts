@@ -144,7 +144,7 @@ export class ListingsService {
 
   async findOne(
     id: string,
-    context?: { userId: string | null; ip?: string; userAgent?: string },
+    context?: { userId: string | null; ip?: string; userAgent?: string; includeFullVin?: boolean },
   ): Promise<Listing> {
     try {
       return await this.getListingUseCase.execute(id, context);

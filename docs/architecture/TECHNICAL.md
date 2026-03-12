@@ -349,7 +349,8 @@ GET    /api/listings/my               # Get user's listings; query: page, limit,
 GET    /api/listings/vin/:vin         # Find listings by VIN
 GET    /api/listings/:id/vin          # Get full VIN (JWT required; rate limit 5/hour; query action=reveal|copy)
 GET    /api/listings/:id/history      # Previous listings with same VIN
-GET    /api/listings/:id/report-url   # Infocar report URL (AES-256-CBC encrypted VIN, param vin)
+GET    /api/listings/:id/report-url        # Infocar report URL (AES-256-CBC encrypted VIN, param vin)
+GET    /api/listings/:id/report-redirect   # 302 redirect to Infocar (direct link for iOS)
 POST   /api/listings/refresh-dates    # Refresh all user's listing dates (max once per 48h; returns 400 if too soon)
 POST   /api/listings/cron/close-old            # Close old listings (cron job, requires x-cron-secret header)
 POST   /api/listings/cron/expire-promotions   # Expire promotions (cron job, requires x-cron-secret header)

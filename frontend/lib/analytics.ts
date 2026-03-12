@@ -348,6 +348,10 @@ export const analytics = {
     });
   },
 
+  infocarSampleClick: (listingId: string) => {
+    trackEvent('click_infocar_sample', { listing_id: listingId });
+  },
+
   vinRevealClick: (listingId: string) => {
     trackEvent('vin_reveal_click', { listing_id: listingId });
   },

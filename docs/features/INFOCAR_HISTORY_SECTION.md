@@ -29,14 +29,14 @@ The "History and Report" section is displayed on the listing detail page. It has
 - **Sub-heading**: `listingDetail.externalReports` — e.g. "Отчёт об данном авто".
 - **Hint**: `listingDetail.externalReportsHint` — tooltip next to the sub-heading: users are redirected to partners who compile the report from various sources; details and terms are on the partner’s site.
 - **Two buttons** (same card style, with icons):
-  1. **Order report** — `listingDetail.orderReport` (e.g. "Заказать отчёт"). Icon: `CoinsIcon`. On click: calls `GET /api/listings/:id/report-url` (returns Infocar URL with encrypted VIN, param `vin`); on success opens that URL in a new tab; on error opens fallback `https://infocar.md/?from=kupito` without showing an error toast. Fires `analytics.infocarCheck(...)` on click. Request uses `X-Skip-Error-Handling: true`.
-  2. **Sample report** — `listingDetail.sampleReport` (e.g. "Пример отчёта"). Icon: `EyeIcon`. Direct link: `https://infocar.md/demo?from=kupito` (constant `INFOCAR_DEMO_URL`). No analytics event.
+  1. **Order report** — `listingDetail.orderReport` (e.g. "Заказать отчёт"). Icon: `CoinsIcon`. Implemented as a direct link `<a href="…/report-redirect">` (no `window.open`) for iOS Safari compatibility. Link points to `GET /api/listings/:id/report-redirect`, which returns 302 to Infocar URL (or fallback). Fires `analytics.infocarCheck(...)` on click.
+  2. **Sample report** — `listingDetail.sampleReport` (e.g. "Пример отчёта"). Icon: `EyeIcon`. Direct link: `https://infocar.md/demo?from=kupito` (constant `INFOCAR_DEMO_URL`). Fires `analytics.infocarSampleClick(listingId)` on click.
 
 Visibility: the whole "Report" sub-section (both "Order report" and "Sample report" buttons) is rendered for all active listings (`shouldShowInfocarSection(listing)` = `listing.status === 'Active'`), regardless of whether VIN is provided. If the user clicks "Order report" without VIN, the API returns an error and the frontend opens the fallback Infocar URL.
 
 ## URLs and helpers
 
-- **Order report**: Backend `GET /api/listings/:id/report-url` returns `{ url: string }` (Infocar URL with encrypted VIN in param `vin`). Frontend `listingsApi.getReportUrl(id)`; on error opens `INFOCAR_BASE_URL` (`https://infocar.md/?from=kupito`).
+- **Order report**: Frontend uses direct link to `GET /api/listings/:id/report-redirect` (302 to Infocar or fallback). No JavaScript open; compatible with iOS Safari. Backend `GET /api/listings/:id/report-url` still returns `{ url: string }` for other consumers.
 - **Sample report URL**: `INFOCAR_DEMO_URL` = `https://infocar.md/demo?from=kupito`.
 - **Section visibility**: `shouldShowInfocarSection(listing)` returns `listing.status === 'Active'`. Both buttons are always shown in the section.
 - **Helper** `getInfocarUrl(listing)` in `listingPageInfocar.ts`: builds base URL with optional `&vin=` when VIN is present and not masked (for reference/fallback).
@@ -49,10 +49,9 @@ The VIN field on the listing form (create and edit) uses `listings.vinHint`. The
 
 ## Analytics
 
-- **Event**: `click_infocar_check`
-- **Method**: `analytics.infocarCheck(listingId, hasVin, brand?, model?, year?)`
-- **When**: On click on the "Order report" link only (before navigation).
-- **Parameters**: `listing_id`, `has_vin`, optional `brand`, `model`, `year`.
+- **Events**: `click_infocar_check` (Order report), `click_infocar_sample` (Sample report).
+- **Methods**: `analytics.infocarCheck(listingId, hasVin, brand?, model?, year?)`, `analytics.infocarSampleClick(listingId)`.
+- **When**: On click on "Order report" or "Sample report" (before navigation).
 - See [GA4_EVENTS.md](../analytics/GA4_EVENTS.md#click_infocar_check).
 
 ## Environment
@@ -68,10 +67,11 @@ Optional overrides: `INFOCAR_BASE_URL` (default `https://infocar.md`), `INFOCAR_
 ## Implementation
 
 - **Component**: `ListingPageHistorySection` in `core/frontend/app/listings/[id]/ListingPageHistorySection.tsx`. Used by `ListingPageClient.tsx`.
-- **Helpers**: `getInfocarUrl(listing)`, `shouldShowInfocarButton(listing)`, `INFOCAR_BASE_URL`, `INFOCAR_DEMO_URL` in `core/frontend/app/listings/[id]/listingPageInfocar.ts`.
-- **Tests**: `core/frontend/app/listings/[id]/ListingPageClient.infocar.test.ts` — `getInfocarUrl` URL building and `shouldShowInfocarButton` visibility (Active with VIN / without VIN, Closed, Paused).
+- **Helpers**: `getInfocarUrl(listing)`, `shouldShowInfocarSection(listing)`, `INFOCAR_BASE_URL`, `INFOCAR_DEMO_URL` in `core/frontend/app/listings/[id]/listingPageInfocar.ts`.
+- **Tests**: `core/frontend/app/listings/[id]/ListingPageClient.infocar.test.ts` — `getInfocarUrl` URL building and `shouldShowInfocarSection` visibility (Active with VIN / without VIN, Closed, Paused).
 - **Backend**:
-  - `GET /api/listings/:id/report-url` — returns Infocar URL with encrypted VIN using `INFOCAR_SECRET_KEY` (AES-256-CBC, param `vin`). If `INFOCAR_SECRET_KEY` is not set, returns 404 (frontend opens fallback URL without showing error toast).
+  - `GET /api/listings/:id/report-url` — returns Infocar URL with encrypted VIN using `INFOCAR_SECRET_KEY` (AES-256-CBC, param `vin`). If `INFOCAR_SECRET_KEY` is not set, returns 404.
+  - `GET /api/listings/:id/report-redirect` — returns 302 redirect to Infocar URL (or `https://infocar.md/?from=kupito` on error). Used by the "Order report" button as direct link for iOS Safari compatibility.
   - `GET /api/listings/:id/history` — returns previous listings with the same VIN (for the site history table).
   - VIN on listing detail: `GET /api/listings/:id` returns masked VIN (4+9+4). Full VIN: `GET /api/listings/:id/vin` (JWT required, rate limit 5 per user per hour; query `action=reveal|copy` for logging). See listing characteristics section for Show/Hide/Copy VIN.
 

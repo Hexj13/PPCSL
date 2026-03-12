@@ -234,6 +234,7 @@ describe('ListingsController', () => {
         userId: 'user-1',
         ip: '127.0.0.1',
         userAgent: 'unknown',
+        includeFullVin: false,
       });
       expect(result).toEqual(mockListing);
     });
@@ -255,8 +256,25 @@ describe('ListingsController', () => {
         userId: null,
         ip: '127.0.0.1',
         userAgent: 'Mozilla/5.0',
+        includeFullVin: false,
       });
       expect(result).toEqual(mockListing);
+    });
+
+    it('should request full VIN when includeFullVin query is set', async () => {
+      const req = { user: mockUser, ip: '127.0.0.1', headers: {}, socket: {} };
+      const listingId = 'listing-1';
+
+      service.findOne.mockResolvedValue(mockListing);
+
+      await controller.findOne(listingId, req as unknown as ExpressRequest, '1');
+
+      expect(service.findOne).toHaveBeenCalledWith(listingId, {
+        userId: 'user-1',
+        ip: '127.0.0.1',
+        userAgent: 'unknown',
+        includeFullVin: true,
+      });
     });
 
     it('should throw NotFoundException when listing not found', async () => {

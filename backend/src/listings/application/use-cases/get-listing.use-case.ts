@@ -17,6 +17,7 @@ export interface GetListingContext {
   userId: string | null;
   ip?: string;
   userAgent?: string;
+  includeFullVin?: boolean;
 }
 
 @Injectable()
@@ -85,7 +86,9 @@ export class GetListingUseCase {
       this.recordView(id, userId, visitorId).catch(() => {});
     }
 
-    if (listing.vin && listing.vin.length === 17) {
+    const isOwner = !!context?.userId && listing.user_id === context.userId;
+    const shouldIncludeFullVin = !!context?.includeFullVin && isOwner;
+    if (listing.vin && listing.vin.length === 17 && !shouldIncludeFullVin) {
       (listing as Partial<Listing>).vin =
         listing.vin.slice(0, 4) + '*'.repeat(9) + listing.vin.slice(-4);
     }

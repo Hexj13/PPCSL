@@ -10,6 +10,7 @@ import {
 } from '@/components/ListingForm/listingFormUtils';
 import { runListingFormValidation } from '@/components/ListingForm/listingFormValidation';
 import {
+  applyEditNullables,
   buildListingPayload,
   getFilledFields,
   getSubmitErrorMessage,
@@ -20,7 +21,7 @@ import { useCities } from '@/hooks/useCities';
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
-import type { Listing, UpdateListingDto } from '@/lib/api';
+import type { Listing } from '@/lib/api';
 import { listingsApi } from '@/lib/api';
 import type { VehicleEquipmentKey } from '@/lib/options';
 import { getEquipmentKeysByVehicleType } from '@/lib/options';
@@ -245,10 +246,7 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
           setLoading(false);
           throw new Error('Listing ID is required for edit mode');
         }
-        const updatePayload: UpdateListingDto = { ...payload };
-        if (!formData.available_in_credit || formData.down_payment_amount.trim() === '') {
-          updatePayload.down_payment_amount = null;
-        }
+        const updatePayload = applyEditNullables(payload, formData, vehicleType);
         const result = await listingsApi.update(listingId, updatePayload);
         sessionStorage.setItem(`refreshListing_${listingId}`, 'true');
         if (result.data) {

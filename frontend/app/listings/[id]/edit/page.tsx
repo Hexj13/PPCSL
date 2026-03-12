@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
-import { api, listingsApi } from '@/lib/api';
+import { api } from '@/lib/api';
 import { toast } from '@/lib/toast';
 
 const ListingForm = dynamic(
@@ -41,9 +41,11 @@ export default function EditListingPage() {
       const shouldRefresh = sessionStorage.getItem(`refreshListing_${listingId}`) === 'true';
       const needsRefresh = forceRefresh || shouldRefresh;
 
-      const res = needsRefresh
-        ? await api.get<Listing>(`/api/listings/${listingId}`, { params: { _t: Date.now() } })
-        : await listingsApi.getOne(listingId);
+      const params: Record<string, string | number> = { includeFullVin: '1' };
+      if (needsRefresh) {
+        params._t = Date.now();
+      }
+      const res = await api.get<Listing>(`/api/listings/${listingId}`, { params });
       const listingData = res.data;
 
       if (listingData.user?.id !== user.id) {

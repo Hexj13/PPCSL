@@ -1,9 +1,36 @@
 import type { AxiosError } from 'axios';
 
-import type { CreateListingDto } from '@/lib/api';
+import type { CreateListingDto, UpdateListingDto } from '@/lib/api';
 import type { BodyType } from '@/lib/types';
 
 import type { ListingFormData } from '../ListingForm';
+
+export function applyEditNullables(
+  payload: CreateListingDto,
+  formData: ListingFormData,
+  vehicleType: 'car' | 'truck' | 'moto',
+): UpdateListingDto {
+  const updatePayload: UpdateListingDto = { ...payload };
+  if (!formData.description.trim()) updatePayload.description = null;
+  if (!formData.vin.trim()) updatePayload.vin = null;
+  if (!formData.power_kw.trim()) updatePayload.power_kw = null;
+  if (formData.equipment.length === 0) updatePayload.equipment = null;
+  if (updatePayload.vehicle) {
+    if (formData.vehicle.fuel === 'Electric' || !formData.vehicle.engine_displ_l.trim())
+      updatePayload.vehicle.engine_displ_l = null;
+    if (!formData.vehicle.mileage_km.trim()) updatePayload.vehicle.mileage_km = null;
+    if (!formData.vehicle.fuel) updatePayload.vehicle.fuel = null;
+    if (!formData.vehicle.transmission) updatePayload.vehicle.transmission = null;
+    if (vehicleType === 'moto' || !formData.vehicle.drive_type)
+      updatePayload.vehicle.drive_type = null;
+    if (!formData.vehicle.color.trim()) updatePayload.vehicle.color = null;
+    if (vehicleType === 'moto' || !formData.vehicle.doors.trim())
+      updatePayload.vehicle.doors = null;
+  }
+  if (!formData.available_in_credit || formData.down_payment_amount.trim() === '')
+    updatePayload.down_payment_amount = null;
+  return updatePayload;
+}
 
 export function getFilledFields(formData: ListingFormData): Record<string, boolean> {
   return {

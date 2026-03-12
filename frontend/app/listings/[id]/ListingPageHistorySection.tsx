@@ -1,13 +1,12 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-
 import { analytics } from '@/lib/analytics';
 import type { Listing } from '@/lib/api';
-import { listingsApi } from '@/lib/api';
-import { LoadingSpinner, InfoBlock, HintTooltip, CoinsIcon, EyeIcon } from '@/ui';
+import { InfoBlock, HintTooltip, CoinsIcon, EyeIcon, LoadingSpinner } from '@/ui';
 
-import { INFOCAR_BASE_URL, INFOCAR_DEMO_URL, shouldShowInfocarSection } from './listingPageInfocar';
+import { INFOCAR_DEMO_URL, shouldShowInfocarSection } from './listingPageInfocar';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 const LINK_BUTTON_CLASS =
   'w-full min-h-12 px-4 md:px-8 py-2 md:py-2.5 text-sm md:text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10! select-none';
@@ -31,9 +30,9 @@ export function ListingPageHistorySection({
   formatDate,
   formatMileage,
 }: ListingPageHistorySectionProps) {
-  const [reportLoading, setReportLoading] = useState(false);
+  const reportRedirectUrl = `${API_URL}/api/listings/${listing.id}/report-redirect`;
 
-  const handleOrderReport = useCallback(() => {
+  const handleOrderReportClick = () => {
     analytics.infocarCheck(
       listing.id,
       !!listing.vin?.trim(),
@@ -41,23 +40,11 @@ export function ListingPageHistorySection({
       listing.vehicle?.model?.name,
       listing.vehicle?.year,
     );
-    setReportLoading(true);
-    listingsApi
-      .getReportUrl(listing.id)
-      .then((res) => {
-        window.open(res.data.url, '_blank', 'noopener,noreferrer');
-      })
-      .catch(() => {
-        window.open(INFOCAR_BASE_URL, '_blank', 'noopener,noreferrer');
-      })
-      .finally(() => setReportLoading(false));
-  }, [
-    listing.id,
-    listing.vin,
-    listing.vehicle?.brand?.name,
-    listing.vehicle?.model?.name,
-    listing.vehicle?.year,
-  ]);
+  };
+
+  const handleSampleReportClick = () => {
+    analytics.infocarSampleClick(listing.id);
+  };
 
   return (
     <div className="surface overflow-visible">
@@ -153,24 +140,22 @@ export function ListingPageHistorySection({
             </HintTooltip>
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              type="button"
-              onClick={handleOrderReport}
-              disabled={reportLoading}
+            <a
+              href={reportRedirectUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={handleOrderReportClick}
               className={LINK_BUTTON_CLASS}
               aria-label={t('listingDetail.orderReport')}
             >
-              {reportLoading ? (
-                <LoadingSpinner size="sm" className="w-5 h-5 shrink-0" />
-              ) : (
-                <CoinsIcon className="w-5 h-5 shrink-0" />
-              )}
+              <CoinsIcon className="w-5 h-5 shrink-0" />
               {t('listingDetail.orderReport')}
-            </button>
+            </a>
             <a
               href={INFOCAR_DEMO_URL}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={handleSampleReportClick}
               className={LINK_BUTTON_CLASS}
               aria-label={t('listingDetail.sampleReport')}
             >
