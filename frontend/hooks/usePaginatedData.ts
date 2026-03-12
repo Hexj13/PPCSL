@@ -65,6 +65,7 @@ export function usePaginatedData<T, F>(
   const hasInitializedRef = useRef(false);
   const showLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prevDebouncedFiltersRef = useRef<F>(initialFilters);
 
   const load = useCallback(
     async (targetPage: number, append = false, filtersToUse: F = debouncedFilters) => {
@@ -151,12 +152,13 @@ export function usePaginatedData<T, F>(
   useEffect(() => {
     if (!hasInitializedRef.current) return;
 
+    const prev = prevDebouncedFiltersRef.current;
     const shouldDebounce =
       debounceFilters &&
       debounceFilters.some((key) => {
         const filterValue = (filters as Record<string, unknown>)[key as string];
-        const debouncedValue = (debouncedFilters as Record<string, unknown>)[key as string];
-        return filterValue !== debouncedValue;
+        const prevValue = (prev as Record<string, unknown>)[key as string];
+        return filterValue !== prevValue;
       });
 
     if (shouldDebounce) {
@@ -164,9 +166,11 @@ export function usePaginatedData<T, F>(
         clearTimeout(debounceTimerRef.current);
       }
       debounceTimerRef.current = setTimeout(() => {
+        prevDebouncedFiltersRef.current = filters;
         setDebouncedFilters(filters);
       }, debounceMs);
     } else {
+      prevDebouncedFiltersRef.current = filters;
       setDebouncedFilters(filters);
     }
 
@@ -175,7 +179,7 @@ export function usePaginatedData<T, F>(
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [filters, debounceFilters, debounceMs, debouncedFilters]);
+  }, [filters, debounceFilters, debounceMs]);
 
   useEffect(() => {
     if (!hasInitializedRef.current) return;
