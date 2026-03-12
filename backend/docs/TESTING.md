@@ -39,6 +39,7 @@ npm run test:integration -- src/test/auth.integration.ts
 ## Requirements
 
 - Database must be running and accessible
+- Auth tests (`auth.integration.ts`) use a shared helper `registerTestUser(request)` that registers with unique phone and email and retries on 400 (e.g. phone already exists) and 429 (rate limit), so shared or persistent DB does not cause failures
 - Test database should be configured via environment variables:
   - `DB_HOST` (default: localhost)
   - `DB_PORT` (default: 5432)

@@ -4,7 +4,7 @@ const legal: LegalConfig = {
   terms: {
     en: {
       title: 'Terms and Conditions',
-      lastUpdated: 'Last updated: March 5, 2026',
+      lastUpdated: 'Last updated: March 12, 2026',
       languageToggle: 'Switch language',
       dictionary: {
         title: 'Glossary of Terms',
@@ -205,6 +205,7 @@ const legal: LegalConfig = {
             '• Errors will be corrected',
             '• The Platform is free from viruses or other harmful components',
             '• Information provided by users is accurate or secure',
+            "The Platform may redirect you to partner sites (e.g. for vehicle history reports). Use of those services is subject to the partner's terms and privacy policy; Kupito is not responsible for the content, availability, or data processing of partner services.",
             'Kupito is not liable for any direct, indirect, incidental, special, or consequential damages resulting from the use or inability to use the Platform.',
           ],
         },
@@ -258,7 +259,7 @@ const legal: LegalConfig = {
     },
     ro: {
       title: 'Termeni și condiții',
-      lastUpdated: 'Ultima actualizare: 5 martie 2026',
+      lastUpdated: 'Ultima actualizare: 12 martie 2026',
       languageToggle: 'Schimbă limba',
       dictionary: {
         title: 'Glosar de termeni',
@@ -465,6 +466,7 @@ const legal: LegalConfig = {
             '• Erorile vor fi corectate',
             '• Platforma este lipsită de viruși sau alte componente dăunătoare',
             '• Informațiile furnizate de utilizatori sunt exacte sau sigure',
+            'Platforma vă poate redirecționa către site-uri ale partenerilor (ex. pentru rapoarte de istoric vehicul). Utilizarea acestor servicii este supusă termenilor și politicii de confidențialitate a partenerului; Kupito nu este răspunzătoare pentru conținutul, disponibilitatea sau prelucrarea datelor de către serviciile partenerilor.',
             'Kupito nu este răspunzătoare pentru orice daune directe, indirecte, accidentale, speciale sau consecvențiale rezultate din utilizarea sau imposibilitatea de a utiliza Platforma.',
           ],
         },
@@ -518,7 +520,7 @@ const legal: LegalConfig = {
     },
     ru: {
       title: 'Условия использования',
-      lastUpdated: 'Последнее обновление: 5 марта 2026',
+      lastUpdated: 'Последнее обновление: 12 марта 2026',
       languageToggle: 'Переключить язык',
       dictionary: {
         title: 'Глоссарий терминов',
@@ -722,6 +724,7 @@ const legal: LegalConfig = {
             '• Ошибки будут исправлены',
             '• Платформа свободна от вирусов или других вредоносных компонентов',
             '• Информация, предоставленная пользователями, является точной или безопасной',
+            'Платформа может перенаправлять вас на сайты партнёров (напр. для отчётов по истории автомобиля). Использование таких услуг регулируется условиями и политикой конфиденциальности партнёра; Kupito не несёт ответственности за содержание, доступность или обработку данных сервисами партнёров.',
             'Kupito не несет ответственности за любые прямые, косвенные, случайные, особые или косвенные убытки, возникшие в результате использования или невозможности использования Платформы.',
           ],
         },
@@ -777,7 +780,7 @@ const legal: LegalConfig = {
   privacy: {
     ro: {
       title: 'Politica de confidențialitate',
-      lastUpdated: 'Ultima actualizare: 5 martie 2026',
+      lastUpdated: 'Ultima actualizare: 12 martie 2026',
       languageToggle: 'Schimbă limba',
       dictionary: {
         title: 'Glosar de termeni',
@@ -979,6 +982,7 @@ const legal: LegalConfig = {
             '• AWS S3 și CloudFront: Pentru stocarea și livrarea fotografiilor din anunțuri. Imaginile sunt stocate pe AWS S3 (Amazon Web Services) și livrate prin AWS CloudFront CDN pentru performanță îmbunătățită. AWS este certificat sub diferite standarde de securitate și protecție a datelor. Pentru mai multe informații, consultați Politica de confidențialitate AWS: https://aws.amazon.com/privacy/',
             '• Furnizori de hosting: Pentru stocarea și prelucrarea datelor pe servere situate în Republica Moldova',
             '• FXRatesAPI: Folosit pentru a obține cursuri valutar zilnice pentru afișarea prețurilor aproximative în valuta implicită a platformei. Nu sunt trimise date cu caracter personal către acest serviciu.',
+            '• Parteneri pentru raportul de istoric vehicul (ex. Infocar.md): Când apăsați „Comandă raport” pe pagina unui anunț, sunteți redirecționat pe site-ul partenerului, care întocmește raportul din diverse surse. Dacă anunțul conține un VIN, acesta poate fi transmis partenerului (criptat) pentru a precompleta cererea. Partenerul are propria politică de confidențialitate și termeni; procesarea datelor de către partener nu este controlată de Kupito.',
             'Toți acești parteneri sunt obligați să vă protejeze datele și să le folosească doar în scopurile menționate în conformitate cu politicile lor de confidențialitate și contractele de prelucrare a datelor.',
             '7.4. La transferul de afaceri:',
             '• În cazul fuziunii, achiziției sau vânzării unei părți a afacerii, datele pot fi transferate ca parte a tranzacției',
@@ -1177,7 +1181,7 @@ const legal: LegalConfig = {
     },
     en: {
       title: 'Privacy Policy',
-      lastUpdated: 'Last updated: March 5, 2026',
+      lastUpdated: 'Last updated: March 12, 2026',
       languageToggle: 'Switch language',
       dictionary: {
         title: 'Glossary of Terms',
@@ -1379,6 +1383,7 @@ const legal: LegalConfig = {
             '• AWS S3 and CloudFront: For storing and delivering photos from listings. Images are stored on AWS S3 (Amazon Web Services) and delivered via AWS CloudFront CDN for improved performance. AWS is certified under various security and data protection standards. For more information, see AWS Privacy Policy: https://aws.amazon.com/privacy/',
             '• Hosting providers: For storing and processing data on servers located in the Republic of Moldova',
             '• FXRatesAPI: Used to obtain daily exchange rates for displaying approximate prices in the platform default currency. No personal data is sent to this service.',
+            '• Vehicle history report partners (e.g. Infocar.md): When you click "Order report" on a listing page, you are redirected to the partner\'s site, which compiles the report from various sources. If the listing has a VIN, it may be transmitted to the partner (encrypted) to pre-fill the report request. The partner has its own privacy policy and terms; Kupito does not control the partner\'s data processing.',
             'All these partners are obligated to protect your data and use it only for the specified purposes in accordance with their privacy policies and data processing agreements.',
             '7.4. In case of business transfer:',
             '• In case of merger, acquisition, or sale of part of the business, data may be transferred as part of the transaction',
@@ -1577,7 +1582,7 @@ const legal: LegalConfig = {
     },
     ru: {
       title: 'Политика конфиденциальности',
-      lastUpdated: 'Последнее обновление: 5 марта 2026',
+      lastUpdated: 'Последнее обновление: 12 марта 2026',
       languageToggle: 'Переключить язык',
       dictionary: {
         title: 'Глоссарий терминов',
@@ -1779,6 +1784,7 @@ const legal: LegalConfig = {
             '• AWS S3 и CloudFront: Для хранения и доставки фотографий из объявлений. Изображения хранятся на AWS S3 (Amazon Web Services) и доставляются через AWS CloudFront CDN для улучшения производительности. AWS сертифицирован по различным стандартам безопасности и защиты данных. Для получения дополнительной информации см. Политику конфиденциальности AWS: https://aws.amazon.com/privacy/',
             '• Хостинг-провайдеры: Для хранения и обработки данных на серверах, расположенных в Республике Молдова',
             '• FXRatesAPI: Используется для получения ежедневных курсов валют для отображения приблизительных цен в валюте платформы по умолчанию. Персональные данные в этот сервис не передаются.',
+            '• Партнёры по отчёту об истории автомобиля (напр. Infocar.md): При нажатии «Заказать отчёт» на странице объявления вы переходите на сайт партнёра, который формирует отчёт из различных источников. Если в объявлении указан VIN, он может передаваться партнёру (в зашифрованном виде) для предзаполнения заявки. У партнёра действуют своя политика конфиденциальности и условия; Kupito не контролирует обработку данных партнёром.',
             'Все эти партнеры обязаны защищать ваши данные и использовать их только в указанных целях в соответствии с их политиками конфиденциальности и договорами об обработке данных.',
             '7.4. При передаче бизнеса:',
             '• В случае слияния, приобретения или продажи части бизнеса данные могут быть переданы как часть сделки',

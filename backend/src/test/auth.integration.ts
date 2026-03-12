@@ -3,6 +3,40 @@ import * as supertest from 'supertest';
 
 import { getTestRequest } from './setup-integration';
 
+const TEST_PASSWORD = 'Test123!@#';
+
+async function registerTestUser(
+  req: ReturnType<typeof getTestRequest>,
+): Promise<{ email: string; password: string }> {
+  const makePayload = () => ({
+    email: `test${Date.now()}${Math.floor(Math.random() * 10000)}@example.com`,
+    password: TEST_PASSWORD,
+    type: 'Individual' as const,
+    phone: `+38970${String(Date.now() + Math.floor(Math.random() * 10000)).slice(-7)}`,
+    firstName: 'Test',
+    lastName: 'User',
+    termsAccepted: true,
+  });
+  let payload = makePayload();
+  let res = await req.post('/api/auth/register').send(payload);
+  let retries = 0;
+  while (retries < 8 && res.status !== 201) {
+    if (res.status === 429) {
+      await new Promise((r) => setTimeout(r, 5000 * (retries + 1)));
+    }
+    payload = makePayload();
+    res = await req.post('/api/auth/register').send(payload);
+    retries++;
+  }
+  if (res.status !== 201) {
+    throw new Error(`Registration failed: ${JSON.stringify(res.body)}`);
+  }
+  return {
+    email: res.body.email ?? payload.email,
+    password: TEST_PASSWORD,
+  };
+}
+
 describe('Auth API Integration Tests', () => {
   let request: ReturnType<typeof getTestRequest>;
 
@@ -43,43 +77,9 @@ describe('Auth API Integration Tests', () => {
     let testPassword: string;
 
     beforeAll(async () => {
-      testEmail = `test${Date.now()}@example.com`;
-      testPassword = 'Test123!@#';
-
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      let registerResponse = await request.post('/api/auth/register').send({
-        email: testEmail,
-        password: testPassword,
-        type: 'Individual',
-        phone: `+389701234${Math.floor(Math.random() * 10000)}`,
-        firstName: 'Test',
-        lastName: 'User',
-        termsAccepted: true,
-      });
-
-      let retries = 0;
-      while (registerResponse.status === 429 && retries < 5) {
-        await new Promise((resolve) => setTimeout(resolve, 5000 * (retries + 1)));
-        registerResponse = await request.post('/api/auth/register').send({
-          email: `test${Date.now() + retries}@example.com`,
-          password: testPassword,
-          type: 'Individual',
-          phone: `+389701234${Math.floor(Math.random() * 10000)}`,
-          firstName: 'Test',
-          lastName: 'User',
-          termsAccepted: true,
-        });
-        retries++;
-      }
-
-      if (registerResponse.status !== 201) {
-        throw new Error(`Registration failed: ${JSON.stringify(registerResponse.body)}`);
-      }
-
-      if (retries > 0) {
-        testEmail = registerResponse.body.email || testEmail;
-      }
+      const user = await registerTestUser(request);
+      testEmail = user.email;
+      testPassword = user.password;
     }, 120000);
 
     it('should login successfully and match OpenAPI schema', async () => {
@@ -114,27 +114,13 @@ describe('Auth API Integration Tests', () => {
     let testEmail: string;
 
     beforeAll(async () => {
-      testEmail = `test${Date.now()}@example.com`;
-      const testPassword = 'Test123!@#';
-
-      await request.post('/api/auth/register').send({
-        email: testEmail,
-        password: testPassword,
-        type: 'Individual',
-        phone: `+389701234${Math.floor(Math.random() * 10000)}`,
-        firstName: 'Test',
-        lastName: 'User',
-        termsAccepted: true,
-      });
-
+      const user = await registerTestUser(request);
+      testEmail = user.email;
       const loginResponse = await request.post('/api/auth/login').send({
-        login: testEmail,
-        password: testPassword,
+        login: user.email,
+        password: user.password,
       });
-
-      if (loginResponse.body.access_token) {
-        authToken = loginResponse.body.access_token;
-      }
+      authToken = loginResponse.body.access_token ?? '';
     });
 
     it('should return current user profile and match OpenAPI schema', async () => {
@@ -164,27 +150,12 @@ describe('Auth API Integration Tests', () => {
     let authToken: string;
 
     beforeAll(async () => {
-      const testEmail = `test${Date.now()}@example.com`;
-      const testPassword = 'Test123!@#';
-
-      await request.post('/api/auth/register').send({
-        email: testEmail,
-        password: testPassword,
-        type: 'Individual',
-        phone: `+389701234${Math.floor(Math.random() * 10000)}`,
-        firstName: 'Test',
-        lastName: 'User',
-        termsAccepted: true,
-      });
-
+      const user = await registerTestUser(request);
       const loginResponse = await request.post('/api/auth/login').send({
-        login: testEmail,
-        password: testPassword,
+        login: user.email,
+        password: user.password,
       });
-
-      if (loginResponse.body.access_token) {
-        authToken = loginResponse.body.access_token;
-      }
+      authToken = loginResponse.body.access_token ?? '';
     });
 
     it('should delete account successfully and match OpenAPI schema', async () => {
