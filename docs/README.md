@@ -48,7 +48,7 @@
 - [SEARCH_TITLE_URL.md](./features/SEARCH_TITLE_URL.md) - URL и заголовок страницы поиска (слаги, диакритика)
 - Approximate price in default currency (≈ EUR) — FXRatesAPI, daily cron, listing enrichment, price sorting in default currency; env: `FXRATESAPI_API_KEY`, `DEFAULT_CURRENCY` (see `TECHNICAL.md` §6 Exchange Rates)
 - [IMAGE_PREVIEW.md](./features/IMAGE_PREVIEW.md) - Система превью изображений
-- [INFOCAR_HISTORY_SECTION.md](./features/INFOCAR_HISTORY_SECTION.md) - Секция «История и отчёт» и кнопка Infocar
+- [INFOCAR_HISTORY_SECTION.md](./features/INFOCAR_HISTORY_SECTION.md) - Секция «История и отчёт», кнопка Infocar, ссылки по языку (RO/RU)
 - [LOADING_STATES.md](./features/LOADING_STATES.md) - Loading states
 - [PAID_PROMOTION.md](./features/PAID_PROMOTION.md) - Платное продвижение
 - Assign listing to user (admin) — на `/listings/new` админ может указать UUID владельца объявления; real-time валидация (GET `/api/admin/validate-assign-user/:userId`), проверки бэкенда (существование, active, лимит объявлений)

@@ -41,7 +41,7 @@ export function ListingPageImageModal(props: ListingPageImageModalProps) {
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black z-50 flex items-center justify-center p-4"
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
@@ -66,7 +66,7 @@ export function ListingPageImageModal(props: ListingPageImageModalProps) {
           e.stopPropagation();
           onClose();
         }}
-        className="absolute top-3 right-3 sm:top-4 sm:right-4 text-primary-700 hover-only:hover:text-primary-900 transition-colors z-10 p-2"
+        className="absolute top-3 right-3 sm:top-4 sm:right-4 text-primary-500 hover-only:hover:text-primary-700 transition-colors z-10 p-2"
       >
         <svg
           className="w-11 h-11 sm:w-12 sm:h-12"
@@ -91,7 +91,7 @@ export function ListingPageImageModal(props: ListingPageImageModalProps) {
               e.stopPropagation();
               onPrev();
             }}
-            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 text-primary-900 transition-all duration-200 z-10 bg-primary-500 rounded-full p-3 sm:p-4 border-2 border-primary-900 shadow-lg hidden sm:block hover-only:hover:scale-110"
+            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 text-primary-900 transition-all duration-200 z-10 bg-primary-500/85 rounded-full p-3 sm:p-4 border-2 border-primary-900 shadow-lg hidden sm:block hover-only:hover:scale-110"
           >
             <svg
               className="w-8 h-8 sm:w-10 sm:h-10"
@@ -114,7 +114,7 @@ export function ListingPageImageModal(props: ListingPageImageModalProps) {
               e.stopPropagation();
               onNext();
             }}
-            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 text-primary-900 transition-all duration-200 z-10 bg-primary-500 rounded-full p-3 sm:p-4 border-2 border-primary-900 shadow-lg hidden sm:block hover-only:hover:scale-110"
+            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 text-primary-900 transition-all duration-200 z-10 bg-primary-500/85 rounded-full p-3 sm:p-4 border-2 border-primary-900 shadow-lg hidden sm:block hover-only:hover:scale-110"
           >
             <svg
               className="w-8 h-8 sm:w-10 sm:h-10"
@@ -223,7 +223,7 @@ export function ListingPageImageModal(props: ListingPageImageModalProps) {
         </div>
 
         {images.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-primary-500 text-lg sm:text-xl font-semibold bg-black bg-opacity-50 px-4 py-2 rounded-full">
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-primary-500 text-lg sm:text-xl font-semibold bg-black/85 px-4 py-2 rounded-full border-2 border-primary-500">
             {visibleIndex + 1} / {images.length}
           </div>
         )}

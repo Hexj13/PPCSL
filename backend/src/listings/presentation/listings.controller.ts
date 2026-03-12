@@ -36,6 +36,10 @@ import { SimilarListingsQueryDto } from './dto/similar-listings.dto';
 import { TogglePromotionDto } from './dto/toggle-promotion.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
 
+function normalizeInfocarLocale(locale?: string): 'ro' | 'ru' {
+  return locale?.trim().toLowerCase() === 'ru' ? 'ru' : 'ro';
+}
+
 @ApiTags('listings')
 @Controller('api/listings')
 export class ListingsController {
@@ -306,21 +310,31 @@ export class ListingsController {
 
   @ApiOperation({ summary: 'Get Infocar report URL with signed VIN' })
   @ApiParam({ name: 'id', description: 'Listing UUID' })
+  @ApiQuery({ name: 'locale', required: false, description: 'Locale for Infocar domain (ro | ru)' })
   @ApiResponse({ status: 200, description: 'Report URL' })
   @ApiResponse({ status: 404, description: 'Listing not found or no VIN' })
   @Get(':id/report-url')
-  async getReportUrl(@Param('id', ParseUUIDPipe) id: string) {
-    return this.listingsService.getReportUrl(id);
+  async getReportUrl(@Param('id', ParseUUIDPipe) id: string, @Query('locale') locale?: string) {
+    return this.listingsService.getReportUrl(id, normalizeInfocarLocale(locale));
   }
 
   @ApiOperation({ summary: 'Redirect to Infocar report (for direct link, iOS Safari)' })
   @ApiParam({ name: 'id', description: 'Listing UUID' })
+  @ApiQuery({ name: 'locale', required: false, description: 'Locale for Infocar domain (ro | ru)' })
   @ApiResponse({ status: 302, description: 'Redirect to Infocar' })
   @Get(':id/report-redirect')
-  async getReportRedirect(@Param('id', ParseUUIDPipe) id: string, @Res() res: Response) {
-    const fallbackUrl = 'https://infocar.md/?from=kupito';
+  async getReportRedirect(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() res: Response,
+    @Query('locale') locale?: string,
+  ) {
+    const normalizedLocale = normalizeInfocarLocale(locale);
+    const fallbackUrl =
+      normalizedLocale === 'ru'
+        ? 'https://ru.infocar.md/?from=kupito'
+        : 'https://infocar.md/?from=kupito';
     try {
-      const { url } = await this.listingsService.getReportUrl(id);
+      const { url } = await this.listingsService.getReportUrl(id, normalizedLocale);
       res.redirect(302, url);
     } catch {
       res.redirect(302, fallbackUrl);

@@ -223,8 +223,8 @@ export class ListingsService {
     return this.getListingHistoryUseCase.execute(listingId);
   }
 
-  async getReportUrl(listingId: string): Promise<{ url: string }> {
-    return this.getReportUrlUseCase.execute(listingId);
+  async getReportUrl(listingId: string, locale?: string): Promise<{ url: string }> {
+    return this.getReportUrlUseCase.execute(listingId, locale);
   }
 
   async closeAllUserListings(userId: string): Promise<number> {

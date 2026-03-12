@@ -5,8 +5,10 @@ import { ConfigService } from '@nestjs/config';
 
 import { IListingRepository, LISTING_REPOSITORY } from '../ports/listing.repository.port';
 
-const INFOCAR_BASE_URL = 'https://infocar.md';
+const INFOCAR_BASE_URL_RO = 'https://infocar.md';
+const INFOCAR_BASE_URL_RU = 'https://ru.infocar.md';
 const INFOCAR_PARTNER_FROM = 'kupito';
+type InfocarLocale = 'ro' | 'ru';
 
 function base64urlEncode(buffer: Buffer): string {
   return buffer.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
@@ -21,6 +23,10 @@ function encryptVin(vin: string, secretKey: string): string {
   return base64urlEncode(Buffer.concat([iv, encrypted]));
 }
 
+function normalizeInfocarLocale(locale?: string): InfocarLocale {
+  return locale?.trim().toLowerCase() === 'ru' ? 'ru' : 'ro';
+}
+
 @Injectable()
 export class GetReportUrlUseCase {
   private readonly logger = new Logger(GetReportUrlUseCase.name);
@@ -31,7 +37,7 @@ export class GetReportUrlUseCase {
     private readonly configService: ConfigService,
   ) {}
 
-  async execute(listingId: string): Promise<{ url: string }> {
+  async execute(listingId: string, locale?: string): Promise<{ url: string }> {
     const listing = await this.listingRepo.findById(listingId);
     if (!listing) {
       throw new NotFoundException('errors.listingNotFound');
@@ -46,7 +52,11 @@ export class GetReportUrlUseCase {
       throw new NotFoundException('errors.listingNotFound');
     }
     const encoded = encryptVin(vin, secretKey);
-    const baseUrl = this.configService.get<string>('INFOCAR_BASE_URL') || INFOCAR_BASE_URL;
+    const normalizedLocale = normalizeInfocarLocale(locale);
+    const baseUrl =
+      normalizedLocale === 'ru'
+        ? this.configService.get<string>('INFOCAR_BASE_URL_RU') || INFOCAR_BASE_URL_RU
+        : this.configService.get<string>('INFOCAR_BASE_URL') || INFOCAR_BASE_URL_RO;
     const from = this.configService.get<string>('INFOCAR_PARTNER_FROM') || INFOCAR_PARTNER_FROM;
     const separator = baseUrl.includes('?') ? '&' : '?';
     const url = `${baseUrl}${separator}from=${encodeURIComponent(from)}&vin=${encodeURIComponent(encoded)}`;

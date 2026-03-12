@@ -1,10 +1,11 @@
 'use client';
 
+import { useI18n } from '@/components/providers/I18nProvider';
 import { analytics } from '@/lib/analytics';
 import type { Listing } from '@/lib/api';
 import { InfoBlock, HintTooltip, CoinsIcon, EyeIcon, LoadingSpinner } from '@/ui';
 
-import { INFOCAR_DEMO_URL, shouldShowInfocarSection } from './listingPageInfocar';
+import { getInfocarDemoUrl, shouldShowInfocarSection } from './listingPageInfocar';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -30,7 +31,8 @@ export function ListingPageHistorySection({
   formatDate,
   formatMileage,
 }: ListingPageHistorySectionProps) {
-  const reportRedirectUrl = `${API_URL}/api/listings/${listing.id}/report-redirect`;
+  const { locale } = useI18n();
+  const reportRedirectUrl = `${API_URL}/api/listings/${listing.id}/report-redirect?locale=${locale}`;
 
   const handleOrderReportClick = () => {
     analytics.infocarCheck(
@@ -152,7 +154,7 @@ export function ListingPageHistorySection({
               {t('listingDetail.orderReport')}
             </a>
             <a
-              href={INFOCAR_DEMO_URL}
+              href={getInfocarDemoUrl(locale)}
               target="_blank"
               rel="noopener noreferrer"
               onClick={handleSampleReportClick}

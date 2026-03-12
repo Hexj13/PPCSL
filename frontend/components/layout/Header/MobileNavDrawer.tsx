@@ -38,7 +38,7 @@ export function MobileNavDrawer({
   if (!isOpen || !showNav) return null;
 
   return (
-    <nav className="lg:hidden pb-4 pt-4 bg-primary-700 w-full">
+    <nav className="lg:hidden relative z-[1] pb-4 pt-4 bg-primary-700 w-full">
       <div className="container mx-auto px-3 sm:px-4">
         {showSkeleton ? (
           <NavSkeleton variant="mobile" />

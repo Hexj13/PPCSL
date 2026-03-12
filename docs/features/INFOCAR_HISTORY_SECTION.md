@@ -6,7 +6,7 @@ The "History and Report" section is displayed on the listing detail page. It has
 
 **Location**: Listing detail page, main column below "Condition and registration", above the seller block.
 
-**Purpose**: Build trust and add value by surfacing vehicle history on the site and by redirecting users to partners for paid reports; the platform uses the referral parameter `from=kupito`.
+**Purpose**: Build trust and add value by surfacing vehicle history on the site and by redirecting users to partners for paid reports; the platform uses the referral parameter `from=kupito`. Report links depend on the user’s selected language: **RO** → `https://infocar.md`, **RU** → `https://ru.infocar.md`.
 
 **Effect of VIN (presence or absence):** VIN only affects (1) whether the VIN field is shown in the listing characteristics block; (2) whether the "History on site" sub-section shows the table of previous listings (with VIN) or the "VIN not provided" message (without VIN); (3) whether the partner link is full (URL with encrypted VIN, param `vin`) or fallback (`from=kupito` only). The Report sub-section (Order report, Sample report) is always shown for active listings regardless of VIN.
 
@@ -29,17 +29,17 @@ The "History and Report" section is displayed on the listing detail page. It has
 - **Sub-heading**: `listingDetail.externalReports` — e.g. "Отчёт об данном авто".
 - **Hint**: `listingDetail.externalReportsHint` — tooltip next to the sub-heading: users are redirected to partners who compile the report from various sources; details and terms are on the partner’s site.
 - **Two buttons** (same card style, with icons):
-  1. **Order report** — `listingDetail.orderReport` (e.g. "Заказать отчёт"). Icon: `CoinsIcon`. Implemented as a direct link `<a href="…/report-redirect">` (no `window.open`) for iOS Safari compatibility. Link points to `GET /api/listings/:id/report-redirect`, which returns 302 to Infocar URL (or fallback). Fires `analytics.infocarCheck(...)` on click.
-  2. **Sample report** — `listingDetail.sampleReport` (e.g. "Пример отчёта"). Icon: `EyeIcon`. Direct link: `https://infocar.md/demo?from=kupito` (constant `INFOCAR_DEMO_URL`). Fires `analytics.infocarSampleClick(listingId)` on click.
+  1. **Order report** — `listingDetail.orderReport` (e.g. "Заказать отчёт"). Icon: `CoinsIcon`. Implemented as a direct link `<a href="…/report-redirect?locale={locale}">` (no `window.open`) for iOS Safari compatibility. Link points to `GET /api/listings/:id/report-redirect?locale=ro|ru`, which returns 302 to Infocar URL for the given locale (or fallback). Fires `analytics.infocarCheck(...)` on click.
+  2. **Sample report** — `listingDetail.sampleReport` (e.g. "Пример отчёта"). Icon: `EyeIcon`. Direct link from `getInfocarDemoUrl(locale)`: RO → `https://infocar.md/demo?from=kupito`, RU → `https://ru.infocar.md/demo?from=kupito`. Fires `analytics.infocarSampleClick(listingId)` on click.
 
 Visibility: the whole "Report" sub-section (both "Order report" and "Sample report" buttons) is rendered for all active listings (`shouldShowInfocarSection(listing)` = `listing.status === 'Active'`), regardless of whether VIN is provided. If the user clicks "Order report" without VIN, the API returns an error and the frontend opens the fallback Infocar URL.
 
 ## URLs and helpers
 
-- **Order report**: Frontend uses direct link to `GET /api/listings/:id/report-redirect` (302 to Infocar or fallback). No JavaScript open; compatible with iOS Safari. Backend `GET /api/listings/:id/report-url` still returns `{ url: string }` for other consumers.
-- **Sample report URL**: `INFOCAR_DEMO_URL` = `https://infocar.md/demo?from=kupito`.
+- **Order report**: Frontend uses direct link to `GET /api/listings/:id/report-redirect?locale={locale}` (302 to Infocar or fallback). Locale `ro` → infocar.md, `ru` → ru.infocar.md. No JavaScript open; compatible with iOS Safari. Backend `GET /api/listings/:id/report-url?locale=ro|ru` returns `{ url: string }` for other consumers.
+- **Sample report URL**: `getInfocarDemoUrl(locale)` — RO → `https://infocar.md/demo?from=kupito`, RU → `https://ru.infocar.md/demo?from=kupito`.
 - **Section visibility**: `shouldShowInfocarSection(listing)` returns `listing.status === 'Active'`. Both buttons are always shown in the section.
-- **Helper** `getInfocarUrl(listing)` in `listingPageInfocar.ts`: builds base URL with optional `&vin=` when VIN is present and not masked (for reference/fallback).
+- **Helpers** in `listingPageInfocar.ts`: `getInfocarBaseUrl(locale)`, `getInfocarDemoUrl(locale)`, `getInfocarUrl(listing, locale)` (default locale `ro`) — build URLs with optional `&vin=` when VIN is present and not masked.
 
 All links open in a new tab (`target="_blank"`, `rel="noopener noreferrer"`). Button styling reuses the existing CTA link style (border, rounded-lg, theme colours).
 
@@ -62,16 +62,16 @@ The VIN field on the listing form (create and edit) uses `listings.vinHint`. The
 |----------|-------------|
 | `INFOCAR_SECRET_KEY` | Secret key from Infocar.md partner agreement. Used to encrypt VIN (AES-256-CBC, key = SHA256(secret), IV 16 bytes random, output base64url(IV \|\| ciphertext)). If unset, `GET /api/listings/:id/report-url` returns 404 and the frontend opens the fallback URL (Infocar base without VIN). |
 
-Optional overrides: `INFOCAR_BASE_URL` (default `https://infocar.md`), `INFOCAR_PARTNER_FROM` (default `kupito`). See also [TECHNICAL.md](../architecture/TECHNICAL.md#3-environment-variables) and [PLATFORM_CHECKLIST.md](../guides/PLATFORM_CHECKLIST.md).
+Optional overrides: `INFOCAR_BASE_URL` (default `https://infocar.md` for RO), `INFOCAR_BASE_URL_RU` (default `https://ru.infocar.md` for RU), `INFOCAR_PARTNER_FROM` (default `kupito`). See also [TECHNICAL.md](../architecture/TECHNICAL.md#3-environment-variables) and [PLATFORM_CHECKLIST.md](../guides/PLATFORM_CHECKLIST.md).
 
 ## Implementation
 
 - **Component**: `ListingPageHistorySection` in `core/frontend/app/listings/[id]/ListingPageHistorySection.tsx`. Used by `ListingPageClient.tsx`.
-- **Helpers**: `getInfocarUrl(listing)`, `shouldShowInfocarSection(listing)`, `INFOCAR_BASE_URL`, `INFOCAR_DEMO_URL` in `core/frontend/app/listings/[id]/listingPageInfocar.ts`.
-- **Tests**: `core/frontend/app/listings/[id]/ListingPageClient.infocar.test.ts` — `getInfocarUrl` URL building and `shouldShowInfocarSection` visibility (Active with VIN / without VIN, Closed, Paused).
+- **Helpers**: `getInfocarBaseUrl(locale)`, `getInfocarDemoUrl(locale)`, `getInfocarUrl(listing, locale)`, `shouldShowInfocarSection(listing)`, `INFOCAR_BASE_URL_RO`, `INFOCAR_BASE_URL_RU` in `core/frontend/app/listings/[id]/listingPageInfocar.ts`.
+- **Tests**: `core/frontend/app/listings/[id]/ListingPageClient.infocar.test.ts` — `getInfocarUrl` URL building (RO/RU locale) and `shouldShowInfocarSection` visibility (Active with VIN / without VIN, Closed, Paused). Backend: `core/backend/src/listings/application/use-cases/get-report-url.use-case.spec.ts` — locale-based host (infocar.md vs ru.infocar.md), errors when listing not found / no VIN / no secret.
 - **Backend**:
-  - `GET /api/listings/:id/report-url` — returns Infocar URL with encrypted VIN using `INFOCAR_SECRET_KEY` (AES-256-CBC, param `vin`). If `INFOCAR_SECRET_KEY` is not set, returns 404.
-  - `GET /api/listings/:id/report-redirect` — returns 302 redirect to Infocar URL (or `https://infocar.md/?from=kupito` on error). Used by the "Order report" button as direct link for iOS Safari compatibility.
+  - `GET /api/listings/:id/report-url?locale=ro|ru` — returns Infocar URL with encrypted VIN using `INFOCAR_SECRET_KEY` (AES-256-CBC, param `vin`). Optional query `locale`: `ru` → ru.infocar.md, otherwise RO (infocar.md). If `INFOCAR_SECRET_KEY` is not set, returns 404.
+  - `GET /api/listings/:id/report-redirect?locale=ro|ru` — returns 302 redirect to Infocar URL for the given locale (or locale-specific fallback on error: RO → `https://infocar.md/?from=kupito`, RU → `https://ru.infocar.md/?from=kupito`). Used by the "Order report" button as direct link for iOS Safari compatibility.
   - `GET /api/listings/:id/history` — returns previous listings with the same VIN (for the site history table).
   - VIN on listing detail: `GET /api/listings/:id` returns masked VIN (4+9+4). Full VIN: `GET /api/listings/:id/vin` (JWT required, rate limit 5 per user per hour; query `action=reveal|copy` for logging). See listing characteristics section for Show/Hide/Copy VIN.
 
@@ -81,7 +81,7 @@ The query parameter `from=kupito` is used by Infocar.md to attribute the user an
 
 ## Partner verification (VIN encryption)
 
-Reversible encryption (AES-256-CBC) so Infocar can recover the VIN. Format: `https://infocar.md/?from=kupito&vin=<encoded>`.
+Reversible encryption (AES-256-CBC) so Infocar can recover the VIN. Format: `https://infocar.md/?from=kupito&vin=<encoded>` (RO) or `https://ru.infocar.md/?from=kupito&vin=<encoded>` (RU).
 
 - **Input**: VIN string (trimmed; we store uppercase from the form). Secret key: `INFOCAR_SECRET_KEY` as UTF-8 string.
 - **Key derivation**: AES key = SHA256(secretKey), 32 bytes.

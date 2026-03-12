@@ -95,9 +95,8 @@ import { HintTooltip } from '@/ui';
 | --------------- | ------------------------------------------------------------------------------------------ |
 | **Open**        | Click on the "?" icon                                                                      |
 | **Close**       | Click outside, press Escape, scroll, or click the icon again                               |
-| **Positioning** | Automatically opens **above** the icon if there is enough space; otherwise opens **below** |
+| **Positioning** | Rendered in a portal with `position: fixed`. Opens above or below, left or right of the icon based on viewport space; coordinates are clamped so the popover stays within the screen (8px margin). On narrow screens `maxWidth: calc(100vw - 16px)` prevents horizontal overflow. |
 | **Animation**   | Fade-in/fade-out with slide (150ms ease-out)                                               |
-| **Arrow**       | Small triangle indicator pointing to the trigger icon                                      |
 | **z-index**     | `1070` (matches `designTokens.zIndex.tooltip`)                                             |
 
 ### Styling
