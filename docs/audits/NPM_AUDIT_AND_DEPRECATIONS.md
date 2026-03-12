@@ -67,7 +67,7 @@ Do not remove these overrides without checking `npm audit` and release notes for
 
 ## npm warn "Unknown env config devdir"
 
-This comes from an environment variable `devdir` that npm no longer supports. It does not affect install or build. To silence it, remove `devdir` from your shell profile or CI environment. For a warning-free `release-check` log, run: `env -u devdir npm run release-check` (or `unset devdir` before the command).
+This comes from an environment variable `devdir` that npm no longer supports. It does not affect install or build. `npm run release-check` already unsets `devdir` internally. For a fully clean local setup, you can still remove `devdir` from your shell profile or CI environment.
 
 ## Commands
 

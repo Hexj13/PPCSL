@@ -1,6 +1,6 @@
 # Linting & Code Quality
 
-Single reference for linting and formatting across the project (frontend and backend). Audit date: 2026-02-17.
+Single reference for linting and formatting across the project (frontend and backend). Audit date: 2026-03-12.
 
 ## Philosophy
 
@@ -11,14 +11,14 @@ Single reference for linting and formatting across the project (frontend and bac
 
 ## Current setup
 
-| Tool                | Frontend                      | Backend                       |
-| ------------------- | ----------------------------- | ----------------------------- |
-| ESLint              | v9 (flat config)              | v9 (flat config)              |
-| Prettier            | v3.4 (`trailingComma: "all"`) | v3.1 (`trailingComma: "all"`) |
-| Stylelint           | v17 (CSS + Tailwind)          | —                             |
-| TypeScript          | v5.7 (strict, target: es2017) | v5.3 (strict, noImplicitAny)  |
-| Husky + lint-staged | Pre-commit hooks              | Pre-commit hooks              |
-| Custom plugins      | `no-hardcoded-text`           | `no-hardcoded-text`, `require-vehicle-type` |
+| Tool                | Frontend                            | Backend                                |
+| ------------------- | ----------------------------------- | -------------------------------------- |
+| ESLint              | v9 (flat config)                    | v9 (flat config)                       |
+| Prettier            | v3.8                                | v3.8                                   |
+| Stylelint           | v17 (CSS + Tailwind)                | —                                      |
+| TypeScript          | v5.7 (strict)                       | v5.3 (strict, `noImplicitAny`)         |
+| Husky + lint-staged | Pre-commit hooks                    | Pre-commit hooks                       |
+| Custom plugins      | `no-hardcoded-text`                 | `no-hardcoded-text`, `require-vehicle-type` |
 
 ### ESLint plugins
 
@@ -46,20 +46,34 @@ Single reference for linting and formatting across the project (frontend and bac
 
 ```bash
 cd core/frontend
-npm run lint          # Check
+npm run lint          # ESLint + translation sync
 npm run lint:fix      # Auto-fix
+npm run lint:styles   # Stylelint check
+npm run lint:styles:fix
 npm run lint:translations  # Translation key sync
 npm run format        # Prettier
+npm run format:check
 ```
 
 ### Backend
 
 ```bash
 cd core/backend
-npm run lint          # Check
-npm run lint:fix      # Auto-fix
+npm run lint:check    # Check
+npm run lint          # Auto-fix
 npm run format        # Prettier
+npm run format:check
 ```
+
+### Release check (root)
+
+```bash
+npm run release-check
+```
+
+Runs `prepare:build`, then frontend (`lint`, `lint:styles`, `format:check`, `test`, `build`), then backend (`lint:check`, `format:check`, `test`, `test:integration`, `build`).
+
+`release-check` already unsets `devdir` internally, so no extra wrapper is needed.
 
 ### Pre-commit (root)
 
@@ -96,11 +110,11 @@ Config: `.lintstagedrc.mjs`, `.husky/pre-commit`.
 
 ## Rule details
 
-### no-hardcoded-text (frontend & backend)
+### no-hardcoded-text
 
-**Goal:** No user-facing strings in code; use the translation function `t()`.
+**Goal:** No hardcoded user-facing strings in code.
 
-**Checked:** JSX text, attributes (e.g. `placeholder`), and calls like `setError(...)`, `toast.success(...)`, `toast.error(...)`.
+**Frontend examples:** JSX text, attributes (e.g. `placeholder`), and calls like `setError(...)`, `toast.success(...)`, `toast.error(...)` should go through translations.
 
 **Correct usage:**
 
@@ -116,7 +130,7 @@ setError(t('errors.invalidCode'))
 toast.success(t('sms.codeSent'))
 ```
 
-**Ignored automatically:** Empty strings, numbers/URLs, separators (`:`, `|`, `•`), single letters, emoji. Config: `translationFunction: 't'`, `ignorePatterns` in eslint config.
+**Ignored automatically:** Empty strings, numbers/URLs, separators (`:`, `|`, `•`), single letters, emoji, and other allow-listed patterns from the ESLint config.
 
 ### import/order
 
@@ -148,7 +162,7 @@ toast.success(t('sms.codeSent'))
 ### Adding keys
 
 1. Use the key in code: `t('profile.changePhone.title')`.
-2. Add the same key in all locale files: `locales/ro.json`, `locales/ru.json`, and `core/frontend/lib/locales/en.json` (or root locales per project layout).
+2. Add the same key in root locale source files: `locales/ro.json`, `locales/ru.json`, and `core/frontend/lib/locales/en.json` if English fallback is used for that key.
 3. Run `npm run lint:translations` (from frontend) to verify sync.
 
 ### Sync check
@@ -162,15 +176,17 @@ toast.success(t('sms.codeSent'))
 | Issue | Fix |
 | ----- | --- |
 | Hardcoded text in `setError()` / `toast.*()` | Use `t('key')` and add the key to all locale files. |
-| Missing key in `lib/locales/en.json` | Add the key in root `locales/` (and any en fallback) then run `prepare:build` / `lint:translations`. |
+| Missing key in translations | Add the key in root locale source files, then run `npm run lint:translations`. |
 | Translation sync errors | Add or remove keys so all locale files match. |
 | Import order | Run `npm run lint:fix` (or `sort-imports` if configured). |
+| Backend lint command unexpectedly changes files | `npm run lint` is fix mode; use `npm run lint:check` for read-only verification. |
+| Frontend CSS violations | Run `npm run lint:styles` or `npm run lint:styles:fix`. |
 
 `no-hardcoded-text` cannot be auto-fixed; add translation keys manually.
 
 ---
 
-## Current status (baseline 2026-02-17)
+## Current status (baseline 2026-03-12)
 
 | Project  | Errors | Warnings |
 | -------- | ------ | -------- |
