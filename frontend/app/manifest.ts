@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
 
+import { getVersionedAssetPath } from '@/lib/assets';
 import { getMetadataLocale, getServerTranslations } from '@/lib/i18n';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { loadThemeSync } from '@/lib/theme';
@@ -11,6 +12,8 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
   const theme = loadThemeSync(country);
   const locale = await getMetadataLocale();
   const t = getServerTranslations(locale);
+  const pwa192Url = getVersionedAssetPath('/pwa192.png', siteConfig.assetVersion);
+  const logoUrl = getVersionedAssetPath('/logo.png', siteConfig.assetVersion);
 
   return {
     name: `${siteConfig.name} - ${t.home.title}`,
@@ -22,25 +25,25 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     theme_color: theme.pwa?.themeColor || '#3b82f6',
     icons: [
       {
-        src: '/pwa192.png',
+        src: pwa192Url,
         sizes: '192x192',
         type: 'image/png',
         purpose: 'any',
       },
       {
-        src: '/pwa192.png',
+        src: pwa192Url,
         sizes: '192x192',
         type: 'image/png',
         purpose: 'maskable',
       },
       {
-        src: '/logo.png',
+        src: logoUrl,
         sizes: '512x512',
         type: 'image/png',
         purpose: 'any',
       },
       {
-        src: '/logo.png',
+        src: logoUrl,
         sizes: '512x512',
         type: 'image/png',
         purpose: 'maskable',

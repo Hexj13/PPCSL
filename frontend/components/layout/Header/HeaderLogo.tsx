@@ -4,6 +4,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 
+import { getVersionedAssetPath } from '@/lib/assets';
+import { loadSiteConfigSync } from '@/lib/site-config';
+import { getCountry } from '@/lib/utils';
+
 export const RESET_SEARCH_EVENT = 'kupito-reset-search';
 
 type HeaderLogoProps = {
@@ -13,6 +17,9 @@ type HeaderLogoProps = {
 export function HeaderLogo({ brandAlt }: HeaderLogoProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const siteConfig = loadSiteConfigSync(getCountry());
+  const desktopLogoUrl = getVersionedAssetPath('/logo-desktop.svg', siteConfig.assetVersion);
+  const mobileLogoUrl = getVersionedAssetPath('/logo-mobile.svg', siteConfig.assetVersion);
 
   const handleClick = (e: React.MouseEvent) => {
     if (pathname !== '/') return;
@@ -32,7 +39,7 @@ export function HeaderLogo({ brandAlt }: HeaderLogoProps) {
     >
       <span className="flex items-center h-8 md:h-10">
         <Image
-          src="/logo-desktop.svg"
+          src={desktopLogoUrl}
           alt={brandAlt}
           width={200}
           height={65}
@@ -41,7 +48,7 @@ export function HeaderLogo({ brandAlt }: HeaderLogoProps) {
           suppressHydrationWarning
         />
         <Image
-          src="/logo-mobile.svg"
+          src={mobileLogoUrl}
           alt={brandAlt}
           width={150}
           height={48}

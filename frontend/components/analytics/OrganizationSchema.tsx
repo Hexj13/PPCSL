@@ -1,3 +1,4 @@
+import { getVersionedAssetPath } from '@/lib/assets';
 import { getMetadataLocale, getServerTranslations } from '@/lib/i18n';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { getCountry, toSafeJsonLdHtml } from '@/lib/utils';
@@ -14,13 +15,14 @@ export async function OrganizationSchema() {
     'ru-MD': 'Russian',
   };
   const availableLanguage = languageNames[localeTag] || 'Romanian';
+  const logoUrl = `${siteConfig.siteUrl}${getVersionedAssetPath('/logo.png', siteConfig.assetVersion)}`;
 
   const schemaData = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: siteConfig.name,
     url: siteConfig.siteUrl,
-    logo: `${siteConfig.siteUrl}/logo.png`,
+    logo: logoUrl,
     description: t.metadata.site.organizationDescription,
     address: {
       '@type': 'PostalAddress',

@@ -8,6 +8,7 @@ export interface SiteConfig {
   countryCode: string;
   supportEmail: string;
   siteUrl: string;
+  assetVersion?: string;
 }
 
 let config: SiteConfig | null = null;

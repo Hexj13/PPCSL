@@ -22,6 +22,7 @@ import { CookieConsent } from '@/components/providers/CookieConsent';
 import { I18nProvider } from '@/components/providers/I18nProvider';
 import { OfflineBanner } from '@/components/pwa/OfflineBanner';
 import { ServiceWorkerRegistration } from '@/components/pwa/ServiceWorkerRegistration';
+import { getVersionedAssetPath } from '@/lib/assets';
 import { getServerTranslations, type Locale } from '@/lib/i18n';
 import { loadSiteConfig } from '@/lib/site-config';
 import { Toaster } from '@/lib/toast';
@@ -47,6 +48,13 @@ export async function generateMetadata(): Promise<Metadata> {
 
   const defaultTitle = `${siteConfig.name} - ${t.metadata.site.defaultTitle}`;
   const defaultDescription = t.metadata.site.defaultDescription;
+  const faviconIcoUrl = getVersionedAssetPath('/favicon.ico', siteConfig.assetVersion);
+  const favicon192Url = getVersionedAssetPath('/favicon-192.png', siteConfig.assetVersion);
+  const favicon512Url = getVersionedAssetPath('/favicon-512.png', siteConfig.assetVersion);
+  const favicon64Url = getVersionedAssetPath('/favicon-64.png', siteConfig.assetVersion);
+  const favicon32Url = getVersionedAssetPath('/favicon-32.png', siteConfig.assetVersion);
+  const appleIconUrl = getVersionedAssetPath('/logo.png', siteConfig.assetVersion);
+  const manifestUrl = getVersionedAssetPath('/manifest.json', siteConfig.assetVersion);
 
   return {
     metadataBase: new URL(siteConfig.siteUrl),
@@ -102,15 +110,15 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     icons: {
       icon: [
-        { url: '/favicon.ico', sizes: 'any' },
-        { url: '/favicon-192.png', sizes: '192x192', type: 'image/png' },
-        { url: '/favicon-512.png', sizes: '512x512', type: 'image/png' },
-        { url: '/favicon-64.png', sizes: '64x64', type: 'image/png' },
-        { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
+        { url: faviconIcoUrl, sizes: 'any' },
+        { url: favicon192Url, sizes: '192x192', type: 'image/png' },
+        { url: favicon512Url, sizes: '512x512', type: 'image/png' },
+        { url: favicon64Url, sizes: '64x64', type: 'image/png' },
+        { url: favicon32Url, sizes: '32x32', type: 'image/png' },
       ],
-      apple: [{ url: '/logo.png', sizes: '180x180', type: 'image/png' }],
+      apple: [{ url: appleIconUrl, sizes: '180x180', type: 'image/png' }],
     },
-    manifest: '/manifest.json',
+    manifest: manifestUrl,
     appleWebApp: {
       capable: true,
       statusBarStyle: 'default',
