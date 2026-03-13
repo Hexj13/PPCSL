@@ -1223,6 +1223,7 @@
     color: rgb(var(--foreground-rgb));
     background: rgb(var(--background-start-rgb));
     min-height: 100vh;
+    letter-spacing: 0.01em;
   }
 
   h1,
