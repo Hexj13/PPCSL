@@ -3,36 +3,41 @@
 import { useMemo } from 'react';
 
 import { useI18n } from '@/components/providers/I18nProvider';
+import { useTranslation } from '@/hooks/useTranslation';
 import { setStoredLocale, type Locale } from '@/lib/i18n';
 
 import { Dropdown } from './Dropdown';
 
-const headerFooterStyle =
+const headerStyle =
+  'header-language-switcher bg-transparent! text-primary-900! font-medium text-sm hover-only:hover:text-primary-700! active:text-primary-700! transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 rounded-lg select-none [&_span]:text-primary-900! hover-only:hover:[&_span]:text-primary-700! [&_svg]:text-primary-900! hover-only:hover:[&_svg]:text-primary-700!';
+
+const footerStyle =
   'header-language-switcher bg-transparent! text-white! font-medium text-sm hover-only:hover:text-primary-100! active:text-primary-300! transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 rounded-lg select-none [&_span]:text-white! hover-only:hover:[&_span]:text-primary-100! [&_svg]:text-white! hover-only:hover:[&_svg]:text-primary-100!';
 
-const getLanguageAbbreviation = (locale: Locale): string => {
-  const abbreviations: Record<Locale, string> = {
-    ro: 'RO',
-    ru: 'RU',
+const getLanguageName = (locale: Locale, t: (key: string) => string): string => {
+  const keys: Record<Locale, string> = {
+    ro: 'common.languageRo',
+    ru: 'common.languageRu',
   };
-  return abbreviations[locale] || locale.toUpperCase();
+  return t(keys[locale] || 'common.languageRo');
 };
 
 export function LanguageSwitcher({
   variant = 'desktop',
-  context: _context = 'footer',
+  context = 'footer',
 }: {
   variant?: 'desktop' | 'mobile';
   context?: 'header' | 'footer';
 }) {
   const { locale } = useI18n();
+  const { t } = useTranslation();
 
   const languages = useMemo(
     () => [
-      { value: 'ro' as Locale, label: getLanguageAbbreviation('ro') },
-      { value: 'ru' as Locale, label: getLanguageAbbreviation('ru') },
+      { value: 'ro' as Locale, label: t('common.languageRo') },
+      { value: 'ru' as Locale, label: t('common.languageRu') },
     ],
-    [],
+    [t],
   );
 
   const handleLanguageChange = (newLocale: string) => {
@@ -43,18 +48,20 @@ export function LanguageSwitcher({
     }
   };
 
-  const buttonClassName = headerFooterStyle;
+  const desktopButtonClassName = context === 'footer' ? footerStyle : headerStyle;
 
   const mobileButtonClassName =
     variant === 'mobile'
-      ? 'header-language-switcher-mobile bg-transparent! text-white! font-medium text-base hover-only:hover:text-primary-100! active:text-primary-300! transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-3.5 rounded-lg select-none [&_span]:text-white! hover-only:hover:[&_span]:text-primary-100! [&_svg]:text-white! hover-only:hover:[&_svg]:text-primary-100!'
-      : buttonClassName;
+      ? 'header-language-switcher-mobile bg-transparent! text-primary-900! font-medium text-[14px] hover-only:hover:text-primary-700! active:text-primary-700! transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-3.5 rounded-lg select-none [&_span]:text-primary-900! hover-only:hover:[&_span]:text-primary-700! [&_svg]:text-primary-900! hover-only:hover:[&_svg]:text-primary-700!'
+      : desktopButtonClassName;
 
-  const currentLanguageAbbr = getLanguageAbbreviation(locale);
+  const currentLanguageName = getLanguageName(locale, t);
+
+  const iconColorClass = context === 'footer' ? 'text-white' : 'text-primary-900';
 
   const languageIcon = (
     <svg
-      className="w-4 h-4 text-white shrink-0"
+      className={`w-4 h-4 shrink-0 ${iconColorClass}`}
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"
@@ -75,7 +82,7 @@ export function LanguageSwitcher({
           value={locale}
           onChange={handleLanguageChange}
           options={languages}
-          placeholder={currentLanguageAbbr}
+          placeholder={currentLanguageName}
           buttonClassName={mobileButtonClassName}
           autoPosition={true}
           searchable={false}

@@ -53,8 +53,8 @@ export function UserDesktopNav({
         <ScaleIcon />
         <span suppressHydrationWarning>{t('header.compare')}</span>
         {comparisonCount > 0 && (
-          <span className="ml-2 rounded-full border border-primary-300 bg-primary-500 px-2 py-0.5 text-xs text-white">
-            {comparisonCount}
+          <span className="ml-2 min-w-[1.25rem] rounded-full border border-primary-300 bg-primary-500 px-2 py-0.5 text-xs text-white text-center">
+            {comparisonCount > 99 ? '99+' : comparisonCount}
           </span>
         )}
       </Link>
@@ -71,7 +71,7 @@ export function UserDesktopNav({
       </button>
       {showLang && (
         <>
-          <div className="mx-1 h-6 w-px bg-white/20" />
+          <div className="mx-1 h-6 w-px bg-primary-700/30" />
           <LanguageSwitcher variant="desktop" context="header" />
         </>
       )}

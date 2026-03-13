@@ -39,11 +39,9 @@ export function CreateListingButton({
   const isMobile = variant === 'mobile';
 
   const baseClasses =
-    'text-white font-medium transition-all duration-200 whitespace-nowrap flex items-center justify-center border-2 border-accent select-none hover-only:hover:text-accent-100 active:text-accent-100';
+    'relative inline-flex items-center justify-center gap-1.5 rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-accent text-primary-900 whitespace-nowrap select-none transition-all duration-200 shadow-none before:absolute before:inset-0 before:rounded-lg before:bg-accent/10 before:pointer-events-none hover-only:hover:text-primary-700 hover-only:hover:border-accent/80';
 
-  const variantClasses = isMobile
-    ? 'text-sm gap-1.5 px-2.5 py-2 rounded-lg w-full'
-    : 'h-10 text-sm gap-1.5 md:gap-2 px-2.5 md:px-3 rounded-lg';
+  const variantClasses = isMobile ? 'px-3 py-2 w-full text-[14px]' : 'h-10 px-2.5 md:px-3';
 
   const iconSize = isMobile ? 'w-4 h-4' : 'w-3.5 h-3.5 md:w-4 md:h-4';
 
@@ -55,15 +53,22 @@ export function CreateListingButton({
       onClick={handleClick}
       className={`${baseClasses} ${variantClasses} ${className}`}
     >
-      <svg className={`${iconSize} shrink-0`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg
+        className={`${iconSize} shrink-0 relative z-10`}
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
       </svg>
       {isMobile ? (
-        <span>{shortLabel ? t('header.createListingShort') : t('header.createListing')}</span>
+        <span className="relative z-10">
+          {shortLabel ? t('header.createListingShort') : t('header.createListing')}
+        </span>
       ) : (
         <>
-          <span className="hidden lg:inline">{t('header.createListing')}</span>
-          <span className="lg:hidden">{t('header.createListingShort')}</span>
+          <span className="relative z-10 hidden lg:inline">{t('header.createListing')}</span>
+          <span className="relative z-10 lg:hidden">{t('header.createListingShort')}</span>
         </>
       )}
     </Link>

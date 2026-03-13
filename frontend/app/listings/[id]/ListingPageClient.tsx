@@ -3,13 +3,13 @@
 import { useCallback } from 'react';
 
 import { ListingPageActions } from '@/components/ListingPage/ListingPageActions';
+import { ListingPageBreadcrumbs } from '@/components/ListingPage/ListingPageBreadcrumbs';
 import { ListingPageCharacteristics } from '@/components/ListingPage/ListingPageCharacteristics';
 import { ListingPageDescription } from '@/components/ListingPage/ListingPageDescription';
 import { ListingPageHeader } from '@/components/ListingPage/ListingPageHeader';
 import { ListingPageImageModal } from '@/components/ListingPage/ListingPageImageModal';
 import { ListingPageImages } from '@/components/ListingPage/ListingPageImages';
 import { ListingPageSeller } from '@/components/ListingPage/ListingPageSeller';
-import { Breadcrumbs } from '@/components/layout/Breadcrumbs';
 import {
   BreadcrumbsSkeleton,
   MainImageSkeleton,
@@ -281,15 +281,17 @@ function ListingPageSkeleton({ t }: { t: (k: string) => string }) {
   return (
     <>
       <div className="max-w-6xl mx-auto">
-        <BreadcrumbsSkeleton />
-        <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-6 md:gap-8">
-          <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-8 lg:gap-6">
+          <div className="space-y-6 order-1">
             <div>
               <MainImageSkeleton />
               <ThumbnailsSkeleton />
             </div>
           </div>
-          <div className="space-y-6">
+          <div className="order-2 lg:order-3 lg:col-span-2">
+            <BreadcrumbsSkeleton />
+          </div>
+          <div className="space-y-6 order-3 lg:order-2">
             <div>
               <TitleSkeleton />
               <PriceSkeleton />
@@ -300,7 +302,7 @@ function ListingPageSkeleton({ t }: { t: (k: string) => string }) {
             </div>
           </div>
         </div>
-        <div className="border-t border-primary-500/20 my-8"></div>
+        <div className="border-t border-primary-500/20 my-6"></div>
         <Spinner size="md" text={t('common.loading')} />
       </div>
     </>
@@ -322,7 +324,7 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
     isFavorite,
     isOwnListing,
     equipmentColumns,
-    displayTitle,
+    displayTitle: _displayTitle,
     imageAltTitle,
     descriptionHtml,
     getClosingDate,
@@ -396,15 +398,8 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
   return (
     <>
       <div className="max-w-6xl mx-auto">
-        <Breadcrumbs
-          items={[
-            { label: t('listingDetail.home'), href: '/' },
-            { label: displayTitle || listing.title },
-          ]}
-          className="mb-6"
-        />
-        <div className="grid grid-cols-1 lg:grid-cols-[1.86fr_1fr] gap-6">
-          <div className="space-y-6 min-w-0">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.86fr_1fr] gap-8 lg:gap-6">
+          <div className="space-y-6 min-w-0 order-1">
             <ListingPageImages
               images={images}
               imageAltTitle={imageAltTitle}
@@ -416,7 +411,11 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
             />
           </div>
 
-          <div className="space-y-6 min-w-0">
+          <div className="order-2 lg:order-3 lg:col-span-2">
+            <ListingPageBreadcrumbs listing={listing} />
+          </div>
+
+          <div className="space-y-6 min-w-0 order-3 lg:order-2">
             <ListingPageHeader listing={listing} title={h1Title} />
             {(listing.available_in_credit ||
               listing.status === 'Closed' ||
@@ -439,7 +438,7 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
           </div>
         </div>
 
-        <div className="border-t border-primary-500/20 my-8"></div>
+        <div className="border-t border-primary-500/20 my-6"></div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1.86fr_1fr] gap-6">
           <div className="space-y-6 min-w-0">

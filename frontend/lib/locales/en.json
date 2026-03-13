@@ -394,8 +394,13 @@
     },
     "vehicleTypeFull": {
       "car": "",
-      "truck": "Commercial",
+      "truck": "Commercial vehicles",
       "moto": "Motorcycles"
+    },
+    "vehicleTypeShort": {
+      "car": "Cars",
+      "truck": "Commercial",
+      "moto": "Moto"
     },
     "required": "Please fill in the required field",
     "brandRequired": "Brand selection is required",
@@ -1289,6 +1294,7 @@
   },
   "breadcrumbs": {
     "home": "Home",
+    "transport": "Transport",
     "ariaLabel": "Breadcrumb"
   },
   "faq": {

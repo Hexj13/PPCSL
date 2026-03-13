@@ -2,27 +2,116 @@
 
 import { useEffect } from 'react';
 
+import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
 import { loadSiteConfigSync } from '@/lib/site-config';
-import { getCountry, getOptimizedImageUrl, isVinMasked } from '@/lib/utils';
+import {
+  createSlug,
+  formatTransmission,
+  getCountry,
+  getVehicleType,
+  getOptimizedImageUrl,
+  isVinMasked,
+} from '@/lib/utils';
 
 interface StructuredDataProps {
   listing: Listing;
 }
 
-function getBreadcrumbSchema(listing: Listing, siteUrl: string) {
+function buildBreadcrumbSearchUrl(
+  type: 'category' | 'transmission' | 'brand' | 'model',
+  listing: Listing,
+  siteUrl: string,
+): string {
+  const vehicleType = getVehicleType(listing);
+  const params = new URLSearchParams();
+
+  if (type === 'category') {
+    if (vehicleType !== 'car') params.set('vehicleType', vehicleType);
+    return params.toString() ? `${siteUrl}?${params.toString()}` : siteUrl;
+  }
+
+  if (vehicleType !== 'car') {
+    params.set('vehicleType', vehicleType);
+  }
+
+  if (type === 'transmission') {
+    const transmission = listing.vehicle?.transmission;
+    if (transmission) params.set('transmissions', transmission);
+    return params.toString() ? `${siteUrl}?${params.toString()}` : siteUrl;
+  }
+
+  const brand = listing.vehicle?.brand;
+  const model = listing.vehicle?.model;
+
+  if (type === 'brand' && brand?.name) {
+    params.set('brand', createSlug(brand.name));
+    return params.toString() ? `${siteUrl}?${params.toString()}` : siteUrl;
+  }
+
+  if (type === 'model' && brand?.name && model?.name) {
+    params.set('brand', createSlug(brand.name));
+    params.set('model', createSlug(model.name));
+    return params.toString() ? `${siteUrl}?${params.toString()}` : siteUrl;
+  }
+
+  return siteUrl;
+}
+
+function getBreadcrumbSchema(
+  listing: Listing,
+  siteUrl: string,
+  categoryLabel: string,
+  transmissionLabel: string | null,
+) {
+  const vehicle = listing.vehicle;
+  const brandName = vehicle?.brand?.name;
+  const modelName = vehicle?.model?.name;
+
+  const items: Array<{ '@type': string; position: number; name: string; item: string }> = [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: categoryLabel,
+      item: buildBreadcrumbSearchUrl('category', listing, siteUrl),
+    },
+  ];
+  let position = 2;
+  if (transmissionLabel) {
+    items.push({
+      '@type': 'ListItem',
+      position: position++,
+      name: transmissionLabel,
+      item: buildBreadcrumbSearchUrl('transmission', listing, siteUrl),
+    });
+  }
+  if (brandName) {
+    items.push({
+      '@type': 'ListItem',
+      position: position++,
+      name: brandName,
+      item: buildBreadcrumbSearchUrl('brand', listing, siteUrl),
+    });
+  }
+  if (modelName) {
+    items.push({
+      '@type': 'ListItem',
+      position: position++,
+      name: modelName,
+      item: buildBreadcrumbSearchUrl('model', listing, siteUrl),
+    });
+  }
+  items.push({
+    '@type': 'ListItem',
+    position: position,
+    name: listing.title || modelName || brandName || 'Listing',
+    item: `${siteUrl}/listings/${listing.id}`,
+  });
+
   return {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Почетна', item: siteUrl },
-      {
-        '@type': 'ListItem',
-        position: 2,
-        name: listing.title,
-        item: `${siteUrl}/listings/${listing.id}`,
-      },
-    ],
+    itemListElement: items,
   };
 }
 
@@ -127,11 +216,31 @@ function getProductSchemaData(
 }
 
 export function StructuredData({ listing }: StructuredDataProps) {
+  const { t } = useTranslation();
+  const vehicleType = getVehicleType(listing);
+  const transmissionLabel = listing.vehicle?.transmission
+    ? formatTransmission(listing.vehicle.transmission, t)
+    : null;
+  const fullCategoryKey = `listings.vehicleTypeFull.${vehicleType}`;
+  const fallbackCategoryKey = `listings.vehicleType.${vehicleType}`;
+  const fullCategoryLabel = t(fullCategoryKey);
+  const fallbackCategoryLabel = t(fallbackCategoryKey);
+  const categoryLabel =
+    (fullCategoryLabel && fullCategoryLabel !== fullCategoryKey ? fullCategoryLabel : '') ||
+    (fallbackCategoryLabel && fallbackCategoryLabel !== fallbackCategoryKey
+      ? fallbackCategoryLabel
+      : t('breadcrumbs.transport'));
+
   useEffect(() => {
     const country = getCountry();
     const siteConfig = loadSiteConfigSync(country);
     const siteUrl = siteConfig.siteUrl;
-    const breadcrumbSchema = getBreadcrumbSchema(listing, siteUrl);
+    const breadcrumbSchema = getBreadcrumbSchema(
+      listing,
+      siteUrl,
+      categoryLabel,
+      transmissionLabel,
+    );
     const schemaData = getProductSchemaData(
       listing,
       siteUrl,
@@ -157,7 +266,7 @@ export function StructuredData({ listing }: StructuredDataProps) {
       const existingScript = document.getElementById('structured-data-listing');
       if (existingScript) document.head.removeChild(existingScript);
     };
-  }, [listing]);
+  }, [listing, categoryLabel, transmissionLabel]);
 
   return null;
 }

@@ -6,7 +6,7 @@ import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { CreateListingButton } from '@/components/listing/CreateListingButton';
 
 const guestLinkClasses =
-  'text-white font-medium text-sm hover-only:hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-3.5 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none';
+  'text-primary-900 font-medium text-sm hover-only:hover:text-primary-700 active:text-primary-700 hover-only:hover:border-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-3.5 rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-700 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base';
 
 type GuestMobileNavProps = {
   isAuthPage: boolean;
@@ -52,8 +52,7 @@ export function GuestMobileNav({
       )}
       {!isAuthPage && (
         <>
-          <div className="-mt-2">
-            <div className="h-px bg-white/20 my-2"></div>
+          <div>
             <div className="flex justify-center">
               <LanguageSwitcher variant="mobile" context="header" />
             </div>

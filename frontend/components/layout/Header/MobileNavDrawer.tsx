@@ -7,6 +7,7 @@ import { NavSkeleton } from './NavSkeleton';
 import { UserMobileNav } from './UserMobileNav';
 
 type MobileNavDrawerProps = {
+  id: string;
   isOpen: boolean;
   user: User | null;
   showSkeleton: boolean;
@@ -22,6 +23,7 @@ type MobileNavDrawerProps = {
 };
 
 export function MobileNavDrawer({
+  id,
   isOpen,
   user,
   showSkeleton,
@@ -38,7 +40,10 @@ export function MobileNavDrawer({
   if (!isOpen || !showNav) return null;
 
   return (
-    <nav className="lg:hidden relative z-[1] pb-4 pt-4 bg-primary-700 w-full">
+    <nav
+      id={id}
+      className="lg:hidden relative z-[1] pb-4 pt-4 bg-bg-base w-full border-b border-primary-700"
+    >
       <div className="container mx-auto px-3 sm:px-4">
         {showSkeleton ? (
           <NavSkeleton variant="mobile" />

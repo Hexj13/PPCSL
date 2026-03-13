@@ -40,7 +40,7 @@ Only **Active** listings are included. Seller boards are included only if the us
 | Brand pages          | Yes      | brands.xml           | `/?brand=slug`, `/?brand=slug&vehicleType=truck` (etc.)            |
 | Brand+Model pages    | Yes      | brands.xml           | `/?brand=slug&model=slug` (with optional vehicleType)              |
 | Seller boards        | Yes      | sellers.xml          | `/board/:board_slug` — only active sellers with active listings    |
-| Individual listings  | Yes      | listings-YYYY-MM.xml | `/listings/:id` — Active only, partitioned by month                |
+| Individual listings  | Yes      | listings-YYYY-MM.xml | `/listings/:id` — Active only, partitioned by month; closed listings are excluded from sitemap and additionally marked `noindex` on their detail pages |
 | Body type pages      | No       | —                    | Removed; use brand/model and search for discovery                  |
 | Auth, profile, admin | No       | —                    | Excluded by design                                                 |
 

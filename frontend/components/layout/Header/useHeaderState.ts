@@ -28,7 +28,7 @@ export function useHeaderState() {
 
   useEffect(() => {
     setIsErrorPage(document.querySelector('[data-error-page="true"]') !== null);
-  }, []);
+  }, [pathname]);
 
   const handleLogout = useCallback(() => {
     startTransition(() => {
@@ -53,10 +53,10 @@ export function useHeaderState() {
   }, []);
 
   const navLinkClasses =
-    'text-white font-medium text-sm hover:text-primary-100 active:text-primary-300 transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 rounded-sm select-none';
+    'text-primary-900 font-medium text-sm hover-only:hover:text-primary-700 active:text-primary-700 transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 rounded-sm select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-700 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base';
 
   const mobileNavLinkClasses =
-    'text-white font-medium hover:text-primary-100 active:text-primary-300 transition-colors duration-200 py-2 pl-4 flex items-center gap-2 select-none';
+    'text-primary-900 text-[14px] font-medium hover-only:hover:text-primary-700 active:text-primary-700 transition-colors duration-200 py-2 pl-4 flex items-center gap-2 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-700 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base';
 
   const showNav = !isAuthPage && !isErrorPage;
 

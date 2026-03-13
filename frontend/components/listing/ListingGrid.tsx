@@ -408,11 +408,13 @@ export function ListingGrid({ initialData }: ListingGridProps) {
     const shouldScroll = sessionStorage.getItem('scrollToResultsAfterLoad');
     if (!shouldScroll) return;
     sessionStorage.removeItem('scrollToResultsAfterLoad');
-    if (window.innerWidth >= 1024) return;
-    const headerOffset = 110;
     requestAnimationFrame(() => {
       const el = document.getElementById('listings-results');
       if (!el) return;
+      const headerEl = document.querySelector('header');
+      const measuredHeaderHeight = headerEl?.getBoundingClientRect().height ?? 0;
+      const fallbackHeaderHeight = window.innerWidth >= 1024 ? 72 : 110;
+      const headerOffset = (measuredHeaderHeight || fallbackHeaderHeight) + 60;
       const targetTop = el.getBoundingClientRect().top + window.scrollY - headerOffset;
       window.scrollTo({ top: targetTop, behavior: 'smooth' });
     });

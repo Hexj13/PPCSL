@@ -62,8 +62,8 @@ export function HeaderMoreDropdown({
             <ScaleIcon className="w-4 h-4 shrink-0 text-primary-700" />
             <span>{t('header.compare')}</span>
             {comparisonCount > 0 && (
-              <span className="ml-auto rounded-full bg-primary-500 px-2 py-0.5 text-xs text-white">
-                {comparisonCount}
+              <span className="ml-auto min-w-[1.25rem] rounded-full bg-primary-500 px-2 py-0.5 text-xs text-white text-center">
+                {comparisonCount > 99 ? '99+' : comparisonCount}
               </span>
             )}
           </Link>

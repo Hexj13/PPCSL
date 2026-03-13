@@ -259,6 +259,16 @@ export async function generateMetadata({
     alternates: {
       canonical: `${siteUrl}/listings/${listing.id}`,
     },
+    ...(listing.status === 'Closed' && {
+      robots: {
+        index: false,
+        follow: true,
+        googleBot: {
+          index: false,
+          follow: true,
+        },
+      },
+    }),
     openGraph: {
       type: 'website',
       url: `${siteUrl}/listings/${listing.id}`,
