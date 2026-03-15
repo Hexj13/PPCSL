@@ -34,6 +34,7 @@ function createListing(overrides: Partial<Listing> = {}): Listing {
       model_id: 'm1',
       year: 2020,
       transmission: 'Automatic',
+      drive_type: 'FWD',
       body_type: 'Sedan',
       brand: { id: 'b1', name: 'Citroën', order: 0 },
       model: { id: 'm1', name: 'C4', brand_id: 'b1', order: 0, vehicle_types: ['car'] },
@@ -67,6 +68,7 @@ describe('ListingPageBreadcrumbs', () => {
         brand_id: 'b1',
         model_id: 'm1',
         year: 2020,
+        drive_type: 'FWD',
         body_type: 'Sedan',
         brand: { id: 'b1', name: 'Honda', order: 0 },
         model: {
@@ -96,6 +98,7 @@ describe('ListingPageBreadcrumbs', () => {
         model_id: 'm1',
         year: 2020,
         transmission: 'Manual',
+        drive_type: 'AWD',
         body_type: 'SUV',
         brand: { id: 'b1', name: 'Ford', order: 0 },
         model: {
