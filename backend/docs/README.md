@@ -1,16 +1,26 @@
+---
+title: Backend documentation
+owner: platform
+tags:
+  - type/readme
+  - domain/engineering
+  - scope/core
+  - status/active
+---
+
 # Backend Documentation
 
 This directory contains backend-specific documentation.
 
 ## Available Documentation
 
-- **[SCRIPTS.md](./SCRIPTS.md)** - Scripts organization and usage guide
-- **[TESTING.md](./TESTING.md)** - Integration testing documentation
+- **[scripts.md](./scripts.md)** - Scripts organization and usage guide
+- **[testing.md](./testing.md)** - Integration testing documentation
 
 ## General Documentation
 
-For general project documentation, see the main [`docs/`](../../docs/) folder:
-- **[README.md](../../docs/README.md)** - Project overview
-- **[TECHNICAL.md](../../docs/architecture/TECHNICAL.md)** - Technical documentation
-- **[DEPLOYMENT.md](../../docs/guides/DEPLOYMENT.md)** - Deployment guides (includes Render.com)
+For core documentation, see the main [`docs/`](../../docs/) folder:
+- **[Core docs](../../docs/README.md)** — Main documentation entry point
+- **[technical.md](../../docs/architecture/technical.md)** — Technical documentation
+- **[deployment.md](../../docs/guides/deployment.md)** — Deployment guides (includes Render.com)
 

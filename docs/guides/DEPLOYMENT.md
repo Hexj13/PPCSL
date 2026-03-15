@@ -1,4 +1,14 @@
-# Деплой платформы
+---
+title: Deployment
+owner: platform
+tags:
+  - type/guide
+  - domain/ops
+  - scope/core
+  - status/active
+---
+
+# Platform deployment
 
 Complete deployment guide for the PPCSL platform on different hosting environments.
 
@@ -12,7 +22,7 @@ Complete deployment guide for the PPCSL platform on different hosting environmen
 6. [Staging Environment](#6-staging-environment)
 7. [Troubleshooting](#7-troubleshooting)
 
-**Note:** For CI/CD workflows and automated deployment pipelines, see [TECHNICAL.md](../architecture/TECHNICAL.md#13-cicd-configuration) section 13.
+**Note:** For CI/CD workflows and automated deployment pipelines, see [technical.md](../architecture/technical.md#13-cicd-configuration) section 13.
 
 ---
 
@@ -425,7 +435,7 @@ pm2 status
 
 ### Step 10: Database Backups
 
-See [TECHNICAL.md](../architecture/TECHNICAL.md#database) section for backup setup.
+See [technical.md](../architecture/technical.md#database) section for backup setup.
 
 ---
 

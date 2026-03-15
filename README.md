@@ -1,36 +1,45 @@
+---
+title: PPCSL Core
+owner: platform
+tags:
+  - type/readme
+  - scope/core
+  - status/active
+---
+
 # PPCSL Core
 
-**Platform-Portable Car Sales Logic** - универсальное ядро для создания автомобильных маркетплейсов.
+**Platform-Portable Car Sales Logic** — universal core for building car marketplaces.
 
-## 🎯 Концепция
+## Concept
 
-**Один Core** → **Множество платформ** (Молдова и др.)
+**One Core** → **Multiple platforms** (Moldova and others)
 
-- **Core** = бизнес-логика, компоненты, API (универсальные)
-- **Platform-repo** = локализация (язык, валюта, дизайн, города)
-
----
-
-## 📚 Documentation
-
-Вся документация в папке **[`docs/`](./docs/)**:
-
-### ⭐ Точки входа:
-
-- **[docs/README.md](./docs/README.md)** - Главный entry point
-- **[docs/guides/PLATFORM_CHECKLIST.md](./docs/guides/PLATFORM_CHECKLIST.md)** - Чеклист для новых платформ
-- **[docs/architecture/ARCHITECTURE_OVERVIEW.md](./docs/architecture/ARCHITECTURE_OVERVIEW.md)** - Обзор архитектуры
-
-### 📂 Категории:
-
-- **[architecture/](./docs/architecture/)** - Архитектура системы
-- **[guides/](./docs/guides/)** - Руководства для разработчиков
-- **[platform-plans/](./docs/platform-plans/)** - Планы конкретных платформ
-- **[features/](./docs/features/)** - Документация фич
+- **Core** = business logic, components, API (universal)
+- **Platform-repo** = localization (language, currency, design, cities)
 
 ---
 
-## 🚀 Quick Start
+## Documentation
+
+All documentation lives in **[`docs/`](./docs/)**:
+
+### Entry points
+
+- **[docs/README.md](./docs/README.md)** — Core documentation entry point
+- **[docs/guides/platform-checklist.md](./docs/guides/platform-checklist.md)** — Checklist for new platforms
+- **[docs/architecture/architecture-overview.md](./docs/architecture/architecture-overview.md)** — Architecture overview
+
+### Categories
+
+- **[architecture/](./docs/architecture/)** — System architecture
+- **[guides/](./docs/guides/)** — Developer guides
+- **[platform-plans/](./docs/platform-plans/)** — Platform-specific plans
+- **[features/](./docs/features/)** — Feature documentation
+
+---
+
+## Quick Start
 
 ```bash
 # Install dependencies
@@ -46,11 +55,11 @@ npm run dev
 **Frontend:** http://localhost:3000  
 **Backend:** http://localhost:4000
 
-**Детальная документация:** [docs/guides/LOCAL_DEVELOPMENT.md](./docs/guides/LOCAL_DEVELOPMENT.md)
+**Detailed docs:** [docs/guides/local-development.md](./docs/guides/local-development.md)
 
 ---
 
-## 📁 Structure
+## Structure
 
 ```
 PPCSL/
@@ -59,34 +68,37 @@ PPCSL/
 │   │   ├── scripts/stage/       # Staging/dev scripts
 │   │   ├── scripts/production/  # Production-safe scripts
 │   │   ├── scripts/platforms/   # Platform configs (e.g. md/)
-│   │   ├── brands/              # Бренды и модели
+│   │   ├── brands/              # Brands and models
 │   │   └── ...
 │   └── docs/         # Backend-specific docs
 ├── frontend/         # Next.js frontend
 │   ├── ui/           # Design system
 │   └── docs/         # Frontend-specific docs
-├── docs/             # 📚 Основная документация
+├── docs/             # Main documentation
 └── docker-compose.yml
 ```
 
 ---
 
-## 🛠️ Для разработчиков
+## For developers
 
-### Backend:
-- **[backend/docs/README.md](./backend/docs/README.md)** - Backend документация
-- **[backend/docs/SCRIPTS.md](./backend/docs/SCRIPTS.md)** - Скрипты
+### Backend
 
-### Frontend:
-- **[frontend/docs/README.md](./frontend/docs/README.md)** - Frontend документация
-- **[frontend/docs/DESIGN_SYSTEM.md](./frontend/docs/DESIGN_SYSTEM.md)** - Design system
+- **[backend/docs/README.md](./backend/docs/README.md)** — Backend documentation
+- **[backend/docs/scripts.md](./backend/docs/scripts.md)** — Scripts
 
-### Создание платформ:
-- **[docs/guides/PLATFORM_GUIDE.md](./docs/guides/PLATFORM_GUIDE.md)** - Полное руководство
+### Frontend
+
+- **[frontend/docs/README.md](./frontend/docs/README.md)** — Frontend documentation
+- **[frontend/docs/design-system.md](./frontend/docs/design-system.md)** — Design system
+
+### Creating platforms
+
+- **[docs/guides/platform-guide.md](./docs/guides/platform-guide.md)** — Full guide
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ```bash
 # Backend unit tests (265 tests)
@@ -99,15 +111,16 @@ cd backend && npm run test:integration
 cd frontend && npm test
 ```
 
-**Документация:** [backend/docs/TESTING.md](./backend/docs/TESTING.md)
+**Documentation:** [backend/docs/testing.md](./backend/docs/testing.md)
 
 ---
 
-## 🚨 Важно
+## Important
 
-⚠️ **Перед созданием новых платформ** прочитайте:
-- [docs/architecture/SCRIPTS_ARCHITECTURE.md](./docs/architecture/SCRIPTS_ARCHITECTURE.md) 🔴 **КРИТИЧНО**
-- [docs/architecture/KNOWN_ISSUES.md](./docs/architecture/KNOWN_ISSUES.md)
+Before creating new platforms, read:
+
+- [docs/architecture/scripts-architecture.md](./docs/architecture/scripts-architecture.md) — **CRITICAL**
+- [docs/architecture/known-issues.md](./docs/architecture/known-issues.md)
 
 ---
 

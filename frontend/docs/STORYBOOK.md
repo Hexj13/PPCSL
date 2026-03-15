@@ -1,4 +1,14 @@
-# Storybook — настройка (альтернативная)
+---
+title: Storybook setup
+owner: platform
+tags:
+  - type/guide
+  - domain/engineering
+  - scope/core
+  - status/active
+---
+
+# Storybook — setup (alternative)
 
 If you want to use Storybook for more advanced component documentation, follow these steps:
 

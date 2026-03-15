@@ -1,12 +1,22 @@
+---
+title: Frontend documentation
+owner: platform
+tags:
+  - type/readme
+  - domain/engineering
+  - scope/core
+  - status/active
+---
+
 # Frontend Documentation
 
 Frontend-specific documentation for PPCSL Next.js application.
 
 ## 📄 Available Documentation
 
-- **[DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md)** - Design system and UI components
-- **[STORYBOOK.md](./STORYBOOK.md)** - Storybook setup guide
-- **[LINTING.md](./LINTING.md)** - ESLint configuration and rules
+- **[design-system.md](./design-system.md)** - Design system and UI components
+- **[storybook.md](./storybook.md)** - Storybook setup guide
+- **[linting.md](../../docs/linting.md)** - ESLint configuration and rules
 
 ## 🏗️ Key Architecture
 
@@ -60,10 +70,10 @@ Frontend-specific documentation for PPCSL Next.js application.
 
 ## 📚 General Documentation
 
-For general project documentation:
-- **[Project Overview](../../docs/README.md)** - Main documentation
-- **[Architecture](../../docs/architecture/)** - System architecture
-- **[Deployment](../../docs/guides/DEPLOYMENT.md)** - Deployment guides
+For core documentation (this repo):
+- **[Core docs](../../docs/README.md)** — Main documentation entry point
+- **[Architecture](../../docs/architecture/)** — System architecture
+- **[Deployment](../../docs/guides/deployment.md)** — Deployment guides
 
 ---
 

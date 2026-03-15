@@ -1,3 +1,13 @@
+---
+title: Frontend config
+owner: platform
+tags:
+  - type/readme
+  - domain/engineering
+  - scope/core
+  - status/active
+---
+
 # Frontend config
 
 Tool and environment configs live here (aligned with backend `config/` layout).

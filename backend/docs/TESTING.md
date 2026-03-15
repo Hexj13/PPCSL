@@ -1,4 +1,14 @@
-# Интеграционные тесты
+---
+title: Backend integration testing
+owner: platform
+tags:
+  - type/reference
+  - domain/engineering
+  - scope/core
+  - status/active
+---
+
+# Integration tests
 
 This directory contains integration tests that validate API endpoints against the Swagger/OpenAPI specification.
 

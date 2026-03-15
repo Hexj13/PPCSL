@@ -1,3 +1,13 @@
+---
+title: Linting and code quality
+owner: platform
+tags:
+  - type/reference
+  - domain/engineering
+  - scope/core
+  - status/active
+---
+
 # Linting & Code Quality
 
 Single reference for linting and formatting across the project (frontend and backend). Audit date: 2026-03-12.

@@ -1,4 +1,14 @@
-# Техническая документация PPCSL
+---
+title: Technical documentation
+owner: platform
+tags:
+  - type/reference
+  - domain/architecture
+  - scope/core
+  - status/active
+---
+
+# PPCSL technical documentation
 
 Complete technical documentation for the PPCSL platform.
 
@@ -44,7 +54,7 @@ Core application framework for creating car marketplace platforms for different 
   - Promotion periods: 1, 7, 14, or 30 days
   - Promotion time is frozen when listing is paused
   - Access control via `PROMOTION_ACCESS` environment variable (disabled/admin/all)
-  - See [PAID_PROMOTION.md](../features/PAID_PROMOTION.md) for complete documentation
+  - See [paid-promotion.md](../features/paid-promotion.md) for complete documentation
 
 ### Technologies
 
@@ -232,7 +242,7 @@ CRON_SECRET=your-secret-key-here  # Secret for cron job authentication
 - **`MAX_PROMOTIONS_PER_USER`**: Maximum number of active promotions per user (default: 10)
 - **`CRON_SECRET`**: Secret key for authenticating cron job endpoints (minimum 32 characters)
 
-See [PAID_PROMOTION.md](../features/PAID_PROMOTION.md) for complete promotion feature documentation.
+See [paid-promotion.md](../features/paid-promotion.md) for complete promotion feature documentation.
 
 ### Production Notes
 
@@ -244,7 +254,7 @@ See [PAID_PROMOTION.md](../features/PAID_PROMOTION.md) for complete promotion fe
 
 ### Backend layered architecture
 
-The backend uses a layered design: **Presentation** (controllers, DTOs) → **Application** (use cases, ports) → **Domain** (entities, value objects, domain services) → **Infrastructure** (TypeORM, Redis, SMS, etc.). Controllers are thin; business logic lives in use cases and domain. See [BACKEND_LAYERS.md](./BACKEND_LAYERS.md) for layer conventions and module structure (Listings, Auth).
+The backend uses a layered design: **Presentation** (controllers, DTOs) → **Application** (use cases, ports) → **Domain** (entities, value objects, domain services) → **Infrastructure** (TypeORM, Redis, SMS, etc.). Controllers are thin; business logic lives in use cases and domain. See [backend-layers.md](./backend-layers.md) for layer conventions and module structure (Listings, Auth).
 
 ### Project Structure
 
@@ -305,7 +315,7 @@ Reusable UI primitives are located in `frontend/ui/` and exported from `@/ui`:
 - **InfoBlock** — Static informational block with icon (info or warning variant)
 - **HintTooltip** — "?" click-to-reveal popover with smart positioning and animation
 
-See [UI_COMPONENTS.md](../features/UI_COMPONENTS.md) for props, behavior, and usage guidelines.
+See [ui-components.md](../features/ui-components.md) for props, behavior, and usage guidelines.
 
 ### Key Features
 
@@ -413,7 +423,7 @@ DELETE /api/saved-filters/:id          # Delete saved filter
 
 ### Seller Listings Board
 
-Public seller board page: all active listings of a seller by slug (no auth required). Pages `/board/*` are noindex. See [SELLER_LISTINGS_BOARD.md](../features/SELLER_LISTINGS_BOARD.md) for full specification.
+Public seller board page: all active listings of a seller by slug (no auth required). Pages `/board/*` are noindex. See [seller-listings-board.md](../features/seller-listings-board.md) for full specification.
 
 ```http
 GET    /api/board/:slug                 # Get board info (displayName, boardSlug)
@@ -434,7 +444,7 @@ GET  /api/upload/image/:filename      # Get optimized image version
 **Watermark Details:**
 
 - Watermark is automatically applied to all uploaded images
-- License plate masking is optional in the listing form; when the user enables it, backend detects plates with an ONNX model and overlays a gray mask. Animated images are rejected; see [LICENSE_PLATE_MASK.md](../features/LICENSE_PLATE_MASK.md)
+- License plate masking is optional in the listing form; when the user enables it, backend detects plates with an ONNX model and overlays a gray mask. Animated images are rejected; see [license-plate-mask.md](../features/license-plate-mask.md)
 - Logo file location: `backend/assets/watermark/logo.png`
 - Watermark includes: logo (15% of image size) + domain text below
 - Watermark domain is configurable via `WATERMARK_DOMAIN` environment variable
@@ -979,7 +989,7 @@ The backend has `trust proxy: true` configured, which correctly identifies real 
 5. Enable SSL/TLS (Full strict mode)
 6. Enable WAF and Bot Protection
 
-See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFront CDN setup instructions (CloudFront is AWS's CDN service, similar to Cloudflare).
+See [deployment.md](../guides/deployment.md#72-rendercom-deployment) for CloudFront CDN setup instructions (CloudFront is AWS's CDN service, similar to Cloudflare).
 
 ---
 
@@ -1028,12 +1038,12 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
   - **Loading states:** Loader only shown when image is actually loading, with 1s minimum display time to prevent flicker
   - **Modal viewer:** Full-screen photo viewer with keyboard navigation and swipe gestures
   - **Performance:** 80% code reduction, instant cache switching, no artificial delays
-  - See [IMAGE_PREVIEW.md](../features/IMAGE_PREVIEW.md) for complete documentation
+  - See [image-preview.md](../features/image-preview.md) for complete documentation
 - **Race condition prevention:** Loading states and request guards to prevent duplicate API calls
   - Favorite toggle button disabled during operation with visual feedback
   - Ref-based guards to prevent concurrent requests
 - Third-party scripts optimization (Google Analytics, Google Tag Manager) using `lazyOnload` strategy to reduce Total Blocking Time (TBT)
-- **INP (Interaction to Next Paint) optimizations for mobile:** Deferred analytics (search/select_content) via requestIdleCallback; single rAF for scroll restore after router.replace; rAF-throttled scroll handlers with state guards (ScrollToFiltersButton, useSearchTabs, BackgroundDecorations, usePageScroll); GTM/Tawk loaded after idle or first interaction; parse cache for ListingGrid search params; chunked dropdown render and precomputed lowerLabel for filter options. See [INP_VALIDATION.md](../performance/INP_VALIDATION.md) for post-deploy validation.
+- **INP (Interaction to Next Paint) optimizations for mobile:** Deferred analytics (search/select_content) via requestIdleCallback; single rAF for scroll restore after router.replace; rAF-throttled scroll handlers with state guards (ScrollToFiltersButton, useSearchTabs, BackgroundDecorations, usePageScroll); GTM/Tawk loaded after idle or first interaction; parse cache for ListingGrid search params; chunked dropdown render and precomputed lowerLabel for filter options. See [inp-validation.md](../performance/inp-validation.md) for post-deploy validation.
 - **Resource hints optimization:**
   - Static preconnect to API domain in `layout.tsx` for faster image loading (server-rendered, no JS required)
   - DNS-prefetch and preconnect for Google Tag Manager (server-rendered in `layout.tsx`)
@@ -1078,7 +1088,7 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
   - `no-hardcoded-text` - Enforces use of translation keys instead of hardcoded text
   - `import/order` - Ensures consistent import ordering
   - TypeScript and React rules for code quality
-  - See [LINTING.md](../../LINTING.md) for complete linting guide
+  - See [linting.md](../linting.md) for complete linting guide
 
 ---
 
@@ -1123,8 +1133,8 @@ Or use `npm run dev` in root - it will start both servers.
 
 - **API Documentation:** Swagger available at `/api` endpoint (when running)
 - **Project README:** See [README.md](../../README.md) in project root
-- **Deployment Guide:** See [DEPLOYMENT.md](../guides/DEPLOYMENT.md) for production deployment
-- **Feature docs:** [SELLER_LISTINGS_BOARD.md](../features/SELLER_LISTINGS_BOARD.md), [PAID_PROMOTION.md](../features/PAID_PROMOTION.md), [IMAGE_PREVIEW.md](../features/IMAGE_PREVIEW.md), [UI_COMPONENTS.md](../features/UI_COMPONENTS.md), [TODO.md](../features/TODO.md)
+- **Deployment Guide:** See [deployment.md](../guides/deployment.md) for production deployment
+- **Feature docs:** [seller-listings-board.md](../features/seller-listings-board.md), [paid-promotion.md](../features/paid-promotion.md), [image-preview.md](../features/image-preview.md), [ui-components.md](../features/ui-components.md), [todo.md](../features/todo.md)
 
 ---
 
@@ -1265,7 +1275,7 @@ cd core/frontend && npm start
 3. Copy platform-specific files via `npm run prepare:build` (frontend locales ro/ru, backend locales, theme, config, assets)
 4. Install dependencies and build the application
 
-**Memory tuning (Next.js frontend):** To avoid out-of-memory restarts on Render.com (e.g. when traffic is low but health checks run frequently), the app uses: `cacheMaxMemorySize: 25MB` in next.config.js, `minimumCacheTTL: 86400` for image optimization, and Sentry server `tracesSampleRate: 0.2`. See [SENTRY.md](../guides/SENTRY.md) for Sentry server config.
+**Memory tuning (Next.js frontend):** To avoid out-of-memory restarts on Render.com (e.g. when traffic is low but health checks run frequently), the app uses: `cacheMaxMemorySize: 25MB` in next.config.js, `minimumCacheTTL: 86400` for image optimization, and Sentry server `tracesSampleRate: 0.2`. See [sentry.md](../guides/sentry.md) for Sentry server config.
 
 ### 13.4.2. Render.com Backend Deployment Configuration
 
@@ -1412,7 +1422,7 @@ cd core/backend && npm run start:prod
 9. **Test submodule updates** in staging before production
 10. **Backup** platform-specific files before major core updates
 
-For detailed implementation, see [Multi-Repository](./MULTI_REPOSITORY.md).
+For detailed implementation, see [Multi-Repository](./multi-repository.md).
 
 ---
 
@@ -1423,7 +1433,7 @@ The platform includes a paid promotion feature (MVP) that allows users to promot
 ### Overview
 
 - **Status:** MVP fully implemented
-- **Documentation:** See [PAID_PROMOTION.md](../features/PAID_PROMOTION.md) for complete documentation
+- **Documentation:** See [paid-promotion.md](../features/paid-promotion.md) for complete documentation
 - **Access Control:** Controlled via `PROMOTION_ACCESS` environment variable
 
 ### Key Features
@@ -1451,7 +1461,7 @@ cd backend && npm run test -- listings.service.spec.ts
 
 ### Related Documentation
 
-- [PAID_PROMOTION.md](../features/PAID_PROMOTION.md) - Complete promotion feature documentation
+- [paid-promotion.md](../features/paid-promotion.md) - Complete promotion feature documentation
 - [listings.service.spec.ts](../../backend/src/listings/listings.service.spec.ts) - Test suite
 
 ---
@@ -1483,7 +1493,7 @@ cd backend && npm run test -- listings.service.spec.ts
   - GTM load after requestIdleCallback (2.5s), Tawk after first interaction or 4s; lower Sentry replay sampling on mobile viewport
   - ListingGrid: parsed search params cache (keyed by searchParamsString + vehicleType), deferred viewItemList; ListingCard prefetch
   - MultiSelectDropdown/Dropdown: precomputed lowerLabel for options, chunked render (first 50 then rAF to full list)
-  - KPI and validation: lib/performance/inp-kpi.ts (targets, observer), [INP_VALIDATION.md](../performance/INP_VALIDATION.md) for GSC validation steps
+  - KPI and validation: lib/performance/inp-kpi.ts (targets, observer), [inp-validation.md](../performance/inp-validation.md) for GSC validation steps
 - **Performance Optimizations (2025-01):**
   - Migrated initial data fetching to Server Components for improved SEO and initial page load
   - Optimized third-party scripts (Google Analytics, Google Tag Manager) with `lazyOnload` strategy

@@ -1,69 +1,79 @@
-# Sentry — настройка и мониторинг ошибок
+---
+title: Sentry setup and monitoring
+owner: platform
+tags:
+  - type/guide
+  - domain/ops
+  - scope/core
+  - status/active
+---
 
-## Дата создания
+# Sentry — setup and error monitoring
 
-23 января 2026
+## Created
 
-## Связанные документы
+23 January 2026
 
-- **[GA4_EVENTS.md](../analytics/GA4_EVENTS.md)** — события и архитектура GA4 (ошибки — в Sentry)
-- **[PLATFORM_GUIDE.md](./PLATFORM_GUIDE.md#6-конфигурация-аналитики-и-мониторинга-ga-gtm-sentry)** — конфигурация GA, GTM, Sentry для платформ
+## Related documents
 
-## Обзор
+- **[ga4-events.md](../analytics/ga4-events.md)** — GA4 events and architecture (errors in Sentry)
+- **[platform-guide.md](./platform-guide.md#6-analytics-and-monitoring-configuration-ga-gtm-sentry)** — GA, GTM, Sentry configuration for platforms
 
-Sentry - это платформа для мониторинга ошибок и производительности приложений. Документ описывает настройку Sentry для отслеживания ошибок на фронтенде и бэкенде проекта.
+## Overview
 
-## Зачем нужен Sentry
+Sentry is a platform for application error and performance monitoring. This document describes setting up Sentry to track errors on the frontend and backend.
 
-### Преимущества перед GA4 exception events
+## Why use Sentry
 
-- **Детальная информация об ошибках**: полные stack traces, контекст выполнения
-- **Группировка ошибок**: автоматическая группировка похожих ошибок
-- **Уведомления**: мгновенные уведомления о критических ошибках
-- **История ошибок**: полная история возникновения ошибок
-- **Контекст пользователя**: информация о пользователе, браузере, устройстве
-- **Performance monitoring**: отслеживание производительности
-- **Release tracking**: отслеживание ошибок по версиям приложения
+### Advantages over GA4 exception events
 
-### Что отслеживать
+- **Detailed error information**: full stack traces, execution context
+- **Error grouping**: automatic grouping of similar errors
+- **Notifications**: instant alerts for critical errors
+- **Error history**: full error occurrence history
+- **User context**: user, browser, device information
+- **Performance monitoring**: performance tracking
+- **Release tracking**: errors by application version
 
-- JavaScript ошибки на клиенте
+### What to track
+
+- JavaScript errors on the client
 - Unhandled promise rejections
-- Ошибки API запросов
-- Ошибки на сервере (NestJS)
-- Ошибки валидации
-- Критические ошибки приложения
+- API request errors
+- Server errors (NestJS)
+- Validation errors
+- Critical application errors
 
-## Установка и настройка
+## Installation and setup
 
-### 1. Создание проекта в Sentry
+### 1. Create project in Sentry
 
-1. Перейти на https://sentry.io
-2. Создать аккаунт или войти
-3. Создать новый проект:
-   - **Platform**: Next.js (для фронтенда)
-   - **Platform**: Node.js (для бэкенда)
-4. Скопировать DSN (Data Source Name) для каждого проекта
+1. Go to https://sentry.io
+2. Create an account or sign in
+3. Create a new project:
+   - **Platform**: Next.js (for frontend)
+   - **Platform**: Node.js (for backend)
+4. Copy the DSN (Data Source Name) for each project
 
-### 2. Установка пакетов
+### 2. Install packages
 
-#### Фронтенд (Next.js)
+#### Frontend (Next.js)
 
 ```bash
 cd core/frontend
 npm install @sentry/nextjs
 ```
 
-#### Бэкенд (NestJS)
+#### Backend (NestJS)
 
 ```bash
 cd core/backend
 npm install @sentry/node @sentry/profiling-node
 ```
 
-### 3. Настройка переменных окружения
+### 3. Environment variables
 
-#### Фронтенд (.env.local)
+#### Frontend (.env.local)
 
 ```env
 NEXT_PUBLIC_SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
@@ -72,7 +82,7 @@ SENTRY_PROJECT=your-frontend-project
 SENTRY_AUTH_TOKEN=your-auth-token
 ```
 
-#### Бэкенд (.env)
+#### Backend (.env)
 
 ```env
 SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
@@ -80,11 +90,11 @@ SENTRY_ENVIRONMENT=production
 SENTRY_RELEASE=1.0.0
 ```
 
-## Интеграция на фронтенде
+## Frontend integration
 
-### 1. Инициализация Sentry
+### 1. Sentry initialization
 
-Создать файл `core/frontend/sentry.client.config.ts`:
+Create `core/frontend/sentry.client.config.ts`:
 
 ```typescript
 import * as Sentry from '@sentry/nextjs';
@@ -105,7 +115,7 @@ Sentry.init({
 });
 ```
 
-Создать файл `core/frontend/sentry.server.config.ts`:
+Create `core/frontend/sentry.server.config.ts`:
 
 ```typescript
 import * as Sentry from '@sentry/nextjs';
@@ -117,9 +127,9 @@ Sentry.init({
 });
 ```
 
-На сервере используется 0.2 (20% транзакций), чтобы снизить потребление памяти: при 100% трейсинге каждый health check и запрос создаёт полный trace, что на хостингах с ограниченной памятью (например Render.com) может приводить к OOM без реального трафика.
+Server uses 0.2 (20% of transactions) to reduce memory usage: at 100% tracing every health check and request creates a full trace, which on memory-limited hosts (e.g. Render.com) can cause OOM without real traffic.
 
-Создать файл `core/frontend/sentry.edge.config.ts`:
+Create `core/frontend/sentry.edge.config.ts`:
 
 ```typescript
 import * as Sentry from '@sentry/nextjs';
@@ -131,13 +141,13 @@ Sentry.init({
 });
 ```
 
-### 2. Обновление next.config.js
+### 2. Update next.config.js
 
 ```javascript
 const { withSentryConfig } = require('@sentry/nextjs');
 
 const nextConfig = {
-  // ... существующая конфигурация
+  // ... existing config
 };
 
 module.exports = withSentryConfig(
@@ -157,9 +167,9 @@ module.exports = withSentryConfig(
 );
 ```
 
-### 3. Глобальный обработчик ошибок
+### 3. Global error handler
 
-Обновить `core/frontend/app/layout.tsx`:
+Update `core/frontend/app/layout.tsx`:
 
 ```typescript
 'use client';
@@ -169,7 +179,7 @@ import * as Sentry from '@sentry/nextjs';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    // Обработка unhandled errors
+    // Handle unhandled errors
     const handleError = (event: ErrorEvent) => {
       Sentry.captureException(event.error, {
         tags: {
@@ -184,7 +194,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       });
     };
 
-    // Обработка unhandled promise rejections
+    // Handle unhandled promise rejections
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       Sentry.captureException(event.reason, {
         tags: {
@@ -205,22 +215,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     };
   }, []);
 
-  // ... остальной код
+  // ... rest of layout
 }
 ```
 
-### 4. Обработка ошибок API
+### 4. API error handling
 
-Обновить перехватчик в `core/frontend/lib/api/api-client.ts` (или другой модуль в `lib/api/`):
+Update the interceptor in `core/frontend/lib/api/api-client.ts` (or another module in `lib/api/`):
 
 ```typescript
 import * as Sentry from '@sentry/nextjs';
 
-// В функции обработки ошибок
+// In error handling
 try {
-  // ... API запрос
+  // ... API request
 } catch (error) {
-  // Логирование в Sentry для критических ошибок
+  // Log to Sentry for critical errors
   if (error.response?.status >= 500) {
     Sentry.captureException(error, {
       tags: {
@@ -238,29 +248,29 @@ try {
 }
 ```
 
-### 5. Контекст пользователя
+### 5. User context
 
-Добавить в `core/frontend/lib/store/store.ts` (auth store):
+Add to `core/frontend/lib/store/store.ts` (auth store):
 
 ```typescript
 import * as Sentry from '@sentry/nextjs';
 
-// При успешной авторизации
+// On successful auth
 Sentry.setUser({
   id: user.id,
   email: user.email,
   username: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : undefined,
 });
 
-// При выходе
+// On logout
 Sentry.setUser(null);
 ```
 
-## Интеграция на бэкенде
+## Backend integration
 
-### 1. Инициализация Sentry
+### 1. Sentry initialization
 
-Создать файл `core/backend/src/common/sentry.config.ts`:
+Create `core/backend/src/common/sentry.config.ts`:
 
 ```typescript
 import * as Sentry from '@sentry/node';
@@ -275,22 +285,22 @@ Sentry.init({
 });
 ```
 
-### 2. Обновление main.ts
+### 2. Update main.ts
 
 ```typescript
 import * as Sentry from '@sentry/node';
 
-// В начале файла, до создания приложения
+// At top of file, before creating app
 import './common/sentry.config';
 
 async function bootstrap() {
-  // ... остальной код
+  // ... rest of bootstrap
 }
 ```
 
-### 3. Обновление HttpExceptionFilter
+### 3. Update HttpExceptionFilter
 
-Обновить `core/backend/src/common/filters/http-exception.filter.ts`:
+Update `core/backend/src/common/filters/http-exception.filter.ts`:
 
 ```typescript
 import * as Sentry from '@sentry/node';
@@ -298,12 +308,12 @@ import * as Sentry from '@sentry/node';
 @Injectable()
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
-  // ... существующий код
+  // ... existing code
 
   catch(exception: unknown, host: ArgumentsHost) {
-    // ... существующая логика
+    // ... existing logic
 
-    // Отправка в Sentry для критических ошибок
+    // Send to Sentry for critical errors
     if (status >= 500) {
       Sentry.captureException(exception, {
         tags: {
@@ -314,19 +324,19 @@ export class HttpExceptionFilter implements ExceptionFilter {
         extra: {
           requestBody: request.body,
           queryParams: request.query,
-          user: request.user, // если есть авторизация
+          user: request.user, // if auth present
         },
       });
     }
 
-    // ... остальной код
+    // ... rest of catch
   }
 }
 ```
 
-### 4. Контекст запроса
+### 4. Request context
 
-Создать interceptor для добавления контекста:
+Create an interceptor to add context:
 
 ```typescript
 import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
@@ -354,13 +364,13 @@ export class SentryInterceptor implements NestInterceptor {
 }
 ```
 
-Добавить в `app.module.ts`:
+Add to `app.module.ts`:
 
 ```typescript
 import { APP_INTERCEPTOR } from '@nestjs/core';
 
 providers: [
-  // ... существующие провайдеры
+  // ... existing providers
   {
     provide: APP_INTERCEPTOR,
     useClass: SentryInterceptor,
@@ -368,39 +378,39 @@ providers: [
 ],
 ```
 
-## Настройка уведомлений
+## Notification setup
 
-### 1. Email уведомления
+### 1. Email notifications
 
-1. В Sentry: Settings → Notifications
-2. Настроить уведомления для:
-   - Новых ошибок
-   - Критических ошибок (>= 500)
-   - Резкого увеличения частоты ошибок
+1. In Sentry: Settings → Notifications
+2. Configure notifications for:
+   - New errors
+   - Critical errors (>= 500)
+   - Sudden error rate increase
 
-### 2. Интеграции
+### 2. Integrations
 
-- **Slack**: для уведомлений команды
-- **Discord**: альтернатива Slack
-- **PagerDuty**: для критических инцидентов
-- **Email**: базовые уведомления
+- **Slack**: team notifications
+- **Discord**: Slack alternative
+- **PagerDuty**: critical incidents
+- **Email**: basic notifications
 
-## Фильтрация ошибок
+## Error filtering
 
-### Игнорирование известных ошибок
+### Ignoring known errors
 
-#### Фронтенд
+#### Frontend
 
 ```typescript
 Sentry.init({
-  // ... другие настройки
+  // ... other options
   ignoreErrors: ['ResizeObserver loop limit exceeded', 'Non-Error promise rejection captured'],
   beforeSend(event, hint) {
-    // Фильтрация по типу ошибки
+    // Filter by error type
     if (event.exception) {
       const error = hint.originalException;
       if (error instanceof Error && error.message.includes('specific error')) {
-        return null; // Игнорировать
+        return null; // Ignore
       }
     }
     return event;
@@ -408,16 +418,16 @@ Sentry.init({
 });
 ```
 
-#### Бэкенд
+#### Backend
 
 ```typescript
 Sentry.init({
-  // ... другие настройки
+  // ... other options
   ignoreErrors: ['ValidationError', 'UnauthorizedException'],
   beforeSend(event, hint) {
-    // Фильтрация по статусу
+    // Filter by status
     if (event.tags?.httpStatus && event.tags.httpStatus < 500) {
-      return null; // Игнорировать клиентские ошибки
+      return null; // Ignore client errors
     }
     return event;
   },
@@ -426,9 +436,9 @@ Sentry.init({
 
 ## Release tracking
 
-### Настройка релизов
+### Release setup
 
-#### Фронтенд (package.json)
+#### Frontend (package.json)
 
 ```json
 {
@@ -439,104 +449,104 @@ Sentry.init({
 }
 ```
 
-#### Бэкенд
+#### Backend (release)
 
 ```typescript
 Sentry.init({
-  // ... другие настройки
+  // ... other options
   release: process.env.SENTRY_RELEASE || '1.0.0',
 });
 ```
 
-## Мониторинг производительности
+## Performance monitoring
 
-### Включение Performance Monitoring
+### Enabling Performance Monitoring
 
-#### Фронтенд
+#### Frontend
 
 ```typescript
 Sentry.init({
-  // ... другие настройки
+  // ... other options
   tracesSampleRate: 0.2,
   integrations: [Sentry.browserTracingIntegration()],
 });
 ```
 
-На сервере (sentry.server.config.ts) рекомендуется 0.1–0.2 для снижения потребления памяти; на клиенте можно использовать до 1.0 при необходимости.
+On the server (sentry.server.config.ts) 0.1–0.2 is recommended to reduce memory; on the client you can use up to 1.0 if needed.
 
-#### Бэкенд
+#### Backend
 
 ```typescript
 Sentry.init({
-  // ... другие настройки
+  // ... other options
   tracesSampleRate: 1.0,
   integrations: [new ProfilingIntegration()],
 });
 ```
 
-## Тестирование
+## Testing
 
-### Проверка интеграции
+### Verify integration
 
-1. **Тестовая ошибка на фронтенде:**
+1. **Test error on frontend:**
 
 ```typescript
-// В компоненте для тестирования
+// In a test component
 const testError = () => {
   throw new Error('Test Sentry error');
 };
 ```
 
-2. **Тестовая ошибка на бэкенде:**
+2. **Test error on backend:**
 
 ```typescript
-// В контроллере для тестирования
+// In a test controller
 @Get('test-error')
 testError() {
   throw new Error('Test Sentry error');
 }
 ```
 
-3. **Проверка в Sentry:**
-   - Перейти в Issues
-   - Убедиться, что ошибка появилась
-   - Проверить детали: stack trace, контекст, пользователь
+3. **Check in Sentry:**
+   - Go to Issues
+   - Confirm the error appeared
+   - Check details: stack trace, context, user
 
-## Best Practices
+## Best practices
 
-### 1. Контекст ошибок
+### 1. Error context
 
-- Всегда добавлять контекст при отправке ошибок
-- Включать информацию о пользователе (если авторизован)
-- Добавлять метаданные о запросе/действии
+- Always add context when sending errors
+- Include user info when authenticated
+- Add request/action metadata
 
-### 2. Группировка ошибок
+### 2. Error grouping
 
-- Использовать fingerprint для кастомной группировки
-- Настраивать правила группировки в Sentry
+- Use fingerprint for custom grouping
+- Configure grouping rules in Sentry
 
-### 3. Приватность
+### 3. Privacy
 
-- Не отправлять чувствительные данные (пароли, токены)
-- Использовать `beforeSend` для фильтрации данных
-- Настраивать Data Scrubbing в Sentry
+- Do not send sensitive data (passwords, tokens)
+- Use `beforeSend` to filter data
+- Configure Data Scrubbing in Sentry
 
-### 4. Производительность
+### 4. Performance
 
-- Использовать sampling для снижения нагрузки
-- Настраивать rate limiting
-- Мониторить влияние Sentry на производительность
+- Use sampling to reduce load
+- Configure rate limiting
+- Monitor Sentry impact on performance
 
-## Интеграция с GA4
+## Integration with GA4
 
-Sentry и GA4 дополняют друг друга:
+Sentry and GA4 complement each other:
 
-- **Sentry**: детальное отслеживание ошибок, stack traces, контекст
-- **GA4**: общая статистика ошибок, метрики вовлеченности
+- **Sentry**: detailed error tracking, stack traces, context
+- **GA4**: overall error stats, engagement metrics
 
-Не нужно дублировать отслеживание ошибок в GA4, если используется Sentry.
+No need to duplicate error tracking in GA4 when using Sentry.
 
-## Полезные ссылки
+## Links
 
 - [Sentry Documentation](https://docs.sentry.io/)
 - [Next.js Integration](https://docs.sentry.io/platforms/javascript/guides/nextjs/)

@@ -1,125 +1,140 @@
+---
+title: Core documentation
+owner: platform
+tags:
+  - type/readme
+  - domain/docs
+  - scope/core
+  - status/active
+---
+
 # PPCSL Core Documentation
 
-Документация для **PPCSL (Platform-Portable Car Sales Logic)** - универсального ядра для создания автомобильных маркетплейсов.
+Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal core for building car marketplaces.
 
-## 📚 Структура документации
+- **Structure and principles:** [documentation-architecture.md](./documentation-architecture.md) | **Migration report:** [docs/documentation-refactor-report.md](../../docs/documentation-refactor-report.md) (in platform repo)
+- **Reference:** [reference/](./reference/) — [popular-brands-sync](./reference/popular-brands-sync.md), [platform-assets](./reference/platform-assets.md), analytics, scripts
+- **Operations:** [operations/](./operations/) — [Sentry launch checklist](./operations/sentry-launch-checklist.md), deploy, monitoring
+- **ADR:** [architecture/adr/](./architecture/adr/) — architecture decision records
 
-### 🏗️ [`architecture/`](./architecture/)
+## Documentation structure
 
-**Архитектура системы** - как устроена multi-platform система
+### [`architecture/`](./architecture/)
 
-- **[ARCHITECTURE_OVERVIEW.md](./architecture/ARCHITECTURE_OVERVIEW.md)** ⭐ **НАЧНИ ЗДЕСЬ**
-- [MULTI_REPOSITORY.md](./architecture/MULTI_REPOSITORY.md) - Core + Platform repos
-- [BACKEND_LAYERS.md](./architecture/BACKEND_LAYERS.md) - Слоистая архитектура бэкенда (use cases, domain)
-- [SCRIPTS_ARCHITECTURE.md](./architecture/SCRIPTS_ARCHITECTURE.md) 🔴 **КРИТИЧНО**
-- [KNOWN_ISSUES.md](./architecture/KNOWN_ISSUES.md) - Известные проблемы
-- [TECHNICAL.md](./architecture/TECHNICAL.md) - Технические детали
+**System architecture** — how the multi-platform system is built
 
-### 📖 [`guides/`](./guides/)
+- **[architecture-overview.md](./architecture/architecture-overview.md)** — **START HERE**
+- [multi-repository.md](./architecture/multi-repository.md) — Core + Platform repos
+- [backend-layers.md](./architecture/backend-layers.md) — Backend layered architecture (use cases, domain)
+- [scripts-architecture.md](./architecture/scripts-architecture.md) — **CRITICAL**
+- [known-issues.md](./architecture/known-issues.md) — Known issues
+- [technical.md](./architecture/technical.md) — Technical details
 
-**Руководства** — создание платформ, деплой, настройка сервисов
+### [`guides/`](./guides/)
 
-- **[PLATFORM_CHECKLIST.md](./guides/PLATFORM_CHECKLIST.md)** ⭐ **Чеклист для новых платформ**
-- [PLATFORM_GUIDE.md](./guides/PLATFORM_GUIDE.md) — настройка и разработка (включая GA, GTM, Sentry)
-- [SENTRY.md](./guides/SENTRY.md) — настройка и мониторинг Sentry
-- [DEPLOYMENT.md](./guides/DEPLOYMENT.md) — деплой (включая опциональный Telegram support bot)
-- [LOCAL_DEVELOPMENT.md](./guides/LOCAL_DEVELOPMENT.md) — локальная разработка
-- [QUICK_START_RU.md](./guides/QUICK_START_RU.md) — быстрый старт
-- [LINTING.md](./LINTING.md) — линтинг и качество кода (единый источник)
+**Guides** — platform creation, deploy, service setup
 
-**Порядок:** PLATFORM_CHECKLIST → PLATFORM_GUIDE → DEPLOYMENT. Локально: LOCAL_DEVELOPMENT → QUICK_START_RU.
+- **[platform-checklist.md](./guides/platform-checklist.md)** — **Checklist for new platforms**
+- [platform-guide.md](./guides/platform-guide.md) — Setup and development (GA, GTM, Sentry)
+- [sentry.md](./guides/sentry.md) — Sentry setup and monitoring
+- [deployment.md](./guides/deployment.md) — Deploy (optional Telegram support bot)
+- [local-development.md](./guides/local-development.md) — Local development
+- [quick-start-ru.md](./guides/quick-start-ru.md) — Quick start (Russian)
+- [linting.md](./linting.md) — Linting and code quality (single source)
 
-### 📊 [`analytics/`](./analytics/)
+**Order:** platform-checklist → platform-guide → deployment. Local: local-development → quick-start-ru.
 
-**Аналитика**
+### [`analytics/`](./analytics/)
 
-- [GA4_EVENTS.md](./analytics/GA4_EVENTS.md) — события и архитектура GA4 (Sentry — в [guides/SENTRY.md](./guides/SENTRY.md))
+**Analytics**
 
-### 📜 [`scripts/`](./scripts/)
+- [ga4-events.md](./analytics/ga4-events.md) — GA4 events and architecture (Sentry in [guides/sentry.md](./guides/sentry.md))
 
-**Скрипты брендов и моделей**
+### [`scripts/`](./scripts/)
 
-- [BRANDS_MODELS_MASTER_PLAN.md](./scripts/BRANDS_MODELS_MASTER_PLAN.md) - План и production-скрипты (seed-all-brands-complete, порядок, кэш)
+**Brands and models scripts**
 
-### ✨ [`features/`](./features/)
+- [brands-models-master-plan.md](./scripts/brands-models-master-plan.md) — Plan and production scripts (seed-all-brands-complete, order, cache)
 
-**Документация фич** - описание компонентов и функциональности
+### [`features/`](./features/)
 
-- [SEARCH_TITLE_URL.md](./features/SEARCH_TITLE_URL.md) - URL и заголовок страницы поиска (слаги, диакритика)
-- Approximate price in default currency (≈ EUR) — FXRatesAPI, daily cron, listing enrichment, price sorting in default currency; env: `FXRATESAPI_API_KEY`, `DEFAULT_CURRENCY` (see `TECHNICAL.md` §6 Exchange Rates)
-- [IMAGE_PREVIEW.md](./features/IMAGE_PREVIEW.md) - Система превью изображений
-- [INFOCAR_HISTORY_SECTION.md](./features/INFOCAR_HISTORY_SECTION.md) - Секция «История и отчёт», кнопка Infocar, ссылки по языку (RO/RU)
-- [LOADING_STATES.md](./features/LOADING_STATES.md) - Loading states
-- [PAID_PROMOTION.md](./features/PAID_PROMOTION.md) - Платное продвижение
-- Assign listing to user (admin) — на `/listings/new` админ может указать UUID владельца объявления; real-time валидация (GET `/api/admin/validate-assign-user/:userId`), проверки бэкенда (существование, active, лимит объявлений)
-- [SEARCH_FILTERS.md](./features/SEARCH_FILTERS.md) - Форма поиска и фильтров (вкладки, поля, вёрстка)
-- [SELLER_LISTINGS_BOARD.md](./features/SELLER_LISTINGS_BOARD.md) - Доска объявлений продавца
-- [SIMILAR_LISTINGS.md](./features/SIMILAR_LISTINGS.md) - Похожие объявления
-- [SITEMAP.md](./features/SITEMAP.md) - Генерация sitemap
-- [VEHICLE_TYPE.md](./features/VEHICLE_TYPE.md) - Переключатели типа транспорта (легковой/грузовой/мото) ✅
-- [SEO_AUDIT.md](./features/SEO_AUDIT.md) - SEO аудит
-- [TODO.md](./features/TODO.md) - Задачи и планы
+**Feature documentation** — components and functionality
 
----
-
-## 🗺️ Roadmap (архитектура)
-
-**Приоритет 1:** Assets — ✅; Скрипты — 🔴 [SCRIPTS_ARCHITECTURE.md](./architecture/SCRIPTS_ARCHITECTURE.md)  
-**Приоритет 2:** Frontend хардкоды — ⚠️ [KNOWN_ISSUES.md](./architecture/KNOWN_ISSUES.md)
+- [search-title-url.md](./features/search-title-url.md) — Search page URL and title (slugs, diacritics)
+- Approximate price in default currency (≈ EUR) — FXRatesAPI, daily cron, listing enrichment, price sorting in default currency; env: `FXRATESAPI_API_KEY`, `DEFAULT_CURRENCY` (see [technical.md](./architecture/technical.md) §6 Exchange Rates)
+- [image-preview.md](./features/image-preview.md) — Image preview system
+- [infocar-history-section.md](./features/infocar-history-section.md) — History and report section, Infocar button, language-specific links (RO/RU)
+- [loading-states.md](./features/loading-states.md) — Loading states
+- [paid-promotion.md](./features/paid-promotion.md) — Paid promotion
+- Assign listing to user (admin) — on `/listings/new` admin can set listing owner UUID; real-time validation (GET `/api/admin/validate-assign-user/:userId`), backend checks (existence, active, listing limit)
+- [search-filters.md](./features/search-filters.md) — Search and filters form (tabs, fields, layout)
+- [seller-listings-board.md](./features/seller-listings-board.md) — Seller listings board
+- [similar-listings.md](./features/similar-listings.md) — Similar listings
+- [sitemap.md](./features/sitemap.md) — Sitemap generation
+- [vehicle-type.md](./features/vehicle-type.md) — Vehicle type toggles (car/truck/moto)
+- [seo-audit.md](./audits/seo-audit.md) — SEO audit
+- [Documentation and product TODO](./reference/documentation-todo.md) — single backlog (features/todo.md redirects there)
 
 ---
 
-## 🚀 Быстрый старт
+## Roadmap (architecture)
 
-### Для Product Manager / Project Manager:
-
-1. [architecture/ARCHITECTURE_OVERVIEW.md](./architecture/ARCHITECTURE_OVERVIEW.md) - Обзор системы
-2. [guides/PLATFORM_CHECKLIST.md](./guides/PLATFORM_CHECKLIST.md) - Чеклист
-3. [guides/PLATFORM_GUIDE.md](./guides/PLATFORM_GUIDE.md) — создание новой платформы по образцу
-
-### Для Backend разработчика:
-
-1. [architecture/MULTI_REPOSITORY.md](./architecture/MULTI_REPOSITORY.md)
-2. [architecture/SCRIPTS_ARCHITECTURE.md](./architecture/SCRIPTS_ARCHITECTURE.md) 🔴 **ОБЯЗАТЕЛЬНО**
-3. [guides/LOCAL_DEVELOPMENT.md](./guides/LOCAL_DEVELOPMENT.md)
-
-### Для Frontend разработчика:
-
-1. [architecture/MULTI_REPOSITORY.md](./architecture/MULTI_REPOSITORY.md)
-2. [architecture/KNOWN_ISSUES.md](./architecture/KNOWN_ISSUES.md)
-3. [guides/LOCAL_DEVELOPMENT.md](./guides/LOCAL_DEVELOPMENT.md)
-
-### Для DevOps:
-
-1. [guides/DEPLOYMENT.md](./guides/DEPLOYMENT.md)
-2. [guides/PLATFORM_GUIDE.md](./guides/PLATFORM_GUIDE.md)
+**Priority 1:** Assets — done; Scripts — [scripts-architecture.md](./architecture/scripts-architecture.md)  
+**Priority 2:** Frontend hardcodes — [known-issues.md](./architecture/known-issues.md)
 
 ---
 
-## 🚨 Важные замечания
+## Quick start
 
-### Критические проблемы архитектуры:
+### For Product Manager / Project Manager
 
-1. **🔴 Скрипты генерации данных в core** (ВЫСОКИЙ приоритет)
-   - См. [architecture/SCRIPTS_ARCHITECTURE.md](./architecture/SCRIPTS_ARCHITECTURE.md)
-   - Требует реорганизации перед созданием новых платформ
+1. [architecture/architecture-overview.md](./architecture/architecture-overview.md) — System overview
+2. [guides/platform-checklist.md](./guides/platform-checklist.md) — Checklist
+3. [guides/platform-guide.md](./guides/platform-guide.md) — Creating a new platform from template
 
-2. **⚠️ Хардкодные данные в frontend** (СРЕДНИЙ приоритет)
-   - См. [architecture/KNOWN_ISSUES.md](./architecture/KNOWN_ISSUES.md)
-   - Можно обойти временными решениями
+### For Backend developer
+
+1. [architecture/multi-repository.md](./architecture/multi-repository.md)
+2. [architecture/scripts-architecture.md](./architecture/scripts-architecture.md) — **REQUIRED**
+3. [guides/local-development.md](./guides/local-development.md)
+
+### For Frontend developer
+
+1. [architecture/multi-repository.md](./architecture/multi-repository.md)
+2. [architecture/known-issues.md](./architecture/known-issues.md)
+3. [guides/local-development.md](./guides/local-development.md)
+
+### For DevOps
+
+1. [guides/deployment.md](./guides/deployment.md)
+2. [guides/platform-guide.md](./guides/platform-guide.md)
 
 ---
 
-## 📞 Поддержка
+## Important notes
 
-1. Документация в нужной секции (архитектура, guides, features)
-2. [KNOWN_ISSUES.md](./architecture/KNOWN_ISSUES.md) — известные проблемы
-3. Обращение в команду
+### Critical architecture issues
+
+1. **Data generation scripts in core** (HIGH priority)
+   - See [architecture/scripts-architecture.md](./architecture/scripts-architecture.md)
+   - Requires reorganization before adding new platforms
+
+2. **Hardcoded data in frontend** (MEDIUM priority)
+   - See [architecture/known-issues.md](./architecture/known-issues.md)
+   - Can be worked around with temporary solutions
 
 ---
 
-## Для разработчиков (фичи)
+## Support
 
-При новой фиче: создать док в `features/`, описать архитектуру/API/UI, обновить список в разделе «features» выше.
+1. Check documentation in the relevant section (architecture, guides, features)
+2. [known-issues.md](./architecture/known-issues.md) — known issues
+3. Contact the team
 
-**Последнее обновление:** 2026-03
+---
+
+## For developers (features)
+
+When adding a new feature: create a doc in `features/`, describe architecture/API/UI, update the list in the features section above.
+
+**Last updated:** 2026-03

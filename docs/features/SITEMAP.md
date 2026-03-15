@@ -1,3 +1,13 @@
+---
+title: Sitemap
+owner: platform
+tags:
+  - type/reference
+  - domain/ops
+  - scope/core
+  - status/active
+---
+
 # Sitemap (Backend)
 
 ## Overview
@@ -111,7 +121,7 @@ If the frontend proxy does not work (e.g. GSC still cannot fetch the sitemap):
 
 Google allows the sitemap to be on a different subdomain; URLs inside the sitemap must point to the verified property (e.g. `https://kupito.club/...`).
 
-For diagnosing Google Search Console sitemap errors and re-submission steps, see [Sitemap and GSC Runbook](../guides/SITEMAP_GSC_RUNBOOK.md).
+For diagnosing Google Search Console sitemap errors and re-submission steps, see [operations/](../operations/) runbooks or SEO audit docs.
 
 ## Related Files
 

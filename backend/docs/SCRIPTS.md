@@ -1,4 +1,14 @@
-# Организация и использование скриптов
+---
+title: Backend scripts
+owner: platform
+tags:
+  - type/reference
+  - domain/scripts
+  - scope/core
+  - status/active
+---
+
+# Script organization and usage
 
 Scripts are organized into two directories based on their intended environment:
 
@@ -318,7 +328,7 @@ Database migrations are handled separately and are located in:
 ## Database Backups
 
 For automated database backups, see:
-- **Documentation**: `../../docs/guides/DEPLOYMENT.md` (Database Backups section)
+- **Documentation**: `../../docs/guides/deployment.md` (Database Backups section)
 - **TypeScript script**: `src/scripts/production/backup-database.ts`
 - **Bash script**: `config/scripts/backup-database.sh` (for cron)
 
