@@ -14,7 +14,7 @@ export function Footer() {
       <div className="container mx-auto px-3 sm:px-4 py-6 md:py-8">
         <div className="text-center">
           <div
-            className="flex flex-col md:flex-row justify-center items-center gap-3 md:gap-4"
+            className="flex flex-col lg:flex-row justify-center items-center gap-3 lg:gap-4"
             suppressHydrationWarning
           >
             <div suppressHydrationWarning>
@@ -22,7 +22,7 @@ export function Footer() {
             </div>
           </div>
           <div
-            className="flex flex-col md:flex-row justify-center gap-2 md:gap-4 text-xs sm:text-sm mb-4 mt-6"
+            className="flex flex-col lg:flex-row justify-center gap-2 lg:gap-4 text-xs sm:text-sm mb-4 mt-6"
             suppressHydrationWarning
           >
             <Link
@@ -32,7 +32,7 @@ export function Footer() {
             >
               {t('footer.faq')}
             </Link>
-            <span className="hidden md:inline text-white" suppressHydrationWarning>
+            <span className="hidden lg:inline text-white" suppressHydrationWarning>
               |
             </span>
             <Link
@@ -42,7 +42,7 @@ export function Footer() {
             >
               {t('footer.terms')}
             </Link>
-            <span className="hidden md:inline text-white" suppressHydrationWarning>
+            <span className="hidden lg:inline text-white" suppressHydrationWarning>
               |
             </span>
             <Link
@@ -52,7 +52,7 @@ export function Footer() {
             >
               {t('footer.privacy')}
             </Link>
-            <span className="hidden md:inline text-white" suppressHydrationWarning>
+            <span className="hidden lg:inline text-white" suppressHydrationWarning>
               |
             </span>
             <Link
@@ -62,7 +62,7 @@ export function Footer() {
             >
               {t('footer.cookieSettings')}
             </Link>
-            <span className="hidden md:inline text-white" suppressHydrationWarning>
+            <span className="hidden lg:inline text-white" suppressHydrationWarning>
               |
             </span>
             <Link

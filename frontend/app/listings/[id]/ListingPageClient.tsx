@@ -302,7 +302,7 @@ function ListingPageSkeleton({ t }: { t: (k: string) => string }) {
             </div>
           </div>
         </div>
-        <div className="border-t border-primary-500/20 my-6"></div>
+        <div className="my-6 border-t-0 lg:border-t border-primary-500/20"></div>
         <Spinner size="md" text={t('common.loading')} />
       </div>
     </>
@@ -438,7 +438,7 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
           </div>
         </div>
 
-        <div className="border-t border-primary-500/20 my-6"></div>
+        <div className="my-6 border-t-0 lg:border-t border-primary-500/20"></div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1.86fr_1fr] gap-6">
           <div className="space-y-6 min-w-0">

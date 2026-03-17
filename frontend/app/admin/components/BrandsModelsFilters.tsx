@@ -57,10 +57,10 @@ export function BrandsModelsFilters({
             </button>
           ))}
         </div>
-        <div className="flex flex-col sm:flex-row gap-2 md:gap-3 w-full sm:w-auto">
+        <div className="flex flex-col lg:flex-row gap-2 md:gap-3 w-full lg:w-auto">
           <LoadMoreButton
             variant="inline"
-            className="w-full sm:w-auto justify-center"
+            className="w-full lg:w-auto justify-center"
             onClick={onAddBrand}
           >
             <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -75,7 +75,7 @@ export function BrandsModelsFilters({
           </LoadMoreButton>
           <LoadMoreButton
             variant="inline"
-            className="w-full sm:w-auto justify-center"
+            className="w-full lg:w-auto justify-center"
             onClick={onAddModel}
           >
             <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

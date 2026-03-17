@@ -23,15 +23,15 @@ function MyListingsSkeleton({ t }: { t: TranslationFn }) {
         items={[{ label: t('myListings.home'), href: '/' }, { label: t('myListings.title') }]}
         className="mb-6"
       />
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6 md:mb-8">
         <h1 className="text-3xl md:text-4xl font-extrabold text-primary-900">
           {t('myListings.title')}
         </h1>
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+        <div className="flex flex-col lg:flex-row gap-3 w-full lg:w-auto">
           {[...Array(3)].map((_, i) => (
             <div
               key={i}
-              className="h-[48px] rounded-lg bg-primary-500/10 animate-pulse min-w-[140px] sm:min-w-[180px]"
+              className="h-[48px] rounded-lg bg-primary-500/10 animate-pulse min-w-[140px] lg:min-w-[180px]"
             />
           ))}
         </div>
@@ -319,11 +319,11 @@ function MyListingsContent(props: ContentProps) {
         items={[{ label: t('myListings.home'), href: '/' }, { label: t('myListings.title') }]}
         className="mb-6"
       />
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6 md:mb-8">
         <h1 className="text-3xl md:text-4xl font-extrabold text-primary-900">
           {t('myListings.title')}
         </h1>
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+        <div className="flex flex-col lg:flex-row gap-3 w-full lg:w-auto">
           <LoadMoreButton
             onClick={handleRefreshDates}
             disabled={
@@ -332,7 +332,7 @@ function MyListingsContent(props: ContentProps) {
               !hasActiveListings
             }
             variant="inline"
-            className="w-full sm:w-auto"
+            className="w-full lg:w-auto"
           >
             {isRefreshing ? (
               <>
@@ -365,7 +365,7 @@ function MyListingsContent(props: ContentProps) {
           {showBoardLink && user?.boardSlug && (
             <Link
               href={`/board/${user.boardSlug}`}
-              className="w-full sm:w-auto min-w-0 h-[48px] text-primary-700 font-medium text-base hover-only:hover:text-primary-900 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 rounded-lg border-2 border-primary-700 hover-only:hover:border-primary-900 bg-primary-500/10 select-none overflow-hidden"
+              className="w-full lg:w-auto min-w-0 h-[48px] text-primary-700 font-medium text-base hover-only:hover:text-primary-900 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 rounded-lg border-2 border-primary-700 hover-only:hover:border-primary-900 bg-primary-500/10 select-none overflow-hidden"
             >
               <span className="flex items-center justify-center shrink-0 w-5 h-5 md:w-6 md:h-6">
                 <svg
@@ -400,7 +400,7 @@ function MyListingsContent(props: ContentProps) {
               }}
               disabled={!hasPromotionHistory}
               variant="inline"
-              className="w-full sm:w-auto"
+              className="w-full lg:w-auto"
             >
               <svg
                 className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0"
@@ -421,7 +421,7 @@ function MyListingsContent(props: ContentProps) {
           {showCreateLink && (
             <Link
               href="/listings/new"
-              className="w-full sm:w-auto min-w-0 h-[48px] text-primary-700 font-medium text-base hover-only:hover:text-primary-900 transition-colors duration-200 whitespace-nowrap flex flex-row items-center justify-center gap-2 px-4 rounded-lg border-2 border-primary-700 hover-only:hover:border-primary-900 bg-primary-500/10 select-none overflow-hidden"
+              className="w-full lg:w-auto min-w-0 h-[48px] text-primary-700 font-medium text-base hover-only:hover:text-primary-900 transition-colors duration-200 whitespace-nowrap flex flex-row items-center justify-center gap-2 px-4 rounded-lg border-2 border-primary-700 hover-only:hover:border-primary-900 bg-primary-500/10 select-none overflow-hidden"
             >
               <span className="flex items-center justify-center shrink-0 w-5 h-5 md:w-6 md:h-6">
                 <svg
