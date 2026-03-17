@@ -36,132 +36,119 @@ Add a public seller page that shows **all their active listings**, available via
 /board/{{nameSlug}}
 ```
 
-### Логика генерации `nameSlug`
+### `nameSlug` generation logic
 
-**Slug всегда формируется только из номера телефона** (название компании и имя пользователя не используются).
+**Slug is always derived only from the phone number** (company name and user name are not used).
 
-1. Из номера телефона берутся **только цифры** (без пробелов, скобок, плюса и т.п.) → это база slug.
-2. Если номера нет (пользователь без телефона) → используется fallback `user-{{первые 8 символов userId}}`.
-3. Если такой slug уже занят другим пользователем → к базе добавляется суффикс `-2`, `-3`, … до первого свободного.
+1. From the phone number take **digits only** (no spaces, parentheses, plus, etc.) → this is the slug base.
+2. If there is no phone (user without phone) → use fallback `user-{{first 8 chars of userId}}`.
+3. If that slug is already taken by another user → append suffix `-2`, `-3`, … until a free one is found.
 
-Примеры:
+Examples:
 
-- Телефон `+373 89 123 456` → `/board/37389123456`
-- Коллизия (два пользователя с одним номером не бывает, но slug мог остаться от старого) → `/board/37389123456-2`
-- Нет телефона → `/board/user-a1b2c3d4`
+- Phone `+373 89 123 456` → `/board/37389123456`
+- Collision (e.g. slug left from old data) → `/board/37389123456-2`
+- No phone → `/board/user-a1b2c3d4`
 
-**Смена номера телефона:** при обновлении телефона в профиле `board_slug` сбрасывается и при следующем обращении генерируется заново из нового номера. Старый URL доски перестаёт работать; актуальной становится новая ссылка.
-
----
-
-## 4. Индексация и SEO
-
-- Страницы `/board/*` **НЕ ДОЛЖНЫ индексироваться**
-- Обязательные требования:
-  - `meta robots: noindex, nofollow`
-
-- Seller board URLs are included in the sitemap (`/sitemaps/sellers.xml`) only when the seller is active and has at least one Active listing; otherwise they are not in the sitemap and may use noindex
-- Страница доступна для просмотра пользователями; индексация — только для активных продавцов с активными объявлениями (через sitemap)
+**Phone number change:** when the user updates their phone in profile, `board_slug` is reset and regenerated on next access from the new number. The old board URL stops working; the new link becomes the current one.
 
 ---
 
-## 5. Состав страницы
+## 4. Indexing and SEO
 
-Страница должна содержать:
+- `/board/*` pages **must NOT be indexed** by default
+- Required: `meta robots: noindex, nofollow`
 
-1. Header (стандартный)
-2. Заголовок страницы
-3. Input сортировки (справа от заголовка)
-4. Список объявлений продавца
-5. Кнопку **«Загрузить ещё»**
-6. Footer (стандартный)
+- Seller board URLs are included in the sitemap (`/sitemaps/sellers.xml`) only when the seller is active and has at least one Active listing; otherwise they are not in the sitemap and may use noindex. Pages are viewable by users; indexing is only for active sellers with active listings (via sitemap).
 
 ---
 
-## 6. Объявления на доске
+## 5. Page structure
 
-- Отображаются **ТОЛЬКО активные объявления**
-- ❌ НЕ отображаются:
-  - объявления со статусом _Paused / На паузе_
-  - закрытые объявления
-  - архивные / удалённые объявления
+The page must contain:
 
-- Страница визуально и логически повторяет **«Мои объявления»**
-
-### Отличия от «Моих объявлений»:
-
-- ❌ Нет кнопок управления на карточках
-- ❌ Нет фильтров
-- ✅ Есть сортировка
+1. Header (standard)
+2. Page title
+3. Sort input (to the right of the title)
+4. Seller's listing list
+5. **"Load more"** button
+6. Footer (standard)
 
 ---
 
-## 7. Сортировка
+## 6. Listings on the board
 
-- Располагается **справа от заголовка**
-- Используется **тот же компонент**, что и в форме поиска
-- Поведение и набор вариантов сортировки идентичны поиску
+- **Only active listings** are shown
+- ❌ Not shown: _Paused_, closed, archived or deleted listings
 
----
+- The page visually and logically matches **"My listings"**
 
-## 8. Подгрузка объявлений
+### Differences from "My listings":
 
-- Полностью аналогична странице **«Мои объявления»**
-- Кнопка **«Загрузить ещё»**:
-  - появляется при наличии следующей страницы
-  - подгружает данные без перезагрузки страницы
+- ❌ No management buttons on cards
+- ❌ No filters
+- ✅ Sorting is available
 
 ---
 
-## 9. Поведение для владельца доски
+## 7. Sorting
 
-Если страницу просматривает **владелец доски**, под заголовком отображается информационный блок (существующий компонент уведомления).
-
-### Текст уведомления:
-
-> **Это ваша доска объявлений.**
-> Здесь отображаются все ваши активные объявления.
-> Вы можете использовать ссылку на эту страницу, чтобы отправить её в мессенджерах или соцсетях и показать все свои объявления в одном месте.
+- Placed **to the right of the title**
+- **Same component** as in the search form
+- Behavior and sort options match search
 
 ---
 
-## 10. Поведение при удалённом или деактивированном пользователе
+## 8. Loading more listings
 
-- Если пользователь:
-  - удалён
-  - деактивирован
-  - заблокирован
-
-- То при попытке открыть `/board/{{nameSlug}}`:
-  - выполняется **redirect на главную страницу сайта**
-  - без показа ошибки или заглушки
+- Same as **"My listings"** page
+- **"Load more"** button: shown when there is a next page; loads data without full page reload
 
 ---
 
-## 11. Изменения на странице «Мои объявления»
+## 9. Behavior for board owner
 
-### Новая кнопка: **«Моя доска объявлений»**
+When the **board owner** views the page, an info block (existing notification component) is shown below the title.
 
-- Расположение: **вторая среди кнопок**
-- Стиль: идентичен существующим кнопкам
-- Иконка: 👁️ (eye)
-- Поведение:
-  - переход на `/board/{{nameSlug}}` текущего пользователя
+### Notification text:
 
----
-
-## 12. Ссылка на доску со страницы объявления
-
-- На странице объявления в блоке контактов продавца отображается кнопка **«Посмотреть все объявления продавца»** (если у продавца больше одного активного объявления).
-- Поведение кнопки:
-  - открывает доску объявлений продавца **в новой вкладке** (`/board/{{nameSlug}}`);
-  - для закрытого объявления кнопка отображается неактивной (без перехода).
-- Модальное окно со списком объявлений продавца не используется — переход только на доску.
+> **This is your listings board.**
+> It shows all your active listings.
+> You can share this page link in messengers or social networks to show all your listings in one place.
 
 ---
 
-## 13. Пустое состояние
+## 10. Deleted or deactivated user
 
-- Если у продавца **нет активных объявлений** (на доске):
-  - показывается пустое состояние
-  - аналогичное странице «Мои объявления»
+- If the user is deleted, deactivated, or blocked:
+
+- Opening `/board/{{nameSlug}}`:
+  - **redirects to the site homepage**
+  - with no error or placeholder shown
+
+---
+
+## 11. Changes on "My listings" page
+
+### New button: **"My listings board"**
+
+- Position: **second among the buttons**
+- Style: same as existing buttons
+- Icon: 👁️ (eye)
+- Action: navigate to `/board/{{nameSlug}}` for the current user
+
+---
+
+## 12. Board link from listing page
+
+- On the listing page, in the seller contact block, a **"View all seller listings"** button is shown (if the seller has more than one active listing).
+- Button action: opens the seller's board **in a new tab** (`/board/{{nameSlug}}`). For a closed listing the button is inactive (no navigation).
+- No modal with seller listings — navigation to the board only.
+
+---
+
+## 13. Empty state
+
+- If the seller **has no active listings** (on the board):
+  - show empty state
+  - same as on "My listings" page

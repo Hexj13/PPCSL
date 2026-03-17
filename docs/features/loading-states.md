@@ -20,153 +20,141 @@ This document describes requirements for unifying and improving the loading stat
 
 The project has several loading levels that can overlap:
 
-- **Route-level загрузка**: сегментные `loading.tsx` и Suspense fallback-и
-- **Page-level загрузка**: локальные `loading`/`isInitialLoading`/`showSkeleton` в страницах и компонентах
-- **Component-level загрузка**: лоудеры на кнопках, модалках, “load more”
-- **Network-level ошибки**: `toast.error` из Axios-интерцептора (`core/frontend/lib/api/api-client.ts`)
+- **Route-level loading**: segment `loading.tsx` and Suspense fallbacks
+- **Page-level loading**: local `loading`/`isInitialLoading`/`showSkeleton` in pages and components
+- **Component-level loading**: loaders on buttons, modals, "load more".
+- **Network-level errors**: `toast.error` from Axios interceptor (`core/frontend/lib/api/api-client.ts`)
 
 Document requirement: align behavior to consistent rules per level and avoid conflicts between levels (e.g. when route-level fallback causes layout flicker and page-level immediately rebuilds content).
 
 ### Main UX goals
 
-- **Никаких мерцаний**: индикатор либо не показывается вообще (слишком быстро), либо заметен и читаем.
-- **Никаких скачков/CLS**: скелетоны и реальный контент занимают одинаковую геометрию.
+- **No flicker**: indicator either does not show (too fast) or is clearly visible and readable.
+- **No layout jumps/CLS**: skeletons and real content share the same geometry.
 - **Никаких “лишних миллисекундных футеров”**: при загрузке должен быть стабильный layout, без промежуточного состояния “пустая страница + футер”.
-- **Никаких одновременных toasts и лоудеров** там, где это ухудшает восприятие: уведомление появляется после завершения визуальной загрузки.
+- **No toasts and loaders at the same time** where it hurts UX: notification appears after the loader is gone.
 
-## Принцип простоты (обязателен для реализации)
+## Simplicity (required)
 
-Фича должна быть простой, быстро реализуемой и безопасной для изменений. Поэтому:
+The feature should be simple, quick to implement, and safe to change. Therefore:
 
-- Не вводим сложную инфраструктуру “глобальных менеджеров” на первом этапе.
-- Делаем минимальный набор универсальных примитивов (`useLoadingState`, `LoadingButton`, `SkeletonContainer`) и мигрируем ключевые места.
-- Всё “глобальное” (например, очередь уведомлений) — только как **опциональное продолжение**, если MVP не закрывает проблему.
+- Do not introduce a heavy "global manager" layer in the first phase.
+- Provide a minimal set of primitives (`useLoadingState`, `LoadingButton`, `SkeletonContainer`) and migrate key call sites.
+- Any "global" layer (e.g. notification queue) is **optional follow-up** only if MVP does not suffice.
 
-## MVP‑скоуп (что делаем в первую очередь)
+## MVP scope
 
-### MVP-1 (обязательный минимум)
+### MVP-1 (required)
 
-- `useLoadingState` (200мс delay, 1000мс min display) + простой способ выполнить действие **после скрытия**.
-- `SkeletonContainer` с min display 1000мс и сохранением геометрии (min-height/сетка).
-- `LoadingButton` для ключевых submit-кнопок (login/register/reset-password/listing form/profile).
-- На ключевых местах с toasts — перенос показа уведомления на момент **после скрытия** (где это реально заметно пользователю).
+- `useLoadingState` (200ms delay, 1000ms min display) + a way to run an action **after hide**.
+- `SkeletonContainer` with 1000ms min display and stable geometry (min-height/grid).
+- `LoadingButton` for main submit buttons (login/register/reset-password/listing form/profile).
+- Where toasts are used: show notification **after** the loader is hidden.
 
-### MVP-2 (если останутся артефакты)
+### MVP-2 (if issues remain)
 
-- Точечные `loading.tsx`/Suspense fallback-и только там, где подтверждено “мигание футера”.
-- Дальнейшая унификация спиннеров/фоллбеков и расширение покрытия.
+- Targeted `loading.tsx`/Suspense fallbacks only where "footer flicker" is confirmed.
+- Further unification of spinners/fallbacks and broader coverage.
 
-## Проблемы текущей реализации
+## Current implementation issues
 
-### 1. Мерцание и скачки интерфейса
+### 1. Flicker and layout jumps
 
-**Проблема:**
+**Problem:**
 
-- Скелетоны и лоудеры появляются и исчезают слишком быстро
-- Футер показывается на миллисекунды перед перестроением страницы
-- Контент "прыгает" при загрузке данных
-- Layout Shift (CLS) из-за резких изменений размеров контента
+- Skeletons and loaders appear and disappear too quickly
+- Footer flashes briefly before page reflows
+- Content "jumps" when data loads
+- Layout shift (CLS) from sudden size changes
 
-**Примеры:**
+**Examples:**
 
-- `ListingGrid.tsx` — скелетоны показываются сразу при `loading = true`, исчезают сразу при `loading = false`
-- `my-listings/page.tsx` — аналогичная проблема
-- `ListingPageClient.tsx` — скелетон показывается с задержкой 500мс, но нет минимального времени показа
+- `ListingGrid.tsx` — skeletons show as soon as `loading = true`, hide as soon as `loading = false`
+- `my-listings/page.tsx` — same issue
+- `ListingPageClient.tsx` — skeleton has 500ms delay but no minimum display time
 
-### 2. Лоудеры на кнопках
+### 2. Button loaders
 
-**Проблема:**
+**Problem:**
 
-- Лоудеры на кнопках появляются и исчезают слишком быстро
-- Пользователь не успевает увидеть/прочитать состояние загрузки
-- Нет единого подхода к отображению лоудеров на кнопках
+- Button loaders appear and disappear too quickly
+- User cannot read the loading state
+- No consistent pattern for button loaders
 
-**Примеры:**
+**Examples:**
 
-- `ListingForm.tsx` — кнопка меняет текст, но нет визуального индикатора
-- `login/page.tsx` — только изменение текста, нет спиннера
-- `register/page.tsx` — аналогично
-- `reset-password/page.tsx` — аналогично
+- `ListingForm.tsx` — button text changes but no visual indicator
+- `login/page.tsx` — text change only, no spinner
+- `register/page.tsx`, `reset-password/page.tsx` — same
 
-### 3. Конфликт уведомлений и лоудеров
+### 3. Toast vs loader conflict
 
-**Проблема:**
+**Problem:**
 
-- Toast уведомления показываются одновременно с лоудерами
-- Пользователь видит и лоудер, и уведомление одновременно
-- Уведомления показываются до завершения загрузки
+- Toasts show while loaders are still visible
+- User sees both loader and notification
+- Notifications appear before loading finishes
 
-**Примеры:**
+**Examples:**
 
-- `ListingForm.tsx:419` — `toast.success()` вызывается сразу после `setLoading(false)`, но лоудер может еще быть виден
-- `my-listings/page.tsx` — уведомления (в т.ч. из useListingActions) показываются сразу после API вызова, состояние загрузки может еще быть активным
-- Все места, где `toast.success/error` вызывается в `finally` блоке или сразу после `setLoading(false)`
+- `ListingForm.tsx:419` — `toast.success()` runs right after `setLoading(false)` but loader may still be visible
+- `my-listings/page.tsx` — toasts (including from useListingActions) show right after API call while loading may still be active
+- Any place where `toast.success/error` is called in `finally` or right after `setLoading(false)`
 
-### 4. Перестроение страниц и футер
+### 4. Page reflow and footer
 
-**Проблема:**
+**Problem:**
 
-- При навигации после загрузки футер показывается на мгновение
-- Страница перестраивается после завершения загрузки
-- Layout Shift при переходе между состояниями
+- After load, footer flashes briefly on navigation
+- Page reflows after load completes
+- Layout shift between states
 
-**Примеры:**
+**Examples:**
 
-- `ListingForm.tsx:420` — `router.push()` вызывается сразу после `toast.success()`, но лоудер еще может быть активен
-- `verify-phone/page.tsx` — множественные редиректы после загрузки
-- `login/page.tsx` — редирект после успешного входа
+- `ListingForm.tsx:420` — `router.push()` runs right after `toast.success()` but loader may still be active
+- `verify-phone/page.tsx` — multiple redirects after load
+- `login/page.tsx` — redirect after successful login
 
-## Требования
+## Requirements
 
-### 1. Универсальный хук для состояний загрузки
+### 1. Generic loading state hook
 
-**Требование 1.1:** Создать хук `useLoadingState` с настраиваемыми параметрами
+**1.1** Implement `useLoadingState` with configurable params:
 
-**Параметры:**
+- `isLoading: boolean` — current loading state
+- `showDelay?: number` — delay before showing (default 200ms)
+- `minDisplayTime?: number` — minimum display time (default 1000ms)
+- `immediate?: boolean` — show immediately (default false)
 
-- `isLoading: boolean` — текущее состояние загрузки
-- `showDelay?: number` — задержка перед показом (по умолчанию 200мс)
-- `minDisplayTime?: number` — минимальное время показа (по умолчанию 1000мс)
-- `immediate?: boolean` — показывать сразу без задержки (по умолчанию false)
+**Behavior:**
 
-**Поведение:**
+- If `isLoading = true` and `showDelay` ms passed → show loader
+- If `isLoading = false` → hide loader no earlier than `minDisplayTime` ms after it was shown
+- If loading ends before `showDelay` → do not show loader at all
 
-- Если `isLoading = true` и прошло `showDelay` мс → показать лоудер
-- Если `isLoading = false` → скрыть лоудер, но не раньше чем через `minDisplayTime` мс от начала показа
-- Если загрузка завершилась до истечения `showDelay` → лоудер не показывать вообще
+**1.2 (required):** Robustness — handle rapid toggles; clear timers on unmount; no setState after unmount.
 
-**Требование 1.2 (обязательное):** устойчивость и безопасность
+**1.3 (required):** Run side-effects (toast/redirect) only **after** the indicator is actually hidden (after `minDisplayTime`).
 
-- Корректная работа при частых переключениях `isLoading` (true/false/true).
-- Очистка всех таймеров при unmount.
-- Недопустимы `setState` после размонтирования.
+Preferred: `useLoadingState` returns `{ visible, afterHidden }` with `afterHidden(fn)` called after hide; or `{ visible, hiddenPromise }` and `await hiddenPromise` before toast/redirect.
 
-**Требование 1.3 (обязательное для координации):** возможность выполнить действие после фактического скрытия
+**File:** `core/frontend/hooks/useLoadingState.ts`
 
-Нужно предусмотреть механизм, позволяющий отложить side-effects (toast/redirect) **до момента, когда индикатор реально скрыт** (после выдерживания `minDisplayTime`).
+### 2. LoadingButton component
 
-Варианты реализации (выбрать один и придерживаться везде). Для простоты предпочтительнее вариант с явной функцией:
+**Requirement 2.1:** Create a unified button component with loading state support
 
-- `useLoadingState` возвращает `{ visible, afterHidden }`, где `afterHidden(fn)` гарантирует вызов `fn` после фактического скрытия
-- либо `{ visible, hiddenPromise }` и `await hiddenPromise` перед toast/redirect
+**Params:**
 
-**Файл:** `core/frontend/hooks/useLoadingState.ts`
+- `loading?: boolean` — loading state
+- `loadingText?: string` — kept for backward compatibility, not used (only spinner shown)
+- `showSpinner?: boolean` — whether to show spinner (default true)
+- `spinnerSize?: 'sm' | 'md' | 'lg'` — spinner size (default 'sm')
+- All standard button props
 
-### 2. Компонент LoadingButton
+**Behavior:**
 
-**Требование 2.1:** Создать унифицированный компонент кнопки с поддержкой loading состояния
-
-**Параметры:**
-
-- `loading?: boolean` — состояние загрузки
-- `loadingText?: string` — параметр оставлен для обратной совместимости, но не используется (показывается только спиннер)
-- `showSpinner?: boolean` — показывать ли спиннер (по умолчанию true)
-- `spinnerSize?: 'sm' | 'md' | 'lg'` — размер спиннера (по умолчанию 'sm')
-- Все стандартные props кнопки
-
-**Поведение:**
-
-- Использовать `useLoadingState` с параметрами: `showDelay: 200мс`, `minDisplayTime: 1000мс`
+- Использовать `useLoadingState` с параметрами: `showDelay: 200ms`, `minDisplayTime: 1000ms`
 - При загрузке показывать только спиннер (текст скрывается)
 - Когда загрузки нет — показывать только `children` (обычный текст кнопки)
 - Кнопка должна быть disabled во время загрузки
@@ -177,212 +165,211 @@ Document requirement: align behavior to consistent rules per level and avoid con
 - При включении loading ширина/высота кнопки не должна “дёргаться”.
 - Внутренний контент должен быть организован так, чтобы спиннер и текст не меняли геометрию (например, `inline-flex`, фиксированная высота, стабильный gap).
 
-**Файл:** `core/frontend/ui/LoadingButton.tsx`
+**File:** `core/frontend/ui/LoadingButton.tsx`
 
-### 3. Компонент SkeletonContainer
+### 3. SkeletonContainer component
 
-**Требование 3.1:** Создать обертку для скелетонов с минимальным временем показа
+**Requirement 3.1:** Create a wrapper for skeletons with minimum display time
 
-**Параметры:**
+**Params:**
 
-- `isLoading: boolean` — состояние загрузки
-- `children: ReactNode` — скелетоны для отображения
-- `minDisplayTime?: number` — минимальное время показа (по умолчанию 1000мс)
+- `isLoading: boolean` — loading state
+- `children: ReactNode` — skeleton content to show
+- `minDisplayTime?: number` — minimum display time (default 1000ms)
 
-**Поведение:**
+**Behavior:**
 
-- Использовать `useLoadingState` с параметрами: `immediate: true`, `showDelay: 0`, `minDisplayTime: 1000мс`
-- Показывать скелетоны сразу при `isLoading = true`
-- Гарантировать минимальное время показа 1 секунду
-- Предотвращать мерцание при быстрой загрузке
+- Use `useLoadingState` with `immediate: true`, `showDelay: 0`, `minDisplayTime: 1000ms`
+- Show skeletons as soon as `isLoading = true`
+- Ensure minimum display time of 1 second
+- Avoid flicker on fast load
 
-**Требование 3.2 (обязательное):** скелетон сохраняет геометрию страницы
+**Requirement 3.2 (required):** Skeleton preserves page geometry
 
-- Скелетоны должны повторять структуру и размеры реального контента.
+- Skeletons must match the structure and size of real content.
 - Для страниц/блоков, где сейчас “мигает футер”, скелетон обязан занимать эквивалентную высоту контента (через корректную сетку и/или `min-height`).
 
-**Файл:** `core/frontend/components/SkeletonContainer.tsx`
+**File:** `core/frontend/components/SkeletonContainer.tsx`
 
-### 4. Унификация компонентов Spinner
+### 4. Spinner component unification
 
-**Требование 4.1:** Унифицировать компоненты спиннеров
+**Requirement 4.1:** Unify spinner components
 
-**Действия:**
+**Actions:**
 
-- Оставить только `Spinner` из `ui/Spinner.tsx`
-- Удалить `LoadingSpinner` из `components/LoadingSpinner.tsx`
-- Добавить в `Spinner` параметр `inline?: boolean` для использования внутри кнопок
-- Обновить все импорты
+- Keep only `Spinner` from `ui/Spinner.tsx`
+- Remove `LoadingSpinner` from `components/LoadingSpinner.tsx`
+- Add `inline?: boolean` to `Spinner` for use inside buttons
+- Update all imports
 
-**Файл:** `core/frontend/ui/Spinner.tsx`
+**File:** `core/frontend/ui/Spinner.tsx`
 
-### 5. Координация уведомлений и лоудеров
+### 5. Coordinating toasts and loaders
 
-**Требование 5.1:** Уведомления должны показываться только после завершения лоудера
+**Requirement 5.1:** Toasts must show only after the loader is done
 
-**Правила:**
+**Rules:**
 
-- Если есть активный лоудер, уведомление должно быть отложено
-- Уведомление показывается только после того, как лоудер скрыт (через `minDisplayTime`)
-- Для кнопок: уведомление показывается после завершения `minDisplayTime` лоудера кнопки
-- Для страниц: уведомление показывается после завершения `minDisplayTime` скелетона/лоудера страницы
+- If a loader is active, delay the toast
+- Show toast only after the loader is hidden (after `minDisplayTime`)
+- For buttons: show toast after the button loader's `minDisplayTime`
+- For pages: show toast after the page skeleton/loader's `minDisplayTime`
 
-**Реализация:**
+**Implementation:**
 
-- Создать хук `useDelayedToast` для отложенного показа уведомлений
-- Или использовать callback после завершения `useLoadingState`
+- Add hook `useDelayedToast` for delayed toasts, or use callback from `useLoadingState`
 
-**Файл:** `core/frontend/hooks/useDelayedToast.ts` (опционально)
+**File:** `core/frontend/hooks/useDelayedToast.ts` (optional)
 
-**Требование 5.2 (MVP‑подход, обязательный):** безопасно не показывать toast из интерцептора там, где есть явный лоудер
+**Requirement 5.2 (MVP, required):** Do not show interceptor toast where there is an explicit loader
 
-Сейчас Axios-интерцептор в `core/frontend/lib/api/api-client.ts` может показывать `toast.error()` самостоятельно. Это может конфликтовать с любым активным лоудером/скелетоном.
+The Axios interceptor in `core/frontend/lib/api/api-client.ts` can show `toast.error()` on its own, which can conflict with an active loader/skeleton.
 
-Требования для MVP‑реализации:
+MVP requirements:
 
-- Для запросов, которые запускаются из действий с лоудером/скелетоном и имеют пользовательский feedback, нужно **отключать** интерцепторный `toast.error` через заголовок `X-Skip-Error-Handling: true` (механизм уже используется в коде).
-- Ошибки/успех в этих местах обрабатываются **локально** и показываются **после скрытия** лоудера (через `afterHidden`/`hiddenPromise` из `useLoadingState`).
-- Это минимальный, быстрый и безопасный способ избежать одновременных уведомлений и лоудеров без введения глобальных очередей.
+- For requests started from UI with a loader/skeleton and custom feedback, **disable** interceptor `toast.error` via header `X-Skip-Error-Handling: true` (already used in code).
+- Handle errors/success **locally** and show **after** the loader is hidden (via `afterHidden`/`hiddenPromise` from `useLoadingState`).
+- This avoids toasts and loaders at the same time without a global queue.
 
-**Опционально после MVP:** если останутся конфликтующие случаи (например, глобальные сетевые ошибки во время page‑loading), можно рассмотреть централизованный слой/очередь уведомлений. Но это не часть MVP.
+**Optional after MVP:** If conflicts remain (e.g. global network errors during page load), consider a central notification layer/queue. Not part of MVP.
 
-### 6. Предотвращение Layout Shift
+### 6. Preventing layout shift
 
-**Требование 6.1:** Минимизировать Cumulative Layout Shift (CLS)
+**Requirement 6.1:** Minimize Cumulative Layout Shift (CLS)
 
-**Правила:**
+**Rules:**
 
-- Скелетоны должны иметь те же размеры, что и реальный контент
-- Футер не должен показываться до полной загрузки контента страницы
-- Использовать `min-height` для контейнеров скелетонов
-- Предотвращать резкие изменения размеров при переходе от скелетона к контенту
+- Skeletons must match real content size
+- Footer must not show before page content is loaded
+- Use `min-height` for skeleton containers
+- Avoid sudden size changes when switching from skeleton to content
 
-**Реализация:**
+**Implementation:**
 
-- Проверить все скелетоны на соответствие размерам реального контента
-- Добавить `min-height` где необходимо
-- Использовать `SkeletonContainer` для всех скелетонов
+- Ensure all skeletons match real content dimensions
+- Add `min-height` where needed
+- Use `SkeletonContainer` for all skeletons
 
-**Требование 6.2 (обязательное):** Suspense/`loading.tsx` и стабильный layout
+**Requirement 6.2 (required):** Suspense/`loading.tsx` and stable layout
 
 - Для страниц/сегментов, где подтвержден сценарий “пустой main + футер”, нужно внедрить route-level fallback (`loading.tsx`) или единый page-level skeleton, который сохраняет геометрию.
 - Это **не обязательный** шаг для MVP: сначала закрываем проблему через корректные скелетоны/`min-height` в самих страницах. `loading.tsx` добавляем точечно только если артефакт сохраняется.
 
 ### 7. Навигация после загрузки
 
-**Требование 7.1:** Навигация должна происходить только после завершения лоудера
+**Requirement 7.1:** Navigation must happen only after the loader is done
 
-**Правила:**
+**Rules:**
 
 - `router.push()` должен вызываться только после завершения `minDisplayTime` лоудера
 - Toast уведомления должны показываться перед навигацией (если применимо)
 - Навигация должна быть плавной, без скачков
 
-**Реализация:**
+**Implementation:**
 
 - Использовать callback из `useLoadingState` для навигации
 - Или использовать `useDelayedToast` с callback для навигации
 
 **Требование 7.2 (обязательное):** определить политику “toast vs redirect”
 
-Нужно формально описать и реализовать единый стандарт:
+Define and implement a single standard:
 
-- **Если редирект на другую страницу сразу после действия**: уведомление показывать на целевой странице (например, через query/sessionStorage), чтобы избежать гонок и потери уведомления.
-- **Если остаёмся на той же странице**: уведомление показывать после скрытия лоудера (после `minDisplayTime`) релевантного scope.
+- **If redirecting right after action:** show notification on the target page (e.g. via query/sessionStorage) to avoid races and lost toasts.
+- **If staying on the same page:** show notification after the relevant loader is hidden (after `minDisplayTime`).
 
-## Места применения
+## Where to apply
 
-### Скелетоны (SkeletonContainer)
+### Skeletons (SkeletonContainer)
 
 1. **ListingGrid.tsx**
-   - Заменить `if (loading)` на `<SkeletonContainer isLoading={loading}>`
-   - Строка ~620
+   - Replace `if (loading)` with `<SkeletonContainer isLoading={loading}>`
+   - Line ~620
 
 2. **my-listings/page.tsx**
-   - Заменить `if (loading || !hasLoadedRef.current)` на `<SkeletonContainer isLoading={loading || !hasLoadedRef.current}>`
+   - Replace `if (loading || !hasLoadedRef.current)` with `<SkeletonContainer isLoading={loading || !hasLoadedRef.current}>`
 
 3. **favorites/page.tsx**
-   - Заменить `if (isInitialLoading || loading)` на `<SkeletonContainer isLoading={isInitialLoading || loading}>`
-   - Строка ~208
+   - Replace `if (isInitialLoading || loading)` with `<SkeletonContainer isLoading={isInitialLoading || loading}>`
+   - Line ~208
 
 4. **admin/page.tsx**
-   - Заменить `if (loading)` на `<SkeletonContainer isLoading={loading}>` в ListingsTab
-   - Строка ~361
+   - Replace `if (loading)` with `<SkeletonContainer isLoading={loading}>` in ListingsTab
+   - Line ~361
 
 5. **ListingPageClient.tsx**
-   - Использовать `useLoadingState` для `showSkeleton`
-   - Строка ~84, ~1169
-   - **Добавить лоудер для полноэкранного просмотра фото в модалке** ✅
-     - Показывать лоудер при загрузке изображения в модалке
-     - Не показывать лоудер, если изображение уже в кеше/preloaded
-     - Использовать `useLoadingState` с параметрами: `showDelay: 200мс`, `minDisplayTime: 1000мс`
-     - Отслеживать загрузку через `onLoad` для `img` и Next.js `Image`
-     - При смене изображения (изменение `modalImageIndex`) показывать лоудер, если изображение не загружено
-   - **Добавить лоудер для главного превью изображения при переключении табов** ✅
-     - Показывать лоудер при загрузке нового изображения при смене таба/миниатюры
-     - Не показывать лоудер, если изображение уже загружено или в кеше
-     - Использовать `useLoadingState` с параметрами: `showDelay: 200мс`, `minDisplayTime: 1000мс`
-     - Отслеживать загрузку через `onLoad` для изображений
+   - Use `useLoadingState` for `showSkeleton`
+   - Line ~84, ~1169
+  - **Add loader for full-screen image in modal** ✅
+    - Show loader when loading image in modal
+    - Do not show loader if image is cached/preloaded
+    - Use `useLoadingState` with `showDelay: 200ms`, `minDisplayTime: 1000ms`
+    - Track load via `onLoad` for `img` and Next.js `Image`
+    - On image change (`modalImageIndex`), show loader if image not loaded
+  - **Add loader for main image preview when switching tabs** ✅
+    - Show loader when loading new image on tab/thumbnail change
+    - Do not show loader if image already loaded or cached
+    - Use `useLoadingState` with `showDelay: 200ms`, `minDisplayTime: 1000ms`
+    - Track load via `onLoad` for images
 
-### Кнопки (LoadingButton)
+### Buttons (LoadingButton)
 
 1. **ListingForm.tsx**
-   - Заменить кнопку submit на `<LoadingButton>`
-   - Строка ~1620
+   - Replace кнопку submit на `<LoadingButton>`
+   - Line ~1620
 
 2. **login/page.tsx**
-   - Заменить кнопку submit на `<LoadingButton>`
-   - Строка ~349
+   - Replace кнопку submit на `<LoadingButton>`
+   - Line ~349
 
 3. **register/page.tsx**
-   - Заменить кнопку submit на `<LoadingButton>`
-   - Строка ~1140
+   - Replace кнопку submit на `<LoadingButton>`
+   - Line ~1140
 
 4. **reset-password/page.tsx**
-   - Заменить все кнопки submit на `<LoadingButton>`
+   - Replace все кнопки submit на `<LoadingButton>`
    - Строки ~714, ~496, ~410
 
 5. **profile/page.tsx**
-   - Заменить кнопку сохранения на `<LoadingButton>`
-   - Строка ~584
+   - Replace кнопку сохранения на `<LoadingButton>`
+   - Line ~584
 
 6. **profile/verify-phone-change/page.tsx**
-   - Заменить кнопку submit на `<LoadingButton>`
-   - Строка ~309
+   - Replace кнопку submit на `<LoadingButton>`
+   - Line ~309
 
 7. **verify-phone/page.tsx**
-   - Заменить кнопку submit на `<LoadingButton>`
-   - Строка ~520
+   - Replace кнопку submit на `<LoadingButton>`
+   - Line ~520
 
 8. **SearchFilters.tsx**
-   - ✅ Заменить кнопку поиска на `<LoadingButton>` (выполнено)
-   - Кнопка находится в компоненте `SearchFormActions.tsx`
+   - ✅ Replace кнопку поиска на `<LoadingButton>` (done)
+   - Button is in component `SearchFormActions.tsx`
 
-### Спиннеры (Spinner с useLoadingState)
+### Spinners (Spinner with useLoadingState)
 
 1. **profile/page.tsx**
-   - Использовать `useLoadingState` для `loadingProfile`
-   - Строка ~218
+   - Use `useLoadingState` for `loadingProfile`
+   - Line ~218
 
 2. **listings/[id]/edit/page.tsx**
-   - Использовать `useLoadingState` для `loadingListing`
-   - Строка ~110
+   - Use `useLoadingState` for `loadingListing`
+   - Line ~110
 
-### Координация уведомлений
+### Toast coordination
 
 1. **ListingForm.tsx**
-   - Отложить `toast.success()` после завершения лоудера кнопки
+   - Defer `toast.success()` после завершения лоудера кнопки
    - Строки ~419, ~426, ~439, ~445
 
 2. **my-listings/page.tsx**
-   - Отложить все `toast.success/error` после завершения лоудера (вызовы на странице и в `useListingActions`)
+   - Defer все `toast.success/error` после завершения лоудера (вызовы на странице и в `useListingActions`)
 
 3. **Все места с toast уведомлениями после API вызовов**
-   - Проверить координацию с лоудерами
+   - Check coordination with loaders
 
-## Примеры (что именно сделать и как, словами)
+## Examples (what to do and how)
 
-### Пример A: Скелетоны грида (список объявлений)
+### Example A: Скелетоны грида (список объявлений)
 
 **Цель:** убрать мерцание скелетона и “мигание футера”, сохранить стабильную высоту.
 
@@ -394,7 +381,7 @@ Document requirement: align behavior to consistent rules per level and avoid con
 
 **Должно стать:**
 
-- Заворачиваем скелетон в `SkeletonContainer` с `minDisplayTime=1000мс`
+- Заворачиваем скелетон в `SkeletonContainer` с `minDisplayTime=1000ms`
 - Скелетон повторяет геометрию реального грида:
   - та же сетка (`grid-cols-*`, `gap-*`)
   - сопоставимая высота карточек
@@ -408,7 +395,7 @@ Document requirement: align behavior to consistent rules per level and avoid con
 - При быстром ответе API скелетон либо вообще не показывается (если это page/action лоудер с delay), либо если показывается — заметен минимум 1 секунду (для скелетонов в MVP мы показываем сразу, но держим минимум).
 - Футер не “подскакивает” вверх/вниз при загрузке.
 
-### Пример B: Скелетон страницы “Мои объявления”
+### Example B: Скелетон страницы “Мои объявления”
 
 **Цель:** не показывать “пустую страницу” и избежать скачка при первом заходе.
 
@@ -420,13 +407,13 @@ Document requirement: align behavior to consistent rules per level and avoid con
   - несколько skeleton-карточек управления
 - Реальный контент после загрузки должен занимать близкую высоту (схожая сетка/отступы).
 
-### Пример C: Кнопка submit (login/register/reset-password/listing form)
+### Example C: Кнопка submit (login/register/reset-password/listing form)
 
 **Цель:** лоудер на кнопке читаемый и без “дёргания” кнопки.
 
 **Должно стать:**
 
-- Заменить ручную логику на `LoadingButton`:
+- Replace ручную логику на `LoadingButton`:
   - `loading` задаётся тем же стейтом, что и сейчас (не меняем бизнес-логику)
 - Внутри кнопки:
   - при загрузке появляется только спиннер (маленький, inline), текст скрывается
@@ -438,9 +425,9 @@ Document requirement: align behavior to consistent rules per level and avoid con
 
 **Важное правило по времени:**
 
-- Показ кнопочного лоудера: delay 200мс (чтобы не мелькал), min display 1000мс (чтобы можно было увидеть).
+- Показ кнопочного лоудера: delay 200ms (чтобы не мелькал), min display 1000ms (чтобы можно было увидеть).
 
-### Пример D: Toast не должен появляться одновременно с лоудером кнопки
+### Example D: Toast не должен появляться одновременно с лоудером кнопки
 
 **Цель:** пользователь сначала видит завершение действия (уходит лоудер), потом toast.
 
@@ -453,7 +440,7 @@ Document requirement: align behavior to consistent rules per level and avoid con
 
 **Примечание:** если действие заканчивается редиректом на другую страницу — см. пример E.
 
-### Пример E: Redirect после успешного действия (например, создание объявления)
+### Example E: Redirect после успешного действия (например, создание объявления)
 
 **Цель:** избежать гонок “toast + router.push + лоудер” и не потерять уведомление.
 
@@ -467,15 +454,11 @@ Document requirement: align behavior to consistent rules per level and avoid con
 
 **Почему так:** это проще и надёжнее, чем пытаться синхронизировать лоудер на старой странице с показом toast прямо перед уходом.
 
-### Пример F: Ошибки из Axios-интерцептора и локальный лоудер
+### Example F: Axios interceptor errors and local loader
 
-**Цель:** не получать двойные toasts и не показывать их во время лоудера.
+**Goal:** No double toasts and no toast during loader.
 
-**Должно стать (MVP):**
-
-- Для запросов, которые выполняются из UI с явным лоудером/скелетоном и имеют пользовательскую обработку ошибок:
-  - добавляем `X-Skip-Error-Handling: true` в запрос
-  - в catch блоке показываем toast локально (и после скрытия лоудера, если применимо)
+**After (MVP):** For requests from UI with explicit loader/skeleton and custom error handling: add `X-Skip-Error-Handling: true` to the request; in catch show toast locally (and after loader is hidden if applicable).
 
 ### Пример G: “Load more” (дозагрузка следующей страницы)
 
@@ -485,16 +468,16 @@ Document requirement: align behavior to consistent rules per level and avoid con
 
 - Не использовать `SkeletonContainer` для `loadingMore`, если контент уже есть.
 - Показывать небольшой inline спиннер/индикатор внизу списка.
-- Не применять `minDisplayTime=1000мс` для `loadingMore`, если это ухудшает ощущение скорости.
+- Не применять `minDisplayTime=1000ms` для `loadingMore`, если это ухудшает ощущение скорости.
 
-### Пример H: Модалка со списком объявлений пользователя
+### Example H: Модалка со списком объявлений пользователя
 
 **Цель:** не мерцать спиннером и не конфликтовать с toast’ом о timeout.
 
 **Должно стать:**
 
 - Использовать `useLoadingState` для показа спиннера в модалке:
-  - delay 200мс, min display 1000мс
+  - delay 200ms, min display 1000ms
 - Если срабатывает timeout и показывается toast:
   - сначала скрывается спиннер (или гарантируется завершение показа)
   - затем показывается toast
@@ -517,10 +500,10 @@ const DEFAULT_MIN_DISPLAY_TIME = 1000; // мс
 
 ### Best Practices (Google, Meta, GitHub)
 
-- **Задержка показа:** 200-300мс (используем 200мс)
-- **Минимальное время показа:** 1000мс
+- **Задержка показа:** 200-300мс (используем 200ms)
+- **Минимальное время показа:** 1000ms
 - **Скелетоны:** показывать сразу (immediate: true)
-- **Лоудеры на кнопках:** задержка 200мс, минимум 1000мс
+- **Лоудеры на кнопках:** задержка 200ms, минимум 1000ms
 
 ### Анимации
 
