@@ -13,14 +13,21 @@ export function resolveConfig(
   env: RuntimeEnv,
   options?: {
     requireAuth?: boolean;
+    requireImportSecret?: boolean;
   },
 ): CipautoConfig {
   const requireAuth = options?.requireAuth ?? false;
+  const requireImportSecret = options?.requireImportSecret ?? false;
   const adminEmail = process.env.CIPAUTO_ADMIN_EMAIL?.trim() ?? '';
   const adminPassword = process.env.CIPAUTO_ADMIN_PASSWORD?.trim() ?? '';
+  const importSecret = process.env.CIPAUTO_IMPORT_SECRET?.trim() ?? '';
   const kupitoApiUrl =
     process.env.CIPAUTO_API_URL?.trim() ??
     (env === 'prod' ? DEFAULT_KUPITO_PROD_API : DEFAULT_KUPITO_LOCAL_API);
+
+  if (requireImportSecret && env === 'prod' && !importSecret) {
+    throw new Error('Missing CIPAUTO_IMPORT_SECRET in prod environment.');
+  }
 
   if (requireAuth && (!adminEmail || !adminPassword)) {
     throw new Error(
@@ -34,6 +41,7 @@ export function resolveConfig(
     kupitoApiUrl: stripTrailingSlash(kupitoApiUrl),
     adminEmail,
     adminPassword,
+    importSecret,
     registryPath: path.join(ROOT_DIR, 'data', 'cipauto-registry.json'),
     reportsDir: path.join(ROOT_DIR, 'reports'),
     requestTimeoutMs: Number(process.env.CIPAUTO_REQUEST_TIMEOUT_MS ?? 20000),

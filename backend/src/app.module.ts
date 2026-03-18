@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AdminModule } from './admin/admin.module';
@@ -14,6 +14,7 @@ import { BrandsModule } from './brands/brands.module';
 import { CitiesModule } from './cities/cities.module';
 import { CommonModule } from './common/common.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { CipautoImportThrottlerGuard } from './common/guards/cipauto-import-throttler.guard';
 import { SentryInterceptor } from './common/interceptors/sentry.interceptor';
 import { dataSourceOptions } from './data-source';
 import { ExchangeRatesModule } from './exchange-rates/exchange-rates.module';
@@ -58,7 +59,7 @@ import { UsersModule } from './users/users.module';
     AppService,
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: CipautoImportThrottlerGuard,
     },
     {
       provide: APP_FILTER,

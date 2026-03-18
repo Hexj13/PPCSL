@@ -307,6 +307,7 @@ export interface CipautoConfig {
   kupitoApiUrl: string;
   adminEmail: string;
   adminPassword: string;
+  importSecret: string;
   registryPath: string;
   reportsDir: string;
   requestTimeoutMs: number;

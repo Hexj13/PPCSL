@@ -208,7 +208,10 @@ async function runScan(options: ScanCommandOptions): Promise<void> {
 }
 
 async function runImport(options: ImportCommandOptions): Promise<void> {
-  const config = resolveConfig(options.env, { requireAuth: !options.dryRun });
+  const config = resolveConfig(options.env, {
+    requireAuth: !options.dryRun,
+    requireImportSecret: !options.dryRun,
+  });
   const registry = new RegistryStore(config.registryPath);
   const reportStore = new ReportStore(config.reportsDir);
   const authClient = options.dryRun ? undefined : new AuthClient(config);

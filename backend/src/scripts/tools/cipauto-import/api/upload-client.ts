@@ -35,17 +35,25 @@ export class UploadClient {
     const blob = new Blob([buffer], { type: mimeType });
     formData.append('file', blob, filename);
 
+    const uploadUrl = `${this.config.kupitoApiUrl}/api/upload/image`;
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${this.authClient.getAccessToken()}`,
+    };
+
+    if (this.config.importSecret) {
+      headers['x-import-secret'] = this.config.importSecret;
+    }
+
     const doUpload = async (): Promise<UploadResult> => {
-      const response = await fetch(`${this.config.kupitoApiUrl}/api/upload/image`, {
+      const response = await fetch(uploadUrl, {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${this.authClient.getAccessToken()}`,
-        },
+        headers,
         body: formData,
       });
       if (!response.ok) {
         const text = await response.text();
-        throw new Error(
+        throw new UploadHttpError(
+          response.status,
           `Upload failed with HTTP ${response.status}: ${text || response.statusText}`,
         );
       }
@@ -56,15 +64,53 @@ export class UploadClient {
       };
     };
 
-    try {
-      return await doUpload();
-    } catch (error) {
-      if (!String(error).includes('HTTP 401')) {
-        throw error;
+    const maxAttempts = Math.max(1, this.config.maxRetries);
+    let lastError: unknown;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        return await doUpload();
+      } catch (error) {
+        lastError = error;
+
+        if (!(error instanceof UploadHttpError)) {
+          throw error;
+        }
+
+        const { status } = error;
+        const isAuthError = status === 401;
+        const isThrottlingError = status === 429;
+        const isServerError = status >= 500 && status <= 599;
+        const isRetryable = isThrottlingError || isServerError;
+
+        if (attempt >= maxAttempts) {
+          throw error;
+        }
+
+        if (isAuthError) {
+          await this.authClient.refresh();
+          continue;
+        }
+
+        if (!isRetryable) {
+          throw error;
+        }
+
+        const delayMs = Math.round(this.config.imageStepDelayMs * Math.pow(2, attempt - 1));
+        await sleep(delayMs);
       }
-      await this.authClient.refresh();
-      return doUpload();
     }
+
+    throw lastError;
+  }
+}
+
+class UploadHttpError extends Error {
+  constructor(
+    public readonly status: number,
+    message: string,
+  ) {
+    super(message);
   }
 }
 
