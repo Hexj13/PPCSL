@@ -1,0 +1,565 @@
+import 'reflect-metadata';
+
+import { Command } from 'commander';
+
+import type { ListingStatus } from '../../../common/types';
+
+import { AuthClient } from './api/auth-client';
+import { KupitoApiClient } from './api/kupito-api';
+import { UploadClient } from './api/upload-client';
+import { auditBrandsModels } from './commands/audit-brands-models';
+import {
+  mapCliStatusToListingStatus,
+  normalizeCliStatus,
+  normalizeRegistrationType,
+  normalizeRuntimeEnv,
+  resolveConfig,
+} from './config';
+import { mapBodyType } from './mapping/body-type-mapper';
+import { BrandModelResolver } from './mapping/brand-model-resolver';
+import { mapColor } from './mapping/color-mapper';
+import { mapDriveType, mapFuel, mapTransmission } from './mapping/enum-mapper';
+import { mapEquipmentOptions } from './mapping/equipment-mapper';
+import { buildCreateListingPayload, buildUpdateListingPayload } from './mapping/field-mapper';
+import { estimateHorsepower } from './mapping/hp-estimator';
+import { PdpParser } from './parsers/pdp-parser';
+import { PlpParser } from './parsers/plp-parser';
+import { RegistryStore } from './storage/registry';
+import { ReportStore } from './storage/report';
+import type {
+  AuditBrandsModelsCommandOptions,
+  ImportCommandOptions,
+  ParsedPdpData,
+  RegistryItem,
+  ReportCommandOptions,
+  ScanCommandOptions,
+} from './types';
+import { Logger } from './utils/logger';
+import { sleep } from './utils/sleep';
+
+const program = new Command();
+const logger = new Logger(process.env.CIPAUTO_DEBUG === '1');
+let shouldStop = false;
+
+process.on('SIGINT', () => {
+  shouldStop = true;
+  logger.warn('SYSTEM', 'SIGINT received, stopping after current item.');
+});
+process.on('SIGTERM', () => {
+  shouldStop = true;
+  logger.warn('SYSTEM', 'SIGTERM received, stopping after current item.');
+});
+
+program.name('cipauto').description('CipAuto partner listings import tool');
+
+program
+  .command('scan')
+  .requiredOption('--pages <number>')
+  .option('--page-from <number>')
+  .option('--page-to <number>')
+  .option('--resume')
+  .option('--dry-run')
+  .option('--env <value>', 'local|prod', 'local')
+  .option('--delay <number>', 'delay between page requests in ms')
+  .action(async (rawOptions) => {
+    const options: ScanCommandOptions = {
+      pages: Number(rawOptions.pages),
+      pageFrom: rawOptions.pageFrom ? Number(rawOptions.pageFrom) : undefined,
+      pageTo: rawOptions.pageTo ? Number(rawOptions.pageTo) : undefined,
+      resume: Boolean(rawOptions.resume),
+      dryRun: Boolean(rawOptions.dryRun),
+      env: normalizeRuntimeEnv(rawOptions.env),
+      delay: rawOptions.delay ? Number(rawOptions.delay) : 3000,
+    };
+    await runScan(options);
+  });
+
+program
+  .command('import')
+  .requiredOption('--userId <uuid>')
+  .option('--status <value>', 'active|paused', 'paused')
+  .option('--env <value>', 'local|prod', 'local')
+  .option('--limit <number>')
+  .option('--resume')
+  .option('--dry-run')
+  .option('--only-failed')
+  .option('--update-existing')
+  .option('--source-id <value>')
+  .option('--registration-type <value>', 'Local|Foreign|Cleared')
+  .option('--default-hp <number>', 'fallback horsepower', '150')
+  .option('--city <value>', 'city value', 'Chișinău')
+  .option('--delay <number>', 'delay between requests in ms', '3000')
+  .action(async (rawOptions) => {
+    if (!rawOptions.userId) {
+      throw new Error('Missing required argument --userId');
+    }
+    const options: ImportCommandOptions = {
+      userId: String(rawOptions.userId),
+      status: normalizeCliStatus(rawOptions.status),
+      env: normalizeRuntimeEnv(rawOptions.env),
+      limit: rawOptions.limit ? Number(rawOptions.limit) : undefined,
+      resume: Boolean(rawOptions.resume),
+      dryRun: Boolean(rawOptions.dryRun),
+      onlyFailed: Boolean(rawOptions.onlyFailed),
+      updateExisting: Boolean(rawOptions.updateExisting),
+      sourceId: rawOptions.sourceId ? String(rawOptions.sourceId) : undefined,
+      registrationType: normalizeRegistrationType(rawOptions.registrationType),
+      defaultHp: Number(rawOptions.defaultHp),
+      city: String(rawOptions.city),
+      delay: Number(rawOptions.delay),
+    };
+    await runImport(options);
+  });
+
+program
+  .command('report')
+  .option('--file <path>')
+  .option('--last')
+  .option('--env <value>', 'local|prod', 'local')
+  .action(async (rawOptions) => {
+    const options: ReportCommandOptions = {
+      file: rawOptions.file ? String(rawOptions.file) : undefined,
+      last: Boolean(rawOptions.last),
+    };
+    const env = normalizeRuntimeEnv(rawOptions.env);
+    await runReport(options, env);
+  });
+
+program
+  .command('audit-brands-models')
+  .option('--env <value>', 'local|prod', 'local')
+  .action(async (rawOptions) => {
+    const options: AuditBrandsModelsCommandOptions = {
+      env: normalizeRuntimeEnv(rawOptions.env),
+    };
+    await runAuditBrandsModels(options);
+  });
+
+async function runScan(options: ScanCommandOptions): Promise<void> {
+  if (!Number.isFinite(options.pages) || options.pages <= 0) {
+    throw new Error('--pages must be a positive number.');
+  }
+
+  const config = resolveConfig(options.env);
+  const registry = new RegistryStore(config.registryPath);
+  const plpParser = new PlpParser(config);
+
+  const pageFrom = options.pageFrom ?? 1;
+  const pageTo = options.pageTo ?? options.pages;
+  const known = new Set(registry.getAll().map((item) => item.sourceListingId));
+  let pagesScanned = 0;
+  let cardsFound = 0;
+  let newItems = 0;
+  let duplicates = 0;
+
+  for (let page = pageFrom; page <= pageTo; page++) {
+    if (shouldStop) {
+      break;
+    }
+    const startedAt = Date.now();
+    const parsed = await plpParser.parseCatalogPage(page);
+    pagesScanned += 1;
+    cardsFound += parsed.items.length;
+
+    let pageNew = 0;
+    let pageDuplicates = 0;
+
+    for (const item of parsed.items) {
+      if (known.has(item.sourceListingId)) {
+        pageDuplicates += 1;
+        duplicates += 1;
+        continue;
+      }
+      known.add(item.sourceListingId);
+      pageNew += 1;
+      newItems += 1;
+      if (!options.dryRun) {
+        registry.upsert({
+          source: 'cipauto',
+          sourceListingId: item.sourceListingId,
+          url: item.url,
+          canonicalUrl: item.canonicalUrl,
+          title: item.title,
+          brand: item.brand,
+          model: item.model,
+          year: item.year,
+          price: item.price,
+          currency: item.currency,
+          state: 'discovered',
+        });
+      }
+    }
+
+    const elapsedSec = ((Date.now() - startedAt) / 1000).toFixed(1);
+    logger.info(
+      'SCAN',
+      `[PAGE ${page}] found=${parsed.items.length} new=${pageNew} duplicates=${pageDuplicates} elapsed=${elapsedSec}s`,
+    );
+
+    if (page < pageTo) {
+      await sleep(options.delay);
+    }
+  }
+
+  logger.info(
+    'SCAN',
+    `[DONE] pagesScanned=${pagesScanned} cardsFound=${cardsFound} new=${newItems} duplicates=${duplicates} dryRun=${Boolean(options.dryRun)}`,
+  );
+}
+
+async function runImport(options: ImportCommandOptions): Promise<void> {
+  const config = resolveConfig(options.env, { requireAuth: !options.dryRun });
+  const registry = new RegistryStore(config.registryPath);
+  const reportStore = new ReportStore(config.reportsDir);
+  const authClient = options.dryRun ? undefined : new AuthClient(config);
+  const kupitoApi = authClient ? new KupitoApiClient(config, authClient) : undefined;
+  const resolver = kupitoApi ? new BrandModelResolver(kupitoApi) : undefined;
+  const pdpParser = new PdpParser(config);
+  const uploadClient = authClient ? new UploadClient(config, authClient) : undefined;
+  const startedAt = new Date().toISOString();
+  const targetStatus = mapCliStatusToListingStatus(options.status);
+
+  if (authClient) {
+    await authClient.login();
+  }
+
+  const candidates = getImportCandidates(registry.getAll(), options);
+  logger.info(
+    'IMPORT',
+    `[START] candidates=${candidates.length} userId=${options.userId} status=${targetStatus} dryRun=${Boolean(options.dryRun)}`,
+  );
+
+  let processed = 0;
+  for (const item of candidates) {
+    if (shouldStop) {
+      break;
+    }
+    if (options.limit && processed >= options.limit) {
+      break;
+    }
+    processed += 1;
+    await processSingleItem({
+      item,
+      options,
+      registry,
+      kupitoApi,
+      resolver,
+      pdpParser,
+      uploadClient,
+      targetStatus,
+    });
+    await sleep(options.delay);
+  }
+
+  const report = reportStore.build({
+    startedAt,
+    env: options.env,
+    userId: options.userId,
+    status: targetStatus,
+    flags: {
+      limit: options.limit,
+      onlyFailed: options.onlyFailed,
+      updateExisting: options.updateExisting,
+      sourceId: options.sourceId,
+      dryRun: options.dryRun,
+      processed,
+    },
+    items: registry.getAll(),
+  });
+  const reportPath = reportStore.save(report);
+  logger.info(
+    'REPORT',
+    `processed=${processed} created=${report.summary.created} updated=${report.summary.updated} skipped=${report.summary.skipped} failed=${report.summary.failed} manualReview=${report.summary.manualReview} file=${reportPath}`,
+  );
+}
+
+async function processSingleItem(params: {
+  item: RegistryItem;
+  options: ImportCommandOptions;
+  registry: RegistryStore;
+  kupitoApi?: KupitoApiClient;
+  resolver?: BrandModelResolver;
+  pdpParser: PdpParser;
+  uploadClient?: UploadClient;
+  targetStatus: ListingStatus;
+}): Promise<void> {
+  const { item, options, registry, kupitoApi, resolver, pdpParser, uploadClient, targetStatus } =
+    params;
+  const sourceId = item.sourceListingId;
+
+  try {
+    logger.info('IMPORT', `[PDP][${sourceId}] parsing ${item.url}`);
+    const parsed = await pdpParser.parse(item.url);
+    const warnings = [...parsed.warnings];
+
+    registry.markState(sourceId, 'pdp_parsed', {
+      parsedData: parsed,
+      error: undefined,
+      warnings,
+      retryCount: item.retryCount ?? 0,
+    });
+
+    if (!parsed.price || parsed.price <= 0) {
+      registry.markState(sourceId, 'manual_review', {
+        error: 'Missing or invalid price',
+      });
+      logger.warn('IMPORT', `[MANUAL][${sourceId}] missing price`);
+      return;
+    }
+
+    const fuelMap = mapFuel(parsed.fuelRaw);
+    if (fuelMap.warning) warnings.push(fuelMap.warning);
+    const transmissionMap = mapTransmission(parsed.gearboxRaw);
+    if (transmissionMap.warning) warnings.push(transmissionMap.warning);
+    const bodyMap = mapBodyType(parsed.bodyRaw);
+    if (bodyMap.warning) warnings.push(bodyMap.warning);
+    const colorMap = mapColor(parsed.colorRaw);
+    if (colorMap.warning) warnings.push(colorMap.warning);
+    const driveType = mapDriveType(parsed.driveTypeRaw);
+    if (parsed.driveTypeRaw && driveType === undefined) {
+      warnings.push(`UNMAPPED_DRIVE:${parsed.driveTypeRaw}`);
+    }
+    const equipmentMap = mapEquipmentOptions(parsed.equipmentOptions);
+    warnings.push(...equipmentMap.warnings);
+
+    if (options.dryRun) {
+      registry.markState(sourceId, 'pdp_parsed', {
+        parsedData: {
+          ...parsed,
+          equipmentKeys: equipmentMap.equipmentKeys,
+          warnings,
+        },
+        warnings,
+        imageCount: parsed.images.slice(0, 20).length,
+        imageFailures: 0,
+      });
+      logger.info('IMPORT', `[DRY-RUN][${sourceId}] parsed successfully`);
+      return;
+    }
+
+    if (item.kupitoListingId && !options.updateExisting) {
+      registry.markState(sourceId, 'skipped', {
+        warnings,
+        error: undefined,
+      });
+      logger.info(
+        'IMPORT',
+        `[SKIP][${sourceId}] already has kupitoListingId=${item.kupitoListingId}`,
+      );
+      return;
+    }
+
+    if (!resolver || !uploadClient || !kupitoApi) {
+      throw new Error('Import clients are not initialized.');
+    }
+
+    let resolvedBrandId = '';
+    let resolvedModelId = '';
+    try {
+      const resolved = await resolver.resolve(parsed.brand, parsed.model);
+      resolvedBrandId = resolved.brandId;
+      resolvedModelId = resolved.modelId;
+    } catch (error) {
+      registry.markState(sourceId, 'manual_review', {
+        warnings,
+        error: String(error),
+      });
+      logger.warn('IMPORT', `[MANUAL][${sourceId}] ${String(error)}`);
+      return;
+    }
+
+    const uploadedImages = await uploadImagesSequentially({
+      sourceId,
+      imageUrls: parsed.images,
+      uploadClient,
+      warnings,
+    });
+
+    if (uploadedImages.urls.length < 2) {
+      registry.markState(sourceId, 'manual_review', {
+        warnings,
+        imageCount: uploadedImages.urls.length,
+        imageFailures: uploadedImages.failures,
+        error: 'Less than 2 images uploaded successfully',
+      });
+      logger.warn(
+        'IMPORT',
+        `[MANUAL][${sourceId}] image upload success=${uploadedImages.urls.length} failed=${uploadedImages.failures}`,
+      );
+      return;
+    }
+
+    const finalizedParsed: ParsedPdpData = {
+      ...parsed,
+      images: uploadedImages.urls,
+      equipmentKeys: equipmentMap.equipmentKeys,
+      warnings,
+    };
+
+    const hp = estimateHorsepower({
+      description: finalizedParsed.description,
+      engineVolumeL: finalizedParsed.engineVolumeL,
+      fuel: fuelMap.value,
+      defaultHorsepower: options.defaultHp,
+      horsepowerFromPdp: finalizedParsed.horsepowerFromPdp,
+    });
+    if (hp.estimated) {
+      warnings.push(`HORSEPOWER_ESTIMATED:${hp.horsepower}`);
+    }
+
+    const payloadInput = {
+      parsed: finalizedParsed,
+      ownerUserId: options.userId,
+      status: targetStatus,
+      city: options.city,
+      registrationType: options.registrationType,
+      defaultHorsepower: options.defaultHp,
+      resolvedBrandId,
+      resolvedModelId,
+      mappedEnums: {
+        fuel: fuelMap.value,
+        transmission: transmissionMap.value,
+        bodyType: bodyMap.value,
+        driveType,
+        color: colorMap.value,
+      },
+      horsepower: hp.horsepower,
+    };
+
+    if (item.kupitoListingId && options.updateExisting) {
+      const updatePayload = buildUpdateListingPayload(payloadInput);
+      const updated = await kupitoApi.updateListing(item.kupitoListingId, updatePayload);
+      registry.markState(sourceId, 'updated', {
+        kupitoListingId: updated.id,
+        ownerUserId: options.userId,
+        createdStatus: targetStatus,
+        warnings,
+        imageCount: uploadedImages.urls.length,
+        imageFailures: uploadedImages.failures,
+        error: undefined,
+      });
+      logger.info('IMPORT', `[OK][${sourceId}] updated kupitoId=${updated.id}`);
+      return;
+    }
+
+    const createPayload = buildCreateListingPayload(payloadInput);
+    const created = await kupitoApi.createListing(createPayload);
+    registry.markState(sourceId, 'created', {
+      kupitoListingId: created.id,
+      ownerUserId: options.userId,
+      createdStatus: targetStatus,
+      warnings,
+      imageCount: uploadedImages.urls.length,
+      imageFailures: uploadedImages.failures,
+      error: undefined,
+    });
+    logger.info('IMPORT', `[OK][${sourceId}] created kupitoId=${created.id}`);
+  } catch (error) {
+    const retryCount = (item.retryCount ?? 0) + 1;
+    registry.markState(sourceId, 'failed', {
+      error: String(error),
+      retryCount,
+    });
+    logger.error('IMPORT', `[FAIL][${sourceId}] ${String(error)}`);
+  }
+}
+
+async function uploadImagesSequentially(params: {
+  sourceId: string;
+  imageUrls: string[];
+  uploadClient: UploadClient;
+  warnings: string[];
+}): Promise<{ urls: string[]; failures: number }> {
+  const { sourceId, uploadClient, warnings } = params;
+  const imageUrls = params.imageUrls.slice(0, 20);
+  const uploaded: string[] = [];
+  let failures = 0;
+
+  for (let index = 0; index < imageUrls.length; index++) {
+    const imageUrl = imageUrls[index];
+    try {
+      const result = await uploadClient.uploadFromUrl(imageUrl);
+      uploaded.push(result.url);
+      logger.info('IMG', `[${sourceId}] [${index + 1}/${imageUrls.length}] uploaded`);
+    } catch (error) {
+      failures += 1;
+      warnings.push(`IMAGE_UPLOAD_FAILED:${index}:${imageUrl}`);
+      logger.warn(
+        'IMG',
+        `[${sourceId}] [${index + 1}/${imageUrls.length}] failed ${String(error)}`,
+      );
+    }
+  }
+
+  return { urls: uploaded, failures };
+}
+
+function getImportCandidates(items: RegistryItem[], options: ImportCommandOptions): RegistryItem[] {
+  const ordered = [...items].sort((a, b) => a.discoveredAt.localeCompare(b.discoveredAt));
+
+  if (options.sourceId) {
+    return ordered.filter((item) => item.sourceListingId === options.sourceId);
+  }
+
+  if (options.onlyFailed) {
+    return ordered.filter((item) => item.state === 'failed');
+  }
+
+  return ordered.filter((item) => {
+    if (
+      options.resume &&
+      (item.state === 'created' || item.state === 'updated' || item.state === 'skipped')
+    ) {
+      return false;
+    }
+    return item.state === 'discovered' || item.state === 'pdp_parsed' || item.state === 'failed';
+  });
+}
+
+async function runReport(options: ReportCommandOptions, env: 'local' | 'prod'): Promise<void> {
+  const config = resolveConfig(env);
+  const reportStore = new ReportStore(config.reportsDir);
+  const targetPath = options.file ?? (options.last ? reportStore.getLatestReportPath() : undefined);
+  if (!targetPath && !options.file && !options.last) {
+    throw new Error('Specify --file <path> or --last to select a report.');
+  }
+  if (!targetPath) {
+    logger.warn('REPORT', 'No report files found.');
+    return;
+  }
+  const report = reportStore.read(targetPath);
+  logger.info(
+    'REPORT',
+    `file=${targetPath} created=${report.summary.created} updated=${report.summary.updated} skipped=${report.summary.skipped} failed=${report.summary.failed} manualReview=${report.summary.manualReview}`,
+  );
+}
+
+async function runAuditBrandsModels(options: AuditBrandsModelsCommandOptions): Promise<void> {
+  const config = resolveConfig(options.env, { requireAuth: true });
+  const registry = new RegistryStore(config.registryPath);
+  const reportStore = new ReportStore(config.reportsDir);
+  const authClient = new AuthClient(config);
+  const kupitoApi = new KupitoApiClient(config, authClient);
+
+  const startedAt = new Date().toISOString();
+  await authClient.login();
+
+  const report = await auditBrandsModels({
+    startedAt,
+    env: options.env,
+    registryItems: registry.getAll(),
+    kupitoApi,
+    vehicleType: 'car',
+  });
+
+  const reportPath = reportStore.saveBrandsModelsAudit(report);
+  logger.info(
+    'AUDIT',
+    `file=${reportPath} missingBrands=${report.stats.missingBrands} missingModels=${report.stats.missingModels} uniquePairs=${report.stats.uniqueBrandModelsPairs} invalidPairs=${report.stats.invalidPairs}`,
+  );
+}
+
+program.parseAsync(process.argv).catch((error) => {
+  logger.error('CLI', String(error));
+  process.exit(1);
+});

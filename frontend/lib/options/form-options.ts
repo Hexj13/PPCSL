@@ -126,6 +126,8 @@ export function getColorOptions(t: (_key: string) => string): Array<LabeledOptio
     'blue',
     'red',
     'green',
+    'light_green',
+    'dark_green',
     'yellow',
     'brown',
     'orange',

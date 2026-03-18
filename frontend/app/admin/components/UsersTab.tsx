@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { CopyButton } from '@/components/common/CopyButton';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -148,6 +148,7 @@ function AdminUserCard({ user, t, onViewListings, onToggleStatus }: AdminUserCar
 export function UsersTab({ onViewUserListings }: UsersTabProps) {
   const { t } = useTranslation();
   const [roleCounts, setRoleCounts] = useState({ All: 0, Individual: 0, Business: 0, Admin: 0 });
+  const roleCountsGenerationRef = useRef(0);
 
   const {
     data: users,
@@ -191,14 +192,17 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
     minDisplayTime: 1000,
   });
 
-  const loadRoleCounts = useCallback(async () => {
+  const loadRoleCounts = useCallback(async (search?: string) => {
+    const generation = ++roleCountsGenerationRef.current;
+    const q = search?.trim() || undefined;
     try {
       const [all, individual, business, admin] = await Promise.all([
-        adminApi.getAllUsers(1, 1),
-        adminApi.getAllUsers(1, 1, undefined, 'Individual'),
-        adminApi.getAllUsers(1, 1, undefined, 'Business'),
-        adminApi.getAllUsers(1, 1, undefined, 'Admin'),
+        adminApi.getAllUsers(1, 1, q),
+        adminApi.getAllUsers(1, 1, q, 'Individual'),
+        adminApi.getAllUsers(1, 1, q, 'Business'),
+        adminApi.getAllUsers(1, 1, q, 'Admin'),
       ]);
+      if (roleCountsGenerationRef.current !== generation) return;
       setRoleCounts({
         All: all.data.meta?.total || 0,
         Individual: individual.data.meta?.total || 0,
@@ -211,8 +215,11 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
   }, []);
 
   useEffect(() => {
-    void loadRoleCounts();
-  }, [loadRoleCounts]);
+    const timer = setTimeout(() => {
+      void loadRoleCounts(filters.searchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [filters.searchQuery, loadRoleCounts]);
 
   const handleToggleStatus = useCallback(
     async (userId: string) => {
@@ -228,7 +235,7 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
       try {
         await adminApi.toggleUserStatus(userId);
         toast.success(t('admin.usersTab.userStatusUpdateSuccess'));
-        await loadRoleCounts();
+        await loadRoleCounts(filters.searchQuery);
       } catch {
         if (previousActive !== undefined) {
           setData((prev) =>
@@ -238,7 +245,7 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
         toast.error(t('admin.usersTab.statusUpdateError'));
       }
     },
-    [users, t, loadRoleCounts, setData],
+    [users, t, loadRoleCounts, setData, filters.searchQuery],
   );
 
   const handleViewListings = useCallback(

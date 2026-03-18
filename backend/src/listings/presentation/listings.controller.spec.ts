@@ -123,7 +123,14 @@ describe('ListingsController', () => {
 
       const result = await controller.getMyListings(req as unknown as AuthenticatedRequest);
 
-      expect(service.getUserListings).toHaveBeenCalledWith('user-1', 1, 20, undefined, undefined);
+      expect(service.getUserListings).toHaveBeenCalledWith(
+        'user-1',
+        1,
+        20,
+        undefined,
+        undefined,
+        undefined,
+      );
       expect(result).toEqual(mockResult);
     });
 
@@ -149,9 +156,50 @@ describe('ListingsController', () => {
         '20',
         'Active',
         'true',
+        undefined,
       );
 
-      expect(service.getUserListings).toHaveBeenCalledWith('user-1', 1, 20, 'Active', true);
+      expect(service.getUserListings).toHaveBeenCalledWith(
+        'user-1',
+        1,
+        20,
+        'Active',
+        true,
+        undefined,
+      );
+    });
+
+    it('should pass search to service', async () => {
+      const req = { user: mockUser };
+      service.getUserListings.mockResolvedValue({
+        data: [],
+        meta: {
+          total: 0,
+          page: 1,
+          limit: 20,
+          totalPages: 0,
+          last_listing_refresh_at: null,
+          refreshCooldownMs: 172800000,
+        },
+      });
+
+      await controller.getMyListings(
+        req as unknown as AuthenticatedRequest,
+        '1',
+        '20',
+        undefined,
+        undefined,
+        'bmw',
+      );
+
+      expect(service.getUserListings).toHaveBeenCalledWith(
+        'user-1',
+        1,
+        20,
+        undefined,
+        undefined,
+        'bmw',
+      );
     });
 
     it('should ignore invalid status filter', async () => {
@@ -174,9 +222,17 @@ describe('ListingsController', () => {
         '20',
         'InvalidStatus',
         undefined,
+        undefined,
       );
 
-      expect(service.getUserListings).toHaveBeenCalledWith('user-1', 1, 20, undefined, undefined);
+      expect(service.getUserListings).toHaveBeenCalledWith(
+        'user-1',
+        1,
+        20,
+        undefined,
+        undefined,
+        undefined,
+      );
     });
   });
 
@@ -235,6 +291,7 @@ describe('ListingsController', () => {
         ip: '127.0.0.1',
         userAgent: 'unknown',
         includeFullVin: false,
+        isAdmin: false,
       });
       expect(result).toEqual(mockListing);
     });
@@ -257,6 +314,7 @@ describe('ListingsController', () => {
         ip: '127.0.0.1',
         userAgent: 'Mozilla/5.0',
         includeFullVin: false,
+        isAdmin: false,
       });
       expect(result).toEqual(mockListing);
     });
@@ -274,6 +332,7 @@ describe('ListingsController', () => {
         ip: '127.0.0.1',
         userAgent: 'unknown',
         includeFullVin: true,
+        isAdmin: false,
       });
     });
 
@@ -368,7 +427,7 @@ describe('ListingsController', () => {
         req as unknown as AuthenticatedRequest,
       );
 
-      expect(service.update).toHaveBeenCalledWith(listingId, updateDto, 'user-1');
+      expect(service.update).toHaveBeenCalledWith(listingId, updateDto, 'user-1', 'Individual');
       expect(result).toEqual(updatedListing);
     });
 
@@ -391,7 +450,7 @@ describe('ListingsController', () => {
         req as unknown as AuthenticatedRequest,
       );
 
-      expect(service.update).toHaveBeenCalledWith(listingId, updateDto, 'user-1');
+      expect(service.update).toHaveBeenCalledWith(listingId, updateDto, 'user-1', 'Individual');
       expect(result.equipment).toEqual(['air_conditioning', 'navigation', 'leather_seats']);
     });
   });

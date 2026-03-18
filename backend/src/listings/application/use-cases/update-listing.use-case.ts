@@ -40,7 +40,12 @@ export class UpdateListingUseCase {
     private readonly brandsCache: IBrandsCache,
   ) {}
 
-  async execute(id: string, updateListingDto: UpdateListingDto, userId: string): Promise<Listing> {
+  async execute(
+    id: string,
+    updateListingDto: UpdateListingDto,
+    userId: string,
+    userType?: string,
+  ): Promise<Listing> {
     const listing = await this.listingsRepository.findOne({
       where: { id },
       relations: ['vehicle'],
@@ -50,11 +55,13 @@ export class UpdateListingUseCase {
       throw new NotFoundException('errors.listingNotFound');
     }
 
-    if (listing.user_id !== userId) {
+    const isAdmin = userType === 'Admin';
+
+    if (!isAdmin && listing.user_id !== userId) {
       throw new ForbiddenException('errors.listingAccessDenied');
     }
 
-    if (listing.status === 'Closed') {
+    if (!isAdmin && listing.status === 'Closed') {
       throw new BadRequestException('errors.cannotEditClosedListing');
     }
 

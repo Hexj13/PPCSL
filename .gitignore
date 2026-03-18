@@ -59,6 +59,8 @@ backend/swagger.json
 !backend/uploads/seed-images/
 uploads/
 public/uploads/
+backend/src/scripts/tools/cipauto-import/data/
+backend/src/scripts/tools/cipauto-import/reports/
 
 
 *storybook.log

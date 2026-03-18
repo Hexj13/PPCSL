@@ -376,6 +376,7 @@ export interface TranslationsPart1 {
   };
   myListings: {
     title: string;
+    searchByBrandModelPlaceholder: string;
     home: string;
     createListing: string;
     refreshDate: string;

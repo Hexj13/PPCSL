@@ -45,7 +45,13 @@ export const listingsApi = {
   publish: (id: string) => api.post(`/api/listings/${id}/publish`),
   pause: (id: string) => api.post(`/api/listings/${id}/pause`),
   close: (id: string) => api.post<Listing>(`/api/listings/${id}/close`),
-  getMy: (page: number = 1, limit: number = 20, status?: string, promoted?: boolean) => {
+  getMy: (
+    page: number = 1,
+    limit: number = 20,
+    status?: string,
+    promoted?: boolean,
+    search?: string,
+  ) => {
     const params = new URLSearchParams();
     params.set('page', page.toString());
     params.set('limit', limit.toString());
@@ -54,6 +60,9 @@ export const listingsApi = {
     }
     if (promoted !== undefined) {
       params.set('promoted', String(promoted));
+    }
+    if (search && search.trim()) {
+      params.set('search', search.trim());
     }
     const query = params.toString();
     return api.get<{ data: Listing[]; meta: PaginationMeta }>(`/api/listings/my?${query}`);

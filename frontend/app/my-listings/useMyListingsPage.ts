@@ -9,19 +9,100 @@ import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing, PaginationMeta, PromotionHistory } from '@/lib/api';
 import { listingsApi, normalizeListingResponse } from '@/lib/api';
 
+type StatusFilter = 'All' | 'Active' | 'Paused' | 'Closed';
+type PromotedFilter = 'All' | 'Promoted' | 'NotPromoted';
+type PromotionHistoryMeta = {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+};
+
+function toApiStatus(status?: string) {
+  return status && status !== 'All' ? status : undefined;
+}
+
+function toApiPromoted(promoted?: boolean) {
+  return promoted === undefined ? undefined : promoted;
+}
+
+function toApiSearch(search?: string) {
+  return search?.trim() || undefined;
+}
+
+function toPromotedBoolean(filter: PromotedFilter) {
+  if (filter === 'Promoted') return true;
+  if (filter === 'NotPromoted') return false;
+  return undefined;
+}
+
+function extractListings(data: unknown): Listing[] {
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) {
+    return data.data as Listing[];
+  }
+  return [];
+}
+
+function mergeUniqueListings(prev: Listing[], next: Listing[]) {
+  const existingIds = new Set(prev.map((listing) => listing.id));
+  const unique = next.filter((listing) => !existingIds.has(listing.id));
+  return [...prev, ...unique];
+}
+
+function getStatusCounts(source: Listing[]) {
+  return {
+    Active: source.filter((listing) => listing.status === 'Active').length,
+    Paused: source.filter((listing) => listing.status === 'Paused').length,
+    Closed: source.filter((listing) => listing.status === 'Closed').length,
+  };
+}
+
+function preloadListingPages(listings: Listing[]) {
+  if (!('caches' in window) || listings.length === 0) return;
+  void caches
+    .open('kupito-data-v1')
+    .then((cache) => {
+      listings.forEach((listing) => {
+        cache.add(`/listings/${listing.id}`).catch(() => {});
+      });
+    })
+    .catch(() => {});
+}
+
+async function fetchPromotionAccess() {
+  try {
+    const res = await listingsApi.getPromotionAccess();
+    return res.data.canPromote;
+  } catch {
+    return false;
+  }
+}
+
+async function fetchPromotionHistoryAvailability() {
+  try {
+    const res = await listingsApi.hasPromotionHistory();
+    return res.data.hasHistory;
+  } catch {
+    return false;
+  }
+}
+
 export function useMyListingsPage() {
   const { user, isLoading, isAuthorized } = useRequireAuth();
   const { t } = useTranslation();
   const [listings, setListings] = useState<Listing[]>([]);
   const [allListingsForCount, setAllListingsForCount] = useState<Listing[]>([]);
+  const countsGenerationRef = useRef(0);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [timeUntilRefresh, setTimeUntilRefresh] = useState<number | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<'All' | 'Active' | 'Paused' | 'Closed'>('All');
-  const [promotedFilter, setPromotedFilter] = useState<'All' | 'Promoted' | 'NotPromoted'>('All');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('All');
+  const [promotedFilter, setPromotedFilter] = useState<PromotedFilter>('All');
+  const [searchQuery, setSearchQuery] = useState('');
   const [isCloseConfirmOpen, setIsCloseConfirmOpen] = useState(false);
   const [listingToClose, setListingToClose] = useState<string | null>(null);
   const [promotionModalOpen, setPromotionModalOpen] = useState(false);
@@ -30,12 +111,9 @@ export function useMyListingsPage() {
   const [hasPromotionHistory, setHasPromotionHistory] = useState(false);
   const [promotionHistory, setPromotionHistory] = useState<PromotionHistory[]>([]);
   const [promotionHistoryPage, setPromotionHistoryPage] = useState(1);
-  const [promotionHistoryMeta, setPromotionHistoryMeta] = useState<{
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  } | null>(null);
+  const [promotionHistoryMeta, setPromotionHistoryMeta] = useState<PromotionHistoryMeta | null>(
+    null,
+  );
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [canPromote, setCanPromote] = useState(false);
   const loadingRef = useRef(false);
@@ -52,9 +130,9 @@ export function useMyListingsPage() {
       limit: number = 20,
       status?: string,
       promoted?: boolean,
+      search?: string,
     ) => {
-      if (append && (loadingMoreRef.current || loadingRef.current)) return;
-      if (!append && loadingRef.current) return;
+      if (loadingRef.current || (append && loadingMoreRef.current)) return;
       if (!append && loadingMoreRef.current) {
         loadingMoreRef.current = false;
         setLoadingMore(false);
@@ -76,17 +154,16 @@ export function useMyListingsPage() {
         }
       }
       try {
-        const apiStatus = status && status !== 'All' ? status : undefined;
-        const apiPromoted = promoted === undefined ? undefined : promoted;
-        const res = await listingsApi.getMy(page, limit, apiStatus, apiPromoted);
+        const apiStatus = toApiStatus(status);
+        const apiPromoted = toApiPromoted(promoted);
+        const apiSearch = toApiSearch(search);
+        const res = await listingsApi.getMy(page, limit, apiStatus, apiPromoted, apiSearch);
         if (fetchGenerationRef.current !== generation) return;
         const normalized = normalizeListingResponse(res.data, page, limit);
         const newListings = normalized.data;
         if (append) {
           setListings((prev) => {
-            const existingIds = new Set(prev.map((l) => l.id));
-            const unique = newListings.filter((l) => !existingIds.has(l.id));
-            const updated = [...prev, ...unique];
+            const updated = mergeUniqueListings(prev, newListings);
             listingsRef.current = updated;
             return updated;
           });
@@ -96,16 +173,7 @@ export function useMyListingsPage() {
         }
         setCurrentPage(page);
         setMeta(normalized.meta);
-        if ('caches' in window && newListings.length > 0) {
-          void caches
-            .open('kupito-data-v1')
-            .then((cache) => {
-              newListings.forEach((listing) => {
-                cache.add(`/listings/${listing.id}`).catch(() => {});
-              });
-            })
-            .catch(() => {});
-        }
+        preloadListingPages(newListings);
       } catch {
         if (fetchGenerationRef.current !== generation) return;
         if (!append) {
@@ -132,15 +200,15 @@ export function useMyListingsPage() {
   );
 
   const refetchAllForCount = useCallback(async () => {
+    const generation = ++countsGenerationRef.current;
     try {
-      const res = await listingsApi.getMy(1, 1000);
-      const data = res.data;
-      const all = Array.isArray(data) ? data : (data?.data ?? []);
-      setAllListingsForCount(all);
-    } catch {
-      // ignore
-    }
-  }, []);
+      const q = toApiSearch(searchQuery);
+      const promoted = toApiPromoted(toPromotedBoolean(promotedFilter));
+      const res = await listingsApi.getMy(1, 1000, undefined, promoted, q);
+      if (countsGenerationRef.current !== generation) return;
+      setAllListingsForCount(extractListings(res.data));
+    } catch {}
+  }, [promotedFilter, searchQuery]);
 
   const listingActions = useListingActions(
     {
@@ -152,6 +220,7 @@ export function useMyListingsPage() {
       userId: user?.id,
       statusFilter,
       promotedFilter,
+      searchQuery,
     },
     {
       setListings,
@@ -161,6 +230,29 @@ export function useMyListingsPage() {
       refetchAllForCount,
     },
   );
+
+  const statusFilterRef = useRef(statusFilter);
+  const promotedFilterRef = useRef(promotedFilter);
+  useEffect(() => {
+    statusFilterRef.current = statusFilter;
+  }, [statusFilter]);
+  useEffect(() => {
+    promotedFilterRef.current = promotedFilter;
+  }, [promotedFilter]);
+
+  useEffect(() => {
+    if (!isAuthorized || !hasLoadedRef.current) return;
+    const timer = setTimeout(() => {
+      const q = searchQuery.trim();
+      const apiStatus = toApiStatus(statusFilterRef.current);
+      const apiPromoted = toPromotedBoolean(promotedFilterRef.current);
+      setCurrentPage(1);
+      void fetchListings(1, false, 20, apiStatus, apiPromoted, q || undefined).then(() => {
+        void refetchAllForCount();
+      });
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery, isAuthorized, fetchListings, refetchAllForCount]);
 
   useEffect(() => {
     if (!isAuthorized || !user) return;
@@ -175,9 +267,7 @@ export function useMyListingsPage() {
       listingsApi
         .getMy(1, 1000)
         .then((res) => {
-          const data = res.data;
-          const all = Array.isArray(data) ? data : (data?.data ?? []);
-          setAllListingsForCount(all);
+          setAllListingsForCount(extractListings(res.data));
         })
         .catch(() => {});
     }
@@ -223,10 +313,9 @@ export function useMyListingsPage() {
 
   const handleLoadMore = useCallback(async () => {
     if (loadingMore || !meta?.totalPages || currentPage >= meta.totalPages) return;
-    const promoted =
-      promotedFilter === 'Promoted' ? true : promotedFilter === 'NotPromoted' ? false : undefined;
-    await fetchListings(currentPage + 1, true, 20, statusFilter, promoted);
-  }, [loadingMore, meta, currentPage, fetchListings, statusFilter, promotedFilter]);
+    const promoted = toPromotedBoolean(promotedFilter);
+    await fetchListings(currentPage + 1, true, 20, statusFilter, promoted, searchQuery);
+  }, [loadingMore, meta, currentPage, fetchListings, statusFilter, promotedFilter, searchQuery]);
 
   const handleAction = useCallback(
     async (id: string, action: 'publish' | 'pause' | 'close') => {
@@ -261,12 +350,7 @@ export function useMyListingsPage() {
   }, [listingActions]);
 
   const checkPromotionHistory = useCallback(async () => {
-    try {
-      const res = await listingsApi.hasPromotionHistory();
-      setHasPromotionHistory(res.data.hasHistory);
-    } catch {
-      setHasPromotionHistory(false);
-    }
+    setHasPromotionHistory(await fetchPromotionHistoryAvailability());
   }, []);
 
   const loadPromotionHistory = useCallback(
@@ -293,12 +377,7 @@ export function useMyListingsPage() {
 
   useEffect(() => {
     const run = async () => {
-      try {
-        const res = await listingsApi.getPromotionAccess();
-        setCanPromote(res.data.canPromote);
-      } catch {
-        setCanPromote(false);
-      }
+      setCanPromote(await fetchPromotionAccess());
     };
     void run();
   }, []);
@@ -329,13 +408,13 @@ export function useMyListingsPage() {
   const hasActiveListings = useMemo(() => listings.some((l) => l.status === 'Active'), [listings]);
 
   const handleStatusFilterChange = useCallback(
-    (newStatus: 'All' | 'Active' | 'Paused' | 'Closed') => {
+    (newStatus: StatusFilter) => {
       setStatusFilter(newStatus);
       if (promotedFilter !== 'All') setPromotedFilter('All');
       setCurrentPage(1);
-      void fetchListings(1, false, 20, newStatus, undefined);
+      void fetchListings(1, false, 20, newStatus, undefined, searchQuery);
     },
-    [fetchListings, promotedFilter],
+    [fetchListings, promotedFilter, searchQuery],
   );
 
   const handlePromotedFilterToggle = useCallback(() => {
@@ -344,16 +423,19 @@ export function useMyListingsPage() {
     const newStatus = newPromoted === 'Promoted' ? 'All' : statusFilter;
     if (newPromoted === 'Promoted') setStatusFilter('All');
     setCurrentPage(1);
-    void fetchListings(1, false, 20, newStatus, newPromoted === 'Promoted' ? true : undefined);
-  }, [fetchListings, promotedFilter, statusFilter]);
+    void fetchListings(
+      1,
+      false,
+      20,
+      newStatus,
+      newPromoted === 'Promoted' ? true : undefined,
+      searchQuery,
+    );
+  }, [fetchListings, promotedFilter, statusFilter, searchQuery]);
 
   const statusCounts = useMemo(() => {
     const source = allListingsForCount.length > 0 ? allListingsForCount : listings;
-    return {
-      Active: source.filter((l) => l.status === 'Active').length,
-      Paused: source.filter((l) => l.status === 'Paused').length,
-      Closed: source.filter((l) => l.status === 'Closed').length,
-    };
+    return getStatusCounts(source);
   }, [listings, allListingsForCount]);
 
   const isLoadingContent = loading || !hasLoadedRef.current;
@@ -407,5 +489,7 @@ export function useMyListingsPage() {
     handlePromotionSelect,
     listingActions,
     promotedFilter,
+    searchQuery,
+    setSearchQuery,
   };
 }

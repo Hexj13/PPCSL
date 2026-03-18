@@ -208,13 +208,13 @@ describe('UsersService', () => {
   });
 
   describe('getListingLimit', () => {
-    it('should return 100 for Business users', async () => {
+    it('should return 1000 for Business users', async () => {
       const businessUser = { ...mockUser, type: UserType.Business };
       repository.findOne.mockResolvedValue(businessUser as User);
 
       const result = await service.getListingLimit('1');
 
-      expect(result).toBe(100);
+      expect(result).toBe(1000);
     });
 
     it('should return 100 for Individual users', async () => {

@@ -92,7 +92,7 @@ export const faqRo: FAQConfig = {
       id: '9',
       question: 'Câte anunțuri pot avea simultan?',
       answer:
-        'Puteți avea maximum 100 de anunțuri active simultan. Anunțurile pauzate temporar nu sunt numărate în această limită. Anunțurile sunt închise automat după 90 de zile de la ultima actualizare.',
+        'Utilizatorii individuali pot avea maximum 100 de anunțuri active simultan, iar persoanele juridice (Business) — maximum 1000. Anunțurile pauzate temporar nu sunt numărate în această limită. Anunțurile sunt închise automat după 90 de zile de la ultima actualizare.',
     },
     {
       id: '10',

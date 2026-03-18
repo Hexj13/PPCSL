@@ -13,6 +13,7 @@ export interface ListingActionsConfig {
   userId: string | undefined;
   statusFilter?: string;
   promotedFilter?: string;
+  searchQuery?: string;
 }
 
 export interface ListingActionsCallbacks {
@@ -25,6 +26,7 @@ export interface ListingActionsCallbacks {
     _limit?: number,
     _status?: string,
     _promoted?: boolean,
+    _search?: string,
   ) => Promise<void>;
   refetchAllForCount: () => Promise<void>;
 }
@@ -41,6 +43,7 @@ export function useListingActions(
     userId,
     statusFilter,
     promotedFilter,
+    searchQuery,
   } = config;
   const { setListings, setAllListingsForCount, listingsRef, fetchListings, refetchAllForCount } =
     callbacks;
@@ -91,8 +94,14 @@ export function useListingActions(
         await listingsApi.publish(id);
         toast.success(t('myListings.published'));
         updateListingInState(id, { status: 'Active' });
-      } catch {
-        toast.error(t('myListings.statusUpdateError'));
+      } catch (error: unknown) {
+        const axiosError = error as {
+          response?: { data?: { message?: string; errorKey?: string } };
+        };
+        const backendMessage = axiosError.response?.data?.message;
+        toast.error(
+          typeof backendMessage === 'string' ? backendMessage : t('myListings.statusUpdateError'),
+        );
       }
     },
     [t, updateListingInState],
@@ -104,8 +113,14 @@ export function useListingActions(
         await listingsApi.pause(id);
         toast.success(t('myListings.pausedMessage'));
         updateListingInState(id, { status: 'Paused' });
-      } catch {
-        toast.error(t('myListings.statusUpdateError'));
+      } catch (error: unknown) {
+        const axiosError = error as {
+          response?: { data?: { message?: string; errorKey?: string } };
+        };
+        const backendMessage = axiosError.response?.data?.message;
+        toast.error(
+          typeof backendMessage === 'string' ? backendMessage : t('myListings.statusUpdateError'),
+        );
       }
     },
     [t, updateListingInState],
@@ -118,8 +133,14 @@ export function useListingActions(
         const updated = res.data;
         toast.success(t('myListings.closedMessage'));
         replaceListingInState(id, updated);
-      } catch {
-        toast.error(t('myListings.statusUpdateError'));
+      } catch (error: unknown) {
+        const axiosError = error as {
+          response?: { data?: { message?: string; errorKey?: string } };
+        };
+        const backendMessage = axiosError.response?.data?.message;
+        toast.error(
+          typeof backendMessage === 'string' ? backendMessage : t('myListings.statusUpdateError'),
+        );
       }
     },
     [t, replaceListingInState],
@@ -152,7 +173,7 @@ export function useListingActions(
         localStorage.setItem(`lastRefreshDate_${userId}`, Date.now().toString());
       }
       if (refreshCooldownMs > 0) setTimeUntilRefresh(refreshCooldownMs);
-      await fetchListings(1, false, 20, apiStatus, apiPromoted);
+      await fetchListings(1, false, 20, apiStatus, apiPromoted, searchQuery);
     } catch (error: unknown) {
       const axiosError = error as { response?: { status?: number } };
       if (axiosError.response?.status === 400) {
@@ -166,6 +187,7 @@ export function useListingActions(
     userId,
     statusFilter,
     promotedFilter,
+    searchQuery,
     refreshCooldownMs,
     setTimeUntilRefresh,
     fetchListings,
@@ -186,7 +208,7 @@ export function useListingActions(
       try {
         await listingsApi.togglePromotion(id, isPromoted, days);
         toast.success(t('listings.promotionEnabled'));
-        await fetchListings(1, false, 20, apiStatus, apiPromoted);
+        await fetchListings(1, false, 20, apiStatus, apiPromoted, searchQuery);
       } catch (error: unknown) {
         const axiosError = error as { response?: { status?: number } };
         if (axiosError.response?.status === 403) {
@@ -198,7 +220,7 @@ export function useListingActions(
         }
       }
     },
-    [fetchListings, statusFilter, promotedFilter, t],
+    [fetchListings, statusFilter, promotedFilter, searchQuery, t],
   );
 
   const formatTimeRemaining = useCallback((ms: number): string => {

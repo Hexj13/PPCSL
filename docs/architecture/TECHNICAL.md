@@ -42,7 +42,7 @@ Core application framework for creating car marketplace platforms for different 
 - Fully free service, no payments, subscriptions, or paid options
 - Two user types: **Individual** and **Business**
 - Individual users: maximum **100 active listings** simultaneously
-- Business users: maximum **100 active listings** simultaneously
+- Business users: maximum **1000 active listings** simultaneously
 - Listings have three statuses: **Active**, **Paused**, **Closed**
 - Automatic closing after **90 days** since `last_updated_at` timestamp
   - Non-promoted listings older than 90 days are closed automatically
@@ -350,19 +350,19 @@ POST /api/auth/reset-password         # Reset password
 
 ```http
 GET    /api/listings                  # List listings (with filters)
-GET    /api/listings/:id              # Get listing details
+GET    /api/listings/:id              # Get listing details (supports includeFullVin=1 for Admin)
 POST   /api/listings                  # Create listing
-PATCH  /api/listings/:id              # Update listing (only non-closed)
+PATCH  /api/listings/:id              # Update listing (owner: non-closed only; Admin can edit any status)
 POST   /api/listings/:id/publish      # Activate listing
 POST   /api/listings/:id/pause        # Pause listing
 POST   /api/listings/:id/close        # Close listing
-GET    /api/listings/my               # Get user's listings; query: page, limit, status (Active|Paused|Closed), promoted (true|false); meta: last_listing_refresh_at, refreshCooldownMs for 48h timer
+GET    /api/listings/my               # Get user's listings; query: page, limit, status (Active|Paused|Closed), promoted (true|false), search (brand/model text); meta: last_listing_refresh_at, refreshCooldownMs for 48h timer
 GET    /api/listings/vin/:vin         # Find listings by VIN
 GET    /api/listings/:id/vin          # Get full VIN (JWT required; rate limit 5/hour; query action=reveal|copy)
 GET    /api/listings/:id/history      # Previous listings with same VIN
 GET    /api/listings/:id/report-url        # Infocar report URL (AES-256-CBC encrypted VIN, param vin); optional query locale=ro|ru
 GET    /api/listings/:id/report-redirect   # 302 redirect to Infocar (direct link for iOS); optional query locale=ro|ru
-POST   /api/listings/refresh-dates    # Refresh all user's listing dates (max once per 48h; returns 400 if too soon)
+POST   /api/listings/refresh-dates    # Refresh all user's listing dates (max once per 48h; returns 400 if too soon, throttle: 5 req/min/user)
 POST   /api/listings/cron/close-old            # Close old listings (cron job, requires x-cron-secret header)
 POST   /api/listings/cron/expire-promotions   # Expire promotions (cron job, requires x-cron-secret header)
 PATCH  /api/listings/:id/promote      # Toggle listing promotion (user, JWT required)
@@ -807,6 +807,16 @@ npm run clear-cache:brands
 npm run make-admin
 npm run reset-users
 ```
+
+### Partner Import Scripts (CipAuto)
+
+```bash
+npm run cipauto:scan -- --pages=24 --env=prod
+npm run cipauto:import -- --userId=<UUID> --status=paused --env=prod --limit=10
+npm run cipauto:report -- --last --env=prod
+```
+
+See [cipauto-import.md](../features/cipauto-import.md) for CLI flags, idempotency model, and rollout checklist.
 
 ### Backup Scripts
 

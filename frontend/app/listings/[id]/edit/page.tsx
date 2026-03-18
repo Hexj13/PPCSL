@@ -30,6 +30,7 @@ export default function EditListingPage() {
   const { t } = useTranslation();
   const listingId = params.id as string;
   const { user, isLoading, isAuthorized } = useRequireAuth();
+  const isAdmin = user?.type === 'Admin';
   const [listing, setListing] = useState<Listing | null>(null);
   const [loadingListing, setLoadingListing] = useState(true);
   const [formKey, setFormKey] = useState(0);
@@ -38,6 +39,7 @@ export default function EditListingPage() {
     if (!user) return;
 
     try {
+      const redirectTo = isAdmin ? '/admin' : '/my-listings';
       const shouldRefresh = sessionStorage.getItem(`refreshListing_${listingId}`) === 'true';
       const needsRefresh = forceRefresh || shouldRefresh;
 
@@ -48,15 +50,15 @@ export default function EditListingPage() {
       const res = await api.get<Listing>(`/api/listings/${listingId}`, { params });
       const listingData = res.data;
 
-      if (listingData.user?.id !== user.id) {
+      if (!isAdmin && listingData.user?.id !== user.id) {
         toast.error(t('listings.noAccessToListing'));
-        router.push('/my-listings');
+        router.push(redirectTo);
         return;
       }
 
-      if (listingData.status === 'Closed') {
+      if (!isAdmin && listingData.status === 'Closed') {
         toast.error(t('listings.cannotEditClosedListing'));
-        router.push('/my-listings');
+        router.push(redirectTo);
         return;
       }
 
@@ -68,7 +70,7 @@ export default function EditListingPage() {
       }
     } catch {
       toast.error(t('listings.loadListingError'));
-      router.push('/my-listings');
+      router.push(isAdmin ? '/admin' : '/my-listings');
       const shouldRefresh = sessionStorage.getItem(`refreshListing_${listingId}`) === 'true';
       if (shouldRefresh) {
         sessionStorage.removeItem(`refreshListing_${listingId}`);
@@ -129,7 +131,7 @@ export default function EditListingPage() {
           }
           sessionStorage.setItem('refreshMyListings', 'true');
           sessionStorage.setItem(`refreshListing_${listingId}`, 'true');
-          router.push('/my-listings');
+          router.push(isAdmin ? '/admin' : '/my-listings');
         }}
       />
     </div>

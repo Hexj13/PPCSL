@@ -185,7 +185,7 @@ function ManagementCardActionBar({
   const showPublish = status === 'Paused';
   const showPause = status === 'Active';
   const showClose = status !== 'Closed';
-  const showEdit = mode === 'my-listings' && status !== 'Closed';
+  const showEdit = (mode === 'my-listings' && status !== 'Closed') || mode === 'admin';
 
   return (
     <div className="mt-auto pt-3 border-t border-primary-500/20">

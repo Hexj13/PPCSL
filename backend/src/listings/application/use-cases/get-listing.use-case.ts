@@ -18,6 +18,7 @@ export interface GetListingContext {
   ip?: string;
   userAgent?: string;
   includeFullVin?: boolean;
+  isAdmin?: boolean;
 }
 
 @Injectable()
@@ -54,7 +55,7 @@ export class GetListingUseCase {
       }
     }
 
-    if (listing.status === ListingStatusEnum.Closed) {
+    if (listing.status === ListingStatusEnum.Closed && !context?.isAdmin) {
       (listing as Partial<Listing>).price = undefined;
       (listing as Partial<Listing>).currency = undefined;
       if (listing.user) {
@@ -87,7 +88,7 @@ export class GetListingUseCase {
     }
 
     const isOwner = !!context?.userId && listing.user_id === context.userId;
-    const shouldIncludeFullVin = !!context?.includeFullVin && isOwner;
+    const shouldIncludeFullVin = !!context?.includeFullVin && (isOwner || context?.isAdmin);
     if (listing.vin && listing.vin.length === 17 && !shouldIncludeFullVin) {
       (listing as Partial<Listing>).vin =
         listing.vin.slice(0, 4) + '*'.repeat(9) + listing.vin.slice(-4);

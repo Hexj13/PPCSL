@@ -9,7 +9,7 @@ import {
 import { sortOptionsByLabel } from '@/lib/utils';
 import { Checkbox, HintTooltip } from '@/ui';
 
-const HEADLIGHT_GROUP: readonly string[] = ['led_lights', 'xenon_lights'];
+const HEADLIGHT_GROUP: readonly string[] = ['led_lights', 'xenon_lights', 'laser_headlights'];
 const TIRE_KEYS: readonly string[] = [
   'tires_summer',
   'tires_winter',

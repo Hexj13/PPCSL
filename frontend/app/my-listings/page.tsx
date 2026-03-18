@@ -23,26 +23,31 @@ function MyListingsSkeleton({ t }: { t: TranslationFn }) {
         items={[{ label: t('myListings.home'), href: '/' }, { label: t('myListings.title') }]}
         className="mb-6"
       />
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6 md:mb-8">
-        <h1 className="text-3xl md:text-4xl font-extrabold text-primary-900">
-          {t('myListings.title')}
-        </h1>
-        <div className="flex flex-col lg:flex-row gap-3 w-full lg:w-auto">
+      <h1 className="text-3xl md:text-4xl font-extrabold text-primary-900 mb-6 md:mb-8">
+        {t('myListings.title')}
+      </h1>
+      <div className="mb-4">
+        <div className="flex flex-col lg:flex-row gap-3 w-full lg:w-full lg:justify-start">
           {[...Array(3)].map((_, i) => (
             <div
               key={i}
-              className="h-[48px] rounded-lg bg-primary-500/10 animate-pulse min-w-[140px] lg:min-w-[180px]"
+              className="h-[48px] rounded-lg bg-primary-500/10 animate-pulse w-full lg:w-auto"
             />
           ))}
         </div>
       </div>
-      <div className="mb-6">
-        <div className="flex flex-wrap gap-2 md:gap-3">
-          <div className="h-9 md:h-10 w-14 rounded-lg bg-primary-500/10 animate-pulse" />
-          <div className="h-9 md:h-10 w-20 rounded-lg bg-primary-500/10 animate-pulse" />
-          <div className="h-9 md:h-10 w-20 rounded-lg bg-primary-500/10 animate-pulse" />
-          <div className="h-9 md:h-10 w-20 rounded-lg bg-primary-500/10 animate-pulse" />
-          <div className="h-9 md:h-10 w-24 rounded-lg bg-primary-500/10 animate-pulse" />
+      <div className="min-w-0 relative border-t border-primary-500/20 pt-4">
+        <div className="mb-4">
+          <div className="w-full h-[48px] md:h-[52px] rounded-lg bg-primary-500/10 animate-pulse" />
+        </div>
+        <div className="mb-4">
+          <div className="flex flex-wrap gap-2 md:gap-3">
+            <div className="h-9 md:h-10 w-14 rounded-lg bg-primary-500/10 animate-pulse" />
+            <div className="h-9 md:h-10 w-20 rounded-lg bg-primary-500/10 animate-pulse" />
+            <div className="h-9 md:h-10 w-20 rounded-lg bg-primary-500/10 animate-pulse" />
+            <div className="h-9 md:h-10 w-20 rounded-lg bg-primary-500/10 animate-pulse" />
+            <div className="h-9 md:h-10 w-24 rounded-lg bg-primary-500/10 animate-pulse" />
+          </div>
         </div>
       </div>
       <div className="space-y-4">
@@ -177,6 +182,7 @@ function MyListingsListSection({
   statusFilter,
   statusCounts,
   promotedFilter,
+  searchQuery,
   meta,
   currentPage,
   loadingMore,
@@ -194,6 +200,7 @@ function MyListingsListSection({
   | 'statusFilter'
   | 'statusCounts'
   | 'promotedFilter'
+  | 'searchQuery'
   | 'meta'
   | 'currentPage'
   | 'loadingMore'
@@ -207,8 +214,9 @@ function MyListingsListSection({
   const showFilters = allListingsForCount.length > 0 || listings.length > 0;
   const sourceForCount = allListingsForCount.length > 0 ? allListingsForCount : listings;
   const promotedCount = sourceForCount.filter((l) => l.is_promoted === true).length;
-  const emptyMessage =
-    statusFilter !== 'All' || promotedFilter !== 'All'
+  const emptyMessage = searchQuery.trim()
+    ? t('myListings.noListingsWithStatus')
+    : statusFilter !== 'All' || promotedFilter !== 'All'
       ? t('myListings.noListingsWithStatus')
       : t('myListings.noListingsYet');
   const hasListings = listings.length > 0;
@@ -219,7 +227,7 @@ function MyListingsListSection({
   return (
     <>
       {showFilters && (
-        <div className="mb-6 pt-4 border-t border-primary-500/20 sm:border-t-0 sm:pt-0">
+        <div className="mb-4">
           <StatusFilterButtons
             currentFilter={statusFilter}
             onFilterChange={handleStatusFilterChange}
@@ -308,160 +316,178 @@ function MyListingsContent(props: ContentProps) {
     handleLoadMore,
     handlePromoteClick,
     handlePromotionSelect,
+    searchQuery,
+    setSearchQuery,
     promotedFilter,
   } = props;
   const showBoardLink = Boolean(user?.boardSlug);
   const showPromotionHistory = listings.length > 0 && canPromote;
   const showCreateLink = listings.length === 0;
+
+  const actions = (
+    <>
+      <LoadMoreButton
+        onClick={handleRefreshDates}
+        disabled={
+          isRefreshing || (timeUntilRefresh !== null && timeUntilRefresh > 0) || !hasActiveListings
+        }
+        variant="inline"
+        className="w-full lg:w-auto"
+      >
+        {isRefreshing ? (
+          <>
+            <div className="w-3.5 h-3.5 md:w-4 md:h-4 border-2 border-primary-700 border-t-transparent rounded-full animate-spin shrink-0"></div>
+            {t('myListings.refreshing')}
+          </>
+        ) : (
+          <>
+            <svg
+              className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+            {formattedTime ? (
+              <>{t('myListings.refreshDateWithTime', { time: formattedTime })}</>
+            ) : (
+              t('myListings.refreshDate')
+            )}
+          </>
+        )}
+      </LoadMoreButton>
+      {showBoardLink && user?.boardSlug && (
+        <Link
+          href={`/board/${user.boardSlug}`}
+          className="w-full lg:w-auto min-w-0 h-[48px] text-primary-700 font-medium text-base hover-only:hover:text-primary-900 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 rounded-lg border-2 border-primary-700 hover-only:hover:border-primary-900 bg-primary-500/10 select-none overflow-hidden"
+        >
+          <span className="flex items-center justify-center shrink-0 w-5 h-5 md:w-6 md:h-6">
+            <svg
+              className="w-3.5 h-3.5 md:w-4 md:h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+              />
+            </svg>
+          </span>
+          {t('myListings.myBoard')}
+        </Link>
+      )}
+      {showPromotionHistory && (
+        <LoadMoreButton
+          onClick={() => {
+            setPromotionHistoryModalOpen(true);
+            void loadPromotionHistory(1);
+          }}
+          disabled={!hasPromotionHistory}
+          variant="inline"
+          className="w-full lg:w-auto"
+        >
+          <svg
+            className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          {t('myListings.promotionHistory')}
+        </LoadMoreButton>
+      )}
+      {showCreateLink && (
+        <Link
+          href="/listings/new"
+          className="w-full lg:w-auto min-w-0 h-[48px] text-primary-700 font-medium text-base hover-only:hover:text-primary-900 transition-colors duration-200 whitespace-nowrap flex flex-row items-center justify-center gap-2 px-4 rounded-lg border-2 border-primary-700 hover-only:hover:border-primary-900 bg-primary-500/10 select-none overflow-hidden"
+        >
+          <span className="flex items-center justify-center shrink-0 w-5 h-5 md:w-6 md:h-6">
+            <svg
+              className="w-3.5 h-3.5 md:w-4 md:h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+          </span>
+          {t('myListings.createListing')}
+        </Link>
+      )}
+    </>
+  );
   return (
     <>
       <Breadcrumbs
         items={[{ label: t('myListings.home'), href: '/' }, { label: t('myListings.title') }]}
         className="mb-6"
       />
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6 md:mb-8">
-        <h1 className="text-3xl md:text-4xl font-extrabold text-primary-900">
-          {t('myListings.title')}
-        </h1>
-        <div className="flex flex-col lg:flex-row gap-3 w-full lg:w-auto">
-          <LoadMoreButton
-            onClick={handleRefreshDates}
-            disabled={
-              isRefreshing ||
-              (timeUntilRefresh !== null && timeUntilRefresh > 0) ||
-              !hasActiveListings
-            }
-            variant="inline"
-            className="w-full lg:w-auto"
-          >
-            {isRefreshing ? (
-              <>
-                <div className="w-3.5 h-3.5 md:w-4 md:h-4 border-2 border-primary-700 border-t-transparent rounded-full animate-spin shrink-0"></div>
-                {t('myListings.refreshing')}
-              </>
-            ) : (
-              <>
-                <svg
-                  className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                  />
-                </svg>
-                {formattedTime ? (
-                  <>{t('myListings.refreshDateWithTime', { time: formattedTime })}</>
-                ) : (
-                  t('myListings.refreshDate')
-                )}
-              </>
-            )}
-          </LoadMoreButton>
-          {showBoardLink && user?.boardSlug && (
-            <Link
-              href={`/board/${user.boardSlug}`}
-              className="w-full lg:w-auto min-w-0 h-[48px] text-primary-700 font-medium text-base hover-only:hover:text-primary-900 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 rounded-lg border-2 border-primary-700 hover-only:hover:border-primary-900 bg-primary-500/10 select-none overflow-hidden"
-            >
-              <span className="flex items-center justify-center shrink-0 w-5 h-5 md:w-6 md:h-6">
-                <svg
-                  className="w-3.5 h-3.5 md:w-4 md:h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                  />
-                </svg>
-              </span>
-              {t('myListings.myBoard')}
-            </Link>
-          )}
-          {showPromotionHistory && (
-            <LoadMoreButton
-              onClick={() => {
-                props.setPromotionHistoryModalOpen(true);
-                void loadPromotionHistory(1);
-              }}
-              disabled={!hasPromotionHistory}
-              variant="inline"
-              className="w-full lg:w-auto"
-            >
-              <svg
-                className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              {t('myListings.promotionHistory')}
-            </LoadMoreButton>
-          )}
-          {showCreateLink && (
-            <Link
-              href="/listings/new"
-              className="w-full lg:w-auto min-w-0 h-[48px] text-primary-700 font-medium text-base hover-only:hover:text-primary-900 transition-colors duration-200 whitespace-nowrap flex flex-row items-center justify-center gap-2 px-4 rounded-lg border-2 border-primary-700 hover-only:hover:border-primary-900 bg-primary-500/10 select-none overflow-hidden"
-            >
-              <span className="flex items-center justify-center shrink-0 w-5 h-5 md:w-6 md:h-6">
-                <svg
-                  className="w-3.5 h-3.5 md:w-4 md:h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-              </span>
-              {t('myListings.createListing')}
-            </Link>
-          )}
+      <h1 className="text-3xl md:text-4xl font-extrabold text-primary-900 mb-6 md:mb-8">
+        {t('myListings.title')}
+      </h1>
+      <div className="mb-4">
+        <div className="flex flex-col lg:flex-row gap-3 w-full lg:w-full lg:justify-start">
+          {actions}
         </div>
       </div>
+      <div className="min-w-0 relative border-t border-primary-500/20 pt-4">
+        <div className="mb-4">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t('myListings.searchByBrandModelPlaceholder')}
+            className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-secondary border-2 border-primary-700 text-text-primary placeholder:text-text-secondary focus:outline-hidden focus:border-primary-900 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
+          />
+        </div>
 
-      <MyListingsListSection
-        t={t}
-        listings={listings}
-        allListingsForCount={allListingsForCount}
-        statusFilter={statusFilter}
-        statusCounts={statusCounts}
-        promotedFilter={promotedFilter}
-        meta={meta}
-        currentPage={currentPage}
-        loadingMore={loadingMore}
-        canPromote={canPromote}
-        handleStatusFilterChange={handleStatusFilterChange}
-        handlePromotedFilterToggle={handlePromotedFilterToggle}
-        handleAction={handleAction}
-        handleLoadMore={handleLoadMore}
-        handlePromoteClick={handlePromoteClick}
-      />
+        <MyListingsListSection
+          t={t}
+          listings={listings}
+          allListingsForCount={allListingsForCount}
+          statusFilter={statusFilter}
+          statusCounts={statusCounts}
+          promotedFilter={promotedFilter}
+          searchQuery={searchQuery}
+          meta={meta}
+          currentPage={currentPage}
+          loadingMore={loadingMore}
+          canPromote={canPromote}
+          handleStatusFilterChange={handleStatusFilterChange}
+          handlePromotedFilterToggle={handlePromotedFilterToggle}
+          handleAction={handleAction}
+          handleLoadMore={handleLoadMore}
+          handlePromoteClick={handlePromoteClick}
+        />
+      </div>
 
       <MyListingsModals
         t={t}

@@ -696,6 +696,7 @@ describe('ListingsService', () => {
         'listing-1',
         updateDto,
         'user-1',
+        undefined,
       );
     });
 
@@ -715,6 +716,7 @@ describe('ListingsService', () => {
         'listing-1',
         updateDto,
         'user-1',
+        undefined,
       );
     });
 
@@ -732,6 +734,7 @@ describe('ListingsService', () => {
         'listing-1',
         updateDto,
         'user-1',
+        undefined,
       );
     });
   });

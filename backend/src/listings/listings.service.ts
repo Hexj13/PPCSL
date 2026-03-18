@@ -144,7 +144,13 @@ export class ListingsService {
 
   async findOne(
     id: string,
-    context?: { userId: string | null; ip?: string; userAgent?: string; includeFullVin?: boolean },
+    context?: {
+      userId: string | null;
+      ip?: string;
+      userAgent?: string;
+      includeFullVin?: boolean;
+      isAdmin?: boolean;
+    },
   ): Promise<Listing> {
     try {
       return await this.getListingUseCase.execute(id, context);
@@ -156,8 +162,13 @@ export class ListingsService {
     }
   }
 
-  async update(id: string, updateListingDto: UpdateListingDto, userId: string): Promise<Listing> {
-    return this.updateListingUseCase.execute(id, updateListingDto, userId);
+  async update(
+    id: string,
+    updateListingDto: UpdateListingDto,
+    userId: string,
+    userType?: string,
+  ): Promise<Listing> {
+    return this.updateListingUseCase.execute(id, updateListingDto, userId, userType);
   }
 
   async publish(id: string, userId: string): Promise<Listing> {
@@ -192,8 +203,9 @@ export class ListingsService {
     limit: number = 20,
     status?: string,
     promoted?: boolean,
+    search?: string,
   ) {
-    return this.getUserListingsUseCase.execute(userId, page, limit, status, promoted);
+    return this.getUserListingsUseCase.execute(userId, page, limit, status, promoted, search);
   }
 
   async getActiveUserListings(userId: string): Promise<Listing[]> {

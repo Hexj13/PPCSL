@@ -70,8 +70,8 @@ export class UsersService {
   }
 
   async getListingLimit(userId: string): Promise<number> {
-    await this.findOne(userId);
-    return 100;
+    const user = await this.findOne(userId);
+    return user.type === 'Business' ? 1000 : 100;
   }
 
   async update(id: string, updateData: Partial<User>): Promise<User> {

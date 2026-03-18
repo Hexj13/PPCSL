@@ -180,4 +180,26 @@ describe('UpdateListingUseCase', () => {
 
     await expect(useCase.execute(listingId, {}, userId)).rejects.toThrow(BadRequestException);
   });
+
+  it('should allow admin to update listing when user does not own it', async () => {
+    await expect(useCase.execute(listingId, {}, 'other-user', 'Admin')).resolves.toBeDefined();
+    expect(uploadService.deleteFile).not.toHaveBeenCalled();
+  });
+
+  it('should allow admin to update closed listing', async () => {
+    (listingsRepository.findOne as jest.Mock).mockReset().mockResolvedValueOnce({
+      ...existingListing,
+      status: 'Closed',
+      vehicle: { id: vehicleId },
+    });
+
+    (listingsRepository.findOne as jest.Mock).mockResolvedValueOnce({
+      ...existingListing,
+      status: 'Closed',
+      vehicle: { ...existingVehicle, brand: {}, model: {} },
+      user: {},
+    });
+
+    await expect(useCase.execute(listingId, {}, userId, 'Admin')).resolves.toBeDefined();
+  });
 });

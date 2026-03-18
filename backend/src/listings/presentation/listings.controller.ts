@@ -138,18 +138,21 @@ export class ListingsController {
     @Query('limit') limit?: string,
     @Query('status') status?: string,
     @Query('promoted') promoted?: string,
+    @Query('search') search?: string,
   ) {
     const pageNum = page && Number.isFinite(parseInt(page, 10)) ? parseInt(page, 10) : 1;
     const limitNum = limit && Number.isFinite(parseInt(limit, 10)) ? parseInt(limit, 10) : 20;
     const validStatuses = ['Active', 'Paused', 'Closed'];
     const statusFilter = status && validStatuses.includes(status) ? status : undefined;
     const promotedFilter = promoted === 'true' ? true : promoted === 'false' ? false : undefined;
+    const searchQuery = search?.trim();
     return this.listingsService.getUserListings(
       req.user.id,
       pageNum,
       limitNum,
       statusFilter,
       promotedFilter,
+      searchQuery && searchQuery.length > 0 ? searchQuery : undefined,
     );
   }
 
@@ -373,6 +376,7 @@ export class ListingsController {
         ip,
         userAgent: (req.headers['user-agent'] as string) || 'unknown',
         includeFullVin: includeFullVin === '1' || includeFullVin === 'true',
+        isAdmin: req.user?.type === 'Admin',
       });
     } catch (error) {
       if (!(error instanceof NotFoundException)) {
@@ -461,7 +465,7 @@ export class ListingsController {
     @Body() updateListingDto: UpdateListingDto,
     @Request() req: AuthenticatedRequest,
   ) {
-    return this.listingsService.update(id, updateListingDto, req.user.id);
+    return this.listingsService.update(id, updateListingDto, req.user.id, req.user.type);
   }
 
   @ApiOperation({ summary: 'Publish listing' })
@@ -517,6 +521,7 @@ export class ListingsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @Post('refresh-dates')
   @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   refreshDates(@Request() req: AuthenticatedRequest) {
     return this.listingsService.refreshAllDates(req.user.id);
   }

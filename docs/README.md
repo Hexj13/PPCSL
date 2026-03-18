@@ -28,7 +28,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 - [backend-layers.md](./architecture/backend-layers.md) — Backend layered architecture (use cases, domain)
 - [scripts-architecture.md](./architecture/scripts-architecture.md) — **CRITICAL**
 - [known-issues.md](./architecture/known-issues.md) — Known issues
-- [technical.md](./architecture/technical.md) — Technical details
+- [TECHNICAL.md](./architecture/TECHNICAL.md) — Technical details
 
 ### [`guides/`](./guides/)
 
@@ -61,12 +61,14 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 **Feature documentation** — components and functionality
 
 - [search-title-url.md](./features/search-title-url.md) — Search page URL and title (slugs, diacritics)
-- Approximate price in default currency (≈ EUR) — FXRatesAPI, daily cron, listing enrichment, price sorting in default currency; env: `FXRATESAPI_API_KEY`, `DEFAULT_CURRENCY` (see [technical.md](./architecture/technical.md) §6 Exchange Rates)
+- Approximate price in default currency (≈ EUR) — FXRatesAPI, daily cron, listing enrichment, price sorting in default currency; env: `FXRATESAPI_API_KEY`, `DEFAULT_CURRENCY` (see [TECHNICAL.md](./architecture/TECHNICAL.md) §6 Exchange Rates)
 - [image-preview.md](./features/image-preview.md) — Image preview system
 - [infocar-history-section.md](./features/infocar-history-section.md) — History and report section, Infocar button, language-specific links (RO/RU)
 - [loading-states.md](./features/loading-states.md) — Loading states
 - [paid-promotion.md](./features/paid-promotion.md) — Paid promotion
 - Assign listing to user (admin) — on `/listings/new` admin can set listing owner UUID; real-time validation (GET `/api/admin/validate-assign-user/:userId`), backend checks (existence, active, listing limit)
+- Admin edit listings — on the admin listings tab, admin can open `/listings/[id]/edit` and edit any listing (including `Closed`), regardless of ownership. Backend bypasses ownership and `Closed` restrictions only for JWT users with role `Admin`. For editing VIN, admin requests full VIN via `GET /api/listings/:id?includeFullVin=1`.
+- [cipauto-import.md](./features/cipauto-import.md) — CipAuto partner import tool (scan/import/report, idempotent registry, retry-safe)
 - [search-filters.md](./features/search-filters.md) — Search and filters form (tabs, fields, layout)
 - [seller-listings-board.md](./features/seller-listings-board.md) — Seller listings board
 - [similar-listings.md](./features/similar-listings.md) — Similar listings
