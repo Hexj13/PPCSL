@@ -412,10 +412,10 @@ export const ListingCardImageCarousel = React.forwardRef<
       if (!src) return null;
       if (imageErrors.has(index)) return errorPlaceholder;
       const imageUrl = src === '/placeholder-car.jpg' ? src : getOptimizedImageUrl(src, 65, 640);
-      const isFirst = priority && index === 0;
-      if (!isFirst) {
+      if (index !== 0) {
         return renderNativeSlide(index);
       }
+      const isFirst = priority && index === 0;
       return (
         <Image
           key={`card-slide-${index}`}
@@ -428,7 +428,7 @@ export const ListingCardImageCarousel = React.forwardRef<
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
           className="object-cover"
-          loading={undefined}
+          loading={isFirst ? undefined : 'lazy'}
           priority={isFirst}
           draggable={false}
           onLoad={() => {
