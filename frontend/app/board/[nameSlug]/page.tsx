@@ -33,9 +33,15 @@ export async function generateMetadata({
   const locale = await getMetadataLocale();
   const t = getServerTranslations(locale);
   const title = t.board.title.replace('{sellerName}', board.displayName);
+  const description = t.board.metaDescription.replace('{sellerName}', board.displayName);
   return {
     title,
-    robots: { index: false, follow: false },
+    description,
+    robots: { index: true, follow: true },
+    openGraph: {
+      title,
+      description,
+    },
   };
 }
 

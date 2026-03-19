@@ -34,21 +34,27 @@ GET /sitemaps/:name.xml   → Next.js route handler → GET /api/sitemaps/:name 
 
 | URL                              | Content                                                    | Priority | changefreq    |
 | -------------------------------- | ---------------------------------------------------------- | -------- | ------------- |
-| `/sitemap.xml`                   | Sitemap index (links to child sitemaps)                    | —        | —             |
+| `/sitemap.xml`                   | Sitemap index (`pages`, `brands-{car\|truck\|moto}`, `sellers`, `listings-*` — **no nested sitemap index**, per Google) | —        | —             |
 | `/sitemaps/pages.xml`            | Static pages                                               | 0.2–1.0  | daily/monthly |
-| `/sitemaps/brands.xml`           | Brand and brand+model pages                                | 0.7–0.8  | daily         |
+| `/sitemaps/brands-car.xml`      | Brand + brand+model URLs for passenger cars (`car`)       | 0.7–0.8  | daily         |
+| `/sitemaps/brands-truck.xml`    | Same for commercial (`truck`)                             | 0.7–0.8  | daily         |
+| `/sitemaps/brands-moto.xml`     | Same for motorcycles (`moto`)                             | 0.7–0.8  | daily         |
 | `/sitemaps/sellers.xml`          | Seller board pages (active sellers with ≥1 active listing) | 0.6      | daily         |
 | `/sitemaps/listings-YYYY-MM.xml` | Active listings created in that month                      | 0.9      | hourly        |
 
 Only **Active** listings are included. Seller boards are included only if the user is active, has a `board_slug`, and has at least one Active listing.
+
+The path **`/sitemaps/brands.xml`** is **not** served (404). Older setups must rely on the root index only; do not submit a nested sitemap index in GSC.
+
+**Crawl policy:** `robots.txt` must **not** disallow `/board/` if seller board URLs are listed here. Board pages use indexable metadata (`robots` index/follow) so sitemap entries match crawl eligibility.
 
 ## What's Included
 
 | Type                 | Included | File                 | Notes                                                              |
 | -------------------- | -------- | -------------------- | ------------------------------------------------------------------ |
 | Static pages         | Yes      | pages.xml            | `/`, `/listings`, `/terms`, `/privacy`, `/faq`, `/contacts`, `/cookie-settings` |
-| Brand pages          | Yes      | brands.xml           | `/?brand=slug`, `/?brand=slug&vehicleType=truck` (etc.)            |
-| Brand+Model pages    | Yes      | brands.xml           | `/?brand=slug&model=slug` (with optional vehicleType)              |
+| Brand pages          | Yes      | brands-*.xml         | Split by `vehicleType`: `car` / `truck` / `moto` (see below)        |
+| Brand+Model pages    | Yes      | brands-*.xml         | Bucket from first model `vehicle_types` entry, else `car`          |
 | Seller boards        | Yes      | sellers.xml          | `/board/:board_slug` — only active sellers with active listings    |
 | Individual listings  | Yes      | listings-YYYY-MM.xml | `/listings/:id` — Active only, partitioned by month; closed listings are excluded from sitemap and additionally marked `noindex` on their detail pages |
 | Body type pages      | No       | —                    | Removed; use brand/model and search for discovery                  |
@@ -68,13 +74,17 @@ Only **Active** listings are included. Seller boards are included only if the us
 | `/contacts`        | 0.3      | monthly    |
 | `/cookie-settings` | 0.2      | monthly    |
 
-### Brand and Model URLs (brands.xml)
+### Brand and Model URLs (`brands-car.xml`, `brands-truck.xml`, `brands-moto.xml`)
 
-Same rules as before: `vehicleType` param for truck/moto, omitted for cars. All URLs use query parameters and are properly escaped in XML (`&` → `&amp;`).
+- The root **`/sitemap.xml`** lists these three **urlset** files directly (not via an intermediate `brands.xml` sitemap index).
+- **Brand rows:** each entry in `brand.vehicle_types` goes to the matching bucket; if the array is empty, defaults to **car** (one URL, no `vehicleType` query param).
+- **Model rows:** first value in `model.vehicle_types` selects the bucket; if missing, **car**.
+
+Same URL rules as before: `vehicleType` query param for truck/moto, omitted for cars. All `<loc>` values use query parameters and are escaped in XML (`&` → `&amp;`).
 
 ### Seller Boards (sellers.xml)
 
-- URL: `https://kupito.club/board/{board_slug}`
+- URL: `https://kupito.club/board/{board_slug}` — same path is allowed for crawling in `robots.txt`; page is indexable.
 - `lastmod`: max `updated_at` among the seller's Active listings
 
 ### Listings (listings-YYYY-MM.xml)
@@ -96,7 +106,7 @@ Same rules as before: `vehicleType` param for truck/moto, omitted for cars. All 
 ### Caching
 
 - Key prefix: `sitemap:`
-- Keys: `sitemap:index`, `sitemap:pages`, `sitemap:brands`, `sitemap:sellers`, `sitemap:listings-YYYY-MM`
+- Keys: `sitemap:index`, `sitemap:pages`, `sitemap:brands-car`, `sitemap:brands-truck`, `sitemap:brands-moto`, `sitemap:sellers`, `sitemap:listings-YYYY-MM`
 - TTL: 3600 seconds (1 hour)
 
 ### Database Queries

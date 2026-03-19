@@ -40,8 +40,14 @@ export class SitemapController {
       case 'pages':
         xml = await this.sitemapService.getPagesSitemap();
         break;
-      case 'brands':
-        xml = await this.sitemapService.getBrandsSitemap();
+      case 'brands-car':
+        xml = await this.sitemapService.getBrandsSitemapVehicleType('car');
+        break;
+      case 'brands-truck':
+        xml = await this.sitemapService.getBrandsSitemapVehicleType('truck');
+        break;
+      case 'brands-moto':
+        xml = await this.sitemapService.getBrandsSitemapVehicleType('moto');
         break;
       case 'sellers':
         xml = await this.sitemapService.getSellersSitemap();

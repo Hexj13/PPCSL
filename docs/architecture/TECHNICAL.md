@@ -872,7 +872,7 @@ All scripts are located in `backend/src/scripts/` and can be executed via npm co
 - **Robots.txt** - Proper crawling instructions
 - **Sitemap** - Backend-generated XML sitemap index at `/sitemap.xml` (proxied from frontend) with child sitemaps:
   - Static pages (homepage, listings, terms, privacy, FAQ, contacts, cookie-settings)
-  - Brand and brand+model landing pages (`/?brand={slug}`, `/?brand={slug}&model={slug}`)
+  - Brand and brand+model landing pages in `brands-car.xml`, `brands-truck.xml`, `brands-moto.xml` (listed directly in the root index; no nested sitemap index)
   - Seller board pages (`/board/{slug}`) for active sellers with active listings
   - Active listings by month (`/listings/{id}`) in `listings-YYYY-MM.xml`
   - Cached in Redis (1 hour); proper XML escaping and Cache-Control headers
@@ -1488,7 +1488,7 @@ cd backend && npm run test -- listings.service.spec.ts
   - Added utility functions `createSlug()` and `slugToName()` in `lib/utils/utils.ts` for URL-friendly text conversion
   - Updated sitemap to include brand landing pages (`/?brand={slug}`) and brand-model combinations (`/?brand={slug}&model={slug}`)
   - Enhanced SavedFiltersList to use slug-based URLs when applying saved filters
-  - Sitemap moved to backend (NestJS): sitemap index + child sitemaps (pages, brands, sellers, listings by month), Redis cache, frontend rewrites
+  - Sitemap moved to backend (NestJS): sitemap index + child sitemaps (pages, `brands-{car|truck|moto}`, sellers, listings by month), Redis cache, frontend rewrites
   - Fixed scroll restoration bug on homepage that was overwriting restored scroll position
 - **Core Web Vitals & INP Optimizations (2025-01-29):**
   - Implemented startTransition for non-blocking state updates, improving INP (Interaction to Next Paint)

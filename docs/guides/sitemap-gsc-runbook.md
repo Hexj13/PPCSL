@@ -50,6 +50,8 @@ curl -sSIL -A "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bo
   "https://kupito.club/sitemap.xml"
 curl -sSIL -A "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" \
   "https://kupito.club/sitemaps/pages.xml"
+curl -sSIL -A "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" \
+  "https://kupito.club/sitemaps/brands-car.xml"
 ```
 
 Expect: `HTTP/2 200`, `Content-Type: application/xml; charset=utf-8`.
@@ -78,6 +80,8 @@ node -e "console.log('API_URL set:', !!process.env.NEXT_PUBLIC_API_URL); console
 6. Optionally request indexing for one child sitemap, e.g. `https://kupito.club/sitemaps/pages.xml`, to trigger a fresh crawl.
 
 GSC may take hours or days to reprocess; status will update after the next crawl.
+
+If `robots.txt` was changed (e.g. seller boards under `/board/` allowed for crawl), verify a live seller board URL in **URL Inspection** so coverage matches `sellers.xml`.
 
 ## 4. Verify sitemap availability (curl)
 

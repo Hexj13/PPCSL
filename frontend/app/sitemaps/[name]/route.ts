@@ -22,7 +22,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ nam
   }
 
   if (!response.ok) {
-    return new Response('', { status: response.status });
+    return new Response(UPSTREAM_UNAVAILABLE, {
+      status: 502,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    });
   }
 
   const xml = await response.text();

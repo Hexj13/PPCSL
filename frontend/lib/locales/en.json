@@ -591,6 +591,7 @@
   },
   "board": {
     "title": "Listings board from {sellerName}",
+    "metaDescription": "Active listings from {sellerName} on one page.",
     "home": "Home",
     "loadMore": "Load more",
     "noMoreListings": "No more listings",

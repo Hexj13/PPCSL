@@ -13,6 +13,9 @@ const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club').rep
 const CACHE_TTL = 3600;
 const CACHE_PREFIX = 'sitemap:';
 
+const BRAND_SITEMAP_VEHICLE_TYPES = ['car', 'truck', 'moto'] as const;
+type BrandSitemapVehicleType = (typeof BRAND_SITEMAP_VEHICLE_TYPES)[number];
+
 interface SitemapUrl {
   loc: string;
   lastmod: string;
@@ -22,6 +25,8 @@ interface SitemapUrl {
 
 @Injectable()
 export class SitemapService {
+  private brandsSitemapsBuild: Promise<Record<BrandSitemapVehicleType, string>> | null = null;
+
   constructor(
     @InjectRepository(Listing)
     private readonly listingRepo: Repository<Listing>,
@@ -43,7 +48,10 @@ export class SitemapService {
 
     const sitemaps: { loc: string; lastmod: string }[] = [
       { loc: `${SITE_URL}/sitemaps/pages.xml`, lastmod: now },
-      { loc: `${SITE_URL}/sitemaps/brands.xml`, lastmod: now },
+      ...BRAND_SITEMAP_VEHICLE_TYPES.map((vt) => ({
+        loc: `${SITE_URL}/sitemaps/brands-${vt}.xml`,
+        lastmod: now,
+      })),
       { loc: `${SITE_URL}/sitemaps/sellers.xml`, lastmod: now },
     ];
 
@@ -66,7 +74,7 @@ export class SitemapService {
     const months = await this.getActiveListingMonths();
     const xmlSitemaps: string[] = [
       await this.getPagesSitemap(),
-      await this.getBrandsSitemap(),
+      ...(await this.getBrandsSitemapUrlsetsForText()),
       await this.getSellersSitemap(),
     ];
 
@@ -104,29 +112,55 @@ export class SitemapService {
     return xml;
   }
 
-  async getBrandsSitemap(): Promise<string> {
-    const cached = await this.getFromCache('brands');
-    if (cached) return cached;
+  async getBrandsSitemapVehicleType(vehicleType: BrandSitemapVehicleType): Promise<string> {
+    const all = await this.ensureBrandsSitemapsBuilt();
+    return all[vehicleType];
+  }
 
-    const now = this.today();
-    const brands = await this.brandRepo.find({ order: { name: 'ASC' } });
-    const models = await this.modelRepo.find({
-      relations: ['brand'],
-      order: { name: 'ASC' },
-    });
+  private async getBrandsSitemapUrlsetsForText(): Promise<string[]> {
+    const all = await this.ensureBrandsSitemapsBuilt();
+    return BRAND_SITEMAP_VEHICLE_TYPES.map((vt) => all[vt]);
+  }
 
-    const urls: SitemapUrl[] = [];
+  private isBrandSitemapVehicleType(v: string): v is BrandSitemapVehicleType {
+    return (BRAND_SITEMAP_VEHICLE_TYPES as readonly string[]).includes(v);
+  }
+
+  private modelBrandSitemapVehicleType(model: VehicleModel): BrandSitemapVehicleType {
+    const vt = model.vehicle_types?.[0];
+    if (vt && this.isBrandSitemapVehicleType(vt)) return vt;
+    return 'car';
+  }
+
+  private groupBrandModelUrlsByVehicleType(
+    brands: Brand[],
+    models: VehicleModel[],
+    now: string,
+  ): Record<BrandSitemapVehicleType, SitemapUrl[]> {
+    const grouped: Record<BrandSitemapVehicleType, SitemapUrl[]> = {
+      car: [],
+      truck: [],
+      moto: [],
+    };
 
     for (const brand of brands) {
       const slug = createSlug(brand.name);
       if (!slug) continue;
 
       const vehicleTypes = brand.vehicle_types || [];
-      const types = vehicleTypes.length > 0 ? vehicleTypes : (['car'] as const);
+      let types: BrandSitemapVehicleType[] =
+        vehicleTypes.length > 0
+          ? vehicleTypes.filter((t): t is BrandSitemapVehicleType =>
+              this.isBrandSitemapVehicleType(t),
+            )
+          : ['car'];
+      if (types.length === 0) {
+        types = ['car'];
+      }
 
       for (const vt of types) {
         const param = vt !== 'car' ? `&vehicleType=${vt}` : '';
-        urls.push({
+        grouped[vt].push({
           loc: `${SITE_URL}/?brand=${slug}${param}`,
           lastmod: now,
           changefreq: 'daily',
@@ -141,9 +175,9 @@ export class SitemapService {
       const modelSlug = createSlug(model.name);
       if (!brandSlug || !modelSlug) continue;
 
-      const vt = model.vehicle_types?.[0];
-      const param = vt && vt !== 'car' ? `&vehicleType=${vt}` : '';
-      urls.push({
+      const vt = this.modelBrandSitemapVehicleType(model);
+      const param = vt !== 'car' ? `&vehicleType=${vt}` : '';
+      grouped[vt].push({
         loc: `${SITE_URL}/?brand=${brandSlug}&model=${modelSlug}${param}`,
         lastmod: now,
         changefreq: 'daily',
@@ -151,9 +185,56 @@ export class SitemapService {
       });
     }
 
-    const xml = this.buildUrlset(urls);
-    await this.saveToCache('brands', xml);
-    return xml;
+    return grouped;
+  }
+
+  private async readBrandsSitemapsFromCache(): Promise<Record<
+    BrandSitemapVehicleType,
+    string
+  > | null> {
+    const result = {} as Record<BrandSitemapVehicleType, string>;
+    for (const vt of BRAND_SITEMAP_VEHICLE_TYPES) {
+      const xml = await this.getFromCache(`brands-${vt}`);
+      if (xml === null) {
+        return null;
+      }
+      result[vt] = xml;
+    }
+    return result;
+  }
+
+  private async ensureBrandsSitemapsBuilt(): Promise<Record<BrandSitemapVehicleType, string>> {
+    const cached = await this.readBrandsSitemapsFromCache();
+    if (cached) {
+      return cached;
+    }
+    if (!this.brandsSitemapsBuild) {
+      this.brandsSitemapsBuild = this.computeAllBrandsSitemaps().finally(() => {
+        this.brandsSitemapsBuild = null;
+      });
+    }
+    return this.brandsSitemapsBuild;
+  }
+
+  private async computeAllBrandsSitemaps(): Promise<Record<BrandSitemapVehicleType, string>> {
+    const now = this.today();
+    const brands = await this.brandRepo.find({ order: { name: 'ASC' } });
+    const models = await this.modelRepo.find({
+      relations: ['brand'],
+      order: { name: 'ASC' },
+    });
+
+    const grouped = this.groupBrandModelUrlsByVehicleType(brands, models, now);
+    const result = {} as Record<BrandSitemapVehicleType, string>;
+
+    for (const vt of BRAND_SITEMAP_VEHICLE_TYPES) {
+      const urls = grouped[vt];
+      const xml = this.buildUrlset(urls);
+      result[vt] = xml;
+      await this.saveToCache(`brands-${vt}`, xml);
+    }
+
+    return result;
   }
 
   async getSellersSitemap(): Promise<string> {

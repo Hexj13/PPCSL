@@ -37,6 +37,7 @@ export interface TranslationsPart1 {
   };
   board: {
     title: string;
+    metaDescription: string;
     home: string;
     loadMore: string;
     noMoreListings: string;
