@@ -293,7 +293,8 @@ export function getOptimizedImageUrl(
   }
 
   const queryString = params.toString();
-  const baseUrl = normalizeUrl(API_URL);
+  const IMAGE_CDN_URL = process.env.NEXT_PUBLIC_IMAGE_CDN_URL;
+  const baseUrl = IMAGE_CDN_URL ? normalizeUrl(IMAGE_CDN_URL) : normalizeUrl(API_URL);
   return `${baseUrl}/api/upload/image/${encodeURIComponent(relativePath)}${queryString ? `?${queryString}` : ''}`;
 }
 

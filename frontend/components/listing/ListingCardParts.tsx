@@ -17,7 +17,7 @@ export function ListingCardImageArea({
   imageUrl,
   imageAltTitle,
   priority,
-  isLocalhostImage,
+  blurDataURL,
   onError,
   t,
 }: {
@@ -25,7 +25,7 @@ export function ListingCardImageArea({
   imageUrl: string;
   imageAltTitle: string;
   priority: boolean;
-  isLocalhostImage: boolean;
+  blurDataURL?: string;
   onError: () => void;
   t: (_key: string, _params?: Record<string, string>) => string;
 }) {
@@ -41,7 +41,9 @@ export function ListingCardImageArea({
         priority={priority}
         draggable={false}
         onError={onError}
-        unoptimized={isLocalhostImage && process.env.NODE_ENV === 'development'}
+        unoptimized
+        placeholder={blurDataURL ? 'blur' : undefined}
+        blurDataURL={blurDataURL}
       />
     );
   }
@@ -90,10 +92,21 @@ export const ListingCardImageCarousel = React.forwardRef<
     onIndexChange?: (index: number) => void;
     imageAltTitle: string;
     priority: boolean;
+    blurDataURL?: string;
     t: (_key: string, _params?: Record<string, string>) => string;
   }
 >(function ListingCardImageCarousel(
-  { images, imageErrors, onImageError, onBusyChange, onIndexChange, imageAltTitle, priority, t },
+  {
+    images,
+    imageErrors,
+    onImageError,
+    onBusyChange,
+    onIndexChange,
+    imageAltTitle,
+    priority,
+    blurDataURL,
+    t,
+  },
   ref,
 ) {
   const [state, setState] = useState<CarouselState>({ type: 'idle', index: 0 });
@@ -171,7 +184,7 @@ export const ListingCardImageCarousel = React.forwardRef<
         continue;
       }
 
-      const url = getOptimizedImageUrl(src, 65, 800);
+      const url = getOptimizedImageUrl(src, 65, 640);
       const img = new window.Image();
       imagesCacheRef.current.push(img);
       preloadingRef.current.add(index);
@@ -241,7 +254,7 @@ export const ListingCardImageCarousel = React.forwardRef<
         return;
       }
 
-      const url = getOptimizedImageUrl(src, 65, 800);
+      const url = getOptimizedImageUrl(src, 65, 640);
       const img = new window.Image();
       imagesCacheRef.current.push(img);
       preloadingRef.current.add(toIndex);
@@ -365,7 +378,7 @@ export const ListingCardImageCarousel = React.forwardRef<
       const src = images[index];
       if (!src) return null;
       if (imageErrors.has(index)) return errorPlaceholder;
-      const imageUrl = src === '/placeholder-car.jpg' ? src : getOptimizedImageUrl(src, 65, 800);
+      const imageUrl = src === '/placeholder-car.jpg' ? src : getOptimizedImageUrl(src, 65, 640);
       return (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -398,13 +411,11 @@ export const ListingCardImageCarousel = React.forwardRef<
       const src = images[index];
       if (!src) return null;
       if (imageErrors.has(index)) return errorPlaceholder;
-      const imageUrl = src === '/placeholder-car.jpg' ? src : getOptimizedImageUrl(src, 65, 800);
+      const imageUrl = src === '/placeholder-car.jpg' ? src : getOptimizedImageUrl(src, 65, 640);
       const isFirst = priority && index === 0;
       if (!isFirst) {
         return renderNativeSlide(index);
       }
-      const isLocalhostImage =
-        imageUrl.startsWith('http://localhost:') || imageUrl.startsWith('http://127.0.0.1:');
       return (
         <Image
           key={`card-slide-${index}`}
@@ -426,7 +437,9 @@ export const ListingCardImageCarousel = React.forwardRef<
           onError={() => {
             onImageError(index);
           }}
-          unoptimized={isLocalhostImage && process.env.NODE_ENV === 'development'}
+          unoptimized
+          placeholder={blurDataURL ? 'blur' : undefined}
+          blurDataURL={blurDataURL}
         />
       );
     },
@@ -435,6 +448,7 @@ export const ListingCardImageCarousel = React.forwardRef<
       imageErrors,
       imageAltTitle,
       priority,
+      blurDataURL,
       t,
       markLoaded,
       onImageError,

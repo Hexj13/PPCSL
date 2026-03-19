@@ -138,7 +138,14 @@ export function useListingFormImages({
           });
         }
 
-        setFormData((prev) => ({ ...prev, images: [...prev.images, imageUrl] }));
+        setFormData((prev) => {
+          const newImages = [...prev.images, imageUrl];
+          const updates: Partial<typeof prev> = { images: newImages };
+          if (newImages.length === 1 && response.data.blurhash) {
+            updates.cover_blur_hash = response.data.blurhash;
+          }
+          return { ...prev, ...updates };
+        });
         setUploadSlots((prev) =>
           prev.map((s) => (s.id === slotId ? { ...s, uploadedUrl: imageUrl } : s)),
         );

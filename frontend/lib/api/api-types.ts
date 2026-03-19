@@ -22,6 +22,7 @@ export interface Listing {
   status: ListingStatus;
   description?: string;
   images?: string[];
+  cover_blur_hash?: string | null;
   urgent?: boolean;
   is_new?: boolean;
   vin?: string;
@@ -152,6 +153,7 @@ export interface CreateListingDto {
   down_payment_amount?: number;
   description?: string;
   images?: string[];
+  cover_blur_hash?: string;
   status?: ListingStatus;
   urgent?: boolean;
   is_new?: boolean;

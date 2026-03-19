@@ -23,6 +23,8 @@ export interface SearchListingsResult {
 
 @Injectable()
 export class SearchListingsUseCase {
+  private static readonly MAX_SEARCH_IMAGES = 5;
+
   constructor(
     @Inject(LISTING_REPOSITORY)
     private readonly listingRepo: IListingRepository,
@@ -80,6 +82,9 @@ export class SearchListingsUseCase {
 
   private maskListings(listings: Listing[]): Listing[] {
     return listings.map((listing) => {
+      if (listing.images && listing.images.length > SearchListingsUseCase.MAX_SEARCH_IMAGES) {
+        listing.images = listing.images.slice(0, SearchListingsUseCase.MAX_SEARCH_IMAGES);
+      }
       if (listing.user) {
         listing.user = removePasswordFromUser(listing.user) as typeof listing.user;
         if (

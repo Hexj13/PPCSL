@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect, startTransition, useCallback, useRef } from 'react';
+import { useState, useEffect, startTransition, useCallback, useRef, useMemo } from 'react';
 
 import { RESET_SEARCH_EVENT } from '@/components/layout/Header/HeaderLogo';
 import { SaveFilterModal } from '@/components/modals/SaveFilterModal';
@@ -18,6 +18,7 @@ import { useSearchTabs } from '@/hooks/useSearchTabs';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useVehicleType } from '@/hooks/useVehicleType';
 import type { User } from '@/lib/api';
+import { getPopularBrands, getPopularModelsByBrand } from '@/lib/content/popular-brands';
 import { useAuthStore } from '@/lib/store';
 import { isBrowser } from '@/lib/utils';
 
@@ -54,12 +55,8 @@ export function SearchFilters() {
     setFilters,
   } = useSearchFilters();
 
-  const {
-    hasBasicFilters,
-    hasAdvancedFiltersActive,
-    hasEquipmentFiltersActive,
-    hasPopularFiltersActive,
-  } = useSearchFilterFlags(filters, currentYear);
+  const { hasBasicFilters, hasAdvancedFiltersActive, hasEquipmentFiltersActive } =
+    useSearchFilterFlags(filters, currentYear);
 
   const tabs = useSearchTabs({
     hasBasicFilters,
@@ -98,6 +95,32 @@ export function SearchFilters() {
     models,
     setModels: setModelsFromHook,
   } = useBrandsAndModels({ autoLoadModels: false, vehicleType });
+
+  const hasPopularFiltersActive = useMemo(() => {
+    if (filters.brand_ids.length === 0 && filters.model_ids.length === 0) {
+      return false;
+    }
+
+    const popularBrands = new Set(getPopularBrands(vehicleType));
+    const selectedBrands = brands.filter((brand) => filters.brand_ids.includes(brand.id));
+
+    if (selectedBrands.some((brand) => popularBrands.has(brand.name))) {
+      return true;
+    }
+
+    const popularModelsByBrand = getPopularModelsByBrand(vehicleType);
+    const selectedModels = models.filter((model) => filters.model_ids.includes(model.id));
+    const brandNameById = new Map(brands.map((brand) => [brand.id, brand.name]));
+
+    return selectedModels.some((model) => {
+      const brandName = brandNameById.get(model.brand_id);
+      if (!brandName) {
+        return false;
+      }
+      const popularModels = popularModelsByBrand[brandName] ?? [];
+      return popularModels.includes(model.name);
+    });
+  }, [brands, filters.brand_ids, filters.model_ids, models, vehicleType]);
   const { cities } = useCities();
 
   useVehicleTypeFromUrl(searchParams, brands, vehicleType, setVehicleTypeWithStorage);

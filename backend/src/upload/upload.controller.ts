@@ -50,6 +50,20 @@ export class UploadController {
 
   private readonly logger = new Logger(UploadController.name);
 
+  private static buildFileUrl(filePath: string): string {
+    if (process.env.AWS_CLOUDFRONT_URL) {
+      return `${process.env.AWS_CLOUDFRONT_URL}${filePath}`;
+    }
+    if (process.env.AWS_S3_BUCKET_NAME && process.env.AWS_REGION) {
+      return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com${filePath}`;
+    }
+    let baseUrl = process.env.API_URL || 'http://localhost:4000';
+    if (process.env.NODE_ENV === 'production' && baseUrl.startsWith('http://')) {
+      baseUrl = baseUrl.replace('http://', 'https://');
+    }
+    return `${baseUrl}${filePath}`;
+  }
+
   private static matchesIfNoneMatch(
     ifNoneMatchHeader: string | string[] | undefined,
     currentEtag: string,
@@ -167,25 +181,17 @@ export class UploadController {
       const filePath = result.path;
       this.logger.debug(`File saved successfully: ${filePath}`);
 
-      let url: string;
-
-      if (process.env.AWS_CLOUDFRONT_URL) {
-        url = `${process.env.AWS_CLOUDFRONT_URL}${filePath}`;
-      } else if (process.env.AWS_S3_BUCKET_NAME && process.env.AWS_REGION) {
-        const bucketName = process.env.AWS_S3_BUCKET_NAME;
-        const region = process.env.AWS_REGION;
-        url = `https://${bucketName}.s3.${region}.amazonaws.com${filePath}`;
-      } else {
-        let baseUrl = process.env.API_URL || 'http://localhost:4000';
-        if (process.env.NODE_ENV === 'production' && baseUrl.startsWith('http://')) {
-          baseUrl = baseUrl.replace('http://', 'https://');
-        }
-        url = `${baseUrl}${filePath}`;
-      }
+      const url = UploadController.buildFileUrl(filePath);
+      const thumbnailUrl = result.thumbnailPath
+        ? UploadController.buildFileUrl(result.thumbnailPath)
+        : null;
 
       return {
         url,
         path: filePath,
+        thumbnailUrl,
+        thumbnailPath: result.thumbnailPath ?? null,
+        blurhash: result.blurhash ?? null,
         plateMaskResult: result.plateMaskResult ?? null,
         deleteToken: req?.user?.id
           ? this.uploadService.generateDeleteToken(req.user.id, filePath)

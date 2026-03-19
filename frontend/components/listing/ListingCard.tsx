@@ -29,6 +29,7 @@ import {
   getListingDisplayTitle,
   getVehicleType,
 } from '@/lib/utils';
+import { blurhashToDataURL } from '@/lib/utils/blurhash';
 
 interface ListingCardProps {
   listing: Listing;
@@ -381,7 +382,7 @@ function useCardCarouselRewind(
       const nextSrc = images[nextIndex];
       if (nextSrc && nextSrc !== '/placeholder-car.jpg') {
         const preloadImg = new window.Image();
-        preloadImg.src = getOptimizedImageUrl(nextSrc, 65, 800);
+        preloadImg.src = getOptimizedImageUrl(nextSrc, 65, 640);
       }
     }
   }, [clearRewind, images, carouselIndex, isMobileOrTablet]);
@@ -531,14 +532,16 @@ function ListingCardComponent({
 
   const singleImageUrl =
     images[0] && images[0] !== '/placeholder-car.jpg'
-      ? getOptimizedImageUrl(images[0], 65, 800)
+      ? getOptimizedImageUrl(images[0], 65, 640)
       : '/placeholder-car.jpg';
-  const isLocalhostImage =
-    singleImageUrl.startsWith('http://localhost:') ||
-    singleImageUrl.startsWith('http://127.0.0.1:');
   const showImage =
     images.length <= 1 &&
     Boolean(singleImageUrl && singleImageUrl !== '/placeholder-car.jpg' && !imageErrors.has(0));
+
+  const blurDataURL = useMemo(
+    () => (listing.cover_blur_hash ? blurhashToDataURL(listing.cover_blur_hash) : undefined),
+    [listing.cover_blur_hash],
+  );
 
   const handleImageError = useListingCardImageError(
     listing.id,
@@ -576,6 +579,7 @@ function ListingCardComponent({
               onIndexChange={handleCarouselIndexChange}
               imageAltTitle={imageAltTitle}
               priority={priority}
+              blurDataURL={blurDataURL}
               t={t}
             />
           ) : (
@@ -584,7 +588,7 @@ function ListingCardComponent({
               imageUrl={singleImageUrl}
               imageAltTitle={imageAltTitle}
               priority={priority}
-              isLocalhostImage={isLocalhostImage}
+              blurDataURL={blurDataURL}
               onError={() => handleImageError(0)}
               t={t}
             />

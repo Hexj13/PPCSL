@@ -12,6 +12,7 @@ import {
   Length,
   Matches,
   Max,
+  MaxLength,
   Min,
   ValidateNested,
 } from 'class-validator';
@@ -188,6 +189,15 @@ export class UpdateListingDto {
     message: 'Максимум 40 опции',
   })
   equipment?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Blurhash of the cover image',
+    example: 'LEHV6nWB2yk8pyo0adR*.7kCMdnj',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  cover_blur_hash?: string;
 
   @ApiPropertyOptional({
     type: () => CreateVehicleDto,

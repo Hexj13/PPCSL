@@ -87,6 +87,9 @@ export class Listing {
   @Column('simple-array', { nullable: true })
   images: string[] | null;
 
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  cover_blur_hash: string | null;
+
   @Column({ type: 'boolean', default: false })
   urgent: boolean;
 

@@ -73,6 +73,7 @@ const defaultFormData = {
   horsepower: '',
   power_kw: '',
   equipment: [],
+  cover_blur_hash: '',
   assignedUserId: '',
   negotiable: false,
   available_in_credit: false,

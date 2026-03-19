@@ -66,7 +66,7 @@ export function useListingCardCarouselPreload(
     const prev = (currentIndex - 1 + images.length) % images.length;
     if (images[next] && images[next] !== '/placeholder-car.jpg' && !imageErrors.has(next)) {
       if (!loadedRef.current.has(next) && !preloadingRef.current.has(next)) {
-        const url = getOptimizedImageUrl(images[next], 65, 800);
+        const url = getOptimizedImageUrl(images[next], 65, 640);
         const img = new window.Image();
         imagesCacheRef.current.push(img);
         preloadingRef.current.add(next);
@@ -88,7 +88,7 @@ export function useListingCardCarouselPreload(
       !imageErrors.has(prev)
     ) {
       if (!loadedRef.current.has(prev) && !preloadingRef.current.has(prev)) {
-        const url = getOptimizedImageUrl(images[prev], 65, 800);
+        const url = getOptimizedImageUrl(images[prev], 65, 640);
         const img = new window.Image();
         imagesCacheRef.current.push(img);
         preloadingRef.current.add(prev);
@@ -115,7 +115,7 @@ export function useListingCardCarouselPreload(
         !loadedRef.current.has(idx) &&
         !preloadingRef.current.has(idx)
       ) {
-        const url = getOptimizedImageUrl(images[idx], 65, 800);
+        const url = getOptimizedImageUrl(images[idx], 65, 640);
         const img = new window.Image();
         imagesCacheRef.current.push(img);
         preloadingRef.current.add(idx);

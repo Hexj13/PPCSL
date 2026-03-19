@@ -10,6 +10,7 @@ export const uploadApi = {
     return api.post<{
       url: string;
       path: string;
+      blurhash?: string | null;
       plateMaskResult?: string | null;
       deleteToken?: string | null;
     }>('/api/upload/image', formData, {

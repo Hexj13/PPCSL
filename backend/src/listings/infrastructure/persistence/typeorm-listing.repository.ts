@@ -144,6 +144,7 @@ export class TypeOrmListingRepository implements IListingRepository {
         'listing.city',
         'listing.status',
         'listing.images',
+        'listing.cover_blur_hash',
         'listing.urgent',
         'listing.is_new',
         'listing.is_promoted',

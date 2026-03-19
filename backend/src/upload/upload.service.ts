@@ -16,6 +16,8 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { encode as blurhashEncode } from 'blurhash';
+import { LRUCache } from 'lru-cache';
 import sharp from 'sharp';
 
 import { handleUploadError } from '../common/utils/error-handling.utils';
@@ -30,11 +32,15 @@ const DETECTION_QUEUE_OVERFLOW = 20;
 const RETRY_MAX_ATTEMPTS = 3;
 const RETRY_BASE_DELAY_MS = 500;
 const DELETE_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
+const THUMBNAIL_WIDTH = 400;
+const THUMBNAIL_QUALITY = 65;
 
 export type PlateMaskResult = 'mask_applied' | 'not_found' | null;
 
 export interface SaveFileResult {
   path: string;
+  thumbnailPath?: string;
+  blurhash?: string | null;
   plateMaskResult?: PlateMaskResult;
 }
 
@@ -51,6 +57,7 @@ export class UploadService {
   private readonly watermarkPath: string;
   private readonly watermarkDomain: string;
   private readonly deleteTokenSecret: string;
+  private readonly optimizedImageCache: LRUCache<string, Buffer>;
 
   private readonly imageMagicNumbers: { [key: string]: Buffer[] } = {
     'image/jpeg': [
@@ -94,6 +101,10 @@ export class UploadService {
       if (!fs.existsSync(this.uploadDir)) {
         fs.mkdirSync(this.uploadDir, { recursive: true });
       }
+      const thumbDir = path.join(this.uploadDir, 'thumb');
+      if (!fs.existsSync(thumbDir)) {
+        fs.mkdirSync(thumbDir, { recursive: true });
+      }
     }
 
     this.watermarkPath = path.join(process.cwd(), 'assets', 'watermark', 'logo.png');
@@ -114,6 +125,13 @@ export class UploadService {
 
     this.deleteTokenSecret =
       this.configService.get<string>('JWT_SECRET') || 'kupito-upload-delete-fallback';
+
+    const cacheSizeMb = parseInt(process.env.IMAGE_CACHE_SIZE_MB || '150', 10);
+    this.optimizedImageCache = new LRUCache<string, Buffer>({
+      maxSize: cacheSizeMb * 1024 * 1024,
+      sizeCalculation: (value) => value.length,
+      ttl: 60 * 60 * 1000,
+    });
   }
 
   private validateFileSignature(buffer: Buffer, mimetype: string): boolean {
@@ -409,7 +427,54 @@ export class UploadService {
           : this.uploadToLocal(fileName, compressedBuffer);
       log('UPLOAD', `path=${pathResult}`);
 
-      return { path: pathResult, plateMaskResult };
+      const [thumbnailPath, blurhash] = await Promise.all([
+        (async (): Promise<string | undefined> => {
+          try {
+            const thumbBuffer = await sharp(compressedBuffer)
+              .resize(THUMBNAIL_WIDTH, null, { withoutEnlargement: true, fit: 'inside' })
+              .webp({ quality: THUMBNAIL_QUALITY, effort: 4 })
+              .toBuffer();
+
+            const thumbKey = `uploads/thumb/${fileName}`;
+            const thumbPath =
+              this.useS3 && this.s3Client
+                ? await this.uploadToS3(thumbKey, thumbBuffer)
+                : this.uploadToLocal(`thumb/${fileName}`, thumbBuffer);
+            log('THUMB', `path=${thumbPath}, size=${thumbBuffer.length}`);
+            return thumbPath;
+          } catch (thumbError) {
+            this.logger.warn(
+              `[${uploadId}] [THUMB] failed: ${thumbError instanceof Error ? thumbError.message : 'unknown'}`,
+            );
+            return undefined;
+          }
+        })(),
+        (async (): Promise<string | null> => {
+          try {
+            const { data: rawPixels, info: rawInfo } = await sharp(compressedBuffer)
+              .raw()
+              .ensureAlpha()
+              .resize(32, 32, { fit: 'inside' })
+              .toBuffer({ resolveWithObject: true });
+            const hash = blurhashEncode(
+              new Uint8ClampedArray(rawPixels),
+              rawInfo.width,
+              rawInfo.height,
+              4,
+              3,
+            );
+            log('BLURHASH', `hash=${hash}`);
+            return hash;
+          } catch (bhError) {
+            this.logger.warn(
+              `[${uploadId}] [BLURHASH] failed: ${bhError instanceof Error ? bhError.message : 'unknown'}`,
+            );
+            return null;
+          }
+        })(),
+      ]);
+
+      return { path: pathResult, thumbnailPath, blurhash, plateMaskResult };
     } catch (error) {
       if (error instanceof BadRequestException || error instanceof ServiceUnavailableException) {
         throw error;
@@ -512,6 +577,10 @@ export class UploadService {
     quality: number = 75,
     maxWidth?: number,
   ): Promise<Buffer> {
+    const cacheKey = `${filePath}:${quality}:${maxWidth ?? 'orig'}`;
+    const cached = this.optimizedImageCache.get(cacheKey);
+    if (cached) return cached;
+
     let imageBuffer: Buffer;
 
     if (this.useS3 && this.s3Client) {
@@ -560,6 +629,7 @@ export class UploadService {
     }
 
     const buffer = await processedImage.webp({ quality, effort: 4 }).toBuffer();
+    this.optimizedImageCache.set(cacheKey, buffer);
 
     return buffer;
   }

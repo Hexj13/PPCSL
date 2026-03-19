@@ -571,6 +571,28 @@ AWS_CLOUDFRONT_URL=https://cdn.kupito.club
 5. Create Access Key and save credentials
 6. (Optional) Setup CloudFront CDN for faster delivery
 
+**CloudFront image optimization caching (optional but recommended):**
+
+To cache optimized images (resized/recompressed by the backend) at the CDN edge,
+add a second origin and behavior to your existing CloudFront distribution:
+
+1. Origins → Create origin:
+   - Origin domain: your API server host (e.g. `kupito-backend.onrender.com`)
+   - Protocol: HTTPS only
+   - Name: `kupito-api`
+2. Behaviors → Create behavior:
+   - Path pattern: `/api/upload/image/*`
+   - Origin: `kupito-api`
+   - Viewer protocol: Redirect HTTP to HTTPS
+   - Allowed HTTP methods: GET, HEAD
+   - Cache policy: CachingOptimized (or custom with All query strings in cache key)
+   - Origin request policy: AllViewerExceptHostHeader
+   - Compress objects: Yes
+3. Set frontend env: `NEXT_PUBLIC_IMAGE_CDN_URL=https://cdn.kupito.club`
+
+The backend already returns `Cache-Control: public, max-age=31536000, immutable`
+for optimized images, so CloudFront will cache them for up to one year.
+
 ### 3.5. Build Configuration
 
 **Build Settings:**

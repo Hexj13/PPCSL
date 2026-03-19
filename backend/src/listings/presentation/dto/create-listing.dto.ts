@@ -221,6 +221,15 @@ export class CreateListingDto {
   equipment?: string[];
 
   @ApiPropertyOptional({
+    description: 'Blurhash of the cover image',
+    example: 'LEHV6nWB2yk8pyo0adR*.7kCMdnj',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  cover_blur_hash?: string;
+
+  @ApiPropertyOptional({
     example: '550e8400-e29b-41d4-a716-446655440000',
     description: 'Assign listing to a different user (admin only)',
   })
