@@ -516,7 +516,8 @@ function MyListingsContent(props: ContentProps) {
 export default function MyListingsPage() {
   const { t } = useTranslation();
   const state = useMyListingsPage();
-  const { isLoading, isAuthorized, showSkeleton } = state;
+  const { isLoading, isAuthorized, showSkeleton, listings } = state;
+  const showInitialSkeleton = showSkeleton && listings.length === 0;
 
   if (isLoading || !isAuthorized) {
     return null;
@@ -525,12 +526,16 @@ export default function MyListingsPage() {
   return (
     <div className="min-h-[calc(100vh-200px)]">
       <div
-        className={`transition-opacity duration-300 ${showSkeleton ? 'opacity-100' : 'opacity-0 hidden'}`}
+        className={`transition-opacity duration-300 ${
+          showInitialSkeleton ? 'opacity-100' : 'opacity-0 hidden'
+        }`}
       >
         <MyListingsSkeleton t={t} />
       </div>
       <div
-        className={`transition-opacity duration-300 ${!showSkeleton ? 'opacity-100' : 'opacity-0 hidden'}`}
+        className={`transition-opacity duration-300 ${
+          !showInitialSkeleton ? 'opacity-100' : 'opacity-0 hidden'
+        }`}
       >
         <MyListingsContent t={t} {...state} />
       </div>

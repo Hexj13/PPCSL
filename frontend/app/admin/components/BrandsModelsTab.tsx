@@ -126,10 +126,6 @@ export function BrandsModelsTab() {
     [t],
   );
 
-  if (loading && brands.length === 0) {
-    return <div className="text-center py-8 text-text-secondary">{t('common.loading')}</div>;
-  }
-
   return (
     <div>
       <BrandsModelsFilters
@@ -143,7 +139,7 @@ export function BrandsModelsTab() {
 
       {brands.length === 0 ? (
         <div className="text-center py-8 text-text-secondary">
-          {t('admin.brandsModelsTab.noBrands')}
+          {loading ? t('common.loading') : t('admin.brandsModelsTab.noBrands')}
         </div>
       ) : (
         <BrandsModelsTable

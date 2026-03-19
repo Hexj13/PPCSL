@@ -255,23 +255,61 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
     [onViewUserListings],
   );
 
+  const showInitialSkeleton = showSkeleton && users.length === 0;
+
   return (
-    <>
-      {showSkeleton && (
+    <div>
+      <div className="mb-4 md:mb-6 flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <input
+            type="text"
+            value={filters.searchQuery}
+            onChange={(e) =>
+              setFilters((prev) => ({
+                ...prev,
+                searchQuery: e.target.value,
+              }))
+            }
+            placeholder={t('admin.usersTab.searchPlaceholder')}
+            className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-secondary border-2 border-primary-700 text-text-primary placeholder:text-text-secondary focus:outline-hidden focus:border-primary-900 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
+          />
+        </div>
+
+        <div className="pt-4 border-t border-primary-500/20 sm:border-t-0 sm:pt-0 flex flex-wrap gap-2 md:gap-3">
+          {(['All', 'Individual', 'Business', 'Admin'] as const).map((role) => (
+            <button
+              key={role}
+              onClick={() =>
+                setFilters((prev) => ({
+                  ...prev,
+                  roleFilter: role,
+                }))
+              }
+              className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-base transition-colors ${
+                filters.roleFilter === role
+                  ? 'bg-primary-500/10 border-2 border-primary-700 text-primary-700'
+                  : 'bg-bg-secondary hover-only:hover:bg-bg-base border-2 border-primary-700 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900'
+              }`}
+            >
+              {role === 'All'
+                ? t('admin.usersTab.allRoles')
+                : role === 'Individual'
+                  ? t('admin.usersTab.individual')
+                  : role === 'Business'
+                    ? t('admin.usersTab.business')
+                    : t('admin.usersTab.admin')}
+              {role !== 'All' && (
+                <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-sm">
+                  {roleCounts[role]}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {showInitialSkeleton ? (
         <div>
-          <div className="mb-4 md:mb-6 flex flex-col gap-4">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="flex-1 h-[48px] md:h-[52px] bg-bg-secondary/30 rounded-lg animate-pulse" />
-            </div>
-            <div className="flex flex-wrap gap-2 md:gap-3">
-              {[...Array(4)].map((_, i) => (
-                <div
-                  key={i}
-                  className="h-9 md:h-10 w-24 md:w-28 bg-bg-secondary/30 rounded-lg animate-pulse"
-                />
-              ))}
-            </div>
-          </div>
           <div className="mb-3 md:mb-4 h-4 md:h-5 bg-bg-secondary/30 rounded-sm w-40 md:w-48 animate-pulse" />
           <div className="space-y-3 md:space-y-4">
             {[...Array(3)].map((_, i) => (
@@ -295,86 +333,27 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
             ))}
           </div>
         </div>
-      )}
-
-      {!showSkeleton && (
-        <div>
-          <div className="mb-4 md:mb-6 flex flex-col gap-4">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <input
-                type="text"
-                value={filters.searchQuery}
-                onChange={(e) =>
-                  setFilters((prev) => ({
-                    ...prev,
-                    searchQuery: e.target.value,
-                  }))
-                }
-                placeholder={t('admin.usersTab.searchPlaceholder')}
-                className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-secondary border-2 border-primary-700 text-text-primary placeholder:text-text-secondary focus:outline-hidden focus:border-primary-900 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
+      ) : users.length === 0 ? (
+        <EmptyState message={t('admin.usersTab.noUsers')} className="py-10 md:py-12" />
+      ) : (
+        <>
+          <div className="space-y-3 md:space-y-4">
+            {users.map((user) => (
+              <AdminUserCard
+                key={user.id}
+                user={user}
+                t={t}
+                onViewListings={handleViewListings}
+                onToggleStatus={handleToggleStatus}
               />
-            </div>
-
-            <div className="pt-4 border-t border-primary-500/20 sm:border-t-0 sm:pt-0 flex flex-wrap gap-2 md:gap-3">
-              {(['All', 'Individual', 'Business', 'Admin'] as const).map((role) => (
-                <button
-                  key={role}
-                  onClick={() =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      roleFilter: role,
-                    }))
-                  }
-                  className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-base transition-colors ${
-                    filters.roleFilter === role
-                      ? 'bg-primary-500/10 border-2 border-primary-700 text-primary-700'
-                      : 'bg-bg-secondary hover-only:hover:bg-bg-base border-2 border-primary-700 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900'
-                  }`}
-                >
-                  {role === 'All'
-                    ? t('admin.usersTab.allRoles')
-                    : role === 'Individual'
-                      ? t('admin.usersTab.individual')
-                      : role === 'Business'
-                        ? t('admin.usersTab.business')
-                        : t('admin.usersTab.admin')}
-                  {role !== 'All' && (
-                    <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-sm">
-                      {roleCounts[role]}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
+            ))}
           </div>
 
-          {users.length === 0 ? (
-            <EmptyState message={t('admin.usersTab.noUsers')} className="py-10 md:py-12" />
-          ) : (
-            <>
-              <div className="space-y-3 md:space-y-4">
-                {users.map((user) => (
-                  <AdminUserCard
-                    key={user.id}
-                    user={user}
-                    t={t}
-                    onViewListings={handleViewListings}
-                    onToggleStatus={handleToggleStatus}
-                  />
-                ))}
-              </div>
-
-              {meta && meta.totalPages > 1 && (
-                <Pagination
-                  currentPage={page}
-                  totalPages={meta.totalPages}
-                  onPageChange={setPage}
-                />
-              )}
-            </>
+          {meta && meta.totalPages > 1 && (
+            <Pagination currentPage={page} totalPages={meta.totalPages} onPageChange={setPage} />
           )}
-        </div>
+        </>
       )}
-    </>
+    </div>
   );
 }

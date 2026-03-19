@@ -204,23 +204,55 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
     [selectedListingId, t, reload, loadStatusCounts, filters.searchQuery],
   );
 
+  const showInitialSkeleton = showSkeleton && listings.length === 0;
+
   return (
-    <>
-      {showSkeleton && (
+    <div>
+      <div className="mb-4 md:mb-6 flex flex-col gap-4">
+        <input
+          type="text"
+          value={filters.searchQuery}
+          onChange={(e) =>
+            setFilters((prev) => ({
+              ...prev,
+              searchQuery: e.target.value,
+            }))
+          }
+          placeholder={t('admin.listingsTab.searchByIdPlaceholder')}
+          className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-secondary border-2 border-primary-700 text-text-primary placeholder:text-text-secondary focus:outline-hidden focus:border-primary-900 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
+        />
+
+        <div className="pt-4 border-t border-primary-500/20 sm:border-t-0 sm:pt-0">
+          <StatusFilterButtons
+            currentFilter={filters.statusFilter}
+            onFilterChange={(status) => {
+              setFilters((prev) => {
+                if (prev.promotedFilter !== 'All') {
+                  return { ...prev, statusFilter: status, promotedFilter: 'All' };
+                }
+                return { ...prev, statusFilter: status };
+              });
+            }}
+            counts={statusCounts}
+            showPromoted={true}
+            promotedCount={statusCounts.Promoted}
+            promotedActive={filters.promotedFilter === 'Promoted'}
+            onPromotedClick={() => {
+              setFilters((prev) => {
+                const newPromotedFilter = prev.promotedFilter === 'Promoted' ? 'All' : 'Promoted';
+                if (newPromotedFilter === 'Promoted') {
+                  return { ...prev, promotedFilter: newPromotedFilter, statusFilter: 'All' };
+                }
+                return { ...prev, promotedFilter: newPromotedFilter };
+              });
+            }}
+            translationPrefix="admin.listingsTab"
+          />
+        </div>
+      </div>
+
+      {showInitialSkeleton ? (
         <div>
-          <div className="mb-4 md:mb-6">
-            <div className="w-full h-[48px] md:h-[52px] bg-bg-secondary/30 rounded-lg animate-pulse" />
-          </div>
-          <div className="mb-4 md:mb-6">
-            <div className="flex flex-wrap gap-2 md:gap-3">
-              {[...Array(4)].map((_, i) => (
-                <div
-                  key={i}
-                  className="h-9 md:h-10 w-20 md:w-24 bg-bg-secondary/30 rounded-lg animate-pulse"
-                />
-              ))}
-            </div>
-          </div>
           <div className="mb-3 md:mb-4 h-4 md:h-5 bg-bg-secondary/30 rounded-sm w-40 md:w-48 animate-pulse" />
           <div className="space-y-3 md:space-y-4">
             {[...Array(3)].map((_, i) => (
@@ -228,97 +260,43 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
             ))}
           </div>
         </div>
-      )}
-
-      {!showSkeleton && (
-        <div>
-          <div className="mb-4 md:mb-6 flex flex-col gap-4">
-            <input
-              type="text"
-              value={filters.searchQuery}
-              onChange={(e) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  searchQuery: e.target.value,
-                }))
-              }
-              placeholder={t('admin.listingsTab.searchByIdPlaceholder')}
-              className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-secondary border-2 border-primary-700 text-text-primary placeholder:text-text-secondary focus:outline-hidden focus:border-primary-900 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
-            />
-
-            <div className="pt-4 border-t border-primary-500/20 sm:border-t-0 sm:pt-0">
-              <StatusFilterButtons
-                currentFilter={filters.statusFilter}
-                onFilterChange={(status) => {
-                  setFilters((prev) => {
-                    if (prev.promotedFilter !== 'All') {
-                      return { ...prev, statusFilter: status, promotedFilter: 'All' };
-                    }
-                    return { ...prev, statusFilter: status };
-                  });
-                }}
-                counts={statusCounts}
-                showPromoted={true}
-                promotedCount={statusCounts.Promoted}
-                promotedActive={filters.promotedFilter === 'Promoted'}
-                onPromotedClick={() => {
-                  setFilters((prev) => {
-                    const newPromotedFilter =
-                      prev.promotedFilter === 'Promoted' ? 'All' : 'Promoted';
-                    if (newPromotedFilter === 'Promoted') {
-                      return { ...prev, promotedFilter: newPromotedFilter, statusFilter: 'All' };
-                    }
-                    return { ...prev, promotedFilter: newPromotedFilter };
-                  });
-                }}
-                translationPrefix="admin.listingsTab"
-              />
-            </div>
+      ) : listings.length === 0 ? (
+        <EmptyState message={t('admin.listingsTab.noListings')} className="py-10 md:py-12" />
+      ) : (
+        <>
+          <div className="mb-3 md:mb-4 text-sm md:text-base text-primary-700">
+            {t('admin.listingsTab.totalListings')}:{' '}
+            <span className="font-semibold text-primary-900">{meta?.total || 0}</span>
           </div>
 
-          {listings.length === 0 ? (
-            <EmptyState message={t('admin.listingsTab.noListings')} className="py-10 md:py-12" />
-          ) : (
-            <>
-              <div className="mb-3 md:mb-4 text-sm md:text-base text-primary-700">
-                {t('admin.listingsTab.totalListings')}:{' '}
-                <span className="font-semibold text-primary-900">{meta?.total || 0}</span>
-              </div>
+          <div className="space-y-3 md:space-y-4">
+            {listings.map((listing) => (
+              <ListingManagementCard
+                key={listing.id}
+                listing={listing}
+                mode="admin"
+                onAction={handleAction}
+                onCopyId={() => {}}
+                onPromoteClick={handlePromoteClick}
+              />
+            ))}
+          </div>
 
-              <div className="space-y-3 md:space-y-4">
-                {listings.map((listing) => (
-                  <ListingManagementCard
-                    key={listing.id}
-                    listing={listing}
-                    mode="admin"
-                    onAction={handleAction}
-                    onCopyId={() => {}}
-                    onPromoteClick={handlePromoteClick}
-                  />
-                ))}
-              </div>
-
-              {meta && meta.totalPages > 1 && (
-                <Pagination
-                  currentPage={page}
-                  totalPages={meta.totalPages}
-                  onPageChange={setPage}
-                />
-              )}
-            </>
+          {meta && meta.totalPages > 1 && (
+            <Pagination currentPage={page} totalPages={meta.totalPages} onPageChange={setPage} />
           )}
-
-          <PromotionModal
-            isOpen={promotionModalOpen}
-            onClose={() => {
-              setPromotionModalOpen(false);
-              setSelectedListingId(null);
-            }}
-            onSelect={handlePromotionSelect}
-            isAdmin={true}
-          />
-        </div>
+        </>
       )}
-    </>
+
+      <PromotionModal
+        isOpen={promotionModalOpen}
+        onClose={() => {
+          setPromotionModalOpen(false);
+          setSelectedListingId(null);
+        }}
+        onSelect={handlePromotionSelect}
+        isAdmin={true}
+      />
+    </div>
   );
 }

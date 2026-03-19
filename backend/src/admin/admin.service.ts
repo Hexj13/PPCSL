@@ -202,17 +202,21 @@ export class AdminService {
 
     const searchTrimmed = search?.trim();
     if (searchTrimmed) {
-      conditions.push('(listing.id = :search OR listing.user_id = :search)');
+      conditions.push(
+        '(CAST(listing.id AS TEXT) = :search OR CAST(listing.user_id AS TEXT) = :search)',
+      );
       params.search = searchTrimmed;
     } else if (listingId && userId) {
-      conditions.push('(listing.id = :listingId OR listing.user_id = :userId)');
+      conditions.push(
+        '(CAST(listing.id AS TEXT) = :listingId OR CAST(listing.user_id AS TEXT) = :userId)',
+      );
       params.listingId = listingId;
       params.userId = userId;
     } else if (listingId) {
-      conditions.push('listing.id = :listingId');
+      conditions.push('CAST(listing.id AS TEXT) = :listingId');
       params.listingId = listingId;
     } else if (userId) {
-      conditions.push('listing.user_id = :userId');
+      conditions.push('CAST(listing.user_id AS TEXT) = :userId');
       params.userId = userId;
     }
 
@@ -293,13 +297,24 @@ export class AdminService {
     const buildBase = () => {
       const qb = this.listingsRepository.createQueryBuilder('listing');
       if (searchTrimmed) {
-        qb.where('(listing.id = :search OR listing.user_id = :search)', { search: searchTrimmed });
+        qb.where(
+          '(CAST(listing.id AS TEXT) = :search OR CAST(listing.user_id AS TEXT) = :search)',
+          {
+            search: searchTrimmed,
+          },
+        );
       } else if (listingId && userId) {
-        qb.where('(listing.id = :listingId OR listing.user_id = :userId)', { listingId, userId });
+        qb.where(
+          '(CAST(listing.id AS TEXT) = :listingId OR CAST(listing.user_id AS TEXT) = :userId)',
+          {
+            listingId,
+            userId,
+          },
+        );
       } else if (listingId) {
-        qb.where('listing.id = :listingId', { listingId });
+        qb.where('CAST(listing.id AS TEXT) = :listingId', { listingId });
       } else if (userId) {
-        qb.where('listing.user_id = :userId', { userId });
+        qb.where('CAST(listing.user_id AS TEXT) = :userId', { userId });
       }
       return qb;
     };
@@ -460,14 +475,16 @@ export class AdminService {
     const params: Record<string, unknown> = {};
 
     if (listingId && userId) {
-      conditions.push('(ph.listing_id = :listingId OR ph.user_id = :userId)');
+      conditions.push(
+        '(CAST(ph.listing_id AS TEXT) = :listingId OR CAST(ph.user_id AS TEXT) = :userId)',
+      );
       params.listingId = listingId;
       params.userId = userId;
     } else if (listingId) {
-      conditions.push('ph.listing_id = :listingId');
+      conditions.push('CAST(ph.listing_id AS TEXT) = :listingId');
       params.listingId = listingId;
     } else if (userId) {
-      conditions.push('ph.user_id = :userId');
+      conditions.push('CAST(ph.user_id AS TEXT) = :userId');
       params.userId = userId;
     }
 
