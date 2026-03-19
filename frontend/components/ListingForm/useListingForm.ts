@@ -126,14 +126,22 @@ export function useListingForm({
   }, [initialData, listingId, resetUploadedImagesState]);
 
   useEffect(() => {
-    if (mode === 'edit' && models.length > 0 && formData.vehicle.model_id) {
-      const selectedModel = models.find((m) => m.id === formData.vehicle.model_id);
-      const modelType = selectedModel?.vehicle_types?.[0];
-      if (modelType && modelType !== vehicleType) {
-        setVehicleType(modelType);
-      }
+    if (
+      mode !== 'edit' ||
+      canChangeVehicleType ||
+      models.length === 0 ||
+      !formData.vehicle.model_id
+    ) {
+      return;
     }
-  }, [models, formData.vehicle.model_id, mode, vehicleType]);
+
+    const selectedModel = models.find((m) => m.id === formData.vehicle.model_id);
+    const modelTypes = selectedModel?.vehicle_types ?? [];
+    if (modelTypes.length === 0) return;
+    if (!modelTypes.includes(vehicleType)) {
+      setVehicleType(modelTypes[0]);
+    }
+  }, [models, formData.vehicle.model_id, mode, vehicleType, canChangeVehicleType]);
 
   useEffect(() => {
     if (models.length > 0 && formData.vehicle.brand_id) {
