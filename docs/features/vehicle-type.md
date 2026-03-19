@@ -14,7 +14,7 @@ tags:
 
 Vehicle type switching (car, truck, moto) for filtering listings on search and listing creation. The feature includes DB changes, scripts for data generation and sync, and UI components for search and create.
 
-**Status:** Implemented — Backend and Frontend ready; classification updated: Van and Pickup are car; truck includes only Truck, Bus, SemiTruck, Tractor.
+**Status:** Implemented — Backend and Frontend ready; classification updated: Minivan and Pickup are for `car`; `truck` includes legacy `Van` (normalized to `Minivan` for create/update/search) plus Truck/Bus/SemiTruck/Tractor/SpecialEquipment.
 
 **Location:**
 
@@ -158,7 +158,7 @@ Three icon switchers:
 
 - 🚗 **Passenger** (`car`) — default
   - License: B
-  - Includes: cars, vans, pickups, crossovers, SUVs
+  - Includes: cars, minivans, pickups, crossovers, SUVs
   - Even when used for cargo, if license B is required
 - 🚛 **Truck** (`truck`)
   - License: C and above
@@ -276,24 +276,25 @@ Body types are tied to vehicle categories. Not every body type applies to every 
 Body types for category B:
 
 - `Sedan`, `Hatchback`, `Wagon`, `SUV`, `Coupe`, `Convertible`
-- `Van` (passenger and cargo category B)
-- `Minivan`
+- `Minivan` (passenger and cargo category B; legacy alias: `Van`)
 - `Pickup` (category B)
 
-**Important:** Category B vans and pickups (e.g. Ford Transit, Mercedes Sprinter, Ford F-150, Toyota Hilux) are passenger cars even when used for cargo.
+**Important:** Category B vans and pickups (e.g. Ford Transit, Mercedes Sprinter, Ford F-150, Toyota Hilux) are passenger cars even when used for cargo (represented by `Minivan` in `body_type`).
 
 #### 🚛 Trucks (`truck`)
 
 Body types for category C and above:
 
+- `Van` (legacy alias for `Minivan`, kept for backward-compatible filters)
 - `Truck` (heavy and light trucks, special equipment)
 - `Bus`
 - `SemiTruck`
 - `Tractor` (agricultural and industrial)
+- `SpecialEquipment`
 
 **Important:**
 
-- Category B vans and pickups (e.g. Ford Transit, Mercedes Sprinter) are passenger cars
+- Category B vans and pickups (e.g. Ford Transit, Mercedes Sprinter) are passenger cars (represented by `Minivan` in `body_type`)
 - Only category C+ vehicles are trucks
 - Semi trucks and tractors have separate body types for clearer classification
 
@@ -642,15 +643,16 @@ export const BODY_TYPES_BY_VEHICLE_TYPE: Record<'car' | 'truck' | 'moto', BodyTy
     'SUV',
     'Coupe',
     'Convertible',
-    'Van', // category B vans (passenger and cargo)
     'Minivan',
     'Pickup', // category B pickups
   ],
   truck: [
+    'Van', // legacy alias for Minivan (backward-compatible filters)
     'Truck', // category C+ trucks
     'Bus',
     'SemiTruck',
     'Tractor',
+    'SpecialEquipment',
   ],
   moto: ['Naked', 'Sport', 'Touring', 'Cruiser', 'Adventure', 'Scooter', 'Enduro', 'Cross'],
 };
@@ -936,7 +938,7 @@ cd core/backend
 COUNTRY=md npx ts-node src/scripts/stage/seed-trucks.ts
 ```
 
-**Truck params:** Engine 3.0–16.0 L, mileage 50k–800k km, price 15k–200k, body types Truck/Bus/SemiTruck/Tractor, uses `drive_type`, no `doors`. Category B vans/pickups (e.g. Sprinter, Transit) are cars, not trucks.
+**Truck params:** Engine 3.0–16.0 L, mileage 50k–800k km, price 15k–200k, body types Van/Truck/Bus/SemiTruck/Tractor/SpecialEquipment, uses `drive_type`, no `doors`. Category B vans/pickups are cars, not trucks (represented as `Minivan` in `body_type`, `Van` is normalized to `Minivan`).
 
 #### Moto (50 listings)
 
@@ -999,7 +1001,7 @@ COUNTRY=md npx ts-node src/scripts/stage/seed-motorcycles.ts
    COUNTRY=md NODE_ENV=stage npx ts-node src/scripts/stage/seed-motorcycles.ts
    ```
 
-**Important:** After reclassification (Van and Pickup → car; trucks only Truck/Bus/SemiTruck/Tractor): run migration for new body types, run sync with `--force`, clear cache.
+**Important:** After reclassification/normalization (`Van` → `Minivan`; `Pickup` stays in `car`; `truck` keeps `Van` as a legacy alias for backward-compatible filters): run migration for new body types, run `1800000000000-ConvertVanBodyTypeToMinivan` (if upgrading an existing DB), run sync with `--force`, clear cache.
 
 ## Related docs
 

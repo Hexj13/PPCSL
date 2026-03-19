@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { useRequireAuth } from '@/hooks/useRequireAuth';
@@ -27,10 +27,20 @@ const ListingForm = dynamic(
 export default function EditListingPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t } = useTranslation();
   const listingId = params.id as string;
   const { user, isLoading, isAuthorized } = useRequireAuth();
   const isAdmin = user?.type === 'Admin';
+  const from = searchParams.get('from');
+  const redirectTo =
+    from === 'my-listings'
+      ? '/my-listings'
+      : from === 'admin'
+        ? '/admin'
+        : isAdmin
+          ? '/admin'
+          : '/my-listings';
   const [listing, setListing] = useState<Listing | null>(null);
   const [loadingListing, setLoadingListing] = useState(true);
   const [formKey, setFormKey] = useState(0);
@@ -39,7 +49,6 @@ export default function EditListingPage() {
     if (!user) return;
 
     try {
-      const redirectTo = isAdmin ? '/admin' : '/my-listings';
       const shouldRefresh = sessionStorage.getItem(`refreshListing_${listingId}`) === 'true';
       const needsRefresh = forceRefresh || shouldRefresh;
 
@@ -70,7 +79,7 @@ export default function EditListingPage() {
       }
     } catch {
       toast.error(t('listings.loadListingError'));
-      router.push(isAdmin ? '/admin' : '/my-listings');
+      router.push(redirectTo);
       const shouldRefresh = sessionStorage.getItem(`refreshListing_${listingId}`) === 'true';
       if (shouldRefresh) {
         sessionStorage.removeItem(`refreshListing_${listingId}`);
@@ -114,6 +123,8 @@ export default function EditListingPage() {
     return null;
   }
 
+  const canChangeVehicleType = isAdmin;
+
   return (
     <div className="max-w-4xl mx-auto mt-6 md:mt-12">
       <h1 className="text-3xl md:text-4xl font-extrabold mb-6 pl-4 md:pl-6 lg:pl-8 text-primary-900">
@@ -124,6 +135,7 @@ export default function EditListingPage() {
         mode="edit"
         listingId={listingId}
         initialData={listing}
+        canChangeVehicleType={canChangeVehicleType}
         onSuccess={(updatedListing) => {
           if (updatedListing) {
             setListing(updatedListing);
@@ -131,7 +143,7 @@ export default function EditListingPage() {
           }
           sessionStorage.setItem('refreshMyListings', 'true');
           sessionStorage.setItem(`refreshListing_${listingId}`, 'true');
-          router.push(isAdmin ? '/admin' : '/my-listings');
+          router.push(redirectTo);
         }}
       />
     </div>

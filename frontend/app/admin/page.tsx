@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTabIndicator } from '@/hooks/useTabIndicator';
 import { useTranslation } from '@/hooks/useTranslation';
+import { toast } from '@/lib/toast';
 
 import { BrandsModelsTab } from './components/BrandsModelsTab';
 import { ListingsTab } from './components/ListingsTab';
@@ -12,6 +13,7 @@ import { PromotionsTab } from './components/PromotionsTab';
 import { UsersTab } from './components/UsersTab';
 
 type AdminTab = 'listings' | 'users' | 'promotions' | 'brandsModels';
+const LISTING_UPDATED_TOAST_KEY = 'listingUpdatedToast';
 
 export default function AdminPage() {
   const { isLoading, isAuthorized } = useRequireAuth({ requiredRole: 'Admin' });
@@ -47,6 +49,13 @@ export default function AdminPage() {
       localStorage.setItem('adminActiveTab', activeTab);
     }
   }, [activeTab]);
+
+  useEffect(() => {
+    const shouldShowToast = sessionStorage.getItem(LISTING_UPDATED_TOAST_KEY) === 'true';
+    if (!shouldShowToast) return;
+    sessionStorage.removeItem(LISTING_UPDATED_TOAST_KEY);
+    toast.success(t('listings.changesSaved'));
+  }, [t]);
 
   if (isLoading || !isAuthorized) {
     return null;

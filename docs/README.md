@@ -67,7 +67,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 - [loading-states.md](./features/loading-states.md) — Loading states
 - [paid-promotion.md](./features/paid-promotion.md) — Paid promotion
 - Assign listing to user (admin) — on `/listings/new` admin can set listing owner UUID; real-time validation (GET `/api/admin/validate-assign-user/:userId`), backend checks (existence, active, listing limit)
-- Admin edit listings — on the admin listings tab, admin can open `/listings/[id]/edit` and edit any listing (including `Closed`), regardless of ownership. Backend bypasses ownership and `Closed` restrictions only for JWT users with role `Admin`. For editing VIN, admin requests full VIN via `GET /api/listings/:id?includeFullVin=1`.
+- Admin edit listings — on the admin listings tab, admin can open `/listings/[id]/edit` and edit any listing (including `Closed`), regardless of ownership. Backend bypasses ownership and `Closed` restrictions only for JWT users with role `Admin`. In edit form, `vehicleType` switcher is available only for admins. For editing VIN, admin requests full VIN via `GET /api/listings/:id?includeFullVin=1`.
 - [cipauto-import.md](./features/cipauto-import.md) — CipAuto partner import tool (scan/import/report, idempotent registry, retry-safe)
 - [search-filters.md](./features/search-filters.md) — Search and filters form (tabs, fields, layout)
 - [seller-listings-board.md](./features/seller-listings-board.md) — Seller listings board

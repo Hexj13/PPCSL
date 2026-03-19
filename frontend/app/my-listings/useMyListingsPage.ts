@@ -8,9 +8,11 @@ import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing, PaginationMeta, PromotionHistory } from '@/lib/api';
 import { listingsApi, normalizeListingResponse } from '@/lib/api';
+import { toast } from '@/lib/toast';
 
 type StatusFilter = 'All' | 'Active' | 'Paused' | 'Closed';
 type PromotedFilter = 'All' | 'Promoted' | 'NotPromoted';
+const LISTING_UPDATED_TOAST_KEY = 'listingUpdatedToast';
 type PromotionHistoryMeta = {
   total: number;
   page: number;
@@ -292,6 +294,13 @@ export function useMyListingsPage() {
       document.removeEventListener('visibilitychange', onVisibility);
     };
   }, [user, fetchListings]);
+
+  useEffect(() => {
+    const shouldShowToast = sessionStorage.getItem(LISTING_UPDATED_TOAST_KEY) === 'true';
+    if (!shouldShowToast) return;
+    sessionStorage.removeItem(LISTING_UPDATED_TOAST_KEY);
+    toast.success(t('listings.changesSaved'));
+  }, [t]);
 
   useEffect(() => {
     if (!meta?.last_listing_refresh_at || meta?.refreshCooldownMs == null || !user?.id) return;

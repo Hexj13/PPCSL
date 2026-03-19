@@ -186,6 +186,10 @@ function ManagementCardActionBar({
   const showPause = status === 'Active';
   const showClose = status !== 'Closed';
   const showEdit = (mode === 'my-listings' && status !== 'Closed') || mode === 'admin';
+  const editFrom = mode === 'admin' ? 'admin' : mode === 'my-listings' ? 'my-listings' : null;
+  const editHref = editFrom
+    ? `/listings/${listing.id}/edit?from=${editFrom}`
+    : `/listings/${listing.id}/edit`;
 
   return (
     <div className="mt-auto pt-3 border-t border-primary-500/20">
@@ -275,7 +279,7 @@ function ManagementCardActionBar({
           )}
           {showEdit && (
             <Link
-              href={`/listings/${listing.id}/edit`}
+              href={editHref}
               className="text-primary-700 font-medium text-base hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none w-full xl:w-auto h-[48px]"
               title={t('common.editListing')}
               onClick={(e) => e.stopPropagation()}

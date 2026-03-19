@@ -182,11 +182,11 @@ export const BODY_TYPES_BY_VEHICLE_TYPE: Record<
     BodyType.SUV,
     BodyType.Coupe,
     BodyType.Convertible,
-    BodyType.Van,
     BodyType.Minivan,
     BodyType.Pickup,
   ],
   truck: [
+    BodyType.Van,
     BodyType.Truck,
     BodyType.Bus,
     BodyType.SemiTruck,

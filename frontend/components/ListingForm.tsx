@@ -54,9 +54,16 @@ interface ListingFormProps {
   listingId?: string;
   initialData?: Listing;
   onSuccess?: (_updatedListing?: Listing) => void;
+  canChangeVehicleType?: boolean;
 }
 
-export function ListingForm({ mode, listingId, initialData, onSuccess }: ListingFormProps) {
+export function ListingForm({
+  mode,
+  listingId,
+  initialData,
+  onSuccess,
+  canChangeVehicleType = false,
+}: ListingFormProps) {
   const {
     formRef,
     isInitialLoading,
@@ -75,7 +82,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
     handleSubmit,
     sectionProps,
     t,
-  } = useListingForm({ mode, listingId, initialData, onSuccess });
+  } = useListingForm({ mode, listingId, initialData, onSuccess, canChangeVehicleType });
 
   if (isInitialLoading) {
     return (
@@ -98,7 +105,7 @@ export function ListingForm({ mode, listingId, initialData, onSuccess }: Listing
             <div className="w-10 h-10 border-4 border-primary-700 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
-        {mode === 'create' && (
+        {(mode === 'create' || (mode === 'edit' && canChangeVehicleType)) && (
           <VehicleTypeSelector
             vehicleType={vehicleType}
             onTypeChange={handleVehicleTypeChange}

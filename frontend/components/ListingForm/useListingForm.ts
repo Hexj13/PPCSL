@@ -33,14 +33,23 @@ import type { ListingFormData } from '../ListingForm';
 
 import { useListingFormImages } from './useListingFormImages';
 
+const LISTING_UPDATED_TOAST_KEY = 'listingUpdatedToast';
+
 export interface UseListingFormProps {
   mode: 'create' | 'edit';
   listingId?: string;
   initialData?: Listing;
   onSuccess?: (_updatedListing?: Listing) => void;
+  canChangeVehicleType?: boolean;
 }
 
-export function useListingForm({ mode, listingId, initialData, onSuccess }: UseListingFormProps) {
+export function useListingForm({
+  mode,
+  listingId,
+  initialData,
+  onSuccess,
+  canChangeVehicleType = false,
+}: UseListingFormProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -152,12 +161,14 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
 
   const handleVehicleTypeChange = useCallback(
     (type: 'car' | 'truck' | 'moto') => {
-      if (mode === 'edit' || type === vehicleType) return;
+      const canChangeInEdit = mode === 'edit' && canChangeVehicleType;
+      if ((mode === 'edit' && !canChangeInEdit) || type === vehicleType) return;
       if (changeTypeTimeoutRef.current) clearTimeout(changeTypeTimeoutRef.current);
       flushSync(() => setIsChangingType(true));
       setVehicleType(type);
       setFormData((prev) => ({
         ...prev,
+        equipment: [],
         vehicle: {
           ...prev.vehicle,
           brand_id: '',
@@ -169,7 +180,7 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
       }));
       changeTypeTimeoutRef.current = setTimeout(() => setIsChangingType(false), 400);
     },
-    [vehicleType, mode],
+    [vehicleType, mode, canChangeVehicleType],
   );
 
   const handleFileUpload = useCallback(
@@ -257,7 +268,11 @@ export function useListingForm({ mode, listingId, initialData, onSuccess }: UseL
         }
         reportFormSubmit(analytics, 'edit', true, filledFields);
         setLoading(false);
-        afterHidden(() => toast.success(t('listings.changesSaved')));
+        if (onSuccess) {
+          sessionStorage.setItem(LISTING_UPDATED_TOAST_KEY, 'true');
+        } else {
+          afterHidden(() => toast.success(t('listings.changesSaved')));
+        }
         onSuccess?.(result.data);
       } catch (error: unknown) {
         setLoading(false);
