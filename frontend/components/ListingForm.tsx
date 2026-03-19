@@ -25,6 +25,7 @@ export interface ListingFormData {
   status: ListingStatus;
   images: string[];
   cover_blur_hash: string;
+  image_blur_hashes: (string | null)[];
   urgent: boolean;
   is_new: boolean;
   vin: string;

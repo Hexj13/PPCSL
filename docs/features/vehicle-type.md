@@ -321,6 +321,12 @@ Body types for category A, A1, A2:
    - Show only body types for the selected vehicle category
    - Use mapping `BODY_TYPES_BY_VEHICLE_TYPE`
 
+3. **Equipment (`equipment`)**:
+   - Each vehicle type has its own curated subset of equipment keys
+   - Use `getEquipmentKeysByVehicleType()` from `vehicle-equipment.ts`
+   - Truck equipment includes ADAS (adaptive cruise, lane assist, blind spot), airbags, multimedia (Android Auto, Apple CarPlay), premium cabin options (leather, massage, ventilated seats), and truck-specific items (retarder, tachograph, sleeper cab, AdBlue, hydraulic lift)
+   - Car-only items excluded from trucks: auto parking, panoramic roof, sunroof, ISOFIX, electric trunk
+
 ## Database
 
 ### Current structure

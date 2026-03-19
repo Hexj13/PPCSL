@@ -41,9 +41,9 @@ export const dataSourceOptions: DataSourceOptions = {
   migrations: process.env.NODE_ENV === 'test' ? [] : ['dist/migrations/*.js'],
   extra: {
     max: parseInt(process.env.DB_POOL_MAX || '20'),
-    min: parseInt(process.env.DB_POOL_MIN || '5'),
+    min: parseInt(process.env.DB_POOL_MIN || '0'),
     idleTimeoutMillis: parseInt(process.env.DB_POOL_IDLE_TIMEOUT || '30000'),
-    connectionTimeoutMillis: parseInt(process.env.DB_POOL_CONNECTION_TIMEOUT || '2000'),
+    connectionTimeoutMillis: parseInt(process.env.DB_POOL_CONNECTION_TIMEOUT || '10000'),
   },
 };
 

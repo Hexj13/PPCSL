@@ -170,9 +170,9 @@ DB_NAME=ppcsl
 
 # Database Connection Pooling (optional)
 DB_POOL_MAX=20
-DB_POOL_MIN=5
+DB_POOL_MIN=0
 DB_POOL_IDLE_TIMEOUT=30000
-DB_POOL_CONNECTION_TIMEOUT=2000
+DB_POOL_CONNECTION_TIMEOUT=10000
 
 # Authentication
 JWT_SECRET=your-secret-key-change-in-production
@@ -370,6 +370,8 @@ GET    /api/listings/promotion-history # Get user's promotion history (JWT requi
 GET    /api/listings/promotion-history/check # Check if user has promotion history (JWT required)
 GET    /api/listings/promotion-access  # Get promotion access status (no auth required)
 ```
+
+**Listing images / blurhash:** Listings store `cover_blur_hash` (first photo, for cards) and optional `image_blur_hashes` (JSON array aligned with `images`, entries may be `null`). `POST /api/listings` and `PATCH /api/listings/:id` accept `image_blur_hashes` when its length matches `images`. For existing rows without the array, run `npm run backfill:blurhash:all` (see `core/backend/docs/SCRIPTS.md`).
 
 **Filter Parameters:**
 
@@ -576,9 +578,9 @@ GET /health                          # Health check (database, Redis)
 #### Connection Pooling
 
 - **Max connections:** 20 (configurable via `DB_POOL_MAX`)
-- **Min connections:** 5 (configurable via `DB_POOL_MIN`)
+- **Min connections:** 0 (configurable via `DB_POOL_MIN`)
 - **Idle timeout:** 30 seconds
-- **Connection timeout:** 2 seconds
+- **Connection timeout:** 10 seconds
 
 ### Backups
 

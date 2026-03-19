@@ -39,6 +39,7 @@ function getEmptyFormData(): ListingFormData {
     status: ListingStatusEnum.Active,
     images: [],
     cover_blur_hash: '',
+    image_blur_hashes: [],
     urgent: false,
     is_new: false,
     vin: '',
@@ -110,6 +111,14 @@ export function getInitialFormData(initialData?: Listing): ListingFormData {
     status: initialData.status || ListingStatusEnum.Active,
     images: initialData.images || [],
     cover_blur_hash: initialData.cover_blur_hash || '',
+    image_blur_hashes: (() => {
+      const imgs = initialData.images || [];
+      const hashes = initialData.image_blur_hashes;
+      if (hashes && hashes.length === imgs.length) {
+        return [...hashes];
+      }
+      return imgs.map((_, i) => (i === 0 ? (initialData.cover_blur_hash ?? null) : null));
+    })(),
     urgent: initialData.urgent || false,
     is_new: initialData.is_new || false,
     vin: initialData.vin || '',

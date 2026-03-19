@@ -12,6 +12,10 @@ import { Vehicle } from '../../entities/vehicle.entity';
 import { CreateListingDto } from '../../presentation/dto/create-listing.dto';
 import { IListingCache, LISTING_CACHE } from '../ports/listing-cache.port';
 import { IListingRepository, LISTING_REPOSITORY } from '../ports/listing.repository.port';
+import {
+  coverBlurHashFromImageBlurHashes,
+  validateImageBlurHashesMatchImages,
+} from '../utils/image-blur-hashes.utils';
 
 @Injectable()
 export class CreateListingUseCase {
@@ -53,6 +57,11 @@ export class CreateListingUseCase {
       }
     }
 
+    const blurHashesError = validateImageBlurHashesMatchImages(dto.image_blur_hashes, dto.images);
+    if (blurHashesError) {
+      throw new BadRequestException(blurHashesError);
+    }
+
     const listingFields = Object.fromEntries(
       Object.entries(dto).filter(([key]) => !['vehicle', 'assignedUserId'].includes(key)),
     ) as Omit<CreateListingDto, 'vehicle' | 'assignedUserId'>;
@@ -73,6 +82,9 @@ export class CreateListingUseCase {
       listing.down_payment_amount = null;
     }
     listing.vehicle = vehicle;
+    if (dto.image_blur_hashes != null) {
+      listing.cover_blur_hash = coverBlurHashFromImageBlurHashes(dto.image_blur_hashes);
+    }
 
     const saved = await this.listingRepo.save(listing);
     await this.listingCache.invalidateSearch();

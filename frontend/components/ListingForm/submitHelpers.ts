@@ -62,6 +62,9 @@ export function buildListingPayload(
     status: formData.status,
     images: formData.images,
     cover_blur_hash: formData.cover_blur_hash || undefined,
+    ...(formData.images.length > 0 && formData.image_blur_hashes.length === formData.images.length
+      ? { image_blur_hashes: formData.image_blur_hashes }
+      : {}),
     urgent: formData.urgent,
     is_new: formData.is_new,
     vin: formData.vin ? formData.vin.toUpperCase() : undefined,

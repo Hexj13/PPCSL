@@ -408,6 +408,8 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
               imageErrors={imageErrors}
               onImageError={handlePageImageError}
               onImageClick={openImageModal}
+              coverBlurHash={listing.cover_blur_hash}
+              imageBlurHashes={listing.image_blur_hashes}
             />
           </div>
 

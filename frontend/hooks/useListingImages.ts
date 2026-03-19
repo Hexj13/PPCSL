@@ -29,7 +29,8 @@ export function useListingImages({
 
   const { visible: showMainImageLoader } = useLoadingState({
     isLoading: mainImageLoading,
-    minDisplayTime: 1000,
+    showDelay: 0,
+    minDisplayTime: 120,
   });
 
   useEffect(() => {
@@ -57,8 +58,15 @@ export function useListingImages({
   useEffect(() => {
     if (images.length <= 1 || typeof window === 'undefined') return;
 
-    const preloadImages: HTMLImageElement[] = [];
+    const preloadEntries: Array<{ img: HTMLImageElement; url: string }> = [];
     const preloadTimeouts: Array<ReturnType<typeof setTimeout>> = [];
+    const rafIds: number[] = [];
+
+    const markLoadedIfDecoded = (img: HTMLImageElement, url: string) => {
+      if (img.complete && img.naturalWidth > 0) {
+        mainImageLoadedRef.current.add(url);
+      }
+    };
 
     const preloadByIndex = (index: number, delay = 0) => {
       const imageUrl = images[index];
@@ -78,11 +86,19 @@ export function useListingImages({
       const startPreload = () => {
         const img = new window.Image();
         imagesCacheRef.current.push(img);
-        preloadImages.push(img);
+        preloadEntries.push({ img, url: optimizedUrl });
         img.onload = () => {
           mainImageLoadedRef.current.add(optimizedUrl);
         };
         img.src = optimizedUrl;
+        const rafId = requestAnimationFrame(() => {
+          markLoadedIfDecoded(img, optimizedUrl);
+          const id2 = requestAnimationFrame(() => {
+            markLoadedIfDecoded(img, optimizedUrl);
+          });
+          rafIds.push(id2);
+        });
+        rafIds.push(rafId);
       };
 
       if (delay > 0) {
@@ -119,8 +135,12 @@ export function useListingImages({
       for (const timeout of preloadTimeouts) {
         clearTimeout(timeout);
       }
-      for (const img of preloadImages) {
+      for (const id of rafIds) {
+        cancelAnimationFrame(id);
+      }
+      for (const { img, url } of preloadEntries) {
         img.onload = null;
+        markLoadedIfDecoded(img, url);
       }
     };
   }, [currentImageIndex, images, imageErrors]);
@@ -158,28 +178,44 @@ export function useListingImages({
     testImg.src = optimizedUrl;
     const imageIndex = currentImageIndex;
 
-    if (testImg.complete && testImg.naturalWidth > 0) {
-      mainImageLoadedRef.current.add(optimizedUrl);
-      setMainImageLoading(false);
+    const markFromCache = () => {
+      if (testImg.complete && testImg.naturalWidth > 0) {
+        mainImageLoadedRef.current.add(optimizedUrl);
+        setMainImageLoading(false);
+        return true;
+      }
+      return false;
+    };
+
+    if (markFromCache()) {
       return;
     }
 
-    setMainImageLoading(true);
-
-    testImg.onload = () => {
-      mainImageLoadedRef.current.add(optimizedUrl);
-      if (imageIndex === currentImageIndex) {
-        setMainImageLoading(false);
+    let deferredDone = false;
+    const deferredId = window.setTimeout(() => {
+      deferredDone = true;
+      if (markFromCache()) {
+        return;
       }
-    };
-
-    testImg.onerror = () => {
-      if (imageIndex === currentImageIndex) {
-        setMainImageLoading(false);
-      }
-    };
+      setMainImageLoading(true);
+      testImg.onload = () => {
+        mainImageLoadedRef.current.add(optimizedUrl);
+        if (imageIndex === currentImageIndex) {
+          setMainImageLoading(false);
+        }
+      };
+      testImg.onerror = () => {
+        if (imageIndex === currentImageIndex) {
+          setMainImageLoading(false);
+        }
+      };
+    }, 0);
 
     return () => {
+      clearTimeout(deferredId);
+      if (!deferredDone) {
+        return;
+      }
       testImg.onload = null;
       testImg.onerror = null;
     };

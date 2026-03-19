@@ -20,7 +20,7 @@ The image preview system provides a simple, fast, and efficient way for users to
 
 - **Listing card (homepage):** `core/frontend/components/listing/ListingCard.tsx` — 2-slot photo carousel with prev/next buttons; preload next/prev in background and all remaining photos on first navigation; delayed preload of second image for mobile; reset-to-first: on desktop on hover leave, on mobile/tablet when card leaves viewport (see below)
 - **Listing page:** Page state and thumbnail logic: `core/frontend/app/listings/[id]/useListingPageClient.ts`, `ListingPageClient.tsx`
-- **Listing page preview block:** `core/frontend/components/ListingPage/ListingPageImages.tsx`, `core/frontend/hooks/useListingImages.ts` — main preview with buttons, swipe, 2-slot slide animation, reset-to-first
+- **Listing page preview block:** `core/frontend/components/ListingPage/ListingPageImages.tsx`, `core/frontend/hooks/useListingImages.ts` — main preview with buttons, swipe, 2-slot slide animation, reset-to-first; **blurhash placeholders** on main preview and visible thumbnails via `next/image` (`placeholder="blur"`, `blurDataURL` from `blurhashToDataURL`), using `listing.image_blur_hashes` per index with fallback `listing.cover_blur_hash` for index `0`; during the short slide animation the frames use native `<img>` (no blur placeholder)
 - **Photo viewer modal:** `core/frontend/components/ListingPage/ListingPageImageModal.tsx`
 
 ---
@@ -348,12 +348,13 @@ The **preview** uses `useLoadingState` in `useListingImages`:
 ```typescript
 const { visible: showMainImageLoader } = useLoadingState({
   isLoading: mainImageLoading,
-  minDisplayTime: 1000,
+  showDelay: 0,
+  minDisplayTime: 120,
 });
 ```
 
 - If image is in cache → loader not shown (instant switch).
-- If image is loading → loader shown for minimum 1 second (readable indicator, prevents flicker).
+- If image is loading → spinner can show after load starts; `minDisplayTime: 120` avoids sub-frame flicker when hiding the spinner.
 
 ### Modal
 
@@ -362,18 +363,11 @@ The **modal** does not use `useLoadingState`. It uses a simple delay:
 - `showSpinner` becomes true 300ms after `modalImageLoading` becomes true, and is cleared when loading ends.
 - The confirmed image stays visible until the new image is ready or the spinner appears, so there is no black gap.
 
-### Why minDisplayTime: 1000ms?
+### Preview loader timing
 
-From `loading-states.md`:
-
-> "Loader shown for minimum 1 second (prevents flicker)"
-
-**Important distinction:**
-
-- **Page skeleton:** User waits for load → minimum 1s prevents flicker ✅
-- **Image switching:** Image IN CACHE → showing loader for 1s = artificial delay ❌
-
-**Solution:** For preview, if image is in cache, `mainImageLoading` is immediately `false`, so loader never shows. If loading, loader shows for minimum 1 second.
+- **`showDelay: 0`** — no extra wait before showing the spinner once `mainImageLoading` is true.
+- **`minDisplayTime: 120`** — once visible, the spinner stays at least 120ms so hide/show does not flicker on fast loads.
+- If the image is already in cache, `mainImageLoading` is cleared immediately and the spinner does not appear.
 
 ---
 
@@ -396,6 +390,13 @@ From `loading-states.md`:
 - **Preview (75%, 1200px):** Balance between quality and file size for main view; same URL for thumbnails and main preview.
 - **Modal (adaptive):** Full-screen viewer optimised for mobile (lighter on slow networks) and desktop (higher quality when possible).
 
+### Blur placeholders (blurhash)
+
+- **Search / listing cards:** `cover_blur_hash` on the listing; `ListingCard` decodes with `blurhashToDataURL` (`core/frontend/lib/utils/blurhash.ts`).
+- **Listing detail:** API returns `image_blur_hashes` (jsonb, same order as `images`, nullable slots) and `cover_blur_hash`. UI uses per-index hash when present; index `0` falls back to `cover_blur_hash` if the array slot is empty (legacy rows).
+- **Create/update:** Form sends `image_blur_hashes` in parallel with `images` (length must match). Upload response includes `blurhash` per file.
+- **Backfill:** `npm run backfill:blurhash:cover` (cover only) and `npm run backfill:blurhash:all` (full array) from `core/backend`; requires DB + S3 access. See `core/backend/docs/SCRIPTS.md` and `core/docs/guides/image-optimization-setup-ru.md`.
+
 ---
 
 ## Implementation Details
@@ -410,9 +411,7 @@ From `loading-states.md`:
    - If `testImg.complete` → image in cache → `setMainImageLoading(false)` → **instant display**
    - If not → `setMainImageLoading(true)` → show loader → wait for `onload`
 
-2. **Loader with flicker protection:**
-   - If loading < 200ms → loader not shown (via `useLoadingState`)
-   - If loading > 200ms → loader shown for minimum 1 second (readable indicator)
+2. **Loader:** `useLoadingState` with `showDelay: 0` and `minDisplayTime: 120` (`useListingImages`).
 
 3. **Preloading:**
    - Simple `new window.Image()` for next photo

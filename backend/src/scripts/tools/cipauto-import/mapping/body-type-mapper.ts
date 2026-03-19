@@ -9,7 +9,7 @@ export function mapBodyType(raw?: string): { value: BodyType; warning?: string }
   const mapping: Array<{ pattern: RegExp; value: BodyType }> = [
     { pattern: /sedan/, value: BodyType.Sedan },
     { pattern: /(hatch|hatchback)/, value: BodyType.Hatchback },
-    { pattern: /(combi|break|wagon|touring)/, value: BodyType.Wagon },
+    { pattern: /(combi|break|wagon|touring|universal)/, value: BodyType.Wagon },
     { pattern: /(suv|crossover)/, value: BodyType.SUV },
     { pattern: /(coupe|coup)/, value: BodyType.Coupe },
     { pattern: /(cabrio|cabriolet|convertible)/, value: BodyType.Convertible },
@@ -23,7 +23,7 @@ export function mapBodyType(raw?: string): { value: BodyType; warning?: string }
   if (!found) {
     return { value: BodyType.SUV, warning: `UNMAPPED_BODY:${raw}` };
   }
-  if (found.value === BodyType.SUV && !/(suv)/.test(normalized)) {
+  if (found.value === BodyType.SUV && !/(suv|crossover)/.test(normalized)) {
     return { value: found.value, warning: `UNMAPPED_BODY:${raw}` };
   }
   return { value: found.value };

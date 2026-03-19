@@ -88,7 +88,9 @@
     "brandNotFound": "Marca nu a fost găsită",
     "modelNotFound": "Modelul nu a fost găsit",
     "plateMaskFailed": "Nu am reușit procesarea măștii plăcuțelor",
-    "plateDetectionTimeout": "Detectarea plăcuțelor a expirat"
+    "plateDetectionTimeout": "Detectarea plăcuțelor a expirat",
+    "imageBlurHashesLengthMismatch": "Datele blur trebuie să corespundă numărului de poze",
+    "imageBlurHashesInvalidEntry": "Hash blur nevalid pentru una dintre poze"
   },
   "vehicleOptions": {
     "transmission": {

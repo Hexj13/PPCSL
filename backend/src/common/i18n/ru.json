@@ -88,7 +88,9 @@
     "brandNotFound": "Марка не найдена",
     "modelNotFound": "Модель не найдена",
     "plateMaskFailed": "Не удалось обработать маскировку номеров",
-    "plateDetectionTimeout": "Время обнаружения номеров истекло"
+    "plateDetectionTimeout": "Время обнаружения номеров истекло",
+    "imageBlurHashesLengthMismatch": "Данные blur должны соответствовать количеству фотографий",
+    "imageBlurHashesInvalidEntry": "Некорректный blur hash для одной из фотографий"
   },
   "vehicleOptions": {
     "transmission": {

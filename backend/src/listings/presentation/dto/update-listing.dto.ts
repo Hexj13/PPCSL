@@ -200,6 +200,15 @@ export class UpdateListingDto {
   cover_blur_hash?: string;
 
   @ApiPropertyOptional({
+    description: 'Blurhash per image URL, same order as images; null when unknown',
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  image_blur_hashes?: (string | null)[];
+
+  @ApiPropertyOptional({
     type: () => CreateVehicleDto,
     description: 'Vehicle details',
   })

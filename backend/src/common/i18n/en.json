@@ -96,7 +96,9 @@
     "modelCategoryOutsideBrand": "Model category must be within brand categories",
     "modelNotFound": "Model not found",
     "plateMaskFailed": "Failed to process plate masking",
-    "plateDetectionTimeout": "Plate detection timed out"
+    "plateDetectionTimeout": "Plate detection timed out",
+    "imageBlurHashesLengthMismatch": "Image blur data must match the number of photos",
+    "imageBlurHashesInvalidEntry": "Invalid blur hash for one of the photos"
   },
   "vehicleOptions": {
     "transmission": {

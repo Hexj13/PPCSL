@@ -20,6 +20,10 @@ import { Listing } from '../../entities/listing.entity';
 import { Vehicle } from '../../entities/vehicle.entity';
 import { UpdateListingDto } from '../../presentation/dto/update-listing.dto';
 import { IListingCache, LISTING_CACHE } from '../ports/listing-cache.port';
+import {
+  coverBlurHashFromImageBlurHashes,
+  validateImageBlurHashesMatchImages,
+} from '../utils/image-blur-hashes.utils';
 
 @Injectable()
 export class UpdateListingUseCase {
@@ -124,6 +128,15 @@ export class UpdateListingUseCase {
       }
     }
 
+    const imagesForBlurValidation = updateListingDto.images ?? listing.images ?? [];
+    const blurHashesError = validateImageBlurHashesMatchImages(
+      updateListingDto.image_blur_hashes,
+      imagesForBlurValidation,
+    );
+    if (blurHashesError) {
+      throw new BadRequestException(blurHashesError);
+    }
+
     const listingFields = { ...updateListingDto };
     delete (listingFields as Record<string, unknown>).vehicle;
     const listingUpdateData: Partial<Listing> = {
@@ -136,6 +149,11 @@ export class UpdateListingUseCase {
     };
     if (listingUpdateData.available_in_credit === false) {
       listingUpdateData.down_payment_amount = null;
+    }
+    if (updateListingDto.image_blur_hashes !== undefined) {
+      listingUpdateData.cover_blur_hash = coverBlurHashFromImageBlurHashes(
+        updateListingDto.image_blur_hashes,
+      );
     }
 
     await this.listingsRepository.update(id, listingUpdateData);

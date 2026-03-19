@@ -1,68 +1,30 @@
 import 'reflect-metadata';
-import type { Readable } from 'stream';
-
-import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { encode } from 'blurhash';
-import sharp from 'sharp';
 
 import { AppDataSource } from '../../data-source';
 import { Listing } from '../../listings/entities/listing.entity';
 import { checkEnvironment } from '../script-guard';
 
+import {
+  BLURHASH_BACKFILL_BATCH_SIZE,
+  BLURHASH_BACKFILL_DELAY_MS,
+  encodeBlurhashFromBuffer,
+  fetchImageBufferFromS3,
+  getS3ClientForBackfill,
+} from './backfill-blurhash-utils';
+
 checkEnvironment(['production', 'stage', 'development']);
 
-const BATCH_SIZE = 50;
-const DELAY_BETWEEN_BATCHES_MS = 1000;
+type BackfillMode = 'cover' | 'all';
 
-function getS3Client(): S3Client | null {
-  const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
-  const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
-  const region = process.env.AWS_REGION || 'eu-north-1';
-  if (!accessKeyId || !secretAccessKey) return null;
-  return new S3Client({ region, credentials: { accessKeyId, secretAccessKey } });
+function parseMode(): BackfillMode {
+  const arg = process.argv[2];
+  if (arg === 'all') return 'all';
+  return 'cover';
 }
 
-async function fetchImageBuffer(
-  imagePath: string,
-  s3: S3Client | null,
-  bucket: string,
-): Promise<Buffer | null> {
-  const filePath = imagePath.replace(/^https?:\/\/[^/]+/, '');
-  const s3Key = filePath.replace(/^\//, '');
-
-  if (!s3) return null;
-
-  try {
-    const result = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: s3Key }));
-    if (!result.Body) return null;
-    const chunks: Buffer[] = [];
-    for await (const chunk of result.Body as Readable) {
-      chunks.push(chunk);
-    }
-    return Buffer.concat(chunks);
-  } catch {
-    return null;
-  }
-}
-
-async function generateBlurhash(imageBuffer: Buffer): Promise<string | null> {
-  try {
-    const { data, info } = await sharp(imageBuffer)
-      .raw()
-      .ensureAlpha()
-      .resize(32, 32, { fit: 'inside' })
-      .toBuffer({ resolveWithObject: true });
-    return encode(new Uint8ClampedArray(data), info.width, info.height, 4, 3);
-  } catch {
-    return null;
-  }
-}
-
-async function backfillBlurhash() {
-  console.log('Connecting to database...');
-  await AppDataSource.initialize();
-
-  const s3 = getS3Client();
+async function backfillCoverBlurHashOnly() {
+  console.log('Mode: cover (first image only)');
+  const s3 = getS3ClientForBackfill();
   const bucket = process.env.AWS_S3_BUCKET_NAME || 'kupito-uploads';
 
   if (!s3) {
@@ -80,7 +42,7 @@ async function backfillBlurhash() {
     .andWhere("listing.status = 'Active'")
     .getCount();
 
-  console.log(`Found ${total} listings to backfill`);
+  console.log(`Found ${total} listings to backfill (cover)`);
 
   let processed = 0;
   let updated = 0;
@@ -93,7 +55,7 @@ async function backfillBlurhash() {
       .andWhere("listing.images IS NOT NULL AND listing.images != ''")
       .andWhere("listing.status = 'Active'")
       .orderBy('listing.created_at', 'DESC')
-      .take(BATCH_SIZE)
+      .take(BLURHASH_BACKFILL_BATCH_SIZE)
       .getMany();
 
     if (listings.length === 0) break;
@@ -106,7 +68,7 @@ async function backfillBlurhash() {
         continue;
       }
 
-      const buffer = await fetchImageBuffer(firstImage, s3, bucket);
+      const buffer = await fetchImageBufferFromS3(firstImage, s3, bucket);
       if (!buffer) {
         console.log(`  SKIP ${listing.id}: could not fetch image`);
         failed++;
@@ -114,7 +76,7 @@ async function backfillBlurhash() {
         continue;
       }
 
-      const hash = await generateBlurhash(buffer);
+      const hash = await encodeBlurhashFromBuffer(buffer);
       if (!hash) {
         console.log(`  SKIP ${listing.id}: blurhash generation failed`);
         failed++;
@@ -130,15 +92,121 @@ async function backfillBlurhash() {
     console.log(`Progress: ${processed}/${total} (updated: ${updated}, failed: ${failed})`);
 
     if (processed < total) {
-      await new Promise((r) => setTimeout(r, DELAY_BETWEEN_BATCHES_MS));
+      await new Promise((r) => setTimeout(r, BLURHASH_BACKFILL_DELAY_MS));
     }
   }
 
   console.log(`Done. Updated: ${updated}, Failed: ${failed}, Total: ${processed}`);
-  await AppDataSource.destroy();
 }
 
-backfillBlurhash().catch((err) => {
+async function backfillAllImageBlurHashes() {
+  console.log('Mode: all (image_blur_hashes per photo)');
+  const s3 = getS3ClientForBackfill();
+  const bucket = process.env.AWS_S3_BUCKET_NAME || 'kupito-uploads';
+
+  if (!s3) {
+    console.error('S3 not configured, cannot backfill');
+    await AppDataSource.destroy();
+    process.exit(1);
+  }
+
+  const repo = AppDataSource.getRepository(Listing);
+
+  const total = await repo
+    .createQueryBuilder('listing')
+    .where('listing.image_blur_hashes IS NULL')
+    .andWhere("listing.images IS NOT NULL AND listing.images != ''")
+    .andWhere("listing.status = 'Active'")
+    .getCount();
+
+  console.log(`Found ${total} listings to backfill (full array)`);
+
+  let processed = 0;
+  let updated = 0;
+  let failed = 0;
+
+  while (processed < total) {
+    const listings = await repo
+      .createQueryBuilder('listing')
+      .where('listing.image_blur_hashes IS NULL')
+      .andWhere("listing.images IS NOT NULL AND listing.images != ''")
+      .andWhere("listing.status = 'Active'")
+      .orderBy('listing.created_at', 'DESC')
+      .take(BLURHASH_BACKFILL_BATCH_SIZE)
+      .getMany();
+
+    if (listings.length === 0) break;
+
+    for (const listing of listings) {
+      const urls = listing.images?.filter((u) => Boolean(u && u.trim())) ?? [];
+      if (urls.length === 0) {
+        failed++;
+        processed++;
+        continue;
+      }
+
+      const hashes: (string | null)[] = [];
+      for (const url of urls) {
+        const buffer = await fetchImageBufferFromS3(url, s3, bucket);
+        if (!buffer) {
+          hashes.push(null);
+          continue;
+        }
+        const hash = await encodeBlurhashFromBuffer(buffer);
+        if (!hash) {
+          hashes.push(null);
+          continue;
+        }
+        hashes.push(hash);
+      }
+
+      if (!hashes.some((h) => h != null)) {
+        console.log(`  SKIP ${listing.id}: no blur hashes generated`);
+        failed++;
+        processed++;
+        continue;
+      }
+
+      const firstSlot =
+        typeof hashes[0] === 'string' && hashes[0].length > 0
+          ? hashes[0]
+          : (hashes.find((h) => h != null) ?? listing.cover_blur_hash ?? null);
+
+      await repo.update(listing.id, {
+        image_blur_hashes: hashes,
+        cover_blur_hash: firstSlot,
+      });
+      updated++;
+      processed++;
+    }
+
+    console.log(`Progress: ${processed}/${total} (updated: ${updated}, failed: ${failed})`);
+
+    if (processed < total) {
+      await new Promise((r) => setTimeout(r, BLURHASH_BACKFILL_DELAY_MS));
+    }
+  }
+
+  console.log(`Done. Updated: ${updated}, Failed: ${failed}, Total: ${processed}`);
+}
+
+async function main() {
+  console.log('Connecting to database...');
+  await AppDataSource.initialize();
+
+  const mode = parseMode();
+  try {
+    if (mode === 'all') {
+      await backfillAllImageBlurHashes();
+    } else {
+      await backfillCoverBlurHashOnly();
+    }
+  } finally {
+    await AppDataSource.destroy();
+  }
+}
+
+main().catch((err) => {
   console.error('Backfill failed:', err);
   process.exit(1);
 });

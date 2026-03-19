@@ -90,6 +90,9 @@ export class Listing {
   @Column({ type: 'varchar', length: 50, nullable: true })
   cover_blur_hash: string | null;
 
+  @Column({ type: 'jsonb', nullable: true })
+  image_blur_hashes: (string | null)[] | null;
+
   @Column({ type: 'boolean', default: false })
   urgent: boolean;
 

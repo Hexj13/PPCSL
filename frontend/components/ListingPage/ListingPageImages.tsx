@@ -1,11 +1,12 @@
 'use client';
 
 import Image from 'next/image';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { useListingImages } from '@/hooks/useListingImages';
 import { useTranslation } from '@/hooks/useTranslation';
 import { getOptimizedImageUrl } from '@/lib/utils';
+import { blurhashToDataURL } from '@/lib/utils/blurhash';
 import { Spinner } from '@/ui';
 
 const RESET_TO_FIRST_DELAY_MS = 10000;
@@ -29,11 +30,10 @@ function renderPreviewImage(
     images: string[];
     imageErrors: Set<number>;
     imageAltTitle: string;
-    currentImageIndex: number;
-    showMainImageLoader: boolean;
     handleImageLoad: (_idx: number) => void;
     onImageError: (_idx: number) => void;
     isAnimating: boolean;
+    blurDataURLForIndex: (_index: number) => string | undefined;
     t: (_key: string, _params?: Record<string, string>) => string;
   },
 ) {
@@ -41,11 +41,10 @@ function renderPreviewImage(
     images,
     imageErrors,
     imageAltTitle,
-    currentImageIndex,
-    showMainImageLoader,
     handleImageLoad,
     onImageError,
     isAnimating,
+    blurDataURLForIndex,
     t,
   } = params;
   const src = images[index];
@@ -64,8 +63,8 @@ function renderPreviewImage(
 
   const optimizedUrl = getOptimizedImageUrl(src, 75, 1200);
   const isExternal = optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://');
-  const isCurrent = index === currentImageIndex;
-  const useNextImage = index === 0 && !isAnimating;
+  const useNextImage = !isAnimating;
+  const blurDataURL = blurDataURLForIndex(index);
 
   if (!useNextImage) {
     return (
@@ -78,11 +77,11 @@ function renderPreviewImage(
           index: String(index + 1),
           total: String(images.length),
         })}
-        decoding="sync"
+        decoding="async"
         draggable={false}
         onLoad={() => handleImageLoad(index)}
         onError={() => onImageError(index)}
-        className={`object-cover ${isCurrent && showMainImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
+        className="object-cover opacity-100"
         style={{
           position: 'absolute',
           inset: 0,
@@ -105,9 +104,11 @@ function renderPreviewImage(
       })}
       fill
       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 65vw"
-      className={`object-cover ${isCurrent && showMainImageLoader ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
-      loading={undefined}
-      priority={true}
+      className="object-cover opacity-100"
+      loading={index === 0 ? undefined : 'lazy'}
+      priority={index === 0}
+      placeholder={blurDataURL ? 'blur' : undefined}
+      blurDataURL={blurDataURL}
       draggable={false}
       unoptimized={isExternal}
       onLoad={() => handleImageLoad(index)}
@@ -127,9 +128,9 @@ function renderPreviewSlides(params: {
   images: string[];
   imageErrors: Set<number>;
   imageAltTitle: string;
-  showMainImageLoader: boolean;
   handleImageLoad: (_idx: number) => void;
   onImageError: (_idx: number) => void;
+  blurDataURLForIndex: (_index: number) => string | undefined;
   t: (_key: string, _params?: Record<string, string>) => string;
 }) {
   const {
@@ -138,9 +139,9 @@ function renderPreviewSlides(params: {
     images,
     imageErrors,
     imageAltTitle,
-    showMainImageLoader,
     handleImageLoad,
     onImageError,
+    blurDataURLForIndex,
     t,
   } = params;
 
@@ -148,10 +149,9 @@ function renderPreviewSlides(params: {
     images,
     imageErrors,
     imageAltTitle,
-    currentImageIndex,
-    showMainImageLoader,
     handleImageLoad,
     onImageError,
+    blurDataURLForIndex,
     t,
   };
 
@@ -203,6 +203,8 @@ interface ListingPageImagesProps {
   imageErrors: Set<number>;
   onImageError: (_index: number) => void;
   onImageClick: (_index: number) => void;
+  coverBlurHash?: string | null;
+  imageBlurHashes?: (string | null)[] | null;
 }
 
 export function ListingPageImages({
@@ -213,8 +215,28 @@ export function ListingPageImages({
   imageErrors,
   onImageError,
   onImageClick,
+  coverBlurHash,
+  imageBlurHashes,
 }: ListingPageImagesProps) {
   const { t } = useTranslation();
+
+  const blurDataURLForIndex = useMemo(() => {
+    return (index: number): string | undefined => {
+      const fromArr = imageBlurHashes?.[index];
+      const hash =
+        typeof fromArr === 'string' && fromArr.length > 0
+          ? fromArr
+          : index === 0 && coverBlurHash && coverBlurHash.length > 0
+            ? coverBlurHash
+            : undefined;
+      if (!hash) return undefined;
+      try {
+        return blurhashToDataURL(hash);
+      } catch {
+        return undefined;
+      }
+    };
+  }, [imageBlurHashes, coverBlurHash]);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
@@ -467,9 +489,9 @@ export function ListingPageImages({
           images,
           imageErrors,
           imageAltTitle,
-          showMainImageLoader,
           handleImageLoad,
           onImageError,
+          blurDataURLForIndex,
           t,
         })}
       </div>
@@ -509,6 +531,7 @@ export function ListingPageImages({
                     const optimizedUrl = getOptimizedImageUrl(img, 75, 1200);
                     const isExternal =
                       optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://');
+                    const thumbBlur = blurDataURLForIndex(index);
                     return (
                       <>
                         <Image
@@ -522,6 +545,8 @@ export function ListingPageImages({
                           sizes="(max-width: 640px) 33vw, 25vw"
                           className="object-cover"
                           loading="lazy"
+                          placeholder={thumbBlur ? 'blur' : undefined}
+                          blurDataURL={thumbBlur}
                           draggable={false}
                           unoptimized={isExternal}
                           onLoad={() => handleImageLoad(index)}

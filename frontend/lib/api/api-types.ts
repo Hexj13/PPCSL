@@ -23,6 +23,7 @@ export interface Listing {
   description?: string;
   images?: string[];
   cover_blur_hash?: string | null;
+  image_blur_hashes?: (string | null)[] | null;
   urgent?: boolean;
   is_new?: boolean;
   vin?: string;
@@ -154,6 +155,7 @@ export interface CreateListingDto {
   description?: string;
   images?: string[];
   cover_blur_hash?: string;
+  image_blur_hashes?: (string | null)[];
   status?: ListingStatus;
   urgent?: boolean;
   is_new?: boolean;

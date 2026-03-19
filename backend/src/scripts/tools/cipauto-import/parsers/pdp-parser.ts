@@ -421,7 +421,7 @@ function readBodyType(
   if (fromJson) return fromJson;
   const text = $('.cipauto-description-content').text();
   const match = text.match(
-    /\b(sedan|hatchback|wagon|suv|crossover|coupe|cabrio|convertible|minivan|van|pickup)\b/i,
+    /\b(sedan|hatchback|wagon|universal|suv|crossover|coupe|cabrio|convertible|minivan|van|pickup)\b/i,
   );
   return match?.[1];
 }

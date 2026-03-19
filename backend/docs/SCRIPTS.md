@@ -311,6 +311,21 @@ npm run check-brands:prod
 npm run check-models:prod
 ```
 
+## Tool scripts (`src/scripts/tools/`)
+
+Maintenance utilities (not under `stage/` / `production/` guards in the same way; each script calls `checkEnvironment` as needed).
+
+### Blurhash backfill (`backfill-blurhash.ts`)
+
+Requires **PostgreSQL**, **S3 credentials** (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AWS_S3_BUCKET_NAME`), and image URLs that resolve to keys in that bucket.
+
+| npm script | Effect |
+|------------|--------|
+| `npm run backfill:blurhash:cover` | Active listings with `cover_blur_hash IS NULL`: fetch first image from S3, set `cover_blur_hash`. |
+| `npm run backfill:blurhash:all` | Active listings with `image_blur_hashes IS NULL`: fetch each image, set `image_blur_hashes` (nullable slots on failure) and sync `cover_blur_hash` from the first successful hash / first slot. |
+
+Batches of 50, 1s pause between batches. Idempotent for the chosen criterion (`NULL` column). Operational notes: `core/docs/guides/image-optimization-setup-ru.md` (Step 3).
+
 ## Migration Scripts
 
 Database migrations are handled separately and are located in:

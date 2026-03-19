@@ -83,18 +83,20 @@ cd core/backend
 COUNTRY=md \
 DB_HOST=... DB_PORT=5432 DB_USERNAME=... DB_PASSWORD=... DB_NAME=... \
 AWS_ACCESS_KEY_ID=... AWS_SECRET_ACCESS_KEY=... AWS_REGION=eu-north-1 AWS_S3_BUCKET_NAME=kupito-uploads \
-npx ts-node -r tsconfig-paths/register src/scripts/tools/backfill-blurhash.ts
+npm run backfill:blurhash:cover
 ```
 
 **On Render Shell:**
 
 ```bash
 cd /opt/render/project/src/core/backend
-node dist/scripts/tools/backfill-blurhash.js
+npm run backfill:blurhash:cover
 ```
 
-The script processes 50 listings at a time with 1-second pause between batches.
-Safe to interrupt and re-run — only processes records with `cover_blur_hash IS NULL`.
+Use `npm run backfill:blurhash:all` when the `image_blur_hashes` column exists and you need placeholders for every photo on the listing page.
+
+The tool processes 50 listings at a time with 1-second pause between batches.
+Cover-only mode only touches rows with `cover_blur_hash IS NULL`. Full mode only touches rows with `image_blur_hashes IS NULL`. Safe to interrupt and re-run.
 
 ---
 

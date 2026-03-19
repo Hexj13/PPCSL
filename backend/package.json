@@ -98,7 +98,9 @@
     "check-user": "ts-node -r tsconfig-paths/register src/scripts/stage/check-user.ts",
     "generate-listings-for-models": "ts-node -r tsconfig-paths/register src/scripts/stage/generate-listings-for-all-models.ts",
     "backup": "ts-node -r tsconfig-paths/register src/scripts/production/backup-database.ts",
-    "upload-robots-txt": "ts-node -r tsconfig-paths/register src/scripts/production/upload-robots-txt.ts"
+    "upload-robots-txt": "ts-node -r tsconfig-paths/register src/scripts/production/upload-robots-txt.ts",
+    "backfill:blurhash:cover": "ts-node -r tsconfig-paths/register src/scripts/tools/backfill-blurhash.ts",
+    "backfill:blurhash:all": "ts-node -r tsconfig-paths/register src/scripts/tools/backfill-blurhash.ts all"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.999.0",

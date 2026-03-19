@@ -230,6 +230,15 @@ export class CreateListingDto {
   cover_blur_hash?: string;
 
   @ApiPropertyOptional({
+    description: 'Blurhash per image URL, same order as images; null when unknown',
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  image_blur_hashes?: (string | null)[];
+
+  @ApiPropertyOptional({
     example: '550e8400-e29b-41d4-a716-446655440000',
     description: 'Assign listing to a different user (admin only)',
   })

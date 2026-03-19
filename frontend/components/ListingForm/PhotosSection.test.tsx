@@ -74,6 +74,7 @@ const defaultFormData = {
   power_kw: '',
   equipment: [],
   cover_blur_hash: '',
+  image_blur_hashes: ['bh1', 'bh2'],
   assignedUserId: '',
   negotiable: false,
   available_in_credit: false,
@@ -125,6 +126,8 @@ describe('PhotosSection', () => {
       'https://example.com/img2.webp',
       'https://example.com/img1.webp',
     ]);
+    expect(movedDown.image_blur_hashes).toEqual(['bh2', 'bh1']);
+    expect(movedDown.cover_blur_hash).toBe('bh2');
 
     const moveUpButtons = screen.getAllByLabelText('Move up');
     fireEvent.click(moveUpButtons[1]);
@@ -136,6 +139,7 @@ describe('PhotosSection', () => {
       'https://example.com/img2.webp',
       'https://example.com/img1.webp',
     ]);
+    expect(movedUp.image_blur_hashes).toEqual(['bh2', 'bh1']);
   });
 
   it('should open preview when clicking first photo', () => {
@@ -155,9 +159,11 @@ describe('PhotosSection', () => {
     expect(setFormData).toHaveBeenCalled();
     const call = setFormData.mock.calls[0][0];
     expect(typeof call).toBe('function');
-    const prev = { images: defaultProps.formData.images };
+    const prev = defaultProps.formData;
     const next = call(prev);
     expect(next.images).toHaveLength(1);
+    expect(next.image_blur_hashes).toHaveLength(1);
+    expect(next.cover_blur_hash).toBe('bh2');
   });
 
   it('should call onImageDelete when provided', () => {

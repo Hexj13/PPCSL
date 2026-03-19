@@ -174,9 +174,9 @@ DB_NAME=ppcsl
 
 # Database Connection Pooling
 DB_POOL_MAX=20
-DB_POOL_MIN=5
+DB_POOL_MIN=0
 DB_POOL_IDLE_TIMEOUT=30000
-DB_POOL_CONNECTION_TIMEOUT=2000
+DB_POOL_CONNECTION_TIMEOUT=10000
 
 # Authentication (REQUIRED! Generate secure key)
 JWT_SECRET=your_very_long_random_secret_key_minimum_32_characters

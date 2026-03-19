@@ -140,7 +140,11 @@ export function useListingFormImages({
 
         setFormData((prev) => {
           const newImages = [...prev.images, imageUrl];
-          const updates: Partial<typeof prev> = { images: newImages };
+          const newHashes = [...prev.image_blur_hashes, response.data.blurhash ?? null];
+          const updates: Partial<typeof prev> = {
+            images: newImages,
+            image_blur_hashes: newHashes,
+          };
           if (newImages.length === 1 && response.data.blurhash) {
             updates.cover_blur_hash = response.data.blurhash;
           }
@@ -211,10 +215,19 @@ export function useListingFormImages({
       const deleteSession = uploadSessionRef.current;
 
       if (!deleteMeta) {
-        setFormData((prev) => ({
-          ...prev,
-          images: prev.images.filter((img) => img !== imageUrl),
-        }));
+        setFormData((prev) => {
+          const idx = prev.images.indexOf(imageUrl);
+          if (idx === -1) return prev;
+          const nextImages = prev.images.filter((_, i) => i !== idx);
+          const nextHashes = prev.image_blur_hashes.filter((_, i) => i !== idx);
+          const firstHash = nextHashes[0];
+          return {
+            ...prev,
+            images: nextImages,
+            image_blur_hashes: nextHashes,
+            cover_blur_hash: firstHash && typeof firstHash === 'string' ? firstHash : '',
+          };
+        });
         return;
       }
 
@@ -226,10 +239,19 @@ export function useListingFormImages({
           return;
         }
         uploadedImageDeleteMetaRef.current.delete(imageUrl);
-        setFormData((prev) => ({
-          ...prev,
-          images: prev.images.filter((img) => img !== imageUrl),
-        }));
+        setFormData((prev) => {
+          const idx = prev.images.indexOf(imageUrl);
+          if (idx === -1) return prev;
+          const nextImages = prev.images.filter((_, i) => i !== idx);
+          const nextHashes = prev.image_blur_hashes.filter((_, i) => i !== idx);
+          const firstHash = nextHashes[0];
+          return {
+            ...prev,
+            images: nextImages,
+            image_blur_hashes: nextHashes,
+            cover_blur_hash: firstHash && typeof firstHash === 'string' ? firstHash : '',
+          };
+        });
       } catch {
         if (deleteSession !== uploadSessionRef.current || !mountedRef.current) {
           return;

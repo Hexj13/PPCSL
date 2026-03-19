@@ -59,6 +59,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
         code = responseObj.code;
       }
     } else if (exception instanceof Error) {
+      if (this.isDatabaseConnectionTimeout(exception)) {
+        status = HttpStatus.SERVICE_UNAVAILABLE;
+        errorKey = 'errors.serviceUnavailable';
+        message = this.i18nService.translate('errors.serviceUnavailable', locale);
+      }
+
       this.logger.error(`Unhandled exception: ${exception.message}`, exception.stack);
 
       Sentry.captureException(exception, {
@@ -77,7 +83,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       });
     }
 
-    if (status >= 500) {
+    if (status >= 500 && exception instanceof HttpException) {
       this.logger.error(
         `HTTP ${status} Error: ${message}`,
         `Path: ${request.url}`,
@@ -141,5 +147,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
       return translated;
     }
     return message;
+  }
+
+  private isDatabaseConnectionTimeout(exception: Error): boolean {
+    const message = exception.message.toLowerCase();
+
+    return (
+      message.includes('connection terminated due to connection timeout') ||
+      message.includes('timeout exceeded when trying to connect') ||
+      message.includes('connect etimedout')
+    );
   }
 }

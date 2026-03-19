@@ -341,12 +341,21 @@ export function PhotosSection({
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    const images = formData.images;
-    const oldIndex = images.indexOf(active.id as string);
-    const newIndex = images.indexOf(over.id as string);
-    if (oldIndex === -1 || newIndex === -1) return;
-    const reordered = arrayMove(images, oldIndex, newIndex);
-    setFormData((prev) => ({ ...prev, images: reordered }));
+    setFormData((prev) => {
+      const images = prev.images;
+      const oldIndex = images.indexOf(active.id as string);
+      const newIndex = images.indexOf(over.id as string);
+      if (oldIndex === -1 || newIndex === -1) return prev;
+      const nextImages = arrayMove(images, oldIndex, newIndex);
+      const nextHashes = arrayMove(prev.image_blur_hashes, oldIndex, newIndex);
+      const firstHash = nextHashes[0];
+      return {
+        ...prev,
+        images: nextImages,
+        image_blur_hashes: nextHashes,
+        cover_blur_hash: firstHash && typeof firstHash === 'string' ? firstHash : '',
+      };
+    });
   };
 
   const imageIds = formData.images;
@@ -394,10 +403,17 @@ export function PhotosSection({
   );
   const moveImage = (fromIndex: number, toIndex: number) => {
     if (toIndex < 0 || toIndex >= formData.images.length || fromIndex === toIndex) return;
-    setFormData((prev) => ({
-      ...prev,
-      images: arrayMove(prev.images, fromIndex, toIndex),
-    }));
+    setFormData((prev) => {
+      const nextImages = arrayMove(prev.images, fromIndex, toIndex);
+      const nextHashes = arrayMove(prev.image_blur_hashes, fromIndex, toIndex);
+      const firstHash = nextHashes[0];
+      return {
+        ...prev,
+        images: nextImages,
+        image_blur_hashes: nextHashes,
+        cover_blur_hash: firstHash && typeof firstHash === 'string' ? firstHash : '',
+      };
+    });
   };
 
   return (
@@ -485,10 +501,18 @@ export function PhotosSection({
                         void onImageDelete(url);
                         return;
                       }
-                      setFormData((prev) => ({
-                        ...prev,
-                        images: prev.images.filter((_, i) => i !== index),
-                      }));
+                      setFormData((prev) => {
+                        const nextImages = prev.images.filter((_, i) => i !== index);
+                        const nextHashes = prev.image_blur_hashes.filter((_, i) => i !== index);
+                        const firstHash = nextHashes[0];
+                        return {
+                          ...prev,
+                          images: nextImages,
+                          image_blur_hashes: nextHashes,
+                          cover_blur_hash:
+                            firstHash && typeof firstHash === 'string' ? firstHash : '',
+                        };
+                      });
                     }}
                     deleting={deletingImageUrls.includes(url)}
                     canMoveUp={index > 0}
@@ -524,10 +548,18 @@ export function PhotosSection({
                           void onImageDelete(url);
                           return;
                         }
-                        setFormData((prev) => ({
-                          ...prev,
-                          images: prev.images.filter((_, i) => i !== index),
-                        }));
+                        setFormData((prev) => {
+                          const nextImages = prev.images.filter((_, i) => i !== index);
+                          const nextHashes = prev.image_blur_hashes.filter((_, i) => i !== index);
+                          const firstHash = nextHashes[0];
+                          return {
+                            ...prev,
+                            images: nextImages,
+                            image_blur_hashes: nextHashes,
+                            cover_blur_hash:
+                              firstHash && typeof firstHash === 'string' ? firstHash : '',
+                          };
+                        });
                       }}
                       deleting={deletingImageUrls.includes(url)}
                       canMoveUp={index > 0}
