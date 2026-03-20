@@ -1190,6 +1190,8 @@ PPCSL (Core Repository)
 
 **Workflow File:** `.github/workflows/ci.yml` in PPCSL repository
 
+The workflow sets `ONNXRUNTIME_NODE_INSTALL=skip` so `onnxruntime-node` does not run NuGet downloads for optional GPU binaries during `npm ci` (plate masking uses CPU only; avoids CI timeouts).
+
 **Jobs:**
 
 1. **Test Jobs:**
@@ -1217,6 +1219,8 @@ PPCSL (Core Repository)
 ### 13.4. Platform-Specific CI/CD (kupito.club)
 
 **Workflow File:** `.github/workflows/ci.yml` in kupito.club repository
+
+The workflow sets `ONNXRUNTIME_NODE_INSTALL=skip` for the same reason as PPCSL core CI (see §13.3).
 
 **Steps:**
 
@@ -1314,6 +1318,7 @@ For deploying kupito.club backend on Render.com, configure the following:
 - `AWS_REGION` - AWS region (e.g., `eu-north-1`)
 - `REDIS_HOST` - Redis host (if using external Redis)
 - `REDIS_PORT` - Redis port (if using external Redis)
+- `ONNXRUNTIME_NODE_INSTALL` - Optional. Set to `skip` if `npm ci` fails on `onnxruntime-node` postinstall (NuGet download for optional GPU binaries). Plate masking uses CPU only.
 
 **Build Command:**
 
