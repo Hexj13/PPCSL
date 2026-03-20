@@ -1,4 +1,5 @@
-import type { CipautoConfig, LoginResponse } from '../types';
+import type { KupitoImportClientConfig } from '../../partner-import-shared/kupito-import-types';
+import type { LoginResponse } from '../types';
 import { requestJson } from '../utils/http';
 
 export class AuthClient {
@@ -6,7 +7,7 @@ export class AuthClient {
   private refreshToken = '';
   private userType = '';
 
-  constructor(private readonly config: CipautoConfig) {}
+  constructor(private readonly config: KupitoImportClientConfig) {}
 
   async login(): Promise<void> {
     const url = `${this.config.kupitoApiUrl}/api/auth/login`;

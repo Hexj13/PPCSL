@@ -61,6 +61,8 @@ uploads/
 public/uploads/
 backend/src/scripts/tools/cipauto-import/data/
 backend/src/scripts/tools/cipauto-import/reports/
+backend/src/scripts/tools/999md-import/data/
+backend/src/scripts/tools/999md-import/reports/
 
 
 *storybook.log

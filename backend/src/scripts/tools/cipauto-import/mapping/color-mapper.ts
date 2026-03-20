@@ -23,10 +23,18 @@ export function mapColor(raw?: string): { value?: string; warning?: string } {
     bej: 'beige',
     auriu: 'gold',
     bordo: 'burgundy',
+    burgundia: 'burgundy',
+    bronz: 'bronze',
+    crom: 'silver',
+    fildes: 'cream',
+    ivory: 'cream',
     hameleon: 'chameleon',
     roz: 'pink',
     violet: 'violet',
     zmeuriu: 'pink',
+    alta: 'other',
+    satin: 'metallic_silver',
+    sampanie: 'champagne',
   };
 
   const value = mapping[normalized];

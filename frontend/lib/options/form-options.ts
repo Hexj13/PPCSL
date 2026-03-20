@@ -137,6 +137,7 @@ export function getColorOptions(t: (_key: string) => string): Array<LabeledOptio
     'gold',
     'bronze',
     'burgundy',
+    'champagne',
     'cream',
     'dark_blue',
     'light_blue',

@@ -1,5 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 
+import { LISTING_GRID_PAGE_SIZE } from '@/lib/constants';
+
 import { useAvailableListingsCount } from './useAvailableListingsCount';
 import type { FilterState } from './useSearchFilters';
 
@@ -13,9 +15,13 @@ jest.mock('@/lib/api', () => ({
   },
 }));
 
-jest.mock('@/lib/search', () => ({
-  getParsedListingSearchParams: (...args: unknown[]) => mockGetParsedListingSearchParams(...args),
-}));
+jest.mock('@/lib/search', () => {
+  const actual = jest.requireActual('@/lib/search');
+  return {
+    ...actual,
+    getParsedListingSearchParams: (...args: unknown[]) => mockGetParsedListingSearchParams(...args),
+  };
+});
 
 jest.mock('@/lib/search/search-params', () => ({
   buildSearchQuery: (...args: unknown[]) => mockBuildSearchQuery(...args),
@@ -184,5 +190,145 @@ describe('useAvailableListingsCount', () => {
     await waitFor(() => {
       expect(mockGetAll).toHaveBeenCalledTimes(1);
     });
+  });
+
+  it('calls getAll with parsed params and string CSV fields for brand, model, and arrays', async () => {
+    mockGetParsedListingSearchParams.mockResolvedValue({
+      page: 1,
+      limit: 20,
+      vehicleType: 'car',
+      brand_ids: 'brand-uuid-1,brand-uuid-2',
+      model_ids: 'model-uuid-1',
+      fuels: 'Diesel',
+    });
+    mockGetAll.mockResolvedValue({ data: { meta: { total: 5 } } });
+
+    const { result } = renderHook(() =>
+      useAvailableListingsCount({
+        filters: {
+          ...baseFilters,
+          brand_ids: ['brand-uuid-1', 'brand-uuid-2'],
+          model_ids: ['model-uuid-1'],
+          fuels: ['Diesel'],
+        },
+        brands: [],
+        models: [],
+        cities: [],
+        vehicleType: 'car',
+        currentYear: '2026',
+        isSyncingFromUrl: false,
+      }),
+    );
+
+    await act(async () => {
+      jest.advanceTimersByTime(350);
+    });
+
+    await waitFor(() => {
+      expect(result.current.total).toBe(5);
+    });
+
+    expect(mockGetAll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        vehicleType: 'car',
+        page: 1,
+        limit: 1,
+        brand_ids: 'brand-uuid-1,brand-uuid-2',
+        model_ids: 'model-uuid-1',
+        fuels: 'Diesel',
+      }),
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+  });
+
+  it('calls getAll with parsed cities and equipment as CSV strings', async () => {
+    mockGetParsedListingSearchParams.mockResolvedValue({
+      page: 1,
+      limit: 20,
+      vehicleType: 'car',
+      cities: 'Chisinau,Balti',
+      equipment: 'abs,esp',
+      equipmentMatch: 'partial',
+    });
+    mockGetAll.mockResolvedValue({ data: { meta: { total: 3 } } });
+
+    const { result } = renderHook(() =>
+      useAvailableListingsCount({
+        filters: {
+          ...baseFilters,
+          cities: ['Chisinau', 'Balti'],
+          equipment: ['abs', 'esp'],
+          equipment_match_mode: 'partial',
+        },
+        brands: [],
+        models: [],
+        cities: [],
+        vehicleType: 'car',
+        currentYear: '2026',
+        isSyncingFromUrl: false,
+      }),
+    );
+
+    await act(async () => {
+      jest.advanceTimersByTime(350);
+    });
+
+    await waitFor(() => {
+      expect(result.current.total).toBe(3);
+    });
+
+    expect(mockGetAll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        vehicleType: 'car',
+        page: 1,
+        limit: 1,
+        cities: 'Chisinau,Balti',
+        equipment: 'abs,esp',
+      }),
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+  });
+
+  it('uses filter fallback when parse returns only page and limit', async () => {
+    mockGetParsedListingSearchParams.mockResolvedValue({
+      page: 1,
+      limit: LISTING_GRID_PAGE_SIZE,
+    });
+    mockGetAll.mockResolvedValue({ data: { meta: { total: 7 } } });
+
+    const { result } = renderHook(() =>
+      useAvailableListingsCount({
+        filters: {
+          ...baseFilters,
+          brand_ids: ['550e8400-e29b-41d4-a716-446655440001'],
+          model_ids: ['660e8400-e29b-41d4-a716-446655440002'],
+        },
+        brands: [],
+        models: [],
+        cities: [],
+        vehicleType: 'car',
+        currentYear: '2026',
+        isSyncingFromUrl: false,
+      }),
+    );
+
+    await act(async () => {
+      jest.advanceTimersByTime(350);
+    });
+
+    await waitFor(() => {
+      expect(result.current.total).toBe(7);
+    });
+
+    expect(mockGetAll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        vehicleType: 'car',
+        page: 1,
+        limit: 1,
+        brand_ids: '550e8400-e29b-41d4-a716-446655440001',
+        model_ids: '660e8400-e29b-41d4-a716-446655440002',
+      }),
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
   });
 });

@@ -4,7 +4,11 @@ import type { FilterState } from '@/hooks/useSearchFilters';
 import type { Brand, City, VehicleModel } from '@/lib/api';
 import { listingsApi } from '@/lib/api';
 import type { SearchParams } from '@/lib/api/api-types';
-import { getParsedListingSearchParams } from '@/lib/search';
+import {
+  buildFallbackListingSearchParamsFromFilters,
+  getParsedListingSearchParams,
+  isGetParsedListingSearchParamsFailure,
+} from '@/lib/search';
 import { buildSearchQuery } from '@/lib/search/search-params';
 import { getFilterRangesValidationError } from '@/lib/validation';
 
@@ -71,27 +75,17 @@ export function useAvailableListingsCount({
           vehicleType,
           searchParams: new URLSearchParams(),
         });
-        const parsedParams = await getParsedListingSearchParams(result.urlString, vehicleType);
-        const validBrandIds = filters.brand_ids.filter(
-          (id) => id !== 'all' && id !== '' && !id.startsWith('__category__'),
-        );
-        const validModelIds = filters.model_ids.filter(
-          (id) => id !== 'all' && id !== '' && !id.startsWith('__category__'),
-        );
-        const parsedSearchParams = parsedParams as SearchParams;
-        const {
-          brand_ids: _parsedBrandIds,
-          model_ids: _parsedModelIds,
-          ...restParsedParams
-        } = parsedSearchParams;
+        let parsedParams = await getParsedListingSearchParams(result.urlString, vehicleType);
+        if (isGetParsedListingSearchParamsFailure(parsedParams)) {
+          parsedParams = buildFallbackListingSearchParamsFromFilters(filters, vehicleType);
+        }
         const response = await listingsApi.getAll(
           {
-            ...restParsedParams,
-            ...(validBrandIds.length > 0 ? { brand_ids: validBrandIds } : {}),
-            ...(validModelIds.length > 0 ? { model_ids: validModelIds } : {}),
+            ...parsedParams,
+            vehicleType,
             page: 1,
             limit: 1,
-          },
+          } as SearchParams,
           { signal: controller.signal },
         );
         setTotal(response.data.meta.total ?? 0);

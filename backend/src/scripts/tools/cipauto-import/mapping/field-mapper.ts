@@ -25,11 +25,12 @@ export function buildCreateListingPayload(
     description,
     images,
     status: input.status,
-    condition: ConditionType.Undamaged,
+    condition: input.parsed.condition ?? ConditionType.Undamaged,
     registration_type: input.registrationType,
     horsepower: input.horsepower,
     equipment: input.parsed.equipmentKeys?.slice(0, 40),
     assignedUserId: input.ownerUserId,
+    ...(input.parsed.vin !== undefined ? { vin: input.parsed.vin } : {}),
     vehicle: {
       brand_id: input.resolvedBrandId,
       model_id: input.resolvedModelId,
@@ -41,6 +42,7 @@ export function buildCreateListingPayload(
       drive_type: input.mappedEnums.driveType,
       body_type: input.mappedEnums.bodyType,
       color: input.mappedEnums.color,
+      ...(input.parsed.doors !== undefined ? { doors: input.parsed.doors } : {}),
     },
   };
 

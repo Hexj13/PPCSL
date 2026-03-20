@@ -3,6 +3,7 @@ import 'reflect-metadata';
 import { Command } from 'commander';
 
 import type { ListingStatus } from '../../../common/types';
+import { isPartnerImportDebugEnabled } from '../partner-import-shared/partner-import-debug';
 
 import { AuthClient } from './api/auth-client';
 import { KupitoApiClient } from './api/kupito-api';
@@ -38,7 +39,7 @@ import { Logger } from './utils/logger';
 import { sleep } from './utils/sleep';
 
 const program = new Command();
-const logger = new Logger(process.env.CIPAUTO_DEBUG === '1');
+const logger = new Logger(isPartnerImportDebugEnabled());
 let shouldStop = false;
 
 process.on('SIGINT', () => {

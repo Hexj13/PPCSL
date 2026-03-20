@@ -43,6 +43,7 @@ function renderPreviewImage(
     handleImageLoad: (_idx: number) => void;
     onImageError: (_idx: number) => void;
     blurDataURLForIndex: (_index: number) => string | undefined;
+    heroPreviewBlurConsumed: boolean;
     t: (_key: string, _params?: Record<string, string>) => string;
   },
 ) {
@@ -53,6 +54,7 @@ function renderPreviewImage(
     handleImageLoad,
     onImageError,
     blurDataURLForIndex,
+    heroPreviewBlurConsumed,
     t,
   } = params;
   const src = images[index];
@@ -71,7 +73,7 @@ function renderPreviewImage(
 
   const optimizedUrl = getOptimizedImageUrl(src, 75, 1200);
   const isExternal = optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://');
-  const blurDataURL = blurDataURLForIndex(index);
+  const blurDataURL = index === 0 && !heroPreviewBlurConsumed ? blurDataURLForIndex(0) : undefined;
 
   return (
     <Image
@@ -111,6 +113,7 @@ function renderPreviewSlides(params: {
   handleImageLoad: (_idx: number) => void;
   onImageError: (_idx: number) => void;
   blurDataURLForIndex: (_index: number) => string | undefined;
+  heroPreviewBlurConsumed: boolean;
   t: (_key: string, _params?: Record<string, string>) => string;
 }) {
   const {
@@ -122,6 +125,7 @@ function renderPreviewSlides(params: {
     handleImageLoad,
     onImageError,
     blurDataURLForIndex,
+    heroPreviewBlurConsumed,
     t,
   } = params;
 
@@ -132,6 +136,7 @@ function renderPreviewSlides(params: {
     handleImageLoad,
     onImageError,
     blurDataURLForIndex,
+    heroPreviewBlurConsumed,
     t,
   };
 
@@ -288,6 +293,13 @@ export function ListingPageImages({
 }: ListingPageImagesProps) {
   const { t } = useTranslation();
 
+  const imagesSignature = useMemo(() => images.join('\u0001'), [images]);
+  const [heroPreviewBlurConsumed, setHeroPreviewBlurConsumed] = useState(false);
+
+  useEffect(() => {
+    setHeroPreviewBlurConsumed(false);
+  }, [imagesSignature]);
+
   const blurDataURLForIndex = useMemo(() => {
     return (index: number): string | undefined => {
       const fromArr = imageBlurHashes?.[index];
@@ -376,6 +388,16 @@ export function ListingPageImages({
     currentImageIndex,
     imageErrors,
   });
+
+  const handlePreviewImageLoad = useCallback(
+    (idx: number) => {
+      handleImageLoad(idx);
+      if (idx === 0) {
+        setHeroPreviewBlurConsumed(true);
+      }
+    },
+    [handleImageLoad],
+  );
 
   const [animState, setAnimState] = useState<{
     fromIndex: number;
@@ -555,9 +577,10 @@ export function ListingPageImages({
           images,
           imageErrors,
           imageAltTitle,
-          handleImageLoad,
+          handleImageLoad: handlePreviewImageLoad,
           onImageError,
           blurDataURLForIndex,
+          heroPreviewBlurConsumed,
           t,
         })}
       </div>

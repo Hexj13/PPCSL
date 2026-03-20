@@ -127,7 +127,14 @@ export function ListingGrid({ initialData }: ListingGridProps) {
         Number.isFinite(limitFromParams) &&
         Number.isInteger(limitFromParams) &&
         limitFromParams > 0;
-      const effectiveLimit = hasValidLimitInSearch ? limitFromParams : LISTING_GRID_PAGE_SIZE;
+      let urlHasExplicitLimit = false;
+      try {
+        urlHasExplicitLimit = new URLSearchParams(searchParamsString).has('limit');
+      } catch {
+        urlHasExplicitLimit = false;
+      }
+      const effectiveLimit =
+        urlHasExplicitLimit && hasValidLimitInSearch ? limitFromParams : LISTING_GRID_PAGE_SIZE;
       const params: Record<string, string | number | boolean> = {
         ...parsedParams,
         vehicleType,

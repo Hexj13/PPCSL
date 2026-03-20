@@ -1,4 +1,5 @@
-import type { CipautoConfig, UploadResult } from '../types';
+import type { KupitoImportClientConfig } from '../../partner-import-shared/kupito-import-types';
+import type { UploadResult } from '../types';
 import { requestBuffer } from '../utils/http';
 import { sleep } from '../utils/sleep';
 
@@ -6,7 +7,7 @@ import type { AuthClient } from './auth-client';
 
 export class UploadClient {
   constructor(
-    private readonly config: CipautoConfig,
+    private readonly config: KupitoImportClientConfig,
     private readonly authClient: AuthClient,
   ) {}
 

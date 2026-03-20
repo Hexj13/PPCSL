@@ -7,6 +7,13 @@ import type {
   RegistrationType,
   TransmissionType,
 } from '../../../common/types';
+import type {
+  CliStatus,
+  KupitoImportClientConfig,
+  RuntimeEnv,
+} from '../partner-import-shared/kupito-import-types';
+
+export type { CliStatus, RuntimeEnv };
 
 export type ImportState =
   | 'discovered'
@@ -16,10 +23,6 @@ export type ImportState =
   | 'failed'
   | 'skipped'
   | 'manual_review';
-
-export type RuntimeEnv = 'local' | 'prod';
-
-export type CliStatus = 'active' | 'paused';
 
 export interface ScanCommandOptions {
   pages: number;
@@ -130,6 +133,9 @@ export interface ParsedPdpData {
   bodyRaw?: string;
   colorRaw?: string;
   city?: string;
+  doors?: number;
+  vin?: string;
+  condition?: ConditionType;
   warnings: string[];
 }
 
@@ -282,6 +288,7 @@ export interface KupitoCreateListingPayload {
   power_kw?: number;
   equipment?: string[];
   assignedUserId: string;
+  vin?: string;
   vehicle: {
     brand_id: string;
     model_id: string;
@@ -293,6 +300,7 @@ export interface KupitoCreateListingPayload {
     drive_type?: 'FWD' | 'RWD' | 'AWD';
     body_type: BodyType;
     color?: string;
+    doors?: number;
   };
 }
 
@@ -301,17 +309,8 @@ export interface KupitoListingResponse {
   status: ListingStatus;
 }
 
-export interface CipautoConfig {
-  env: RuntimeEnv;
+export interface CipautoConfig extends KupitoImportClientConfig {
   cipautoBaseUrl: string;
-  kupitoApiUrl: string;
-  adminEmail: string;
-  adminPassword: string;
-  importSecret: string;
   registryPath: string;
   reportsDir: string;
-  requestTimeoutMs: number;
-  maxRetries: number;
-  defaultDelayMs: number;
-  imageStepDelayMs: number;
 }

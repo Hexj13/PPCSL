@@ -2,7 +2,7 @@
 
 ## Purpose
 
-`cipauto-import` migrates vehicle listings from `cipauto.md` into Kupito through the standard backend API.
+`cipauto-import` migrates vehicle listings from `cipauto.md` into Kupito through the standard backend API. Kupito admin credentials and API URL are shared with other partner CLI tools via `KUPITO_IMPORT_*` (see [999md-import.md](./999md-import.md) for the same pattern on 999.md).
 
 The tool is designed for safe production use:
 
@@ -72,20 +72,28 @@ npm run cipauto:report -- --last --env=prod
 - `--env=local|prod`
 - `--file=<path>` read a specific report file
 
-## Required environment variables
+## Required environment variables (Kupito API)
 
-- `CIPAUTO_ADMIN_EMAIL`
-- `CIPAUTO_ADMIN_PASSWORD`
+Primary (shared with other partner importers such as `999md-import`):
 
-Optional:
+- `KUPITO_IMPORT_ADMIN_EMAIL`
+- `KUPITO_IMPORT_ADMIN_PASSWORD`
 
-- `CIPAUTO_API_URL` Kupito API URL
+Legacy aliases (still supported): `CIPAUTO_ADMIN_EMAIL`, `CIPAUTO_ADMIN_PASSWORD`.
+
+Optional (Kupito):
+
+- `KUPITO_IMPORT_API_URL` — override Kupito API base URL (legacy: `CIPAUTO_API_URL`)
+- `KUPITO_IMPORT_SECRET` — import secret header when enforced on **prod** (legacy: `CIPAUTO_IMPORT_SECRET`)
+- `KUPITO_IMPORT_DEBUG=1` — verbose logs (legacy: `CIPAUTO_DEBUG=1`)
+
+CipAuto source only:
+
 - `CIPAUTO_BASE_URL` source catalog base URL (default `https://cipauto.md`)
 - `CIPAUTO_REQUEST_TIMEOUT_MS` request timeout
 - `CIPAUTO_MAX_RETRIES` retry count
 - `CIPAUTO_DEFAULT_DELAY_MS` delay between listing/page requests
 - `CIPAUTO_IMAGE_DELAY_MS` delay between image operations
-- `CIPAUTO_DEBUG=1` debug logs
 
 ## Data and idempotency
 
@@ -160,4 +168,3 @@ This minimizes CPU/network load and reduces risk of partner-side blocks.
 3. Run real import with `--limit=10 --status=paused`
 4. Verify created listings in admin
 5. Run larger batches incrementally
-

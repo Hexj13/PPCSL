@@ -37,10 +37,16 @@ export function mapTransmission(raw?: string): { value?: TransmissionType; warni
   const mapping: Record<string, TransmissionType> = {
     manuala: TransmissionType.Manual,
     manual: TransmissionType.Manual,
+    mecanica: TransmissionType.Manual,
+    mecanic: TransmissionType.Manual,
     automata: TransmissionType.Automatic,
     automat: TransmissionType.Automatic,
     automatic: TransmissionType.Automatic,
+    automattiptronic: TransmissionType.Automatic,
+    tiptronic: TransmissionType.Automatic,
+    semiautomata: TransmissionType.Automatic,
     cvt: TransmissionType.CVT,
+    variator: TransmissionType.CVT,
     robot: TransmissionType.Robot,
     robotizata: TransmissionType.Robot,
   };

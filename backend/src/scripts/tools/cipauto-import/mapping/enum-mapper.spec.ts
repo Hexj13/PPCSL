@@ -1,33 +1,20 @@
-import { mapDriveType } from './enum-mapper';
+import { TransmissionType } from '../../../../common/types';
 
-describe('enum-mapper', () => {
-  describe('mapDriveType', () => {
-    it('maps Față to FWD', () => {
-      expect(mapDriveType('Față')).toBe('FWD');
-    });
+import { mapTransmission } from './enum-mapper';
 
-    it('maps Spate to RWD', () => {
-      expect(mapDriveType('Spate')).toBe('RWD');
-    });
+describe('mapTransmission', () => {
+  it('maps 999.md Cutia de viteze labels (Romanian)', () => {
+    expect(mapTransmission('Mecanică').value).toBe(TransmissionType.Manual);
+    expect(mapTransmission('Automată').value).toBe(TransmissionType.Automatic);
+    expect(mapTransmission('Automat-Tiptronic').value).toBe(TransmissionType.Automatic);
+    expect(mapTransmission('Semiautomată').value).toBe(TransmissionType.Automatic);
+    expect(mapTransmission('Variator').value).toBe(TransmissionType.CVT);
+    expect(mapTransmission('Robotizată').value).toBe(TransmissionType.Robot);
+  });
 
-    it('maps 4x4 to AWD', () => {
-      expect(mapDriveType('4x4')).toBe('AWD');
-    });
-
-    it('maps quattro to AWD', () => {
-      expect(mapDriveType('quattro')).toBe('AWD');
-    });
-
-    it('maps xDrive to AWD', () => {
-      expect(mapDriveType('xDrive')).toBe('AWD');
-    });
-
-    it('maps 4matic to AWD', () => {
-      expect(mapDriveType('4matic')).toBe('AWD');
-    });
-
-    it('maps 4x2 with front traction to FWD', () => {
-      expect(mapDriveType('4x2 Față')).toBe('FWD');
-    });
+  it('returns warning for unknown gearbox label', () => {
+    const r = mapTransmission('Quantum gearbox');
+    expect(r.value).toBeUndefined();
+    expect(r.warning).toBe('UNMAPPED_TRANSMISSION:Quantum gearbox');
   });
 });

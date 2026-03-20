@@ -4,10 +4,15 @@ import React from 'react';
 
 import type { Listing, PaginationMeta } from '@/lib/api';
 import { favoritesApi, listingsApi } from '@/lib/api';
-import { Currency } from '@/lib/constants';
+import { Currency, LISTING_GRID_PAGE_SIZE } from '@/lib/constants';
+import { getParsedListingSearchParams } from '@/lib/search';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
 
 import { ListingGrid } from './ListingGrid';
+
+jest.mock('@/lib/search', () => ({
+  getParsedListingSearchParams: jest.fn(),
+}));
 
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
@@ -139,7 +144,7 @@ const mockListing2: Listing = {
 
 const mockMeta: PaginationMeta = {
   page: 1,
-  limit: 20,
+  limit: LISTING_GRID_PAGE_SIZE,
   total: 2,
   totalPages: 1,
 };
@@ -155,6 +160,10 @@ describe('ListingGrid', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (getParsedListingSearchParams as jest.Mock).mockResolvedValue({
+      page: 1,
+      limit: 20,
+    });
     (useFavoritesStore as unknown as { getState: jest.Mock }).getState.mockReturnValue({
       favorites: [],
     });
@@ -305,6 +314,60 @@ describe('ListingGrid', () => {
       render(<ListingGrid />);
 
       expect(screen.queryByTestId('listing-skeleton')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('listing fetch limit', () => {
+    const emptyResponse = {
+      data: { data: [] as Listing[], meta: { ...mockMeta, total: 0 } },
+    };
+
+    beforeEach(() => {
+      (listingsApi.getAll as jest.Mock).mockResolvedValue(emptyResponse);
+      (getParsedListingSearchParams as jest.Mock).mockResolvedValue({
+        page: 1,
+        limit: 20,
+      });
+    });
+
+    it('uses grid page size when URL has no limit query', async () => {
+      (useSearchParams as jest.Mock).mockReturnValue({
+        get: () => null,
+        toString: () => 'page=1',
+      });
+
+      render(<ListingGrid />);
+
+      await waitFor(() => {
+        expect(listingsApi.getAll).toHaveBeenCalledWith(
+          expect.objectContaining({
+            limit: LISTING_GRID_PAGE_SIZE,
+            page: 1,
+          }),
+        );
+      });
+    });
+
+    it('uses URL limit when limit is present in query', async () => {
+      (getParsedListingSearchParams as jest.Mock).mockResolvedValueOnce({
+        page: 1,
+        limit: 10,
+      });
+      (useSearchParams as jest.Mock).mockReturnValue({
+        get: (key: string) => (key === 'limit' ? '10' : null),
+        toString: () => 'page=1&limit=10',
+      });
+
+      render(<ListingGrid />);
+
+      await waitFor(() => {
+        expect(listingsApi.getAll).toHaveBeenCalledWith(
+          expect.objectContaining({
+            limit: 10,
+            page: 1,
+          }),
+        );
+      });
     });
   });
 

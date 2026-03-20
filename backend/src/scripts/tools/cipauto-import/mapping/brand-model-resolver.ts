@@ -1,8 +1,10 @@
 import type { KupitoApiClient } from '../api/kupito-api';
 import type { BrandInfo, ModelInfo } from '../types';
 
+export type BrandModelVehicleType = 'car' | 'truck' | 'moto';
+
 export class BrandModelResolver {
-  private brandsCache: BrandInfo[] | null = null;
+  private readonly brandsByVehicleType = new Map<BrandModelVehicleType, BrandInfo[] | null>();
   private readonly modelsByBrandCache = new Map<string, ModelInfo[]>();
 
   constructor(private readonly kupitoApi: KupitoApiClient) {}
@@ -10,19 +12,20 @@ export class BrandModelResolver {
   async resolve(
     brandName?: string,
     modelName?: string,
+    vehicleType: BrandModelVehicleType = 'car',
   ): Promise<{ brandId: string; modelId: string }> {
     if (!brandName || !modelName) {
       throw new Error(`Brand/model missing. brand="${brandName}" model="${modelName}"`);
     }
 
-    const brands = await this.getBrands();
+    const brands = await this.getBrands(vehicleType);
     const brandCandidates = findBrandCandidates(brands, brandName, modelName);
     if (brandCandidates.length === 0) {
       throw new Error(`Brand not found in Kupito: ${brandName}`);
     }
 
     for (const brand of brandCandidates) {
-      const models = await this.getModelsByBrand(brand.id);
+      const models = await this.getModelsByBrand(brand.id, vehicleType);
       const adaptedModelName = adaptSourceModelForBrand(modelName, brand.name);
       const model = findModelBySourceName(models, adaptedModelName);
       if (model) {
@@ -36,20 +39,31 @@ export class BrandModelResolver {
     throw new Error(`Model not found in Kupito: ${brandName} ${modelName}`);
   }
 
-  private async getBrands(): Promise<BrandInfo[]> {
-    if (!this.brandsCache) {
-      this.brandsCache = await this.kupitoApi.getBrands('car');
-    }
-    return this.brandsCache;
-  }
-
-  private async getModelsByBrand(brandId: string): Promise<ModelInfo[]> {
-    const cached = this.modelsByBrandCache.get(brandId);
+  private async getBrands(vehicleType: BrandModelVehicleType): Promise<BrandInfo[]> {
+    const cached = this.brandsByVehicleType.get(vehicleType);
     if (cached) {
       return cached;
     }
-    const models = await this.kupitoApi.getModelsByBrand(brandId, 'car');
-    this.modelsByBrandCache.set(brandId, models);
+    const loaded = await this.kupitoApi.getBrands(vehicleType);
+    this.brandsByVehicleType.set(vehicleType, loaded);
+    return loaded;
+  }
+
+  private modelsCacheKey(brandId: string, vehicleType: BrandModelVehicleType): string {
+    return `${brandId}:${vehicleType}`;
+  }
+
+  private async getModelsByBrand(
+    brandId: string,
+    vehicleType: BrandModelVehicleType,
+  ): Promise<ModelInfo[]> {
+    const key = this.modelsCacheKey(brandId, vehicleType);
+    const cached = this.modelsByBrandCache.get(key);
+    if (cached) {
+      return cached;
+    }
+    const models = await this.kupitoApi.getModelsByBrand(brandId, vehicleType);
+    this.modelsByBrandCache.set(key, models);
     return models;
   }
 }

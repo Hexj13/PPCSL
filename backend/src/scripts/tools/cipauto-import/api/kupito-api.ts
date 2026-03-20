@@ -1,7 +1,7 @@
 import { ListingStatus, RegistrationType } from '../../../../common/types';
+import type { KupitoImportClientConfig } from '../../partner-import-shared/kupito-import-types';
 import type {
   BrandInfo,
-  CipautoConfig,
   KupitoCreateListingPayload,
   KupitoListingResponse,
   ModelInfo,
@@ -12,7 +12,7 @@ import type { AuthClient } from './auth-client';
 
 export class KupitoApiClient {
   constructor(
-    private readonly config: CipautoConfig,
+    private readonly config: KupitoImportClientConfig,
     private readonly authClient: AuthClient,
   ) {}
 
