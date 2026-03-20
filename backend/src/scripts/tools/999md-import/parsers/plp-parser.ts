@@ -1,4 +1,4 @@
-import { sleep } from '../../cipauto-import/utils/sleep';
+import { sleep } from '../../partner-import-shared/utils/sleep';
 import { GraphqlClient999 } from '../graphql-client';
 import type { Md999Config, ParsedPlpItem999 } from '../types';
 import { buildListingUrlFromTemplate } from '../utils/listing-url';

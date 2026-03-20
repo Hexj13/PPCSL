@@ -260,6 +260,51 @@ describe('normalize999mdAdvert', () => {
     expect(parsed.equipmentOptions.some((o) => o.slug === 'abs')).toBe(true);
   });
 
+  it('reads free-text model (feature id 585) for buses-and-minibuses-shaped adverts', () => {
+    const advert: AdvertRaw = {
+      id: '103481089',
+      title: 'Ford Transit',
+      subCategory: { id: 660, url: 'transport/buses-and-minibuses' },
+      groups: [
+        {
+          title: 'General',
+          controls: [
+            {
+              type: 'CONTROL_TYPE_DROP_DOWN_OPTIONS',
+              title: 'Marcă',
+              option_title: '',
+              feature: {
+                id: 20,
+                type: 'FEATURE_OPTIONS',
+                value: { translated: 'Ford', value: 139 },
+              },
+            },
+            {
+              type: 'CONTROL_TYPE_TEXTBOX_TEXT',
+              title: 'Model',
+              option_title: '',
+              feature: {
+                id: 585,
+                type: 'FEATURE_TEXT',
+                value: 'Transit',
+              },
+            },
+          ],
+        },
+      ],
+    };
+
+    const parsed = normalize999mdAdvert({
+      advert,
+      listingUrl: 'https://999.md/ro/103481089',
+      canonicalUrl: 'https://999.md/ro/103481089',
+      imageBaseUrl: 'https://example.com',
+    });
+
+    expect(parsed.brand).toBe('Ford');
+    expect(parsed.model).toBe('Transit');
+  });
+
   it('accepts MDL price and currency when unit is UNIT_MDL', () => {
     const advert: AdvertRaw = {
       id: '1',

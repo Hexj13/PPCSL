@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { bindImageReadiness } from '@/components/listing/useListingCardCarouselPreload';
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { getOptimizedImageUrl } from '@/lib/utils';
 
@@ -20,11 +21,13 @@ export function useListingImages({
   imageErrors,
 }: UseListingImagesProps) {
   const [mainImageLoading, setMainImageLoading] = useState(false);
-  const mainImageLoadedRef = useRef<Set<string>>(new Set());
+  const mainImageLoadedRef = useRef<Set<number>>(new Set());
+  const mainImagePreloadingRef = useRef<Set<number>>(new Set());
   const navigationCountRef = useRef(0);
   const lastNavigatedIndexRef = useRef(currentImageIndex);
   const hasPreloadedAllRef = useRef(false);
   const imagesCacheRef = useRef<HTMLImageElement[]>([]);
+  const preloadAllRemainingCleanupsRef = useRef<Array<() => void>>([]);
   const imagesSignature = images.join('\u0001');
 
   const { visible: showMainImageLoader } = useLoadingState({
@@ -33,8 +36,24 @@ export function useListingImages({
     minDisplayTime: 120,
   });
 
+  const getPreviewUrl = useCallback(
+    (imageUrl: string) =>
+      getOptimizedImageUrl(imageUrl, PREVIEW_IMAGE_QUALITY, PREVIEW_IMAGE_WIDTH),
+    [],
+  );
+
+  const markLoaded = useCallback((index: number) => {
+    mainImageLoadedRef.current.add(index);
+    mainImagePreloadingRef.current.delete(index);
+  }, []);
+
   useEffect(() => {
+    for (const cleanup of preloadAllRemainingCleanupsRef.current) {
+      cleanup();
+    }
+    preloadAllRemainingCleanupsRef.current = [];
     mainImageLoadedRef.current.clear();
+    mainImagePreloadingRef.current.clear();
     navigationCountRef.current = 0;
     lastNavigatedIndexRef.current = currentImageIndex;
     hasPreloadedAllRef.current = false;
@@ -58,61 +77,56 @@ export function useListingImages({
   useEffect(() => {
     if (images.length <= 1 || typeof window === 'undefined') return;
 
-    const preloadEntries: Array<{ img: HTMLImageElement; url: string }> = [];
-    const preloadTimeouts: Array<ReturnType<typeof setTimeout>> = [];
-
-    const markLoadedIfDecoded = (img: HTMLImageElement, url: string) => {
-      if (img.complete && img.naturalWidth > 0) {
-        mainImageLoadedRef.current.add(url);
-      }
-    };
-
-    const attachDecode = (img: HTMLImageElement, url: string) => {
-      if (typeof img.decode !== 'function') {
-        return;
-      }
-      void img
-        .decode()
-        .then(() => {
-          mainImageLoadedRef.current.add(url);
-        })
-        .catch(() => undefined);
-    };
+    const preloadCleanups: Array<() => void> = [];
 
     const preloadByIndex = (index: number, delay = 0) => {
       const imageUrl = images[index];
       if (!imageUrl || imageUrl === '/placeholder-car.jpg' || imageErrors.has(index)) {
         return;
       }
-
-      const optimizedUrl = getOptimizedImageUrl(
-        imageUrl,
-        PREVIEW_IMAGE_QUALITY,
-        PREVIEW_IMAGE_WIDTH,
-      );
-      if (mainImageLoadedRef.current.has(optimizedUrl)) {
+      if (mainImageLoadedRef.current.has(index) || mainImagePreloadingRef.current.has(index)) {
         return;
       }
 
+      let preloadTimeout: ReturnType<typeof setTimeout> | null = null;
+      let img: HTMLImageElement | null = null;
+
       const startPreload = () => {
-        const img = new window.Image();
+        img = new window.Image();
         imagesCacheRef.current.push(img);
-        preloadEntries.push({ img, url: optimizedUrl });
-        img.onload = () => {
-          mainImageLoadedRef.current.add(optimizedUrl);
-        };
-        img.onerror = () => {};
-        img.src = optimizedUrl;
-        attachDecode(img, optimizedUrl);
+        mainImagePreloadingRef.current.add(index);
+        const resolveReadiness = bindImageReadiness(
+          img,
+          () => markLoaded(index),
+          () => {
+            mainImagePreloadingRef.current.delete(index);
+          },
+        );
+        img.src = getPreviewUrl(imageUrl);
+        if (img.complete) {
+          resolveReadiness();
+        }
       };
 
       if (delay > 0) {
-        const timeout = setTimeout(startPreload, delay);
-        preloadTimeouts.push(timeout);
-        return;
+        preloadTimeout = setTimeout(startPreload, delay);
+      } else {
+        startPreload();
       }
 
-      startPreload();
+      preloadCleanups.push(() => {
+        if (preloadTimeout) {
+          clearTimeout(preloadTimeout);
+        }
+        if (!img) {
+          return;
+        }
+        if (img.complete && img.naturalWidth > 0) {
+          markLoaded(index);
+        }
+        img.onload = null;
+        img.onerror = null;
+      });
     };
 
     const nextIndex = (currentImageIndex + 1) % images.length;
@@ -137,107 +151,99 @@ export function useListingImages({
     }
 
     return () => {
-      for (const timeout of preloadTimeouts) {
-        clearTimeout(timeout);
-      }
-      for (const { img, url } of preloadEntries) {
-        img.onload = null;
-        img.onerror = null;
-        markLoadedIfDecoded(img, url);
+      for (const cleanup of preloadCleanups) {
+        cleanup();
       }
     };
-  }, [currentImageIndex, images, imageErrors]);
+  }, [currentImageIndex, getPreviewUrl, images, imageErrors, markLoaded]);
 
-  useEffect(() => {
-    if (images.length <= 1) {
-      setMainImageLoading(false);
-      mainImageLoadedRef.current.clear();
-      return;
-    }
-
-    const currentImage = images[currentImageIndex];
-
-    if (
-      !currentImage ||
-      currentImage === '/placeholder-car.jpg' ||
-      imageErrors.has(currentImageIndex)
-    ) {
-      setMainImageLoading(false);
-      return;
-    }
-
-    const optimizedUrl = getOptimizedImageUrl(
-      currentImage,
-      PREVIEW_IMAGE_QUALITY,
-      PREVIEW_IMAGE_WIDTH,
-    );
-
-    if (mainImageLoadedRef.current.has(optimizedUrl)) {
-      setMainImageLoading(false);
-      return;
-    }
-
-    const testImg = new window.Image();
-    testImg.src = optimizedUrl;
-    const imageIndex = currentImageIndex;
-
-    const markFromCache = () => {
-      if (testImg.complete && testImg.naturalWidth > 0) {
-        mainImageLoadedRef.current.add(optimizedUrl);
-        setMainImageLoading(false);
+  const isTargetReady = useCallback(
+    (index: number) => {
+      const imageUrl = images[index];
+      if (!imageUrl || imageUrl === '/placeholder-car.jpg' || imageErrors.has(index)) {
         return true;
       }
-      return false;
-    };
+      return mainImageLoadedRef.current.has(index);
+    },
+    [images, imageErrors],
+  );
 
-    if (markFromCache()) {
+  const preloadTarget = useCallback(
+    (
+      index: number,
+      callbacks?: {
+        onReady?: () => void;
+        onFailure?: () => void;
+      },
+    ) => {
+      const imageUrl = images[index];
+      if (!imageUrl || imageUrl === '/placeholder-car.jpg' || imageErrors.has(index)) {
+        callbacks?.onReady?.();
+        return () => {};
+      }
+      if (mainImageLoadedRef.current.has(index)) {
+        callbacks?.onReady?.();
+        return () => {};
+      }
+
+      const img = new window.Image();
+      imagesCacheRef.current.push(img);
+      mainImagePreloadingRef.current.add(index);
+      const resolveReadiness = bindImageReadiness(
+        img,
+        () => {
+          markLoaded(index);
+          callbacks?.onReady?.();
+        },
+        () => {
+          mainImagePreloadingRef.current.delete(index);
+          callbacks?.onFailure?.();
+        },
+      );
+      img.src = getPreviewUrl(imageUrl);
+      if (img.complete) {
+        resolveReadiness();
+      }
+
+      return () => {
+        if (img.complete && img.naturalWidth > 0) {
+          markLoaded(index);
+        }
+        img.onload = null;
+        img.onerror = null;
+      };
+    },
+    [getPreviewUrl, images, imageErrors, markLoaded],
+  );
+
+  const preloadAllRemaining = useCallback(() => {
+    if (hasPreloadedAllRef.current || images.length <= 1) {
       return;
     }
 
-    let deferredDone = false;
-    const deferredId = window.setTimeout(() => {
-      deferredDone = true;
-      if (markFromCache()) {
-        return;
-      }
-      setMainImageLoading(true);
-      testImg.onload = () => {
-        mainImageLoadedRef.current.add(optimizedUrl);
-        if (imageIndex === currentImageIndex) {
-          setMainImageLoading(false);
-        }
-      };
-      testImg.onerror = () => {
-        if (imageIndex === currentImageIndex) {
-          setMainImageLoading(false);
-        }
-      };
-    }, 0);
-
-    return () => {
-      clearTimeout(deferredId);
-      if (!deferredDone) {
-        return;
-      }
-      testImg.onload = null;
-      testImg.onerror = null;
-    };
-  }, [currentImageIndex, images, imageErrors]);
+    hasPreloadedAllRef.current = true;
+    const cleanups: Array<() => void> = [];
+    for (let index = 0; index < images.length; index += 1) {
+      cleanups.push(preloadTarget(index));
+    }
+    preloadAllRemainingCleanupsRef.current = cleanups;
+  }, [images, preloadTarget]);
 
   const handleImageLoad = (index: number) => {
     const imageUrl = images[index];
     if (!imageUrl || imageUrl === '/placeholder-car.jpg') return;
-    const optimizedUrl = getOptimizedImageUrl(imageUrl, PREVIEW_IMAGE_QUALITY, PREVIEW_IMAGE_WIDTH);
-    mainImageLoadedRef.current.add(optimizedUrl);
-    if (index === currentImageIndex) {
-      setMainImageLoading(false);
-    }
+    markLoaded(index);
+    if (index === currentImageIndex) setMainImageLoading(false);
   };
 
   return {
-    mainImageLoading,
     showMainImageLoader,
+    mainImageLoading,
     mainImageLoadedRef,
+    setMainImageLoading,
+    isTargetReady,
+    preloadTarget,
+    preloadAllRemaining,
     handleImageLoad,
   };
 }

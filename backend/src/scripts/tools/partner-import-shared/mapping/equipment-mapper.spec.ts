@@ -1,5 +1,5 @@
 import { mapEquipmentOptions } from './equipment-mapper';
-import type { ParsedPdpEquipmentOption } from '../types';
+import type { ParsedPdpEquipmentOption } from '../listing-types';
 
 describe('equipment-mapper', () => {
   it('maps by slug (slug priority over label)', () => {

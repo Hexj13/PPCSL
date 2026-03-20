@@ -1,0 +1,1207 @@
+{
+  "generatedAt": "2026-03-20T20:43:41.115Z",
+  "dealerLogin": "AGMOTORS",
+  "kupitoApiUrl": "http://localhost:4000",
+  "graphqlUrl": "https://999.md/graphql",
+  "stats": {
+    "listingIdsFetched": 131,
+    "uniqueBrandModelPairs": 81,
+    "resolvedPairs": 76,
+    "missingPairs": 5,
+    "skippedSubcategory": 1,
+    "incompleteBrandModel": 8
+  },
+  "pairsFrom999": [
+    {
+      "vehicleType": "car",
+      "brand": "Audi",
+      "model": "A6",
+      "listingCount": 2
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Audi",
+      "model": "Q7",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "BMW",
+      "model": "2 Series",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "BMW",
+      "model": "2 Series Gran Tourer",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "BMW",
+      "model": "5 Series",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "BMW",
+      "model": "8 Series",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "BMW",
+      "model": "X3",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "BMW",
+      "model": "X4",
+      "listingCount": 2
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Byd",
+      "model": "Song L",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Cadillac",
+      "model": "SRX",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Chevrolet",
+      "model": "Orlando",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Citroen",
+      "model": "Berlingo",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Citroen",
+      "model": "C4 Picasso",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Citroen",
+      "model": "C4 X",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Dacia",
+      "model": "Dokker",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Dacia",
+      "model": "Lodgy",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Dodge",
+      "model": "Ram",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "DS Automobiles",
+      "model": "DS 7 Crossback",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Ford",
+      "model": "Escape",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Ford",
+      "model": "Focus",
+      "listingCount": 3
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Ford",
+      "model": "Fusion",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Ford",
+      "model": "Kuga",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Ford",
+      "model": "Mondeo",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Ford",
+      "model": "Transit Connect",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Ford",
+      "model": "Transit Custom",
+      "listingCount": 2
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Honda",
+      "model": "Accord",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Honda",
+      "model": "Clarity",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Honda",
+      "model": "CR-V",
+      "listingCount": 3
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Honda",
+      "model": "Jazz",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Hyundai",
+      "model": "Accent",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Hyundai",
+      "model": "Creta",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Hyundai",
+      "model": "Sonata",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Hyundai",
+      "model": "Tucson",
+      "listingCount": 2
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Infiniti",
+      "model": "QX56",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Jeep",
+      "model": "Wrangler",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "KIA",
+      "model": "Carnival",
+      "listingCount": 3
+    },
+    {
+      "vehicleType": "car",
+      "brand": "KIA",
+      "model": "Sportage",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Land Rover",
+      "model": "Range Rover",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Mazda",
+      "model": "CX-7",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Mercedes",
+      "model": "B-Class",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Mercedes",
+      "model": "C-Class",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Mercedes",
+      "model": "E-Class",
+      "listingCount": 2
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Mercedes",
+      "model": "GLA",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Mercedes",
+      "model": "S-Class",
+      "listingCount": 3
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Mitsubishi",
+      "model": "ASX",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Mitsubishi",
+      "model": "Outlander",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Nissan",
+      "model": "Juke",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Nissan",
+      "model": "Note",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Nissan",
+      "model": "Qashqai",
+      "listingCount": 8
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Nissan",
+      "model": "X-Trail",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Opel",
+      "model": "Astra",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Opel",
+      "model": "Grandland X",
+      "listingCount": 2
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Peugeot",
+      "model": "2008",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Peugeot",
+      "model": "308",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Peugeot",
+      "model": "5008",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Polestar",
+      "model": "2",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Porsche",
+      "model": "Cayenne",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Renault",
+      "model": "Arkana",
+      "listingCount": 2
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Renault",
+      "model": "Captur",
+      "listingCount": 8
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Renault",
+      "model": "Grand Scenic",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Renault",
+      "model": "Kadjar",
+      "listingCount": 2
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Renault",
+      "model": "Megane",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Renault Samsung",
+      "model": "SM6",
+      "listingCount": 2
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Skoda",
+      "model": "Fabia",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Skoda",
+      "model": "Octavia",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Skoda",
+      "model": "Yeti",
+      "listingCount": 2
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Tesla",
+      "model": "Model Y",
+      "listingCount": 2
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Toyota",
+      "model": "C-HR",
+      "listingCount": 2
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Toyota",
+      "model": "Camry",
+      "listingCount": 2
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Toyota",
+      "model": "Hiace",
+      "listingCount": 2
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Toyota",
+      "model": "Highlander",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Toyota",
+      "model": "Land Cruiser",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Toyota",
+      "model": "Land Cruiser Prado",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Toyota",
+      "model": "Proace Verso",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Toyota",
+      "model": "Rav 4",
+      "listingCount": 4
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Toyota",
+      "model": "Yaris Cross",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Volkswagen",
+      "model": "Caddy",
+      "listingCount": 2
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Volkswagen",
+      "model": "Golf",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Volkswagen",
+      "model": "Jetta",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Volkswagen",
+      "model": "Passat",
+      "listingCount": 1
+    },
+    {
+      "vehicleType": "car",
+      "brand": "Volvo",
+      "model": "XC90",
+      "listingCount": 2
+    }
+  ],
+  "missingFromKupito": [
+    {
+      "brand": "Mercedes",
+      "model": "B-Class",
+      "vehicleType": "car",
+      "reason": "BRAND_NOT_FOUND",
+      "listingCount": 1,
+      "sampleListingIds": [
+        "100923564"
+      ]
+    },
+    {
+      "brand": "Mercedes",
+      "model": "C-Class",
+      "vehicleType": "car",
+      "reason": "BRAND_NOT_FOUND",
+      "listingCount": 1,
+      "sampleListingIds": [
+        "102134882"
+      ]
+    },
+    {
+      "brand": "Mercedes",
+      "model": "E-Class",
+      "vehicleType": "car",
+      "reason": "BRAND_NOT_FOUND",
+      "listingCount": 2,
+      "sampleListingIds": [
+        "103778341",
+        "86531297"
+      ]
+    },
+    {
+      "brand": "Mercedes",
+      "model": "GLA",
+      "vehicleType": "car",
+      "reason": "BRAND_NOT_FOUND",
+      "listingCount": 1,
+      "sampleListingIds": [
+        "102689825"
+      ]
+    },
+    {
+      "brand": "Mercedes",
+      "model": "S-Class",
+      "vehicleType": "car",
+      "reason": "BRAND_NOT_FOUND",
+      "listingCount": 3,
+      "sampleListingIds": [
+        "100956287",
+        "102932160",
+        "102554838"
+      ]
+    }
+  ],
+  "resolved": [
+    {
+      "brand": "Audi",
+      "model": "A6",
+      "vehicleType": "car",
+      "kupitoBrandId": "99571d6f-bd75-47f8-b2fa-9a74014255de",
+      "kupitoModelId": "62d41d70-39c4-4509-a170-378349fba5ec",
+      "listingCount": 2
+    },
+    {
+      "brand": "Audi",
+      "model": "Q7",
+      "vehicleType": "car",
+      "kupitoBrandId": "99571d6f-bd75-47f8-b2fa-9a74014255de",
+      "kupitoModelId": "777c364d-8b5b-42d2-844f-b4925a1a5fd6",
+      "listingCount": 1
+    },
+    {
+      "brand": "BMW",
+      "model": "2 Series",
+      "vehicleType": "car",
+      "kupitoBrandId": "f712e12b-07a6-42f9-93ac-5a0e8cc86bc8",
+      "kupitoModelId": "5364e0f5-152d-4436-bd8e-7fb825ae266a",
+      "listingCount": 1
+    },
+    {
+      "brand": "BMW",
+      "model": "2 Series Gran Tourer",
+      "vehicleType": "car",
+      "kupitoBrandId": "f712e12b-07a6-42f9-93ac-5a0e8cc86bc8",
+      "kupitoModelId": "5364e0f5-152d-4436-bd8e-7fb825ae266a",
+      "listingCount": 1
+    },
+    {
+      "brand": "BMW",
+      "model": "5 Series",
+      "vehicleType": "car",
+      "kupitoBrandId": "f712e12b-07a6-42f9-93ac-5a0e8cc86bc8",
+      "kupitoModelId": "41cdea3c-86b3-484a-bda4-afe1c1ea40a6",
+      "listingCount": 1
+    },
+    {
+      "brand": "BMW",
+      "model": "8 Series",
+      "vehicleType": "car",
+      "kupitoBrandId": "f712e12b-07a6-42f9-93ac-5a0e8cc86bc8",
+      "kupitoModelId": "f2e75cf8-aa58-485a-b044-a9432d17fe82",
+      "listingCount": 1
+    },
+    {
+      "brand": "BMW",
+      "model": "X3",
+      "vehicleType": "car",
+      "kupitoBrandId": "f712e12b-07a6-42f9-93ac-5a0e8cc86bc8",
+      "kupitoModelId": "b9989065-5b1c-42e6-a382-d3a41ba9d03b",
+      "listingCount": 1
+    },
+    {
+      "brand": "BMW",
+      "model": "X4",
+      "vehicleType": "car",
+      "kupitoBrandId": "f712e12b-07a6-42f9-93ac-5a0e8cc86bc8",
+      "kupitoModelId": "9e9dacbb-09f3-44d9-98f5-aacbeb041d92",
+      "listingCount": 2
+    },
+    {
+      "brand": "Byd",
+      "model": "Song L",
+      "vehicleType": "car",
+      "kupitoBrandId": "cf7a1280-1e1b-4326-bd84-f5b96862246c",
+      "kupitoModelId": "f6a59487-a442-4f58-b6a3-f41b368efafd",
+      "listingCount": 1
+    },
+    {
+      "brand": "Cadillac",
+      "model": "SRX",
+      "vehicleType": "car",
+      "kupitoBrandId": "35a8044d-f1da-4d0d-9bef-9794e6f1552a",
+      "kupitoModelId": "672bece6-7b04-4695-a1cd-1a7a901bc9f6",
+      "listingCount": 1
+    },
+    {
+      "brand": "Chevrolet",
+      "model": "Orlando",
+      "vehicleType": "car",
+      "kupitoBrandId": "ee43c17d-9bab-4400-b036-a0a3f913980d",
+      "kupitoModelId": "ea5bbb1a-b143-408e-ae58-a81ed37a7b02",
+      "listingCount": 1
+    },
+    {
+      "brand": "Citroen",
+      "model": "Berlingo",
+      "vehicleType": "car",
+      "kupitoBrandId": "298c957d-32c0-4168-94b6-0d4405179e4f",
+      "kupitoModelId": "0bcb7796-de00-42d0-a6fa-925d311963c6",
+      "listingCount": 1
+    },
+    {
+      "brand": "Citroen",
+      "model": "C4 Picasso",
+      "vehicleType": "car",
+      "kupitoBrandId": "298c957d-32c0-4168-94b6-0d4405179e4f",
+      "kupitoModelId": "62566d72-5d07-42e9-a97f-00dd4ca9ec7e",
+      "listingCount": 1
+    },
+    {
+      "brand": "Citroen",
+      "model": "C4 X",
+      "vehicleType": "car",
+      "kupitoBrandId": "298c957d-32c0-4168-94b6-0d4405179e4f",
+      "kupitoModelId": "fd095ec9-c6d8-4583-95bc-fbbb52b0360e",
+      "listingCount": 1
+    },
+    {
+      "brand": "Dacia",
+      "model": "Dokker",
+      "vehicleType": "car",
+      "kupitoBrandId": "3ff7581f-6339-4429-9862-dd489760afb3",
+      "kupitoModelId": "9d22f51c-43af-40aa-9278-e21eec00a6d8",
+      "listingCount": 1
+    },
+    {
+      "brand": "Dacia",
+      "model": "Lodgy",
+      "vehicleType": "car",
+      "kupitoBrandId": "3ff7581f-6339-4429-9862-dd489760afb3",
+      "kupitoModelId": "182d208d-1bc7-45cb-bfc1-e6a2e29386d1",
+      "listingCount": 1
+    },
+    {
+      "brand": "Dodge",
+      "model": "Ram",
+      "vehicleType": "car",
+      "kupitoBrandId": "e6140b66-3d1e-4060-80c5-451edf0a4ae2",
+      "kupitoModelId": "5d695a32-c4db-4af6-aa0a-e806cbb24f8f",
+      "listingCount": 1
+    },
+    {
+      "brand": "DS Automobiles",
+      "model": "DS 7 Crossback",
+      "vehicleType": "car",
+      "kupitoBrandId": "a23d6890-769f-4384-a386-e0bdcf8c9879",
+      "kupitoModelId": "c7fa1ac4-9e4c-4c33-ad89-29ec4b5186d1",
+      "listingCount": 1
+    },
+    {
+      "brand": "Ford",
+      "model": "Escape",
+      "vehicleType": "car",
+      "kupitoBrandId": "32a18a19-a1e1-46fb-a99c-3abcf69a594f",
+      "kupitoModelId": "4b5b366c-3478-47fb-a4df-2efdad2c84f3",
+      "listingCount": 1
+    },
+    {
+      "brand": "Ford",
+      "model": "Focus",
+      "vehicleType": "car",
+      "kupitoBrandId": "32a18a19-a1e1-46fb-a99c-3abcf69a594f",
+      "kupitoModelId": "0fe21c37-0e59-4558-8dec-fcb2024e9f9c",
+      "listingCount": 3
+    },
+    {
+      "brand": "Ford",
+      "model": "Fusion",
+      "vehicleType": "car",
+      "kupitoBrandId": "32a18a19-a1e1-46fb-a99c-3abcf69a594f",
+      "kupitoModelId": "0a548c10-8033-4b2a-af83-01d745eecb7e",
+      "listingCount": 1
+    },
+    {
+      "brand": "Ford",
+      "model": "Kuga",
+      "vehicleType": "car",
+      "kupitoBrandId": "32a18a19-a1e1-46fb-a99c-3abcf69a594f",
+      "kupitoModelId": "8054d9e6-0e3f-47f1-9499-abd2b1f6875a",
+      "listingCount": 1
+    },
+    {
+      "brand": "Ford",
+      "model": "Mondeo",
+      "vehicleType": "car",
+      "kupitoBrandId": "32a18a19-a1e1-46fb-a99c-3abcf69a594f",
+      "kupitoModelId": "196517c5-b39d-4876-b746-d7dbab432b81",
+      "listingCount": 1
+    },
+    {
+      "brand": "Ford",
+      "model": "Transit Connect",
+      "vehicleType": "car",
+      "kupitoBrandId": "32a18a19-a1e1-46fb-a99c-3abcf69a594f",
+      "kupitoModelId": "97e82925-284b-494b-8ce1-2d1dff665a86",
+      "listingCount": 1
+    },
+    {
+      "brand": "Ford",
+      "model": "Transit Custom",
+      "vehicleType": "car",
+      "kupitoBrandId": "32a18a19-a1e1-46fb-a99c-3abcf69a594f",
+      "kupitoModelId": "87daf350-4786-4b4b-981d-71608d04bc6b",
+      "listingCount": 2
+    },
+    {
+      "brand": "Honda",
+      "model": "Accord",
+      "vehicleType": "car",
+      "kupitoBrandId": "f5e5a32e-221b-4cac-abe4-3816069e752d",
+      "kupitoModelId": "b5515205-3c29-4bd9-86b9-614ce0a0ed10",
+      "listingCount": 1
+    },
+    {
+      "brand": "Honda",
+      "model": "Clarity",
+      "vehicleType": "car",
+      "kupitoBrandId": "f5e5a32e-221b-4cac-abe4-3816069e752d",
+      "kupitoModelId": "82a4c89d-8b99-42de-9034-a25f1e4af2e2",
+      "listingCount": 1
+    },
+    {
+      "brand": "Honda",
+      "model": "CR-V",
+      "vehicleType": "car",
+      "kupitoBrandId": "f5e5a32e-221b-4cac-abe4-3816069e752d",
+      "kupitoModelId": "11cea4fe-a863-4fa6-b980-e1fc00f90db0",
+      "listingCount": 3
+    },
+    {
+      "brand": "Honda",
+      "model": "Jazz",
+      "vehicleType": "car",
+      "kupitoBrandId": "f5e5a32e-221b-4cac-abe4-3816069e752d",
+      "kupitoModelId": "8b72727a-ab81-488c-a7e2-fe59a77ba0cb",
+      "listingCount": 1
+    },
+    {
+      "brand": "Hyundai",
+      "model": "Accent",
+      "vehicleType": "car",
+      "kupitoBrandId": "269ac503-74ce-4f04-b782-b0377aa2b2ab",
+      "kupitoModelId": "a021b27f-17a6-4fdd-89a4-467f6414ea34",
+      "listingCount": 1
+    },
+    {
+      "brand": "Hyundai",
+      "model": "Creta",
+      "vehicleType": "car",
+      "kupitoBrandId": "269ac503-74ce-4f04-b782-b0377aa2b2ab",
+      "kupitoModelId": "e367c0ca-5e2d-4f6a-8bd5-968a164dd4fa",
+      "listingCount": 1
+    },
+    {
+      "brand": "Hyundai",
+      "model": "Sonata",
+      "vehicleType": "car",
+      "kupitoBrandId": "269ac503-74ce-4f04-b782-b0377aa2b2ab",
+      "kupitoModelId": "ff025f90-5450-48a1-a28c-fd796b9bacdc",
+      "listingCount": 1
+    },
+    {
+      "brand": "Hyundai",
+      "model": "Tucson",
+      "vehicleType": "car",
+      "kupitoBrandId": "269ac503-74ce-4f04-b782-b0377aa2b2ab",
+      "kupitoModelId": "f31b1f9c-2c07-432f-a290-2b598d50e8f0",
+      "listingCount": 2
+    },
+    {
+      "brand": "Infiniti",
+      "model": "QX56",
+      "vehicleType": "car",
+      "kupitoBrandId": "f9901bc8-2ac5-4ea8-9892-5de79a215561",
+      "kupitoModelId": "86dfe6d6-e0ba-4f7d-92e3-9fe8ca018a5d",
+      "listingCount": 1
+    },
+    {
+      "brand": "Jeep",
+      "model": "Wrangler",
+      "vehicleType": "car",
+      "kupitoBrandId": "ab74c21c-713e-4f2a-a853-309e413518da",
+      "kupitoModelId": "2fa9bff2-83d4-470f-b722-7e8d3684a667",
+      "listingCount": 1
+    },
+    {
+      "brand": "KIA",
+      "model": "Carnival",
+      "vehicleType": "car",
+      "kupitoBrandId": "185b16cb-ca4e-4637-92ba-c2a67c8bafde",
+      "kupitoModelId": "f0cdd414-775a-4ee7-9d74-19e9b1273953",
+      "listingCount": 3
+    },
+    {
+      "brand": "KIA",
+      "model": "Sportage",
+      "vehicleType": "car",
+      "kupitoBrandId": "185b16cb-ca4e-4637-92ba-c2a67c8bafde",
+      "kupitoModelId": "f4b987a9-71fd-4d5d-b7de-245dc7bcb9c3",
+      "listingCount": 1
+    },
+    {
+      "brand": "Land Rover",
+      "model": "Range Rover",
+      "vehicleType": "car",
+      "kupitoBrandId": "f4f979d4-3b1c-4a40-b10e-158df04a976f",
+      "kupitoModelId": "06bd9253-03fb-4717-8f0f-c251dbb26a9e",
+      "listingCount": 1
+    },
+    {
+      "brand": "Mazda",
+      "model": "CX-7",
+      "vehicleType": "car",
+      "kupitoBrandId": "8e46fa8c-7e6a-45aa-87a1-dc3977976d8c",
+      "kupitoModelId": "ee34a113-ee83-4a9e-9bdc-bde4d67a04ab",
+      "listingCount": 1
+    },
+    {
+      "brand": "Mitsubishi",
+      "model": "ASX",
+      "vehicleType": "car",
+      "kupitoBrandId": "2e4a72a2-580e-4203-be9e-a528be34f13e",
+      "kupitoModelId": "aa3fab43-7fad-490a-b6bb-84cb4b0c0b5a",
+      "listingCount": 1
+    },
+    {
+      "brand": "Mitsubishi",
+      "model": "Outlander",
+      "vehicleType": "car",
+      "kupitoBrandId": "2e4a72a2-580e-4203-be9e-a528be34f13e",
+      "kupitoModelId": "7050dc79-4590-43c2-9ece-c073d17e709b",
+      "listingCount": 1
+    },
+    {
+      "brand": "Nissan",
+      "model": "Juke",
+      "vehicleType": "car",
+      "kupitoBrandId": "e8d2bdf6-a239-4479-aa3b-00a3d5e8050e",
+      "kupitoModelId": "df016a54-b518-4d73-8a35-36206561baef",
+      "listingCount": 1
+    },
+    {
+      "brand": "Nissan",
+      "model": "Note",
+      "vehicleType": "car",
+      "kupitoBrandId": "e8d2bdf6-a239-4479-aa3b-00a3d5e8050e",
+      "kupitoModelId": "db906697-04f2-4763-99f5-daf946837e2d",
+      "listingCount": 1
+    },
+    {
+      "brand": "Nissan",
+      "model": "Qashqai",
+      "vehicleType": "car",
+      "kupitoBrandId": "e8d2bdf6-a239-4479-aa3b-00a3d5e8050e",
+      "kupitoModelId": "cf66bf12-dd98-4e20-9dee-a0de04f936c3",
+      "listingCount": 8
+    },
+    {
+      "brand": "Nissan",
+      "model": "X-Trail",
+      "vehicleType": "car",
+      "kupitoBrandId": "e8d2bdf6-a239-4479-aa3b-00a3d5e8050e",
+      "kupitoModelId": "87ee9638-9e72-44ad-b302-36c8379188b7",
+      "listingCount": 1
+    },
+    {
+      "brand": "Opel",
+      "model": "Astra",
+      "vehicleType": "car",
+      "kupitoBrandId": "040ce825-771c-4ac7-831d-af88ca2dc33e",
+      "kupitoModelId": "a5676509-1eeb-484a-8ec3-72f93be586ee",
+      "listingCount": 1
+    },
+    {
+      "brand": "Opel",
+      "model": "Grandland X",
+      "vehicleType": "car",
+      "kupitoBrandId": "040ce825-771c-4ac7-831d-af88ca2dc33e",
+      "kupitoModelId": "422158a8-c990-4719-9af4-d1ddeb95300a",
+      "listingCount": 2
+    },
+    {
+      "brand": "Peugeot",
+      "model": "2008",
+      "vehicleType": "car",
+      "kupitoBrandId": "f0869aa6-709c-4938-a52c-8ffeef0f5142",
+      "kupitoModelId": "1d115e65-1c2f-4215-9f08-dd78c5344b3e",
+      "listingCount": 1
+    },
+    {
+      "brand": "Peugeot",
+      "model": "308",
+      "vehicleType": "car",
+      "kupitoBrandId": "f0869aa6-709c-4938-a52c-8ffeef0f5142",
+      "kupitoModelId": "6d0b4da3-89da-4cb5-be8e-abff238c70e5",
+      "listingCount": 1
+    },
+    {
+      "brand": "Peugeot",
+      "model": "5008",
+      "vehicleType": "car",
+      "kupitoBrandId": "f0869aa6-709c-4938-a52c-8ffeef0f5142",
+      "kupitoModelId": "90886788-40b7-42dc-8fc1-e84a8474a868",
+      "listingCount": 1
+    },
+    {
+      "brand": "Polestar",
+      "model": "2",
+      "vehicleType": "car",
+      "kupitoBrandId": "bef81c4c-1581-44ef-8a55-ff246be958f7",
+      "kupitoModelId": "191d8f9b-af92-4d62-8679-3f0c7090b97e",
+      "listingCount": 1
+    },
+    {
+      "brand": "Porsche",
+      "model": "Cayenne",
+      "vehicleType": "car",
+      "kupitoBrandId": "aa027fc0-d316-433b-b535-448fd29f1b2f",
+      "kupitoModelId": "1fad3947-3670-4674-b0e3-d0f04458eadd",
+      "listingCount": 1
+    },
+    {
+      "brand": "Renault",
+      "model": "Arkana",
+      "vehicleType": "car",
+      "kupitoBrandId": "dc884229-e754-434c-856d-e9a1525ad564",
+      "kupitoModelId": "a389c49a-54d6-4ead-aee9-f0395cb11470",
+      "listingCount": 2
+    },
+    {
+      "brand": "Renault",
+      "model": "Captur",
+      "vehicleType": "car",
+      "kupitoBrandId": "dc884229-e754-434c-856d-e9a1525ad564",
+      "kupitoModelId": "0332186a-baa3-43c1-838c-01ce02678601",
+      "listingCount": 8
+    },
+    {
+      "brand": "Renault",
+      "model": "Grand Scenic",
+      "vehicleType": "car",
+      "kupitoBrandId": "dc884229-e754-434c-856d-e9a1525ad564",
+      "kupitoModelId": "919d62c2-4311-47ae-a2bf-86513ca4a247",
+      "listingCount": 1
+    },
+    {
+      "brand": "Renault",
+      "model": "Kadjar",
+      "vehicleType": "car",
+      "kupitoBrandId": "dc884229-e754-434c-856d-e9a1525ad564",
+      "kupitoModelId": "304fe2bf-78f9-4259-9ac4-4ecb2bff13b9",
+      "listingCount": 2
+    },
+    {
+      "brand": "Renault",
+      "model": "Megane",
+      "vehicleType": "car",
+      "kupitoBrandId": "dc884229-e754-434c-856d-e9a1525ad564",
+      "kupitoModelId": "b903cc18-ed42-4146-86de-10ff26607b3e",
+      "listingCount": 1
+    },
+    {
+      "brand": "Renault Samsung",
+      "model": "SM6",
+      "vehicleType": "car",
+      "kupitoBrandId": "401c5438-8c91-4388-9728-3cfa685357bd",
+      "kupitoModelId": "361cda86-0a3f-4a7e-8b00-0d61316990df",
+      "listingCount": 2
+    },
+    {
+      "brand": "Skoda",
+      "model": "Fabia",
+      "vehicleType": "car",
+      "kupitoBrandId": "be605046-44ed-45ff-8c71-074cc63dffea",
+      "kupitoModelId": "c26c9707-7240-44a6-8698-7fbc463ecd5b",
+      "listingCount": 1
+    },
+    {
+      "brand": "Skoda",
+      "model": "Octavia",
+      "vehicleType": "car",
+      "kupitoBrandId": "be605046-44ed-45ff-8c71-074cc63dffea",
+      "kupitoModelId": "f386c72b-1db8-4eed-bbc9-7476b29ca2a4",
+      "listingCount": 1
+    },
+    {
+      "brand": "Skoda",
+      "model": "Yeti",
+      "vehicleType": "car",
+      "kupitoBrandId": "be605046-44ed-45ff-8c71-074cc63dffea",
+      "kupitoModelId": "13833dc6-80d1-4600-891b-35e8f0ae3e9f",
+      "listingCount": 2
+    },
+    {
+      "brand": "Tesla",
+      "model": "Model Y",
+      "vehicleType": "car",
+      "kupitoBrandId": "2fa38130-afa0-4fd7-8832-fc4f813a699c",
+      "kupitoModelId": "582fbfe1-82a5-494e-8c6f-fe573416fb8a",
+      "listingCount": 2
+    },
+    {
+      "brand": "Toyota",
+      "model": "C-HR",
+      "vehicleType": "car",
+      "kupitoBrandId": "15095c55-6f43-44df-9d14-cfcbb520e890",
+      "kupitoModelId": "001f0933-5c41-45ae-ad5a-0eb24f354eeb",
+      "listingCount": 2
+    },
+    {
+      "brand": "Toyota",
+      "model": "Camry",
+      "vehicleType": "car",
+      "kupitoBrandId": "15095c55-6f43-44df-9d14-cfcbb520e890",
+      "kupitoModelId": "5a671f0c-7dd8-4d94-b225-89aa00130eef",
+      "listingCount": 2
+    },
+    {
+      "brand": "Toyota",
+      "model": "Hiace",
+      "vehicleType": "car",
+      "kupitoBrandId": "15095c55-6f43-44df-9d14-cfcbb520e890",
+      "kupitoModelId": "a65649ac-d40e-4099-8c18-b703bed419f7",
+      "listingCount": 2
+    },
+    {
+      "brand": "Toyota",
+      "model": "Highlander",
+      "vehicleType": "car",
+      "kupitoBrandId": "15095c55-6f43-44df-9d14-cfcbb520e890",
+      "kupitoModelId": "8da66e81-e193-43c4-b380-820f01c32e0a",
+      "listingCount": 1
+    },
+    {
+      "brand": "Toyota",
+      "model": "Land Cruiser",
+      "vehicleType": "car",
+      "kupitoBrandId": "15095c55-6f43-44df-9d14-cfcbb520e890",
+      "kupitoModelId": "1e40b78a-ffe0-4f34-aec5-5f4f52da3cbe",
+      "listingCount": 1
+    },
+    {
+      "brand": "Toyota",
+      "model": "Land Cruiser Prado",
+      "vehicleType": "car",
+      "kupitoBrandId": "15095c55-6f43-44df-9d14-cfcbb520e890",
+      "kupitoModelId": "e6c6eb9c-32f1-4de7-affc-26dfaf365b63",
+      "listingCount": 1
+    },
+    {
+      "brand": "Toyota",
+      "model": "Proace Verso",
+      "vehicleType": "car",
+      "kupitoBrandId": "15095c55-6f43-44df-9d14-cfcbb520e890",
+      "kupitoModelId": "22d72b8c-d300-4dc7-a580-0e9559236dff",
+      "listingCount": 1
+    },
+    {
+      "brand": "Toyota",
+      "model": "Rav 4",
+      "vehicleType": "car",
+      "kupitoBrandId": "15095c55-6f43-44df-9d14-cfcbb520e890",
+      "kupitoModelId": "5665ae3f-f822-452b-b955-7d8617aa1b08",
+      "listingCount": 4
+    },
+    {
+      "brand": "Toyota",
+      "model": "Yaris Cross",
+      "vehicleType": "car",
+      "kupitoBrandId": "15095c55-6f43-44df-9d14-cfcbb520e890",
+      "kupitoModelId": "261af172-895c-4c6f-8ee2-be0b6480fe1d",
+      "listingCount": 1
+    },
+    {
+      "brand": "Volkswagen",
+      "model": "Caddy",
+      "vehicleType": "car",
+      "kupitoBrandId": "b5780011-2e95-4ffe-b6b9-01d4ae58d419",
+      "kupitoModelId": "5704cd5d-435a-45e2-908e-fc47828f9bde",
+      "listingCount": 2
+    },
+    {
+      "brand": "Volkswagen",
+      "model": "Golf",
+      "vehicleType": "car",
+      "kupitoBrandId": "b5780011-2e95-4ffe-b6b9-01d4ae58d419",
+      "kupitoModelId": "338b0979-68fe-4b04-b2a4-6e7b1e164bdb",
+      "listingCount": 1
+    },
+    {
+      "brand": "Volkswagen",
+      "model": "Jetta",
+      "vehicleType": "car",
+      "kupitoBrandId": "b5780011-2e95-4ffe-b6b9-01d4ae58d419",
+      "kupitoModelId": "710f0eb9-0915-450a-a973-ac48de431962",
+      "listingCount": 1
+    },
+    {
+      "brand": "Volkswagen",
+      "model": "Passat",
+      "vehicleType": "car",
+      "kupitoBrandId": "b5780011-2e95-4ffe-b6b9-01d4ae58d419",
+      "kupitoModelId": "39e68005-c2bf-41b6-afc5-fffe3c7bc706",
+      "listingCount": 1
+    },
+    {
+      "brand": "Volvo",
+      "model": "XC90",
+      "vehicleType": "car",
+      "kupitoBrandId": "cb07105b-7cd3-498c-af15-aecfa46e19b7",
+      "kupitoModelId": "01c4bc82-0624-48c6-9763-2739ef2a0752",
+      "listingCount": 2
+    }
+  ],
+  "skippedSubcategory": [
+    {
+      "listingId": "84427972",
+      "reason": "UNMAPPED_SUBCATEGORY:url=transport/interior-accessories;id=6710"
+    }
+  ],
+  "incompleteBrandModel": [
+    {
+      "listingId": "103481089",
+      "brand": "Ford"
+    },
+    {
+      "listingId": "101259321",
+      "brand": "Mercedes"
+    },
+    {
+      "listingId": "101269252",
+      "brand": "Mercedes"
+    },
+    {
+      "listingId": "101262712",
+      "brand": "Mercedes"
+    },
+    {
+      "listingId": "101272782",
+      "brand": "Mercedes"
+    },
+    {
+      "listingId": "102896108",
+      "brand": "Mercedes"
+    },
+    {
+      "listingId": "102831899",
+      "brand": "Mercedes"
+    },
+    {
+      "listingId": "103179625",
+      "brand": "Mercedes"
+    }
+  ]
+}

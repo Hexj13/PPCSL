@@ -1,5 +1,5 @@
 import { ConditionType, Currency, ListingStatus } from '../../../../common/types';
-import type { BuildListingPayloadInput, KupitoCreateListingPayload } from '../types';
+import type { BuildListingPayloadInput, KupitoCreateListingPayload } from '../listing-types';
 
 export function buildCreateListingPayload(
   input: BuildListingPayloadInput,

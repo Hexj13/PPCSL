@@ -46,13 +46,8 @@ export class BrandsService {
 
     if (vehicleType) {
       queryBuilder.andWhere(
-        `(brand.vehicle_types IS NOT NULL AND (brand.vehicle_types::text LIKE :pattern1 OR brand.vehicle_types::text LIKE :pattern2 OR brand.vehicle_types::text LIKE :pattern3 OR brand.vehicle_types::text = :vehicleType)) OR EXISTS (SELECT 1 FROM vehicle_models vm WHERE vm.brand_id = brand.id AND vm.is_archived = false AND (vm.vehicle_types::text = :vehicleType OR vm.vehicle_types::text LIKE :pattern1 OR vm.vehicle_types::text LIKE :pattern2 OR vm.vehicle_types::text LIKE :pattern3))`,
-        {
-          vehicleType,
-          pattern1: `%,${vehicleType},%`,
-          pattern2: `${vehicleType},%`,
-          pattern3: `%,${vehicleType}`,
-        },
+        `(brand.vehicle_types IS NOT NULL AND (string_to_array(COALESCE(NULLIF(trim(both from brand.vehicle_types), ''), ''), ','))::text[] @> ARRAY[:vtFilter]::text[]) OR EXISTS (SELECT 1 FROM vehicle_models vm WHERE vm.brand_id = brand.id AND vm.is_archived = false AND (string_to_array(COALESCE(NULLIF(trim(both from vm.vehicle_types), ''), ''), ','))::text[] @> ARRAY[:vtFilter]::text[])`,
+        { vtFilter: vehicleType },
       );
     }
 
@@ -99,13 +94,8 @@ export class BrandsService {
 
     if (vehicleType) {
       queryBuilder.andWhere(
-        `(model.vehicle_types::text = :vehicleType OR model.vehicle_types::text LIKE :pattern1 OR model.vehicle_types::text LIKE :pattern2 OR model.vehicle_types::text LIKE :pattern3)`,
-        {
-          vehicleType,
-          pattern1: `${vehicleType},%`,
-          pattern2: `%,${vehicleType},%`,
-          pattern3: `%,${vehicleType}`,
-        },
+        `(string_to_array(COALESCE(NULLIF(trim(both from model.vehicle_types), ''), ''), ','))::text[] @> ARRAY[:vtFilter]::text[]`,
+        { vtFilter: vehicleType },
       );
     }
 
@@ -157,13 +147,8 @@ export class BrandsService {
 
       if (vehicleType) {
         queryBuilder.andWhere(
-          `(model.vehicle_types::text = :vehicleType OR model.vehicle_types::text LIKE :pattern1 OR model.vehicle_types::text LIKE :pattern2 OR model.vehicle_types::text LIKE :pattern3)`,
-          {
-            vehicleType,
-            pattern1: `${vehicleType},%`,
-            pattern2: `%,${vehicleType},%`,
-            pattern3: `%,${vehicleType}`,
-          },
+          `(string_to_array(COALESCE(NULLIF(trim(both from model.vehicle_types), ''), ''), ','))::text[] @> ARRAY[:vtFilter]::text[]`,
+          { vtFilter: vehicleType },
         );
       }
 

@@ -218,11 +218,20 @@ export class SitemapService {
 
   private async computeAllBrandsSitemaps(): Promise<Record<BrandSitemapVehicleType, string>> {
     const now = this.today();
-    const brands = await this.brandRepo.find({ order: { name: 'ASC' } });
-    const models = await this.modelRepo.find({
-      relations: ['brand'],
+    const brands = await this.brandRepo.find({
+      where: { is_archived: false },
+      select: ['id', 'name', 'vehicle_types'],
       order: { name: 'ASC' },
     });
+    const models = await this.modelRepo
+      .createQueryBuilder('model')
+      .select(['model.id', 'model.name', 'model.vehicle_types', 'model.brand_id'])
+      .addSelect(['brand.id', 'brand.name'])
+      .innerJoin('model.brand', 'brand')
+      .where('model.is_archived = :archived', { archived: false })
+      .andWhere('brand.is_archived = :barchived', { barchived: false })
+      .orderBy('model.name', 'ASC')
+      .getMany();
 
     const grouped = this.groupBrandModelUrlsByVehicleType(brands, models, now);
     const result = {} as Record<BrandSitemapVehicleType, string>;

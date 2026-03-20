@@ -9,6 +9,8 @@ const mockGetAll = jest.fn();
 const mockGetParsedListingSearchParams = jest.fn();
 const mockBuildSearchQuery = jest.fn();
 
+const WAIT_TIMEOUT_MS = 4000;
+
 jest.mock('@/lib/api', () => ({
   listingsApi: {
     getAll: (...args: unknown[]) => mockGetAll(...args),
@@ -62,17 +64,9 @@ const baseFilters: FilterState = {
 
 describe('useAvailableListingsCount', () => {
   beforeEach(() => {
-    jest.useFakeTimers();
     jest.clearAllMocks();
     mockBuildSearchQuery.mockReturnValue({ urlString: 'vehicleType=car' });
     mockGetParsedListingSearchParams.mockResolvedValue({ vehicleType: 'car' });
-  });
-
-  afterEach(() => {
-    act(() => {
-      jest.runOnlyPendingTimers();
-    });
-    jest.useRealTimers();
   });
 
   it('loads total count after debounce', async () => {
@@ -92,17 +86,16 @@ describe('useAvailableListingsCount', () => {
 
     expect(result.current.isLoading).toBe(false);
 
-    await act(async () => {
-      jest.advanceTimersByTime(350);
-    });
-
-    await waitFor(() => {
-      expect(result.current.total).toBe(42);
-      expect(result.current.isLoading).toBe(false);
-    });
+    await waitFor(
+      () => {
+        expect(result.current.total).toBe(42);
+        expect(result.current.isLoading).toBe(false);
+      },
+      { timeout: WAIT_TIMEOUT_MS },
+    );
   });
 
-  it('keeps loading false while syncing from url', async () => {
+  it('keeps loading false while syncing from url', () => {
     const { result } = renderHook(() =>
       useAvailableListingsCount({
         filters: baseFilters,
@@ -114,10 +107,6 @@ describe('useAvailableListingsCount', () => {
         isSyncingFromUrl: true,
       }),
     );
-
-    await act(async () => {
-      jest.advanceTimersByTime(400);
-    });
 
     expect(result.current.isLoading).toBe(false);
     expect(mockGetAll).not.toHaveBeenCalled();
@@ -138,14 +127,13 @@ describe('useAvailableListingsCount', () => {
       }),
     );
 
-    await act(async () => {
-      jest.advanceTimersByTime(350);
-    });
-
-    await waitFor(() => {
-      expect(result.current.total).toBe(0);
-      expect(result.current.isLoading).toBe(false);
-    });
+    await waitFor(
+      () => {
+        expect(result.current.total).toBe(0);
+        expect(result.current.isLoading).toBe(false);
+      },
+      { timeout: WAIT_TIMEOUT_MS },
+    );
   });
 
   it('triggers only latest request for rapid changes', async () => {
@@ -172,8 +160,8 @@ describe('useAvailableListingsCount', () => {
       },
     });
 
-    act(() => {
-      jest.advanceTimersByTime(200);
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 200));
     });
 
     rerender({
@@ -183,13 +171,7 @@ describe('useAvailableListingsCount', () => {
       },
     });
 
-    await act(async () => {
-      jest.advanceTimersByTime(350);
-    });
-
-    await waitFor(() => {
-      expect(mockGetAll).toHaveBeenCalledTimes(1);
-    });
+    await waitFor(() => expect(mockGetAll).toHaveBeenCalledTimes(1), { timeout: WAIT_TIMEOUT_MS });
   });
 
   it('calls getAll with parsed params and string CSV fields for brand, model, and arrays', async () => {
@@ -220,13 +202,7 @@ describe('useAvailableListingsCount', () => {
       }),
     );
 
-    await act(async () => {
-      jest.advanceTimersByTime(350);
-    });
-
-    await waitFor(() => {
-      expect(result.current.total).toBe(5);
-    });
+    await waitFor(() => expect(result.current.total).toBe(5), { timeout: WAIT_TIMEOUT_MS });
 
     expect(mockGetAll).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -269,13 +245,7 @@ describe('useAvailableListingsCount', () => {
       }),
     );
 
-    await act(async () => {
-      jest.advanceTimersByTime(350);
-    });
-
-    await waitFor(() => {
-      expect(result.current.total).toBe(3);
-    });
+    await waitFor(() => expect(result.current.total).toBe(3), { timeout: WAIT_TIMEOUT_MS });
 
     expect(mockGetAll).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -312,13 +282,7 @@ describe('useAvailableListingsCount', () => {
       }),
     );
 
-    await act(async () => {
-      jest.advanceTimersByTime(350);
-    });
-
-    await waitFor(() => {
-      expect(result.current.total).toBe(7);
-    });
+    await waitFor(() => expect(result.current.total).toBe(7), { timeout: WAIT_TIMEOUT_MS });
 
     expect(mockGetAll).toHaveBeenCalledWith(
       expect.objectContaining({

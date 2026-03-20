@@ -1,7 +1,10 @@
 import { Currency as CurrencyEnum } from '../../../../common/constants';
 import type { Currency } from '../../../../common/types';
 import type { ConditionType } from '../../../../common/types';
-import type { ParsedPdpData, ParsedPdpEquipmentOption } from '../../cipauto-import/types';
+import type {
+  ParsedPdpData,
+  ParsedPdpEquipmentOption,
+} from '../../partner-import-shared/listing-types';
 import { map999mdColorToCipautoRaw } from '../mapping/999md-color-mapper';
 import { map999mdCheckboxToEquipmentOption } from '../mapping/999md-equipment-mapper';
 import { map999mdStareOptionIdToCondition } from '../mapping/999md-stare-to-condition';
@@ -10,6 +13,7 @@ import type { AdvertRaw } from './advert-types';
 
 const FEAT_BRAND = 20;
 const FEAT_MODEL = 21;
+const FEAT_MODEL_FREE_TEXT = 585;
 const FEAT_PRICE = 2;
 const FEAT_BODY = 13;
 const FEAT_IMAGES = 14;
@@ -78,6 +82,13 @@ export function normalize999mdAdvert(params: {
       }
       if (featId === FEAT_MODEL && featType === 'FEATURE_OPTIONS') {
         model = pickTranslated(value) ?? model;
+        continue;
+      }
+      if (featId === FEAT_MODEL_FREE_TEXT && featType === 'FEATURE_TEXT') {
+        const raw = typeof value === 'string' ? value.trim() : pickBodyText(value);
+        if (raw) {
+          model = model ?? raw;
+        }
         continue;
       }
       if (featId === FEAT_YEAR && featType === 'FEATURE_INT' && typeof value === 'number') {

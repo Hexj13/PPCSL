@@ -1,4 +1,4 @@
-import type { BrandModelVehicleType } from '../../cipauto-import/mapping/brand-model-resolver';
+import type { BrandModelVehicleType } from '../../partner-import-shared/mapping/brand-model-resolver';
 
 export type SubcategoryVehicleResolution =
   | { kind: 'ok'; vehicleType: BrandModelVehicleType }

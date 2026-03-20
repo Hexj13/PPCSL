@@ -1,5 +1,5 @@
 import type { KupitoApiClient } from '../api/kupito-api';
-import type { BrandInfo, ModelInfo } from '../types';
+import type { BrandInfo, ModelInfo } from '../listing-types';
 
 export type BrandModelVehicleType = 'car' | 'truck' | 'moto';
 
@@ -79,7 +79,7 @@ function findByNormalizedName<T extends { name: string; name_normalized?: string
   });
 }
 
-function findBrandCandidates<T extends { name: string; name_normalized?: string | null }>(
+export function findBrandCandidates<T extends { name: string; name_normalized?: string | null }>(
   list: T[],
   sourceBrandName: string,
   sourceModelName: string,
@@ -109,13 +109,16 @@ export function buildBrandCandidateKeys(
 ): string[] {
   const normalizedBrand = normalize(sourceBrandName);
   const normalizedModel = normalize(sourceModelName);
-  const keys = [normalizedBrand];
+
+  if (normalizedBrand === 'mercedes') {
+    return ['mercedesbenz', normalizedBrand];
+  }
 
   if (normalizedBrand === 'landrover' && normalizedModel.includes('rangerover')) {
     return ['rangerover', normalizedBrand];
   }
 
-  return keys;
+  return [normalizedBrand];
 }
 
 export function findModelBySourceName<T extends { name: string; name_normalized?: string | null }>(

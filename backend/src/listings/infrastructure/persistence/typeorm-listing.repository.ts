@@ -45,42 +45,49 @@ export class TypeOrmListingRepository implements IListingRepository {
     const { page = 1, limit = 20, sortBy = 'created_at', sortOrder = 'DESC' } = criteria;
     const skip = (page - 1) * limit;
 
-    const queryBuilder = this.buildSearchQuery(criteria);
-    const validSortFields = ['created_at', 'price', 'year', 'views'];
-    const sortField = validSortFields.includes(sortBy) ? sortBy : 'created_at';
-    const order = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
-    const dateSortColumn = sortField === 'created_at' ? 'last_updated_at' : sortField;
+    return this.repository.manager.transaction('REPEATABLE READ', async (manager) => {
+      const scopedRepository = manager.getRepository(Listing);
 
-    queryBuilder.addSelect(
-      `(CASE WHEN listing.is_promoted = true AND (listing.promoted_until IS NULL OR listing.promoted_until > NOW()) THEN 1 ELSE 0 END)`,
-      'actively_promoted',
-    );
-    queryBuilder.orderBy('actively_promoted', 'DESC');
-    if (dateSortColumn === 'year') {
-      queryBuilder.addOrderBy('vehicle.year', order);
-    } else if (dateSortColumn === 'views') {
-      queryBuilder.addOrderBy('listing.views', order);
-    } else if (
-      dateSortColumn === 'price' &&
-      criteria.defaultCurrency !== undefined &&
-      criteria.priceSortRates !== undefined
-    ) {
-      const { expression, params } = buildPriceInDefaultCurrencyOrderExpression(
-        criteria.defaultCurrency,
-        criteria.priceSortRates,
+      const countQb = this.buildSearchQuery(criteria, scopedRepository);
+      const total = await countQb.getCount();
+
+      const queryBuilder = this.buildSearchQuery(criteria, scopedRepository);
+      const validSortFields = ['created_at', 'price', 'year', 'views'];
+      const sortField = validSortFields.includes(sortBy) ? sortBy : 'created_at';
+      const order = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+      const dateSortColumn = sortField === 'created_at' ? 'last_updated_at' : sortField;
+
+      queryBuilder.addSelect(
+        `(CASE WHEN listing.is_promoted = true AND (listing.promoted_until IS NULL OR listing.promoted_until > NOW()) THEN 1 ELSE 0 END)`,
+        'actively_promoted',
       );
-      for (const [key, value] of Object.entries(params)) {
-        queryBuilder.setParameter(key, value);
+      queryBuilder.orderBy('actively_promoted', 'DESC');
+      if (dateSortColumn === 'year') {
+        queryBuilder.addOrderBy('vehicle.year', order);
+      } else if (dateSortColumn === 'views') {
+        queryBuilder.addOrderBy('listing.views', order);
+      } else if (
+        dateSortColumn === 'price' &&
+        criteria.defaultCurrency !== undefined &&
+        criteria.priceSortRates !== undefined
+      ) {
+        const { expression, params } = buildPriceInDefaultCurrencyOrderExpression(
+          criteria.defaultCurrency,
+          criteria.priceSortRates,
+        );
+        for (const [key, value] of Object.entries(params)) {
+          queryBuilder.setParameter(key, value);
+        }
+        queryBuilder.addSelect(expression, 'price_in_default_currency');
+        queryBuilder.addOrderBy('price_in_default_currency', order);
+      } else {
+        queryBuilder.addOrderBy(`listing.${dateSortColumn}`, order);
       }
-      queryBuilder.addSelect(expression, 'price_in_default_currency');
-      queryBuilder.addOrderBy('price_in_default_currency', order);
-    } else {
-      queryBuilder.addOrderBy(`listing.${dateSortColumn}`, order);
-    }
-    queryBuilder.addOrderBy('listing.id', 'ASC');
+      queryBuilder.addOrderBy('listing.id', 'ASC');
 
-    const [data, total] = await queryBuilder.skip(skip).take(limit).getManyAndCount();
-    return { data, total };
+      const data = await queryBuilder.skip(skip).take(limit).getMany();
+      return { data, total };
+    });
   }
 
   async countActiveByUser(userId: string): Promise<number> {
@@ -133,8 +140,11 @@ export class TypeOrmListingRepository implements IListingRepository {
     return queryBuilder.getMany();
   }
 
-  private buildSearchQuery(searchDto: SearchCriteria) {
-    const qb = this.repository
+  private buildSearchQuery(
+    searchDto: SearchCriteria,
+    repository: Repository<Listing> = this.repository,
+  ) {
+    const qb = repository
       .createQueryBuilder('listing')
       .select([
         'listing.id',

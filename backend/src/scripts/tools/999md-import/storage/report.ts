@@ -1,7 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import type { ImportReport, RegistryItem999, RuntimeEnv } from '../types';
+import type { ImportReport } from '../../partner-import-shared/import-workflow-types';
+import { buildImportReport } from '../../partner-import-shared/storage/build-import-report';
+import type { RegistryItem999, RuntimeEnv } from '../types';
 
 interface BuildReportInput {
   startedAt: string;
@@ -16,94 +18,7 @@ export class ReportStore999 {
   constructor(private readonly reportsDir: string) {}
 
   build(input: BuildReportInput): ImportReport {
-    const completedAt = new Date().toISOString();
-    const startedMs = Date.parse(input.startedAt);
-    const completedMs = Date.parse(completedAt);
-    const elapsedMs = Number.isFinite(startedMs) ? Math.max(0, completedMs - startedMs) : 0;
-
-    const failedItems: ImportReport['failedItems'] = [];
-    const manualReviewItems: ImportReport['manualReviewItems'] = [];
-    const unmappedValues = {
-      bodyTypes: new Set<string>(),
-      fuelTypes: new Set<string>(),
-      colors: new Set<string>(),
-      transmissions: new Set<string>(),
-      driveTypes: new Set<string>(),
-      equipmentSlugs: new Set<string>(),
-      equipmentLabels: new Set<string>(),
-    };
-
-    let created = 0;
-    let updated = 0;
-    let skipped = 0;
-    let failed = 0;
-    let manualReview = 0;
-    let pdpParsed = 0;
-    let listingsDiscovered = 0;
-    let totalImages = 0;
-    let imageFailures = 0;
-
-    for (const item of input.items) {
-      listingsDiscovered += 1;
-      if (item.state === 'pdp_parsed') pdpParsed += 1;
-      if (item.state === 'created') created += 1;
-      if (item.state === 'updated') updated += 1;
-      if (item.state === 'skipped') skipped += 1;
-      if (item.state === 'failed') {
-        failed += 1;
-        failedItems.push({
-          sourceListingId: item.sourceListingId,
-          url: item.url,
-          error: item.error ?? 'Unknown error',
-        });
-      }
-      if (item.state === 'manual_review') {
-        manualReview += 1;
-        manualReviewItems.push({
-          sourceListingId: item.sourceListingId,
-          url: item.url,
-          reason: item.error ?? 'Manual review required',
-        });
-      }
-      totalImages += item.imageCount ?? 0;
-      imageFailures += item.imageFailures ?? 0;
-      for (const warning of item.warnings ?? []) {
-        collectUnmappedWarning(warning, unmappedValues);
-      }
-    }
-
-    return {
-      startedAt: input.startedAt,
-      completedAt,
-      elapsedMs,
-      env: input.env,
-      userId: input.userId,
-      status: input.status as ImportReport['status'],
-      flags: input.flags ?? {},
-      summary: {
-        pagesScanned: Number(input.flags?.pagesScanned ?? 0),
-        listingsDiscovered,
-        pdpParsed,
-        created,
-        updated,
-        skipped,
-        failed,
-        manualReview,
-        totalImages,
-        imageFailures,
-      },
-      unmappedValues: {
-        bodyTypes: [...unmappedValues.bodyTypes],
-        fuelTypes: [...unmappedValues.fuelTypes],
-        colors: [...unmappedValues.colors],
-        transmissions: [...unmappedValues.transmissions],
-        driveTypes: [...unmappedValues.driveTypes],
-        equipmentSlugs: [...unmappedValues.equipmentSlugs],
-        equipmentLabels: [...unmappedValues.equipmentLabels],
-      },
-      failedItems,
-      manualReviewItems,
-    };
+    return buildImportReport(input);
   }
 
   save(report: ImportReport): string {
@@ -135,57 +50,5 @@ export class ReportStore999 {
     if (!fs.existsSync(this.reportsDir)) {
       fs.mkdirSync(this.reportsDir, { recursive: true });
     }
-  }
-}
-
-function collectUnmappedWarning(
-  warning: string,
-  target: {
-    bodyTypes: Set<string>;
-    fuelTypes: Set<string>;
-    colors: Set<string>;
-    transmissions: Set<string>;
-    driveTypes: Set<string>;
-    equipmentSlugs: Set<string>;
-    equipmentLabels: Set<string>;
-  },
-): void {
-  const body = warning.match(/^UNMAPPED_BODY:(.+)$/);
-  if (body) {
-    target.bodyTypes.add(body[1].trim());
-    return;
-  }
-  const fuel = warning.match(/^UNMAPPED_FUEL:(.+)$/);
-  if (fuel) {
-    target.fuelTypes.add(fuel[1].trim());
-    return;
-  }
-  const color = warning.match(/^UNMAPPED_COLOR:(.+)$/);
-  if (color) {
-    target.colors.add(color[1].trim());
-    return;
-  }
-  const transmission = warning.match(/^UNMAPPED_TRANSMISSION:(.+)$/);
-  if (transmission) {
-    target.transmissions.add(transmission[1].trim());
-    return;
-  }
-
-  const drive = warning.match(/^UNMAPPED_DRIVE:(.+)$/);
-  if (drive) {
-    target.driveTypes.add(drive[1].trim());
-    return;
-  }
-
-  const equipSlug = warning.match(/^UNMAPPED_EQUIPMENT_SLUG:(.+)$/);
-  if (equipSlug) {
-    target.equipmentSlugs.add(equipSlug[1].trim());
-    return;
-  }
-
-  const equipLabel = warning.match(/^UNMAPPED_EQUIPMENT_LABEL:(.+)$/);
-  if (equipLabel) {
-    target.equipmentLabels.add(equipLabel[1].trim());
-    return;
   }
 }

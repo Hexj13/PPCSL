@@ -1,11 +1,11 @@
 import { ListingStatus, RegistrationType } from '../../../../common/types';
-import type { KupitoImportClientConfig } from '../../partner-import-shared/kupito-import-types';
+import type { KupitoImportClientConfig } from '../kupito-import-types';
 import type {
   BrandInfo,
   KupitoCreateListingPayload,
   KupitoListingResponse,
   ModelInfo,
-} from '../types';
+} from '../listing-types';
 import { requestJson } from '../utils/http';
 
 import type { AuthClient } from './auth-client';

@@ -95,6 +95,7 @@
     "999md:scan": "ts-node -r tsconfig-paths/register src/scripts/tools/999md-import/cli.ts scan",
     "999md:import": "ts-node -r tsconfig-paths/register src/scripts/tools/999md-import/cli.ts import",
     "999md:report": "ts-node -r tsconfig-paths/register src/scripts/tools/999md-import/cli.ts report",
+    "999md:dealer-audit": "ts-node -r tsconfig-paths/register src/scripts/tools/999md-import/tools/dealer-brand-model-audit.ts",
     "check-duplicates": "ts-node -r tsconfig-paths/register src/scripts/stage/check-duplicates.ts",
     "check-brand-model-name-duplicates": "ts-node -r tsconfig-paths/register src/scripts/stage/check-brand-model-name-duplicates.ts",
     "remove-duplicates": "ts-node -r tsconfig-paths/register src/scripts/stage/remove-duplicates.ts",

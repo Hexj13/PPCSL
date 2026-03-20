@@ -23,12 +23,10 @@ Runtime files:
 
 ## Architecture
 
+- `../partner-import-shared/` — shared HTTP helpers, Kupito API/auth/upload clients, enum/color/equipment/field mappers, listing payload and import-workflow types (`ImportReport`, `ImportCommandOptions`, …), JSON registry store (`JsonRegistryStore`), import report builder (`buildImportReport`), env helpers (also used by `999md-import`)
 - `cli.ts` command entrypoint
 - `parsers/` PLP/PDP HTML and JSON-LD extraction
-- `mapping/` enum normalization, brand/model resolving, payload mapping
-- `api/` auth, listings API, upload API clients
 - `storage/` registry persistence + report generation
-- `utils/` logging, retry, HTTP, delays
 
 ## Commands
 

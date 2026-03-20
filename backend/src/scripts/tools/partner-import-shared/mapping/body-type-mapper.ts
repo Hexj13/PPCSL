@@ -13,9 +13,9 @@ export function mapBodyType(raw?: string): { value: BodyType; warning?: string }
     { pattern: /(suv|crossover)/, value: BodyType.SUV },
     { pattern: /(coupe|coup)/, value: BodyType.Coupe },
     { pattern: /(cabrio|cabriolet|convertible)/, value: BodyType.Convertible },
-    { pattern: /(van|furgon)/, value: BodyType.Van },
+    { pattern: /(minivan|monovolum|mpv|microvan)/, value: BodyType.Minivan },
     { pattern: /(pickup|pick-up)/, value: BodyType.Pickup },
-    { pattern: /(minivan|monovolum|mpv)/, value: BodyType.Minivan },
+    { pattern: /(van|furgon)/, value: BodyType.Van },
     { pattern: /(truck|camion)/, value: BodyType.Truck },
   ];
 

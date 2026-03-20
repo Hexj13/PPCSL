@@ -1,7 +1,7 @@
 import * as cheerio from 'cheerio';
 
+import { requestText } from '../../partner-import-shared/utils/http';
 import type { CipautoConfig, ParsedPlpItem } from '../types';
-import { requestText } from '../utils/http';
 
 interface ParsePlpPageResult {
   items: ParsedPlpItem[];

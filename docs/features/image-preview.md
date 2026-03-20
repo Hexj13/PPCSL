@@ -20,7 +20,7 @@ The image preview system provides a simple, fast, and efficient way for users to
 
 - **Listing card (homepage):** `core/frontend/components/listing/ListingCard.tsx` — 2-slot photo carousel with prev/next buttons; preload next/prev in background and all remaining photos on first navigation; delayed preload of second image for mobile; reset-to-first: on desktop on hover leave, on mobile/tablet when card leaves viewport (see below)
 - **Listing page:** Page state and thumbnail logic: `core/frontend/app/listings/[id]/useListingPageClient.ts`, `ListingPageClient.tsx`
-- **Listing page preview block:** `core/frontend/components/ListingPage/ListingPageImages.tsx`, `core/frontend/hooks/useListingImages.ts` — main preview with buttons, swipe, 2-slot slide animation, reset-to-first; **blurhash placeholders** on main preview and visible thumbnails via `next/image` (`placeholder="blur"`, `blurDataURL` from `blurhashToDataURL`), using `listing.image_blur_hashes` per index with fallback `listing.cover_blur_hash` for index `0`; slide layers also use `next/image` end-to-end (no swap to native `<img>` during the transition, to avoid WebKit flicker on iOS). Sliding wrappers use `translate3d` and `will-change: transform` while the transition is active.
+- **Listing page preview block:** `ListingPageImages.tsx` (state, navigation, imperative handle), `ListingPageImagesLayout.tsx` (markup), `ListingPageImagesPreview.tsx` (slide layers, thumbnail tiles, timing constants), `core/frontend/hooks/useListingImages.ts` — main preview with buttons, swipe, 2-slot slide animation, reset-to-first; **blurhash placeholders** on the initial main preview paint and visible thumbnails via `next/image` (`placeholder="blur"`, `blurDataURL` from `blurhashToDataURL`), using `listing.image_blur_hashes` per index with fallback `listing.cover_blur_hash` for index `0`; after the first preview paint, inline navigation follows a current-frame-first contract: the visible image stays on screen until the target frame is ready, so swipe/button/thumbnail navigation must not expose a gray block between slides. Paths: `core/frontend/components/ListingPage/`.
 - **Photo viewer modal:** `core/frontend/components/ListingPage/ListingPageImageModal.tsx`
 
 ---
@@ -255,19 +255,19 @@ useEffect(() => {
 
 ### Loader with Flicker Protection
 
-Loader uses `useLoadingState` with `minDisplayTime: 1000`:
+Loader uses `useLoadingState` with `minDisplayTime: 120`:
 
 ```typescript
 const { visible: showMainImageLoader } = useLoadingState({
   isLoading: mainImageLoading,
-  minDisplayTime: 1000,
+  minDisplayTime: 120,
 });
 ```
 
 **Rule:**
 
 - **If image is in cache** → `mainImageLoading` is immediately `false` → loader not shown
-- **If image is loading** → `mainImageLoading = true` → loader shown for minimum 1 second (prevents flicker)
+- **If image is loading** → `mainImageLoading = true` → loader is only a brief fallback and must not replace the currently visible frame during inline preview navigation
 
 ### Preview block: navigation and animation
 
@@ -278,7 +278,18 @@ The main preview block on the listing page (`ListingPageImages`) supports multip
 - **2-slot slide animation:** When `images.length > 1`, the preview uses the same 2-slot approach as the card: at rest only the current image is in the DOM; when switching (buttons, swipe, or thumbnail click), two slots (from / to) are rendered and animated with `transform: translate3d(...)` and `transition` (220ms). Animation timing uses `useLayoutEffect` plus one `requestAnimationFrame` before switching to the running phase, then a short timeout after the duration to clear animation state.
 - **Reset to first photo:** When the user leaves the preview block (mouse leave), a 10-second timer starts. After it expires, the preview rewinds to the first photo step-by-step (220ms per step). Re-entering the block or using buttons/swipe/thumbnail cancels the timer and any in-progress rewind.
 
-Constants used in `ListingPageImages.tsx`: `RESET_TO_FIRST_DELAY_MS = 10000`, `REWIND_STEP_MS = 220`, `IMAGE_SLIDE_DURATION_MS = 220`.
+Timing constants (`RESET_TO_FIRST_DELAY_MS = 10000`, `REWIND_STEP_MS = 220`, `IMAGE_SLIDE_DURATION_MS = 220`) live in `ListingPageImagesPreview.tsx` and are imported by `ListingPageImages.tsx`.
+
+### Preview anti-flicker contract
+
+The inline preview on the listing page is expected to behave as follows:
+
+1. **Initial load:** the hero preview may show a blur placeholder on first paint; visible thumbnails may also use blur placeholders where blurhash data exists.
+2. **After first paint:** inline preview navigation no longer relies on blur placeholders. On swipe, button click, or thumbnail click, the current frame stays visible until the target frame is confirmed ready.
+3. **No gray interstitial:** a pending target frame must not replace the current frame with the preview container background. If the target is not ready yet, the current frame remains visible and only a lightweight fallback loader may appear.
+4. **Second-pass stability:** once a frame has been preloaded or already shown, going back and forth over the same images should not re-enter a visible gray/loading path.
+5. **Shared preview cache:** thumbnails and inline preview use the same optimized URL (`75`, `1200`) so clicking a visible thumbnail can switch instantly from browser cache.
+6. **Gesture safety:** horizontal swipe should not fight vertical page scrolling, and a completed horizontal swipe must not trigger a follow-up accidental preview click.
 
 ### Controls
 
@@ -300,6 +311,7 @@ Constants used in `ListingPageImages.tsx`: `RESET_TO_FIRST_DELAY_MS = 10000`, `R
 2. **Preloading** — Next, previous, and (on mobile) second-next images are preloaded inside the modal with the same adaptive width/quality used for display. No preload in `useListingPageClient`.
 3. **Spinner** — Shown only after 300ms of loading; previous image stays visible until the new one is ready or the spinner appears.
 4. **Scroll lock** — On open, `window.scrollY` is saved and `body` gets `top: -scrollY` so the page does not jump; on close, scroll position is restored (fixes iOS Safari).
+5. **Adaptive quality contract** — The modal may request a different, higher-quality URL than the inline preview. This is expected. The UX requirement is not "no request at all", but "no empty frame while the higher-quality frame is loading"; an already available preview-quality frame may be used as the immediate visual fallback before the adaptive modal URL is confirmed.
 
 ### Rendering
 
@@ -398,24 +410,26 @@ The **modal** does not use `useLoadingState`. It uses a simple delay:
 - **Create/update:** Form sends `image_blur_hashes` in parallel with `images` (length must match). Upload response includes `blurhash` per file.
 - **Backfill:** `npm run backfill:blurhash:cover` (cover only) and `npm run backfill:blurhash:all` (full array) from `core/backend`; requires DB + S3 access. See `core/backend/docs/SCRIPTS.md` and `core/docs/guides/image-optimization-setup-ru.md`.
 
+### Local development vs production
+
+Blur placeholders are **not** turned off by `NODE_ENV` or a separate dev-only flag. The UI only renders them when the listing payload includes non-empty `cover_blur_hash` / `image_blur_hashes` (decoded to `blurDataURL` for `next/image`). If your **local** database has `NULL` for those fields—common with seeds, manual inserts, or dumps without blur data—you will see **no** blur placeholder while **production** may show one for the same logical listing after create/update or a backfill. To see placeholders locally: create or edit a listing through the app (payload includes hashes when photos are processed), or run the blurhash backfill against the same DB and S3 your backend uses. CSS `backdrop-blur` on layout components (e.g. footer) does not depend on listing blurhash fields.
+
 ---
 
 ## Implementation Details
 
 ### Image Loading Flow
 
-1. **User clicks thumbnail:**
-   - `setCurrentImageIndex(index)` is called
-   - `useEffect` triggers with new `currentImageIndex`
-   - Check `mainImageLoadedRef` - already loaded?
-   - Create `new window.Image()` with same URL
-   - If `testImg.complete` → image in cache → `setMainImageLoading(false)` → **instant display**
-   - If not → `setMainImageLoading(true)` → show loader → wait for `onload`
+1. **User triggers preview navigation:**
+   - Capture the target index
+   - Check whether the target preview URL is already ready
+   - If ready → start slide animation immediately
+   - If not → keep the current frame visible, preload the target, then animate
 
-2. **Loader:** `useLoadingState` with `showDelay: 0` and `minDisplayTime: 120` (`useListingImages`).
+2. **Loader:** `useLoadingState` with `showDelay: 0` and `minDisplayTime: 120` (`useListingImages`); loader is fallback-only and should not replace the current frame during inline preview navigation.
 
 3. **Preloading:**
-   - Simple `new window.Image()` for next photo
+   - Simple `new window.Image()` for adjacent photos
    - Browser decides when and how to load
    - No manual queue management
 
@@ -471,7 +485,7 @@ The **modal** does not use `useLoadingState`. It uses a simple delay:
 ### Performance Characteristics
 
 - **Listing card (homepage):** At most 2 images in the DOM per card (primary confirmed + secondary outgoing during transition). First image can use `priority`/lazy; next/prev preloaded in background; on first navigation all remaining photos for that card are preloaded. Second image also preloaded after 1.5s for mobile. Preloaded `Image` objects are kept in `imagesCacheRef` so the browser does not evict decoded data; cache is cleared and handlers detached when the image set changes. If a requested image is not ready yet, the current photo remains on screen and a small spinner is shown instead of a flash. No flicker on transition end (stable primary slot).
-- **Preview (listing page):** At most 2 images in the DOM (current + entering during transition). Cache hit → 0ms switch; cache miss → real network time + up to 1s loader. `useListingImages` preloads adjacent indices (next immediately, previous after 120ms, second-ahead after 220ms, third-ahead after 320ms when the gallery has enough images), then on first navigation preloads all remaining images. Optional `HTMLImageElement.decode()` on preload instances helps populate the URL cache sooner. Preloaded images are tracked in `imagesCacheRef` and cleaned up when the listing changes.
+- **Preview (listing page):** At most 2 images in the DOM (current + entering during transition). Cache hit → 0ms switch. Cache miss → current frame remains visible while the target frame loads; only a brief fallback loader may appear if the miss persists. `useListingImages` preloads adjacent indices (next immediately, previous after 120ms, second-ahead after 220ms, third-ahead after 320ms when the gallery has enough images), then on first navigation preloads all remaining images. Optional `HTMLImageElement.decode()` on preload instances helps populate the URL cache sooner. Preloaded images are tracked in `imagesCacheRef` and cleaned up when the listing changes.
 - **Modal:** Two layers (confirmed + pending), max 2 decoded images. Spinner after 300ms if still loading. Preload next/prev/second-next with same URL as display. Preloaded `Image` objects kept in `imagesCacheRef` and cleared when the image set changes. No duplicate preload or keydown logic in the page hook.
 - **Memory:** Card, preview, and modal each keep a ref to preloaded `Image` instances (`imagesCacheRef`) so decoded data stays in memory; when the image set changes, `onload`/`onerror` are set to `null` and the cache array is reset to avoid leaks. URL/index sets (`mainImageLoadedRef`, `modalImageLoadedRef`, `loadedRef`) track which images are ready.
 
@@ -500,6 +514,7 @@ The **modal** does not use `useLoadingState`. It uses a simple delay:
   - Multiple photos: prev/next buttons (vertically centered); same visibility rules as card
   - Swipe left/right switches photo and cancels reset timer; slide animation on swipe and button tap (mobile and desktop)
   - 2-slot slide animation when switching (no abrupt swap); at most 2 images in DOM
+  - Current frame stays visible until the target frame is ready; no gray block between slides
   - Mouse leave: after 10s rewinds to first photo; re-entering or buttons/swipe/thumbnail cancels
 
 - ✅ **Click on thumbnail:**
@@ -515,7 +530,7 @@ The **modal** does not use `useLoadingState`. It uses a simple delay:
   - Repeat clicks don't create new requests
 
 - ✅ **Loader:**
-  - Doesn't flicker (either not shown, or visible for minimum 1s)
+  - Doesn't flicker (either not shown, or visible only briefly with `minDisplayTime: 120`)
   - Only shown when actually loading
 
 - ✅ **Page refresh:**
@@ -595,5 +610,5 @@ If you need to add features:
 
 ---
 
-**Last Updated:** 2026-03-12  
-**Version:** 3.10 (Error handling: retry with backoff via useImageRetry; Sentry failure reporting via image-failure-monitor)
+**Last Updated:** 2026-03-20  
+**Version:** 3.11 (Anti-flicker contract clarified for inline preview; loader timing references aligned to 120ms; modal adaptive-cache contract documented)

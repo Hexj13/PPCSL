@@ -371,7 +371,7 @@ GET    /api/listings/promotion-history/check # Check if user has promotion histo
 GET    /api/listings/promotion-access  # Get promotion access status (no auth required)
 ```
 
-**Listing images / blurhash:** Listings store `cover_blur_hash` (first photo, for cards) and optional `image_blur_hashes` (JSON array aligned with `images`, entries may be `null`). `POST /api/listings` and `PATCH /api/listings/:id` accept `image_blur_hashes` when its length matches `images`. For existing rows without the array, run `npm run backfill:blurhash:all` (see `core/backend/docs/SCRIPTS.md`).
+**Listing images / blurhash:** Listings store `cover_blur_hash` (first photo, for cards) and optional `image_blur_hashes` (JSON array aligned with `images`, entries may be `null`). `POST /api/listings` and `PATCH /api/listings/:id` accept `image_blur_hashes` when its length matches `images`. For existing rows without the array, run `npm run backfill:blurhash:all` (see `core/backend/docs/SCRIPTS.md`). The listing UI shows blur placeholders only when these fields are populated; a local DB without blurhash data will not show them compared to production—see `core/docs/features/image-preview.md` (Local development vs production).
 
 **Filter Parameters:**
 
@@ -1047,7 +1047,7 @@ See [deployment.md](../guides/deployment.md#72-rendercom-deployment) for CloudFr
 - **Image preview system:** Simplified, efficient image preview and photo viewer system
   - **Thumbnail switching:** Instant switching when images are in browser cache (thumbnails and preview use same URL)
   - **Simple preloading:** Next image preloaded using `new window.Image()` - browser manages caching automatically
-  - **Loading states:** Loader only shown when image is actually loading, with 1s minimum display time to prevent flicker
+  - **Loading states:** Loader only shown on real cache misses; preview uses a brief 120ms minimum display time and keeps the current frame visible until the target frame is ready
   - **Modal viewer:** Full-screen photo viewer with keyboard navigation and swipe gestures
   - **Performance:** 80% code reduction, instant cache switching, no artificial delays
   - See [image-preview.md](../features/image-preview.md) for complete documentation

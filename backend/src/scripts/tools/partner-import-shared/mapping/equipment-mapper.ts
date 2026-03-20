@@ -1,4 +1,4 @@
-import type { ParsedPdpEquipmentOption } from '../types';
+import type { ParsedPdpEquipmentOption } from '../listing-types';
 
 const EQUIPMENT_SLUG_MAP: Record<string, string> = {
   // auto / safety / comfort

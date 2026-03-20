@@ -246,16 +246,12 @@ function CarouselNavButtons({
   disabled,
   onPrev,
   onNext,
-  onPrevTouch,
-  onNextTouch,
   prevLabel,
   nextLabel,
 }: {
   disabled: boolean;
   onPrev: (e: React.MouseEvent) => void;
   onNext: (e: React.MouseEvent) => void;
-  onPrevTouch: (e: React.TouchEvent) => void;
-  onNextTouch: (e: React.TouchEvent) => void;
   prevLabel: string;
   nextLabel: string;
 }) {
@@ -263,7 +259,7 @@ function CarouselNavButtons({
     ? 'opacity-40 cursor-wait'
     : 'opacity-60 lg:opacity-0 lg:group-hover:opacity-60 hover-only:hover:opacity-100';
   const hitAreaClass =
-    'absolute w-14 h-14 flex z-10 touch-manipulation pointer-events-auto lg:w-10 lg:h-10';
+    'absolute w-14 h-14 flex z-10 touch-manipulation touch-pan-y pointer-events-auto lg:w-10 lg:h-10';
   const iconWrapClass =
     'w-10 h-10 shrink-0 rounded-full bg-primary-500 flex items-center justify-center transition-all shadow-lg text-white';
   return (
@@ -271,7 +267,6 @@ function CarouselNavButtons({
       <button
         type="button"
         onClick={onPrev}
-        onTouchStart={onPrevTouch}
         aria-disabled={disabled || undefined}
         className={`bottom-3 left-3 ${hitAreaClass} justify-start items-end lg:justify-center lg:items-center`}
         aria-label={prevLabel}
@@ -290,7 +285,6 @@ function CarouselNavButtons({
       <button
         type="button"
         onClick={onNext}
-        onTouchStart={onNextTouch}
         aria-disabled={disabled || undefined}
         className={`bottom-3 right-3 ${hitAreaClass} justify-end items-end lg:justify-center lg:items-center`}
         aria-label={nextLabel}
@@ -510,24 +504,6 @@ function ListingCardComponent({
     [goCarouselNext],
   );
 
-  const handlePrevPhotoTouchStart = useCallback(
-    (e: React.TouchEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      goCarouselPrev();
-    },
-    [goCarouselPrev],
-  );
-
-  const handleNextPhotoTouchStart = useCallback(
-    (e: React.TouchEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      goCarouselNext();
-    },
-    [goCarouselNext],
-  );
-
   const cardUrl = `/listings/${listing.id}`;
 
   const singleImageUrl =
@@ -599,8 +575,6 @@ function ListingCardComponent({
               disabled={isCarouselBusy || isAutoRewinding}
               onPrev={handlePrevPhoto}
               onNext={handleNextPhoto}
-              onPrevTouch={handlePrevPhotoTouchStart}
-              onNextTouch={handleNextPhotoTouchStart}
               prevLabel={t('listings.previousPhoto')}
               nextLabel={t('listings.nextPhoto')}
             />

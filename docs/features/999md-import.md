@@ -21,13 +21,14 @@ Runtime files (generated locally; paths under `data/` and `reports/` are gitigno
 - `graphql-client.ts` — POST JSON to 999.md GraphQL with error handling
 - `parsers/plp-parser.ts` — `profileAds` with pagination (`skip` / `limit`)
 - `parsers/advert-batch.ts` — batched `advert` queries with aliases (`VIEW_ONE_DESKTOP` groups)
-- `parsers/pdp-normalizer.ts` — GraphQL `Advert` → `ParsedPdpData` (doors: feature id `851` / «Număr uși», `FEATURE_OPTIONS`; VIN: id `2512` / «VIN-cod`, `FEATURE_TEXT` — validated to 17 characters per `CreateListingDto`, no I/O/Q; **Stare** id `593` → Kupito `condition`: `Damaged` = Avariată / Necesită reparații / Nu funcționează; `ForParts` = La dezmembrare / Pentru piese; `Undamaged` = all other known option ids from 999’s `feature(593)` list — unknown ids → warning `STARE_UNKNOWN:<id>`, default `Undamaged` in payload)
+- `parsers/pdp-normalizer.ts` — GraphQL `Advert` → `ParsedPdpData` (brand: id `20` `FEATURE_OPTIONS`; model: id `21` `FEATURE_OPTIONS` on cars, id `585` `FEATURE_TEXT` on e.g. `transport/buses-and-minibuses`; doors: feature id `851` / «Număr uși», `FEATURE_OPTIONS`; VIN: id `2512` / «VIN-cod», `FEATURE_TEXT` — validated to 17 characters per `CreateListingDto`, no I/O/Q; **Stare** id `593` → Kupito `condition`: `Damaged` = Avariată / Necesită reparații / Nu funcționează; `ForParts` = La dezmembrare / Pentru piese; `Undamaged` = all other known option ids from 999’s `feature(593)` list — unknown ids → warning `STARE_UNKNOWN:<id>`, default `Undamaged` in payload)
 - **Price** — `FEATURE_PRICE` with `UNIT_EUR` / `EUR` or `UNIT_MDL` / `MDL` is accepted (numeric value stored with that currency). Unsupported units (e.g. `UNIT_USD`) → no `price`, warning `PRICE_UNSUPPORTED_CURRENCY:<unit>` or `PRICE_CURRENCY_UNKNOWN` (import then stops with missing price / manual review)
 - `mapping/999md-stare-to-condition.ts` — 999 Stare option id → `ConditionType`
-- `mapping/subcategory-vehicle-type.ts` — `subCategory` → `car` | `truck` | `moto` (or skip / unmapped)
-- `mapping/999md-color-mapper.ts` / `999md-equipment-mapper.ts` — labels → CipAuto-compatible raw values / equipment option slugs (`EQUIPMENT_SLUG_MAP` keys in `cipauto-import/mapping/equipment-mapper.ts`, not Kupito internal keys)
-- `storage/` — registry + reports (999md-prefixed report filenames)
-- Reuses `cipauto-import` — `AuthClient`, `KupitoApiClient`, `UploadClient`, `BrandModelResolver`, enum/color/equipment/field mappers (`mapTransmission` includes 999 «Cutia de viteze» labels: Mecanică, Automată, Automat-Tiptronic, Semiautomată, Variator, Robotizată; `map999mdColorToCipautoRaw` + `mapColor` cover all `feature(17)` option titles from 999, including Altă → `other`, Bronz, Burgundia, Crom, Fildeș, Ivory, Satin, Șampanie)
+- `mapping/subcategory-vehicle-type.ts` — `subCategory` → `car` | `truck` | `moto` (or skip / unmapped). **Only** `subCategoryId` / `subCategoryUrl` set Kupito brand-model `vehicleType`; `bodyRaw` / `mapBodyType` affect listing body type, not car-vs-truck catalog resolution (e.g. minivans under `transport/cars` remain `car`).
+- `mapping/999md-color-mapper.ts` / `999md-equipment-mapper.ts` — labels → CipAuto-compatible raw values / equipment option slugs (`EQUIPMENT_SLUG_MAP` keys in `partner-import-shared/mapping/equipment-mapper.ts`, not Kupito internal keys)
+- `storage/` — thin wrappers over `partner-import-shared` (`JsonRegistryStore`, `buildImportReport`); JSON filenames use the `999md-run-*` prefix
+- Reuses `partner-import-shared` — `AuthClient`, `KupitoApiClient`, `UploadClient`, `BrandModelResolver`, enum/color/equipment/field mappers (`mapTransmission` includes 999 «Cutia de viteze» labels: Mecanică, Automată, Automat-Tiptronic, Semiautomată, Variator, Robotizată; `map999mdColorToCipautoRaw` + `mapColor` cover all `feature(17)` option titles from 999, including Altă → `other`, Bronz, Burgundia, Crom, Fildeș, Ivory, Satin, Șampanie)
+- `BrandModelResolver` / `buildBrandCandidateKeys` — 999 short brand **Mercedes** → Kupito **Mercedes-Benz**
 
 ## Commands
 
@@ -109,6 +110,16 @@ Defaults: `http://localhost:4000` (local), `https://api.kupito.club` (prod).
 ## Registry states
 
 Same lifecycle as CipAuto: `discovered` → `pdp_parsed` → `created` | `updated` | `skipped` | `failed` | `manual_review`.
+
+## Dealer brand/model audit
+
+Compares all brand/model pairs from a 999 profile against the **running Kupito API** (same matching rules as `BrandModelResolver`). Writes one JSON report (default under `core/docs/features/data/` when committed from a full run).
+
+```bash
+npm run 999md:dealer-audit -- --login=AGMOTORS --kupitoApiUrl=http://localhost:4000 --out=core/docs/features/data/999md-agmotors-brands-models-audit.json
+```
+
+Flags: `--maxAds=<n>` (cap listings), `--pageSize`, `--batchSize`, `--delayMs` (GraphQL pacing).
 
 ## Tests
 

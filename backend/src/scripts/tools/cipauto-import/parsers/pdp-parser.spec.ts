@@ -1,3 +1,5 @@
+import { describe, expect, it } from '@jest/globals';
+
 import { parsePdpHtml } from './pdp-parser';
 
 describe('pdp-parser', () => {

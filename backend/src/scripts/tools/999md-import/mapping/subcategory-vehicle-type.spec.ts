@@ -8,6 +8,24 @@ describe('resolveSubcategoryToVehicleType', () => {
     });
   });
 
+  it('keeps passenger transport/cars as car (body type does not affect this)', () => {
+    expect(
+      resolveSubcategoryToVehicleType({
+        subCategoryId: 659,
+        subCategoryUrl: 'transport/cars',
+      }),
+    ).toEqual({ kind: 'ok', vehicleType: 'car' });
+  });
+
+  it('maps buses-and-minibuses to truck from 999 category only', () => {
+    expect(
+      resolveSubcategoryToVehicleType({
+        subCategoryId: 660,
+        subCategoryUrl: 'transport/buses-and-minibuses',
+      }),
+    ).toEqual({ kind: 'ok', vehicleType: 'truck' });
+  });
+
   it('resolves trucks subcategory by url', () => {
     expect(resolveSubcategoryToVehicleType({ subCategoryUrl: 'transport/trucks' })).toEqual({
       kind: 'ok',

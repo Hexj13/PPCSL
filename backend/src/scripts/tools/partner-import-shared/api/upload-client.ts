@@ -1,5 +1,5 @@
-import type { KupitoImportClientConfig } from '../../partner-import-shared/kupito-import-types';
-import type { UploadResult } from '../types';
+import type { KupitoImportClientConfig } from '../kupito-import-types';
+import type { UploadResult } from '../listing-types';
 import { requestBuffer } from '../utils/http';
 import { sleep } from '../utils/sleep';
 

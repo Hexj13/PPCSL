@@ -2,8 +2,8 @@ import * as cheerio from 'cheerio';
 import type { AnyNode } from 'domhandler';
 
 import { Currency } from '../../../../common/types';
+import { requestText } from '../../partner-import-shared/utils/http';
 import type { CipautoConfig, ParsedPdpData, ParsedPdpEquipmentOption } from '../types';
-import { requestText } from '../utils/http';
 
 import { extractSourceListingId } from './plp-parser';
 

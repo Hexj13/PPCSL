@@ -3,27 +3,31 @@ import 'reflect-metadata';
 import { Command } from 'commander';
 
 import type { ListingStatus } from '../../../common/types';
-import { AuthClient } from '../cipauto-import/api/auth-client';
-import { KupitoApiClient } from '../cipauto-import/api/kupito-api';
-import { UploadClient } from '../cipauto-import/api/upload-client';
-import { mapBodyType } from '../cipauto-import/mapping/body-type-mapper';
-import { BrandModelResolver } from '../cipauto-import/mapping/brand-model-resolver';
-import { mapColor } from '../cipauto-import/mapping/color-mapper';
-import { mapDriveType, mapFuel, mapTransmission } from '../cipauto-import/mapping/enum-mapper';
-import { mapEquipmentOptions } from '../cipauto-import/mapping/equipment-mapper';
+import { AuthClient } from '../partner-import-shared/api/auth-client';
+import { KupitoApiClient } from '../partner-import-shared/api/kupito-api';
+import { UploadClient } from '../partner-import-shared/api/upload-client';
+import type {
+  ImportCommandOptions,
+  ReportCommandOptions,
+} from '../partner-import-shared/import-workflow-types';
+import type { ParsedPdpData } from '../partner-import-shared/listing-types';
+import { mapBodyType } from '../partner-import-shared/mapping/body-type-mapper';
+import { BrandModelResolver } from '../partner-import-shared/mapping/brand-model-resolver';
+import { mapColor } from '../partner-import-shared/mapping/color-mapper';
+import {
+  mapDriveType,
+  mapFuel,
+  mapTransmission,
+} from '../partner-import-shared/mapping/enum-mapper';
+import { mapEquipmentOptions } from '../partner-import-shared/mapping/equipment-mapper';
 import {
   buildCreateListingPayload,
   buildUpdateListingPayload,
-} from '../cipauto-import/mapping/field-mapper';
-import { estimateHorsepower } from '../cipauto-import/mapping/hp-estimator';
-import type {
-  ImportCommandOptions,
-  ParsedPdpData,
-  ReportCommandOptions,
-} from '../cipauto-import/types';
-import { Logger } from '../cipauto-import/utils/logger';
-import { sleep } from '../cipauto-import/utils/sleep';
+} from '../partner-import-shared/mapping/field-mapper';
+import { estimateHorsepower } from '../partner-import-shared/mapping/hp-estimator';
 import { isPartnerImportDebugEnabled } from '../partner-import-shared/partner-import-debug';
+import { Logger } from '../partner-import-shared/utils/logger';
+import { sleep } from '../partner-import-shared/utils/sleep';
 
 import {
   mapCliStatusToListingStatus,

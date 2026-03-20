@@ -3,11 +3,27 @@ import 'reflect-metadata';
 import { Command } from 'commander';
 
 import type { ListingStatus } from '../../../common/types';
+import { AuthClient } from '../partner-import-shared/api/auth-client';
+import { KupitoApiClient } from '../partner-import-shared/api/kupito-api';
+import { UploadClient } from '../partner-import-shared/api/upload-client';
+import { mapBodyType } from '../partner-import-shared/mapping/body-type-mapper';
+import { BrandModelResolver } from '../partner-import-shared/mapping/brand-model-resolver';
+import { mapColor } from '../partner-import-shared/mapping/color-mapper';
+import {
+  mapDriveType,
+  mapFuel,
+  mapTransmission,
+} from '../partner-import-shared/mapping/enum-mapper';
+import { mapEquipmentOptions } from '../partner-import-shared/mapping/equipment-mapper';
+import {
+  buildCreateListingPayload,
+  buildUpdateListingPayload,
+} from '../partner-import-shared/mapping/field-mapper';
+import { estimateHorsepower } from '../partner-import-shared/mapping/hp-estimator';
 import { isPartnerImportDebugEnabled } from '../partner-import-shared/partner-import-debug';
+import { Logger } from '../partner-import-shared/utils/logger';
+import { sleep } from '../partner-import-shared/utils/sleep';
 
-import { AuthClient } from './api/auth-client';
-import { KupitoApiClient } from './api/kupito-api';
-import { UploadClient } from './api/upload-client';
 import { auditBrandsModels } from './commands/audit-brands-models';
 import {
   mapCliStatusToListingStatus,
@@ -16,13 +32,6 @@ import {
   normalizeRuntimeEnv,
   resolveConfig,
 } from './config';
-import { mapBodyType } from './mapping/body-type-mapper';
-import { BrandModelResolver } from './mapping/brand-model-resolver';
-import { mapColor } from './mapping/color-mapper';
-import { mapDriveType, mapFuel, mapTransmission } from './mapping/enum-mapper';
-import { mapEquipmentOptions } from './mapping/equipment-mapper';
-import { buildCreateListingPayload, buildUpdateListingPayload } from './mapping/field-mapper';
-import { estimateHorsepower } from './mapping/hp-estimator';
 import { PdpParser } from './parsers/pdp-parser';
 import { PlpParser } from './parsers/plp-parser';
 import { RegistryStore } from './storage/registry';
@@ -35,8 +44,6 @@ import type {
   ReportCommandOptions,
   ScanCommandOptions,
 } from './types';
-import { Logger } from './utils/logger';
-import { sleep } from './utils/sleep';
 
 const program = new Command();
 const logger = new Logger(isPartnerImportDebugEnabled());

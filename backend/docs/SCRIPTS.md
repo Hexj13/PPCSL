@@ -326,6 +326,20 @@ Requires **PostgreSQL**, **S3 credentials** (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_AC
 
 Batches of 50, 1s pause between batches. Idempotent for the chosen criterion (`NULL` column). Operational notes: `core/docs/guides/image-optimization-setup-ru.md` (Step 3).
 
+**Local vs production UI:** Missing blur placeholders in the Next.js app on localhost usually means listing rows have null blurhash columns in the DB you hit locally—not a dev-build switch. Align data (create via the app, or backfill) or see `core/docs/features/image-preview.md` (Local development vs production).
+
+### Partner listing imports (`cipauto-import`, `999md-import`)
+
+Shared code lives in `src/scripts/tools/partner-import-shared/` (Kupito API client, upload, mappers, registry/report helpers). Each importer has its own CLI and parsers under `cipauto-import/` and `999md-import/`.
+
+| npm script | Effect |
+|------------|--------|
+| `npm run cipauto:scan` / `cipauto:import` / `cipauto:report` | CipAuto HTML catalog → Kupito API |
+| `npm run 999md:scan` / `999md:import` / `999md:report` | 999.md GraphQL → same downstream pipeline |
+| `npm run 999md:dealer-audit` | Brand/model audit report vs live Kupito API |
+
+From the **platform repo root**, the same flows are exposed as `npm run 999md:*` (see root `package.json`). Full env flags and checklists: `core/docs/features/cipauto-import.md`, `core/docs/features/999md-import.md`.
+
 ## Migration Scripts
 
 Database migrations are handled separately and are located in:

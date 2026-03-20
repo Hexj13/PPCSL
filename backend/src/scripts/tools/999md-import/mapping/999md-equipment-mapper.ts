@@ -1,4 +1,4 @@
-import type { ParsedPdpEquipmentOption } from '../../cipauto-import/types';
+import type { ParsedPdpEquipmentOption } from '../../partner-import-shared/listing-types';
 
 function normalize(value: string): string {
   return value

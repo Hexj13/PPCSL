@@ -1,4 +1,4 @@
-import { requestJson } from '../cipauto-import/utils/http';
+import { requestJson } from '../partner-import-shared/utils/http';
 
 import type { Md999Config } from './types';
 

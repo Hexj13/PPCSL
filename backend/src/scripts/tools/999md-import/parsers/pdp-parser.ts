@@ -1,4 +1,4 @@
-import type { ParsedPdpData } from '../../cipauto-import/types';
+import type { ParsedPdpData } from '../../partner-import-shared/listing-types';
 import {
   resolveSubcategoryToVehicleType,
   type SubcategoryVehicleResolution,

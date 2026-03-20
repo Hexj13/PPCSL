@@ -51,7 +51,10 @@ export class GetListingUseCase {
     if (listing.user) {
       listing.user = removePasswordFromUser(listing.user) as typeof listing.user;
       if (!listing.user.board_slug) {
-        listing.user.board_slug = await this.usersService.ensureBoardSlug(listing.user_id);
+        listing.user.board_slug = await this.usersService.ensureBoardSlug(
+          listing.user_id,
+          listing.user,
+        );
       }
     }
 

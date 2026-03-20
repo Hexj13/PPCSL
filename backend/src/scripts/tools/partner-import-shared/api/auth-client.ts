@@ -1,5 +1,5 @@
-import type { KupitoImportClientConfig } from '../../partner-import-shared/kupito-import-types';
-import type { LoginResponse } from '../types';
+import type { KupitoImportClientConfig } from '../kupito-import-types';
+import type { LoginResponse } from '../listing-types';
 import { requestJson } from '../utils/http';
 
 export class AuthClient {

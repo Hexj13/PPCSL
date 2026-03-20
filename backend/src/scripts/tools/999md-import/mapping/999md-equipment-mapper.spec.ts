@@ -1,4 +1,4 @@
-import { mapEquipmentOptions } from '../../cipauto-import/mapping/equipment-mapper';
+import { mapEquipmentOptions } from '../../partner-import-shared/mapping/equipment-mapper';
 
 import { map999mdCheckboxToEquipmentOption } from './999md-equipment-mapper';
 

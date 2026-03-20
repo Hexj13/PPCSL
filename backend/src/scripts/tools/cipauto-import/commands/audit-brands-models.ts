@@ -1,9 +1,9 @@
-import type { KupitoApiClient } from '../api/kupito-api';
+import type { KupitoApiClient } from '../../partner-import-shared/api/kupito-api';
 import {
   adaptSourceModelForBrand,
   buildBrandCandidateKeys,
   findModelBySourceName,
-} from '../mapping/brand-model-resolver';
+} from '../../partner-import-shared/mapping/brand-model-resolver';
 import type {
   CipautoBrandModelPair,
   CipautoBrandsModelsAuditReport,

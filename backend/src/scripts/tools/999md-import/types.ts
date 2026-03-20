@@ -3,12 +3,13 @@ import type {
   ImportCommandOptions,
   ImportReport,
   ImportState,
-  ParsedPdpData,
-  ParsedPlpItem,
   ReportCommandOptions,
+} from '../partner-import-shared/import-workflow-types';
+import type {
+  KupitoImportClientConfig,
   RuntimeEnv,
-} from '../cipauto-import/types';
-import type { KupitoImportClientConfig } from '../partner-import-shared/kupito-import-types';
+} from '../partner-import-shared/kupito-import-types';
+import type { ParsedPdpData, ParsedPlpItem } from '../partner-import-shared/listing-types';
 
 export type {
   ImportCommandOptions,

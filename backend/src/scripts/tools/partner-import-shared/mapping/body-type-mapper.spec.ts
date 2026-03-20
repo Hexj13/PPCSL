@@ -14,6 +14,14 @@ describe('body-type-mapper', () => {
     expect(mapBodyType('Crossover')).toEqual({ value: BodyType.SUV });
   });
 
+  it('maps Minivan to Minivan not Van (substring van must not win)', () => {
+    expect(mapBodyType('Minivan')).toEqual({ value: BodyType.Minivan });
+  });
+
+  it('maps Microvan to Minivan', () => {
+    expect(mapBodyType('Microvan')).toEqual({ value: BodyType.Minivan });
+  });
+
   it('returns warning for unknown body and falls back to SUV', () => {
     expect(mapBodyType('UnknownCoachwork')).toEqual({
       value: BodyType.SUV,

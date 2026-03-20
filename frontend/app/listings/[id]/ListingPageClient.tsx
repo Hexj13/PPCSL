@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { ListingPageActions } from '@/components/ListingPage/ListingPageActions';
 import { ListingPageBreadcrumbs } from '@/components/ListingPage/ListingPageBreadcrumbs';
@@ -8,7 +8,10 @@ import { ListingPageCharacteristics } from '@/components/ListingPage/ListingPage
 import { ListingPageDescription } from '@/components/ListingPage/ListingPageDescription';
 import { ListingPageHeader } from '@/components/ListingPage/ListingPageHeader';
 import { ListingPageImageModal } from '@/components/ListingPage/ListingPageImageModal';
-import { ListingPageImages } from '@/components/ListingPage/ListingPageImages';
+import {
+  ListingPageImages,
+  type ListingPageImagesHandle,
+} from '@/components/ListingPage/ListingPageImages';
 import { ListingPageSeller } from '@/components/ListingPage/ListingPageSeller';
 import {
   BreadcrumbsSkeleton,
@@ -351,6 +354,7 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
     openImageModal,
     closeImageModal,
   } = props;
+  const previewRef = useRef<ListingPageImagesHandle>(null);
 
   const images =
     listing?.images && listing.images.length > 0 ? listing.images : ['/placeholder-car.jpg'];
@@ -362,6 +366,28 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
     1200,
   );
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
+      }
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        previewRef.current?.goPrev();
+      }
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        previewRef.current?.goNext();
+      }
+    };
+
+    if (!isImageModalOpen && images.length > 1) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [images.length, isImageModalOpen]);
   if (!listing) return null;
 
   const vehicle = listing.vehicle;
@@ -401,6 +427,7 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
         <div className="grid grid-cols-1 lg:grid-cols-[1.86fr_1fr] gap-8 lg:gap-6">
           <div className="space-y-6 min-w-0 order-1">
             <ListingPageImages
+              ref={previewRef}
               images={images}
               imageAltTitle={imageAltTitle}
               currentImageIndex={currentImageIndex}
