@@ -12,7 +12,7 @@ interface UseListingImagesProps {
 const PREVIEW_IMAGE_QUALITY = 75;
 const PREVIEW_IMAGE_WIDTH = 1200;
 const PRELOAD_NEXT_DELAY_MS = 220;
-const PRELOAD_THIRD_AHEAD_DELAY_MS = 450;
+const PRELOAD_THIRD_AHEAD_DELAY_MS = 320;
 
 export function useListingImages({
   images,
@@ -60,12 +60,23 @@ export function useListingImages({
 
     const preloadEntries: Array<{ img: HTMLImageElement; url: string }> = [];
     const preloadTimeouts: Array<ReturnType<typeof setTimeout>> = [];
-    const rafIds: number[] = [];
 
     const markLoadedIfDecoded = (img: HTMLImageElement, url: string) => {
       if (img.complete && img.naturalWidth > 0) {
         mainImageLoadedRef.current.add(url);
       }
+    };
+
+    const attachDecode = (img: HTMLImageElement, url: string) => {
+      if (typeof img.decode !== 'function') {
+        return;
+      }
+      void img
+        .decode()
+        .then(() => {
+          mainImageLoadedRef.current.add(url);
+        })
+        .catch(() => undefined);
     };
 
     const preloadByIndex = (index: number, delay = 0) => {
@@ -90,15 +101,9 @@ export function useListingImages({
         img.onload = () => {
           mainImageLoadedRef.current.add(optimizedUrl);
         };
+        img.onerror = () => {};
         img.src = optimizedUrl;
-        const rafId = requestAnimationFrame(() => {
-          markLoadedIfDecoded(img, optimizedUrl);
-          const id2 = requestAnimationFrame(() => {
-            markLoadedIfDecoded(img, optimizedUrl);
-          });
-          rafIds.push(id2);
-        });
-        rafIds.push(rafId);
+        attachDecode(img, optimizedUrl);
       };
 
       if (delay > 0) {
@@ -135,11 +140,9 @@ export function useListingImages({
       for (const timeout of preloadTimeouts) {
         clearTimeout(timeout);
       }
-      for (const id of rafIds) {
-        cancelAnimationFrame(id);
-      }
       for (const { img, url } of preloadEntries) {
         img.onload = null;
+        img.onerror = null;
         markLoadedIfDecoded(img, url);
       }
     };

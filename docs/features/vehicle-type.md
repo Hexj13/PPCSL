@@ -265,6 +265,8 @@ Controls whether to show the fade effect on the right when horizontally scrollab
 </div>
 ```
 
+Search actions now include a live listing count preview. The count is recalculated from the current draft filters (before submitting), debounced on client input, and displayed next to sorting on desktop or above sorting on mobile. The preview request reads `meta.total` from `/api/listings` with `page=1` and `limit=1`, and uses the same URL-to-API parsing path as `ListingGrid` to keep displayed totals consistent with loaded results.
+
 ## Body types by vehicle category
 
 ### Body type classification

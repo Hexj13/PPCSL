@@ -98,7 +98,9 @@
     "plateMaskFailed": "Failed to process plate masking",
     "plateDetectionTimeout": "Plate detection timed out",
     "imageBlurHashesLengthMismatch": "Image blur data must match the number of photos",
-    "imageBlurHashesInvalidEntry": "Invalid blur hash for one of the photos"
+    "imageBlurHashesInvalidEntry": "Invalid blur hash for one of the photos",
+    "searchBrandIdsLimit": "You can select up to {max} brands.",
+    "searchModelIdsLimit": "You can select up to {max} models."
   },
   "vehicleOptions": {
     "transmission": {

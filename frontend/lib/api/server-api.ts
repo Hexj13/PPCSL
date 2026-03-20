@@ -1,10 +1,29 @@
 import { cache } from 'react';
 
+import { LISTING_GRID_PAGE_SIZE } from '@/lib/constants';
 import { createBrandResolver, createModelResolver, parseSearchParams } from '@/lib/search';
 
 import type { Listing, PaginationMeta, Brand, VehicleModel } from './api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+
+export function withListingGridDefaultLimit(
+  searchParams: Record<string, string | string[] | undefined> = {},
+): Record<string, string | string[] | undefined> {
+  const limit = searchParams.limit;
+  const hasLimit =
+    (typeof limit === 'string' && limit.trim() !== '') ||
+    (Array.isArray(limit) && limit.length > 0 && limit.some((value) => value.trim() !== ''));
+
+  if (hasLimit) {
+    return searchParams;
+  }
+
+  return {
+    ...searchParams,
+    limit: String(LISTING_GRID_PAGE_SIZE),
+  };
+}
 
 export interface SearchMetadataResponse {
   title: string | null;
@@ -116,15 +135,16 @@ export const getListings = cache(
         errorMessage.includes('ECONNREFUSED') ||
         errorMessage.includes('fetch failed') ||
         errorMessage.includes('network');
+      const limit = typeof params.limit === 'number' ? params.limit : 20;
 
       if (isConnectionError && process.env.NODE_ENV === 'development') {
-        return { data: [], meta: { page: 1, limit: 20, total: 0, totalPages: 0 } };
+        return { data: [], meta: { page: 1, limit, total: 0, totalPages: 0 } };
       }
 
       if (process.env.NODE_ENV === 'production') {
         console.error('Error fetching listings:', error);
       }
-      return { data: [], meta: { page: 1, limit: 20, total: 0, totalPages: 0 } };
+      return { data: [], meta: { page: 1, limit, total: 0, totalPages: 0 } };
     }
   },
 );

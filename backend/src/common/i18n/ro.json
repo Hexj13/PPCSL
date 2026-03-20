@@ -90,7 +90,9 @@
     "plateMaskFailed": "Nu am reușit procesarea măștii plăcuțelor",
     "plateDetectionTimeout": "Detectarea plăcuțelor a expirat",
     "imageBlurHashesLengthMismatch": "Datele blur trebuie să corespundă numărului de poze",
-    "imageBlurHashesInvalidEntry": "Hash blur nevalid pentru una dintre poze"
+    "imageBlurHashesInvalidEntry": "Hash blur nevalid pentru una dintre poze",
+    "searchBrandIdsLimit": "Puteți selecta cel mult {max} mărci.",
+    "searchModelIdsLimit": "Puteți selecta cel mult {max} modele."
   },
   "vehicleOptions": {
     "transmission": {

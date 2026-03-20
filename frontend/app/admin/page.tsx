@@ -18,15 +18,7 @@ const LISTING_UPDATED_TOAST_KEY = 'listingUpdatedToast';
 export default function AdminPage() {
   const { isLoading, isAuthorized } = useRequireAuth({ requiredRole: 'Admin' });
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<AdminTab>(() => {
-    if (typeof window !== 'undefined') {
-      const savedTab = localStorage.getItem('adminActiveTab') as AdminTab | null;
-      if (savedTab && ['listings', 'users', 'promotions', 'brandsModels'].includes(savedTab)) {
-        return savedTab;
-      }
-    }
-    return 'users';
-  });
+  const [activeTab, setActiveTab] = useState<AdminTab>('users');
 
   const listingsTabRef = useRef<HTMLButtonElement>(null);
   const usersTabRef = useRef<HTMLButtonElement>(null);
@@ -43,12 +35,6 @@ export default function AdminPage() {
     },
     tabsContainerRef,
   );
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('adminActiveTab', activeTab);
-    }
-  }, [activeTab]);
 
   useEffect(() => {
     const shouldShowToast = sessionStorage.getItem(LISTING_UPDATED_TOAST_KEY) === 'true';

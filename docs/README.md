@@ -39,6 +39,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 - [sentry.md](./guides/sentry.md) — Sentry setup and monitoring
 - [deployment.md](./guides/deployment.md) — Deploy (optional Telegram support bot)
 - [local-development.md](./guides/local-development.md) — Local development
+- [search-filter-limits.md](./guides/search-filter-limits.md) — Brand/model selection limits in search
 - [quick-start-ru.md](./guides/quick-start-ru.md) — Quick start (Russian)
 - [linting.md](./linting.md) — Linting and code quality (single source)
 

@@ -6,7 +6,7 @@ import { SearchStructuredData } from '@/components/analytics/SearchStructuredDat
 import { ListingGrid } from '@/components/listing/ListingGrid';
 import { ScrollToFiltersButton } from '@/components/search/ScrollToFiltersButton';
 import { SearchFilters } from '@/components/search/SearchFilters';
-import { getListings } from '@/lib/api';
+import { getListings, withListingGridDefaultLimit } from '@/lib/api';
 import { getMetadataLocale, getServerTranslations } from '@/lib/i18n';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { getCountry } from '@/lib/utils';
@@ -83,7 +83,7 @@ async function ListingGridServer({
   searchParams?: Promise<Record<string, string | string[] | undefined> | undefined>;
 }) {
   const params = (await (searchParams ?? Promise.resolve(undefined))) ?? {};
-  const initialData = await getListings(params);
+  const initialData = await getListings(withListingGridDefaultLimit(params));
   return <ListingGrid initialData={initialData} />;
 }
 

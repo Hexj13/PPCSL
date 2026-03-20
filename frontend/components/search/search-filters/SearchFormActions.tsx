@@ -14,6 +14,8 @@ interface SearchFormActionsProps {
   showSearchLoader: boolean;
   hasActiveFilters: boolean;
   canSaveFilter: boolean;
+  availableListingsTotal: number | null;
+  isAvailableListingsLoading: boolean;
   buttonsContainerRef: React.RefObject<HTMLDivElement | null>;
   isInternalSearchRef?: React.MutableRefObject<boolean>;
   onSortChange?: (sortBy: string, sortOrder: 'ASC' | 'DESC') => void;
@@ -27,6 +29,8 @@ export function SearchFormActions({
   showSearchLoader,
   hasActiveFilters,
   canSaveFilter,
+  availableListingsTotal,
+  isAvailableListingsLoading,
   buttonsContainerRef,
   isInternalSearchRef,
   onSortChange,
@@ -35,10 +39,48 @@ export function SearchFormActions({
   const { user, isInitialized } = useAuthStore();
   const userForUi = user;
 
+  const isSearchReady = Boolean(hasFiltersChanged && !isSyncingFromUrl);
+
   return (
-    <div className="mt-6 relative -mx-3 sm:mx-0 px-3 sm:px-0">
-      <div className="flex flex-col lg:flex-row lg:flex-nowrap lg:justify-between gap-3 items-stretch lg:items-center">
+    <div className="mt-4 relative -mx-3 sm:mx-0 px-3 sm:px-0">
+      <div className="flex flex-col lg:flex-row lg:flex-nowrap lg:justify-between gap-3 items-stretch lg:items-end">
         <div className="w-full lg:w-auto shrink-0 relative">
+          <div
+            className="w-full inline-flex justify-start items-center gap-2 pb-2"
+            aria-live="polite"
+          >
+            <span className="inline-flex items-center gap-2">
+              <svg
+                className="h-4 w-4 shrink-0 text-primary-900"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path
+                  fillRule="evenodd"
+                  clipRule="evenodd"
+                  d="M9.29289 1.29289C9.48043 1.10536 9.73478 1 10 1H18C19.6569 1 21 2.34315 21 4V8C21 8.55228 20.5523 9 20 9C19.4477 9 19 8.55228 19 8V4C19 3.44772 18.5523 3 18 3H11V8C11 8.55228 10.5523 9 10 9H5V20C5 20.5523 5.44772 21 6 21H10C10.5523 21 11 21.4477 11 22C11 22.5523 10.5523 23 10 23H6C4.34315 23 3 21.6569 3 20V8C3 7.73478 3.10536 7.48043 3.29289 7.29289L9.29289 1.29289ZM6.41421 7H9V4.41421L6.41421 7ZM20.1716 18.7574C20.6951 17.967 21 17.0191 21 16C21 13.2386 18.7614 11 16 11C13.2386 11 11 13.2386 11 16C11 18.7614 13.2386 21 16 21C17.0191 21 17.967 20.6951 18.7574 20.1716L21.2929 22.7071C21.6834 23.0976 22.3166 23.0976 22.7071 22.7071C23.0976 22.3166 23.0976 21.6834 22.7071 21.2929L20.1716 18.7574ZM13 16C13 14.3431 14.3431 13 16 13C17.6569 13 19 14.3431 19 16C19 17.6569 17.6569 19 16 19C14.3431 19 13 17.6569 13 16Z"
+                  fill="currentColor"
+                />
+              </svg>
+              <span className="text-sm text-primary-900">
+                <span className="inline [@media_(width:1024px)]:hidden">
+                  {t('searchFilters.availableListingsLabel')}
+                </span>
+                <span className="hidden [@media_(width:1024px)]:inline">
+                  {t('searchFilters.availableListingsLabelShort')}
+                </span>
+              </span>
+            </span>
+            {isAvailableListingsLoading || availableListingsTotal === null ? (
+              <span className="w-4 h-4 border-2 border-primary-300 border-t-transparent rounded-full animate-spin shrink-0" />
+            ) : (
+              <span className="text-sm font-semibold text-primary-700">
+                {availableListingsTotal ?? 0}
+              </span>
+            )}
+          </div>
           <SortDropdown isInternalSearchRef={isInternalSearchRef} onSortChange={onSortChange} />
         </div>
         <div className="min-w-0 relative border-t border-primary-500/20 pt-3 lg:border-t-0 lg:pt-0">
@@ -106,11 +148,17 @@ export function SearchFormActions({
                 loading={showSearchLoader}
                 loadingText={t('searchFilters.searching')}
                 disabled={Boolean(!hasFiltersChanged || isSyncingFromUrl)}
-                className={`w-full btn-secondary flex items-center justify-center gap-2 text-primary-900! ${
-                  !hasFiltersChanged || isSyncingFromUrl ? '' : 'border-primary-500!'
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.blur();
+                }}
+                className={`relative w-full overflow-hidden rounded-lg h-[52px] min-h-[52px] max-h-[52px] px-6 font-semibold text-base outline-hidden select-none border-2 transition-colors duration-200 text-primary-900! ${
+                  isSearchReady
+                    ? 'border-primary-700 bg-primary-500/12'
+                    : 'border-primary-700/30 bg-bg-secondary hover-only:hover:border-primary-700'
                 }`}
               >
-                <span className="inline-flex items-center gap-2">
+                <span className="relative z-10 inline-flex items-center gap-2">
                   <svg
                     className="w-4 h-4 shrink-0"
                     fill="none"

@@ -5,6 +5,7 @@ import { useCallback, useMemo, startTransition } from 'react';
 import type { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import type { Brand, VehicleModel, City } from '@/lib/api';
+import { MAX_SEARCH_BRAND_SELECTIONS, MAX_SEARCH_MODEL_SELECTIONS } from '@/lib/constants';
 import { buildSearchQuery, clearFiltersFromStorage, saveFiltersToStorage } from '@/lib/search';
 import { toast } from '@/lib/toast';
 import {
@@ -97,6 +98,22 @@ export function useFilterHandlers({
   const handleMultiSelectChange = useCallback(
     (key: keyof typeof filters, values: string[]) => {
       const filteredValues = values.filter((v) => v !== 'all' && !v.startsWith('__category__'));
+      if (key === 'brand_ids' && filteredValues.length > MAX_SEARCH_BRAND_SELECTIONS) {
+        toast.error(
+          t('searchFilters.selectionLimitBrands', {
+            max: MAX_SEARCH_BRAND_SELECTIONS.toString(),
+          }),
+        );
+        return;
+      }
+      if (key === 'model_ids' && filteredValues.length > MAX_SEARCH_MODEL_SELECTIONS) {
+        toast.error(
+          t('searchFilters.selectionLimitModels', {
+            max: MAX_SEARCH_MODEL_SELECTIONS.toString(),
+          }),
+        );
+        return;
+      }
 
       const contentTypeMap: Record<string, string> = {
         brand_ids: 'brand',
@@ -133,7 +150,7 @@ export function useFilterHandlers({
 
       updateFilter(key, filteredValues);
     },
-    [updateFilter, filters, getBrandOptions, getModelOptions, getCityOptions],
+    [updateFilter, filters, getBrandOptions, getModelOptions, getCityOptions, t],
   );
 
   const handleCheckboxChange = useCallback(

@@ -40,7 +40,7 @@ function hasContactInfo(user: User): boolean {
 
 interface AdminUserCardProps {
   user: User;
-  t: (key: string, values?: Record<string, number>) => string;
+  t: (key: string, params?: Record<string, string | number>) => string;
   onViewListings: (user: User) => void;
   onToggleStatus: (userId: string) => void;
 }
@@ -48,6 +48,7 @@ interface AdminUserCardProps {
 function AdminUserCard({ user, t, onViewListings, onToggleStatus }: AdminUserCardProps) {
   const displayName = getDisplayName(user) || t('admin.usersTab.deletedUser');
   const listingCount = user.listings?.length ?? 0;
+  const canToggleStatus = hasContactInfo(user);
 
   return (
     <div className="card p-4 md:p-5">
@@ -73,7 +74,7 @@ function AdminUserCard({ user, t, onViewListings, onToggleStatus }: AdminUserCar
             )}
           </div>
           <div
-            className="space-y-1 text-sm md:text-base"
+            className="space-y-1 text-sm md:text-base lg:grid lg:grid-cols-2 lg:gap-x-8 lg:gap-y-2 lg:space-y-0"
             style={{ color: 'rgb(var(--text-secondary-rgb))' }}
           >
             {user.email ? (
@@ -100,7 +101,26 @@ function AdminUserCard({ user, t, onViewListings, onToggleStatus }: AdminUserCar
               <span className="text-primary-700">{t('admin.usersTab.type')}</span>{' '}
               {t(getTypeLabelKey(user.type))}
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
+            <div>
+              <span className="text-primary-700">{t('admin.usersTab.listings')}</span>{' '}
+              {listingCount}
+            </div>
+            {user.type === 'Business' && user.companyWebsiteUrl?.trim() && (
+              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 min-w-0 lg:col-span-2">
+                <span className="text-primary-700 shrink-0">
+                  {t('listingDetail.companyWebsite')}
+                </span>
+                <a
+                  href={user.companyWebsiteUrl.trim()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="wrap-break-word min-w-0 underline text-text-secondary hover-only:hover:text-primary-700 transition-colors"
+                >
+                  {user.companyWebsiteUrl.trim()}
+                </a>
+              </div>
+            )}
+            <div className="flex items-center gap-2 flex-wrap lg:col-span-2">
               <span className="text-primary-700">{t('admin.usersTab.status')}</span>
               <span
                 className={`px-2 py-1 rounded text-sm md:text-base font-semibold text-text-secondary ${
@@ -110,35 +130,31 @@ function AdminUserCard({ user, t, onViewListings, onToggleStatus }: AdminUserCar
                 {user.active !== false ? t('admin.usersTab.active') : t('admin.usersTab.inactive')}
               </span>
             </div>
-            <div>
-              <span className="text-primary-700">{t('admin.usersTab.listings')}</span>{' '}
-              {listingCount}
-            </div>
           </div>
         </div>
-        <div className="flex flex-col xl:flex-row items-stretch xl:items-center gap-2 w-full xl:w-auto shrink-0">
+        <div className="flex flex-col xl:flex-row items-stretch xl:items-center gap-2 w-full lg:w-auto shrink-0">
           {listingCount > 0 && (
             <button
               onClick={() => onViewListings(user)}
-              className="text-primary-700 font-medium text-base hover-only:hover:text-primary-900 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-700 hover-only:hover:border-primary-900 bg-primary-500/10 select-none w-full xl:w-auto h-[48px]"
+              className="text-primary-700 font-medium text-base hover-only:hover:text-primary-900 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-700 hover-only:hover:border-primary-900 bg-primary-500/10 select-none w-full lg:w-auto h-[48px]"
             >
-              {t('admin.usersTab.viewListings', { count: listingCount })}
+              {t('admin.usersTab.viewListings')}
             </button>
           )}
-          {hasContactInfo(user) && (
-            <button
-              onClick={() => onToggleStatus(user.id)}
-              className={`font-medium text-base transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 select-none w-full xl:w-auto h-[48px] ${
-                user.active !== false
+          <button
+            type="button"
+            disabled={!canToggleStatus}
+            onClick={() => onToggleStatus(user.id)}
+            className={`font-medium text-base transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 select-none w-full lg:w-auto h-[48px] disabled:opacity-50 disabled:cursor-not-allowed ${
+              !canToggleStatus
+                ? 'text-text-secondary border-primary-500/20 bg-bg-secondary/40'
+                : user.active !== false
                   ? 'text-text-secondary hover-only:hover:text-text-primary border-red-500/40 hover-only:hover:border-red-500/60 bg-red-500/20 hover-only:hover:bg-red-500/30'
                   : 'text-primary-700 hover-only:hover:text-primary-900 border-primary-700 hover-only:hover:border-primary-900 bg-primary-500/10'
-              }`}
-            >
-              {user.active !== false
-                ? t('admin.usersTab.deactivate')
-                : t('admin.usersTab.activate')}
-            </button>
-          )}
+            }`}
+          >
+            {user.active !== false ? t('admin.usersTab.deactivate') : t('admin.usersTab.activate')}
+          </button>
         </div>
       </div>
     </div>

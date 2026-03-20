@@ -7,11 +7,13 @@ import { usePopularModels } from '@/hooks/usePopularModels';
 import type { FilterState } from '@/hooks/useSearchFilters';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Brand, VehicleModel } from '@/lib/api';
+import { MAX_SEARCH_BRAND_SELECTIONS, MAX_SEARCH_MODEL_SELECTIONS } from '@/lib/constants';
 import {
   getPopularBrands,
   getPopularModelsByBrand,
   getMostPopularModel,
 } from '@/lib/content/popular-brands';
+import { toast } from '@/lib/toast';
 import { compareNames, createSlug } from '@/lib/utils';
 
 interface PopularFiltersProps {
@@ -264,6 +266,18 @@ export function PopularFilters({
       filters,
       setFilters,
       vehicleType,
+      onBrandLimitReached: () =>
+        toast.error(
+          t('searchFilters.selectionLimitBrands', {
+            max: MAX_SEARCH_BRAND_SELECTIONS.toString(),
+          }),
+        ),
+      onModelLimitReached: () =>
+        toast.error(
+          t('searchFilters.selectionLimitModels', {
+            max: MAX_SEARCH_MODEL_SELECTIONS.toString(),
+          }),
+        ),
     });
 
   const popularBrandsSorted = useMemo(

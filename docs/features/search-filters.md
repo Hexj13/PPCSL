@@ -134,6 +134,19 @@ Only one tab’s content is rendered at a time (`activeTab === 'basic' | 'advanc
 
 ---
 
+## Selection Limits (Brands and Models)
+
+- Maximum selected brands: `20`
+- Maximum selected models: `20`
+- Limits apply in Basic and Popular tabs.
+- When user hits the limit, UI keeps current selection and shows a localized error toast.
+- If URL contains more than allowed selections, the app resets the filter params and shows a localized error toast after redirect.
+- Backend enforces the same limits in `SearchListingsDto` (`ArrayMaxSize(20)` for `brand_ids` and `model_ids`) and returns localized validation messages.
+
+For full behavior and edge-case flow, see [search-filter-limits.md](../guides/search-filter-limits.md).
+
+---
+
 ## Styling and UX Details
 
 ### Paired inputs (From/To)
@@ -157,7 +170,7 @@ Only one tab’s content is rendered at a time (`activeTab === 'basic' | 'advanc
 
 - **Filter state:** `useSearchFilters` — holds all filter fields (brand_ids, model_ids, year_gte/lte, price_gte/lte, cities, currency, etc.).
 - **URL sync:** `useSearchFiltersSync` — reads/writes URL search params and applies initial state from URL.
-- **Handlers:** `useFilterHandlers` — change handlers, validation (year/price/mileage/engine/horsepower ranges), submit, reset.
+- **Handlers:** `useFilterHandlers` — change handlers, validation (year/price/mileage/engine/horsepower ranges and brand/model selection limits), submit, reset.
 - **Options:** `useFilterOptions` — brand/model options (with popular/other categories), city options, colors, doors, condition, registration type, registration yes/no, currency list.
 - **Tabs:** `useSearchTabs` — active tab, refs for indicator and scroll.
 - **Vehicle type:** `useVehicleType` — from URL or default `car`.
@@ -192,4 +205,4 @@ Only one tab’s content is rendered at a time (`activeTab === 'basic' | 'advanc
 
 ---
 
-**Last updated:** 2026-03-03
+**Last updated:** 2026-03-20

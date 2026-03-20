@@ -145,6 +145,24 @@ function getMessageForStatus(
   );
 }
 
+function translateBackendKeyIfNeeded(
+  backendMessage: string,
+  t: (key: string, params?: Record<string, string | number>) => string,
+): string {
+  if (!backendMessage) return backendMessage;
+  if (!(backendMessage.startsWith('errors.') || backendMessage.startsWith('validation.'))) {
+    return backendMessage;
+  }
+
+  const [key, ...rawParams] = backendMessage.split('|');
+  const params: Record<string, string> = {};
+  if (rawParams[0]) {
+    params.max = rawParams[0];
+    params.value = rawParams[0];
+  }
+  return t(key, params);
+}
+
 function clearAuthAndRedirectToLogin(): void {
   if (typeof window === 'undefined') return;
   localStorage.removeItem('token');
@@ -179,15 +197,17 @@ const getErrorMessage = (error: AxiosError): string => {
 
   const status = error.response.status;
   const backendMessage = getBackendMessageString(error.response.data);
+  const translatedBackendMessage = translateBackendKeyIfNeeded(backendMessage, t);
   const useTranslation =
-    !backendMessage || STANDARD_ERROR_PHRASES.some((phrase) => backendMessage.includes(phrase));
+    !translatedBackendMessage ||
+    STANDARD_ERROR_PHRASES.some((phrase) => translatedBackendMessage.includes(phrase));
 
   if (status === 401 && typeof window !== 'undefined') {
     const refreshToken = localStorage.getItem('refresh_token');
     if (!refreshToken) clearAuthAndRedirectToLogin();
   }
 
-  return getMessageForStatus(status, t, backendMessage, useTranslation);
+  return getMessageForStatus(status, t, translatedBackendMessage, useTranslation);
 };
 
 async function handle429Retry(

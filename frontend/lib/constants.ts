@@ -4,6 +4,11 @@ export const listingStatuses = ['Active', 'Paused', 'Closed'] as const;
 
 export const currencies = ['EUR', 'MDL'] as const;
 
+export const LISTING_GRID_PAGE_SIZE = 32;
+export const MAX_SEARCH_BRAND_SELECTIONS = 20;
+export const MAX_SEARCH_MODEL_SELECTIONS = 20;
+export const SEARCH_FILTERS_LIMIT_ERROR_TOAST_KEY = 'kupito_search_filters_limit_error';
+
 export function getPlatformCurrencies(): readonly string[] {
   try {
     const { loadSiteConfigSync } = require('./site-config');

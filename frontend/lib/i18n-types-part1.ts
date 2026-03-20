@@ -299,6 +299,7 @@ export interface TranslationsPart1 {
     noListingsYet: string;
     noListingsWithStatus: string;
     loadMore: string;
+    showMore: string;
     noMoreListings: string;
     selectBrand: string;
     selectCity: string;

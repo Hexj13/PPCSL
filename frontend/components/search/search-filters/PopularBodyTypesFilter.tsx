@@ -128,7 +128,7 @@ export function PopularBodyTypesFilter({
   };
 
   return (
-    <div className="mt-6 mb-6 select-none">
+    <div className="mt-6 mb-4 select-none">
       <label className="block text-sm font-semibold mb-2 text-primary-900 flex items-center gap-2">
         <svg
           width="16"

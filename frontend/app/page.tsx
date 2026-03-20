@@ -9,7 +9,14 @@ import { DynamicPageTitle } from '@/components/common/DynamicPageTitle';
 import { ListingGrid } from '@/components/listing/ListingGrid';
 import { ScrollToFiltersButton } from '@/components/search/ScrollToFiltersButton';
 import { SearchFilters } from '@/components/search/SearchFilters';
-import { fetchBrands, fetchModelsByBrands, fetchSearchMetadata, getListings } from '@/lib/api';
+import { SearchFiltersLimitToast } from '@/components/search/SearchFiltersLimitToast';
+import {
+  fetchBrands,
+  fetchModelsByBrands,
+  fetchSearchMetadata,
+  getListings,
+  withListingGridDefaultLimit,
+} from '@/lib/api';
 import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/content/popular-brands';
 import { getMetadataLocale, getServerTranslations, type Translations } from '@/lib/i18n';
 import { loadSiteConfigSync } from '@/lib/site-config';
@@ -363,7 +370,7 @@ async function getHomePrevNextUrls(
     prevUrl = `${siteUrl}/${prevQuery ? `?${prevQuery}` : ''}`;
   }
   if (!hasNonIndexableParams) {
-    const listings = await getListings(params);
+    const listings = await getListings(withListingGridDefaultLimit(params));
     const totalPages = listings?.meta?.totalPages ?? 0;
     if (typeof totalPages === 'number' && totalPages > 0 && safePage < totalPages) {
       const nextParams = new URLSearchParams(canonicalParams.toString());
@@ -509,12 +516,13 @@ export default async function Home({
   const params = (await (searchParams ?? Promise.resolve(undefined))) ?? {};
   const brand = typeof params.brand === 'string' ? params.brand : null;
   const model = typeof params.model === 'string' ? params.model : null;
-  const initialData = await getListings(params);
+  const initialData = await getListings(withListingGridDefaultLimit(params));
 
   return (
     <div>
       <BackgroundDecorations />
       <ConversionEvent />
+      <SearchFiltersLimitToast />
       <DynamicPageTitle />
       <SearchStructuredData brand={brand} model={model} listings={initialData.data} />
       <HomeHero />

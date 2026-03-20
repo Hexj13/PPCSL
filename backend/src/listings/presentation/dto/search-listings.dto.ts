@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
   IsArray,
   IsBoolean,
   IsEnum,
@@ -50,6 +51,7 @@ export class SearchListingsDto {
     return [];
   })
   @IsArray()
+  @ArrayMaxSize(20, { message: 'errors.searchBrandIdsLimit|20' })
   @IsUUID(undefined, { each: true })
   brand_ids?: string[];
 
@@ -77,6 +79,7 @@ export class SearchListingsDto {
     return [];
   })
   @IsArray()
+  @ArrayMaxSize(20, { message: 'errors.searchModelIdsLimit|20' })
   @IsUUID(undefined, { each: true })
   model_ids?: string[];
 

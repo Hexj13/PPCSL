@@ -1,7 +1,17 @@
 'use client';
 
 import Image from 'next/image';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 
 import { useListingImages } from '@/hooks/useListingImages';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -32,7 +42,6 @@ function renderPreviewImage(
     imageAltTitle: string;
     handleImageLoad: (_idx: number) => void;
     onImageError: (_idx: number) => void;
-    isAnimating: boolean;
     blurDataURLForIndex: (_index: number) => string | undefined;
     t: (_key: string, _params?: Record<string, string>) => string;
   },
@@ -43,7 +52,6 @@ function renderPreviewImage(
     imageAltTitle,
     handleImageLoad,
     onImageError,
-    isAnimating,
     blurDataURLForIndex,
     t,
   } = params;
@@ -63,35 +71,7 @@ function renderPreviewImage(
 
   const optimizedUrl = getOptimizedImageUrl(src, 75, 1200);
   const isExternal = optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://');
-  const useNextImage = !isAnimating;
   const blurDataURL = blurDataURLForIndex(index);
-
-  if (!useNextImage) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        key={`preview-native-${index}`}
-        src={optimizedUrl}
-        alt={t('listings.imageAltWithTotal', {
-          title: imageAltTitle,
-          index: String(index + 1),
-          total: String(images.length),
-        })}
-        decoding="async"
-        draggable={false}
-        onLoad={() => handleImageLoad(index)}
-        onError={() => onImageError(index)}
-        className="object-cover opacity-100"
-        style={{
-          position: 'absolute',
-          inset: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-        }}
-      />
-    );
-  }
 
   return (
     <Image
@@ -158,7 +138,7 @@ function renderPreviewSlides(params: {
   if (!animState) {
     return (
       <div className="absolute inset-0 overflow-hidden">
-        {renderPreviewImage(currentImageIndex, { ...slideParams, isAnimating: false })}
+        {renderPreviewImage(currentImageIndex, slideParams)}
       </div>
     );
   }
@@ -169,29 +149,117 @@ function renderPreviewSlides(params: {
   const enterOffset = direction === 'next' ? '100%' : '-100%';
   const leaveTarget = direction === 'next' ? '-100%' : '100%';
 
+  const layerStyle = (transform: string): CSSProperties => ({
+    position: 'absolute',
+    inset: 0,
+    transform,
+    transition: transitionStyle,
+    willChange: isRunning ? 'transform' : 'auto',
+  });
+
   return (
     <div className="absolute inset-0 overflow-hidden">
       <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          transform: isRunning ? `translateX(${leaveTarget})` : 'translateX(0%)',
-          transition: transitionStyle,
-        }}
+        style={layerStyle(
+          isRunning ? `translate3d(${leaveTarget}, 0, 0)` : 'translate3d(0%, 0, 0)',
+        )}
       >
-        {renderPreviewImage(fromIndex, { ...slideParams, isAnimating: true })}
+        {renderPreviewImage(fromIndex, slideParams)}
       </div>
       <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          transform: isRunning ? 'translateX(0%)' : `translateX(${enterOffset})`,
-          transition: transitionStyle,
-        }}
+        style={layerStyle(
+          isRunning ? 'translate3d(0%, 0, 0)' : `translate3d(${enterOffset}, 0, 0)`,
+        )}
       >
-        {renderPreviewImage(toIndex, { ...slideParams, isAnimating: true })}
+        {renderPreviewImage(toIndex, slideParams)}
       </div>
     </div>
+  );
+}
+
+type ListingThumbnailTileProps = {
+  img: string;
+  index: number;
+  totalImages: number;
+  imageAltTitle: string;
+  blurDataURLForIndex: (_index: number) => string | undefined;
+  t: (_key: string, _params?: Record<string, string>) => string;
+  handleImageLoad: (_idx: number) => void;
+  onImageError: (_idx: number) => void;
+  setCurrentImageIndex: Dispatch<SetStateAction<number>>;
+  onImageClick: (_index: number) => void;
+};
+
+function ListingThumbnailTile({
+  img,
+  index,
+  totalImages,
+  imageAltTitle,
+  blurDataURLForIndex,
+  t,
+  handleImageLoad,
+  onImageError,
+  setCurrentImageIndex,
+  onImageClick,
+}: ListingThumbnailTileProps) {
+  const isLastThumbnailMobile = index === 2;
+  const isLastThumbnailDesktop = index === 3;
+  const hasMoreImagesMobile = totalImages > 3;
+  const hasMoreImagesDesktop = totalImages > 4;
+  const remainingCountMobile = totalImages - 3;
+  const remainingCountDesktop = totalImages - 4;
+
+  const optimizedUrl = getOptimizedImageUrl(img, 75, 1200);
+  const isExternal = optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://');
+  const thumbBlur = blurDataURLForIndex(index);
+
+  return (
+    <>
+      <Image
+        src={optimizedUrl}
+        alt={t('listings.imageAltWithTotal', {
+          title: imageAltTitle,
+          index: (index + 1).toString(),
+          total: totalImages.toString(),
+        })}
+        fill
+        sizes="(max-width: 640px) 33vw, 25vw"
+        className="object-cover"
+        loading="lazy"
+        placeholder={thumbBlur ? 'blur' : undefined}
+        blurDataURL={thumbBlur}
+        draggable={false}
+        unoptimized={isExternal}
+        onLoad={() => handleImageLoad(index)}
+        onError={() => onImageError(index)}
+      />
+      {isLastThumbnailMobile && hasMoreImagesMobile && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setCurrentImageIndex(index);
+            onImageClick(index);
+          }}
+          className="absolute inset-0 bg-black/60 flex items-center justify-center sm:hidden cursor-pointer hover-only:hover:bg-black/70 transition-opacity"
+        >
+          <span className="text-white text-lg font-bold">+{remainingCountMobile}</span>
+        </button>
+      )}
+      {isLastThumbnailDesktop && hasMoreImagesDesktop && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setCurrentImageIndex(index);
+            onImageClick(index);
+          }}
+          className="absolute inset-0 bg-black/60 hidden sm:flex items-center justify-center cursor-pointer hover-only:hover:bg-black/70 transition-opacity"
+        >
+          <span className="text-white text-lg sm:text-xl font-bold">+{remainingCountDesktop}</span>
+        </button>
+      )}
+    </>
   );
 }
 
@@ -199,7 +267,7 @@ interface ListingPageImagesProps {
   images: string[];
   imageAltTitle: string;
   currentImageIndex: number;
-  setCurrentImageIndex: React.Dispatch<React.SetStateAction<number>>;
+  setCurrentImageIndex: Dispatch<SetStateAction<number>>;
   imageErrors: Set<number>;
   onImageError: (_index: number) => void;
   onImageClick: (_index: number) => void;
@@ -335,12 +403,10 @@ export function ListingPageImages({
     setAnimState({ fromIndex: from, toIndex: to, direction: dir, phase: 'setup' });
 
     imgRafRef.current = requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        setAnimState((s) => (s ? { ...s, phase: 'running' } : null));
-        imgTimerRef.current = setTimeout(() => {
-          setAnimState(null);
-        }, IMAGE_SLIDE_DURATION_MS + 30);
-      });
+      setAnimState((s) => (s ? { ...s, phase: 'running' } : null));
+      imgTimerRef.current = setTimeout(() => {
+        setAnimState(null);
+      }, IMAGE_SLIDE_DURATION_MS + 30);
     });
   }, [currentImageIndex, images.length]);
 
@@ -353,7 +419,7 @@ export function ListingPageImages({
   );
 
   const minSwipeDistance = 50;
-  const swipeIntentThreshold = 12;
+  const swipeIntentThreshold = 18;
 
   const onTouchStart = useCallback((e: React.TouchEvent) => {
     touchEndX.current = null;
@@ -374,7 +440,7 @@ export function ListingPageImages({
     const deltaX = nextX - touchStartX.current;
     const deltaY = nextY - touchStartY.current;
     const isHorizontalIntent =
-      Math.abs(deltaX) > swipeIntentThreshold && Math.abs(deltaX) > Math.abs(deltaY);
+      Math.abs(deltaX) > swipeIntentThreshold && Math.abs(deltaX) > Math.abs(deltaY) * 1.1;
 
     if (isHorizontalIntent) {
       horizontalSwipeRef.current = true;
@@ -432,7 +498,7 @@ export function ListingPageImages({
             onImageClick(currentImageIndex);
           }
         }}
-        className="relative h-64 sm:h-80 md:h-96 bg-bg-darker rounded-xl overflow-hidden mb-4 w-full cursor-pointer border border-transparent hover-only:hover:border-primary-500/50 transition-colors group touch-pan-y"
+        className="relative h-64 sm:h-80 md:h-96 bg-bg-darker rounded-xl overflow-hidden mb-4 w-full cursor-pointer border border-transparent hover-only:hover:border-primary-500/50 transition-colors group touch-manipulation"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -498,109 +564,56 @@ export function ListingPageImages({
 
       {images.length > 1 && (
         <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-          {images.slice(0, 4).map((img, index) => {
-            const isLastThumbnailMobile = index === 2;
-            const isLastThumbnailDesktop = index === 3;
-            const hasMoreImagesMobile = images.length > 3;
-            const hasMoreImagesDesktop = images.length > 4;
-            const remainingCountMobile = images.length - 3;
-            const remainingCountDesktop = images.length - 4;
-
-            return (
-              <div
-                key={index}
-                onClick={() => setCurrentImageIndex(index)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    setCurrentImageIndex(index);
-                  }
-                }}
-                className={`relative h-28 sm:h-32 bg-bg-darker rounded-lg overflow-hidden transition-all cursor-pointer ${
-                  index === 3 ? 'hidden sm:block' : ''
-                } ${
-                  currentImageIndex === index
-                    ? 'ring-2 ring-primary-500 shadow-md'
-                    : 'hover-only:hover:ring-2 hover-only:hover:ring-primary-300'
-                }`}
-              >
-                {img !== '/placeholder-car.jpg' && !imageErrors.has(index) ? (
-                  (() => {
-                    const optimizedUrl = getOptimizedImageUrl(img, 75, 1200);
-                    const isExternal =
-                      optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://');
-                    const thumbBlur = blurDataURLForIndex(index);
-                    return (
-                      <>
-                        <Image
-                          src={optimizedUrl}
-                          alt={t('listings.imageAltWithTotal', {
-                            title: imageAltTitle,
-                            index: (index + 1).toString(),
-                            total: images.length.toString(),
-                          })}
-                          fill
-                          sizes="(max-width: 640px) 33vw, 25vw"
-                          className="object-cover"
-                          loading="lazy"
-                          placeholder={thumbBlur ? 'blur' : undefined}
-                          blurDataURL={thumbBlur}
-                          draggable={false}
-                          unoptimized={isExternal}
-                          onLoad={() => handleImageLoad(index)}
-                          onError={() => onImageError(index)}
-                        />
-                        {isLastThumbnailMobile && hasMoreImagesMobile && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setCurrentImageIndex(index);
-                              onImageClick(index);
-                            }}
-                            className="absolute inset-0 bg-black/60 flex items-center justify-center sm:hidden cursor-pointer hover-only:hover:bg-black/70 transition-opacity"
-                          >
-                            <span className="text-white text-lg font-bold">
-                              +{remainingCountMobile}
-                            </span>
-                          </button>
-                        )}
-                        {isLastThumbnailDesktop && hasMoreImagesDesktop && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setCurrentImageIndex(index);
-                              onImageClick(index);
-                            }}
-                            className="absolute inset-0 bg-black/60 hidden sm:flex items-center justify-center cursor-pointer hover-only:hover:bg-black/70 transition-opacity"
-                          >
-                            <span className="text-white text-lg sm:text-xl font-bold">
-                              +{remainingCountDesktop}
-                            </span>
-                          </button>
-                        )}
-                      </>
-                    );
-                  })()
-                ) : (
-                  <div
-                    className="w-full h-full flex items-center justify-center"
-                    style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-                  >
-                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"
-                      />
-                    </svg>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          {images.slice(0, 4).map((img, index) => (
+            <div
+              key={index}
+              onClick={() => setCurrentImageIndex(index)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setCurrentImageIndex(index);
+                }
+              }}
+              className={`relative h-28 sm:h-32 bg-bg-darker rounded-lg overflow-hidden transition-all cursor-pointer ${
+                index === 3 ? 'hidden sm:block' : ''
+              } ${
+                currentImageIndex === index
+                  ? 'ring-2 ring-primary-500 shadow-md'
+                  : 'hover-only:hover:ring-2 hover-only:hover:ring-primary-300'
+              }`}
+            >
+              {img !== '/placeholder-car.jpg' && !imageErrors.has(index) ? (
+                <ListingThumbnailTile
+                  img={img}
+                  index={index}
+                  totalImages={images.length}
+                  imageAltTitle={imageAltTitle}
+                  blurDataURLForIndex={blurDataURLForIndex}
+                  t={t}
+                  handleImageLoad={handleImageLoad}
+                  onImageError={onImageError}
+                  setCurrentImageIndex={setCurrentImageIndex}
+                  onImageClick={onImageClick}
+                />
+              ) : (
+                <div
+                  className="w-full h-full flex items-center justify-center"
+                  style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+                >
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"
+                    />
+                  </svg>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       )}
     </div>

@@ -287,6 +287,8 @@ jest.mock('./search-filters/SearchFormActions', () => {
       isSyncingFromUrl?: boolean;
       hasActiveFilters?: boolean;
       canSaveFilter?: boolean;
+      availableListingsTotal?: number | null;
+      isAvailableListingsLoading?: boolean;
     }) => {
       const { user } = (useAuthStore as jest.Mock)();
       const { t } = useTranslation();

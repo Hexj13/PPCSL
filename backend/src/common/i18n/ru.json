@@ -90,7 +90,9 @@
     "plateMaskFailed": "Не удалось обработать маскировку номеров",
     "plateDetectionTimeout": "Время обнаружения номеров истекло",
     "imageBlurHashesLengthMismatch": "Данные blur должны соответствовать количеству фотографий",
-    "imageBlurHashesInvalidEntry": "Некорректный blur hash для одной из фотографий"
+    "imageBlurHashesInvalidEntry": "Некорректный blur hash для одной из фотографий",
+    "searchBrandIdsLimit": "Можно выбрать не более {max} марок.",
+    "searchModelIdsLimit": "Можно выбрать не более {max} моделей."
   },
   "vehicleOptions": {
     "transmission": {

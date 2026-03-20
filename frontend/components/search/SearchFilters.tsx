@@ -5,6 +5,7 @@ import { useState, useEffect, startTransition, useCallback, useRef, useMemo } fr
 
 import { RESET_SEARCH_EVENT } from '@/components/layout/Header/HeaderLogo';
 import { SaveFilterModal } from '@/components/modals/SaveFilterModal';
+import { useAvailableListingsCount } from '@/hooks/useAvailableListingsCount';
 import { useBrandsAndModels } from '@/hooks/useBrandsAndModels';
 import { useCities } from '@/hooks/useCities';
 import { useFilterHandlers } from '@/hooks/useFilterHandlers';
@@ -176,6 +177,22 @@ export function SearchFilters() {
     getCityOptions: filterOptions.getCityOptions,
     t,
   });
+  const { total: availableListingsTotal, isLoading: isAvailableListingsLoading } =
+    useAvailableListingsCount({
+      filters,
+      brands,
+      models,
+      cities,
+      vehicleType,
+      currentYear,
+      isSyncingFromUrl,
+    });
+  const { visible: showAvailableListingsLoader } = useLoadingState({
+    isLoading: isAvailableListingsLoading || availableListingsTotal === null,
+    showDelay: 0,
+    minDisplayTime: 2000,
+    immediate: true,
+  });
 
   useEffect(() => {
     setIsHydrated(true);
@@ -345,6 +362,8 @@ export function SearchFilters() {
         canSaveFilter={canSaveFilter()}
         buttonsContainerRef={tabs.buttonsContainerRef}
         isInternalSearchRef={isInternalSearchRef}
+        availableListingsTotal={availableListingsTotal}
+        isAvailableListingsLoading={showAvailableListingsLoader}
         onSortChange={(sortBy, sortOrder) =>
           handlers.applySearchWithOverrides({ sortBy, sortOrder })
         }

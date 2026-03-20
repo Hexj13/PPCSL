@@ -6,6 +6,7 @@ import { Dropdown } from '@/components/common/Dropdown';
 import { MultiSelectDropdown } from '@/components/common/MultiSelectDropdown';
 import type { FilterState } from '@/hooks/useSearchFilters';
 import { useTranslation } from '@/hooks/useTranslation';
+import { MAX_SEARCH_BRAND_SELECTIONS, MAX_SEARCH_MODEL_SELECTIONS } from '@/lib/constants';
 import {
   getBodyTypeOptions,
   getDriveTypeOptions,
@@ -199,6 +200,14 @@ export function BasicFilters({
               placeholder={t('searchFilters.selectBrands')}
               showActionButtons={true}
               options={brandOptions}
+              maxSelection={MAX_SEARCH_BRAND_SELECTIONS}
+              onSelectionLimitReached={() =>
+                toast.error(
+                  t('searchFilters.selectionLimitBrands', {
+                    max: MAX_SEARCH_BRAND_SELECTIONS.toString(),
+                  }),
+                )
+              }
             />
           </div>
           <div>
@@ -213,6 +222,14 @@ export function BasicFilters({
               placeholder={t('searchFilters.selectModels')}
               showActionButtons={true}
               options={modelOptions}
+              maxSelection={MAX_SEARCH_MODEL_SELECTIONS}
+              onSelectionLimitReached={() =>
+                toast.error(
+                  t('searchFilters.selectionLimitModels', {
+                    max: MAX_SEARCH_MODEL_SELECTIONS.toString(),
+                  }),
+                )
+              }
             />
           </div>
         </div>

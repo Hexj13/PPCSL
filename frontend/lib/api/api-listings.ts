@@ -9,8 +9,12 @@ import type {
 } from './api-types';
 
 export const listingsApi = {
-  getAll: (params?: SearchParams) =>
-    api.get<{ data: Listing[]; meta: PaginationMeta }>('/api/listings', { params }),
+  getAll: (
+    params?: SearchParams,
+    config?: {
+      signal?: AbortSignal;
+    },
+  ) => api.get<{ data: Listing[]; meta: PaginationMeta }>('/api/listings', { params, ...config }),
   getOne: (id: string) => {
     const config: { params?: Record<string, unknown>; headers?: Record<string, string> } = {};
     if (process.env.NODE_ENV === 'development') {

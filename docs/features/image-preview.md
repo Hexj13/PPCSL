@@ -20,7 +20,7 @@ The image preview system provides a simple, fast, and efficient way for users to
 
 - **Listing card (homepage):** `core/frontend/components/listing/ListingCard.tsx` — 2-slot photo carousel with prev/next buttons; preload next/prev in background and all remaining photos on first navigation; delayed preload of second image for mobile; reset-to-first: on desktop on hover leave, on mobile/tablet when card leaves viewport (see below)
 - **Listing page:** Page state and thumbnail logic: `core/frontend/app/listings/[id]/useListingPageClient.ts`, `ListingPageClient.tsx`
-- **Listing page preview block:** `core/frontend/components/ListingPage/ListingPageImages.tsx`, `core/frontend/hooks/useListingImages.ts` — main preview with buttons, swipe, 2-slot slide animation, reset-to-first; **blurhash placeholders** on main preview and visible thumbnails via `next/image` (`placeholder="blur"`, `blurDataURL` from `blurhashToDataURL`), using `listing.image_blur_hashes` per index with fallback `listing.cover_blur_hash` for index `0`; during the short slide animation the frames use native `<img>` (no blur placeholder)
+- **Listing page preview block:** `core/frontend/components/ListingPage/ListingPageImages.tsx`, `core/frontend/hooks/useListingImages.ts` — main preview with buttons, swipe, 2-slot slide animation, reset-to-first; **blurhash placeholders** on main preview and visible thumbnails via `next/image` (`placeholder="blur"`, `blurDataURL` from `blurhashToDataURL`), using `listing.image_blur_hashes` per index with fallback `listing.cover_blur_hash` for index `0`; slide layers also use `next/image` end-to-end (no swap to native `<img>` during the transition, to avoid WebKit flicker on iOS). Sliding wrappers use `translate3d` and `will-change: transform` while the transition is active.
 - **Photo viewer modal:** `core/frontend/components/ListingPage/ListingPageImageModal.tsx`
 
 ---
@@ -274,8 +274,8 @@ const { visible: showMainImageLoader } = useLoadingState({
 The main preview block on the listing page (`ListingPageImages`) supports multiple photos with the same interaction pattern as the homepage card:
 
 - **Prev/Next buttons:** When there are multiple images, two round buttons appear on the left and right, vertically centered (`top-1/2 -translate-y-1/2`). Same opacity rules as the card: on mobile always visible (`opacity-60`), on desktop only when the block is hovered (`lg:opacity-0 lg:group-hover:opacity-60`), and full opacity when hovering the button (`hover-only:hover:opacity-100`).
-- **Swipe:** On touch devices, horizontal swipe (min distance 50px) switches to the previous or next photo; the reset-to-first timer is cancelled.
-- **2-slot slide animation:** When `images.length > 1`, the preview uses the same 2-slot approach as the card: at rest only the current image is in the DOM; when switching (buttons, swipe, or thumbnail click), two slots (from / to) are rendered and animated with `transform: translateX(...)` and `transition` (220ms). Animation timing uses `useLayoutEffect` (before browser paint) plus double `requestAnimationFrame` so the slide runs reliably on mobile (swipe and button taps) as well as desktop.
+- **Swipe:** On touch devices, horizontal swipe (min distance 50px) switches to the previous or next photo; the reset-to-first timer is cancelled. Horizontal intent is detected when horizontal movement exceeds ~18px and dominates vertical movement (`|dx| > |dy| * 1.1`); only then `preventDefault` runs, so vertical page scrolling is less likely to fight the gesture. The preview container uses `touch-manipulation` (not `touch-pan-y`).
+- **2-slot slide animation:** When `images.length > 1`, the preview uses the same 2-slot approach as the card: at rest only the current image is in the DOM; when switching (buttons, swipe, or thumbnail click), two slots (from / to) are rendered and animated with `transform: translate3d(...)` and `transition` (220ms). Animation timing uses `useLayoutEffect` plus one `requestAnimationFrame` before switching to the running phase, then a short timeout after the duration to clear animation state.
 - **Reset to first photo:** When the user leaves the preview block (mouse leave), a 10-second timer starts. After it expires, the preview rewinds to the first photo step-by-step (220ms per step). Re-entering the block or using buttons/swipe/thumbnail cancels the timer and any in-progress rewind.
 
 Constants used in `ListingPageImages.tsx`: `RESET_TO_FIRST_DELAY_MS = 10000`, `REWIND_STEP_MS = 220`, `IMAGE_SLIDE_DURATION_MS = 220`.
@@ -285,6 +285,7 @@ Constants used in `ListingPageImages.tsx`: `RESET_TO_FIRST_DELAY_MS = 10000`, `R
 - **Prev/Next buttons** — Switch to previous/next photo (when multiple images); cancel reset-to-first timer
 - **Swipe** — Previous/next on touch (when multiple images)
 - **Click on thumbnail** — Switches preview
+- **`+N` on last visible thumbnail** — Selects the **same** photo as that thumbnail (the one under the mask) and opens the modal on it; the overlay only indicates that more photos exist beyond the row
 - **ArrowLeft/ArrowRight** — Switches photos (when focus is not in modal)
 
 ---
@@ -444,7 +445,7 @@ The **modal** does not use `useLoadingState`. It uses a simple delay:
 
 ### Error Handling
 
-**Preview:** `useListingImages` exposes `handleImageError(index)`; the parent passes `onImageError` so that failed indices are added to the shared `imageErrors` Set. Placeholder is shown for failed images.
+**Preview:** `useListingImages` exposes `handleImageLoad(index)`; the parent passes `onImageError` from the page so failed indices are added to the shared `imageErrors` Set (from `<Image>` `onError`). Placeholder is shown for failed images.
 
 **Modal:** The modal receives `onImageError: (index: number) => void` and calls it from both the confirmed and pending `<Image>` `onError` handlers (with the correct index). The parent updates `imageErrors`; the modal does not call `onIndexChange` on error (that would retry the same broken index). Failed images show the placeholder and do not block others.
 
@@ -470,7 +471,7 @@ The **modal** does not use `useLoadingState`. It uses a simple delay:
 ### Performance Characteristics
 
 - **Listing card (homepage):** At most 2 images in the DOM per card (primary confirmed + secondary outgoing during transition). First image can use `priority`/lazy; next/prev preloaded in background; on first navigation all remaining photos for that card are preloaded. Second image also preloaded after 1.5s for mobile. Preloaded `Image` objects are kept in `imagesCacheRef` so the browser does not evict decoded data; cache is cleared and handlers detached when the image set changes. If a requested image is not ready yet, the current photo remains on screen and a small spinner is shown instead of a flash. No flicker on transition end (stable primary slot).
-- **Preview (listing page):** At most 2 images in the DOM (current + entering during transition). Cache hit → 0ms switch; cache miss → real network time + up to 1s loader. `useListingImages` preloads indices 1–2 on mount (3–4 with delay), then on first swipe preloads all remaining images. Preloaded images are tracked in `imagesCacheRef` and cleaned up when the listing changes.
+- **Preview (listing page):** At most 2 images in the DOM (current + entering during transition). Cache hit → 0ms switch; cache miss → real network time + up to 1s loader. `useListingImages` preloads adjacent indices (next immediately, previous after 120ms, second-ahead after 220ms, third-ahead after 320ms when the gallery has enough images), then on first navigation preloads all remaining images. Optional `HTMLImageElement.decode()` on preload instances helps populate the URL cache sooner. Preloaded images are tracked in `imagesCacheRef` and cleaned up when the listing changes.
 - **Modal:** Two layers (confirmed + pending), max 2 decoded images. Spinner after 300ms if still loading. Preload next/prev/second-next with same URL as display. Preloaded `Image` objects kept in `imagesCacheRef` and cleared when the image set changes. No duplicate preload or keydown logic in the page hook.
 - **Memory:** Card, preview, and modal each keep a ref to preloaded `Image` instances (`imagesCacheRef`) so decoded data stays in memory; when the image set changes, `onload`/`onerror` are set to `null` and the cache array is reset to avoid leaks. URL/index sets (`mainImageLoadedRef`, `modalImageLoadedRef`, `loadedRef`) track which images are ready.
 

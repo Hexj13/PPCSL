@@ -1,6 +1,7 @@
 'use client';
 
-import { useSearchParams, usePathname } from 'next/navigation';
+import { isAxiosError } from 'axios';
+import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback, useRef, useMemo, startTransition } from 'react';
 import { flushSync } from 'react-dom';
 
@@ -8,8 +9,9 @@ import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import type { Listing, PaginationMeta } from '@/lib/api';
-import { brandsApi, favoritesApi, listingsApi } from '@/lib/api';
-import { createBrandResolver, createModelResolver, parseSearchParams } from '@/lib/search';
+import { favoritesApi, listingsApi } from '@/lib/api';
+import { LISTING_GRID_PAGE_SIZE, SEARCH_FILTERS_LIMIT_ERROR_TOAST_KEY } from '@/lib/constants';
+import { getParsedListingSearchParams } from '@/lib/search';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
 
 import { ListingCard } from './ListingCard';
@@ -55,9 +57,6 @@ const loadGridState = (): {
   return null;
 };
 
-const PARSED_PARAMS_CACHE_MAX = 32;
-const parsedParamsCache = new Map<string, Record<string, string | number | boolean>>();
-
 function getVehicleTypeFromParams(searchParamsString: string): 'car' | 'truck' | 'moto' {
   const params = new URLSearchParams(searchParamsString);
   const vehicleTypeParam = params.get('vehicleType') as 'car' | 'truck' | 'moto' | null;
@@ -66,94 +65,26 @@ function getVehicleTypeFromParams(searchParamsString: string): 'car' | 'truck' |
     : 'car';
 }
 
-function getParsedSearchParamsCacheKey(
-  searchParamsString: string,
-  vehicleType: 'car' | 'truck' | 'moto',
-): string {
-  return `${searchParamsString}|${vehicleType}`;
-}
-
-async function getParsedSearchParams(
-  searchParamsString: string,
-  vehicleType: 'car' | 'truck' | 'moto',
-): Promise<Record<string, string | number | boolean>> {
-  const cacheKey = getParsedSearchParamsCacheKey(searchParamsString, vehicleType);
-  const cached = parsedParamsCache.get(cacheKey);
-  if (cached) return cached;
-
-  const currentSearchParams = new URLSearchParams(searchParamsString);
-  try {
-    let brands;
-    try {
-      brands = await brandsApi.getAll(vehicleType);
-    } catch {
-      brands = await brandsApi.getAll();
-    }
-    const fallbackBrands = brands.data.length === 0 ? await brandsApi.getAll() : brands;
-    const brandResolver = createBrandResolver(fallbackBrands.data);
-
-    const parsed = await parseSearchParams(currentSearchParams, {
-      brandResolver: async (slugs) => brandResolver(slugs),
-      modelResolver: async (brandIds, slugs) => {
-        let modelsByBrand;
-        try {
-          modelsByBrand = await brandsApi.getModelsBatch(brandIds, vehicleType);
-        } catch {
-          modelsByBrand = await brandsApi.getModelsBatch(brandIds);
-        }
-        const fallbackModels =
-          Object.keys(modelsByBrand.data).length === 0
-            ? await brandsApi.getModelsBatch(brandIds)
-            : modelsByBrand;
-        const modelResolver = createModelResolver(fallbackModels.data);
-        return modelResolver(brandIds, slugs);
-      },
-    });
-    const result = parsed as unknown as Record<string, string | number | boolean>;
-    if (parsedParamsCache.size >= PARSED_PARAMS_CACHE_MAX) {
-      const firstKey = parsedParamsCache.keys().next().value;
-      if (firstKey !== undefined) parsedParamsCache.delete(firstKey);
-    }
-    parsedParamsCache.set(cacheKey, result);
-    return result;
-  } catch {
-    return { page: 1, limit: 20 };
-  }
-}
-
 async function fetchListingsPage(
   params: Record<string, string | number | boolean>,
   page: number,
-  limit: number,
 ): Promise<{ data: Listing[]; meta: PaginationMeta }> {
-  const res = await listingsApi.getAll({ ...params, page, limit });
+  const res = await listingsApi.getAll({ ...params, page });
   return { data: res.data.data, meta: res.data.meta };
-}
-
-function mergePageResults(
-  firstRes: { data: Listing[]; meta: PaginationMeta },
-  secondRes: { data: Listing[]; meta: PaginationMeta } | null,
-  page: number,
-): { allNewListings: Listing[]; finalMeta: PaginationMeta; finalPage: number } {
-  const allNewListings = secondRes ? [...firstRes.data, ...secondRes.data] : firstRes.data;
-  const finalMeta = secondRes?.meta ?? firstRes.meta;
-  const finalPage = secondRes ? page + 1 : page;
-  return { allNewListings, finalMeta, finalPage };
 }
 
 export function ListingGrid({ initialData }: ListingGridProps) {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
   const pathname = usePathname();
+  const router = useRouter();
   const [listings, setListings] = useState<Listing[]>(initialData?.data || []);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [meta, setMeta] = useState<PaginationMeta | null>(initialData?.meta || null);
   const [currentPage, setCurrentPage] = useState(initialData?.meta?.page || 1);
   const [error, setError] = useState<string | null>(null);
-  const [autoLoadCount, setAutoLoadCount] = useState(0);
   const [hasLoadedWithFilters, setHasLoadedWithFilters] = useState(false);
-  const observerTarget = useRef<HTMLDivElement>(null);
   const listingsRef = useRef<Listing[]>(initialData?.data || []);
   const restoredFromStorageRef = useRef(false);
   const { user } = useAuthStore();
@@ -188,17 +119,19 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   );
 
   const fetchListings = useCallback(
-    async (
-      page: number,
-      append: boolean = false,
-      limit: number = 20,
-      loadTwoPages: boolean = false,
-    ) => {
+    async (page: number, append: boolean = false) => {
       const vehicleType = getVehicleTypeFromParams(searchParamsString);
-      const parsedParams = await getParsedSearchParams(searchParamsString, vehicleType);
+      const parsedParams = await getParsedListingSearchParams(searchParamsString, vehicleType);
+      const limitFromParams = Number(parsedParams.limit);
+      const hasValidLimitInSearch =
+        Number.isFinite(limitFromParams) &&
+        Number.isInteger(limitFromParams) &&
+        limitFromParams > 0;
+      const effectiveLimit = hasValidLimitInSearch ? limitFromParams : LISTING_GRID_PAGE_SIZE;
       const params: Record<string, string | number | boolean> = {
         ...parsedParams,
         vehicleType,
+        limit: effectiveLimit,
       };
 
       let loadMoreStartedAt = 0;
@@ -212,17 +145,9 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       }
 
       try {
-        const firstRes = await fetchListingsPage(params, page, limit);
-        const shouldFetchSecond = loadTwoPages && meta?.totalPages && page + 1 <= meta.totalPages;
-        const secondRes = shouldFetchSecond
-          ? await fetchListingsPage(params, page + 1, limit)
-          : null;
-
-        const { allNewListings, finalMeta, finalPage } = mergePageResults(
-          firstRes,
-          secondRes,
-          page,
-        );
+        const firstRes = await fetchListingsPage(params, page);
+        const allNewListings = firstRes.data;
+        const finalMeta = firstRes.meta;
 
         await checkFavorites(allNewListings.map((l) => l.id));
 
@@ -231,7 +156,6 @@ export function ListingGrid({ initialData }: ListingGridProps) {
             setListings(allNewListings);
             listingsRef.current = allNewListings;
             setCurrentPage(1);
-            setAutoLoadCount(0);
             setLoadingMore(false);
             setMeta(finalMeta);
             setError(null);
@@ -258,16 +182,36 @@ export function ListingGrid({ initialData }: ListingGridProps) {
               setListings((prev) => {
                 const updated = [...prev, ...allNewListings];
                 listingsRef.current = updated;
-                setCurrentPage(finalPage);
+                setCurrentPage(page);
                 setMeta(finalMeta);
-                if (loadTwoPages) saveGridState(updated, finalPage, finalMeta);
+                saveGridState(updated, page, finalMeta);
                 return updated;
               });
               setLoadingMore(false);
             });
           }, remaining);
         }
-      } catch {
+      } catch (error) {
+        if (isAxiosError(error) && error.response?.status === 400) {
+          const errorKey = (error.response.data as { errorKey?: string } | undefined)?.errorKey;
+          if (
+            errorKey === 'errors.searchBrandIdsLimit' ||
+            errorKey === 'errors.searchModelIdsLimit'
+          ) {
+            if (typeof window !== 'undefined') {
+              sessionStorage.setItem(
+                SEARCH_FILTERS_LIMIT_ERROR_TOAST_KEY,
+                'searchFilters.invalidUrlSelectionLimits',
+              );
+            }
+            console.error('Search filters API rejected limit-overflow query', {
+              errorKey,
+              searchParams: searchParamsString,
+            });
+            router.replace('/');
+            return;
+          }
+        }
         if (!append) {
           setListings([]);
           setError(t('listings.loadError'));
@@ -285,7 +229,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
         }
       }
     },
-    [searchParamsString, t, checkFavorites, meta],
+    [searchParamsString, t, checkFavorites, router],
   );
 
   useEffect(() => {
@@ -308,7 +252,6 @@ export function ListingGrid({ initialData }: ListingGridProps) {
     if (searchParamsString !== prevSearchParamsString.current) {
       prevSearchParamsString.current = searchParamsString;
       setCurrentPage(1);
-      setAutoLoadCount(0);
       setHasLoadedWithFilters(false);
       setLoading(true);
       setError(null);
@@ -345,53 +288,11 @@ export function ListingGrid({ initialData }: ListingGridProps) {
     }
   }, [initialData, user, setFavorites]);
 
-  useEffect(() => {
-    if (autoLoadCount >= 3 || loading || !meta || !observerTarget.current) {
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (
-          entries[0].isIntersecting &&
-          !loadingMore &&
-          !loading &&
-          meta &&
-          meta.totalPages &&
-          currentPage < meta.totalPages &&
-          autoLoadCount < 3
-        ) {
-          const nextPage = currentPage + 1;
-          setCurrentPage(nextPage);
-          setAutoLoadCount((prev) => prev + 1);
-          void fetchListings(nextPage, true);
-        }
-      },
-      { threshold: 0.1 },
-    );
-
-    const currentTarget = observerTarget.current;
-    if (currentTarget) {
-      const timeoutId = setTimeout(() => {
-        if (currentTarget) {
-          observer.observe(currentTarget);
-        }
-      }, 100);
-
-      return () => {
-        clearTimeout(timeoutId);
-        if (currentTarget) {
-          observer.unobserve(currentTarget);
-        }
-      };
-    }
-  }, [loadingMore, loading, meta, currentPage, fetchListings, autoLoadCount]);
-
   const handleLoadMore = useCallback(async () => {
     if (loadingMore || !meta || !meta.totalPages || currentPage >= meta.totalPages) {
       return;
     }
-    await fetchListings(currentPage + 1, true, 20, true);
+    await fetchListings(currentPage + 1, true);
   }, [loadingMore, meta, currentPage, fetchListings]);
 
   const { visible: showSkeleton } = useLoadingState({
@@ -482,16 +383,17 @@ export function ListingGrid({ initialData }: ListingGridProps) {
 
               {(() => {
                 const hasMore = meta && meta.totalPages && currentPage < meta.totalPages;
-                const showLoadMoreButton = autoLoadCount >= 3 && hasMore;
 
                 return (
                   <>
-                    {(showLoadMoreButton || loadingMore) && (
+                    {(hasMore || loadingMore) && (
                       <LoadMoreButton
                         onClick={handleLoadMore}
                         loading={loadingMore}
                         disabled={loadingMore}
-                      />
+                      >
+                        {t('listings.showMore')}
+                      </LoadMoreButton>
                     )}
 
                     {!hasMore && uniqueListings.length > 0 && !loadingMore && (
@@ -501,8 +403,6 @@ export function ListingGrid({ initialData }: ListingGridProps) {
                         </p>
                       </div>
                     )}
-
-                    {autoLoadCount < 3 && <div ref={observerTarget} style={{ height: '1px' }} />}
                   </>
                 );
               })()}

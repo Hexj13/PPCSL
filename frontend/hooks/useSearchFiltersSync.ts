@@ -1,7 +1,13 @@
+import { useRouter } from 'next/navigation';
 import type { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 import type { Brand, VehicleModel } from '@/lib/api';
+import {
+  MAX_SEARCH_BRAND_SELECTIONS,
+  MAX_SEARCH_MODEL_SELECTIONS,
+  SEARCH_FILTERS_LIMIT_ERROR_TOAST_KEY,
+} from '@/lib/constants';
 import { createSlug } from '@/lib/utils';
 
 import type { FilterState } from './useSearchFilters';
@@ -27,6 +33,7 @@ export function useSearchFiltersSync({
   hasActiveFilters,
   isInternalSearchRef: isInternalSearchRefParam,
 }: UseSearchFiltersSyncParams) {
+  const router = useRouter();
   const [isSyncingFromUrl, setIsSyncingFromUrl] = useState(false);
 
   const prevUrlForSyncRef = useRef<string>('');
@@ -44,6 +51,33 @@ export function useSearchFiltersSync({
     const currentUrl = searchParams.toString();
     const brandParam = searchParams.get('brand');
     const modelParam = searchParams.get('model');
+    const brandCount = brandParam
+      ? brandParam
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean).length
+      : 0;
+    const modelCount = modelParam
+      ? modelParam
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean).length
+      : 0;
+    if (brandCount > MAX_SEARCH_BRAND_SELECTIONS || modelCount > MAX_SEARCH_MODEL_SELECTIONS) {
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(
+          SEARCH_FILTERS_LIMIT_ERROR_TOAST_KEY,
+          'searchFilters.invalidUrlSelectionLimits',
+        );
+      }
+      console.warn('Search filters URL exceeds allowed limits', {
+        brandCount,
+        modelCount,
+        currentUrl,
+      });
+      router.replace('/');
+      return;
+    }
     const urlChanged = currentUrl !== prevUrlForSyncRef.current;
 
     if (urlChanged) {
@@ -116,6 +150,7 @@ export function useSearchFiltersSync({
     isSyncingFromUrl,
     setLastAppliedFilters,
     isInternalSearchRef,
+    router,
   ]);
 
   useEffect(() => {

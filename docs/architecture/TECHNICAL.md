@@ -299,12 +299,12 @@ PPCSL/
 
 - Homepage (`app/page.tsx`) is an async Server Component that fetches initial listings data
 - Server-side data fetching uses native `fetch` with Next.js Data Cache and Request Memoization
-- Initial data passed as props to client components for infinite scroll functionality
+- Initial data passed as props to client components for client-side pagination and load-more interactions
 - Improves SEO, reduces client-side JavaScript, and improves initial page load performance
 
 **Client Components:**
 
-- Interactive components (forms, modals, infinite scroll) remain as Client Components
+- Interactive components (forms, modals, pagination controls) remain as Client Components
 - State management handled by Zustand stores
 - API calls for subsequent data loads use Axios client (`lib/api`; barrel `api.ts` re-exports from `api-listings.ts`, `api-auth.ts`, etc.)
 

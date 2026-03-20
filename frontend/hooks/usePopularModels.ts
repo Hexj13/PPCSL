@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { Brand, VehicleModel } from '@/lib/api';
+import { MAX_SEARCH_BRAND_SELECTIONS, MAX_SEARCH_MODEL_SELECTIONS } from '@/lib/constants';
 
 import type { FilterState } from './useSearchFilters';
 
@@ -14,6 +15,8 @@ interface UsePopularModelsParams {
   filters: FilterState;
   setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
   vehicleType: 'car' | 'truck' | 'moto';
+  onBrandLimitReached?: () => void;
+  onModelLimitReached?: () => void;
 }
 
 interface UsePopularModelsReturn {
@@ -30,8 +33,14 @@ export function usePopularModels({
   models,
   filters,
   setFilters,
+  onBrandLimitReached,
+  onModelLimitReached,
 }: UsePopularModelsParams): UsePopularModelsReturn {
   const [pendingModels, setPendingModels] = useState<PendingItem[]>([]);
+  const selectedModelCount = useMemo(() => {
+    const pendingUnique = new Set(pendingModels.map((item) => `${item.brand}\0${item.model}`));
+    return filters.model_ids.length + pendingUnique.size;
+  }, [filters.model_ids.length, pendingModels]);
 
   const brandByName = useMemo(() => {
     const map = new Map<string, Brand>();
@@ -57,6 +66,11 @@ export function usePopularModels({
       const resolvedModel = modelByBrandAndName.get(key);
 
       if (resolvedModel) {
+        const hasAlreadySelected = filters.model_ids.includes(resolvedModel.id);
+        if (!hasAlreadySelected && selectedModelCount >= MAX_SEARCH_MODEL_SELECTIONS) {
+          onModelLimitReached?.();
+          return;
+        }
         setFilters((prev) => {
           const has = prev.model_ids.includes(resolvedModel.id);
           const newModelIds = has
@@ -99,6 +113,10 @@ export function usePopularModels({
         return;
       }
 
+      if (selectedModelCount >= MAX_SEARCH_MODEL_SELECTIONS) {
+        onModelLimitReached?.();
+        return;
+      }
       setPendingModels((prev) => [...prev, { brand: brandName, model: modelName }]);
       setFilters((prev) => ({
         ...prev,
@@ -107,7 +125,16 @@ export function usePopularModels({
           : [...prev.brand_ids, brand.id],
       }));
     },
-    [brandByName, modelByBrandAndName, models, pendingModels, setFilters],
+    [
+      brandByName,
+      modelByBrandAndName,
+      models,
+      pendingModels,
+      setFilters,
+      selectedModelCount,
+      filters.model_ids,
+      onModelLimitReached,
+    ],
   );
 
   useEffect(() => {
@@ -126,6 +153,10 @@ export function usePopularModels({
       for (const p of resolved) {
         const m = modelByBrandAndName.get(`${p.brand}\0${p.model}`);
         if (m && !next.model_ids.includes(m.id)) {
+          if (next.model_ids.length >= MAX_SEARCH_MODEL_SELECTIONS) {
+            onModelLimitReached?.();
+            continue;
+          }
           next = {
             ...next,
             model_ids: [...next.model_ids, m.id],
@@ -137,7 +168,7 @@ export function usePopularModels({
       }
       return next;
     });
-  }, [models, modelByBrandAndName, pendingModels, setFilters]);
+  }, [models, modelByBrandAndName, pendingModels, setFilters, onModelLimitReached]);
 
   useEffect(() => {
     if (filters.brand_ids.length === 0 && filters.model_ids.length === 0) {
@@ -172,6 +203,10 @@ export function usePopularModels({
           return { ...prev, brand_ids: newBrandIds };
         });
       } else {
+        if (filters.brand_ids.length >= MAX_SEARCH_BRAND_SELECTIONS) {
+          onBrandLimitReached?.();
+          return;
+        }
         setFilters((prev) => {
           const modelIdsForBrand = prev.model_ids.filter(
             (mid) => models.find((m) => m.id === mid)?.brand_id === brand.id,
@@ -183,7 +218,15 @@ export function usePopularModels({
         setPendingModels((prev) => prev.filter((p) => p.brand !== brandName));
       }
     },
-    [brandByName, filters.brand_ids, filters.model_ids, models, pendingModels, setFilters],
+    [
+      brandByName,
+      filters.brand_ids,
+      filters.model_ids,
+      models,
+      pendingModels,
+      setFilters,
+      onBrandLimitReached,
+    ],
   );
 
   const isBrandExplicitlySelected = useCallback(

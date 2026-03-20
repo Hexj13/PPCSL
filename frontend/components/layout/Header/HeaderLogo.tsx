@@ -23,6 +23,7 @@ export function HeaderLogo({ brandAlt }: HeaderLogoProps) {
 
   const handleClick = (e: React.MouseEvent) => {
     if (pathname !== '/') return;
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
     const hasParams = searchParams.toString().length > 0;
     if (!hasParams) {
       e.preventDefault();
