@@ -18,7 +18,7 @@ export class AddVehicleModelsVehicleTypesGinIndex1792000000000 implements Migrat
       CREATE INDEX IF NOT EXISTS "IDX_vehicle_models_vehicle_types_gin"
       ON "vehicle_models"
       USING gin (
-        (string_to_array(COALESCE(NULLIF(trim(both from "vehicle_types"), ''), ''), ','))::text[]
+        string_to_array(COALESCE(NULLIF(trim(both from "vehicle_types"), ''), ''), ',')
       )
       WHERE "is_archived" = false
     `);
