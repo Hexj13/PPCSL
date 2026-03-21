@@ -233,7 +233,12 @@ function isRefreshRequest(url: string | undefined): boolean {
   return !!url?.includes('/api/auth/refresh');
 }
 
+function isAxiosRequestCanceled(error: AxiosError): boolean {
+  return error.code === 'ERR_CANCELED' || error.name === 'CanceledError';
+}
+
 function isTransientAxiosFailure(error: AxiosError): boolean {
+  if (isAxiosRequestCanceled(error)) return false;
   const status = error.response?.status;
   if (status === 502 || status === 503 || status === 504) return true;
   if (error.response) return false;
@@ -275,6 +280,7 @@ function isDuplicateNameError(error: AxiosError): boolean {
 async function showErrorToastAndSentry(error: AxiosError): Promise<void> {
   if (error.config?.headers['X-Skip-Error-Handling']) return;
   if (isDuplicateNameError(error)) return;
+  if (isAxiosRequestCanceled(error)) return;
   await showToastForError(error);
   if (typeof window === 'undefined') return;
   if (!error.response) {
@@ -336,6 +342,10 @@ api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as ExtendedAxiosRequestConfig | undefined;
+
+    if (isAxiosRequestCanceled(error)) {
+      return Promise.reject(error);
+    }
 
     const retry429 = await handle429Retry(error, originalRequest);
     if (retry429 !== undefined) return retry429;

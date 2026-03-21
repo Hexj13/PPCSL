@@ -33,6 +33,11 @@ Use this checklist when users see periodic “connection / server unavailable”
 | Sentry / backend `503` or pool timeout | No | Yes |
 | Matches fixed 30s cadence only | Consider `revalidate: 30` | Also check cron / health checks |
 
-## 6. Related runbook
+## 6. Axios `ERR_CANCELED` (aborted requests)
+
+- **Not a server failure:** Axios uses `ERR_CANCELED` / `CanceledError` when a request is **aborted** (navigation, strict effect cleanup, superseded in-flight call). That must **not** be reported as “API failed before response” or shown as a connection toast.
+- **Sentry:** Only genuine no-response failures (e.g. `ERR_NETWORK`, timeout) are captured from the shared client; canceled requests are ignored in [`api-client`](../../frontend/lib/api/api-client.ts).
+
+## 7. Related runbook
 
 - Pool saturation, connection limits, and Top Queries: [postgres-query-baseline.md](./postgres-query-baseline.md).
