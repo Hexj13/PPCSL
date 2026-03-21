@@ -59,20 +59,26 @@ export class HttpExceptionFilter implements ExceptionFilter {
         code = responseObj.code;
       }
     } else if (exception instanceof Error) {
-      if (this.isDatabaseConnectionTimeout(exception)) {
+      const isDbConnectivity = this.isDatabaseConnectivityFailure(exception);
+      if (isDbConnectivity) {
         status = HttpStatus.SERVICE_UNAVAILABLE;
         errorKey = 'errors.serviceUnavailable';
         message = this.i18nService.translate('errors.serviceUnavailable', locale);
       }
 
-      this.logger.error(`Unhandled exception: ${exception.message}`, exception.stack);
+      const logLabel = isDbConnectivity ? '[db_connectivity]' : 'Unhandled exception';
+      this.logger.error(
+        `${logLabel}: ${exception.message} | ${request.method} ${request.url}`,
+        exception.stack,
+      );
 
       Sentry.captureException(exception, {
         tags: {
           httpStatus: status,
           httpMethod: request.method,
           httpPath: request.url,
-          errorType: 'unhandled',
+          errorType: isDbConnectivity ? 'database_connectivity' : 'unhandled',
+          errorCategory: isDbConnectivity ? 'database_connectivity' : 'application',
         },
         extra: {
           requestBody: request.body,
@@ -149,13 +155,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
     return message;
   }
 
-  private isDatabaseConnectionTimeout(exception: Error): boolean {
+  private isDatabaseConnectivityFailure(exception: Error): boolean {
     const message = exception.message.toLowerCase();
 
     return (
       message.includes('connection terminated due to connection timeout') ||
       message.includes('timeout exceeded when trying to connect') ||
-      message.includes('connect etimedout')
+      message.includes('connect etimedout') ||
+      message.includes('econnrefused') ||
+      message.includes('connect econnrefused')
     );
   }
 }

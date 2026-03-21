@@ -3,6 +3,7 @@ import axios from 'axios';
 
 interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
+  _transientRetry?: boolean;
 }
 
 import { getDefaultLocale, loadTranslations, type Translations } from '../i18n';
@@ -232,6 +233,32 @@ function isRefreshRequest(url: string | undefined): boolean {
   return !!url?.includes('/api/auth/refresh');
 }
 
+function isTransientAxiosFailure(error: AxiosError): boolean {
+  const status = error.response?.status;
+  if (status === 502 || status === 503 || status === 504) return true;
+  if (error.response) return false;
+  if (error.code === 'ECONNABORTED') return true;
+  if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') return true;
+  return false;
+}
+
+async function handleTransientGetRetry(
+  error: AxiosError,
+  originalRequest: ExtendedAxiosRequestConfig | undefined,
+): Promise<unknown> {
+  if (!originalRequest || originalRequest._transientRetry) return undefined;
+  if (originalRequest.headers?.['X-Skip-Error-Handling']) return undefined;
+  const method = (originalRequest.method || 'get').toLowerCase();
+  if (method !== 'get') return undefined;
+  if (isLoginOrRegisterRequest(originalRequest.url) || isRefreshRequest(originalRequest.url)) {
+    return undefined;
+  }
+  if (!isTransientAxiosFailure(error)) return undefined;
+  originalRequest._transientRetry = true;
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  return api.request(originalRequest);
+}
+
 async function showToastForError(error: AxiosError): Promise<void> {
   if (typeof window === 'undefined') return;
   const errorMessage = getErrorMessage(error);
@@ -250,7 +277,24 @@ async function showErrorToastAndSentry(error: AxiosError): Promise<void> {
   if (isDuplicateNameError(error)) return;
   await showToastForError(error);
   if (typeof window === 'undefined') return;
-  if (error.response?.status && error.response.status >= 500) {
+  if (!error.response) {
+    const Sentry = await import('@sentry/nextjs');
+    Sentry.captureMessage('API request failed before HTTP response', {
+      level: 'warning',
+      tags: {
+        apiError: true,
+        noHttpResponse: true,
+        axiosCode: error.code ?? 'unknown',
+      },
+      extra: {
+        url: error.config?.url,
+        method: error.config?.method,
+        message: error.message,
+      },
+    });
+    return;
+  }
+  if (error.response.status >= 500) {
     const Sentry = await import('@sentry/nextjs');
     Sentry.captureException(error, {
       tags: { apiError: true, statusCode: error.response.status },
@@ -295,6 +339,9 @@ api.interceptors.response.use(
 
     const retry429 = await handle429Retry(error, originalRequest);
     if (retry429 !== undefined) return retry429;
+
+    const transientRetry = await handleTransientGetRetry(error, originalRequest);
+    if (transientRetry !== undefined) return transientRetry;
 
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       if (isLoginOrRegisterRequest(originalRequest.url) || isRefreshRequest(originalRequest.url)) {

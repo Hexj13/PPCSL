@@ -9,6 +9,14 @@ Runbook after upgrading Render Postgres or when investigating slow queries, 503s
 3. **Pool env** — Backend pool is configured in [`data-source.ts`](../../backend/src/data-source.ts) via `DB_POOL_MAX`, `DB_POOL_MIN`, `DB_POOL_IDLE_TIMEOUT`, `DB_POOL_CONNECTION_TIMEOUT`. After a DB upgrade, a small `DB_POOL_MIN` (e.g. 2–5) on a single web instance can reduce cold connection bursts if the DB limit allows it.
 4. **Dashboards** — Watch Postgres metrics: active connections, CPU, RAM, disk, Top Queries. Watch Redis: errors, memory, evictions (cache misses increase load on Postgres).
 
+### Phase A2: pool saturation checklist (prod)
+
+1. **Capacity formula** — `backend_replicas × DB_POOL_MAX` + importers + scripts + BI tools + local sessions ≤ Postgres `max_connections` (with headroom for superuser/maintenance).
+2. **Active sessions** — In Postgres (read-only): `SELECT state, count(*) FROM pg_stat_activity GROUP BY 1;` and inspect `wait_event_type` / `wait_event` for `Client` / `IO` spikes during incidents.
+3. **Top Queries** — Sort by total time and call count; map to [Phase B](#phase-b-correlate-top-queries-with-code). Pay attention to listing search (`getCount` + `getMany`) and `GET /api/listings/:id` if Sentry shows `pg-pool:connect` or connection timeouts.
+4. **Backend logs** — Search for `[db_connectivity]` (see [`HttpExceptionFilter`](../../backend/src/common/filters/http-exception.filter.ts)) and correlate timestamp with Postgres metrics and Redis.
+5. **Caching vs load** — If Redis miss rate rises before DB saturation, treat Redis latency/evictions as a force multiplier; see [intermittent-toast-cache-checklist.md](./intermittent-toast-cache-checklist.md).
+
 ## Phase B: correlate Top Queries with code
 
 Map slow statements to handlers:

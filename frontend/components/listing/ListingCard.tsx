@@ -36,6 +36,7 @@ interface ListingCardProps {
   forceFavorite?: boolean;
   onRemove?: () => void;
   priority?: boolean;
+  linkPrefetch?: boolean;
 }
 
 function useListingCardFavorite(
@@ -407,6 +408,7 @@ function ListingCardComponent({
   forceFavorite = false,
   onRemove,
   priority = false,
+  linkPrefetch = false,
 }: ListingCardProps) {
   const { t } = useTranslation();
   const { locale } = useI18n();
@@ -535,7 +537,7 @@ function ListingCardComponent({
     >
       <Link
         href={cardUrl}
-        prefetch={true}
+        prefetch={linkPrefetch}
         onClick={handleClick}
         aria-label={displayTitle}
         className="absolute inset-0 z-0"

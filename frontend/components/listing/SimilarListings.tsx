@@ -63,7 +63,7 @@ function SimilarListingCard({
 
   return (
     <div ref={cardRef} className="[&_.card]:bg-bg-darker h-full">
-      <ListingCard listing={listing} />
+      <ListingCard listing={listing} linkPrefetch={true} />
     </div>
   );
 }
