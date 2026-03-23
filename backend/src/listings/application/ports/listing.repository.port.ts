@@ -2,6 +2,11 @@ import type { Listing } from '../../entities/listing.entity';
 
 export const LISTING_REPOSITORY = Symbol('LISTING_REPOSITORY');
 
+export interface SimilarCandidatesCurrencyContext {
+  defaultCurrency: string;
+  rates: Record<string, number>;
+}
+
 export interface SearchCriteria {
   page?: number;
   limit?: number;
@@ -56,5 +61,8 @@ export interface IListingRepository {
   countActiveByUser(userId: string): Promise<number>;
   countPromotedByUser(userId: string): Promise<number>;
   findByVin(vin: string): Promise<Listing | null>;
-  findSimilarCandidates(listing: Listing): Promise<Listing[]>;
+  findSimilarCandidates(
+    listing: Listing,
+    currencyContext: SimilarCandidatesCurrencyContext,
+  ): Promise<Listing[]>;
 }

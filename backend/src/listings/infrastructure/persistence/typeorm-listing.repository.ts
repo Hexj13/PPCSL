@@ -13,8 +13,13 @@ import {
 import {
   IListingRepository,
   SearchCriteria,
+  SimilarCandidatesCurrencyContext,
 } from '../../application/ports/listing.repository.port';
-import { buildPriceInDefaultCurrencyOrderExpression } from '../../application/utils/price-sort.utils';
+import {
+  approximatePriceInDefaultCurrency,
+  buildListingRoundedPriceInDefaultCurrencySql,
+  buildPriceInDefaultCurrencyOrderExpression,
+} from '../../application/utils/price-sort.utils';
 import { getVehicleTypeFromBodyType } from '../../domain/utils/vehicle-type.utils';
 import { Listing } from '../../entities/listing.entity';
 import { applyCitiesFilter } from '../utils/query-filters.utils';
@@ -110,10 +115,39 @@ export class TypeOrmListingRepository implements IListingRepository {
     return this.repository.findOne({ where: { vin } });
   }
 
-  async findSimilarCandidates(listing: Listing): Promise<Listing[]> {
+  async findSimilarCandidates(
+    listing: Listing,
+    currencyContext: SimilarCandidatesCurrencyContext,
+  ): Promise<Listing[]> {
     const { vehicle } = listing;
     const { id: currentId } = listing;
     const body_type = vehicle?.body_type;
+    const currentBrandId = vehicle?.brand_id ?? null;
+    const currentModelId = vehicle?.model_id ?? null;
+    const currentYear = vehicle?.year ?? null;
+    const { defaultCurrency, rates } = currencyContext;
+    const listingNorm = buildListingRoundedPriceInDefaultCurrencySql(defaultCurrency, rates);
+    const currentPriceNormalized =
+      listing.price != null && Number.isFinite(Number(listing.price))
+        ? approximatePriceInDefaultCurrency(
+            Number(listing.price),
+            listing.currency,
+            defaultCurrency,
+            rates,
+          )
+        : null;
+    const currentYearInt =
+      currentYear != null && Number.isFinite(Number(currentYear))
+        ? Math.round(Number(currentYear))
+        : null;
+    const yearDistanceSql =
+      currentYearInt != null && currentYearInt >= 1900 && currentYearInt <= 2100
+        ? `CASE WHEN vehicle.year IS NULL THEN 9999 ELSE ABS(vehicle.year - ${currentYearInt}) END`
+        : '9999';
+    const priceDistanceSql =
+      currentPriceNormalized != null
+        ? `CASE WHEN listing.price IS NULL THEN 999999999 ELSE ABS(${listingNorm.expression} - ${currentPriceNormalized}) END`
+        : '999999999';
     let vehicle_type = vehicle?.model?.vehicle_types?.[0];
 
     if (!vehicle_type && body_type) {
@@ -136,7 +170,30 @@ export class TypeOrmListingRepository implements IListingRepository {
       });
     }
 
-    queryBuilder.limit(100);
+    queryBuilder
+      .addSelect(
+        'CASE WHEN vehicle.brand_id = CAST(:currentBrandId AS uuid) AND vehicle.model_id = CAST(:currentModelId AS uuid) THEN 0 ELSE 1 END',
+        'same_model_priority',
+      )
+      .addSelect(
+        'CASE WHEN CAST(:currentBrandId AS uuid) IS NULL OR CAST(:currentBodyType AS text) IS NULL THEN 1 WHEN vehicle.brand_id = CAST(:currentBrandId AS uuid) AND vehicle.body_type::text = CAST(:currentBodyType AS text) THEN 0 ELSE 1 END',
+        'same_brand_body_priority',
+      )
+      .addSelect(yearDistanceSql, 'year_distance')
+      .addSelect(priceDistanceSql, 'price_distance')
+      .setParameters({
+        ...listingNorm.params,
+        currentBrandId,
+        currentModelId,
+        currentBodyType: body_type ?? null,
+      })
+      .orderBy('same_model_priority', 'ASC')
+      .addOrderBy('same_brand_body_priority', 'ASC')
+      .addOrderBy('year_distance', 'ASC')
+      .addOrderBy('price_distance', 'ASC')
+      .addOrderBy('listing.last_updated_at', 'DESC')
+      .limit(200);
+
     return queryBuilder.getMany();
   }
 

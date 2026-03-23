@@ -22,6 +22,7 @@ export type ListingPageImagesLayoutProps = {
   handleNext: (e: React.MouseEvent) => void;
   t: (_key: string, _params?: Record<string, string>) => string;
   showMainImageLoader: boolean;
+  isPreloading: boolean;
   animState: {
     fromIndex: number;
     toIndex: number;
@@ -54,6 +55,7 @@ export function ListingPageImagesLayout({
   handleNext,
   t,
   showMainImageLoader,
+  isPreloading,
   animState,
   imageAltTitle,
   handlePreviewImageLoad,
@@ -128,6 +130,11 @@ export function ListingPageImagesLayout({
               </span>
             </button>
           </>
+        )}
+        {isPreloading && (
+          <div className="absolute inset-0 z-[2] flex items-center justify-center bg-black/10 pointer-events-none">
+            <Spinner size="sm" inline />
+          </div>
         )}
         {showMainImageLoader && (
           <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">

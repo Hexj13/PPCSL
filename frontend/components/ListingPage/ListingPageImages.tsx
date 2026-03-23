@@ -89,7 +89,8 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
     useEffect(() => {
       setHeroPreviewBlurConsumed(false);
       setState({ type: 'idle', index: currentImageIndex });
-    }, [currentImageIndex, imagesSignature]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- reset carousel only when image set changes; index is parent value at that commit
+    }, [imagesSignature]);
 
     useEffect(() => {
       if (state.type !== 'idle' || state.index === currentImageIndex) {
@@ -426,7 +427,8 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
         handlePrev={handlePrev}
         handleNext={handleNext}
         t={t}
-        showMainImageLoader={showMainImageLoader}
+        showMainImageLoader={showMainImageLoader && state.type === 'idle'}
+        isPreloading={state.type === 'preloading'}
         animState={state.type === 'animating' ? state : null}
         imageAltTitle={imageAltTitle}
         handlePreviewImageLoad={handlePreviewImageLoad}

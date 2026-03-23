@@ -16,7 +16,7 @@ The Similar Listings block is displayed at the bottom of the listing detail page
 
 **Location**: Bottom of listing detail page, below all other sections.
 
-**Design Principle**: Non-blocking, lazy-loaded feature that doesn't interfere with the main page load or image gallery performance.
+**Design Principle**: Non-blocking feature that doesn't interfere with the main page load or image gallery performance.
 
 ## Features
 
@@ -37,7 +37,7 @@ The Similar Listings block is displayed at the bottom of the listing detail page
 - Request starts after 100ms delay (non-blocking priority)
 - Shows 4 skeleton loaders while fetching
 - No lazy loading — all data loaded upfront for simplicity and reliability
-- **Candidate Pool**: Up to 100 listings fetched from database (increased from 50)
+- **Candidate Pool**: Up to 200 listings fetched from database using deterministic SQL ordering
 
 ### Navigation
 
@@ -72,9 +72,9 @@ GET /api/listings/:id/similar?limit=4&offset=4
 
 ### Ranking System
 
-**6-Tier Bucket System** (priority 1 = most relevant):
+**7-Tier Bucket System** (priority 1 = most relevant):
 
-**Important**: All buckets work only with **Active listings**. The `status = Active` filter is applied globally at the SQL query level before bucket assignment, ensuring that all 6 buckets process only active listings.
+**Important**: All buckets work only with **Active listings**. The `status = Active` filter is applied globally at the SQL query level before bucket assignment, ensuring that all 7 buckets process only active listings.
 
 1. **Same brand + model, year ±3-5**
    - `brand_id` matches
@@ -82,31 +82,38 @@ GET /api/listings/:id/similar?limit=4&offset=4
    - `year` within ±3-5 years (adaptive: older cars < 2010 ±3, newer ±5)
    - ✅ Only Active listings
 
-2. **Same brand + body type, year ±3-5, price ±30-60%**
+2. **Same brand + model, year outside ±3-5**
+   - `brand_id` matches
+   - `model_id` matches
+   - `year` outside adaptive window
+   - ✅ Only Active listings
+
+3. **Same brand + body type, year ±3-5, price ±30-60%**
    - `brand_id` matches
    - `body_type` matches
    - `year` within ±3-5 years (adaptive)
    - `price` within ±30-60% range (adaptive: cheaper < 10k€ ±30%, higher ≥ 10k€ ±60%)
+   - Price comparison uses normalized default currency
    - ✅ Only Active listings
 
-3. **Same body type, year ±3-5, price ±30-60%**
+4. **Same body type, year ±3-5, price ±30-60%**
    - `body_type` matches
    - `year` within ±3-5 years (adaptive)
-   - `price` within ±30-60% range (adaptive)
+   - `price` within ±30-60% range (adaptive, normalized default currency)
    - ✅ Only Active listings
 
-4. **Same body type, price ±30-60%**
+5. **Same body type, price ±30-60%**
    - `body_type` matches
-   - `price` within ±30-60% range (adaptive)
+   - `price` within ±30-60% range (adaptive, normalized default currency)
    - ✅ Only Active listings
 
-5. **Year ±3-5, price ±30-60%**
+6. **Year ±3-5, price ±30-60%**
    - `year` within ±3-5 years (adaptive)
-   - `price` within ±30-60% range (adaptive)
+   - `price` within ±30-60% range (adaptive, normalized default currency)
    - ✅ Only Active listings
 
-6. **Fallback: all other active listings**
-   - All remaining Active listings that don't match buckets 1-5
+7. **Fallback: all other active listings**
+   - All remaining Active listings that don't match buckets 1-6
    - Includes listings without vehicle data (year, body_type)
    - ✅ Only Active listings (filter applied globally)
 
@@ -116,23 +123,24 @@ For listings in the same bucket, secondary sorting:
 
 1. **Promoted status** (`is_promoted DESC`) - promoted listings first
 2. **Same city** (`same_city DESC`) - listings from same city first
-3. **Mileage similarity** (`mileage_diff ASC`) - closer mileage ranks higher
-4. **Freshness** (`last_updated_at DESC`) - newer listings first
+3. **Engine/fuel/transmission similarity** (`fuel_match`, `transmission_match`, `drive_type_match`, `engine_diff`)
+4. **Condition/newness similarity** (`condition_match`, `is_new_match`)
+5. **Mileage similarity** (`mileage_diff ASC`) - closer mileage ranks higher
+6. **Freshness** (`last_updated_at DESC`) - newer listings first
 
 This means:
 
 - ✅ Promoted listings always rank higher within their relevance tier
 - ✅ Listings from the same city get a boost
-- ✅ Similar mileage = more relevant (if both have mileage data)
+- ✅ Matching drivetrain signals (fuel/transmission/drive/engine) boosts relevance
+- ✅ Matching condition/newness boosts relevance
+- ✅ Similar mileage remains a tie-breaker
 - ✅ Newer listings break ties between otherwise equal results
 
 ### Seller Diversification
 
-- **Rule**: Maximum 2 listings per seller in final results (adaptive)
-- If there are 3+ unique sellers: max 2 per seller
-- If there are 1-2 unique sellers: no limit (show up to 8 from same seller)
-- Applied globally across all 8 results
-- This ensures the block shows results even when most listings are from one seller
+- **Rule**: no per-seller cap in final results
+- Final block takes top 8 strictly by ranking score
 
 ### Data Filters
 
@@ -140,11 +148,18 @@ This means:
 
 - ✅ **Only Active listings** (`status = Active`) - applied globally for all buckets
 - ✅ Excludes current listing (`listing.id != :currentId`)
+- ✅ Applies deterministic candidate ordering before ranking:
+  - same brand+model first
+  - then same brand+body type
+  - then smaller `ABS(year diff)`
+  - then smaller `ABS(price diff)` on **approximate default-currency amounts** (same `ROUND(price/rate)` rules as ranking, via `getAllRatesMap` passed into the candidate query)
+  - then `last_updated_at DESC`
 
 **Note**:
 
+- Candidate ordering and in-memory bucket checks both use prices normalized to the platform default currency (`getAllRatesMap`).
 - Promotion status does NOT affect filtering — all Active listings are included. Promotion status only affects sorting within buckets (actively promoted listings rank higher).
-- Vehicle data (year, body_type) is NOT required — listings without this data will fall into bucket 6 (fallback).
+- Vehicle data (year, body_type) is NOT required — listings without this data will fall into bucket 7 (fallback).
 
 **Included**:
 
@@ -170,9 +185,7 @@ This means:
 ```
 SimilarListings
 ├── Title + Navigation Controls (desktop only)
-├── Scrollable Container
-│   ├── First Batch (4 cards or skeletons)
-│   └── Second Batch (4 cards or skeletons, lazy-loaded)
+├── Scrollable Container (up to 8 cards)
 └── Analytics Tracking
 ```
 
@@ -250,10 +263,10 @@ SimilarListings
 ### Optimization Strategies
 
 1. **Non-blocking Load**: 100ms delay prevents blocking main page
-2. **Lazy Second Batch**: Only loads when user shows interest
-3. **Efficient Query**: Single query with CASE expressions for bucket priority
+2. **Single Request Load**: All cards load in one request after a short delay
+3. **Efficient Query**: Deterministic candidate ordering in SQL + in-memory ranking
 4. **Caching**: 2-minute cache reduces database load
-5. **Limit to 100 candidates**: Prevents large result sets while ensuring diversity
+5. **Limit to 200 candidates**: Keeps query bounded while widening relevant candidate pool
 
 ### Performance Targets
 
@@ -294,9 +307,9 @@ CARD_GAP = 16; // px
 | ------------------------- | ---------------------------------------------------------- |
 | Current listing not found | Returns empty array, block doesn't render                  |
 | Current listing inactive  | Returns empty array, block doesn't render                  |
-| Less than 4 results       | Shows available count, no second batch                     |
-| Price is null/0           | Skips price-dependent buckets (2, 3, 4, 5)                 |
-| All from same seller      | Diversification limits to 2, rest filled from next buckets |
+| Less than 4 results       | Shows available count                                      |
+| Price is null/0           | Skips price-dependent buckets (3, 4, 5, 6)                 |
+| All from same seller      | Top 8 by ranking can come from one seller                  |
 | Rapid scrolling           | Single request, no duplicates                              |
 | API error                 | Block doesn't render, no error shown to user               |
 

@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 
+import * as constants from '../../../common/constants';
 import { ListingStatus as ListingStatusEnum } from '../../../common/types';
 import { ExchangeRatesService } from '../../../exchange-rates/exchange-rates.service';
 import { SimilarListingsRankingService } from '../../domain/services/similar-ranking.service';
@@ -48,10 +49,18 @@ export class FindSimilarUseCase {
       return enriched.slice(normalizedOffset, normalizedOffset + normalizedLimit) as ListingData[];
     }
 
-    const candidates = await this.listingRepo.findSimilarCandidates(current);
+    const ratesMap = await this.exchangeRatesService.getAllRatesMap();
+    const currencyContext = {
+      defaultCurrency: ratesMap.defaultCurrency || constants.getDefaultCurrency(),
+      rates: ratesMap.rates,
+    };
+    const candidates = await this.listingRepo.findSimilarCandidates(current, currencyContext);
     const ranked = this.similarRankingService.rank(
       {
         price: current.price,
+        currency: current.currency,
+        is_new: current.is_new,
+        condition: current.condition,
         city: current.city,
         vehicle: current.vehicle
           ? {
@@ -60,15 +69,17 @@ export class FindSimilarUseCase {
               body_type: current.vehicle.body_type,
               year: current.vehicle.year,
               mileage_km: current.vehicle.mileage_km,
+              fuel: current.vehicle.fuel,
+              transmission: current.vehicle.transmission,
+              drive_type: current.vehicle.drive_type,
+              engine_displ_l: current.vehicle.engine_displ_l,
             }
           : null,
       },
       candidates as ListingData[],
+      currencyContext,
     );
-    const uniqueSellers = new Set(ranked.map((l) => l.user_id)).size;
-    const maxPerSeller = uniqueSellers <= 2 ? 8 : 2;
-    const diversified = this.similarRankingService.diversifyBySeller(ranked, maxPerSeller);
-    const result = diversified.slice(0, 8);
+    const result = ranked.slice(0, 8);
 
     await this.listingCache.setSimilarResults(listingId, result as Listing[]);
 

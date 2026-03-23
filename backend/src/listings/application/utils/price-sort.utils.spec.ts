@@ -1,4 +1,8 @@
-import { buildPriceInDefaultCurrencyOrderExpression } from './price-sort.utils';
+import {
+  approximatePriceInDefaultCurrency,
+  buildListingRoundedPriceInDefaultCurrencySql,
+  buildPriceInDefaultCurrencyOrderExpression,
+} from './price-sort.utils';
 
 describe('buildPriceInDefaultCurrencyOrderExpression', () => {
   it('should return plain listing.price when rates map is empty', () => {
@@ -73,5 +77,40 @@ describe('buildPriceInDefaultCurrencyOrderExpression', () => {
 
     expect(result.params).toHaveProperty('priceSort_curr_X_Y', 'X-Y');
     expect(result.params).toHaveProperty('priceSort_rate_X_Y', 2.5);
+  });
+});
+
+describe('buildListingRoundedPriceInDefaultCurrencySql', () => {
+  it('should build rounded CASE with default branch only when rates map is empty', () => {
+    const result = buildListingRoundedPriceInDefaultCurrencySql('EUR', {});
+
+    expect(result.expression).toContain('WHEN listing.currency = :similarPrice_defaultCurrency');
+    expect(result.expression).toContain('ELSE ROUND(listing.price::numeric) END');
+    expect(result.params).toEqual({ similarPrice_defaultCurrency: 'EUR' });
+  });
+
+  it('should include ROUND and NULLIF for quote currencies', () => {
+    const result = buildListingRoundedPriceInDefaultCurrencySql('EUR', { MDL: 20 });
+
+    expect(result.expression).toContain('ROUND(listing.price::numeric / NULLIF(20::numeric, 0))');
+    expect(result.params).toMatchObject({
+      similarPrice_defaultCurrency: 'EUR',
+      similarPrice_curr_MDL: 'MDL',
+    });
+    expect(result.params).not.toHaveProperty('similarPrice_rate_MDL');
+  });
+});
+
+describe('approximatePriceInDefaultCurrency', () => {
+  it('should return rounded price when currency is default', () => {
+    expect(approximatePriceInDefaultCurrency(9999.4, 'EUR', 'EUR', {})).toBe(9999);
+  });
+
+  it('should convert using rate when currency differs from default', () => {
+    expect(approximatePriceInDefaultCurrency(20000, 'MDL', 'EUR', { MDL: 20 })).toBe(1000);
+  });
+
+  it('should return null when rate is missing', () => {
+    expect(approximatePriceInDefaultCurrency(20000, 'MDL', 'EUR', {})).toBeNull();
   });
 });
