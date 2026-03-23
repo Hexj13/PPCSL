@@ -2,12 +2,9 @@ import { linkifyPlainUrlsInHtml } from './listingDescriptionHtml';
 
 describe('linkifyPlainUrlsInHtml', () => {
   it('keeps balanced closing paren in Wikipedia-style URLs', () => {
-    const html =
-      '<p>See https://en.wikipedia.org/wiki/Example_(disambiguation) for details.</p>';
+    const html = '<p>See https://en.wikipedia.org/wiki/Example_(disambiguation) for details.</p>';
     const out = linkifyPlainUrlsInHtml(html, document);
-    expect(out).toContain(
-      'href="https://en.wikipedia.org/wiki/Example_(disambiguation)"',
-    );
+    expect(out).toContain('href="https://en.wikipedia.org/wiki/Example_(disambiguation)"');
     expect(out).not.toMatch(/Example_\(disambiguation<\/a>\)/);
   });
 
@@ -21,9 +18,7 @@ describe('linkifyPlainUrlsInHtml', () => {
   it('strips trailing period after a URL with balanced parens', () => {
     const html = '<p>Link https://en.wikipedia.org/wiki/Example_(disambiguation).</p>';
     const out = linkifyPlainUrlsInHtml(html, document);
-    expect(out).toContain(
-      'href="https://en.wikipedia.org/wiki/Example_(disambiguation)"',
-    );
+    expect(out).toContain('href="https://en.wikipedia.org/wiki/Example_(disambiguation)"');
     expect(out).toMatch(/disambiguation\)<\/a>\./);
   });
 });
