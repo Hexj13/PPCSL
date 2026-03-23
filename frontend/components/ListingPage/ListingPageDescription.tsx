@@ -82,7 +82,7 @@ export function ListingPageDescription({ descriptionHtml }: ListingPageDescripti
       >
         <div
           ref={contentRef}
-          className="leading-relaxed max-w-none listing-description whitespace-pre-wrap"
+          className="leading-relaxed max-w-none listing-description whitespace-pre-wrap [&_a]:text-primary-900 [&_a]:underline [&_a]:transition-colors [&_a]:duration-200 hover-only:[&_a:hover]:text-primary-700"
           style={{
             color: 'rgb(var(--text-secondary-rgb))',
             paddingBottom: !needsExpansion ? '0' : isExpanded ? '24px' : '60px',

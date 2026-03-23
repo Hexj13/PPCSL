@@ -1,6 +1,5 @@
 'use client';
 
-import createDOMPurify from 'dompurify';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -12,6 +11,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import type { Listing } from '@/lib/api';
 import { listingsApi, favoritesApi } from '@/lib/api';
+import { prepareListingDescriptionHtml } from '@/lib/listingDescriptionHtml';
 import { useAuthStore, useFavoritesStore, useComparisonStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
 import { getCityName, getListingDisplayTitle, sortOptionsByLabel } from '@/lib/utils';
@@ -125,12 +125,8 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
   }, [listing, locale, cities]);
 
   const descriptionHtml = useMemo(() => {
-    if (!listing?.description || !isHydrated) return null;
-    const DOMPurify = createDOMPurify(window);
-    return DOMPurify.sanitize(listing.description, {
-      ALLOWED_TAGS: ['p', 'br', 'div', 'strong', 'em', 'i', 'b', 'u', 'ul', 'ol', 'li', 'font'],
-      ALLOWED_ATTR: ['size'],
-    });
+    if (!listing?.description || !isHydrated || typeof window === 'undefined') return null;
+    return prepareListingDescriptionHtml(listing.description, window);
   }, [isHydrated, listing?.description]);
 
   useEffect(() => {

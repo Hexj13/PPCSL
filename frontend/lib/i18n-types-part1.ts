@@ -438,7 +438,6 @@ export interface TranslationsPart1 {
     description: string;
     previousListings: string;
     vehicleHistory: string;
-    historyAndReport: string;
     checkVehicleHistory: string;
     externalReports: string;
     externalReportsHint: string;

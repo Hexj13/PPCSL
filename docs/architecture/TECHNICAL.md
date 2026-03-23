@@ -660,11 +660,12 @@ Backups are saved to `backend/backups/` by default with format: `ppcsl_backup_YY
 
 #### HTML Sanitization
 
-- Backend HTML sanitization for listing descriptions
-- Removes dangerous HTML tags (script, iframe, object, embed, etc.)
-- Strips event handlers (onclick, onerror, etc.)
-- Removes javascript: protocol links
-- Allows only safe formatting tags (p, br, strong, em, u, ul, ol, li, font)
+- **Backend** (`backend/src/common/utils/html-sanitizer.ts`): sanitizes stored listing description HTML on write/update.
+  - Removes dangerous tags (e.g. script, iframe, object, embed, img, style, form, input, button, link, meta).
+  - Strips inline event handlers and `javascript:` URLs.
+  - Keeps a whitelist of tags: `p`, `br`, `div`, `strong`, `em`, `i`, `b`, `u`, `ul`, `ol`, `li`, `font` (only `size` attribute, values 2–7), `a` (only `http:`, `https:`, or `mailto:` hrefs; unsafe anchors become text; external links get `target="_blank"` and `rel="noopener noreferrer"`).
+  - `normalizeDescriptionHtml()` trims leading/trailing empty block markup.
+- **Frontend** (`frontend/lib/listingDescriptionHtml.ts`): before render, DOMPurify with a matching tag/attr allowlist and `linkifyPlainUrlsInHtml` turns plain `http(s)` / `www.` / `mailto:` in text nodes into safe links (`useListingPageClient` → `prepareListingDescriptionHtml`).
 
 #### HTTP Security Headers
 

@@ -473,15 +473,15 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
           <div className="space-y-6 min-w-0">
             {vehicle && <ListingPageCharacteristics listing={listing} />}
 
-            <ListingPageEquipmentSection equipmentColumns={equipmentColumns} t={t} />
-
-            {listing.description && <ListingPageDescription descriptionHtml={descriptionHtml} />}
-
             <ListingPageConditionRegistrationSection
               listing={listing}
               t={t}
               formatRegistrationType={formatRegistrationType}
             />
+
+            <ListingPageEquipmentSection equipmentColumns={equipmentColumns} t={t} />
+
+            {listing.description && <ListingPageDescription descriptionHtml={descriptionHtml} />}
 
             <ListingPageHistorySection
               listing={listing}

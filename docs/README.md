@@ -64,7 +64,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 - [search-title-url.md](./features/search-title-url.md) — Search page URL and title (slugs, diacritics)
 - Approximate price in default currency (≈ EUR) — FXRatesAPI, daily cron, listing enrichment, price sorting in default currency; env: `FXRATESAPI_API_KEY`, `DEFAULT_CURRENCY` (see [TECHNICAL.md](./architecture/TECHNICAL.md) §6 Exchange Rates)
 - [image-preview.md](./features/image-preview.md) — Image preview system (cards, listing page, modal; blurhash placeholders; `image_blur_hashes` + backfill scripts)
-- [infocar-history-section.md](./features/infocar-history-section.md) — History and report section, Infocar button, language-specific links (RO/RU)
+- [infocar-history-section.md](./features/infocar-history-section.md) — Infocar report card + on-site VIN history (two cards, RO/RU links)
 - [loading-states.md](./features/loading-states.md) — Loading states
 - [paid-promotion.md](./features/paid-promotion.md) — Paid promotion
 - Assign listing to user (admin) — on `/listings/new` admin can set listing owner UUID; real-time validation (GET `/api/admin/validate-assign-user/:userId`), backend checks (existence, active, listing limit)
