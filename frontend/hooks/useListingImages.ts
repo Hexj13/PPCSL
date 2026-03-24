@@ -92,6 +92,9 @@ export function useListingImages({
       let img: HTMLImageElement | null = null;
 
       const startPreload = () => {
+        if (mainImageLoadedRef.current.has(index) || mainImagePreloadingRef.current.has(index)) {
+          return;
+        }
         img = new window.Image();
         imagesCacheRef.current.push(img);
         mainImagePreloadingRef.current.add(index);
@@ -184,6 +187,38 @@ export function useListingImages({
       if (mainImageLoadedRef.current.has(index)) {
         callbacks?.onReady?.();
         return () => {};
+      }
+      if (mainImagePreloadingRef.current.has(index)) {
+        if (!callbacks?.onReady && !callbacks?.onFailure) {
+          return () => {};
+        }
+
+        let cancelled = false;
+        let rafId: number | null = null;
+
+        const waitForExistingPreload = () => {
+          if (cancelled) {
+            return;
+          }
+          if (mainImageLoadedRef.current.has(index)) {
+            callbacks?.onReady?.();
+            return;
+          }
+          if (!mainImagePreloadingRef.current.has(index)) {
+            callbacks?.onFailure?.();
+            return;
+          }
+          rafId = window.requestAnimationFrame(waitForExistingPreload);
+        };
+
+        rafId = window.requestAnimationFrame(waitForExistingPreload);
+
+        return () => {
+          cancelled = true;
+          if (rafId !== null) {
+            window.cancelAnimationFrame(rafId);
+          }
+        };
       }
 
       const img = new window.Image();
