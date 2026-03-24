@@ -84,6 +84,8 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
     const imgRafRef = useRef<number | undefined>(undefined);
     const imgTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const preloadCleanupRef = useRef<(() => void) | null>(null);
+    const previewStateRef = useRef<PreviewState>(state);
+    const goPrevInternalRef = useRef<(options?: { clearTimer?: boolean }) => void>(() => {});
     const visibleIndex = state.type === 'idle' ? state.index : state.fromIndex;
 
     useEffect(() => {
@@ -275,6 +277,9 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
       [images.length, navigateTo, state],
     );
 
+    previewStateRef.current = state;
+    goPrevInternalRef.current = goPrevInternal;
+
     const goNextInternal = useCallback(
       (options?: { clearTimer?: boolean }) => {
         if (state.type !== 'idle' || images.length <= 1) {
@@ -305,21 +310,26 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
       }
       resetToFirstTimerRef.current = setTimeout(() => {
         resetToFirstTimerRef.current = null;
+        const snapshot = previewStateRef.current;
+        if (snapshot.type !== 'idle' || snapshot.index <= 0) {
+          return;
+        }
         rewindIntervalRef.current = setInterval(() => {
-          if (state.type !== 'idle') {
+          const s = previewStateRef.current;
+          if (s.type !== 'idle') {
             return;
           }
-          if (state.index <= 0) {
+          if (s.index <= 0) {
             if (rewindIntervalRef.current) {
               clearInterval(rewindIntervalRef.current);
               rewindIntervalRef.current = null;
             }
             return;
           }
-          goPrevInternal({ clearTimer: false });
+          goPrevInternalRef.current({ clearTimer: false });
         }, REWIND_STEP_MS);
       }, RESET_TO_FIRST_DELAY_MS);
-    }, [clearResetToFirstTimer, goPrevInternal, images.length, state, visibleIndex]);
+    }, [clearResetToFirstTimer, images.length, visibleIndex]);
 
     const handlePreviewMouseEnter = useCallback(() => {
       clearResetToFirstTimer();
