@@ -166,7 +166,7 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
         removeFavorite(id);
         setIsFavorite(false);
         analytics.removeFromWishlist(id);
-        toast.success(t('listingDetail.removeFromFavorites'));
+        toast.success(t('listings.removeFromFavorites'));
       } catch {
         removeFavorite(id);
         setIsFavorite(false);
@@ -182,7 +182,7 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
       addFavorite(id);
       setIsFavorite(true);
       analytics.addToWishlist(id, { title: listing?.title, price: listing?.price });
-      toast.success(t('listingDetail.addToFavorites'));
+      toast.success(t('listings.addToFavorites'));
     } catch {
       addFavorite(id);
       setIsFavorite(true);
