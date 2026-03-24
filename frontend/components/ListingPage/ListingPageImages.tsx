@@ -54,6 +54,25 @@ export interface ListingPageImagesHandle {
   getIndex: () => number;
 }
 
+const MIN_SWIPE_DISTANCE = 50;
+const SWIPE_INTENT_THRESHOLD = 18;
+
+function getDirection(fromIndex: number, toIndex: number, total: number): 'next' | 'prev' {
+  const forwardDistance = (toIndex - fromIndex + total) % total;
+  const backwardDistance = (fromIndex - toIndex + total) % total;
+  return forwardDistance <= backwardDistance ? 'next' : 'prev';
+}
+
+function getPredictedSwipeIndex(currentIndex: number, total: number, deltaX: number) {
+  if (deltaX < 0) {
+    return (currentIndex + 1) % total;
+  }
+  if (deltaX > 0) {
+    return currentIndex === 0 ? total - 1 : currentIndex - 1;
+  }
+  return null;
+}
+
 export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPageImagesProps>(
   function ListingPageImages(
     {
@@ -86,6 +105,7 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
     const slideCommitSeqRef = useRef(0);
     const pendingSlideCommitRef = useRef<{ commitSeq: number; toIndex: number } | null>(null);
     const preloadCleanupRef = useRef<(() => void) | null>(null);
+    const swipePreloadIndexRef = useRef<number | null>(null);
     const previewStateRef = useRef<PreviewState>(state);
     const goPrevInternalRef = useRef<(options?: { clearTimer?: boolean }) => void>(() => {});
     const visibleIndex = state.type === 'idle' ? state.index : state.fromIndex;
@@ -137,7 +157,6 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
       setMainImageLoading,
       isTargetReady,
       preloadTarget,
-      preloadAllRemaining,
       handleImageLoad,
     } = useListingImages({
       images,
@@ -155,6 +174,10 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
       [handleImageLoad],
     );
 
+    const clearSwipePreload = useCallback(() => {
+      swipePreloadIndexRef.current = null;
+    }, []);
+
     const clearAnimationWork = useCallback(() => {
       if (imgRafRef.current !== undefined) {
         cancelAnimationFrame(imgRafRef.current);
@@ -169,8 +192,9 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
         preloadCleanupRef.current();
         preloadCleanupRef.current = null;
       }
+      clearSwipePreload();
       setMainImageLoading(false);
-    }, [setMainImageLoading]);
+    }, [clearSwipePreload, setMainImageLoading]);
 
     useEffect(() => () => clearResetToFirstTimer(), [clearResetToFirstTimer]);
     useEffect(() => () => clearAnimationWork(), [clearAnimationWork]);
@@ -182,16 +206,6 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
       }
     }, [state]);
 
-    const getDirection = useCallback(
-      (fromIndex: number, toIndex: number) => {
-        const len = images.length;
-        const forwardDistance = (toIndex - fromIndex + len) % len;
-        const backwardDistance = (fromIndex - toIndex + len) % len;
-        return forwardDistance <= backwardDistance ? 'next' : 'prev';
-      },
-      [images.length],
-    );
-
     const completeNavigation = useCallback(
       (toIndex: number) => {
         setState({ type: 'idle', index: toIndex });
@@ -200,18 +214,29 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
       [setCurrentImageIndex],
     );
 
+    const finalizePendingSlide = useCallback(
+      (commitSeq: number) => {
+        const pending = pendingSlideCommitRef.current;
+        if (!pending || pending.commitSeq !== commitSeq) {
+          return;
+        }
+        pendingSlideCommitRef.current = null;
+        if (imgTimerRef.current !== undefined) {
+          clearTimeout(imgTimerRef.current);
+          imgTimerRef.current = undefined;
+        }
+        completeNavigation(pending.toIndex);
+      },
+      [completeNavigation],
+    );
+
     const handleSlideTransformTransitionEnd = useCallback(() => {
       const pending = pendingSlideCommitRef.current;
-      if (!pending || pending.commitSeq !== slideCommitSeqRef.current) {
+      if (!pending) {
         return;
       }
-      pendingSlideCommitRef.current = null;
-      if (imgTimerRef.current !== undefined) {
-        clearTimeout(imgTimerRef.current);
-        imgTimerRef.current = undefined;
-      }
-      completeNavigation(pending.toIndex);
-    }, [completeNavigation]);
+      finalizePendingSlide(slideCommitSeqRef.current);
+    }, [finalizePendingSlide]);
 
     const startAnimating = useCallback(
       (fromIndex: number, toIndex: number, direction: 'next' | 'prev') => {
@@ -231,22 +256,14 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
               prev.type === 'animating' ? { ...prev, phase: 'running' as const } : prev,
             );
             pendingSlideCommitRef.current = { commitSeq, toIndex };
-            const finishSlide = () => {
-              if (pendingSlideCommitRef.current?.commitSeq !== commitSeq) {
-                return;
-              }
-              pendingSlideCommitRef.current = null;
-              if (imgTimerRef.current !== undefined) {
-                clearTimeout(imgTimerRef.current);
-                imgTimerRef.current = undefined;
-              }
-              completeNavigation(toIndex);
-            };
-            imgTimerRef.current = setTimeout(finishSlide, IMAGE_SLIDE_DURATION_MS + 80);
+            imgTimerRef.current = setTimeout(
+              () => finalizePendingSlide(commitSeq),
+              IMAGE_SLIDE_DURATION_MS + 80,
+            );
           });
         });
       },
-      [clearAnimationWork, completeNavigation],
+      [clearAnimationWork, finalizePendingSlide],
     );
 
     const navigateTo = useCallback(
@@ -257,9 +274,8 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
         if (options?.clearTimer !== false) {
           clearResetToFirstTimer();
         }
-        preloadAllRemaining();
         const fromIndex = state.index;
-        const direction = getDirection(fromIndex, toIndex);
+        const direction = getDirection(fromIndex, toIndex, images.length);
         if (isTargetReady(toIndex)) {
           setMainImageLoading(false);
           startAnimating(fromIndex, toIndex, direction);
@@ -282,10 +298,8 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
       },
       [
         clearResetToFirstTimer,
-        getDirection,
         images.length,
         isTargetReady,
-        preloadAllRemaining,
         preloadTarget,
         setMainImageLoading,
         startAnimating,
@@ -384,16 +398,14 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
       [goNextInternal, navBusy],
     );
 
-    const minSwipeDistance = 50;
-    const swipeIntentThreshold = 18;
-
     const onTouchStart = useCallback((e: React.TouchEvent) => {
+      clearSwipePreload();
       touchEndX.current = null;
       touchEndY.current = null;
       horizontalSwipeRef.current = false;
       touchStartX.current = e.targetTouches[0].clientX;
       touchStartY.current = e.targetTouches[0].clientY;
-    }, []);
+    }, [clearSwipePreload]);
 
     const onTouchMove = useCallback((e: React.TouchEvent) => {
       const nextX = e.targetTouches[0].clientX;
@@ -406,16 +418,25 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
       const deltaX = nextX - touchStartX.current;
       const deltaY = nextY - touchStartY.current;
       const isHorizontalIntent =
-        Math.abs(deltaX) > swipeIntentThreshold && Math.abs(deltaX) > Math.abs(deltaY) * 1.1;
+        Math.abs(deltaX) > SWIPE_INTENT_THRESHOLD && Math.abs(deltaX) > Math.abs(deltaY) * 1.1;
 
       if (isHorizontalIntent) {
         horizontalSwipeRef.current = true;
+        if (state.type === 'idle' && images.length > 1) {
+          const predictedIndex = getPredictedSwipeIndex(state.index, images.length, deltaX);
+
+          if (predictedIndex !== null && swipePreloadIndexRef.current !== predictedIndex) {
+            swipePreloadIndexRef.current = predictedIndex;
+            preloadTarget(predictedIndex);
+          }
+        }
         e.preventDefault();
       }
-    }, []);
+    }, [images.length, preloadTarget, state]);
 
     const onTouchEnd = useCallback(() => {
       const resetTouchState = () => {
+        clearSwipePreload();
         horizontalSwipeRef.current = false;
         touchStartX.current = null;
         touchStartY.current = null;
@@ -433,8 +454,8 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
       }
 
       const distance = touchStartX.current - touchEndX.current;
-      const isLeftSwipe = distance > minSwipeDistance;
-      const isRightSwipe = distance < -minSwipeDistance;
+      const isLeftSwipe = distance > MIN_SWIPE_DISTANCE;
+      const isRightSwipe = distance < -MIN_SWIPE_DISTANCE;
 
       if (isLeftSwipe && images.length > 1) {
         suppressPreviewClickRef.current = true;
@@ -446,7 +467,7 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
       }
 
       resetTouchState();
-    }, [goNextInternal, goPrevInternal, images.length]);
+    }, [clearSwipePreload, goNextInternal, goPrevInternal, images.length]);
 
     return (
       <ListingPageImagesLayout
@@ -464,8 +485,7 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
         handlePrev={handlePrev}
         handleNext={handleNext}
         t={t}
-        showMainImageLoader={showMainImageLoader && state.type === 'idle'}
-        isPreloading={state.type === 'preloading'}
+        showMainImageLoader={showMainImageLoader && state.type !== 'animating'}
         animState={state.type === 'animating' ? state : null}
         imageAltTitle={imageAltTitle}
         handlePreviewImageLoad={handlePreviewImageLoad}

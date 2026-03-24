@@ -23,6 +23,15 @@ describe('useListingImages', () => {
   ];
 
   const fourImages = fiveImages.slice(0, 4);
+  const sevenImages = [
+    '/uploads/a.jpg',
+    '/uploads/b.jpg',
+    '/uploads/c.jpg',
+    '/uploads/d.jpg',
+    '/uploads/e.jpg',
+    '/uploads/f.jpg',
+    '/uploads/g.jpg',
+  ];
 
   let imageSpy: jest.SpyInstance;
   let mockImageInstances: MockImg[];
@@ -159,5 +168,77 @@ describe('useListingImages', () => {
 
     expect(onReady).not.toHaveBeenCalled();
     expect(onFailure).toHaveBeenCalledTimes(1);
+  });
+
+  it('prioritizes nearest forward frames before the previous frame', () => {
+    const imageErrors = new Set<number>();
+
+    renderHook(() => useListingImages({ images: fiveImages, currentImageIndex: 0, imageErrors }));
+
+    expect(mockImageInstances).toHaveLength(1);
+
+    act(() => {
+      jest.advanceTimersByTime(39);
+    });
+    expect(mockImageInstances).toHaveLength(1);
+
+    act(() => {
+      jest.advanceTimersByTime(1);
+    });
+    expect(mockImageInstances).toHaveLength(2);
+
+    act(() => {
+      jest.advanceTimersByTime(80);
+    });
+    expect(mockImageInstances).toHaveLength(3);
+
+    act(() => {
+      jest.advanceTimersByTime(60);
+    });
+    expect(mockImageInstances).toHaveLength(4);
+  });
+
+  it('does not burst-preload all remaining images after the first navigation', async () => {
+    const imageErrors = new Set<number>();
+    const { rerender } = renderHook(
+      ({ index }: { index: number }) =>
+        useListingImages({ images: sevenImages, currentImageIndex: index, imageErrors }),
+      { initialProps: { index: 0 } },
+    );
+
+    act(() => {
+      jest.advanceTimersByTime(180);
+    });
+
+    expect(mockImageInstances).toHaveLength(4);
+
+    await act(async () => {
+      for (const img of mockImageInstances) {
+        img.complete = true;
+        img.naturalWidth = 1;
+        img.onload?.();
+      }
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    rerender({ index: 1 });
+
+    expect(mockImageInstances).toHaveLength(4);
+
+    act(() => {
+      jest.advanceTimersByTime(119);
+    });
+    expect(mockImageInstances).toHaveLength(4);
+
+    act(() => {
+      jest.advanceTimersByTime(1);
+    });
+    expect(mockImageInstances).toHaveLength(5);
+
+    act(() => {
+      jest.advanceTimersByTime(60);
+    });
+    expect(mockImageInstances).toHaveLength(6);
   });
 });

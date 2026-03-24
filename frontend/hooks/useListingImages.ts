@@ -12,8 +12,10 @@ interface UseListingImagesProps {
 
 const PREVIEW_IMAGE_QUALITY = 75;
 const PREVIEW_IMAGE_WIDTH = 1200;
-const PRELOAD_NEXT_DELAY_MS = 220;
-const PRELOAD_THIRD_AHEAD_DELAY_MS = 320;
+const PRELOAD_SECOND_AHEAD_DELAY_MS = 40;
+const PRELOAD_THIRD_AHEAD_DELAY_MS = 120;
+const PRELOAD_PREV_DELAY_MS = 180;
+const LOADING_INDICATOR_DELAY_MS = 120;
 const EXISTING_PRELOAD_MAX_FRAMES = 900;
 
 export function useListingImages({
@@ -24,16 +26,12 @@ export function useListingImages({
   const [mainImageLoading, setMainImageLoading] = useState(false);
   const mainImageLoadedRef = useRef<Set<number>>(new Set());
   const mainImagePreloadingRef = useRef<Set<number>>(new Set());
-  const navigationCountRef = useRef(0);
-  const lastNavigatedIndexRef = useRef(currentImageIndex);
-  const hasPreloadedAllRef = useRef(false);
   const imagesCacheRef = useRef<HTMLImageElement[]>([]);
-  const preloadAllRemainingCleanupsRef = useRef<Array<() => void>>([]);
   const imagesSignature = images.join('\u0001');
 
   const { visible: showMainImageLoader } = useLoadingState({
     isLoading: mainImageLoading,
-    showDelay: 0,
+    showDelay: LOADING_INDICATOR_DELAY_MS,
     minDisplayTime: 120,
   });
 
@@ -49,31 +47,15 @@ export function useListingImages({
   }, []);
 
   useEffect(() => {
-    for (const cleanup of preloadAllRemainingCleanupsRef.current) {
-      cleanup();
-    }
-    preloadAllRemainingCleanupsRef.current = [];
     mainImageLoadedRef.current.clear();
     mainImagePreloadingRef.current.clear();
-    navigationCountRef.current = 0;
-    lastNavigatedIndexRef.current = currentImageIndex;
-    hasPreloadedAllRef.current = false;
     for (const img of imagesCacheRef.current) {
       img.onload = null;
       img.onerror = null;
     }
     imagesCacheRef.current = [];
     setMainImageLoading(false);
-    // Intentionally depend only on imagesSignature so reset runs when listing changes, not on every index change
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [imagesSignature]);
-
-  useEffect(() => {
-    if (lastNavigatedIndexRef.current !== currentImageIndex) {
-      navigationCountRef.current += 1;
-      lastNavigatedIndexRef.current = currentImageIndex;
-    }
-  }, [currentImageIndex]);
 
   useEffect(() => {
     if (images.length <= 1 || typeof window === 'undefined') return;
@@ -156,23 +138,16 @@ export function useListingImages({
     };
 
     addPreloadJob(nextIndex, 0);
-    addPreloadJob(prevIndex, 120);
     if (images.length > 2) {
-      addPreloadJob(secondAheadIndex, PRELOAD_NEXT_DELAY_MS);
+      addPreloadJob(secondAheadIndex, PRELOAD_SECOND_AHEAD_DELAY_MS);
     }
     if (images.length > 3) {
       addPreloadJob(thirdAheadIndex, PRELOAD_THIRD_AHEAD_DELAY_MS);
     }
+    addPreloadJob(prevIndex, PRELOAD_PREV_DELAY_MS);
 
     for (const { index, delay } of preloadJobs) {
       preloadByIndex(index, delay);
-    }
-
-    if (navigationCountRef.current >= 1 && !hasPreloadedAllRef.current) {
-      hasPreloadedAllRef.current = true;
-      for (let i = 0; i < images.length; i += 1) {
-        preloadByIndex(i);
-      }
     }
 
     return () => {
@@ -282,19 +257,6 @@ export function useListingImages({
     [getPreviewUrl, images, imageErrors, markLoaded],
   );
 
-  const preloadAllRemaining = useCallback(() => {
-    if (hasPreloadedAllRef.current || images.length <= 1) {
-      return;
-    }
-
-    hasPreloadedAllRef.current = true;
-    const cleanups: Array<() => void> = [];
-    for (let index = 0; index < images.length; index += 1) {
-      cleanups.push(preloadTarget(index));
-    }
-    preloadAllRemainingCleanupsRef.current = cleanups;
-  }, [images, preloadTarget]);
-
   const handleImageLoad = (index: number) => {
     const imageUrl = images[index];
     if (!imageUrl || imageUrl === '/placeholder-car.jpg') return;
@@ -309,7 +271,6 @@ export function useListingImages({
     setMainImageLoading,
     isTargetReady,
     preloadTarget,
-    preloadAllRemaining,
     handleImageLoad,
   };
 }

@@ -34,7 +34,11 @@ type SlideParams = {
   t: (_key: string, _params?: Record<string, string>) => string;
 };
 
-function renderPreviewImage(index: number, params: SlideParams) {
+type PreviewSlideOptions = {
+  useBlur?: boolean;
+};
+
+function renderPreviewSlide(index: number, params: SlideParams, options: PreviewSlideOptions = {}) {
   const {
     images,
     imageErrors,
@@ -45,6 +49,7 @@ function renderPreviewImage(index: number, params: SlideParams) {
     heroPreviewBlurConsumed,
     t,
   } = params;
+  const { useBlur = false } = options;
   const src = images[index];
   const hasError = imageErrors.has(index);
 
@@ -61,7 +66,8 @@ function renderPreviewImage(index: number, params: SlideParams) {
 
   const optimizedUrl = getOptimizedImageUrl(src, PREVIEW_IMAGE_QUALITY, PREVIEW_IMAGE_WIDTH);
   const isExternal = optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://');
-  const blurDataURL = index === 0 && !heroPreviewBlurConsumed ? blurDataURLForIndex(0) : undefined;
+  const blurDataURL = useBlur && !heroPreviewBlurConsumed ? blurDataURLForIndex(index) : undefined;
+  const priority = index === 0;
 
   return (
     <Image
@@ -75,8 +81,8 @@ function renderPreviewImage(index: number, params: SlideParams) {
       fill
       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 65vw"
       className="object-cover opacity-100"
-      loading={index === 0 ? 'eager' : 'lazy'}
-      priority={index === 0}
+      loading={priority ? undefined : 'eager'}
+      priority={priority}
       placeholder={blurDataURL ? 'blur' : undefined}
       blurDataURL={blurDataURL}
       draggable={false}
@@ -87,71 +93,17 @@ function renderPreviewImage(index: number, params: SlideParams) {
   );
 }
 
-function renderPreviewNativeSlide(index: number, params: SlideParams) {
-  const { images, imageErrors, imageAltTitle, handleImageLoad, onImageError, t } = params;
-  const src = images[index];
-  const hasError = imageErrors.has(index);
-
-  if (!src || src === '/placeholder-car.jpg' || hasError) {
-    return (
-      <div
-        className="w-full h-full flex items-center justify-center"
-        style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-      >
-        {PLACEHOLDER_SVG}
-      </div>
-    );
-  }
-
-  const imageUrl =
-    src === '/placeholder-car.jpg'
-      ? src
-      : getOptimizedImageUrl(src, PREVIEW_IMAGE_QUALITY, PREVIEW_IMAGE_WIDTH);
-
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      key={`preview-native-${index}`}
-      src={imageUrl}
-      alt={t('listings.imageAltWithTotal', {
-        title: imageAltTitle,
-        index: String(index + 1),
-        total: String(images.length),
-      })}
-      decoding="sync"
-      draggable={false}
-      onLoad={() => handleImageLoad(index)}
-      onError={() => onImageError(index)}
-      style={{
-        position: 'absolute',
-        inset: 0,
-        width: '100%',
-        height: '100%',
-        objectFit: 'cover',
-      }}
-    />
-  );
-}
-
 function renderPreviewIncomingSlide(toIndex: number, params: SlideParams) {
-  if (toIndex === 0 && !params.heroPreviewBlurConsumed) {
-    return renderPreviewImage(0, params);
-  }
-  return renderPreviewNativeSlide(toIndex, params);
+  return renderPreviewSlide(toIndex, params, { useBlur: toIndex === 0 });
 }
 
 function renderPreviewIdleSlide(index: number, params: SlideParams) {
-  if (index === 0) {
-    return renderPreviewImage(0, params);
-  }
-  return renderPreviewNativeSlide(index, params);
+  return renderPreviewSlide(index, params, { useBlur: index === 0 });
 }
 
 const slideBase: CSSProperties = {
   position: 'absolute',
   inset: 0,
-  backfaceVisibility: 'hidden',
-  WebkitBackfaceVisibility: 'hidden',
 };
 
 export function renderPreviewSlides(params: {
@@ -211,23 +163,18 @@ export function renderPreviewSlides(params: {
   const enterOffset = direction === 'next' ? '100%' : '-100%';
   const leaveTarget = direction === 'next' ? '-100%' : '100%';
 
-  const layerStyle = (transform: string): CSSProperties => ({
+  const layerStyle = (offset: string): CSSProperties => ({
     ...slideBase,
-    transform,
+    transform: `translateX(${offset})`,
     transition: transitionStyle,
-    willChange: isRunning ? 'transform' : 'auto',
   });
 
-  const outgoingContent =
-    fromIndex === 0
-      ? renderPreviewImage(0, slideParams)
-      : renderPreviewNativeSlide(fromIndex, slideParams);
+  const outgoingContent = renderPreviewSlide(fromIndex, slideParams, { useBlur: fromIndex === 0 });
   const incomingContent = renderPreviewIncomingSlide(toIndex, slideParams);
 
   return (
     <div
       className="absolute inset-0 overflow-hidden"
-      style={{ isolation: 'isolate' }}
       onTransitionEnd={(e) => {
         if (e.propertyName !== 'transform') return;
         if (!isRunning) return;
@@ -236,14 +183,14 @@ export function renderPreviewSlides(params: {
     >
       <div
         style={layerStyle(
-          isRunning ? `translate3d(${leaveTarget}, 0, 0)` : 'translate3d(0%, 0, 0)',
+          isRunning ? leaveTarget : '0%',
         )}
       >
         {outgoingContent}
       </div>
       <div
         style={layerStyle(
-          isRunning ? 'translate3d(0%, 0, 0)' : `translate3d(${enterOffset}, 0, 0)`,
+          isRunning ? '0%' : enterOffset,
         )}
       >
         {incomingContent}
