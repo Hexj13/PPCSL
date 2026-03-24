@@ -774,6 +774,8 @@ CREATE INDEX idx_vehicles_model_type ON vehicles(model_id)
 
 When **Fuel = Electric**, the **Engine displacement** field is optional and disabled for all vehicle types (car, truck, moto). If the user had already entered a value and then selects Electric, the field is cleared so that no engine volume is sent to the API. The placeholder shows "—" when Electric is selected and "2.0" otherwise. On listing cards, the engine block is not shown when `engine_displ_l` is empty. Implementation: `SpecsGrid.tsx` (form), `useListingForm.ts` (validation), backend `CreateVehicleDto` has `engine_displ_l` as optional.
 
+**Fuel type values (hybrids):** `Hybrid` (classic/full hybrid), `MHEV` (mild hybrid), `PHEV` (plug-in hybrid). Existing listings keep `Hybrid`; new listings can use `MHEV` or `PHEV`.
+
 ### Backend
 
 - `core/backend/src/brands/entities/brand.entity.ts` — brand entity (`vehicle_types` added)
@@ -797,6 +799,7 @@ When **Fuel = Electric**, the **Engine displacement** field is optional and disa
 - `1779000000000-AddVehicleTypesToBrandsAndModels.ts`
 - `1780000000000-AddMotorcycleAndBusBodyTypes.ts`
 - `1782000000000-AddSemiTruckAndTractorBodyTypes.ts`
+- `1792000000000-AddMhevPhevFuelTypes.ts` — adds `MHEV` and `PHEV` to `vehicles.fuel` enum
 
 ### Linter
 

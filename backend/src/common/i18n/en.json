@@ -7,7 +7,8 @@
     "string": "Value must be a string",
     "codeLength": "Code must contain exactly 6 digits",
     "codeDigits": "Code must contain only digits",
-    "passwordMinLength": "Password must be at least 8 characters"
+    "passwordMinLength": "Password must be at least 8 characters",
+    "passwordMaxLength": "Password cannot be longer than 100 characters"
   },
   "errors": {
     "serverError": "Server error. Please try again later.",
@@ -47,8 +48,13 @@
     "userWithPhoneNotFound": "User with this phone number not found",
     "phoneRequired": "Phone number is required",
     "invalidCode": "Invalid code. Please try again.",
+    "smsHourlyLimit": "SMS limit reached for this number. You can request a new code in one hour.",
+    "maxSmsCodeAttempts": "Too many incorrect code attempts. Request a new SMS code.",
     "codeRequired": "Code is required",
     "newPasswordRequired": "New password is required",
+    "currentPasswordRequired": "Current password is required",
+    "invalidCurrentPassword": "Current password is incorrect",
+    "newPasswordMustDiffer": "New password must be different from the current password",
     "refreshTokenExpired": "Refresh token has expired",
     "refreshTokenRevoked": "Refresh token has been revoked",
     "invalidRefreshToken": "Invalid refresh token",

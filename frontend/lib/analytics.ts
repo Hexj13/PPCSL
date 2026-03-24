@@ -212,6 +212,13 @@ export const analytics = {
     });
   },
 
+  authTabSelect: (tab: 'login' | 'register') => {
+    trackEvent('select_content', {
+      content_type: 'auth_tab',
+      content_id: tab,
+    });
+  },
+
   signUp: (method?: 'email' | 'phone') => {
     trackEvent('sign_up', {
       method: method || 'email',

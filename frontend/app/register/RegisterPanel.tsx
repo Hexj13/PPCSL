@@ -8,7 +8,17 @@ import { RegisterFormTerms } from './RegisterFormTerms';
 import { RegisterFormType } from './RegisterFormType';
 import { useRegisterPage } from './useRegisterPage';
 
-export default function RegisterPage() {
+type RegisterPanelProps = {
+  showTitle?: boolean;
+  showLoginLink?: boolean;
+  formClassName?: string;
+};
+
+export function RegisterPanel({
+  showTitle = true,
+  showLoginLink = true,
+  formClassName = 'card p-6 md:p-8',
+}: RegisterPanelProps) {
   const { t } = useTranslation();
   const {
     formData,
@@ -28,11 +38,13 @@ export default function RegisterPage() {
   } = useRegisterPage();
 
   return (
-    <div className="max-w-md mx-auto mt-6 md:mt-12 mb-16">
-      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center text-primary-900">
-        {t('register.title')}
-      </h1>
-      <form onSubmit={handleSubmit} className="card p-6 md:p-8" autoComplete="off">
+    <>
+      {showTitle && (
+        <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center text-primary-900">
+          {t('register.title')}
+        </h1>
+      )}
+      <form onSubmit={handleSubmit} className={formClassName} autoComplete="off">
         <RegisterFormType formData={formData} setFormData={setFormData} />
         <RegisterFormFields
           formData={formData}
@@ -61,16 +73,18 @@ export default function RegisterPage() {
           {t('register.registerButton')}
         </LoadingButton>
 
-        <p className="mt-5 text-center text-sm text-hint">
-          {t('register.alreadyHaveAccount')}{' '}
-          <a
-            href="/login"
-            className="text-primary-700 font-semibold hover-only:hover:text-primary-900 underline transition-colors"
-          >
-            {t('header.login')}
-          </a>
-        </p>
+        {showLoginLink && (
+          <p className="mt-5 text-center text-sm text-hint">
+            {t('register.alreadyHaveAccount')}{' '}
+            <a
+              href="/sign"
+              className="text-primary-700 font-semibold hover-only:hover:text-primary-900 underline transition-colors"
+            >
+              {t('header.login')}
+            </a>
+          </p>
+        )}
       </form>
-    </div>
+    </>
   );
 }

@@ -7,7 +7,8 @@
     "string": "Значение должно быть строкой",
     "codeLength": "Код должен содержать ровно 6 цифр",
     "codeDigits": "Код должен содержать только цифры",
-    "passwordMinLength": "Пароль должен содержать не менее 8 символов"
+    "passwordMinLength": "Пароль должен содержать не менее 8 символов",
+    "passwordMaxLength": "Пароль не может быть длиннее 100 символов"
   },
   "errors": {
     "serverError": "Ошибка на сервере. Попробуйте позже.",
@@ -48,9 +49,15 @@
     "verificationCodeExpired": "Код верификации истек",
     "invalidVerificationCode": "Неверный код верификации",
     "invalidCode": "Неверный код. Попробуйте снова.",
+    "smsHourlyLimit": "Достигнут лимит SMS для этого номера. Новый код можно запросить через час.",
+    "maxSmsCodeAttempts": "Слишком много неверных попыток ввода кода. Запросите новый код по SMS.",
     "maxVerificationAttemptsReached": "Достигнуто максимальное количество попыток верификации",
     "passwordResetCodeExpired": "Код сброса пароля истек",
     "invalidPasswordResetCode": "Неверный код сброса пароля",
+    "newPasswordRequired": "Новый пароль обязателен",
+    "currentPasswordRequired": "Текущий пароль обязателен",
+    "invalidCurrentPassword": "Неверный текущий пароль",
+    "newPasswordMustDiffer": "Новый пароль должен отличаться от текущего",
     "listingUpdateForbidden": "У вас нет разрешения на обновление этого объявления",
     "listingDeleteForbidden": "У вас нет разрешения на удаление этого объявления",
     "favoriteNotFound": "Избранное не найдено",

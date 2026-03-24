@@ -323,6 +323,19 @@ describe('AuthController', () => {
       ).rejects.toThrow(BadRequestException);
       expect(ipBlockService.recordFailedAttempt).toHaveBeenCalledWith('127.0.0.1');
     });
+
+    it('should not record IP failure when max SMS code attempts exceeded', async () => {
+      const req = { ip: '127.0.0.1' };
+      const verifySmsDto: VerifySmsDto = { phone: '+37370123456', code: '123456' };
+
+      ipBlockService.getClientIp.mockReturnValue('127.0.0.1');
+      smsService.verifyCode.mockRejectedValue(new BadRequestException('errors.maxSmsCodeAttempts'));
+
+      await expect(
+        controller.verifySms(req as unknown as AuthenticatedRequest, verifySmsDto),
+      ).rejects.toThrow(BadRequestException);
+      expect(ipBlockService.recordFailedAttempt).not.toHaveBeenCalled();
+    });
   });
 
   describe('verifyEmail', () => {

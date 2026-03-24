@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Breadcrumbs } from '@/components/layout/Breadcrumbs';
 import { LoadMoreButton } from '@/components/listing/LoadMoreButton';
-import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
 import { listingsApi } from '@/lib/api';
@@ -17,14 +16,24 @@ import { getComparisonFieldsForListings } from './comparisonFields';
 
 export default function ComparePage() {
   const { t } = useTranslation();
-  const { isLoading, isAuthorized } = useRequireAuth();
   const { comparisons, remove, rehydrate } = useComparisonStore();
   const [listings, setListings] = useState<Listing[]>([]);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [comparisonStoreHydrated, setComparisonStoreHydrated] = useState(false);
   const prevComparisonsRef = useRef<string[]>([]);
   const listingsLengthRef = useRef(0);
   const hasRehydratedRef = useRef(false);
   const skeletonStartRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const unsub = useComparisonStore.persist.onFinishHydration(() => {
+      setComparisonStoreHydrated(true);
+    });
+    if (useComparisonStore.persist.hasHydrated()) {
+      setComparisonStoreHydrated(true);
+    }
+    return unsub;
+  }, []);
 
   const siteConfig = loadSiteConfigSync(getCountry());
 
@@ -36,14 +45,18 @@ export default function ComparePage() {
   }, []);
 
   useEffect(() => {
+    if (!comparisonStoreHydrated) return;
+
     skeletonStartRef.current = Date.now();
     const rehydrateAndFetch = async () => {
+      let currentComparisons: string[];
       if (!hasRehydratedRef.current) {
         hasRehydratedRef.current = true;
         await rehydrate();
+        currentComparisons = useComparisonStore.getState().comparisons;
+      } else {
+        currentComparisons = comparisons;
       }
-
-      let currentComparisons = comparisons;
 
       if (currentComparisons.length === 0 && typeof window !== 'undefined') {
         const backup = localStorage.getItem('comparison-storage-backup');
@@ -111,11 +124,7 @@ export default function ComparePage() {
     };
 
     void rehydrateAndFetch();
-  }, [comparisons, rehydrate, t, finishWithMinSkeleton]);
-
-  if (isLoading || !isAuthorized) {
-    return null;
-  }
+  }, [comparisonStoreHydrated, comparisons, rehydrate, t, finishWithMinSkeleton]);
 
   const handleRemove = (id: string) => {
     setListings((prev) => prev.filter((listing) => listing.id !== id));
@@ -123,7 +132,7 @@ export default function ComparePage() {
     toast.success(t('compare.removedFromComparison'));
   };
 
-  if (!hasInitialized) {
+  if (!comparisonStoreHydrated || !hasInitialized) {
     return (
       <div className="max-w-7xl mx-auto min-h-[calc(100vh-200px)]">
         <Breadcrumbs

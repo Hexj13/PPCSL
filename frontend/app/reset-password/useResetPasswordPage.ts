@@ -10,6 +10,7 @@ import {
 } from '@/app/reset-password/utils';
 import { useTranslation } from '@/hooks/useTranslation';
 import { authApi } from '@/lib/api';
+import { SMS_HOURLY_QUOTA_RESEND_COOLDOWN_SECONDS } from '@/lib/constants';
 import { toast } from '@/lib/toast';
 
 export type ResetPasswordStep = 'phone' | 'code' | 'password';
@@ -34,6 +35,7 @@ export function useResetPasswordPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<ResetPasswordErrors>({});
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendSmsAttempts, setResendSmsAttempts] = useState(0);
   const [verificationAttempts, setVerificationAttempts] = useState(0);
   const [isVerificationBlocked, setIsVerificationBlocked] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -90,12 +92,19 @@ export function useResetPasswordPage() {
       try {
         await authApi.requestPasswordReset({ phone });
         toast.success(t('resetPassword.codeSent'));
+        setResendSmsAttempts(0);
         setStep('code');
         setResendCooldown(60);
       } catch (err: unknown) {
-        const axiosError = err as { response?: { data?: { message?: string } } };
+        const axiosError = err as {
+          response?: { data?: { message?: string; errorKey?: string } };
+        };
+        const data = axiosError.response?.data;
         setErrors({
-          phone: resolveApiMessage(axiosError.response?.data?.message, 'resetPassword.sendError'),
+          phone:
+            data?.errorKey === 'errors.smsHourlyLimit'
+              ? t('errors.smsHourlyLimit')
+              : resolveApiMessage(data?.message, 'resetPassword.sendError'),
         });
       } finally {
         setLoading(false);
@@ -181,7 +190,10 @@ export function useResetPasswordPage() {
         setStep('password');
       } catch (err: unknown) {
         const axiosError = err as {
-          response?: { status?: number; data?: { message?: string; blockedUntil?: string } };
+          response?: {
+            status?: number;
+            data?: { message?: string; errorKey?: string; blockedUntil?: string };
+          };
         };
         if (axiosError.response?.status === 429) {
           const blockedUntil = axiosError.response.data?.blockedUntil;
@@ -200,16 +212,22 @@ export function useResetPasswordPage() {
             return;
           }
         }
+        if (axiosError.response?.data?.errorKey === 'errors.maxSmsCodeAttempts') {
+          setIsVerificationBlocked(true);
+          setErrors({ code: t('errors.maxSmsCodeAttempts') });
+          setCode(['', '', '', '', '', '']);
+          setLoading(false);
+          setTimeout(() => inputRefs.current[0]?.focus(), 100);
+          return;
+        }
         const newAttempts = verificationAttempts + 1;
         setVerificationAttempts(newAttempts);
-        if (newAttempts >= 10) {
+        if (newAttempts >= 3) {
           setIsVerificationBlocked(true);
           setErrors({ code: t('resetPassword.maxAttempts') });
         } else {
           setErrors({
-            code:
-              axiosError.response?.data?.message ||
-              t('resetPassword.invalidCodeWithAttempts', { attempts: newAttempts.toString() }),
+            code: t('resetPassword.invalidCodeWithAttempts', { attempts: newAttempts.toString() }),
           });
         }
         setCode(['', '', '', '', '', '']);
@@ -245,7 +263,7 @@ export function useResetPasswordPage() {
       try {
         await authApi.resetPassword({ phone, code: fullCode, newPassword: password });
         toast.success(t('resetPassword.passwordResetSuccess'));
-        router.push('/login');
+        router.push('/sign');
       } catch {
       } finally {
         setLoading(false);
@@ -255,7 +273,7 @@ export function useResetPasswordPage() {
   );
 
   const handleResendCode = useCallback(async () => {
-    if (resendCooldown > 0) return;
+    if (resendCooldown > 0 || resendSmsAttempts >= 2) return;
     setResendCooldown(60);
     setCode(['', '', '', '', '', '']);
     setErrors({});
@@ -264,12 +282,22 @@ export function useResetPasswordPage() {
     inputRefs.current[0]?.focus();
     try {
       await authApi.requestPasswordReset({ phone });
+      setResendSmsAttempts((p) => p + 1);
       toast.success(t('resetPassword.codeResent'));
     } catch (err: unknown) {
-      const axiosError = err as { response?: { data?: { message?: string } } };
-      toast.error(resolveApiMessage(axiosError.response?.data?.message, 'resetPassword.sendError'));
+      const axiosError = err as {
+        response?: { data?: { message?: string; errorKey?: string } };
+      };
+      const data = axiosError.response?.data;
+      if (data?.errorKey === 'errors.smsHourlyLimit') {
+        setResendCooldown(SMS_HOURLY_QUOTA_RESEND_COOLDOWN_SECONDS);
+        toast.error(t('errors.smsHourlyLimit'));
+      } else {
+        setResendCooldown(0);
+        toast.error(resolveApiMessage(data?.message, 'resetPassword.sendError'));
+      }
     }
-  }, [phone, resendCooldown, resolveApiMessage, t]);
+  }, [phone, resendCooldown, resendSmsAttempts, resolveApiMessage, t]);
 
   const handleBack = useCallback(() => {
     setLoading(false);
@@ -277,6 +305,7 @@ export function useResetPasswordPage() {
       setStep('phone');
       setCode(['', '', '', '', '', '']);
       setErrors({});
+      setResendSmsAttempts(0);
       setVerificationAttempts(0);
       setIsVerificationBlocked(false);
     } else if (step === 'password') {
@@ -312,6 +341,7 @@ export function useResetPasswordPage() {
     errors,
     setErrors,
     resendCooldown,
+    resendSmsAttempts,
     verificationAttempts,
     isVerificationBlocked,
     inputRefs,

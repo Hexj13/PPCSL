@@ -7,7 +7,7 @@ import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAuthStore } from '@/lib/store';
 
-const AUTH_PATHS = ['/login', '/register', '/verify-phone', '/reset-password'];
+const AUTH_PATHS = ['/sign', '/verify-phone', '/reset-password'];
 
 export function useHeaderState() {
   const { user, logout, isInitialized } = useAuthStore();
@@ -20,9 +20,9 @@ export function useHeaderState() {
   const { visible: loadingStateVisible } = useLoadingState({
     isLoading: !isInitialized,
     showDelay: 200,
-    minDisplayTime: 1000,
+    minDisplayTime: 200,
   });
-  const showSkeleton = !isInitialized || loadingStateVisible;
+  const showSkeleton = loadingStateVisible;
 
   const isAuthPage = AUTH_PATHS.includes(pathname);
 
@@ -58,7 +58,7 @@ export function useHeaderState() {
   const mobileNavLinkClasses =
     'text-primary-900 text-[14px] font-medium hover-only:hover:text-primary-700 active:text-primary-700 transition-colors duration-200 py-2 pl-4 flex items-center gap-2 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-700 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base';
 
-  const showNav = !isAuthPage && !isErrorPage;
+  const showNav = (!isAuthPage || pathname === '/sign') && !isErrorPage;
 
   return {
     user,

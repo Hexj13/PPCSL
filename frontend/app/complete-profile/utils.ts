@@ -1,5 +1,6 @@
 import type { UpdateProfileDto, User } from '@/lib/api';
 import { favoritesApi, listingsApi, savedFiltersApi } from '@/lib/api';
+import { applyComparisonAfterAuth } from '@/lib/comparisonMigration';
 import { toast } from '@/lib/toast';
 
 export async function processPendingFavorites(userId: string): Promise<void> {
@@ -22,28 +23,7 @@ export async function processPendingFavorites(userId: string): Promise<void> {
 }
 
 export async function processPendingComparisons(): Promise<void> {
-  const pending = JSON.parse(localStorage.getItem('pendingComparisons') || '[]');
-  if (pending.length === 0) return;
-  const { useComparisonStore } = await import('@/lib/store');
-  const comparisonStore = useComparisonStore.getState();
-  for (const listingId of pending) {
-    try {
-      await listingsApi.getOne(listingId);
-      comparisonStore.add(listingId);
-    } catch {
-      // ignore
-    }
-  }
-  if (comparisonStore.comparisons.length > 0) {
-    const storageData = { state: { comparisons: comparisonStore.comparisons }, version: 0 };
-    localStorage.setItem('comparison-storage', JSON.stringify(storageData));
-    await new Promise<void>((resolve) => {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => setTimeout(resolve, 100));
-      });
-    });
-  }
-  localStorage.removeItem('pendingComparisons');
+  await applyComparisonAfterAuth();
 }
 
 export async function processPendingSavedFilter(t: (key: string) => string): Promise<boolean> {

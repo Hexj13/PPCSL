@@ -6,9 +6,9 @@ import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { authApi, favoritesApi, listingsApi, savedFiltersApi } from '@/lib/api';
+import { applyComparisonAfterAuth } from '@/lib/comparisonMigration';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
-import { LoadingButton } from '@/ui';
 
 const isValidEmail = (value: string): boolean => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -35,36 +35,6 @@ async function processPendingFavorites(userId: string): Promise<void> {
     await Promise.all(validFavorites.map((id: string) => favoritesApi.add(id).catch(() => {})));
   }
   localStorage.removeItem('pendingFavorites');
-}
-
-async function processPendingComparisons(): Promise<void> {
-  const pending = JSON.parse(localStorage.getItem('pendingComparisons') || '[]');
-  if (pending.length === 0) return;
-  const { useComparisonStore } = await import('@/lib/store');
-  const store = useComparisonStore.getState();
-  for (const listingId of pending) {
-    try {
-      await listingsApi.getOne(listingId);
-      store.add(listingId);
-    } catch {
-      // ignore
-    }
-  }
-  if (store.comparisons.length > 0 && typeof window !== 'undefined') {
-    const storageData = { state: { comparisons: store.comparisons }, version: 0 };
-    const str = JSON.stringify(storageData);
-    localStorage.setItem('comparison-storage', str);
-    await new Promise<void>((resolve) => {
-      requestAnimationFrame(() => {
-        localStorage.setItem('comparison-storage', str);
-        requestAnimationFrame(() => {
-          localStorage.setItem('comparison-storage', str);
-          setTimeout(resolve, 100);
-        });
-      });
-    });
-  }
-  localStorage.removeItem('pendingComparisons');
 }
 
 async function processPendingSavedFilter(
@@ -124,7 +94,13 @@ function applyLoginSuccessRedirect(
   }
 }
 
-export default function LoginPage() {
+const AUTH_PATH_PREFIXES = ['/sign', '/login', '/register'];
+
+function isAuthPath(path: string): boolean {
+  return AUTH_PATH_PREFIXES.some((p) => path === p || path.startsWith(`${p}?`));
+}
+
+export function useLoginPage() {
   const router = useRouter();
   const { setAuth, user, isInitialized } = useAuthStore();
   const { t } = useTranslation();
@@ -146,16 +122,14 @@ export default function LoginPage() {
     if (typeof window !== 'undefined') {
       const existingReturnUrl = localStorage.getItem('returnUrl');
       if (!existingReturnUrl) {
-        const currentUrl = window.location.pathname + window.location.search;
-        if (currentUrl !== '/login' && currentUrl !== '/register') {
+        if (!isAuthPath(window.location.pathname)) {
           const referrer = document.referrer;
-          if (referrer && !referrer.includes('/login') && !referrer.includes('/register')) {
+          if (referrer) {
             try {
               const referrerUrl = new URL(referrer);
               const referrerPath = referrerUrl.pathname + referrerUrl.search;
               if (
-                referrerPath !== '/login' &&
-                referrerPath !== '/register' &&
+                !isAuthPath(referrerUrl.pathname) &&
                 referrerPath !== '/' &&
                 referrerPath !== ''
               ) {
@@ -178,10 +152,6 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<{ login?: string; password?: string }>({});
   const [showPassword, setShowPassword] = useState(false);
   const formStartSentRef = useRef(false);
-
-  if (isInitialized && user) {
-    return null;
-  }
 
   const handleFormFieldFocus = () => {
     if (!formStartSentRef.current) {
@@ -231,7 +201,7 @@ export default function LoginPage() {
         return;
       }
       await processPendingFavorites(res.data.user.id);
-      await processPendingComparisons();
+      await applyComparisonAfterAuth();
       const filterHandled = await processPendingSavedFilter(
         localStorage.getItem('pendingSavedFilter'),
         t,
@@ -249,126 +219,18 @@ export default function LoginPage() {
     }
   };
 
-  return (
-    <div className="max-w-md mx-auto mt-6 md:mt-12 mb-16">
-      <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center text-primary-900">
-        {t('login.title')}
-      </h1>
-      <form onSubmit={handleSubmit} className="card p-6 md:p-8">
-        <div className="mb-5">
-          <label className="block text-sm font-semibold mb-2 text-primary-900">
-            {t('login.emailOrPhone')}
-          </label>
-          <input
-            type="text"
-            value={formData.login}
-            onChange={(e) => {
-              setFormData({ ...formData, login: e.target.value });
-              if (errors.login) {
-                setErrors({ ...errors, login: undefined });
-              }
-            }}
-            onFocus={handleFormFieldFocus}
-            className={`input-field ${errors.login ? 'border-red-500' : ''}`}
-            placeholder={t('login.emailOrPhone')}
-            autoComplete="username"
-          />
-          {errors.login && <p className="mt-1 text-sm text-red-400">{errors.login}</p>}
-        </div>
-
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-semibold text-primary-900">
-              {t('login.password')}
-            </label>
-            <a
-              href="/reset-password"
-              className="text-sm text-primary-700 font-semibold hover-only:hover:text-primary-900 underline transition-colors"
-            >
-              {t('login.forgotPassword')}
-            </a>
-          </div>
-          <div className="relative">
-            <input
-              type={showPassword ? 'text' : 'password'}
-              value={formData.password}
-              onChange={(e) => {
-                setFormData({ ...formData, password: e.target.value });
-                if (errors.password) {
-                  setErrors({ ...errors, password: undefined });
-                }
-              }}
-              className={`input-field pr-10 ${errors.password ? 'border-red-500' : ''}`}
-              placeholder={t('login.passwordPlaceholder')}
-              autoComplete="current-password"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover-only:hover:text-primary-400 transition-colors"
-              tabIndex={-1}
-            >
-              {showPassword ? (
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
-                  />
-                </svg>
-              ) : (
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                  />
-                </svg>
-              )}
-            </button>
-          </div>
-          {errors.password && <p className="mt-1 text-sm text-red-400">{errors.password}</p>}
-        </div>
-
-        <LoadingButton
-          type="submit"
-          loading={loading}
-          loadingText={t('login.loggingIn')}
-          className="w-full text-primary-700 font-medium text-sm md:text-base hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {t('login.loginButton')}
-        </LoadingButton>
-
-        <p className="mt-6 text-center text-sm text-hint">
-          {t('login.noAccount')}{' '}
-          <a
-            href="/register"
-            className="text-primary-700 font-semibold hover-only:hover:text-primary-900 underline transition-colors"
-          >
-            {t('login.registerLink')}
-          </a>
-        </p>
-      </form>
-    </div>
-  );
+  return {
+    t,
+    user,
+    isInitialized,
+    formData,
+    setFormData,
+    loading,
+    errors,
+    setErrors,
+    showPassword,
+    setShowPassword,
+    handleFormFieldFocus,
+    handleSubmit,
+  };
 }

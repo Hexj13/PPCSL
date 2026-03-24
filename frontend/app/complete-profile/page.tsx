@@ -195,7 +195,7 @@ function CompleteProfileContent() {
 
   useEffect(() => {
     if (isInitialized && !user) {
-      router.push('/login');
+      router.push('/sign');
       return;
     }
 

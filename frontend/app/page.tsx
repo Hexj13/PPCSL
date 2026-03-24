@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 import { BackgroundDecorations } from '@/components/BackgroundDecorations';
 import { HomeHero } from '@/components/HomeHero';
 import { ConversionEvent } from '@/components/analytics/ConversionEvent';
-import { SearchStructuredData } from '@/components/analytics/SearchStructuredData';
+import { getSearchStructuredData } from '@/components/analytics/SearchStructuredData';
 import { DynamicPageTitle } from '@/components/common/DynamicPageTitle';
 import { ListingGrid } from '@/components/listing/ListingGrid';
 import { ScrollToFiltersButton } from '@/components/search/ScrollToFiltersButton';
@@ -517,6 +517,11 @@ export default async function Home({
   const brand = typeof params.brand === 'string' ? params.brand : null;
   const model = typeof params.model === 'string' ? params.model : null;
   const initialData = await getListings(withListingGridDefaultLimit(params));
+  const searchStructuredData = await getSearchStructuredData({
+    brand,
+    model,
+    listings: initialData.data,
+  });
 
   return (
     <div>
@@ -524,7 +529,7 @@ export default async function Home({
       <ConversionEvent />
       <SearchFiltersLimitToast />
       <DynamicPageTitle />
-      <SearchStructuredData brand={brand} model={model} listings={initialData.data} />
+      {searchStructuredData}
       <HomeHero />
 
       <SearchFiltersWrapper />

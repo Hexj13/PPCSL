@@ -221,6 +221,11 @@ export interface LoginDto {
   password: string;
 }
 
+export interface ChangePasswordDto {
+  currentPassword: string;
+  newPassword: string;
+}
+
 export interface PaginationMeta {
   page?: number;
   limit?: number;

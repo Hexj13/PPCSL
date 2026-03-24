@@ -23,6 +23,7 @@ export interface TranslationsPart1 {
     login: string;
     loginShort: string;
     register: string;
+    loginAndRegister: string;
   };
   home: {
     title: string;
@@ -34,6 +35,10 @@ export interface TranslationsPart1 {
   listingsPage: {
     title: string;
     description: string;
+  };
+  errors: {
+    smsHourlyLimit: string;
+    maxSmsCodeAttempts: string;
   };
   board: {
     title: string;
@@ -172,6 +177,10 @@ export interface TranslationsPart1 {
     dataPreparationError: string;
     alreadyHaveAccount: string;
   };
+  sign: {
+    pageTitle: string;
+    greeting: string;
+  };
   completeProfile: {
     title: string;
     description: string;
@@ -271,6 +280,11 @@ export interface TranslationsPart1 {
     removeFromFavorites: string;
     addToFavoritesError: string;
     removeFromFavoritesError: string;
+    compareAddToComparisonAria: string;
+    compareRemoveFromComparisonAria: string;
+    favoriteAddAria: string;
+    favoriteRemoveAria: string;
+    favoriteOwnListingAria: string;
     photoUploaded: string;
     photoUploadError: string;
     createError: string;
@@ -403,6 +417,7 @@ export interface TranslationsPart1 {
     removeFromFavorites: string;
     yourListing: string;
     cannotAddOwnListing: string;
+    cannotFavoriteOwnListingToast: string;
     compare: string;
     alreadyInComparison: string;
     cannotCompareMore: string;

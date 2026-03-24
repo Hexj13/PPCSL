@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
+import { isHideFooterPath, isProfilePhoneFlowPath } from '@/components/layout/header-flow-paths';
 import { CreateListingButton } from '@/components/listing/CreateListingButton';
 import type { User } from '@/lib/api';
 
@@ -31,13 +33,19 @@ export function UserMobileNav({
   onClose,
   t,
 }: UserMobileNavProps) {
-  const showLang = !isAuthPage && !isErrorPage;
+  const pathname = usePathname();
+  const showLang =
+    ((!isAuthPage && !isErrorPage) || (pathname === '/sign' && !isErrorPage)) &&
+    !isProfilePhoneFlowPath(pathname);
+  const showCreateListingInDrawer = !isHideFooterPath(pathname);
 
   const linkProps = { onClick: onClose, className: mobileNavLinkClasses };
 
   return (
     <div className="flex flex-col gap-4">
-      <CreateListingButton variant="mobile" onClick={onClose} className="py-3.5!" />
+      {showCreateListingInDrawer && (
+        <CreateListingButton variant="mobile" onClick={onClose} className="py-3.5!" />
+      )}
       <Link href="/my-listings" {...linkProps}>
         <DocumentsIcon className={iconClass} />
         <span suppressHydrationWarning>{t('header.myListings')}</span>

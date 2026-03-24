@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 
 import { ConversionEvent } from '@/components/analytics/ConversionEvent';
-import { SearchStructuredData } from '@/components/analytics/SearchStructuredData';
+import { getSearchStructuredData } from '@/components/analytics/SearchStructuredData';
 import { ListingGrid } from '@/components/listing/ListingGrid';
 import { ScrollToFiltersButton } from '@/components/search/ScrollToFiltersButton';
 import { SearchFilters } from '@/components/search/SearchFilters';
@@ -109,11 +109,12 @@ export default async function ListingsPage({
   const params = (await (searchParams ?? Promise.resolve(undefined))) ?? {};
   const brand = typeof params.brand === 'string' ? params.brand : null;
   const model = typeof params.model === 'string' ? params.model : null;
+  const searchStructuredData = await getSearchStructuredData({ brand, model });
 
   return (
     <div>
       <ConversionEvent />
-      <SearchStructuredData brand={brand} model={model} />
+      {searchStructuredData}
 
       <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-6 text-primary-900">
         {t.listingsPage.title}

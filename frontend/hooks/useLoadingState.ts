@@ -25,9 +25,12 @@ export function useLoadingState({
   const [visible, setVisible] = useState(immediate && isLoading);
   const delayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const minDisplayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const loadingStartTimeRef = useRef<number | null>(null);
+  const visibilityStartRef = useRef<number | null>(null);
   const isMountedRef = useRef(true);
+  const isLoadingRef = useRef(isLoading);
   const pendingCallbacksRef = useRef<Array<() => void>>([]);
+
+  isLoadingRef.current = isLoading;
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -42,24 +45,41 @@ export function useLoadingState({
     };
   }, []);
 
+  const runPendingCallbacks = () => {
+    const callbacks = [...pendingCallbacksRef.current];
+    pendingCallbacksRef.current = [];
+    callbacks.forEach((callback) => {
+      try {
+        callback();
+      } catch (error) {
+        console.error('Error in afterHidden callback:', error);
+      }
+    });
+  };
+
   useEffect(() => {
     if (isLoading) {
       if (minDisplayTimeoutRef.current) {
         clearTimeout(minDisplayTimeoutRef.current);
         minDisplayTimeoutRef.current = null;
       }
-      if (loadingStartTimeRef.current === null) {
-        loadingStartTimeRef.current = Date.now();
-
+      if (visible && visibilityStartRef.current === null) {
+        visibilityStartRef.current = Date.now();
+      }
+      if (!visible) {
         if (immediate) {
+          visibilityStartRef.current = Date.now();
           if (isMountedRef.current) {
             setVisible(true);
           }
-        } else {
+        } else if (!delayTimeoutRef.current) {
           delayTimeoutRef.current = setTimeout(() => {
-            if (isMountedRef.current) {
-              setVisible(true);
+            delayTimeoutRef.current = null;
+            if (!isMountedRef.current || !isLoadingRef.current) {
+              return;
             }
+            visibilityStartRef.current = Date.now();
+            setVisible(true);
           }, showDelay);
         }
       }
@@ -69,47 +89,36 @@ export function useLoadingState({
         delayTimeoutRef.current = null;
       }
 
-      if (visible && loadingStartTimeRef.current !== null) {
-        const elapsedTime = Date.now() - loadingStartTimeRef.current;
-        const remainingTime = minDisplayTime - elapsedTime;
+      if (!visible) {
+        visibilityStartRef.current = null;
+        return;
+      }
 
-        if (remainingTime > 0) {
-          minDisplayTimeoutRef.current = setTimeout(() => {
-            if (isMountedRef.current) {
-              setVisible(false);
-              loadingStartTimeRef.current = null;
+      const start = visibilityStartRef.current;
+      if (start === null) {
+        if (isMountedRef.current) {
+          setVisible(false);
+        }
+        return;
+      }
 
-              const callbacks = [...pendingCallbacksRef.current];
-              pendingCallbacksRef.current = [];
-              callbacks.forEach((callback) => {
-                try {
-                  callback();
-                } catch (error) {
-                  console.error('Error in afterHidden callback:', error);
-                }
-              });
-            }
-          }, remainingTime);
-        } else {
+      const elapsedTime = Date.now() - start;
+      const remainingTime = minDisplayTime - elapsedTime;
+
+      if (remainingTime > 0) {
+        minDisplayTimeoutRef.current = setTimeout(() => {
+          minDisplayTimeoutRef.current = null;
           if (isMountedRef.current) {
             setVisible(false);
-            loadingStartTimeRef.current = null;
-
-            const callbacks = [...pendingCallbacksRef.current];
-            pendingCallbacksRef.current = [];
-            callbacks.forEach((callback) => {
-              try {
-                callback();
-              } catch (error) {
-                console.error('Error in afterHidden callback:', error);
-              }
-            });
+            visibilityStartRef.current = null;
+            runPendingCallbacks();
           }
-        }
+        }, remainingTime);
       } else {
         if (isMountedRef.current) {
           setVisible(false);
-          loadingStartTimeRef.current = null;
+          visibilityStartRef.current = null;
+          runPendingCallbacks();
         }
       }
     }
@@ -125,7 +134,7 @@ export function useLoadingState({
   }, [isLoading, showDelay, minDisplayTime, immediate, visible]);
 
   const afterHidden = (callback: () => void) => {
-    if (!visible && loadingStartTimeRef.current === null) {
+    if (!visible && visibilityStartRef.current === null) {
       callback();
     } else {
       pendingCallbacksRef.current.push(callback);

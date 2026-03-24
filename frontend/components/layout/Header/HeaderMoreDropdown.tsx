@@ -5,12 +5,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ChevronDownIcon } from '@/ui';
 
-import { ScaleIcon, ShieldIcon, UserIcon } from './icons';
+import { DetailsMoreIcon, LogoutIcon, ScaleIcon, ShieldIcon, UserIcon } from './icons';
 
 type HeaderMoreDropdownProps = {
   user: { type: string };
   comparisonCount: number;
   navLinkClasses: string;
+  onLogout: () => void;
   t: (key: string) => string;
 };
 
@@ -18,6 +19,7 @@ export function HeaderMoreDropdown({
   user,
   comparisonCount,
   navLinkClasses,
+  onLogout,
   t,
 }: HeaderMoreDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -34,6 +36,11 @@ export function HeaderMoreDropdown({
     return () => document.removeEventListener('mousedown', handleClick);
   }, [isOpen, close]);
 
+  const handleLogout = () => {
+    close();
+    onLogout();
+  };
+
   return (
     <div ref={ref} className="relative">
       <button
@@ -43,6 +50,7 @@ export function HeaderMoreDropdown({
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
+        <DetailsMoreIcon className="w-4 h-4 shrink-0" />
         <span suppressHydrationWarning>{t('header.more')}</span>
         <ChevronDownIcon
           className={`w-4 h-4 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
@@ -57,7 +65,7 @@ export function HeaderMoreDropdown({
             href="/compare"
             role="menuitem"
             onClick={close}
-            className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-text-primary transition-colors hover-only:hover:bg-primary-500/10"
+            className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-text-primary transition-colors hover-only:hover:bg-primary-500/10 xl:hidden"
           >
             <ScaleIcon className="w-4 h-4 shrink-0 text-primary-700" />
             <span>{t('header.compare')}</span>
@@ -87,6 +95,15 @@ export function HeaderMoreDropdown({
               <span>{t('header.admin')}</span>
             </Link>
           )}
+          <button
+            type="button"
+            role="menuitem"
+            onClick={handleLogout}
+            className="flex w-full cursor-pointer items-center gap-2 border-0 bg-transparent px-4 py-3 text-left text-sm text-text-primary transition-colors hover-only:hover:bg-primary-500/10"
+          >
+            <LogoutIcon className="w-4 h-4 shrink-0 text-primary-700" />
+            <span suppressHydrationWarning>{t('header.logout')}</span>
+          </button>
         </div>
       )}
     </div>

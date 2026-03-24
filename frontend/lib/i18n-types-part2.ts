@@ -243,6 +243,8 @@ export interface TranslationsPart2 {
       Diesel: string;
       Electric: string;
       Hybrid: string;
+      MHEV: string;
+      PHEV: string;
       LPG: string;
     };
     transmission: {
@@ -408,6 +410,13 @@ export interface TranslationsPart2 {
       ogAlt: string;
     };
     register: {
+      title: string;
+      description: string;
+      ogTitle: string;
+      ogDescription: string;
+      ogAlt: string;
+    };
+    sign: {
       title: string;
       description: string;
       ogTitle: string;

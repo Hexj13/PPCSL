@@ -43,6 +43,8 @@ const mockT = (key: string): string => {
     'vehicleOptions.fuel.Diesel': 'Diesel',
     'vehicleOptions.fuel.Electric': 'Electric',
     'vehicleOptions.fuel.Hybrid': 'Hybrid',
+    'vehicleOptions.fuel.MHEV': 'Hybrid (MHEV)',
+    'vehicleOptions.fuel.PHEV': 'Hybrid (PHEV)',
     'vehicleOptions.fuel.LPG': 'LPG',
   };
   return translations[key] || key;
@@ -294,6 +296,14 @@ describe('utils', () => {
 
     it('should format Hybrid', () => {
       expect(formatFuel('Hybrid', mockT)).toBe('Hybrid');
+    });
+
+    it('should format MHEV', () => {
+      expect(formatFuel('MHEV', mockT)).toBe('Hybrid (MHEV)');
+    });
+
+    it('should format PHEV', () => {
+      expect(formatFuel('PHEV', mockT)).toBe('Hybrid (PHEV)');
     });
 
     it('should format LPG', () => {

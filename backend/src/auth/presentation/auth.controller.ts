@@ -26,6 +26,11 @@ const getThrottleLimit = (prodLimit: number, devLimit: number = prodLimit * 100)
   default: { limit: isProduction ? prodLimit : devLimit, ttl: 60000 },
 });
 
+const getSmsIpThrottle = (prodLimit: number, devLimit: number = prodLimit * 50) => ({
+  default: { limit: isProduction ? prodLimit : devLimit, ttl: 3_600_000 },
+});
+
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { ChangePhoneRequestDto, ChangePhoneVerifyDto } from './dto/change-phone.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
@@ -292,6 +297,35 @@ export class AuthController {
     return user;
   }
 
+  @ApiOperation({ summary: 'Change password (authenticated)' })
+  @ApiBearerAuth('JWT-auth')
+  @ApiResponse({
+    status: 200,
+    description: 'Password changed successfully',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean', example: true },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid current password or validation error' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @Throttle(getThrottleLimit(5, 200))
+  @UseGuards(JwtAuthGuard)
+  @Post('change-password')
+  async changePassword(
+    @Request() req: AuthenticatedRequest,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ) {
+    await this.authService.changePassword(req.user.id, changePasswordDto);
+    return { success: true };
+  }
+
   @ApiOperation({
     summary: 'Delete user account',
     description:
@@ -516,7 +550,7 @@ export class AuthController {
       },
     },
   })
-  @Throttle(getThrottleLimit(3, 100))
+  @Throttle(getSmsIpThrottle(30, 500))
   @Post('send-sms')
   async sendSms(@Body() sendSmsDto: SendSmsDto) {
     return this.authService.sendVerificationSms(sendSmsDto.phone);
@@ -659,7 +693,7 @@ export class AuthController {
       },
     },
   })
-  @Throttle(getThrottleLimit(3, 100))
+  @Throttle(getSmsIpThrottle(30, 500))
   @UseGuards(IpBlockGuard)
   @HttpCode(200)
   @Post('request-password-reset')

@@ -13,13 +13,14 @@ import {
 import { PriceDisplay } from '@/components/listing/PriceDisplay';
 import { useI18n } from '@/components/providers/I18nProvider';
 import { useCities } from '@/hooks/useCities';
+import {
+  getCompareButtonClassName,
+  useListingCardComparison,
+} from '@/hooks/useListingCardComparison';
+import { getFavoriteButtonClassName, useListingCardFavorite } from '@/hooks/useListingCardFavorite';
 import { useListingCardImageError } from '@/hooks/useListingCardImageError';
 import { useTranslation } from '@/hooks/useTranslation';
-import { analytics } from '@/lib/analytics';
 import type { Listing } from '@/lib/api';
-import { favoritesApi } from '@/lib/api';
-import { useAuthStore, useFavoritesStore } from '@/lib/store';
-import { toast } from '@/lib/toast';
 import {
   formatDateShort,
   formatDateRelative,
@@ -39,132 +40,8 @@ interface ListingCardProps {
   linkPrefetch?: boolean;
 }
 
-function useListingCardFavorite(
-  listing: Listing,
-  displayTitle: string,
-  forceFavorite: boolean,
-  onRemove: (() => void) | undefined,
-) {
-  const { user } = useAuthStore();
-  const { favorites, add: addFavorite, remove: removeFavorite } = useFavoritesStore();
-  const storeIsFavorite = useMemo(
-    () => forceFavorite || (favorites && favorites.includes(listing.id)),
-    [forceFavorite, listing.id, favorites],
-  );
-  const [localIsFavorite, setLocalIsFavorite] = React.useState(storeIsFavorite);
-  const [isToggling, setIsToggling] = React.useState(false);
-  const isTogglingRef = React.useRef(false);
-  const { t } = useTranslation();
-
-  React.useEffect(() => {
-    setLocalIsFavorite(storeIsFavorite);
-  }, [storeIsFavorite]);
-
-  const isOwnListing = useMemo(
-    () => !!(user && listing.user && user.id === listing.user.id),
-    [user, listing.user],
-  );
-
-  const handleRemove = useCallback(() => {
-    removeFavorite(listing.id);
-    onRemove?.();
-    favoritesApi
-      .remove(listing.id)
-      .then(() => {
-        analytics.removeFromWishlist(listing.id);
-        toast.success(t('listings.removeFromFavorites'));
-      })
-      .catch(() => {
-        setLocalIsFavorite(true);
-        addFavorite(listing.id);
-        toast.error(t('listings.removeFromFavoritesError'));
-      })
-      .finally(() => {
-        setIsToggling(false);
-        isTogglingRef.current = false;
-      });
-  }, [listing.id, removeFavorite, addFavorite, onRemove, t]);
-
-  const handleAdd = useCallback(() => {
-    addFavorite(listing.id);
-    favoritesApi
-      .add(listing.id)
-      .then(() => {
-        analytics.addToWishlist(listing.id, { title: displayTitle, price: listing.price });
-        toast.success(t('listings.addToFavorites'));
-      })
-      .catch(() => {
-        setLocalIsFavorite(false);
-        removeFavorite(listing.id);
-        toast.error(t('listings.addToFavoritesError'));
-      })
-      .finally(() => {
-        setIsToggling(false);
-        isTogglingRef.current = false;
-      });
-  }, [listing.id, listing.price, displayTitle, addFavorite, removeFavorite, t]);
-
-  const handleToggleFavorite = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (!user) {
-        toast.error(t('common.loginRequired'));
-        return;
-      }
-      if (isTogglingRef.current) return;
-
-      const newFavoriteState = !localIsFavorite;
-      setIsToggling(true);
-      isTogglingRef.current = true;
-      setLocalIsFavorite(newFavoriteState);
-
-      startTransition(() => {
-        if (localIsFavorite) {
-          handleRemove();
-          return;
-        }
-        if (isOwnListing) {
-          setLocalIsFavorite(false);
-          setIsToggling(false);
-          isTogglingRef.current = false;
-          return;
-        }
-        handleAdd();
-      });
-    },
-    [user, localIsFavorite, isOwnListing, t, handleRemove, handleAdd],
-  );
-
-  return {
-    isFavorite: localIsFavorite,
-    isToggling,
-    isOwnListing,
-    handleToggleFavorite,
-  };
-}
-
 const RESET_TO_FIRST_DELAY_MS = 10000;
 const REWIND_STEP_MS = 400;
-
-function getFavoriteButtonProps(
-  favoriteDisabled: boolean,
-  isFavorite: boolean,
-  isOwnListing: boolean,
-) {
-  const favoriteButtonClass = favoriteDisabled
-    ? 'opacity-30 cursor-not-allowed'
-    : isFavorite
-      ? 'opacity-100 hover-only:hover:border-primary-400'
-      : 'opacity-60 hover-only:hover:opacity-100 hover-only:hover:border-primary-400';
-  const favoriteAriaLabel =
-    !isFavorite && isOwnListing
-      ? 'Не можете да додадете ваше објавување во омилени'
-      : isFavorite
-        ? 'Отстрани од омилени'
-        : 'Додади во омилени';
-  return { favoriteButtonClass, favoriteAriaLabel };
-}
 
 function ListingCardBody({
   listing,
@@ -262,7 +139,7 @@ function CarouselNavButtons({
   const hitAreaClass =
     'absolute w-14 h-14 flex z-10 touch-manipulation touch-pan-y pointer-events-auto lg:w-10 lg:h-10';
   const iconWrapClass =
-    'w-10 h-10 shrink-0 rounded-full bg-primary-500 flex items-center justify-center transition-all shadow-lg text-white';
+    'w-10 h-10 shrink-0 rounded-full bg-primary-500 flex items-center justify-center transition-all duration-300 ease-out shadow-lg text-white';
   return (
     <>
       <button
@@ -432,6 +309,16 @@ function ListingCardComponent({
     onRemove,
   );
 
+  const { isInComparison, handleToggleComparison } = useListingCardComparison(
+    listing,
+    displayTitle,
+  );
+  const showCompareButton = listing.status !== 'Closed';
+  const compareButtonClass = getCompareButtonClassName(isInComparison);
+  const compareAriaLabel = isInComparison
+    ? t('listings.compareRemoveFromComparisonAria')
+    : t('listings.compareAddToComparisonAria');
+
   const [imageErrors, setImageErrors] = React.useState<Set<number>>(() => new Set());
   const [isHydrated, setIsHydrated] = React.useState(false);
   const [isCarouselBusy, setIsCarouselBusy] = React.useState(false);
@@ -469,12 +356,13 @@ function ListingCardComponent({
     }
   }, []);
 
-  const favoriteDisabled = (!isFavorite && isOwnListing) || isToggling;
-  const { favoriteButtonClass, favoriteAriaLabel } = getFavoriteButtonProps(
-    favoriteDisabled,
-    isFavorite,
-    isOwnListing,
-  );
+  const favoriteDisabled = isToggling;
+  const favoriteButtonClass = getFavoriteButtonClassName(isToggling, isFavorite);
+  const favoriteAriaLabel = isFavorite
+    ? t('listings.favoriteRemoveAria')
+    : isOwnListing
+      ? t('listings.favoriteOwnListingAria')
+      : t('listings.favoriteAddAria');
 
   const goCarouselPrev = useCallback(() => {
     if (isAutoRewinding) return;
@@ -527,6 +415,12 @@ function ListingCardComponent({
     imageErrors,
     setImageErrors,
   );
+
+  const compareTopClassName = useMemo(() => {
+    if (isFavorite) return 'top-14';
+    if (isInComparison) return 'top-14 lg:top-3 lg:group-hover:top-14';
+    return 'top-14';
+  }, [isFavorite, isInComparison]);
 
   return (
     <div
@@ -584,7 +478,7 @@ function ListingCardComponent({
           <button
             onClick={handleToggleFavorite}
             disabled={favoriteDisabled}
-            className={`absolute top-3 right-3 w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center transition-all shadow-lg z-10 pointer-events-auto ${favoriteButtonClass}`}
+            className={`absolute top-3 right-3 z-10 box-border flex h-10 w-10 items-center justify-center rounded-full border-2 border-transparent bg-primary-500 shadow-lg transition-[opacity,border-color] duration-300 ease-out pointer-events-auto ${favoriteButtonClass}`}
             aria-label={favoriteAriaLabel}
           >
             <svg
@@ -601,6 +495,28 @@ function ListingCardComponent({
               />
             </svg>
           </button>
+          {showCompareButton && (
+            <button
+              type="button"
+              onClick={handleToggleComparison}
+              className={`absolute right-3 z-10 box-border flex h-10 w-10 items-center justify-center rounded-full border-2 border-transparent bg-primary-500 shadow-lg transition-[top,opacity,border-color] duration-300 ease-out pointer-events-auto ${compareTopClassName} ${compareButtonClass}`}
+              aria-label={compareAriaLabel}
+            >
+              <svg
+                className={`w-6 h-6 ${isInComparison ? 'text-red-400' : 'text-white'}`}
+                fill={isInComparison ? 'currentColor' : 'none'}
+                stroke={isInComparison ? 'white' : 'currentColor'}
+                strokeWidth={isInComparison ? 1.5 : 2}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"
+                />
+              </svg>
+            </button>
+          )}
         </div>
         <ListingCardBody
           listing={listing}

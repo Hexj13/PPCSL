@@ -8,7 +8,6 @@ interface ListingPageActionsProps {
   listing: Listing;
   isInitialized: boolean;
   isInComparison: boolean;
-  comparisonCount: () => number;
   isFavorite: boolean;
   isOwnListing: boolean;
   canPromote: boolean;
@@ -22,7 +21,6 @@ export function ListingPageActions({
   listing,
   isInitialized,
   isInComparison,
-  comparisonCount,
   isFavorite,
   isOwnListing,
   canPromote,
@@ -67,13 +65,7 @@ export function ListingPageActions({
       ) : (
         <button
           onClick={onToggleFavorite}
-          disabled={isOwnListing}
-          className={`w-full sm:w-auto sm:max-w-fit h-12 py-2 sm:h-auto sm:min-h-0 sm:py-3.5 md:py-2.5 px-8 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
-            isOwnListing
-              ? 'bg-primary-500/10 text-primary-500 border-2 border-primary-500 cursor-not-allowed opacity-50'
-              : 'text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10 select-none'
-          }`}
-          title={isOwnListing ? t('listingDetail.cannotAddOwnListing') : ''}
+          className="w-full sm:w-auto sm:max-w-fit h-12 py-2 sm:h-auto sm:min-h-0 sm:py-3.5 md:py-2.5 px-8 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10 select-none"
         >
           <svg
             className="w-3.5 h-3.5 md:w-4 md:h-4"
@@ -108,17 +100,7 @@ export function ListingPageActions({
           ) : (
             <button
               onClick={onToggleComparison}
-              disabled={comparisonCount() >= 3 && !isInComparison}
-              className={`w-full sm:w-auto sm:max-w-fit h-12 py-2 sm:h-auto sm:min-h-0 sm:py-3.5 md:py-2.5 px-8 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
-                comparisonCount() >= 3 && !isInComparison
-                  ? 'bg-primary-500/10 text-primary-500 border-2 border-primary-500 cursor-not-allowed opacity-50'
-                  : 'text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10 select-none'
-              }`}
-              title={
-                comparisonCount() >= 3 && !isInComparison
-                  ? t('listingDetail.cannotCompareMore')
-                  : ''
-              }
+              className="w-full sm:w-auto sm:max-w-fit h-12 py-2 sm:h-auto sm:min-h-0 sm:py-3.5 md:py-2.5 px-8 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10 select-none"
             >
               <svg
                 className="w-3.5 h-3.5 md:w-4 md:h-4"

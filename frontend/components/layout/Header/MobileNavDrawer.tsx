@@ -60,6 +60,8 @@ export function MobileNavDrawer({
           />
         ) : (
           <GuestMobileNav
+            comparisonCount={comparisonCount}
+            mobileNavLinkClasses={mobileNavLinkClasses}
             isAuthPage={isAuthPage}
             isErrorPage={isErrorPage}
             onSetReturnUrl={onSetReturnUrl}

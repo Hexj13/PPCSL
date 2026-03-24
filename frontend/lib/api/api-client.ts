@@ -168,8 +168,8 @@ function clearAuthAndRedirectToLogin(): void {
   if (typeof window === 'undefined') return;
   localStorage.removeItem('token');
   localStorage.removeItem('refresh_token');
-  if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
-    window.location.href = '/login';
+  if (window.location.pathname !== '/sign') {
+    window.location.href = '/sign';
   }
 }
 
@@ -179,7 +179,7 @@ function clearAuthSetReturnUrlAndRedirect(): void {
   localStorage.removeItem('refresh_token');
   const currentUrl = window.location.pathname + window.location.search;
   localStorage.setItem('returnUrl', currentUrl);
-  window.location.href = '/login';
+  window.location.href = '/sign';
 }
 
 const getErrorMessage = (error: AxiosError): string => {

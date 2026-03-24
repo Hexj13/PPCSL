@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsInt, IsNumber, IsOptional, IsUUID, Max, Min } from 'class-validator';
 
+import { fuelTypes } from '../../../common/constants';
 import { BodyType, DriveType, FuelType, TransmissionType } from '../../../common/types';
 
 export class CreateVehicleDto {
@@ -55,7 +56,7 @@ export class CreateVehicleDto {
 
   @ApiPropertyOptional({
     example: 'Petrol',
-    enum: ['Petrol', 'Diesel', 'Electric', 'Hybrid', 'LPG'],
+    enum: fuelTypes,
     description: 'Fuel type',
   })
   @IsOptional()

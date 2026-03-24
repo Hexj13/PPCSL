@@ -1,12 +1,14 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
+
 import type { User } from '@/lib/api';
 
 import { GuestDesktopNav } from './GuestDesktopNav';
 import { NavSkeleton } from './NavSkeleton';
-import { UserDesktopNav } from './UserDesktopNav';
+import { UserDesktopNavActions, UserDesktopNavLinks } from './UserDesktopNav';
 
-type DesktopNavProps = {
+export type DesktopNavProps = {
   user: User | null;
   showSkeleton: boolean;
   showNav: boolean;
@@ -19,36 +21,79 @@ type DesktopNavProps = {
   t: (key: string) => string;
 };
 
-export function DesktopNav({
+export function DesktopNavMenuArea({
   user,
   showSkeleton,
   showNav,
   comparisonCount,
-  isAuthPage,
-  isErrorPage,
   navLinkClasses,
   onLogout,
-  onSetReturnUrl,
   t,
-}: DesktopNavProps) {
+}: Pick<
+  DesktopNavProps,
+  'user' | 'showSkeleton' | 'showNav' | 'comparisonCount' | 'navLinkClasses' | 'onLogout' | 't'
+>) {
   if (!showNav) return null;
 
+  const showLinksSkeleton = Boolean(showSkeleton && user);
+  const showUserLinks = Boolean(user) && !showSkeleton;
+
+  if (!showLinksSkeleton && !showUserLinks) return null;
+
   return (
-    <nav className="hidden lg:flex gap-2 xl:gap-4 items-center">
-      {showSkeleton ? (
-        <NavSkeleton variant="desktop" />
-      ) : user ? (
-        <UserDesktopNav
+    <div className="hidden lg:flex gap-2 xl:gap-4 items-center min-w-0 shrink-0">
+      {showUserLinks && user && (
+        <UserDesktopNavLinks
           user={user}
           comparisonCount={comparisonCount}
-          isAuthPage={isAuthPage}
-          isErrorPage={isErrorPage}
           navLinkClasses={navLinkClasses}
           onLogout={onLogout}
           t={t}
         />
+      )}
+      {showLinksSkeleton && <NavSkeleton variant="desktopLinks" />}
+    </div>
+  );
+}
+
+export function DesktopNavActions({
+  user,
+  showSkeleton,
+  showNav,
+  comparisonCount,
+  navLinkClasses,
+  isAuthPage,
+  isErrorPage,
+  onSetReturnUrl,
+  t,
+}: Pick<
+  DesktopNavProps,
+  | 'user'
+  | 'showSkeleton'
+  | 'showNav'
+  | 'comparisonCount'
+  | 'navLinkClasses'
+  | 'isAuthPage'
+  | 'isErrorPage'
+  | 'onSetReturnUrl'
+  | 't'
+>) {
+  const pathname = usePathname();
+  if (!showNav) return null;
+
+  const actionsSkeletonVariant =
+    !user && pathname === '/sign' ? 'desktopSignGuest' : 'desktopActions';
+
+  return (
+    <nav className="hidden lg:flex gap-2 xl:gap-4 items-center shrink-0">
+      {showSkeleton ? (
+        <NavSkeleton variant={actionsSkeletonVariant} />
+      ) : user ? (
+        <UserDesktopNavActions isAuthPage={isAuthPage} isErrorPage={isErrorPage} />
       ) : (
         <GuestDesktopNav
+          comparisonCount={comparisonCount}
+          navLinkClasses={navLinkClasses}
           isAuthPage={isAuthPage}
           isErrorPage={isErrorPage}
           onSetReturnUrl={onSetReturnUrl}

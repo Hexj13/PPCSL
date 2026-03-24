@@ -225,6 +225,10 @@ export function formatFuel(fuel: string | undefined, t: (_key: string) => string
       return t('vehicleOptions.fuel.Electric');
     case 'Hybrid':
       return t('vehicleOptions.fuel.Hybrid');
+    case 'MHEV':
+      return t('vehicleOptions.fuel.MHEV');
+    case 'PHEV':
+      return t('vehicleOptions.fuel.PHEV');
     case 'LPG':
       return t('vehicleOptions.fuel.LPG');
     default:

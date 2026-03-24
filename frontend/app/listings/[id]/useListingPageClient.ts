@@ -157,7 +157,7 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
         }
         localStorage.setItem('returnUrl', `/listings/${id}`);
       }
-      router.push('/login');
+      router.push('/sign');
       return;
     }
     if (isFavorite) {
@@ -173,7 +173,10 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
       }
       return;
     }
-    if (listing?.user && user.id === listing.user.id) return;
+    if (listing?.user && user.id === listing.user.id) {
+      toast.warning(t('listingDetail.cannotFavoriteOwnListingToast'));
+      return;
+    }
     try {
       await favoritesApi.add(id);
       addFavorite(id);
@@ -187,18 +190,6 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
   }, [user, id, isFavorite, listing, router, t, addFavorite, removeFavorite, setIsFavorite]);
 
   const handleToggleComparison = useCallback(() => {
-    if (!user) {
-      if (typeof window !== 'undefined') {
-        const pendingComparisons = JSON.parse(localStorage.getItem('pendingComparisons') || '[]');
-        if (!pendingComparisons.includes(id)) {
-          pendingComparisons.push(id);
-          localStorage.setItem('pendingComparisons', JSON.stringify(pendingComparisons));
-        }
-        localStorage.setItem('returnUrl', `/listings/${id}`);
-      }
-      router.push('/login');
-      return;
-    }
     if (isInComparison) {
       removeComparison(id);
       setIsInComparison(false);
@@ -207,7 +198,7 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
       return;
     }
     if (comparisonCount() >= 3) {
-      toast.error(t('listingDetail.cannotCompareMore'));
+      toast.warning(t('listingDetail.cannotCompareMore'));
       return;
     }
     const added = addComparison(id);
@@ -219,7 +210,6 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
       toast.error(t('listingDetail.alreadyInComparisonError'));
     }
   }, [
-    user,
     id,
     isInComparison,
     comparisonCount,
@@ -227,7 +217,6 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
     removeComparison,
     setIsInComparison,
     listing,
-    router,
     t,
   ]);
 
@@ -327,7 +316,6 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
     loadingPrevious,
     activeListingsCount,
     listingRef,
-    comparisonCount,
     handleToggleFavorite,
     handleToggleComparison,
     handlePromoteClick,

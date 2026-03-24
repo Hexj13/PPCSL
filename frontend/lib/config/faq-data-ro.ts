@@ -18,7 +18,7 @@ export const faqRo: FAQConfig = {
       question: 'Cum mă pot înregistra?',
       answer: [
         'Pentru a vă înregistra pe Kupito:',
-        '1. Faceți clic pe butonul "Înregistrare" din colțul din dreapta sus',
+        '1. Deschideți pagina de autentificare și înregistrare din colțul din dreapta sus (pe ecrane mici — din meniu), apoi selectați fila «Înregistrare»',
         '2. Selectați dacă sunteți persoană fizică sau juridică',
         '3. Completați formularul: telefon (obligatoriu), parolă (obligatoriu), mesajere (opțional: Viber, WhatsApp, Telegram). Pentru persoana juridică — și denumirea companiei (obligatoriu)',
         '4. Acceptați termenii și condițiile și trimiteți formularul',
@@ -203,8 +203,8 @@ export const faqRo: FAQConfig = {
         '6. Pe pagina de comparație veți vedea un tabel detaliat cu toate specificațiile tehnice, caracteristicile și prețurile',
         '7. Puteți elimina un autoturism din comparație făcând clic pe iconița de ștergere',
         '8. Puteți șterge toate autoturismele din comparație cu butonul "Șterge"',
-        'Dacă nu sunteți conectat, puteți adăuga autoturisme în comparație, dar veți fi redirecționat către pagina de conectare. După conectare, autoturismele vor fi adăugate automat în comparație.',
-        'Datele de comparație sunt stocate local și sunt șterse la deconectare.',
+        'Comparația funcționează și pentru vizitatori neautentificați: puteți adăuga anunțuri fără să vă conectați. După autentificare, lista se actualizează din datele salvate local (anunțurile care nu mai există sunt eliminate; rămân cel mult 3 vehicule).',
+        'Lista de comparație este stocată local în browser și se golește la deconectare.',
       ],
     },
     {

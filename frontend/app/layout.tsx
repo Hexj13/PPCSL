@@ -4,7 +4,6 @@ import { cookies } from 'next/headers';
 
 import { PageScrollTracker } from '@/components/PageScrollTracker';
 import { ProfileSaveSuccessToast } from '@/components/ProfileSaveSuccessToast';
-import { RegisterPageBodyClass } from '@/components/RegisterPageBodyClass';
 import { TawkTo } from '@/components/TawkTo';
 import { ExternalLinkTracker } from '@/components/analytics/ExternalLinkTracker';
 import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics';
@@ -14,7 +13,7 @@ import {
   GoogleTagManagerNoscript,
 } from '@/components/analytics/GoogleTagManager';
 import { OrganizationSchema } from '@/components/analytics/OrganizationSchema';
-import { Footer } from '@/components/layout/Footer';
+import { ConditionalFooter } from '@/components/layout/ConditionalFooter';
 import { Header } from '@/components/layout/Header';
 import { ScrollReset } from '@/components/layout/ScrollReset';
 import { AuthProvider } from '@/components/providers/AuthProvider';
@@ -174,7 +173,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <CookieConsent />
         <I18nProvider initialLocale={initialLocale}>
           <AuthProvider>
-            <RegisterPageBodyClass />
             <ProfileSaveSuccessToast />
             <ServiceWorkerRegistration />
             <ScrollReset />
@@ -183,10 +181,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <div className="min-h-screen flex flex-col">
               <Header />
               <OfflineBanner />
-              <main className="grow container mx-auto px-3 sm:px-4 py-6 md:py-8 register-page-main">
-                {children}
-              </main>
-              <Footer />
+              <main className="grow container mx-auto px-3 sm:px-4 py-6 md:py-8">{children}</main>
+              <ConditionalFooter />
             </div>
             <Toaster
               position="top-right"
@@ -200,7 +196,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   minWidth: '320px',
                   maxWidth: '400px',
                   width: '100%',
-                  background: '#F5F5F5',
+                  background: '#FFFFFF',
                   color: '#1B1B1B',
                   border: '2px solid rgba(74, 154, 126, 0.4)',
                   borderRadius: '0.75rem',
@@ -208,12 +204,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
                 },
                 success: {
-                  iconTheme: {
-                    primary: '#28A745',
-                    secondary: '#ffffff',
-                  },
                   style: {
-                    background: '#F5F5F5',
+                    background: '#FFFFFF',
                     color: '#1B1B1B',
                     border: '2px solid rgba(40, 167, 69, 0.6)',
                     borderRadius: '0.75rem',
@@ -223,12 +215,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   },
                 },
                 error: {
-                  iconTheme: {
-                    primary: '#DC3545',
-                    secondary: '#ffffff',
-                  },
                   style: {
-                    background: '#F5F5F5',
+                    background: '#FFFFFF',
                     color: '#1B1B1B',
                     border: '2px solid rgba(220, 53, 69, 0.6)',
                     borderRadius: '0.75rem',

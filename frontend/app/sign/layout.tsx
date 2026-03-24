@@ -13,8 +13,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = getServerTranslations(locale);
 
   return {
-    title: t.metadata.login.title,
-    description: t.metadata.login.description,
+    title: t.metadata.sign.title,
+    description: t.metadata.sign.description,
     robots: {
       index: false,
       follow: false,
@@ -24,19 +24,19 @@ export async function generateMetadata(): Promise<Metadata> {
       },
     },
     alternates: {
-      canonical: `${siteUrl}/login`,
+      canonical: `${siteUrl}/sign`,
     },
     openGraph: {
       type: 'website',
-      url: `${siteUrl}/login`,
-      title: t.metadata.login.ogTitle,
-      description: t.metadata.login.ogDescription,
+      url: `${siteUrl}/sign`,
+      title: t.metadata.sign.ogTitle,
+      description: t.metadata.sign.ogDescription,
       images: [
         {
           url: `${siteUrl}/og-image.jpg`,
           width: 1200,
           height: 630,
-          alt: t.metadata.login.ogAlt,
+          alt: t.metadata.sign.ogAlt,
         },
       ],
       siteName: siteConfig.name,
@@ -44,13 +44,13 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: {
       card: 'summary_large_image',
-      title: t.metadata.login.ogTitle,
-      description: t.metadata.login.ogDescription,
+      title: t.metadata.sign.ogTitle,
+      description: t.metadata.sign.ogDescription,
       images: [`${siteUrl}/og-image.jpg`],
     },
   };
 }
 
-export default function LoginLayout({ children }: { children: React.ReactNode }) {
+export default function SignLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }

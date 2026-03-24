@@ -47,7 +47,10 @@ function getRatio(fuel?: FuelType): number {
     case FuelType.Diesel:
       return 60;
     case FuelType.Hybrid:
+    case FuelType.PHEV:
       return 80;
+    case FuelType.MHEV:
+      return 75;
     case FuelType.Electric:
       return 110;
     case FuelType.LPG:

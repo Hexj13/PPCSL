@@ -9,6 +9,8 @@ export const MAX_SEARCH_BRAND_SELECTIONS = 20;
 export const MAX_SEARCH_MODEL_SELECTIONS = 20;
 export const SEARCH_FILTERS_LIMIT_ERROR_TOAST_KEY = 'kupito_search_filters_limit_error';
 
+export const SMS_HOURLY_QUOTA_RESEND_COOLDOWN_SECONDS = 3600;
+
 export function getPlatformCurrencies(): readonly string[] {
   try {
     const { loadSiteConfigSync } = require('./site-config');
@@ -20,7 +22,7 @@ export function getPlatformCurrencies(): readonly string[] {
   }
 }
 
-export const fuelTypes = ['Petrol', 'Diesel', 'Electric', 'Hybrid', 'LPG'] as const;
+export const fuelTypes = ['Petrol', 'Diesel', 'Electric', 'Hybrid', 'LPG', 'MHEV', 'PHEV'] as const;
 
 export const transmissionTypes = ['Manual', 'Automatic', 'CVT', 'Robot'] as const;
 
@@ -95,6 +97,8 @@ export const FuelType = {
   Electric: fuelTypes[2],
   Hybrid: fuelTypes[3],
   LPG: fuelTypes[4],
+  MHEV: fuelTypes[5],
+  PHEV: fuelTypes[6],
 } as const;
 
 export const TransmissionType = {

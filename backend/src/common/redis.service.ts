@@ -220,6 +220,13 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     return await this.client.incr(key);
   }
 
+  async decr(key: string): Promise<number> {
+    if (!this.client?.isOpen) {
+      throw new Error('Redis client is not connected');
+    }
+    return await this.client.decr(key);
+  }
+
   async expire(key: string, seconds: number): Promise<void> {
     if (!this.client?.isOpen) {
       throw new Error('Redis client is not connected');

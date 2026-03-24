@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   convertToBoolean,
@@ -9,11 +9,52 @@ import {
   validateCompanyWebsiteUrl,
   validateEmail,
 } from '@/app/profile/utils';
+import { isPasswordValid, validatePassword } from '@/app/reset-password/utils';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { UpdateProfileDto } from '@/lib/api';
 import { authApi } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
+
+function hasProfileFormChanges(
+  formData: UpdateProfileDto,
+  initialData: ReturnType<typeof initializeFormData>,
+): boolean {
+  return (
+    formData.email !== initialData.email ||
+    formData.firstName !== initialData.firstName ||
+    formData.lastName !== initialData.lastName ||
+    formData.companyName !== initialData.companyName ||
+    formData.companyWebsiteUrl !== initialData.companyWebsiteUrl ||
+    formData.emailNotifications !== initialData.emailNotifications ||
+    formData.viber !== initialData.viber ||
+    formData.whatsapp !== initialData.whatsapp ||
+    formData.telegram !== initialData.telegram
+  );
+}
+
+function isProfilePasswordChangeComplete(curPw: string, neuPw: string): boolean {
+  return Boolean(curPw && neuPw) && neuPw.length <= 100 && isPasswordValid(neuPw);
+}
+
+function getProfilePasswordChangeError(
+  curPw: string,
+  neuPw: string,
+  t: (key: string) => string,
+): string | null {
+  const hasAny = Boolean(curPw || neuPw);
+  if (!hasAny || isProfilePasswordChangeComplete(curPw, neuPw)) {
+    return null;
+  }
+  if (!curPw || !neuPw) {
+    return t('profile.passwordChangeFillAllFields');
+  }
+  if (neuPw.length > 100) {
+    return t('profile.passwordChangeMaxLength');
+  }
+  const ruleError = validatePassword(neuPw, t);
+  return ruleError || null;
+}
 
 export function useProfilePage() {
   const router = useRouter();
@@ -25,14 +66,34 @@ export function useProfilePage() {
   const [emailError, setEmailError] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const hasLoadedRef = useRef(false);
   const logoutRef = useRef(logout);
   logoutRef.current = logout;
 
+  const canSave = useMemo(() => {
+    if (!user) return false;
+    if (emailError) return false;
+    if (formData.email && !validateEmail(formData.email)) return false;
+    if (
+      formData.companyWebsiteUrl?.trim() &&
+      !validateCompanyWebsiteUrl(formData.companyWebsiteUrl)
+    ) {
+      return false;
+    }
+    const initialData = initializeFormData(user);
+    const hasProfileChanges = hasProfileFormChanges(formData, initialData);
+    const cur = currentPassword.trim();
+    const neu = newPassword.trim();
+    const passwordComplete = isProfilePasswordChangeComplete(cur, neu);
+    return hasProfileChanges || passwordComplete;
+  }, [user, formData, emailError, currentPassword, newPassword]);
+
   useEffect(() => {
     if (!isInitialized) return;
     if (!token) {
-      router.push('/login');
+      router.push('/sign');
       return;
     }
     if (hasLoadedRef.current) return;
@@ -59,7 +120,7 @@ export function useProfilePage() {
       } catch {
         hasLoadedRef.current = true;
         logoutRef.current();
-        router.push('/login');
+        router.push('/sign');
       } finally {
         setLoadingProfile(false);
       }
@@ -72,16 +133,7 @@ export function useProfilePage() {
     if (!user || !hasLoadedRef.current) return;
     const newFormData = initializeFormData(user);
     setFormData((prev) => {
-      const hasChanges =
-        prev.email !== newFormData.email ||
-        prev.firstName !== newFormData.firstName ||
-        prev.lastName !== newFormData.lastName ||
-        prev.companyName !== newFormData.companyName ||
-        prev.companyWebsiteUrl !== newFormData.companyWebsiteUrl ||
-        prev.emailNotifications !== newFormData.emailNotifications ||
-        prev.viber !== newFormData.viber ||
-        prev.whatsapp !== newFormData.whatsapp ||
-        prev.telegram !== newFormData.telegram;
+      const hasChanges = hasProfileFormChanges(prev, newFormData);
       return hasChanges ? newFormData : prev;
     });
   }, [user]);
@@ -121,31 +173,39 @@ export function useProfilePage() {
         return;
       }
       const initialData = initializeFormData(user);
-      const hasChanges =
-        formData.email !== initialData.email ||
-        formData.firstName !== initialData.firstName ||
-        formData.lastName !== initialData.lastName ||
-        formData.companyName !== initialData.companyName ||
-        formData.companyWebsiteUrl !== initialData.companyWebsiteUrl ||
-        formData.emailNotifications !== initialData.emailNotifications ||
-        formData.viber !== initialData.viber ||
-        formData.whatsapp !== initialData.whatsapp ||
-        formData.telegram !== initialData.telegram;
-      if (!hasChanges) {
-        toast.success(t('profile.noChanges'));
+      const hasProfileChanges = hasProfileFormChanges(formData, initialData);
+      const curPw = currentPassword.trim();
+      const neuPw = newPassword.trim();
+      const passwordComplete = isProfilePasswordChangeComplete(curPw, neuPw);
+      const passwordError = getProfilePasswordChangeError(curPw, neuPw, t);
+      if (passwordError) {
+        toast.error(passwordError);
         return;
       }
+
+      if (!hasProfileChanges && !passwordComplete) {
+        return;
+      }
+
       setLoading(true);
       try {
-        const response = await authApi.updateProfile(formData);
-        setAuth(response.data, useAuthStore.getState().token);
-        toast.success(t('profile.updateSuccess'));
+        if (hasProfileChanges) {
+          const response = await authApi.updateProfile(formData);
+          setAuth(response.data, useAuthStore.getState().token);
+          toast.success(t('profile.updateSuccess'));
+        }
+        if (passwordComplete) {
+          await authApi.changePassword({ currentPassword: curPw, newPassword: neuPw });
+          toast.success(t('profile.passwordChangeSuccess'));
+          setCurrentPassword('');
+          setNewPassword('');
+        }
       } catch {
       } finally {
         setLoading(false);
       }
     },
-    [formData, user, setAuth, emailError, t],
+    [formData, user, setAuth, emailError, t, currentPassword, newPassword],
   );
 
   const handleDeleteAccount = useCallback(async () => {
@@ -176,6 +236,11 @@ export function useProfilePage() {
     deleting,
     handleChange,
     handleSubmit,
+    canSave,
+    currentPassword,
+    setCurrentPassword,
+    newPassword,
+    setNewPassword,
     handleDeleteAccount,
   };
 }

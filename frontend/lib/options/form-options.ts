@@ -8,6 +8,8 @@ export function getFuelOptions(t: (_key: string) => string): Array<LabeledOption
     { value: 'Diesel', label: t('vehicleOptions.fuel.Diesel') },
     { value: 'Electric', label: t('vehicleOptions.fuel.Electric') },
     { value: 'Hybrid', label: t('vehicleOptions.fuel.Hybrid') },
+    { value: 'MHEV', label: t('vehicleOptions.fuel.MHEV') },
+    { value: 'PHEV', label: t('vehicleOptions.fuel.PHEV') },
     { value: 'LPG', label: t('vehicleOptions.fuel.LPG') },
   ]);
 }

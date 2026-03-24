@@ -8,6 +8,7 @@ import { User } from '../../users/entities/user.entity';
 import { UsersService } from '../../users/application/users.service';
 
 import { AuthService } from './auth.service';
+import { ChangePasswordUseCase } from './use-cases/change-password.use-case';
 import { CheckPhoneAvailabilityUseCase } from './use-cases/check-phone-availability.use-case';
 import { DeleteAccountUseCase } from './use-cases/delete-account.use-case';
 import { GetUserProfileUseCase } from './use-cases/get-user-profile.use-case';
@@ -167,6 +168,7 @@ describe('AuthService', () => {
         VerifyPhoneChangeUseCase,
         CheckPhoneAvailabilityUseCase,
         SendVerificationSmsUseCase,
+        ChangePasswordUseCase,
       ],
     }).compile();
 

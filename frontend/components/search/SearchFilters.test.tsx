@@ -771,7 +771,7 @@ describe('SearchFilters', () => {
       fireEvent.click(saveButton);
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/login');
+        expect(mockPush).toHaveBeenCalledWith('/sign');
         expect(window.localStorage.setItem).toHaveBeenCalledWith(
           'pendingSavedFilter',
           expect.any(String),

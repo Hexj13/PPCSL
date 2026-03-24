@@ -5,8 +5,10 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { authApi } from '@/lib/api';
+import { SMS_HOURLY_QUOTA_RESEND_COOLDOWN_SECONDS } from '@/lib/constants';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
+import { smsResendCooldownButtonLabel } from '@/lib/utils';
 import { LoadingButton } from '@/ui';
 
 function VerifyPhoneChangeContent() {
@@ -19,6 +21,7 @@ function VerifyPhoneChangeContent() {
   const [loading, setLoading] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendAttempts, setResendAttempts] = useState(0);
   const [verificationAttempts, setVerificationAttempts] = useState(0);
   const [isVerificationBlocked, setIsVerificationBlocked] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -26,7 +29,7 @@ function VerifyPhoneChangeContent() {
 
   useEffect(() => {
     if (isInitialized && !user) {
-      router.push('/login');
+      router.push('/sign');
       return;
     }
   }, [user, isInitialized, router]);
@@ -178,7 +181,7 @@ function VerifyPhoneChangeContent() {
       const axiosError = err as {
         response?: {
           status?: number;
-          data?: { message?: string; blockedUntil?: string };
+          data?: { message?: string; errorKey?: string; blockedUntil?: string };
         };
       };
 
@@ -203,10 +206,21 @@ function VerifyPhoneChangeContent() {
         }
       }
 
+      if (axiosError.response?.data?.errorKey === 'errors.maxSmsCodeAttempts') {
+        setIsVerificationBlocked(true);
+        setError(t('errors.maxSmsCodeAttempts'));
+        setCode(['', '', '', '', '', '']);
+        setLoading(false);
+        setTimeout(() => {
+          inputRefs.current[0]?.focus();
+        }, 100);
+        return;
+      }
+
       const newAttempts = verificationAttempts + 1;
       setVerificationAttempts(newAttempts);
 
-      if (newAttempts >= 10) {
+      if (newAttempts >= 3) {
         setIsVerificationBlocked(true);
         setError(t('profile.verifyPhoneChange.maxAttempts'));
       } else {
@@ -226,7 +240,7 @@ function VerifyPhoneChangeContent() {
   };
 
   const handleResendCode = async () => {
-    if (resendCooldown > 0) {
+    if (resendCooldown > 0 || resendAttempts >= 2) {
       return;
     }
 
@@ -239,12 +253,20 @@ function VerifyPhoneChangeContent() {
 
     try {
       await authApi.changePhoneRequest({ phone: phoneNumber });
+      setResendAttempts((p) => p + 1);
       toast.success(t('profile.verifyPhoneChange.codeResent'));
     } catch (err: unknown) {
-      const axiosError = err as { response?: { data?: { message?: string } } };
-      toast.error(
-        axiosError.response?.data?.message || t('profile.verifyPhoneChange.resendCodeError'),
-      );
+      const axiosError = err as {
+        response?: { data?: { message?: string; errorKey?: string } };
+      };
+      const data = axiosError.response?.data;
+      if (data?.errorKey === 'errors.smsHourlyLimit') {
+        setResendCooldown(SMS_HOURLY_QUOTA_RESEND_COOLDOWN_SECONDS);
+        toast.error(t('errors.smsHourlyLimit'));
+      } else {
+        setResendCooldown(0);
+        toast.error(data?.message || t('profile.verifyPhoneChange.resendCodeError'));
+      }
     }
   };
 
@@ -343,14 +365,17 @@ function VerifyPhoneChangeContent() {
             <button
               type="button"
               onClick={handleResendCode}
-              disabled={loading || resendCooldown > 0}
+              disabled={loading || resendCooldown > 0 || resendAttempts >= 2}
               className="text-sm text-primary-700 hover-only:hover:text-primary-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {resendCooldown > 0
-                ? t('profile.verifyPhoneChange.resendCodeWithCooldown', {
-                    cooldown: resendCooldown.toString(),
-                  })
-                : t('profile.verifyPhoneChange.resendCode')}
+              {resendAttempts >= 2
+                ? t('smsVerification.maxResendAttempts')
+                : resendCooldown > 0
+                  ? smsResendCooldownButtonLabel(resendCooldown, t, {
+                      withSeconds: 'profile.verifyPhoneChange.resendCodeWithCooldown',
+                      withMinutes: 'profile.verifyPhoneChange.resendCodeWithCooldownMinutes',
+                    })
+                  : t('profile.verifyPhoneChange.resendCode')}
             </button>
           </div>
         </div>

@@ -12,7 +12,7 @@ export function getDefaultCurrency(): (typeof currencies)[number] {
   return currencies[0];
 }
 
-export const fuelTypes = ['Petrol', 'Diesel', 'Electric', 'Hybrid', 'LPG'] as const;
+export const fuelTypes = ['Petrol', 'Diesel', 'Electric', 'Hybrid', 'LPG', 'MHEV', 'PHEV'] as const;
 
 export const transmissionTypes = ['Manual', 'Automatic', 'CVT', 'Robot'] as const;
 
@@ -89,6 +89,8 @@ export const FuelType = {
   Electric: fuelTypes[2],
   Hybrid: fuelTypes[3],
   LPG: fuelTypes[4],
+  MHEV: fuelTypes[5],
+  PHEV: fuelTypes[6],
 } as const;
 
 export const TransmissionType = {

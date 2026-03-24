@@ -238,11 +238,9 @@ export default function ColorPalettePage() {
                   bg-dark, bg-light (forms), primary-500
                 </div>
                 <div>
-                  <span className="font-semibold text-text-primary">Login (/login):</span> bg-dark,
-                  primary-500/600
-                </div>
-                <div>
-                  <span className="font-semibold text-text-primary">Register (/register):</span>{' '}
+                  <span className="font-semibold text-text-primary">
+                    Sign in / register (/sign):
+                  </span>{' '}
                   bg-dark, primary-500/600
                 </div>
                 <div>

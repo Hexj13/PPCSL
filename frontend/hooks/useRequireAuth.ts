@@ -9,7 +9,7 @@ interface UseRequireAuthOptions {
 }
 
 export function useRequireAuth(options: UseRequireAuthOptions = {}) {
-  const { redirectTo = '/login', requiredRole } = options;
+  const { redirectTo = '/sign', requiredRole } = options;
   const router = useRouter();
   const { user, isInitialized } = useAuthStore();
 

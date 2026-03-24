@@ -1,13 +1,22 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
-import { useAuthStore } from '@/lib/store';
+import { useAuthStore, useFavoritesStore } from '@/lib/store';
 
 import { AuthProvider } from './AuthProvider';
 
-jest.mock('@/lib/store', () => ({
-  useAuthStore: jest.fn(),
-}));
+jest.mock('@/lib/store', () => {
+  const mockRehydrate = jest.fn(() => Promise.resolve());
+  const withPersist = (fn: ReturnType<typeof jest.fn>) => {
+    Object.assign(fn, { persist: { rehydrate: mockRehydrate } });
+    return fn;
+  };
+  return {
+    useAuthStore: withPersist(jest.fn()),
+    useFavoritesStore: withPersist(jest.fn()),
+    useComparisonStore: withPersist(jest.fn()),
+  };
+});
 
 describe('AuthProvider', () => {
   const mockInitAuth = jest.fn();
@@ -22,14 +31,17 @@ describe('AuthProvider', () => {
     });
   });
 
-  it('should call initAuth on mount', () => {
+  it('should call initAuth on mount', async () => {
     render(
       <AuthProvider>
         <div>Test</div>
       </AuthProvider>,
     );
 
-    expect(mockInitAuth).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(mockInitAuth).toHaveBeenCalledTimes(1));
+    const rehydrate = (useFavoritesStore as unknown as { persist: { rehydrate: jest.Mock } })
+      .persist.rehydrate;
+    expect(rehydrate).toHaveBeenCalledTimes(3);
   });
 
   it('should render children', () => {
@@ -42,7 +54,7 @@ describe('AuthProvider', () => {
     expect(screen.getByText('Test Content')).toBeInTheDocument();
   });
 
-  it('should use initAuth from store', () => {
+  it('should use initAuth from store', async () => {
     const mockInitAuthFromStore = jest.fn();
     (useAuthStore as unknown as jest.Mock).mockImplementation((sel) => {
       if (typeof sel === 'function') {
@@ -57,6 +69,6 @@ describe('AuthProvider', () => {
       </AuthProvider>,
     );
 
-    expect(mockInitAuthFromStore).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(mockInitAuthFromStore).toHaveBeenCalledTimes(1));
   });
 });

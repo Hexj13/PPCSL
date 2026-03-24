@@ -339,12 +339,17 @@ POST /api/auth/login                  # Login (returns access_token and refresh_
 POST /api/auth/refresh                # Refresh access token
 GET  /api/auth/me                     # Get current user profile
 PATCH /api/auth/profile              # Update user profile
+POST /api/auth/change-password       # Change password (JWT; current + new; throttle: 5/min per IP in production)
+POST /api/auth/change-phone-request  # Request phone number change; sends SMS to new number (JWT; per-phone SMS quota in Redis)
+POST /api/auth/change-phone-verify   # Complete phone change with SMS code (JWT)
 DELETE /api/auth/profile              # Delete user account
 POST /api/auth/send-sms              # Send SMS verification code
 POST /api/auth/verify-sms            # Verify SMS code
 POST /api/auth/request-password-reset # Request password reset
 POST /api/auth/reset-password         # Reset password
 ```
+
+**Profile password change (`/profile`):** The form uses **two fields only** (current + new password). There is no duplicate “confirm new password” field by product choice—to keep the UI light. The client validates length (max 100) and strength before calling `POST /api/auth/change-password`.
 
 ### Listings
 
@@ -407,12 +412,13 @@ GET    /api/favorites/check/:id       # Check if listing is in favorites
 
 Car comparison feature allows users to compare up to 3 cars simultaneously:
 
-- Comparison data stored in `localStorage` (Zustand store with persist middleware)
+- Comparison data stored in `localStorage` (Zustand store with persist middleware, key `comparison-storage`); there is no comparison API or database table
 - Maximum 3 cars can be added to comparison
-- Comparison page displays detailed side-by-side table with all vehicle specifications
-- Unauthorized users can add cars to comparison; data is stored in `pendingComparisons` and automatically added after login/registration
+- Comparison page (`/compare`) is public; guests and authenticated users see the same empty state and table UI
+- Guests add and remove listings via the same store (listing cards, listing detail, header link); no redirect to sign-in for comparison
+- On login or registration, `applyComparisonAfterAuth` merges `pendingComparisons` (legacy) with `comparison-storage`, validates listing IDs, then replaces the store list (deduped, max 3)
 - Comparison data is cleared on logout
-- Comparison button in header shows counter badge when items are added
+- Header shows a Compare link with counter badge for both guests and signed-in users (signed-in users also have Compare in the main nav / more menu where applicable)
 
 ### Saved Filters
 
@@ -637,15 +643,19 @@ Backups are saved to `backend/backups/` by default with format: `ppcsl_backup_YY
 
 - `POST /api/auth/register`: 3 requests per 10 minutes
 - `POST /api/auth/login`: 5 requests per 5 minutes
-- `POST /api/auth/send-sms`: 3 requests per minute
+- `POST /api/auth/change-password`: 5 requests per minute (higher limit in non-production)
+- `POST /api/auth/send-sms`: 30 requests per hour per IP (supplementary; per-phone SMS quota enforced in Redis)
+- `POST /api/auth/request-password-reset`: 30 requests per hour per IP (supplementary; per-phone SMS quota enforced in Redis)
 - `POST /api/upload/image`: 20 requests per minute
 
 **Excluded from global limit:** `GET /api/upload/image/:filename` (image delivery) uses `@SkipThrottle()` so viewing listing photos does not count toward the 100 req/min per-IP quota.
 
 #### SMS Verification
 
-- IP-based brute force protection (40 attempts per IP, 1-hour block)
-- Frontend: 10 attempts per code, 3 code resends maximum
+- IP-based brute force protection (40 failed attempts per IP on guarded auth endpoints, 1-hour block)
+- Per phone number: at most 3 SMS sends per rolling hour (Redis); at most 3 incorrect code submissions per active code (Redis), separate counters for registration/phone-change codes vs password-reset codes
+- Frontend: 3 attempts per code before prompting for a new SMS; up to 2 resends after the initial send (3 SMS total per hour aligned with backend)
+- Frontend: when a resend fails with API error key `errors.smsHourlyLimit`, the client sets the resend cooldown to one hour (instead of clearing it) on registration verify, password reset, and profile phone-change verify, so the UI does not allow immediate repeated resend clicks against an exhausted per-phone quota
 - Automatic cleanup of expired IP blocks (hourly cron job)
 
 #### File Upload Security
@@ -853,7 +863,7 @@ All scripts are located in `backend/src/scripts/` and can be executed via npm co
   - URL: `https://your-domain.com/listings/{id}`
 - **Static meta tags for key pages**:
   - Homepage (`/`): Static OG tags with platform description
-  - Auth pages (`/login`, `/register`, `/reset-password`): Page-specific descriptions
+  - Auth pages (`/sign` with optional `?tab=register` for the registration tab, `/reset-password`): Page-specific descriptions; legacy `/login` and `/register` URLs redirect to `/sign`
   - Legal and info pages (`/terms`, `/privacy`, `/faq`, `/contacts`): Content-specific descriptions
 - **Meta description length**: All descriptions are optimized to 110-160 characters (Open Graph recommendation)
 - **H1 tags**: All pages have proper `<h1>` tags:
@@ -918,6 +928,7 @@ All scripts are located in `backend/src/scripts/` and can be executed via npm co
 - `create_listing` - When user creates a new listing
 - `save_filter` - When user saves a search filter
 - `login` / `sign_up` - Authentication events
+- `select_content` with `content_type: auth_tab` - Switching between login and registration on `/sign`
 - `conversion_event_page_view` - Homepage conversion tracking
 
 All events are sent only after user grants analytics consent.

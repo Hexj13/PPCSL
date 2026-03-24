@@ -2,14 +2,17 @@
 
 import Link from 'next/link';
 
+import { ProfilePasswordSection } from '@/app/profile/ProfilePasswordSection';
 import { useProfilePage } from '@/app/profile/useProfilePage';
 import { validateEmail } from '@/app/profile/utils';
 import { Modal } from '@/components/modals/Modal';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { UpdateProfileDto, User } from '@/lib/api';
-import { LoadingButton, InfoBlock } from '@/ui';
+import { HintTooltip, LoadingButton } from '@/ui';
 
 type TranslationFn = ReturnType<typeof useTranslation>['t'];
+
+const PROFILE_EDIT_FORM_ID = 'profile-edit';
 
 function ProfileContactSection({
   user,
@@ -90,15 +93,34 @@ function ProfileContactSection({
         {t('profile.contactInfo')}
       </h2>
       <div>
-        <label className="block text-sm font-semibold mb-2 text-primary-900">
-          {t('profile.phone')}
-        </label>
-        <div className="relative">
+        <div className="flex items-center gap-1.5 mb-2">
+          <label htmlFor="profile-phone-input" className="text-sm font-semibold text-primary-900">
+            {t('profile.phone')}
+          </label>
+          <HintTooltip ariaLabel={t('profile.phoneChangeBoardUrlHintAria')} width="w-80">
+            <>
+              {t('profile.phoneChangeBoardUrlNoticeBefore')}
+              {user?.boardSlug ? (
+                <Link
+                  href={`/board/${user.boardSlug}`}
+                  className="text-primary-700 underline hover-only:hover:text-primary-900"
+                >
+                  {t('myListings.myBoard')}
+                </Link>
+              ) : (
+                t('myListings.myBoard')
+              )}
+              {t('profile.phoneChangeBoardUrlNoticeAfter')}
+            </>
+          </HintTooltip>
+        </div>
+        <div className="relative w-full md:w-1/2">
           <input
+            id="profile-phone-input"
             type="tel"
             value={user.phone || ''}
             disabled
-            className="input-field bg-bg-secondary/50 cursor-not-allowed opacity-70 pr-12"
+            className="input-field w-full bg-bg-secondary/50 cursor-not-allowed opacity-70 pr-12"
           />
           <Link
             href="/profile/change-phone"
@@ -121,22 +143,6 @@ function ProfileContactSection({
             </svg>
           </Link>
         </div>
-        <InfoBlock variant="warning" className="mt-2">
-          <p>
-            {t('profile.phoneChangeBoardUrlNoticeBefore')}
-            {user?.boardSlug ? (
-              <Link
-                href={`/board/${user.boardSlug}`}
-                className="text-primary-700 underline hover-only:hover:text-primary-900"
-              >
-                {t('myListings.myBoard')}
-              </Link>
-            ) : (
-              t('myListings.myBoard')
-            )}
-            {t('profile.phoneChangeBoardUrlNoticeAfter')}
-          </p>
-        </InfoBlock>
         <div className="mt-4 space-y-3">
           <span className="block text-sm font-semibold mb-2 text-primary-900">
             {t('profile.availableMessengers')}
@@ -173,23 +179,30 @@ function ProfileEmailSection({
         {t('profile.emailAndNotifications')}
       </h2>
       <div>
-        <label className="block text-sm font-semibold mb-2 text-primary-900">
-          {t('profile.email')}
-        </label>
-        <input
-          type="email"
-          value={formData.email || ''}
-          onChange={(e) => onChange('email', e.target.value)}
-          disabled={!!user.email}
-          className={`input-field ${emailError ? 'border-red-500' : ''} ${
-            user.email ? 'bg-bg-secondary/50 cursor-not-allowed opacity-70' : ''
-          }`}
-          placeholder={t('profile.emailPlaceholder')}
-        />
-        {emailError && <p className="mt-1 text-sm text-red-400">{emailError}</p>}
-        {user.email && (
-          <p className="mt-1 text-xs text-text-secondary">{t('profile.emailCannotBeChanged')}</p>
-        )}
+        <div className="flex items-center gap-1.5 mb-2">
+          <label htmlFor="profile-email-input" className="text-sm font-semibold text-primary-900">
+            {t('profile.email')}
+          </label>
+          {user.email && (
+            <HintTooltip ariaLabel={t('profile.emailCannotBeChanged')} width="w-72">
+              {t('profile.emailCannotBeChanged')}
+            </HintTooltip>
+          )}
+        </div>
+        <div className="w-full md:w-1/2">
+          <input
+            id="profile-email-input"
+            type="email"
+            value={formData.email || ''}
+            onChange={(e) => onChange('email', e.target.value)}
+            disabled={!!user.email}
+            className={`input-field w-full ${emailError ? 'border-red-500' : ''} ${
+              user.email ? 'bg-bg-secondary/50 cursor-not-allowed opacity-70' : ''
+            }`}
+            placeholder={t('profile.emailPlaceholder')}
+          />
+          {emailError && <p className="mt-1 text-sm text-red-400">{emailError}</p>}
+        </div>
         <div className="mt-4">
           <div className="flex items-center gap-3 group">
             <div className="relative">
@@ -373,10 +386,12 @@ function ProfileActions({
   loading,
   t,
   onDeleteClick,
+  saveDisabled,
 }: {
   loading: boolean;
   t: TranslationFn;
   onDeleteClick: () => void;
+  saveDisabled: boolean;
 }) {
   return (
     <>
@@ -384,6 +399,7 @@ function ProfileActions({
         <LoadingButton
           type="submit"
           loading={loading}
+          disabled={saveDisabled}
           loadingText={t('profile.saving')}
           className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -473,6 +489,11 @@ export default function ProfilePage() {
     deleting,
     handleChange,
     handleSubmit,
+    canSave,
+    currentPassword,
+    setCurrentPassword,
+    newPassword,
+    setNewPassword,
     handleDeleteAccount,
   } = useProfilePage();
 
@@ -492,23 +513,37 @@ export default function ProfilePage() {
       <h1 className="text-3xl md:text-4xl font-extrabold mb-6 pl-4 md:pl-6 lg:pl-8 text-primary-900">
         {t('profile.title')}
       </h1>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <ProfileContactSection user={user} formData={formData} t={t} onChange={handleChange} />
-        <ProfileEmailSection
-          user={user}
-          formData={formData}
-          emailError={emailError}
-          t={t}
-          onChange={handleChange}
-        />
-        {user.type === 'Business' && (
-          <ProfileCompanySection formData={formData} t={t} onChange={handleChange} />
-        )}
-        {(user.type === 'Individual' || user.type === 'Admin') && (
-          <ProfilePersonalSection formData={formData} t={t} onChange={handleChange} />
-        )}
-        <ProfileActions loading={loading} t={t} onDeleteClick={() => setShowDeleteModal(true)} />
-      </form>
+      <div className="space-y-6">
+        <form id={PROFILE_EDIT_FORM_ID} onSubmit={handleSubmit} className="space-y-6">
+          <ProfileContactSection user={user} formData={formData} t={t} onChange={handleChange} />
+          <ProfileEmailSection
+            user={user}
+            formData={formData}
+            emailError={emailError}
+            t={t}
+            onChange={handleChange}
+          />
+          {user.type === 'Business' && (
+            <ProfileCompanySection formData={formData} t={t} onChange={handleChange} />
+          )}
+          {(user.type === 'Individual' || user.type === 'Admin') && (
+            <ProfilePersonalSection formData={formData} t={t} onChange={handleChange} />
+          )}
+          <ProfilePasswordSection
+            t={t}
+            currentPassword={currentPassword}
+            newPassword={newPassword}
+            onCurrentPasswordChange={setCurrentPassword}
+            onNewPasswordChange={setNewPassword}
+          />
+          <ProfileActions
+            loading={loading}
+            t={t}
+            saveDisabled={!canSave}
+            onDeleteClick={() => setShowDeleteModal(true)}
+          />
+        </form>
+      </div>
       <ProfileDeleteModal
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}

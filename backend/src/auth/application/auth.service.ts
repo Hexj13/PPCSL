@@ -5,6 +5,7 @@ import { UsersService } from '../../users/application/users.service';
 import { EmailService } from '../infrastructure/services/email.service';
 import { RefreshTokenService } from '../infrastructure/services/refresh-token.service';
 import { SmsService } from '../infrastructure/services/sms.service';
+import { ChangePasswordDto } from '../presentation/dto/change-password.dto';
 import { ChangePhoneRequestDto, ChangePhoneVerifyDto } from '../presentation/dto/change-phone.dto';
 import { LoginDto } from '../presentation/dto/login.dto';
 import { RefreshTokenDto } from '../presentation/dto/refresh-token.dto';
@@ -15,6 +16,7 @@ import { UpdateProfileDto } from '../presentation/dto/update-profile.dto';
 import { VerifyResetCodeDto } from '../presentation/dto/verify-reset-code.dto';
 
 import { UserProfileResponse, UserWithoutPassword } from './auth.types';
+import { ChangePasswordUseCase } from './use-cases/change-password.use-case';
 import { CheckPhoneAvailabilityUseCase } from './use-cases/check-phone-availability.use-case';
 import { DeleteAccountUseCase } from './use-cases/delete-account.use-case';
 import { GetUserProfileUseCase } from './use-cases/get-user-profile.use-case';
@@ -56,6 +58,7 @@ export class AuthService {
     private verifyPhoneChangeUseCase: VerifyPhoneChangeUseCase,
     private checkPhoneAvailabilityUseCase: CheckPhoneAvailabilityUseCase,
     private sendVerificationSmsUseCase: SendVerificationSmsUseCase,
+    private changePasswordUseCase: ChangePasswordUseCase,
   ) {}
 
   async validateUser(login: string, password: string): Promise<UserWithoutPassword | null> {
@@ -83,6 +86,10 @@ export class AuthService {
     updateProfileDto: UpdateProfileDto,
   ): Promise<UserProfileResponse> {
     return this.updateProfileUseCase.execute(userId, updateProfileDto);
+  }
+
+  async changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {
+    return this.changePasswordUseCase.execute(userId, dto);
   }
 
   async verifyPhone(userId: string): Promise<UserProfileResponse> {

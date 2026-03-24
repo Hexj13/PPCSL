@@ -1,5 +1,6 @@
 import { api } from './api-client';
 import type {
+  ChangePasswordDto,
   ChangePhoneRequestDto,
   ChangePhoneVerifyDto,
   LoginDto,
@@ -26,6 +27,8 @@ export const authApi = {
     ),
   me: () => api.get<User>('/api/auth/me'),
   updateProfile: (data: UpdateProfileDto) => api.patch<User>('/api/auth/profile', data),
+  changePassword: (data: ChangePasswordDto) =>
+    api.post<{ success: boolean }>('/api/auth/change-password', data),
   deleteAccount: () => api.delete<{ message: string }>('/api/auth/profile'),
   verifyPhone: () => api.post<User>('/api/auth/verify-phone'),
   sendSms: (data: SendSmsDto) =>

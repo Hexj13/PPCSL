@@ -47,7 +47,7 @@ export default function ChangePhonePage() {
 
   useEffect(() => {
     if (isInitialized && !user) {
-      router.push('/login');
+      router.push('/sign');
       return;
     }
   }, [user, isInitialized, router]);

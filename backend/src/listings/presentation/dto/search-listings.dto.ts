@@ -188,7 +188,7 @@ export class SearchListingsDto {
 
   @ApiPropertyOptional({
     example: 'Petrol',
-    enum: ['Petrol', 'Diesel', 'Electric', 'Hybrid', 'LPG'],
+    enum: constants.fuelTypes,
     description: 'Fuel type',
   })
   @IsOptional()
@@ -197,7 +197,7 @@ export class SearchListingsDto {
 
   @ApiPropertyOptional({
     example: ['Petrol', 'Diesel'],
-    enum: ['Petrol', 'Diesel', 'Electric', 'Hybrid', 'LPG'],
+    enum: constants.fuelTypes,
     description: 'Fuel types (comma-separated or array)',
     type: [String],
   })

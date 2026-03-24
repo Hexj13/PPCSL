@@ -24,6 +24,7 @@
     "login": "Login",
     "loginShort": "Login",
     "register": "Register",
+    "loginAndRegister": "Login and registration",
     "brandName": "Kupito",
     "toggleMenu": "Toggle Menu",
     "more": "More"
@@ -126,6 +127,10 @@
     "daysAgo": "{days} days ago",
     "languageRo": "Română",
     "languageRu": "Русский"
+  },
+  "errors": {
+    "smsHourlyLimit": "SMS limit reached for this number. You can request a new code in one hour.",
+    "maxSmsCodeAttempts": "Too many incorrect code attempts. Request a new SMS code."
   },
   "cookieSettings": {
     "loading": "Loading...",
@@ -244,6 +249,10 @@
     "dataPreparationError": "Error preparing data",
     "alreadyHaveAccount": "Already have an account?"
   },
+  "sign": {
+    "pageTitle": "Login and registration",
+    "greeting": "Hello!"
+  },
   "resetPassword": {
     "title": "Reset Password",
     "phoneNumber": "Phone Number",
@@ -262,12 +271,14 @@
     "codeVerified": "Code successfully verified",
     "maxAttemptsReached": "Maximum number of attempts reached. Resend the code to continue.",
     "maxAttemptsReachedWithMinutes": "Maximum number of attempts reached. Try again in {minutes} minutes",
-    "maxAttempts": "Maximum number of attempts (10) reached. Resend the code to continue.",
-    "invalidCodeWithAttempts": "Invalid code. Please try again. ({attempts}/10)",
+    "maxAttempts": "Maximum number of attempts (3) reached. Resend the code to continue.",
+    "invalidCodeWithAttempts": "Invalid code. Please try again. ({attempts}/3)",
     "verifying": "Verifying...",
     "verify": "Verify",
     "blocked": "Blocked",
     "resendCode": "Resend Code",
+    "resendCodeWithCooldown": "Resend code ({cooldown}s)",
+    "resendCodeWithCooldownMinutes": "Resend code ({minutes} min)",
     "codeResent": "Code has been resent",
     "newPassword": "New Password",
     "confirmPassword": "Confirm Password",
@@ -285,16 +296,17 @@
     "codeDigitsOnly": "Code must contain only digits",
     "sendSmsError": "Error sending SMS",
     "maxAttemptsReached": "Maximum number of attempts reached. Resend the code.",
-    "maxAttemptsReachedWithMinutes": "Maximum number of attempts reached (40). Please try again in {minutes} minutes.",
+    "maxAttemptsReachedWithMinutes": "Maximum number of attempts reached. Please try again in {minutes} minutes.",
     "ipBlocked": "IP address blocked for {remainingMinutes} minutes",
     "codeInvalid": "Invalid code. Please try again.",
-    "invalidCodeWithAttempts": "Invalid code. Please try again. ({attempts}/10)",
+    "invalidCodeWithAttempts": "Invalid code. Please try again. ({attempts}/3)",
     "enterFullCode": "Enter the full code",
     "verifying": "Verifying...",
     "verify": "Verify",
     "blocked": "Blocked",
     "resendCode": "Resend Code",
-    "resendCodeWithCooldown": "Resend Code ({cooldown}s)",
+    "resendCodeWithCooldown": "Resend code ({cooldown}s)",
+    "resendCodeWithCooldownMinutes": "Resend code ({minutes} min)",
     "codeResent": "Code has been resent",
     "maxResendAttempts": "Maximum number of attempts"
   },
@@ -344,6 +356,11 @@
     "removeFromFavorites": "Removed from favorites",
     "addToFavoritesError": "Error adding to favorites",
     "removeFromFavoritesError": "Error removing from favorites",
+    "compareAddToComparisonAria": "Add to comparison",
+    "compareRemoveFromComparisonAria": "Remove from comparison",
+    "favoriteAddAria": "Add to favorites",
+    "favoriteRemoveAria": "Remove from favorites",
+    "favoriteOwnListingAria": "Cannot add your own listing to favorites",
     "photoUploaded": "Photo uploaded successfully",
     "photoUploadError": "Error uploading photo",
     "photoDeleteError": "Error deleting photo",
@@ -606,6 +623,7 @@
     "removeFromFavorites": "Remove from favorites",
     "yourListing": "Your listing",
     "cannotAddOwnListing": "You cannot add your own listing to favorites",
+    "cannotFavoriteOwnListingToast": "You cannot add your own listings to favorites. They are in the «My listings» section.",
     "compare": "Compare",
     "alreadyInComparison": "Already in comparison",
     "cannotCompareMore": "You can compare a maximum of 3 vehicles",
@@ -834,6 +852,7 @@
     "phone": "Phone",
     "phoneChangeBoardUrlNoticeBefore": "Changing your phone number will also change the link to your listings board. If you have shared this link elsewhere (e.g. on social networks or in messengers), update it — the new URL can be copied on the \"",
     "phoneChangeBoardUrlNoticeAfter": "\".",
+    "phoneChangeBoardUrlHintAria": "More information: board link when changing phone number",
     "availableMessengers": "Available messengers",
     "emailAndNotifications": "Email and Notifications",
     "email": "Email",
@@ -852,6 +871,14 @@
     "firstNamePlaceholder": "Enter your first name",
     "lastName": "Last Name",
     "lastNamePlaceholder": "Enter your last name",
+    "passwordChangeTitle": "Change password",
+    "currentPasswordLabel": "Current password",
+    "newPasswordLabel": "New password",
+    "changePasswordButton": "Change password",
+    "changingPassword": "Changing...",
+    "passwordChangeSuccess": "Password changed successfully",
+    "passwordChangeFillAllFields": "Fill in all password fields",
+    "passwordChangeMaxLength": "New password cannot be longer than 100 characters",
     "saving": "Saving...",
     "saveChanges": "Save Changes",
     "dangerZone": "Danger Zone",
@@ -888,10 +915,10 @@
       "enterCode": "Enter the 6-digit code from the SMS message",
       "verify": "Verify",
       "blocked": "Blocked",
-      "invalidCodeWithAttempts": "Invalid code. Please try again. ({attempts}/10)",
+      "invalidCodeWithAttempts": "Invalid code. Please try again. ({attempts}/3)",
       "maxAttemptsReached": "Maximum number of attempts reached. Resend the code.",
       "maxAttemptsReachedWithMinutes": "Maximum number of attempts reached. Please try again in {minutes} minutes",
-      "maxAttempts": "Maximum number of attempts reached (10). Resend the code to continue.",
+      "maxAttempts": "Maximum number of attempts reached (3). Resend the code to continue.",
       "codeRequired": "Code must contain exactly 6 digits",
       "codeDigitsOnly": "Code must contain only digits",
       "phoneChangedSuccess": "Phone has been successfully changed",
@@ -899,7 +926,8 @@
       "codeResent": "Code has been resent",
       "resendCodeError": "Error sending SMS",
       "resendCode": "Resend Code",
-      "resendCodeWithCooldown": "Resend Code ({cooldown}s)"
+      "resendCodeWithCooldown": "Resend code ({cooldown}s)",
+      "resendCodeWithCooldownMinutes": "Resend code ({minutes} min)"
     }
   },
   "admin": {
@@ -1099,6 +1127,8 @@
       "Diesel": "Diesel",
       "Electric": "Electric",
       "Hybrid": "Hybrid",
+      "MHEV": "Hybrid (MHEV)",
+      "PHEV": "Hybrid (PHEV)",
       "LPG": "LPG"
     },
     "transmission": {
@@ -1441,6 +1471,13 @@
       "ogTitle": "Register - Kupito",
       "ogDescription": "Register on Kupito and start posting car sale listings for free. Create a profile for individual or business and get in touch with buyers in Moldova.",
       "ogAlt": "Kupito - Register"
+    },
+    "sign": {
+      "title": "Login and registration",
+      "description": "Sign in to your Kupito profile or register to manage listings, favorites, and saved filters.",
+      "ogTitle": "Login and registration - Kupito",
+      "ogDescription": "Sign in to your Kupito profile or register to manage listings, favorites, and saved filters.",
+      "ogAlt": "Kupito - Login and registration"
     },
     "resetPassword": {
       "title": "Reset Password",

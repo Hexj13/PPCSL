@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslation } from '@/hooks/useTranslation';
+import { smsResendCooldownButtonLabel } from '@/lib/utils';
 import { LoadingButton } from '@/ui';
 
 type VerifyPhoneCodeFormProps = {
@@ -123,14 +124,15 @@ export function VerifyPhoneCodeForm({
           <button
             type="button"
             onClick={onResend}
-            disabled={isSubmitting || resendCooldown > 0 || resendAttempts >= 3}
+            disabled={isSubmitting || resendCooldown > 0 || resendAttempts >= 2}
             className="text-sm text-primary-700 hover-only:hover:text-primary-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {resendAttempts >= 3
+            {resendAttempts >= 2
               ? t('smsVerification.maxResendAttempts')
               : resendCooldown > 0
-                ? t('smsVerification.resendCodeWithCooldown', {
-                    cooldown: resendCooldown.toString(),
+                ? smsResendCooldownButtonLabel(resendCooldown, t, {
+                    withSeconds: 'smsVerification.resendCodeWithCooldown',
+                    withMinutes: 'smsVerification.resendCodeWithCooldownMinutes',
                   })
                 : t('smsVerification.resendCode')}
           </button>

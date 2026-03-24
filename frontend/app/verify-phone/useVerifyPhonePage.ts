@@ -8,6 +8,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import type { RegisterDto } from '@/lib/api';
 import { authApi } from '@/lib/api';
+import { SMS_HOURLY_QUOTA_RESEND_COOLDOWN_SECONDS } from '@/lib/constants';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
 
@@ -35,12 +36,22 @@ export function useVerifyPhonePage() {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const cooldownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const sendSmsCode = async (phone: string) => {
+  const sendSmsCode = async (phone: string): Promise<'success' | 'hourly_limit' | 'error'> => {
     try {
       await authApi.sendSms({ phone });
+      return 'success';
     } catch (err: unknown) {
-      const axiosError = err as { response?: { data?: { message?: string } } };
-      toast.error(axiosError.response?.data?.message || t('smsVerification.sendSmsError'));
+      const axiosError = err as {
+        response?: { data?: { message?: string; errorKey?: string } };
+      };
+      const data = axiosError.response?.data;
+      const key = data?.errorKey;
+      if (key === 'errors.smsHourlyLimit') {
+        toast.error(t('errors.smsHourlyLimit'));
+        return 'hourly_limit';
+      }
+      toast.error(data?.message || t('smsVerification.sendSmsError'));
+      return 'error';
     }
   };
 
@@ -56,7 +67,7 @@ export function useVerifyPhonePage() {
         setFormData(parsedData);
       } catch {
         toast.error(t('verifyPhone.loadDataError'));
-        router.push('/register');
+        router.push('/sign?tab=register');
         return;
       }
     }
@@ -65,7 +76,7 @@ export function useVerifyPhonePage() {
     if (phoneToUse) {
       setPhoneNumber(phoneToUse);
     } else {
-      router.push('/register');
+      router.push('/sign?tab=register');
       return;
     }
 
@@ -166,7 +177,7 @@ export function useVerifyPhonePage() {
   const performRegistration = async () => {
     if (!formData) {
       toast.error(t('verifyPhone.loadDataError'));
-      router.push('/register');
+      router.push('/sign?tab=register');
       return;
     }
 
@@ -191,7 +202,7 @@ export function useVerifyPhonePage() {
         await runAfterRegistration(formData, loginRes, setAuth, t);
       } catch {
         toast.error(t('verifyPhone.registrationSuccessButLoginFailed'));
-        router.push('/login');
+        router.push('/sign');
       }
     } catch {
       // Error is already handled by API interceptor
@@ -243,7 +254,7 @@ export function useVerifyPhonePage() {
       const axiosError = err as {
         response?: {
           status?: number;
-          data?: { message?: string; blockedUntil?: string };
+          data?: { message?: string; errorKey?: string; blockedUntil?: string };
         };
       };
 
@@ -268,10 +279,21 @@ export function useVerifyPhonePage() {
         }
       }
 
+      if (axiosError.response?.data?.errorKey === 'errors.maxSmsCodeAttempts') {
+        setIsVerificationBlocked(true);
+        setError(t('errors.maxSmsCodeAttempts'));
+        setCode(['', '', '', '', '', '']);
+        setIsSubmitting(false);
+        setTimeout(() => {
+          inputRefs.current[0]?.focus();
+        }, 100);
+        return;
+      }
+
       const newAttempts = verificationAttempts + 1;
       setVerificationAttempts(newAttempts);
 
-      if (newAttempts >= 10) {
+      if (newAttempts >= 3) {
         setIsVerificationBlocked(true);
         setError(t('smsVerification.maxAttemptsReached'));
       } else {
@@ -302,24 +324,30 @@ export function useVerifyPhonePage() {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('pendingRegistration');
     }
-    router.push('/register');
+    router.push('/sign?tab=register');
   };
 
   const handleResend = async () => {
-    if (resendAttempts >= 3) return;
+    if (resendAttempts >= 2) return;
     if (!phoneNumber) {
       toast.error(t('verifyPhone.phoneNotAvailable'));
       return;
     }
-    setResendAttempts((prev) => prev + 1);
     setResendCooldown(60);
     setCode(['', '', '', '', '', '']);
     setError('');
     setVerificationAttempts(0);
     setIsVerificationBlocked(false);
     inputRefs.current[0]?.focus();
-    await sendSmsCode(phoneNumber);
-    toast.success(t('smsVerification.codeResent'));
+    const result = await sendSmsCode(phoneNumber);
+    if (result === 'success') {
+      setResendAttempts((prev) => prev + 1);
+      toast.success(t('smsVerification.codeResent'));
+    } else if (result === 'hourly_limit') {
+      setResendCooldown(SMS_HOURLY_QUOTA_RESEND_COOLDOWN_SECONDS);
+    } else {
+      setResendCooldown(0);
+    }
   };
 
   return {

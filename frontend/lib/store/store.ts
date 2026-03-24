@@ -103,6 +103,7 @@ export const useAuthStore = create<AuthState>()(
         token: state.token,
         refreshToken: state.refreshToken,
       }),
+      skipHydration: true,
     },
   ),
 );
@@ -129,6 +130,7 @@ export const useFavoritesStore = create<FavoritesState>()(
     {
       name: 'favorites-storage',
       storage: typeof window !== 'undefined' ? createJSONStorage(() => localStorage) : undefined,
+      skipHydration: true,
     },
   ),
 );
@@ -139,6 +141,7 @@ interface ComparisonState {
   remove: (_id: string) => void;
   check: (_id: string) => boolean;
   clear: () => void;
+  setComparisons: (_ids: string[]) => void;
   count: () => number;
   rehydrate: () => Promise<void>;
 }
@@ -174,6 +177,20 @@ export const useComparisonStore = create<ComparisonState>()(
           localStorage.removeItem('comparison-storage-backup');
         }
       },
+      setComparisons: (_ids) => {
+        const seen = new Set<string>();
+        const next: string[] = [];
+        for (const id of _ids) {
+          if (typeof id !== 'string' || !id || seen.has(id)) continue;
+          seen.add(id);
+          next.push(id);
+          if (next.length >= 3) break;
+        }
+        set({ comparisons: next });
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('comparison-storage-backup');
+        }
+      },
       count: () => get().comparisons.length,
       rehydrate: async () => {
         if (typeof window !== 'undefined') {
@@ -194,6 +211,7 @@ export const useComparisonStore = create<ComparisonState>()(
     {
       name: 'comparison-storage',
       storage: typeof window !== 'undefined' ? createJSONStorage(() => localStorage) : undefined,
+      skipHydration: true,
     },
   ),
 );

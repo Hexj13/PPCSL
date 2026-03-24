@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import type { Listing } from '@/lib/api';
 import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/content/popular-brands';
 import { getMetadataLocale, getServerTranslations } from '@/lib/i18n';
@@ -168,7 +170,7 @@ function buildCollectionPageSchema(
   };
 }
 
-export async function SearchStructuredData({
+export async function getSearchStructuredData({
   brand,
   model,
   listings,
@@ -178,7 +180,7 @@ export async function SearchStructuredData({
   model?: string | null;
   listings?: Listing[];
   maxItems?: number;
-}) {
+}): Promise<ReactNode> {
   const country = getCountry();
   const siteConfig = loadSiteConfigSync(country);
   const locale = await getMetadataLocale();

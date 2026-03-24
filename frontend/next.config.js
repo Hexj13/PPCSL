@@ -7,6 +7,13 @@ const nextConfig = {
   poweredByHeader: false,
   trailingSlash: false,
 
+  async redirects() {
+    return [
+      { source: '/login', destination: '/sign', permanent: true },
+      { source: '/register', destination: '/sign?tab=register', permanent: true },
+    ];
+  },
+
   experimental: {
     optimizeCss: true,
   },

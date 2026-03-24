@@ -6,6 +6,11 @@ import { SMS_MESSAGES } from '../../../common/constants';
 import { RedisService } from '../../../common/redis.service';
 import { PhoneService } from '../../domain/services/phone.service';
 
+const SMS_PER_HOUR = 3;
+const CODE_FAIL_MAX = 3;
+const SEND_HOUR_TTL_SECONDS = 3600;
+const CODE_TTL_SECONDS = 600;
+
 @Injectable()
 export class SmsService {
   private twilioClient: twilio.Twilio | null = null;
@@ -35,10 +40,14 @@ export class SmsService {
     const code = this.generateCode();
     const normalizedPhone = this.normalizePhoneNumber(phoneNumber);
 
+    await this.consumeSmsSendQuota(normalizedPhone);
+    await this.redisService.del(this.codeFailKey(normalizedPhone));
+
     const redisKey = `sms:code:${normalizedPhone}`;
     try {
-      await this.redisService.set(redisKey, code, 600);
+      await this.redisService.set(redisKey, code, CODE_TTL_SECONDS);
     } catch {
+      await this.releaseSmsSendQuotaSlot(normalizedPhone);
       throw new BadRequestException('errors.codeSaveError');
     }
 
@@ -85,10 +94,14 @@ export class SmsService {
     const code = this.generateCode();
     const normalizedPhone = this.normalizePhoneNumber(phoneNumber);
 
+    await this.consumeSmsSendQuota(normalizedPhone);
+    await this.redisService.del(this.resetFailKey(normalizedPhone));
+
     const redisKey = `sms:reset:${normalizedPhone}`;
     try {
-      await this.redisService.set(redisKey, code, 600);
+      await this.redisService.set(redisKey, code, CODE_TTL_SECONDS);
     } catch {
+      await this.releaseSmsSendQuotaSlot(normalizedPhone);
       throw new BadRequestException('errors.codeSaveError');
     }
 
@@ -137,6 +150,8 @@ export class SmsService {
     const isTest = nodeEnv === 'test';
 
     if ((isStageOrDev || isTest) && code === '000000') {
+      const normalizedPhone = this.normalizePhoneNumber(phoneNumber);
+      await this.redisService.del(this.resetFailKey(normalizedPhone));
       return true;
     }
 
@@ -155,9 +170,11 @@ export class SmsService {
     }
 
     if (storedCode === code) {
+      await this.redisService.del(this.resetFailKey(normalizedPhone));
       return true;
     }
 
+    await this.incrementWrongCodeFail(this.resetFailKey(normalizedPhone));
     return false;
   }
 
@@ -167,6 +184,8 @@ export class SmsService {
     const isTest = nodeEnv === 'test';
 
     if ((isStageOrDev || isTest) && code === '000000') {
+      const normalizedPhone = this.normalizePhoneNumber(phoneNumber);
+      await this.redisService.del(this.codeFailKey(normalizedPhone));
       return true;
     }
 
@@ -190,9 +209,11 @@ export class SmsService {
       } catch {
         // Ignore cleanup errors
       }
+      await this.redisService.del(this.codeFailKey(normalizedPhone));
       return true;
     }
 
+    await this.incrementWrongCodeFail(this.codeFailKey(normalizedPhone));
     return false;
   }
 
@@ -204,13 +225,56 @@ export class SmsService {
     } catch {
       // Ignore cleanup errors
     }
-  }
-
-  private generateCode(): string {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+    await this.redisService.del(this.resetFailKey(normalizedPhone));
   }
 
   normalizePhoneNumber(phone: string): string {
     return this.phoneService.normalize(phone);
+  }
+
+  private sendHourKey(normalizedPhone: string): string {
+    return `sms:send-hour:${normalizedPhone}`;
+  }
+
+  private codeFailKey(normalizedPhone: string): string {
+    return `sms:code-fail:${normalizedPhone}`;
+  }
+
+  private resetFailKey(normalizedPhone: string): string {
+    return `sms:reset-fail:${normalizedPhone}`;
+  }
+
+  private async consumeSmsSendQuota(normalizedPhone: string): Promise<void> {
+    const key = this.sendHourKey(normalizedPhone);
+    const n = await this.redisService.incr(key);
+    if (n === 1) {
+      await this.redisService.expire(key, SEND_HOUR_TTL_SECONDS);
+    }
+    if (n > SMS_PER_HOUR) {
+      await this.redisService.decr(key);
+      throw new BadRequestException('errors.smsHourlyLimit');
+    }
+  }
+
+  private async releaseSmsSendQuotaSlot(normalizedPhone: string): Promise<void> {
+    try {
+      await this.redisService.decr(this.sendHourKey(normalizedPhone));
+    } catch {
+      // Ignore
+    }
+  }
+
+  private async incrementWrongCodeFail(failKey: string): Promise<void> {
+    const n = await this.redisService.incr(failKey);
+    if (n === 1) {
+      await this.redisService.expire(failKey, CODE_TTL_SECONDS);
+    }
+    if (n >= CODE_FAIL_MAX) {
+      throw new BadRequestException('errors.maxSmsCodeAttempts');
+    }
+  }
+
+  private generateCode(): string {
+    return Math.floor(100000 + Math.random() * 900000).toString();
   }
 }

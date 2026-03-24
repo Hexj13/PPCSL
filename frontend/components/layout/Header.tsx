@@ -1,13 +1,17 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
+import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
+import { isHideFooterPath } from '@/components/layout/header-flow-paths';
 import { useComparisonStore } from '@/lib/store';
 
-import { DesktopNav } from './Header/DesktopNav';
+import { DesktopNavActions, DesktopNavMenuArea } from './Header/DesktopNav';
 import { HeaderLogo } from './Header/HeaderLogo';
 import { MobileNavDrawer } from './Header/MobileNavDrawer';
 import { MobileToolbar } from './Header/MobileToolbar';
+import { NavSkeleton } from './Header/NavSkeleton';
 import { useHeaderState } from './Header/useHeaderState';
 
 const MOBILE_DRAWER_ID = 'header-mobile-drawer';
@@ -33,6 +37,16 @@ export function Header() {
     mobileNavLinkClasses,
     t,
   } = useHeaderState();
+
+  const pathname = usePathname();
+  const showInlineMobileLanguage = isHideFooterPath(pathname) && !isErrorPage;
+  const hideMobileCreateListing = isHideFooterPath(pathname);
+
+  useEffect(() => {
+    if (pathname === '/sign' && isMobileMenuOpen) {
+      handleMobileMenuClose();
+    }
+  }, [pathname, isMobileMenuOpen, handleMobileMenuClose]);
 
   useEffect(() => {
     if (!isMobileMenuOpen) return;
@@ -76,32 +90,70 @@ export function Header() {
         className="container relative z-[1] mx-auto px-3 sm:px-4 h-full border-b border-primary-700"
         suppressHydrationWarning
       >
-        <div className="flex justify-between items-center h-full" suppressHydrationWarning>
+        <div
+          className="flex justify-between items-center h-full w-full min-w-0 gap-2"
+          suppressHydrationWarning
+        >
           <HeaderLogo brandAlt={t('header.brandName')} />
 
-          {showNav && (
-            <MobileToolbar
+          <div className="flex items-center justify-end shrink-0 min-w-0 gap-2 xl:gap-4">
+            {showInlineMobileLanguage && (
+              <div className="flex lg:hidden items-center shrink-0">
+                {showSkeleton ? (
+                  <NavSkeleton variant="mobileSignGuest" />
+                ) : (
+                  <LanguageSwitcher variant="mobile" context="header" />
+                )}
+              </div>
+            )}
+            {!showNav && !isErrorPage && (
+              <div className="hidden lg:flex items-center shrink-0">
+                {showSkeleton ? (
+                  <NavSkeleton variant="desktopSignGuest" />
+                ) : (
+                  <LanguageSwitcher variant="desktop" context="header" />
+                )}
+              </div>
+            )}
+            {showNav && (
+              <MobileToolbar
+                showSkeleton={showSkeleton}
+                isMobileMenuOpen={isMobileMenuOpen}
+                onToggle={handleMobileMenuToggle}
+                toggleAriaLabel={t('header.toggleMenu')}
+                toggleId={MOBILE_MENU_TOGGLE_ID}
+                drawerId={MOBILE_DRAWER_ID}
+                showMenuToggle={pathname !== '/sign'}
+                showCreateListing={!hideMobileCreateListing}
+              />
+            )}
+            <DesktopNavMenuArea
+              user={user}
               showSkeleton={showSkeleton}
-              isMobileMenuOpen={isMobileMenuOpen}
-              onToggle={handleMobileMenuToggle}
-              toggleAriaLabel={t('header.toggleMenu')}
-              toggleId={MOBILE_MENU_TOGGLE_ID}
-              drawerId={MOBILE_DRAWER_ID}
+              showNav={showNav}
+              comparisonCount={comparisonCount}
+              navLinkClasses={navLinkClasses}
+              onLogout={handleLogout}
+              t={t}
             />
-          )}
-
-          <DesktopNav
-            user={user}
-            showSkeleton={showSkeleton}
-            showNav={showNav}
-            comparisonCount={comparisonCount}
-            isAuthPage={isAuthPage}
-            isErrorPage={isErrorPage}
-            navLinkClasses={navLinkClasses}
-            onLogout={handleLogout}
-            onSetReturnUrl={handleSetReturnUrl}
-            t={t}
-          />
+            {showNav && user && (
+              <div
+                className="hidden lg:block mx-1 h-6 w-px shrink-0 bg-primary-700/30"
+                aria-hidden
+              />
+            )}
+            <DesktopNavActions
+              user={user}
+              showSkeleton={showSkeleton}
+              showNav={showNav}
+              comparisonCount={comparisonCount}
+              navLinkClasses={navLinkClasses}
+              isAuthPage={isAuthPage}
+              isErrorPage={isErrorPage}
+              onSetReturnUrl={handleSetReturnUrl}
+              t={t}
+            />
+          </div>
         </div>
       </div>
 

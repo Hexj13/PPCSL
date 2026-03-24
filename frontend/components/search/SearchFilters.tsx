@@ -352,7 +352,7 @@ export function SearchFilters() {
               localStorage.setItem('pendingSavedFilter', JSON.stringify(getFiltersForSave()));
               localStorage.setItem('returnUrl', '/favorites?tab=filters');
             }
-            router.push('/login');
+            router.push('/sign');
           }
         }}
         hasFiltersChanged={handlers.hasFiltersChanged}

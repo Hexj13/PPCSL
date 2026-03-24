@@ -45,7 +45,7 @@ export function CreateListingButton({
 
   const iconSize = isMobile ? 'w-4 h-4' : 'w-3.5 h-3.5 md:w-4 md:h-4';
 
-  const href = user ? '/listings/new' : '/login';
+  const href = user ? '/listings/new' : '/sign';
 
   return (
     <Link

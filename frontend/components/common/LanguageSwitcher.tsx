@@ -87,6 +87,8 @@ export function LanguageSwitcher({
           autoPosition={true}
           searchable={false}
           rightIcon={languageIcon}
+          menuSelectedStyle="checkmark"
+          menuExpandToContent
         />
       </div>
     </div>

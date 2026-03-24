@@ -1,38 +1,32 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { CreateListingButton } from '@/components/listing/CreateListingButton';
 import type { User } from '@/lib/api';
 
 import { HeaderMoreDropdown } from './HeaderMoreDropdown';
-import { DocumentsIcon, HeartIcon, ScaleIcon, ShieldIcon, UserIcon, LogoutIcon } from './icons';
+import { DocumentsIcon, HeartIcon, ScaleIcon } from './icons';
 
-type UserDesktopNavProps = {
+type UserDesktopNavLinksProps = {
   user: User;
   comparisonCount: number;
-  isAuthPage: boolean;
-  isErrorPage: boolean;
   navLinkClasses: string;
   onLogout: () => void;
   t: (key: string) => string;
 };
 
-export function UserDesktopNav({
+export function UserDesktopNavLinks({
   user,
   comparisonCount,
-  isAuthPage,
-  isErrorPage,
   navLinkClasses,
   onLogout,
   t,
-}: UserDesktopNavProps) {
-  const showLang = !isAuthPage && !isErrorPage;
-
+}: UserDesktopNavLinksProps) {
   return (
     <>
-      <CreateListingButton variant="desktop" />
       <Link href="/my-listings" className={navLinkClasses}>
         <DocumentsIcon />
         <span suppressHydrationWarning>{t('header.myListings')}</span>
@@ -41,14 +35,6 @@ export function UserDesktopNav({
         <HeartIcon />
         <span suppressHydrationWarning>{t('header.favorites')}</span>
       </Link>
-      <div className="xl:hidden">
-        <HeaderMoreDropdown
-          user={user}
-          comparisonCount={comparisonCount}
-          navLinkClasses={navLinkClasses}
-          t={t}
-        />
-      </div>
       <Link href="/compare" className={`${navLinkClasses} hidden xl:flex`}>
         <ScaleIcon />
         <span suppressHydrationWarning>{t('header.compare')}</span>
@@ -58,40 +44,35 @@ export function UserDesktopNav({
           </span>
         )}
       </Link>
-      <Link href="/profile" className={`${navLinkClasses} hidden xl:flex`}>
-        <UserIcon />
-        <span suppressHydrationWarning>{t('header.profile')}</span>
-      </Link>
-      {user.type === 'Admin' && (
-        <AdminDesktopLink navLinkClasses={navLinkClasses} t={t} className="hidden xl:flex" />
-      )}
-      <button onClick={onLogout} className={navLinkClasses}>
-        <LogoutIcon />
-        <span suppressHydrationWarning>{t('header.logout')}</span>
-      </button>
-      {showLang && (
-        <>
-          <div className="mx-1 h-6 w-px bg-primary-700/30" />
-          <LanguageSwitcher variant="desktop" context="header" />
-        </>
-      )}
+      <HeaderMoreDropdown
+        user={user}
+        comparisonCount={comparisonCount}
+        navLinkClasses={navLinkClasses}
+        onLogout={onLogout}
+        t={t}
+      />
     </>
   );
 }
 
-export function AdminDesktopLink({
-  navLinkClasses,
-  t,
-  className = '',
-}: {
-  navLinkClasses: string;
-  t: (key: string) => string;
-  className?: string;
-}) {
+type UserDesktopNavActionsProps = {
+  isAuthPage: boolean;
+  isErrorPage: boolean;
+};
+
+export function UserDesktopNavActions({ isAuthPage, isErrorPage }: UserDesktopNavActionsProps) {
+  const pathname = usePathname();
+  const showLang = (!isAuthPage && !isErrorPage) || (pathname === '/sign' && !isErrorPage);
+
   return (
-    <Link href="/admin" className={`${navLinkClasses} ${className}`}>
-      <ShieldIcon />
-      <span suppressHydrationWarning>{t('header.admin')}</span>
-    </Link>
+    <>
+      <CreateListingButton variant="desktop" />
+      {showLang && (
+        <>
+          <div className="mx-1 h-6 w-px bg-primary-700/30 shrink-0" />
+          <LanguageSwitcher variant="desktop" context="header" />
+        </>
+      )}
+    </>
   );
 }

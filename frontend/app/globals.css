@@ -1307,6 +1307,31 @@
   }
 }
 
+@keyframes toast-icon-enter {
+  from {
+    opacity: 0.4;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.toast-icon-slot {
+  opacity: 0.4;
+  transform: scale(0.6);
+  animation: toast-icon-enter 0.3s 0.12s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast-icon-slot {
+    animation: none;
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .admin-expand-row {
   animation: admin-expand-row-fade-in 0.2s ease-out forwards;
 }
@@ -1318,9 +1343,4 @@
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
-}
-
-body.register-page .register-page-main {
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
 }

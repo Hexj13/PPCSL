@@ -323,7 +323,6 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
     user,
     isInitialized,
     isInComparison,
-    comparisonCount,
     isFavorite,
     isOwnListing,
     equipmentColumns,
@@ -455,7 +454,6 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
               listing={listing}
               isInitialized={isInitialized}
               isInComparison={isInComparison}
-              comparisonCount={comparisonCount}
               isFavorite={isFavorite}
               isOwnListing={isOwnListing}
               canPromote={canPromote}

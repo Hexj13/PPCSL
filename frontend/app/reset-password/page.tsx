@@ -7,6 +7,7 @@ import {
   type ResetPasswordErrors,
 } from '@/app/reset-password/useResetPasswordPage';
 import { getPasswordValidationRules } from '@/app/reset-password/utils';
+import { smsResendCooldownButtonLabel } from '@/lib/utils';
 import { LoadingButton } from '@/ui';
 
 type TranslationFn = ReturnType<typeof useResetPasswordPage>['t'];
@@ -60,7 +61,7 @@ function ResetPasswordPhoneStep({
       </LoadingButton>
       <p className="mt-6 text-center text-sm text-gray-300">
         <Link
-          href="/login"
+          href="/sign"
           className="text-primary-700 font-semibold hover-only:hover:text-primary-900 underline transition-colors"
         >
           {t('resetPassword.backToLogin')}
@@ -76,6 +77,7 @@ function ResetPasswordCodeStep({
   errors,
   loading,
   resendCooldown,
+  resendSmsAttempts,
   isVerificationBlocked,
   inputRefs,
   onCodeChange,
@@ -91,6 +93,7 @@ function ResetPasswordCodeStep({
   errors: ResetPasswordErrors;
   loading: boolean;
   resendCooldown: number;
+  resendSmsAttempts: number;
   isVerificationBlocked: boolean;
   inputRefs: React.MutableRefObject<(HTMLInputElement | null)[]>;
   onCodeChange: (index: number, value: string) => void;
@@ -182,12 +185,17 @@ function ResetPasswordCodeStep({
           <button
             type="button"
             onClick={onResend}
-            disabled={loading || resendCooldown > 0}
+            disabled={loading || resendCooldown > 0 || resendSmsAttempts >= 2}
             className="text-sm text-primary-500 hover-only:hover:text-primary-500 active:text-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {resendCooldown > 0
-              ? `${t('resetPassword.resendCode')} (${resendCooldown}с)`
-              : t('resetPassword.resendCode')}
+            {resendSmsAttempts >= 2
+              ? t('smsVerification.maxResendAttempts')
+              : resendCooldown > 0
+                ? smsResendCooldownButtonLabel(resendCooldown, t, {
+                    withSeconds: 'resetPassword.resendCodeWithCooldown',
+                    withMinutes: 'resetPassword.resendCodeWithCooldownMinutes',
+                  })
+                : t('resetPassword.resendCode')}
           </button>
         </div>
       </div>
@@ -398,6 +406,7 @@ export default function ResetPasswordPage() {
     errors,
     setErrors,
     resendCooldown,
+    resendSmsAttempts,
     isVerificationBlocked,
     inputRefs,
     handleRequestReset,
@@ -435,6 +444,7 @@ export default function ResetPasswordPage() {
           errors={errors}
           loading={loading}
           resendCooldown={resendCooldown}
+          resendSmsAttempts={resendSmsAttempts}
           isVerificationBlocked={isVerificationBlocked}
           inputRefs={inputRefs}
           onCodeChange={handleCodeChange}

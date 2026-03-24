@@ -1,5 +1,6 @@
 import type { RegisterDto, User } from '@/lib/api';
 import { authApi, favoritesApi, listingsApi, savedFiltersApi } from '@/lib/api';
+import { applyComparisonAfterAuth } from '@/lib/comparisonMigration';
 import { toast } from '@/lib/toast';
 
 type LoginResponse = {
@@ -44,37 +45,7 @@ export async function runAfterRegistration(
     localStorage.removeItem('pendingFavorites');
   }
 
-  const pendingComparisons = JSON.parse(localStorage.getItem('pendingComparisons') || '[]');
-  if (pendingComparisons.length > 0) {
-    const { useComparisonStore } = await import('@/lib/store');
-    const comparisonStore = useComparisonStore.getState();
-    for (const listingId of pendingComparisons) {
-      try {
-        await listingsApi.getOne(listingId);
-        comparisonStore.add(listingId);
-      } catch {
-        // ignore
-      }
-    }
-    if (comparisonStore.comparisons.length > 0) {
-      const storageData = {
-        state: { comparisons: comparisonStore.comparisons },
-        version: 0,
-      };
-      const str = JSON.stringify(storageData);
-      localStorage.setItem('comparison-storage', str);
-      await new Promise<void>((resolve) => {
-        requestAnimationFrame(() => {
-          localStorage.setItem('comparison-storage', str);
-          requestAnimationFrame(() => {
-            localStorage.setItem('comparison-storage', str);
-            setTimeout(resolve, 100);
-          });
-        });
-      });
-    }
-    localStorage.removeItem('pendingComparisons');
-  }
+  await applyComparisonAfterAuth();
 
   const pendingSavedFilter = localStorage.getItem('pendingSavedFilter');
   if (pendingSavedFilter) {

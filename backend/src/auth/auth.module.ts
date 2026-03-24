@@ -8,6 +8,7 @@ import { ListingsModule } from '../listings/listings.module';
 import { UsersModule } from '../users/users.module';
 
 import { AuthService } from './application/auth.service';
+import { ChangePasswordUseCase } from './application/use-cases/change-password.use-case';
 import { CheckPhoneAvailabilityUseCase } from './application/use-cases/check-phone-availability.use-case';
 import { DeleteAccountUseCase } from './application/use-cases/delete-account.use-case';
 import { GetUserProfileUseCase } from './application/use-cases/get-user-profile.use-case';
@@ -85,6 +86,7 @@ import { AuthController } from './presentation/auth.controller';
     VerifyPhoneChangeUseCase,
     CheckPhoneAvailabilityUseCase,
     SendVerificationSmsUseCase,
+    ChangePasswordUseCase,
   ],
   exports: [AuthService, IpBlockService, RefreshTokenService],
 })
