@@ -37,6 +37,7 @@ export type ListingPageImagesLayoutProps = {
   navigateTo: (_index: number, _options?: { clearTimer?: boolean }) => void;
   setCurrentImageIndex: Dispatch<SetStateAction<number>>;
   handleImageLoad: (_idx: number) => void;
+  onSlideTransformTransitionEnd: () => void;
 };
 
 export function ListingPageImagesLayout({
@@ -65,6 +66,7 @@ export function ListingPageImagesLayout({
   navigateTo,
   setCurrentImageIndex,
   handleImageLoad,
+  onSlideTransformTransitionEnd,
 }: ListingPageImagesLayoutProps) {
   return (
     <div>
@@ -153,6 +155,7 @@ export function ListingPageImagesLayout({
           blurDataURLForIndex,
           heroPreviewBlurConsumed,
           t,
+          onSlideTransformTransitionEnd,
         })}
       </div>
 

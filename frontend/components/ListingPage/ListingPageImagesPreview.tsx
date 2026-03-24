@@ -140,6 +140,13 @@ function renderPreviewIncomingSlide(toIndex: number, params: SlideParams) {
   return renderPreviewNativeSlide(toIndex, params);
 }
 
+function renderPreviewIdleSlide(index: number, params: SlideParams) {
+  if (index === 0) {
+    return renderPreviewImage(0, params);
+  }
+  return renderPreviewNativeSlide(index, params);
+}
+
 const slideBase: CSSProperties = {
   position: 'absolute',
   inset: 0,
@@ -163,6 +170,7 @@ export function renderPreviewSlides(params: {
   blurDataURLForIndex: (_index: number) => string | undefined;
   heroPreviewBlurConsumed: boolean;
   t: (_key: string, _params?: Record<string, string>) => string;
+  onSlideTransformTransitionEnd?: () => void;
 }) {
   const {
     animState,
@@ -175,6 +183,7 @@ export function renderPreviewSlides(params: {
     blurDataURLForIndex,
     heroPreviewBlurConsumed,
     t,
+    onSlideTransformTransitionEnd,
   } = params;
 
   const slideParams: SlideParams = {
@@ -191,7 +200,7 @@ export function renderPreviewSlides(params: {
   if (!animState) {
     return (
       <div className="absolute inset-0 overflow-hidden">
-        {renderPreviewImage(currentImageIndex, slideParams)}
+        {renderPreviewIdleSlide(currentImageIndex, slideParams)}
       </div>
     );
   }
@@ -216,7 +225,15 @@ export function renderPreviewSlides(params: {
   const incomingContent = renderPreviewIncomingSlide(toIndex, slideParams);
 
   return (
-    <div className="absolute inset-0 overflow-hidden" style={{ isolation: 'isolate' }}>
+    <div
+      className="absolute inset-0 overflow-hidden"
+      style={{ isolation: 'isolate' }}
+      onTransitionEnd={(e) => {
+        if (e.propertyName !== 'transform') return;
+        if (!isRunning) return;
+        onSlideTransformTransitionEnd?.();
+      }}
+    >
       <div
         style={layerStyle(
           isRunning ? `translate3d(${leaveTarget}, 0, 0)` : 'translate3d(0%, 0, 0)',

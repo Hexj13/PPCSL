@@ -83,6 +83,8 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
     const rewindIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const imgRafRef = useRef<number | undefined>(undefined);
     const imgTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+    const slideCommitSeqRef = useRef(0);
+    const pendingSlideCommitRef = useRef<{ commitSeq: number; toIndex: number } | null>(null);
     const preloadCleanupRef = useRef<(() => void) | null>(null);
     const previewStateRef = useRef<PreviewState>(state);
     const goPrevInternalRef = useRef<(options?: { clearTimer?: boolean }) => void>(() => {});
@@ -162,6 +164,7 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
         clearTimeout(imgTimerRef.current);
         imgTimerRef.current = undefined;
       }
+      pendingSlideCommitRef.current = null;
       if (preloadCleanupRef.current) {
         preloadCleanupRef.current();
         preloadCleanupRef.current = null;
@@ -197,9 +200,24 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
       [setCurrentImageIndex],
     );
 
+    const handleSlideTransformTransitionEnd = useCallback(() => {
+      const pending = pendingSlideCommitRef.current;
+      if (!pending || pending.commitSeq !== slideCommitSeqRef.current) {
+        return;
+      }
+      pendingSlideCommitRef.current = null;
+      if (imgTimerRef.current !== undefined) {
+        clearTimeout(imgTimerRef.current);
+        imgTimerRef.current = undefined;
+      }
+      completeNavigation(pending.toIndex);
+    }, [completeNavigation]);
+
     const startAnimating = useCallback(
       (fromIndex: number, toIndex: number, direction: 'next' | 'prev') => {
         clearAnimationWork();
+        slideCommitSeqRef.current += 1;
+        const commitSeq = slideCommitSeqRef.current;
         setState({
           type: 'animating',
           fromIndex,
@@ -212,10 +230,19 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
             setState((prev) =>
               prev.type === 'animating' ? { ...prev, phase: 'running' as const } : prev,
             );
-            imgTimerRef.current = setTimeout(() => {
+            pendingSlideCommitRef.current = { commitSeq, toIndex };
+            const finishSlide = () => {
+              if (pendingSlideCommitRef.current?.commitSeq !== commitSeq) {
+                return;
+              }
+              pendingSlideCommitRef.current = null;
+              if (imgTimerRef.current !== undefined) {
+                clearTimeout(imgTimerRef.current);
+                imgTimerRef.current = undefined;
+              }
               completeNavigation(toIndex);
-              imgTimerRef.current = undefined;
-            }, IMAGE_SLIDE_DURATION_MS + 30);
+            };
+            imgTimerRef.current = setTimeout(finishSlide, IMAGE_SLIDE_DURATION_MS + 80);
           });
         });
       },
@@ -448,6 +475,7 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
         navigateTo={navigateTo}
         setCurrentImageIndex={setCurrentImageIndex}
         handleImageLoad={handleImageLoad}
+        onSlideTransformTransitionEnd={handleSlideTransformTransitionEnd}
       />
     );
   },
