@@ -14,6 +14,7 @@ const PREVIEW_IMAGE_QUALITY = 75;
 const PREVIEW_IMAGE_WIDTH = 1200;
 const PRELOAD_NEXT_DELAY_MS = 220;
 const PRELOAD_THIRD_AHEAD_DELAY_MS = 320;
+const EXISTING_PRELOAD_MAX_FRAMES = 900;
 
 export function useListingImages({
   images,
@@ -126,6 +127,8 @@ export function useListingImages({
         }
         if (img.complete && img.naturalWidth > 0) {
           markLoaded(index);
+        } else {
+          mainImagePreloadingRef.current.delete(index);
         }
         img.onload = null;
         img.onerror = null;
@@ -137,13 +140,32 @@ export function useListingImages({
     const secondAheadIndex = (currentImageIndex + 2) % images.length;
     const thirdAheadIndex = (currentImageIndex + 3) % images.length;
 
-    preloadByIndex(nextIndex);
-    preloadByIndex(prevIndex, 120);
+    type PreloadJob = { index: number; delay: number };
+    const preloadJobs: PreloadJob[] = [];
+    const addPreloadJob = (idx: number, delay: number) => {
+      const url = images[idx];
+      if (!url || url === '/placeholder-car.jpg' || imageErrors.has(idx)) {
+        return;
+      }
+      const existing = preloadJobs.find((j) => j.index === idx);
+      if (existing) {
+        existing.delay = Math.min(existing.delay, delay);
+      } else {
+        preloadJobs.push({ index: idx, delay });
+      }
+    };
+
+    addPreloadJob(nextIndex, 0);
+    addPreloadJob(prevIndex, 120);
     if (images.length > 2) {
-      preloadByIndex(secondAheadIndex, PRELOAD_NEXT_DELAY_MS);
+      addPreloadJob(secondAheadIndex, PRELOAD_NEXT_DELAY_MS);
     }
     if (images.length > 3) {
-      preloadByIndex(thirdAheadIndex, PRELOAD_THIRD_AHEAD_DELAY_MS);
+      addPreloadJob(thirdAheadIndex, PRELOAD_THIRD_AHEAD_DELAY_MS);
+    }
+
+    for (const { index, delay } of preloadJobs) {
+      preloadByIndex(index, delay);
     }
 
     if (navigationCountRef.current >= 1 && !hasPreloadedAllRef.current) {
@@ -195,6 +217,7 @@ export function useListingImages({
 
         let cancelled = false;
         let rafId: number | null = null;
+        let waitFrames = 0;
 
         const waitForExistingPreload = () => {
           if (cancelled) {
@@ -205,6 +228,12 @@ export function useListingImages({
             return;
           }
           if (!mainImagePreloadingRef.current.has(index)) {
+            callbacks?.onFailure?.();
+            return;
+          }
+          waitFrames += 1;
+          if (waitFrames > EXISTING_PRELOAD_MAX_FRAMES) {
+            mainImagePreloadingRef.current.delete(index);
             callbacks?.onFailure?.();
             return;
           }
@@ -243,6 +272,8 @@ export function useListingImages({
       return () => {
         if (img.complete && img.naturalWidth > 0) {
           markLoaded(index);
+        } else {
+          mainImagePreloadingRef.current.delete(index);
         }
         img.onload = null;
         img.onerror = null;
