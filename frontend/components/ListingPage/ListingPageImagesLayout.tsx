@@ -1,10 +1,21 @@
 'use client';
 
-import { type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
+import {
+  useEffect,
+  useState,
+  type Dispatch,
+  type MutableRefObject,
+  type SetStateAction,
+} from 'react';
 
 import { Spinner } from '@/ui';
 
-import { ListingThumbnailTile, renderPreviewSlides } from './ListingPageImagesPreview';
+import {
+  type HeroPreviewSlotId,
+  type HeroPreviewSlots,
+  ListingThumbnailTile,
+  renderPreviewSlides,
+} from './ListingPageImagesPreview';
 
 export type ListingPageImagesLayoutProps = {
   visibleIndex: number;
@@ -22,21 +33,17 @@ export type ListingPageImagesLayoutProps = {
   handleNext: (e: React.MouseEvent) => void;
   t: (_key: string, _params?: Record<string, string>) => string;
   showMainImageLoader: boolean;
-  animState: {
-    fromIndex: number;
-    toIndex: number;
-    direction: 'next' | 'prev';
-    phase: 'setup' | 'running';
-  } | null;
+  confirmedSlot: HeroPreviewSlotId;
+  pendingSlot: HeroPreviewSlotId | null;
+  slotIndices: HeroPreviewSlots;
   imageAltTitle: string;
-  handlePreviewImageLoad: (_idx: number) => void;
+  onHeroImageLoad: (_slotId: HeroPreviewSlotId, _idx: number) => void;
   onImageError: (_idx: number) => void;
   blurDataURLForIndex: (_index: number) => string | undefined;
   heroPreviewBlurConsumed: boolean;
   navigateTo: (_index: number, _options?: { clearTimer?: boolean }) => void;
   setCurrentImageIndex: Dispatch<SetStateAction<number>>;
-  handleImageLoad: (_idx: number) => void;
-  onSlideTransformTransitionEnd: () => void;
+  handleThumbnailImageLoad: (_idx: number) => void;
 };
 
 export function ListingPageImagesLayout({
@@ -55,17 +62,82 @@ export function ListingPageImagesLayout({
   handleNext,
   t,
   showMainImageLoader,
-  animState,
+  confirmedSlot,
+  pendingSlot,
+  slotIndices,
   imageAltTitle,
-  handlePreviewImageLoad,
+  onHeroImageLoad,
   onImageError,
   blurDataURLForIndex,
   heroPreviewBlurConsumed,
   navigateTo,
   setCurrentImageIndex,
-  handleImageLoad,
-  onSlideTransformTransitionEnd,
+  handleThumbnailImageLoad,
 }: ListingPageImagesLayoutProps) {
+  const [isMobileViewport, setIsMobileViewport] = useState(true);
+
+  useEffect(() => {
+    const updateViewport = () => {
+      setIsMobileViewport(window.innerWidth < 640);
+    };
+
+    updateViewport();
+    window.addEventListener('resize', updateViewport);
+
+    return () => {
+      window.removeEventListener('resize', updateViewport);
+    };
+  }, []);
+
+  const renderThumbnail = (img: string, index: number) => (
+    <div
+      key={index}
+      onClick={() => navigateTo(index, { clearTimer: true })}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          navigateTo(index, { clearTimer: true });
+        }
+      }}
+      className={`relative h-28 sm:h-32 bg-bg-darker rounded-lg overflow-hidden transition-all cursor-pointer ${
+        visibleIndex === index
+          ? 'ring-2 ring-primary-500 shadow-md'
+          : 'hover-only:hover:ring-2 hover-only:hover:ring-primary-300'
+      }`}
+    >
+      {img !== '/placeholder-car.jpg' && !imageErrors.has(index) ? (
+        <ListingThumbnailTile
+          img={img}
+          index={index}
+          totalImages={images.length}
+          imageAltTitle={imageAltTitle}
+          blurDataURLForIndex={blurDataURLForIndex}
+          t={t}
+          handleThumbnailImageLoad={handleThumbnailImageLoad}
+          onImageError={onImageError}
+          setCurrentImageIndex={setCurrentImageIndex}
+          onImageClick={onImageClick}
+        />
+      ) : (
+        <div
+          className="w-full h-full flex items-center justify-center"
+          style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+        >
+          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"
+            />
+          </svg>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div>
       <div
@@ -138,72 +210,25 @@ export function ListingPageImagesLayout({
         )}
 
         {renderPreviewSlides({
-          animState,
-          currentImageIndex: visibleIndex,
+          confirmedSlot,
+          pendingSlot,
+          slotIndices,
           images,
           imageErrors,
           imageAltTitle,
-          handleImageLoad: handlePreviewImageLoad,
+          onHeroImageLoad,
           onImageError,
           blurDataURLForIndex,
           heroPreviewBlurConsumed,
           t,
-          onSlideTransformTransitionEnd,
         })}
       </div>
 
       {images.length > 1 && (
-        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-          {images.slice(0, 4).map((img, index) => (
-            <div
-              key={index}
-              onClick={() => navigateTo(index, { clearTimer: true })}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  navigateTo(index, { clearTimer: true });
-                }
-              }}
-              className={`relative h-28 sm:h-32 bg-bg-darker rounded-lg overflow-hidden transition-all cursor-pointer ${
-                index === 3 ? 'hidden sm:block' : ''
-              } ${
-                visibleIndex === index
-                  ? 'ring-2 ring-primary-500 shadow-md'
-                  : 'hover-only:hover:ring-2 hover-only:hover:ring-primary-300'
-              }`}
-            >
-              {img !== '/placeholder-car.jpg' && !imageErrors.has(index) ? (
-                <ListingThumbnailTile
-                  img={img}
-                  index={index}
-                  totalImages={images.length}
-                  imageAltTitle={imageAltTitle}
-                  blurDataURLForIndex={blurDataURLForIndex}
-                  t={t}
-                  handleImageLoad={handleImageLoad}
-                  onImageError={onImageError}
-                  setCurrentImageIndex={setCurrentImageIndex}
-                  onImageClick={onImageClick}
-                />
-              ) : (
-                <div
-                  className="w-full h-full flex items-center justify-center"
-                  style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-                >
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"
-                    />
-                  </svg>
-                </div>
-              )}
-            </div>
-          ))}
+        <div className={`grid gap-2 ${isMobileViewport ? 'grid-cols-3' : 'grid-cols-4'}`}>
+          {images
+            .slice(0, isMobileViewport ? 3 : 4)
+            .map((img, index) => renderThumbnail(img, index))}
         </div>
       )}
     </div>

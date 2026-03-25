@@ -58,46 +58,36 @@ describe('useListingImages', () => {
     jest.restoreAllMocks();
   });
 
-  it('does not leave main preview loading when the fourth image was already marked loaded', () => {
+  it('marks hero readiness separately from generic preload readiness', () => {
     const imageErrors = new Set<number>();
-    const { result, rerender } = renderHook(
+    const { result } = renderHook(
       ({ index }: { index: number }) =>
         useListingImages({ images: fiveImages, currentImageIndex: index, imageErrors }),
       { initialProps: { index: 0 } },
     );
 
     act(() => {
-      result.current.handleImageLoad(3);
+      result.current.handleHeroImageLoad(3);
     });
 
-    rerender({ index: 3 });
-
-    act(() => {
-      jest.runOnlyPendingTimers();
-    });
-
-    expect(result.current.mainImageLoading).toBe(false);
+    expect(result.current.isTargetReady(3)).toBe(true);
+    expect(result.current.isHeroReady(3)).toBe(true);
   });
 
-  it('clears loading state when jumping to first slide after thumbnails loaded it', () => {
+  it('does not mark a hero image as hero-ready when only the thumbnail loaded', () => {
     const imageErrors = new Set<number>();
-    const { result, rerender } = renderHook(
+    const { result } = renderHook(
       ({ index }: { index: number }) =>
         useListingImages({ images: fiveImages, currentImageIndex: index, imageErrors }),
       { initialProps: { index: 2 } },
     );
 
     act(() => {
-      result.current.handleImageLoad(0);
+      result.current.handleThumbnailImageLoad(3);
     });
 
-    rerender({ index: 0 });
-
-    act(() => {
-      jest.runOnlyPendingTimers();
-    });
-
-    expect(result.current.mainImageLoading).toBe(false);
+    expect(result.current.isTargetReady(3)).toBe(true);
+    expect(result.current.isHeroReady(3)).toBe(false);
   });
 
   it('preloadTarget for index 3 allocates a new Image when that index is not already preloading', async () => {

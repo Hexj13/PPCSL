@@ -18,7 +18,8 @@ import { blurhashToDataURL } from '@/lib/utils/blurhash';
 
 import { ListingPageImagesLayout } from './ListingPageImagesLayout';
 import {
-  IMAGE_SLIDE_DURATION_MS,
+  type HeroPreviewSlotId,
+  type HeroPreviewSlots,
   REWIND_STEP_MS,
   RESET_TO_FIRST_DELAY_MS,
 } from './ListingPageImagesPreview';
@@ -35,16 +36,11 @@ interface ListingPageImagesProps {
   imageBlurHashes?: (string | null)[] | null;
 }
 
-type PreviewState =
-  | { type: 'idle'; index: number }
-  | { type: 'preloading'; fromIndex: number; toIndex: number; direction: 'next' | 'prev' }
-  | {
-      type: 'animating';
-      fromIndex: number;
-      toIndex: number;
-      direction: 'next' | 'prev';
-      phase: 'setup' | 'running';
-    };
+export type PreviewState = {
+  confirmedSlot: HeroPreviewSlotId;
+  pendingSlot: HeroPreviewSlotId | null;
+  slotIndices: HeroPreviewSlots;
+};
 
 export interface ListingPageImagesHandle {
   goNext: () => void;
@@ -57,10 +53,58 @@ export interface ListingPageImagesHandle {
 const MIN_SWIPE_DISTANCE = 50;
 const SWIPE_INTENT_THRESHOLD = 18;
 
-function getDirection(fromIndex: number, toIndex: number, total: number): 'next' | 'prev' {
-  const forwardDistance = (toIndex - fromIndex + total) % total;
-  const backwardDistance = (fromIndex - toIndex + total) % total;
-  return forwardDistance <= backwardDistance ? 'next' : 'prev';
+export function createPreviewState(index: number): PreviewState {
+  return {
+    confirmedSlot: 'primary',
+    pendingSlot: null,
+    slotIndices: {
+      primary: index,
+      secondary: null,
+    },
+  };
+}
+
+export function getConfirmedIndex(state: PreviewState) {
+  return state.slotIndices[state.confirmedSlot] ?? 0;
+}
+
+export function getPendingSlotId(slotId: HeroPreviewSlotId): HeroPreviewSlotId {
+  return slotId === 'primary' ? 'secondary' : 'primary';
+}
+
+export function preparePendingPreviewState(state: PreviewState, toIndex: number) {
+  const pendingSlot = getPendingSlotId(state.confirmedSlot);
+  return {
+    pendingSlot,
+    nextState: {
+      ...state,
+      pendingSlot,
+      slotIndices: {
+        ...state.slotIndices,
+        [pendingSlot]: toIndex,
+      },
+    },
+  };
+}
+
+export function promotePendingPreviewState(
+  state: PreviewState,
+  pendingSlot: HeroPreviewSlotId,
+  toIndex: number,
+): PreviewState {
+  if (state.pendingSlot !== pendingSlot || state.slotIndices[pendingSlot] !== toIndex) {
+    return state;
+  }
+
+  const previousConfirmedSlot = state.confirmedSlot;
+  return {
+    confirmedSlot: pendingSlot,
+    pendingSlot: null,
+    slotIndices: {
+      ...state.slotIndices,
+      [previousConfirmedSlot]: null,
+    },
+  };
 }
 
 function getPredictedSwipeIndex(currentIndex: number, total: number, deltaX: number) {
@@ -91,7 +135,7 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
     const { t } = useTranslation();
     const imagesSignature = useMemo(() => images.join('\u0001'), [images]);
     const [heroPreviewBlurConsumed, setHeroPreviewBlurConsumed] = useState(false);
-    const [state, setState] = useState<PreviewState>({ type: 'idle', index: currentImageIndex });
+    const [state, setState] = useState<PreviewState>(() => createPreviewState(currentImageIndex));
     const touchStartX = useRef<number | null>(null);
     const touchStartY = useRef<number | null>(null);
     const touchEndX = useRef<number | null>(null);
@@ -101,27 +145,31 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
     const resetToFirstTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const rewindIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const imgRafRef = useRef<number | undefined>(undefined);
-    const imgTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-    const slideCommitSeqRef = useRef(0);
-    const pendingSlideCommitRef = useRef<{ commitSeq: number; toIndex: number } | null>(null);
+    const navigationSeqRef = useRef(0);
     const preloadCleanupRef = useRef<(() => void) | null>(null);
     const swipePreloadIndexRef = useRef<number | null>(null);
     const previewStateRef = useRef<PreviewState>(state);
     const goPrevInternalRef = useRef<(options?: { clearTimer?: boolean }) => void>(() => {});
-    const visibleIndex = state.type === 'idle' ? state.index : state.fromIndex;
+    const visibleIndex = getConfirmedIndex(state);
 
     useEffect(() => {
       setHeroPreviewBlurConsumed(false);
-      setState({ type: 'idle', index: currentImageIndex });
+      setState(createPreviewState(currentImageIndex));
       // eslint-disable-next-line react-hooks/exhaustive-deps -- reset carousel only when image set changes; index is parent value at that commit
     }, [imagesSignature]);
 
     useEffect(() => {
-      if (state.type !== 'idle' || state.index === currentImageIndex) {
+      if (state.pendingSlot || visibleIndex === currentImageIndex) {
         return;
       }
-      setState({ type: 'idle', index: currentImageIndex });
-    }, [currentImageIndex, state]);
+      setState((prev) => ({
+        ...prev,
+        slotIndices: {
+          ...prev.slotIndices,
+          [prev.confirmedSlot]: currentImageIndex,
+        },
+      }));
+    }, [currentImageIndex, state.pendingSlot, visibleIndex]);
 
     const blurDataURLForIndex = useMemo(() => {
       return (index: number): string | undefined => {
@@ -156,38 +204,71 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
       showMainImageLoader,
       setMainImageLoading,
       isTargetReady,
+      isHeroReady,
       preloadTarget,
-      handleImageLoad,
+      handleHeroImageLoad,
+      handleThumbnailImageLoad,
     } = useListingImages({
       images,
       currentImageIndex: visibleIndex,
       imageErrors,
     });
 
-    const handlePreviewImageLoad = useCallback(
-      (idx: number) => {
-        handleImageLoad(idx);
+    const completeNavigation = useCallback(
+      (pendingSlot: HeroPreviewSlotId, toIndex: number, sequence: number) => {
+        if (navigationSeqRef.current !== sequence) {
+          return;
+        }
+        setState((prev) => {
+          return promotePendingPreviewState(prev, pendingSlot, toIndex);
+        });
+        setCurrentImageIndex(toIndex);
+      },
+      [setCurrentImageIndex],
+    );
+
+    const schedulePendingPromotion = useCallback(
+      (pendingSlot: HeroPreviewSlotId, toIndex: number, sequence: number) => {
+        if (imgRafRef.current !== undefined) {
+          cancelAnimationFrame(imgRafRef.current);
+        }
+        imgRafRef.current = requestAnimationFrame(() => {
+          imgRafRef.current = undefined;
+          completeNavigation(pendingSlot, toIndex, sequence);
+        });
+      },
+      [completeNavigation],
+    );
+
+    const handleHeroLayerLoad = useCallback(
+      (slotId: HeroPreviewSlotId, idx: number) => {
+        handleHeroImageLoad(idx);
         if (idx === 0) {
           setHeroPreviewBlurConsumed(true);
         }
+        const snapshot = previewStateRef.current;
+        if (snapshot.pendingSlot !== slotId || snapshot.slotIndices[slotId] !== idx) {
+          return;
+        }
+        if (preloadCleanupRef.current) {
+          preloadCleanupRef.current();
+          preloadCleanupRef.current = null;
+        }
+        setMainImageLoading(false);
+        schedulePendingPromotion(slotId, idx, navigationSeqRef.current);
       },
-      [handleImageLoad],
+      [handleHeroImageLoad, schedulePendingPromotion, setMainImageLoading],
     );
 
     const clearSwipePreload = useCallback(() => {
       swipePreloadIndexRef.current = null;
     }, []);
 
-    const clearAnimationWork = useCallback(() => {
+    const clearNavigationWork = useCallback(() => {
       if (imgRafRef.current !== undefined) {
         cancelAnimationFrame(imgRafRef.current);
         imgRafRef.current = undefined;
       }
-      if (imgTimerRef.current !== undefined) {
-        clearTimeout(imgTimerRef.current);
-        imgTimerRef.current = undefined;
-      }
-      pendingSlideCommitRef.current = null;
       if (preloadCleanupRef.current) {
         preloadCleanupRef.current();
         preloadCleanupRef.current = null;
@@ -197,125 +278,77 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
     }, [clearSwipePreload, setMainImageLoading]);
 
     useEffect(() => () => clearResetToFirstTimer(), [clearResetToFirstTimer]);
-    useEffect(() => () => clearAnimationWork(), [clearAnimationWork]);
+    useEffect(() => () => clearNavigationWork(), [clearNavigationWork]);
 
     useEffect(() => {
-      if (state.type === 'idle' && state.index === 0 && rewindIntervalRef.current) {
+      if (!state.pendingSlot && visibleIndex === 0 && rewindIntervalRef.current) {
         clearInterval(rewindIntervalRef.current);
         rewindIntervalRef.current = null;
       }
-    }, [state]);
-
-    const completeNavigation = useCallback(
-      (toIndex: number) => {
-        setState({ type: 'idle', index: toIndex });
-        setCurrentImageIndex(toIndex);
-      },
-      [setCurrentImageIndex],
-    );
-
-    const finalizePendingSlide = useCallback(
-      (commitSeq: number) => {
-        const pending = pendingSlideCommitRef.current;
-        if (!pending || pending.commitSeq !== commitSeq) {
-          return;
-        }
-        pendingSlideCommitRef.current = null;
-        if (imgTimerRef.current !== undefined) {
-          clearTimeout(imgTimerRef.current);
-          imgTimerRef.current = undefined;
-        }
-        completeNavigation(pending.toIndex);
-      },
-      [completeNavigation],
-    );
-
-    const handleSlideTransformTransitionEnd = useCallback(() => {
-      const pending = pendingSlideCommitRef.current;
-      if (!pending) {
-        return;
-      }
-      finalizePendingSlide(slideCommitSeqRef.current);
-    }, [finalizePendingSlide]);
-
-    const startAnimating = useCallback(
-      (fromIndex: number, toIndex: number, direction: 'next' | 'prev') => {
-        clearAnimationWork();
-        slideCommitSeqRef.current += 1;
-        const commitSeq = slideCommitSeqRef.current;
-        setState({
-          type: 'animating',
-          fromIndex,
-          toIndex,
-          direction,
-          phase: 'setup',
-        });
-        imgRafRef.current = requestAnimationFrame(() => {
-          imgRafRef.current = requestAnimationFrame(() => {
-            setState((prev) =>
-              prev.type === 'animating' ? { ...prev, phase: 'running' as const } : prev,
-            );
-            pendingSlideCommitRef.current = { commitSeq, toIndex };
-            imgTimerRef.current = setTimeout(
-              () => finalizePendingSlide(commitSeq),
-              IMAGE_SLIDE_DURATION_MS + 80,
-            );
-          });
-        });
-      },
-      [clearAnimationWork, finalizePendingSlide],
-    );
+    }, [state.pendingSlot, visibleIndex]);
 
     const navigateTo = useCallback(
       (toIndex: number, options?: { clearTimer?: boolean }) => {
-        if (state.type !== 'idle' || images.length <= 1 || state.index === toIndex) {
+        if (state.pendingSlot || images.length <= 1 || visibleIndex === toIndex) {
           return;
         }
         if (options?.clearTimer !== false) {
           clearResetToFirstTimer();
         }
-        const fromIndex = state.index;
-        const direction = getDirection(fromIndex, toIndex, images.length);
-        if (isTargetReady(toIndex)) {
+        clearNavigationWork();
+        navigationSeqRef.current += 1;
+        const sequence = navigationSeqRef.current;
+        const { pendingSlot, nextState } = preparePendingPreviewState(
+          previewStateRef.current,
+          toIndex,
+        );
+
+        setState(nextState);
+
+        if (isHeroReady(toIndex)) {
           setMainImageLoading(false);
-          startAnimating(fromIndex, toIndex, direction);
+          schedulePendingPromotion(pendingSlot, toIndex, sequence);
           return;
         }
-        setState({ type: 'preloading', fromIndex, toIndex, direction });
+
+        if (isTargetReady(toIndex)) {
+          setMainImageLoading(false);
+          return;
+        }
+
         setMainImageLoading(true);
         preloadCleanupRef.current = preloadTarget(toIndex, {
           onReady: () => {
             preloadCleanupRef.current = null;
-            setMainImageLoading(false);
-            startAnimating(fromIndex, toIndex, direction);
           },
           onFailure: () => {
             preloadCleanupRef.current = null;
-            setMainImageLoading(false);
-            startAnimating(fromIndex, toIndex, direction);
           },
         });
       },
       [
+        clearNavigationWork,
         clearResetToFirstTimer,
         images.length,
+        isHeroReady,
         isTargetReady,
         preloadTarget,
+        schedulePendingPromotion,
         setMainImageLoading,
-        startAnimating,
         state,
+        visibleIndex,
       ],
     );
 
     const goPrevInternal = useCallback(
       (options?: { clearTimer?: boolean }) => {
-        if (state.type !== 'idle' || images.length <= 1) {
+        if (state.pendingSlot || images.length <= 1) {
           return;
         }
-        const toIndex = state.index === 0 ? images.length - 1 : state.index - 1;
+        const toIndex = visibleIndex === 0 ? images.length - 1 : visibleIndex - 1;
         navigateTo(toIndex, options);
       },
-      [images.length, navigateTo, state],
+      [images.length, navigateTo, state.pendingSlot, visibleIndex],
     );
 
     previewStateRef.current = state;
@@ -323,13 +356,13 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
 
     const goNextInternal = useCallback(
       (options?: { clearTimer?: boolean }) => {
-        if (state.type !== 'idle' || images.length <= 1) {
+        if (state.pendingSlot || images.length <= 1) {
           return;
         }
-        const toIndex = (state.index + 1) % images.length;
+        const toIndex = (visibleIndex + 1) % images.length;
         navigateTo(toIndex, options);
       },
-      [images.length, navigateTo, state],
+      [images.length, navigateTo, state.pendingSlot, visibleIndex],
     );
 
     useImperativeHandle(
@@ -338,10 +371,10 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
         goNext: () => goNextInternal(),
         goPrev: () => goPrevInternal(),
         goTo: (index: number) => navigateTo(index),
-        isBusy: () => state.type !== 'idle',
-        getIndex: () => (state.type === 'idle' ? state.index : state.fromIndex),
+        isBusy: () => state.pendingSlot !== null,
+        getIndex: () => getConfirmedIndex(previewStateRef.current),
       }),
-      [goNextInternal, goPrevInternal, navigateTo, state],
+      [goNextInternal, goPrevInternal, navigateTo, state.pendingSlot],
     );
 
     const handlePreviewMouseLeave = useCallback(() => {
@@ -352,15 +385,17 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
       resetToFirstTimerRef.current = setTimeout(() => {
         resetToFirstTimerRef.current = null;
         const snapshot = previewStateRef.current;
-        if (snapshot.type !== 'idle' || snapshot.index <= 0) {
+        const snapshotIndex = getConfirmedIndex(snapshot);
+        if (snapshot.pendingSlot || snapshotIndex <= 0) {
           return;
         }
         rewindIntervalRef.current = setInterval(() => {
           const s = previewStateRef.current;
-          if (s.type !== 'idle') {
+          const currentIndex = getConfirmedIndex(s);
+          if (s.pendingSlot) {
             return;
           }
-          if (s.index <= 0) {
+          if (currentIndex <= 0) {
             if (rewindIntervalRef.current) {
               clearInterval(rewindIntervalRef.current);
               rewindIntervalRef.current = null;
@@ -376,7 +411,7 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
       clearResetToFirstTimer();
     }, [clearResetToFirstTimer]);
 
-    const navBusy = state.type !== 'idle';
+    const navBusy = state.pendingSlot !== null;
 
     const handlePrev = useCallback(
       (e: React.MouseEvent) => {
@@ -398,41 +433,47 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
       [goNextInternal, navBusy],
     );
 
-    const onTouchStart = useCallback((e: React.TouchEvent) => {
-      clearSwipePreload();
-      touchEndX.current = null;
-      touchEndY.current = null;
-      horizontalSwipeRef.current = false;
-      touchStartX.current = e.targetTouches[0].clientX;
-      touchStartY.current = e.targetTouches[0].clientY;
-    }, [clearSwipePreload]);
+    const onTouchStart = useCallback(
+      (e: React.TouchEvent) => {
+        clearSwipePreload();
+        touchEndX.current = null;
+        touchEndY.current = null;
+        horizontalSwipeRef.current = false;
+        touchStartX.current = e.targetTouches[0].clientX;
+        touchStartY.current = e.targetTouches[0].clientY;
+      },
+      [clearSwipePreload],
+    );
 
-    const onTouchMove = useCallback((e: React.TouchEvent) => {
-      const nextX = e.targetTouches[0].clientX;
-      const nextY = e.targetTouches[0].clientY;
-      touchEndX.current = nextX;
-      touchEndY.current = nextY;
+    const onTouchMove = useCallback(
+      (e: React.TouchEvent) => {
+        const nextX = e.targetTouches[0].clientX;
+        const nextY = e.targetTouches[0].clientY;
+        touchEndX.current = nextX;
+        touchEndY.current = nextY;
 
-      if (touchStartX.current === null || touchStartY.current === null) return;
+        if (touchStartX.current === null || touchStartY.current === null) return;
 
-      const deltaX = nextX - touchStartX.current;
-      const deltaY = nextY - touchStartY.current;
-      const isHorizontalIntent =
-        Math.abs(deltaX) > SWIPE_INTENT_THRESHOLD && Math.abs(deltaX) > Math.abs(deltaY) * 1.1;
+        const deltaX = nextX - touchStartX.current;
+        const deltaY = nextY - touchStartY.current;
+        const isHorizontalIntent =
+          Math.abs(deltaX) > SWIPE_INTENT_THRESHOLD && Math.abs(deltaX) > Math.abs(deltaY) * 1.1;
 
-      if (isHorizontalIntent) {
-        horizontalSwipeRef.current = true;
-        if (state.type === 'idle' && images.length > 1) {
-          const predictedIndex = getPredictedSwipeIndex(state.index, images.length, deltaX);
+        if (isHorizontalIntent) {
+          horizontalSwipeRef.current = true;
+          if (!state.pendingSlot && images.length > 1) {
+            const predictedIndex = getPredictedSwipeIndex(visibleIndex, images.length, deltaX);
 
-          if (predictedIndex !== null && swipePreloadIndexRef.current !== predictedIndex) {
-            swipePreloadIndexRef.current = predictedIndex;
-            preloadTarget(predictedIndex);
+            if (predictedIndex !== null && swipePreloadIndexRef.current !== predictedIndex) {
+              swipePreloadIndexRef.current = predictedIndex;
+              preloadTarget(predictedIndex);
+            }
           }
+          e.preventDefault();
         }
-        e.preventDefault();
-      }
-    }, [images.length, preloadTarget, state]);
+      },
+      [images.length, preloadTarget, state.pendingSlot, visibleIndex],
+    );
 
     const onTouchEnd = useCallback(() => {
       const resetTouchState = () => {
@@ -485,17 +526,18 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
         handlePrev={handlePrev}
         handleNext={handleNext}
         t={t}
-        showMainImageLoader={showMainImageLoader && state.type !== 'animating'}
-        animState={state.type === 'animating' ? state : null}
+        showMainImageLoader={showMainImageLoader && state.pendingSlot !== null}
+        confirmedSlot={state.confirmedSlot}
+        pendingSlot={state.pendingSlot}
+        slotIndices={state.slotIndices}
         imageAltTitle={imageAltTitle}
-        handlePreviewImageLoad={handlePreviewImageLoad}
+        onHeroImageLoad={handleHeroLayerLoad}
         onImageError={onImageError}
         blurDataURLForIndex={blurDataURLForIndex}
         heroPreviewBlurConsumed={heroPreviewBlurConsumed}
         navigateTo={navigateTo}
         setCurrentImageIndex={setCurrentImageIndex}
-        handleImageLoad={handleImageLoad}
-        onSlideTransformTransitionEnd={handleSlideTransformTransitionEnd}
+        handleThumbnailImageLoad={handleThumbnailImageLoad}
       />
     );
   },

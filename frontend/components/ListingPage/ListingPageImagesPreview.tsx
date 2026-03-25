@@ -7,10 +7,12 @@ import { getOptimizedImageUrl } from '@/lib/utils';
 
 export const RESET_TO_FIRST_DELAY_MS = 10000;
 export const REWIND_STEP_MS = 220;
-export const IMAGE_SLIDE_DURATION_MS = 220;
 
 const PREVIEW_IMAGE_QUALITY = 75;
 const PREVIEW_IMAGE_WIDTH = 1200;
+
+export type HeroPreviewSlotId = 'primary' | 'secondary';
+export type HeroPreviewSlots = Record<HeroPreviewSlotId, number | null>;
 
 const PLACEHOLDER_SVG = (
   <svg className="w-24 h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -107,94 +109,81 @@ const slideBase: CSSProperties = {
 };
 
 export function renderPreviewSlides(params: {
-  animState: {
-    fromIndex: number;
-    toIndex: number;
-    direction: 'next' | 'prev';
-    phase: 'setup' | 'running';
-  } | null;
-  currentImageIndex: number;
+  confirmedSlot: HeroPreviewSlotId;
+  pendingSlot: HeroPreviewSlotId | null;
+  slotIndices: HeroPreviewSlots;
   images: string[];
   imageErrors: Set<number>;
   imageAltTitle: string;
-  handleImageLoad: (_idx: number) => void;
+  onHeroImageLoad: (_slotId: HeroPreviewSlotId, _idx: number) => void;
   onImageError: (_idx: number) => void;
   blurDataURLForIndex: (_index: number) => string | undefined;
   heroPreviewBlurConsumed: boolean;
   t: (_key: string, _params?: Record<string, string>) => string;
-  onSlideTransformTransitionEnd?: () => void;
 }) {
   const {
-    animState,
-    currentImageIndex,
+    confirmedSlot,
+    pendingSlot,
+    slotIndices,
     images,
     imageErrors,
     imageAltTitle,
-    handleImageLoad,
+    onHeroImageLoad,
     onImageError,
     blurDataURLForIndex,
     heroPreviewBlurConsumed,
     t,
-    onSlideTransformTransitionEnd,
   } = params;
 
   const slideParams: SlideParams = {
     images,
     imageErrors,
     imageAltTitle,
-    handleImageLoad,
+    handleImageLoad: () => {},
     onImageError,
     blurDataURLForIndex,
     heroPreviewBlurConsumed,
     t,
   };
 
-  if (!animState) {
+  const renderLayer = (slotId: HeroPreviewSlotId) => {
+    const index = slotIndices[slotId];
+    if (index === null) {
+      return null;
+    }
+
+    const isConfirmed = slotId === confirmedSlot;
+    const isPending = slotId === pendingSlot;
+    const content =
+      isPending && index !== 0
+        ? renderPreviewIncomingSlide(index, {
+            ...slideParams,
+            handleImageLoad: () => onHeroImageLoad(slotId, index),
+          })
+        : renderPreviewIdleSlide(index, {
+            ...slideParams,
+            handleImageLoad: () => onHeroImageLoad(slotId, index),
+          });
+
     return (
-      <div className="absolute inset-0 overflow-hidden">
-        {renderPreviewIdleSlide(currentImageIndex, slideParams)}
+      <div
+        key={slotId}
+        style={{
+          ...slideBase,
+          opacity: isConfirmed ? 1 : 0,
+          visibility: isConfirmed ? 'visible' : 'hidden',
+          zIndex: isConfirmed ? 1 : 0,
+        }}
+      >
+        {content}
       </div>
     );
-  }
-
-  const { fromIndex, toIndex, direction, phase } = animState;
-  const isRunning = phase === 'running';
-  const transitionStyle = isRunning ? `transform ${IMAGE_SLIDE_DURATION_MS}ms ease-out` : 'none';
-  const enterOffset = direction === 'next' ? '100%' : '-100%';
-  const leaveTarget = direction === 'next' ? '-100%' : '100%';
-
-  const layerStyle = (offset: string): CSSProperties => ({
-    ...slideBase,
-    transform: `translateX(${offset})`,
-    transition: transitionStyle,
-  });
-
-  const outgoingContent = renderPreviewSlide(fromIndex, slideParams, { useBlur: fromIndex === 0 });
-  const incomingContent = renderPreviewIncomingSlide(toIndex, slideParams);
+  };
 
   return (
-    <div
-      className="absolute inset-0 overflow-hidden"
-      onTransitionEnd={(e) => {
-        if (e.propertyName !== 'transform') return;
-        if (!isRunning) return;
-        onSlideTransformTransitionEnd?.();
-      }}
-    >
-      <div
-        style={layerStyle(
-          isRunning ? leaveTarget : '0%',
-        )}
-      >
-        {outgoingContent}
-      </div>
-      <div
-        style={layerStyle(
-          isRunning ? '0%' : enterOffset,
-        )}
-      >
-        {incomingContent}
-      </div>
+    <div className="absolute inset-0 overflow-hidden">
+      {renderLayer('primary')}
+      {renderLayer('secondary')}
     </div>
   );
 }
@@ -206,7 +195,7 @@ type ListingThumbnailTileProps = {
   imageAltTitle: string;
   blurDataURLForIndex: (_index: number) => string | undefined;
   t: (_key: string, _params?: Record<string, string>) => string;
-  handleImageLoad: (_idx: number) => void;
+  handleThumbnailImageLoad: (_idx: number) => void;
   onImageError: (_idx: number) => void;
   setCurrentImageIndex: Dispatch<SetStateAction<number>>;
   onImageClick: (_index: number) => void;
@@ -219,7 +208,7 @@ export function ListingThumbnailTile({
   imageAltTitle,
   blurDataURLForIndex,
   t,
-  handleImageLoad,
+  handleThumbnailImageLoad,
   onImageError,
   setCurrentImageIndex,
   onImageClick,
@@ -252,7 +241,7 @@ export function ListingThumbnailTile({
         blurDataURL={thumbBlur}
         draggable={false}
         unoptimized={isExternal}
-        onLoad={() => handleImageLoad(index)}
+        onLoad={() => handleThumbnailImageLoad(index)}
         onError={() => onImageError(index)}
       />
       {isLastThumbnailMobile && hasMoreImagesMobile && (

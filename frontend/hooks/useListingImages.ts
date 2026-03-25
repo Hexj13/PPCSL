@@ -25,6 +25,7 @@ export function useListingImages({
 }: UseListingImagesProps) {
   const [mainImageLoading, setMainImageLoading] = useState(false);
   const mainImageLoadedRef = useRef<Set<number>>(new Set());
+  const heroImageLoadedRef = useRef<Set<number>>(new Set());
   const mainImagePreloadingRef = useRef<Set<number>>(new Set());
   const imagesCacheRef = useRef<HTMLImageElement[]>([]);
   const imagesSignature = images.join('\u0001');
@@ -48,6 +49,7 @@ export function useListingImages({
 
   useEffect(() => {
     mainImageLoadedRef.current.clear();
+    heroImageLoadedRef.current.clear();
     mainImagePreloadingRef.current.clear();
     for (const img of imagesCacheRef.current) {
       img.onload = null;
@@ -168,6 +170,17 @@ export function useListingImages({
     [images, imageErrors],
   );
 
+  const isHeroReady = useCallback(
+    (index: number) => {
+      const imageUrl = images[index];
+      if (!imageUrl || imageUrl === '/placeholder-car.jpg' || imageErrors.has(index)) {
+        return true;
+      }
+      return heroImageLoadedRef.current.has(index);
+    },
+    [images, imageErrors],
+  );
+
   const preloadTarget = useCallback(
     (
       index: number,
@@ -257,20 +270,30 @@ export function useListingImages({
     [getPreviewUrl, images, imageErrors, markLoaded],
   );
 
-  const handleImageLoad = (index: number) => {
+  const handleHeroImageLoad = (index: number) => {
     const imageUrl = images[index];
     if (!imageUrl || imageUrl === '/placeholder-car.jpg') return;
     markLoaded(index);
+    heroImageLoadedRef.current.add(index);
     if (index === currentImageIndex) setMainImageLoading(false);
+  };
+
+  const handleThumbnailImageLoad = (index: number) => {
+    const imageUrl = images[index];
+    if (!imageUrl || imageUrl === '/placeholder-car.jpg') return;
+    markLoaded(index);
   };
 
   return {
     showMainImageLoader,
     mainImageLoading,
     mainImageLoadedRef,
+    heroImageLoadedRef,
     setMainImageLoading,
     isTargetReady,
+    isHeroReady,
     preloadTarget,
-    handleImageLoad,
+    handleHeroImageLoad,
+    handleThumbnailImageLoad,
   };
 }
