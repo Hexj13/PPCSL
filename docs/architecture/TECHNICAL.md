@@ -1059,7 +1059,7 @@ See [deployment.md](../guides/deployment.md#72-rendercom-deployment) for CloudFr
 - **Image preview system:** Simplified, efficient image preview and photo viewer system
   - **Thumbnail switching:** Instant switching when images are in browser cache (thumbnails and preview use same URL)
   - **Simple preloading:** Next image preloaded using `new window.Image()` - browser manages caching automatically
-  - **Loading states:** Loader only shown on real cache misses; preview uses a brief 120ms minimum display time and keeps the current frame visible until the target frame is ready
+  - **Loading states:** Listing page hero keeps the confirmed layer visible while a pending image loads; large spinner only during pending navigation, with `useLoadingState` show/min display delays (120ms). See `image-preview.md`.
   - **Modal viewer:** Full-screen photo viewer with keyboard navigation and swipe gestures
   - **Performance:** 80% code reduction, instant cache switching, no artificial delays
   - See [image-preview.md](../features/image-preview.md) for complete documentation
