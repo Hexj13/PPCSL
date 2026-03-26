@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode, Ref } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -9,6 +9,8 @@ interface LoadMoreButtonProps {
   disabled?: boolean;
   loading?: boolean;
   className?: string;
+  buttonRef?: Ref<HTMLButtonElement>;
+  style?: CSSProperties;
   children?: ReactNode;
   wrapperClassName?: string;
   variant?: 'default' | 'inline';
@@ -19,6 +21,8 @@ export function LoadMoreButton({
   disabled = false,
   loading = false,
   className = '',
+  buttonRef,
+  style,
   children,
   wrapperClassName = '',
   variant = 'default',
@@ -48,8 +52,10 @@ export function LoadMoreButton({
   if (variant === 'inline') {
     return (
       <button
+        ref={buttonRef}
         onClick={onClick}
         disabled={disabled || loading}
+        style={style}
         className={`${buttonClasses} ${className}`}
       >
         {inner}
@@ -60,8 +66,10 @@ export function LoadMoreButton({
   return (
     <div className={`flex justify-center pt-8 pb-0 ${wrapperClassName}`}>
       <button
+        ref={buttonRef}
         onClick={onClick}
         disabled={disabled || loading}
+        style={style}
         className={`${buttonClasses} ${className}`}
       >
         {inner}

@@ -219,8 +219,7 @@ export function PopularBodyTypesFilter({
                   onClick={() => handleTileClick(value)}
                   className={`
                   relative w-full h-[95px] lg:h-[110px] flex items-center justify-center p-2 rounded-lg
-                  outline-hidden select-none ${value === 'ATV' ? 'overflow-hidden' : ''}
-                  ${vehicleType === 'moto' && value !== 'ATV' ? 'md:overflow-hidden xl:overflow-visible' : ''}
+                  outline-hidden select-none ${vehicleType === 'moto' ? 'md:overflow-hidden xl:overflow-visible' : ''}
                   ${
                     isSelected
                       ? 'border-2 border-primary-700'
@@ -238,7 +237,7 @@ export function PopularBodyTypesFilter({
                   aria-label={`${t(`vehicleOptions.bodyType.${value}`)}${isSelected ? ', selected' : ''}`}
                 >
                   <div
-                    className={`relative w-full h-full flex items-center justify-center ${value === 'ATV' ? 'overflow-hidden' : ''} ${vehicleType === 'moto' && value !== 'ATV' ? 'md:overflow-hidden xl:overflow-visible' : ''}`}
+                    className={`relative w-full h-full flex items-center justify-center ${vehicleType === 'moto' ? 'overflow-hidden' : ''}`}
                   >
                     {image ? (
                       <Image
@@ -247,7 +246,7 @@ export function PopularBodyTypesFilter({
                         alt={t(`vehicleOptions.bodyType.${value}`)}
                         width={value === 'ATV' ? 260 : 180}
                         height={value === 'ATV' ? 260 : 180}
-                        className={`object-contain select-none transition-opacity duration-200 ${value === 'Wagon' ? 'object-top -mt-4' : ''} ${value === 'ATV' ? 'max-w-full max-h-full scale-125' : ''} ${value === 'Minivan' ? 'scale-[1.15] mt-2' : ''} ${vehicleType === 'car' && value !== 'Convertible' && value !== 'Minivan' ? 'scale-[1.2]' : ''} ${vehicleType === 'moto' && value !== 'ATV' ? 'md:max-w-full md:max-h-full md:scale-125 lg:scale-110 xl:max-w-none xl:max-h-none xl:scale-100' : ''}`}
+                        className={`object-contain select-none transition-opacity duration-200 ${value === 'Wagon' ? 'object-top -mt-4' : ''} ${value === 'ATV' ? 'max-w-full max-h-full scale-[1.2]' : ''} ${value === 'Minivan' ? 'scale-[1.15] mt-2' : ''} ${vehicleType === 'car' && value !== 'Convertible' && value !== 'Minivan' ? 'scale-[1.2]' : ''} ${vehicleType === 'moto' && value !== 'ATV' ? 'max-w-full max-h-full scale-[1.2]' : ''}`}
                         sizes={
                           value === 'ATV'
                             ? '(max-width: 768px) 260px, (max-width: 1024px) 280px, 300px'

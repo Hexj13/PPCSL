@@ -885,6 +885,7 @@ All scripts are located in `backend/src/scripts/` and can be executed via npm co
 - **WebSite Schema** - Site structure with SearchAction
 - **Vehicle Schema** - Vehicle-specific information for listings
 - **Product Schema** - Product information alongside Vehicle schema
+- **Offer data** - Included only for listings with a defined price (`price`, `priceCurrency`, `priceValidUntil`)
 - **BreadcrumbList Schema** - Navigation structure
 
 #### Technical SEO

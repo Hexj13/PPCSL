@@ -76,21 +76,16 @@ function getVehicleJsonLdPart(listing: Listing): Record<string, unknown> {
   };
 }
 
-function getOffersJsonLd(listing: Listing): Record<string, unknown> {
-  const priceFields =
-    listing.price !== undefined && listing.price !== null
-      ? {
-          price: listing.price.toString(),
-          priceCurrency: listing.currency || siteConfig.currency,
-          priceValidUntil: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
-            .toISOString()
-            .split('T')[0],
-        }
-      : {};
+function getOffersJsonLd(listing: Listing): Record<string, unknown> | undefined {
+  if (listing.price === undefined || listing.price === null) {
+    return undefined;
+  }
 
   return {
     '@type': 'Offer',
-    ...priceFields,
+    price: listing.price.toString(),
+    priceCurrency: listing.currency || siteConfig.currency,
+    priceValidUntil: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     availability:
       listing.status === 'Active' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
     url: `${siteUrl}/listings/${listing.id}`,
@@ -148,6 +143,7 @@ function buildListingJsonLd(listing: Listing): Record<string, unknown> {
     ? listing.description.replace(/<[^>]*>/g, '').substring(0, 500)
     : listing.title;
   const seller = getSellerJsonLd(listing);
+  const offers = getOffersJsonLd(listing);
 
   return {
     '@context': 'https://schema.org',
@@ -158,7 +154,7 @@ function buildListingJsonLd(listing: Listing): Record<string, unknown> {
     brand: brandName ? { '@type': 'Brand', name: brandName } : undefined,
     model: modelName || undefined,
     ...getVehicleJsonLdPart(listing),
-    offers: getOffersJsonLd(listing),
+    ...(offers && { offers }),
     ...(seller && { seller }),
     url: `${siteUrl}/listings/${listing.id}`,
   };

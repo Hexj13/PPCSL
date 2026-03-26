@@ -97,6 +97,7 @@ export function useMyListingsPage() {
   const [allListingsForCount, setAllListingsForCount] = useState<Listing[]>([]);
   const countsGenerationRef = useRef(0);
   const [loading, setLoading] = useState(false);
+  const [initialListingsLoadDone, setInitialListingsLoadDone] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -184,6 +185,9 @@ export function useMyListingsPage() {
         }
       } finally {
         if (fetchGenerationRef.current === generation) {
+          if (!append) {
+            setInitialListingsLoadDone(true);
+          }
           if (showLoadingTimeoutRef.current) {
             clearTimeout(showLoadingTimeoutRef.current);
             showLoadingTimeoutRef.current = null;
@@ -206,9 +210,8 @@ export function useMyListingsPage() {
       const generation = ++countsGenerationRef.current;
       try {
         const q = toApiSearch(searchQuery);
-        const pf = promotedFilterOverride ?? promotedFilter;
-        const apiPromoted = toApiPromoted(toPromotedBoolean(pf));
-        const res = await listingsApi.getMy(1, 1000, undefined, apiPromoted, q);
+        const promoted = toPromotedBoolean(promotedFilterOverride ?? promotedFilter);
+        const res = await listingsApi.getMy(1, 1000, undefined, promoted, q);
         if (countsGenerationRef.current !== generation) return;
         setAllListingsForCount(extractListings(res.data));
       } catch {}
@@ -453,7 +456,7 @@ export function useMyListingsPage() {
     return getStatusCounts(source);
   }, [listings, allListingsForCount]);
 
-  const isLoadingContent = loading || !hasLoadedRef.current;
+  const isLoadingContent = !initialListingsLoadDone && (loading || !hasLoadedRef.current);
   const { visible: showSkeleton } = useLoadingState({
     isLoading: isLoadingContent,
     immediate: true,
@@ -467,6 +470,7 @@ export function useMyListingsPage() {
     isAuthorized,
     listings,
     showSkeleton,
+    listingsLoading: loading,
     statusFilter,
     statusCounts,
     allListingsForCount,

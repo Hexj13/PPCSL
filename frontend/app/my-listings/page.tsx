@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useRef, useState } from 'react';
 
 import { useMyListingsPage } from '@/app/my-listings/useMyListingsPage';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -186,6 +187,7 @@ function MyListingsListSection({
   meta,
   currentPage,
   loadingMore,
+  listingsLoading,
   canPromote,
   handleStatusFilterChange,
   handlePromotedFilterToggle,
@@ -204,6 +206,7 @@ function MyListingsListSection({
   | 'meta'
   | 'currentPage'
   | 'loadingMore'
+  | 'listingsLoading'
   | 'canPromote'
   | 'handleStatusFilterChange'
   | 'handlePromotedFilterToggle'
@@ -240,7 +243,13 @@ function MyListingsListSection({
           />
         </div>
       )}
-      {!hasListings ? (
+      {listingsLoading ? (
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <ListingManagementCardSkeleton key={`my-listings-loading-${i}`} />
+          ))}
+        </div>
+      ) : !hasListings ? (
         <EmptyState message={emptyMessage} />
       ) : (
         <>
@@ -288,6 +297,7 @@ function MyListingsContent(props: ContentProps) {
     meta,
     currentPage,
     loadingMore,
+    listingsLoading,
     isRefreshing,
     timeUntilRefresh,
     formattedTime,
@@ -321,8 +331,21 @@ function MyListingsContent(props: ContentProps) {
     promotedFilter,
   } = props;
   const showBoardLink = Boolean(user?.boardSlug);
-  const showPromotionHistory = listings.length > 0 && canPromote;
+  const showPromotionHistory = hasPromotionHistory && canPromote;
   const showCreateLink = statusCounts.Active === 0;
+  const refreshButtonRef = useRef<HTMLButtonElement | null>(null);
+  const [refreshButtonWidth, setRefreshButtonWidth] = useState<number | null>(null);
+  const refreshButtonLockKey = `${isRefreshing}-${Boolean(timeUntilRefresh && timeUntilRefresh > 0)}-${hasActiveListings}`;
+
+  useEffect(() => {
+    setRefreshButtonWidth(null);
+    const frame = requestAnimationFrame(() => {
+      const button = refreshButtonRef.current;
+      if (!button) return;
+      setRefreshButtonWidth(button.offsetWidth);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [refreshButtonLockKey]);
 
   const actions = (
     <>
@@ -332,7 +355,9 @@ function MyListingsContent(props: ContentProps) {
           isRefreshing || (timeUntilRefresh !== null && timeUntilRefresh > 0) || !hasActiveListings
         }
         variant="inline"
-        className="w-full lg:w-auto"
+        buttonRef={refreshButtonRef}
+        className="w-full lg:w-auto lg:tabular-nums"
+        style={refreshButtonWidth ? { width: `${refreshButtonWidth}px` } : undefined}
       >
         {isRefreshing ? (
           <>
@@ -480,6 +505,7 @@ function MyListingsContent(props: ContentProps) {
           meta={meta}
           currentPage={currentPage}
           loadingMore={loadingMore}
+          listingsLoading={listingsLoading}
           canPromote={canPromote}
           handleStatusFilterChange={handleStatusFilterChange}
           handlePromotedFilterToggle={handlePromotedFilterToggle}

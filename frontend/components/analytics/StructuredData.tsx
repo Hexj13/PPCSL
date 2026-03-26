@@ -154,23 +154,25 @@ function getVehicleExtras(listing: Listing): Record<string, unknown> | undefined
   };
 }
 
-function getOffersSchema(listing: Listing, siteUrl: string, currency: string) {
+function getOffersSchema(
+  listing: Listing,
+  siteUrl: string,
+  currency: string,
+): Record<string, unknown> | undefined {
+  if (listing.price === undefined || listing.price === null) {
+    return undefined;
+  }
+
   const priceValidUntil = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
     .toISOString()
     .split('T')[0];
   const availability =
     listing.status === 'Active' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock';
-  const priceFields =
-    listing.price !== undefined
-      ? {
-          price: listing.price.toString(),
-          priceCurrency: listing.currency || currency,
-          priceValidUntil,
-        }
-      : {};
   return {
     '@type': 'Offer',
-    ...priceFields,
+    price: listing.price.toString(),
+    priceCurrency: listing.currency || currency,
+    priceValidUntil,
     availability,
     url: `${siteUrl}/listings/${listing.id}`,
   };
@@ -191,6 +193,7 @@ function getProductSchemaData(
   const imageList = listing.images?.length
     ? listing.images.map((img) => getOptimizedImageUrl(img))
     : [`${siteUrl}/placeholder-car.jpg`];
+  const offers = getOffersSchema(listing, siteUrl, currency);
 
   return {
     '@context': 'https://schema.org',
@@ -201,7 +204,7 @@ function getProductSchemaData(
     brand: brandName ? { '@type': 'Brand', name: brandName } : undefined,
     model: modelName || undefined,
     category: 'Vehicle',
-    offers: getOffersSchema(listing, siteUrl, currency),
+    ...(offers && { offers }),
     ...getVehicleExtras(listing),
     seller: getSellerSchema(listing),
     locationCreated: {
