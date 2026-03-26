@@ -41,10 +41,12 @@ function FavoritesContent() {
     handleRemoveListing,
   } = useFavoritesListings(user ?? null);
 
+  const tabIndicatorRemeasureKey = `${activeTab}-${meta == null ? 'pending' : (meta.total ?? 0)}-${filtersCount}`;
   const { indicatorRef, indicatorStyle } = useTabIndicator(
     activeTab,
     { listings: listingsTabRef, filters: filtersTabRef },
     tabsContainerRef,
+    tabIndicatorRemeasureKey,
   );
 
   useEffect(() => {

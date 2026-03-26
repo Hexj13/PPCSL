@@ -99,7 +99,6 @@ export interface TranslationsPart2 {
     emailPlaceholder: string;
     emailCannotBeChanged: string;
     receiveEmailNotifications: string;
-    enterEmailForNotifications: string;
     companyInfo: string;
     companyName: string;
     companyNamePlaceholder: string;

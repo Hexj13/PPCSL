@@ -21,6 +21,7 @@ import { getFavoriteButtonClassName, useListingCardFavorite } from '@/hooks/useL
 import { useListingCardImageError } from '@/hooks/useListingCardImageError';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
+import { CARD_EXIT_ANIMATION_MS } from '@/lib/constants';
 import {
   formatDateShort,
   formatDateRelative,
@@ -280,6 +281,22 @@ function useCardCarouselRewind(
   return { onMouseLeave, onMouseEnter, clearRewind, isAutoRewinding };
 }
 
+function cardFavoriteExitMotionClass(
+  isHydrated: boolean,
+  isRemovingFromFavorites: boolean,
+): string {
+  if (!isHydrated || !isRemovingFromFavorites) return '';
+  return 'transition-[opacity,transform] ease-out opacity-0 scale-[0.97]';
+}
+
+function cardFavoriteExitMotionStyle(
+  isHydrated: boolean,
+  isRemovingFromFavorites: boolean,
+): { transitionDuration: string } | undefined {
+  if (!isHydrated || !isRemovingFromFavorites) return undefined;
+  return { transitionDuration: `${CARD_EXIT_ANIMATION_MS}ms` };
+}
+
 function ListingCardComponent({
   listing,
   forceFavorite = false,
@@ -302,12 +319,8 @@ function ListingCardComponent({
     return [displayTitle, city].filter((v) => v && v.trim() !== '').join(' - ');
   }, [displayTitle, listing.city, locale, cities]);
 
-  const { isFavorite, isToggling, isOwnListing, handleToggleFavorite } = useListingCardFavorite(
-    listing,
-    displayTitle,
-    forceFavorite,
-    onRemove,
-  );
+  const { isFavorite, isToggling, isOwnListing, handleToggleFavorite, isRemovingFromFavorites } =
+    useListingCardFavorite(listing, displayTitle, forceFavorite, onRemove);
 
   const { isInComparison, handleToggleComparison } = useListingCardComparison(
     listing,
@@ -425,7 +438,13 @@ function ListingCardComponent({
   return (
     <div
       ref={cardRef}
-      className="card relative overflow-hidden cursor-pointer h-full flex flex-col group"
+      className={[
+        'card relative overflow-hidden cursor-pointer h-full flex flex-col group',
+        cardFavoriteExitMotionClass(isHydrated, isRemovingFromFavorites),
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      style={cardFavoriteExitMotionStyle(isHydrated, isRemovingFromFavorites)}
       onMouseLeave={handleCardMouseLeave}
       onMouseEnter={handleCardMouseEnter}
     >

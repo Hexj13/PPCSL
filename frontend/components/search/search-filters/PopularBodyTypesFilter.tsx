@@ -21,6 +21,7 @@ const POPULAR_BODY_TYPES_CAR: Array<{ value: string; image: string }> = [
 ];
 
 const POPULAR_BODY_TYPES_TRUCK: Array<{ value: string; image: string }> = [
+  { value: 'Van', image: '/popular_body_types/trucks/furgon.png' },
   { value: 'Truck', image: '/popular_body_types/trucks/TRUCK.png' },
   { value: 'SemiTruck', image: '/popular_body_types/trucks/SEMITRUCK.png' },
   { value: 'SpecialEquipment', image: '/popular_body_types/trucks/SPECIAL.png' },
@@ -43,6 +44,11 @@ export function PopularBodyTypesFilter({
   vehicleType = 'car',
 }: PopularBodyTypesFilterProps) {
   const { t } = useTranslation();
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   const POPULAR_BODY_TYPES = useMemo(
     () =>
@@ -160,7 +166,7 @@ export function PopularBodyTypesFilter({
           <button
             type="button"
             onClick={scrollLeft}
-            className="hidden lg:flex absolute left-0 top-[55px] -translate-y-1/2 -translate-x-4 z-10 w-10 h-10 items-center justify-center bg-bg-secondary border-2 border-primary-500/50 rounded-full hover-only:hover:bg-primary-500/10 hover-only:hover:border-primary-500 transition-colors duration-200 shadow-lg"
+            className="hidden lg:flex absolute left-0 top-[55px] -translate-y-1/2 -translate-x-4 z-30 w-10 h-10 items-center justify-center bg-bg-secondary border-2 border-primary-500/50 rounded-full hover-only:hover:bg-primary-500/10 hover-only:hover:border-primary-500 transition-colors duration-200 shadow-lg"
             aria-label={t('common.scrollLeft')}
           >
             <svg
@@ -182,7 +188,7 @@ export function PopularBodyTypesFilter({
           <button
             type="button"
             onClick={scrollRight}
-            className="hidden lg:flex absolute right-0 top-[55px] -translate-y-1/2 translate-x-4 z-10 w-10 h-10 items-center justify-center bg-bg-secondary border-2 border-primary-500/50 rounded-full hover-only:hover:bg-primary-500/10 hover-only:hover:border-primary-500 transition-colors duration-200 shadow-lg"
+            className="hidden lg:flex absolute right-0 top-[55px] -translate-y-1/2 translate-x-4 z-30 w-10 h-10 items-center justify-center bg-bg-secondary border-2 border-primary-500/50 rounded-full hover-only:hover:bg-primary-500/10 hover-only:hover:border-primary-500 transition-colors duration-200 shadow-lg"
             aria-label={t('common.scrollRight')}
           >
             <svg
@@ -197,6 +203,7 @@ export function PopularBodyTypesFilter({
         )}
         <div
           ref={scrollContainerRef}
+          {...(!isHydrated ? { inert: true } : {})}
           className="grid grid-cols-2 md:grid-cols-3 gap-3 lg:flex lg:gap-4 lg:overflow-x-auto lg:scrollbar-hide lg:justify-between"
         >
           {POPULAR_BODY_TYPES.map(({ value, image }) => {
@@ -321,6 +328,22 @@ export function PopularBodyTypesFilter({
               </div>
             );
           })}
+        </div>
+        <div
+          className={`absolute inset-0 z-20 grid grid-cols-2 md:grid-cols-3 gap-3 lg:flex lg:gap-4 lg:justify-between bg-bg-base/80 transition-opacity duration-200 ease-out ${
+            isHydrated ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          }`}
+          aria-hidden={isHydrated}
+        >
+          {POPULAR_BODY_TYPES.map(({ value }) => (
+            <div
+              key={`sk-${vehicleType}-${value}`}
+              className="flex flex-col items-center gap-1 w-full min-w-0 min-h-[135px] lg:min-h-[152px] lg:shrink-0 lg:w-[180px] lg:flex-1 lg:min-w-0 lg:max-w-[210px]"
+            >
+              <div className="w-full h-[95px] lg:h-[110px] rounded-lg border-2 border-primary-700/20 bg-bg-secondary/50 animate-pulse" />
+              <div className="w-2/3 h-4 rounded bg-bg-secondary/50 animate-pulse shrink-0" />
+            </div>
+          ))}
         </div>
       </div>
     </div>

@@ -18,6 +18,7 @@ function PasswordInputWithToggle({
   onToggle,
   maxLength,
   rules,
+  passwordManagerIgnore,
 }: {
   id: string;
   label: string;
@@ -28,6 +29,7 @@ function PasswordInputWithToggle({
   onToggle: () => void;
   maxLength?: number;
   rules?: PasswordValidationRule[];
+  passwordManagerIgnore?: boolean;
 }) {
   return (
     <div className="w-full min-w-0">
@@ -42,6 +44,9 @@ function PasswordInputWithToggle({
           maxLength={maxLength}
           onChange={(e) => onChange(e.target.value)}
           autoComplete={autoComplete}
+          {...(passwordManagerIgnore
+            ? ({ 'data-1p-ignore': true, 'data-lpignore': 'true' } as const)
+            : {})}
           className="input-field w-full pr-10"
         />
         <button
@@ -167,7 +172,8 @@ export function ProfilePasswordSection({
           label={t('profile.currentPasswordLabel')}
           value={currentPassword}
           onChange={onCurrentPasswordChange}
-          autoComplete="current-password"
+          autoComplete="off"
+          passwordManagerIgnore
           show={showCurrentPassword}
           onToggle={() => setShowCurrentPassword((v) => !v)}
         />
@@ -176,7 +182,8 @@ export function ProfilePasswordSection({
           label={t('profile.newPasswordLabel')}
           value={newPassword}
           onChange={onNewPasswordChange}
-          autoComplete="new-password"
+          autoComplete="off"
+          passwordManagerIgnore
           show={showNewPassword}
           onToggle={() => setShowNewPassword((v) => !v)}
           maxLength={100}

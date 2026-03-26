@@ -201,16 +201,20 @@ export function useMyListingsPage() {
     [],
   );
 
-  const refetchAllForCount = useCallback(async () => {
-    const generation = ++countsGenerationRef.current;
-    try {
-      const q = toApiSearch(searchQuery);
-      const promoted = toApiPromoted(toPromotedBoolean(promotedFilter));
-      const res = await listingsApi.getMy(1, 1000, undefined, promoted, q);
-      if (countsGenerationRef.current !== generation) return;
-      setAllListingsForCount(extractListings(res.data));
-    } catch {}
-  }, [promotedFilter, searchQuery]);
+  const refetchAllForCount = useCallback(
+    async (promotedFilterOverride?: PromotedFilter) => {
+      const generation = ++countsGenerationRef.current;
+      try {
+        const q = toApiSearch(searchQuery);
+        const pf = promotedFilterOverride ?? promotedFilter;
+        const apiPromoted = toApiPromoted(toPromotedBoolean(pf));
+        const res = await listingsApi.getMy(1, 1000, undefined, apiPromoted, q);
+        if (countsGenerationRef.current !== generation) return;
+        setAllListingsForCount(extractListings(res.data));
+      } catch {}
+    },
+    [searchQuery, promotedFilter],
+  );
 
   const listingActions = useListingActions(
     {
@@ -439,8 +443,10 @@ export function useMyListingsPage() {
       newStatus,
       newPromoted === 'Promoted' ? true : undefined,
       searchQuery,
-    );
-  }, [fetchListings, promotedFilter, statusFilter, searchQuery]);
+    ).then(() => {
+      void refetchAllForCount(newPromoted);
+    });
+  }, [fetchListings, promotedFilter, statusFilter, searchQuery, refetchAllForCount]);
 
   const statusCounts = useMemo(() => {
     const source = allListingsForCount.length > 0 ? allListingsForCount : listings;

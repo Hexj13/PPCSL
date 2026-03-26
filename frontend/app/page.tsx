@@ -513,6 +513,8 @@ export default async function Home({
 }: {
   searchParams?: Promise<Record<string, string | string[] | undefined> | undefined>;
 }) {
+  const locale = await getMetadataLocale();
+  const t = getServerTranslations(locale);
   const params = (await (searchParams ?? Promise.resolve(undefined))) ?? {};
   const brand = typeof params.brand === 'string' ? params.brand : null;
   const model = typeof params.model === 'string' ? params.model : null;
@@ -530,7 +532,13 @@ export default async function Home({
       <SearchFiltersLimitToast />
       <DynamicPageTitle />
       {searchStructuredData}
-      <HomeHero />
+      <HomeHero
+        title={t.home.title}
+        subtitle={t.home.subtitle}
+        subtitleBold={t.home.subtitleBold}
+        subtitle2={t.home.subtitle2}
+        subtitle3={t.home.subtitle3}
+      />
 
       <SearchFiltersWrapper />
 

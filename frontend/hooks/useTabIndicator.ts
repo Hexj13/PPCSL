@@ -5,6 +5,7 @@ export function useTabIndicator<T extends string>(
   activeTab: T,
   tabRefs: Record<T, RefObject<HTMLButtonElement | null>>,
   containerRef: RefObject<HTMLDivElement | null>,
+  measureKey?: string | number,
 ) {
   const indicatorRef = useRef<HTMLDivElement>(null);
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
@@ -59,7 +60,7 @@ export function useTabIndicator<T extends string>(
         }
       }
     };
-  }, [activeTab, containerRef]);
+  }, [activeTab, containerRef, measureKey]);
 
   return { indicatorRef, indicatorStyle };
 }

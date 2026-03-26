@@ -28,7 +28,9 @@ export interface ListingActionsCallbacks {
     _promoted?: boolean,
     _search?: string,
   ) => Promise<void>;
-  refetchAllForCount: () => Promise<void>;
+  refetchAllForCount: (
+    _promotedFilterOverride?: 'All' | 'Promoted' | 'NotPromoted',
+  ) => Promise<void>;
 }
 
 export function useListingActions(

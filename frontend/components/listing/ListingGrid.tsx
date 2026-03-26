@@ -89,7 +89,8 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   const restoredFromStorageRef = useRef(false);
   const { user } = useAuthStore();
   const { setFavorites } = useFavoritesStore();
-  const prevSearchParamsString = useRef<string>('');
+  const prevSearchParamsStringRef = useRef<string | null>(null);
+  const gridSearchParamsEffectInitializedRef = useRef(false);
 
   const searchParamsString = useMemo(() => searchParams.toString(), [searchParams]);
 
@@ -239,6 +240,9 @@ export function ListingGrid({ initialData }: ListingGridProps) {
     [searchParamsString, t, checkFavorites, router],
   );
 
+  const fetchListingsRef = useRef(fetchListings);
+  fetchListingsRef.current = fetchListings;
+
   useEffect(() => {
     if (restoredFromStorageRef.current) return;
     restoredFromStorageRef.current = true;
@@ -256,17 +260,31 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   }, []);
 
   useEffect(() => {
-    if (searchParamsString !== prevSearchParamsString.current) {
-      prevSearchParamsString.current = searchParamsString;
+    if (!gridSearchParamsEffectInitializedRef.current) {
+      gridSearchParamsEffectInitializedRef.current = true;
+      prevSearchParamsStringRef.current = searchParamsString;
+      const ts =
+        typeof window !== 'undefined' ? sessionStorage.getItem('homeScrollTimestamp') : null;
+      const saved = loadGridState();
+      const skipInitialFetch = Boolean(ts && saved && saved.page > 1);
+      if (!skipInitialFetch) {
+        void fetchListingsRef.current(1, false);
+      } else {
+        setHasLoadedWithFilters(true);
+      }
+      return;
+    }
+    if (searchParamsString !== prevSearchParamsStringRef.current) {
+      prevSearchParamsStringRef.current = searchParamsString;
       setCurrentPage(1);
       setHasLoadedWithFilters(false);
       setLoading(true);
       setError(null);
       sessionStorage.removeItem(GRID_STATE_KEY);
       sessionStorage.removeItem('homeScrollTimestamp');
-      void fetchListings(1, false);
+      void fetchListingsRef.current(1, false);
     }
-  }, [fetchListings, searchParamsString]);
+  }, [searchParamsString]);
 
   useEffect(() => {
     if (initialData && initialData.data.length > 0) {

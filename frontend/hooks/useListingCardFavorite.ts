@@ -1,11 +1,52 @@
-import { useCallback, useEffect, useMemo, useRef, useState, startTransition } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  startTransition,
+  type MouseEvent,
+  type MutableRefObject,
+} from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import type { Listing } from '@/lib/api';
 import { favoritesApi } from '@/lib/api';
+import { CARD_EXIT_ANIMATION_MS } from '@/lib/constants';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
+
+type PendingRemoveChain = {
+  raf1?: number;
+  raf2?: number;
+  timeout?: ReturnType<typeof setTimeout>;
+};
+
+function clearPendingRemoveChain(ref: MutableRefObject<PendingRemoveChain>) {
+  const p = ref.current;
+  if (p.raf1 !== undefined) cancelAnimationFrame(p.raf1);
+  if (p.raf2 !== undefined) cancelAnimationFrame(p.raf2);
+  if (p.timeout !== undefined) clearTimeout(p.timeout);
+  ref.current = {};
+}
+
+function scheduleRemoveAfterExitAnimation(
+  ref: MutableRefObject<PendingRemoveChain>,
+  onRemove: () => void,
+) {
+  clearPendingRemoveChain(ref);
+  const raf1 = requestAnimationFrame(() => {
+    const raf2 = requestAnimationFrame(() => {
+      ref.current.timeout = setTimeout(() => {
+        ref.current = {};
+        onRemove();
+      }, CARD_EXIT_ANIMATION_MS);
+    });
+    ref.current.raf2 = raf2;
+  });
+  ref.current.raf1 = raf1;
+}
 
 export function useListingCardFavorite(
   listing: Listing,
@@ -22,7 +63,12 @@ export function useListingCardFavorite(
   const [localIsFavorite, setLocalIsFavorite] = useState(storeIsFavorite);
   const [isToggling, setIsToggling] = useState(false);
   const isTogglingRef = useRef(false);
+  const pendingRemoveChainRef = useRef<PendingRemoveChain>({});
   const { t } = useTranslation();
+
+  useEffect(() => {
+    return () => clearPendingRemoveChain(pendingRemoveChainRef);
+  }, []);
 
   useEffect(() => {
     setLocalIsFavorite(storeIsFavorite);
@@ -35,7 +81,10 @@ export function useListingCardFavorite(
 
   const handleRemove = useCallback(() => {
     removeFavorite(listing.id);
-    onRemove?.();
+    clearPendingRemoveChain(pendingRemoveChainRef);
+    if (onRemove) {
+      scheduleRemoveAfterExitAnimation(pendingRemoveChainRef, onRemove);
+    }
     favoritesApi
       .remove(listing.id)
       .then(() => {
@@ -43,6 +92,7 @@ export function useListingCardFavorite(
         toast.success(t('listings.removeFromFavorites'));
       })
       .catch(() => {
+        clearPendingRemoveChain(pendingRemoveChainRef);
         setLocalIsFavorite(true);
         addFavorite(listing.id);
         toast.error(t('listings.removeFromFavoritesError'));
@@ -73,7 +123,7 @@ export function useListingCardFavorite(
   }, [listing.id, listing.price, displayTitle, addFavorite, removeFavorite, t]);
 
   const handleToggleFavorite = useCallback(
-    (e: React.MouseEvent) => {
+    (e: MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
       if (!user) {
@@ -112,6 +162,7 @@ export function useListingCardFavorite(
     isToggling,
     isOwnListing,
     handleToggleFavorite,
+    isRemovingFromFavorites: Boolean(onRemove) && forceFavorite && !localIsFavorite,
   };
 }
 

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   convertToBoolean,
+  getSafeEmailValue,
   initializeFormData,
   validateCompanyWebsiteUrl,
   validateEmail,
@@ -63,7 +64,6 @@ export function useProfilePage() {
   const [loading, setLoading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [formData, setFormData] = useState<UpdateProfileDto>(() => initializeFormData(user));
-  const [emailError, setEmailError] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
@@ -74,7 +74,6 @@ export function useProfilePage() {
 
   const canSave = useMemo(() => {
     if (!user) return false;
-    if (emailError) return false;
     if (formData.email && !validateEmail(formData.email)) return false;
     if (
       formData.companyWebsiteUrl?.trim() &&
@@ -88,7 +87,7 @@ export function useProfilePage() {
     const neu = newPassword.trim();
     const passwordComplete = isProfilePasswordChangeComplete(cur, neu);
     return hasProfileChanges || passwordComplete;
-  }, [user, formData, emailError, currentPassword, newPassword]);
+  }, [user, formData, currentPassword, newPassword]);
 
   useEffect(() => {
     if (!isInitialized) return;
@@ -105,7 +104,7 @@ export function useProfilePage() {
         const profileUser = response.data;
         setAuth(profileUser, useAuthStore.getState().token);
         const formDataToSet = {
-          email: profileUser.email || '',
+          email: getSafeEmailValue(profileUser.email),
           firstName: profileUser.firstName || '',
           lastName: profileUser.lastName || '',
           companyName: profileUser.companyName || '',
@@ -138,32 +137,18 @@ export function useProfilePage() {
     });
   }, [user]);
 
-  const handleChange = useCallback(
-    (field: keyof UpdateProfileDto, value: string | boolean) => {
-      setFormData((prev) => {
-        const newData = { ...prev, [field]: value };
-        if (field === 'email') {
-          const emailValue = value as string;
-          if (emailValue && !validateEmail(emailValue)) {
-            setEmailError(t('profile.invalidEmail'));
-          } else {
-            setEmailError('');
-          }
-        }
-        return newData;
-      });
-    },
-    [t],
-  );
+  const handleChange = useCallback((field: keyof UpdateProfileDto, value: string | boolean) => {
+    setFormData((prev) => {
+      const nextValue = field === 'email' ? (value as string) : value;
+      const newData = { ...prev, [field]: nextValue };
+      return newData;
+    });
+  }, []);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
       if (!user) return;
-      if (emailError) {
-        toast.error(t('profile.fixEmail'));
-        return;
-      }
       if (formData.email && !validateEmail(formData.email)) {
         toast.error(t('profile.invalidEmail'));
         return;
@@ -205,7 +190,7 @@ export function useProfilePage() {
         setLoading(false);
       }
     },
-    [formData, user, setAuth, emailError, t, currentPassword, newPassword],
+    [formData, user, setAuth, t, currentPassword, newPassword],
   );
 
   const handleDeleteAccount = useCallback(async () => {
@@ -230,7 +215,6 @@ export function useProfilePage() {
     loading,
     loadingProfile,
     formData,
-    emailError,
     showDeleteModal,
     setShowDeleteModal,
     deleting,

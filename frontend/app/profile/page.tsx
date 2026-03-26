@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 import { ProfilePasswordSection } from '@/app/profile/ProfilePasswordSection';
 import { useProfilePage } from '@/app/profile/useProfilePage';
-import { validateEmail } from '@/app/profile/utils';
+import { getSafeEmailValue, validateEmail } from '@/app/profile/utils';
 import { Modal } from '@/components/modals/Modal';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { UpdateProfileDto, User } from '@/lib/api';
@@ -13,6 +14,10 @@ import { HintTooltip, LoadingButton } from '@/ui';
 type TranslationFn = ReturnType<typeof useTranslation>['t'];
 
 const PROFILE_EDIT_FORM_ID = 'profile-edit';
+
+function profileEmailUnlockedStorageKey(userId: string) {
+  return `kupito:profileEmailUnlocked:${userId}`;
+}
 
 function ProfileContactSection({
   user,
@@ -117,9 +122,13 @@ function ProfileContactSection({
         <div className="relative w-full md:w-1/2">
           <input
             id="profile-phone-input"
+            name="profilePhoneDisplay"
             type="tel"
             value={user.phone || ''}
             disabled
+            autoComplete="off"
+            data-1p-ignore
+            data-lpignore="true"
             className="input-field w-full bg-bg-secondary/50 cursor-not-allowed opacity-70 pr-12"
           />
           <Link
@@ -159,18 +168,27 @@ function ProfileContactSection({
 function ProfileEmailSection({
   user,
   formData,
-  emailError,
   t,
   onChange,
 }: {
   user: User;
   formData: UpdateProfileDto;
-  emailError: string;
   t: TranslationFn;
   onChange: (field: keyof UpdateProfileDto, value: string | boolean) => void;
 }) {
-  const hasEmail = !!formData.email || !!user.email;
+  const [emailFieldUnlocked, setEmailFieldUnlocked] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const key = profileEmailUnlockedStorageKey(user.id);
+    setEmailFieldUnlocked(sessionStorage.getItem(key) === 'true');
+  }, [user.id]);
+
+  const storedEmailForUi = getSafeEmailValue(user.email);
+  const hasValidStoredEmail = !!storedEmailForUi;
+  const hasEmail = !!formData.email || hasValidStoredEmail;
   const emailValid = !formData.email || validateEmail(formData.email);
+  const emailFormatInvalid = !!(formData.email && !validateEmail(formData.email));
   const notificationsDisabled = !hasEmail || !emailValid;
   const notificationsChecked = formData.emailNotifications === true && hasEmail;
   return (
@@ -183,7 +201,7 @@ function ProfileEmailSection({
           <label htmlFor="profile-email-input" className="text-sm font-semibold text-primary-900">
             {t('profile.email')}
           </label>
-          {user.email && (
+          {hasValidStoredEmail && (
             <HintTooltip ariaLabel={t('profile.emailCannotBeChanged')} width="w-72">
               {t('profile.emailCannotBeChanged')}
             </HintTooltip>
@@ -192,16 +210,29 @@ function ProfileEmailSection({
         <div className="w-full md:w-1/2">
           <input
             id="profile-email-input"
+            name="profileEmail"
             type="email"
             value={formData.email || ''}
             onChange={(e) => onChange('email', e.target.value)}
-            disabled={!!user.email}
-            className={`input-field w-full ${emailError ? 'border-red-500' : ''} ${
-              user.email ? 'bg-bg-secondary/50 cursor-not-allowed opacity-70' : ''
+            onFocus={() => {
+              setEmailFieldUnlocked(true);
+              if (typeof window !== 'undefined') {
+                sessionStorage.setItem(profileEmailUnlockedStorageKey(user.id), 'true');
+              }
+            }}
+            readOnly={!hasValidStoredEmail && !emailFieldUnlocked}
+            disabled={hasValidStoredEmail}
+            autoComplete="off"
+            data-1p-ignore
+            data-lpignore="true"
+            className={`input-field w-full ${emailFormatInvalid ? 'border-red-500' : ''} ${
+              hasValidStoredEmail ? 'bg-bg-secondary/50 cursor-not-allowed opacity-70' : ''
             }`}
             placeholder={t('profile.emailPlaceholder')}
           />
-          {emailError && <p className="mt-1 text-sm text-red-400">{emailError}</p>}
+          {emailFormatInvalid && (
+            <p className="mt-1 text-sm text-red-400">{t('profile.invalidEmail')}</p>
+          )}
         </div>
         <div className="mt-4">
           <div className="flex items-center gap-3 group">
@@ -267,11 +298,6 @@ function ProfileEmailSection({
               {t('profile.receiveEmailNotifications')}
             </button>
           </div>
-          {!hasEmail && (
-            <p className="mt-2 text-xs text-text-secondary">
-              {t('profile.enterEmailForNotifications')}
-            </p>
-          )}
         </div>
       </div>
     </div>
@@ -299,12 +325,16 @@ function ProfileCompanySection({
           </label>
           <input
             type="text"
+            name="profileCompanyName"
             maxLength={100}
             value={formData.companyName || ''}
             onChange={(e) => {
               const value = e.target.value;
               if (value.length <= 100) onChange('companyName', value);
             }}
+            autoComplete="off"
+            data-1p-ignore
+            data-lpignore="true"
             className="input-field"
             placeholder={t('profile.companyNamePlaceholder')}
           />
@@ -315,11 +345,14 @@ function ProfileCompanySection({
           </label>
           <input
             type="url"
+            name="profileCompanyWebsiteUrl"
             inputMode="url"
-            autoComplete="url"
+            autoComplete="off"
             maxLength={500}
             value={formData.companyWebsiteUrl || ''}
             onChange={(e) => onChange('companyWebsiteUrl', e.target.value)}
+            data-1p-ignore
+            data-lpignore="true"
             className="input-field"
             placeholder={t('profile.companyWebsiteUrlPlaceholder')}
           />
@@ -351,12 +384,16 @@ function ProfilePersonalSection({
           </label>
           <input
             type="text"
+            name="profileFirstName"
             maxLength={50}
             value={formData.firstName || ''}
             onChange={(e) => {
               const value = e.target.value.replace(namePattern, '');
               if (value.length <= 50) onChange('firstName', value);
             }}
+            autoComplete="off"
+            data-1p-ignore
+            data-lpignore="true"
             className="input-field"
             placeholder={t('profile.firstNamePlaceholder')}
           />
@@ -367,12 +404,16 @@ function ProfilePersonalSection({
           </label>
           <input
             type="text"
+            name="profileLastName"
             maxLength={50}
             value={formData.lastName || ''}
             onChange={(e) => {
               const value = e.target.value.replace(namePattern, '');
               if (value.length <= 50) onChange('lastName', value);
             }}
+            autoComplete="off"
+            data-1p-ignore
+            data-lpignore="true"
             className="input-field"
             placeholder={t('profile.lastNamePlaceholder')}
           />
@@ -483,7 +524,6 @@ export default function ProfilePage() {
     loading,
     loadingProfile,
     formData,
-    emailError,
     showDeleteModal,
     setShowDeleteModal,
     deleting,
@@ -514,15 +554,14 @@ export default function ProfilePage() {
         {t('profile.title')}
       </h1>
       <div className="space-y-6">
-        <form id={PROFILE_EDIT_FORM_ID} onSubmit={handleSubmit} className="space-y-6">
+        <form
+          id={PROFILE_EDIT_FORM_ID}
+          onSubmit={handleSubmit}
+          className="space-y-6"
+          autoComplete="off"
+        >
           <ProfileContactSection user={user} formData={formData} t={t} onChange={handleChange} />
-          <ProfileEmailSection
-            user={user}
-            formData={formData}
-            emailError={emailError}
-            t={t}
-            onChange={handleChange}
-          />
+          <ProfileEmailSection user={user} formData={formData} t={t} onChange={handleChange} />
           {user.type === 'Business' && (
             <ProfileCompanySection formData={formData} t={t} onChange={handleChange} />
           )}

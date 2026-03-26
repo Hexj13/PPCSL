@@ -35,6 +35,8 @@ const ALLOWED_FILTER_KEYS = [
   'drive_types',
   'equipment',
   'equipment_match_mode',
+  'available_in_credit',
+  'down_payment_amount_gte',
   'sortBy',
   'sortOrder',
   'vehicleType',
@@ -79,7 +81,7 @@ export class IsValidFilterObjectConstraint implements ValidatorConstraintInterfa
         ) {
           return false;
         }
-      } else if (key === 'urgent' || key === 'is_new') {
+      } else if (key === 'urgent' || key === 'is_new' || key === 'available_in_credit') {
         if (val !== true && val !== false && val !== undefined) {
           return false;
         }

@@ -15,6 +15,11 @@ export const validateEmail = (email: string): boolean => {
   return emailRegex.test(email);
 };
 
+export const getSafeEmailValue = (email: string | null | undefined): string => {
+  const trimmedEmail = email?.trim() || '';
+  return validateEmail(trimmedEmail) ? trimmedEmail : '';
+};
+
 export const validateCompanyWebsiteUrl = (value: string): boolean => {
   if (!value.trim()) return true;
   const trimmed = value.trim();
@@ -43,7 +48,7 @@ export const initializeFormData = (user: User | null): UpdateProfileDto => {
   }
 
   return {
-    email: user.email || '',
+    email: getSafeEmailValue(user.email),
     firstName: user.firstName || '',
     lastName: user.lastName || '',
     companyName: user.companyName || '',

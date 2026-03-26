@@ -351,6 +351,11 @@ POST /api/auth/reset-password         # Reset password
 
 **Profile password change (`/profile`):** The form uses **two fields only** (current + new password). There is no duplicate “confirm new password” field by product choice—to keep the UI light. The client validates length (max 100) and strength before calling `POST /api/auth/change-password`.
 
+**Profile email input hardening (`/profile`):** The client sanitizes prefilled values before submit:
+- invalid persisted email values are normalized to empty state on load
+- phone-like autofill values in the email field are dropped
+- profile inputs disable browser/password-manager autocomplete hints to reduce accidental cross-field autofill
+
 ### Listings
 
 ```http
@@ -408,6 +413,8 @@ GET    /api/favorites/check/:id       # Check if listing is in favorites
 
 **Note:** Favorites page includes tab counters showing the number of listings and saved filters.
 
+**Favorites removal UX:** Removing a card from `/favorites` is optimistic and delayed by a short exit animation (~280ms). If API deletion fails, local favorite state is restored.
+
 ### Car Comparison
 
 Car comparison feature allows users to compare up to 3 cars simultaneously:
@@ -428,6 +435,8 @@ POST   /api/saved-filters              # Create saved filter (max 20 per user)
 PATCH  /api/saved-filters/:id          # Update saved filter name
 DELETE /api/saved-filters/:id          # Delete saved filter
 ```
+
+**Saved filters payload sanitization:** Client-side create requests keep only allowed filter keys before calling `POST /api/saved-filters`. This prevents accidental UI-only/transient fields from being persisted.
 
 ### Seller Listings Board
 
@@ -1495,8 +1504,8 @@ cd backend && npm run test -- listings.service.spec.ts
 
 ---
 
-**Last Updated:** 2026-02-03
-**Version:** 1.11
+**Last Updated:** 2026-03-26
+**Version:** 1.12
 
 ### Recent Updates
 

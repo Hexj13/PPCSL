@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useMemo } from 'react';
 
 import { Dropdown } from '@/components/common/Dropdown';
@@ -17,7 +18,9 @@ import {
 import { toast } from '@/lib/toast';
 import { isInRange, MILEAGE_RANGE } from '@/lib/validation';
 
-import PopularBodyTypesFilter from './PopularBodyTypesFilter';
+const PopularBodyTypesFilter = dynamic(() => import('./PopularBodyTypesFilter'), {
+  ssr: false,
+});
 
 const DriveTypeIcon = () => (
   <svg

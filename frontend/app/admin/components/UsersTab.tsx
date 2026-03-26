@@ -133,13 +133,18 @@ function AdminUserCard({ user, t, onViewListings, onToggleStatus }: AdminUserCar
           </div>
         </div>
         <div className="flex flex-col xl:flex-row items-stretch xl:items-center gap-2 w-full lg:w-auto shrink-0">
-          {listingCount > 0 && (
+          {listingCount > 0 ? (
             <button
               onClick={() => onViewListings(user)}
               className="text-primary-700 font-medium text-base hover-only:hover:text-primary-900 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-700 hover-only:hover:border-primary-900 bg-primary-500/10 select-none w-full lg:w-auto h-[48px]"
             >
               {t('admin.usersTab.viewListings')}
             </button>
+          ) : (
+            <div
+              className="invisible pointer-events-none w-full lg:w-auto h-[48px] shrink-0 rounded-lg border-2 border-transparent px-3 md:px-4 py-2 md:py-2.5"
+              aria-hidden
+            />
           )}
           <button
             type="button"

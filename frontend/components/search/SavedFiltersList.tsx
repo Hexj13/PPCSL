@@ -2,12 +2,14 @@
 
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 
 import { SaveFilterModal } from '@/components/modals/SaveFilterModal';
 import { useI18n } from '@/components/providers/I18nProvider';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { SavedFilter } from '@/lib/api';
 import { brandsApi, savedFiltersApi } from '@/lib/api';
+import { CARD_EXIT_ANIMATION_MS } from '@/lib/constants';
 import { toast } from '@/lib/toast';
 import { createSlug, formatDateLong } from '@/lib/utils';
 
@@ -84,6 +86,7 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
   });
 
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+  const [exitingIds, setExitingIds] = useState<Set<string>>(new Set());
   const [editingFilterId, setEditingFilterId] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
@@ -94,8 +97,20 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
   const handleDelete = async (id: string) => {
     if (deletingIds.has(id)) return;
 
-    setDeletingIds((prev) => new Set(prev).add(id));
+    flushSync(() => {
+      setDeletingIds((prev) => new Set(prev).add(id));
+      setExitingIds((prev) => new Set(prev).add(id));
+    });
     const previousFilters = filters;
+
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setTimeout(resolve, CARD_EXIT_ANIMATION_MS);
+        });
+      });
+    });
+
     setFilters((prev) => prev.filter((f) => f.id !== id));
     try {
       await savedFiltersApi.remove(id);
@@ -106,7 +121,34 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
       moduleHasLoaded = false;
       loadFilters(true, true);
     } catch (error: unknown) {
-      setFilters(previousFilters);
+      setExitingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      setDeletingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      setFilters((current) => {
+        const removedFilter = previousFilters.find((f) => f.id === id);
+        if (!removedFilter || current.some((f) => f.id === id)) {
+          return current;
+        }
+        const originalIndex = previousFilters.findIndex((f) => f.id === id);
+        let insertPos = 0;
+        for (let i = 0; i < originalIndex; i++) {
+          const precedingId = previousFilters[i].id;
+          const idx = current.findIndex((f) => f.id === precedingId);
+          if (idx !== -1) {
+            insertPos = idx + 1;
+          }
+        }
+        const next = [...current];
+        next.splice(insertPos, 0, removedFilter);
+        return next;
+      });
       const errorMessage =
         (error && typeof error === 'object' && 'response' in error
           ? (error.response as { data?: { message?: string } })?.data?.message
@@ -114,6 +156,11 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
       toast.error(errorMessage);
     } finally {
       setDeletingIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
+      setExitingIds((prev) => {
         const newSet = new Set(prev);
         newSet.delete(id);
         return newSet;
@@ -299,7 +346,10 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
               });
             }
           }}
-          className="saved-filter-card card p-4 md:p-5 cursor-pointer group bg-white rounded-xl border-2 border-primary-700/30 shadow-none transition-all duration-200"
+          style={{ transitionDuration: `${CARD_EXIT_ANIMATION_MS}ms` }}
+          className={`saved-filter-card card p-4 md:p-5 cursor-pointer group bg-white rounded-xl border-2 border-primary-700/30 shadow-none transition-[opacity,transform] ease-out ${
+            exitingIds.has(filter.id) ? 'opacity-0 scale-[0.97]' : ''
+          }`}
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex-1">
