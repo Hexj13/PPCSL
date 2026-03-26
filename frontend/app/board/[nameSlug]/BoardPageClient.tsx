@@ -13,6 +13,7 @@ import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
 import { boardApi, type BoardInfo, type Listing, type PaginationMeta } from '@/lib/api';
 import { normalizeListingResponse } from '@/lib/api';
+import { LISTING_GRID_PAGE_SIZE } from '@/lib/constants';
 import { useAuthStore } from '@/lib/store';
 import { InfoBlock } from '@/ui';
 
@@ -44,7 +45,7 @@ export default function BoardPageClient({
   const sortOrder = initialSortOrder ?? (searchParams.get('sortOrder') === 'ASC' ? 'ASC' : 'DESC');
 
   const fetchListings = useCallback(
-    async (page: number, append: boolean = false, limit: number = 20) => {
+    async (page: number, append: boolean = false, limit: number = LISTING_GRID_PAGE_SIZE) => {
       if (append && loadingMoreRef.current) return;
       if (!append && loadingRef.current) return;
 
@@ -148,24 +149,31 @@ export default function BoardPageClient({
             ))}
           </div>
 
-          <div className="min-h-20 flex flex-col items-center justify-center py-8">
-            {loadingMore && (
+          {(() => {
+            const hasMore = meta && meta.totalPages && currentPage < meta.totalPages;
+
+            return (
               <>
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
-                <p className="mt-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
-                  {t('common.loading')}
-                </p>
+                {(hasMore || loadingMore) && (
+                  <LoadMoreButton
+                    onClick={handleLoadMore}
+                    loading={loadingMore}
+                    disabled={loadingMore}
+                  >
+                    {t('listings.showMore')}
+                  </LoadMoreButton>
+                )}
+
+                {!hasMore && listings.length > 0 && !loadingMore && (
+                  <div className="text-center pt-8 pb-0">
+                    <p style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
+                      {t('listings.noMoreListings')}
+                    </p>
+                  </div>
+                )}
               </>
-            )}
-
-            {meta && meta.totalPages != null && currentPage < meta.totalPages && !loadingMore && (
-              <LoadMoreButton onClick={handleLoadMore}>{t('board.loadMore')}</LoadMoreButton>
-            )}
-
-            {meta && meta.totalPages != null && currentPage >= meta.totalPages && !loadingMore && (
-              <p style={{ color: 'rgb(var(--text-secondary-rgb))' }}>{t('board.noMoreListings')}</p>
-            )}
-          </div>
+            );
+          })()}
         </>
       )}
     </div>
