@@ -322,7 +322,7 @@ function MyListingsContent(props: ContentProps) {
   } = props;
   const showBoardLink = Boolean(user?.boardSlug);
   const showPromotionHistory = listings.length > 0 && canPromote;
-  const showCreateLink = listings.length === 0;
+  const showCreateLink = statusCounts.Active === 0;
 
   const actions = (
     <>
