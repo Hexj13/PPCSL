@@ -114,7 +114,6 @@ export default async function ListingsPage({
   return (
     <div>
       <ConversionEvent />
-      {searchStructuredData}
 
       <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-6 text-primary-900">
         {t.listingsPage.title}
@@ -123,6 +122,7 @@ export default async function ListingsPage({
       <SearchFiltersWrapper />
       <ListingGridWrapper searchParams={searchParams} />
       <ScrollToFiltersButton />
+      {searchStructuredData}
     </div>
   );
 }

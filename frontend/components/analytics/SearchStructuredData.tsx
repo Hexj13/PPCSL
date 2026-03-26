@@ -1,3 +1,4 @@
+import Script from 'next/script';
 import type { ReactNode } from 'react';
 
 import type { Listing } from '@/lib/api';
@@ -218,27 +219,27 @@ export async function getSearchStructuredData({
 
   return (
     <>
-      <script
+      <Script
         id="structured-data-search-breadcrumb"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: toSafeJsonLdHtml(breadcrumbSchema) }}
       />
       {potentialActions.length > 0 && (
-        <script
+        <Script
           id="structured-data-search-website"
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: toSafeJsonLdHtml(websiteSchema) }}
         />
       )}
       {itemListSchema && (
-        <script
+        <Script
           id="structured-data-search-itemlist"
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: toSafeJsonLdHtml(itemListSchema) }}
         />
       )}
       {collectionPageSchema && (
-        <script
+        <Script
           id="structured-data-search-collection"
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: toSafeJsonLdHtml(collectionPageSchema) }}

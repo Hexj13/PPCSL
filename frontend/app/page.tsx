@@ -531,7 +531,6 @@ export default async function Home({
       <ConversionEvent />
       <SearchFiltersLimitToast />
       <DynamicPageTitle />
-      {searchStructuredData}
       <HomeHero
         title={t.home.title}
         subtitle={t.home.subtitle}
@@ -545,6 +544,7 @@ export default async function Home({
       <ListingGrid initialData={initialData} />
 
       <ScrollToFiltersButton />
+      {searchStructuredData}
     </div>
   );
 }

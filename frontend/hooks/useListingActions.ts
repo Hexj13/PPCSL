@@ -28,9 +28,7 @@ export interface ListingActionsCallbacks {
     _promoted?: boolean,
     _search?: string,
   ) => Promise<void>;
-  refetchAllForCount: (
-    _promotedFilterOverride?: 'All' | 'Promoted' | 'NotPromoted',
-  ) => Promise<void>;
+  refetchAllForCount: () => Promise<void>;
 }
 
 export function useListingActions(
@@ -176,6 +174,7 @@ export function useListingActions(
       }
       if (refreshCooldownMs > 0) setTimeUntilRefresh(refreshCooldownMs);
       await fetchListings(1, false, 20, apiStatus, apiPromoted, searchQuery);
+      void refetchAllForCount();
     } catch (error: unknown) {
       const axiosError = error as { response?: { status?: number } };
       if (axiosError.response?.status === 400) {
@@ -193,6 +192,7 @@ export function useListingActions(
     refreshCooldownMs,
     setTimeUntilRefresh,
     fetchListings,
+    refetchAllForCount,
     t,
   ]);
 
@@ -211,6 +211,7 @@ export function useListingActions(
         await listingsApi.togglePromotion(id, isPromoted, days);
         toast.success(t('listings.promotionEnabled'));
         await fetchListings(1, false, 20, apiStatus, apiPromoted, searchQuery);
+        void refetchAllForCount();
       } catch (error: unknown) {
         const axiosError = error as { response?: { status?: number } };
         if (axiosError.response?.status === 403) {
@@ -222,7 +223,7 @@ export function useListingActions(
         }
       }
     },
-    [fetchListings, statusFilter, promotedFilter, searchQuery, t],
+    [fetchListings, refetchAllForCount, statusFilter, promotedFilter, searchQuery, t],
   );
 
   const formatTimeRemaining = useCallback((ms: number): string => {

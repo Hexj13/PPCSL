@@ -187,7 +187,7 @@ function MyListingsListSection({
   meta,
   currentPage,
   loadingMore,
-  listingsLoading,
+  listingsRefreshing,
   canPromote,
   handleStatusFilterChange,
   handlePromotedFilterToggle,
@@ -206,7 +206,7 @@ function MyListingsListSection({
   | 'meta'
   | 'currentPage'
   | 'loadingMore'
-  | 'listingsLoading'
+  | 'listingsRefreshing'
   | 'canPromote'
   | 'handleStatusFilterChange'
   | 'handlePromotedFilterToggle'
@@ -214,9 +214,11 @@ function MyListingsListSection({
   | 'handleLoadMore'
   | 'handlePromoteClick'
 >) {
-  const showFilters = allListingsForCount.length > 0 || listings.length > 0;
-  const sourceForCount = allListingsForCount.length > 0 ? allListingsForCount : listings;
-  const promotedCount = sourceForCount.filter((l) => l.is_promoted === true).length;
+  const hasAnyListings = allListingsForCount.length > 0 || listings.length > 0;
+  const hasActiveFilters =
+    searchQuery.trim().length > 0 || statusFilter !== 'All' || promotedFilter !== 'All';
+  const showFilters = hasAnyListings || hasActiveFilters;
+  const promotedCount = allListingsForCount.filter((l) => l.is_promoted === true).length;
   const emptyMessage = searchQuery.trim()
     ? t('myListings.noListingsWithStatus')
     : statusFilter !== 'All' || promotedFilter !== 'All'
@@ -243,45 +245,43 @@ function MyListingsListSection({
           />
         </div>
       )}
-      {listingsLoading ? (
-        <div className="space-y-4">
-          {[...Array(3)].map((_, i) => (
-            <ListingManagementCardSkeleton key={`my-listings-loading-${i}`} />
-          ))}
-        </div>
-      ) : !hasListings ? (
-        <EmptyState message={emptyMessage} />
-      ) : (
-        <>
-          <div className="space-y-4">
-            {listings.map((listing) => (
-              <ListingManagementCard
-                key={listing.id}
-                listing={listing}
-                mode="my-listings"
-                onAction={handleAction}
-                onPromoteClick={canPromote ? handlePromoteClick : undefined}
-              />
-            ))}
-          </div>
-          {loadingMore && (
-            <div className="text-center py-8">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-              <p className="mt-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
-                {t('common.loading')}
-              </p>
+      <div
+        className={`min-w-0 ${listingsRefreshing ? 'opacity-60 pointer-events-none transition-opacity duration-200' : 'transition-opacity duration-200'}`}
+      >
+        {!hasListings ? (
+          <EmptyState message={emptyMessage} />
+        ) : (
+          <>
+            <div className="space-y-4">
+              {listings.map((listing) => (
+                <ListingManagementCard
+                  key={listing.id}
+                  listing={listing}
+                  mode="my-listings"
+                  onAction={handleAction}
+                  onPromoteClick={canPromote ? handlePromoteClick : undefined}
+                />
+              ))}
             </div>
-          )}
-          {showLoadMore && <LoadMoreButton onClick={handleLoadMore} />}
-          {showNoMore && (
-            <div className="text-center pt-8 pb-0">
-              <p style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
-                {t('myListings.noMoreListings')}
-              </p>
-            </div>
-          )}
-        </>
-      )}
+            {loadingMore && (
+              <div className="text-center py-8">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                <p className="mt-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
+                  {t('common.loading')}
+                </p>
+              </div>
+            )}
+            {showLoadMore && <LoadMoreButton onClick={handleLoadMore} />}
+            {showNoMore && (
+              <div className="text-center pt-8 pb-0">
+                <p style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
+                  {t('myListings.noMoreListings')}
+                </p>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </>
   );
 }
@@ -297,11 +297,11 @@ function MyListingsContent(props: ContentProps) {
     meta,
     currentPage,
     loadingMore,
-    listingsLoading,
+    listingsRefreshing,
     isRefreshing,
     timeUntilRefresh,
     formattedTime,
-    hasActiveListings,
+    hasActiveListingsOverall,
     canPromote,
     hasPromotionHistory,
     isCloseConfirmOpen,
@@ -332,10 +332,10 @@ function MyListingsContent(props: ContentProps) {
   } = props;
   const showBoardLink = Boolean(user?.boardSlug);
   const showPromotionHistory = hasPromotionHistory && canPromote;
-  const showCreateLink = statusCounts.Active === 0;
+  const showCreateLink = !hasActiveListingsOverall;
   const refreshButtonRef = useRef<HTMLButtonElement | null>(null);
   const [refreshButtonWidth, setRefreshButtonWidth] = useState<number | null>(null);
-  const refreshButtonLockKey = `${isRefreshing}-${Boolean(timeUntilRefresh && timeUntilRefresh > 0)}-${hasActiveListings}`;
+  const refreshButtonLockKey = `${isRefreshing}-${Boolean(timeUntilRefresh && timeUntilRefresh > 0)}-${hasActiveListingsOverall}`;
 
   useEffect(() => {
     setRefreshButtonWidth(null);
@@ -352,7 +352,9 @@ function MyListingsContent(props: ContentProps) {
       <LoadMoreButton
         onClick={handleRefreshDates}
         disabled={
-          isRefreshing || (timeUntilRefresh !== null && timeUntilRefresh > 0) || !hasActiveListings
+          isRefreshing ||
+          (timeUntilRefresh !== null && timeUntilRefresh > 0) ||
+          !hasActiveListingsOverall
         }
         variant="inline"
         buttonRef={refreshButtonRef}
@@ -505,7 +507,7 @@ function MyListingsContent(props: ContentProps) {
           meta={meta}
           currentPage={currentPage}
           loadingMore={loadingMore}
-          listingsLoading={listingsLoading}
+          listingsRefreshing={listingsRefreshing}
           canPromote={canPromote}
           handleStatusFilterChange={handleStatusFilterChange}
           handlePromotedFilterToggle={handlePromotedFilterToggle}
