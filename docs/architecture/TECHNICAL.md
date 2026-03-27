@@ -415,17 +415,16 @@ GET    /api/favorites/check/:id       # Check if listing is in favorites
 
 **Favorites removal UX:** Removing a card from `/favorites` is optimistic and delayed by a short exit animation (~280ms). If API deletion fails, local favorite state is restored.
 
-### Car Comparison
+### Comparison (vehicles and tires)
 
-Car comparison feature allows users to compare up to 3 cars simultaneously:
+Users can compare up to three vehicle listings and up to three tire listings; each category has its own list in client state.
 
-- Comparison data stored in `localStorage` (Zustand store with persist middleware, key `comparison-storage`); there is no comparison API or database table
-- Maximum 3 cars can be added to comparison
-- Comparison page (`/compare`) is public; guests and authenticated users see the same empty state and table UI
-- Guests add and remove listings via the same store (listing cards, listing detail, header link); no redirect to sign-in for comparison
-- On login or registration, `applyComparisonAfterAuth` merges `pendingComparisons` (legacy) with `comparison-storage`, validates listing IDs, then replaces the store list (deduped, max 3)
-- Comparison data is cleared on logout
-- Header shows a Compare link with counter badge for both guests and signed-in users (signed-in users also have Compare in the main nav / more menu where applicable)
+- Comparison data is stored in `localStorage` (Zustand persist, key `comparison-storage`): `vehicleComparisons` and `tireComparisons` (legacy persisted shape used `comparisons` only; migration maps that to `vehicleComparisons`). There is no comparison API or database table.
+- Comparison page (`/compare`) is public; guests and authenticated users use the same store and UI.
+- Guests add and remove listings via the same store (cards, listing detail, header); no sign-in required for comparison.
+- On login or registration, `applyComparisonAfterAuth` merges `pendingComparisons` (legacy) with IDs from `comparison-storage` (legacy `comparisons` or `vehicleComparisons` + `tireComparisons`), validates each ID with `GET /api/listings/:id`, then clears the store and repopulates vehicle vs tire lists from the listing `category` (still capped by the merge step, max 3 candidates total from merged sources).
+- Comparison data is cleared on logout.
+- Header shows a Compare link with a counter badge (total items in both lists) for guests and signed-in users where applicable.
 
 ### Saved Filters
 
@@ -499,9 +498,23 @@ PATCH /api/admin/brands/:id/unarchive # Unarchive brand (409 if non-archived bra
 PATCH /api/admin/models/:id/unarchive # Unarchive model
 ```
 
-Entities: `brands` and `vehicle_models` have `is_archived`, `name_normalized`, `vehicle_types` (array). Public catalog endpoints exclude archived records. Audit: `admin_audit_log` for create/update/archive/unarchive. After mutations, brands cache is invalidated.
+**Tire brands / models** — separate catalog (`tire_brands`, `tire_models`); listings use `listings.tire_id` and `Listing.category = tire`:
 
-**Frontend (Brands/Models tab):** Container `BrandsModelsTab` uses `usePaginatedData`, renders `BrandsModelsFilters` (search, vehicle type filter, Add Brand / Add Model), `BrandsModelsTable` (expandable rows, archive/unarchive buttons, edit icons, copy ID), `ArchiveConfirmModal`, `BrandFormModal`, `ModelFormModal`. Model form uses searchable brand dropdown with `renderMenuInPortal` so the list is not clipped by the modal. Duplicate name errors show inline (no global toast); API returns `code: 'DUPLICATE_NAME'` with 409.
+```http
+GET   /api/admin/tire-brands-models   # Paginated tire brands with models; query: page, limit, query (search), tireVehicleType (car|truck|moto) — brand must have ≥1 active tire listing of that type
+POST  /api/admin/tire-brands         # Create tire brand (name)
+PATCH /api/admin/tire-brands/:id     # Update tire brand
+POST  /api/admin/tire-models        # Create tire model (brandId, name, optional isOther)
+PATCH /api/admin/tire-models/:id     # Update tire model
+PATCH /api/admin/tire-brands/:id/archive
+PATCH /api/admin/tire-models/:id/archive
+PATCH /api/admin/tire-brands/:id/unarchive
+PATCH /api/admin/tire-models/:id/unarchive
+```
+
+Entities: `brands` and `vehicle_models` have `is_archived`, `name_normalized`, `vehicle_types` (array). `tire_brands` and `tire_models` have `is_archived`, `name_normalized`; models also `is_other`. Public catalog endpoints exclude archived records. Audit: `admin_audit_log` for vehicle and tire entities. After vehicle mutations, brands cache is invalidated; after tire mutations, tire Redis cache and listing search cache are invalidated.
+
+**Frontend (Brands/Models tab):** Container `BrandsModelsTab` uses `usePaginatedData`, renders `BrandsModelsFilters` (search, vehicle or tire catalog toggle, vehicle type filter for cars/trucks/moto, tire listing-type filter when in tire mode, Add Brand / Add Model), `BrandsModelsTable` (expandable rows, archive/unarchive buttons, edit icons, copy ID), `ArchiveConfirmModal`, `BrandFormModal`, `ModelFormModal`, `TireBrandFormModal`, `TireModelFormModal`. Model form uses searchable brand dropdown with `renderMenuInPortal` so the list is not clipped by the modal. Duplicate name errors show inline (no global toast); API returns `code: 'DUPLICATE_NAME'` with 409.
 
 ### Health
 
@@ -933,7 +946,7 @@ All scripts are located in `backend/src/scripts/` and can be executed via npm co
 - `view_item` - When user views a listing detail page
 - `search` - When user performs search/filtering
 - `add_to_wishlist` / `remove_from_wishlist` - Favorite management
-- `add_to_comparison` / `remove_from_comparison` - Car comparison
+- `add_to_comparison` / `remove_from_comparison` - Comparison (vehicles or tires)
 - `contact_seller` - When user contacts seller (phone/Viber/WhatsApp/Telegram)
 - `create_listing` - When user creates a new listing
 - `save_filter` - When user saves a search filter
@@ -1538,7 +1551,7 @@ cd backend && npm run test -- listings.service.spec.ts
   - Optimized third-party scripts (Google Analytics, Google Tag Manager) with `lazyOnload` strategy
   - Enhanced image optimization with proper Next.js Image configuration
   - Removed custom webpack configuration, relying on Next.js built-in optimizations
-- Added car comparison feature (up to 3 cars)
+- Added comparison feature (vehicles and tires; up to 3 listings per category)
 - Added status filters with counters on My Listings page
 - Added tab counters on Favorites page
 - Added breadcrumbs navigation on key pages

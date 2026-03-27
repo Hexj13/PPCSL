@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { usePopularModels } from '@/hooks/usePopularModels';
@@ -14,7 +13,13 @@ import {
   getMostPopularModel,
 } from '@/lib/content/popular-brands';
 import { toast } from '@/lib/toast';
-import { compareNames, createSlug } from '@/lib/utils';
+import { compareNames } from '@/lib/utils';
+
+import {
+  PopularFilterBrandTile,
+  PopularFilterChip,
+  popularVehicleBrandLogoUrl,
+} from './PopularFilterPickers';
 
 interface PopularFiltersProps {
   brands: Brand[];
@@ -91,152 +96,6 @@ function useShuffledOtherChips(vehicleType: 'car' | 'truck' | 'moto'): ChipItem[
     cacheRef.current = { vehicleType: key, value: shuffled };
     return shuffled;
   }, [vehicleType]);
-}
-
-function ModelChip({
-  brand,
-  model,
-  selected,
-  onToggle,
-  style,
-}: {
-  brand: string;
-  model: string;
-  selected: boolean;
-  onToggle: () => void;
-  style?: React.CSSProperties;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      style={style}
-      className={`relative px-3 py-2 rounded-full border-2 text-primary-900 transition-all text-sm ${
-        selected
-          ? 'border-primary-900 bg-primary-500/10'
-          : 'border-primary-500 bg-bg-secondary hover-only:hover:border-primary-900 hover-only:hover:bg-primary-500/10'
-      }`}
-    >
-      {brand} {model}
-      {selected && (
-        <div
-          className="absolute inset-0 flex items-center justify-center rounded-full pointer-events-none"
-          style={{
-            borderRadius: 'inherit',
-            background:
-              'radial-gradient(circle, rgba(64, 145, 107, 0.25) 0%, rgba(64, 145, 107, 0.15) 40%, rgba(64, 145, 107, 0.05) 100%)',
-          }}
-        >
-          <div className="w-5 h-5 bg-primary-500 rounded-full flex items-center justify-center shadow-lg border-2 border-primary-900">
-            <svg
-              className="w-3 h-3 text-primary-900"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={3}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-          </div>
-        </div>
-      )}
-    </button>
-  );
-}
-
-function getBrandLogoPath(brandName: string): string {
-  return `/brands_logo/${createSlug(brandName)}-logo.png`;
-}
-
-function BrandTile({
-  brandName,
-  selected,
-  onToggle,
-}: {
-  brandName: string;
-  selected: boolean;
-  onToggle: () => void;
-}) {
-  const [logoError, setLogoError] = useState(false);
-  const logoPath = getBrandLogoPath(brandName);
-
-  return (
-    <div className="flex flex-col items-center gap-1 w-full min-w-0 min-h-[100px] lg:min-h-[110px]">
-      <button
-        type="button"
-        onClick={onToggle}
-        className={`
-          relative w-full h-[80px] lg:h-[90px] flex items-center justify-center p-2 rounded-lg
-          outline-hidden select-none
-          ${
-            selected
-              ? 'border-2 border-primary-700'
-              : 'border-2 border-primary-700/30 hover-only:hover:border-primary-700 transition-colors duration-200'
-          }
-        `}
-        style={{ background: '#F4F4F4' }}
-        aria-pressed={selected}
-        aria-label={`${brandName}${selected ? ', selected' : ''}`}
-      >
-        <div className="relative w-full h-full flex items-center justify-center">
-          {!logoError ? (
-            <Image
-              src={logoPath}
-              alt={brandName}
-              width={80}
-              height={80}
-              className="object-contain select-none"
-              sizes="(max-width: 768px) 80px, 90px"
-              loading="lazy"
-              draggable={false}
-              unoptimized
-              onError={() => setLogoError(true)}
-            />
-          ) : (
-            <span className="text-2xl lg:text-3xl font-semibold text-primary-700">
-              {brandName.charAt(0)}
-            </span>
-          )}
-        </div>
-        {selected && (
-          <>
-            <div
-              className="absolute inset-0 rounded-lg pointer-events-none"
-              style={{
-                borderRadius: 'inherit',
-                background:
-                  'radial-gradient(ellipse 100% 80% at 50% 100%, rgba(64, 145, 107, 0.25) 0%, rgba(64, 145, 107, 0.15) 40%, rgba(64, 145, 107, 0.05) 100%)',
-              }}
-            />
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 pointer-events-none">
-              <div className="w-5 h-5 bg-primary-500 rounded-full flex items-center justify-center shadow-lg border-2 border-primary-900">
-                <svg
-                  className="w-3 h-3 text-primary-900"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={3}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-            </div>
-          </>
-        )}
-      </button>
-      <span className="text-xs md:text-sm font-medium text-primary-900 text-center select-none h-[32px] flex items-center justify-center">
-        {brandName}
-      </span>
-    </div>
-  );
 }
 
 export function PopularFilters({
@@ -380,23 +239,23 @@ export function PopularFilters({
 
   return (
     <div ref={blockRef} className="mb-5 scroll-mt-20">
-      {vehicleType === 'car' && (
-        <>
-          <h3 className="text-sm font-medium text-primary-900 mb-3">
-            {t('searchFilters.popularBrands')}
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-            {popularBrandsSorted.map((brandName) => (
-              <BrandTile
-                key={brandName}
-                brandName={brandName}
-                selected={isBrandExplicitlySelected(brandName)}
-                onToggle={() => toggleBrand(brandName)}
-              />
-            ))}
-          </div>
-        </>
-      )}
+      <>
+        <h3 className="text-sm font-medium text-primary-900 mb-3">
+          {t('searchFilters.popularBrands')}
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+          {popularBrandsSorted.map((brandName) => (
+            <PopularFilterBrandTile
+              key={brandName}
+              label={brandName}
+              imageSrc={popularVehicleBrandLogoUrl(brandName)}
+              letterPlaceholder={vehicleType === 'truck' || vehicleType === 'moto'}
+              selected={isBrandExplicitlySelected(brandName)}
+              onToggle={() => toggleBrand(brandName)}
+            />
+          ))}
+        </div>
+      </>
       <div ref={popularModelsBlockRef} className="scroll-mt-20">
         <h3 className="text-sm font-medium text-primary-900 mb-3">
           {t('searchFilters.popularModels')}
@@ -404,10 +263,9 @@ export function PopularFilters({
       </div>
       <div className="flex flex-wrap items-center gap-2">
         {mostPopularChips.map(({ brand, model }) => (
-          <ModelChip
+          <PopularFilterChip
             key={`${brand}-${model}`}
-            brand={brand}
-            model={model}
+            label={`${brand} ${model}`}
             selected={isModelSelected(brand, model)}
             onToggle={() => toggleModel(brand, model)}
           />
@@ -440,10 +298,9 @@ export function PopularFilters({
         )}
         {(showMore || isHiding) &&
           otherChips.map(({ brand, model }) => (
-            <ModelChip
+            <PopularFilterChip
               key={`${brand}-${model}`}
-              brand={brand}
-              model={model}
+              label={`${brand} ${model}`}
               selected={isModelSelected(brand, model)}
               onToggle={() => toggleModel(brand, model)}
               style={

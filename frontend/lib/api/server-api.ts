@@ -1,6 +1,7 @@
 import { cache } from 'react';
 
 import { LISTING_GRID_PAGE_SIZE } from '@/lib/constants';
+import type { Locale } from '@/lib/i18n-types';
 import { createBrandResolver, createModelResolver, parseSearchParams } from '@/lib/search';
 
 import type { Listing, PaginationMeta, Brand, VehicleModel } from './api';
@@ -47,6 +48,32 @@ export const fetchSearchMetadata = cache(
       const response = await fetch(
         `${API_URL}/api/brands/search-metadata${query ? `?${query}` : ''}`,
         {
+          next: { revalidate: 3600 },
+        },
+      );
+      if (!response.ok) return { title: null };
+      return response.json();
+    } catch {
+      return { title: null };
+    }
+  },
+);
+
+export const fetchTireSearchMetadata = cache(
+  async (params: {
+    tire_brand_ids?: string;
+    tire_model_ids?: string;
+    locale: Locale;
+  }): Promise<SearchMetadataResponse> => {
+    try {
+      const searchParams = new URLSearchParams();
+      if (params.tire_brand_ids) searchParams.set('tire_brand_ids', params.tire_brand_ids);
+      if (params.tire_model_ids) searchParams.set('tire_model_ids', params.tire_model_ids);
+      const query = searchParams.toString();
+      const response = await fetch(
+        `${API_URL}/api/tire-brands/search-metadata${query ? `?${query}` : ''}`,
+        {
+          headers: { 'Accept-Language': params.locale },
           next: { revalidate: 3600 },
         },
       );

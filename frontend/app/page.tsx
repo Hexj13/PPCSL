@@ -14,11 +14,17 @@ import {
   fetchBrands,
   fetchModelsByBrands,
   fetchSearchMetadata,
+  fetchTireSearchMetadata,
   getListings,
   withListingGridDefaultLimit,
 } from '@/lib/api';
 import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/content/popular-brands';
 import { getMetadataLocale, getServerTranslations, type Translations } from '@/lib/i18n';
+import {
+  appendTireCanonicalParams,
+  hasNonIndexableHomeSearchParams,
+  isIndexableVehicleTypeParam,
+} from '@/lib/search/home-page-indexable-params';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { createSlug, getCountry, slugMatches, slugToName } from '@/lib/utils';
 
@@ -242,40 +248,6 @@ async function getTitleFromParams(
   }
 }
 
-const INDEXABLE_PARAM_KEYS = new Set([
-  'brand',
-  'model',
-  'page',
-  'body_types',
-  'vehicleType',
-  'utm_source',
-  'utm_medium',
-  'utm_campaign',
-  'utm_content',
-  'utm_term',
-  'gclid',
-  'gclsrc',
-  'fbclid',
-  'ref',
-  'mc_cid',
-  'mc_eid',
-]);
-
-function isIndexableVehicleType(value: string | string[] | undefined): value is string {
-  return typeof value === 'string' && ['car', 'truck', 'moto'].includes(value);
-}
-
-function hasNonIndexableSearchParams(
-  params: Record<string, string | string[] | undefined>,
-): boolean {
-  return Object.entries(params).some(([key, value]) => {
-    if (value === undefined) return false;
-    if (!INDEXABLE_PARAM_KEYS.has(key)) return true;
-    if (key === 'vehicleType') return !isIndexableVehicleType(value);
-    return false;
-  });
-}
-
 type SearchMetadataApi = Awaited<ReturnType<typeof fetchSearchMetadata>>;
 
 function getHomeMetaDescription(
@@ -332,23 +304,37 @@ function buildHomeMetaUrls(
   const modelParam = params.model;
   const vehicleTypeParam = params.vehicleType;
   const bodyTypesParam = params.body_types;
+  const categoryParam = params.category;
+  const isTire = typeof categoryParam === 'string' && categoryParam === 'tire';
+
   const queryParams = new URLSearchParams();
-  if (brandParam && typeof brandParam === 'string') queryParams.set('brand', brandParam);
-  if (modelParam && typeof modelParam === 'string') queryParams.set('model', modelParam);
-  if (isIndexableVehicleType(vehicleTypeParam)) queryParams.set('vehicleType', vehicleTypeParam);
-  if (bodyTypesParam && typeof bodyTypesParam === 'string') {
-    queryParams.set('body_types', bodyTypesParam);
+  if (isTire) {
+    queryParams.set('category', 'tire');
+    appendTireCanonicalParams(params, queryParams);
+  } else {
+    if (brandParam && typeof brandParam === 'string') queryParams.set('brand', brandParam);
+    if (modelParam && typeof modelParam === 'string') queryParams.set('model', modelParam);
+    if (isIndexableVehicleTypeParam(vehicleTypeParam))
+      queryParams.set('vehicleType', vehicleTypeParam);
+    if (bodyTypesParam && typeof bodyTypesParam === 'string') {
+      queryParams.set('body_types', bodyTypesParam);
+    }
   }
   if (!hasNonIndexableParams && safePage > 1) queryParams.set('page', String(safePage));
   const queryString = queryParams.toString();
   const urlSuffix = queryString ? `?${queryString}` : '';
   const canonicalParams = new URLSearchParams();
-  if (brandParam && typeof brandParam === 'string') canonicalParams.set('brand', brandParam);
-  if (modelParam && typeof modelParam === 'string') canonicalParams.set('model', modelParam);
-  if (isIndexableVehicleType(vehicleTypeParam))
-    canonicalParams.set('vehicleType', vehicleTypeParam);
-  if (bodyTypesParam && typeof bodyTypesParam === 'string') {
-    canonicalParams.set('body_types', bodyTypesParam);
+  if (isTire) {
+    canonicalParams.set('category', 'tire');
+    appendTireCanonicalParams(params, canonicalParams);
+  } else {
+    if (brandParam && typeof brandParam === 'string') canonicalParams.set('brand', brandParam);
+    if (modelParam && typeof modelParam === 'string') canonicalParams.set('model', modelParam);
+    if (isIndexableVehicleTypeParam(vehicleTypeParam))
+      canonicalParams.set('vehicleType', vehicleTypeParam);
+    if (bodyTypesParam && typeof bodyTypesParam === 'string') {
+      canonicalParams.set('body_types', bodyTypesParam);
+    }
   }
   const canonicalQuery = canonicalParams.toString();
   const canonicalUrl = `${siteUrl}/${canonicalQuery ? `?${canonicalQuery}` : ''}`;
@@ -435,14 +421,55 @@ export async function generateMetadata({
   const locale = await getMetadataLocale();
   const t = getServerTranslations(locale);
   const params = (await (searchParams ?? Promise.resolve(undefined))) ?? {};
+  const pageParam = params.page;
+  const page =
+    typeof pageParam === 'string' && pageParam.trim() !== '' ? parseInt(pageParam, 10) : 1;
+  const safePage = Number.isFinite(page) && page > 0 ? page : 1;
+  const hasNonIndexableParams = hasNonIndexableHomeSearchParams(params);
+
+  const isTireCategory = typeof params.category === 'string' && params.category === 'tire';
+
+  if (isTireCategory) {
+    const tiresBaseTitle = t.metadata.site.tiresDefaultTitle;
+    const tireMeta = await fetchTireSearchMetadata({
+      tire_brand_ids: typeof params.tire_brand_ids === 'string' ? params.tire_brand_ids : undefined,
+      tire_model_ids: typeof params.tire_model_ids === 'string' ? params.tire_model_ids : undefined,
+      locale,
+    });
+    const title = tireMeta.title ?? tiresBaseTitle;
+    const fullTitle = title === tiresBaseTitle ? title : `${title} | ${tiresBaseTitle}`;
+    const description = tireMeta.description ?? t.metadata.site.tiresHomePageDescription;
+    const { urlSuffix, canonicalUrl, canonicalParams } = buildHomeMetaUrls(
+      params,
+      hasNonIndexableParams,
+      safePage,
+    );
+    const { prevUrl, nextUrl } = await getHomePrevNextUrls(
+      hasNonIndexableParams,
+      safePage,
+      canonicalParams,
+      params,
+    );
+    return buildHomeMetadata(
+      fullTitle,
+      description,
+      title,
+      urlSuffix,
+      canonicalUrl,
+      hasNonIndexableParams,
+      prevUrl,
+      nextUrl,
+      t,
+    );
+  }
+
   const brandParam = params.brand;
   const modelParam = params.model;
   const bodyTypesParam = params.body_types;
   const vehicleTypeParam = params.vehicleType;
-  const pageParam = params.page;
   const baseTitle = t.metadata.site.defaultTitle;
 
-  const vehicleType = (isIndexableVehicleType(vehicleTypeParam) ? vehicleTypeParam : 'car') as
+  const vehicleType = (isIndexableVehicleTypeParam(vehicleTypeParam) ? vehicleTypeParam : 'car') as
     | 'car'
     | 'truck'
     | 'moto';
@@ -462,11 +489,6 @@ export async function generateMetadata({
       t,
     ));
   const fullTitle = title === baseTitle ? title : `${title} | ${baseTitle}`;
-
-  const page =
-    typeof pageParam === 'string' && pageParam.trim() !== '' ? parseInt(pageParam, 10) : 1;
-  const safePage = Number.isFinite(page) && page > 0 ? page : 1;
-  const hasNonIndexableParams = hasNonIndexableSearchParams(params);
 
   const description = getHomeMetaDescription(
     metadataFromApi,
@@ -518,10 +540,12 @@ export default async function Home({
   const params = (await (searchParams ?? Promise.resolve(undefined))) ?? {};
   const brand = typeof params.brand === 'string' ? params.brand : null;
   const model = typeof params.model === 'string' ? params.model : null;
+  const category = typeof params.category === 'string' ? params.category : null;
   const initialData = await getListings(withListingGridDefaultLimit(params));
   const searchStructuredData = await getSearchStructuredData({
     brand,
     model,
+    category,
     listings: initialData.data,
   });
 

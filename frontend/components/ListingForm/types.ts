@@ -1,6 +1,6 @@
 import type { Brand, City, VehicleModel } from '@/lib/api';
 
-import type { ListingFormData } from '../ListingForm';
+import type { ListingFormData } from './listingFormTypes';
 
 export interface ListingFormSectionProps {
   formData: ListingFormData;
@@ -30,4 +30,5 @@ export interface ListingFormSectionProps {
     uploadedUrl?: string;
   }>;
   onUploadedImageLoaded?: (_slotId: string) => void;
+  minPhotosRequired?: number;
 }

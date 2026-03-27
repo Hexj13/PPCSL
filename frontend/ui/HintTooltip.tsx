@@ -5,19 +5,19 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { createPortal } from 'react-dom';
 
 export interface HintTooltipProps {
-  children: ReactNode;
+  children?: ReactNode;
+  contentHtml?: string;
   ariaLabel?: string;
   width?: string;
   className?: string;
 }
 
 const VIEWPORT_MARGIN = 8;
-const POPOVER_WIDTH = 288;
-const POPOVER_HEIGHT_ESTIMATE = 120;
 const GAP = 8;
 
 export function HintTooltip({
   children,
+  contentHtml,
   ariaLabel,
   width = 'w-64',
   className = '',
@@ -37,19 +37,39 @@ export function HintTooltip({
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const updatePortalPosition = useCallback(() => {
-    if (!containerRef.current || !isOpen) return;
-    const rect = containerRef.current.getBoundingClientRect();
+    const trigger = containerRef.current;
+    const pop = popoverRef.current;
+    if (!trigger || !pop || !isOpen) return;
+
+    const rect = trigger.getBoundingClientRect();
+    const popW = pop.offsetWidth;
+    const popH = pop.offsetHeight;
     const vw = window.innerWidth;
     const vh = window.innerHeight;
+
     const spaceAbove = rect.top;
     const spaceBelow = vh - rect.bottom;
-    const nextPlacement: 'top' | 'bottom' = spaceAbove >= spaceBelow ? 'top' : 'bottom';
+    const neededAbove = popH + GAP;
+    const neededBelow = popH + GAP;
+    const fitsAbove = spaceAbove >= neededAbove + VIEWPORT_MARGIN;
+    const fitsBelow = spaceBelow >= neededBelow + VIEWPORT_MARGIN;
+    let nextPlacement: 'top' | 'bottom';
+    if (fitsAbove && fitsBelow) {
+      nextPlacement = spaceAbove >= spaceBelow ? 'top' : 'bottom';
+    } else if (fitsBelow) {
+      nextPlacement = 'bottom';
+    } else if (fitsAbove) {
+      nextPlacement = 'top';
+    } else {
+      nextPlacement = spaceAbove >= spaceBelow ? 'top' : 'bottom';
+    }
+
     const spaceRight = vw - rect.left - VIEWPORT_MARGIN;
     const spaceLeft = rect.left - VIEWPORT_MARGIN;
     let nextHorizontal: 'left' | 'right';
-    if (spaceRight >= POPOVER_WIDTH) {
+    if (spaceRight >= popW) {
       nextHorizontal = 'right';
-    } else if (spaceLeft >= POPOVER_WIDTH) {
+    } else if (spaceLeft >= popW) {
       nextHorizontal = 'left';
     } else {
       nextHorizontal = spaceRight >= spaceLeft ? 'right' : 'left';
@@ -58,17 +78,19 @@ export function HintTooltip({
     if (nextHorizontal === 'right') {
       left = rect.left;
     } else {
-      left = rect.right - POPOVER_WIDTH;
+      left = rect.right - popW;
     }
-    left = Math.max(VIEWPORT_MARGIN, Math.min(left, vw - POPOVER_WIDTH - VIEWPORT_MARGIN));
+    left = Math.max(VIEWPORT_MARGIN, Math.min(left, vw - popW - VIEWPORT_MARGIN));
+
     let top: number;
     if (nextPlacement === 'top') {
-      top = rect.top - POPOVER_HEIGHT_ESTIMATE - GAP;
+      top = rect.top - popH - GAP;
       top = Math.max(VIEWPORT_MARGIN, top);
     } else {
       top = rect.bottom + GAP;
-      top = Math.min(top, vh - VIEWPORT_MARGIN - POPOVER_HEIGHT_ESTIMATE);
+      top = Math.min(top, vh - VIEWPORT_MARGIN - popH);
     }
+
     setPlacement(nextPlacement);
     setHorizontalPlacement(nextHorizontal);
     setPortalStyle({
@@ -86,8 +108,20 @@ export function HintTooltip({
     }
     updatePortalPosition();
     window.addEventListener('resize', updatePortalPosition);
-    return () => window.removeEventListener('resize', updatePortalPosition);
-  }, [isOpen, updatePortalPosition]);
+    const pop = popoverRef.current;
+    const ro =
+      pop &&
+      new ResizeObserver(() => {
+        updatePortalPosition();
+      });
+    if (pop && ro) {
+      ro.observe(pop);
+    }
+    return () => {
+      window.removeEventListener('resize', updatePortalPosition);
+      ro?.disconnect();
+    };
+  }, [isOpen, children, contentHtml, width, updatePortalPosition]);
 
   const open = useCallback(() => {
     if (closeTimeoutRef.current) {
@@ -157,23 +191,35 @@ export function HintTooltip({
     };
   }, []);
 
-  const popoverContent = isOpen && portalStyle && typeof document !== 'undefined' && (
+  const positioned = portalStyle !== null;
+  const animPlacement = portalStyle?.placement ?? placement;
+
+  const popoverContent = isOpen && typeof document !== 'undefined' && (
     <div
       ref={popoverRef}
-      className={`fixed z-1070 ${width} transition-all duration-150 ease-out`}
+      className={`fixed z-1070 ${width} transition-[opacity,transform] duration-150 ease-out`}
       style={{
-        left: portalStyle.left,
-        top: portalStyle.top,
+        left: portalStyle?.left ?? 0,
+        top: portalStyle?.top ?? 0,
         maxWidth: 'calc(100vw - 16px)',
-        ...(isVisible
+        visibility: positioned ? 'visible' : 'hidden',
+        pointerEvents: positioned ? 'auto' : 'none',
+        ...(positioned && isVisible
           ? { opacity: 1, transform: 'translateY(0)' }
-          : placement === 'top'
+          : animPlacement === 'top'
             ? { opacity: 0, transform: 'translateY(4px)' }
             : { opacity: 0, transform: 'translateY(-4px)' }),
       }}
     >
       <div className="bg-bg-base border-2 border-primary-900 rounded-lg p-3 shadow-lg">
-        <div className="text-xs text-primary-900 leading-relaxed">{children}</div>
+        {contentHtml !== undefined ? (
+          <div
+            className="text-xs text-primary-900 leading-relaxed [&_strong]:font-bold"
+            dangerouslySetInnerHTML={{ __html: contentHtml }}
+          />
+        ) : (
+          <div className="text-xs text-primary-900 leading-relaxed">{children}</div>
+        )}
       </div>
     </div>
   );

@@ -6,6 +6,9 @@ import { BrandsModule } from '../brands/brands.module';
 import { CommonModule } from '../common/common.module';
 import { CronSecretGuard } from '../common/guards/cron-secret.guard';
 import { ExchangeRatesModule } from '../exchange-rates/exchange-rates.module';
+import { TireBrand } from '../tires/entities/tire-brand.entity';
+import { TireModel } from '../tires/entities/tire-model.entity';
+import { Tire } from '../tires/entities/tire.entity';
 import { UploadModule } from '../upload/upload.module';
 import { UsersModule } from '../users/users.module';
 
@@ -52,7 +55,15 @@ import { ListingsController } from './presentation/listings.controller';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Listing, Vehicle, ListingView, PromotionHistory]),
+    TypeOrmModule.forFeature([
+      Listing,
+      Vehicle,
+      ListingView,
+      PromotionHistory,
+      Tire,
+      TireModel,
+      TireBrand,
+    ]),
     CommonModule,
     ExchangeRatesModule,
     UploadModule,

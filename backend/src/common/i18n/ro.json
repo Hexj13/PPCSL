@@ -8,7 +8,16 @@
     "codeLength": "Codul trebuie să conțină exact 6 cifre",
     "codeDigits": "Codul trebuie să conțină doar cifre",
     "passwordMinLength": "Parola trebuie să conțină cel puțin 8 caractere",
-    "passwordMaxLength": "Parola nu poate depăși 100 de caractere"
+    "passwordMaxLength": "Parola nu poate depăși 100 de caractere",
+    "listingCategory": "Categoria anunțului trebuie să fie vehicle sau tire",
+    "tireLoadIndexRange": "Indice de sarcină ca pe flancul anvelopei: număr întreg de la 0 la 279",
+    "tireWidthMmInvalid": "Lățimea secțiunii în mm (primul număr, ex. 205 la 205/55 R16): 125–355, pas 5",
+    "tireAspectRatioInvalid": "Înălțimea profilului (numărul după slash, ex. 55 la 205/55 R16): 5–95, pas 5",
+    "tireDiameterInchInvalid": "Dimensiunea jantei după R (ex. 16 la R16): 10–35 inch, pas 0,5 (ex. 16, 17,5, 22,5)",
+    "tireSpeedIndexRange": "Indice de viteză: o literă — Q, R, S, T, H, V, W sau Y (ca pe anvelopă)",
+    "listingImagesMinVehicle": "Sunt necesare minimum {count} fotografii",
+    "listingImagesMinTire": "Este necesară minimum {count} fotografie",
+    "listingImagesMax": "Puteți încărca cel mult {max} fotografii"
   },
   "errors": {
     "serverError": "Eroare pe server. Încercați mai târziu.",
@@ -78,6 +87,21 @@
     "vinRateLimitExceeded": "Puteți solicita VIN de maximum 5 ori pe oră. Încercați mai târziu.",
     "vehicleIdNotFound": "ID vehicul negăsit",
     "brandNotFoundById": "Marca nu a fost găsită",
+    "tireBrandNotFound": "Marca de anvelope nu a fost găsită",
+    "listingMixedVehicleTire": "Un anunț nu poate include simultan date de vehicul și de anvelope",
+    "listingCategoryImmutable": "Categoria anunțului nu poate fi schimbată",
+    "tirePayloadRequired": "Detaliile anvelopei sunt obligatorii pentru anunțuri la anvelope",
+    "vehiclePayloadRequired": "Detaliile vehiculului sunt obligatorii pentru anunțuri la vehicule",
+    "tireModelNotFound": "Modelul de anvelope nu a fost găsit",
+    "tireModelBrandMismatch": "Modelul de anvelope nu se potrivește cu marca selectată",
+    "tireModelArchived": "Acest model de anvelope nu mai este disponibil",
+    "tireCustomModelRequired": "Numele modelului este obligatoriu când selectați Other",
+    "tireCustomModelUnexpected": "Numele personalizat al modelului este permis doar când modelul este Other",
+    "tireStuddedOnlyWinter": "Anvelopele cu ținte sunt valide doar pentru sezonul de iarnă",
+    "tireRunFlatOnlyCar": "Run-flat este valabil doar pentru anvelope auto de pasageri",
+    "tireDiameterInvalid": "Diametrul jantei 10–35 inch, pas 0,5 (ex. 16 la R16 sau 22,5)",
+    "tireNotFoundForListing": "Detaliile anvelopei nu au fost găsite pentru acest anunț",
+    "tireOtherModelMissing": "În catalog lipsește modelul Other pentru această marcă",
     "invalidSecretKey": "Cheie secretă invalidă",
     "invalidFilename": "Nume de fișier invalid",
     "qualityMustBeNumber": "Calitatea trebuie să fie un număr între 1 și 100",
@@ -113,7 +137,10 @@
     "site": {
       "homePageDescription": "Cumpără sau vinde auto pe Kupito! Publică anunț gratuit. Platformă pentru cumpărarea și vânzarea autoturismelor online în Moldova. Anunțuri auto Moldova - publicare gratuită de anunțuri pentru persoane fizice și dealeri auto.",
       "homePageDescriptionWithBrand": "Cumpără autoturisme {brand} pe Kupito! Găsește cele mai bune prețuri și selecție de autoturisme {brand} în Moldova.",
-      "homePageDescriptionWithBrandModel": "Cumpără {brand} {model} pe Kupito! Găsește cele mai bune prețuri și selecție de autoturisme {brand} {model} în Moldova."
+      "homePageDescriptionWithBrandModel": "Cumpără {brand} {model} pe Kupito! Găsește cele mai bune prețuri și selecție de autoturisme {brand} {model} în Moldova.",
+      "tiresHomePageDescription": "Cumpără sau vinde anvelope pe Kupito! Anunțuri gratuite pentru anvelope în Moldova: noi și uzate, diverse dimensiuni și sezoane.",
+      "tiresHomePageDescriptionWithBrand": "Anvelope {brand} pe Kupito! Alegere și prețuri pentru anvelope {brand} în Moldova.",
+      "tiresHomePageDescriptionWithBrandModel": "Anvelope {brand} {model} pe Kupito! Alegere și prețuri pentru {brand} {model} în Moldova."
     }
   },
   "telegram": {

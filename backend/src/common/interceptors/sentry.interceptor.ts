@@ -10,6 +10,10 @@ export class SentryInterceptor implements NestInterceptor {
     const scope = Sentry.getCurrentScope();
     scope.setTag('httpMethod', request.method);
     scope.setTag('httpPath', request.url);
+    const body = request.body as { category?: string; tire?: unknown } | undefined;
+    if (body && (body.category === 'tire' || (body.tire !== undefined && body.tire !== null))) {
+      scope.setTag('listingCategory', 'tire');
+    }
     if (request.user) {
       scope.setUser({
         id: request.user.id,

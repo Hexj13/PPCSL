@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 
 import { useMyListingsPage } from '@/app/my-listings/useMyListingsPage';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -334,18 +334,19 @@ function MyListingsContent(props: ContentProps) {
   const showPromotionHistory = hasPromotionHistory && canPromote;
   const showCreateLink = !hasActiveListingsOverall;
   const refreshButtonRef = useRef<HTMLButtonElement | null>(null);
-  const [refreshButtonWidth, setRefreshButtonWidth] = useState<number | null>(null);
+  const [refreshButtonMinWidth, setRefreshButtonMinWidth] = useState<number | null>(null);
   const refreshButtonLockKey = `${isRefreshing}-${Boolean(timeUntilRefresh && timeUntilRefresh > 0)}-${hasActiveListingsOverall}`;
+  const prevRefreshLockKeyRef = useRef(refreshButtonLockKey);
+  if (prevRefreshLockKeyRef.current !== refreshButtonLockKey) {
+    prevRefreshLockKeyRef.current = refreshButtonLockKey;
+    setRefreshButtonMinWidth(null);
+  }
 
-  useEffect(() => {
-    setRefreshButtonWidth(null);
-    const frame = requestAnimationFrame(() => {
-      const button = refreshButtonRef.current;
-      if (!button) return;
-      setRefreshButtonWidth(button.offsetWidth);
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [refreshButtonLockKey]);
+  useLayoutEffect(() => {
+    const button = refreshButtonRef.current;
+    if (!button || refreshButtonMinWidth !== null) return;
+    setRefreshButtonMinWidth(button.getBoundingClientRect().width);
+  }, [refreshButtonLockKey, refreshButtonMinWidth]);
 
   const actions = (
     <>
@@ -359,7 +360,9 @@ function MyListingsContent(props: ContentProps) {
         variant="inline"
         buttonRef={refreshButtonRef}
         className="w-full lg:w-auto lg:tabular-nums"
-        style={refreshButtonWidth ? { width: `${refreshButtonWidth}px` } : undefined}
+        style={
+          refreshButtonMinWidth != null ? { minWidth: `${refreshButtonMinWidth}px` } : undefined
+        }
       >
         {isRefreshing ? (
           <>

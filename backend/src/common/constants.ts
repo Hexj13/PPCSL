@@ -2,6 +2,66 @@ export const userTypes = ['Individual', 'Business', 'Admin'] as const;
 
 export const listingStatuses = ['Active', 'Paused', 'Closed'] as const;
 
+export const listingCategories = ['vehicle', 'tire'] as const;
+
+export const tireVehicleTypes = ['car', 'truck', 'moto'] as const;
+
+export const tireSeasons = [
+  'summer',
+  'winter',
+  'all_season',
+  'mud_at',
+  'mud_mt',
+  'mud_rt',
+  'sport_semi_slick',
+  'race_slick',
+] as const;
+
+export const tireConditions = ['new', 'used', 'retreaded'] as const;
+
+export const tireSpeedIndices = ['Q', 'R', 'S', 'T', 'H', 'V', 'W', 'Y'] as const;
+
+export const tireQuantityMin = 1;
+export const tireQuantityMax = 8;
+
+export const tireWidthMmMin = 125;
+export const tireWidthMmMax = 355;
+export const tireWidthMmStep = 5;
+
+export const tireAspectRatioMin = 5;
+export const tireAspectRatioMax = 95;
+export const tireAspectRatioStep = 5;
+
+export const tireDiameterInchMin = 10;
+export const tireDiameterInchMax = 35;
+export const tireDiameterInchStep = 0.5;
+
+const TIRE_DIAMETER_EPS = 1e-6;
+
+export function normalizeTireDiameterInch(d: number): number {
+  return Math.round(d * 10) / 10;
+}
+
+export function isValidTireDiameterInch(d: number): boolean {
+  if (!Number.isFinite(d)) return false;
+  const scaled = normalizeTireDiameterInch(d);
+  if (Math.abs(scaled - d) > TIRE_DIAMETER_EPS) return false;
+  if (scaled < tireDiameterInchMin || scaled > tireDiameterInchMax) return false;
+  const half = Math.round(scaled * 2);
+  return Math.abs(scaled - half / 2) < TIRE_DIAMETER_EPS;
+}
+
+export function parseStrictUnsignedIntToken(value: unknown): number | null {
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value) || !Number.isInteger(value)) return null;
+    return value;
+  }
+  if (typeof value !== 'string') return null;
+  const s = value.trim();
+  if (!/^\d+$/.test(s)) return null;
+  return parseInt(s, 10);
+}
+
 export const currencies = ['EUR', 'MDL'] as const;
 
 export function getDefaultCurrency(): (typeof currencies)[number] {
@@ -76,6 +136,34 @@ export const ListingStatus = {
   Active: listingStatuses[0],
   Paused: listingStatuses[1],
   Closed: listingStatuses[2],
+} as const;
+
+export const ListingCategory = {
+  Vehicle: listingCategories[0],
+  Tire: listingCategories[1],
+} as const;
+
+export const TireVehicleType = {
+  Car: tireVehicleTypes[0],
+  Truck: tireVehicleTypes[1],
+  Moto: tireVehicleTypes[2],
+} as const;
+
+export const TireSeason = {
+  Summer: tireSeasons[0],
+  Winter: tireSeasons[1],
+  AllSeason: tireSeasons[2],
+  MudAt: tireSeasons[3],
+  MudMt: tireSeasons[4],
+  MudRt: tireSeasons[5],
+  SportSemiSlick: tireSeasons[6],
+  RaceSlick: tireSeasons[7],
+} as const;
+
+export const TireCondition = {
+  New: tireConditions[0],
+  Used: tireConditions[1],
+  Retreaded: tireConditions[2],
 } as const;
 
 export const Currency = {

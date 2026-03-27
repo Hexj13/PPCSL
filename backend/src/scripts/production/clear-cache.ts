@@ -34,6 +34,12 @@ async function clearCache() {
   const deletedBrandsModels = await redisService.invalidateByPrefix(CACHE_PREFIXES.brandsModels);
   console.log(`   ✅ Deleted ${deletedBrandsModels} model caches\n`);
 
+  const deletedTireBrands = await redisService.invalidateByPrefix(CACHE_PREFIXES.tireBrands);
+  console.log(`   ✅ Deleted ${deletedTireBrands} tire brand caches\n`);
+
+  const deletedTireModels = await redisService.invalidateByPrefix(CACHE_PREFIXES.tireBrandsModels);
+  console.log(`   ✅ Deleted ${deletedTireModels} tire model caches\n`);
+
   const deletedCities = await redisService.invalidateByPrefix(CACHE_PREFIXES.cities);
   console.log(`   ✅ Deleted ${deletedCities} city caches\n`);
 

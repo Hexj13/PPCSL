@@ -1,29 +1,179 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
 import { Breadcrumbs } from '@/components/layout/Breadcrumbs';
 import { LoadMoreButton } from '@/components/listing/LoadMoreButton';
+import { useTabIndicator } from '@/hooks/useTabIndicator';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
 import { listingsApi } from '@/lib/api';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { useComparisonStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
-import { getCountry } from '@/lib/utils';
+import { getCountry, isTireListing } from '@/lib/utils';
 
+import type { ComparisonField } from './comparisonFields';
 import { getComparisonFieldsForListings } from './comparisonFields';
+import { getTireComparisonFieldsForListings } from './tireComparisonFields';
 
-export default function ComparePage() {
+type CompareTab = 'vehicles' | 'tires';
+
+function getInitialTab(searchParams: URLSearchParams): CompareTab {
+  const tabParam = searchParams.get('tab');
+  return tabParam === 'tires' || tabParam === 'vehicles' ? tabParam : 'vehicles';
+}
+
+const BALANCE_ICON_PATH =
+  'M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3';
+
+function CompareEmptyBlock({
+  heading,
+  hint,
+  onBrowse,
+  browseLabel,
+}: {
+  heading: string;
+  hint: string;
+  onBrowse: () => void;
+  browseLabel: string;
+}) {
+  return (
+    <div className="surface text-center py-12">
+      <svg
+        className="w-24 h-24 mx-auto text-text-secondary mb-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={BALANCE_ICON_PATH} />
+      </svg>
+      <h2 className="text-2xl font-bold text-primary-900 mb-2">{heading}</h2>
+      <p className="mb-6" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
+        {hint}
+      </p>
+      <div className="flex justify-center">
+        <LoadMoreButton onClick={onBrowse} variant="inline">
+          {browseLabel}
+        </LoadMoreButton>
+      </div>
+    </div>
+  );
+}
+
+function CompareTableBlock({
+  listings,
+  fields,
+  onRemove,
+  parameterLabel,
+  siteConfig,
+  t,
+}: {
+  listings: Listing[];
+  fields: ComparisonField[];
+  onRemove: (id: string) => void;
+  parameterLabel: string;
+  siteConfig: { currency: string };
+  t: (key: string, params?: Record<string, string | number>) => string;
+}) {
+  return (
+    <div className="surface overflow-x-auto">
+      <table className="w-full min-w-[800px]">
+        <thead>
+          <tr className="border-b border-primary-700/30">
+            <th className="text-left py-2 px-2 md:py-4 md:px-4 text-sm md:text-base text-primary-900 font-semibold">
+              {parameterLabel}
+            </th>
+            {listings.map((listing) => (
+              <th
+                key={listing.id}
+                className="text-center py-2 px-2 md:py-4 md:px-4 text-sm md:text-base text-primary-900 font-semibold min-w-[200px]"
+              >
+                <div className="flex justify-center items-center">
+                  <button
+                    type="button"
+                    onClick={() => onRemove(listing.id)}
+                    className="p-2 text-text-secondary hover-only:hover:text-red-400 transition-colors"
+                    title={t('common.removeFromComparison')}
+                  >
+                    <svg
+                      className="w-5 h-5 md:w-6 md:h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {fields.map((field) => (
+            <tr key={field.key} className="border-b border-primary-700/10 last:border-b-0">
+              <td className="py-2 px-2 md:py-4 md:px-4 text-sm md:text-base text-primary-700 font-semibold">
+                {t(field.labelKey)}
+              </td>
+              {listings.map((listing) => field.renderCell(listing, t, siteConfig))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+type PersistedComparisonBackup = {
+  state?: {
+    vehicleComparisons?: string[];
+    tireComparisons?: string[];
+    comparisons?: string[];
+  };
+};
+
+function ComparePageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { t } = useTranslation();
-  const { comparisons, remove, rehydrate } = useComparisonStore();
-  const [listings, setListings] = useState<Listing[]>([]);
+  const vehicleComparisons = useComparisonStore((s) => s.vehicleComparisons);
+  const tireComparisons = useComparisonStore((s) => s.tireComparisons);
+  const removeVehicle = useComparisonStore((s) => s.removeVehicle);
+  const removeTire = useComparisonStore((s) => s.removeTire);
+  const rehydrate = useComparisonStore((s) => s.rehydrate);
+
+  const [activeTab, setActiveTab] = useState<CompareTab>(() => getInitialTab(searchParams));
+  const [vehicleListings, setVehicleListings] = useState<Listing[]>([]);
+  const [tireListings, setTireListings] = useState<Listing[]>([]);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [comparisonStoreHydrated, setComparisonStoreHydrated] = useState(false);
-  const prevComparisonsRef = useRef<string[]>([]);
-  const listingsLengthRef = useRef(0);
+  const prevVehicleIdsRef = useRef<string[]>([]);
+  const prevTireIdsRef = useRef<string[]>([]);
+  const vehicleListingsLengthRef = useRef(0);
+  const tireListingsLengthRef = useRef(0);
   const hasRehydratedRef = useRef(false);
   const skeletonStartRef = useRef<number | null>(null);
+  const vehiclesTabRef = useRef<HTMLButtonElement>(null);
+  const tiresTabRef = useRef<HTMLButtonElement>(null);
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
+
+  const vehicleCount = vehicleComparisons.length;
+  const tireCount = tireComparisons.length;
+  const tabIndicatorRemeasureKey = `${activeTab}-${vehicleCount}-${tireCount}-${hasInitialized}`;
+  const { indicatorRef, indicatorStyle } = useTabIndicator(
+    activeTab,
+    { vehicles: vehiclesTabRef, tires: tiresTabRef },
+    tabsContainerRef,
+    tabIndicatorRemeasureKey,
+  );
 
   useEffect(() => {
     const unsub = useComparisonStore.persist.onFinishHydration(() => {
@@ -35,7 +185,42 @@ export default function ComparePage() {
     return unsub;
   }, []);
 
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'tires' || tabParam === 'vehicles') {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
+
   const siteConfig = loadSiteConfigSync(getCountry());
+
+  const tabButtonClass = (isActive: boolean) =>
+    `shrink-0 px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 whitespace-nowrap flex items-center gap-2 ${
+      isActive
+        ? 'text-primary-700 bg-primary-500/10 rounded-t-lg'
+        : 'text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:bg-primary-500/10'
+    }`;
+
+  const handleTabChange = (tab: CompareTab) => {
+    const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
+    setActiveTab(tab);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', tab);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('scrollPreserved', 'true');
+    }
+    router.replace(`/compare?${params.toString()}`, { scroll: false });
+    if (typeof window !== 'undefined') {
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: scrollY, behavior: 'instant' });
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            sessionStorage.removeItem('scrollPreserved');
+          });
+        });
+      });
+    }
+  };
 
   const finishWithMinSkeleton = useCallback(() => {
     const start = skeletonStartRef.current ?? Date.now();
@@ -44,77 +229,147 @@ export default function ComparePage() {
     setTimeout(() => setHasInitialized(true), remaining);
   }, []);
 
+  const syncVehicleListings = useCallback(
+    async (currentIds: string[]) => {
+      if (currentIds.length === 0) {
+        setVehicleListings([]);
+        prevVehicleIdsRef.current = [];
+        vehicleListingsLengthRef.current = 0;
+        return;
+      }
+
+      const prevIds = new Set(prevVehicleIdsRef.current);
+      const currentIdSet = new Set(currentIds);
+      const newIds = currentIds.filter((id) => !prevIds.has(id));
+
+      if (newIds.length === 0 && vehicleListingsLengthRef.current > 0) {
+        setVehicleListings((prev) => {
+          const filtered = prev.filter((listing) => currentIdSet.has(listing.id));
+          vehicleListingsLengthRef.current = filtered.length;
+          return filtered;
+        });
+        prevVehicleIdsRef.current = currentIds;
+        return;
+      }
+
+      const idsToFetch = newIds.length > 0 ? newIds : currentIds;
+      const promises = idsToFetch.map((id) => listingsApi.getOne(id).catch(() => null));
+      const results = await Promise.all(promises);
+      const validListings = results.filter((r) => r !== null).map((r) => r!.data);
+      const tireOnly = validListings.filter((l) => isTireListing(l));
+      if (tireOnly.length > 0) {
+        tireOnly.forEach((l) => removeVehicle(l.id));
+        toast.warning(t('compare.removedWrongCategoryFromCompare'));
+      }
+      const forCompare = validListings.filter((l) => !isTireListing(l));
+
+      if (newIds.length > 0) {
+        setVehicleListings((prev) => {
+          const existingIds = new Set(prev.map((l) => l.id));
+          const newListings = forCompare.filter((l) => !existingIds.has(l.id));
+          const updated = [...prev.filter((l) => currentIdSet.has(l.id)), ...newListings];
+          vehicleListingsLengthRef.current = updated.length;
+          return updated;
+        });
+      } else {
+        setVehicleListings(forCompare);
+        vehicleListingsLengthRef.current = forCompare.length;
+      }
+      prevVehicleIdsRef.current = currentIds;
+    },
+    [removeVehicle, t],
+  );
+
+  const syncTireListings = useCallback(
+    async (currentIds: string[]) => {
+      if (currentIds.length === 0) {
+        setTireListings([]);
+        prevTireIdsRef.current = [];
+        tireListingsLengthRef.current = 0;
+        return;
+      }
+
+      const prevIds = new Set(prevTireIdsRef.current);
+      const currentIdSet = new Set(currentIds);
+      const newIds = currentIds.filter((id) => !prevIds.has(id));
+
+      if (newIds.length === 0 && tireListingsLengthRef.current > 0) {
+        setTireListings((prev) => {
+          const filtered = prev.filter((listing) => currentIdSet.has(listing.id));
+          tireListingsLengthRef.current = filtered.length;
+          return filtered;
+        });
+        prevTireIdsRef.current = currentIds;
+        return;
+      }
+
+      const idsToFetch = newIds.length > 0 ? newIds : currentIds;
+      const promises = idsToFetch.map((id) => listingsApi.getOne(id).catch(() => null));
+      const results = await Promise.all(promises);
+      const validListings = results.filter((r) => r !== null).map((r) => r!.data);
+      const vehicleOnly = validListings.filter((l) => !isTireListing(l));
+      if (vehicleOnly.length > 0) {
+        vehicleOnly.forEach((l) => removeTire(l.id));
+        toast.warning(t('compare.removedWrongCategoryFromCompare'));
+      }
+      const forCompare = validListings.filter((l) => isTireListing(l));
+
+      if (newIds.length > 0) {
+        setTireListings((prev) => {
+          const existingIds = new Set(prev.map((l) => l.id));
+          const newListings = forCompare.filter((l) => !existingIds.has(l.id));
+          const updated = [...prev.filter((l) => currentIdSet.has(l.id)), ...newListings];
+          tireListingsLengthRef.current = updated.length;
+          return updated;
+        });
+      } else {
+        setTireListings(forCompare);
+        tireListingsLengthRef.current = forCompare.length;
+      }
+      prevTireIdsRef.current = currentIds;
+    },
+    [removeTire, t],
+  );
+
   useEffect(() => {
     if (!comparisonStoreHydrated) return;
 
     skeletonStartRef.current = Date.now();
-    const rehydrateAndFetch = async () => {
-      let currentComparisons: string[];
+    const run = async () => {
+      let vIds = vehicleComparisons;
+      let tIds = tireComparisons;
+
       if (!hasRehydratedRef.current) {
         hasRehydratedRef.current = true;
         await rehydrate();
-        currentComparisons = useComparisonStore.getState().comparisons;
-      } else {
-        currentComparisons = comparisons;
+        vIds = useComparisonStore.getState().vehicleComparisons;
+        tIds = useComparisonStore.getState().tireComparisons;
       }
 
-      if (currentComparisons.length === 0 && typeof window !== 'undefined') {
-        const backup = localStorage.getItem('comparison-storage-backup');
-        if (backup) {
+      if (vIds.length === 0 && tIds.length === 0 && typeof window !== 'undefined') {
+        const backupRaw = localStorage.getItem('comparison-storage-backup');
+        if (backupRaw) {
           try {
-            const parsed = JSON.parse(backup);
-            if (parsed.state?.comparisons?.length > 0) {
-              currentComparisons = parsed.state.comparisons;
+            const parsed = JSON.parse(backupRaw) as PersistedComparisonBackup;
+            const st = parsed.state;
+            const hasOld =
+              (st?.vehicleComparisons?.length ?? 0) > 0 ||
+              (st?.tireComparisons?.length ?? 0) > 0 ||
+              (st?.comparisons?.length ?? 0) > 0;
+            if (hasOld) {
               await rehydrate();
+              vIds = useComparisonStore.getState().vehicleComparisons;
+              tIds = useComparisonStore.getState().tireComparisons;
             }
           } catch {
-            // Ignore errors
+            // Ignore
           }
         }
       }
 
-      if (currentComparisons.length === 0) {
-        setListings([]);
-        prevComparisonsRef.current = [];
-        listingsLengthRef.current = 0;
-        finishWithMinSkeleton();
-        return;
-      }
-
-      const prevIds = new Set(prevComparisonsRef.current);
-      const currentIds = new Set(currentComparisons);
-      const newIds = currentComparisons.filter((id) => !prevIds.has(id));
-
-      if (newIds.length === 0 && listingsLengthRef.current > 0) {
-        setListings((prev) => {
-          const filtered = prev.filter((listing) => currentIds.has(listing.id));
-          listingsLengthRef.current = filtered.length;
-          return filtered;
-        });
-        prevComparisonsRef.current = currentComparisons;
-        finishWithMinSkeleton();
-        return;
-      }
-
       try {
-        const idsToFetch = newIds.length > 0 ? newIds : currentComparisons;
-        const promises = idsToFetch.map((id) => listingsApi.getOne(id).catch(() => null));
-        const results = await Promise.all(promises);
-        const validListings = results.filter((r) => r !== null).map((r) => r!.data);
-
-        if (newIds.length > 0) {
-          setListings((prev) => {
-            const existingIds = new Set(prev.map((l) => l.id));
-            const newListings = validListings.filter((l) => !existingIds.has(l.id));
-            const updated = [...prev.filter((l) => currentIds.has(l.id)), ...newListings];
-            listingsLengthRef.current = updated.length;
-            return updated;
-          });
-        } else {
-          setListings(validListings);
-          listingsLengthRef.current = validListings.length;
-        }
-        prevComparisonsRef.current = currentComparisons;
+        await syncVehicleListings(vIds);
+        await syncTireListings(tIds);
       } catch (error) {
         console.error('Error fetching listings:', error);
         toast.error(t('compare.loadError'));
@@ -123,25 +378,94 @@ export default function ComparePage() {
       }
     };
 
-    void rehydrateAndFetch();
-  }, [comparisonStoreHydrated, comparisons, rehydrate, t, finishWithMinSkeleton]);
+    void run();
+  }, [
+    comparisonStoreHydrated,
+    vehicleComparisons,
+    tireComparisons,
+    rehydrate,
+    t,
+    finishWithMinSkeleton,
+    syncVehicleListings,
+    syncTireListings,
+  ]);
 
-  const handleRemove = (id: string) => {
-    setListings((prev) => prev.filter((listing) => listing.id !== id));
-    remove(id);
+  const handleRemoveVehicle = (id: string) => {
+    setVehicleListings((prev) => prev.filter((listing) => listing.id !== id));
+    removeVehicle(id);
     toast.success(t('compare.removedFromComparison'));
   };
 
+  const handleRemoveTire = (id: string) => {
+    setTireListings((prev) => prev.filter((listing) => listing.id !== id));
+    removeTire(id);
+    toast.success(t('compare.removedFromComparison'));
+  };
+
+  const breadcrumbLabel = t('compare.pageTitle');
+  const breadcrumbExtra =
+    activeTab === 'tires'
+      ? [{ label: t('compare.tiresSectionTitle') }]
+      : [{ label: t('compare.vehiclesSectionTitle') }];
+
+  const tabsRow = (
+    <div className="mb-6 border-b border-primary-500/20">
+      <div ref={tabsContainerRef} className="relative overflow-x-auto scrollbar-hide">
+        <div className="relative flex gap-1 min-w-max">
+          <button
+            ref={vehiclesTabRef}
+            type="button"
+            onClick={() => handleTabChange('vehicles')}
+            className={tabButtonClass(activeTab === 'vehicles')}
+          >
+            {t('compare.vehiclesSectionTitle')}
+            {vehicleCount > 0 && (
+              <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-700/20 text-xs">
+                {vehicleCount}
+              </span>
+            )}
+          </button>
+          <button
+            ref={tiresTabRef}
+            type="button"
+            onClick={() => handleTabChange('tires')}
+            className={tabButtonClass(activeTab === 'tires')}
+          >
+            {t('compare.tiresSectionTitle')}
+            {tireCount > 0 && (
+              <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-700/20 text-xs">
+                {tireCount}
+              </span>
+            )}
+          </button>
+          <div
+            ref={indicatorRef}
+            className="absolute bottom-0 h-0.5 bg-primary-700 transition-all duration-300 ease-in-out"
+            style={{
+              left: `${indicatorStyle.left}px`,
+              width: `${indicatorStyle.width}px`,
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+
   if (!comparisonStoreHydrated || !hasInitialized) {
     return (
-      <div className="max-w-7xl mx-auto min-h-[calc(100vh-200px)]">
+      <div className="max-w-7xl mx-auto min-h-[calc(100vh-200px)] pb-12 md:pb-16">
         <Breadcrumbs
-          items={[{ label: t('breadcrumbs.home'), href: '/' }, { label: t('compare.title') }]}
+          items={[
+            { label: t('breadcrumbs.home'), href: '/' },
+            { label: breadcrumbLabel, href: '/compare' },
+            ...(comparisonStoreHydrated ? breadcrumbExtra : []),
+          ]}
           className="mb-6"
         />
-        <h1 className="text-xl md:text-3xl lg:text-4xl font-extrabold mb-6 text-primary-900">
-          {t('compare.title')}
+        <h1 className="text-xl md:text-3xl lg:text-4xl font-extrabold mb-6 md:mb-8 text-primary-900">
+          {breadcrumbLabel}
         </h1>
+        {comparisonStoreHydrated ? tabsRow : null}
         <div className="surface py-12 animate-pulse">
           <div className="w-24 h-24 mx-auto rounded-full bg-primary-500/10 mb-4" />
           <div className="h-8 w-64 mx-auto bg-primary-500/10 rounded-sm mb-2" />
@@ -151,125 +475,77 @@ export default function ComparePage() {
     );
   }
 
-  if (listings.length === 0) {
-    return (
-      <div className="max-w-7xl mx-auto min-h-[calc(100vh-200px)]">
-        <Breadcrumbs
-          items={[{ label: t('breadcrumbs.home'), href: '/' }, { label: t('compare.title') }]}
-          className="mb-6"
-        />
-        <h1 className="text-xl md:text-3xl lg:text-4xl font-extrabold mb-6 text-primary-900">
-          {t('compare.title')}
-        </h1>
-        <div className="surface text-center py-12">
-          <svg
-            className="w-24 h-24 mx-auto text-text-secondary mb-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"
-            />
-          </svg>
-          <h2 className="text-2xl font-bold text-primary-900 mb-2">{t('compare.noVehicles')}</h2>
-          <p className="mb-6" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
-            {t('compare.addVehiclesHint')}
-          </p>
-          <div className="flex justify-center">
-            <LoadMoreButton
-              onClick={() => {
-                if (typeof window !== 'undefined') {
-                  window.location.href = '/';
-                }
-              }}
-              variant="inline"
-            >
-              {t('compare.browseListings')}
-            </LoadMoreButton>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-7xl mx-auto min-h-[calc(100vh-200px)]">
+    <div className="max-w-7xl mx-auto min-h-[calc(100vh-200px)] pb-12 md:pb-16">
       <Breadcrumbs
-        items={[{ label: t('breadcrumbs.home'), href: '/' }, { label: t('compare.title') }]}
+        items={[
+          { label: t('breadcrumbs.home'), href: '/' },
+          { label: breadcrumbLabel, href: '/compare' },
+          ...breadcrumbExtra,
+        ]}
         className="mb-6"
       />
-      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <h1 className="text-xl md:text-3xl lg:text-4xl font-extrabold text-primary-900">
-          {t('compare.title')}
-        </h1>
-        <button
-          onClick={() => {
-            comparisons.forEach((id) => remove(id));
-            if (typeof window !== 'undefined') {
-              localStorage.removeItem('comparison-storage-backup');
-            }
-            toast.success(t('compare.allRemoved'));
-          }}
-          className="px-8 py-2 md:py-2.5 text-sm md:text-sm lg:text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10 select-none"
-        >
-          {t('compare.clearAll')}
-        </button>
-      </div>
+      <h1 className="text-xl md:text-3xl lg:text-4xl font-extrabold mb-6 md:mb-8 text-primary-900">
+        {breadcrumbLabel}
+      </h1>
 
-      <div className="surface overflow-x-auto">
-        <table className="w-full min-w-[800px]">
-          <thead>
-            <tr className="border-b border-primary-700/30">
-              <th className="text-left py-2 px-2 md:py-4 md:px-4 text-sm md:text-base text-primary-900 font-semibold">
-                {t('compare.parameter')}
-              </th>
-              {listings.map((listing) => (
-                <th
-                  key={listing.id}
-                  className="text-center py-2 px-2 md:py-4 md:px-4 text-sm md:text-base text-primary-900 font-semibold min-w-[200px]"
-                >
-                  <div className="flex justify-center items-center">
-                    <button
-                      onClick={() => handleRemove(listing.id)}
-                      className="p-2 text-text-secondary hover-only:hover:text-red-400 transition-colors"
-                      title={t('common.removeFromComparison')}
-                    >
-                      <svg
-                        className="w-5 h-5 md:w-6 md:h-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {getComparisonFieldsForListings(listings).map((field) => (
-              <tr key={field.key} className="border-b border-primary-700/10 last:border-b-0">
-                <td className="py-2 px-2 md:py-4 md:px-4 text-sm md:text-base text-primary-700 font-semibold">
-                  {t(field.labelKey)}
-                </td>
-                {listings.map((listing) => field.renderCell(listing, t, siteConfig))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {tabsRow}
+
+      {activeTab === 'vehicles' &&
+        (vehicleListings.length === 0 ? (
+          <CompareEmptyBlock
+            heading={t('compare.noVehicles')}
+            hint={t('compare.addVehiclesHint')}
+            onBrowse={() => {
+              if (typeof window !== 'undefined') {
+                window.location.href = '/';
+              }
+            }}
+            browseLabel={t('compare.browseListings')}
+          />
+        ) : (
+          <CompareTableBlock
+            listings={vehicleListings}
+            fields={getComparisonFieldsForListings(vehicleListings)}
+            onRemove={handleRemoveVehicle}
+            parameterLabel={t('compare.parameter')}
+            siteConfig={siteConfig}
+            t={t}
+          />
+        ))}
+
+      {activeTab === 'tires' &&
+        (tireListings.length === 0 ? (
+          <CompareEmptyBlock
+            heading={t('compare.noTires')}
+            hint={t('compare.addTiresHint')}
+            onBrowse={() => {
+              if (typeof window !== 'undefined') {
+                window.location.href = '/listings?category=tire';
+              }
+            }}
+            browseLabel={t('compare.browseTireListings')}
+          />
+        ) : (
+          <CompareTableBlock
+            listings={tireListings}
+            fields={getTireComparisonFieldsForListings(tireListings)}
+            onRemove={handleRemoveTire}
+            parameterLabel={t('compare.parameter')}
+            siteConfig={siteConfig}
+            t={t}
+          />
+        ))}
     </div>
+  );
+}
+
+export default function ComparePage() {
+  const { t } = useTranslation();
+
+  return (
+    <Suspense fallback={<div>{t('common.loading')}</div>}>
+      <ComparePageContent />
+    </Suspense>
   );
 }

@@ -3,6 +3,7 @@
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface SearchTabsProps {
+  variant?: 'vehicle' | 'tire';
   activeTab: 'basic' | 'advanced' | 'equipment' | 'popular';
   onTabChange: (_tab: 'basic' | 'advanced' | 'equipment' | 'popular') => void;
   hasBasicFilters: boolean;
@@ -21,6 +22,7 @@ interface SearchTabsProps {
 }
 
 export function SearchTabs({
+  variant = 'vehicle',
   activeTab,
   onTabChange,
   hasBasicFilters,
@@ -38,6 +40,71 @@ export function SearchTabs({
   fadeOpacity,
 }: SearchTabsProps) {
   const { t } = useTranslation();
+
+  if (variant === 'tire') {
+    return (
+      <div className="relative">
+        <div
+          ref={tabsContainerRef}
+          className="overflow-x-auto scrollbar-hide"
+          suppressHydrationWarning
+        >
+          <div className="relative flex gap-1 min-w-max">
+            <button
+              ref={basicTabRef}
+              type="button"
+              onClick={() => activeTab !== 'basic' && onTabChange('basic')}
+              className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap ${
+                activeTab === 'basic'
+                  ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
+                  : 'text-primary-900 hover-only:hover:bg-primary-500/10'
+              }`}
+              suppressHydrationWarning
+            >
+              <span suppressHydrationWarning>{t('searchFilters.basicCriteria')}</span>
+              {hasBasicFilters && (
+                <span className="absolute right-2 top-2 w-2 h-2 rounded-full bg-accent" />
+              )}
+            </button>
+            <button
+              ref={popularTabRef}
+              type="button"
+              onClick={() => activeTab !== 'popular' && onTabChange('popular')}
+              className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap ${
+                activeTab === 'popular'
+                  ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
+                  : 'text-primary-900 hover-only:hover:bg-primary-500/10'
+              }`}
+              suppressHydrationWarning
+            >
+              <span suppressHydrationWarning>{t('searchFilters.popularFilters')}</span>
+              {hasPopularFiltersActive && (
+                <span className="absolute right-2 top-2 w-2 h-2 rounded-full bg-accent" />
+              )}
+            </button>
+            <div
+              ref={indicatorRef}
+              className="absolute bottom-0 h-0.5 bg-primary-700 transition-all duration-300 ease-in-out"
+              style={{
+                left: `${indicatorStyle.left}px`,
+                width: `${indicatorStyle.width}px`,
+              }}
+            />
+          </div>
+        </div>
+        {showFade && (
+          <div
+            className="lg:hidden absolute top-0 -right-px bottom-0 w-14 pointer-events-none z-20 transition-opacity duration-200"
+            style={{
+              opacity: fadeOpacity,
+              background:
+                'linear-gradient(to left, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 50%, rgba(255, 255, 255, 0.5) 100%)',
+            }}
+          />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="relative">

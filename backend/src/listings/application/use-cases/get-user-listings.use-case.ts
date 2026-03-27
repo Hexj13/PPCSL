@@ -46,6 +46,9 @@ export class GetUserListingsUseCase {
         .leftJoinAndSelect('listing.vehicle', 'vehicle')
         .leftJoinAndSelect('vehicle.brand', 'brand')
         .leftJoinAndSelect('vehicle.model', 'model')
+        .leftJoinAndSelect('listing.tire', 'tire')
+        .leftJoinAndSelect('tire.brand', 'tireBrand')
+        .leftJoinAndSelect('tire.model', 'tireModel')
         .where('listing.user_id = :userId', { userId });
 
       if (status) {
@@ -82,7 +85,14 @@ export class GetUserListingsUseCase {
 
       const result = await this.listingsRepository.findAndCount({
         where,
-        relations: ['vehicle', 'vehicle.brand', 'vehicle.model'],
+        relations: [
+          'vehicle',
+          'vehicle.brand',
+          'vehicle.model',
+          'tire',
+          'tire.brand',
+          'tire.model',
+        ],
         order: { created_at: 'DESC' },
         skip,
         take: limit,

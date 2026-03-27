@@ -36,6 +36,7 @@ const ADVANCED_PARAM_KEYS = [
 ] as const;
 
 interface UseSearchTabsParams {
+  mode?: 'vehicle' | 'tire';
   hasBasicFilters: boolean;
   hasAdvancedFiltersActive: boolean;
   hasEquipmentFiltersActive: boolean;
@@ -43,7 +44,31 @@ interface UseSearchTabsParams {
   preserveTabOnNextSyncRef?: React.MutableRefObject<boolean>;
 }
 
+const TIRE_BASIC_PARAM_KEYS = [
+  'tire_brand_ids',
+  'tire_model_ids',
+  'tire_widths',
+  'tire_profiles',
+  'tire_diameters',
+  'tireVehicleType',
+  'tire_seasons',
+  'tire_conditions',
+  'tire_quantities',
+  'tire_studded',
+  'tire_run_flat',
+  'tire_reinforced_xl',
+  'tire_spare_donut',
+  'tire_tubeless',
+  'tire_acoustic',
+  'price_gte',
+  'price_lte',
+  'cities',
+] as const;
+
+const TIRE_POPULAR_HINT_KEYS: readonly string[] = [];
+
 export function useSearchTabs({
+  mode = 'vehicle',
   hasBasicFilters: _hasBasicFilters,
   hasAdvancedFiltersActive: _hasAdvancedFiltersActive,
   hasEquipmentFiltersActive: _hasEquipmentFiltersActive,
@@ -53,13 +78,28 @@ export function useSearchTabs({
   const searchParams = useSearchParams();
 
   const getInitialTab = useCallback((): SearchTab => {
+    if (mode === 'tire') {
+      const hasBasicHint = TIRE_BASIC_PARAM_KEYS.some((key) => {
+        if (key === 'tire_seasons' || key === 'tire_quantities') return false;
+        return !!searchParams.get(key);
+      });
+      if (hasBasicHint) return 'basic';
+      if (TIRE_POPULAR_HINT_KEYS.some((key) => searchParams.get(key))) return 'popular';
+      return 'basic';
+    }
     if (BASIC_PARAM_KEYS.some((key) => searchParams.get(key))) return 'basic';
     if (ADVANCED_PARAM_KEYS.some((key) => searchParams.get(key))) return 'advanced';
     if (searchParams.get('equipment')) return 'equipment';
     return 'basic';
-  }, [searchParams]);
+  }, [searchParams, mode]);
 
   const [activeTab, setActiveTab] = useState<SearchTab>(() => getInitialTab());
+
+  useEffect(() => {
+    if (mode === 'tire' && (activeTab === 'advanced' || activeTab === 'equipment')) {
+      setActiveTab('basic');
+    }
+  }, [mode, activeTab]);
 
   useEffect(() => {
     if (preserveTabOnNextSyncRef?.current) {

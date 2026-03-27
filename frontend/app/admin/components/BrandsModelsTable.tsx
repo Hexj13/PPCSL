@@ -8,9 +8,11 @@ import type { AdminBrand, AdminModel } from '@/lib/api';
 import { Button, ChevronRightIcon, EditIcon, Pagination } from '@/ui';
 
 import type { ArchiveTarget } from './ArchiveConfirmModal';
+import type { CatalogMode } from './BrandsModelsFilters';
 
 interface BrandsModelsTableProps {
   brands: AdminBrand[];
+  catalog: CatalogMode;
   vehicleType: '' | 'car' | 'truck' | 'moto';
   expandedBrandIds: Set<string>;
   currentPage: number;
@@ -27,6 +29,7 @@ interface BrandsModelsTableProps {
 
 function BrandRow({
   brand,
+  catalog,
   filteredModels,
   isExpanded,
   onToggleExpand,
@@ -38,6 +41,7 @@ function BrandRow({
   formatVehicleTypes,
 }: {
   brand: AdminBrand;
+  catalog: CatalogMode;
   filteredModels: AdminModel[];
   isExpanded: boolean;
   onToggleExpand: () => void;
@@ -87,7 +91,9 @@ function BrandRow({
         <td className="py-2 px-4 min-w-[200px]" />
         <td className="py-2 px-4 text-center">{brand.activeListingsCount}</td>
         <td className="py-2 px-4 text-sm text-text-secondary">
-          {formatVehicleTypes(brand.vehicleTypes)}
+          {catalog === 'tire'
+            ? t('admin.brandsModelsTab.catalogTires')
+            : formatVehicleTypes(brand.vehicleTypes)}
         </td>
         <td className="py-2 px-4">
           <div className="flex items-center gap-2">
@@ -146,7 +152,11 @@ function BrandRow({
             </td>
             <td className="py-2 px-4 text-center">{model.activeListingsCount}</td>
             <td className="py-2 px-4 text-sm text-text-secondary">
-              {formatVehicleTypes(model.vehicleTypes)}
+              {catalog === 'tire'
+                ? model.isOther
+                  ? t('admin.brandsModelsTab.fieldIsOtherTireModel')
+                  : t('admin.brandsModelsTab.emptyCell')
+                : formatVehicleTypes(model.vehicleTypes)}
             </td>
             <td className="py-2 px-4">
               <div className="flex items-center gap-2">
@@ -196,6 +206,7 @@ function BrandRow({
 
 export function BrandsModelsTable({
   brands,
+  catalog,
   vehicleType,
   expandedBrandIds,
   currentPage,
@@ -241,13 +252,15 @@ export function BrandsModelsTable({
           <tbody>
             {brands.map((brand) => {
               const vt = vehicleType;
-              const filteredModels = vt
-                ? brand.models.filter((m) => m.vehicleTypes.includes(vt))
-                : brand.models;
+              const filteredModels =
+                catalog === 'tire' || !vt
+                  ? brand.models
+                  : brand.models.filter((m) => m.vehicleTypes.includes(vt));
               return (
                 <BrandRow
                   key={brand.id}
                   brand={brand}
+                  catalog={catalog}
                   filteredModels={filteredModels}
                   isExpanded={expandedBrandIds.has(brand.id)}
                   onToggleExpand={() => toggleExpand(brand.id)}

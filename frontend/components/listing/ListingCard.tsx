@@ -8,9 +8,11 @@ import {
   ListingCardImageArea,
   ListingCardImageCarousel,
   type ListingCardImageCarouselHandle,
+  ListingCardTireSpecs,
   ListingCardVehicleSpecs,
 } from '@/components/listing/ListingCardParts';
 import { PriceDisplay } from '@/components/listing/PriceDisplay';
+import { TireListingPriceSuffix } from '@/components/listing/TireListingPriceSuffix';
 import { useI18n } from '@/components/providers/I18nProvider';
 import { useCities } from '@/hooks/useCities';
 import {
@@ -30,6 +32,7 @@ import {
   getCityName,
   getListingDisplayTitle,
   getVehicleType,
+  isTireListing,
 } from '@/lib/utils';
 import { blurhashToDataURL } from '@/lib/utils/blurhash';
 
@@ -59,6 +62,7 @@ function ListingCardBody({
   isHydrated: boolean;
   t: (key: string, params?: Record<string, string | number>) => string;
 }) {
+  const tireCard = isTireListing(listing);
   return (
     <div className="p-4 md:p-5 grow flex flex-col">
       <h3 className="font-bold text-base md:text-lg mb-3 line-clamp-2 text-primary-900">
@@ -66,21 +70,32 @@ function ListingCardBody({
       </h3>
       <div className="flex items-baseline gap-2 mb-3 flex-wrap">
         {listing.price !== undefined ? (
-          <PriceDisplay
-            price={listing.price}
-            currency={listing.currency ?? listing.defaultCurrencyCode ?? 'EUR'}
-            approxPrice={listing.approxPriceDefaultCurrency}
-            defaultCurrencyCode={listing.defaultCurrencyCode}
-            size="small"
-            priceClassName="text-primary-500"
-            currencyStyle={{ color: 'rgb(var(--text-secondary-rgb))' }}
-          />
+          <>
+            <PriceDisplay
+              price={listing.price}
+              currency={listing.currency ?? listing.defaultCurrencyCode ?? 'EUR'}
+              approxPrice={listing.approxPriceDefaultCurrency}
+              defaultCurrencyCode={listing.defaultCurrencyCode}
+              size="small"
+              priceClassName="text-primary-500"
+              currencyStyle={{ color: 'rgb(var(--text-secondary-rgb))' }}
+            />
+            <TireListingPriceSuffix
+              listing={listing}
+              t={t}
+              className="text-xs md:text-sm font-medium text-text-secondary shrink-0"
+            />
+          </>
         ) : (
           <span className="text-xl md:text-2xl font-extrabold text-primary-400">••••</span>
         )}
       </div>
       <div className="grow mb-3">
-        {listing.vehicle && <ListingCardVehicleSpecs vehicle={listing.vehicle} t={t} />}
+        {tireCard ? (
+          <ListingCardTireSpecs listing={listing} t={t} />
+        ) : (
+          listing.vehicle && <ListingCardVehicleSpecs vehicle={listing.vehicle} t={t} />
+        )}
       </div>
       <div
         className="flex justify-between items-center gap-2 text-sm font-medium mt-auto pt-3 border-t border-primary-500/20"
@@ -297,6 +312,26 @@ function cardFavoriteExitMotionStyle(
   return { transitionDuration: `${CARD_EXIT_ANIMATION_MS}ms` };
 }
 
+function listingCardNewLabelText(
+  listing: Listing,
+  vehicleType: 'car' | 'truck' | 'moto',
+  t: (key: string, params?: Record<string, string | number>) => string,
+): string {
+  if (isTireListing(listing)) return '';
+  if (vehicleType === 'moto') return t('listings.newMoto');
+  return t('listings.new');
+}
+
+function listingCardFavoriteAriaLabelText(
+  isFavorite: boolean,
+  isOwnListing: boolean,
+  t: (key: string, params?: Record<string, string | number>) => string,
+): string {
+  if (isFavorite) return t('listings.favoriteRemoveAria');
+  if (isOwnListing) return t('listings.favoriteOwnListingAria');
+  return t('listings.favoriteAddAria');
+}
+
 function ListingCardComponent({
   listing,
   forceFavorite = false,
@@ -312,7 +347,7 @@ function ListingCardComponent({
     [listing.images],
   );
   const vehicleType = getVehicleType(listing);
-  const newLabel = vehicleType === 'moto' ? t('listings.newMoto') : t('listings.new');
+  const newLabel = listingCardNewLabelText(listing, vehicleType, t);
   const displayTitle = useMemo(() => getListingDisplayTitle(listing, t), [listing, t]);
   const imageAltTitle = useMemo(() => {
     const city = getCityName(listing.city, locale, cities);
@@ -371,11 +406,7 @@ function ListingCardComponent({
 
   const favoriteDisabled = isToggling;
   const favoriteButtonClass = getFavoriteButtonClassName(isToggling, isFavorite);
-  const favoriteAriaLabel = isFavorite
-    ? t('listings.favoriteRemoveAria')
-    : isOwnListing
-      ? t('listings.favoriteOwnListingAria')
-      : t('listings.favoriteAddAria');
+  const favoriteAriaLabel = listingCardFavoriteAriaLabelText(isFavorite, isOwnListing, t);
 
   const goCarouselPrev = useCallback(() => {
     if (isAutoRewinding) return;

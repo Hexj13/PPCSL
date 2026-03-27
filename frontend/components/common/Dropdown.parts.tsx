@@ -143,7 +143,7 @@ export function DropdownMenu({
     >
       <div className={scrollClass} style={scrollStyle}>
         {filteredOptions.length > 0 ? (
-          filteredOptions.map((option) => {
+          filteredOptions.map((option, index) => {
             const isSelected = showActionButtons
               ? option.value === tempValue
               : option.value === value;
@@ -151,35 +151,66 @@ export function DropdownMenu({
               menuSelectedStyle === 'background' && isSelected
                 ? 'bg-primary-500/20 font-semibold'
                 : '';
-            return (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => onSelect(option.value)}
-                className={`w-full px-4 py-3 text-left text-sm text-text-primary hover-only:hover:bg-primary-500/10 transition-colors duration-150 flex items-center justify-between gap-2 ${selectedHighlight}`}
-              >
-                <span
-                  className={menuExpandToContent ? 'whitespace-nowrap pr-1' : 'min-w-0 truncate'}
+            const isCategory =
+              Boolean(option.category) &&
+              (!option.value || option.value.startsWith('__category__'));
+            const prevOption = index > 0 ? filteredOptions[index - 1] : null;
+            const showCategoryHeader =
+              Boolean(option.category) && prevOption?.category !== option.category && !isCategory;
+            const isFirstCategory = showCategoryHeader && index === 0;
+
+            if (isCategory) {
+              return (
+                <div
+                  key={`category-${option.category}-${index}`}
+                  className={`px-4 py-2 text-primary-500 font-semibold text-sm sticky top-0 bg-white z-10 border-b border-primary-500/20 pointer-events-none ${
+                    isFirstCategory ? 'rounded-t-lg' : ''
+                  }`}
                 >
                   {option.label}
-                </span>
-                {menuSelectedStyle === 'checkmark' && isSelected ? (
-                  <svg
-                    className="w-4 h-4 shrink-0 text-semantic-success"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden
+                </div>
+              );
+            }
+
+            return (
+              <React.Fragment key={option.value || `option-${index}`}>
+                {showCategoryHeader && (
+                  <div
+                    className={`px-4 py-2 text-primary-500 font-semibold text-sm sticky top-0 bg-white z-10 border-b border-primary-500/20 pointer-events-none ${
+                      isFirstCategory ? 'rounded-t-lg' : ''
+                    }`}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                ) : null}
-              </button>
+                    {option.category}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => onSelect(option.value)}
+                  className={`w-full px-4 py-3 text-left text-sm text-text-primary hover-only:hover:bg-primary-500/10 transition-colors duration-150 flex items-center justify-between gap-2 ${selectedHighlight} ${option.category ? 'pl-8' : ''}`}
+                >
+                  <span
+                    className={menuExpandToContent ? 'whitespace-nowrap pr-1' : 'min-w-0 truncate'}
+                  >
+                    {option.label}
+                  </span>
+                  {menuSelectedStyle === 'checkmark' && isSelected ? (
+                    <svg
+                      className="w-4 h-4 shrink-0 text-semantic-success"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  ) : null}
+                </button>
+              </React.Fragment>
             );
           })
         ) : (

@@ -11,7 +11,14 @@ import {
 } from 'typeorm';
 
 import * as constants from '../../common/constants';
-import { ConditionType, Currency, ListingStatus, RegistrationType } from '../../common/types';
+import {
+  ConditionType,
+  Currency,
+  ListingCategory,
+  ListingStatus,
+  RegistrationType,
+} from '../../common/types';
+import { Tire } from '../../tires/entities/tire.entity';
 import { User } from '../../users/entities/user.entity';
 
 import { Vehicle } from './vehicle.entity';
@@ -28,6 +35,8 @@ const ListingStatusClosed = 'Closed' as const;
 @Index(['price'])
 @Index(['created_at'])
 @Index(['views'])
+@Index(['category'])
+@Index(['category', 'status'])
 @Index(['vin'], { where: '"vin" IS NOT NULL' })
 @Index(['urgent'], { where: '"urgent" = true' })
 @Index(['currency'])
@@ -37,6 +46,14 @@ export class Listing {
 
   @Column()
   title: string;
+
+  @Column({
+    type: 'enum',
+    enum: constants.listingCategories,
+    enumName: 'listing_category_enum',
+    default: constants.listingCategories[0],
+  })
+  category: ListingCategory;
 
   @Column('integer')
   price: number;
@@ -84,6 +101,13 @@ export class Listing {
   @JoinColumn({ name: 'vehicle_id' })
   vehicle: Vehicle | null;
 
+  @Column({ type: 'uuid', nullable: true })
+  tire_id: string | null;
+
+  @OneToOne(() => Tire, { cascade: true })
+  @JoinColumn({ name: 'tire_id' })
+  tire: Tire | null;
+
   @Column('simple-array', { nullable: true })
   images: string[] | null;
 
@@ -105,17 +129,19 @@ export class Listing {
   @Column({
     type: 'enum',
     enum: constants.conditionTypes,
+    nullable: true,
   })
-  condition: ConditionType;
+  condition: ConditionType | null;
 
   @Column({
     type: 'enum',
     enum: constants.registrationTypes,
+    nullable: true,
   })
-  registration_type: RegistrationType;
+  registration_type: RegistrationType | null;
 
-  @Column('int')
-  horsepower: number;
+  @Column('int', { nullable: true })
+  horsepower: number | null;
 
   @Column({ type: 'integer', nullable: true })
   power_kw: number | null;

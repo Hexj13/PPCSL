@@ -1,12 +1,15 @@
 'use client';
 
+import { useMemo } from 'react';
+
 import { Dropdown } from '@/components/common/Dropdown';
 import { useTranslation } from '@/hooks/useTranslation';
+import { getPopularBrands } from '@/lib/content/popular-brands';
 import { getYearOptions } from '@/lib/options';
-import { loadSiteConfigSync } from '@/lib/site-config';
-import { getCountry } from '@/lib/utils';
-import { InfoBlock, HintTooltip } from '@/ui';
+import { sortByName } from '@/lib/utils';
+import { HintTooltip } from '@/ui';
 
+import { BrandModelCatalogInfoBlock } from './BrandModelCatalogInfoBlock';
 import { RequiredAsterisk } from './RequiredAsterisk';
 import type { ListingFormSectionProps } from './types';
 
@@ -18,30 +21,37 @@ export function BasicInfoSection({
   brands = [],
   models = [],
   loadingModels = false,
+  vehicleType = 'car',
 }: ListingFormSectionProps) {
   const { t } = useTranslation();
-  const country = getCountry();
-  const siteConfig = loadSiteConfigSync(country);
+
+  const brandOptions = useMemo(() => {
+    const popularNames = getPopularBrands(vehicleType);
+    const popularBrands = sortByName(brands.filter((brand) => popularNames.includes(brand.name)));
+    const otherBrands = sortByName(brands.filter((brand) => !popularNames.includes(brand.name)));
+    const options: Array<{ value: string; label: string; category?: string }> = [];
+    if (popularBrands.length > 0) {
+      const popularLabel = t('searchFilters.popular');
+      options.push({ value: '__category__popular', label: popularLabel, category: popularLabel });
+      popularBrands.forEach((brand) => {
+        options.push({ value: brand.id, label: brand.name, category: popularLabel });
+      });
+    }
+    if (otherBrands.length > 0) {
+      const otherLabel = t('searchFilters.other');
+      options.push({ value: '__category__other', label: otherLabel, category: otherLabel });
+      otherBrands.forEach((brand) => {
+        options.push({ value: brand.id, label: brand.name, category: otherLabel });
+      });
+    }
+    return options;
+  }, [brands, vehicleType, t]);
 
   return (
     <div className="mb-6">
       <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-900">
         {t('listings.basicInfo')}
       </h2>
-      <InfoBlock className="mb-5">
-        <p>
-          {t('listings.brandModelInfo')
-            .split('support@kupito.club')
-            .map((part, index, array) => (
-              <span key={index}>
-                {part}
-                {index < array.length - 1 && (
-                  <strong className="font-bold text-primary-900">{siteConfig.supportEmail}</strong>
-                )}
-              </span>
-            ))}
-        </p>
-      </InfoBlock>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
         <div>
           <label className="block text-sm font-semibold mb-2 text-primary-700">
@@ -62,7 +72,7 @@ export function BasicInfoSection({
             error={!!errors['vehicle.brand_id']}
             autoPosition={true}
             menuMaxHeight={300}
-            options={brands.map((brand) => ({ value: brand.id, label: brand.name }))}
+            options={brandOptions}
           />
           {errors['vehicle.brand_id'] && (
             <p className="mt-1 text-sm text-red-500">{t('listings.brandRequired')}</p>
@@ -96,6 +106,7 @@ export function BasicInfoSection({
           )}
         </div>
       </div>
+      <BrandModelCatalogInfoBlock />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>

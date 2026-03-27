@@ -8,6 +8,12 @@ export type {
   CreateModelPayload,
   UpdateModelPayload,
 } from './admin-brands-models';
+export type {
+  CreateTireBrandPayload,
+  UpdateTireBrandPayload,
+  CreateTireModelPayload,
+  UpdateTireModelPayload,
+} from './admin-tire-brands-models';
 
 export * from './api-types';
 export { adminApi } from './api-admin';
@@ -18,4 +24,6 @@ export { citiesApi } from './api-cities';
 export { favoritesApi } from './api-favorites';
 export { listingsApi } from './api-listings';
 export { savedFiltersApi } from './api-saved-filters';
+export { tiresApi } from './api-tires';
+export type { TireBrand, TireModel } from './api-tires';
 export { uploadApi } from './api-upload';

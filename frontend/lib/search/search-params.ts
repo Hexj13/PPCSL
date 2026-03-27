@@ -1,4 +1,14 @@
 import type { Brand, VehicleModel, City } from '@/lib/api';
+import {
+  isValidTireAspectRatio,
+  isValidTireDiameterInch,
+  isValidTireWidthMm,
+  normalizeTireDiameterInch,
+  parseStrictUnsignedIntString,
+  TIRE_LISTING_QUANTITY_MAX,
+  TIRE_LISTING_QUANTITY_MIN,
+} from '@/lib/constants';
+import { TIRE_TREAD_SET } from '@/lib/tire-tread';
 import { createSlug, slugMatches } from '@/lib/utils';
 
 export { FILTERS_STORAGE_KEY, MAX_URL_LENGTH } from './search-params-constants';
@@ -42,6 +52,7 @@ export function clearFiltersFromStorage(): void {
 }
 
 export interface BuildSearchQueryFilters {
+  listing_category: 'vehicle' | 'tire';
   brand_ids: string[];
   model_ids: string[];
   cities: string[];
@@ -72,12 +83,28 @@ export interface BuildSearchQueryFilters {
   equipment_match_mode: 'full' | 'partial';
   sortBy: string;
   sortOrder: string;
+  tire_vehicle_type: '' | 'car' | 'truck' | 'moto';
+  tire_brand_ids: string[];
+  tire_model_ids: string[];
+  tire_widths: string[];
+  tire_profiles: string[];
+  tire_diameters: string[];
+  tire_seasons: string[];
+  tire_conditions: string[];
+  tire_quantities: string[];
+  tire_studded: boolean;
+  tire_run_flat: boolean;
+  tire_reinforced_xl: boolean;
+  tire_spare_donut: boolean;
+  tire_tubeless: boolean;
+  tire_acoustic: boolean;
 }
 
 export interface BuildSearchQueryOptions {
   currentYear: string;
   vehicleType: 'car' | 'moto' | 'truck';
   searchParams: URLSearchParams;
+  listingCategory?: 'vehicle' | 'tire';
 }
 
 export interface BuildSearchQueryResult {
@@ -159,8 +186,152 @@ function handleArrayFilterInBuildQuery(ctx: BuildQueryContext, key: string, valu
   }
 }
 
+const TIRE_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const TIRE_CONDITION_SET = new Set(['new', 'used', 'retreaded']);
+
+/* eslint-disable complexity -- tire scalar and array URL params */
+function buildTireSearchQuery(
+  filters: BuildSearchQueryFilters,
+  cities: City[],
+  _options: BuildSearchQueryOptions,
+): BuildSearchQueryResult {
+  const params = new URLSearchParams();
+  const largeArrays: Record<string, string[]> = {};
+
+  params.set('category', 'tire');
+  params.delete('vehicleType');
+
+  const validCities = filters.cities.filter(
+    (city) => city !== 'all' && city !== '' && !city.startsWith('__category__'),
+  );
+  const allCitiesSelected = validCities.length === cities.length && cities.length > 0;
+  if (!allCitiesSelected && validCities.length > 0) {
+    largeArrays.cities = validCities;
+  }
+
+  if (filters.tire_vehicle_type && ['car', 'truck', 'moto'].includes(filters.tire_vehicle_type)) {
+    params.set('tireVehicleType', filters.tire_vehicle_type);
+  }
+
+  const tireBrandIds = filters.tire_brand_ids
+    .filter((id) => id !== 'all' && id !== '' && TIRE_UUID_RE.test(id))
+    .slice(0, 20);
+  if (tireBrandIds.length > 0) params.set('tire_brand_ids', tireBrandIds.join(','));
+
+  const tireModelIds = filters.tire_model_ids
+    .filter((id) => id !== 'all' && id !== '' && TIRE_UUID_RE.test(id))
+    .slice(0, 20);
+  if (tireModelIds.length > 0) params.set('tire_model_ids', tireModelIds.join(','));
+
+  const widths = filters.tire_widths
+    .map((s) => parseStrictUnsignedIntString(String(s)))
+    .filter((n): n is number => n !== null && isValidTireWidthMm(n))
+    .slice(0, 20);
+  if (widths.length > 0) params.set('tire_widths', widths.join(','));
+
+  const profiles = filters.tire_profiles
+    .map((s) => parseStrictUnsignedIntString(String(s)))
+    .filter((n): n is number => n !== null && isValidTireAspectRatio(n))
+    .slice(0, 20);
+  if (profiles.length > 0) params.set('tire_profiles', profiles.join(','));
+
+  const diameters = filters.tire_diameters
+    .map((s) => {
+      const n = parseFloat(String(s).replace(/\s/g, '').replace(',', '.'));
+      if (Number.isNaN(n)) return null;
+      return normalizeTireDiameterInch(n);
+    })
+    .filter((n): n is number => n !== null && isValidTireDiameterInch(n))
+    .slice(0, 20);
+  if (diameters.length > 0) params.set('tire_diameters', diameters.join(','));
+
+  const seasons = filters.tire_seasons.filter((s) => TIRE_TREAD_SET.has(s)).slice(0, 10);
+  if (seasons.length > 0) params.set('tire_seasons', seasons.join(','));
+
+  const conditions = filters.tire_conditions.filter((s) => TIRE_CONDITION_SET.has(s)).slice(0, 10);
+  if (conditions.length > 0) params.set('tire_conditions', conditions.join(','));
+
+  const quantities = filters.tire_quantities
+    .map((s) => parseStrictUnsignedIntString(String(s)))
+    .filter(
+      (n): n is number =>
+        n !== null && n >= TIRE_LISTING_QUANTITY_MIN && n <= TIRE_LISTING_QUANTITY_MAX,
+    )
+    .slice(0, 10);
+  if (quantities.length > 0) params.set('tire_quantities', quantities.join(','));
+
+  if (filters.tire_studded) params.set('tire_studded', 'true');
+  if (filters.tire_run_flat) params.set('tire_run_flat', 'true');
+  if (filters.tire_reinforced_xl) params.set('tire_reinforced_xl', 'true');
+  if (filters.tire_spare_donut) params.set('tire_spare_donut', 'true');
+  if (filters.tire_tubeless) params.set('tire_tubeless', 'true');
+  if (filters.tire_acoustic) params.set('tire_acoustic', 'true');
+
+  if (filters.price_gte) params.set('price_gte', filters.price_gte);
+  if (filters.price_lte) params.set('price_lte', filters.price_lte);
+  if (filters.currency) params.set('currency', filters.currency);
+  if (filters.urgent) params.set('urgent', 'true');
+
+  if (
+    (filters.sortBy && filters.sortBy !== 'created_at') ||
+    (filters.sortOrder && filters.sortOrder !== 'DESC')
+  ) {
+    params.set('sortBy', filters.sortBy || 'created_at');
+    params.set('sortOrder', filters.sortOrder || 'DESC');
+  }
+
+  let urlString = params.toString();
+  let needsStorage = false;
+
+  if (Object.keys(largeArrays).length > 0) {
+    const testParamsPlain = new URLSearchParams(params);
+    Object.entries(largeArrays).forEach(([k, values]) => {
+      testParamsPlain.set(k, values.join(','));
+    });
+    const testUrlPlain = `/?${testParamsPlain.toString()}`;
+
+    if (testUrlPlain.length > MAX_URL_LENGTH) {
+      const testParamsEncoded = new URLSearchParams(params);
+      Object.entries(largeArrays).forEach(([k, values]) => {
+        testParamsEncoded.set(k, encodeArray(values));
+      });
+      testParamsEncoded.set('_e', '1');
+      const testUrlEncoded = `/?${testParamsEncoded.toString()}`;
+
+      if (testUrlEncoded.length > MAX_URL_LENGTH) {
+        needsStorage = true;
+        params.set('_f', '1');
+      } else {
+        Object.entries(largeArrays).forEach(([k, values]) => {
+          params.set(k, encodeArray(values));
+        });
+        params.set('_e', '1');
+        urlString = params.toString();
+      }
+    } else {
+      Object.entries(largeArrays).forEach(([k, values]) => {
+        params.set(k, values.join(','));
+      });
+      urlString = params.toString();
+    }
+  }
+
+  return {
+    urlString,
+    storageData: needsStorage ? largeArrays : undefined,
+    clearBrandIds: false,
+    clearModelIds: false,
+    clearCities: allCitiesSelected,
+  };
+}
+/* eslint-enable complexity */
+
 function processFilterEntry(key: string, value: unknown, ctx: BuildQueryContext): void {
   if (key === 'sortBy' || key === 'sortOrder') return;
+  if (key === 'listing_category' || key.startsWith('tire_') || key === 'tire_vehicle_type') {
+    return;
+  }
   if (key === 'year_lte') {
     handleYearLte(ctx, value);
     return;
@@ -205,6 +376,10 @@ export function buildSearchQuery(
   options: BuildSearchQueryOptions,
 ): BuildSearchQueryResult {
   const { currentYear, vehicleType, searchParams } = options;
+
+  if (filters.listing_category === 'tire') {
+    return buildTireSearchQuery(filters, cities, options);
+  }
 
   const validBrandIds = filters.brand_ids.filter(
     (id) => id !== 'all' && id !== '' && !id.startsWith('__category__'),

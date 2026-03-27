@@ -9,6 +9,62 @@ export const LISTING_GRID_PAGE_SIZE = 32;
 export const CARD_EXIT_ANIMATION_MS = 300;
 export const MAX_SEARCH_BRAND_SELECTIONS = 20;
 export const MAX_SEARCH_MODEL_SELECTIONS = 20;
+export const MAX_TIRE_SIZE_SELECTIONS = 20;
+export const TIRE_LISTING_QUANTITY_MIN = 1;
+export const TIRE_LISTING_QUANTITY_MAX = 8;
+
+export const TIRE_WIDTH_MM_MIN = 125;
+export const TIRE_WIDTH_MM_MAX = 355;
+export const TIRE_WIDTH_MM_STEP = 5;
+
+export const TIRE_ASPECT_RATIO_MIN = 5;
+export const TIRE_ASPECT_RATIO_MAX = 95;
+export const TIRE_ASPECT_RATIO_STEP = 5;
+
+export const TIRE_DIAMETER_INCH_MIN = 10;
+export const TIRE_DIAMETER_INCH_MAX = 35;
+export const TIRE_DIAMETER_INCH_STEP = 0.5;
+
+export const TIRE_LISTING_TREAD_DEPTH_MM_MAX = 20;
+
+const TIRE_DIAMETER_EPS = 1e-6;
+
+export function normalizeTireDiameterInch(d: number): number {
+  return Math.round(d * 10) / 10;
+}
+
+export function isValidTireDiameterInch(d: number): boolean {
+  if (!Number.isFinite(d)) return false;
+  const scaled = normalizeTireDiameterInch(d);
+  if (Math.abs(scaled - d) > TIRE_DIAMETER_EPS) return false;
+  if (scaled < TIRE_DIAMETER_INCH_MIN || scaled > TIRE_DIAMETER_INCH_MAX) return false;
+  const half = Math.round(scaled * 2);
+  return Math.abs(scaled - half / 2) < TIRE_DIAMETER_EPS;
+}
+
+export function isValidTireWidthMm(n: number): boolean {
+  return (
+    Number.isInteger(n) &&
+    n >= TIRE_WIDTH_MM_MIN &&
+    n <= TIRE_WIDTH_MM_MAX &&
+    n % TIRE_WIDTH_MM_STEP === 0
+  );
+}
+
+export function isValidTireAspectRatio(n: number): boolean {
+  return (
+    Number.isInteger(n) &&
+    n >= TIRE_ASPECT_RATIO_MIN &&
+    n <= TIRE_ASPECT_RATIO_MAX &&
+    n % TIRE_ASPECT_RATIO_STEP === 0
+  );
+}
+
+export function parseStrictUnsignedIntString(s: string): number | null {
+  const t = s.replace(/\s/g, '');
+  if (!/^\d+$/.test(t)) return null;
+  return parseInt(t, 10);
+}
 export const SEARCH_FILTERS_LIMIT_ERROR_TOAST_KEY = 'kupito_search_filters_limit_error';
 
 export const SMS_HOURLY_QUOTA_RESEND_COOLDOWN_SECONDS = 3600;

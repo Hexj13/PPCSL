@@ -36,7 +36,7 @@ const getVehicleTypeFromStorage = (): 'car' | 'moto' | 'truck' | null => {
 
 interface UseVehicleTypeParams {
   searchParams: ReturnType<typeof useSearchParams>;
-  resetFilters: () => void;
+  resetToVehicleSearchDefaults: () => void;
   setLastAppliedFilters: React.Dispatch<React.SetStateAction<FilterState | null>>;
   setActiveTab: (_tab: 'basic' | 'advanced' | 'equipment' | 'popular') => void;
   scrollTabsToStart?: () => void;
@@ -44,7 +44,7 @@ interface UseVehicleTypeParams {
 
 export function useVehicleType({
   searchParams,
-  resetFilters,
+  resetToVehicleSearchDefaults,
   setLastAppliedFilters,
   setActiveTab,
   scrollTabsToStart,
@@ -70,6 +70,9 @@ export function useVehicleType({
   );
 
   useEffect(() => {
+    if (searchParams.get('category') === 'tire') {
+      return;
+    }
     const vehicleTypeParam = searchParams.get('vehicleType');
     let newVehicleType: 'car' | 'truck' | 'moto' = 'car';
 
@@ -111,14 +114,14 @@ export function useVehicleType({
       startTransition(() => {
         setVehicleType(type);
         saveVehicleTypeToStorage(type);
-        resetFilters();
+        resetToVehicleSearchDefaults();
         setLastAppliedFilters(null);
         setActiveTab('basic');
         scrollTabsToStart?.();
         router.replace(`/?${params.toString()}`, { scroll: false });
       });
     },
-    [router, resetFilters, setLastAppliedFilters, setActiveTab, scrollTabsToStart],
+    [router, resetToVehicleSearchDefaults, setLastAppliedFilters, setActiveTab, scrollTabsToStart],
   );
 
   return {

@@ -3,27 +3,10 @@
 import { PriceDisplay } from '@/components/listing/PriceDisplay';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
-import { formatPrice, getVehicleType } from '@/lib/utils';
+import { formatPrice, getVehicleType, isTireListing } from '@/lib/utils';
+import { BenefitCheckRow } from '@/ui';
 
 const SPARKLES_EMOJI = '\u2728';
-
-function CheckIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M20 6L9 17l-5-5" />
-    </svg>
-  );
-}
 
 interface ListingPageHeaderProps {
   listing: Listing;
@@ -64,30 +47,19 @@ function ListingBenefits({ listing, t }: { listing: Listing; t: TranslateFn }) {
 
   return (
     <div className="flex flex-col gap-1.5 text-primary-900 text-[14px] leading-relaxed">
-      {listing.negotiable && (
-        <div className="flex items-center gap-2">
-          <CheckIcon className="w-4 h-4 shrink-0 text-primary-500" />
-          <span className="font-medium">{t('listingDetail.negotiable')}</span>
-        </div>
-      )}
+      {listing.negotiable && <BenefitCheckRow>{t('listingDetail.negotiable')}</BenefitCheckRow>}
       {listing.available_in_credit && (
-        <div className="flex items-center gap-2">
-          <CheckIcon className="w-4 h-4 shrink-0 text-primary-500" />
-          <span className="font-medium">{t('listingDetail.availableInCredit')}</span>
-        </div>
+        <BenefitCheckRow>{t('listingDetail.availableInCredit')}</BenefitCheckRow>
       )}
       {listing.available_in_credit &&
         listing.down_payment_amount != null &&
         listing.down_payment_amount > 0 && (
-          <div className="flex items-center gap-2">
-            <CheckIcon className="w-4 h-4 shrink-0 text-primary-500" />
-            <span className="font-medium">
-              {t('listingDetail.downPaymentFromLabel', {
-                amount: formatPrice(listing.down_payment_amount),
-                currency: listing.currency ?? listing.defaultCurrencyCode ?? 'EUR',
-              })}
-            </span>
-          </div>
+          <BenefitCheckRow>
+            {t('listingDetail.downPaymentFromLabel', {
+              amount: formatPrice(listing.down_payment_amount),
+              currency: listing.currency ?? listing.defaultCurrencyCode ?? 'EUR',
+            })}
+          </BenefitCheckRow>
         )}
     </div>
   );
@@ -97,13 +69,15 @@ function ListingStatusBadges({
   listing,
   t,
   newLabel,
+  showNewVehicleBadge,
 }: {
   listing: Listing;
   t: TranslateFn;
   newLabel: string;
+  showNewVehicleBadge: boolean;
 }) {
   const hasStatusBadges =
-    listing.status === 'Closed' || listing.is_promoted || listing.is_new || listing.urgent;
+    listing.status === 'Closed' || listing.is_promoted || showNewVehicleBadge || listing.urgent;
 
   if (!hasStatusBadges) return null;
 
@@ -128,7 +102,7 @@ function ListingStatusBadges({
           <span className="relative z-10">{t('listingDetail.promoted')}</span>
         </span>
       )}
-      {listing.is_new && (
+      {showNewVehicleBadge && (
         <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-newBadge text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-newBadge/10 before:pointer-events-none">
           <span
             className="relative z-10 text-text-secondary"
@@ -158,13 +132,20 @@ function ListingStatusBadges({
 export function ListingPageHeader({ listing, title }: ListingPageHeaderProps) {
   const { t } = useTranslation();
   const vehicleType = getVehicleType(listing);
+  const showNewVehicleBadge = Boolean(listing.is_new && !isTireListing(listing));
   const newLabel = vehicleType === 'moto' ? t('listingDetail.newMoto') : t('listingDetail.new');
+  const tirePriceScopeLine =
+    isTireListing(listing) &&
+    listing.tire != null &&
+    listing.status !== 'Closed' &&
+    listing.price !== undefined;
   const showMeta =
+    tirePriceScopeLine ||
     listing.negotiable ||
-    listing.available_in_credit ||
+    (!isTireListing(listing) && listing.available_in_credit) ||
     listing.status === 'Closed' ||
     listing.is_promoted ||
-    listing.is_new ||
+    showNewVehicleBadge ||
     listing.urgent;
 
   return (
@@ -178,8 +159,22 @@ export function ListingPageHeader({ listing, title }: ListingPageHeaderProps) {
         </div>
         {showMeta && (
           <div className="mt-4 space-y-4">
+            {tirePriceScopeLine && (
+              <div className="text-primary-900 text-[14px] leading-relaxed">
+                <BenefitCheckRow>
+                  {listing.tire!.quantity === 1
+                    ? t('listingDetail.tirePriceScopePerUnit')
+                    : t('listingDetail.tirePriceScopePerSet')}
+                </BenefitCheckRow>
+              </div>
+            )}
             <ListingBenefits listing={listing} t={t} />
-            <ListingStatusBadges listing={listing} t={t} newLabel={newLabel} />
+            <ListingStatusBadges
+              listing={listing}
+              t={t}
+              newLabel={newLabel}
+              showNewVehicleBadge={showNewVehicleBadge}
+            />
           </div>
         )}
       </div>

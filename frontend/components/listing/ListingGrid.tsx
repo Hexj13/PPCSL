@@ -7,7 +7,7 @@ import { flushSync } from 'react-dom';
 
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
-import { analytics } from '@/lib/analytics';
+import { analytics, listingToViewItemListEntry } from '@/lib/analytics';
 import type { Listing, PaginationMeta } from '@/lib/api';
 import { favoritesApi, listingsApi } from '@/lib/api';
 import { LISTING_GRID_PAGE_SIZE, SEARCH_FILTERS_LIMIT_ERROR_TOAST_KEY } from '@/lib/constants';
@@ -123,6 +123,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
     async (page: number, append: boolean = false) => {
       const vehicleType = getVehicleTypeFromParams(searchParamsString);
       const parsedParams = await getParsedListingSearchParams(searchParamsString, vehicleType);
+      const isTireCategory = parsedParams.category === 'tire';
       const limitFromParams = Number(parsedParams.limit);
       const hasValidLimitInSearch =
         Number.isFinite(limitFromParams) &&
@@ -138,7 +139,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
         urlHasExplicitLimit && hasValidLimitInSearch ? limitFromParams : LISTING_GRID_PAGE_SIZE;
       const params: Record<string, string | number | boolean> = {
         ...parsedParams,
-        vehicleType,
+        ...(!isTireCategory ? { vehicleType } : {}),
         limit: effectiveLimit,
       };
 
@@ -169,11 +170,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
             setError(null);
             setHasLoadedWithFilters(true);
             if (allNewListings.length > 0) {
-              const items = allNewListings.map((listing) => ({
-                id: listing.id,
-                title: listing.title,
-                price: listing.price,
-              }));
+              const items = allNewListings.map((listing) => listingToViewItemListEntry(listing));
               if (typeof requestIdleCallback !== 'undefined') {
                 requestIdleCallback(() => analytics.viewItemList(items), { timeout: 500 });
               } else {
@@ -304,11 +301,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       }
 
       analytics.viewItemList(
-        initialData.data.map((listing) => ({
-          id: listing.id,
-          title: listing.title,
-          price: listing.price,
-        })),
+        initialData.data.map((listing) => listingToViewItemListEntry(listing)),
       );
     }
   }, [initialData, user, setFavorites]);

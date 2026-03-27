@@ -87,6 +87,7 @@ export interface TranslationsPart2 {
     mileage: string;
     from: string;
     to: string;
+    tiresCategory: string;
     horsepower: string;
     engine: string;
   };
@@ -205,12 +206,19 @@ export interface TranslationsPart2 {
     closed: string;
   };
   compare: {
+    pageTitle: string;
     title: string;
+    vehiclesSectionTitle: string;
+    tiresSectionTitle: string;
     loadError: string;
     removedFromComparison: string;
+    removedWrongCategoryFromCompare: string;
     noVehicles: string;
     addVehiclesHint: string;
     browseListings: string;
+    noTires: string;
+    addTiresHint: string;
+    browseTireListings: string;
     clearAll: string;
     allRemoved: string;
     parameter: string;
@@ -235,6 +243,21 @@ export interface TranslationsPart2 {
     notRegistered: string;
     price: string;
     notAvailable: string;
+    tireBrand: string;
+    tireModel: string;
+    tireVehicleType: string;
+    tireSize: string;
+    tireSeason: string;
+    tireCondition: string;
+    tireQuantity: string;
+    tireLoadIndex: string;
+    tireSpeedIndex: string;
+    tireStudded: string;
+    tireRunFlat: string;
+    tireReinforcedXl: string;
+    tireSpareDonut: string;
+    tireTubeless: string;
+    tireAcoustic: string;
   };
   vehicleOptions: {
     fuel: {
@@ -363,6 +386,10 @@ export interface TranslationsPart2 {
       homePageDescription: string;
       homePageDescriptionWithBrand: string;
       homePageDescriptionWithBrandModel: string;
+      tiresDefaultTitle: string;
+      tiresHomePageDescription: string;
+      tiresHomePageDescriptionWithBrand: string;
+      tiresHomePageDescriptionWithBrandModel: string;
       organizationDescription: string;
       keywords: string[];
     };

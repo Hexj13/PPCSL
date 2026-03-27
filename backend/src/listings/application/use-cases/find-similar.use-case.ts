@@ -62,19 +62,38 @@ export class FindSimilarUseCase {
         is_new: current.is_new,
         condition: current.condition,
         city: current.city,
-        vehicle: current.vehicle
-          ? {
-              brand_id: current.vehicle.brand_id,
-              model_id: current.vehicle.model_id,
-              body_type: current.vehicle.body_type,
-              year: current.vehicle.year,
-              mileage_km: current.vehicle.mileage_km,
-              fuel: current.vehicle.fuel,
-              transmission: current.vehicle.transmission,
-              drive_type: current.vehicle.drive_type,
-              engine_displ_l: current.vehicle.engine_displ_l,
-            }
-          : null,
+        vehicle:
+          current.category === constants.ListingCategory.Tire
+            ? null
+            : current.vehicle
+              ? {
+                  brand_id: current.vehicle.brand_id,
+                  model_id: current.vehicle.model_id,
+                  body_type: current.vehicle.body_type,
+                  year: current.vehicle.year,
+                  mileage_km: current.vehicle.mileage_km,
+                  fuel: current.vehicle.fuel,
+                  transmission: current.vehicle.transmission,
+                  drive_type: current.vehicle.drive_type,
+                  engine_displ_l: current.vehicle.engine_displ_l,
+                }
+              : null,
+        tire:
+          current.category === constants.ListingCategory.Tire && current.tire
+            ? {
+                brand_id: current.tire.brand_id,
+                model_id: current.tire.model_id,
+                tire_vehicle_type: current.tire.tire_vehicle_type,
+                season: current.tire.season,
+                condition: current.tire.condition,
+                width_mm: current.tire.width_mm,
+                aspect_ratio: current.tire.aspect_ratio,
+                diameter_inch: Number(current.tire.diameter_inch),
+                quantity: current.tire.quantity,
+                studded: current.tire.studded,
+                run_flat: current.tire.run_flat,
+              }
+            : null,
       },
       candidates as ListingData[],
       currencyContext,

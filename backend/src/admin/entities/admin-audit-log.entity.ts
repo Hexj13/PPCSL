@@ -20,9 +20,17 @@ export type AuditAction =
   | 'MODEL_UPDATE'
   | 'MODEL_ARCHIVE'
   | 'MODEL_UNARCHIVE'
-  | 'MODEL_ACTIVE_TOGGLE';
+  | 'MODEL_ACTIVE_TOGGLE'
+  | 'TIRE_BRAND_CREATE'
+  | 'TIRE_BRAND_UPDATE'
+  | 'TIRE_BRAND_ARCHIVE'
+  | 'TIRE_BRAND_UNARCHIVE'
+  | 'TIRE_MODEL_CREATE'
+  | 'TIRE_MODEL_UPDATE'
+  | 'TIRE_MODEL_ARCHIVE'
+  | 'TIRE_MODEL_UNARCHIVE';
 
-export type AuditEntityType = 'BRAND' | 'MODEL';
+export type AuditEntityType = 'BRAND' | 'MODEL' | 'TIRE_BRAND' | 'TIRE_MODEL';
 
 @Entity('admin_audit_log')
 @Index(['actor_user_id'])

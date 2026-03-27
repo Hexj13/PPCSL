@@ -4,6 +4,27 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import type { User } from '@/lib/api';
 import { authApi } from '@/lib/api';
 
+const MAX_COMPARE = 3;
+
+function normalizeCompareIds(ids: unknown): string[] {
+  if (!Array.isArray(ids)) return [];
+  const seen = new Set<string>();
+  const next: string[] = [];
+  for (const id of ids) {
+    if (typeof id !== 'string' || !id || seen.has(id)) continue;
+    seen.add(id);
+    next.push(id);
+    if (next.length >= MAX_COMPARE) break;
+  }
+  return next;
+}
+
+function stripComparisonBackup() {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('comparison-storage-backup');
+  }
+}
+
 interface AuthState {
   user: User | null;
   token: string | null;
@@ -136,82 +157,146 @@ export const useFavoritesStore = create<FavoritesState>()(
 );
 
 interface ComparisonState {
-  comparisons: string[];
-  add: (_id: string) => boolean;
-  remove: (_id: string) => void;
-  check: (_id: string) => boolean;
+  vehicleComparisons: string[];
+  tireComparisons: string[];
+  addVehicle: (_id: string) => boolean;
+  removeVehicle: (_id: string) => void;
+  checkVehicle: (_id: string) => boolean;
+  setVehicleComparisons: (_ids: string[]) => void;
+  addTire: (_id: string) => boolean;
+  removeTire: (_id: string) => void;
+  checkTire: (_id: string) => boolean;
+  setTireComparisons: (_ids: string[]) => void;
+  clearVehicles: () => void;
+  clearTires: () => void;
   clear: () => void;
-  setComparisons: (_ids: string[]) => void;
   count: () => number;
   rehydrate: () => Promise<void>;
+}
+
+type PersistedComparisonSlice = {
+  vehicleComparisons?: string[];
+  tireComparisons?: string[];
+  comparisons?: string[];
+};
+
+function applyComparisonSnapshotFromStorage(slice: PersistedComparisonSlice | undefined) {
+  if (!slice) return {};
+  if (Array.isArray(slice.vehicleComparisons) || Array.isArray(slice.tireComparisons)) {
+    return {
+      vehicleComparisons: normalizeCompareIds(slice.vehicleComparisons ?? []),
+      tireComparisons: normalizeCompareIds(slice.tireComparisons ?? []),
+    };
+  }
+  if (Array.isArray(slice.comparisons)) {
+    return {
+      vehicleComparisons: normalizeCompareIds(slice.comparisons),
+      tireComparisons: [],
+    };
+  }
+  return {};
 }
 
 export const useComparisonStore = create<ComparisonState>()(
   persist(
     (set, get) => ({
-      comparisons: [],
-      add: (_id) => {
-        const current = get().comparisons;
-        if (current.includes(_id)) {
-          return false;
-        }
-        if (current.length >= 3) {
-          return false;
-        }
-        set({ comparisons: [...current, _id] });
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('comparison-storage-backup');
-        }
+      vehicleComparisons: [],
+      tireComparisons: [],
+      addVehicle: (_id) => {
+        const current = get().vehicleComparisons;
+        if (current.includes(_id)) return false;
+        if (current.length >= MAX_COMPARE) return false;
+        set({ vehicleComparisons: [...current, _id] });
+        stripComparisonBackup();
         return true;
       },
-      remove: (_id) => {
-        set((state) => ({ comparisons: state.comparisons.filter((c) => c !== _id) }));
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('comparison-storage-backup');
-        }
+      removeVehicle: (_id) => {
+        set((state) => ({
+          vehicleComparisons: state.vehicleComparisons.filter((c) => c !== _id),
+        }));
+        stripComparisonBackup();
       },
-      check: (_id) => get().comparisons.includes(_id),
+      checkVehicle: (_id) => get().vehicleComparisons.includes(_id),
+      setVehicleComparisons: (_ids) => {
+        set({ vehicleComparisons: normalizeCompareIds(_ids) });
+        stripComparisonBackup();
+      },
+      addTire: (_id) => {
+        const current = get().tireComparisons;
+        if (current.includes(_id)) return false;
+        if (current.length >= MAX_COMPARE) return false;
+        set({ tireComparisons: [...current, _id] });
+        stripComparisonBackup();
+        return true;
+      },
+      removeTire: (_id) => {
+        set((state) => ({
+          tireComparisons: state.tireComparisons.filter((c) => c !== _id),
+        }));
+        stripComparisonBackup();
+      },
+      checkTire: (_id) => get().tireComparisons.includes(_id),
+      setTireComparisons: (_ids) => {
+        set({ tireComparisons: normalizeCompareIds(_ids) });
+        stripComparisonBackup();
+      },
+      clearVehicles: () => {
+        set({ vehicleComparisons: [] });
+        stripComparisonBackup();
+      },
+      clearTires: () => {
+        set({ tireComparisons: [] });
+        stripComparisonBackup();
+      },
       clear: () => {
-        set({ comparisons: [] });
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('comparison-storage-backup');
-        }
+        set({ vehicleComparisons: [], tireComparisons: [] });
+        stripComparisonBackup();
       },
-      setComparisons: (_ids) => {
-        const seen = new Set<string>();
-        const next: string[] = [];
-        for (const id of _ids) {
-          if (typeof id !== 'string' || !id || seen.has(id)) continue;
-          seen.add(id);
-          next.push(id);
-          if (next.length >= 3) break;
-        }
-        set({ comparisons: next });
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('comparison-storage-backup');
-        }
-      },
-      count: () => get().comparisons.length,
+      count: () => get().vehicleComparisons.length + get().tireComparisons.length,
       rehydrate: async () => {
-        if (typeof window !== 'undefined') {
-          const stored = localStorage.getItem('comparison-storage');
-          if (stored) {
-            try {
-              const parsed = JSON.parse(stored);
-              if (parsed.state?.comparisons) {
-                set({ comparisons: parsed.state.comparisons });
-              }
-            } catch {
-              // Ignore errors
-            }
+        if (typeof window === 'undefined') return;
+        const stored = localStorage.getItem('comparison-storage');
+        if (!stored) return;
+        try {
+          const parsed = JSON.parse(stored) as { state?: PersistedComparisonSlice };
+          const next = applyComparisonSnapshotFromStorage(parsed.state);
+          if (Object.keys(next).length > 0) {
+            set(next as Pick<ComparisonState, 'vehicleComparisons' | 'tireComparisons'>);
           }
+        } catch {
+          // Ignore
         }
       },
     }),
     {
       name: 'comparison-storage',
+      version: 1,
       storage: typeof window !== 'undefined' ? createJSONStorage(() => localStorage) : undefined,
       skipHydration: true,
+      partialize: (state) => ({
+        vehicleComparisons: state.vehicleComparisons,
+        tireComparisons: state.tireComparisons,
+      }),
+      migrate: (persisted: unknown, fromVersion: number) => {
+        const p = persisted as PersistedComparisonSlice | null | undefined;
+        if (!p) {
+          return { vehicleComparisons: [], tireComparisons: [] };
+        }
+        if (
+          fromVersion === 0 &&
+          Array.isArray(p.comparisons) &&
+          !Array.isArray(p.vehicleComparisons)
+        ) {
+          return {
+            vehicleComparisons: normalizeCompareIds(p.comparisons),
+            tireComparisons: [],
+          };
+        }
+        return {
+          vehicleComparisons: normalizeCompareIds(p.vehicleComparisons ?? []),
+          tireComparisons: normalizeCompareIds(p.tireComparisons ?? []),
+        };
+      },
     },
   ),
 );

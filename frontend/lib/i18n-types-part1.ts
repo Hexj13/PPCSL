@@ -421,9 +421,11 @@ export interface TranslationsPart1 {
     compare: string;
     alreadyInComparison: string;
     cannotCompareMore: string;
+    cannotCompareMoreTires: string;
     addedToComparison: string;
     removedFromComparison: string;
     alreadyInComparisonError: string;
+    alreadyInComparisonErrorTire: string;
     closed: string;
     new: string;
     urgent: string;

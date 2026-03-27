@@ -95,6 +95,9 @@ export class AdminService {
         'listings.vehicle',
         'listings.vehicle.brand',
         'listings.vehicle.model',
+        'listings.tire',
+        'listings.tire.brand',
+        'listings.tire.model',
       ],
     });
     if (!user) {
@@ -194,6 +197,9 @@ export class AdminService {
       .leftJoinAndSelect('listing.vehicle', 'vehicle')
       .leftJoinAndSelect('vehicle.brand', 'brand')
       .leftJoinAndSelect('vehicle.model', 'model')
+      .leftJoinAndSelect('listing.tire', 'tire')
+      .leftJoinAndSelect('tire.brand', 'tireBrand')
+      .leftJoinAndSelect('tire.model', 'tireModel')
       .leftJoinAndSelect('listing.user', 'user')
       .orderBy('listing.created_at', 'DESC');
 

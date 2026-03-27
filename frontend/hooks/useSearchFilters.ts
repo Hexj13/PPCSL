@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FILTERS_STORAGE_KEY,
   getDefaultFilters as getDefaultFiltersFromSearchParams,
+  getDefaultTireFilters,
 } from '@/lib/search';
 
 type UrlParseContext = {
@@ -53,6 +54,7 @@ const loadFiltersFromStorage = (): Record<string, unknown> | null => {
 };
 
 export interface FilterState {
+  listing_category: 'vehicle' | 'tire';
   brand_ids: string[];
   model_ids: string[];
   cities: string[];
@@ -83,10 +85,28 @@ export interface FilterState {
   down_payment_amount_gte: string;
   sortBy: string;
   sortOrder: 'ASC' | 'DESC';
+  tire_vehicle_type: '' | 'car' | 'truck' | 'moto';
+  tire_brand_ids: string[];
+  tire_model_ids: string[];
+  tire_widths: string[];
+  tire_profiles: string[];
+  tire_diameters: string[];
+  tire_seasons: string[];
+  tire_conditions: string[];
+  tire_quantities: string[];
+  tire_studded: boolean;
+  tire_run_flat: boolean;
+  tire_reinforced_xl: boolean;
+  tire_spare_donut: boolean;
+  tire_tubeless: boolean;
+  tire_acoustic: boolean;
 }
 
 const getDefaultFilters = (currentYear: string): FilterState =>
   getDefaultFiltersFromSearchParams(currentYear) as FilterState;
+
+const getTireDefaults = (currentYear: string): FilterState =>
+  getDefaultTireFilters(currentYear) as FilterState;
 
 const parseArrayParam = (param: string | null, isEncoded: boolean = false): string[] => {
   if (!param) return [];
@@ -104,6 +124,7 @@ export function useSearchFilters() {
   const hasEncodedArrays = searchParams.get('_e') === '1';
   const storedFilters = hasStorageFlag ? loadFiltersFromStorage() : null;
 
+  /* eslint-disable complexity -- URL + storage matrix for vehicle vs tire */
   const getInitialFilters = useCallback((): FilterState => {
     const ctx: UrlParseContext = {
       searchParams,
@@ -111,6 +132,43 @@ export function useSearchFilters() {
       hasEncodedArrays,
       currentYear,
     };
+    const listing_category = searchParams.get('category') === 'tire' ? 'tire' : 'vehicle';
+
+    const tireVtRaw = searchParams.get('tireVehicleType');
+    const tire_vehicle_type =
+      tireVtRaw && ['car', 'truck', 'moto'].includes(tireVtRaw)
+        ? (tireVtRaw as 'car' | 'truck' | 'moto')
+        : '';
+
+    if (listing_category === 'tire') {
+      const tireBase = getTireDefaults(currentYear);
+      return {
+        ...tireBase,
+        cities: resolveArrayFromStorageOrUrl(ctx, 'cities', ['cities', 'city']),
+        price_gte: searchParams.get('price_gte') || '',
+        price_lte: searchParams.get('price_lte') || '',
+        currency: searchParams.get('currency') || '',
+        urgent: searchParams.get('urgent') === 'true',
+        sortBy: searchParams.get('sortBy') || 'created_at',
+        sortOrder: (searchParams.get('sortOrder') || 'DESC') as 'ASC' | 'DESC',
+        tire_vehicle_type,
+        tire_brand_ids: resolveArrayFromStorageOrUrl(ctx, 'tire_brand_ids', ['tire_brand_ids']),
+        tire_model_ids: resolveArrayFromStorageOrUrl(ctx, 'tire_model_ids', ['tire_model_ids']),
+        tire_widths: resolveArrayFromStorageOrUrl(ctx, 'tire_widths', ['tire_widths']),
+        tire_profiles: resolveArrayFromStorageOrUrl(ctx, 'tire_profiles', ['tire_profiles']),
+        tire_diameters: resolveArrayFromStorageOrUrl(ctx, 'tire_diameters', ['tire_diameters']),
+        tire_seasons: resolveArrayFromStorageOrUrl(ctx, 'tire_seasons', ['tire_seasons']),
+        tire_conditions: resolveArrayFromStorageOrUrl(ctx, 'tire_conditions', ['tire_conditions']),
+        tire_quantities: resolveArrayFromStorageOrUrl(ctx, 'tire_quantities', ['tire_quantities']),
+        tire_studded: searchParams.get('tire_studded') === 'true',
+        tire_run_flat: searchParams.get('tire_run_flat') === 'true',
+        tire_reinforced_xl: searchParams.get('tire_reinforced_xl') === 'true',
+        tire_spare_donut: searchParams.get('tire_spare_donut') === 'true',
+        tire_tubeless: searchParams.get('tire_tubeless') === 'true',
+        tire_acoustic: searchParams.get('tire_acoustic') === 'true',
+      };
+    }
+
     const hasBrandParam = !!searchParams.get('brand');
     const hasModelParam = !!searchParams.get('model');
     const brandIdsFromUrl = parseArrayParam(
@@ -134,6 +192,7 @@ export function useSearchFilters() {
     };
 
     return {
+      ...getDefaultFilters(currentYear),
       brand_ids: resolveBrandIds(),
       model_ids: resolveModelIds(),
       cities: resolveArrayFromStorageOrUrl(ctx, 'cities', ['cities', 'city']),
@@ -171,85 +230,10 @@ export function useSearchFilters() {
       sortOrder: (searchParams.get('sortOrder') || 'DESC') as 'ASC' | 'DESC',
     };
   }, [searchParams, hasEncodedArrays, storedFilters, currentYear]);
+  /* eslint-enable complexity */
 
   const [filters, setFilters] = useState<FilterState>(getInitialFilters);
   const prevUrlParamsRef = useRef<string>('');
-
-  const buildUrlDerivedFilters = useCallback((): Partial<FilterState> => {
-    const ctx: UrlParseContext = {
-      searchParams,
-      storedFilters,
-      hasEncodedArrays,
-      currentYear,
-    };
-    const hasBrandParam = !!searchParams.get('brand');
-    const hasModelParam = !!searchParams.get('model');
-    const brandIdsFromUrl = parseArrayParam(
-      searchParams.get('brand_ids') || searchParams.get('brand_id') || null,
-      hasEncodedArrays,
-    );
-    const modelIdsFromUrl = parseArrayParam(
-      searchParams.get('model_ids') || searchParams.get('model_id') || null,
-      hasEncodedArrays,
-    );
-    const resolveBrandIds = (): string[] | undefined => {
-      if (hasBrandParam) return undefined;
-      if (Array.isArray(storedFilters?.brand_ids)) return storedFilters.brand_ids as string[];
-      return brandIdsFromUrl;
-    };
-    const resolveModelIds = (): string[] | undefined => {
-      if (hasBrandParam || hasModelParam) return undefined;
-      if (Array.isArray(storedFilters?.model_ids)) return storedFilters.model_ids as string[];
-      return modelIdsFromUrl;
-    };
-
-    const derived: Partial<FilterState> = {
-      cities: resolveArrayFromStorageOrUrl(ctx, 'cities', ['cities', 'city']),
-      year_gte: searchParams.get('year_gte') || '',
-      year_lte: searchParams.get('year_lte') || currentYear,
-      price_gte: searchParams.get('price_gte') || '',
-      price_lte: searchParams.get('price_lte') || '',
-      mileage_gte: searchParams.get('mileage_gte') || '',
-      mileage_lte: searchParams.get('mileage_lte') || '',
-      engine_displ_l_gte: searchParams.get('engine_displ_l_gte') || '',
-      engine_displ_l_lte: searchParams.get('engine_displ_l_lte') || '',
-      horsepower_gte: searchParams.get('horsepower_gte') || '',
-      horsepower_lte: searchParams.get('horsepower_lte') || '',
-      currency: searchParams.get('currency') || '',
-      urgent: searchParams.get('urgent') === 'true',
-      is_new: searchParams.get('is_new') === 'true',
-      fuels: resolveArrayFromStorageOrUrl(ctx, 'fuels', ['fuels', 'fuel']),
-      transmissions: resolveArrayFromStorageOrUrl(ctx, 'transmissions', [
-        'transmissions',
-        'transmission',
-      ]),
-      body_types: resolveArrayFromStorageOrUrl(ctx, 'body_types', ['body_types', 'body_type']),
-      colors: resolveArrayFromStorageOrUrl(ctx, 'colors', ['colors', 'color']),
-      doors: resolveArrayFromStorageOrUrl(ctx, 'doors', ['doors']),
-      conditions: resolveArrayFromStorageOrUrl(ctx, 'conditions', ['conditions']),
-      registration_types: resolveArrayFromStorageOrUrl(ctx, 'registration_types', [
-        'registration_types',
-      ]),
-      drive_types: resolveArrayFromStorageOrUrl(ctx, 'drive_types', ['drive_types']),
-      equipment: resolveArrayFromStorageOrUrl(ctx, 'equipment', ['equipment']),
-      equipment_match_mode: searchParams.get('equipmentMatch') === 'partial' ? 'partial' : 'full',
-      available_in_credit: searchParams.get('available_in_credit') === 'true',
-      down_payment_amount_gte: searchParams.get('down_payment_amount_gte') || '',
-      sortBy: searchParams.get('sortBy') || 'created_at',
-      sortOrder: (searchParams.get('sortOrder') || 'DESC') as 'ASC' | 'DESC',
-    };
-
-    const brandIds = resolveBrandIds();
-    if (brandIds !== undefined) {
-      derived.brand_ids = brandIds;
-    }
-    const modelIds = resolveModelIds();
-    if (modelIds !== undefined) {
-      derived.model_ids = modelIds;
-    }
-
-    return derived;
-  }, [searchParams, hasEncodedArrays, storedFilters, currentYear]);
 
   useEffect(() => {
     const currentUrlParams = searchParams.toString();
@@ -257,8 +241,8 @@ export function useSearchFilters() {
       return;
     }
     prevUrlParamsRef.current = currentUrlParams;
-    setFilters((prev) => ({ ...prev, ...buildUrlDerivedFilters() }));
-  }, [searchParams, buildUrlDerivedFilters]);
+    setFilters(getInitialFilters());
+  }, [searchParams, getInitialFilters]);
 
   const updateFilter = useCallback(<K extends keyof FilterState>(key: K, value: FilterState[K]) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -269,11 +253,18 @@ export function useSearchFilters() {
   }, []);
 
   const reset = useCallback(() => {
-    setFilters(getDefaultFilters(currentYear));
+    setFilters((prev) =>
+      prev.listing_category === 'tire'
+        ? getTireDefaults(currentYear)
+        : getDefaultFilters(currentYear),
+    );
   }, [currentYear]);
 
   const hasActiveFilters = useMemo(() => {
-    const defaultFilters = getDefaultFilters(currentYear);
+    const defaultFilters =
+      filters.listing_category === 'tire'
+        ? getTireDefaults(currentYear)
+        : getDefaultFilters(currentYear);
     return Object.keys(filters).some((key) => {
       const filterKey = key as keyof FilterState;
       const filterValue = filters[filterKey];

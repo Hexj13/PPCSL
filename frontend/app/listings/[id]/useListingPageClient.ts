@@ -8,13 +8,18 @@ import { useCities } from '@/hooks/useCities';
 import { useListingData } from '@/hooks/useListingData';
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
-import { analytics } from '@/lib/analytics';
+import { analytics, buildListingViewItemParams } from '@/lib/analytics';
 import type { Listing } from '@/lib/api';
 import { listingsApi, favoritesApi } from '@/lib/api';
 import { prepareListingDescriptionHtml } from '@/lib/listingDescriptionHtml';
 import { useAuthStore, useFavoritesStore, useComparisonStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
-import { getCityName, getListingDisplayTitle, sortOptionsByLabel } from '@/lib/utils';
+import {
+  getCityName,
+  getListingDisplayTitle,
+  isTireListing,
+  sortOptionsByLabel,
+} from '@/lib/utils';
 
 function getClosingDate(lastUpdatedAt: string): Date {
   const date = new Date(lastUpdatedAt);
@@ -30,11 +35,12 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
   const { t } = useTranslation();
   const { locale } = useI18n();
   const { cities } = useCities();
-  const {
-    add: addComparison,
-    remove: removeComparison,
-    count: comparisonCount,
-  } = useComparisonStore();
+  const addVehicle = useComparisonStore((s) => s.addVehicle);
+  const removeVehicle = useComparisonStore((s) => s.removeVehicle);
+  const addTire = useComparisonStore((s) => s.addTire);
+  const removeTire = useComparisonStore((s) => s.removeTire);
+  const vehicleCompareCount = useComparisonStore((s) => s.vehicleComparisons.length);
+  const tireCompareCount = useComparisonStore((s) => s.tireComparisons.length);
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
@@ -116,10 +122,19 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
 
   const imageAltTitle = useMemo(() => {
     if (!listing) return '';
+    const city = getCityName(listing.city, locale, cities);
+    if (isTireListing(listing) && listing.tire) {
+      const tire = listing.tire;
+      const modelPart =
+        tire.model?.is_other && tire.custom_model_name?.trim()
+          ? tire.custom_model_name.trim()
+          : tire.model?.name;
+      const details = [tire.brand?.name, modelPart].filter(Boolean).join(' ').trim();
+      return [listing.title, details, city].filter((v) => v && v.trim() !== '').join(' - ');
+    }
     const brandName = listing.vehicle?.brand?.name;
     const modelName = listing.vehicle?.model?.name;
     const year = listing.vehicle?.year ? String(listing.vehicle.year) : null;
-    const city = getCityName(listing.city, locale, cities);
     const details = [brandName, modelName, year].filter(Boolean).join(' ').trim();
     return [listing.title, details, city].filter((v) => v && v.trim() !== '').join(' - ');
   }, [listing, locale, cities]);
@@ -165,7 +180,9 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
         await favoritesApi.remove(id);
         removeFavorite(id);
         setIsFavorite(false);
-        analytics.removeFromWishlist(id);
+        analytics.removeFromWishlist(id, {
+          listing_category: listing && isTireListing(listing) ? 'tire' : 'vehicle',
+        });
         toast.success(t('listings.removeFromFavorites'));
       } catch {
         removeFavorite(id);
@@ -181,7 +198,9 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
       await favoritesApi.add(id);
       addFavorite(id);
       setIsFavorite(true);
-      analytics.addToWishlist(id, { title: listing?.title, price: listing?.price });
+      if (listing) {
+        analytics.addToWishlist(id, buildListingViewItemParams(listing));
+      }
       toast.success(t('listings.addToFavorites'));
     } catch {
       addFavorite(id);
@@ -190,21 +209,55 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
   }, [user, id, isFavorite, listing, router, t, addFavorite, removeFavorite, setIsFavorite]);
 
   const handleToggleComparison = useCallback(() => {
+    if (!listing) return;
+    const tire = isTireListing(listing);
+    if (tire) {
+      if (isInComparison) {
+        removeTire(id);
+        setIsInComparison(false);
+        analytics.removeFromComparison(id, { listing_category: 'tire' });
+        toast.success(t('listingDetail.removedFromComparison'));
+        return;
+      }
+      if (tireCompareCount >= 3) {
+        toast.warning(t('listingDetail.cannotCompareMoreTires'));
+        return;
+      }
+      const added = addTire(id);
+      if (added) {
+        setIsInComparison(true);
+        analytics.addToComparison(id, {
+          title: listing.title,
+          price: listing.price,
+          listing_category: 'tire',
+          item_category: 'Tire',
+        });
+        toast.success(t('listingDetail.addedToComparison'));
+      } else {
+        toast.error(t('listingDetail.alreadyInComparisonErrorTire'));
+      }
+      return;
+    }
     if (isInComparison) {
-      removeComparison(id);
+      removeVehicle(id);
       setIsInComparison(false);
-      analytics.removeFromComparison(id);
+      analytics.removeFromComparison(id, { listing_category: 'vehicle' });
       toast.success(t('listingDetail.removedFromComparison'));
       return;
     }
-    if (comparisonCount() >= 3) {
+    if (vehicleCompareCount >= 3) {
       toast.warning(t('listingDetail.cannotCompareMore'));
       return;
     }
-    const added = addComparison(id);
+    const added = addVehicle(id);
     if (added) {
       setIsInComparison(true);
-      analytics.addToComparison(id, { title: listing?.title, price: listing?.price });
+      analytics.addToComparison(id, {
+        title: listing?.title,
+        price: listing?.price,
+        listing_category: 'vehicle',
+        item_category: 'Vehicle',
+      });
       toast.success(t('listingDetail.addedToComparison'));
     } else {
       toast.error(t('listingDetail.alreadyInComparisonError'));
@@ -212,13 +265,18 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
   }, [
     id,
     isInComparison,
-    comparisonCount,
-    addComparison,
-    removeComparison,
+    vehicleCompareCount,
+    tireCompareCount,
+    addVehicle,
+    removeVehicle,
+    addTire,
+    removeTire,
     setIsInComparison,
     listing,
     t,
   ]);
+
+  const showCompare = listing ? listing.status !== 'Closed' : false;
 
   const handlePromoteClick = useCallback(() => setPromotionModalOpen(true), []);
 
@@ -318,6 +376,7 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
     listingRef,
     handleToggleFavorite,
     handleToggleComparison,
+    showCompare,
     handlePromoteClick,
     handleCopyLink,
     handleShare,

@@ -48,6 +48,7 @@ These scripts are **blocked from running in production** and can only be execute
 - `add-commercial-models.ts` - Add commercial vehicle models
 - `add-other-model.ts` - Add other model to existing brand
 - `sync-popular-brands-from-config.ts` - Sync brands and top models from platform config JSON (popular-brands.json, popular-brands-truck.json, popular-brands-moto.json) into DB; creates missing brands/models and clears brands Redis cache if needed. Run: `COUNTRY=md npm run sync-popular-brands`
+- `add-tire-brands-models.ts` - Seed tire brands and models from platform config (`COUNTRY=md npm run add-tire-brands`; production: `add-tire-brands:prod`); clears tire and listing-search Redis cache as needed
 - `delete-all-brands.ts` - Delete all brands
 - `check-brands-count.ts` - Check brand count
 - `check-brands-dates.ts` - Check brand creation dates (not available via npm script, internal utility)

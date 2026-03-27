@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 import { IBrandsCache, BRANDS_CACHE } from '../brands/application/ports/brands-cache.port';
+import { ListingCategory } from '../common/constants';
 
 import { IListingCache, LISTING_CACHE } from './application/ports/listing-cache.port';
 import {
@@ -105,12 +106,15 @@ export class ListingsService {
       userType,
     );
     const Sentry = await import('@sentry/node');
-    const vehicle_type =
+    let vehicle_type: string =
       savedListing.vehicle?.model?.vehicle_types?.[0] ||
       (savedListing.vehicle?.body_type
         ? getVehicleTypeFromBodyType(savedListing.vehicle.body_type)
         : undefined) ||
       'unknown';
+    if (savedListing.category === ListingCategory.Tire) {
+      vehicle_type = savedListing.tire?.tire_vehicle_type ?? 'unknown';
+    }
     Sentry.metrics.count('listings.created', 1, {
       attributes: {
         status: savedListing.status,

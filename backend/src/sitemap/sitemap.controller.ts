@@ -49,6 +49,9 @@ export class SitemapController {
       case 'brands-moto':
         xml = await this.sitemapService.getBrandsSitemapVehicleType('moto');
         break;
+      case 'tires':
+        xml = await this.sitemapService.getTiresSitemap();
+        break;
       case 'sellers':
         xml = await this.sitemapService.getSellersSitemap();
         break;

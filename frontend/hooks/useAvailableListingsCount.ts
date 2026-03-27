@@ -20,6 +20,7 @@ interface UseAvailableListingsCountParams {
   vehicleType: 'car' | 'moto' | 'truck';
   currentYear: string;
   isSyncingFromUrl: boolean;
+  listingCategory: 'vehicle' | 'tire';
   debounceMs?: number;
 }
 
@@ -38,6 +39,7 @@ export function useAvailableListingsCount({
   vehicleType,
   currentYear,
   isSyncingFromUrl,
+  listingCategory,
   debounceMs = DEFAULT_DEBOUNCE_MS,
 }: UseAvailableListingsCountParams): UseAvailableListingsCountResult {
   const [total, setTotal] = useState<number | null>(null);
@@ -48,8 +50,9 @@ export function useAvailableListingsCount({
       JSON.stringify({
         filters,
         vehicleType,
+        listingCategory,
       }),
-    [filters, vehicleType],
+    [filters, vehicleType, listingCategory],
   );
 
   useEffect(() => {
@@ -79,10 +82,11 @@ export function useAvailableListingsCount({
         if (isGetParsedListingSearchParamsFailure(parsedParams)) {
           parsedParams = buildFallbackListingSearchParamsFromFilters(filters, vehicleType);
         }
+        const isTire = listingCategory === 'tire' || parsedParams.category === 'tire';
         const response = await listingsApi.getAll(
           {
             ...parsedParams,
-            vehicleType,
+            ...(!isTire ? { vehicleType } : {}),
             page: 1,
             limit: 1,
           } as SearchParams,
@@ -114,6 +118,7 @@ export function useAvailableListingsCount({
     cities,
     currentYear,
     vehicleType,
+    listingCategory,
   ]);
 
   return { total, isLoading };

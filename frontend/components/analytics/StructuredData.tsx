@@ -7,10 +7,12 @@ import type { Listing } from '@/lib/api';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import {
   createSlug,
+  formatTireSize,
   formatTransmission,
   getCountry,
   getVehicleType,
   getOptimizedImageUrl,
+  isTireListing,
   isVinMasked,
 } from '@/lib/utils';
 
@@ -178,6 +180,105 @@ function getOffersSchema(
   };
 }
 
+function getTireBreadcrumbSchema(listing: Listing, siteUrl: string, tiresCategoryLabel: string) {
+  const tire = listing.tire!;
+  const items: Array<{ '@type': string; position: number; name: string; item: string }> = [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: tiresCategoryLabel,
+      item: `${siteUrl}/?category=tire`,
+    },
+  ];
+  let position = 2;
+  if (tire.brand?.name && tire.brand?.id) {
+    const p = new URLSearchParams();
+    p.set('category', 'tire');
+    p.set('tire_brand_ids', tire.brand.id);
+    items.push({
+      '@type': 'ListItem',
+      position: position++,
+      name: tire.brand.name,
+      item: `${siteUrl}/?${p.toString()}`,
+    });
+  }
+  const modelDisplay =
+    tire.model?.is_other && tire.custom_model_name?.trim()
+      ? tire.custom_model_name.trim()
+      : tire.model?.name;
+  if (modelDisplay && tire.model?.id && !tire.model?.is_other) {
+    const p = new URLSearchParams();
+    p.set('category', 'tire');
+    if (tire.brand?.id) p.set('tire_brand_ids', tire.brand.id);
+    p.append('tire_model_ids', tire.model.id);
+    items.push({
+      '@type': 'ListItem',
+      position: position++,
+      name: modelDisplay,
+      item: `${siteUrl}/?${p.toString()}`,
+    });
+  }
+  items.push({
+    '@type': 'ListItem',
+    position,
+    name: listing.title || modelDisplay || tire.brand?.name || 'Listing',
+    item: `${siteUrl}/listings/${listing.id}`,
+  });
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items,
+  };
+}
+
+function getTireProductSchemaData(
+  listing: Listing,
+  siteUrl: string,
+  currency: string,
+  countryCode: string,
+) {
+  const tire = listing.tire!;
+  const brandName = tire.brand?.name || '';
+  const modelName =
+    tire.model?.is_other && tire.custom_model_name?.trim()
+      ? tire.custom_model_name.trim()
+      : tire.model?.name || '';
+  const description = listing.description
+    ? listing.description.replace(/<[^>]*>/g, '').substring(0, 500)
+    : listing.title;
+  const imageList = listing.images?.length
+    ? listing.images.map((img) => getOptimizedImageUrl(img))
+    : [`${siteUrl}/placeholder-car.jpg`];
+  const offers = getOffersSchema(listing, siteUrl, currency);
+  const additional: Array<{ '@type': string; name: string; value: string }> = [
+    { '@type': 'PropertyValue', name: 'Size', value: formatTireSize(tire) },
+    { '@type': 'PropertyValue', name: 'Season', value: tire.season },
+    { '@type': 'PropertyValue', name: 'Condition', value: tire.condition },
+    { '@type': 'PropertyValue', name: 'Quantity', value: String(tire.quantity) },
+  ];
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: listing.title,
+    description,
+    image: imageList,
+    brand: brandName ? { '@type': 'Brand', name: brandName } : undefined,
+    model: modelName || undefined,
+    category: 'Tire',
+    additionalProperty: additional,
+    ...(offers && { offers }),
+    seller: getSellerSchema(listing),
+    locationCreated: {
+      '@type': 'Place',
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: listing.city,
+        addressCountry: countryCode,
+      },
+    },
+  };
+}
+
 function getProductSchemaData(
   listing: Listing,
   siteUrl: string,
@@ -233,23 +334,19 @@ export function StructuredData({ listing }: StructuredDataProps) {
     (fallbackCategoryLabel && fallbackCategoryLabel !== fallbackCategoryKey
       ? fallbackCategoryLabel
       : t('breadcrumbs.transport'));
+  const tiresCategoryLabel = t('searchFilters.tiresCategory');
 
   useEffect(() => {
     const country = getCountry();
     const siteConfig = loadSiteConfigSync(country);
     const siteUrl = siteConfig.siteUrl;
-    const breadcrumbSchema = getBreadcrumbSchema(
-      listing,
-      siteUrl,
-      categoryLabel,
-      transmissionLabel,
-    );
-    const schemaData = getProductSchemaData(
-      listing,
-      siteUrl,
-      siteConfig.currency,
-      siteConfig.countryCode,
-    );
+    const isTire = isTireListing(listing) && listing.tire;
+    const breadcrumbSchema = isTire
+      ? getTireBreadcrumbSchema(listing, siteUrl, tiresCategoryLabel)
+      : getBreadcrumbSchema(listing, siteUrl, categoryLabel, transmissionLabel);
+    const schemaData = isTire
+      ? getTireProductSchemaData(listing, siteUrl, siteConfig.currency, siteConfig.countryCode)
+      : getProductSchemaData(listing, siteUrl, siteConfig.currency, siteConfig.countryCode);
 
     const breadcrumbScript = document.createElement('script');
     breadcrumbScript.type = 'application/ld+json';
@@ -269,7 +366,7 @@ export function StructuredData({ listing }: StructuredDataProps) {
       const existingScript = document.getElementById('structured-data-listing');
       if (existingScript) document.head.removeChild(existingScript);
     };
-  }, [listing, categoryLabel, transmissionLabel]);
+  }, [listing, categoryLabel, transmissionLabel, tiresCategoryLabel]);
 
   return null;
 }

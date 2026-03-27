@@ -1,0 +1,144 @@
+'use client';
+
+import { forwardRef, useImperativeHandle } from 'react';
+
+import { AdditionalInfoSection } from '@/components/ListingForm/AdditionalInfoSection';
+import { BasicInfoSection } from '@/components/ListingForm/BasicInfoSection';
+import { ListingFormSkeleton } from '@/components/ListingForm/ListingFormSkeleton';
+import { ListingSettingsSection } from '@/components/ListingForm/ListingSettingsSection';
+import { PhotosSection } from '@/components/ListingForm/PhotosSection';
+import { PriceAndLocationSection } from '@/components/ListingForm/PriceAndLocationSection';
+import { TechnicalSpecsSection } from '@/components/ListingForm/TechnicalSpecsSection';
+import { VehicleTypeSelector } from '@/components/ListingForm/VehicleTypeSelector';
+import { useListingForm } from '@/components/ListingForm/useListingForm';
+import { ScrollDropdownIntoViewContext } from '@/components/common/Dropdown';
+import type { Listing } from '@/lib/api';
+import { LoadingButton } from '@/ui';
+
+export type VehicleListingFormHandle = {
+  changeVehicleType: (_type: 'car' | 'truck' | 'moto') => void;
+};
+
+interface VehicleListingFormProps {
+  mode: 'create' | 'edit';
+  listingId?: string;
+  initialData?: Listing;
+  onSuccess?: (_updatedListing?: Listing) => void;
+  canChangeVehicleType?: boolean;
+  embedded?: boolean;
+  hideVehicleTypeSelector?: boolean;
+  controlledVehicleType?: 'car' | 'truck' | 'moto';
+  onControlledVehicleTypeChange?: (_type: 'car' | 'truck' | 'moto') => void;
+  onVehicleTypeChanging?: (_busy: boolean) => void;
+  onInitialLoadReady?: () => void;
+}
+
+export const VehicleListingForm = forwardRef<VehicleListingFormHandle, VehicleListingFormProps>(
+  function VehicleListingForm(
+    {
+      mode,
+      listingId,
+      initialData,
+      onSuccess,
+      canChangeVehicleType = false,
+      embedded = false,
+      hideVehicleTypeSelector = false,
+      controlledVehicleType,
+      onControlledVehicleTypeChange,
+      onVehicleTypeChanging,
+      onInitialLoadReady,
+    },
+    ref,
+  ) {
+    const {
+      formRef,
+      isInitialLoading,
+      showSkeleton,
+      isMounted,
+      isChangingType,
+      vehicleType,
+      loading,
+      uploading,
+      hidePlates,
+      setHidePlates,
+      deletingImageUrls,
+      handleVehicleTypeChange,
+      handleFileUpload,
+      handleImageDelete,
+      handleSubmit,
+      sectionProps,
+      t,
+    } = useListingForm({
+      mode,
+      listingId,
+      initialData,
+      onSuccess,
+      canChangeVehicleType,
+      controlledVehicleType,
+      onControlledVehicleTypeChange,
+      onVehicleTypeChanging,
+      onInitialLoadReady,
+    });
+
+    useImperativeHandle(ref, () => ({ changeVehicleType: handleVehicleTypeChange }), [
+      handleVehicleTypeChange,
+    ]);
+
+    const formShell = embedded ? 'relative min-h-[800px]' : 'card relative min-h-[800px]';
+    const formPadding = embedded ? '' : 'p-4 md:p-6 lg:p-8';
+
+    if (isInitialLoading) {
+      return (
+        <div className={embedded ? `min-h-[400px] ${formPadding}` : 'card p-4 md:p-6 lg:p-8'}>
+          <div className="h-96" />
+        </div>
+      );
+    }
+
+    return (
+      <ScrollDropdownIntoViewContext.Provider value={true}>
+        <form ref={formRef} onSubmit={handleSubmit} className={`${formShell} ${formPadding}`}>
+          <ListingFormSkeleton isVisible={showSkeleton && !isMounted} />
+          {isChangingType && !onVehicleTypeChanging && (
+            <div className="absolute inset-0 bg-white/90 z-50 flex items-center justify-center rounded-xl">
+              <div className="w-10 h-10 border-4 border-primary-700 border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+          {!hideVehicleTypeSelector &&
+            (mode === 'create' || (mode === 'edit' && canChangeVehicleType)) && (
+              <VehicleTypeSelector
+                title={t('listings.vehicleTypeLabel')}
+                vehicleType={vehicleType}
+                onTypeChange={handleVehicleTypeChange}
+                t={t}
+              />
+            )}
+
+          <BasicInfoSection {...sectionProps} />
+          <TechnicalSpecsSection {...sectionProps} />
+          <AdditionalInfoSection {...sectionProps} />
+          <PhotosSection
+            {...sectionProps}
+            uploading={uploading}
+            onFileUpload={handleFileUpload}
+            onImageDelete={handleImageDelete}
+            hidePlates={hidePlates}
+            onHidePlatesChange={setHidePlates}
+            deletingImageUrls={deletingImageUrls}
+          />
+          <PriceAndLocationSection {...sectionProps} />
+          <ListingSettingsSection {...sectionProps} mode={mode} />
+
+          <LoadingButton
+            type="submit"
+            loading={loading}
+            loadingText={mode === 'create' ? t('listings.creating') : t('listings.saving')}
+            className="w-full min-h-12 text-primary-700 font-medium text-base hover:text-primary-900 hover:border-primary-900 transition-colors duration-200 whitespace-nowrap px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {mode === 'create' ? t('listings.createListing') : t('listings.saveChanges')}
+          </LoadingButton>
+        </form>
+      </ScrollDropdownIntoViewContext.Provider>
+    );
+  },
+);

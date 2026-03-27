@@ -29,8 +29,7 @@ import { loadSiteConfigSync } from '@/lib/site-config';
 import { toast } from '@/lib/toast';
 import { getCountry } from '@/lib/utils';
 
-import type { ListingFormData } from '../ListingForm';
-
+import type { ListingFormData } from './listingFormTypes';
 import { useListingFormImages } from './useListingFormImages';
 
 const LISTING_UPDATED_TOAST_KEY = 'listingUpdatedToast';
@@ -41,6 +40,10 @@ export interface UseListingFormProps {
   initialData?: Listing;
   onSuccess?: (_updatedListing?: Listing) => void;
   canChangeVehicleType?: boolean;
+  controlledVehicleType?: 'car' | 'truck' | 'moto';
+  onControlledVehicleTypeChange?: (_type: 'car' | 'truck' | 'moto') => void;
+  onVehicleTypeChanging?: (_busy: boolean) => void;
+  onInitialLoadReady?: () => void;
 }
 
 export function useListingForm({
@@ -49,6 +52,10 @@ export function useListingForm({
   initialData,
   onSuccess,
   canChangeVehicleType = false,
+  controlledVehicleType,
+  onControlledVehicleTypeChange,
+  onVehicleTypeChanging,
+  onInitialLoadReady,
 }: UseListingFormProps) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -60,9 +67,14 @@ export function useListingForm({
   });
   const [formData, setFormData] = useState<ListingFormData>(() => getInitialFormData(initialData));
   const [errors, setErrors] = useState<Record<string, boolean>>({});
-  const [vehicleType, setVehicleType] = useState<'car' | 'truck' | 'moto'>(() =>
+  const isVehicleTypeControlled =
+    mode === 'create' &&
+    controlledVehicleType !== undefined &&
+    onControlledVehicleTypeChange !== undefined;
+  const [internalVehicleType, setInternalVehicleType] = useState<'car' | 'truck' | 'moto'>(() =>
     getInitialVehicleType(initialData),
   );
+  const vehicleType = isVehicleTypeControlled ? controlledVehicleType : internalVehicleType;
   const [isChangingType, setIsChangingType] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -116,14 +128,25 @@ export function useListingForm({
     return () => clearTimeout(timer);
   }, []);
 
+  const onInitialLoadReadyRef = useRef(onInitialLoadReady);
+  onInitialLoadReadyRef.current = onInitialLoadReady;
+
+  useEffect(() => {
+    if (!isInitialLoading) {
+      onInitialLoadReadyRef.current?.();
+    }
+  }, [isInitialLoading]);
+
   useEffect(() => {
     if (initialData && initialDataRef.current !== listingId) {
       initialDataRef.current = listingId;
       setFormData(getInitialFormData(initialData));
-      setVehicleType(getInitialVehicleType(initialData));
+      if (!isVehicleTypeControlled) {
+        setInternalVehicleType(getInitialVehicleType(initialData));
+      }
       resetUploadedImagesState();
     }
-  }, [initialData, listingId, resetUploadedImagesState]);
+  }, [initialData, listingId, resetUploadedImagesState, isVehicleTypeControlled]);
 
   useEffect(() => {
     if (
@@ -139,9 +162,22 @@ export function useListingForm({
     const modelTypes = selectedModel?.vehicle_types ?? [];
     if (modelTypes.length === 0) return;
     if (!modelTypes.includes(vehicleType)) {
-      setVehicleType(modelTypes[0]);
+      const next = modelTypes[0];
+      if (isVehicleTypeControlled) {
+        onControlledVehicleTypeChange?.(next);
+      } else {
+        setInternalVehicleType(next);
+      }
     }
-  }, [models, formData.vehicle.model_id, mode, vehicleType, canChangeVehicleType]);
+  }, [
+    models,
+    formData.vehicle.model_id,
+    mode,
+    vehicleType,
+    canChangeVehicleType,
+    isVehicleTypeControlled,
+    onControlledVehicleTypeChange,
+  ]);
 
   useEffect(() => {
     if (models.length > 0 && formData.vehicle.brand_id) {
@@ -172,8 +208,15 @@ export function useListingForm({
       const canChangeInEdit = mode === 'edit' && canChangeVehicleType;
       if ((mode === 'edit' && !canChangeInEdit) || type === vehicleType) return;
       if (changeTypeTimeoutRef.current) clearTimeout(changeTypeTimeoutRef.current);
-      flushSync(() => setIsChangingType(true));
-      setVehicleType(type);
+      flushSync(() => {
+        setIsChangingType(true);
+        onVehicleTypeChanging?.(true);
+      });
+      if (isVehicleTypeControlled) {
+        onControlledVehicleTypeChange?.(type);
+      } else {
+        setInternalVehicleType(type);
+      }
       setFormData((prev) => ({
         ...prev,
         equipment: [],
@@ -186,9 +229,19 @@ export function useListingForm({
           body_type: '',
         },
       }));
-      changeTypeTimeoutRef.current = setTimeout(() => setIsChangingType(false), 400);
+      changeTypeTimeoutRef.current = setTimeout(() => {
+        setIsChangingType(false);
+        onVehicleTypeChanging?.(false);
+      }, 400);
     },
-    [vehicleType, mode, canChangeVehicleType],
+    [
+      vehicleType,
+      mode,
+      canChangeVehicleType,
+      isVehicleTypeControlled,
+      onControlledVehicleTypeChange,
+      onVehicleTypeChanging,
+    ],
   );
 
   const handleFileUpload = useCallback(
@@ -233,13 +286,15 @@ export function useListingForm({
     async (e: React.FormEvent) => {
       e.preventDefault();
       if (!validateForm()) {
-        reportFormSubmit(analytics, mode, false);
+        reportFormSubmit(analytics, mode, false, undefined, { listing_category: 'vehicle' });
         return;
       }
 
       if (!formData.vehicle.brand_id || !formData.vehicle.model_id) {
         toast.error(t('listings.brandAndModelRequired'));
-        reportFormSubmit(analytics, mode, false, getFilledFields(formData));
+        reportFormSubmit(analytics, mode, false, getFilledFields(formData), {
+          listing_category: 'vehicle',
+        });
         return;
       }
 
@@ -253,8 +308,15 @@ export function useListingForm({
           const res = await listingsApi.create(payload);
           formSubmittedSuccessfullyRef.current = true;
           resetUploadedImagesState();
-          analytics.createListing(res.data.id, { title: res.data.title, price: res.data.price });
-          reportFormSubmit(analytics, 'create', true, filledFields);
+          analytics.createListing(res.data.id, {
+            title: res.data.title,
+            price: res.data.price,
+            listing_category: 'vehicle',
+            item_category: 'Vehicle',
+          });
+          reportFormSubmit(analytics, 'create', true, filledFields, {
+            listing_category: 'vehicle',
+          });
           setLoading(false);
           sessionStorage.setItem('listingCreatedToast', t('listings.createSuccess'));
           router.push(`/listings/${res.data.id}`);
@@ -274,7 +336,7 @@ export function useListingForm({
           setFormData(getInitialFormData(result.data));
           if (result.data.vehicle?.brand_id) loadModels(result.data.vehicle.brand_id);
         }
-        reportFormSubmit(analytics, 'edit', true, filledFields);
+        reportFormSubmit(analytics, 'edit', true, filledFields, { listing_category: 'vehicle' });
         setLoading(false);
         if (onSuccess) {
           sessionStorage.setItem(LISTING_UPDATED_TOAST_KEY, 'true');
@@ -284,7 +346,7 @@ export function useListingForm({
         onSuccess?.(result.data);
       } catch (error: unknown) {
         setLoading(false);
-        reportFormSubmit(analytics, mode, false, filledFields);
+        reportFormSubmit(analytics, mode, false, filledFields, { listing_category: 'vehicle' });
 
         const axiosError = error as {
           response?: { data?: { message?: string; errorKey?: string } };

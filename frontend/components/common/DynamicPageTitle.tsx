@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
-import { brandsApi } from '@/lib/api';
+import { brandsApi, tiresApi } from '@/lib/api';
 import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/content/popular-brands';
 import { createSlug, slugMatches, slugToName } from '@/lib/utils';
 
@@ -74,6 +74,27 @@ export function DynamicPageTitle() {
   const { t } = useTranslation();
 
   useEffect(() => {
+    const categoryParam = searchParams.get('category');
+    if (categoryParam === 'tire') {
+      const tiresBaseTitle = t('metadata.site.tiresDefaultTitle');
+      const tireBrandIds = searchParams.get('tire_brand_ids');
+      const tireModelIds = searchParams.get('tire_model_ids');
+      document.title = tiresBaseTitle;
+      tiresApi
+        .getSearchMetadata({
+          tire_brand_ids: tireBrandIds ?? undefined,
+          tire_model_ids: tireModelIds ?? undefined,
+        })
+        .then((res) => {
+          const title = res.data.title ?? tiresBaseTitle;
+          document.title = title === tiresBaseTitle ? title : `${title} | ${tiresBaseTitle}`;
+        })
+        .catch(() => {
+          document.title = tiresBaseTitle;
+        });
+      return;
+    }
+
     const brandParam = searchParams.get('brand');
     const modelParam = searchParams.get('model');
     const bodyTypesParam = searchParams.get('body_types');

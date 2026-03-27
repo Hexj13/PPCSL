@@ -5,7 +5,10 @@ import { Repository } from 'typeorm';
 
 import { BRANDS_CACHE } from '../../../brands/application/ports/brands-cache.port';
 import { BrandsService } from '../../../brands/brands.service';
+import { ListingCategory } from '../../../common/constants';
 import { I18nService } from '../../../common/i18n/i18n.service';
+import { Tire } from '../../../tires/entities/tire.entity';
+import { TireModel } from '../../../tires/entities/tire-model.entity';
 import { UploadService } from '../../../upload/upload.service';
 
 jest.mock('../../../upload/upload.service', () => ({
@@ -34,6 +37,7 @@ describe('UpdateListingUseCase', () => {
     id: listingId,
     user_id: userId,
     status: 'Active',
+    category: ListingCategory.Vehicle,
     vehicle_id: vehicleId,
     images: [
       'https://example.com/uploads/abc.webp',
@@ -77,6 +81,19 @@ describe('UpdateListingUseCase', () => {
           },
         },
         {
+          provide: getRepositoryToken(Tire),
+          useValue: {
+            findOne: jest.fn(),
+            save: jest.fn(),
+          },
+        },
+        {
+          provide: getRepositoryToken(TireModel),
+          useValue: {
+            findOne: jest.fn(),
+          },
+        },
+        {
           provide: BrandsService,
           useValue: {
             findOne: jest.fn().mockResolvedValue({ name: 'Brand' }),
@@ -89,7 +106,10 @@ describe('UpdateListingUseCase', () => {
         },
         {
           provide: ListingTitleService,
-          useValue: { generate: jest.fn().mockResolvedValue('Generated Title') },
+          useValue: {
+            generate: jest.fn().mockResolvedValue('Generated Title'),
+            generateForTire: jest.fn().mockReturnValue('Tire Title'),
+          },
         },
         { provide: UploadService, useValue: uploadService },
         {
@@ -108,9 +128,14 @@ describe('UpdateListingUseCase', () => {
     vehiclesRepository = module.get(getRepositoryToken(Vehicle));
 
     (listingsRepository.findOne as jest.Mock)
-      .mockResolvedValueOnce({ ...existingListing, vehicle: { id: vehicleId } })
       .mockResolvedValueOnce({
         ...existingListing,
+        category: ListingCategory.Vehicle,
+        vehicle: { id: vehicleId },
+      })
+      .mockResolvedValueOnce({
+        ...existingListing,
+        category: ListingCategory.Vehicle,
         vehicle: { ...existingVehicle, brand: {}, model: {} },
         user: {},
       });
@@ -122,7 +147,10 @@ describe('UpdateListingUseCase', () => {
   });
 
   it('should call deleteFile for each removed image when images array is updated', async () => {
-    const newImages = ['https://example.com/uploads/abc.webp'];
+    const newImages = [
+      'https://example.com/uploads/abc.webp',
+      'https://example.com/uploads/kept-second.webp',
+    ];
     const dto: UpdateListingDto = {
       images: newImages,
     };
@@ -155,7 +183,10 @@ describe('UpdateListingUseCase', () => {
       .mockRejectedValueOnce(new Error('S3 error'))
       .mockResolvedValueOnce(undefined);
 
-    const newImages = ['https://example.com/uploads/abc.webp'];
+    const newImages = [
+      'https://example.com/uploads/abc.webp',
+      'https://example.com/uploads/kept-second.webp',
+    ];
     const dto: UpdateListingDto = { images: newImages };
 
     await expect(useCase.execute(listingId, dto, userId)).resolves.toBeDefined();
@@ -174,9 +205,12 @@ describe('UpdateListingUseCase', () => {
   });
 
   it('should throw BadRequestException when listing is closed', async () => {
-    (listingsRepository.findOne as jest.Mock)
-      .mockReset()
-      .mockResolvedValueOnce({ ...existingListing, status: 'Closed', vehicle: { id: vehicleId } });
+    (listingsRepository.findOne as jest.Mock).mockReset().mockResolvedValueOnce({
+      ...existingListing,
+      category: ListingCategory.Vehicle,
+      status: 'Closed',
+      vehicle: { id: vehicleId },
+    });
 
     await expect(useCase.execute(listingId, {}, userId)).rejects.toThrow(BadRequestException);
   });
@@ -189,12 +223,14 @@ describe('UpdateListingUseCase', () => {
   it('should allow admin to update closed listing', async () => {
     (listingsRepository.findOne as jest.Mock).mockReset().mockResolvedValueOnce({
       ...existingListing,
+      category: ListingCategory.Vehicle,
       status: 'Closed',
       vehicle: { id: vehicleId },
     });
 
     (listingsRepository.findOne as jest.Mock).mockResolvedValueOnce({
       ...existingListing,
+      category: ListingCategory.Vehicle,
       status: 'Closed',
       vehicle: { ...existingVehicle, brand: {}, model: {} },
       user: {},

@@ -7,6 +7,7 @@ import { analytics } from '@/lib/analytics';
 import type { Brand, VehicleModel, City } from '@/lib/api';
 import { MAX_SEARCH_BRAND_SELECTIONS, MAX_SEARCH_MODEL_SELECTIONS } from '@/lib/constants';
 import { buildSearchQuery, clearFiltersFromStorage, saveFiltersToStorage } from '@/lib/search';
+import { buildDeferredSearchFiltersPayload } from '@/lib/search/build-deferred-search-filters-payload';
 import { toast } from '@/lib/toast';
 import {
   getFilterRangesValidationError,
@@ -80,7 +81,15 @@ export function useFilterHandlers({
         key === 'conditions' ||
         key === 'registration_types' ||
         key === 'drive_types' ||
-        key === 'equipment'
+        key === 'equipment' ||
+        key === 'tire_brand_ids' ||
+        key === 'tire_model_ids' ||
+        key === 'tire_widths' ||
+        key === 'tire_profiles' ||
+        key === 'tire_diameters' ||
+        key === 'tire_seasons' ||
+        key === 'tire_conditions' ||
+        key === 'tire_quantities'
       ) {
         updateFilter(
           key,
@@ -98,7 +107,10 @@ export function useFilterHandlers({
   const handleMultiSelectChange = useCallback(
     (key: keyof typeof filters, values: string[]) => {
       const filteredValues = values.filter((v) => v !== 'all' && !v.startsWith('__category__'));
-      if (key === 'brand_ids' && filteredValues.length > MAX_SEARCH_BRAND_SELECTIONS) {
+      if (
+        (key === 'brand_ids' || key === 'tire_brand_ids') &&
+        filteredValues.length > MAX_SEARCH_BRAND_SELECTIONS
+      ) {
         toast.error(
           t('searchFilters.selectionLimitBrands', {
             max: MAX_SEARCH_BRAND_SELECTIONS.toString(),
@@ -106,7 +118,10 @@ export function useFilterHandlers({
         );
         return;
       }
-      if (key === 'model_ids' && filteredValues.length > MAX_SEARCH_MODEL_SELECTIONS) {
+      if (
+        (key === 'model_ids' || key === 'tire_model_ids') &&
+        filteredValues.length > MAX_SEARCH_MODEL_SELECTIONS
+      ) {
         toast.error(
           t('searchFilters.selectionLimitModels', {
             max: MAX_SEARCH_MODEL_SELECTIONS.toString(),
@@ -136,9 +151,9 @@ export function useFilterHandlers({
       const newValues = filteredValues.filter((v) => !previousValues.includes(v));
 
       const optionsSnapshot =
-        key === 'brand_ids'
+        key === 'brand_ids' || key === 'tire_brand_ids'
           ? getBrandOptions()
-          : key === 'model_ids'
+          : key === 'model_ids' || key === 'tire_model_ids'
             ? getModelOptions()
             : key === 'cities'
               ? getCityOptions()
@@ -243,23 +258,7 @@ export function useFilterHandlers({
         clearFiltersFromStorage();
       }
 
-      const validBrandIds = merged.brand_ids.filter(
-        (id) => id !== 'all' && id !== '' && !id.startsWith('__category__'),
-      );
-      const validModelIds = merged.model_ids.filter(
-        (id) => id !== 'all' && id !== '' && !id.startsWith('__category__'),
-      );
-      const validCities = merged.cities.filter(
-        (city) => city !== 'all' && city !== '' && !city.startsWith('__category__'),
-      );
-      const searchFilters: Record<string, unknown> = {};
-      if (validBrandIds.length > 0) searchFilters.brand_ids_count = validBrandIds.length;
-      if (validModelIds.length > 0) searchFilters.model_ids_count = validModelIds.length;
-      if (validCities.length > 0) searchFilters.cities_count = validCities.length;
-      if (merged.price_gte) searchFilters.price_min = merged.price_gte;
-      if (merged.price_lte) searchFilters.price_max = merged.price_lte;
-      if (merged.year_gte) searchFilters.year_min = merged.year_gte;
-      if (merged.year_lte) searchFilters.year_max = merged.year_lte;
+      const searchFilters = buildDeferredSearchFiltersPayload(merged, vehicleType);
       analytics.searchDeferred(undefined, searchFilters);
 
       const newUrl = `/?${result.urlString}`;
@@ -318,7 +317,9 @@ export function useFilterHandlers({
       }
       startTransition(() => {
         const params = new URLSearchParams();
-        if (vehicleType !== 'car') {
+        if (filters.listing_category === 'tire') {
+          params.set('category', 'tire');
+        } else if (vehicleType !== 'car') {
           params.set('vehicleType', vehicleType);
         }
         router.replace(`/?${params.toString()}`, { scroll: false });
@@ -334,7 +335,7 @@ export function useFilterHandlers({
         }
       });
     },
-    [resetFilters, setLastAppliedFilters, vehicleType, router],
+    [resetFilters, setLastAppliedFilters, vehicleType, router, filters.listing_category],
   );
 
   const hasFiltersChanged = useMemo(() => {
@@ -356,6 +357,14 @@ export function useFilterHandlers({
         'doors',
         'conditions',
         'equipment',
+        'tire_brand_ids',
+        'tire_model_ids',
+        'tire_widths',
+        'tire_profiles',
+        'tire_diameters',
+        'tire_seasons',
+        'tire_conditions',
+        'tire_quantities',
       ];
 
       arrayKeys.forEach((key) => {

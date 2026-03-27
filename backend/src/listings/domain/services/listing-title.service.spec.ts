@@ -103,4 +103,45 @@ describe('ListingTitleService', () => {
 
     expect(title).toBe('2019');
   });
+
+  it('should build tire title without model', () => {
+    const title = service.generateForTire({
+      brandName: 'Michelin',
+      modelName: null,
+      width_mm: 205,
+      aspect_ratio: 55,
+      diameter_inch: 16,
+      load_index: '91',
+      speed_index: 'V',
+    });
+    expect(title).toBe('Michelin 205/55 R16 91V');
+  });
+
+  it('should build tire title with model and load/speed marking', () => {
+    const title = service.generateForTire({
+      brandName: 'Pirelli',
+      modelName: 'Contra',
+      isOtherModel: false,
+      customModelName: null,
+      width_mm: 205,
+      aspect_ratio: 55,
+      diameter_inch: 16,
+      load_index: '91',
+      speed_index: 'v',
+    });
+    expect(title).toBe('Pirelli Contra 205/55 R16 91V');
+  });
+
+  it('should build tire title with marking only when load and speed omitted', () => {
+    const title = service.generateForTire({
+      brandName: 'Michelin',
+      modelName: 'Pilot Sport',
+      isOtherModel: false,
+      customModelName: null,
+      width_mm: 255,
+      aspect_ratio: 40,
+      diameter_inch: 20,
+    });
+    expect(title).toBe('Michelin Pilot Sport 255/40 R20');
+  });
 });

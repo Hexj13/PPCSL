@@ -22,11 +22,13 @@ export {
   CarIcon,
   MotoIcon,
   TruckIcon,
+  TireCategoryIcon,
   ExternalLinkIcon,
   CoinsIcon,
   EyeIcon,
   EyeSlashIcon,
 } from './icons';
+export { BenefitCheckRow, type BenefitCheckRowProps } from './BenefitCheckRow';
 export { InfoBlock, type InfoBlockProps } from './InfoBlock';
 export { HintTooltip, type HintTooltipProps } from './HintTooltip';
 export { designTokens, type DesignTokens } from './design-tokens';

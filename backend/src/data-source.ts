@@ -12,6 +12,9 @@ import { Listing } from './listings/entities/listing.entity';
 import { PromotionHistory } from './listings/entities/promotion-history.entity';
 import { Vehicle } from './listings/entities/vehicle.entity';
 import { SavedFilter } from './saved-filters/entities/saved-filter.entity';
+import { TireBrand } from './tires/entities/tire-brand.entity';
+import { TireModel } from './tires/entities/tire-model.entity';
+import { Tire } from './tires/entities/tire.entity';
 import { User } from './users/entities/user.entity';
 
 export const dataSourceOptions: DataSourceOptions = {
@@ -35,6 +38,9 @@ export const dataSourceOptions: DataSourceOptions = {
     SavedFilter,
     ExchangeRate,
     AdminAuditLog,
+    TireBrand,
+    TireModel,
+    Tire,
   ],
   synchronize: process.env.DB_SYNC === 'true' || process.env.NODE_ENV === 'test',
   logging: process.env.NODE_ENV === 'development',

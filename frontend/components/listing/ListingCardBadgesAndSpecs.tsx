@@ -7,6 +7,8 @@ import {
   formatEngineVolume,
   formatFuel,
   formatMileage,
+  formatTireSize,
+  isTireListing,
 } from '@/lib/utils';
 
 const SPARKLES_EMOJI = '\u2728';
@@ -20,7 +22,8 @@ export function ListingCardBadges({
   newLabel: string;
   t: (_key: string) => string;
 }) {
-  const compact = !!(listing.is_promoted && listing.is_new && listing.urgent);
+  const showNewVehicleBadge = Boolean(listing.is_new && !isTireListing(listing));
+  const compact = !!(listing.is_promoted && showNewVehicleBadge && listing.urgent);
   const badgeCollapseClass = compact
     ? 'px-3 py-1.5 gap-1.5 lg:px-1.5 lg:py-1.5 lg:gap-0 lg:group-hover:px-3 lg:group-hover:gap-1.5'
     : 'px-3 py-1.5 gap-1.5';
@@ -48,7 +51,7 @@ export function ListingCardBadges({
           <span className="relative z-10">{t('listings.promoted')}</span>
         </span>
       )}
-      {listing.is_new && (
+      {showNewVehicleBadge && (
         <span
           className={`relative inline-flex items-center overflow-hidden rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-newBadge text-text-secondary shadow-lg whitespace-nowrap transition-all duration-300 w-fit before:absolute before:inset-0 before:rounded-lg before:bg-newBadge/10 before:pointer-events-none ${badgeCollapseClass}`}
         >
@@ -79,6 +82,38 @@ export function ListingCardBadges({
           </span>
         </span>
       )}
+    </div>
+  );
+}
+
+export function ListingCardTireSpecs({
+  listing,
+  t,
+}: {
+  listing: Listing;
+  t: (_key: string, _params?: Record<string, string | number>) => string;
+}) {
+  const tire = listing.tire;
+  if (!tire) return null;
+  const size = formatTireSize(tire);
+  return (
+    <div className="text-sm space-y-1.5" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
+      <div>
+        {t('listingDetail.tireTread')}: {t(`searchFilters.tireTreadOption.${tire.season}`)}
+      </div>
+      <div>
+        {t('listingDetail.tireCondition')}:{' '}
+        {t(`searchFilters.tireConditionOption.${tire.condition}`)}
+      </div>
+      <div>
+        {t('listingDetail.tireSize')}: {size}
+      </div>
+      <div>
+        {t('listingDetail.tireVehicleType')}: {t(`listings.vehicleType.${tire.tire_vehicle_type}`)}
+      </div>
+      <div>
+        {t('listings.tireForm.quantityLabel')}: {tire.quantity}
+      </div>
     </div>
   );
 }

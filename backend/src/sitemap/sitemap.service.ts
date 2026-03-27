@@ -7,6 +7,8 @@ import { VehicleModel } from '../brands/entities/vehicle-model.entity';
 import { RedisService } from '../common/redis.service';
 import { createSlug } from '../common/utils/slug.utils';
 import { Listing } from '../listings/entities/listing.entity';
+import { TireBrand } from '../tires/entities/tire-brand.entity';
+import { TireModel } from '../tires/entities/tire-model.entity';
 import { User } from '../users/entities/user.entity';
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club').replace(/\/$/, '');
@@ -36,6 +38,10 @@ export class SitemapService {
     private readonly modelRepo: Repository<VehicleModel>,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    @InjectRepository(TireBrand)
+    private readonly tireBrandRepo: Repository<TireBrand>,
+    @InjectRepository(TireModel)
+    private readonly tireModelRepo: Repository<TireModel>,
     private readonly redis: RedisService,
   ) {}
 
@@ -52,6 +58,7 @@ export class SitemapService {
         loc: `${SITE_URL}/sitemaps/brands-${vt}.xml`,
         lastmod: now,
       })),
+      { loc: `${SITE_URL}/sitemaps/tires.xml`, lastmod: now },
       { loc: `${SITE_URL}/sitemaps/sellers.xml`, lastmod: now },
     ];
 
@@ -75,6 +82,7 @@ export class SitemapService {
     const xmlSitemaps: string[] = [
       await this.getPagesSitemap(),
       ...(await this.getBrandsSitemapUrlsetsForText()),
+      await this.getTiresSitemap(),
       await this.getSellersSitemap(),
     ];
 
@@ -109,6 +117,64 @@ export class SitemapService {
 
     const xml = this.buildUrlset(urls);
     await this.saveToCache('pages', xml);
+    return xml;
+  }
+
+  async getTiresSitemap(): Promise<string> {
+    const cached = await this.getFromCache('tires');
+    if (cached) return cached;
+
+    const now = this.today();
+    const urls: SitemapUrl[] = [
+      {
+        loc: `${SITE_URL}/?category=tire`,
+        lastmod: now,
+        changefreq: 'daily',
+        priority: 0.85,
+      },
+    ];
+
+    const tireBrands = await this.tireBrandRepo.find({
+      where: { is_archived: false },
+      select: ['id', 'name'],
+      order: { name: 'ASC' },
+    });
+
+    for (const b of tireBrands) {
+      urls.push({
+        loc: `${SITE_URL}/?category=tire&tire_brand_ids=${encodeURIComponent(b.id)}`,
+        lastmod: now,
+        changefreq: 'daily',
+        priority: 0.75,
+      });
+    }
+
+    const tireModels = await this.tireModelRepo
+      .createQueryBuilder('model')
+      .select(['model.id', 'model.brand_id'])
+      .innerJoin('model.brand', 'brand')
+      .where('model.is_archived = :archived', { archived: false })
+      .andWhere('brand.is_archived = :barchived', { barchived: false })
+      .orderBy('brand.name', 'ASC')
+      .addOrderBy('model.name', 'ASC')
+      .getMany();
+
+    for (const m of tireModels) {
+      const qs = new URLSearchParams({
+        category: 'tire',
+        tire_brand_ids: m.brand_id,
+        tire_model_ids: m.id,
+      });
+      urls.push({
+        loc: `${SITE_URL}/?${qs.toString()}`,
+        lastmod: now,
+        changefreq: 'weekly',
+        priority: 0.65,
+      });
+    }
+
+    const xml = this.buildUrlset(urls);
+    await this.saveToCache('tires', xml);
     return xml;
   }
 

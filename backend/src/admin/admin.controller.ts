@@ -26,16 +26,34 @@ import { Request } from 'express';
 
 import { AdminGuard } from '../auth/infrastructure/guards/admin.guard';
 import { JwtAuthGuard } from '../auth/infrastructure/guards/jwt-auth.guard';
-import { ListingStatus } from '../common/types';
+import * as constants from '../common/constants';
+import { ListingStatus, TireVehicleType } from '../common/types';
 import { TogglePromotionDto } from '../listings/presentation/dto/toggle-promotion.dto';
 
 import { AdminBrandsModelsService } from './admin-brands-models.service';
+import { AdminTireBrandsModelsService } from './admin-tire-brands-models.service';
 import { AdminService } from './admin.service';
 import { DeleteAllBrandsService } from './delete-all-brands.service';
 import { CreateBrandDto } from './dto/create-brand.dto';
 import { CreateModelDto } from './dto/create-model.dto';
+import { CreateTireBrandDto } from './dto/create-tire-brand.dto';
+import { CreateTireModelDto } from './dto/create-tire-model.dto';
 import { UpdateBrandDto } from './dto/update-brand.dto';
 import { UpdateModelDto } from './dto/update-model.dto';
+import { UpdateTireBrandDto } from './dto/update-tire-brand.dto';
+import { UpdateTireModelDto } from './dto/update-tire-model.dto';
+
+const parsePositiveIntQuery = (
+  value: string | undefined,
+  defaultValue: number,
+  maxValue: number,
+): number => {
+  const parsed = value ? Number.parseInt(value, 10) : Number.NaN;
+  if (!Number.isFinite(parsed)) {
+    return defaultValue;
+  }
+  return Math.min(maxValue, Math.max(1, parsed));
+};
 
 @ApiTags('admin')
 @ApiBearerAuth('JWT-auth')
@@ -46,6 +64,7 @@ export class AdminController {
     private readonly adminService: AdminService,
     private readonly deleteAllBrandsService: DeleteAllBrandsService,
     private readonly adminBrandsModelsService: AdminBrandsModelsService,
+    private readonly adminTireBrandsModelsService: AdminTireBrandsModelsService,
   ) {}
 
   @ApiOperation({ summary: 'Get all users' })
@@ -736,6 +755,136 @@ export class AdminController {
   unarchiveModel(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
     const user = req.user as { id: string };
     return this.adminBrandsModelsService.unarchiveModel(id, {
+      actorUserId: user.id,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+  }
+
+  @Get('tire-brands-models')
+  @ApiOperation({ summary: 'Get tire brands and models (paginated)' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'query', required: false, type: String })
+  @ApiQuery({
+    name: 'tireVehicleType',
+    required: false,
+    enum: constants.tireVehicleTypes,
+    description: 'Filter brands with at least one active tire listing of this vehicle type',
+  })
+  getTireBrandsModels(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('query') query?: string,
+    @Query('tireVehicleType') tireVehicleType?: string,
+  ) {
+    const pageNum = parsePositiveIntQuery(page, 1, 2000);
+    const limitNum = parsePositiveIntQuery(limit, 100, 2000);
+    const tvt =
+      tireVehicleType === 'car' || tireVehicleType === 'truck' || tireVehicleType === 'moto'
+        ? (tireVehicleType as TireVehicleType)
+        : undefined;
+    return this.adminTireBrandsModelsService.getTireBrandsModels(pageNum, limitNum, query, tvt);
+  }
+
+  @Post('tire-brands')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @ApiOperation({ summary: 'Create tire brand' })
+  createTireBrand(@Body() dto: CreateTireBrandDto, @Req() req: Request) {
+    const user = req.user as { id: string };
+    return this.adminTireBrandsModelsService.createTireBrand(dto, {
+      actorUserId: user.id,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+  }
+
+  @Patch('tire-brands/:id')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @ApiOperation({ summary: 'Update tire brand' })
+  updateTireBrand(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateTireBrandDto,
+    @Req() req: Request,
+  ) {
+    const user = req.user as { id: string };
+    return this.adminTireBrandsModelsService.updateTireBrand(id, dto, {
+      actorUserId: user.id,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+  }
+
+  @Post('tire-models')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @ApiOperation({ summary: 'Create tire model' })
+  createTireModel(@Body() dto: CreateTireModelDto, @Req() req: Request) {
+    const user = req.user as { id: string };
+    return this.adminTireBrandsModelsService.createTireModel(dto, {
+      actorUserId: user.id,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+  }
+
+  @Patch('tire-models/:id')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @ApiOperation({ summary: 'Update tire model' })
+  updateTireModel(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateTireModelDto,
+    @Req() req: Request,
+  ) {
+    const user = req.user as { id: string };
+    return this.adminTireBrandsModelsService.updateTireModel(id, dto, {
+      actorUserId: user.id,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+  }
+
+  @Patch('tire-brands/:id/archive')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @ApiOperation({ summary: 'Archive tire brand' })
+  archiveTireBrand(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+    const user = req.user as { id: string };
+    return this.adminTireBrandsModelsService.archiveTireBrand(id, {
+      actorUserId: user.id,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+  }
+
+  @Patch('tire-models/:id/archive')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @ApiOperation({ summary: 'Archive tire model' })
+  archiveTireModel(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+    const user = req.user as { id: string };
+    return this.adminTireBrandsModelsService.archiveTireModel(id, {
+      actorUserId: user.id,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+  }
+
+  @Patch('tire-brands/:id/unarchive')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @ApiOperation({ summary: 'Unarchive tire brand' })
+  unarchiveTireBrand(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+    const user = req.user as { id: string };
+    return this.adminTireBrandsModelsService.unarchiveTireBrand(id, {
+      actorUserId: user.id,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+  }
+
+  @Patch('tire-models/:id/unarchive')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @ApiOperation({ summary: 'Unarchive tire model' })
+  unarchiveTireModel(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+    const user = req.user as { id: string };
+    return this.adminTireBrandsModelsService.unarchiveTireModel(id, {
       actorUserId: user.id,
       ip: req.ip,
       userAgent: req.headers['user-agent'],

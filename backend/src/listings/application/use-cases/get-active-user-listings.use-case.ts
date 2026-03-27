@@ -17,7 +17,7 @@ export class GetActiveUserListingsUseCase {
   async execute(userId: string): Promise<Listing[]> {
     const listings = await this.listingsRepository.find({
       where: { user_id: userId, status: ListingStatusEnum.Active },
-      relations: ['vehicle', 'vehicle.brand', 'vehicle.model'],
+      relations: ['vehicle', 'vehicle.brand', 'vehicle.model', 'tire', 'tire.brand', 'tire.model'],
       order: { is_promoted: 'DESC', created_at: 'DESC' },
     });
     return this.exchangeRatesService.enrichListingsWithApproxPrice(listings);

@@ -1,6 +1,6 @@
 import { validators } from '@/lib/validation';
 
-import type { ListingFormData } from '../ListingForm';
+import type { ListingFormData } from './listingFormTypes';
 
 type T = (_key: string, _params?: Record<string, string | number>) => string;
 type Toast = { error: (_msg: string) => void };

@@ -303,6 +303,7 @@ export function PhotosSection({
   onHidePlatesChange,
   deletingImageUrls = [],
   uploadSlots = [],
+  minPhotosRequired = 2,
 }: ListingFormSectionProps) {
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [previewImageErrors, setPreviewImageErrors] = useState<Set<number>>(new Set());
@@ -599,8 +600,10 @@ export function PhotosSection({
       />
       <p className="mt-2 text-sm text-gray-400">
         {t('listings.uploadedCount', { count: formData.images.length })}{' '}
-        {formData.images.length < 2 && (
-          <span className="text-red-400">{t('listings.minPhotosRequired')}</span>
+        {formData.images.length < minPhotosRequired && (
+          <span className="text-red-400">
+            {t('listings.minPhotosRequired', { count: minPhotosRequired })}
+          </span>
         )}
       </p>
     </div>

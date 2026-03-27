@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const locale = await getMetadataLocale();
   const t = getServerTranslations(locale);
   return {
-    title: t.compare.title,
+    title: t.compare.pageTitle,
     robots: {
       index: false,
       follow: false,

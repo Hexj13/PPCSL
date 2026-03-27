@@ -8,7 +8,16 @@
     "codeLength": "Code must contain exactly 6 digits",
     "codeDigits": "Code must contain only digits",
     "passwordMinLength": "Password must be at least 8 characters",
-    "passwordMaxLength": "Password cannot be longer than 100 characters"
+    "passwordMaxLength": "Password cannot be longer than 100 characters",
+    "listingCategory": "Listing category must be vehicle or tire",
+    "tireLoadIndexRange": "Load index as on the sidewall: whole number from 0 to 279",
+    "tireWidthMmInvalid": "Section width in mm (first number, e.g. 205 in 205/55 R16): whole number from 125 to 355 in steps of 5",
+    "tireAspectRatioInvalid": "Aspect ratio (middle number, e.g. 55 in 205/55 R16): whole number from 5 to 95 in steps of 5",
+    "tireDiameterInchInvalid": "Rim size in inches (number after R, e.g. 16 in R16): from 10 to 35 in half-inch steps (e.g. 16, 17.5, 22.5)",
+    "tireSpeedIndexRange": "Speed rating: one letter — Q, R, S, T, H, V, W, or Y (as on the sidewall)",
+    "listingImagesMinVehicle": "At least {count} photos are required",
+    "listingImagesMinTire": "At least {count} photo is required",
+    "listingImagesMax": "You can upload at most {max} photos"
   },
   "errors": {
     "serverError": "Server error. Please try again later.",
@@ -86,6 +95,21 @@
     "vinRateLimitExceeded": "You can request VIN no more than 5 times per hour. Please try again later.",
     "vehicleIdNotFound": "Vehicle ID not found",
     "brandNotFoundById": "Brand not found",
+    "tireBrandNotFound": "Tire brand not found",
+    "listingMixedVehicleTire": "A listing cannot include both vehicle and tire data",
+    "listingCategoryImmutable": "Listing category cannot be changed",
+    "tirePayloadRequired": "Tire details are required for tire listings",
+    "vehiclePayloadRequired": "Vehicle details are required for vehicle listings",
+    "tireModelNotFound": "Tire model not found",
+    "tireModelBrandMismatch": "Tire model does not match the selected brand",
+    "tireModelArchived": "This tire model is no longer available",
+    "tireCustomModelRequired": "A model name is required when you select Other",
+    "tireCustomModelUnexpected": "Custom model name is only allowed when model is Other",
+    "tireStuddedOnlyWinter": "Studded tires are only valid for winter season",
+    "tireRunFlatOnlyCar": "Run-flat is only valid for passenger car tires",
+    "tireDiameterInvalid": "Rim diameter must be from 10 to 35 inches in half-inch steps (e.g. 16 in R16 or 22.5)",
+    "tireNotFoundForListing": "Tire details not found for this listing",
+    "tireOtherModelMissing": "Tire catalog is missing the Other model for this brand",
     "invalidSecretKey": "Invalid secret key",
     "invalidFilename": "Invalid filename",
     "qualityMustBeNumber": "Quality must be a number between 1 and 100",
@@ -120,7 +144,10 @@
     "site": {
       "homePageDescription": "Buy or sell cars on Kupito! Publish a listing for free. Platform for buying and selling cars online in Moldova. Car listings Moldova - free listings for private sellers and dealers.",
       "homePageDescriptionWithBrand": "Buy {brand} cars on Kupito! Find the best prices and selection of {brand} cars in Moldova.",
-      "homePageDescriptionWithBrandModel": "Buy {brand} {model} on Kupito! Find the best prices and selection of {brand} {model} cars in Moldova."
+      "homePageDescriptionWithBrandModel": "Buy {brand} {model} on Kupito! Find the best prices and selection of {brand} {model} cars in Moldova.",
+      "tiresHomePageDescription": "Buy or sell tires on Kupito! Free tire listings in Moldova: new and used, many sizes and seasons.",
+      "tiresHomePageDescriptionWithBrand": "{brand} tires on Kupito! Selection and prices for {brand} tires in Moldova.",
+      "tiresHomePageDescriptionWithBrandModel": "{brand} {model} tires on Kupito! Selection and prices for {brand} {model} in Moldova."
     }
   },
   "telegram": {

@@ -21,9 +21,25 @@ function parseComparisonStorageIds(): string[] {
   try {
     const raw = localStorage.getItem('comparison-storage');
     if (!raw) return [];
-    const parsed = JSON.parse(raw) as { state?: { comparisons?: string[] } };
-    const list = parsed?.state?.comparisons;
-    return Array.isArray(list) ? list.filter((id) => typeof id === 'string' && !!id) : [];
+    const parsed = JSON.parse(raw) as {
+      state?: {
+        comparisons?: string[];
+        vehicleComparisons?: string[];
+        tireComparisons?: string[];
+      };
+    };
+    const state = parsed?.state;
+    if (!state) return [];
+    if (Array.isArray(state.comparisons)) {
+      return state.comparisons.filter((id) => typeof id === 'string' && !!id);
+    }
+    const vehicles = Array.isArray(state.vehicleComparisons)
+      ? state.vehicleComparisons.filter((id) => typeof id === 'string' && !!id)
+      : [];
+    const tires = Array.isArray(state.tireComparisons)
+      ? state.tireComparisons.filter((id) => typeof id === 'string' && !!id)
+      : [];
+    return [...vehicles, ...tires];
   } catch {
     return [];
   }
@@ -53,20 +69,25 @@ export async function applyComparisonAfterAuth(): Promise<void> {
     return;
   }
 
-  const valid: string[] = [];
+  const valid: { id: string; isTire: boolean }[] = [];
   for (const listingId of candidateIds) {
     try {
-      await listingsApi.getOne(listingId);
-      valid.push(listingId);
+      const { data } = await listingsApi.getOne(listingId);
+      const isTire = data.category === 'tire';
+      valid.push({ id: listingId, isTire });
       if (valid.length >= MAX_COMPARISONS) break;
     } catch {
       // skip invalid or deleted listings
     }
   }
 
-  const { clear, add } = useComparisonStore.getState();
+  const { clear, addVehicle, addTire } = useComparisonStore.getState();
   clear();
-  for (const id of valid) {
-    add(id);
+  for (const { id, isTire } of valid) {
+    if (isTire) {
+      addTire(id);
+    } else {
+      addVehicle(id);
+    }
   }
 }

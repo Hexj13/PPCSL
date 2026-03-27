@@ -10,8 +10,7 @@ import { toast } from '@/lib/toast';
 import { clampToRange, ENGINE_RANGE, isInRange, POWER_RANGE } from '@/lib/validation';
 import { Checkbox } from '@/ui';
 
-const FIRE_EMOJI = '🔥';
-const SPARKLES_EMOJI = '\u2728';
+import { FIRE_EMOJI, renderSearchFilterLabelBadge, SPARKLES_EMOJI } from './searchFilterLabelBadge';
 
 const sanitizeEngineInput = (raw: string): string | null => {
   let value = raw.replace(',', '.');
@@ -66,20 +65,6 @@ export function AdvancedFilters({
   const { t } = useTranslation();
 
   const doorOptions = useMemo(() => getDoorOptions(t), [t]);
-
-  const renderLabelBadge = (label: string, emoji: string, borderColor: string, bgColor: string) => (
-    <span
-      className={`relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 ${borderColor} text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg ${bgColor} before:pointer-events-none`}
-    >
-      <span
-        className="relative z-10 shrink-0 text-text-secondary"
-        style={{ filter: 'grayscale(1) brightness(0.5)' }}
-      >
-        {emoji}
-      </span>
-      <span className="relative z-10">{label}</span>
-    </span>
-  );
 
   const handleEngineBlur = (key: string, value: string) => {
     if (value && value.trim() !== '') {
@@ -318,7 +303,7 @@ export function AdvancedFilters({
               id="urgent"
               checked={filters.urgent}
               onChange={(checked) => onCheckboxChange('urgent', checked)}
-              label={renderLabelBadge(
+              label={renderSearchFilterLabelBadge(
                 t('searchFilters.urgent'),
                 FIRE_EMOJI,
                 'border-accentSecondary',
@@ -331,7 +316,7 @@ export function AdvancedFilters({
               id="is_new"
               checked={filters.is_new}
               onChange={(checked) => onCheckboxChange('is_new', checked)}
-              label={renderLabelBadge(
+              label={renderSearchFilterLabelBadge(
                 vehicleType === 'moto' ? t('searchFilters.newMoto') : t('searchFilters.new'),
                 SPARKLES_EMOJI,
                 'border-newBadge',

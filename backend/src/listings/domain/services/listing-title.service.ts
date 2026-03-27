@@ -12,7 +12,53 @@ export interface BrandModelResolver {
   getTransmissionLabel(transmissionKey: string): Promise<string | null>;
 }
 
+export interface TireTitleInput {
+  brandName: string;
+  modelName?: string | null;
+  isOtherModel?: boolean;
+  customModelName?: string | null;
+  width_mm: number;
+  aspect_ratio: number;
+  diameter_inch: number;
+  load_index?: string | null;
+  speed_index?: string | null;
+}
+
+function formatRimDiameterInches(d: number): string {
+  const rounded = Math.round(d * 10) / 10;
+  if (Number.isInteger(rounded)) {
+    return String(Math.trunc(rounded));
+  }
+  return rounded.toFixed(1).replace(/\.0$/, '');
+}
+
+function formatLoadSpeedMarking(
+  loadIndex: string | null | undefined,
+  speedIndex: string | null | undefined,
+): string {
+  const li = loadIndex?.trim() ?? '';
+  const si = (speedIndex?.trim() ?? '').toUpperCase();
+  return `${li}${si}`.trim();
+}
+
 export class ListingTitleService {
+  generateForTire(input: TireTitleInput): string {
+    let modelPart = '';
+    if (input.isOtherModel && input.customModelName?.trim()) {
+      modelPart = input.customModelName.trim();
+    } else if (input.modelName?.trim()) {
+      modelPart = input.modelName.trim();
+    }
+    const r = formatRimDiameterInches(input.diameter_inch);
+    const marking = `${input.width_mm}/${input.aspect_ratio} R${r}`;
+    const loadSpeed = formatLoadSpeedMarking(input.load_index, input.speed_index);
+    const parts: string[] = [input.brandName.trim()];
+    if (modelPart) parts.push(modelPart);
+    parts.push(marking);
+    if (loadSpeed) parts.push(loadSpeed);
+    return parts.join(' ');
+  }
+
   async generate(vehicle: VehicleForTitle, resolver: BrandModelResolver): Promise<string> {
     const brandName = vehicle.brand_id ? await resolver.getBrandName(vehicle.brand_id) : null;
     const modelName = vehicle.model_id ? await resolver.getModelName(vehicle.model_id) : null;

@@ -2,14 +2,14 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
-  ArrayMinSize,
-  IsArray,
   IsBoolean,
   IsEnum,
   IsInt,
   IsNumber,
   IsOptional,
+  IsArray,
   IsString,
+  IsNotEmpty,
   IsUUID,
   Length,
   Matches,
@@ -17,13 +17,65 @@ import {
   MaxLength,
   Min,
   MinLength,
+  Validate,
+  ValidateIf,
+  ValidationArguments,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
   ValidateNested,
 } from 'class-validator';
 
 import * as constants from '../../../common/constants';
-import { ConditionType, Currency, ListingStatus, RegistrationType } from '../../../common/types';
+import {
+  ConditionType,
+  Currency,
+  ListingCategory,
+  ListingStatus,
+  RegistrationType,
+} from '../../../common/types';
+import { inferListingCategoryFromPayload } from '../../../common/utils/listing-category.utils';
 
+import { CreateTireDto } from './create-tire.dto';
 import { CreateVehicleDto } from './create-vehicle.dto';
+
+@ValidatorConstraint({ name: 'listingImages', async: false })
+class ListingImagesConstraint implements ValidatorConstraintInterface {
+  validate(value: unknown, args: ValidationArguments): boolean {
+    return this.getValidationMessage(value, args) === null;
+  }
+
+  defaultMessage(args: ValidationArguments): string {
+    return this.getValidationMessage(args.value, args) ?? 'validation.listingImagesMinVehicle|2';
+  }
+
+  private getValidationMessage(value: unknown, args: ValidationArguments): string | null {
+    const dto = args.object as CreateListingDto;
+    const category = inferListingCategoryFromPayload(dto);
+    const minImages = category === ListingCategory.Tire ? 1 : 2;
+
+    if (!Array.isArray(value)) {
+      return category === ListingCategory.Tire
+        ? 'validation.listingImagesMinTire|1'
+        : 'validation.listingImagesMinVehicle|2';
+    }
+
+    if (value.length < minImages) {
+      return category === ListingCategory.Tire
+        ? 'validation.listingImagesMinTire|1'
+        : 'validation.listingImagesMinVehicle|2';
+    }
+
+    if (value.length > 20) {
+      return 'validation.listingImagesMax|20';
+    }
+
+    if (value.some((item) => typeof item !== 'string')) {
+      return 'each value in images must be a string';
+    }
+
+    return null;
+  }
+}
 
 export class CreateListingDto {
   @ApiPropertyOptional({
@@ -35,6 +87,26 @@ export class CreateListingDto {
   @IsString()
   @MaxLength(200)
   title?: string;
+
+  @ApiPropertyOptional({
+    enum: constants.listingCategories,
+    description: 'Listing category; omit for legacy vehicle listings',
+  })
+  @IsOptional()
+  @IsEnum(ListingCategory, { message: 'validation.listingCategory' })
+  category?: ListingCategory;
+
+  @ValidateIf((o) => inferListingCategoryFromPayload(o) === ListingCategory.Vehicle)
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => CreateVehicleDto)
+  vehicle?: CreateVehicleDto;
+
+  @ValidateIf((o) => inferListingCategoryFromPayload(o) === ListingCategory.Tire)
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => CreateTireDto)
+  tire?: CreateTireDto;
 
   @ApiProperty({
     example: 25000,
@@ -79,18 +151,20 @@ export class CreateListingDto {
 
   @ApiPropertyOptional({
     example: false,
-    description: 'Available in credit or installment',
+    description: 'Available in credit (vehicle listings only)',
   })
+  @ValidateIf((o) => inferListingCategoryFromPayload(o) === ListingCategory.Vehicle)
   @IsOptional()
   @IsBoolean()
   available_in_credit?: boolean;
 
   @ApiPropertyOptional({
     example: 5000,
-    description: 'Down payment amount (when available_in_credit is true)',
+    description: 'Down payment (vehicle listings only)',
     minimum: 0,
     maximum: 999999999,
   })
+  @ValidateIf((o) => inferListingCategoryFromPayload(o) === ListingCategory.Vehicle)
   @IsOptional()
   @IsInt()
   @Min(0)
@@ -112,19 +186,12 @@ export class CreateListingDto {
       'http://localhost:4000/uploads/image1.webp',
       'http://localhost:4000/uploads/image2.webp',
     ],
-    description: 'Array of image URLs (2-20 images required)',
+    description: 'Image URLs: 1–20 for tire listings, 2–20 for vehicle listings',
     type: [String],
-    minItems: 2,
+    minItems: 1,
     maxItems: 20,
   })
-  @IsArray()
-  @IsString({ each: true })
-  @ArrayMinSize(2, {
-    message: 'Минимум 2 слики',
-  })
-  @ArrayMaxSize(20, {
-    message: 'Максимум 20 слики',
-  })
+  @Validate(ListingImagesConstraint)
   images?: string[];
 
   @ApiPropertyOptional({
@@ -146,17 +213,19 @@ export class CreateListingDto {
 
   @ApiPropertyOptional({
     example: false,
-    description: 'Mark listing as new',
+    description: 'Mark listing as new (vehicle listings only; tires derive from tire condition)',
   })
+  @ValidateIf((o) => inferListingCategoryFromPayload(o) === ListingCategory.Vehicle)
   @IsOptional()
   @IsBoolean()
   is_new?: boolean;
 
   @ApiPropertyOptional({
     example: 'WBA3A5G59CNP12345',
-    description: 'Vehicle Identification Number (17 characters, no I, O, Q)',
+    description: 'VIN (vehicle listings only)',
     pattern: '^[A-HJ-NPR-Z0-9]{17}$',
   })
+  @ValidateIf((o) => inferListingCategoryFromPayload(o) === ListingCategory.Vehicle)
   @IsOptional()
   @IsString()
   @Length(17, 17, { message: 'VIN мора да биде точно 17 карактери' })
@@ -165,41 +234,45 @@ export class CreateListingDto {
   })
   vin?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'Undamaged',
-    enum: ['Undamaged', 'Damaged', 'ForParts'],
-    description: 'Vehicle condition',
+    enum: constants.conditionTypes,
+    description: 'Vehicle condition (vehicle listings only)',
   })
+  @ValidateIf((o) => inferListingCategoryFromPayload(o) === ListingCategory.Vehicle)
   @IsEnum(ConditionType, { message: 'Состојбата мора да биде Undamaged, Damaged или ForParts' })
-  condition: ConditionType;
+  condition?: ConditionType;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'Local',
-    enum: ['Local', 'Foreign', 'Cleared'],
-    description: 'Registration type',
+    enum: constants.registrationTypes,
+    description: 'Registration type (vehicle listings only)',
   })
+  @ValidateIf((o) => inferListingCategoryFromPayload(o) === ListingCategory.Vehicle)
   @IsEnum(RegistrationType, {
     message: 'validation.registrationType',
   })
-  registration_type: RegistrationType;
+  registration_type?: RegistrationType;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 150,
-    description: 'Horsepower',
+    description: 'Horsepower (vehicle listings only)',
     minimum: 1,
     maximum: 9999,
   })
+  @ValidateIf((o) => inferListingCategoryFromPayload(o) === ListingCategory.Vehicle)
   @IsNumber({ maxDecimalPlaces: 0 })
   @Min(1)
   @Max(9999)
-  horsepower: number;
+  horsepower?: number;
 
   @ApiPropertyOptional({
     example: 110,
-    description: 'Power in kilowatts',
+    description: 'Power in kilowatts (vehicle listings only)',
     minimum: 1,
     maximum: 9999,
   })
+  @ValidateIf((o) => inferListingCategoryFromPayload(o) === ListingCategory.Vehicle)
   @IsOptional()
   @IsInt()
   @Min(1)
@@ -208,10 +281,11 @@ export class CreateListingDto {
 
   @ApiPropertyOptional({
     example: ['air_conditioning', 'navigation', 'parking_sensors'],
-    description: 'Array of equipment keys (max 40 items)',
+    description: 'Array of equipment keys (vehicle listings only, max 40 items)',
     type: [String],
     maxItems: 40,
   })
+  @ValidateIf((o) => inferListingCategoryFromPayload(o) === ListingCategory.Vehicle)
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
@@ -245,12 +319,4 @@ export class CreateListingDto {
   @IsOptional()
   @IsUUID('4', { message: 'errors.invalidUserId' })
   assignedUserId?: string;
-
-  @ApiProperty({
-    type: () => CreateVehicleDto,
-    description: 'Vehicle details',
-  })
-  @ValidateNested()
-  @Type(() => CreateVehicleDto)
-  vehicle: CreateVehicleDto;
 }

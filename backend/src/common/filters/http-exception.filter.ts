@@ -139,6 +139,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
       let translated = this.i18nService.translate(key, locale);
 
       if (params.length > 0) {
+        if (translated.includes('{count}')) {
+          translated = translated.replace(/{count}/g, params[0]);
+        }
         if (translated.includes('{max}')) {
           translated = translated.replace(/{max}/g, params[0]);
         }

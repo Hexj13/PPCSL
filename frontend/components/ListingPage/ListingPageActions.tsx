@@ -12,6 +12,7 @@ interface ListingPageActionsProps {
   isOwnListing: boolean;
   canPromote: boolean;
   showPromoteButton: boolean;
+  showCompare?: boolean;
   onToggleComparison: () => void;
   onToggleFavorite: () => void;
   onPromoteClick: () => void;
@@ -25,6 +26,7 @@ export function ListingPageActions({
   isOwnListing,
   canPromote,
   showPromoteButton,
+  showCompare = true,
   onToggleComparison,
   onToggleFavorite,
   onPromoteClick,
@@ -87,7 +89,7 @@ export function ListingPageActions({
               : t('listingDetail.addToFavorites')}
         </button>
       )}
-      {listing.status !== 'Closed' && (
+      {listing.status !== 'Closed' && showCompare && (
         <>
           {!isInitialized && listing.user ? (
             <button

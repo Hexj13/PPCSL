@@ -4,7 +4,7 @@ import { CopyButton } from '@/components/common/CopyButton';
 import { useI18n } from '@/components/providers/I18nProvider';
 import { useCities } from '@/hooks/useCities';
 import { useTranslation } from '@/hooks/useTranslation';
-import { analytics } from '@/lib/analytics';
+import { analytics, buildListingViewItemParams } from '@/lib/analytics';
 import type { Listing } from '@/lib/api';
 import { getCityName, getTelegramUrl, getViberUrl, getWhatsAppUrl } from '@/lib/utils';
 
@@ -27,10 +27,7 @@ function SellerMessengerLinks({
   if (listing.status === 'Closed' || !hasAny || !user.phone) return null;
 
   const track = (channel: 'viber' | 'whatsapp' | 'telegram') => {
-    analytics.contactSeller(listingId, channel, {
-      title: listing.title,
-      price: listing.price,
-    });
+    analytics.contactSeller(listingId, channel, buildListingViewItemParams(listing));
   };
 
   return (
@@ -293,10 +290,7 @@ export function ListingPageSeller({
                 <a
                   href={`tel:${user.phone}`}
                   onClick={() =>
-                    analytics.contactSeller(id, 'phone', {
-                      title: listing.title,
-                      price: listing.price,
-                    })
+                    analytics.contactSeller(id, 'phone', buildListingViewItemParams(listing))
                   }
                   className="ml-2 hover-only:hover:text-primary-300 transition-colors underline break-all min-w-0"
                   style={secondaryStyle}

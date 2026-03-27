@@ -12,11 +12,16 @@ import { Listing } from '../listings/entities/listing.entity';
 import { PromotionHistory } from '../listings/entities/promotion-history.entity';
 import { Vehicle } from '../listings/entities/vehicle.entity';
 import { ListingsModule } from '../listings/listings.module';
+import { TireBrand } from '../tires/entities/tire-brand.entity';
+import { TireModel } from '../tires/entities/tire-model.entity';
+import { Tire } from '../tires/entities/tire.entity';
+import { TiresModule } from '../tires/tires.module';
 import { User } from '../users/entities/user.entity';
 import { UsersModule } from '../users/users.module';
 
 import { AdminAuditService } from './admin-audit.service';
 import { AdminBrandsModelsService } from './admin-brands-models.service';
+import { AdminTireBrandsModelsService } from './admin-tire-brands-models.service';
 import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 import { DeleteAllBrandsService } from './delete-all-brands.service';
@@ -31,17 +36,27 @@ import { AdminAuditLog } from './entities/admin-audit-log.entity';
       Brand,
       VehicleModel,
       Vehicle,
+      TireBrand,
+      TireModel,
+      Tire,
       ListingView,
       Favorite,
       AdminAuditLog,
     ]),
     AuthModule,
     ListingsModule,
+    TiresModule,
     BrandsModule,
     ExchangeRatesModule,
     UsersModule,
   ],
   controllers: [AdminController],
-  providers: [AdminService, DeleteAllBrandsService, AdminAuditService, AdminBrandsModelsService],
+  providers: [
+    AdminService,
+    DeleteAllBrandsService,
+    AdminAuditService,
+    AdminBrandsModelsService,
+    AdminTireBrandsModelsService,
+  ],
 })
 export class AdminModule {}

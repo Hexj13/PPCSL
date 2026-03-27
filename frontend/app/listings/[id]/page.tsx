@@ -5,9 +5,11 @@ import type { Listing } from '@/lib/api';
 import { getMetadataLocale, getServerTranslations, getTFromTranslations } from '@/lib/i18n';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import {
+  formatTireSize,
   getCountry,
   getListingDisplayTitle,
   getOptimizedImageUrl,
+  isTireListing,
   isVinMasked,
   toSafeJsonLdHtml,
 } from '@/lib/utils';
@@ -135,7 +137,62 @@ function getSellerJsonLd(listing: Listing): Record<string, unknown> | undefined 
   return { '@type': type, name };
 }
 
-function buildListingJsonLd(listing: Listing): Record<string, unknown> {
+function buildTireProductJsonLd(
+  listing: Listing,
+  tFn: (_key: string, _params?: Record<string, string | number>) => string,
+): Record<string, unknown> {
+  const tire = listing.tire!;
+  const brandName = tire.brand?.name || '';
+  const modelName =
+    tire.model?.is_other && tire.custom_model_name?.trim()
+      ? tire.custom_model_name.trim()
+      : tire.model?.name || '';
+  const description = listing.description
+    ? listing.description.replace(/<[^>]*>/g, '').substring(0, 500)
+    : listing.title;
+  const seller = getSellerJsonLd(listing);
+  const offers = getOffersJsonLd(listing);
+  const additional: Array<{ '@type': string; name: string; value: string }> = [
+    { '@type': 'PropertyValue', name: 'Size', value: formatTireSize(tire) },
+    {
+      '@type': 'PropertyValue',
+      name: tFn('listingDetail.tireTread'),
+      value: tFn(`searchFilters.tireTreadOption.${tire.season}`),
+    },
+    {
+      '@type': 'PropertyValue',
+      name: tFn('listingDetail.tireCondition'),
+      value: tFn(`searchFilters.tireConditionOption.${tire.condition}`),
+    },
+    {
+      '@type': 'PropertyValue',
+      name: tFn('listings.tireForm.quantityLabel'),
+      value: String(tire.quantity),
+    },
+  ];
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: listing.title,
+    description,
+    image: getListingImages(listing),
+    brand: brandName ? { '@type': 'Brand', name: brandName } : undefined,
+    model: modelName || undefined,
+    category: 'Tire',
+    additionalProperty: additional,
+    ...(offers && { offers }),
+    ...(seller && { seller }),
+    url: `${siteUrl}/listings/${listing.id}`,
+  };
+}
+
+function buildListingJsonLd(
+  listing: Listing,
+  tFn: (_key: string, _params?: Record<string, string | number>) => string,
+): Record<string, unknown> {
+  if (isTireListing(listing) && listing.tire) {
+    return buildTireProductJsonLd(listing, tFn);
+  }
   const vehicle = listing.vehicle;
   const brandName = vehicle?.brand?.name || '';
   const modelName = vehicle?.model?.name || '';
@@ -163,25 +220,35 @@ function buildListingJsonLd(listing: Listing): Record<string, unknown> {
 function buildListingBreadcrumbJsonLd(
   listing: Listing,
   homeLabel: string,
+  tiresCategoryLabel: string,
   listingDisplayTitle: string,
 ): Record<string, unknown> {
+  const elements: Array<{ '@type': string; position: number; name: string; item: string }> = [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: homeLabel,
+      item: siteUrl,
+    },
+  ];
+  if (isTireListing(listing) && listing.tire) {
+    elements.push({
+      '@type': 'ListItem',
+      position: 2,
+      name: tiresCategoryLabel,
+      item: `${siteUrl}?category=tire`,
+    });
+  }
+  elements.push({
+    '@type': 'ListItem',
+    position: elements.length + 1,
+    name: listingDisplayTitle,
+    item: `${siteUrl}/listings/${listing.id}`,
+  });
   return {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
-    itemListElement: [
-      {
-        '@type': 'ListItem',
-        position: 1,
-        name: homeLabel,
-        item: siteUrl,
-      },
-      {
-        '@type': 'ListItem',
-        position: 2,
-        name: listingDisplayTitle,
-        item: `${siteUrl}/listings/${listing.id}`,
-      },
-    ],
+    itemListElement: elements,
   };
 }
 
@@ -305,9 +372,10 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
   const breadcrumbJsonLd = buildListingBreadcrumbJsonLd(
     listing,
     t.listingDetail.home,
+    t.searchFilters.tiresCategory,
     displayTitle,
   );
-  const listingJsonLd = buildListingJsonLd(listing);
+  const listingJsonLd = buildListingJsonLd(listing, tFn);
 
   return (
     <>

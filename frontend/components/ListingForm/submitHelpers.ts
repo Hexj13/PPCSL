@@ -3,7 +3,7 @@ import type { AxiosError } from 'axios';
 import type { CreateListingDto, UpdateListingDto } from '@/lib/api';
 import type { BodyType } from '@/lib/types';
 
-import type { ListingFormData } from '../ListingForm';
+import type { ListingFormData } from './listingFormTypes';
 
 export function applyEditNullables(
   payload: CreateListingDto,
@@ -85,12 +85,17 @@ export function buildListingPayload(
             ? Number(formData.vehicle.engine_displ_l)
             : undefined,
       mileage_km: formData.vehicle.mileage_km ? parseInt(formData.vehicle.mileage_km) : undefined,
-      fuel: (formData.vehicle.fuel || undefined) as CreateListingDto['vehicle']['fuel'],
-      transmission: (formData.vehicle.transmission ||
-        undefined) as CreateListingDto['vehicle']['transmission'],
+      fuel: (formData.vehicle.fuel || undefined) as NonNullable<
+        CreateListingDto['vehicle']
+      >['fuel'],
+      transmission: (formData.vehicle.transmission || undefined) as NonNullable<
+        CreateListingDto['vehicle']
+      >['transmission'],
       ...(vehicleType !== 'moto' && formData.vehicle.drive_type
         ? {
-            drive_type: formData.vehicle.drive_type as CreateListingDto['vehicle']['drive_type'],
+            drive_type: formData.vehicle.drive_type as NonNullable<
+              CreateListingDto['vehicle']
+            >['drive_type'],
           }
         : {}),
       body_type: formData.vehicle.body_type as BodyType,
@@ -106,14 +111,20 @@ export function buildListingPayload(
 
 export function reportFormSubmit(
   analytics: {
-    formSubmit: (_event: string, _success: boolean, _filled?: Record<string, boolean>) => void;
+    formSubmit: (
+      _event: string,
+      _success: boolean,
+      _filled?: Record<string, boolean>,
+      _extra?: Record<string, unknown>,
+    ) => void;
   },
   mode: 'create' | 'edit',
   success: boolean,
   filledFields?: Record<string, boolean>,
+  extra?: Record<string, unknown>,
 ): void {
   const event = mode === 'create' ? 'create_listing' : 'edit_listing';
-  analytics.formSubmit(event, success, filledFields);
+  analytics.formSubmit(event, success, filledFields, extra);
 }
 
 export function getSubmitErrorMessage(

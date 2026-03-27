@@ -39,6 +39,10 @@ export interface CacheTTL {
     all: number;
     models: number;
   };
+  tireBrands: {
+    all: number;
+    models: number;
+  };
   cities: {
     all: number;
   };
@@ -55,6 +59,10 @@ export const CACHE_TTL: CacheTTL = {
     all: 86400,
     models: 86400,
   },
+  tireBrands: {
+    all: 86400,
+    models: 86400,
+  },
   cities: {
     all: 604800,
   },
@@ -67,5 +75,7 @@ export const CACHE_PREFIXES = {
   listingsSimilar: 'cache:listings:similar',
   brands: 'cache:brands',
   brandsModels: 'cache:brands:models',
+  tireBrands: 'cache:tire-brands',
+  tireBrandsModels: 'cache:tire-brands:models',
   cities: 'cache:cities',
 } as const;

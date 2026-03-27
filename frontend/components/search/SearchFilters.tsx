@@ -16,12 +16,16 @@ import { useSearchFilters, type FilterState } from '@/hooks/useSearchFilters';
 import { useModelsForBrands, useVehicleTypeFromUrl } from '@/hooks/useSearchFiltersEffects';
 import { useSearchFiltersSync } from '@/hooks/useSearchFiltersSync';
 import { useSearchTabs } from '@/hooks/useSearchTabs';
+import { useTireBrandsCatalog } from '@/hooks/useTireBrandsCatalog';
+import { useTireModelsForBrands } from '@/hooks/useTireModelsForBrands';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useVehicleType } from '@/hooks/useVehicleType';
 import type { User } from '@/lib/api';
 import { getPopularBrands, getPopularModelsByBrand } from '@/lib/content/popular-brands';
+import { getDefaultFilters, getDefaultTireFilters } from '@/lib/search';
 import { useAuthStore } from '@/lib/store';
-import { isBrowser } from '@/lib/utils';
+import { buildCategorizedTireBrandOptions } from '@/lib/tire-catalog-sort';
+import { isBrowser } from '@/lib/utils/utils';
 
 import { AdvancedFilters } from './search-filters/AdvancedFilters';
 import { BasicFilters } from './search-filters/BasicFilters';
@@ -29,8 +33,12 @@ import { EquipmentFilters } from './search-filters/EquipmentFilters';
 import { PopularFilters } from './search-filters/PopularFilters';
 import { SearchFormActions } from './search-filters/SearchFormActions';
 import { SearchTabs } from './search-filters/SearchTabs';
+import { TireSearchFilters } from './search-filters/TireSearchFilters';
 import { VehicleTypeSelector } from './search-filters/VehicleTypeSelector';
 
+const NO_BRAND_IDS_FOR_MODELS: string[] = [];
+
+/* eslint-disable max-lines-per-function -- search form orchestration */
 export function SearchFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -51,15 +59,30 @@ export function SearchFilters() {
   const {
     filters,
     updateFilter,
+    updateMultiple,
     reset: resetFilters,
     hasActiveFilters,
     setFilters,
   } = useSearchFilters();
 
-  const { hasBasicFilters, hasAdvancedFiltersActive, hasEquipmentFiltersActive } =
-    useSearchFilterFlags(filters, currentYear);
+  const tireBrands = useTireBrandsCatalog();
+
+  const resetToVehicleSearchDefaults = useCallback(() => {
+    setFilters(getDefaultFilters(currentYear) as FilterState);
+  }, [currentYear, setFilters]);
+
+  const {
+    hasBasicFilters,
+    hasAdvancedFiltersActive,
+    hasEquipmentFiltersActive,
+    hasTireBasicFilters,
+    hasTirePopularFilters,
+  } = useSearchFilterFlags(filters, currentYear, tireBrands);
+
+  const searchTabsMode = filters.listing_category === 'tire' ? 'tire' : 'vehicle';
 
   const tabs = useSearchTabs({
+    mode: searchTabsMode,
     hasBasicFilters,
     hasAdvancedFiltersActive,
     hasEquipmentFiltersActive,
@@ -73,15 +96,25 @@ export function SearchFilters() {
 
   const { vehicleType, setVehicleTypeWithStorage, handleVehicleTypeChange } = useVehicleType({
     searchParams,
-    resetFilters,
+    resetToVehicleSearchDefaults,
     setLastAppliedFilters,
     setActiveTab: tabs.setActiveTab,
     scrollTabsToStart,
   });
 
+  const handleTireCategorySelect = useCallback(() => {
+    setFilters(getDefaultTireFilters(currentYear) as FilterState);
+    setLastAppliedFilters(null);
+    tabs.setActiveTab('basic');
+    scrollTabsToStart();
+    startTransition(() => {
+      router.replace('/?category=tire', { scroll: false });
+    });
+  }, [currentYear, router, scrollTabsToStart, setFilters, setLastAppliedFilters, tabs]);
+
   useEffect(() => {
     const handler = () => {
-      resetFilters();
+      resetToVehicleSearchDefaults();
       setLastAppliedFilters(null);
       tabs.setActiveTab('basic');
       setVehicleTypeWithStorage('car');
@@ -89,7 +122,13 @@ export function SearchFilters() {
     };
     window.addEventListener(RESET_SEARCH_EVENT, handler);
     return () => window.removeEventListener(RESET_SEARCH_EVENT, handler);
-  }, [resetFilters, tabs, setVehicleTypeWithStorage, scrollTabsToStart]);
+  }, [
+    resetToVehicleSearchDefaults,
+    tabs,
+    setVehicleTypeWithStorage,
+    scrollTabsToStart,
+    setLastAppliedFilters,
+  ]);
 
   const {
     brands,
@@ -98,6 +137,9 @@ export function SearchFilters() {
   } = useBrandsAndModels({ autoLoadModels: false, vehicleType });
 
   const hasPopularFiltersActive = useMemo(() => {
+    if (filters.listing_category === 'tire') {
+      return hasTirePopularFilters;
+    }
     if (filters.brand_ids.length === 0 && filters.model_ids.length === 0) {
       return false;
     }
@@ -121,15 +163,44 @@ export function SearchFilters() {
       const popularModels = popularModelsByBrand[brandName] ?? [];
       return popularModels.includes(model.name);
     });
-  }, [brands, filters.brand_ids, filters.model_ids, models, vehicleType]);
+  }, [
+    brands,
+    filters.brand_ids,
+    filters.listing_category,
+    filters.model_ids,
+    hasTirePopularFilters,
+    models,
+    vehicleType,
+  ]);
   const { cities } = useCities();
 
   useVehicleTypeFromUrl(searchParams, brands, vehicleType, setVehicleTypeWithStorage);
   const loadingModels = useModelsForBrands(
-    filters.brand_ids,
+    filters.listing_category === 'vehicle' ? filters.brand_ids : NO_BRAND_IDS_FOR_MODELS,
     vehicleType,
     setModelsFromHook,
     setFilters,
+  );
+
+  const { tireModels, loadingTireModels } = useTireModelsForBrands(
+    filters.listing_category,
+    filters.tire_brand_ids,
+    setFilters,
+  );
+
+  const tireBrandOptionsForHandlers = useMemo(
+    () => buildCategorizedTireBrandOptions([...tireBrands], t),
+    [tireBrands, t],
+  );
+
+  const tireModelOptionsForHandlers = useMemo(
+    () =>
+      tireModels.map((m) => ({
+        value: m.id,
+        label: m.name,
+        category: tireBrands.find((b) => b.id === m.brand_id)?.name,
+      })),
+    [tireModels, tireBrands],
   );
   const { isSyncingFromUrl } = useSearchFiltersSync({
     searchParams,
@@ -172,8 +243,14 @@ export function SearchFilters() {
     setIsSearching,
     setLastAppliedFilters,
     isInternalSearchRef,
-    getBrandOptions: filterOptions.getBrandOptions,
-    getModelOptions: filterOptions.getModelOptions,
+    getBrandOptions: () =>
+      filters.listing_category === 'tire'
+        ? tireBrandOptionsForHandlers
+        : filterOptions.getBrandOptions(),
+    getModelOptions: () =>
+      filters.listing_category === 'tire'
+        ? tireModelOptionsForHandlers
+        : filterOptions.getModelOptions(),
     getCityOptions: filterOptions.getCityOptions,
     t,
   });
@@ -186,11 +263,12 @@ export function SearchFilters() {
       vehicleType,
       currentYear,
       isSyncingFromUrl,
+      listingCategory: filters.listing_category,
     });
   const { visible: showAvailableListingsLoader } = useLoadingState({
     isLoading: isAvailableListingsLoading || availableListingsTotal === null,
     showDelay: 0,
-    minDisplayTime: 2000,
+    minDisplayTime: 1000,
     immediate: true,
   });
 
@@ -247,8 +325,14 @@ export function SearchFilters() {
   };
 
   const getFiltersForSave = () => {
-    return { ...filters, vehicleType: vehicleType || 'car' };
+    return {
+      ...filters,
+      vehicleType: vehicleType || 'car',
+    };
   };
+
+  const basicTabHasActiveDot =
+    filters.listing_category === 'tire' ? hasTireBasicFilters : hasBasicFilters;
 
   return (
     <form
@@ -260,16 +344,19 @@ export function SearchFilters() {
       <div className="mb-6 border-b border-primary-500/20 -mx-4 md:-mx-5 px-4 md:px-5 relative">
         <div className="relative overflow-visible">
           <VehicleTypeSelector
+            listingCategory={filters.listing_category}
             vehicleType={vehicleType}
             onVehicleTypeChange={handleVehicleTypeChange}
+            onTireCategorySelect={handleTireCategorySelect}
           />
           <SearchTabs
+            variant={filters.listing_category === 'tire' ? 'tire' : 'vehicle'}
             activeTab={tabs.activeTab}
             onTabChange={(tab) => {
               tabs.setActiveTab(tab);
               tabs.scrollTabToStart(tab);
             }}
-            hasBasicFilters={hasBasicFilters}
+            hasBasicFilters={basicTabHasActiveDot}
             hasAdvancedFiltersActive={hasAdvancedFiltersActive}
             hasEquipmentFiltersActive={hasEquipmentFiltersActive}
             hasPopularFiltersActive={hasPopularFiltersActive}
@@ -286,7 +373,25 @@ export function SearchFilters() {
         </div>
       </div>
 
-      {tabs.activeTab === 'basic' && (
+      {filters.listing_category === 'tire' && (
+        <TireSearchFilters
+          activeTab={tabs.activeTab === 'popular' ? 'popular' : 'basic'}
+          filters={filters}
+          tireBrands={tireBrands}
+          tireModels={tireModels}
+          loadingTireModels={loadingTireModels}
+          cityOptions={filterOptions.getCityOptions()}
+          onFilterChange={handlers.handleChange}
+          onMultiSelectChange={handlers.handleMultiSelectChange}
+          onCheckboxChange={handlers.handleCheckboxChange}
+          onPriceChange={handlers.handlePriceChange}
+          onPriceBlur={handlers.handlePriceBlur}
+          onWheel={handlers.handleWheel}
+          updateMultiple={updateMultiple}
+        />
+      )}
+
+      {filters.listing_category === 'vehicle' && tabs.activeTab === 'basic' && (
         <BasicFilters
           filters={filters}
           onFilterChange={handlers.handleChange}
@@ -303,7 +408,7 @@ export function SearchFilters() {
         />
       )}
 
-      {tabs.activeTab === 'advanced' && (
+      {filters.listing_category === 'vehicle' && tabs.activeTab === 'advanced' && (
         <AdvancedFilters
           filters={filters}
           onFilterChange={handlers.handleChange}
@@ -318,7 +423,7 @@ export function SearchFilters() {
         />
       )}
 
-      {tabs.activeTab === 'equipment' && (
+      {filters.listing_category === 'vehicle' && tabs.activeTab === 'equipment' && (
         <EquipmentFilters
           equipment={filters.equipment}
           equipmentMatchMode={filters.equipment_match_mode}
@@ -328,16 +433,18 @@ export function SearchFilters() {
         />
       )}
 
-      <div className={tabs.activeTab === 'popular' ? '' : 'hidden'}>
-        <PopularFilters
-          key={vehicleType}
-          brands={brands}
-          models={models}
-          filters={filters}
-          setFilters={setFilters}
-          vehicleType={vehicleType}
-        />
-      </div>
+      {filters.listing_category === 'vehicle' && (
+        <div className={tabs.activeTab === 'popular' ? '' : 'hidden'}>
+          <PopularFilters
+            key={vehicleType}
+            brands={brands}
+            models={models}
+            filters={filters}
+            setFilters={setFilters}
+            vehicleType={vehicleType}
+          />
+        </div>
+      )}
 
       <SearchFormActions
         onReset={() => {

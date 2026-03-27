@@ -9,8 +9,24 @@ import {
 import { currencies } from '../../common/constants';
 
 const ALLOWED_FILTER_KEYS = [
+  'category',
   'brand_ids',
   'model_ids',
+  'tireVehicleType',
+  'tire_brand_ids',
+  'tire_model_ids',
+  'tire_widths',
+  'tire_profiles',
+  'tire_diameters',
+  'tire_seasons',
+  'tire_conditions',
+  'tire_quantities',
+  'tire_studded',
+  'tire_run_flat',
+  'tire_reinforced_xl',
+  'tire_spare_donut',
+  'tire_tubeless',
+  'tire_acoustic',
   'cities',
   'year_gte',
   'year_lte',
@@ -81,15 +97,35 @@ export class IsValidFilterObjectConstraint implements ValidatorConstraintInterfa
         ) {
           return false;
         }
-      } else if (key === 'urgent' || key === 'is_new' || key === 'available_in_credit') {
+      } else if (
+        key === 'urgent' ||
+        key === 'is_new' ||
+        key === 'available_in_credit' ||
+        key === 'tire_studded' ||
+        key === 'tire_run_flat' ||
+        key === 'tire_reinforced_xl' ||
+        key === 'tire_spare_donut' ||
+        key === 'tire_tubeless' ||
+        key === 'tire_acoustic'
+      ) {
         if (val !== true && val !== false && val !== undefined) {
+          return false;
+        }
+      } else if (key === 'category') {
+        if (
+          val !== '' &&
+          val !== null &&
+          val !== undefined &&
+          val !== 'vehicle' &&
+          val !== 'tire'
+        ) {
           return false;
         }
       } else if (key === 'sortBy' || key === 'sortOrder') {
         if (val !== '' && val !== null && val !== undefined && typeof val !== 'string') {
           return false;
         }
-      } else if (key === 'vehicleType') {
+      } else if (key === 'vehicleType' || key === 'tireVehicleType') {
         if (val !== '' && val !== null && val !== undefined && typeof val !== 'string') {
           return false;
         }
@@ -110,7 +146,18 @@ export class IsValidFilterObjectConstraint implements ValidatorConstraintInterfa
         if (val.length === 0) {
           continue;
         }
+        const allowNumericItems =
+          key === 'tire_widths' ||
+          key === 'tire_profiles' ||
+          key === 'tire_diameters' ||
+          key === 'tire_quantities';
         for (const item of val) {
+          if (allowNumericItems) {
+            if (typeof item !== 'string' && typeof item !== 'number') {
+              return false;
+            }
+            continue;
+          }
           if (typeof item !== 'string') {
             return false;
           }

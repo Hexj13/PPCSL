@@ -11,7 +11,14 @@ function getParsedSearchParamsCacheKey(
   searchParamsString: string,
   vehicleType: 'car' | 'truck' | 'moto',
 ): string {
-  return `${searchParamsString}|${vehicleType}`;
+  let categoryTag = 'vehicle';
+  try {
+    const p = new URLSearchParams(searchParamsString);
+    if (p.get('category') === 'tire') categoryTag = 'tire';
+  } catch {
+    categoryTag = 'vehicle';
+  }
+  return `${searchParamsString}|${vehicleType}|${categoryTag}`;
 }
 
 export async function getParsedListingSearchParams(
@@ -23,6 +30,17 @@ export async function getParsedListingSearchParams(
   if (cached) return cached;
 
   const currentSearchParams = new URLSearchParams(searchParamsString);
+  if (currentSearchParams.get('category') === 'tire') {
+    const parsed = await parseSearchParams(currentSearchParams, {});
+    const result = parsed as unknown as Record<string, string | number | boolean>;
+    if (parsedParamsCache.size >= PARSED_PARAMS_CACHE_MAX) {
+      const firstKey = parsedParamsCache.keys().next().value;
+      if (firstKey !== undefined) parsedParamsCache.delete(firstKey);
+    }
+    parsedParamsCache.set(cacheKey, result);
+    return result;
+  }
+
   try {
     let brands;
     try {

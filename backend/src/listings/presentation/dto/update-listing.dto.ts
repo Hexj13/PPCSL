@@ -18,9 +18,10 @@ import {
 } from 'class-validator';
 
 import * as constants from '../../../common/constants';
-import { ConditionType, Currency, RegistrationType } from '../../../common/types';
+import { ConditionType, Currency, ListingCategory, RegistrationType } from '../../../common/types';
 
 import { CreateVehicleDto } from './create-vehicle.dto';
+import { UpdateTireDto } from './update-tire.dto';
 
 export class UpdateListingDto {
   @ApiPropertyOptional({
@@ -216,4 +217,18 @@ export class UpdateListingDto {
   @ValidateNested()
   @Type(() => CreateVehicleDto)
   vehicle?: CreateVehicleDto;
+
+  @ApiPropertyOptional({
+    enum: constants.listingCategories,
+    description: 'Must match existing listing category if sent',
+  })
+  @IsOptional()
+  @IsEnum(ListingCategory, { message: 'validation.listingCategory' })
+  category?: ListingCategory;
+
+  @ApiPropertyOptional({ type: () => UpdateTireDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => UpdateTireDto)
+  tire?: UpdateTireDto;
 }

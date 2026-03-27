@@ -8,7 +8,16 @@
     "codeLength": "Код должен содержать ровно 6 цифр",
     "codeDigits": "Код должен содержать только цифры",
     "passwordMinLength": "Пароль должен содержать не менее 8 символов",
-    "passwordMaxLength": "Пароль не может быть длиннее 100 символов"
+    "passwordMaxLength": "Пароль не может быть длиннее 100 символов",
+    "listingCategory": "Категория объявления должна быть vehicle или tire",
+    "tireLoadIndexRange": "Индекс нагрузки по боковине шины: целое число от 0 до 279",
+    "tireWidthMmInvalid": "Ширина профиля в мм (первое число, например 205 в 205/55 R16): от 125 до 355, шаг 5",
+    "tireAspectRatioInvalid": "Высота профиля (число после слэша, например 55 в 205/55 R16): от 5 до 95, шаг 5",
+    "tireDiameterInchInvalid": "Диаметр обода в дюймах (число после R, например 16 в R16): от 10 до 35 с шагом 0,5 (16, 17,5, 22,5)",
+    "tireSpeedIndexRange": "Индекс скорости: одна латинская буква — Q, R, S, T, H, V, W или Y (как на шине)",
+    "listingImagesMinVehicle": "Требуется минимум {count} фотографии",
+    "listingImagesMinTire": "Требуется минимум {count} фотография",
+    "listingImagesMax": "Можно загрузить не более {max} фотографий"
   },
   "errors": {
     "serverError": "Ошибка на сервере. Попробуйте позже.",
@@ -78,6 +87,21 @@
     "vinRateLimitExceeded": "Запрашивать VIN можно не более 5 раз в час. Попробуйте позже.",
     "vehicleIdNotFound": "ID транспортного средства не найден",
     "brandNotFoundById": "Марка не найдена",
+    "tireBrandNotFound": "Марка шин не найдена",
+    "listingMixedVehicleTire": "Объявление не может одновременно содержать данные автомобиля и шин",
+    "listingCategoryImmutable": "Категорию объявления нельзя изменить",
+    "tirePayloadRequired": "Для объявлений о шинах обязательно укажите данные шины",
+    "vehiclePayloadRequired": "Для объявлений об авто обязательно укажите данные ТС",
+    "tireModelNotFound": "Модель шин не найдена",
+    "tireModelBrandMismatch": "Модель шин не соответствует выбранной марке",
+    "tireModelArchived": "Эта модель шин больше недоступна",
+    "tireCustomModelRequired": "При выборе Other укажите название модели",
+    "tireCustomModelUnexpected": "Своё название модели допустимо только для варианта Other",
+    "tireStuddedOnlyWinter": "Шипы допустимы только для зимнего сезона",
+    "tireRunFlatOnlyCar": "Run-flat только для легковых шин",
+    "tireDiameterInvalid": "Диаметр обода от 10 до 35 дюймов с шагом 0,5 (например 16 в R16 или 22,5)",
+    "tireNotFoundForListing": "Для объявления не найдены данные шины",
+    "tireOtherModelMissing": "В каталоге нет модели Other для этой марки",
     "invalidSecretKey": "Неверный секретный ключ",
     "invalidFilename": "Недопустимое имя файла",
     "qualityMustBeNumber": "Качество должно быть числом от 1 до 100",
@@ -113,7 +137,10 @@
     "site": {
       "homePageDescription": "Купите или продайте авто на Kupito! Опубликуйте объявление бесплатно. Платформа для покупки и продажи автомобилей онлайн в Молдове. Объявления о продаже автомобилей Молдова - бесплатная публикация объявлений для физических лиц и автодилеров.",
       "homePageDescriptionWithBrand": "Купите автомобили {brand} на Kupito! Найдите лучшие цены и выбор автомобилей {brand} в Молдове.",
-      "homePageDescriptionWithBrandModel": "Купите {brand} {model} на Kupito! Найдите лучшие цены и выбор автомобилей {brand} {model} в Молдове."
+      "homePageDescriptionWithBrandModel": "Купите {brand} {model} на Kupito! Найдите лучшие цены и выбор автомобилей {brand} {model} в Молдове.",
+      "tiresHomePageDescription": "Купите или продайте шины на Kupito! Бесплатные объявления о шинах в Молдове: новые и б/у, разные размеры и сезоны.",
+      "tiresHomePageDescriptionWithBrand": "Шины {brand} на Kupito! Выбор и цены на шины {brand} в Молдове.",
+      "tiresHomePageDescriptionWithBrandModel": "Шины {brand} {model} на Kupito! Выбор и цены на {brand} {model} в Молдове."
     }
   },
   "telegram": {

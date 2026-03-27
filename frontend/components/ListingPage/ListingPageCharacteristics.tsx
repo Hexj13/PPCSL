@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
@@ -18,9 +18,11 @@ import {
   formatFuel,
   horsepowerToKw,
   formatMileage,
+  formatTireSize,
   getVehicleType,
+  isTireListing,
 } from '@/lib/utils';
-import { CopyIcon, EyeIcon, EyeSlashIcon } from '@/ui';
+import { CopyIcon, EyeIcon, EyeSlashIcon, HintTooltip } from '@/ui';
 
 const SECONDARY_STYLE = { color: 'rgb(var(--text-secondary-rgb))' as const };
 const BTN_CLASS =
@@ -30,14 +32,20 @@ function CharRow({
   label,
   value,
   children,
+  hint,
 }: {
   label: string;
-  value?: React.ReactNode;
-  children?: React.ReactNode;
+  value?: ReactNode;
+  children?: ReactNode;
+  hint?: ReactNode;
 }) {
   return (
     <div>
-      <span className="text-primary-700 font-semibold">{label}:</span>
+      <span className="text-primary-700 font-semibold inline-flex items-center gap-1 flex-wrap">
+        <span>{label}</span>
+        {hint}
+        <span>:</span>
+      </span>
       <span className="ml-2" style={SECONDARY_STYLE}>
         {value ?? children}
       </span>
@@ -295,8 +303,83 @@ interface ListingPageCharacteristicsProps {
   listing: Listing;
 }
 
+function ListingPageTireCharacteristics({ listing }: { listing: Listing }) {
+  const { t } = useTranslation();
+  const tire = listing.tire;
+  if (!tire) return null;
+  const modelLabel =
+    tire.model?.is_other && tire.custom_model_name?.trim()
+      ? tire.custom_model_name.trim()
+      : tire.model?.name || '';
+  const yes = t('listingDetail.tireYes');
+  return (
+    <div className="surface overflow-hidden">
+      <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-900">
+        {t('listingDetail.characteristics')}
+      </h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-base">
+        {tire.brand?.name && <CharRow label={t('listingDetail.brand')} value={tire.brand.name} />}
+        {modelLabel && <CharRow label={t('listingDetail.model')} value={modelLabel} />}
+        <CharRow
+          label={t('listingDetail.tireVehicleType')}
+          value={t(`listings.vehicleType.${tire.tire_vehicle_type}`)}
+        />
+        <CharRow label={t('listingDetail.tireSize')} value={formatTireSize(tire)} />
+        <CharRow
+          label={t('listingDetail.tireTread')}
+          value={t(`searchFilters.tireTreadOption.${tire.season}`)}
+        />
+        <CharRow
+          label={t('listingDetail.tireCondition')}
+          value={t(`searchFilters.tireConditionOption.${tire.condition}`)}
+        />
+        <CharRow label={t('listings.tireForm.quantityLabel')} value={String(tire.quantity)} />
+        {tire.load_index && (
+          <CharRow
+            label={t('listingDetail.tireLoadIndex')}
+            value={tire.load_index}
+            hint={
+              <HintTooltip
+                ariaLabel={t('listings.tireForm.loadIndexHintAria')}
+                width="w-96"
+                contentHtml={t('listings.tireForm.loadIndexHint')}
+              />
+            }
+          />
+        )}
+        {tire.speed_index && (
+          <CharRow
+            label={t('listingDetail.tireSpeedIndex')}
+            value={tire.speed_index}
+            hint={
+              <HintTooltip
+                ariaLabel={t('listings.tireForm.speedIndexHintAria')}
+                width="w-96"
+                contentHtml={t('listings.tireForm.speedIndexHint')}
+              />
+            }
+          />
+        )}
+        {tire.studded === true && <CharRow label={t('listingDetail.tireStudded')} value={yes} />}
+        {tire.run_flat === true && <CharRow label={t('listingDetail.tireRunFlat')} value={yes} />}
+        {tire.reinforced_xl === true && (
+          <CharRow label={t('listingDetail.tireReinforcedXl')} value={yes} />
+        )}
+        {tire.spare_donut === true && (
+          <CharRow label={t('listingDetail.tireSpareDonut')} value={yes} />
+        )}
+        {tire.tubeless === true && <CharRow label={t('listingDetail.tireTubeless')} value={yes} />}
+        {tire.acoustic === true && <CharRow label={t('listingDetail.tireAcoustic')} value={yes} />}
+      </div>
+    </div>
+  );
+}
+
 export function ListingPageCharacteristics({ listing }: ListingPageCharacteristicsProps) {
   const { t } = useTranslation();
+  if (isTireListing(listing)) {
+    return <ListingPageTireCharacteristics listing={listing} />;
+  }
   const vehicle = listing.vehicle;
   const vehicleType = getVehicleType(listing);
 

@@ -109,7 +109,8 @@ export default async function ListingsPage({
   const params = (await (searchParams ?? Promise.resolve(undefined))) ?? {};
   const brand = typeof params.brand === 'string' ? params.brand : null;
   const model = typeof params.model === 'string' ? params.model : null;
-  const searchStructuredData = await getSearchStructuredData({ brand, model });
+  const category = typeof params.category === 'string' ? params.category : null;
+  const searchStructuredData = await getSearchStructuredData({ brand, model, category });
 
   return (
     <div>

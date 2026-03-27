@@ -10,6 +10,20 @@ export interface VehicleForRanking {
   engine_displ_l?: number | null;
 }
 
+export interface TireForRanking {
+  brand_id?: string | null;
+  model_id?: string | null;
+  tire_vehicle_type?: string | null;
+  season?: string | null;
+  condition?: string | null;
+  width_mm?: number | null;
+  aspect_ratio?: number | null;
+  diameter_inch?: number | null;
+  quantity?: number | null;
+  studded?: boolean | null;
+  run_flat?: boolean | null;
+}
+
 export interface ListingForRanking {
   id: string;
   user_id: string;
@@ -22,6 +36,7 @@ export interface ListingForRanking {
   promoted_until?: Date | string | null;
   last_updated_at: Date | string;
   vehicle?: VehicleForRanking | null;
+  tire?: TireForRanking | null;
 }
 
 export interface CurrentListingForRanking {
@@ -31,6 +46,7 @@ export interface CurrentListingForRanking {
   condition?: string | null;
   city?: string | null;
   vehicle?: VehicleForRanking | null;
+  tire?: TireForRanking | null;
 }
 
 interface ListingWithMetadata extends ListingForRanking {
@@ -45,6 +61,19 @@ interface ListingWithMetadata extends ListingForRanking {
   __condition_match: number;
 }
 
+interface TireListingWithMetadata extends ListingForRanking {
+  __bucket_priority: number;
+  __same_city: number;
+  __tire_vehicle_type_match: number;
+  __season_match: number;
+  __tire_condition_match: number;
+  __listing_condition_match: number;
+  __quantity_diff: number;
+  __stud_match: number;
+  __run_flat_match: number;
+  __price_norm_diff: number;
+}
+
 export class SimilarListingsRankingService {
   rank<T extends ListingForRanking>(
     current: CurrentListingForRanking,
@@ -54,6 +83,10 @@ export class SimilarListingsRankingService {
       rates: Record<string, number>;
     },
   ): T[] {
+    if (current.tire?.width_mm != null) {
+      return this.rankTireListings(current, candidates, currencyContext);
+    }
+
     const { vehicle } = current;
     const { price, city } = current;
     const year = vehicle?.year;
@@ -262,6 +295,161 @@ export class SimilarListingsRankingService {
         __engine_diff,
         __is_new_match,
         __condition_match,
+        ...listing
+      }) => listing as T,
+    );
+  }
+
+  private rankTireListings<T extends ListingForRanking>(
+    current: CurrentListingForRanking,
+    candidates: T[],
+    currencyContext?: {
+      defaultCurrency: string;
+      rates: Record<string, number>;
+    },
+  ): T[] {
+    const t = current.tire!;
+    const { city } = current;
+    const currentCondition = current.condition;
+    const currentCityNormalized = city ? city.trim().toLowerCase() : '';
+
+    const currentPriceNormalized = this.normalizeToDefaultCurrency(
+      current.price ?? null,
+      current.currency ?? null,
+      currencyContext,
+    );
+
+    const withMetadata = candidates.map((listing): T & TireListingWithMetadata => {
+      const ct = listing.tire;
+      let bucketPriority = 7;
+
+      if (ct) {
+        const exactSize =
+          ct.width_mm === t.width_mm &&
+          ct.aspect_ratio === t.aspect_ratio &&
+          Number(ct.diameter_inch) === Number(t.diameter_inch);
+        const brandMatch = !!t.brand_id && ct.brand_id === t.brand_id;
+        const modelMatch = !!t.model_id && !!ct.model_id && ct.model_id === t.model_id;
+
+        if (exactSize && brandMatch && modelMatch) {
+          bucketPriority = 1;
+        } else if (exactSize && brandMatch) {
+          bucketPriority = 2;
+        } else if (exactSize) {
+          bucketPriority = 3;
+        } else if (brandMatch && modelMatch) {
+          bucketPriority = 4;
+        } else if (brandMatch) {
+          bucketPriority = 5;
+        }
+      }
+
+      const tireVehicleTypeMatch =
+        !!t.tire_vehicle_type &&
+        !!ct?.tire_vehicle_type &&
+        ct.tire_vehicle_type === t.tire_vehicle_type
+          ? 1
+          : 0;
+      const listingCityNormalized = listing.city ? listing.city.trim().toLowerCase() : '';
+      const sameCity = listingCityNormalized === currentCityNormalized ? 1 : 0;
+
+      const seasonMatch = t.season && ct?.season && ct.season === t.season ? 1 : 0;
+      const tireConditionMatch =
+        t.condition && ct?.condition && ct.condition === t.condition ? 1 : 0;
+      const listingConditionMatch =
+        currentCondition && listing.condition && listing.condition === currentCondition ? 1 : 0;
+
+      let quantityDiff = Number.POSITIVE_INFINITY;
+      if (t.quantity != null && ct?.quantity != null) {
+        quantityDiff = Math.abs(ct.quantity - t.quantity);
+      }
+
+      const studMatch =
+        t.studded != null && ct?.studded != null && ct.studded === t.studded ? 1 : 0;
+      const runFlatMatch =
+        t.run_flat != null && ct?.run_flat != null && ct.run_flat === t.run_flat ? 1 : 0;
+
+      const listingPriceNormalized = this.normalizeToDefaultCurrency(
+        listing.price,
+        listing.currency ?? null,
+        currencyContext,
+      );
+      let priceNormDiff = Number.POSITIVE_INFINITY;
+      if (currentPriceNormalized != null && listingPriceNormalized != null) {
+        priceNormDiff = Math.abs(listingPriceNormalized - currentPriceNormalized);
+      }
+
+      return {
+        ...listing,
+        __bucket_priority: bucketPriority,
+        __same_city: sameCity,
+        __tire_vehicle_type_match: tireVehicleTypeMatch,
+        __season_match: seasonMatch,
+        __tire_condition_match: tireConditionMatch,
+        __listing_condition_match: listingConditionMatch,
+        __quantity_diff: quantityDiff,
+        __stud_match: studMatch,
+        __run_flat_match: runFlatMatch,
+        __price_norm_diff: priceNormDiff,
+      } as T & TireListingWithMetadata;
+    });
+
+    const now = new Date();
+    withMetadata.sort((a, b) => {
+      if (a.__bucket_priority !== b.__bucket_priority) {
+        return a.__bucket_priority - b.__bucket_priority;
+      }
+      const isActivelyPromotedA =
+        a.is_promoted && (!a.promoted_until || new Date(a.promoted_until) > now);
+      const isActivelyPromotedB =
+        b.is_promoted && (!b.promoted_until || new Date(b.promoted_until) > now);
+      const promotedA = isActivelyPromotedA ? 1 : 0;
+      const promotedB = isActivelyPromotedB ? 1 : 0;
+      if (promotedA !== promotedB) {
+        return promotedB - promotedA;
+      }
+      if (a.__tire_vehicle_type_match !== b.__tire_vehicle_type_match) {
+        return b.__tire_vehicle_type_match - a.__tire_vehicle_type_match;
+      }
+      if (a.__same_city !== b.__same_city) {
+        return b.__same_city - a.__same_city;
+      }
+      if (a.__season_match !== b.__season_match) {
+        return b.__season_match - a.__season_match;
+      }
+      if (a.__tire_condition_match !== b.__tire_condition_match) {
+        return b.__tire_condition_match - a.__tire_condition_match;
+      }
+      if (a.__listing_condition_match !== b.__listing_condition_match) {
+        return b.__listing_condition_match - a.__listing_condition_match;
+      }
+      if (a.__quantity_diff !== b.__quantity_diff) {
+        return a.__quantity_diff - b.__quantity_diff;
+      }
+      if (a.__stud_match !== b.__stud_match) {
+        return b.__stud_match - a.__stud_match;
+      }
+      if (a.__run_flat_match !== b.__run_flat_match) {
+        return b.__run_flat_match - a.__run_flat_match;
+      }
+      if (a.__price_norm_diff !== b.__price_norm_diff) {
+        return a.__price_norm_diff - b.__price_norm_diff;
+      }
+      return new Date(b.last_updated_at).getTime() - new Date(a.last_updated_at).getTime();
+    });
+
+    return withMetadata.map(
+      ({
+        __bucket_priority,
+        __same_city,
+        __tire_vehicle_type_match,
+        __season_match,
+        __tire_condition_match,
+        __listing_condition_match,
+        __quantity_diff,
+        __stud_match,
+        __run_flat_match,
+        __price_norm_diff,
         ...listing
       }) => listing as T,
     );

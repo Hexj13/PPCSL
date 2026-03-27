@@ -1,3 +1,4 @@
+import type { TireTread } from '../tire-tread';
 import type {
   BodyType,
   ConditionType,
@@ -10,9 +11,49 @@ import type {
   UserType,
 } from '../types';
 
+export type ListingCategory = 'vehicle' | 'tire';
+
+export interface TireOnListing {
+  id: string;
+  brand_id: string;
+  model_id: string | null;
+  brand?: {
+    id: string;
+    name: string;
+    logoUrl?: string | null;
+    order?: number;
+  };
+  model?: {
+    id: string;
+    brand_id?: string;
+    name: string;
+    order?: number;
+    is_other?: boolean;
+  };
+  custom_model_name?: string | null;
+  tire_vehicle_type: 'car' | 'truck' | 'moto';
+  season: TireTread;
+  condition: 'new' | 'used' | 'retreaded';
+  width_mm: number;
+  aspect_ratio: number;
+  diameter_inch: number;
+  quantity: number;
+  load_index?: string | null;
+  speed_index?: string | null;
+  dot_year?: number | null;
+  tread_depth_mm?: number | null;
+  studded?: boolean | null;
+  run_flat?: boolean | null;
+  reinforced_xl?: boolean | null;
+  spare_donut?: boolean | null;
+  tubeless?: boolean | null;
+  acoustic?: boolean | null;
+}
+
 export interface Listing {
   id: string;
   title: string;
+  category?: ListingCategory;
   price?: number;
   currency?: Currency;
   city: string;
@@ -27,13 +68,14 @@ export interface Listing {
   urgent?: boolean;
   is_new?: boolean;
   vin?: string;
-  condition: ConditionType;
-  registration_type: RegistrationType;
-  horsepower: number;
+  condition?: ConditionType | null;
+  registration_type?: RegistrationType | null;
+  horsepower?: number | null;
   power_kw?: number;
   views?: number;
   equipment?: string[];
-  vehicle?: Vehicle;
+  vehicle?: Vehicle | null;
+  tire?: TireOnListing | null;
   user?: User;
   last_updated_at: string;
   last_edited_at?: string;
@@ -105,6 +147,23 @@ export interface User {
 }
 
 export interface SearchParams {
+  category?: string;
+  vehicleType?: 'car' | 'truck' | 'moto';
+  tireVehicleType?: 'car' | 'truck' | 'moto';
+  tire_brand_ids?: string;
+  tire_model_ids?: string;
+  tire_widths?: string;
+  tire_profiles?: string;
+  tire_diameters?: string;
+  tire_seasons?: string;
+  tire_conditions?: string;
+  tire_quantities?: string;
+  tire_studded?: boolean;
+  tire_run_flat?: boolean;
+  tire_reinforced_xl?: boolean;
+  tire_spare_donut?: boolean;
+  tire_tubeless?: boolean;
+  tire_acoustic?: boolean;
   brand_id?: string;
   brand_ids?: string[];
   model_id?: string;
@@ -144,7 +203,29 @@ export interface SearchParams {
   sortOrder?: 'ASC' | 'DESC';
 }
 
+export interface CreateTireDtoPayload {
+  brand_id: string;
+  model_id?: string;
+  custom_model_name?: string;
+  tire_vehicle_type: 'car' | 'truck' | 'moto';
+  season: TireTread;
+  condition: 'new' | 'used' | 'retreaded';
+  width_mm: number;
+  aspect_ratio: number;
+  diameter_inch: number;
+  quantity: number;
+  load_index?: string;
+  speed_index?: string;
+  studded?: boolean;
+  run_flat?: boolean;
+  reinforced_xl?: boolean;
+  spare_donut?: boolean;
+  tubeless?: boolean;
+  acoustic?: boolean;
+}
+
 export interface CreateListingDto {
+  category?: ListingCategory;
   title?: string;
   price: number;
   currency?: Currency;
@@ -160,12 +241,12 @@ export interface CreateListingDto {
   urgent?: boolean;
   is_new?: boolean;
   vin?: string;
-  condition: ConditionType;
-  registration_type: RegistrationType;
-  horsepower: number;
+  condition?: ConditionType;
+  registration_type?: RegistrationType;
+  horsepower?: number;
   power_kw?: number;
   equipment?: string[];
-  vehicle: {
+  vehicle?: {
     brand_id: string;
     model_id: string;
     year: number;
@@ -178,28 +259,33 @@ export interface CreateListingDto {
     color?: string;
     doors?: number;
   };
+  tire?: CreateTireDtoPayload;
   assignedUserId?: string;
 }
 
 export type UpdateListingDto = Omit<
   Partial<CreateListingDto>,
-  'down_payment_amount' | 'vin' | 'description' | 'power_kw' | 'equipment' | 'vehicle'
+  'down_payment_amount' | 'vin' | 'description' | 'power_kw' | 'equipment' | 'vehicle' | 'tire'
 > & {
   vin?: string | null;
   description?: string | null;
   power_kw?: number | null;
   equipment?: string[] | null;
   vehicle?: Omit<
-    Partial<CreateListingDto['vehicle']>,
+    Partial<NonNullable<CreateListingDto['vehicle']>>,
     'engine_displ_l' | 'mileage_km' | 'fuel' | 'transmission' | 'drive_type' | 'color' | 'doors'
   > & {
     engine_displ_l?: number | null;
     mileage_km?: number | null;
-    fuel?: CreateListingDto['vehicle']['fuel'] | null;
-    transmission?: CreateListingDto['vehicle']['transmission'] | null;
-    drive_type?: CreateListingDto['vehicle']['drive_type'] | null;
+    fuel?: NonNullable<CreateListingDto['vehicle']>['fuel'] | null;
+    transmission?: NonNullable<CreateListingDto['vehicle']>['transmission'] | null;
+    drive_type?: NonNullable<CreateListingDto['vehicle']>['drive_type'] | null;
     color?: string | null;
     doors?: number | null;
+  };
+  tire?: Partial<Omit<CreateTireDtoPayload, 'model_id' | 'custom_model_name'>> & {
+    model_id?: string | null;
+    custom_model_name?: string | null;
   };
   down_payment_amount?: number | null;
 };

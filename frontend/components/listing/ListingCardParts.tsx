@@ -510,4 +510,8 @@ export const ListingCardImageCarousel = React.forwardRef<
   );
 });
 
-export { ListingCardBadges, ListingCardVehicleSpecs } from './ListingCardBadgesAndSpecs';
+export {
+  ListingCardBadges,
+  ListingCardTireSpecs,
+  ListingCardVehicleSpecs,
+} from './ListingCardBadgesAndSpecs';

@@ -16,6 +16,7 @@ export interface AdminModel {
   vehicleTypes: ('car' | 'truck' | 'moto')[];
   isArchived: boolean;
   activeListingsCount: number;
+  isOther?: boolean;
 }
 
 export interface CreateBrandPayload {

@@ -30,6 +30,10 @@ jest.mock('@/lib/api', () => ({
   citiesApi: {
     getAll: jest.fn(),
   },
+  tiresApi: {
+    getBrands: jest.fn().mockResolvedValue({ data: [] }),
+    getModelsByBrand: jest.fn().mockResolvedValue({ data: [] }),
+  },
 }));
 
 jest.mock('@/lib/store', () => ({
@@ -44,6 +48,7 @@ const searchFiltersTranslations: Record<string, string> = {
   'searchFilters.model': 'Model',
   'searchFilters.city': 'City',
   'searchFilters.price': 'Price',
+  'searchFilters.priceWithSearchCurrency': 'Price ({currency})',
   'searchFilters.from': 'From',
   'searchFilters.to': 'To',
   'searchFilters.selectBrands': 'Select brands',
@@ -81,13 +86,15 @@ const searchFiltersTranslations: Record<string, string> = {
 
 jest.mock('@/hooks/useTranslation', () => ({
   useTranslation: () => ({
-    t: (key: string, params?: Record<string, string>) => {
+    t: (key: string, params?: Record<string, string | number>) => {
       const s = searchFiltersTranslations[key] ?? key;
       if (params) {
-        return Object.entries(params).reduce(
-          (acc, [k, v]) => acc.replace(new RegExp(`\\{\\{${k}\\}\\}`, 'g'), v),
-          s,
-        );
+        return Object.entries(params).reduce((acc, [k, v]) => {
+          const str = String(v);
+          return acc
+            .replace(new RegExp(`\\{\\{${k}\\}\\}`, 'g'), str)
+            .replace(new RegExp(`\\{${k}\\}`, 'g'), str);
+        }, s);
       }
       return s;
     },

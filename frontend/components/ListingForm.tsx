@@ -1,54 +1,18 @@
 'use client';
 
-import { AdditionalInfoSection } from '@/components/ListingForm/AdditionalInfoSection';
-import { BasicInfoSection } from '@/components/ListingForm/BasicInfoSection';
-import { ListingFormSkeleton } from '@/components/ListingForm/ListingFormSkeleton';
-import { ListingSettingsSection } from '@/components/ListingForm/ListingSettingsSection';
-import { PhotosSection } from '@/components/ListingForm/PhotosSection';
-import { PriceAndLocationSection } from '@/components/ListingForm/PriceAndLocationSection';
-import { TechnicalSpecsSection } from '@/components/ListingForm/TechnicalSpecsSection';
-import { VehicleTypeSelector } from '@/components/ListingForm/VehicleTypeSelector';
-import { useListingForm } from '@/components/ListingForm/useListingForm';
-import { ScrollDropdownIntoViewContext } from '@/components/common/Dropdown';
-import type { Listing } from '@/lib/api';
-import type { ConditionType, Currency, ListingStatus, RegistrationType } from '@/lib/types';
-import { LoadingButton } from '@/ui';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 
-export interface ListingFormData {
-  price: string;
-  currency: Currency;
-  city: string;
-  negotiable: boolean;
-  available_in_credit: boolean;
-  down_payment_amount: string;
-  description: string;
-  status: ListingStatus;
-  images: string[];
-  cover_blur_hash: string;
-  image_blur_hashes: (string | null)[];
-  urgent: boolean;
-  is_new: boolean;
-  vin: string;
-  condition: ConditionType;
-  registration_type: RegistrationType;
-  horsepower: string;
-  power_kw: string;
-  equipment: string[];
-  vehicle: {
-    brand_id: string;
-    model_id: string;
-    year: string;
-    engine_displ_l: string;
-    mileage_km: string;
-    fuel: string;
-    transmission: string;
-    drive_type: string;
-    body_type: string;
-    color: string;
-    doors: string;
-  };
-  assignedUserId: string;
-}
+import { TireListingForm } from '@/components/ListingForm/TireListingForm';
+import {
+  VehicleListingForm,
+  type VehicleListingFormHandle,
+} from '@/components/ListingForm/VehicleListingForm';
+import { VehicleTypeSelector } from '@/components/ListingForm/VehicleTypeSelector';
+import { useTranslation } from '@/hooks/useTranslation';
+import type { Listing } from '@/lib/api';
+
+export type { ListingFormData } from '@/components/ListingForm/listingFormTypes';
 
 interface ListingFormProps {
   mode: 'create' | 'edit';
@@ -56,6 +20,18 @@ interface ListingFormProps {
   initialData?: Listing;
   onSuccess?: (_updatedListing?: Listing) => void;
   canChangeVehicleType?: boolean;
+  initialCreateCategory?: 'vehicle' | 'tire';
+}
+
+function initialCreateCategoryValue(
+  mode: ListingFormProps['mode'],
+  initialData: Listing | undefined,
+  initialCreateCategory: 'vehicle' | 'tire',
+): 'vehicle' | 'tire' {
+  if (mode === 'edit') {
+    return initialData?.category === 'tire' ? 'tire' : 'vehicle';
+  }
+  return initialCreateCategory;
 }
 
 export function ListingForm({
@@ -64,80 +40,124 @@ export function ListingForm({
   initialData,
   onSuccess,
   canChangeVehicleType = false,
+  initialCreateCategory = 'vehicle',
 }: ListingFormProps) {
-  const {
-    formRef,
-    isInitialLoading,
-    showSkeleton,
-    isMounted,
-    isChangingType,
-    vehicleType,
-    loading,
-    uploading,
-    hidePlates,
-    setHidePlates,
-    deletingImageUrls,
-    handleVehicleTypeChange,
-    handleFileUpload,
-    handleImageDelete,
-    handleSubmit,
-    sectionProps,
-    t,
-  } = useListingForm({ mode, listingId, initialData, onSuccess, canChangeVehicleType });
+  const { t } = useTranslation();
+  const initialCategory = initialCreateCategoryValue(mode, initialData, initialCreateCategory);
+  const [createCategory, setCreateCategory] = useState<'vehicle' | 'tire'>(() => initialCategory);
+  const [createVehicleType, setCreateVehicleType] = useState<'car' | 'truck' | 'moto'>('car');
+  const [tireFormNonce, setTireFormNonce] = useState(0);
+  const [tireBootstrapOverlay, setTireBootstrapOverlay] = useState(
+    () => mode === 'create' && initialCategory === 'tire',
+  );
+  const [vehicleTypeSwitchingOverlay, setVehicleTypeSwitchingOverlay] = useState(false);
+  const [vehicleBootstrapOverlay, setVehicleBootstrapOverlay] = useState(false);
+  const vehicleFormRef = useRef<VehicleListingFormHandle>(null);
 
-  if (isInitialLoading) {
+  useEffect(() => {
+    if (mode === 'edit' && initialData?.category === 'tire') {
+      setCreateCategory('tire');
+    }
+    if (mode === 'edit' && initialData?.category !== 'tire') {
+      setCreateCategory('vehicle');
+    }
+  }, [mode, initialData?.category, initialData?.id]);
+
+  const handleTireListingLoadReady = useCallback(() => {
+    setTireBootstrapOverlay(false);
+  }, []);
+
+  const handleVehicleListingLoadReady = useCallback(() => {
+    setVehicleBootstrapOverlay(false);
+  }, []);
+
+  const handleSelectTire = useCallback(() => {
+    if (createCategory === 'tire') return;
+    setVehicleTypeSwitchingOverlay(false);
+    setVehicleBootstrapOverlay(false);
+    flushSync(() => setTireBootstrapOverlay(true));
+    setTireFormNonce((n) => n + 1);
+    setCreateCategory('tire');
+  }, [createCategory]);
+
+  const handleListingVehicleTypeSelect = useCallback(
+    (type: 'car' | 'truck' | 'moto') => {
+      setTireBootstrapOverlay(false);
+      setCreateCategory('vehicle');
+      if (createCategory === 'vehicle') {
+        setVehicleBootstrapOverlay(false);
+        vehicleFormRef.current?.changeVehicleType(type);
+      } else {
+        flushSync(() => setVehicleBootstrapOverlay(true));
+        setCreateVehicleType(type);
+      }
+    },
+    [createCategory],
+  );
+
+  if (mode === 'edit' && initialData?.category === 'tire') {
     return (
-      <div className="card p-4 md:p-6 lg:p-8">
-        <div className="h-96" />
+      <TireListingForm
+        mode="edit"
+        listingId={listingId}
+        initialData={initialData}
+        onSuccess={onSuccess}
+      />
+    );
+  }
+
+  if (mode === 'create') {
+    const globalBusy =
+      vehicleTypeSwitchingOverlay || tireBootstrapOverlay || vehicleBootstrapOverlay;
+
+    return (
+      <div className="card p-4 md:p-6 lg:p-8 relative min-h-[800px]">
+        {globalBusy && (
+          <div className="absolute inset-0 bg-white/90 z-50 flex items-center justify-center rounded-xl">
+            <div className="w-10 h-10 border-4 border-primary-700 border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+        <VehicleTypeSelector
+          variant="listingCategory"
+          title={t('listings.listingCategoryLabel')}
+          vehicleType={createVehicleType}
+          activeListingCategory={createCategory === 'tire' ? 'tire' : 'vehicle'}
+          onTypeChange={handleListingVehicleTypeSelect}
+          onTireSelect={handleSelectTire}
+          t={t}
+        />
+        {createCategory === 'vehicle' ? (
+          <VehicleListingForm
+            ref={vehicleFormRef}
+            mode="create"
+            onSuccess={onSuccess}
+            embedded
+            hideVehicleTypeSelector
+            controlledVehicleType={createVehicleType}
+            onControlledVehicleTypeChange={setCreateVehicleType}
+            onVehicleTypeChanging={setVehicleTypeSwitchingOverlay}
+            onInitialLoadReady={handleVehicleListingLoadReady}
+          />
+        ) : (
+          <TireListingForm
+            key={`tire-create-${tireFormNonce}`}
+            mode="create"
+            onSuccess={onSuccess}
+            embedded
+            onInitialLoadReady={handleTireListingLoadReady}
+          />
+        )}
       </div>
     );
   }
 
   return (
-    <ScrollDropdownIntoViewContext.Provider value={true}>
-      <form
-        ref={formRef}
-        onSubmit={handleSubmit}
-        className="card p-4 md:p-6 lg:p-8 relative min-h-[800px]"
-      >
-        <ListingFormSkeleton isVisible={showSkeleton && !isMounted} />
-        {isChangingType && (
-          <div className="absolute inset-0 bg-white/90 z-50 flex items-center justify-center rounded-xl">
-            <div className="w-10 h-10 border-4 border-primary-700 border-t-transparent rounded-full animate-spin" />
-          </div>
-        )}
-        {(mode === 'create' || (mode === 'edit' && canChangeVehicleType)) && (
-          <VehicleTypeSelector
-            vehicleType={vehicleType}
-            onTypeChange={handleVehicleTypeChange}
-            t={t}
-          />
-        )}
-
-        <BasicInfoSection {...sectionProps} />
-        <TechnicalSpecsSection {...sectionProps} />
-        <AdditionalInfoSection {...sectionProps} />
-        <PhotosSection
-          {...sectionProps}
-          uploading={uploading}
-          onFileUpload={handleFileUpload}
-          onImageDelete={handleImageDelete}
-          hidePlates={hidePlates}
-          onHidePlatesChange={setHidePlates}
-          deletingImageUrls={deletingImageUrls}
-        />
-        <PriceAndLocationSection {...sectionProps} />
-        <ListingSettingsSection {...sectionProps} mode={mode} />
-
-        <LoadingButton
-          type="submit"
-          loading={loading}
-          loadingText={mode === 'create' ? t('listings.creating') : t('listings.saving')}
-          className="w-full min-h-12 text-primary-700 font-medium text-base hover:text-primary-900 hover:border-primary-900 transition-colors duration-200 whitespace-nowrap px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {mode === 'create' ? t('listings.createListing') : t('listings.saveChanges')}
-        </LoadingButton>
-      </form>
-    </ScrollDropdownIntoViewContext.Provider>
+    <VehicleListingForm
+      mode={mode}
+      listingId={listingId}
+      initialData={initialData}
+      onSuccess={onSuccess}
+      canChangeVehicleType={canChangeVehicleType}
+    />
   );
 }

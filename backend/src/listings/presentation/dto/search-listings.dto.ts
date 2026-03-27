@@ -6,6 +6,7 @@ import {
   IsBoolean,
   IsEnum,
   IsIn,
+  IsInt,
   IsNumber,
   IsOptional,
   IsString,
@@ -22,11 +23,253 @@ import {
   Currency,
   DriveType,
   FuelType,
+  ListingCategory,
   RegistrationType,
+  TireCondition,
+  TireSeason,
+  TireVehicleType,
   TransmissionType,
 } from '../../../common/types';
 
 export class SearchListingsDto {
+  @ApiPropertyOptional({
+    enum: constants.listingCategories,
+    description: 'Listing category; omit for vehicle search',
+  })
+  @IsOptional()
+  @IsEnum(ListingCategory)
+  category?: 'vehicle' | 'tire';
+
+  @ApiPropertyOptional({
+    example: 'car',
+    enum: constants.tireVehicleTypes,
+    description: 'Tire listing vehicle type (passenger/commercial/moto compatibility)',
+  })
+  @IsOptional()
+  @IsEnum(TireVehicleType)
+  tireVehicleType?: 'car' | 'truck' | 'moto';
+
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Tire brand UUIDs (comma-separated or array)',
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return value.split(',').filter((v) => v.trim() !== '');
+    }
+    if (Array.isArray(value)) {
+      return value;
+    }
+    return [];
+  })
+  @IsArray()
+  @ArrayMaxSize(20, { message: 'errors.searchBrandIdsLimit|20' })
+  @IsUUID(undefined, { each: true })
+  tire_brand_ids?: string[];
+
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Tire model UUIDs (comma-separated or array)',
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return value.split(',').filter((v) => v.trim() !== '');
+    }
+    if (Array.isArray(value)) {
+      return value;
+    }
+    return [];
+  })
+  @IsArray()
+  @ArrayMaxSize(20, { message: 'errors.searchModelIdsLimit|20' })
+  @IsUUID(undefined, { each: true })
+  tire_model_ids?: string[];
+
+  @ApiPropertyOptional({
+    type: [Number],
+    description: 'Tire width in mm',
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    const parseAndFilter = (raw: unknown[]): number[] =>
+      raw
+        .map((v) => constants.parseStrictUnsignedIntToken(v))
+        .filter(
+          (n): n is number =>
+            n !== null &&
+            n >= constants.tireWidthMmMin &&
+            n <= constants.tireWidthMmMax &&
+            n % constants.tireWidthMmStep === 0,
+        );
+    if (typeof value === 'string') {
+      return parseAndFilter(value.split(',').filter((v) => v.trim() !== ''));
+    }
+    if (Array.isArray(value)) {
+      return parseAndFilter(value);
+    }
+    return [];
+  })
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsInt({ each: true })
+  tire_widths?: number[];
+
+  @ApiPropertyOptional({ type: [Number], description: 'Aspect ratio (profile)' })
+  @IsOptional()
+  @Transform(({ value }) => {
+    const parseAndFilter = (raw: unknown[]): number[] =>
+      raw
+        .map((v) => constants.parseStrictUnsignedIntToken(v))
+        .filter(
+          (n): n is number =>
+            n !== null &&
+            n >= constants.tireAspectRatioMin &&
+            n <= constants.tireAspectRatioMax &&
+            n % constants.tireAspectRatioStep === 0,
+        );
+    if (typeof value === 'string') {
+      return parseAndFilter(value.split(',').filter((v) => v.trim() !== ''));
+    }
+    if (Array.isArray(value)) {
+      return parseAndFilter(value);
+    }
+    return [];
+  })
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsInt({ each: true })
+  @Min(constants.tireAspectRatioMin, { each: true })
+  @Max(constants.tireAspectRatioMax, { each: true })
+  tire_profiles?: number[];
+
+  @ApiPropertyOptional({
+    type: [Number],
+    description: 'Rim diameter in inches (e.g. 16, 22.5); half-inch steps',
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    const parseAndFilter = (raw: unknown[]): number[] =>
+      raw
+        .map((v) => {
+          const n = typeof v === 'string' ? parseFloat(v.trim().replace(',', '.')) : Number(v);
+          if (Number.isNaN(n)) return null;
+          return constants.normalizeTireDiameterInch(n);
+        })
+        .filter((n): n is number => n !== null && constants.isValidTireDiameterInch(n));
+    if (typeof value === 'string') {
+      return parseAndFilter(value.split(',').filter((v) => v.trim() !== ''));
+    }
+    if (Array.isArray(value)) {
+      return parseAndFilter(value);
+    }
+    return [];
+  })
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsNumber({ maxDecimalPlaces: 1 }, { each: true })
+  @Min(constants.tireDiameterInchMin, { each: true })
+  @Max(constants.tireDiameterInchMax, { each: true })
+  tire_diameters?: number[];
+
+  @ApiPropertyOptional({ enum: constants.tireSeasons, isArray: true })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return value.split(',').filter((v) => v.trim() !== '');
+    }
+    if (Array.isArray(value)) {
+      return value;
+    }
+    return [];
+  })
+  @IsArray()
+  @ArrayMaxSize(10)
+  @IsEnum(TireSeason, { each: true })
+  tire_seasons?: TireSeason[];
+
+  @ApiPropertyOptional({ enum: constants.tireConditions, isArray: true })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return value.split(',').filter((v) => v.trim() !== '');
+    }
+    if (Array.isArray(value)) {
+      return value;
+    }
+    return [];
+  })
+  @IsArray()
+  @ArrayMaxSize(10)
+  @IsEnum(TireCondition, { each: true })
+  tire_conditions?: TireCondition[];
+
+  @ApiPropertyOptional({
+    type: [Number],
+    description: `Quantity from ${constants.tireQuantityMin} to ${constants.tireQuantityMax}`,
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    const parse = (raw: unknown[]): number[] => {
+      return raw
+        .map((v) => constants.parseStrictUnsignedIntToken(v))
+        .filter(
+          (n): n is number =>
+            n !== null && n >= constants.tireQuantityMin && n <= constants.tireQuantityMax,
+        );
+    };
+    if (typeof value === 'string') {
+      return parse(value.split(',').filter((v) => v.trim() !== ''));
+    }
+    if (Array.isArray(value)) {
+      return parse(value);
+    }
+    return [];
+  })
+  @IsArray()
+  @ArrayMaxSize(10)
+  @IsInt({ each: true })
+  @Min(constants.tireQuantityMin, { each: true })
+  @Max(constants.tireQuantityMax, { each: true })
+  tire_quantities?: number[];
+
+  @ApiPropertyOptional({ description: 'Studded winter tires' })
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  tire_studded?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  tire_run_flat?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  tire_reinforced_xl?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  tire_spare_donut?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  tire_tubeless?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  tire_acoustic?: boolean;
+
   @ApiPropertyOptional({
     example: '550e8400-e29b-41d4-a716-446655440000',
     description: 'Brand UUID',

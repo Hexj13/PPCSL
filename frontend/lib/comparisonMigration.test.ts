@@ -28,14 +28,14 @@ describe('mergeComparisonSourcesFromLocalStorage', () => {
   });
 });
 
-describe('useComparisonStore setComparisons', () => {
+describe('useComparisonStore setVehicleComparisons', () => {
   beforeEach(() => {
     localStorage.removeItem('comparison-storage');
     useComparisonStore.getState().clear();
   });
 
   it('dedupes ids and keeps at most three', () => {
-    useComparisonStore.getState().setComparisons(['a', 'b', 'a', 'c', 'd']);
-    expect(useComparisonStore.getState().comparisons).toEqual(['a', 'b', 'c']);
+    useComparisonStore.getState().setVehicleComparisons(['a', 'b', 'a', 'c', 'd']);
+    expect(useComparisonStore.getState().vehicleComparisons).toEqual(['a', 'b', 'c']);
   });
 });

@@ -174,11 +174,13 @@ function buildCollectionPageSchema(
 export async function getSearchStructuredData({
   brand,
   model,
+  category,
   listings,
   maxItems = 12,
 }: {
   brand?: string | null;
   model?: string | null;
+  category?: string | null;
   listings?: Listing[];
   maxItems?: number;
 }): Promise<ReactNode> {
@@ -190,6 +192,35 @@ export async function getSearchStructuredData({
   const brandParam = brand || null;
   const modelParam = model || null;
   const localeTag = `${locale}-${siteConfig.locale.split('-')[1] || 'MD'}` as `${string}-${string}`;
+
+  if (category === 'tire') {
+    const tireBreadcrumbItems = [
+      { '@type': 'ListItem', position: 1, name: t.breadcrumbs.home, item: siteUrl },
+      { '@type': 'ListItem', position: 2, name: t.home.title, item: `${siteUrl}/` },
+    ] as BreadcrumbItem[];
+    const breadcrumbSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: tireBreadcrumbItems,
+    };
+    const itemListSchema = buildItemListSchema(listings, maxItems, siteUrl);
+    return (
+      <>
+        <Script
+          id="structured-data-search-breadcrumb"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: toSafeJsonLdHtml(breadcrumbSchema) }}
+        />
+        {itemListSchema && (
+          <Script
+            id="structured-data-search-itemlist"
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: toSafeJsonLdHtml(itemListSchema) }}
+          />
+        )}
+      </>
+    );
+  }
 
   const itemListElements = buildBreadcrumbItemList(brandParam, modelParam, siteUrl, t);
   const breadcrumbSchema = {

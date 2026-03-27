@@ -272,6 +272,9 @@ function DropdownComponent({
 
   const handleSelect = useCallback(
     (optionValue: string) => {
+      if (optionValue.startsWith('__category__')) {
+        return;
+      }
       if (showActionButtons) {
         setTempValue(optionValue);
       } else {

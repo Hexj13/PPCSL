@@ -250,4 +250,200 @@ describe('SimilarListingsRankingService', () => {
       expect(result[1].id).toBe('far-mdl');
     });
   });
+
+  describe('tire rank', () => {
+    const baseTireCurrent: CurrentListingForRanking = {
+      price: 400,
+      currency: 'EUR',
+      city: 'Chisinau',
+      condition: 'Undamaged',
+      tire: {
+        brand_id: 'tb1',
+        model_id: 'tm1',
+        tire_vehicle_type: 'car',
+        season: 'summer',
+        condition: 'used',
+        width_mm: 225,
+        aspect_ratio: 45,
+        diameter_inch: 17,
+        quantity: 4,
+        studded: false,
+        run_flat: false,
+      },
+    };
+
+    const makeTireCandidate = (
+      overrides: Partial<ListingForRanking> & { id: string; user_id: string; price: number },
+    ): ListingForRanking => ({
+      id: overrides.id,
+      user_id: overrides.user_id,
+      price: overrides.price,
+      currency: overrides.currency ?? 'EUR',
+      is_new: overrides.is_new ?? false,
+      condition: overrides.condition ?? 'Undamaged',
+      city: overrides.city ?? null,
+      is_promoted: overrides.is_promoted ?? false,
+      promoted_until: overrides.promoted_until ?? null,
+      last_updated_at: overrides.last_updated_at ?? new Date().toISOString(),
+      vehicle: null,
+      tire: overrides.tire ?? null,
+    });
+
+    it('should rank exact tire size and brand+model first', () => {
+      const exactMatch = makeTireCandidate({
+        id: 'exact',
+        user_id: 'u1',
+        price: 410,
+        tire: {
+          brand_id: 'tb1',
+          model_id: 'tm1',
+          season: 'winter',
+          condition: 'new',
+          width_mm: 225,
+          aspect_ratio: 45,
+          diameter_inch: 17,
+          quantity: 2,
+        },
+      });
+      const otherSize = makeTireCandidate({
+        id: 'other-size',
+        user_id: 'u2',
+        price: 390,
+        tire: {
+          brand_id: 'tb1',
+          model_id: 'tm1',
+          season: 'summer',
+          condition: 'used',
+          width_mm: 215,
+          aspect_ratio: 45,
+          diameter_inch: 17,
+          quantity: 4,
+        },
+      });
+      const result = service.rank(baseTireCurrent, [otherSize, exactMatch]);
+      expect(result[0].id).toBe('exact');
+      expect(result[1].id).toBe('other-size');
+    });
+
+    it('should prefer promoted tires in the same bucket', () => {
+      const promoted = makeTireCandidate({
+        id: 'p',
+        user_id: 'u1',
+        price: 400,
+        is_promoted: true,
+        promoted_until: new Date(Date.now() + 86400000),
+        tire: {
+          brand_id: 'tb1',
+          model_id: 'tm1',
+          season: 'summer',
+          condition: 'used',
+          width_mm: 225,
+          aspect_ratio: 45,
+          diameter_inch: 17,
+          quantity: 4,
+        },
+      });
+      const plain = makeTireCandidate({
+        id: 'n',
+        user_id: 'u2',
+        price: 400,
+        tire: {
+          brand_id: 'tb1',
+          model_id: 'tm1',
+          season: 'summer',
+          condition: 'used',
+          width_mm: 225,
+          aspect_ratio: 45,
+          diameter_inch: 17,
+          quantity: 4,
+        },
+      });
+      const result = service.rank(baseTireCurrent, [plain, promoted]);
+      expect(result[0].id).toBe('p');
+      expect(result[1].id).toBe('n');
+    });
+
+    it('should prefer same city after promotion within tire bucket', () => {
+      const sameCity = makeTireCandidate({
+        id: 'c',
+        user_id: 'u1',
+        price: 400,
+        city: 'Chisinau',
+        tire: {
+          brand_id: 'tb1',
+          model_id: 'tm1',
+          season: 'summer',
+          condition: 'used',
+          width_mm: 225,
+          aspect_ratio: 45,
+          diameter_inch: 17,
+          quantity: 4,
+        },
+      });
+      const otherCity = makeTireCandidate({
+        id: 'o',
+        user_id: 'u2',
+        price: 400,
+        city: 'Balti',
+        tire: {
+          brand_id: 'tb1',
+          model_id: 'tm1',
+          season: 'summer',
+          condition: 'used',
+          width_mm: 225,
+          aspect_ratio: 45,
+          diameter_inch: 17,
+          quantity: 4,
+        },
+      });
+      const result = service.rank(baseTireCurrent, [otherCity, sameCity]);
+      expect(result[0].id).toBe('c');
+      expect(result[1].id).toBe('o');
+    });
+
+    it('should prefer same tire_vehicle_type when buckets match', () => {
+      const truckCurrent: CurrentListingForRanking = {
+        ...baseTireCurrent,
+        tire: {
+          ...baseTireCurrent.tire!,
+          tire_vehicle_type: 'truck',
+        },
+      };
+      const carTire = makeTireCandidate({
+        id: 'car-tire',
+        user_id: 'u1',
+        price: 400,
+        tire: {
+          brand_id: 'tb1',
+          model_id: 'tm1',
+          tire_vehicle_type: 'car',
+          season: 'summer',
+          condition: 'used',
+          width_mm: 225,
+          aspect_ratio: 45,
+          diameter_inch: 17,
+          quantity: 4,
+        },
+      });
+      const truckTire = makeTireCandidate({
+        id: 'truck-tire',
+        user_id: 'u2',
+        price: 400,
+        tire: {
+          brand_id: 'tb1',
+          model_id: 'tm1',
+          tire_vehicle_type: 'truck',
+          season: 'summer',
+          condition: 'used',
+          width_mm: 225,
+          aspect_ratio: 45,
+          diameter_inch: 17,
+          quantity: 4,
+        },
+      });
+      const result = service.rank(truckCurrent, [carTire, truckTire]);
+      expect(result[0].id).toBe('truck-tire');
+      expect(result[1].id).toBe('car-tire');
+    });
+  });
 });

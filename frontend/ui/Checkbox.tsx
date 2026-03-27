@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 
 import { CheckIcon } from './icons';
 
@@ -32,7 +32,8 @@ export function Checkbox({
   size = 'sm',
   'data-testid': dataTestId,
 }: CheckboxProps) {
-  const checkboxId = id || `checkbox-${Math.random().toString(36).substr(2, 9)}`;
+  const reactId = useId();
+  const checkboxId = id ?? reactId;
 
   return (
     <div className={`flex items-center gap-3 group ${disabled ? 'opacity-50' : ''} ${className}`}>

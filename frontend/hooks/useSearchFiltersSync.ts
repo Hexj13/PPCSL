@@ -23,6 +23,32 @@ interface UseSearchFiltersSyncParams {
   isInternalSearchRef?: React.MutableRefObject<boolean>;
 }
 
+function countCommaSeparatedParam(param: string | null): number {
+  if (!param) {
+    return 0;
+  }
+  return param
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean).length;
+}
+
+function urlSelectionExceedsLimits(brandParam: string | null, modelParam: string | null): boolean {
+  return (
+    countCommaSeparatedParam(brandParam) > MAX_SEARCH_BRAND_SELECTIONS ||
+    countCommaSeparatedParam(modelParam) > MAX_SEARCH_MODEL_SELECTIONS
+  );
+}
+
+function clearSyncTimeout(
+  syncTimeoutRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null>,
+): void {
+  if (syncTimeoutRef.current) {
+    clearTimeout(syncTimeoutRef.current);
+    syncTimeoutRef.current = null;
+  }
+}
+
 export function useSearchFiltersSync({
   searchParams,
   filters,
@@ -51,19 +77,9 @@ export function useSearchFiltersSync({
     const currentUrl = searchParams.toString();
     const brandParam = searchParams.get('brand');
     const modelParam = searchParams.get('model');
-    const brandCount = brandParam
-      ? brandParam
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean).length
-      : 0;
-    const modelCount = modelParam
-      ? modelParam
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean).length
-      : 0;
-    if (brandCount > MAX_SEARCH_BRAND_SELECTIONS || modelCount > MAX_SEARCH_MODEL_SELECTIONS) {
+    const shouldSyncVehicleSlugParams =
+      filters.listing_category === 'vehicle' && (brandParam || modelParam);
+    if (urlSelectionExceedsLimits(brandParam, modelParam)) {
       if (typeof window !== 'undefined') {
         sessionStorage.setItem(
           SEARCH_FILTERS_LIMIT_ERROR_TOAST_KEY,
@@ -71,8 +87,8 @@ export function useSearchFiltersSync({
         );
       }
       console.warn('Search filters URL exceeds allowed limits', {
-        brandCount,
-        modelCount,
+        brandCount: countCommaSeparatedParam(brandParam),
+        modelCount: countCommaSeparatedParam(modelParam),
         currentUrl,
       });
       router.replace('/');
@@ -81,10 +97,7 @@ export function useSearchFiltersSync({
     const urlChanged = currentUrl !== prevUrlForSyncRef.current;
 
     if (urlChanged) {
-      if (syncTimeoutRef.current) {
-        clearTimeout(syncTimeoutRef.current);
-        syncTimeoutRef.current = null;
-      }
+      clearSyncTimeout(syncTimeoutRef);
       if (isInternalSearchRef.current) {
         isInternalSearchRef.current = false;
         prevUrlForSyncRef.current = currentUrl;
@@ -95,7 +108,7 @@ export function useSearchFiltersSync({
         return;
       }
 
-      if (brandParam || modelParam) {
+      if (shouldSyncVehicleSlugParams) {
         processedBrandParamRef.current = null;
         processedModelParamRef.current = null;
         setIsSyncingFromUrl(true);
@@ -119,20 +132,21 @@ export function useSearchFiltersSync({
       return;
     }
 
-    const brandSynced = !brandParam || (brands.length > 0 && filters.brand_ids.length > 0);
+    const brandSynced =
+      !shouldSyncVehicleSlugParams ||
+      !brandParam ||
+      (brands.length > 0 && filters.brand_ids.length > 0);
     const modelsMatchBrand =
       models.length > 0 && models.every((m) => filters.brand_ids.includes(m.brand_id));
     const modelSynced =
+      !shouldSyncVehicleSlugParams ||
       !modelParam ||
       !brandParam ||
       (models.length > 0 && filters.model_ids.length > 0) ||
       (modelsMatchBrand && processedModelParamRef.current === modelParam);
 
     if (brandSynced && modelSynced) {
-      if (syncTimeoutRef.current) {
-        clearTimeout(syncTimeoutRef.current);
-        syncTimeoutRef.current = null;
-      }
+      clearSyncTimeout(syncTimeoutRef);
       if (hasActiveFilters) {
         setLastAppliedFilters({ ...filters });
       } else {
@@ -163,6 +177,14 @@ export function useSearchFiltersSync({
 
   useEffect(() => {
     const brandParam = searchParams.get('brand');
+
+    if (filters.listing_category !== 'vehicle') {
+      if (processedBrandParamRef.current !== null || processedModelParamRef.current !== null) {
+        processedBrandParamRef.current = null;
+        processedModelParamRef.current = null;
+      }
+      return;
+    }
 
     if (!brandParam) {
       if (processedBrandParamRef.current !== null) {
@@ -200,11 +222,19 @@ export function useSearchFiltersSync({
       }
       processedBrandParamRef.current = brandParam;
     }
-  }, [brands, searchParams, setFilters]);
+  }, [brands, filters.listing_category, searchParams, setFilters]);
 
   useEffect(() => {
     const modelParam = searchParams.get('model');
     const currentUrl = searchParams.toString();
+
+    if (filters.listing_category !== 'vehicle') {
+      if (processedModelParamRef.current !== null) {
+        processedModelParamRef.current = null;
+      }
+      lastModelEffectUrlRef.current = currentUrl;
+      return;
+    }
 
     if (!modelParam) {
       const urlChanged = currentUrl !== lastModelEffectUrlRef.current;
@@ -259,7 +289,7 @@ export function useSearchFiltersSync({
         };
       });
     }
-  }, [models, filters.brand_ids, searchParams, setFilters]);
+  }, [models, filters.brand_ids, filters.listing_category, searchParams, setFilters]);
 
   return {
     isSyncingFromUrl,

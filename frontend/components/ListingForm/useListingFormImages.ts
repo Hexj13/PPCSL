@@ -6,7 +6,7 @@ import { uploadApi } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { isBrowser } from '@/lib/utils';
 
-import type { ListingFormData } from '../ListingForm';
+import type { ListingFormImageFields } from './listingFormTypes';
 
 interface UploadedImageDeleteMeta {
   path: string;
@@ -23,19 +23,19 @@ export interface UploadSlot {
   uploadedUrl?: string;
 }
 
-interface UseListingFormImagesParams {
+interface UseListingFormImagesParams<T extends ListingFormImageFields> {
   t: TranslationFunction;
-  setFormData: React.Dispatch<React.SetStateAction<ListingFormData>>;
+  setFormData: React.Dispatch<React.SetStateAction<T>>;
   formSubmittedSuccessfullyRef?: React.MutableRefObject<boolean>;
 }
 
 const MAX_CONCURRENT_UPLOADS = 2;
 
-export function useListingFormImages({
+export function useListingFormImages<T extends ListingFormImageFields>({
   t,
   setFormData,
   formSubmittedSuccessfullyRef,
-}: UseListingFormImagesParams) {
+}: UseListingFormImagesParams<T>) {
   const [uploading, setUploading] = useState(false);
   const [hidePlates, setHidePlates] = useState(false);
   const [deletingImageUrls, setDeletingImageUrls] = useState<string[]>([]);
@@ -141,14 +141,14 @@ export function useListingFormImages({
         setFormData((prev) => {
           const newImages = [...prev.images, imageUrl];
           const newHashes = [...prev.image_blur_hashes, response.data.blurhash ?? null];
-          const updates: Partial<typeof prev> = {
+          return {
+            ...prev,
             images: newImages,
             image_blur_hashes: newHashes,
+            ...(newImages.length === 1 && response.data.blurhash
+              ? { cover_blur_hash: response.data.blurhash }
+              : {}),
           };
-          if (newImages.length === 1 && response.data.blurhash) {
-            updates.cover_blur_hash = response.data.blurhash;
-          }
-          return { ...prev, ...updates };
         });
         setUploadSlots((prev) =>
           prev.map((s) => (s.id === slotId ? { ...s, uploadedUrl: imageUrl } : s)),

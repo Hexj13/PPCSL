@@ -73,6 +73,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 - [cipauto-import.md](./features/cipauto-import.md) — CipAuto partner import tool (scan/import/report, idempotent registry, retry-safe)
 - [999md-import.md](./features/999md-import.md) — 999.md partner import (GraphQL scan/import, shared Kupito pipeline in `partner-import-shared`)
 - [search-filters.md](./features/search-filters.md) — Search and filters form (tabs, fields, layout)
+- [tires-category.md](./features/tires-category.md) — Dev-ready spec for tire listings, taxonomy, create form, and search
 - [seller-listings-board.md](./features/seller-listings-board.md) — Seller listings board
 - [similar-listings.md](./features/similar-listings.md) — Similar listings
 - [sitemap.md](./features/sitemap.md) — Sitemap generation

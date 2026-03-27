@@ -1,18 +1,31 @@
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Repository } from 'typeorm';
 
 import { BrandsService } from '../../../brands/brands.service';
+import { ListingCategory } from '../../../common/constants';
 import { ListingStatus as ListingStatusEnum } from '../../../common/types';
 import { I18nService } from '../../../common/i18n/i18n.service';
+import { TireBrand } from '../../../tires/entities/tire-brand.entity';
+import { TireModel } from '../../../tires/entities/tire-model.entity';
 import { User } from '../../../users/entities/user.entity';
 import { UsersService } from '../../../users/application/users.service';
+import { ListingTitleService } from '../../domain/services/listing-title.service';
 import { Listing } from '../../entities/listing.entity';
 import { Vehicle } from '../../entities/vehicle.entity';
 import { CreateListingDto } from '../../presentation/dto/create-listing.dto';
-import { IListingCache, LISTING_CACHE } from '../ports/listing-cache.port';
-import { IListingRepository, LISTING_REPOSITORY } from '../ports/listing.repository.port';
+import { CreateVehicleDto } from '../../presentation/dto/create-vehicle.dto';
+import { IListingCache } from '../ports/listing-cache.port';
+import { IListingRepository } from '../ports/listing.repository.port';
 
 import { CreateListingUseCase } from './create-listing.use-case';
-import { ListingTitleService } from '../../domain/services/listing-title.service';
+
+const testVehicle: CreateVehicleDto = {
+  brand_id: 'brand-1',
+  model_id: 'model-1',
+  year: 2020,
+  body_type: 'Sedan',
+  drive_type: 'FWD',
+};
 
 const minimalDto: CreateListingDto = {
   price: 10000,
@@ -20,13 +33,7 @@ const minimalDto: CreateListingDto = {
   condition: 'Undamaged',
   registration_type: 'Local',
   horsepower: 150,
-  vehicle: {
-    brand_id: 'brand-1',
-    model_id: 'model-1',
-    year: 2020,
-    body_type: 'Sedan',
-    drive_type: 'FWD',
-  },
+  vehicle: testVehicle,
 };
 
 function createUseCase(mocks: {
@@ -36,6 +43,8 @@ function createUseCase(mocks: {
   usersService?: Partial<UsersService>;
   brandsService?: Partial<BrandsService>;
   i18nService?: Partial<I18nService>;
+  tireModelRepository?: Partial<Repository<TireModel>>;
+  tireBrandRepository?: Partial<Repository<TireBrand>>;
 }) {
   const listingRepo = {
     save: jest.fn(),
@@ -60,6 +69,7 @@ function createUseCase(mocks: {
   };
   const titleService = {
     generate: jest.fn().mockResolvedValue('Generated Title'),
+    generateForTire: jest.fn().mockReturnValue('Tire Listing Title'),
     ...mocks.titleService,
   };
   const usersService = {
@@ -77,6 +87,16 @@ function createUseCase(mocks: {
     ...mocks.i18nService,
   };
 
+  const tireModelRepository = {
+    findOne: jest.fn(),
+    ...mocks.tireModelRepository,
+  };
+
+  const tireBrandRepository = {
+    findOne: jest.fn().mockResolvedValue({ id: 'tb-1', name: 'Tire Brand', is_archived: false }),
+    ...mocks.tireBrandRepository,
+  };
+
   const useCase = new CreateListingUseCase(
     listingRepo as IListingRepository,
     listingCache as IListingCache,
@@ -84,6 +104,8 @@ function createUseCase(mocks: {
     usersService as UsersService,
     brandsService as BrandsService,
     i18nService as I18nService,
+    tireModelRepository as Repository<TireModel>,
+    tireBrandRepository as Repository<TireBrand>,
   );
 
   return {
@@ -94,6 +116,7 @@ function createUseCase(mocks: {
     usersService,
     brandsService,
     i18nService,
+    tireModelRepository,
   };
 }
 
@@ -129,7 +152,7 @@ describe('CreateListingUseCase', () => {
       const dto: CreateListingDto = {
         ...minimalDto,
         vehicle: {
-          ...minimalDto.vehicle,
+          ...testVehicle,
           fuel: 'Electric',
         },
       };
@@ -150,7 +173,7 @@ describe('CreateListingUseCase', () => {
       const dto: CreateListingDto = {
         ...minimalDto,
         vehicle: {
-          ...minimalDto.vehicle,
+          ...testVehicle,
           fuel: 'Electric',
           engine_displ_l: 2.0,
         },
@@ -276,6 +299,53 @@ describe('CreateListingUseCase', () => {
       await expect(useCase.execute(dto, 'admin-id', 'Admin')).rejects.toThrow(BadRequestException);
       await expect(useCase.execute(dto, 'admin-id', 'Admin')).rejects.toThrow(
         'errors.activeListingsLimitExceeded',
+      );
+    });
+
+    it('should create tire listing when tire payload is sent without explicit category', async () => {
+      const brandId = '00000000-0000-0000-0000-000000000001';
+      const modelId = '00000000-0000-0000-0000-000000000002';
+      const { useCase, listingRepo, tireModelRepository } = createUseCase({
+        tireModelRepository: {
+          findOne: jest.fn().mockResolvedValue({
+            id: modelId,
+            brand_id: brandId,
+            name: 'Alpin',
+            is_other: false,
+            is_archived: false,
+            brand: { id: brandId, name: 'Michelin' },
+          }),
+        },
+      });
+      (listingRepo.save as jest.Mock).mockImplementation((listing: Listing) =>
+        Promise.resolve({ ...listing, id: 'listing-tire-1' }),
+      );
+
+      const dto: CreateListingDto = {
+        price: 400,
+        city: 'Chișinău',
+        tire: {
+          brand_id: brandId,
+          model_id: modelId,
+          tire_vehicle_type: 'car',
+          season: 'summer',
+          condition: 'used',
+          width_mm: 205,
+          aspect_ratio: 55,
+          diameter_inch: 16,
+          quantity: 4,
+        },
+      };
+
+      const result = await useCase.execute(dto, 'user-1');
+
+      expect(result.id).toBe('listing-tire-1');
+      expect(tireModelRepository.findOne).toHaveBeenCalled();
+      expect(listingRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          category: ListingCategory.Tire,
+          user_id: 'user-1',
+        }),
       );
     });
 

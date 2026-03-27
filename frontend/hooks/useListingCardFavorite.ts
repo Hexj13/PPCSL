@@ -10,12 +10,13 @@ import {
 } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
-import { analytics } from '@/lib/analytics';
+import { analytics, buildListingViewItemParams } from '@/lib/analytics';
 import type { Listing } from '@/lib/api';
 import { favoritesApi } from '@/lib/api';
 import { CARD_EXIT_ANIMATION_MS } from '@/lib/constants';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
+import { isTireListing } from '@/lib/utils';
 
 type PendingRemoveChain = {
   raf1?: number;
@@ -88,7 +89,9 @@ export function useListingCardFavorite(
     favoritesApi
       .remove(listing.id)
       .then(() => {
-        analytics.removeFromWishlist(listing.id);
+        analytics.removeFromWishlist(listing.id, {
+          listing_category: isTireListing(listing) ? 'tire' : 'vehicle',
+        });
         toast.success(t('listings.removeFromFavorites'));
       })
       .catch(() => {
@@ -101,14 +104,14 @@ export function useListingCardFavorite(
         setIsToggling(false);
         isTogglingRef.current = false;
       });
-  }, [listing.id, removeFavorite, addFavorite, onRemove, t]);
+  }, [listing, removeFavorite, addFavorite, onRemove, t]);
 
   const handleAdd = useCallback(() => {
     addFavorite(listing.id);
     favoritesApi
       .add(listing.id)
       .then(() => {
-        analytics.addToWishlist(listing.id, { title: displayTitle, price: listing.price });
+        analytics.addToWishlist(listing.id, buildListingViewItemParams(listing));
         toast.success(t('listings.addToFavorites'));
       })
       .catch(() => {
@@ -120,7 +123,7 @@ export function useListingCardFavorite(
         setIsToggling(false);
         isTogglingRef.current = false;
       });
-  }, [listing.id, listing.price, displayTitle, addFavorite, removeFavorite, t]);
+  }, [listing, addFavorite, removeFavorite, t]);
 
   const handleToggleFavorite = useCallback(
     (e: MouseEvent) => {

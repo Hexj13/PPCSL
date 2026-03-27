@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 import { CopyButton } from '@/components/common/CopyButton';
+import { ListingCardTireSpecs } from '@/components/listing/ListingCardBadgesAndSpecs';
 import { PriceDisplay } from '@/components/listing/PriceDisplay';
+import { TireListingPriceSuffix } from '@/components/listing/TireListingPriceSuffix';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
 import {
@@ -17,6 +19,7 @@ import {
   getListingDisplayTitle,
   getOptimizedImageUrl,
   getVehicleType,
+  isTireListing,
 } from '@/lib/utils';
 
 const SPARKLES_EMOJI = '\u2728';
@@ -126,7 +129,7 @@ function ManagementCardBadges({
           <span className="relative z-10">{t('listings.promoted')}</span>
         </span>
       )}
-      {listing.is_new && (
+      {listing.is_new && !isTireListing(listing) && (
         <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-base font-semibold bg-white/90 border-2 border-newBadge text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-newBadge/10 before:pointer-events-none">
           <span
             className="relative z-10 text-text-secondary"
@@ -386,21 +389,33 @@ export function ListingManagementCard({
                 </div>
               </Link>
               {listing.vehicle && <ManagementCardVehicleSpecs vehicle={listing.vehicle} t={t} />}
+              {isTireListing(listing) && (
+                <div className="mb-3">
+                  <ListingCardTireSpecs listing={listing} t={t} />
+                </div>
+              )}
               {isAdminMode && <ManagementCardAdminIds listing={listing} onCopyId={onCopyId} />}
             </div>
             <div className="flex flex-col items-start text-left w-full lg:items-end lg:text-right lg:min-w-[140px] lg:w-auto mb-3">
               {listing.price !== undefined ? (
-                <div className="mb-3">
-                  <PriceDisplay
-                    price={listing.price}
-                    currency={listing.currency ?? listing.defaultCurrencyCode ?? 'EUR'}
-                    approxPrice={listing.approxPriceDefaultCurrency}
-                    defaultCurrencyCode={listing.defaultCurrencyCode}
-                    size="medium"
-                    approxPriceBelow
-                    priceClassName="text-primary-500"
-                    currencyStyle={{ color: 'rgb(var(--text-secondary-rgb))' }}
-                  />
+                <div className="mb-3 w-full lg:w-auto">
+                  <div className="flex items-baseline gap-2 flex-wrap justify-start lg:justify-end">
+                    <PriceDisplay
+                      price={listing.price}
+                      currency={listing.currency ?? listing.defaultCurrencyCode ?? 'EUR'}
+                      approxPrice={listing.approxPriceDefaultCurrency}
+                      defaultCurrencyCode={listing.defaultCurrencyCode}
+                      size="medium"
+                      approxPriceBelow
+                      priceClassName="text-primary-500"
+                      currencyStyle={{ color: 'rgb(var(--text-secondary-rgb))' }}
+                    />
+                    <TireListingPriceSuffix
+                      listing={listing}
+                      t={t}
+                      className="text-sm font-medium text-text-secondary shrink-0"
+                    />
+                  </div>
                 </div>
               ) : (
                 <span className="text-lg sm:text-xl md:text-2xl font-extrabold text-primary-400 mb-3">

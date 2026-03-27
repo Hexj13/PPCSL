@@ -5,7 +5,7 @@ import type { Currency } from '@/lib/types';
 import { ConditionTypeEnum, ListingStatusEnum, RegistrationTypeEnum } from '@/lib/types';
 import { getCountry, horsepowerToKw, sortOptionsByLabel } from '@/lib/utils';
 
-import type { ListingFormData } from '../ListingForm';
+import type { ListingFormData } from './listingFormTypes';
 
 function getDefaultCurrency(): Currency {
   const config = loadSiteConfigSync(getCountry());

@@ -1,7 +1,9 @@
 'use client';
 
+import type { Listing } from '@/lib/api';
+
 import { loadSiteConfigSync } from './site-config';
-import { getCountry } from './utils';
+import { formatTireSize, getCountry, isTireListing } from './utils';
 
 let consentCache: boolean | null = null;
 
@@ -65,36 +67,127 @@ export function trackEventDeferred(eventName: string, params?: Record<string, un
   scheduleDeferred(() => trackEvent(eventName, params));
 }
 
+export type ViewItemListEntry = {
+  id: string;
+  title: string;
+  price?: number;
+  listing_category?: 'vehicle' | 'tire';
+  item_category?: 'Vehicle' | 'Tire';
+  tire_brand?: string;
+  tire_model?: string;
+  tire_size?: string;
+  season?: string;
+  condition?: string;
+  quantity?: number;
+};
+
+export function listingToViewItemListEntry(listing: Listing): ViewItemListEntry {
+  if (isTireListing(listing) && listing.tire) {
+    const tr = listing.tire;
+    return {
+      id: listing.id,
+      title: listing.title,
+      price: listing.price,
+      listing_category: 'tire',
+      item_category: 'Tire',
+      tire_brand: tr.brand?.name,
+      tire_model: tr.model?.is_other ? (tr.custom_model_name ?? undefined) : tr.model?.name,
+      tire_size: formatTireSize(tr),
+      season: tr.season,
+      condition: tr.condition,
+      quantity: tr.quantity,
+    };
+  }
+  return {
+    id: listing.id,
+    title: listing.title,
+    price: listing.price,
+    listing_category: 'vehicle',
+    item_category: 'Vehicle',
+  };
+}
+
+export function buildListingViewItemParams(listing: Listing): Record<string, unknown> {
+  if (isTireListing(listing) && listing.tire) {
+    const tr = listing.tire;
+    return {
+      title: listing.title,
+      price: listing.price,
+      listing_category: 'tire',
+      item_category: 'Tire',
+      tire_brand: tr.brand?.name,
+      tire_model: tr.model?.is_other ? (tr.custom_model_name ?? undefined) : tr.model?.name,
+      tire_size: formatTireSize(tr),
+      season: tr.season,
+      condition: tr.condition,
+      quantity: tr.quantity,
+    };
+  }
+  return {
+    title: listing.title,
+    price: listing.price,
+    listing_category: 'vehicle',
+    item_category: 'Vehicle',
+    brand: listing.vehicle?.brand?.name,
+    model: listing.vehicle?.model?.name,
+  };
+}
+
 export const analytics = {
-  viewItem: (
-    listingId: string,
-    listing: { title?: string; price?: number; brand?: string; model?: string },
-  ) => {
+  viewItem: (listingId: string, listing: Record<string, unknown>) => {
+    const itemCategory = listing.item_category === 'Tire' ? 'Tire' : 'Vehicle';
+    const listingCategory = listing.listing_category === 'tire' ? 'tire' : 'vehicle';
+    const item: Record<string, unknown> = {
+      item_id: listingId,
+      item_name:
+        listing.title ||
+        (listingCategory === 'tire'
+          ? [listing.tire_brand, listing.tire_model].filter(Boolean).join(' ')
+          : `${listing.brand ?? ''} ${listing.model ?? ''}`.trim()),
+      price: listing.price,
+      item_category: itemCategory,
+      listing_category: listingCategory,
+    };
+    if (listingCategory === 'tire') {
+      if (listing.tire_brand) item.tire_brand = listing.tire_brand;
+      if (listing.tire_model) item.tire_model = listing.tire_model;
+      if (listing.tire_size) item.tire_size = listing.tire_size;
+      if (listing.season) item.season = listing.season;
+      if (listing.condition) item.condition = listing.condition;
+      if (listing.quantity != null) item.quantity = listing.quantity;
+    } else {
+      if (listing.brand) item.item_brand = listing.brand;
+      if (listing.model) item.item_model = listing.model;
+    }
     trackEvent('view_item', {
       currency: getCurrency(),
       value: listing.price,
-      items: [
-        {
-          item_id: listingId,
-          item_name: listing.title || `${listing.brand} ${listing.model}`,
-          price: listing.price,
-          item_brand: listing.brand,
-          item_category: 'Vehicle',
-        },
-      ],
+      items: [item],
     });
   },
 
-  viewItemList: (items: Array<{ id: string; title: string; price?: number }>) => {
+  viewItemList: (items: ViewItemListEntry[]) => {
     trackEvent('view_item_list', {
       item_list_id: 'search_results',
       item_list_name: 'Search Results',
-      items: items.map((item) => ({
-        item_id: item.id,
-        item_name: item.title,
-        price: item.price,
-        item_category: 'Vehicle',
-      })),
+      items: items.map((item) => {
+        const row: Record<string, unknown> = {
+          item_id: item.id,
+          item_name: item.title,
+          price: item.price,
+          item_category: item.item_category ?? 'Vehicle',
+          listing_category: item.listing_category ?? 'vehicle',
+        };
+        if (item.listing_category === 'tire') {
+          if (item.tire_brand) row.tire_brand = item.tire_brand;
+          if (item.tire_model) row.tire_model = item.tire_model;
+          if (item.tire_size) row.tire_size = item.tire_size;
+          if (item.season) row.season = item.season;
+          if (item.condition) row.condition = item.condition;
+          if (item.quantity != null) row.quantity = item.quantity;
+        }
+        return row;
+      }),
     });
   },
 
@@ -112,33 +205,47 @@ export const analytics = {
     });
   },
 
-  addToWishlist: (listingId: string, listing: { title?: string; price?: number }) => {
+  addToWishlist: (listingId: string, listing: Record<string, unknown>) => {
+    const itemCategory = listing.item_category === 'Tire' ? 'Tire' : 'Vehicle';
+    const listingCategory = listing.listing_category === 'tire' ? 'tire' : 'vehicle';
+    const item: Record<string, unknown> = {
+      item_id: listingId,
+      item_name: listing.title,
+      price: listing.price,
+      item_category: itemCategory,
+      listing_category: listingCategory,
+    };
+    if (listingCategory === 'tire') {
+      if (listing.tire_brand) item.tire_brand = listing.tire_brand;
+      if (listing.tire_model) item.tire_model = listing.tire_model;
+      if (listing.tire_size) item.tire_size = listing.tire_size;
+      if (listing.season) item.season = listing.season;
+      if (listing.condition) item.condition = listing.condition;
+      if (listing.quantity != null) item.quantity = listing.quantity;
+    }
     trackEvent('add_to_wishlist', {
       currency: getCurrency(),
       value: listing.price,
-      items: [
-        {
-          item_id: listingId,
-          item_name: listing.title,
-          price: listing.price,
-          item_category: 'Vehicle',
-        },
-      ],
+      items: [item],
     });
   },
 
-  removeFromWishlist: (listingId: string) => {
+  removeFromWishlist: (listingId: string, meta?: { listing_category?: 'vehicle' | 'tire' }) => {
+    const listingCategory = meta?.listing_category ?? 'vehicle';
     trackEvent('remove_from_wishlist', {
       items: [
         {
           item_id: listingId,
-          item_category: 'Vehicle',
+          item_category: listingCategory === 'tire' ? 'Tire' : 'Vehicle',
+          listing_category: listingCategory,
         },
       ],
     });
   },
 
-  addToComparison: (listingId: string, listing: { title?: string; price?: number }) => {
+  addToComparison: (listingId: string, listing: Record<string, unknown>) => {
+    const itemCategory = listing.item_category === 'Tire' ? 'Tire' : 'Vehicle';
+    const listingCategory = listing.listing_category === 'tire' ? 'tire' : 'vehicle';
     trackEvent('add_to_comparison', {
       currency: getCurrency(),
       value: listing.price,
@@ -147,18 +254,21 @@ export const analytics = {
           item_id: listingId,
           item_name: listing.title,
           price: listing.price,
-          item_category: 'Vehicle',
+          item_category: itemCategory,
+          listing_category: listingCategory,
         },
       ],
     });
   },
 
-  removeFromComparison: (listingId: string) => {
+  removeFromComparison: (listingId: string, meta?: { listing_category?: 'vehicle' | 'tire' }) => {
+    const listingCategory = meta?.listing_category ?? 'vehicle';
     trackEvent('remove_from_comparison', {
       items: [
         {
           item_id: listingId,
-          item_category: 'Vehicle',
+          item_category: listingCategory === 'tire' ? 'Tire' : 'Vehicle',
+          listing_category: listingCategory,
         },
       ],
     });
@@ -167,41 +277,84 @@ export const analytics = {
   contactSeller: (
     listingId: string,
     method: 'phone' | 'viber' | 'whatsapp' | 'telegram',
-    listing?: { title?: string; price?: number },
+    listing?: Record<string, unknown>,
   ) => {
+    const itemCategory = listing?.item_category === 'Tire' ? 'Tire' : 'Vehicle';
+    const listingCategory = listing?.listing_category === 'tire' ? 'tire' : 'vehicle';
+    const item: Record<string, unknown> = {
+      item_id: listingId,
+      item_name: listing?.title,
+      price: listing?.price,
+      item_category: itemCategory,
+      listing_category: listingCategory,
+    };
+    if (listingCategory === 'tire' && listing) {
+      if (listing.tire_brand) item.tire_brand = listing.tire_brand;
+      if (listing.tire_model) item.tire_model = listing.tire_model;
+      if (listing.tire_size) item.tire_size = listing.tire_size;
+      if (listing.season) item.season = listing.season;
+      if (listing.condition) item.condition = listing.condition;
+      if (listing.quantity != null) item.quantity = listing.quantity;
+    }
     trackEvent('contact_seller', {
       currency: getCurrency(),
       value: listing?.price,
       contact_method: method,
-      items: [
-        {
-          item_id: listingId,
-          item_name: listing?.title,
-          price: listing?.price,
-          item_category: 'Vehicle',
-        },
-      ],
+      items: [item],
     });
   },
 
-  createListing: (listingId: string, listing: { title?: string; price?: number }) => {
+  createListing: (listingId: string, listing: Record<string, unknown>) => {
+    const itemCategory = listing.item_category === 'Tire' ? 'Tire' : 'Vehicle';
+    const listingCategory = listing.listing_category === 'tire' ? 'tire' : 'vehicle';
+    const item: Record<string, unknown> = {
+      item_id: listingId,
+      item_name: listing.title,
+      price: listing.price,
+      item_category: itemCategory,
+      listing_category: listingCategory,
+    };
+    if (listingCategory === 'tire') {
+      if (listing.tire_brand) item.tire_brand = listing.tire_brand;
+      if (listing.tire_model) item.tire_model = listing.tire_model;
+      if (listing.tire_size) item.tire_size = listing.tire_size;
+      if (listing.season) item.season = listing.season;
+      if (listing.condition) item.condition = listing.condition;
+      if (listing.quantity != null) item.quantity = listing.quantity;
+    }
     trackEvent('create_listing', {
       currency: getCurrency(),
       value: listing.price,
-      items: [
-        {
-          item_id: listingId,
-          item_name: listing.title,
-          price: listing.price,
-          item_category: 'Vehicle',
-        },
-      ],
+      items: [item],
     });
   },
 
   saveFilter: (filterName: string, filters?: Record<string, unknown>) => {
+    const listingCategory =
+      (filters?.listing_category as string | undefined) ||
+      (filters?.category as string | undefined) ||
+      'vehicle';
+    const tireBrandIds = filters?.tire_brand_ids as unknown;
+    const tireModelIds = filters?.tire_model_ids as unknown;
+    const countIds = (v: unknown) =>
+      Array.isArray(v)
+        ? v.filter((id) => id && id !== 'all' && !String(id).startsWith('__')).length
+        : 0;
     trackEvent('save_filter', {
       filter_name: filterName,
+      category: listingCategory,
+      listing_category: listingCategory,
+      ...(listingCategory === 'tire' && {
+        tire_vehicle_type: filters?.tire_vehicle_type,
+        tire_brand_ids_count: countIds(tireBrandIds),
+        tire_model_ids_count: countIds(tireModelIds),
+        tire_studded: filters?.tire_studded,
+        tire_run_flat: filters?.tire_run_flat,
+        tire_reinforced_xl: filters?.tire_reinforced_xl,
+        tire_spare_donut: filters?.tire_spare_donut,
+        tire_tubeless: filters?.tire_tubeless,
+        tire_acoustic: filters?.tire_acoustic,
+      }),
       ...filters,
     });
   },
@@ -287,7 +440,12 @@ export const analytics = {
     });
   },
 
-  formSubmit: (formName: string, success: boolean, fields?: Record<string, boolean>) => {
+  formSubmit: (
+    formName: string,
+    success: boolean,
+    fields?: Record<string, boolean>,
+    extra?: Record<string, unknown>,
+  ) => {
     const filledFields = fields
       ? Object.keys(fields)
           .filter((key) => fields[key])
@@ -299,6 +457,7 @@ export const analytics = {
       success: success,
       ...(filledFields && { filled_fields: filledFields }),
       ...(fields && { fields_count: Object.values(fields).filter(Boolean).length }),
+      ...extra,
     });
   },
 

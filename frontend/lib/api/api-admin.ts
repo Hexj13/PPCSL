@@ -1,6 +1,7 @@
 import type { ListingStatus } from '../types';
 
 import { adminBrandsModelsApi } from './admin-brands-models';
+import { adminTireBrandsModelsApi } from './admin-tire-brands-models';
 import { api } from './api-client';
 import type { AdminStats, Listing, PaginationMeta, PromotionHistory, User } from './api-types';
 
@@ -97,4 +98,5 @@ export const adminApi = {
     }>(`/api/admin/promotions?${params.toString()}`);
   },
   ...adminBrandsModelsApi,
+  ...adminTireBrandsModelsApi,
 };

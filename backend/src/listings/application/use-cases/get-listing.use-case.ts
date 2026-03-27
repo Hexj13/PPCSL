@@ -43,7 +43,12 @@ export class GetListingUseCase {
       throw new NotFoundException('errors.listingNotFound');
     }
 
-    if (!listing.vehicle) {
+    if (listing.category === constants.ListingCategory.Tire) {
+      if (!listing.tire) {
+        this.logger.error(`Listing ${id} has no tire`);
+        throw new NotFoundException('errors.tireNotFoundForListing');
+      }
+    } else if (!listing.vehicle) {
       this.logger.error(`Listing ${id} has no vehicle`);
       throw new NotFoundException('errors.vehicleNotFoundForListing');
     }

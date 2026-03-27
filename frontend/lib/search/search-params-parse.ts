@@ -1,6 +1,19 @@
 import { FILTERS_STORAGE_KEY } from './search-params-constants';
+import { decodeBase64Array } from './search-params-encoding';
+import {
+  applyTireBooleanParamsToParsed,
+  applyTireSearchArraysToParsed,
+  stripVehicleSearchFieldsForTireCategory,
+} from './search-params-parse-tire';
+import type { ParsedSearchParams } from './search-params-parsed.types';
+
+export type { ParsedSearchParams } from './search-params-parsed.types';
+export { decodeBase64Array, encodeBase64Array } from './search-params-encoding';
+
+export type ListingCategoryFilter = 'vehicle' | 'tire';
 
 export interface DefaultFiltersShape {
+  listing_category: ListingCategoryFilter;
   brand_ids: string[];
   model_ids: string[];
   cities: string[];
@@ -31,10 +44,26 @@ export interface DefaultFiltersShape {
   down_payment_amount_gte: string;
   sortBy: string;
   sortOrder: 'ASC' | 'DESC';
+  tire_vehicle_type: '' | 'car' | 'truck' | 'moto';
+  tire_brand_ids: string[];
+  tire_model_ids: string[];
+  tire_widths: string[];
+  tire_profiles: string[];
+  tire_diameters: string[];
+  tire_seasons: string[];
+  tire_conditions: string[];
+  tire_quantities: string[];
+  tire_studded: boolean;
+  tire_run_flat: boolean;
+  tire_reinforced_xl: boolean;
+  tire_spare_donut: boolean;
+  tire_tubeless: boolean;
+  tire_acoustic: boolean;
 }
 
 export function getDefaultFilters(currentYear: string): DefaultFiltersShape {
   return {
+    listing_category: 'vehicle',
     brand_ids: [],
     model_ids: [],
     cities: [],
@@ -65,44 +94,53 @@ export function getDefaultFilters(currentYear: string): DefaultFiltersShape {
     down_payment_amount_gte: '',
     sortBy: 'created_at',
     sortOrder: 'DESC',
+    tire_vehicle_type: '',
+    tire_brand_ids: [],
+    tire_model_ids: [],
+    tire_widths: [],
+    tire_profiles: [],
+    tire_diameters: [],
+    tire_seasons: [],
+    tire_conditions: [],
+    tire_quantities: [],
+    tire_studded: false,
+    tire_run_flat: false,
+    tire_reinforced_xl: false,
+    tire_spare_donut: false,
+    tire_tubeless: false,
+    tire_acoustic: false,
   };
 }
 
-export interface ParsedSearchParams {
-  page: number;
-  limit: number;
-  vehicleType?: 'car' | 'truck' | 'moto';
-  brand_ids?: string;
-  model_ids?: string;
-  cities?: string;
-  fuels?: string;
-  transmissions?: string;
-  body_types?: string;
-  colors?: string;
-  doors?: string;
-  conditions?: string;
-  registration_types?: string;
-  drive_types?: string;
-  equipment?: string;
-  equipmentMatch?: string;
-  year_gte?: number;
-  year_lte?: number;
-  price_gte?: number;
-  price_lte?: number;
-  mileage_gte?: number;
-  mileage_lte?: number;
-  engine_displ_l_gte?: number;
-  engine_displ_l_lte?: number;
-  horsepower_gte?: number;
-  horsepower_lte?: number;
-  urgent?: boolean;
-  is_new?: boolean;
-  available_in_credit?: boolean;
-  down_payment_amount_gte?: number;
-  currency?: string;
-  sortBy?: string;
-  sortOrder?: string;
-  title?: string;
+export function getDefaultTireFilters(currentYear: string): DefaultFiltersShape {
+  const base = getDefaultFilters(currentYear);
+  return {
+    ...base,
+    listing_category: 'tire',
+    brand_ids: [],
+    model_ids: [],
+    year_gte: '',
+    year_lte: currentYear,
+    mileage_gte: '',
+    mileage_lte: '',
+    fuels: [],
+    transmissions: [],
+    body_types: [],
+    engine_displ_l_gte: '',
+    engine_displ_l_lte: '',
+    colors: [],
+    doors: [],
+    conditions: [],
+    registration_types: [],
+    horsepower_gte: '',
+    horsepower_lte: '',
+    drive_types: [],
+    equipment: [],
+    equipment_match_mode: 'full',
+    available_in_credit: false,
+    down_payment_amount_gte: '',
+    is_new: false,
+  };
 }
 
 const ARRAY_PARAMS = [
@@ -137,34 +175,6 @@ const FLOAT_PARAMS = ['engine_displ_l_gte', 'engine_displ_l_lte'] as const;
 const BOOLEAN_PARAMS = ['urgent', 'is_new', 'available_in_credit'] as const;
 
 const DOWN_PAYMENT_PARAM = 'down_payment_amount_gte';
-
-export function decodeBase64Array(encoded: string): string[] {
-  if (!encoded) return [];
-  try {
-    let base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
-    while (base64.length % 4) {
-      base64 += '=';
-    }
-    const json =
-      typeof atob !== 'undefined' ? atob(base64) : Buffer.from(base64, 'base64').toString('utf-8');
-    return JSON.parse(json);
-  } catch {
-    return encoded.split(',').filter((v) => v.trim() !== '');
-  }
-}
-
-export function encodeBase64Array(arr: string[]): string {
-  if (arr.length === 0) return '';
-  try {
-    const json =
-      typeof btoa !== 'undefined'
-        ? btoa(JSON.stringify(arr))
-        : Buffer.from(JSON.stringify(arr)).toString('base64');
-    return json.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-  } catch {
-    return arr.join(',');
-  }
-}
 
 function getParamValue(
   urlParams: URLSearchParams | Record<string, string | string[] | undefined>,
@@ -231,7 +241,10 @@ function applyLegacyParams(
         'sortBy',
         'sortOrder',
         'title',
+        'category',
+        'tireVehicleType',
       ].includes(key) ||
+      key.startsWith('tire_') ||
       (ARRAY_PARAMS as readonly string[]).includes(key) ||
       (NUMBER_PARAMS as readonly string[]).includes(key) ||
       (FLOAT_PARAMS as readonly string[]).includes(key) ||
@@ -356,7 +369,9 @@ function applyDownPaymentPageLimitSortAndTitle(
   if (sortBy) params.sortBy = sortBy;
   const sortOrder = getVal('sortOrder');
   if (sortOrder) params.sortOrder = sortOrder as 'ASC' | 'DESC';
-  params.equipmentMatch = getVal('equipmentMatch') === 'partial' ? 'partial' : 'full';
+  if (params.category !== 'tire') {
+    params.equipmentMatch = getVal('equipmentMatch') === 'partial' ? 'partial' : 'full';
+  }
   const title = getVal('title');
   if (title) params.title = title;
 }
@@ -376,35 +391,57 @@ export async function parseSearchParams(
     applyStoredFilters(params as unknown as Record<string, unknown>, storedFilters);
   }
 
-  const vehicleTypeParam = getValue('vehicleType');
-  params.vehicleType =
-    vehicleTypeParam && ['car', 'truck', 'moto'].includes(vehicleTypeParam)
-      ? (vehicleTypeParam as 'car' | 'truck' | 'moto')
-      : 'car';
+  const categoryParam = getValue('category');
+  const isTireCategory = categoryParam === 'tire';
 
-  const NO_MATCH_BRAND_ID = '00000000-0000-0000-0000-000000000000';
-  const brandParam = getValue('brand');
-  const modelParam = getValue('model');
-
-  if (brandParam && options?.brandResolver) {
-    const brandSlugs = brandParam.split(',').map((s) => s.trim());
-    const brandIds = await options.brandResolver(brandSlugs);
-    params.brand_ids = brandIds.length > 0 ? brandIds.join(',') : NO_MATCH_BRAND_ID;
-    if (modelParam && options?.modelResolver && brandIds.length > 0) {
-      const modelSlugs = modelParam.split(',').map((s) => s.trim());
-      const modelIds = await options.modelResolver(brandIds, modelSlugs);
-      if (modelIds.length > 0) params.model_ids = modelIds.join(',');
+  if (isTireCategory) {
+    params.category = 'tire';
+    applyTireSearchArraysToParsed(params, urlParams, hasEncodedArrays, storedFilters);
+    applyTireBooleanParamsToParsed(params, urlParams);
+    const tireVt = getValue('tireVehicleType');
+    if (tireVt && ['car', 'truck', 'moto'].includes(tireVt)) {
+      params.tireVehicleType = tireVt as 'car' | 'truck' | 'moto';
     }
-  }
+    applyNumberParamsToParsed(params, urlParams);
+    applyFloatParamsToParsed(params, urlParams);
+    applyBooleanParamsToParsed(params, urlParams);
+    applyDownPaymentPageLimitSortAndTitle(params, urlParams);
+    stripVehicleSearchFieldsForTireCategory(params);
+  } else {
+    const vehicleTypeParam = getValue('vehicleType');
+    params.vehicleType =
+      vehicleTypeParam && ['car', 'truck', 'moto'].includes(vehicleTypeParam)
+        ? (vehicleTypeParam as 'car' | 'truck' | 'moto')
+        : 'car';
 
-  applyArrayParamsToParsed(params, urlParams, hasEncodedArrays, storedFilters);
-  applyNumberParamsToParsed(params, urlParams);
-  applyFloatParamsToParsed(params, urlParams);
-  applyBooleanParamsToParsed(params, urlParams);
-  applyDownPaymentPageLimitSortAndTitle(params, urlParams);
+    const NO_MATCH_BRAND_ID = '00000000-0000-0000-0000-000000000000';
+    const brandParam = getValue('brand');
+    const modelParam = getValue('model');
+
+    if (brandParam && options?.brandResolver) {
+      const brandSlugs = brandParam.split(',').map((s) => s.trim());
+      const brandIds = await options.brandResolver(brandSlugs);
+      params.brand_ids = brandIds.length > 0 ? brandIds.join(',') : NO_MATCH_BRAND_ID;
+      if (modelParam && options?.modelResolver && brandIds.length > 0) {
+        const modelSlugs = modelParam.split(',').map((s) => s.trim());
+        const modelIds = await options.modelResolver(brandIds, modelSlugs);
+        if (modelIds.length > 0) params.model_ids = modelIds.join(',');
+      }
+    }
+
+    applyArrayParamsToParsed(params, urlParams, hasEncodedArrays, storedFilters);
+    applyNumberParamsToParsed(params, urlParams);
+    applyFloatParamsToParsed(params, urlParams);
+    applyBooleanParamsToParsed(params, urlParams);
+    applyDownPaymentPageLimitSortAndTitle(params, urlParams);
+  }
 
   if (!(urlParams instanceof URLSearchParams)) {
     applyLegacyParams(params as unknown as Record<string, unknown>, urlParams);
+  }
+
+  if (params.category === 'tire') {
+    stripVehicleSearchFieldsForTireCategory(params);
   }
 
   return params as ParsedSearchParams;

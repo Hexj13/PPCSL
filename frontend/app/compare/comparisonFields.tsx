@@ -26,7 +26,7 @@ export interface ComparisonField {
   ) => React.ReactNode;
 }
 
-const getValue = (
+export const getCompareCellValue = (
   value: string | number | null | undefined,
   t: (_key: string) => string,
 ): string => {
@@ -103,7 +103,7 @@ export const comparisonFields: ComparisonField[] = [
           href={`/listings/${listing.id}`}
           className="text-text-primary hover-only:hover:text-primary-700 transition-colors underline font-medium inline-flex items-center gap-1.5"
         >
-          {getValue(listing.title, t)}
+          {getCompareCellValue(listing.title, t)}
           <svg
             className="w-5 h-5 opacity-60"
             style={{ verticalAlign: 'middle', marginBottom: '2px' }}
@@ -132,7 +132,7 @@ export const comparisonFields: ComparisonField[] = [
         className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
-        {getValue(listing.vehicle?.brand?.name, t)}
+        {getCompareCellValue(listing.vehicle?.brand?.name, t)}
       </td>
     ),
   },
@@ -145,7 +145,7 @@ export const comparisonFields: ComparisonField[] = [
         className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
-        {getValue(listing.vehicle?.model?.name, t)}
+        {getCompareCellValue(listing.vehicle?.model?.name, t)}
       </td>
     ),
   },
@@ -158,7 +158,7 @@ export const comparisonFields: ComparisonField[] = [
         className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
-        {getValue(listing.vehicle?.year, t)}
+        {getCompareCellValue(listing.vehicle?.year, t)}
       </td>
     ),
   },
@@ -291,7 +291,7 @@ export const comparisonFields: ComparisonField[] = [
         className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
-        {getValue(listing.vehicle?.doors, t)}
+        {getCompareCellValue(listing.vehicle?.doors, t)}
       </td>
     ),
   },

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { BODY_TYPES_BY_VEHICLE_TYPE } from '../../../common/constants';
+import { BODY_TYPES_BY_VEHICLE_TYPE, ListingCategory } from '../../../common/constants';
 import { ListingStatus as ListingStatusEnum } from '../../../common/types';
 import {
   applyBooleanFilter,
@@ -37,6 +37,9 @@ export class TypeOrmListingRepository implements IListingRepository {
       .leftJoinAndSelect('listing.vehicle', 'vehicle')
       .leftJoinAndSelect('vehicle.brand', 'brand')
       .leftJoinAndSelect('vehicle.model', 'model')
+      .leftJoinAndSelect('listing.tire', 'tire')
+      .leftJoinAndSelect('tire.brand', 'tireBrand')
+      .leftJoinAndSelect('tire.model', 'tireModel')
       .leftJoinAndSelect('listing.user', 'user')
       .where('listing.id = :id', { id })
       .getOne();
@@ -49,6 +52,7 @@ export class TypeOrmListingRepository implements IListingRepository {
   async search(criteria: SearchCriteria): Promise<{ data: Listing[]; total: number }> {
     const { page = 1, limit = 20, sortBy = 'created_at', sortOrder = 'DESC' } = criteria;
     const skip = (page - 1) * limit;
+    const listCategory = criteria.category ?? 'vehicle';
 
     return this.repository.manager.transaction('REPEATABLE READ', async (manager) => {
       const scopedRepository = manager.getRepository(Listing);
@@ -57,7 +61,10 @@ export class TypeOrmListingRepository implements IListingRepository {
       const total = await countQb.getCount();
 
       const queryBuilder = this.buildSearchQuery(criteria, scopedRepository);
-      const validSortFields = ['created_at', 'price', 'year', 'views'];
+      const validSortFields =
+        listCategory === 'tire'
+          ? ['created_at', 'price', 'views']
+          : ['created_at', 'price', 'year', 'views'];
       const sortField = validSortFields.includes(sortBy) ? sortBy : 'created_at';
       const order = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
       const dateSortColumn = sortField === 'created_at' ? 'last_updated_at' : sortField;
@@ -67,7 +74,7 @@ export class TypeOrmListingRepository implements IListingRepository {
         'actively_promoted',
       );
       queryBuilder.orderBy('actively_promoted', 'DESC');
-      if (dateSortColumn === 'year') {
+      if (dateSortColumn === 'year' && listCategory !== 'tire') {
         queryBuilder.addOrderBy('vehicle.year', order);
       } else if (dateSortColumn === 'views') {
         queryBuilder.addOrderBy('listing.views', order);
@@ -119,6 +126,10 @@ export class TypeOrmListingRepository implements IListingRepository {
     listing: Listing,
     currencyContext: SimilarCandidatesCurrencyContext,
   ): Promise<Listing[]> {
+    if (listing.category === ListingCategory.Tire) {
+      return this.findSimilarTireCandidates(listing, currencyContext);
+    }
+
     const { vehicle } = listing;
     const { id: currentId } = listing;
     const body_type = vehicle?.body_type;
@@ -197,7 +208,103 @@ export class TypeOrmListingRepository implements IListingRepository {
     return queryBuilder.getMany();
   }
 
+  private async findSimilarTireCandidates(
+    listing: Listing,
+    currencyContext: SimilarCandidatesCurrencyContext,
+  ): Promise<Listing[]> {
+    const tire = listing.tire;
+    if (!tire) {
+      return [];
+    }
+
+    const { id: currentId } = listing;
+    const { defaultCurrency, rates } = currencyContext;
+    const listingNorm = buildListingRoundedPriceInDefaultCurrencySql(defaultCurrency, rates);
+    const currentPriceNormalized =
+      listing.price != null && Number.isFinite(Number(listing.price))
+        ? approximatePriceInDefaultCurrency(
+            Number(listing.price),
+            listing.currency,
+            defaultCurrency,
+            rates,
+          )
+        : null;
+    const priceDistanceSql =
+      currentPriceNormalized != null
+        ? `CASE WHEN listing.price IS NULL THEN 999999999 ELSE ABS(${listingNorm.expression} - ${currentPriceNormalized}) END`
+        : '999999999';
+
+    const sizeMatchSql = `CASE WHEN tire.width_mm = :tw AND tire.aspect_ratio = :tar AND tire.diameter_inch = :td THEN 0 ELSE 1 END`;
+    const brandModelPrioritySql =
+      tire.model_id != null
+        ? `CASE WHEN tire.brand_id = CAST(:tbid AS uuid) AND tire.model_id = CAST(:tmid AS uuid) THEN 0 ELSE 1 END`
+        : `CASE WHEN tire.brand_id = CAST(:tbid AS uuid) THEN 0 ELSE 1 END`;
+    const seasonPrioritySql = `CASE WHEN tire.season = :tseason THEN 0 ELSE 1 END`;
+    const tireCondPrioritySql = `CASE WHEN tire.condition = :tireCond THEN 0 ELSE 1 END`;
+
+    const params: Record<string, string | number | boolean> = {
+      ...listingNorm.params,
+      tw: tire.width_mm,
+      tar: tire.aspect_ratio,
+      td: Number(tire.diameter_inch),
+      tbid: tire.brand_id,
+      tseason: tire.season,
+      tireCond: tire.condition,
+    };
+    if (tire.model_id != null) {
+      params.tmid = tire.model_id;
+    }
+
+    const buildTireSimilarQuery = (restrictVehicleType: boolean) => {
+      const qb = this.repository
+        .createQueryBuilder('listing')
+        .leftJoinAndSelect('listing.tire', 'tire')
+        .leftJoinAndSelect('tire.brand', 'tireBrand')
+        .leftJoinAndSelect('tire.model', 'tireModel')
+        .leftJoinAndSelect('listing.user', 'user')
+        .where('listing.status = :status', { status: ListingStatusEnum.Active })
+        .andWhere('listing.id != :currentId', { currentId })
+        .andWhere('listing.category = :tireCategory', { tireCategory: ListingCategory.Tire })
+        .addSelect(sizeMatchSql, 'size_match_priority')
+        .addSelect(brandModelPrioritySql, 'brand_model_priority')
+        .addSelect(seasonPrioritySql, 'season_priority')
+        .addSelect(tireCondPrioritySql, 'tire_cond_priority')
+        .addSelect(priceDistanceSql, 'price_distance')
+        .orderBy('size_match_priority', 'ASC')
+        .addOrderBy('brand_model_priority', 'ASC')
+        .addOrderBy('season_priority', 'ASC')
+        .addOrderBy('tire_cond_priority', 'ASC')
+        .addOrderBy('price_distance', 'ASC')
+        .addOrderBy('listing.last_updated_at', 'DESC')
+        .limit(200)
+        .setParameters(params);
+      if (restrictVehicleType) {
+        qb.andWhere('tire.tire_vehicle_type = :tireVehType', {
+          tireVehType: tire.tire_vehicle_type,
+        });
+      }
+      return qb;
+    };
+
+    const strict = await buildTireSimilarQuery(true).getMany();
+    if (strict.length > 0) {
+      return strict;
+    }
+    return buildTireSimilarQuery(false).getMany();
+  }
+
   private buildSearchQuery(
+    searchDto: SearchCriteria,
+    repository: Repository<Listing> = this.repository,
+  ) {
+    const cat = searchDto.category ?? 'vehicle';
+    if (cat === 'tire') {
+      return this.buildTireSearchQuery(searchDto, repository);
+    }
+    return this.buildVehicleSearchQuery(searchDto, repository);
+  }
+
+  private buildVehicleSearchQuery(
     searchDto: SearchCriteria,
     repository: Repository<Listing> = this.repository,
   ) {
@@ -220,6 +327,7 @@ export class TypeOrmListingRepository implements IListingRepository {
         'listing.condition',
         'listing.registration_type',
         'listing.equipment',
+        'listing.category',
         'listing.created_at',
         'listing.last_updated_at',
       ])
@@ -250,7 +358,10 @@ export class TypeOrmListingRepository implements IListingRepository {
         'user.companyName',
         'user.companyWebsiteUrl',
       ])
-      .where('listing.status = :status', { status: ListingStatusEnum.Active });
+      .where('listing.status = :status', { status: ListingStatusEnum.Active })
+      .andWhere('listing.category = :vehicleListCategory', {
+        vehicleListCategory: ListingCategory.Vehicle,
+      });
 
     this.applyBrandModelFilter(qb, searchDto);
 
@@ -361,6 +472,179 @@ export class TypeOrmListingRepository implements IListingRepository {
     );
 
     return qb;
+  }
+
+  private buildTireSearchQuery(
+    searchDto: SearchCriteria,
+    repository: Repository<Listing> = this.repository,
+  ) {
+    const qb = repository
+      .createQueryBuilder('listing')
+      .select([
+        'listing.id',
+        'listing.title',
+        'listing.price',
+        'listing.currency',
+        'listing.city',
+        'listing.status',
+        'listing.images',
+        'listing.cover_blur_hash',
+        'listing.urgent',
+        'listing.is_new',
+        'listing.is_promoted',
+        'listing.promoted_until',
+        'listing.views',
+        'listing.condition',
+        'listing.registration_type',
+        'listing.equipment',
+        'listing.category',
+        'listing.created_at',
+        'listing.last_updated_at',
+      ])
+      .leftJoin('listing.tire', 'tire')
+      .addSelect([
+        'tire.id',
+        'tire.brand_id',
+        'tire.model_id',
+        'tire.custom_model_name',
+        'tire.tire_vehicle_type',
+        'tire.season',
+        'tire.condition',
+        'tire.width_mm',
+        'tire.aspect_ratio',
+        'tire.diameter_inch',
+        'tire.quantity',
+        'tire.studded',
+        'tire.run_flat',
+        'tire.reinforced_xl',
+        'tire.spare_donut',
+        'tire.tubeless',
+        'tire.acoustic',
+      ])
+      .leftJoin('tire.brand', 'tireBrand')
+      .addSelect(['tireBrand.id', 'tireBrand.name', 'tireBrand.logoUrl'])
+      .leftJoin('tire.model', 'tireModel')
+      .addSelect(['tireModel.id', 'tireModel.name', 'tireModel.is_other'])
+      .leftJoin('listing.user', 'user')
+      .addSelect([
+        'user.id',
+        'user.type',
+        'user.phone',
+        'user.firstName',
+        'user.lastName',
+        'user.companyName',
+        'user.companyWebsiteUrl',
+      ])
+      .where('listing.status = :status', { status: ListingStatusEnum.Active })
+      .andWhere('listing.category = :tireListCategory', {
+        tireListCategory: ListingCategory.Tire,
+      });
+
+    if (searchDto.tireVehicleType) {
+      qb.andWhere('tire.tire_vehicle_type = :tireVehType', {
+        tireVehType: searchDto.tireVehicleType,
+      });
+    }
+
+    this.applyTireBrandModelFilter(qb, searchDto);
+
+    this.applyTireDimensionFilters(qb, searchDto);
+    if (searchDto.tire_seasons && searchDto.tire_seasons.length > 0) {
+      qb.andWhere('tire.season IN (:...tireSeasons)', { tireSeasons: searchDto.tire_seasons });
+    }
+    if (searchDto.tire_conditions && searchDto.tire_conditions.length > 0) {
+      qb.andWhere('tire.condition IN (:...tireConditions)', {
+        tireConditions: searchDto.tire_conditions,
+      });
+    }
+    if (searchDto.tire_quantities && searchDto.tire_quantities.length > 0) {
+      qb.andWhere('tire.quantity IN (:...tireQty)', { tireQty: searchDto.tire_quantities });
+    }
+
+    applyBooleanFilter(qb, 'tire', 'studded', searchDto.tire_studded);
+    applyBooleanFilter(qb, 'tire', 'run_flat', searchDto.tire_run_flat);
+    applyBooleanFilter(qb, 'tire', 'reinforced_xl', searchDto.tire_reinforced_xl);
+    applyBooleanFilter(qb, 'tire', 'spare_donut', searchDto.tire_spare_donut);
+    applyBooleanFilter(qb, 'tire', 'tubeless', searchDto.tire_tubeless);
+    applyBooleanFilter(qb, 'tire', 'acoustic', searchDto.tire_acoustic);
+
+    applyRangeFilter(qb, 'listing', 'price', searchDto.price_gte, searchDto.price_lte);
+    applyCitiesFilter(qb, 'listing', searchDto.cities, searchDto.city);
+
+    if (searchDto.currency) {
+      qb.andWhere('listing.currency = :currency', { currency: searchDto.currency });
+    }
+
+    applyTextSearchFilter(qb, 'listing', 'title', searchDto.title);
+    applyBooleanFilter(qb, 'listing', 'urgent', searchDto.urgent);
+    applyBooleanFilter(qb, 'listing', 'is_new', searchDto.is_new);
+
+    qb.andWhere(
+      '(listing.is_promoted = false OR listing.promoted_until IS NULL OR listing.promoted_until > NOW())',
+    );
+
+    return qb;
+  }
+
+  private applyTireDimensionFilters(
+    qb: ReturnType<Repository<Listing>['createQueryBuilder']>,
+    searchDto: SearchCriteria,
+  ): void {
+    const w = searchDto.tire_widths;
+    const p = searchDto.tire_profiles;
+    const d = searchDto.tire_diameters;
+    const lenW = w?.length ?? 0;
+    const lenP = p?.length ?? 0;
+    const lenD = d?.length ?? 0;
+    if (lenW > 0 && lenW === lenP && lenP === lenD) {
+      const parts: string[] = [];
+      const params: Record<string, number> = {};
+      w!.forEach((tw, i) => {
+        const s = `i${i}`;
+        parts.push(
+          `(tire.width_mm = :taw${s} AND tire.aspect_ratio = :tap${s} AND tire.diameter_inch = :tad${s})`,
+        );
+        params[`taw${s}`] = tw;
+        params[`tap${s}`] = p![i];
+        params[`tad${s}`] = d![i];
+      });
+      qb.andWhere(`(${parts.join(' OR ')})`, params);
+      return;
+    }
+    if (w && w.length > 0) {
+      qb.andWhere('tire.width_mm IN (:...tireWidths)', { tireWidths: w });
+    }
+    if (p && p.length > 0) {
+      qb.andWhere('tire.aspect_ratio IN (:...tireProfiles)', { tireProfiles: p });
+    }
+    if (d && d.length > 0) {
+      const placeholders = d.map((_, i) => `:tdia${i}`).join(', ');
+      const diaParams: Record<string, number> = {};
+      d.forEach((dia, i) => {
+        diaParams[`tdia${i}`] = dia;
+      });
+      qb.andWhere(`tire.diameter_inch IN (${placeholders})`, diaParams);
+    }
+  }
+
+  private applyTireBrandModelFilter(
+    qb: ReturnType<Repository<Listing>['createQueryBuilder']>,
+    searchDto: SearchCriteria,
+  ): void {
+    const bids = searchDto.tire_brand_ids;
+    const mids = searchDto.tire_model_ids;
+    const hasB = bids && bids.length > 0;
+    const hasM = mids && mids.length > 0;
+    if (hasB && hasM) {
+      qb.andWhere('tire.model_id IN (:...tireModelIds) AND tire.brand_id IN (:...tireBrandIds)', {
+        tireModelIds: mids,
+        tireBrandIds: bids,
+      });
+    } else if (hasM) {
+      qb.andWhere('tire.model_id IN (:...tireModelIdsOnly)', { tireModelIdsOnly: mids });
+    } else if (hasB) {
+      qb.andWhere('tire.brand_id IN (:...tireBrandIdsOnly)', { tireBrandIdsOnly: bids });
+    }
   }
 
   private applyBrandModelFilter(

@@ -5,12 +5,14 @@ import { analytics } from '@/lib/analytics';
 import type { Listing } from '@/lib/api';
 import { useComparisonStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
+import { isTireListing } from '@/lib/utils';
 
 export function useListingCardComparison(listing: Listing, displayTitle: string) {
   const { t } = useTranslation();
-  const comparisons = useComparisonStore((s) => s.comparisons);
-  const addComparison = useComparisonStore((s) => s.add);
-  const removeComparison = useComparisonStore((s) => s.remove);
+  const tire = isTireListing(listing);
+  const comparisons = useComparisonStore((s) => (tire ? s.tireComparisons : s.vehicleComparisons));
+  const addComparison = useComparisonStore((s) => (tire ? s.addTire : s.addVehicle));
+  const removeComparison = useComparisonStore((s) => (tire ? s.removeTire : s.removeVehicle));
 
   const storeIsInComparison = comparisons.includes(listing.id);
   const [localInComparison, setLocalInComparison] = useState(storeIsInComparison);
@@ -26,26 +28,39 @@ export function useListingCardComparison(listing: Listing, displayTitle: string)
       if (localInComparison) {
         removeComparison(listing.id);
         setLocalInComparison(false);
-        analytics.removeFromComparison(listing.id);
+        analytics.removeFromComparison(listing.id, {
+          listing_category: tire ? 'tire' : 'vehicle',
+        });
         toast.success(t('listingDetail.removedFromComparison'));
         return;
       }
       if (comparisons.length >= 3) {
-        toast.warning(t('listingDetail.cannotCompareMore'));
+        toast.warning(
+          tire ? t('listingDetail.cannotCompareMoreTires') : t('listingDetail.cannotCompareMore'),
+        );
         return;
       }
       const added = addComparison(listing.id);
       if (added) {
         setLocalInComparison(true);
-        analytics.addToComparison(listing.id, { title: displayTitle, price: listing.price });
+        analytics.addToComparison(listing.id, {
+          title: displayTitle,
+          price: listing.price,
+          listing_category: tire ? 'tire' : 'vehicle',
+          item_category: tire ? 'Tire' : 'Vehicle',
+        });
         toast.success(t('listingDetail.addedToComparison'));
       } else {
-        toast.error(t('listingDetail.alreadyInComparisonError'));
+        toast.error(
+          tire
+            ? t('listingDetail.alreadyInComparisonErrorTire')
+            : t('listingDetail.alreadyInComparisonError'),
+        );
       }
     },
     [
-      listing.id,
-      listing.price,
+      listing,
+      tire,
       localInComparison,
       comparisons.length,
       addComparison,

@@ -1,70 +1,44 @@
 'use client';
 
-import Image from 'next/image';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
-import { CarIcon, MotoIcon, TruckIcon } from '@/ui';
+import { CarIcon, MotoIcon, TireCategoryIcon, TruckIcon } from '@/ui';
+
+type ListingCategory = 'vehicle' | 'tire';
 
 interface VehicleTypeSelectorProps {
+  listingCategory: ListingCategory;
   vehicleType: 'car' | 'moto' | 'truck';
   onVehicleTypeChange: (_type: 'car' | 'moto' | 'truck') => void;
+  onTireCategorySelect: () => void;
 }
 
 export function VehicleTypeSelector({
+  listingCategory,
   vehicleType,
   onVehicleTypeChange,
+  onTireCategorySelect,
 }: VehicleTypeSelectorProps) {
   const { t } = useTranslation();
   const carRef = useRef<HTMLButtonElement>(null);
   const truckRef = useRef<HTMLButtonElement>(null);
   const motoRef = useRef<HTMLButtonElement>(null);
+  const tireRef = useRef<HTMLButtonElement>(null);
   const vehicleIconsContainerRef = useRef<HTMLDivElement>(null);
-  const comingSoonRef = useRef<HTMLSpanElement>(null);
-  const [vehicleIndicatorStyle, setVehicleIndicatorStyle] = useState({ left: 0, width: 0 });
+  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
   const [showVehicleFade, setShowVehicleFade] = useState(false);
-  const [showComingSoonHint, setShowComingSoonHint] = useState(false);
-  const [hintPosition, setHintPosition] = useState({ top: 0, left: 0 });
-
-  const closeComingSoonHint = useCallback(() => setShowComingSoonHint(false), []);
-
-  const updateHintPosition = useCallback(() => {
-    if (comingSoonRef.current) {
-      const rect = comingSoonRef.current.getBoundingClientRect();
-      setHintPosition({
-        top: rect.top - 8,
-        left: rect.left + rect.width / 2 - 96,
-      });
-    }
-  }, []);
-
-  useLayoutEffect(() => {
-    if (showComingSoonHint) updateHintPosition();
-  }, [showComingSoonHint, updateHintPosition]);
 
   useEffect(() => {
-    if (!showComingSoonHint) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (comingSoonRef.current && !comingSoonRef.current.contains(e.target as Node)) {
-        closeComingSoonHint();
-      }
-    };
-    const handleScroll = () => closeComingSoonHint();
-    window.addEventListener('resize', updateHintPosition);
-    document.addEventListener('mousedown', handleClickOutside);
-    window.addEventListener('scroll', handleScroll, true);
-    return () => {
-      window.removeEventListener('resize', updateHintPosition);
-      document.removeEventListener('mousedown', handleClickOutside);
-      window.removeEventListener('scroll', handleScroll, true);
-    };
-  }, [showComingSoonHint, closeComingSoonHint, updateHintPosition]);
-
-  useEffect(() => {
-    const updateVehicleIndicator = () => {
+    const updateIndicator = () => {
       const activeRef =
-        vehicleType === 'car' ? carRef : vehicleType === 'truck' ? truckRef : motoRef;
+        listingCategory === 'tire'
+          ? tireRef
+          : vehicleType === 'car'
+            ? carRef
+            : vehicleType === 'truck'
+              ? truckRef
+              : motoRef;
 
       if (activeRef.current && vehicleIconsContainerRef.current) {
         const rect = activeRef.current.getBoundingClientRect();
@@ -72,7 +46,7 @@ export function VehicleTypeSelector({
         const containerRect = container.getBoundingClientRect();
         const scrollLeft = container.scrollLeft || 0;
 
-        setVehicleIndicatorStyle({
+        setIndicatorStyle({
           left: rect.left - containerRect.left + scrollLeft,
           width: rect.width,
         });
@@ -87,16 +61,16 @@ export function VehicleTypeSelector({
     };
 
     const handleResize = () => {
-      updateVehicleIndicator();
+      updateIndicator();
       checkScrollability();
     };
 
     const handleScroll = () => {
-      updateVehicleIndicator();
+      updateIndicator();
       checkScrollability();
     };
 
-    updateVehicleIndicator();
+    updateIndicator();
     checkScrollability();
 
     const container = vehicleIconsContainerRef.current;
@@ -114,7 +88,31 @@ export function VehicleTypeSelector({
     }
 
     return undefined;
-  }, [vehicleType]);
+  }, [vehicleType, listingCategory]);
+
+  const onCarClick = useCallback(() => {
+    if (listingCategory === 'tire') {
+      onVehicleTypeChange('car');
+      return;
+    }
+    if (vehicleType !== 'car') onVehicleTypeChange('car');
+  }, [listingCategory, vehicleType, onVehicleTypeChange]);
+
+  const onTruckClick = useCallback(() => {
+    if (listingCategory === 'tire') {
+      onVehicleTypeChange('truck');
+      return;
+    }
+    if (vehicleType !== 'truck') onVehicleTypeChange('truck');
+  }, [listingCategory, vehicleType, onVehicleTypeChange]);
+
+  const onMotoClick = useCallback(() => {
+    if (listingCategory === 'tire') {
+      onVehicleTypeChange('moto');
+      return;
+    }
+    if (vehicleType !== 'moto') onVehicleTypeChange('moto');
+  }, [listingCategory, vehicleType, onVehicleTypeChange]);
 
   return (
     <div
@@ -135,78 +133,61 @@ export function VehicleTypeSelector({
         <button
           ref={carRef}
           type="button"
-          onClick={() => vehicleType !== 'car' && onVehicleTypeChange('car')}
+          onClick={onCarClick}
           className={`h-12 w-16 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap flex items-center justify-center ${
-            vehicleType === 'car'
+            listingCategory === 'vehicle' && vehicleType === 'car'
               ? 'bg-primary-500/10 rounded-t-lg'
               : 'hover-only:hover:bg-primary-500/10 hover-only:hover:rounded-t-lg'
           }`}
+          aria-pressed={listingCategory === 'vehicle' && vehicleType === 'car'}
         >
           <CarIcon className="w-12 h-12 transition-colors duration-300 scale-x-[-1] text-primary-900" />
         </button>
         <button
           ref={truckRef}
           type="button"
-          onClick={() => vehicleType !== 'truck' && onVehicleTypeChange('truck')}
+          onClick={onTruckClick}
           className={`h-12 w-16 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap flex items-center justify-center ${
-            vehicleType === 'truck'
+            listingCategory === 'vehicle' && vehicleType === 'truck'
               ? 'bg-primary-500/10 rounded-t-lg'
               : 'hover-only:hover:bg-primary-500/10 hover-only:hover:rounded-t-lg'
           }`}
+          aria-pressed={listingCategory === 'vehicle' && vehicleType === 'truck'}
         >
           <TruckIcon className="w-12 h-12 transition-colors duration-300 scale-x-[-1] text-primary-900" />
         </button>
         <button
           ref={motoRef}
           type="button"
-          onClick={() => vehicleType !== 'moto' && onVehicleTypeChange('moto')}
+          onClick={onMotoClick}
           className={`h-12 w-16 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap flex items-center justify-center ${
-            vehicleType === 'moto'
+            listingCategory === 'vehicle' && vehicleType === 'moto'
               ? 'bg-primary-500/10 rounded-t-lg'
               : 'hover-only:hover:bg-primary-500/10 hover-only:hover:rounded-t-lg'
           }`}
+          aria-pressed={listingCategory === 'vehicle' && vehicleType === 'moto'}
         >
           <MotoIcon className="w-12 h-12 transition-colors duration-300 scale-x-[-1] text-primary-900" />
         </button>
-        <span
-          ref={comingSoonRef}
-          role="img"
-          aria-label={t('searchFilters.comingSoonHint')}
-          className="h-12 w-16 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap flex items-center justify-center cursor-default"
-          onMouseEnter={() => setShowComingSoonHint(true)}
-          onMouseLeave={() => setShowComingSoonHint(false)}
+        <button
+          ref={tireRef}
+          type="button"
+          onClick={() => listingCategory !== 'tire' && onTireCategorySelect()}
+          className={`h-12 w-16 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap flex items-center justify-center ${
+            listingCategory === 'tire'
+              ? 'bg-primary-500/10 rounded-t-lg'
+              : 'hover-only:hover:bg-primary-500/10 hover-only:hover:rounded-t-lg'
+          }`}
+          aria-pressed={listingCategory === 'tire'}
+          aria-label={t('searchFilters.tiresCategory')}
         >
-          <Image
-            src="/icons/tire.svg"
-            alt={t('searchFilters.tireAlt')}
-            width={44}
-            height={44}
-            className="w-[44px] h-[44px] object-contain grayscale opacity-35 transition-colors duration-300 scale-x-[-1]"
-          />
-          {showComingSoonHint &&
-            createPortal(
-              <div
-                className="fixed z-9999 w-48"
-                style={{
-                  top: hintPosition.top - 56,
-                  left: hintPosition.left,
-                }}
-              >
-                <div className="bg-bg-darker border-2 border-primary-500/50 rounded-lg p-3 shadow-lg relative">
-                  <div className="text-xs text-text-primary leading-relaxed text-center">
-                    {t('searchFilters.comingSoonHint')}
-                  </div>
-                  <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-[5px] border-r-[5px] border-t-[5px] border-t-primary-500/50 border-l-transparent border-r-transparent" />
-                </div>
-              </div>,
-              document.body,
-            )}
-        </span>
+          <TireCategoryIcon className="w-11 h-11 text-primary-900 transition-colors duration-300 scale-x-[-1]" />
+        </button>
         <div
           className="absolute bottom-0 xl:bottom-0 h-0.5 bg-primary-400 transition-all duration-300 ease-in-out"
           style={{
-            left: `${vehicleIndicatorStyle.left}px`,
-            width: `${vehicleIndicatorStyle.width}px`,
+            left: `${indicatorStyle.left}px`,
+            width: `${indicatorStyle.width}px`,
           }}
         />
       </div>

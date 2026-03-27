@@ -55,9 +55,7 @@ import { InfoBlock } from '@/ui';
   <p>{t('listingDetail.vinNotProvidedDescription')}</p>
 </InfoBlock>
 
-<InfoBlock className="mb-5">
-  <p>{t('listings.brandModelInfo')}</p>
-</InfoBlock>
+<BrandModelCatalogInfoBlock />
 ```
 
 ### Styling

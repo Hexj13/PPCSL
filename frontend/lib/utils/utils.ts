@@ -27,14 +27,14 @@ function getCollator(): Intl.Collator {
   return new Intl.Collator(locale, { sensitivity: 'base', numeric: true });
 }
 
-export function sortByName<T extends { name: string }>(items: T[]): T[] {
-  const collator = getCollator();
-  return [...items].sort((a, b) => collator.compare(a.name, b.name));
-}
-
 export function compareNames(a: string, b: string): number {
   const collator = getCollator();
   return collator.compare(a, b);
+}
+
+export function sortByName<T extends { name: string }>(items: T[]): T[] {
+  const collator = getCollator();
+  return [...items].sort((a, b) => collator.compare(a.name, b.name));
 }
 
 export function sortOptionsByLabel<T>(options: Array<LabeledOption<T>>): Array<LabeledOption<T>> {
@@ -482,7 +482,20 @@ export function kwToHorsepower(kw: number): number {
   return Math.round(kw / 0.73549875);
 }
 
+export function isTireListing(listing: Listing): boolean {
+  return listing.category === 'tire' || (!!listing.tire && !listing.vehicle);
+}
+
+export function formatTireSize(tire: NonNullable<Listing['tire']>): string {
+  const d = Number(tire.diameter_inch);
+  const dStr = Number.isInteger(d) ? String(d) : d.toFixed(1);
+  return `${tire.width_mm}/${tire.aspect_ratio} R${dStr}`;
+}
+
 export function getVehicleType(listing: Listing): 'car' | 'truck' | 'moto' {
+  if (isTireListing(listing) && listing.tire) {
+    return listing.tire.tire_vehicle_type;
+  }
   const modelTypes = listing.vehicle?.model?.vehicle_types;
   if (modelTypes?.[0]) {
     return modelTypes[0];
@@ -494,6 +507,9 @@ export function getVehicleType(listing: Listing): 'car' | 'truck' | 'moto' {
 }
 
 export function getListingDisplayTitle(listing: Listing, t: (_key: string) => string): string {
+  if (isTireListing(listing)) {
+    return listing.title?.trim() || '';
+  }
   const vehicle = listing.vehicle;
   const brandName = vehicle?.brand?.name;
   const modelName = vehicle?.model?.name;

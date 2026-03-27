@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, type RefObject } from 'react';
 
 import { ListingPageActions } from '@/components/ListingPage/ListingPageActions';
 import { ListingPageBreadcrumbs } from '@/components/ListingPage/ListingPageBreadcrumbs';
@@ -29,7 +29,7 @@ import { useImageRetry } from '@/hooks/useImageRetry';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
 import { reportImageLoadFailure } from '@/lib/image-failure-monitor';
-import { formatDate, formatMileage, formatRegistrationType } from '@/lib/utils';
+import { formatDate, formatMileage, formatRegistrationType, isTireListing } from '@/lib/utils';
 import { Spinner } from '@/ui';
 
 import { ListingPageHistorySection } from './ListingPageHistorySection';
@@ -312,6 +312,76 @@ function ListingPageSkeleton({ t }: { t: (k: string) => string }) {
   );
 }
 
+function useListingPageGalleryKeyboard(
+  previewRef: RefObject<ListingPageImagesHandle | null>,
+  imagesLength: number,
+  isImageModalOpen: boolean,
+): void {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
+      }
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        previewRef.current?.goPrev();
+      }
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        previewRef.current?.goNext();
+      }
+    };
+
+    if (!isImageModalOpen && imagesLength > 1) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [imagesLength, isImageModalOpen, previewRef]);
+}
+
+function listingPagePrimaryHeadingTitle(listing: Listing, t: (k: string) => string): string {
+  if (isTireListing(listing)) {
+    const tire = listing.tire;
+    const tireTitleParts =
+      tire &&
+      [
+        tire.brand?.name,
+        tire.model?.is_other && tire.custom_model_name?.trim()
+          ? tire.custom_model_name.trim()
+          : tire.model?.name,
+      ].filter(Boolean);
+    return (
+      (tireTitleParts?.length ? tireTitleParts.join(' ') : listing.title) ||
+      t('listings.defaultTitle')
+    );
+  }
+  const vehicle = listing.vehicle;
+  const brand = vehicle?.brand?.name || '';
+  const model = vehicle?.model?.name || '';
+  const year = vehicle?.year || '';
+  const vehicleInfo = [brand, model, year].filter(Boolean).join(' ');
+  return vehicleInfo || listing.title || t('listings.defaultTitle');
+}
+
+function reportListingPageImageFailure(
+  scope: 'listing_page' | 'listing_modal',
+  listingId: string,
+  images: string[],
+  index: number,
+  retry: (i: number) => void,
+): void {
+  retry(index);
+  void reportImageLoadFailure({
+    scope,
+    listingId,
+    imageUrl: images[index] ?? '',
+    imageIndex: index,
+    imagesTotal: images.length,
+  });
+}
+
 function ListingPageMainContent(props: UseListingPageClientReturn) {
   const { t } = useTranslation();
   const { locale } = useI18n();
@@ -345,6 +415,7 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
     loadingPrevious,
     activeListingsCount,
     handleToggleComparison,
+    showCompare,
     handleToggleFavorite,
     handlePromoteClick,
     handleCopyLink,
@@ -365,60 +436,18 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
     1200,
   );
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
-        return;
-      }
-      if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        previewRef.current?.goPrev();
-      }
-      if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        previewRef.current?.goNext();
-      }
-    };
-
-    if (!isImageModalOpen && images.length > 1) {
-      window.addEventListener('keydown', handleKeyDown);
-    }
-
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [images.length, isImageModalOpen]);
+  useListingPageGalleryKeyboard(previewRef, images.length, isImageModalOpen);
   if (!listing) return null;
 
-  const vehicle = listing.vehicle;
   const closingDate = getClosingDate(listing.last_updated_at);
-  const brand = vehicle?.brand?.name || '';
-  const model = vehicle?.model?.name || '';
-  const year = vehicle?.year || '';
-  const vehicleInfo = [brand, model, year].filter(Boolean).join(' ');
-  const h1Title = vehicleInfo || listing.title || t('listings.defaultTitle');
+  const h1Title = listingPagePrimaryHeadingTitle(listing, t);
 
   const nextImage = () => setModalImageIndex((prev) => (prev + 1) % images.length);
   const prevImage = () => setModalImageIndex((prev) => (prev - 1 + images.length) % images.length);
-  const handlePageImageError = (index: number) => {
-    retryImageError(index);
-    void reportImageLoadFailure({
-      scope: 'listing_page',
-      listingId: listing.id,
-      imageUrl: images[index] ?? '',
-      imageIndex: index,
-      imagesTotal: images.length,
-    });
-  };
-  const handleModalImageError = (index: number) => {
-    retryImageError(index);
-    void reportImageLoadFailure({
-      scope: 'listing_modal',
-      listingId: listing.id,
-      imageUrl: images[index] ?? '',
-      imageIndex: index,
-      imagesTotal: images.length,
-    });
-  };
+  const handlePageImageError = (index: number) =>
+    reportListingPageImageFailure('listing_page', listing.id, images, index, retryImageError);
+  const handleModalImageError = (index: number) =>
+    reportListingPageImageFailure('listing_modal', listing.id, images, index, retryImageError);
 
   return (
     <>
@@ -445,10 +474,14 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
 
           <div className="space-y-6 min-w-0 order-3 lg:order-2">
             <ListingPageHeader listing={listing} title={h1Title} />
-            {(listing.available_in_credit ||
+            {((!isTireListing(listing) && listing.available_in_credit) ||
+              (isTireListing(listing) &&
+                listing.tire != null &&
+                listing.status !== 'Closed' &&
+                listing.price !== undefined) ||
               listing.status === 'Closed' ||
               listing.is_promoted ||
-              listing.is_new ||
+              (listing.is_new && !isTireListing(listing)) ||
               listing.urgent) && <div className="border-t border-primary-500/20" />}
             <ListingPageActions
               listing={listing}
@@ -458,6 +491,7 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
               isOwnListing={isOwnListing}
               canPromote={canPromote}
               showPromoteButton={getShowPromoteButton(listing, user?.id)}
+              showCompare={showCompare}
               onToggleComparison={handleToggleComparison}
               onToggleFavorite={handleToggleFavorite}
               onPromoteClick={handlePromoteClick}
@@ -469,27 +503,35 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
 
         <div className="grid grid-cols-1 lg:grid-cols-[1.86fr_1fr] gap-6">
           <div className="space-y-6 min-w-0">
-            {vehicle && <ListingPageCharacteristics listing={listing} />}
+            {(listing.vehicle || isTireListing(listing)) && (
+              <ListingPageCharacteristics listing={listing} />
+            )}
 
-            <ListingPageConditionRegistrationSection
-              listing={listing}
-              t={t}
-              formatRegistrationType={formatRegistrationType}
-            />
+            {!isTireListing(listing) && (
+              <ListingPageConditionRegistrationSection
+                listing={listing}
+                t={t}
+                formatRegistrationType={formatRegistrationType}
+              />
+            )}
 
-            <ListingPageEquipmentSection equipmentColumns={equipmentColumns} t={t} />
+            {!isTireListing(listing) && (
+              <ListingPageEquipmentSection equipmentColumns={equipmentColumns} t={t} />
+            )}
 
             {listing.description && <ListingPageDescription descriptionHtml={descriptionHtml} />}
 
-            <ListingPageHistorySection
-              listing={listing}
-              loadingPrevious={loadingPrevious}
-              previousListings={previousListings}
-              router={router}
-              t={t}
-              formatDate={formatDateWithLocale}
-              formatMileage={formatMileage}
-            />
+            {!isTireListing(listing) && (
+              <ListingPageHistorySection
+                listing={listing}
+                loadingPrevious={loadingPrevious}
+                previousListings={previousListings}
+                router={router}
+                t={t}
+                formatDate={formatDateWithLocale}
+                formatMileage={formatMileage}
+              />
+            )}
           </div>
 
           <div className="space-y-6 min-w-0">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { usePaginatedData } from '@/hooks/usePaginatedData';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -14,6 +14,17 @@ import { BrandFormModal } from './BrandFormModal';
 import { BrandsModelsFilters } from './BrandsModelsFilters';
 import { BrandsModelsTable } from './BrandsModelsTable';
 import { ModelFormModal } from './ModelFormModal';
+import { TireBrandFormModal } from './TireBrandFormModal';
+import { TireModelFormModal } from './TireModelFormModal';
+
+type Segment = '' | 'car' | 'truck' | 'moto';
+
+type BrandsModelsFiltersState = {
+  searchQuery: string;
+  catalog: 'vehicle' | 'tire';
+  vehicleSegment: Segment;
+  tireSegment: Segment;
+};
 
 export function BrandsModelsTab() {
   const { t } = useTranslation();
@@ -21,6 +32,12 @@ export function BrandsModelsTab() {
   const [archiveTarget, setArchiveTarget] = useState<ArchiveTarget | null>(null);
   const [brandModal, setBrandModal] = useState<AdminBrand | null | 'create'>(null);
   const [modelModal, setModelModal] = useState<
+    | { mode: 'create'; brandId?: string }
+    | { mode: 'edit'; model: AdminModel; brandName: string }
+    | null
+  >(null);
+  const [tireBrandModal, setTireBrandModal] = useState<AdminBrand | null | 'create'>(null);
+  const [tireModelModal, setTireModelModal] = useState<
     | { mode: 'create'; brandId?: string }
     | { mode: 'edit'; model: AdminModel; brandName: string }
     | null
@@ -35,25 +52,40 @@ export function BrandsModelsTab() {
     setFilters,
     setPage,
     reload,
-  } = usePaginatedData<
-    AdminBrand,
-    { searchQuery: string; vehicleType: '' | 'car' | 'truck' | 'moto' }
-  >({
+  } = usePaginatedData<AdminBrand, BrandsModelsFiltersState>({
     fetchFn: async (pageNum, limitNum, filtersData) => {
+      if (filtersData.catalog === 'tire') {
+        const res = await adminApi.getTireBrandsModels(
+          pageNum,
+          limitNum,
+          filtersData.searchQuery || undefined,
+          filtersData.tireSegment || undefined,
+        );
+        return { data: res.data.data, meta: res.data.meta };
+      }
       const res = await adminApi.getBrandsModels(
         pageNum,
         limitNum,
         filtersData.searchQuery || undefined,
-        filtersData.vehicleType || undefined,
+        filtersData.vehicleSegment || undefined,
       );
       return { data: res.data.data, meta: res.data.meta };
     },
     limit: 100,
-    initialFilters: { searchQuery: '', vehicleType: '' },
+    initialFilters: {
+      searchQuery: '',
+      catalog: 'vehicle',
+      vehicleSegment: '',
+      tireSegment: '',
+    },
     debounceFilters: ['searchQuery'],
     debounceMs: 500,
     showLoadingDelay: 300,
   });
+
+  useEffect(() => {
+    setExpandedBrandIds(new Set());
+  }, [filters.catalog, filters.vehicleSegment, filters.tireSegment]);
 
   const toggleExpand = useCallback((brandId: string) => {
     setExpandedBrandIds((prev) => {
@@ -67,8 +99,15 @@ export function BrandsModelsTab() {
   const handleArchiveConfirm = useCallback(async () => {
     if (!archiveTarget) return;
     try {
+      const tire = filters.catalog === 'tire';
       if (archiveTarget.type === 'brand') {
-        await adminApi.archiveBrand(archiveTarget.id);
+        if (tire) {
+          await adminApi.archiveTireBrand(archiveTarget.id);
+        } else {
+          await adminApi.archiveBrand(archiveTarget.id);
+        }
+      } else if (tire) {
+        await adminApi.archiveTireModel(archiveTarget.id);
       } else {
         await adminApi.archiveModel(archiveTarget.id);
       }
@@ -86,32 +125,40 @@ export function BrandsModelsTab() {
           : t('admin.brandsModelsTab.archiveError');
       toast.error(message);
     }
-  }, [archiveTarget, reload, t]);
+  }, [archiveTarget, filters.catalog, reload, t]);
 
   const handleUnarchiveBrand = useCallback(
     async (id: string) => {
       try {
-        await adminApi.unarchiveBrand(id);
+        if (filters.catalog === 'tire') {
+          await adminApi.unarchiveTireBrand(id);
+        } else {
+          await adminApi.unarchiveBrand(id);
+        }
         toast.success(t('admin.brandsModelsTab.unarchiveSuccess'));
         reload();
       } catch {
         toast.error(t('admin.brandsModelsTab.unarchiveError'));
       }
     },
-    [reload, t],
+    [filters.catalog, reload, t],
   );
 
   const handleUnarchiveModel = useCallback(
     async (id: string) => {
       try {
-        await adminApi.unarchiveModel(id);
+        if (filters.catalog === 'tire') {
+          await adminApi.unarchiveTireModel(id);
+        } else {
+          await adminApi.unarchiveModel(id);
+        }
         toast.success(t('admin.brandsModelsTab.unarchiveSuccess'));
         reload();
       } catch {
         toast.error(t('admin.brandsModelsTab.unarchiveError'));
       }
     },
-    [reload, t],
+    [filters.catalog, reload, t],
   );
 
   const formatVehicleTypes = useCallback(
@@ -130,11 +177,23 @@ export function BrandsModelsTab() {
     <div>
       <BrandsModelsFilters
         searchQuery={filters.searchQuery}
-        vehicleType={filters.vehicleType}
         onSearchChange={(value) => setFilters((prev) => ({ ...prev, searchQuery: value }))}
-        onVehicleTypeChange={(value) => setFilters((prev) => ({ ...prev, vehicleType: value }))}
-        onAddBrand={() => setBrandModal('create')}
-        onAddModel={() => setModelModal({ mode: 'create' })}
+        catalog={filters.catalog}
+        onCatalogChange={(catalog) => setFilters((prev) => ({ ...prev, catalog }))}
+        vehicleSegment={filters.vehicleSegment}
+        onVehicleSegmentChange={(vehicleSegment) =>
+          setFilters((prev) => ({ ...prev, catalog: 'vehicle', vehicleSegment }))
+        }
+        tireSegment={filters.tireSegment}
+        onTireSegmentChange={(tireSegment) => setFilters((prev) => ({ ...prev, tireSegment }))}
+        onAddBrand={() =>
+          filters.catalog === 'tire' ? setTireBrandModal('create') : setBrandModal('create')
+        }
+        onAddModel={() =>
+          filters.catalog === 'tire'
+            ? setTireModelModal({ mode: 'create' })
+            : setModelModal({ mode: 'create' })
+        }
       />
 
       {brands.length === 0 ? (
@@ -144,13 +203,20 @@ export function BrandsModelsTab() {
       ) : (
         <BrandsModelsTable
           brands={brands}
-          vehicleType={filters.vehicleType}
+          catalog={filters.catalog}
+          vehicleType={filters.vehicleSegment}
           expandedBrandIds={expandedBrandIds}
           currentPage={page}
           totalPages={meta?.totalPages ?? 1}
           toggleExpand={toggleExpand}
-          onEditBrand={setBrandModal}
-          onEditModel={(model, brandName) => setModelModal({ mode: 'edit', model, brandName })}
+          onEditBrand={(b) =>
+            filters.catalog === 'tire' ? setTireBrandModal(b) : setBrandModal(b)
+          }
+          onEditModel={(model, brandName) =>
+            filters.catalog === 'tire'
+              ? setTireModelModal({ mode: 'edit', model, brandName })
+              : setModelModal({ mode: 'edit', model, brandName })
+          }
           setArchiveTarget={setArchiveTarget}
           onUnarchiveBrand={handleUnarchiveBrand}
           onUnarchiveModel={handleUnarchiveModel}
@@ -186,6 +252,28 @@ export function BrandsModelsTab() {
         initialBrandId={modelModal?.mode === 'create' ? modelModal.brandId : undefined}
         editModel={modelModal?.mode === 'edit' ? modelModal.model : undefined}
         editBrandName={modelModal?.mode === 'edit' ? modelModal.brandName : undefined}
+      />
+
+      <TireBrandFormModal
+        isOpen={tireBrandModal !== null}
+        onClose={() => setTireBrandModal(null)}
+        onSuccess={() => {
+          setTireBrandModal(null);
+          reload();
+        }}
+        brand={tireBrandModal === 'create' ? null : tireBrandModal}
+      />
+
+      <TireModelFormModal
+        isOpen={tireModelModal !== null}
+        onClose={() => setTireModelModal(null)}
+        onSuccess={() => {
+          setTireModelModal(null);
+          reload();
+        }}
+        initialBrandId={tireModelModal?.mode === 'create' ? tireModelModal.brandId : undefined}
+        editModel={tireModelModal?.mode === 'edit' ? tireModelModal.model : undefined}
+        editBrandName={tireModelModal?.mode === 'edit' ? tireModelModal.brandName : undefined}
       />
     </div>
   );

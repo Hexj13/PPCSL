@@ -340,6 +340,18 @@
     position: relative !important;
   }
 
+  &.paired-middle {
+    border-radius: 0 !important;
+    border-left-width: 1px !important;
+    margin-left: -1px !important;
+    border-right-width: 1px !important;
+  }
+
+  &.paired-middle:focus {
+    z-index: 1 !important;
+    position: relative !important;
+  }
+
   .paired-right &:focus {
     z-index: 1 !important;
     position: relative !important;
@@ -857,6 +869,20 @@
 
   & .input-field.input-field-error:focus {
     border-color: #dc3545 !important;
+  }
+}
+
+@utility paired-middle {
+  & .input-field {
+    border-radius: 0 !important;
+    border-left-width: 1px !important;
+    margin-left: -1px !important;
+    border-right-width: 1px !important;
+  }
+
+  & .input-field:focus {
+    z-index: 1 !important;
+    position: relative !important;
   }
 }
 

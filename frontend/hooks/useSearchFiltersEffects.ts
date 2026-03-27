@@ -13,6 +13,7 @@ export function useVehicleTypeFromUrl(
   setVehicleTypeWithStorage: (_v: 'car' | 'moto' | 'truck') => void,
 ) {
   useEffect(() => {
+    if (searchParams.get('category') === 'tire') return;
     const vehicleTypeParam = searchParams.get('vehicleType');
     const brandParam = searchParams.get('brand');
     if (vehicleTypeParam || !brandParam || brands.length === 0) return;
