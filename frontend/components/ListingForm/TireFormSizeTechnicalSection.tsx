@@ -133,10 +133,15 @@ export function TireFormSizeTechnicalSection({
           </div>
         </div>
         <div className="w-full min-w-0 sm:flex-1 sm:basis-0">
-          <label className="block text-sm font-semibold mb-2 text-primary-700">
-            {t('listings.tireForm.quantityLabel')}
-            <RequiredAsterisk filled={!!formData.quantity} />
-          </label>
+          <div className="flex items-center gap-1.5 mb-2">
+            <label className="text-sm font-semibold text-primary-700">
+              {t('listings.tireForm.quantityLabel')}
+              <RequiredAsterisk filled={!!formData.quantity} />
+            </label>
+            <HintTooltip ariaLabel={t('listings.tireForm.quantityHintAria')} width="w-96">
+              {t('listings.tireForm.quantityHint')}
+            </HintTooltip>
+          </div>
           <Dropdown
             value={formData.quantity}
             onChange={(value) => {

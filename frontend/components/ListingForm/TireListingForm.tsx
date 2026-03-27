@@ -68,7 +68,6 @@ export function TireListingForm({
     onFormFieldFocus,
     uploadSlots,
     onUploadedImageLoaded,
-    isOtherModel,
   } = sectionProps;
 
   const country = getCountry();
@@ -183,7 +182,6 @@ export function TireListingForm({
                         ...prev,
                         brand_id: value,
                         model_id: '',
-                        custom_model_name: '',
                       }));
                     }}
                     searchable={true}
@@ -202,11 +200,9 @@ export function TireListingForm({
                     value={formData.model_id}
                     onChange={(value) => {
                       clearError('model_id');
-                      clearError('custom_model_name');
                       setFormData((prev) => ({
                         ...prev,
                         model_id: value,
-                        custom_model_name: '',
                       }));
                     }}
                     disabled={!formData.brand_id || loadingModels}
@@ -225,26 +221,6 @@ export function TireListingForm({
                 </div>
               </div>
               <BrandModelCatalogInfoBlock />
-              {isOtherModel && (
-                <div className="mb-4">
-                  <label className="block text-sm font-semibold mb-2 text-primary-700">
-                    {t('listings.tireForm.customModelName')}
-                    <RequiredAsterisk filled={formData.custom_model_name.trim().length >= 2} />
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.custom_model_name}
-                    onChange={(e) => {
-                      clearError('custom_model_name');
-                      setFormData((prev) => ({ ...prev, custom_model_name: e.target.value }));
-                    }}
-                    className={`input-field h-[48px] w-full max-w-md ${errors['custom_model_name'] ? 'border-red-500' : ''}`}
-                    maxLength={60}
-                    placeholder={t('listings.tireForm.customModelPlaceholder')}
-                    title={t('listings.tireForm.customModelTitle')}
-                  />
-                </div>
-              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold mb-2 text-primary-700">

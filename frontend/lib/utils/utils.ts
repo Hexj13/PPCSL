@@ -492,6 +492,13 @@ export function formatTireSize(tire: NonNullable<Listing['tire']>): string {
   return `${tire.width_mm}/${tire.aspect_ratio} R${dStr}`;
 }
 
+export function getTireModelDisplayLabel(tire: NonNullable<Listing['tire']>): string {
+  if (tire.model?.is_other) {
+    return '';
+  }
+  return tire.model?.name?.trim() ?? '';
+}
+
 export function getVehicleType(listing: Listing): 'car' | 'truck' | 'moto' {
   if (isTireListing(listing) && listing.tire) {
     return listing.tire.tire_vehicle_type;

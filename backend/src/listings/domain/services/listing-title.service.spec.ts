@@ -122,7 +122,6 @@ describe('ListingTitleService', () => {
       brandName: 'Pirelli',
       modelName: 'Contra',
       isOtherModel: false,
-      customModelName: null,
       width_mm: 205,
       aspect_ratio: 55,
       diameter_inch: 16,
@@ -137,11 +136,24 @@ describe('ListingTitleService', () => {
       brandName: 'Michelin',
       modelName: 'Pilot Sport',
       isOtherModel: false,
-      customModelName: null,
       width_mm: 255,
       aspect_ratio: 40,
       diameter_inch: 20,
     });
     expect(title).toBe('Michelin Pilot Sport 255/40 R20');
+  });
+
+  it('should not put catalog other-model name in tire title when isOtherModel', () => {
+    const title = service.generateForTire({
+      brandName: 'Michelin',
+      modelName: 'Other (catalog)',
+      isOtherModel: true,
+      width_mm: 205,
+      aspect_ratio: 55,
+      diameter_inch: 16,
+      load_index: '91',
+      speed_index: 'V',
+    });
+    expect(title).toBe('Michelin 205/55 R16 91V');
   });
 });

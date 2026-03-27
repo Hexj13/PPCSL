@@ -21,8 +21,6 @@ interface BrandsModelsFiltersProps {
   onCatalogChange: (catalog: CatalogMode) => void;
   vehicleSegment: Segment;
   onVehicleSegmentChange: (value: Segment) => void;
-  tireSegment: Segment;
-  onTireSegmentChange: (value: Segment) => void;
   onAddBrand: () => void;
   onAddModel: () => void;
 }
@@ -34,8 +32,6 @@ export function BrandsModelsFilters({
   onCatalogChange,
   vehicleSegment,
   onVehicleSegmentChange,
-  tireSegment,
-  onTireSegmentChange,
   onAddBrand,
   onAddModel,
 }: BrandsModelsFiltersProps) {
@@ -50,68 +46,39 @@ export function BrandsModelsFilters({
         placeholder={t('admin.brandsModelsTab.searchPlaceholder')}
         className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-secondary border-2 border-primary-700 text-text-primary placeholder:text-text-secondary focus:outline-hidden focus:border-primary-900 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
       />
-      <div className="pt-4 border-t border-primary-500/20 sm:border-t-0 sm:pt-0 flex flex-wrap gap-2 md:gap-3 items-center justify-between">
-        <div className="flex flex-col gap-3 w-full">
-          <div className="flex flex-wrap gap-2 md:gap-3">
-            {VEHICLE_SEGMENT_KEYS.map(({ value, labelKey }) => (
-              <button
-                key={value || 'v-all'}
-                type="button"
-                onClick={() => {
-                  onCatalogChange('vehicle');
-                  onVehicleSegmentChange(value);
-                }}
-                className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-base transition-colors ${
-                  catalog === 'vehicle' && vehicleSegment === value
-                    ? 'bg-primary-500/10 border-2 border-primary-700 text-primary-700'
-                    : 'bg-bg-secondary hover-only:hover:bg-bg-base border-2 border-primary-700 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900'
-                }`}
-              >
-                {t(labelKey)}
-              </button>
-            ))}
+      <div className="pt-4 border-t border-primary-500/20 sm:border-t-0 sm:pt-0 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="flex flex-wrap gap-2 md:gap-3 min-w-0 sm:flex-1">
+          {VEHICLE_SEGMENT_KEYS.map(({ value, labelKey }) => (
             <button
+              key={value || 'v-all'}
               type="button"
-              onClick={() => onCatalogChange('tire')}
+              onClick={() => {
+                onCatalogChange('vehicle');
+                onVehicleSegmentChange(value);
+              }}
               className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-base transition-colors ${
-                catalog === 'tire'
+                catalog === 'vehicle' && vehicleSegment === value
                   ? 'bg-primary-500/10 border-2 border-primary-700 text-primary-700'
                   : 'bg-bg-secondary hover-only:hover:bg-bg-base border-2 border-primary-700 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900'
               }`}
             >
-              {t('admin.brandsModelsTab.filterTires')}
+              {t(labelKey)}
             </button>
-          </div>
-          {catalog === 'tire' ? (
-            <div className="flex flex-col gap-2">
-              <span className="text-sm text-text-secondary">
-                {t('admin.brandsModelsTab.tireListingVehicleTypeLabel')}
-              </span>
-              <div className="flex flex-wrap gap-2 md:gap-3">
-                {VEHICLE_SEGMENT_KEYS.map(({ value, labelKey }) => (
-                  <button
-                    key={`t-${value || 'all'}`}
-                    type="button"
-                    onClick={() => onTireSegmentChange(value)}
-                    className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-sm transition-colors ${
-                      tireSegment === value
-                        ? 'bg-primary-500/10 border-2 border-primary-700 text-primary-700'
-                        : 'bg-bg-secondary hover-only:hover:bg-bg-base border-2 border-primary-700 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900'
-                    }`}
-                  >
-                    {t(labelKey)}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null}
-        </div>
-        <div className="flex flex-col lg:flex-row gap-2 md:gap-3 w-full lg:w-auto">
-          <LoadMoreButton
-            variant="inline"
-            className="w-full lg:w-auto justify-center"
-            onClick={onAddBrand}
+          ))}
+          <button
+            type="button"
+            onClick={() => onCatalogChange('tire')}
+            className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-base transition-colors ${
+              catalog === 'tire'
+                ? 'bg-primary-500/10 border-2 border-primary-700 text-primary-700'
+                : 'bg-bg-secondary hover-only:hover:bg-bg-base border-2 border-primary-700 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900'
+            }`}
           >
+            {t('admin.brandsModelsTab.filterTires')}
+          </button>
+        </div>
+        <div className="flex flex-row flex-wrap gap-2 md:gap-3 justify-end shrink-0 sm:ml-2">
+          <LoadMoreButton variant="inline" className="justify-center" onClick={onAddBrand}>
             <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
@@ -122,11 +89,7 @@ export function BrandsModelsFilters({
             </svg>
             {t('admin.brandsModelsTab.addBrand')}
           </LoadMoreButton>
-          <LoadMoreButton
-            variant="inline"
-            className="w-full lg:w-auto justify-center"
-            onClick={onAddModel}
-          >
+          <LoadMoreButton variant="inline" className="justify-center" onClick={onAddModel}>
             <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"

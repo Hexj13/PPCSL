@@ -17,6 +17,7 @@ import { toast } from '@/lib/toast';
 import {
   getCityName,
   getListingDisplayTitle,
+  getTireModelDisplayLabel,
   isTireListing,
   sortOptionsByLabel,
 } from '@/lib/utils';
@@ -125,10 +126,7 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
     const city = getCityName(listing.city, locale, cities);
     if (isTireListing(listing) && listing.tire) {
       const tire = listing.tire;
-      const modelPart =
-        tire.model?.is_other && tire.custom_model_name?.trim()
-          ? tire.custom_model_name.trim()
-          : tire.model?.name;
+      const modelPart = getTireModelDisplayLabel(tire);
       const details = [tire.brand?.name, modelPart].filter(Boolean).join(' ').trim();
       return [listing.title, details, city].filter((v) => v && v.trim() !== '').join(' - ');
     }

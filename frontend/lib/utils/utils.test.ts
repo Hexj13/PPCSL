@@ -9,6 +9,7 @@ import {
   formatPrice,
   formatTransmission,
   getListingDisplayTitle,
+  getTireModelDisplayLabel,
   horsepowerToKw,
   kwToHorsepower,
 } from './utils';
@@ -228,6 +229,24 @@ describe('utils', () => {
         },
       } as Parameters<typeof getListingDisplayTitle>[0];
       expect(getListingDisplayTitle(listing, mockT)).toBe('Some Title');
+    });
+  });
+
+  describe('getTireModelDisplayLabel', () => {
+    it('should return empty string when model is_other', () => {
+      const tireOther = {
+        brand_id: 'b1',
+        model_id: 'm1',
+        model: { id: 'm1', name: 'Other', is_other: true },
+      } as Parameters<typeof getTireModelDisplayLabel>[0];
+      expect(getTireModelDisplayLabel(tireOther)).toBe('');
+    });
+
+    it('should return catalog model name when not is_other', () => {
+      const tire = {
+        model: { id: 'm1', name: 'Alpin 6', is_other: false },
+      } as Parameters<typeof getTireModelDisplayLabel>[0];
+      expect(getTireModelDisplayLabel(tire)).toBe('Alpin 6');
     });
   });
 

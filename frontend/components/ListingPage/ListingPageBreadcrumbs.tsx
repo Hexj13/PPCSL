@@ -5,7 +5,13 @@ import { useCallback, useMemo } from 'react';
 import { Breadcrumbs } from '@/components/layout/Breadcrumbs';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
-import { createSlug, formatTransmission, getVehicleType, isTireListing } from '@/lib/utils';
+import {
+  createSlug,
+  formatTransmission,
+  getTireModelDisplayLabel,
+  getVehicleType,
+  isTireListing,
+} from '@/lib/utils';
 
 interface ListingPageBreadcrumbsProps {
   listing: Listing;
@@ -68,10 +74,7 @@ export function ListingPageBreadcrumbs({ listing, className = '' }: ListingPageB
     if (!isTireListing(listing) || !listing.tire) return null;
     const tire = listing.tire;
     const brandName = tire.brand?.name;
-    const modelDisplay =
-      tire.model?.is_other && tire.custom_model_name?.trim()
-        ? tire.custom_model_name.trim()
-        : tire.model?.name;
+    const modelDisplay = getTireModelDisplayLabel(tire) || undefined;
     const result: Array<{ label: string; href?: string; onClick?: () => void }> = [
       {
         label: t('searchFilters.tiresCategory'),

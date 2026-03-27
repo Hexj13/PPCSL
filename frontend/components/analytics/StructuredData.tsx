@@ -10,6 +10,7 @@ import {
   formatTireSize,
   formatTransmission,
   getCountry,
+  getTireModelDisplayLabel,
   getVehicleType,
   getOptimizedImageUrl,
   isTireListing,
@@ -202,10 +203,7 @@ function getTireBreadcrumbSchema(listing: Listing, siteUrl: string, tiresCategor
       item: `${siteUrl}/?${p.toString()}`,
     });
   }
-  const modelDisplay =
-    tire.model?.is_other && tire.custom_model_name?.trim()
-      ? tire.custom_model_name.trim()
-      : tire.model?.name;
+  const modelDisplay = getTireModelDisplayLabel(tire) || undefined;
   if (modelDisplay && tire.model?.id && !tire.model?.is_other) {
     const p = new URLSearchParams();
     p.set('category', 'tire');
@@ -239,10 +237,7 @@ function getTireProductSchemaData(
 ) {
   const tire = listing.tire!;
   const brandName = tire.brand?.name || '';
-  const modelName =
-    tire.model?.is_other && tire.custom_model_name?.trim()
-      ? tire.custom_model_name.trim()
-      : tire.model?.name || '';
+  const modelName = getTireModelDisplayLabel(tire);
   const description = listing.description
     ? listing.description.replace(/<[^>]*>/g, '').substring(0, 500)
     : listing.title;

@@ -29,7 +29,6 @@ export function getEmptyTireListingFormData(): TireListingFormData {
     tire_vehicle_type: 'car',
     brand_id: '',
     model_id: '',
-    custom_model_name: '',
     season: 'summer',
     condition: 'new',
     width_mm: '',
@@ -72,7 +71,6 @@ export function getInitialTireListingFormData(initialData?: Listing): TireListin
     tire_vehicle_type: t.tire_vehicle_type,
     brand_id: t.brand_id || '',
     model_id: t.model_id || '',
-    custom_model_name: t.custom_model_name?.trim() || '',
     season: t.season,
     condition: t.condition,
     width_mm: t.width_mm != null ? String(t.width_mm) : '',
@@ -113,19 +111,10 @@ function parseDiameterInch(s: string): number {
   return normalizeTireDiameterInch(n);
 }
 
-export function buildTireCreatePayload(
-  formData: TireListingFormData,
-  isOtherModel: boolean,
-): CreateListingDto {
-  const customTrim = formData.custom_model_name.trim().replace(/\s+/g, ' ');
+export function buildTireCreatePayload(formData: TireListingFormData): CreateListingDto {
   const tire = {
     brand_id: formData.brand_id,
-    ...(formData.model_id
-      ? {
-          model_id: formData.model_id,
-          ...(isOtherModel && customTrim ? { custom_model_name: customTrim } : {}),
-        }
-      : {}),
+    ...(formData.model_id ? { model_id: formData.model_id } : {}),
     tire_vehicle_type: formData.tire_vehicle_type,
     season: formData.season,
     condition: formData.condition,
@@ -164,17 +153,12 @@ export function buildTireCreatePayload(
   };
 }
 
-export function buildTireUpdatePayload(
-  formData: TireListingFormData,
-  isOtherModel: boolean,
-): UpdateListingDto {
-  const base = buildTireCreatePayload(formData, isOtherModel);
+export function buildTireUpdatePayload(formData: TireListingFormData): UpdateListingDto {
+  const base = buildTireCreatePayload(formData);
   const { tire, ...rest } = base;
   const tirePatch = {
     ...tire,
-    ...(!formData.model_id.trim()
-      ? { model_id: null as string | null, custom_model_name: null as string | null }
-      : {}),
+    ...(!formData.model_id.trim() ? { model_id: null as string | null } : {}),
   };
   const update: UpdateListingDto = {
     ...rest,

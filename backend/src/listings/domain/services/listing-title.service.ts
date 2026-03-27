@@ -16,7 +16,6 @@ export interface TireTitleInput {
   brandName: string;
   modelName?: string | null;
   isOtherModel?: boolean;
-  customModelName?: string | null;
   width_mm: number;
   aspect_ratio: number;
   diameter_inch: number;
@@ -44,9 +43,7 @@ function formatLoadSpeedMarking(
 export class ListingTitleService {
   generateForTire(input: TireTitleInput): string {
     let modelPart = '';
-    if (input.isOtherModel && input.customModelName?.trim()) {
-      modelPart = input.customModelName.trim();
-    } else if (input.modelName?.trim()) {
+    if (!input.isOtherModel && input.modelName?.trim()) {
       modelPart = input.modelName.trim();
     }
     const r = formatRimDiameterInches(input.diameter_inch);

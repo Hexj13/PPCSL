@@ -26,7 +26,7 @@ Dev-ready specification for adding a dedicated tire listings vertical next to th
 1. Add a new top-level listing category `tire`. Existing listings become `vehicle`.
 2. Keep `vehicleType` unchanged for vehicle listings only. Do not use `vehicleType` as the category switch.
 3. Create separate tire taxonomy tables and a separate tire details entity. Do not reuse `brands`, `vehicle_models`, or `vehicles` for tire data.
-4. Support missing models via a canonical `Other` model per brand plus `custom_model_name` on the listing.
+4. Support ambiguous models via a canonical `Other` model per brand (`is_other`); listing title omits the model name for that choice.
 5. Tire search uses only two tabs in MVP: `Basic criteria` and `Popular`.
 6. Tire create/edit uses a dedicated category-aware form branch, not a large set of tire conditionals inside the current vehicle form.
 7. Listing category is immutable after creation in MVP. Edit flow may change tire fields but may not convert `vehicle` ↔ `tire`.
@@ -112,14 +112,12 @@ Create dedicated taxonomy tables:
 - Each brand must have exactly one `Other` model with `is_other = true`.
 - `Other` must always be the last option in the model dropdown.
 
-### Missing model flow
+### “Other” model flow
 
 - Brand is always selected from the curated brand list.
 - Model is optional; when set, it is selected from the curated model list for that brand.
-- If the seller chooses `Other`, show a required free-text field `custom_model_name`.
-- `custom_model_name` is stored on the tire listing itself, not as a new taxonomy row.
-- Search by explicit model matches only curated `tire_models`.
-- Listings with `custom_model_name` are still searchable by brand and free text, but they are not included in exact model filters.
+- If the seller chooses catalog `Other` (`is_other = true`), no free-text model field is collected; the generated title is brand + size (and optional load/speed), without a model segment.
+- Search by explicit model matches only curated `tire_models`; `Other` behaves like any other taxonomy row for filters.
 
 ## Tire details entity
 
@@ -129,7 +127,6 @@ Create a dedicated `tires` table and entity referenced from `listings.tire_id`.
 | --- | --- | --- | --- |
 | `brand_id` | UUID | yes | References `tire_brands` |
 | `model_id` | UUID | no | Nullable; references `tire_models`; may point to `Other` when present |
-| `custom_model_name` | varchar(60) | conditional | Required when selected model is `Other` |
 | `tire_vehicle_type` | enum | yes | `car`, `truck`, `moto` |
 | `season` | enum | yes | Stored as `season` in DB; UI label “tread pattern”. Values: `summer`, `winter`, `all_season`, `mud_at`, `mud_mt`, `mud_rt`, `sport_semi_slick`, `race_slick` |
 | `condition` | enum | yes | `new`, `used`, `retreaded` |
@@ -194,7 +191,6 @@ Keep these as phase-2 candidates:
    - `tire_vehicle_type`
    - `brand`
    - `model` (optional)
-   - `custom_model_name` when model is `Other`
    - `season`
    - `condition`
 
@@ -252,7 +248,6 @@ Do not show these current vehicle form fields for `category = 'tire'`:
 ### Form validation rules
 
 - `brand`, `tire_vehicle_type`, `season`, `condition`, `width_mm`, `aspect_ratio`, `diameter_inch`, `quantity`, `price`, `city`, and `images` are required; `model` is optional.
-- `custom_model_name` is required when selected model is `Other`.
 - `dot_year` and `tread_depth_mm` are required when `condition !== 'new'`.
 - `studded = true` is valid only when `season = 'winter'`.
 - `run_flat = true` is valid only when `tire_vehicle_type = 'car'`.
@@ -265,8 +260,7 @@ Do not show these current vehicle form fields for `category = 'tire'`:
 - `category` is required.
 - API must reject mixed payloads that contain both `vehicle` and `tire`.
 - Tire payload must be present when `category = 'tire'`.
-- `model_id` may be omitted (stored as `NULL`); `custom_model_name` is allowed only when the selected model is `Other`.
-- `custom_model_name` is trimmed, internal whitespace is normalized, and final length must be `2..60`.
+- `model_id` may be omitted (stored as `NULL`).
 - `width_mm` must be an integer from `125` to `355` mm, multiple of `5`.
 - `aspect_ratio` must be an integer from `5` to `95` (%), multiple of `5`.
 - `diameter_inch` must be from `10` to `35` inches, at most one decimal place, in `0.5` steps (e.g. `16`, `22.5`).
@@ -280,9 +274,8 @@ Do not show these current vehicle form fields for `category = 'tire'`:
 
 - Category is immutable after create in MVP.
 - Same category-specific validation rules apply as in create.
-- Changing tire brand resets selected model and clears `custom_model_name`.
-- Clearing the model on edit sends `model_id: null` and `custom_model_name: null` in the tire patch so the database row updates.
-- Changing model away from `Other` clears `custom_model_name`.
+- Changing tire brand resets selected model.
+- Clearing the model on edit sends `model_id: null` in the tire patch so the database row updates.
 - Edit API must reject mixed category payloads in the same way as create.
 - Existing listing lifecycle rules remain unchanged: tire category does not bypass current ownership, status, or admin edit rules.
 
@@ -417,7 +410,7 @@ Listing title format (automatic):
 
 - Known model: `{Brand} {Model} {Width}/{Profile} R{Diameter}[ {LoadIndex}{SpeedIndex}]`
 - Model omitted: `{Brand} {Width}/{Profile} R{Diameter}[ {LoadIndex}{SpeedIndex}]`
-- Other model: `{Brand} {custom_model_name} {Width}/{Profile} R{Diameter}[ {LoadIndex}{SpeedIndex}]`
+- Catalog `Other` model (`is_other`): `{Brand} {Width}/{Profile} R{Diameter}[ {LoadIndex}{SpeedIndex}]` (no model segment)
 
 Marking: width (mm), profile (%), `R` (radial), rim diameter (inches); optional suffix is load index plus speed index with no space between them (e.g. `91V`). Omit the suffix when both load index and speed index are empty.
 
@@ -425,7 +418,7 @@ Examples:
 
 - `Pirelli Contra 205/55 R16 91V`
 - `Michelin Pilot Sport 255/40 R20` (no load/speed in title)
-- The catalog label `Other` must never appear in the title when `custom_model_name` is set; use the custom name instead of `Other`
+- The catalog label `Other` must never appear in the title; titles use brand + size only for that case
 
 ### Listing card
 
@@ -444,7 +437,7 @@ Do not show vehicle characteristics on tire cards.
 Show these tire-specific attributes on the listing detail page:
 
 - brand
-- model or `custom_model_name`
+- model (catalog name when applicable; `Other` does not show a separate free-text label)
 - tire vehicle type
 - size
 - season
@@ -543,8 +536,7 @@ Do not send tire listings through vehicle-only analytics dimensions.
 
 ### Privacy and safe logging
 
-- Do not log raw `custom_model_name`, free-text description, contact data, or full request bodies.
-- If diagnostics need custom-model visibility, log only a boolean like `hasCustomModelName=true`.
+- Do not log raw free-text description, contact data, or full request bodies.
 
 ## Backend and API changes
 

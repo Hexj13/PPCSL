@@ -95,8 +95,6 @@
     "tireModelNotFound": "Modelul de anvelope nu a fost găsit",
     "tireModelBrandMismatch": "Modelul de anvelope nu se potrivește cu marca selectată",
     "tireModelArchived": "Acest model de anvelope nu mai este disponibil",
-    "tireCustomModelRequired": "Numele modelului este obligatoriu când selectați Other",
-    "tireCustomModelUnexpected": "Numele personalizat al modelului este permis doar când modelul este Other",
     "tireStuddedOnlyWinter": "Anvelopele cu ținte sunt valide doar pentru sezonul de iarnă",
     "tireRunFlatOnlyCar": "Run-flat este valabil doar pentru anvelope auto de pasageri",
     "tireDiameterInvalid": "Diametrul jantei 10–35 inch, pas 0,5 (ex. 16 la R16 sau 22,5)",

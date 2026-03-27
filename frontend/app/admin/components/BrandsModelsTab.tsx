@@ -23,7 +23,6 @@ type BrandsModelsFiltersState = {
   searchQuery: string;
   catalog: 'vehicle' | 'tire';
   vehicleSegment: Segment;
-  tireSegment: Segment;
 };
 
 export function BrandsModelsTab() {
@@ -59,7 +58,7 @@ export function BrandsModelsTab() {
           pageNum,
           limitNum,
           filtersData.searchQuery || undefined,
-          filtersData.tireSegment || undefined,
+          undefined,
         );
         return { data: res.data.data, meta: res.data.meta };
       }
@@ -76,7 +75,6 @@ export function BrandsModelsTab() {
       searchQuery: '',
       catalog: 'vehicle',
       vehicleSegment: '',
-      tireSegment: '',
     },
     debounceFilters: ['searchQuery'],
     debounceMs: 500,
@@ -85,7 +83,7 @@ export function BrandsModelsTab() {
 
   useEffect(() => {
     setExpandedBrandIds(new Set());
-  }, [filters.catalog, filters.vehicleSegment, filters.tireSegment]);
+  }, [filters.catalog, filters.vehicleSegment]);
 
   const toggleExpand = useCallback((brandId: string) => {
     setExpandedBrandIds((prev) => {
@@ -184,8 +182,6 @@ export function BrandsModelsTab() {
         onVehicleSegmentChange={(vehicleSegment) =>
           setFilters((prev) => ({ ...prev, catalog: 'vehicle', vehicleSegment }))
         }
-        tireSegment={filters.tireSegment}
-        onTireSegmentChange={(tireSegment) => setFilters((prev) => ({ ...prev, tireSegment }))}
         onAddBrand={() =>
           filters.catalog === 'tire' ? setTireBrandModal('create') : setBrandModal('create')
         }

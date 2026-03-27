@@ -180,6 +180,9 @@ describe('ListingGrid', () => {
       favorites: [],
       setFavorites: (useFavoritesStore as unknown as { _setFavorites: jest.Mock })._setFavorites,
     });
+    (listingsApi.getAll as jest.Mock).mockResolvedValue({
+      data: { data: [] as Listing[], meta: { ...mockMeta, total: 0 } },
+    });
     mockSearchParams.forEach.mockImplementation((_callback) => {
       _callback('', '');
     });
@@ -211,40 +214,53 @@ describe('ListingGrid', () => {
   });
 
   describe('with initialData', () => {
-    it('should render listings from initialData', () => {
+    it('should render listings from initialData', async () => {
       const initialData = {
         data: [mockListing1, mockListing2],
         meta: mockMeta,
       };
 
+      (listingsApi.getAll as jest.Mock).mockResolvedValue({
+        data: { data: initialData.data, meta: initialData.meta },
+      });
+
       render(<ListingGrid initialData={initialData} />);
 
-      expect(screen.getByTestId('listing-listing-1')).toBeInTheDocument();
+      expect(await screen.findByTestId('listing-listing-1')).toBeInTheDocument();
       expect(screen.getByTestId('listing-listing-2')).toBeInTheDocument();
       expect(screen.getByText('Test Car 1')).toBeInTheDocument();
       expect(screen.getByText('Test Car 2')).toBeInTheDocument();
     });
 
-    it('should not show loading state when initialData is provided', () => {
+    it('should not show loading state when initialData is provided', async () => {
       const initialData = {
         data: [mockListing1],
         meta: mockMeta,
       };
 
+      (listingsApi.getAll as jest.Mock).mockResolvedValue({
+        data: { data: initialData.data, meta: initialData.meta },
+      });
+
       render(<ListingGrid initialData={initialData} />);
 
+      expect(await screen.findByTestId('listing-listing-1')).toBeInTheDocument();
       expect(screen.queryByTestId('listing-skeleton')).not.toBeInTheDocument();
     });
 
-    it('should initialize state from initialData', () => {
+    it('should initialize state from initialData', async () => {
       const initialData = {
         data: [mockListing1],
         meta: { ...mockMeta, page: 2 },
       };
 
+      (listingsApi.getAll as jest.Mock).mockResolvedValue({
+        data: { data: initialData.data, meta: initialData.meta },
+      });
+
       render(<ListingGrid initialData={initialData} />);
 
-      expect(screen.getByTestId('listing-listing-1')).toBeInTheDocument();
+      expect(await screen.findByTestId('listing-listing-1')).toBeInTheDocument();
     });
 
     it('should load favorites for initialData when user is logged in', async () => {
@@ -265,14 +281,19 @@ describe('ListingGrid', () => {
         meta: mockMeta,
       };
 
+      (listingsApi.getAll as jest.Mock).mockResolvedValue({
+        data: { data: initialData.data, meta: initialData.meta },
+      });
+
       render(<ListingGrid initialData={initialData} />);
 
+      await screen.findByTestId('listing-listing-2');
       await waitFor(() => {
         expect(favoritesApi.checkBatch).toHaveBeenCalledWith(['listing-1', 'listing-2']);
       });
     });
 
-    it('should not load favorites when user is not logged in', () => {
+    it('should not load favorites when user is not logged in', async () => {
       (useAuthStore as unknown as jest.Mock).mockReturnValue({
         user: null,
       });
@@ -282,12 +303,17 @@ describe('ListingGrid', () => {
         meta: mockMeta,
       };
 
+      (listingsApi.getAll as jest.Mock).mockResolvedValue({
+        data: { data: initialData.data, meta: initialData.meta },
+      });
+
       render(<ListingGrid initialData={initialData} />);
 
+      await screen.findByTestId('listing-listing-1');
       expect(favoritesApi.checkBatch).not.toHaveBeenCalled();
     });
 
-    it('should not load favorites when initialData is empty', () => {
+    it('should not load favorites when initialData is empty', async () => {
       (useAuthStore as unknown as jest.Mock).mockReturnValue({
         user: { id: 'user-1' },
       });
@@ -299,21 +325,24 @@ describe('ListingGrid', () => {
 
       render(<ListingGrid initialData={initialData} />);
 
+      await screen.findByText('No listings found');
       expect(favoritesApi.checkBatch).not.toHaveBeenCalled();
     });
   });
 
   describe('without initialData', () => {
-    it('should show empty state initially', () => {
+    it('should show empty state initially', async () => {
       render(<ListingGrid />);
 
       expect(screen.queryByTestId('listing-listing-1')).not.toBeInTheDocument();
+      await screen.findByText('No listings found');
     });
 
-    it('should not show loading skeletons initially', () => {
+    it('should not show loading skeletons initially', async () => {
       render(<ListingGrid />);
 
       expect(screen.queryByTestId('listing-skeleton')).not.toBeInTheDocument();
+      await screen.findByText('No listings found');
     });
   });
 
@@ -346,6 +375,7 @@ describe('ListingGrid', () => {
           }),
         );
       });
+      await screen.findByText('No listings found');
     });
 
     it('uses URL limit when limit is present in query', async () => {
@@ -368,6 +398,7 @@ describe('ListingGrid', () => {
           }),
         );
       });
+      await screen.findByText('No listings found');
     });
   });
 
@@ -402,12 +433,14 @@ describe('ListingGrid', () => {
 
     it('should dispatch reset event when on home page', async () => {
       (usePathname as jest.Mock).mockReturnValue('/');
+      render(<ListingGrid />);
+
+      await screen.findByText('View all listings', {}, { timeout: 5000 });
+
       const dispatchEventSpy = jest.fn();
       window.dispatchEvent = dispatchEventSpy;
 
-      render(<ListingGrid />);
-
-      const button = await screen.findByText('View all listings', {}, { timeout: 5000 });
+      const button = screen.getByText('View all listings');
       fireEvent.click(button);
 
       expect(dispatchEventSpy).toHaveBeenCalledWith(

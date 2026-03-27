@@ -8,7 +8,6 @@ export interface TireListingFormData {
   tire_vehicle_type: 'car' | 'truck' | 'moto';
   brand_id: string;
   model_id: string;
-  custom_model_name: string;
   season: TireSeason;
   condition: TireCondition;
   width_mm: string;

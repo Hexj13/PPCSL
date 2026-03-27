@@ -30,7 +30,6 @@ export interface TireOnListing {
     order?: number;
     is_other?: boolean;
   };
-  custom_model_name?: string | null;
   tire_vehicle_type: 'car' | 'truck' | 'moto';
   season: TireTread;
   condition: 'new' | 'used' | 'retreaded';
@@ -206,7 +205,6 @@ export interface SearchParams {
 export interface CreateTireDtoPayload {
   brand_id: string;
   model_id?: string;
-  custom_model_name?: string;
   tire_vehicle_type: 'car' | 'truck' | 'moto';
   season: TireTread;
   condition: 'new' | 'used' | 'retreaded';
@@ -283,9 +281,8 @@ export type UpdateListingDto = Omit<
     color?: string | null;
     doors?: number | null;
   };
-  tire?: Partial<Omit<CreateTireDtoPayload, 'model_id' | 'custom_model_name'>> & {
+  tire?: Partial<Omit<CreateTireDtoPayload, 'model_id'>> & {
     model_id?: string | null;
-    custom_model_name?: string | null;
   };
   down_payment_amount?: number | null;
 };

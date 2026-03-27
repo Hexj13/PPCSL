@@ -95,8 +95,6 @@
     "tireModelNotFound": "Модель шин не найдена",
     "tireModelBrandMismatch": "Модель шин не соответствует выбранной марке",
     "tireModelArchived": "Эта модель шин больше недоступна",
-    "tireCustomModelRequired": "При выборе Other укажите название модели",
-    "tireCustomModelUnexpected": "Своё название модели допустимо только для варианта Other",
     "tireStuddedOnlyWinter": "Шипы допустимы только для зимнего сезона",
     "tireRunFlatOnlyCar": "Run-flat только для легковых шин",
     "tireDiameterInvalid": "Диаметр обода от 10 до 35 дюймов с шагом 0,5 (например 16 в R16 или 22,5)",

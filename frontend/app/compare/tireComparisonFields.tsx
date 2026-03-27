@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 import { TireListingPriceSuffix } from '@/components/listing/TireListingPriceSuffix';
 import type { Listing } from '@/lib/api';
-import { formatPrice, formatTireSize } from '@/lib/utils';
+import { formatPrice, formatTireSize, getTireModelDisplayLabel } from '@/lib/utils';
 
 import type { ComparisonField } from './comparisonFields';
 import { getCompareCellValue } from './comparisonFields';
@@ -119,10 +119,7 @@ export const tireComparisonFields: ComparisonField[] = [
     labelKey: 'compare.tireModel',
     renderCell: (listing, t) => {
       const tire = listing.tire;
-      const model =
-        tire?.model?.is_other && tire.custom_model_name?.trim()
-          ? tire.custom_model_name.trim()
-          : tire?.model?.name;
+      const model = tire ? getTireModelDisplayLabel(tire) : undefined;
       return (
         <td
           key={listing.id}
@@ -362,11 +359,7 @@ export const tireComparisonFields: ComparisonField[] = [
                 </span>
               ) : null}
             </span>
-            <TireListingPriceSuffix
-              listing={listing}
-              t={t}
-              className="text-xs font-medium text-text-secondary"
-            />
+            <TireListingPriceSuffix listing={listing} t={t} className="text-xs font-medium" />
           </div>
         )}
       </td>

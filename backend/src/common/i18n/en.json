@@ -103,8 +103,6 @@
     "tireModelNotFound": "Tire model not found",
     "tireModelBrandMismatch": "Tire model does not match the selected brand",
     "tireModelArchived": "This tire model is no longer available",
-    "tireCustomModelRequired": "A model name is required when you select Other",
-    "tireCustomModelUnexpected": "Custom model name is only allowed when model is Other",
     "tireStuddedOnlyWinter": "Studded tires are only valid for winter season",
     "tireRunFlatOnlyCar": "Run-flat is only valid for passenger car tires",
     "tireDiameterInvalid": "Rim diameter must be from 10 to 35 inches in half-inch steps (e.g. 16 in R16 or 22.5)",

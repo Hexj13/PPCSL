@@ -83,7 +83,7 @@ function ListingCardBody({
             <TireListingPriceSuffix
               listing={listing}
               t={t}
-              className="text-xs md:text-sm font-medium text-text-secondary shrink-0"
+              className="text-xs md:text-sm font-medium shrink-0"
             />
           </>
         ) : (

@@ -21,5 +21,9 @@ export function TireListingPriceSuffix({
     listing.tire.quantity === 1
       ? t('listings.tireCardPriceScopePerUnit')
       : t('listings.tireCardPriceScopePerSet');
-  return <span className={className}>{label}</span>;
+  return (
+    <span className={className} style={{ color: 'rgb(var(--gray-400-rgb))' }}>
+      {label}
+    </span>
+  );
 }

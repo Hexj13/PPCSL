@@ -20,6 +20,7 @@ import type { Listing, TireBrand, TireModel } from '@/lib/api';
 import { listingsApi, tiresApi } from '@/lib/api';
 import { sortTireModelsForDisplay } from '@/lib/tire-catalog-sort';
 import { toast } from '@/lib/toast';
+import { getTireModelDisplayLabel } from '@/lib/utils';
 
 import { useListingFormImages } from './useListingFormImages';
 
@@ -62,22 +63,18 @@ function readTireSubmitAxiosErrorPayload(error: unknown): {
 async function executeTireListingApiMutation(
   mode: 'create' | 'edit',
   formData: TireListingFormData,
-  tireModels: TireModel[],
   listingId: string | undefined,
 ): Promise<
   | { branch: 'create'; res: Awaited<ReturnType<typeof listingsApi.create>> }
   | { branch: 'edit'; result: Awaited<ReturnType<typeof listingsApi.update>> }
 > {
-  const other = Boolean(
-    formData.model_id && tireModels.find((m) => m.id === formData.model_id)?.is_other,
-  );
   if (mode === 'create') {
-    const payload = buildTireCreatePayload(formData, other);
+    const payload = buildTireCreatePayload(formData);
     const res = await listingsApi.create(payload);
     return { branch: 'create', res };
   }
   if (!listingId) throw new Error('Listing ID is required for edit mode');
-  const updatePayload = buildTireUpdatePayload(formData, other);
+  const updatePayload = buildTireUpdatePayload(formData);
   const result = await listingsApi.update(listingId, updatePayload);
   return { branch: 'edit', result };
 }
@@ -120,6 +117,8 @@ export function useTireListingForm({
   const [showSkeleton, setShowSkeleton] = useState(true);
 
   const initialDataRef = useRef<string | undefined>(undefined);
+  const tireModelsRequestSeqRef = useRef(0);
+  const tireModelsResolvedForBrandIdRef = useRef<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const formStartSentRef = useRef(false);
   const formSubmittedSuccessfullyRef = useRef(false);
@@ -157,24 +156,38 @@ export function useTireListingForm({
 
   const loadModels = useCallback((brandId: string) => {
     if (!brandId) {
+      tireModelsRequestSeqRef.current += 1;
+      tireModelsResolvedForBrandIdRef.current = null;
       setTireModels([]);
+      setLoadingModels(false);
       return;
     }
+    const requestSeq = ++tireModelsRequestSeqRef.current;
     setLoadingModels(true);
     tiresApi
       .getModelsByBrand(brandId)
       .then((res) => {
+        if (requestSeq !== tireModelsRequestSeqRef.current) return;
+        tireModelsResolvedForBrandIdRef.current = brandId;
         setTireModels(sortTireModelsForDisplay(res.data ?? []));
       })
-      .catch(() => setTireModels([]))
-      .finally(() => setLoadingModels(false));
+      .catch(() => {
+        if (requestSeq !== tireModelsRequestSeqRef.current) return;
+        tireModelsResolvedForBrandIdRef.current = null;
+        setTireModels([]);
+      })
+      .finally(() => {
+        if (requestSeq === tireModelsRequestSeqRef.current) {
+          setLoadingModels(false);
+        }
+      });
   }, []);
 
   useEffect(() => {
     if (formData.brand_id) {
       loadModels(formData.brand_id);
     } else {
-      setTireModels([]);
+      loadModels('');
     }
   }, [formData.brand_id, loadModels]);
 
@@ -208,21 +221,23 @@ export function useTireListingForm({
   }, [initialData, listingId, resetUploadedImagesState]);
 
   useEffect(() => {
-    if (tireModels.length > 0 && formData.brand_id) {
-      setFormData((prev) => {
-        if (!tireModels.find((m) => m.id === prev.model_id)) {
-          return { ...prev, model_id: '', custom_model_name: '' };
-        }
-        return prev;
-      });
-    } else if (!formData.brand_id) {
+    if (loadingModels) return;
+    if (!formData.brand_id) {
       setFormData((prev) => ({
         ...prev,
         model_id: '',
-        custom_model_name: '',
       }));
+      return;
     }
-  }, [tireModels, formData.brand_id]);
+    if (tireModels.length === 0) return;
+    if (tireModelsResolvedForBrandIdRef.current !== formData.brand_id) return;
+    setFormData((prev) => {
+      if (!tireModels.find((m) => m.id === prev.model_id)) {
+        return { ...prev, model_id: '' };
+      }
+      return prev;
+    });
+  }, [tireModels, formData.brand_id, loadingModels]);
 
   const handleFileUpload = useCallback(
     (files: File[]) => {
@@ -244,14 +259,11 @@ export function useTireListingForm({
     });
   }, []);
 
-  const selectedModel = tireModels.find((m) => m.id === formData.model_id);
-  const isOtherModel = Boolean(selectedModel?.is_other);
-
   const validateForm = useCallback((): boolean => {
-    const { isValid, errors: newErrors } = runTireListingValidation(formData, tireModels, t, toast);
+    const { isValid, errors: newErrors } = runTireListingValidation(formData, t, toast);
     setErrors(newErrors);
     return isValid;
-  }, [formData, tireModels, t]);
+  }, [formData, t]);
 
   const handleFormFieldFocus = useCallback(() => {
     if (!formStartSentRef.current) {
@@ -280,7 +292,7 @@ export function useTireListingForm({
       const filledFields = getTireFilledFields(formData);
 
       try {
-        const outcome = await executeTireListingApiMutation(mode, formData, tireModels, listingId);
+        const outcome = await executeTireListingApiMutation(mode, formData, listingId);
         if (outcome.branch === 'create') {
           const res = outcome.res;
           formSubmittedSuccessfullyRef.current = true;
@@ -290,7 +302,9 @@ export function useTireListingForm({
             price: res.data.price,
             listing_category: 'tire',
             tire_brand: res.data.tire?.brand?.name,
-            tire_model: res.data.tire?.model?.name,
+            tire_model: res.data.tire
+              ? getTireModelDisplayLabel(res.data.tire) || undefined
+              : undefined,
             tire_size: res.data.tire
               ? `${res.data.tire.width_mm}/${res.data.tire.aspect_ratio} R${res.data.tire.diameter_inch}`
               : undefined,
@@ -344,7 +358,6 @@ export function useTireListingForm({
     [
       validateForm,
       formData,
-      tireModels,
       mode,
       listingId,
       t,
@@ -370,7 +383,6 @@ export function useTireListingForm({
     onFormFieldFocus: handleFormFieldFocus,
     uploadSlots,
     onUploadedImageLoaded,
-    isOtherModel,
   };
 
   return {

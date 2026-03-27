@@ -19,6 +19,7 @@ import {
   horsepowerToKw,
   formatMileage,
   formatTireSize,
+  getTireModelDisplayLabel,
   getVehicleType,
   isTireListing,
 } from '@/lib/utils';
@@ -307,10 +308,7 @@ function ListingPageTireCharacteristics({ listing }: { listing: Listing }) {
   const { t } = useTranslation();
   const tire = listing.tire;
   if (!tire) return null;
-  const modelLabel =
-    tire.model?.is_other && tire.custom_model_name?.trim()
-      ? tire.custom_model_name.trim()
-      : tire.model?.name || '';
+  const modelLabel = getTireModelDisplayLabel(tire);
   const yes = t('listingDetail.tireYes');
   return (
     <div className="surface overflow-hidden">

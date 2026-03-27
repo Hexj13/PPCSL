@@ -399,7 +399,7 @@ export function ListingManagementCard({
             <div className="flex flex-col items-start text-left w-full lg:items-end lg:text-right lg:min-w-[140px] lg:w-auto mb-3">
               {listing.price !== undefined ? (
                 <div className="mb-3 w-full lg:w-auto">
-                  <div className="flex items-baseline gap-2 flex-wrap justify-start lg:justify-end">
+                  <div className="flex flex-col items-start gap-0.5 lg:items-end">
                     <PriceDisplay
                       price={listing.price}
                       currency={listing.currency ?? listing.defaultCurrencyCode ?? 'EUR'}
@@ -413,7 +413,7 @@ export function ListingManagementCard({
                     <TireListingPriceSuffix
                       listing={listing}
                       t={t}
-                      className="text-sm font-medium text-text-secondary shrink-0"
+                      className="text-sm font-medium"
                     />
                   </div>
                 </div>

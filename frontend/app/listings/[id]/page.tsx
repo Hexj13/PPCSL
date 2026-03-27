@@ -9,6 +9,7 @@ import {
   getCountry,
   getListingDisplayTitle,
   getOptimizedImageUrl,
+  getTireModelDisplayLabel,
   isTireListing,
   isVinMasked,
   toSafeJsonLdHtml,
@@ -143,10 +144,7 @@ function buildTireProductJsonLd(
 ): Record<string, unknown> {
   const tire = listing.tire!;
   const brandName = tire.brand?.name || '';
-  const modelName =
-    tire.model?.is_other && tire.custom_model_name?.trim()
-      ? tire.custom_model_name.trim()
-      : tire.model?.name || '';
+  const modelName = getTireModelDisplayLabel(tire);
   const description = listing.description
     ? listing.description.replace(/<[^>]*>/g, '').substring(0, 500)
     : listing.title;

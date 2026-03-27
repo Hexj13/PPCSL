@@ -34,10 +34,6 @@ import {
   validateImageBlurHashesMatchImages,
 } from '../utils/image-blur-hashes.utils';
 
-function collapseInternalWhitespace(s: string): string {
-  return s.trim().replace(/\s+/g, ' ');
-}
-
 @Injectable()
 export class CreateListingUseCase {
   private readonly logger = new Logger(CreateListingUseCase.name);
@@ -107,9 +103,6 @@ export class CreateListingUseCase {
     }
 
     const hasModelId = Boolean(td.model_id);
-    if (!hasModelId && td.custom_model_name?.trim()) {
-      throw new BadRequestException('errors.tireCustomModelUnexpected');
-    }
 
     let model: TireModel | null = null;
     if (hasModelId) {
@@ -126,16 +119,6 @@ export class CreateListingUseCase {
       }
       if (model.is_archived) {
         throw new BadRequestException('errors.tireModelArchived');
-      }
-
-      const customName = td.custom_model_name?.trim()
-        ? collapseInternalWhitespace(td.custom_model_name)
-        : null;
-      if (model.is_other && (!customName || customName.length < 2)) {
-        throw new BadRequestException('errors.tireCustomModelRequired');
-      }
-      if (!model.is_other && customName) {
-        throw new BadRequestException('errors.tireCustomModelUnexpected');
       }
     }
 
@@ -156,15 +139,9 @@ export class CreateListingUseCase {
     const normalizedLoad = td.load_index?.trim() ? td.load_index.trim().toUpperCase() : null;
     const normalizedSpeed = td.speed_index?.trim() ? td.speed_index.trim().toUpperCase() : null;
 
-    const customForDb =
-      model?.is_other && td.custom_model_name?.trim()
-        ? collapseInternalWhitespace(td.custom_model_name)
-        : null;
-
     const tire = Object.assign(new Tire(), {
       brand_id: td.brand_id,
       model_id: hasModelId ? td.model_id! : null,
-      custom_model_name: customForDb,
       tire_vehicle_type: td.tire_vehicle_type,
       season: td.season,
       condition: td.condition,
@@ -188,7 +165,6 @@ export class CreateListingUseCase {
       brandName: brand.name,
       modelName: model?.name ?? null,
       isOtherModel: Boolean(model?.is_other),
-      customModelName: tire.custom_model_name,
       width_mm: tire.width_mm,
       aspect_ratio: tire.aspect_ratio,
       diameter_inch: Number(tire.diameter_inch),

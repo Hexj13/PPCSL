@@ -15,6 +15,7 @@ import { isValidTireDiameterInch, ListingCategory } from '../../../common/consta
 import { I18nService } from '../../../common/i18n/i18n.service';
 import { removePasswordFromUser } from '../../../common/utils/error-handling.utils';
 import { normalizeDescriptionHtml, sanitizeHtml } from '../../../common/utils/html-sanitizer';
+import { TireBrand } from '../../../tires/entities/tire-brand.entity';
 import { TireModel } from '../../../tires/entities/tire-model.entity';
 import { Tire } from '../../../tires/entities/tire.entity';
 import { UploadService } from '../../../upload/upload.service';
@@ -29,10 +30,6 @@ import {
   validateImageBlurHashesMatchImages,
 } from '../utils/image-blur-hashes.utils';
 
-function collapseInternalWhitespace(s: string): string {
-  return s.trim().replace(/\s+/g, ' ');
-}
-
 @Injectable()
 export class UpdateListingUseCase {
   private readonly logger = new Logger(UpdateListingUseCase.name);
@@ -46,6 +43,8 @@ export class UpdateListingUseCase {
     private readonly tireRepository: Repository<Tire>,
     @InjectRepository(TireModel)
     private readonly tireModelRepository: Repository<TireModel>,
+    @InjectRepository(TireBrand)
+    private readonly tireBrandRepository: Repository<TireBrand>,
     private readonly brandsService: BrandsService,
     private readonly i18nService: I18nService,
     private readonly listingTitleService: ListingTitleService,
@@ -198,9 +197,14 @@ export class UpdateListingUseCase {
 
     const tire = await this.tireRepository.findOne({
       where: { id: listing.tire_id },
-      relations: ['brand', 'model'],
     });
-    if (!tire || !tire.brand) {
+    if (!tire) {
+      throw new NotFoundException('errors.tireNotFoundForListing');
+    }
+    const tireBrandExists = await this.tireBrandRepository.exist({
+      where: { id: tire.brand_id, is_archived: false },
+    });
+    if (!tireBrandExists) {
       throw new NotFoundException('errors.tireNotFoundForListing');
     }
 
@@ -222,7 +226,6 @@ export class UpdateListingUseCase {
       brandName: refreshedTire.brand.name,
       modelName: refreshedTire.model?.name ?? null,
       isOtherModel: Boolean(refreshedTire.model?.is_other),
-      customModelName: refreshedTire.custom_model_name,
       width_mm: refreshedTire.width_mm,
       aspect_ratio: refreshedTire.aspect_ratio,
       diameter_inch: Number(refreshedTire.diameter_inch),
@@ -294,66 +297,26 @@ export class UpdateListingUseCase {
       if (td.model_id !== undefined) {
         if (isClearedModelId(td.model_id)) {
           tire.model_id = null;
-          tire.custom_model_name = null;
         } else {
           const newModelId = td.model_id as string;
           await this.assertTireModelForBrand(newModelId, td.brand_id);
           tire.model_id = newModelId;
           const m = await this.tireModelRepository.findOne({ where: { id: newModelId } });
           if (!m) throw new BadRequestException('errors.tireModelNotFound');
-          if (m.is_other) {
-            const custom = td.custom_model_name?.trim()
-              ? collapseInternalWhitespace(td.custom_model_name)
-              : null;
-            if (!custom || custom.length < 2) {
-              throw new BadRequestException('errors.tireCustomModelRequired');
-            }
-            tire.custom_model_name = custom;
-          } else {
-            tire.custom_model_name = null;
-          }
         }
       } else {
         tire.model_id = null;
-        tire.custom_model_name = null;
       }
     } else if (td.model_id !== undefined) {
       if (isClearedModelId(td.model_id)) {
         tire.model_id = null;
-        tire.custom_model_name = null;
       } else if (td.model_id !== tire.model_id) {
         const newModelId = td.model_id as string;
         await this.assertTireModelForBrand(newModelId, tire.brand_id);
         tire.model_id = newModelId;
         const m = await this.tireModelRepository.findOne({ where: { id: newModelId } });
         if (!m) throw new BadRequestException('errors.tireModelNotFound');
-        if (m.is_other) {
-          const custom = td.custom_model_name?.trim()
-            ? collapseInternalWhitespace(td.custom_model_name)
-            : tire.custom_model_name;
-          if (!custom || custom.trim().length < 2) {
-            throw new BadRequestException('errors.tireCustomModelRequired');
-          }
-          tire.custom_model_name = collapseInternalWhitespace(custom);
-        } else {
-          tire.custom_model_name = null;
-        }
       }
-    } else if (td.custom_model_name !== undefined) {
-      if (!tire.model_id) {
-        throw new BadRequestException('errors.tireCustomModelUnexpected');
-      }
-      const m = await this.tireModelRepository.findOne({ where: { id: tire.model_id } });
-      if (!m?.is_other) {
-        throw new BadRequestException('errors.tireCustomModelUnexpected');
-      }
-      const custom = td.custom_model_name?.trim()
-        ? collapseInternalWhitespace(td.custom_model_name)
-        : null;
-      if (!custom || custom.length < 2) {
-        throw new BadRequestException('errors.tireCustomModelRequired');
-      }
-      tire.custom_model_name = custom;
     }
 
     if (td.tire_vehicle_type !== undefined) tire.tire_vehicle_type = td.tire_vehicle_type;
@@ -378,19 +341,9 @@ export class UpdateListingUseCase {
     if (td.tubeless !== undefined) tire.tubeless = td.tubeless;
     if (td.acoustic !== undefined) tire.acoustic = td.acoustic;
 
-    if (!tire.model_id) {
-      if (tire.custom_model_name) {
-        throw new BadRequestException('errors.tireCustomModelUnexpected');
-      }
-    } else {
+    if (tire.model_id) {
       const mFinal = await this.tireModelRepository.findOne({ where: { id: tire.model_id } });
       if (!mFinal) throw new BadRequestException('errors.tireModelNotFound');
-      if (mFinal.is_other && (!tire.custom_model_name || tire.custom_model_name.length < 2)) {
-        throw new BadRequestException('errors.tireCustomModelRequired');
-      }
-      if (!mFinal.is_other && tire.custom_model_name) {
-        throw new BadRequestException('errors.tireCustomModelUnexpected');
-      }
     }
   }
 

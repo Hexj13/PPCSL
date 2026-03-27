@@ -11,9 +11,7 @@ import {
   IsUUID,
   Matches,
   Max,
-  MaxLength,
   Min,
-  MinLength,
   Validate,
 } from 'class-validator';
 
@@ -35,13 +33,6 @@ export class CreateTireDto {
   @Transform(({ value }) => (value === '' || value === null ? undefined : value))
   @IsUUID('4')
   model_id?: string;
-
-  @ApiPropertyOptional({ maxLength: 60, description: 'Required when model is Other' })
-  @IsOptional()
-  @IsString()
-  @MinLength(2)
-  @MaxLength(60)
-  custom_model_name?: string;
 
   @ApiProperty({ enum: constants.tireVehicleTypes })
   @IsEnum(TireVehicleType)

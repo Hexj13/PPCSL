@@ -506,7 +506,6 @@ export class TypeOrmListingRepository implements IListingRepository {
         'tire.id',
         'tire.brand_id',
         'tire.model_id',
-        'tire.custom_model_name',
         'tire.tire_vehicle_type',
         'tire.season',
         'tire.condition',

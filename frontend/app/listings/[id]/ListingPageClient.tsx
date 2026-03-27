@@ -29,7 +29,13 @@ import { useImageRetry } from '@/hooks/useImageRetry';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
 import { reportImageLoadFailure } from '@/lib/image-failure-monitor';
-import { formatDate, formatMileage, formatRegistrationType, isTireListing } from '@/lib/utils';
+import {
+  formatDate,
+  formatMileage,
+  formatRegistrationType,
+  getTireModelDisplayLabel,
+  isTireListing,
+} from '@/lib/utils';
 import { Spinner } from '@/ui';
 
 import { ListingPageHistorySection } from './ListingPageHistorySection';
@@ -345,13 +351,7 @@ function listingPagePrimaryHeadingTitle(listing: Listing, t: (k: string) => stri
   if (isTireListing(listing)) {
     const tire = listing.tire;
     const tireTitleParts =
-      tire &&
-      [
-        tire.brand?.name,
-        tire.model?.is_other && tire.custom_model_name?.trim()
-          ? tire.custom_model_name.trim()
-          : tire.model?.name,
-      ].filter(Boolean);
+      tire && [tire.brand?.name, getTireModelDisplayLabel(tire)].filter(Boolean);
     return (
       (tireTitleParts?.length ? tireTitleParts.join(' ') : listing.title) ||
       t('listings.defaultTitle')

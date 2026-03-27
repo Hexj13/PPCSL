@@ -32,9 +32,6 @@ export class Tire {
   @JoinColumn({ name: 'model_id' })
   model: TireModel | null;
 
-  @Column({ type: 'varchar', length: 60, nullable: true })
-  custom_model_name: string | null;
-
   @Column({
     type: 'enum',
     enum: constants.tireVehicleTypes,

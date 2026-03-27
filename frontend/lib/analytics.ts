@@ -3,7 +3,7 @@
 import type { Listing } from '@/lib/api';
 
 import { loadSiteConfigSync } from './site-config';
-import { formatTireSize, getCountry, isTireListing } from './utils';
+import { formatTireSize, getCountry, getTireModelDisplayLabel, isTireListing } from './utils';
 
 let consentCache: boolean | null = null;
 
@@ -91,7 +91,7 @@ export function listingToViewItemListEntry(listing: Listing): ViewItemListEntry 
       listing_category: 'tire',
       item_category: 'Tire',
       tire_brand: tr.brand?.name,
-      tire_model: tr.model?.is_other ? (tr.custom_model_name ?? undefined) : tr.model?.name,
+      tire_model: getTireModelDisplayLabel(tr) || undefined,
       tire_size: formatTireSize(tr),
       season: tr.season,
       condition: tr.condition,
@@ -116,7 +116,7 @@ export function buildListingViewItemParams(listing: Listing): Record<string, unk
       listing_category: 'tire',
       item_category: 'Tire',
       tire_brand: tr.brand?.name,
-      tire_model: tr.model?.is_other ? (tr.custom_model_name ?? undefined) : tr.model?.name,
+      tire_model: getTireModelDisplayLabel(tr) || undefined,
       tire_size: formatTireSize(tr),
       season: tr.season,
       condition: tr.condition,

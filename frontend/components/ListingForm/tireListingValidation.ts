@@ -1,4 +1,3 @@
-import type { TireModel } from '@/lib/api';
 import {
   isValidTireAspectRatio,
   isValidTireDiameterInch,
@@ -33,20 +32,9 @@ function parseDiameter(s: string): number | null {
   return scaled;
 }
 
-function validateTireBrandModelFields(
-  formData: TireListingFormData,
-  models: TireModel[],
-  fail: FailFn,
-): void {
+function validateTireBrandModelFields(formData: TireListingFormData, fail: FailFn): void {
   if (!formData.brand_id) {
     fail('brand_id', 'brandRequired');
-  }
-
-  const selectedModel = models.find((m) => m.id === formData.model_id);
-  const isOther = Boolean(selectedModel?.is_other);
-  const custom = formData.custom_model_name.trim().replace(/\s+/g, ' ');
-  if (isOther && (custom.length < 2 || custom.length > 60)) {
-    fail('custom_model_name', 'tireForm.customModelInvalid');
   }
 }
 
@@ -163,7 +151,6 @@ function validateAssignedUserField(
 
 export function runTireListingValidation(
   formData: TireListingFormData,
-  models: TireModel[],
   t: T,
   toast: Toast,
 ): { isValid: boolean; errors: Record<string, boolean> } {
@@ -173,7 +160,7 @@ export function runTireListingValidation(
     newErrors[field] = true;
   };
 
-  validateTireBrandModelFields(formData, models, fail);
+  validateTireBrandModelFields(formData, fail);
   validateTireWidthProfileDiameter(formData, fail);
   validateTireQuantityAndLoad(formData, fail);
   validateTirePriceAndCity(formData, fail);
