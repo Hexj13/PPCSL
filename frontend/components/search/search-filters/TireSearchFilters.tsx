@@ -374,17 +374,36 @@ export function TireSearchFilters({
           </div>
         </div>
         <div className="grid grid-cols-2 gap-2 min-w-0">
-          <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-900">
-              {t('searchFilters.tireQuantityLabel')}
+          <div className="min-w-0">
+            <label
+              className="block text-sm font-semibold mb-2 text-primary-900 flex items-center gap-2 overflow-hidden"
+              title={t('searchFilters.city')}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                className="shrink-0"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M5.7 15C4.03377 15.6353 3 16.5205 3 17.4997C3 19.4329 7.02944 21 12 21C16.9706 21 21 19.4329 21 17.4997C21 16.5205 19.9662 15.6353 18.3 15M12 9H12.01M18 9C18 13.0637 13.5 15 12 18C10.5 15 6 13.0637 6 9C6 5.68629 8.68629 3 12 3C15.3137 3 18 5.68629 18 9ZM13 9C13 9.55228 12.5523 10 12 10C11.4477 10 11 9.55228 11 9C11 8.44772 11.4477 8 12 8C12.5523 8 13 8.44772 13 9Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <span className="truncate">{t('searchFilters.city')}</span>
             </label>
             <MultiSelectDropdown
-              values={filters.tire_quantities}
-              onChange={(values) => onMultiSelectChange('tire_quantities', values)}
-              placeholder={t('searchFilters.selectTireQuantity')}
-              searchable={false}
+              values={filters.cities}
+              onChange={(values) => onMultiSelectChange('cities', values)}
+              searchable
+              placeholder={t('searchFilters.selectCities')}
               showActionButtons
-              options={TIRE_QUANTITY_FILTER_OPTIONS}
+              options={cityOptions}
             />
           </div>
           <div>
@@ -405,35 +424,16 @@ export function TireSearchFilters({
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="min-w-0">
-          <label
-            className="block text-sm font-semibold mb-2 text-primary-900 flex items-center gap-2 overflow-hidden"
-            title={t('searchFilters.city')}
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              className="shrink-0"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M5.7 15C4.03377 15.6353 3 16.5205 3 17.4997C3 19.4329 7.02944 21 12 21C16.9706 21 21 19.4329 21 17.4997C21 16.5205 19.9662 15.6353 18.3 15M12 9H12.01M18 9C18 13.0637 13.5 15 12 18C10.5 15 6 13.0637 6 9C6 5.68629 8.68629 3 12 3C15.3137 3 18 5.68629 18 9ZM13 9C13 9.55228 12.5523 10 12 10C11.4477 10 11 9.55228 11 9C11 8.44772 11.4477 8 12 8C12.5523 8 13 8.44772 13 9Z"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <span className="truncate">{t('searchFilters.city')}</span>
+          <label className="block text-sm font-semibold mb-2 text-primary-900">
+            {t('searchFilters.tireQuantityLabel')}
           </label>
           <MultiSelectDropdown
-            values={filters.cities}
-            onChange={(values) => onMultiSelectChange('cities', values)}
-            searchable
-            placeholder={t('searchFilters.selectCities')}
+            values={filters.tire_quantities}
+            onChange={(values) => onMultiSelectChange('tire_quantities', values)}
+            placeholder={t('searchFilters.selectTireQuantity')}
+            searchable={false}
             showActionButtons
-            options={cityOptions}
+            options={TIRE_QUANTITY_FILTER_OPTIONS}
           />
         </div>
         <div className="min-w-0">

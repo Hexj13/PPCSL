@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { FilterState } from '@/hooks/useSearchFilters';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -23,6 +23,13 @@ import {
 const TIRE_POPULAR_LOGO_DEFAULT_SIZE_BRANDS = new Set(
   ['toyo', 'falken'].map((n) => normalizeTireNameKey(n)),
 );
+
+function getTirePopularBrandImageScale(brandName: string): number {
+  const key = normalizeTireNameKey(brandName);
+  if (key === 'michelin' || key === 'dunlop') return 2;
+  if (TIRE_POPULAR_LOGO_DEFAULT_SIZE_BRANDS.has(key)) return 0.9;
+  return 1.65;
+}
 
 function tireTriplesAligned(filters: FilterState): boolean {
   const w = filters.tire_widths;
@@ -62,6 +69,20 @@ export function TirePopularPanel({
   updateMultiple,
 }: TirePopularPanelProps) {
   const { t } = useTranslation();
+  const [isNarrowViewport, setIsNarrowViewport] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+    const mql = window.matchMedia('(max-width: 1024px)');
+    const update = (event?: MediaQueryListEvent) => {
+      setIsNarrowViewport(event ? event.matches : mql.matches);
+    };
+    update();
+    mql.addEventListener('change', update);
+    return () => {
+      mql.removeEventListener('change', update);
+    };
+  }, []);
 
   const popularBrandsSorted = useMemo(() => [...POPULAR_TIRE_BRAND_NAMES].sort(compareNames), []);
 
@@ -162,12 +183,12 @@ export function TirePopularPanel({
               imageSrc={popularTireBrandLogoUrl(brandName)}
               selected={isPopularBrandSelected(brandName)}
               onToggle={() => toggleTireBrandPopular(brandName)}
-              imageScale={(() => {
-                const key = normalizeTireNameKey(brandName);
-                if (key === 'michelin' || key === 'dunlop') return 2.3;
-                if (TIRE_POPULAR_LOGO_DEFAULT_SIZE_BRANDS.has(key)) return 0.9;
-                return 1.65;
-              })()}
+              imageScale={
+                isNarrowViewport &&
+                !TIRE_POPULAR_LOGO_DEFAULT_SIZE_BRANDS.has(normalizeTireNameKey(brandName))
+                  ? 1.5
+                  : getTirePopularBrandImageScale(brandName)
+              }
             />
           ))}
         </div>
