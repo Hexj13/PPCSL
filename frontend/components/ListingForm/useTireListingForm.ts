@@ -122,6 +122,7 @@ export function useTireListingForm({
   const formRef = useRef<HTMLFormElement>(null);
   const formStartSentRef = useRef(false);
   const formSubmittedSuccessfullyRef = useRef(false);
+  const submitInFlightRef = useRef(false);
   const {
     uploading,
     deletingImageUrls,
@@ -275,6 +276,9 @@ export function useTireListingForm({
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
+      if (loading || submitInFlightRef.current) {
+        return;
+      }
       if (!validateForm()) {
         reportFormSubmit(analytics, mode, false, undefined, { listing_category: 'tire' });
         return;
@@ -288,6 +292,7 @@ export function useTireListingForm({
         return;
       }
 
+      submitInFlightRef.current = true;
       setLoading(true);
       const filledFields = getTireFilledFields(formData);
 
@@ -353,6 +358,8 @@ export function useTireListingForm({
         } else {
           afterHidden(() => toast.error(getSubmitErrorMessage(error, mode, t)));
         }
+      } finally {
+        submitInFlightRef.current = false;
       }
     },
     [
@@ -365,6 +372,7 @@ export function useTireListingForm({
       loadModels,
       afterHidden,
       onSuccess,
+      loading,
       resetUploadedImagesState,
     ],
   );

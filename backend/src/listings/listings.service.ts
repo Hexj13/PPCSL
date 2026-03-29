@@ -105,6 +105,14 @@ export class ListingsService {
       userId,
       userType,
     );
+    this.logger.log(
+      JSON.stringify({
+        event: 'listing_created',
+        listingId: savedListing.id,
+        ownerUserId: savedListing.user_id,
+        actorUserId: userId,
+      }),
+    );
     const Sentry = await import('@sentry/node');
     let vehicle_type: string =
       savedListing.vehicle?.model?.vehicle_types?.[0] ||

@@ -100,6 +100,7 @@ export function useListingForm({
   const changeTypeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const formStartSentRef = useRef(false);
   const formSubmittedSuccessfullyRef = useRef(false);
+  const submitInFlightRef = useRef(false);
   const {
     uploading,
     hidePlates,
@@ -285,6 +286,9 @@ export function useListingForm({
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
+      if (loading || submitInFlightRef.current) {
+        return;
+      }
       if (!validateForm()) {
         reportFormSubmit(analytics, mode, false, undefined, { listing_category: 'vehicle' });
         return;
@@ -298,6 +302,7 @@ export function useListingForm({
         return;
       }
 
+      submitInFlightRef.current = true;
       setLoading(true);
       const filledFields = getFilledFields(formData);
 
@@ -374,6 +379,8 @@ export function useListingForm({
         } else {
           afterHidden(() => toast.error(getSubmitErrorMessage(error, mode, t)));
         }
+      } finally {
+        submitInFlightRef.current = false;
       }
     },
     [
@@ -387,6 +394,7 @@ export function useListingForm({
       loadModels,
       afterHidden,
       onSuccess,
+      loading,
       resetUploadedImagesState,
     ],
   );
