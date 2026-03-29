@@ -3,9 +3,11 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 
+import { logUserEvent } from '../../../common/utils/log-user-event';
 import { UsersService } from '../../../users/application/users.service';
 import { Listing } from '../../entities/listing.entity';
 import { IListingCache, LISTING_CACHE } from '../ports/listing-cache.port';
@@ -13,6 +15,8 @@ import { IListingRepository, LISTING_REPOSITORY } from '../ports/listing.reposit
 
 @Injectable()
 export class PublishListingUseCase {
+  private readonly logger = new Logger(PublishListingUseCase.name);
+
   constructor(
     @Inject(LISTING_REPOSITORY)
     private readonly listingRepo: IListingRepository,
@@ -39,10 +43,18 @@ export class PublishListingUseCase {
       throw new BadRequestException(`errors.activeListingsLimitExceeded|${limit}`);
     }
 
+    const previousStatus = listing.status;
     listing.publish();
     const saved = await this.listingRepo.save(listing);
     await this.listingCache.invalidateSearch();
     await this.listingCache.invalidateSingle(listingId);
+    logUserEvent(this.logger, {
+      event: 'listing_published',
+      userId,
+      listingId,
+      previousStatus,
+      newStatus: saved.status,
+    });
     return saved;
   }
 }

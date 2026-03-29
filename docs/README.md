@@ -14,7 +14,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 
 - **Structure and principles:** [documentation-architecture.md](./documentation-architecture.md) | **Migration report:** [docs/documentation-refactor-report.md](../../docs/documentation-refactor-report.md) (in platform repo)
 - **Reference:** [reference/](./reference/) — [popular-brands-sync](./reference/popular-brands-sync.md), [platform-assets](./reference/platform-assets.md), analytics, scripts
-- **Operations:** [operations/](./operations/) — [Sentry launch checklist](./operations/sentry-launch-checklist.md), [Postgres query baseline](./operations/postgres-query-baseline.md), deploy, monitoring
+- **Operations:** [operations/](./operations/) — [User action logging](./operations/user-action-logging.md), [Sentry launch checklist](./operations/sentry-launch-checklist.md), [Postgres query baseline](./operations/postgres-query-baseline.md), deploy, monitoring
 - **ADR:** [architecture/adr/](./architecture/adr/) — architecture decision records
 
 ## Documentation structure

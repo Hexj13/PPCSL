@@ -1,6 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+
+import { logUserEvent } from '../common/utils/log-user-event';
 
 import { SavedFilter } from './entities/saved-filter.entity';
 
@@ -8,6 +10,8 @@ const MAX_SAVED_FILTERS = 20;
 
 @Injectable()
 export class SavedFiltersService {
+  private readonly logger = new Logger(SavedFiltersService.name);
+
   constructor(
     @InjectRepository(SavedFilter)
     private savedFiltersRepository: Repository<SavedFilter>,
@@ -32,7 +36,13 @@ export class SavedFiltersService {
       filters,
     });
 
-    return this.savedFiltersRepository.save(savedFilter);
+    const saved = await this.savedFiltersRepository.save(savedFilter);
+    logUserEvent(this.logger, {
+      event: 'saved_filter_created',
+      userId,
+      savedFilterId: saved.id,
+    });
+    return saved;
   }
 
   async findAll(userId: string): Promise<SavedFilter[]> {
@@ -52,7 +62,13 @@ export class SavedFiltersService {
     }
 
     savedFilter.name = name;
-    return this.savedFiltersRepository.save(savedFilter);
+    const updated = await this.savedFiltersRepository.save(savedFilter);
+    logUserEvent(this.logger, {
+      event: 'saved_filter_updated',
+      userId,
+      savedFilterId: id,
+    });
+    return updated;
   }
 
   async remove(userId: string, id: string): Promise<void> {
@@ -64,5 +80,10 @@ export class SavedFiltersService {
     if (result.affected === 0) {
       throw new BadRequestException('errors.filterNotFound');
     }
+    logUserEvent(this.logger, {
+      event: 'saved_filter_removed',
+      userId,
+      savedFilterId: id,
+    });
   }
 }

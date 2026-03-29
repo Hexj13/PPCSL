@@ -11,6 +11,11 @@ import * as Sentry from '@sentry/node';
 import { Request, Response } from 'express';
 
 import { I18nService } from '../i18n/i18n.service';
+import { logUserActionFailure } from '../utils/log-user-event';
+import {
+  buildUserActionFailureContext,
+  shouldLogUserActionFailure,
+} from '../utils/user-action-failure-log.utils';
 
 @Injectable()
 @Catch()
@@ -110,6 +115,16 @@ export class HttpExceptionFilter implements ExceptionFilter {
           user: (request as { user?: { id?: string; email?: string } }).user,
         },
       });
+    }
+
+    if (
+      exception instanceof HttpException &&
+      status >= HttpStatus.BAD_REQUEST &&
+      status < HttpStatus.INTERNAL_SERVER_ERROR &&
+      errorKey?.startsWith('errors.') &&
+      shouldLogUserActionFailure(request.path, request.method)
+    ) {
+      logUserActionFailure(this.logger, buildUserActionFailureContext(request, status, errorKey));
     }
 
     response.status(status).json({

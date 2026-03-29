@@ -270,13 +270,12 @@ describe('AuthController', () => {
 
       authService.sendVerificationSms.mockResolvedValue({
         success: true,
-        message: 'SMS code sent',
       });
 
       const result = await controller.sendSms(sendSmsDto);
 
       expect(authService.sendVerificationSms).toHaveBeenCalledWith('+37370123456');
-      expect(result).toEqual({ success: true, message: expect.any(String) });
+      expect(result).toEqual({ success: true });
     });
 
     it('should throw BadRequestException when phone already exists', async () => {
@@ -307,7 +306,7 @@ describe('AuthController', () => {
       expect(ipBlockService.getClientIp).toHaveBeenCalledWith(req);
       expect(smsService.verifyCode).toHaveBeenCalledWith('+37370123456', '123456');
       expect(ipBlockService.resetAttempts).toHaveBeenCalledWith('127.0.0.1');
-      expect(result).toEqual({ success: true, message: expect.any(String) });
+      expect(result).toEqual({ success: true });
     });
 
     it('should record failed attempt and throw when code is invalid', async () => {
@@ -373,7 +372,6 @@ describe('AuthController', () => {
       expect(authService.verifyEmail).toHaveBeenCalledWith('email-token');
       expect(result).toEqual({
         success: true,
-        message: expect.any(String),
         user: {
           id: verifiedUser.id,
           email: verifiedUser.email,
@@ -407,7 +405,6 @@ describe('AuthController', () => {
       expect(authService.requestPasswordReset).toHaveBeenCalledWith(requestPasswordResetDto);
       expect(result).toEqual({
         success: true,
-        message: expect.any(String),
       });
     });
 
@@ -449,7 +446,7 @@ describe('AuthController', () => {
       expect(ipBlockService.getClientIp).toHaveBeenCalledWith(req);
       expect(authService.verifyResetCode).toHaveBeenCalledWith(verifyResetCodeDto);
       expect(ipBlockService.resetAttempts).toHaveBeenCalledWith('127.0.0.1');
-      expect(result).toEqual({ success: true, message: expect.any(String) });
+      expect(result).toEqual({ success: true });
     });
 
     it('should record failed attempt when code is invalid', async () => {
@@ -516,7 +513,6 @@ describe('AuthController', () => {
       expect(ipBlockService.resetAttempts).toHaveBeenCalledWith('127.0.0.1');
       expect(result).toEqual({
         success: true,
-        message: expect.any(String),
         user: {
           id: mockUser.id,
           email: mockUser.email,
@@ -608,7 +604,7 @@ describe('AuthController', () => {
         mockUser.id,
         changePhoneRequestDto,
       );
-      expect(result).toEqual({ success: true, message: expect.any(String) });
+      expect(result).toEqual({ success: true });
     });
   });
 

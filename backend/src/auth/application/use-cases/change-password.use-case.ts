@@ -1,11 +1,14 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 
+import { logUserEvent } from '../../../common/utils/log-user-event';
 import { UsersService } from '../../../users/application/users.service';
 import { PasswordService } from '../../domain/services/password.service';
 import { ChangePasswordDto } from '../../presentation/dto/change-password.dto';
 
 @Injectable()
 export class ChangePasswordUseCase {
+  private readonly logger = new Logger(ChangePasswordUseCase.name);
+
   constructor(
     private usersService: UsersService,
     private passwordService: PasswordService,
@@ -25,5 +28,9 @@ export class ChangePasswordUseCase {
 
     const hashedPassword = await this.passwordService.hash(dto.newPassword);
     await this.usersService.update(userId, { password: hashedPassword });
+    logUserEvent(this.logger, {
+      event: 'password_changed',
+      userId,
+    });
   }
 }

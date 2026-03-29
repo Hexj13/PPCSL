@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 
 import { IBrandsCache, BRANDS_CACHE } from '../brands/application/ports/brands-cache.port';
 import { ListingCategory } from '../common/constants';
+import { logUserEvent } from '../common/utils/log-user-event';
 
 import { IListingCache, LISTING_CACHE } from './application/ports/listing-cache.port';
 import {
@@ -105,14 +106,12 @@ export class ListingsService {
       userId,
       userType,
     );
-    this.logger.log(
-      JSON.stringify({
-        event: 'listing_created',
-        listingId: savedListing.id,
-        ownerUserId: savedListing.user_id,
-        actorUserId: userId,
-      }),
-    );
+    logUserEvent(this.logger, {
+      event: 'listing_created',
+      userId,
+      listingId: savedListing.id,
+      ownerUserId: savedListing.user_id,
+    });
     const Sentry = await import('@sentry/node');
     let vehicle_type: string =
       savedListing.vehicle?.model?.vehicle_types?.[0] ||

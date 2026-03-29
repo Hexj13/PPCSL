@@ -590,7 +590,7 @@ describe('AuthService', () => {
         companyWebsiteUrl: null,
         active: false,
       });
-      expect(result).toEqual({ message: expect.any(String) });
+      expect(result).toEqual({ success: true });
     });
 
     it('should throw BadRequestException when account is already deleted', async () => {

@@ -1,5 +1,6 @@
-import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 
+import { logUserEvent } from '../../../common/utils/log-user-event';
 import { Listing } from '../../entities/listing.entity';
 import { IListingCache, LISTING_CACHE } from '../ports/listing-cache.port';
 import { IListingRepository, LISTING_REPOSITORY } from '../ports/listing.repository.port';
@@ -7,6 +8,8 @@ import { IPromotionHistoryWriter, PROMOTION_HISTORY_WRITER } from '../ports/prom
 
 @Injectable()
 export class CloseListingUseCase {
+  private readonly logger = new Logger(CloseListingUseCase.name);
+
   constructor(
     @Inject(LISTING_REPOSITORY)
     private readonly listingRepo: IListingRepository,
@@ -26,6 +29,7 @@ export class CloseListingUseCase {
     }
 
     const wasPromoted = listing.isPromoted();
+    const previousStatus = listing.status;
     listing.close();
     const saved = await this.listingRepo.save(listing);
 
@@ -35,6 +39,13 @@ export class CloseListingUseCase {
 
     await this.listingCache.invalidateSearch();
     await this.listingCache.invalidateSingle(listingId);
+    logUserEvent(this.logger, {
+      event: 'listing_closed',
+      userId,
+      listingId,
+      previousStatus,
+      newStatus: saved.status,
+    });
     return saved;
   }
 }

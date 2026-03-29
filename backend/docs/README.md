@@ -21,6 +21,7 @@ This directory contains backend-specific documentation.
 
 For core documentation, see the main [`docs/`](../../docs/) folder:
 - **[Core docs](../../docs/README.md)** — Main documentation entry point
+- **[User action logging](../../docs/operations/user-action-logging.md)** — Structured API logs (ops)
 - **[technical.md](../../docs/architecture/technical.md)** — Technical documentation
 - **[deployment.md](../../docs/guides/deployment.md)** — Deployment guides (includes Render.com)
 

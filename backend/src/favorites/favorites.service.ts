@@ -1,7 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+import { logUserEvent } from '../common/utils/log-user-event';
 import { ExchangeRatesService } from '../exchange-rates/exchange-rates.service';
 import { Listing } from '../listings/entities/listing.entity';
 
@@ -9,6 +10,8 @@ import { Favorite } from './entities/favorite.entity';
 
 @Injectable()
 export class FavoritesService {
+  private readonly logger = new Logger(FavoritesService.name);
+
   constructor(
     @InjectRepository(Favorite)
     private favoritesRepository: Repository<Favorite>,
@@ -44,7 +47,13 @@ export class FavoritesService {
       listing_id: listingId,
     });
 
-    return this.favoritesRepository.save(favorite);
+    const saved = await this.favoritesRepository.save(favorite);
+    logUserEvent(this.logger, {
+      event: 'favorite_added',
+      userId,
+      listingId,
+    });
+    return saved;
   }
 
   async remove(userId: string, listingId: string): Promise<void> {
@@ -56,6 +65,11 @@ export class FavoritesService {
     if (result.affected === 0) {
       throw new NotFoundException('errors.favoriteNotFound');
     }
+    logUserEvent(this.logger, {
+      event: 'favorite_removed',
+      userId,
+      listingId,
+    });
   }
 
   async findAll(

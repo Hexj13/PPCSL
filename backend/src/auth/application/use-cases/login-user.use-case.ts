@@ -1,7 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
 import { removePasswordFromUser } from '../../../common/utils/error-handling.utils';
+import { logUserEvent } from '../../../common/utils/log-user-event';
 import { UsersService } from '../../../users/application/users.service';
 import { PasswordService } from '../../domain/services/password.service';
 import { RefreshTokenService } from '../../infrastructure/services/refresh-token.service';
@@ -11,6 +12,8 @@ import { LoginResponse, UserWithoutPassword } from '../auth.types';
 
 @Injectable()
 export class LoginUserUseCase {
+  private readonly logger = new Logger(LoginUserUseCase.name);
+
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
@@ -45,6 +48,11 @@ export class LoginUserUseCase {
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = await this.refreshTokenService.generateToken(user.id);
     const boardSlug = await this.usersService.ensureBoardSlug(user.id);
+
+    logUserEvent(this.logger, {
+      event: 'user_logged_in',
+      userId: user.id,
+    });
 
     return {
       access_token: accessToken,

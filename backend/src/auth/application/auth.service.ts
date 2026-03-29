@@ -130,11 +130,11 @@ export class AuthService {
     return this.checkPhoneAvailabilityUseCase.execute(phone);
   }
 
-  async sendVerificationSms(phone: string): Promise<{ success: true; message: string }> {
+  async sendVerificationSms(phone: string): Promise<{ success: true }> {
     return this.sendVerificationSmsUseCase.execute(phone);
   }
 
-  async deleteAccount(userId: string): Promise<{ message: string }> {
+  async deleteAccount(userId: string): Promise<{ success: true }> {
     return this.deleteAccountUseCase.execute(userId);
   }
 }

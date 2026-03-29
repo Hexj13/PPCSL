@@ -12,13 +12,13 @@ export class SendVerificationSmsUseCase {
     private readonly smsService: SmsService,
   ) {}
 
-  async execute(phone: string): Promise<{ success: true; message: string }> {
+  async execute(phone: string): Promise<{ success: true }> {
     const normalizedPhone = this.phoneService.normalize(phone);
     const existingUser = await this.usersService.findByPhone(normalizedPhone);
     if (existingUser) {
       throw new BadRequestException('errors.phoneAlreadyExists');
     }
     await this.smsService.sendVerificationCode(normalizedPhone);
-    return { success: true, message: 'SMS кодот е испратен' };
+    return { success: true };
   }
 }

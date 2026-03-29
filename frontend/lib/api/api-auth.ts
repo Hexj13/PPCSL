@@ -29,30 +29,30 @@ export const authApi = {
   updateProfile: (data: UpdateProfileDto) => api.patch<User>('/api/auth/profile', data),
   changePassword: (data: ChangePasswordDto) =>
     api.post<{ success: boolean }>('/api/auth/change-password', data),
-  deleteAccount: () => api.delete<{ message: string }>('/api/auth/profile'),
+  deleteAccount: () => api.delete<{ success: boolean }>('/api/auth/profile'),
   verifyPhone: () => api.post<User>('/api/auth/verify-phone'),
   sendSms: (data: SendSmsDto) =>
-    api.post<{ success: boolean; message: string }>('/api/auth/send-sms', data, {
+    api.post<{ success: boolean }>('/api/auth/send-sms', data, {
       headers: { 'X-Skip-Error-Handling': 'true' },
     }),
   verifySms: (data: VerifySmsDto) =>
-    api.post<{ success: boolean; message: string }>('/api/auth/verify-sms', data, {
+    api.post<{ success: boolean }>('/api/auth/verify-sms', data, {
       headers: { 'X-Skip-Error-Handling': 'true' },
     }),
   verifyEmail: (data: VerifyEmailDto) =>
-    api.post<{ success: boolean; message: string; user: User }>('/api/auth/verify-email', data),
+    api.post<{ success: boolean; user: User }>('/api/auth/verify-email', data),
   requestPasswordReset: (data: RequestPasswordResetDto) =>
-    api.post<{ success: boolean; message: string }>('/api/auth/request-password-reset', data, {
+    api.post<{ success: boolean }>('/api/auth/request-password-reset', data, {
       headers: { 'X-Skip-Error-Handling': 'true' },
     }),
   verifyResetCode: (data: VerifyResetCodeDto) =>
-    api.post<{ success: boolean; message: string }>('/api/auth/verify-reset-code', data, {
+    api.post<{ success: boolean }>('/api/auth/verify-reset-code', data, {
       headers: { 'X-Skip-Error-Handling': 'true' },
     }),
   resetPassword: (data: ResetPasswordDto) =>
-    api.post<{ success: boolean; message: string; user: User }>('/api/auth/reset-password', data),
+    api.post<{ success: boolean; user: User }>('/api/auth/reset-password', data),
   changePhoneRequest: (data: ChangePhoneRequestDto) =>
-    api.post<{ success: boolean; message: string }>('/api/auth/change-phone-request', data, {
+    api.post<{ success: boolean }>('/api/auth/change-phone-request', data, {
       headers: { 'X-Skip-Error-Handling': 'true' },
     }),
   changePhoneVerify: (data: ChangePhoneVerifyDto) =>

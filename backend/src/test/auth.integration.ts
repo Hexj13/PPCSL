@@ -168,7 +168,7 @@ describe('Auth API Integration Tests', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
 
-      expect(response.body).toHaveProperty('message');
+      expect(response.body).toEqual({ success: true });
       expect(response).toSatisfyApiSpec();
     });
 

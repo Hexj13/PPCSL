@@ -15,6 +15,11 @@ import { isValidTireDiameterInch, ListingCategory } from '../../../common/consta
 import { I18nService } from '../../../common/i18n/i18n.service';
 import { removePasswordFromUser } from '../../../common/utils/error-handling.utils';
 import { normalizeDescriptionHtml, sanitizeHtml } from '../../../common/utils/html-sanitizer';
+import {
+  buildListingAuditSnapshot,
+  diffListingAuditSnapshots,
+} from '../../../common/utils/listing-audit-snapshot.utils';
+import { logUserEvent } from '../../../common/utils/log-user-event';
 import { TireBrand } from '../../../tires/entities/tire-brand.entity';
 import { TireModel } from '../../../tires/entities/tire-model.entity';
 import { Tire } from '../../../tires/entities/tire.entity';
@@ -133,11 +138,13 @@ export class UpdateListingUseCase {
       }
     }
 
+    const beforeSnapshot = buildListingAuditSnapshot(listing);
+
     if (listing.category === ListingCategory.Tire) {
       if (updateListingDto.vehicle) {
         throw new BadRequestException('errors.listingMixedVehicleTire');
       }
-      return this.executeTireListingUpdate(id, listing, updateListingDto, userId, isAdmin);
+      return this.executeTireListingUpdate(id, listing, updateListingDto, userId, beforeSnapshot);
     }
 
     if (updateListingDto.tire) {
@@ -151,7 +158,35 @@ export class UpdateListingUseCase {
       userId,
       userType,
       isAdmin,
+      beforeSnapshot,
     );
+  }
+
+  private emitListingUpdatedLog(
+    beforeSnapshot: Record<string, unknown>,
+    freshListing: Listing,
+    listingId: string,
+    actorUserId: string,
+    ownerUserId: string,
+  ): void {
+    const changes = diffListingAuditSnapshots(
+      beforeSnapshot,
+      buildListingAuditSnapshot(freshListing),
+    );
+    if (changes.length === 0) {
+      return;
+    }
+    const payload: Record<string, unknown> = {
+      event: 'listing_updated',
+      userId: actorUserId,
+      listingId,
+      category: freshListing.category,
+      changes,
+    };
+    if (actorUserId !== ownerUserId) {
+      payload.ownerUserId = ownerUserId;
+    }
+    logUserEvent(this.logger, payload);
   }
 
   private async executeTireListingUpdate(
@@ -159,11 +194,8 @@ export class UpdateListingUseCase {
     listing: Listing,
     updateListingDto: UpdateListingDto,
     userId: string,
-    isAdmin: boolean,
+    beforeSnapshot: Record<string, unknown>,
   ): Promise<Listing> {
-    void userId;
-    void isAdmin;
-
     if (!listing.tire_id) {
       throw new NotFoundException('errors.tireNotFoundForListing');
     }
@@ -286,6 +318,8 @@ export class UpdateListingUseCase {
       freshListing.user = removePasswordFromUser(freshListing.user) as typeof freshListing.user;
     }
 
+    this.emitListingUpdatedLog(beforeSnapshot, freshListing, id, userId, listing.user_id);
+
     return freshListing;
   }
 
@@ -361,8 +395,8 @@ export class UpdateListingUseCase {
     userId: string,
     userType: string | undefined,
     isAdmin: boolean,
+    beforeSnapshot: Record<string, unknown>,
   ): Promise<Listing> {
-    void userId;
     void userType;
     void isAdmin;
 
@@ -483,6 +517,8 @@ export class UpdateListingUseCase {
     if (freshListing.user) {
       freshListing.user = removePasswordFromUser(freshListing.user) as typeof freshListing.user;
     }
+
+    this.emitListingUpdatedLog(beforeSnapshot, freshListing, id, userId, listing.user_id);
 
     return freshListing;
   }

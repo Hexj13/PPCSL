@@ -340,10 +340,7 @@ export class AuthController {
         schema: {
           type: 'object',
           properties: {
-            message: {
-              type: 'string',
-              example: 'Аккаунтот е успешно избришан',
-            },
+            success: { type: 'boolean', example: true },
           },
         },
       },
@@ -358,7 +355,8 @@ export class AuthController {
           type: 'object',
           properties: {
             statusCode: { type: 'number', example: 400 },
-            message: { type: 'string', example: 'Аккаунтот е веќе избришан или деактивиран' },
+            message: { type: 'string', example: 'This account has been deactivated.' },
+            errorKey: { type: 'string', example: 'errors.userDeactivated' },
             timestamp: { type: 'string' },
             path: { type: 'string' },
           },
@@ -387,7 +385,6 @@ export class AuthController {
           type: 'object',
           properties: {
             success: { type: 'boolean', example: true },
-            message: { type: 'string' },
           },
         },
       },
@@ -408,7 +405,7 @@ export class AuthController {
     @Body() changePhoneRequestDto: ChangePhoneRequestDto,
   ) {
     await this.authService.requestPhoneChange(req.user.id, changePhoneRequestDto);
-    return { success: true, message: 'SMS кодот е испратен' };
+    return { success: true };
   }
 
   @ApiOperation({ summary: 'Verify phone number change' })
@@ -527,7 +524,6 @@ export class AuthController {
           type: 'object',
           properties: {
             success: { type: 'boolean', example: true },
-            message: { type: 'string' },
           },
         },
       },
@@ -566,7 +562,6 @@ export class AuthController {
           type: 'object',
           properties: {
             success: { type: 'boolean', example: true },
-            message: { type: 'string' },
           },
         },
       },
@@ -598,7 +593,7 @@ export class AuthController {
 
     if (isVerified) {
       this.ipBlockService.resetAttempts(ip);
-      return { success: true, message: 'Кодот е успешно верифициран' };
+      return { success: true };
     }
 
     this.ipBlockService.recordFailedAttempt(ip);
@@ -615,7 +610,6 @@ export class AuthController {
           type: 'object',
           properties: {
             success: { type: 'boolean', example: true },
-            message: { type: 'string' },
             user: { type: 'object' },
           },
         },
@@ -645,7 +639,6 @@ export class AuthController {
     const user = await this.authService.verifyEmail(verifyEmailDto.token);
     return {
       success: true,
-      message: 'Email адресата е успешно потврдена',
       user: {
         id: user.id,
         email: user.email,
@@ -670,7 +663,6 @@ export class AuthController {
           type: 'object',
           properties: {
             success: { type: 'boolean', example: true },
-            message: { type: 'string' },
           },
         },
       },
@@ -704,7 +696,7 @@ export class AuthController {
     const ip = this.ipBlockService.getClientIp(req);
     try {
       await this.authService.requestPasswordReset(requestPasswordResetDto);
-      return { success: true, message: 'SMS кодот за ресетирање на лозинка е испратен' };
+      return { success: true };
     } catch (error) {
       this.ipBlockService.recordFailedAttempt(ip);
       throw error;
@@ -721,7 +713,6 @@ export class AuthController {
           type: 'object',
           properties: {
             success: { type: 'boolean', example: true },
-            message: { type: 'string' },
           },
         },
       },
@@ -756,7 +747,7 @@ export class AuthController {
 
     if (result.success) {
       this.ipBlockService.resetAttempts(ip);
-      return { success: true, message: 'Кодот е успешно верифициран' };
+      return { success: true };
     }
 
     this.ipBlockService.recordFailedAttempt(ip);
@@ -773,7 +764,6 @@ export class AuthController {
           type: 'object',
           properties: {
             success: { type: 'boolean', example: true },
-            message: { type: 'string' },
             user: { type: 'object' },
           },
         },
@@ -810,7 +800,6 @@ export class AuthController {
       this.ipBlockService.resetAttempts(ip);
       return {
         success: true,
-        message: 'Лозинката е успешно ресетирана',
         user: {
           id: user.id,
           email: user.email,
