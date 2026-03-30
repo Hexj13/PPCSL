@@ -3,6 +3,12 @@
 import { useEffect, useState } from 'react';
 
 import { invalidateConsentCache } from '@/lib/analytics';
+import {
+  isStorageAccessError,
+  localStorageGetItem,
+  localStorageRemoveItem,
+  localStorageSetItem,
+} from '@/lib/browser-local-storage';
 
 type ConsentStatus = 'granted' | 'denied' | null;
 
@@ -22,7 +28,7 @@ export function useCookieConsent() {
     if (typeof window === 'undefined') return;
 
     try {
-      const stored = localStorage.getItem(CONSENT_STORAGE_KEY);
+      const stored = localStorageGetItem(CONSENT_STORAGE_KEY);
       if (stored) {
         const parsed: ConsentPreferences = JSON.parse(stored);
         const now = Date.now();
@@ -31,11 +37,13 @@ export function useCookieConsent() {
         if (now < expiryTime) {
           setConsent(parsed);
         } else {
-          localStorage.removeItem(CONSENT_STORAGE_KEY);
+          localStorageRemoveItem(CONSENT_STORAGE_KEY);
         }
       }
     } catch (error) {
-      console.error('Error reading cookie consent:', error);
+      if (!isStorageAccessError(error)) {
+        console.error('Error reading cookie consent:', error);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -50,7 +58,7 @@ export function useCookieConsent() {
     };
 
     try {
-      localStorage.setItem(CONSENT_STORAGE_KEY, JSON.stringify(preferences));
+      localStorageSetItem(CONSENT_STORAGE_KEY, JSON.stringify(preferences));
       invalidateConsentCache();
       setConsent(preferences);
 
@@ -71,7 +79,9 @@ export function useCookieConsent() {
         });
       }
     } catch (error) {
-      console.error('Error saving cookie consent:', error);
+      if (!isStorageAccessError(error)) {
+        console.error('Error saving cookie consent:', error);
+      }
     }
   };
 

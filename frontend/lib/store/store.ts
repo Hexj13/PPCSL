@@ -1,8 +1,14 @@
 import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
+import { persist } from 'zustand/middleware';
 
 import type { User } from '@/lib/api';
 import { authApi } from '@/lib/api';
+import {
+  createPersistJSONStorage,
+  localStorageGetItem,
+  localStorageRemoveItem,
+  localStorageSetItem,
+} from '@/lib/browser-local-storage';
 
 const MAX_COMPARE = 3;
 
@@ -21,7 +27,7 @@ function normalizeCompareIds(ids: unknown): string[] {
 
 function stripComparisonBackup() {
   if (typeof window !== 'undefined') {
-    localStorage.removeItem('comparison-storage-backup');
+    localStorageRemoveItem('comparison-storage-backup');
   }
 }
 
@@ -46,23 +52,23 @@ export const useAuthStore = create<AuthState>()(
         set({ user: _user, token: _token, refreshToken: _refreshToken, isInitialized: true });
         if (typeof window !== 'undefined') {
           if (_token) {
-            localStorage.setItem('token', _token);
+            localStorageSetItem('token', _token);
           }
           if (_refreshToken) {
-            localStorage.setItem('refresh_token', _refreshToken);
+            localStorageSetItem('refresh_token', _refreshToken);
           }
         }
       },
       logout: () => {
         set({ user: null, token: null, refreshToken: null, isInitialized: true });
         if (typeof window !== 'undefined') {
-          localStorage.removeItem('token');
-          localStorage.removeItem('refresh_token');
-          localStorage.removeItem('pendingFavorites');
-          localStorage.removeItem('pendingComparisons');
-          localStorage.removeItem('returnUrl');
+          localStorageRemoveItem('token');
+          localStorageRemoveItem('refresh_token');
+          localStorageRemoveItem('pendingFavorites');
+          localStorageRemoveItem('pendingComparisons');
+          localStorageRemoveItem('returnUrl');
           sessionStorage.removeItem('kupito_search_filters');
-          localStorage.removeItem('kupito_search_filters');
+          localStorageRemoveItem('kupito_search_filters');
           useFavoritesStore.getState().clear();
           useComparisonStore.getState().clear();
         }
@@ -74,13 +80,13 @@ export const useAuthStore = create<AuthState>()(
         }
 
         const { token, refreshToken } = get();
-        const storedToken = localStorage.getItem('token');
+        const storedToken = localStorageGetItem('token');
         const actualToken = token || storedToken;
 
         if (actualToken) {
           try {
             const response = await authApi.me();
-            const storedRefreshToken = localStorage.getItem('refresh_token');
+            const storedRefreshToken = localStorageGetItem('refresh_token');
             set({
               user: response.data,
               token: actualToken,
@@ -88,7 +94,7 @@ export const useAuthStore = create<AuthState>()(
               isInitialized: true,
             });
           } catch {
-            const storedRefreshToken = localStorage.getItem('refresh_token');
+            const storedRefreshToken = localStorageGetItem('refresh_token');
             if (storedRefreshToken) {
               try {
                 const refreshResponse = await authApi.refresh({
@@ -100,8 +106,8 @@ export const useAuthStore = create<AuthState>()(
                   refreshToken: refreshResponse.data.refresh_token,
                   isInitialized: true,
                 });
-                localStorage.setItem('token', refreshResponse.data.access_token);
-                localStorage.setItem('refresh_token', refreshResponse.data.refresh_token);
+                localStorageSetItem('token', refreshResponse.data.access_token);
+                localStorageSetItem('refresh_token', refreshResponse.data.refresh_token);
               } catch {
                 get().logout();
                 set({ isInitialized: true });
@@ -118,7 +124,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
-      storage: typeof window !== 'undefined' ? createJSONStorage(() => localStorage) : undefined,
+      storage: createPersistJSONStorage(),
       partialize: (state) => ({
         user: state.user,
         token: state.token,
@@ -150,7 +156,7 @@ export const useFavoritesStore = create<FavoritesState>()(
     }),
     {
       name: 'favorites-storage',
-      storage: typeof window !== 'undefined' ? createJSONStorage(() => localStorage) : undefined,
+      storage: createPersistJSONStorage(),
       skipHydration: true,
     },
   ),
@@ -255,7 +261,7 @@ export const useComparisonStore = create<ComparisonState>()(
       count: () => get().vehicleComparisons.length + get().tireComparisons.length,
       rehydrate: async () => {
         if (typeof window === 'undefined') return;
-        const stored = localStorage.getItem('comparison-storage');
+        const stored = localStorageGetItem('comparison-storage');
         if (!stored) return;
         try {
           const parsed = JSON.parse(stored) as { state?: PersistedComparisonSlice };
@@ -271,7 +277,7 @@ export const useComparisonStore = create<ComparisonState>()(
     {
       name: 'comparison-storage',
       version: 1,
-      storage: typeof window !== 'undefined' ? createJSONStorage(() => localStorage) : undefined,
+      storage: createPersistJSONStorage(),
       skipHydration: true,
       partialize: (state) => ({
         vehicleComparisons: state.vehicleComparisons,

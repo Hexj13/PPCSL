@@ -10,9 +10,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const run = async () => {
       await Promise.all([
-        useAuthStore.persist.rehydrate(),
-        useFavoritesStore.persist.rehydrate(),
-        useComparisonStore.persist.rehydrate(),
+        useAuthStore.persist?.rehydrate?.() ?? Promise.resolve(),
+        useFavoritesStore.persist?.rehydrate?.() ?? Promise.resolve(),
+        useComparisonStore.persist?.rehydrate?.() ?? Promise.resolve(),
       ]);
       await initAuth();
     };

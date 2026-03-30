@@ -2,6 +2,7 @@
 
 import type { Listing } from '@/lib/api';
 
+import { localStorageGetItem } from './browser-local-storage';
 import { loadSiteConfigSync } from './site-config';
 import { formatTireSize, getCountry, getTireModelDisplayLabel, isTireListing } from './utils';
 
@@ -16,7 +17,7 @@ function checkConsent(): boolean {
   if (consentCache !== null) return consentCache;
 
   const consentKey = 'cookie_consent';
-  const stored = localStorage.getItem(consentKey);
+  const stored = localStorageGetItem(consentKey);
   if (!stored) {
     consentCache = false;
     return false;

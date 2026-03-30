@@ -6,6 +6,11 @@ interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
   _transientRetry?: boolean;
 }
 
+import {
+  localStorageGetItem,
+  localStorageRemoveItem,
+  localStorageSetItem,
+} from '../browser-local-storage';
 import { getDefaultLocale, loadTranslations, type Translations } from '../i18n';
 
 import type { User } from './api';
@@ -38,12 +43,12 @@ const processQueue = (error: AxiosError | null, token: string | null = null) => 
 };
 
 api.interceptors.request.use((config) => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const token = typeof window !== 'undefined' ? localStorageGetItem('token') : null;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   if (typeof window !== 'undefined') {
-    const storedLocale = localStorage.getItem('kupito-locale') as 'ro' | 'ru' | null;
+    const storedLocale = localStorageGetItem('kupito-locale') as 'ro' | 'ru' | null;
     const locale =
       storedLocale === 'ro' || storedLocale === 'ru' ? storedLocale : getDefaultLocale();
     config.headers['Accept-Language'] = locale;
@@ -71,7 +76,7 @@ const STANDARD_ERROR_PHRASES = [
 
 function getStoredLocale(): 'ro' | 'ru' | null {
   if (typeof window === 'undefined') return null;
-  const stored = localStorage.getItem('kupito-locale') as 'ro' | 'ru' | null;
+  const stored = localStorageGetItem('kupito-locale') as 'ro' | 'ru' | null;
   return stored === 'ro' || stored === 'ru' ? stored : null;
 }
 
@@ -166,8 +171,8 @@ function translateBackendKeyIfNeeded(
 
 function clearAuthAndRedirectToLogin(): void {
   if (typeof window === 'undefined') return;
-  localStorage.removeItem('token');
-  localStorage.removeItem('refresh_token');
+  localStorageRemoveItem('token');
+  localStorageRemoveItem('refresh_token');
   if (window.location.pathname !== '/sign') {
     window.location.href = '/sign';
   }
@@ -175,10 +180,10 @@ function clearAuthAndRedirectToLogin(): void {
 
 function clearAuthSetReturnUrlAndRedirect(): void {
   if (typeof window === 'undefined') return;
-  localStorage.removeItem('token');
-  localStorage.removeItem('refresh_token');
+  localStorageRemoveItem('token');
+  localStorageRemoveItem('refresh_token');
   const currentUrl = window.location.pathname + window.location.search;
-  localStorage.setItem('returnUrl', currentUrl);
+  localStorageSetItem('returnUrl', currentUrl);
   window.location.href = '/sign';
 }
 
@@ -204,7 +209,7 @@ const getErrorMessage = (error: AxiosError): string => {
     STANDARD_ERROR_PHRASES.some((phrase) => translatedBackendMessage.includes(phrase));
 
   if (status === 401 && typeof window !== 'undefined') {
-    const refreshToken = localStorage.getItem('refresh_token');
+    const refreshToken = localStorageGetItem('refresh_token');
     if (!refreshToken) clearAuthAndRedirectToLogin();
   }
 
@@ -328,8 +333,8 @@ async function doRefreshAndRetry(
   );
   const { access_token } = response.data;
   if (typeof window !== 'undefined') {
-    localStorage.setItem('token', access_token);
-    localStorage.setItem('refresh_token', response.data.refresh_token);
+    localStorageSetItem('token', access_token);
+    localStorageSetItem('refresh_token', response.data.refresh_token);
   }
   if (originalRequest.headers) {
     originalRequest.headers.Authorization = `Bearer ${access_token}`;
@@ -377,7 +382,7 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
       const refreshToken =
-        typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null;
+        typeof window !== 'undefined' ? localStorageGetItem('refresh_token') : null;
 
       if (!refreshToken) {
         processQueue(error);
