@@ -490,7 +490,8 @@ export async function generateMetadata({
       baseTitle,
       t,
     ));
-  const fullTitle = title === baseTitle ? title : `${title} | ${baseTitle}`;
+  const vehicleTitleSegment = title === baseTitle ? baseTitle : `${title} | ${baseTitle}`;
+  const fullTitle = `${vehicleTitleSegment} | ${siteConfig.name}`;
 
   const description = getHomeMetaDescription(
     metadataFromApi,

@@ -3,7 +3,6 @@
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useCallback, startTransition, useEffect } from 'react';
 
-import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAuthStore } from '@/lib/store';
 
@@ -17,12 +16,7 @@ export function useHeaderState() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isErrorPage, setIsErrorPage] = useState(false);
 
-  const { visible: loadingStateVisible } = useLoadingState({
-    isLoading: !isInitialized,
-    showDelay: 200,
-    minDisplayTime: 200,
-  });
-  const showSkeleton = loadingStateVisible;
+  const showSkeleton = !isInitialized && !user;
 
   const isAuthPage = AUTH_PATHS.includes(pathname);
 

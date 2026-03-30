@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
-import { useAuthStore, useFavoritesStore } from '@/lib/store';
+import { useAuthStore } from '@/lib/store';
 
 import { AuthProvider } from './AuthProvider';
 
@@ -9,16 +9,25 @@ jest.mock('@/lib/comparisonMigration', () => ({
   loadComparisonFromApi: jest.fn(() => Promise.resolve()),
 }));
 
+var rehydrateMocks: {
+  auth: jest.Mock;
+  favorites: jest.Mock;
+  comparison: jest.Mock;
+};
+
 jest.mock('@/lib/store', () => {
-  const mockRehydrate = jest.fn(() => Promise.resolve());
-  const withPersist = (fn: ReturnType<typeof jest.fn>) => {
-    Object.assign(fn, { persist: { rehydrate: mockRehydrate } });
+  const auth = jest.fn(() => Promise.resolve());
+  const favorites = jest.fn(() => Promise.resolve());
+  const comparison = jest.fn(() => Promise.resolve());
+  rehydrateMocks = { auth, favorites, comparison };
+  const withPersist = (fn: ReturnType<typeof jest.fn>, rehydrate: jest.Mock) => {
+    Object.assign(fn, { persist: { rehydrate } });
     return fn;
   };
   return {
-    useAuthStore: withPersist(jest.fn()),
-    useFavoritesStore: withPersist(jest.fn()),
-    useComparisonStore: withPersist(jest.fn()),
+    useAuthStore: withPersist(jest.fn(), auth),
+    useFavoritesStore: withPersist(jest.fn(), favorites),
+    useComparisonStore: withPersist(jest.fn(), comparison),
   };
 });
 
@@ -47,9 +56,9 @@ describe('AuthProvider', () => {
     );
 
     await waitFor(() => expect(mockInitAuth).toHaveBeenCalledTimes(1));
-    const rehydrate = (useFavoritesStore as unknown as { persist: { rehydrate: jest.Mock } })
-      .persist.rehydrate;
-    expect(rehydrate).toHaveBeenCalledTimes(3);
+    expect(rehydrateMocks.auth).toHaveBeenCalledTimes(1);
+    expect(rehydrateMocks.favorites).toHaveBeenCalledTimes(1);
+    expect(rehydrateMocks.comparison).toHaveBeenCalledTimes(1);
   });
 
   it('should render children', () => {
