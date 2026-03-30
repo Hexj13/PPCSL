@@ -327,10 +327,10 @@ function ComparePageContent() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="inline-flex items-center gap-2"
+                  className="group inline-flex items-center gap-2 !text-primary-700 !border-primary-700 transition-colors hover-only:hover:!text-primary-900 hover-only:hover:!border-primary-900"
                   onClick={() => void handleClearAllVehicles()}
                 >
-                  <TrashIcon className="w-4 h-4 shrink-0" />
+                  <TrashIcon className="w-4 h-4 shrink-0 transition-colors group-hover:text-primary-900" />
                   {t('compare.clearAll')}
                 </Button>
               </div>
@@ -366,10 +366,10 @@ function ComparePageContent() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="inline-flex items-center gap-2"
+                  className="group inline-flex items-center gap-2 !text-primary-700 !border-primary-700 transition-colors hover-only:hover:!text-primary-900 hover-only:hover:!border-primary-900"
                   onClick={() => void handleClearAllTires()}
                 >
-                  <TrashIcon className="w-4 h-4 shrink-0" />
+                  <TrashIcon className="w-4 h-4 shrink-0 transition-colors group-hover:text-primary-900" />
                   {t('compare.clearAll')}
                 </Button>
               </div>
