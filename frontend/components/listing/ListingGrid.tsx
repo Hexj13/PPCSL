@@ -8,10 +8,10 @@ import { flushSync } from 'react-dom';
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics, listingToViewItemListEntry } from '@/lib/analytics';
-import type { Listing, PaginationMeta } from '@/lib/api';
+import type { Listing, PaginationMeta, SearchParams } from '@/lib/api';
 import { favoritesApi, listingsApi } from '@/lib/api';
 import { LISTING_GRID_PAGE_SIZE, SEARCH_FILTERS_LIMIT_ERROR_TOAST_KEY } from '@/lib/constants';
-import { getParsedListingSearchParams } from '@/lib/search';
+import { buildMinimalCategorySearchUrl, getParsedListingSearchParams } from '@/lib/search';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
 
 import { ListingCard } from './ListingCard';
@@ -85,6 +85,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   const [currentPage, setCurrentPage] = useState(initialData?.meta?.page || 1);
   const [error, setError] = useState<string | null>(null);
   const [hasLoadedWithFilters, setHasLoadedWithFilters] = useState(false);
+  const [widerCategoryHasListings, setWiderCategoryHasListings] = useState<boolean | null>(null);
   const listingsRef = useRef<Listing[]>(initialData?.data || []);
   const restoredFromStorageRef = useRef(false);
   const { user } = useAuthStore();
@@ -284,6 +285,46 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   }, [searchParamsString]);
 
   useEffect(() => {
+    if (!hasLoadedWithFilters || listings.length > 0 || error) {
+      setWiderCategoryHasListings(null);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    const run = async () => {
+      setWiderCategoryHasListings(null);
+      try {
+        const minimalHref = buildMinimalCategorySearchUrl(new URLSearchParams(searchParamsString));
+        const minimalQuery = minimalHref === '/' ? '' : minimalHref.slice(2);
+        const vt = getVehicleTypeFromParams(minimalQuery || searchParamsString);
+        const parsed = await getParsedListingSearchParams(minimalQuery, vt);
+        const isTire = parsed.category === 'tire';
+        const params: SearchParams = {
+          ...parsed,
+          ...(!isTire ? { vehicleType: vt } : {}),
+          page: 1,
+          limit: 1,
+        };
+        const res = await listingsApi.getAll(params, { signal: controller.signal });
+        if (!controller.signal.aborted) {
+          setWiderCategoryHasListings((res.data.meta.total ?? 0) > 0);
+        }
+      } catch {
+        if (!controller.signal.aborted) {
+          setWiderCategoryHasListings(false);
+        }
+      }
+    };
+
+    void run();
+
+    return () => {
+      controller.abort();
+    };
+  }, [hasLoadedWithFilters, listings.length, error, searchParamsString]);
+
+  useEffect(() => {
     if (initialData && initialData.data.length > 0) {
       if (user) {
         const listingIds = initialData.data.map((l) => l.id);
@@ -365,26 +406,30 @@ export function ListingGrid({ initialData }: ListingGridProps) {
               <p className="text-lg mb-6" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
                 {t('listings.notFound')}
               </p>
-              <div className="flex justify-center">
-                <button
-                  onClick={() => {
-                    sessionStorage.removeItem(GRID_STATE_KEY);
-                    sessionStorage.removeItem('homeScrollTimestamp');
-                    sessionStorage.removeItem('scrollPreserved');
+              {widerCategoryHasListings === true && (
+                <div className="flex justify-center">
+                  <button
+                    onClick={() => {
+                      sessionStorage.removeItem(GRID_STATE_KEY);
+                      sessionStorage.removeItem('homeScrollTimestamp');
+                      sessionStorage.removeItem('scrollPreserved');
 
-                    if (pathname === '/') {
-                      if (typeof window !== 'undefined') {
-                        window.dispatchEvent(new CustomEvent('resetFiltersFromListingGrid'));
+                      if (pathname === '/') {
+                        if (typeof window !== 'undefined') {
+                          window.dispatchEvent(new CustomEvent('resetFiltersFromListingGrid'));
+                        }
+                      } else {
+                        window.location.href = buildMinimalCategorySearchUrl(
+                          new URLSearchParams(searchParamsString),
+                        );
                       }
-                    } else {
-                      window.location.href = '/';
-                    }
-                  }}
-                  className="text-primary-400 font-medium text-sm md:text-base hover-only:hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-6 py-3 text-base rounded-lg border-2 border-primary-400/20 hover-only:hover:border-primary-400/40 bg-primary-500/10 hover-only:hover:bg-primary-500/20"
-                >
-                  {t('listings.viewAllListings')}
-                </button>
-              </div>
+                    }}
+                    className="text-primary-900 font-medium text-sm md:text-base hover-only:hover:text-primary-700 active:text-primary-700 hover-only:hover:border-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-6 py-3 rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-700 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base cursor-pointer"
+                  >
+                    {t('listings.viewAllListings')}
+                  </button>
+                </div>
+              )}
             </div>
           )}
 

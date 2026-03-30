@@ -22,7 +22,11 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { useVehicleType } from '@/hooks/useVehicleType';
 import type { User } from '@/lib/api';
 import { getPopularBrands, getPopularModelsByBrand } from '@/lib/content/popular-brands';
-import { getDefaultFilters, getDefaultTireFilters } from '@/lib/search';
+import {
+  buildMinimalCategorySearchUrl,
+  getDefaultFilters,
+  getDefaultTireFilters,
+} from '@/lib/search';
 import { useAuthStore } from '@/lib/store';
 import { buildCategorizedTireBrandOptions } from '@/lib/tire-catalog-sort';
 import { isBrowser } from '@/lib/utils/utils';
@@ -302,8 +306,9 @@ export function SearchFilters() {
     const handleResetEvent = () => {
       resetFilters();
       setLastAppliedFilters(null);
+      const href = buildMinimalCategorySearchUrl(new URLSearchParams(window.location.search));
       startTransition(() => {
-        router.replace('/', { scroll: false });
+        router.replace(href, { scroll: false });
         if (typeof window !== 'undefined') {
           requestAnimationFrame(() => {
             window.scrollTo({ top: 0, behavior: 'smooth' });

@@ -51,6 +51,26 @@ export function clearFiltersFromStorage(): void {
   }
 }
 
+const MINIMAL_CATEGORY_VEHICLE_TYPE_SET = new Set(['car', 'truck', 'moto']);
+
+export function buildMinimalCategorySearchUrl(searchParams: URLSearchParams): string {
+  const params = new URLSearchParams();
+  if (searchParams.get('category') === 'tire') {
+    params.set('category', 'tire');
+    const tvt = searchParams.get('tireVehicleType');
+    if (tvt && MINIMAL_CATEGORY_VEHICLE_TYPE_SET.has(tvt)) {
+      params.set('tireVehicleType', tvt);
+    }
+  } else {
+    const vt = searchParams.get('vehicleType');
+    if (vt && vt !== 'car' && MINIMAL_CATEGORY_VEHICLE_TYPE_SET.has(vt)) {
+      params.set('vehicleType', vt);
+    }
+  }
+  const qs = params.toString();
+  return qs ? `/?${qs}` : '/';
+}
+
 export interface BuildSearchQueryFilters {
   listing_category: 'vehicle' | 'tire';
   brand_ids: string[];

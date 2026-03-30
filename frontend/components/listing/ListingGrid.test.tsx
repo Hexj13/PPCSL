@@ -11,6 +11,7 @@ import { useAuthStore, useFavoritesStore } from '@/lib/store';
 import { ListingGrid } from './ListingGrid';
 
 jest.mock('@/lib/search', () => ({
+  ...jest.requireActual('@/lib/search'),
   getParsedListingSearchParams: jest.fn(),
 }));
 
@@ -408,7 +409,14 @@ describe('ListingGrid', () => {
     };
 
     beforeEach(() => {
-      (listingsApi.getAll as jest.Mock).mockResolvedValue(emptyResponse);
+      (listingsApi.getAll as jest.Mock).mockImplementation((params?: { limit?: number }) => {
+        if (params && Number(params.limit) === 1) {
+          return Promise.resolve({
+            data: { data: [] as Listing[], meta: { ...mockMeta, total: 12 } },
+          });
+        }
+        return Promise.resolve(emptyResponse);
+      });
       (useSearchParams as jest.Mock).mockReturnValue({
         get: () => null,
         toString: () => 'page=1',
@@ -423,12 +431,21 @@ describe('ListingGrid', () => {
       ).toBeInTheDocument();
     });
 
-    it('should show "View all listings" button when no listings', async () => {
+    it('should show "View all listings" button when wider category has listings', async () => {
       render(<ListingGrid />);
 
       expect(
         await screen.findByText('View all listings', {}, { timeout: 5000 }),
       ).toBeInTheDocument();
+    });
+
+    it('should not show "View all listings" when category-wide search has no listings', async () => {
+      (listingsApi.getAll as jest.Mock).mockImplementation(() => Promise.resolve(emptyResponse));
+
+      render(<ListingGrid />);
+
+      await screen.findByText('No listings found', {}, { timeout: 5000 });
+      expect(screen.queryByText('View all listings')).not.toBeInTheDocument();
     });
 
     it('should dispatch reset event when on home page', async () => {
@@ -450,7 +467,7 @@ describe('ListingGrid', () => {
       );
     });
 
-    it('should redirect to home when not on home page', async () => {
+    it('should redirect to home when not on home page and no category in search', async () => {
       (usePathname as jest.Mock).mockReturnValue('/listings');
       const locationMock = { href: '' };
       Object.defineProperty(window, 'location', {
@@ -464,6 +481,26 @@ describe('ListingGrid', () => {
       fireEvent.click(button);
 
       expect(locationMock.href).toBe('/');
+    });
+
+    it('should preserve tire category when redirecting from non-home page', async () => {
+      (usePathname as jest.Mock).mockReturnValue('/listings');
+      (useSearchParams as jest.Mock).mockReturnValue({
+        get: () => null,
+        toString: () => 'category=tire&tireVehicleType=moto&page=1',
+      });
+      const locationMock = { href: '' };
+      Object.defineProperty(window, 'location', {
+        value: locationMock,
+        writable: true,
+      });
+
+      render(<ListingGrid />);
+
+      const button = await screen.findByText('View all listings', {}, { timeout: 5000 });
+      fireEvent.click(button);
+
+      expect(locationMock.href).toBe('/?category=tire&tireVehicleType=moto');
     });
   });
 });
