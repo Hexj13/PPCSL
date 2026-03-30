@@ -26,7 +26,7 @@ import { UpdateModelDto } from './dto/update-model.dto';
 export interface AdminBrandDto {
   id: string;
   name: string;
-  vehicleTypes: ('car' | 'truck' | 'moto')[];
+  vehicleTypes: ('car' | 'truck' | 'moto' | 'tire')[];
   isArchived: boolean;
   activeListingsCount: number;
   models: AdminModelDto[];
@@ -36,7 +36,7 @@ export interface AdminModelDto {
   id: string;
   brandId: string;
   name: string;
-  vehicleTypes: ('car' | 'truck' | 'moto')[];
+  vehicleTypes: ('car' | 'truck' | 'moto' | 'tire')[];
   isArchived: boolean;
   activeListingsCount: number;
 }
@@ -70,7 +70,7 @@ export class AdminBrandsModelsService {
     page: number,
     limit: number,
     query?: string,
-    vehicleType?: 'car' | 'truck' | 'moto',
+    vehicleType?: 'car' | 'truck' | 'moto' | 'tire',
   ): Promise<{
     data: AdminBrandDto[];
     meta: { total: number; page: number; limit: number; totalPages: number };
@@ -139,7 +139,7 @@ export class AdminBrandsModelsService {
     const data: AdminBrandDto[] = brands.map((b) => ({
       id: b.id,
       name: b.name,
-      vehicleTypes: (b.vehicle_types ?? []) as ('car' | 'truck' | 'moto')[],
+      vehicleTypes: (b.vehicle_types ?? []) as ('car' | 'truck' | 'moto' | 'tire')[],
       isArchived: b.is_archived,
       activeListingsCount: brandCountMap.get(b.id) ?? 0,
       models: (modelsByBrand.get(b.id) ?? [])
@@ -149,7 +149,7 @@ export class AdminBrandsModelsService {
           id: m.id,
           brandId: m.brand_id,
           name: m.name,
-          vehicleTypes: (m.vehicle_types ?? []) as ('car' | 'truck' | 'moto')[],
+          vehicleTypes: (m.vehicle_types ?? []) as ('car' | 'truck' | 'moto' | 'tire')[],
           isArchived: m.is_archived,
           activeListingsCount: modelCountMap.get(m.id) ?? 0,
         })),
@@ -234,7 +234,7 @@ export class AdminBrandsModelsService {
       const prevTypes = (brand.vehicle_types ?? []) as string[];
       if (dto.vehicleTypes !== undefined) {
         const removed = prevTypes.filter(
-          (t) => !dto.vehicleTypes!.includes(t as 'car' | 'truck' | 'moto'),
+          (t) => !dto.vehicleTypes!.includes(t as 'car' | 'truck' | 'moto' | 'tire'),
         );
         if (removed.length > 0) {
           const brandModels = await manager.find(VehicleModel, { where: { brand_id: id } });
@@ -621,14 +621,14 @@ export class AdminBrandsModelsService {
     return {
       id: b.id,
       name: b.name,
-      vehicleTypes: (b.vehicle_types ?? []) as ('car' | 'truck' | 'moto')[],
+      vehicleTypes: (b.vehicle_types ?? []) as ('car' | 'truck' | 'moto' | 'tire')[],
       isArchived: b.is_archived,
       activeListingsCount: brandCount,
       models: models.map((m) => ({
         id: m.id,
         brandId: m.brand_id,
         name: m.name,
-        vehicleTypes: (m.vehicle_types ?? []) as ('car' | 'truck' | 'moto')[],
+        vehicleTypes: (m.vehicle_types ?? []) as ('car' | 'truck' | 'moto' | 'tire')[],
         isArchived: m.is_archived,
         activeListingsCount: modelCountMap.get(m.id) ?? 0,
       })),
@@ -640,7 +640,7 @@ export class AdminBrandsModelsService {
       id: m.id,
       brandId: m.brand_id,
       name: m.name,
-      vehicleTypes: (m.vehicle_types ?? []) as ('car' | 'truck' | 'moto')[],
+      vehicleTypes: (m.vehicle_types ?? []) as ('car' | 'truck' | 'moto' | 'tire')[],
       isArchived: m.is_archived,
       activeListingsCount,
     };

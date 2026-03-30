@@ -24,7 +24,7 @@ interface BrandsModelsTableProps {
   onUnarchiveBrand: (id: string) => void;
   onUnarchiveModel: (id: string) => void;
   onPageChange: (page: number) => void;
-  formatVehicleTypes: (types: ('car' | 'truck' | 'moto')[]) => string;
+  formatVehicleTypes: (types: ('car' | 'truck' | 'moto' | 'tire')[]) => string;
 }
 
 function BrandRow({
@@ -50,7 +50,7 @@ function BrandRow({
   setArchiveTarget: (target: ArchiveTarget) => void;
   onUnarchiveBrand: () => void;
   onUnarchiveModel: (id: string) => void;
-  formatVehicleTypes: (types: ('car' | 'truck' | 'moto')[]) => string;
+  formatVehicleTypes: (types: ('car' | 'truck' | 'moto' | 'tire')[]) => string;
 }) {
   const { t } = useTranslation();
 

@@ -11,6 +11,8 @@ describe('user-action-failure-log.utils', () => {
       expect(shouldLogUserActionFailure('/api/auth/login', 'POST')).toBe(true);
       expect(shouldLogUserActionFailure('/api/users', 'GET')).toBe(true);
       expect(shouldLogUserActionFailure('/api/favorites/x', 'DELETE')).toBe(true);
+      expect(shouldLogUserActionFailure('/api/comparison/ids', 'GET')).toBe(true);
+      expect(shouldLogUserActionFailure('/api/comparison/x', 'DELETE')).toBe(true);
     });
 
     it('returns false for disallowed API areas', () => {
@@ -63,6 +65,25 @@ describe('user-action-failure-log.utils', () => {
         httpStatus: 403,
         method: 'PATCH',
         path: '/api/listings/550e8400-e29b-41d4-a716-446655440000',
+        listingId: '550e8400-e29b-41d4-a716-446655440000',
+      });
+    });
+
+    it('maps listingId from comparison route params', () => {
+      const request = {
+        path: '/api/comparison/550e8400-e29b-41d4-a716-446655440000',
+        method: 'DELETE',
+        params: { listingId: '550e8400-e29b-41d4-a716-446655440000' },
+        user: { id: 'actor-1' },
+      } as unknown as Request;
+
+      expect(buildUserActionFailureContext(request, 404, 'errors.comparisonNotFound')).toEqual({
+        outcome: 'failure',
+        errorKey: 'errors.comparisonNotFound',
+        httpStatus: 404,
+        method: 'DELETE',
+        path: '/api/comparison/550e8400-e29b-41d4-a716-446655440000',
+        userId: 'actor-1',
         listingId: '550e8400-e29b-41d4-a716-446655440000',
       });
     });

@@ -10,7 +10,7 @@ import { adminApi } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { Checkbox } from '@/ui';
 
-const VEHICLE_TYPES = ['car', 'truck', 'moto'] as const;
+const VEHICLE_TYPES = ['car', 'truck', 'moto', 'tire'] as const;
 
 interface ModelFormModalProps {
   isOpen: boolean;
@@ -33,7 +33,7 @@ export function ModelFormModal({
   const [brands, setBrands] = useState<AdminBrand[]>([]);
   const [brandId, setBrandId] = useState('');
   const [name, setName] = useState('');
-  const [vehicleTypes, setVehicleTypes] = useState<('car' | 'truck' | 'moto')[]>(['car']);
+  const [vehicleTypes, setVehicleTypes] = useState<('car' | 'truck' | 'moto' | 'tire')[]>(['car']);
   const [submitting, setSubmitting] = useState(false);
   const [loadingBrands, setLoadingBrands] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
@@ -41,7 +41,7 @@ export function ModelFormModal({
   const isEdit = !!editModel;
   const selectedBrand = brands.find((b) => b.id === brandId);
   const allowedTypes = useMemo(
-    () => (selectedBrand?.vehicleTypes ?? []) as ('car' | 'truck' | 'moto')[],
+    () => (selectedBrand?.vehicleTypes ?? []) as ('car' | 'truck' | 'moto' | 'tire')[],
     [selectedBrand?.vehicleTypes],
   );
 
@@ -72,7 +72,7 @@ export function ModelFormModal({
     }
   }, [brandId, selectedBrand, allowedTypes]);
 
-  const toggleType = (type: 'car' | 'truck' | 'moto') => {
+  const toggleType = (type: 'car' | 'truck' | 'moto' | 'tire') => {
     if (!selectedBrand || !allowedTypes.includes(type)) return;
     setVehicleTypes((prev) => {
       const next = prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type];

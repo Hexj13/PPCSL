@@ -419,12 +419,19 @@ GET    /api/favorites/check/:id       # Check if listing is in favorites
 
 Users can compare up to three vehicle listings and up to three tire listings; each category has its own list in client state.
 
-- Comparison data is stored in `localStorage` (Zustand persist, key `comparison-storage`): `vehicleComparisons` and `tireComparisons` (legacy persisted shape used `comparisons` only; migration maps that to `vehicleComparisons`). There is no comparison API or database table.
-- Comparison page (`/compare`) is public; guests and authenticated users use the same store and UI.
-- Guests add and remove listings via the same store (cards, listing detail, header); no sign-in required for comparison.
-- On login or registration, `applyComparisonAfterAuth` merges `pendingComparisons` (legacy) with IDs from `comparison-storage` (legacy `comparisons` or `vehicleComparisons` + `tireComparisons`), validates each ID with `GET /api/listings/:id`, then clears the store and repopulates vehicle vs tire lists from the listing `category` (still capped by the merge step, max 3 candidates total from merged sources).
-- Comparison data is cleared on logout.
-- Header shows a Compare link with a counter badge (total items in both lists) for guests and signed-in users where applicable.
+```http
+GET    /api/comparison/ids            # Listings IDs grouped by category (authenticated)
+POST   /api/comparison/sync           # Merge guest buckets with saved rows (authenticated)
+POST   /api/comparison/:listingId     # Add listing to comparison (authenticated)
+DELETE /api/comparison/:listingId     # Remove listing from comparison (authenticated)
+```
+
+- **Guests:** comparison lists persist in `localStorage` (Zustand, key `comparison-storage`): `vehicleComparisons` and `tireComparisons` (legacy shape `comparisons` maps to vehicles only).
+- **Authenticated users:** rows in `comparison_items` (Postgres) are the source of truth; the client loads them after session init (`loadComparisonFromApi`) and syncs mutations via the comparison API. Adding own listings is allowed (unlike favorites).
+- Comparison page (`/compare`) is public; guests use local storage only; signed-in users call the API when toggling compare or removing rows on the compare page.
+- On login or registration, `applyComparisonAfterAuth` merges `pendingComparisons` (legacy) and buckets from `comparison-storage` (up to 3 vehicles and 3 tires separately) into the account via `POST /api/comparison/sync` (server order kept, then guest IDs fill free slots).
+- **Logout:** local comparison state is cleared; server-side rows remain for the next login.
+- Header shows a Compare link with a counter badge (total items in both lists).
 
 ### Saved Filters
 
@@ -1264,7 +1271,7 @@ The workflow sets `ONNXRUNTIME_NODE_INSTALL=skip` for the same reason as PPCSL c
    - Initializes and updates submodules recursively
 
 2. **Copy platform-specific files:**
-   - Copies `locales/ro.json`, `locales/ru.json` to `core/frontend/lib/locales/` (frontend; no backend folder in frontend)
+   - Copies `locales/ro.json`, `locales/ru.json`, `locales/en.json` to `core/frontend/lib/locales/` (frontend; no backend folder in frontend)
    - Copies `locales/backend/*.json` to `core/backend/src/common/i18n/` (backend)
    - Copies `theme/` to `core/frontend/lib/theme/`
    - Copies `config/` to `core/frontend/lib/config/`
@@ -1323,7 +1330,7 @@ cd core/frontend && npm start
 
 1. Configure git credentials for accessing private submodule
 2. Initialize and update the submodule
-3. Copy platform-specific files via `npm run prepare:build` (frontend locales ro/ru, backend locales, theme, config, assets)
+3. Copy platform-specific files via `npm run prepare:build` (frontend locales ro/ru/en, backend locales, theme, config, assets)
 4. Install dependencies and build the application
 
 **Memory tuning (Next.js frontend):** To avoid out-of-memory restarts on Render.com (e.g. when traffic is low but health checks run frequently), the app uses: `cacheMaxMemorySize: 25MB` in next.config.js, `minimumCacheTTL: 86400` for image optimization, and Sentry server `tracesSampleRate: 0.2`. See [sentry.md](../guides/sentry.md) for Sentry server config.

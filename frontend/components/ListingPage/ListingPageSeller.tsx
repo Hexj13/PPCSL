@@ -13,6 +13,8 @@ const MESSENGER_ICON_PATH =
 const BOARD_ICON_PATH =
   'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z';
 
+const MASKED_CONTACT = '••••••••';
+
 function SellerMessengerLinks({
   listing,
   listingId,
@@ -206,36 +208,46 @@ export function ListingPageSeller({
         {user.firstName && (
           <div>
             <span className="font-semibold text-primary-700">{t('listingDetail.name')}:</span>
-            <span className="ml-2" style={secondaryStyle}>
-              {user.firstName}
+            <span
+              className={isClosed ? 'ml-2 text-text-secondary' : 'ml-2'}
+              style={isClosed ? undefined : secondaryStyle}
+            >
+              {isClosed ? MASKED_CONTACT : user.firstName}
             </span>
           </div>
         )}
 
-        {!isClosed && isBusiness && user.companyName && (
+        {isBusiness && user.companyName && (
           <div>
             <span className="font-semibold text-primary-700">{t('listingDetail.company')}:</span>
-            <span className="ml-2" style={secondaryStyle}>
-              {user.companyName}
+            <span
+              className={isClosed ? 'ml-2 text-text-secondary' : 'ml-2'}
+              style={isClosed ? undefined : secondaryStyle}
+            >
+              {isClosed ? MASKED_CONTACT : user.companyName}
             </span>
           </div>
         )}
 
-        {!isClosed && isBusiness && user.companyWebsiteUrl && (
+        {isBusiness && user.companyWebsiteUrl && (
           <div className="flex items-center min-w-0 gap-2">
             <span className="font-semibold text-primary-700 shrink-0">
               {t('listingDetail.companyWebsite')}:
             </span>
-            <a
-              href={user.companyWebsiteUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="min-w-0 truncate hover-only:hover:text-primary-300 transition-colors underline"
-              style={secondaryStyle}
-              title={user.companyWebsiteUrl}
-            >
-              {user.companyWebsiteUrl}
-            </a>
+            {isClosed ? (
+              <span className="ml-2 text-text-secondary">{MASKED_CONTACT}</span>
+            ) : (
+              <a
+                href={user.companyWebsiteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="min-w-0 truncate hover-only:hover:text-primary-300 transition-colors underline"
+                style={secondaryStyle}
+                title={user.companyWebsiteUrl}
+              >
+                {user.companyWebsiteUrl}
+              </a>
+            )}
           </div>
         )}
 
@@ -248,14 +260,18 @@ export function ListingPageSeller({
 
         {isClosed ? (
           <>
-            <div>
-              <span className="font-semibold text-primary-700">{t('listingDetail.email')}:</span>
-              <span className="ml-2 text-text-secondary">••••••••</span>
-            </div>
-            <div>
-              <span className="font-semibold text-primary-700">{t('listingDetail.phone')}:</span>
-              <span className="ml-2 text-text-secondary">••••••••</span>
-            </div>
+            {user.email && (
+              <div>
+                <span className="font-semibold text-primary-700">{t('listingDetail.email')}:</span>
+                <span className="ml-2 text-text-secondary">{MASKED_CONTACT}</span>
+              </div>
+            )}
+            {user.phone && (
+              <div>
+                <span className="font-semibold text-primary-700">{t('listingDetail.phone')}:</span>
+                <span className="ml-2 text-text-secondary">{MASKED_CONTACT}</span>
+              </div>
+            )}
           </>
         ) : (
           <>

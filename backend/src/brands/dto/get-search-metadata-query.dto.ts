@@ -15,8 +15,8 @@ export class GetSearchMetadataQueryDto {
   @IsString()
   model?: string;
 
-  @ApiPropertyOptional({ enum: ['car', 'truck', 'moto'], example: 'car' })
+  @ApiPropertyOptional({ enum: ['car', 'truck', 'moto', 'tire'], example: 'car' })
   @IsOptional()
-  @IsEnum(['car', 'truck', 'moto'])
-  vehicleType?: 'car' | 'truck' | 'moto';
+  @IsEnum(['car', 'truck', 'moto', 'tire'])
+  vehicleType?: 'car' | 'truck' | 'moto' | 'tire';
 }

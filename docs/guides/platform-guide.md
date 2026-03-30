@@ -325,7 +325,7 @@ In PPCSL repository (`.github/workflows/ci.yml`), add a new step in `sync-to-loc
 
 ```bash
 # Copy platform files to core (or: npm run prepare:build from repo root)
-mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/
+mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json locales/en.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/
 cp -r theme core/frontend/lib/
 cp -r config core/frontend/lib/
 
@@ -438,7 +438,7 @@ git push origin main
 3. **Copy platform files to core for testing:**
 
    ```bash
-   mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/
+   mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json locales/en.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/
    cp -r theme core/frontend/lib/
    cp -r config core/frontend/lib/
    ```
@@ -451,7 +451,7 @@ git push origin main
 5. **Copy files again and test:**
 
    ```bash
-   mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/
+   mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json locales/en.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/
    cp -r theme core/frontend/lib/
    cp -r config core/frontend/lib/
    cd core
@@ -504,7 +504,7 @@ git push origin main
 4. **Copy platform files and test:**
 
    ```bash
-   mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/
+   mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json locales/en.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/
    cp -r theme core/frontend/lib/
    cp -r config core/frontend/lib/
    cd core
@@ -663,7 +663,7 @@ git pull origin main
 cd ..
 
 # Copy platform files for testing
-mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/
+mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json locales/en.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/
 cp -r theme core/frontend/lib/
 cp -r config core/frontend/lib/
 

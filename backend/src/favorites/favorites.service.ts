@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 
 import { logUserEvent } from '../common/utils/log-user-event';
 import { ExchangeRatesService } from '../exchange-rates/exchange-rates.service';
+import { maskClosedListingForPublicView } from '../listings/application/utils/mask-closed-listing-for-public-view';
 import { Listing } from '../listings/entities/listing.entity';
 
 import { Favorite } from './entities/favorite.entity';
@@ -88,6 +89,9 @@ export class FavoritesService {
       .leftJoinAndSelect('listing.vehicle', 'vehicle')
       .leftJoinAndSelect('vehicle.brand', 'brand')
       .leftJoinAndSelect('vehicle.model', 'model')
+      .leftJoinAndSelect('listing.tire', 'tire')
+      .leftJoinAndSelect('tire.brand', 'tireBrand')
+      .leftJoinAndSelect('tire.model', 'tireModel')
       .leftJoinAndSelect('listing.user', 'user')
       .where('favorite.user_id = :userId', { userId })
       .orderBy('listing.is_promoted', 'DESC')
@@ -104,6 +108,7 @@ export class FavoritesService {
     const data = favorites.map((f) => {
       if (f.listing) {
         f.listing = enrichedMap.get(f.listing.id) ?? f.listing;
+        maskClosedListingForPublicView(f.listing);
       }
       return f;
     });

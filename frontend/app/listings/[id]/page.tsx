@@ -128,6 +128,7 @@ function getOffersJsonLd(listing: Listing): Record<string, unknown> | undefined 
 }
 
 function getSellerJsonLd(listing: Listing): Record<string, unknown> | undefined {
+  if (listing.status === 'Closed') return undefined;
   const user = listing.user;
   if (!user) return undefined;
   const type = user.type === 'Business' ? 'Organization' : 'Person';

@@ -21,6 +21,7 @@ export { authApi } from './api-auth';
 export { boardApi } from './api-board';
 export { brandsApi } from './api-brands';
 export { citiesApi } from './api-cities';
+export { comparisonApi } from './api-comparison';
 export { favoritesApi } from './api-favorites';
 export { listingsApi } from './api-listings';
 export { savedFiltersApi } from './api-saved-filters';

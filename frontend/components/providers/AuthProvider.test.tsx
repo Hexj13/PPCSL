@@ -5,6 +5,10 @@ import { useAuthStore, useFavoritesStore } from '@/lib/store';
 
 import { AuthProvider } from './AuthProvider';
 
+jest.mock('@/lib/comparisonMigration', () => ({
+  loadComparisonFromApi: jest.fn(() => Promise.resolve()),
+}));
+
 jest.mock('@/lib/store', () => {
   const mockRehydrate = jest.fn(() => Promise.resolve());
   const withPersist = (fn: ReturnType<typeof jest.fn>) => {
@@ -25,7 +29,11 @@ describe('AuthProvider', () => {
     jest.clearAllMocks();
     (useAuthStore as unknown as jest.Mock).mockImplementation((selector) => {
       if (typeof selector === 'function') {
-        return selector({ initAuth: mockInitAuth });
+        return selector({
+          initAuth: mockInitAuth,
+          user: null,
+          isInitialized: true,
+        });
       }
       return mockInitAuth;
     });
@@ -58,7 +66,11 @@ describe('AuthProvider', () => {
     const mockInitAuthFromStore = jest.fn();
     (useAuthStore as unknown as jest.Mock).mockImplementation((sel) => {
       if (typeof sel === 'function') {
-        return sel({ initAuth: mockInitAuthFromStore });
+        return sel({
+          initAuth: mockInitAuthFromStore,
+          user: null,
+          isInitialized: true,
+        });
       }
       return mockInitAuthFromStore;
     });

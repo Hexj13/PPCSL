@@ -1,5 +1,6 @@
 'use client';
 
+import { ListingClosedStatusBadge } from '@/components/listing/ListingClosedStatusBadge';
 import { PriceDisplay } from '@/components/listing/PriceDisplay';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
@@ -84,10 +85,7 @@ function ListingStatusBadges({
   return (
     <div className="flex items-center gap-2 flex-wrap">
       {listing.status === 'Closed' && (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold bg-red-500/20 border border-red-500/40 text-text-secondary shadow-xs">
-          <span>🔒</span>
-          <span>{t('listingDetail.closed')}</span>
-        </span>
+        <ListingClosedStatusBadge label={t('listingDetail.closed')} />
       )}
       {listing.is_promoted && (
         <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-accent text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-accent/10 before:pointer-events-none">

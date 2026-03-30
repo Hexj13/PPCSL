@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
+import { ListingClosedStatusBadge } from '@/components/listing/ListingClosedStatusBadge';
 import type { Listing } from '@/lib/api';
 import { getColorLabel } from '@/lib/options';
 import {
@@ -99,27 +100,32 @@ export const comparisonFields: ComparisonField[] = [
     labelKey: 'compare.titleColumn',
     renderCell: (listing, t) => (
       <td key={listing.id} className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base">
-        <Link
-          href={`/listings/${listing.id}`}
-          className="text-text-primary hover-only:hover:text-primary-700 transition-colors underline font-medium inline-flex items-center gap-1.5"
-        >
-          {getCompareCellValue(listing.title, t)}
-          <svg
-            className="w-5 h-5 opacity-60"
-            style={{ verticalAlign: 'middle', marginBottom: '2px' }}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
+        <div className="flex flex-col items-center gap-2">
+          <Link
+            href={`/listings/${listing.id}`}
+            className="text-text-primary hover-only:hover:text-primary-700 transition-colors underline font-medium inline-flex items-center gap-1.5"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-            />
-          </svg>
-        </Link>
+            {getCompareCellValue(listing.title, t)}
+            <svg
+              className="w-5 h-5 opacity-60"
+              style={{ verticalAlign: 'middle', marginBottom: '2px' }}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+              />
+            </svg>
+          </Link>
+          {listing.status === 'Closed' && (
+            <ListingClosedStatusBadge label={t('listingDetail.closed')} className="shrink-0" />
+          )}
+        </div>
       </td>
     ),
   },

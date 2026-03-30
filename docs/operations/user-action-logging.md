@@ -14,8 +14,7 @@ Structured logs for significant user-driven mutations on the NestJS API. Intende
 
 ## Scope
 
-- **In scope:** HTTP API flows handled by Nest (authenticated user or guest only where an endpoint exists).
-- **Out of scope:** Vehicle/tire **comparison** lists — stored only in browser `localStorage` (`comparison-storage`); no server events.
+- **In scope:** HTTP API flows handled by Nest (authenticated user or guest only where an endpoint exists), including **`/api/comparison`** mutations (comparison rows are persisted for signed-in users).
 - **Separate mechanism:** Admin catalog edits use `admin_audit_log` / `AdminAuditService`, not this convention.
 
 ## Transport
@@ -38,7 +37,7 @@ Errors, metrics, and breadcrumbs stay in Sentry as today. Duplicating every user
 
 For **application** errors returned as HTTP 4xx with an `errors.*` i18n key (Nest `HttpException` messages), the global `HttpExceptionFilter` emits one structured line at **WARN** via `logUserActionFailure` (`core/backend/src/common/utils/log-user-event.ts`). Payloads use **`outcome: "failure"`** plus `errorKey` (raw key, e.g. `errors.invalidLoginCredentials`), `httpStatus`, `method`, `path`, optional `userId` from JWT, and route-derived ids (`listingId`, `savedFilterId`, `resourceUserId`, `targetUserId`) where applicable.
 
-- **Paths:** `api/auth`, `api/users`, `api/listings` (except `GET /api/listings` search), `api/favorites`, `api/saved-filters`. Other API areas are omitted to limit noise.
+- **Paths:** `api/auth`, `api/users`, `api/listings` (except `GET /api/listings` search), `api/favorites`, `api/comparison`, `api/saved-filters`. Other API areas are omitted to limit noise.
 - **Not included:** request body, query strings beyond `path`, email/phone/password/tokens. **`validation.*` keys** and class-validator-only 400 responses are not emitted here (no stable `errors.*` key).
 - **Server errors:** 5xx and unhandled exceptions stay on `logger.error` / Sentry; they are not duplicated as these WARN lines.
 

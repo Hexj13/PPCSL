@@ -6,6 +6,7 @@ import { Suspense, useState, useEffect, useRef } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { authApi } from '@/lib/api';
+import { holdComparisonApiLoadUntilReleased } from '@/lib/comparisonMigration';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
 import { Checkbox, LoadingButton, InfoBlock, HintTooltip } from '@/ui';
@@ -378,9 +379,14 @@ function CompleteProfileContent() {
     try {
       const updateData = buildUpdateData(formData, isBusiness);
       const response = await authApi.updateProfile(updateData);
-      setAuth(response.data, useAuthStore.getState().token);
-
-      const redirected = await processPendingData(user, t);
+      const releaseComparisonHold = holdComparisonApiLoadUntilReleased();
+      let redirected = false;
+      try {
+        setAuth(response.data, useAuthStore.getState().token);
+        redirected = await processPendingData(user, t);
+      } finally {
+        releaseComparisonHold();
+      }
       if (redirected) {
         analytics.formSubmit('complete_profile', true, filledFields);
         return;

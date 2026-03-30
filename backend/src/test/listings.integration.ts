@@ -4,6 +4,7 @@ import { In } from 'typeorm';
 
 import { RefreshToken } from '../auth/entities/refresh-token.entity';
 import { AppDataSource } from '../data-source';
+import { ComparisonItem } from '../comparison/entities/comparison-item.entity';
 import { Favorite } from '../favorites/entities/favorite.entity';
 import { ListingView } from '../listings/entities/listing-view.entity';
 import { Listing } from '../listings/entities/listing.entity';
@@ -38,6 +39,7 @@ describe('Listings API Integration Tests', () => {
       const vehicleRepo = AppDataSource.getRepository(Vehicle);
       const listingViewRepo = AppDataSource.getRepository(ListingView);
       const favoriteRepo = AppDataSource.getRepository(Favorite);
+      const comparisonRepo = AppDataSource.getRepository(ComparisonItem);
       const promotionHistoryRepo = AppDataSource.getRepository(PromotionHistory);
       const savedFilterRepo = AppDataSource.getRepository(SavedFilter);
       const refreshTokenRepo = AppDataSource.getRepository(RefreshToken);
@@ -55,6 +57,8 @@ describe('Listings API Integration Tests', () => {
       const vehicleIds = listings
         .map((listing) => listing.vehicle_id)
         .filter((vehicleId): vehicleId is string => vehicleId !== null);
+
+      await comparisonRepo.delete({ user_id: user.id });
 
       if (listingIds.length > 0) {
         await listingViewRepo.delete({ listing_id: In(listingIds) });

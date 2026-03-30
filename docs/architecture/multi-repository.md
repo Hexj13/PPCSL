@@ -212,7 +212,7 @@ return <h1>{t('header.addListing')}</h1>;
 ### In Platform Repositories
 
 1. **Copy platform files** to core before build (e.g. `npm run prepare:build`):
-   - `locales/ro.json`, `locales/ru.json` → `core/frontend/lib/locales/` (frontend)
+   - `locales/ro.json`, `locales/ru.json`, `locales/en.json` → `core/frontend/lib/locales/` (frontend)
    - `locales/backend/*.json` → `core/backend/src/common/i18n/` (backend)
    - `theme/` → `core/frontend/lib/theme/`
    - `config/` → `core/frontend/lib/config/`

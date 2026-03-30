@@ -1,5 +1,38 @@
-import { mergeComparisonSourcesFromLocalStorage } from '@/lib/comparisonMigration';
+import {
+  mergeComparisonSourcesFromLocalStorage,
+  mergeIdLists,
+  parseComparisonStorageBuckets,
+} from '@/lib/comparisonMigration';
 import { useComparisonStore } from '@/lib/store';
+
+describe('mergeIdLists', () => {
+  it('concatenates primary then secondary with dedupe and cap', () => {
+    expect(mergeIdLists(['a'], ['b', 'a'], 3)).toEqual(['a', 'b']);
+  });
+});
+
+describe('parseComparisonStorageBuckets', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('keeps up to three vehicles and three tires separately', () => {
+    localStorage.setItem(
+      'comparison-storage',
+      JSON.stringify({
+        state: {
+          vehicleComparisons: ['v1', 'v2', 'v3', 'v4'],
+          tireComparisons: ['t1', 't2', 't3', 't4'],
+        },
+        version: 0,
+      }),
+    );
+    expect(parseComparisonStorageBuckets()).toEqual({
+      vehicleListingIds: ['v1', 'v2', 'v3'],
+      tireListingIds: ['t1', 't2', 't3'],
+    });
+  });
+});
 
 describe('mergeComparisonSourcesFromLocalStorage', () => {
   beforeEach(() => {

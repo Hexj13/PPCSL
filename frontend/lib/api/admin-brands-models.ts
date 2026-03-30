@@ -3,7 +3,7 @@ import { api } from './api-client';
 export interface AdminBrand {
   id: string;
   name: string;
-  vehicleTypes: ('car' | 'truck' | 'moto')[];
+  vehicleTypes: ('car' | 'truck' | 'moto' | 'tire')[];
   isArchived: boolean;
   activeListingsCount: number;
   models: AdminModel[];
@@ -13,7 +13,7 @@ export interface AdminModel {
   id: string;
   brandId: string;
   name: string;
-  vehicleTypes: ('car' | 'truck' | 'moto')[];
+  vehicleTypes: ('car' | 'truck' | 'moto' | 'tire')[];
   isArchived: boolean;
   activeListingsCount: number;
   isOther?: boolean;
@@ -21,24 +21,24 @@ export interface AdminModel {
 
 export interface CreateBrandPayload {
   name: string;
-  vehicleTypes: ('car' | 'truck' | 'moto')[];
+  vehicleTypes: ('car' | 'truck' | 'moto' | 'tire')[];
 }
 
 export interface UpdateBrandPayload {
   name?: string;
-  vehicleTypes?: ('car' | 'truck' | 'moto')[];
+  vehicleTypes?: ('car' | 'truck' | 'moto' | 'tire')[];
 }
 
 export interface CreateModelPayload {
   brandId: string;
   name: string;
-  vehicleTypes: ('car' | 'truck' | 'moto')[];
+  vehicleTypes: ('car' | 'truck' | 'moto' | 'tire')[];
 }
 
 export interface UpdateModelPayload {
   brandId?: string;
   name?: string;
-  vehicleTypes?: ('car' | 'truck' | 'moto')[];
+  vehicleTypes?: ('car' | 'truck' | 'moto' | 'tire')[];
 }
 
 export const adminBrandsModelsApi = {
@@ -46,7 +46,7 @@ export const adminBrandsModelsApi = {
     page: number = 1,
     limit: number = 100,
     query?: string,
-    vehicleType?: 'car' | 'truck' | 'moto',
+    vehicleType?: 'car' | 'truck' | 'moto' | 'tire',
   ) => {
     const params = new URLSearchParams();
     params.set('page', page.toString());

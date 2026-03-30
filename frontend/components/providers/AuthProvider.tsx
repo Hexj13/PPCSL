@@ -2,10 +2,13 @@
 
 import React, { useEffect } from 'react';
 
+import { loadComparisonFromApi } from '@/lib/comparisonMigration';
 import { useAuthStore, useComparisonStore, useFavoritesStore } from '@/lib/store';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const initAuth = useAuthStore((state) => state.initAuth);
+  const user = useAuthStore((state) => state.user);
+  const isInitialized = useAuthStore((state) => state.isInitialized);
 
   useEffect(() => {
     const run = async () => {
@@ -18,6 +21,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
     void run();
   }, [initAuth]);
+
+  useEffect(() => {
+    if (!isInitialized || !user) return;
+    void loadComparisonFromApi();
+  }, [isInitialized, user]);
 
   return <>{children}</>;
 }

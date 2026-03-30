@@ -16,6 +16,7 @@ import { CommonModule } from './common/common.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { CipautoImportThrottlerGuard } from './common/guards/cipauto-import-throttler.guard';
 import { SentryInterceptor } from './common/interceptors/sentry.interceptor';
+import { ComparisonModule } from './comparison/comparison.module';
 import { dataSourceOptions } from './data-source';
 import { ExchangeRatesModule } from './exchange-rates/exchange-rates.module';
 import { FavoritesModule } from './favorites/favorites.module';
@@ -47,6 +48,7 @@ import { UsersModule } from './users/users.module';
     ListingsModule,
     BoardModule,
     FavoritesModule,
+    ComparisonModule,
     SavedFiltersModule,
     AdminModule,
     BrandsModule,

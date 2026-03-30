@@ -10,7 +10,7 @@ import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics, buildListingViewItemParams } from '@/lib/analytics';
 import type { Listing } from '@/lib/api';
-import { listingsApi, favoritesApi } from '@/lib/api';
+import { listingsApi, favoritesApi, comparisonApi } from '@/lib/api';
 import { prepareListingDescriptionHtml } from '@/lib/listingDescriptionHtml';
 import { useAuthStore, useFavoritesStore, useComparisonStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
@@ -206,11 +206,32 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
     }
   }, [user, id, isFavorite, listing, router, t, addFavorite, removeFavorite, setIsFavorite]);
 
-  const handleToggleComparison = useCallback(() => {
+  const handleToggleComparison = useCallback(async () => {
     if (!listing) return;
     const tire = isTireListing(listing);
+
+    const toastApiError = (err: unknown) => {
+      const fromApi =
+        err &&
+        typeof err === 'object' &&
+        'response' in err &&
+        typeof (err as { response?: { data?: { message?: string } } }).response?.data?.message ===
+          'string'
+          ? (err as { response: { data: { message: string } } }).response.data.message
+          : null;
+      toast.error(fromApi ?? t('common.error'));
+    };
+
     if (tire) {
       if (isInComparison) {
+        if (user) {
+          try {
+            await comparisonApi.remove(id);
+          } catch (err) {
+            toastApiError(err);
+            return;
+          }
+        }
         removeTire(id);
         setIsInComparison(false);
         analytics.removeFromComparison(id, { listing_category: 'tire' });
@@ -222,21 +243,38 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
         return;
       }
       const added = addTire(id);
-      if (added) {
-        setIsInComparison(true);
-        analytics.addToComparison(id, {
-          title: listing.title,
-          price: listing.price,
-          listing_category: 'tire',
-          item_category: 'Tire',
-        });
-        toast.success(t('listingDetail.addedToComparison'));
-      } else {
+      if (!added) {
         toast.error(t('listingDetail.alreadyInComparisonErrorTire'));
+        return;
       }
+      if (user) {
+        try {
+          await comparisonApi.add(id);
+        } catch (err) {
+          removeTire(id);
+          toastApiError(err);
+          return;
+        }
+      }
+      setIsInComparison(true);
+      analytics.addToComparison(id, {
+        title: listing.title,
+        price: listing.price,
+        listing_category: 'tire',
+        item_category: 'Tire',
+      });
+      toast.success(t('listingDetail.addedToComparison'));
       return;
     }
     if (isInComparison) {
+      if (user) {
+        try {
+          await comparisonApi.remove(id);
+        } catch (err) {
+          toastApiError(err);
+          return;
+        }
+      }
       removeVehicle(id);
       setIsInComparison(false);
       analytics.removeFromComparison(id, { listing_category: 'vehicle' });
@@ -248,19 +286,29 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
       return;
     }
     const added = addVehicle(id);
-    if (added) {
-      setIsInComparison(true);
-      analytics.addToComparison(id, {
-        title: listing?.title,
-        price: listing?.price,
-        listing_category: 'vehicle',
-        item_category: 'Vehicle',
-      });
-      toast.success(t('listingDetail.addedToComparison'));
-    } else {
+    if (!added) {
       toast.error(t('listingDetail.alreadyInComparisonError'));
+      return;
     }
+    if (user) {
+      try {
+        await comparisonApi.add(id);
+      } catch (err) {
+        removeVehicle(id);
+        toastApiError(err);
+        return;
+      }
+    }
+    setIsInComparison(true);
+    analytics.addToComparison(id, {
+      title: listing?.title,
+      price: listing?.price,
+      listing_category: 'vehicle',
+      item_category: 'Vehicle',
+    });
+    toast.success(t('listingDetail.addedToComparison'));
   }, [
+    user,
     id,
     isInComparison,
     vehicleCompareCount,

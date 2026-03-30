@@ -184,7 +184,7 @@ export class BrandsService {
     brandSlug: string | undefined,
     modelSlug: string | undefined,
     locale: string,
-    vehicleType?: 'car' | 'truck' | 'moto',
+    vehicleType?: 'car' | 'truck' | 'moto' | 'tire',
   ): Promise<{
     title: string | null;
     description?: string;
@@ -343,7 +343,7 @@ export class BrandsService {
       const existingModel = existingModels.find((m) => m.name.toLowerCase() === modelNameLower);
 
       if (!existingModel) {
-        const vehicleTypes: ('car' | 'truck' | 'moto')[] =
+        const vehicleTypes: ('car' | 'truck' | 'moto' | 'tire')[] =
           brand.vehicle_types && brand.vehicle_types.length > 0 ? [brand.vehicle_types[0]] : [];
         const model = this.modelsRepository.create({
           name: modelName,

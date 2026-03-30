@@ -172,7 +172,7 @@ toast.success(t('sms.codeSent'))
 ### Adding keys
 
 1. Use the key in code: `t('profile.changePhone.title')`.
-2. Add the same key in root locale source files: `locales/ro.json`, `locales/ru.json`, and `core/frontend/lib/locales/en.json` if English fallback is used for that key.
+2. Add the same key in root locale source files: `locales/ro.json`, `locales/ru.json`, and `locales/en.json`.
 3. Run `npm run lint:translations` (from frontend) to verify sync.
 
 ### Sync check

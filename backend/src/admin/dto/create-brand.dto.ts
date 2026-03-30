@@ -8,6 +8,6 @@ export class CreateBrandDto {
 
   @IsArray()
   @ArrayMinSize(1)
-  @IsIn(['car', 'truck', 'moto'], { each: true })
-  vehicleTypes: ('car' | 'truck' | 'moto')[];
+  @IsIn(['car', 'truck', 'moto', 'tire'], { each: true })
+  vehicleTypes: ('car' | 'truck' | 'moto' | 'tire')[];
 }

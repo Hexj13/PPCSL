@@ -6,7 +6,10 @@ import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { authApi, favoritesApi, listingsApi, savedFiltersApi } from '@/lib/api';
-import { applyComparisonAfterAuth } from '@/lib/comparisonMigration';
+import {
+  applyComparisonAfterAuth,
+  holdComparisonApiLoadUntilReleased,
+} from '@/lib/comparisonMigration';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
 
@@ -192,16 +195,20 @@ export function useLoginPage() {
     try {
       const res = await authApi.login(formData);
       setIsRedirecting(true);
-      setAuth(res.data.user, res.data.access_token, res.data.refresh_token);
-      const savedReturnUrl =
-        typeof window !== 'undefined' ? localStorage.getItem('returnUrl') : null;
-      if (typeof window === 'undefined') {
-        analytics.login(loginMethod as 'email' | 'phone');
-        analytics.formSubmit('login', true, filledFields);
-        return;
+      const releaseComparisonHold = holdComparisonApiLoadUntilReleased();
+      try {
+        setAuth(res.data.user, res.data.access_token, res.data.refresh_token);
+        if (typeof window === 'undefined') {
+          analytics.login(loginMethod as 'email' | 'phone');
+          analytics.formSubmit('login', true, filledFields);
+          return;
+        }
+        await processPendingFavorites(res.data.user.id);
+        await applyComparisonAfterAuth();
+      } finally {
+        releaseComparisonHold();
       }
-      await processPendingFavorites(res.data.user.id);
-      await applyComparisonAfterAuth();
+      const savedReturnUrl = localStorage.getItem('returnUrl');
       const filterHandled = await processPendingSavedFilter(
         localStorage.getItem('pendingSavedFilter'),
         t,

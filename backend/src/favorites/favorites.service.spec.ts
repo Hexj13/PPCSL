@@ -176,6 +176,43 @@ describe('FavoritesService', () => {
       expect(result.data).toEqual([]);
       expect(result.meta).toEqual({ total: 0, page: 1, limit: 20, totalPages: 0 });
     });
+
+    it('should mask price currency and approx for closed listings', async () => {
+      const listing = {
+        id: 'listing-1',
+        status: 'Closed',
+        price: 1000,
+        currency: 'MDL',
+        user: {
+          phone: '+373123',
+          email: 'seller@example.com',
+          firstName: 'A',
+          lastName: 'B',
+          companyName: 'Co',
+          companyWebsiteUrl: 'https://x.test',
+        },
+      } as Listing;
+      const favoriteWithListing = { ...mockFavorite, listing } as Favorite;
+      mockQueryBuilder.getManyAndCount.mockResolvedValue([[favoriteWithListing], 1]);
+      mockExchangeRatesService.enrichListingsWithApproxPrice.mockResolvedValueOnce([
+        {
+          ...listing,
+          approxPriceDefaultCurrency: 500,
+          defaultCurrencyCode: 'EUR',
+        } as unknown as Listing,
+      ]);
+
+      const result = await service.findAll('user-1', 1, 20);
+
+      const out = result.data[0].listing! as Listing & {
+        approxPriceDefaultCurrency?: number | null;
+      };
+      expect(out.price).toBeUndefined();
+      expect(out.currency).toBeUndefined();
+      expect(out.approxPriceDefaultCurrency).toBeNull();
+      expect(out.user?.phone).toBeNull();
+      expect(out.user?.email).toBeNull();
+    });
   });
 
   describe('checkIfFavorite', () => {

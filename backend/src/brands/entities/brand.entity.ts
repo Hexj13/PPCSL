@@ -31,7 +31,7 @@ export class Brand {
   order: number;
 
   @Column('simple-array', { nullable: true })
-  vehicle_types: ('car' | 'truck' | 'moto')[];
+  vehicle_types: ('car' | 'truck' | 'moto' | 'tire')[];
 
   @Column({ default: false })
   is_archived: boolean;

@@ -37,11 +37,12 @@ async function syncVehicleTypes(forceReset: boolean = false) {
     car: 0,
     truck: 0,
     moto: 0,
+    tire: 0,
   };
 
   for (const brand of allBrands) {
     const models = brand.models || [];
-    const modelTypes = new Set<'car' | 'truck' | 'moto'>();
+    const modelTypes = new Set<'car' | 'truck' | 'moto' | 'tire'>();
     let modelsNeedUpdate = false;
     const modelsToUpdate: VehicleModel[] = [];
 
@@ -101,6 +102,7 @@ async function syncVehicleTypes(forceReset: boolean = false) {
   console.log(`   - Car models: ${stats.car}`);
   console.log(`   - Truck models: ${stats.truck}`);
   console.log(`   - Moto models: ${stats.moto}`);
+  console.log(`   - Tire models: ${stats.tire}`);
 
   const brandsWithoutTypes = await brandRepo
     .createQueryBuilder('brand')

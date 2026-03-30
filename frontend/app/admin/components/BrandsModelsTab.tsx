@@ -160,11 +160,12 @@ export function BrandsModelsTab() {
   );
 
   const formatVehicleTypes = useCallback(
-    (types: ('car' | 'truck' | 'moto')[]) => {
+    (types: ('car' | 'truck' | 'moto' | 'tire')[]) => {
       const keys = {
         car: 'vehicleTypeCar',
         truck: 'vehicleTypeTruck',
         moto: 'vehicleTypeMoto',
+        tire: 'vehicleTypeTire',
       } as const;
       return types.map((x) => t(`admin.brandsModelsTab.${keys[x]}`)).join(', ');
     },

@@ -96,6 +96,7 @@ export interface TranslationsPart1 {
     goToHome: string;
     today: string;
     daysAgo: string;
+    languageEn: string;
     languageRo: string;
     languageRu: string;
   };

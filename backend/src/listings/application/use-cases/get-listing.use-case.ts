@@ -5,13 +5,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import * as constants from '../../../common/constants';
-import { ListingStatus as ListingStatusEnum } from '../../../common/types';
 import { removePasswordFromUser } from '../../../common/utils/error-handling.utils';
 import { ExchangeRatesService } from '../../../exchange-rates/exchange-rates.service';
 import { UsersService } from '../../../users/application/users.service';
 import { ListingView } from '../../entities/listing-view.entity';
 import { Listing } from '../../entities/listing.entity';
 import { IListingRepository, LISTING_REPOSITORY } from '../ports/listing.repository.port';
+import { maskClosedListingForPublicView } from '../utils/mask-closed-listing-for-public-view';
 
 export interface GetListingContext {
   userId: string | null;
@@ -63,17 +63,8 @@ export class GetListingUseCase {
       }
     }
 
-    if (listing.status === ListingStatusEnum.Closed && !context?.isAdmin) {
-      (listing as Partial<Listing>).price = undefined;
-      (listing as Partial<Listing>).currency = undefined;
-      if (listing.user) {
-        listing.user.phone = null;
-        listing.user.email = null;
-        listing.user.firstName = null;
-        listing.user.lastName = null;
-        listing.user.companyName = null;
-        listing.user.companyWebsiteUrl = null;
-      }
+    if (!context?.isAdmin) {
+      maskClosedListingForPublicView(listing);
     }
 
     if (listing.user && !listing.user.email && !listing.user.phone) {

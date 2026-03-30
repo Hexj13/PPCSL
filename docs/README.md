@@ -76,6 +76,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 - [tires-category.md](./features/tires-category.md) — Dev-ready spec for tire listings, taxonomy, create form, and search
 - [seller-listings-board.md](./features/seller-listings-board.md) — Seller listings board
 - [similar-listings.md](./features/similar-listings.md) — Similar listings
+- Comparison (vehicles and tires) — up to 3 + 3 listings; guests in `localStorage`, signed-in users in `comparison_items` and `/api/comparison/*` (see [TECHNICAL.md](./architecture/TECHNICAL.md#comparison-vehicles-and-tires))
 - [sitemap.md](./features/sitemap.md) — Sitemap generation
 - [vehicle-type.md](./features/vehicle-type.md) — Vehicle type toggles (car/truck/moto)
 - [seo-audit.md](./audits/seo-audit.md) — SEO audit

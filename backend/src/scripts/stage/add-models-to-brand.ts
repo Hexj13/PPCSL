@@ -77,7 +77,7 @@ async function addModelsToBrands() {
       where: { brand_id: brand.id },
       select: ['vehicle_types'],
     });
-    const vehicleTypes = new Set<'car' | 'truck' | 'moto'>();
+    const vehicleTypes = new Set<'car' | 'truck' | 'moto' | 'tire'>();
     for (const model of allModelsForBrand) {
       if (model.vehicle_types?.[0]) {
         vehicleTypes.add(model.vehicle_types[0]);

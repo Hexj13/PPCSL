@@ -121,7 +121,7 @@ async function addMotorcycleBrandsAndModels() {
       }
     }
 
-    const vehicleTypes = new Set<'car' | 'truck' | 'moto'>();
+    const vehicleTypes = new Set<'car' | 'truck' | 'moto' | 'tire'>();
     const allBrandModels = await modelRepo.find({
       where: { brand_id: brand.id },
     });

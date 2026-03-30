@@ -11,6 +11,7 @@ import {
   ListingCardTireSpecs,
   ListingCardVehicleSpecs,
 } from '@/components/listing/ListingCardParts';
+import { ListingClosedStatusBadge } from '@/components/listing/ListingClosedStatusBadge';
 import { PriceDisplay } from '@/components/listing/PriceDisplay';
 import { TireListingPriceSuffix } from '@/components/listing/TireListingPriceSuffix';
 import { useI18n } from '@/components/providers/I18nProvider';
@@ -68,26 +69,31 @@ function ListingCardBody({
       <h3 className="font-bold text-base md:text-lg mb-3 line-clamp-2 text-primary-900">
         {displayTitle}
       </h3>
-      <div className="flex items-baseline gap-2 mb-3 flex-wrap">
-        {listing.price !== undefined ? (
-          <>
-            <PriceDisplay
-              price={listing.price}
-              currency={listing.currency ?? listing.defaultCurrencyCode ?? 'EUR'}
-              approxPrice={listing.approxPriceDefaultCurrency}
-              defaultCurrencyCode={listing.defaultCurrencyCode}
-              size="small"
-              priceClassName="text-primary-500"
-              currencyStyle={{ color: 'rgb(var(--text-secondary-rgb))' }}
-            />
-            <TireListingPriceSuffix
-              listing={listing}
-              t={t}
-              className="text-xs md:text-sm font-medium shrink-0"
-            />
-          </>
-        ) : (
-          <span className="text-xl md:text-2xl font-extrabold text-primary-400">••••</span>
+      <div className="flex items-baseline justify-between gap-2 mb-3 flex-wrap">
+        <div className="flex items-baseline gap-2 flex-wrap min-w-0">
+          {listing.price !== undefined ? (
+            <>
+              <PriceDisplay
+                price={listing.price}
+                currency={listing.currency ?? listing.defaultCurrencyCode ?? 'EUR'}
+                approxPrice={listing.approxPriceDefaultCurrency}
+                defaultCurrencyCode={listing.defaultCurrencyCode}
+                size="small"
+                priceClassName="text-primary-500"
+                currencyStyle={{ color: 'rgb(var(--text-secondary-rgb))' }}
+              />
+              <TireListingPriceSuffix
+                listing={listing}
+                t={t}
+                className="text-xs md:text-sm font-medium shrink-0"
+              />
+            </>
+          ) : (
+            <span className="text-xl md:text-2xl font-extrabold text-primary-400">••••</span>
+          )}
+        </div>
+        {listing.status === 'Closed' && (
+          <ListingClosedStatusBadge label={t('listingDetail.closed')} className="shrink-0" />
         )}
       </div>
       <div className="grow mb-3">

@@ -69,11 +69,11 @@ platform-repo/
 ### 3. Translations (`locales/{lang}.json`)
 
 - [ ] Translation file created for primary language
-- [ ] All keys translated (match `ro.json` or `ru.json`)
+- [ ] All keys translated (structure matches across `ro.json`, `ru.json`, `en.json` where the platform ships English)
 - [ ] Legal documents translated (Terms, Privacy)
 - [ ] FAQ translated
 - [ ] SMS messages translated (in `core/backend/src/common/constants.ts`)
-- [ ] Structure verified (matches `ro.json` or `ru.json`)
+- [ ] Structure verified (same keys in every shipped frontend locale file)
 
 ### 4. Theme (`theme/colors.ts`)
 
@@ -114,7 +114,7 @@ platform-repo/
 - [ ] `description` set
 - [ ] `prepare:build` script updated:
   ```json
-  "prepare:build": "mkdir -p core/frontend/lib/locales && rm -rf core/frontend/lib/locales/backend && cp locales/ro.json locales/ru.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/ && cp -r theme core/frontend/lib/ && cp -r config core/frontend/lib/ && cp -r assets/frontend/public/* core/frontend/public/ && cp -r assets/backend/watermark core/backend/assets/"
+  "prepare:build": "mkdir -p core/frontend/lib/locales && rm -rf core/frontend/lib/locales/backend && cp locales/ro.json locales/ru.json locales/en.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/ && cp -r theme core/frontend/lib/ && cp -r config core/frontend/lib/ && cp -r assets/frontend/public/* core/frontend/public/ && cp -r assets/backend/watermark core/backend/assets/"
   ```
 - [ ] Run scripts added:
   ```json

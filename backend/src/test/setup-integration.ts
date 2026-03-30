@@ -57,6 +57,7 @@ export async function createTestApp(): Promise<INestApplication> {
     .addTag('auth', 'Authentication and authorization')
     .addTag('listings', 'Listings')
     .addTag('favorites', 'Favorites')
+    .addTag('comparison', 'Comparison')
     .addTag('saved-filters', 'Saved search filters')
     .addTag('users', 'Users')
     .addTag('brands', 'Brands and models')

@@ -6,7 +6,8 @@ import { useEffect } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { brandsApi, tiresApi } from '@/lib/api';
 import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/content/popular-brands';
-import { createSlug, slugMatches, slugToName } from '@/lib/utils';
+import { loadSiteConfigSync } from '@/lib/site-config';
+import { createSlug, getCountry, slugMatches, slugToName } from '@/lib/utils';
 
 const decodeArray = (encoded: string): string[] => {
   if (!encoded) return [];
@@ -77,9 +78,11 @@ export function DynamicPageTitle() {
     const categoryParam = searchParams.get('category');
     if (categoryParam === 'tire') {
       const tiresBaseTitle = t('metadata.site.tiresDefaultTitle');
+      const siteName = loadSiteConfigSync(getCountry()).name;
       const tireBrandIds = searchParams.get('tire_brand_ids');
       const tireModelIds = searchParams.get('tire_model_ids');
-      document.title = tiresBaseTitle;
+      const withSite = (segment: string) => `${segment} | ${siteName}`;
+      document.title = withSite(tiresBaseTitle);
       tiresApi
         .getSearchMetadata({
           tire_brand_ids: tireBrandIds ?? undefined,
@@ -87,10 +90,12 @@ export function DynamicPageTitle() {
         })
         .then((res) => {
           const title = res.data.title ?? tiresBaseTitle;
-          document.title = title === tiresBaseTitle ? title : `${title} | ${tiresBaseTitle}`;
+          const segment =
+            title === tiresBaseTitle ? tiresBaseTitle : `${title} | ${tiresBaseTitle}`;
+          document.title = withSite(segment);
         })
         .catch(() => {
-          document.title = tiresBaseTitle;
+          document.title = withSite(tiresBaseTitle);
         });
       return;
     }

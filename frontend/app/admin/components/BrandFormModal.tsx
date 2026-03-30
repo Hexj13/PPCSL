@@ -9,7 +9,7 @@ import { adminApi } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { Checkbox } from '@/ui';
 
-const VEHICLE_TYPES = ['car', 'truck', 'moto'] as const;
+const VEHICLE_TYPES = ['car', 'truck', 'moto', 'tire'] as const;
 
 interface BrandFormModalProps {
   isOpen: boolean;
@@ -21,7 +21,7 @@ interface BrandFormModalProps {
 export function BrandFormModal({ isOpen, onClose, onSuccess, brand }: BrandFormModalProps) {
   const { t } = useTranslation();
   const [name, setName] = useState('');
-  const [vehicleTypes, setVehicleTypes] = useState<('car' | 'truck' | 'moto')[]>(['car']);
+  const [vehicleTypes, setVehicleTypes] = useState<('car' | 'truck' | 'moto' | 'tire')[]>(['car']);
   const [submitting, setSubmitting] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
 
@@ -35,7 +35,7 @@ export function BrandFormModal({ isOpen, onClose, onSuccess, brand }: BrandFormM
     }
   }, [isOpen, brand]);
 
-  const toggleType = (type: 'car' | 'truck' | 'moto') => {
+  const toggleType = (type: 'car' | 'truck' | 'moto' | 'tire') => {
     setVehicleTypes((prev) => {
       const next = prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type];
       return next.length > 0 ? next : prev;

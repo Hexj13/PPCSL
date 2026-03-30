@@ -131,7 +131,7 @@ async function auditVehicleTypes(fix: boolean = false) {
 
     for (const brand of allBrands) {
       const updatedModels = await modelRepo.find({ where: { brand_id: brand.id } });
-      const types = new Set<'car' | 'truck' | 'moto'>();
+      const types = new Set<'car' | 'truck' | 'moto' | 'tire'>();
 
       for (const model of updatedModels) {
         const t = model.vehicle_types?.[0];

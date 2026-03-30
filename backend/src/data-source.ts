@@ -5,6 +5,7 @@ import { AdminAuditLog } from './admin/entities/admin-audit-log.entity';
 import { RefreshToken } from './auth/entities/refresh-token.entity';
 import { Brand } from './brands/entities/brand.entity';
 import { VehicleModel } from './brands/entities/vehicle-model.entity';
+import { ComparisonItem } from './comparison/entities/comparison-item.entity';
 import { ExchangeRate } from './exchange-rates/entities/exchange-rate.entity';
 import { Favorite } from './favorites/entities/favorite.entity';
 import { ListingView } from './listings/entities/listing-view.entity';
@@ -32,6 +33,7 @@ export const dataSourceOptions: DataSourceOptions = {
     Vehicle,
     PromotionHistory,
     Favorite,
+    ComparisonItem,
     Brand,
     VehicleModel,
     RefreshToken,

@@ -193,7 +193,7 @@ async function syncVehicleTypesFromListings() {
 
     for (const brand of allBrands) {
       const models = brand.models || [];
-      const types = new Set<'car' | 'truck' | 'moto'>();
+      const types = new Set<'car' | 'truck' | 'moto' | 'tire'>();
 
       for (const model of models) {
         const t = model.vehicle_types?.[0];

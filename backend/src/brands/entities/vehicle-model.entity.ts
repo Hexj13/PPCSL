@@ -33,7 +33,7 @@ export class VehicleModel {
   brand: Brand;
 
   @Column('simple-array', { nullable: true })
-  vehicle_types: ('car' | 'truck' | 'moto')[];
+  vehicle_types: ('car' | 'truck' | 'moto' | 'tire')[];
 
   @Column({ default: 0 })
   order: number;

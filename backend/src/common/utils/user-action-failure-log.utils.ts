@@ -5,6 +5,7 @@ export const USER_ACTION_FAILURE_LOG_PREFIXES = [
   '/api/users',
   '/api/listings',
   '/api/favorites',
+  '/api/comparison',
   '/api/saved-filters',
 ] as const;
 
@@ -45,6 +46,7 @@ export function buildUserActionFailureContext(
   }
 
   const idParam = params?.id;
+  const listingIdParam = params?.listingId;
   if (idParam) {
     if (pathNorm.startsWith('/api/listings')) {
       payload.listingId = idParam;
@@ -55,6 +57,10 @@ export function buildUserActionFailureContext(
     } else if (pathNorm.startsWith('/api/users')) {
       payload.resourceUserId = idParam;
     }
+  }
+
+  if (listingIdParam && pathNorm.startsWith('/api/comparison')) {
+    payload.listingId = listingIdParam;
   }
 
   const userIdParam = params?.userId;

@@ -3,7 +3,7 @@ import type { VehicleModel } from '../../entities/vehicle-model.entity';
 
 export const BRANDS_CACHE = Symbol('BRANDS_CACHE');
 
-export type BrandVehicleType = 'car' | 'truck' | 'moto';
+export type BrandVehicleType = 'car' | 'truck' | 'moto' | 'tire';
 
 export interface IBrandsCache {
   getBrands(vehicleType?: BrandVehicleType): Promise<Brand[] | null>;

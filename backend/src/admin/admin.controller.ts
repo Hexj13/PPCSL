@@ -641,7 +641,7 @@ export class AdminController {
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'query', required: false, type: String })
-  @ApiQuery({ name: 'vehicleType', required: false, enum: ['car', 'truck', 'moto'] })
+  @ApiQuery({ name: 'vehicleType', required: false, enum: ['car', 'truck', 'moto', 'tire'] })
   getBrandsModels(
     @Query('page') page?: string,
     @Query('limit') limit?: string,
@@ -651,7 +651,10 @@ export class AdminController {
     const pageNum = page ? Math.max(1, parseInt(page, 10)) : 1;
     const limitNum = limit ? Math.min(2000, Math.max(1, parseInt(limit, 10))) : 100;
     const type =
-      vehicleType === 'car' || vehicleType === 'truck' || vehicleType === 'moto'
+      vehicleType === 'car' ||
+      vehicleType === 'truck' ||
+      vehicleType === 'moto' ||
+      vehicleType === 'tire'
         ? vehicleType
         : undefined;
     return this.adminBrandsModelsService.getBrandsModels(pageNum, limitNum, query, type);

@@ -225,7 +225,7 @@ async function getTitleFromParams(
   }
 
   if (!brand && !model) {
-    return vehicleTypeLabel ? `${vehicleTypeLabel} | ${defaultTitle}` : defaultTitle;
+    return vehicleTypeLabel ? vehicleTypeLabel : defaultTitle;
   }
 
   const brandSlugs = brand
@@ -437,7 +437,9 @@ export async function generateMetadata({
       locale,
     });
     const title = tireMeta.title ?? tiresBaseTitle;
-    const fullTitle = title === tiresBaseTitle ? title : `${title} | ${tiresBaseTitle}`;
+    const tireTitleSegment =
+      title === tiresBaseTitle ? tiresBaseTitle : `${title} | ${tiresBaseTitle}`;
+    const fullTitle = `${tireTitleSegment} | ${siteConfig.name}`;
     const description = tireMeta.description ?? t.metadata.site.tiresHomePageDescription;
     const { urlSuffix, canonicalUrl, canonicalParams } = buildHomeMetaUrls(
       params,

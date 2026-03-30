@@ -119,6 +119,7 @@ function getBreadcrumbSchema(
 }
 
 function getSellerSchema(listing: Listing): { '@type': string; name: string } | undefined {
+  if (listing.status === 'Closed') return undefined;
   if (!listing.user) return undefined;
   const name =
     listing.user.type === 'Business'

@@ -12,11 +12,13 @@ export class GetModelsBatchDto {
   brandIds: string[];
 
   @ApiProperty({
-    enum: ['car', 'truck', 'moto'],
+    enum: ['car', 'truck', 'moto', 'tire'],
     required: false,
     description: 'Filter models by vehicle type',
   })
   @IsOptional()
-  @IsEnum(['car', 'truck', 'moto'], { message: 'vehicleType мора да биде car, truck или moto' })
-  vehicleType?: 'car' | 'truck' | 'moto';
+  @IsEnum(['car', 'truck', 'moto', 'tire'], {
+    message: 'vehicleType мора да биде car, truck, moto или tire',
+  })
+  vehicleType?: 'car' | 'truck' | 'moto' | 'tire';
 }

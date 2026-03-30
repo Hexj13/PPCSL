@@ -1,6 +1,9 @@
 import type { RegisterDto, User } from '@/lib/api';
 import { authApi, favoritesApi, listingsApi, savedFiltersApi } from '@/lib/api';
-import { applyComparisonAfterAuth } from '@/lib/comparisonMigration';
+import {
+  applyComparisonAfterAuth,
+  holdComparisonApiLoadUntilReleased,
+} from '@/lib/comparisonMigration';
 import { toast } from '@/lib/toast';
 
 type LoginResponse = {
@@ -17,35 +20,40 @@ export async function runAfterRegistration(
   setAuth: (user: User | null, accessToken: string | null, refreshToken?: string | null) => void,
   t: (key: string) => string,
 ): Promise<void> {
-  setAuth(loginRes.data.user, loginRes.data.access_token, loginRes.data.refresh_token);
+  const releaseComparisonHold = holdComparisonApiLoadUntilReleased();
   try {
-    await authApi.verifyPhone();
-  } catch {}
+    setAuth(loginRes.data.user, loginRes.data.access_token, loginRes.data.refresh_token);
+    try {
+      await authApi.verifyPhone();
+    } catch {}
 
-  if (typeof window === 'undefined') return;
-  localStorage.removeItem('pendingRegistration');
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem('pendingRegistration');
 
-  const pendingFavorites = JSON.parse(localStorage.getItem('pendingFavorites') || '[]');
-  if (pendingFavorites.length > 0) {
-    const validFavorites: string[] = [];
-    for (const listingId of pendingFavorites) {
-      try {
-        const listingRes = await listingsApi.getOne(listingId);
-        const listing = listingRes.data;
-        if (listing.user && listing.user.id !== loginRes.data.user.id) {
-          validFavorites.push(listingId);
+    const pendingFavorites = JSON.parse(localStorage.getItem('pendingFavorites') || '[]');
+    if (pendingFavorites.length > 0) {
+      const validFavorites: string[] = [];
+      for (const listingId of pendingFavorites) {
+        try {
+          const listingRes = await listingsApi.getOne(listingId);
+          const listing = listingRes.data;
+          if (listing.user && listing.user.id !== loginRes.data.user.id) {
+            validFavorites.push(listingId);
+          }
+        } catch {
+          // skip
         }
-      } catch {
-        // skip
       }
+      if (validFavorites.length > 0) {
+        await Promise.all(validFavorites.map((id: string) => favoritesApi.add(id).catch(() => {})));
+      }
+      localStorage.removeItem('pendingFavorites');
     }
-    if (validFavorites.length > 0) {
-      await Promise.all(validFavorites.map((id: string) => favoritesApi.add(id).catch(() => {})));
-    }
-    localStorage.removeItem('pendingFavorites');
-  }
 
-  await applyComparisonAfterAuth();
+    await applyComparisonAfterAuth();
+  } finally {
+    releaseComparisonHold();
+  }
 
   const pendingSavedFilter = localStorage.getItem('pendingSavedFilter');
   if (pendingSavedFilter) {
