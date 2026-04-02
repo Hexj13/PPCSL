@@ -81,6 +81,8 @@ export interface MappedVehicleEnums {
   color?: string;
 }
 
+export type PartnerImportVehicleType = 'car' | 'truck' | 'moto';
+
 export interface BuildListingPayloadInput {
   parsed: ParsedPdpData;
   ownerUserId: string;
@@ -92,6 +94,7 @@ export interface BuildListingPayloadInput {
   resolvedModelId: string;
   mappedEnums: MappedVehicleEnums;
   horsepower: number;
+  vehicleType?: PartnerImportVehicleType;
 }
 
 export interface ImportFailedItem {

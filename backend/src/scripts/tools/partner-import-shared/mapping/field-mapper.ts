@@ -1,5 +1,9 @@
 import { ConditionType, Currency, ListingStatus } from '../../../../common/types';
-import type { BuildListingPayloadInput, KupitoCreateListingPayload } from '../listing-types';
+import type {
+  BuildListingPayloadInput,
+  KupitoCreateListingPayload,
+  PartnerImportVehicleType,
+} from '../listing-types';
 
 export function buildCreateListingPayload(
   input: BuildListingPayloadInput,
@@ -42,7 +46,9 @@ export function buildCreateListingPayload(
       drive_type: input.mappedEnums.driveType,
       body_type: input.mappedEnums.bodyType,
       color: input.mappedEnums.color,
-      ...(input.parsed.doors !== undefined ? { doors: input.parsed.doors } : {}),
+      ...(shouldIncludeDoorsInPayload(input.vehicleType, input.parsed.doors)
+        ? { doors: input.parsed.doors }
+        : {}),
     },
   };
 
@@ -77,6 +83,19 @@ function validateYear(year?: number): number {
     throw new Error(`Invalid year: ${year}`);
   }
   return Math.round(Number(year));
+}
+
+function shouldIncludeDoorsInPayload(
+  vehicleType: PartnerImportVehicleType | undefined,
+  doors: number | undefined,
+): doors is number {
+  if (doors === undefined) {
+    return false;
+  }
+  if (vehicleType === 'truck' || vehicleType === 'moto') {
+    return false;
+  }
+  return true;
 }
 
 function trimText(value?: string, maxLength = 5000): string | undefined {

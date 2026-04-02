@@ -60,6 +60,23 @@ function pickTranslated(value: unknown): string | undefined {
   return undefined;
 }
 
+function pickBodyText(value: unknown): string | undefined {
+  if (value === null || value === undefined) {
+    return undefined;
+  }
+  if (typeof value === 'string') {
+    return value.trim() || undefined;
+  }
+  if (typeof value === 'object') {
+    const o = value as Record<string, string>;
+    const ro = o.ro?.trim();
+    const ru = o.ru?.trim();
+    const tr = o.translated?.trim();
+    return tr || ro || ru || undefined;
+  }
+  return undefined;
+}
+
 async function gql<T>(query: string, variables?: Record<string, unknown>): Promise<T> {
   const res = await fetch(GQL, {
     method: 'POST',
@@ -144,6 +161,12 @@ function extractBrandModel(advert: AdvertRaw): { brand?: string; model?: string 
       }
       if (f.id === 21 && f.type === 'FEATURE_OPTIONS') {
         model = pickTranslated(f.value) ?? model;
+      }
+      if (f.id === 585 && f.type === 'FEATURE_TEXT') {
+        const raw = typeof f.value === 'string' ? f.value.trim() : pickBodyText(f.value);
+        if (raw) {
+          model = model ?? raw;
+        }
       }
     }
   }

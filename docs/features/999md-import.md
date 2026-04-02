@@ -29,6 +29,8 @@ Runtime files (generated locally; paths under `data/` and `reports/` are gitigno
 - `storage/` — thin wrappers over `partner-import-shared` (`JsonRegistryStore`, `buildImportReport`); JSON filenames use the `999md-run-*` prefix
 - Reuses `partner-import-shared` — `AuthClient`, `KupitoApiClient`, `UploadClient`, `BrandModelResolver`, enum/color/equipment/field mappers (`mapFuel` covers current 999 vehicle fuel labels such as Benzină, Diesel, Electricitate, Gaz / Benzină, Mild Hybrid, Plug-in Hybrid; `mapTransmission` includes 999 «Cutia de viteze» labels: Mecanică, Automată, Automat-Tiptronic, Semiautomată, Variator, Robotizată; `map999mdColorToCipautoRaw` + `mapColor` cover all `feature(17)` option titles from 999, including Altă → `other`, Bronz, Burgundia, Crom, Fildeș, Ivory, Satin, Șampanie)
 - `BrandModelResolver` / `buildBrandCandidateKeys` — 999 short brand **Mercedes** → Kupito **Mercedes-Benz**
+- `utils/listing-city.ts` — maps 999 **Regiune** (`feature 7`) to a **canonical name** from `platforms/md/config.ts` (same catalogue as `/api/cities`); supports labels like `Chișinău mun.` via prefix match. If 999 text does not match any known city, listing `city` falls back to **Chișinău**. When Regiune is empty, `--city` is used (CLI default `Chișinău`)
+- `partner-import-shared/mapping/field-mapper.ts` — `doors` from 999 are included in the create/update payload only for **car**; **truck** / **moto** omit `doors` (aligned with Kupito truck/moto vehicle parameters)
 
 ## Commands
 
@@ -113,7 +115,7 @@ Same lifecycle as CipAuto: `discovered` → `pdp_parsed` → `created` | `update
 
 ## Dealer brand/model audit
 
-Compares all brand/model pairs from a 999 profile against the **running Kupito API** (same matching rules as `BrandModelResolver`). Writes one JSON report (default under `core/docs/features/data/` when committed from a full run).
+Compares all brand/model pairs from a 999 profile against the **running Kupito API** (same matching rules as `BrandModelResolver`). Extraction includes **model** from `feature 21` or free-text `feature 585` (e.g. buses/minibuses), consistent with `pdp-normalizer`. Writes one JSON report (default under `core/docs/features/data/` when committed from a full run).
 
 ```bash
 npm run 999md:dealer-audit -- --login=AGMOTORS --kupitoApiUrl=http://localhost:4000 --out=core/docs/features/data/999md-agmotors-brands-models-audit.json
@@ -128,6 +130,8 @@ Unit tests (fixtures only, no network):
 - `parsers/pdp-normalizer.spec.ts`
 - `mapping/subcategory-vehicle-type.spec.ts`
 - `mapping/999md-equipment-mapper.spec.ts`
+- `utils/listing-city.spec.ts`
+- `../partner-import-shared/mapping/field-mapper.spec.ts` (doors vs `vehicleType`)
 - `../partner-import-shared/kupito-env.spec.ts` (Kupito env variable precedence)
 
 ```bash

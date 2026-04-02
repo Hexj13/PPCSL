@@ -41,6 +41,7 @@ import { PlpParser999 } from './parsers/plp-parser';
 import { RegistryStore999 } from './storage/registry';
 import { ReportStore999 } from './storage/report';
 import type { RegistryItem999, Scan999CommandOptions } from './types';
+import { resolve999mdListingCity } from './utils/listing-city';
 
 const program = new Command();
 const logger = new Logger(isPartnerImportDebugEnabled(process.env.SITE999MD_DEBUG === '1'));
@@ -418,11 +419,12 @@ async function processSingleItem(params: {
       warnings.push(`HORSEPOWER_ESTIMATED:${hp.horsepower}`);
     }
 
+    const listingCity = resolve999mdListingCity(finalizedParsed.city, options.city);
     const payloadInput = {
       parsed: finalizedParsed,
       ownerUserId: options.userId,
       status: targetStatus,
-      city: options.city,
+      city: listingCity,
       registrationType: options.registrationType,
       defaultHorsepower: options.defaultHp,
       resolvedBrandId,
@@ -435,6 +437,7 @@ async function processSingleItem(params: {
         color: colorMap.value,
       },
       horsepower: hp.horsepower,
+      vehicleType,
     };
 
     if (item.kupitoListingId && options.updateExisting) {
