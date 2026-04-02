@@ -2,17 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useCrossTabMyListingsRefetch } from '@/hooks/useCrossTabMyListingsRefetch';
 import { useListingActions } from '@/hooks/useListingActions';
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTranslation } from '@/hooks/useTranslation';
-import type { Listing, PaginationMeta, PromotionHistory } from '@/lib/api';
+import type { Listing, PaginationMeta, PromotionAccessStatus, PromotionHistory } from '@/lib/api';
 import { listingsApi, normalizeListingResponse } from '@/lib/api';
-import { toast } from '@/lib/toast';
+
+import { useMyListingsRefreshCooldownTimer } from './useMyListingsRefreshCooldownTimer';
+import { useMyListingsUpdatedToast } from './useMyListingsUpdatedToast';
 
 type StatusFilter = 'All' | 'Active' | 'Paused' | 'Closed';
 type PromotedFilter = 'All' | 'Promoted' | 'NotPromoted';
-const LISTING_UPDATED_TOAST_KEY = 'listingUpdatedToast';
 type PromotionHistoryMeta = {
   total: number;
   page: number;
@@ -72,12 +74,21 @@ function preloadListingPages(listings: Listing[]) {
     .catch(() => {});
 }
 
-async function fetchPromotionAccess() {
+async function fetchPromotionAccess(): Promise<PromotionAccessStatus> {
   try {
     const res = await listingsApi.getPromotionAccess();
-    return res.data.canPromote;
+    return res.data;
   } catch {
-    return false;
+    return {
+      access: 'disabled',
+      enabled: false,
+      isAdmin: false,
+      canPromote: false,
+      isPartner: false,
+      freePromotionBalance: 0,
+      partnerListingProgress: 0,
+      listingsUntilNextFreePromotion: null,
+    };
   }
 }
 
@@ -129,7 +140,7 @@ export function useMyListingsPage() {
     null,
   );
   const [loadingHistory, setLoadingHistory] = useState(false);
-  const [canPromote, setCanPromote] = useState(false);
+  const [promotionAccess, setPromotionAccess] = useState<PromotionAccessStatus | null>(null);
   const [hasActiveListingsOverall, setHasActiveListingsOverall] = useState(false);
   const loadingRef = useRef(false);
   const loadingMoreRef = useRef(false);
@@ -224,13 +235,17 @@ export function useMyListingsPage() {
     setHasActiveListingsOverall(await fetchHasActiveListingsOverall());
   }, []);
 
+  const loadPromotionAccess = useCallback(async () => {
+    setPromotionAccess(await fetchPromotionAccess());
+  }, []);
+
   const listingActions = useListingActions(
     {
       refreshCooldownMs: meta?.refreshCooldownMs ?? 0,
       lastRefreshAt: meta?.last_listing_refresh_at ?? null,
       timeUntilRefresh,
       setTimeUntilRefresh,
-      canPromote,
+      canPromote: (promotionAccess?.canPromote ?? false) || (promotionAccess?.isPartner ?? false),
       userId: user?.id,
       statusFilter,
       promotedFilter,
@@ -305,30 +320,19 @@ export function useMyListingsPage() {
     };
   }, [user, fetchListings, refetchAllForCount, refetchHasActiveListingsOverall]);
 
-  useEffect(() => {
-    const shouldShowToast = sessionStorage.getItem(LISTING_UPDATED_TOAST_KEY) === 'true';
-    if (!shouldShowToast) return;
-    sessionStorage.removeItem(LISTING_UPDATED_TOAST_KEY);
-    toast.success(t('listings.changesSaved'));
-  }, [t]);
+  useCrossTabMyListingsRefetch({
+    user,
+    hasLoadedRef,
+    fetchListings,
+    refetchAllForCount,
+    refetchHasActiveListingsOverall,
+    statusFilter,
+    promotedFilter,
+    searchQuery,
+  });
 
-  useEffect(() => {
-    if (!meta?.last_listing_refresh_at || meta?.refreshCooldownMs == null || !user?.id) return;
-    const at = new Date(meta.last_listing_refresh_at).getTime();
-    const remaining = at + meta.refreshCooldownMs - Date.now();
-    if (remaining > 0) {
-      setTimeUntilRefresh(remaining);
-      localStorage.setItem(`lastRefreshDate_${user.id}`, at.toString());
-    }
-  }, [meta?.last_listing_refresh_at, meta?.refreshCooldownMs, user?.id]);
-
-  useEffect(() => {
-    if (timeUntilRefresh === null || timeUntilRefresh <= 0) return;
-    const interval = setInterval(() => {
-      setTimeUntilRefresh((prev) => (prev === null || prev <= 1000 ? 0 : prev - 1000));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [timeUntilRefresh]);
+  useMyListingsUpdatedToast(t);
+  useMyListingsRefreshCooldownTimer(meta, user?.id, timeUntilRefresh, setTimeUntilRefresh);
 
   const handleLoadMore = useCallback(async () => {
     if (loadingMore || !meta?.totalPages || currentPage >= meta.totalPages) return;
@@ -397,11 +401,8 @@ export function useMyListingsPage() {
   }, [user, checkPromotionHistory]);
 
   useEffect(() => {
-    const run = async () => {
-      setCanPromote(await fetchPromotionAccess());
-    };
-    void run();
-  }, []);
+    void loadPromotionAccess();
+  }, [loadPromotionAccess]);
 
   const handlePromoteClick = useCallback((id: string) => {
     setSelectedListingId(id);
@@ -411,11 +412,18 @@ export function useMyListingsPage() {
   const handlePromotionSelect = useCallback(
     async (days: number | null) => {
       if (!selectedListingId) return;
-      await listingActions.togglePromotion(selectedListingId, true, days ?? undefined);
+      await listingActions.togglePromotion(
+        selectedListingId,
+        true,
+        days,
+        days === null ? 'partner_balance' : 'default',
+      );
+      await loadPromotionAccess();
+      await checkPromotionHistory();
       setPromotionModalOpen(false);
       setSelectedListingId(null);
     },
-    [selectedListingId, listingActions],
+    [selectedListingId, listingActions, loadPromotionAccess, checkPromotionHistory],
   );
 
   const formattedTime = useMemo(
@@ -462,6 +470,9 @@ export function useMyListingsPage() {
     minDisplayTime: 1000,
   });
 
+  const canPromote =
+    (promotionAccess?.canPromote ?? false) || (promotionAccess?.isPartner ?? false);
+
   return {
     user,
     isLoading,
@@ -480,6 +491,7 @@ export function useMyListingsPage() {
     formattedTime,
     hasActiveListingsOverall,
     canPromote,
+    promotionAccess,
     hasPromotionHistory,
     isCloseConfirmOpen,
     listingToClose,

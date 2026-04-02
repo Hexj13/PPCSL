@@ -11,6 +11,7 @@ import {
 } from 'class-validator';
 
 import { IsName } from '../../../common/decorators/is-name.decorator';
+import { IsPhone } from '../../../common/decorators/is-phone.decorator';
 
 export class UpdateProfileDto {
   @ApiPropertyOptional({
@@ -100,4 +101,13 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsBoolean()
   telegram?: boolean;
+
+  @ApiPropertyOptional({
+    example: '+49891234567',
+    description: 'Optional additional business contact phone (E.164-style; not verified by SMS)',
+  })
+  @IsOptional()
+  @ValidateIf((o) => o.additionalPhone != null && o.additionalPhone !== '')
+  @IsPhone()
+  additionalPhone?: string;
 }

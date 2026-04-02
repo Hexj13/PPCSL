@@ -9,6 +9,15 @@ export interface SiteConfig {
   supportEmail: string;
   siteUrl: string;
   assetVersion?: string;
+  footerPartners?: Array<{
+    name: string;
+    href: string;
+    logoSrc: string;
+    logoWidth?: number;
+    logoHeight?: number;
+    logoSurface?: 'light' | 'transparent';
+    descriptionKey?: string;
+  }>;
 }
 
 let config: SiteConfig | null = null;

@@ -39,6 +39,7 @@ import {
 import { Spinner } from '@/ui';
 
 import { ListingPageHistorySection } from './ListingPageHistorySection';
+import { listingPageShowsHeaderDivider } from './listing-page-header-divider';
 import { useListingPageClient, type UseListingPageClientReturn } from './useListingPageClient';
 
 function getShowPromoteButton(listing: Listing, userId: string | undefined): boolean {
@@ -409,6 +410,7 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
     setImageErrors,
     promotionModalOpen,
     setPromotionModalOpen,
+    promotionAccess,
     canPromote,
     canShare,
     previousListings,
@@ -474,15 +476,9 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
 
           <div className="space-y-6 min-w-0 order-3 lg:order-2">
             <ListingPageHeader listing={listing} title={h1Title} />
-            {((!isTireListing(listing) && listing.available_in_credit) ||
-              (isTireListing(listing) &&
-                listing.tire != null &&
-                listing.status !== 'Closed' &&
-                listing.price !== undefined) ||
-              listing.status === 'Closed' ||
-              listing.is_promoted ||
-              (listing.is_new && !isTireListing(listing)) ||
-              listing.urgent) && <div className="border-t border-primary-500/20" />}
+            {listingPageShowsHeaderDivider(listing) && (
+              <div className="border-t border-primary-500/20" />
+            )}
             <ListingPageActions
               listing={listing}
               isInitialized={isInitialized}
@@ -575,6 +571,9 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
         onClose={() => setPromotionModalOpen(false)}
         onSelect={handlePromotionSelect}
         isAdmin={false}
+        showPartnerBalanceOption={promotionAccess?.isPartner === true}
+        disableStandardOptions={promotionAccess?.isPartner === true}
+        partnerBalance={promotionAccess?.freePromotionBalance ?? 0}
       />
     </>
   );

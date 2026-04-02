@@ -10,6 +10,7 @@ import {
   validateCompanyWebsiteUrl,
   validateEmail,
 } from '@/app/profile/utils';
+import { validatePhone } from '@/app/register/utils';
 import { isPasswordValid, validatePassword } from '@/app/reset-password/utils';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { UpdateProfileDto } from '@/lib/api';
@@ -27,6 +28,7 @@ function hasProfileFormChanges(
     formData.lastName !== initialData.lastName ||
     formData.companyName !== initialData.companyName ||
     formData.companyWebsiteUrl !== initialData.companyWebsiteUrl ||
+    (formData.additionalPhone || '') !== (initialData.additionalPhone || '') ||
     formData.emailNotifications !== initialData.emailNotifications ||
     formData.viber !== initialData.viber ||
     formData.whatsapp !== initialData.whatsapp ||
@@ -81,13 +83,20 @@ export function useProfilePage() {
     ) {
       return false;
     }
+    if (
+      user.type === 'Business' &&
+      formData.additionalPhone?.trim() &&
+      validatePhone(formData.additionalPhone.trim(), t)
+    ) {
+      return false;
+    }
     const initialData = initializeFormData(user);
     const hasProfileChanges = hasProfileFormChanges(formData, initialData);
     const cur = currentPassword.trim();
     const neu = newPassword.trim();
     const passwordComplete = isProfilePasswordChangeComplete(cur, neu);
     return hasProfileChanges || passwordComplete;
-  }, [user, formData, currentPassword, newPassword]);
+  }, [user, formData, currentPassword, newPassword, t]);
 
   useEffect(() => {
     if (!isInitialized) return;
@@ -109,6 +118,7 @@ export function useProfilePage() {
           lastName: profileUser.lastName || '',
           companyName: profileUser.companyName || '',
           companyWebsiteUrl: profileUser.companyWebsiteUrl || '',
+          additionalPhone: profileUser.additionalPhone || '',
           emailNotifications: convertToBoolean(profileUser.emailNotifications),
           viber: convertToBoolean(profileUser.viber),
           whatsapp: convertToBoolean(profileUser.whatsapp),
@@ -156,6 +166,17 @@ export function useProfilePage() {
       if (formData.companyWebsiteUrl && !validateCompanyWebsiteUrl(formData.companyWebsiteUrl)) {
         toast.error(t('profile.invalidCompanyWebsiteUrl'));
         return;
+      }
+      if (user.type === 'Business' && formData.additionalPhone?.trim()) {
+        const phoneErr = validatePhone(formData.additionalPhone.trim(), t);
+        if (phoneErr) {
+          toast.error(phoneErr);
+          return;
+        }
+        if (formData.additionalPhone.trim() === (user.phone || '').trim()) {
+          toast.error(t('errors.additionalPhoneSameAsPrimary'));
+          return;
+        }
       }
       const initialData = initializeFormData(user);
       const hasProfileChanges = hasProfileFormChanges(formData, initialData);

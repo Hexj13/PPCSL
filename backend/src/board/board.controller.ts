@@ -1,6 +1,7 @@
 import { Controller, Get, NotFoundException, Param, Query } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+import { UserType } from '../common/constants';
 import { ListingsService } from '../listings/listings.service';
 import { UsersService } from '../users/application/users.service';
 
@@ -27,6 +28,7 @@ export class BoardController {
       userId: user.id,
       displayName,
       boardSlug: user.board_slug,
+      isPlatformPartner: user.type === UserType.Business && user.isPlatformPartner,
     };
   }
 

@@ -78,6 +78,7 @@ export function buildUpdateData(
     lastName: string;
     email: string;
     companyWebsiteUrl: string;
+    additionalPhone: string;
     emailNotifications: boolean;
   },
   isBusiness: boolean,
@@ -87,6 +88,9 @@ export function buildUpdateData(
     updateData.companyWebsiteUrl = formData.companyWebsiteUrl?.trim() || '';
     if (formData.email?.trim()) updateData.email = formData.email.trim();
     updateData.emailNotifications = formData.emailNotifications;
+    updateData.additionalPhone = formData.additionalPhone?.trim()
+      ? formData.additionalPhone.trim()
+      : null;
   } else {
     if (formData.firstName?.trim()) updateData.firstName = formData.firstName.trim();
     if (formData.lastName?.trim()) updateData.lastName = formData.lastName.trim();
@@ -101,6 +105,7 @@ export function getFilledFields(
     lastName: string;
     email: string;
     companyWebsiteUrl: string;
+    additionalPhone: string;
     emailNotifications: boolean;
   },
   isBusiness: boolean,
@@ -108,6 +113,7 @@ export function getFilledFields(
   return isBusiness
     ? {
         companyWebsiteUrl: !!formData.companyWebsiteUrl?.trim(),
+        additionalPhone: !!formData.additionalPhone?.trim(),
         email: !!formData.email?.trim(),
         emailNotifications: formData.emailNotifications,
       }

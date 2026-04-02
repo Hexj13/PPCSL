@@ -83,6 +83,7 @@ const WARNING_TOAST_STYLE: NonNullable<ToastOptions['style']> = {
   borderRadius: '0.75rem',
   padding: '16px',
   boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
+  whiteSpace: 'pre-line',
 };
 
 type DedupeType = 'success' | 'error' | 'warning' | 'blank';

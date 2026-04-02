@@ -4,6 +4,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { comparisonApi } from '@/lib/api';
 import type { Listing } from '@/lib/api';
+import { publishCrossTabEvent } from '@/lib/cross-tab-events';
 import { useAuthStore, useComparisonStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
 import { isTireListing } from '@/lib/utils';
@@ -53,6 +54,14 @@ export function useListingCardComparison(listing: Listing, displayTitle: string)
         }
         removeComparison(listing.id);
         setLocalInComparison(false);
+        publishCrossTabEvent({
+          type: 'comparison-changed',
+          listingId: listing.id,
+          action: 'remove',
+          bucket: tire ? 'tire' : 'vehicle',
+          isAuthenticated: !!user,
+          at: Date.now(),
+        });
         analytics.removeFromComparison(listing.id, {
           listing_category: tire ? 'tire' : 'vehicle',
         });
@@ -84,6 +93,14 @@ export function useListingCardComparison(listing: Listing, displayTitle: string)
         }
       }
       setLocalInComparison(true);
+      publishCrossTabEvent({
+        type: 'comparison-changed',
+        listingId: listing.id,
+        action: 'add',
+        bucket: tire ? 'tire' : 'vehicle',
+        isAuthenticated: !!user,
+        at: Date.now(),
+      });
       analytics.addToComparison(listing.id, {
         title: displayTitle,
         price: listing.price,

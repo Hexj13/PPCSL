@@ -5,6 +5,7 @@ import Script from 'next/script';
 import { useEffect, useState } from 'react';
 
 import { useCookieConsent } from '@/hooks/useCookieConsent';
+import { invokeGtag } from '@/lib/analytics';
 
 const isProduction = () => {
   if (typeof window === 'undefined') return false;
@@ -40,7 +41,7 @@ export function GoogleAnalytics() {
       consent !== 'granted'
     )
       return;
-    window.gtag('config', gaId, { page_path: pathname });
+    invokeGtag(() => window.gtag('config', gaId, { page_path: pathname }));
   }, [pathname, gaId, isProd, isScriptLoaded, consent, isLoading]);
 
   useEffect(() => {
@@ -57,9 +58,11 @@ export function GoogleAnalytics() {
 
     const analyticsStorage = consent === 'granted' ? 'granted' : 'denied';
 
-    window.gtag('consent', 'update', {
-      analytics_storage: analyticsStorage,
-    });
+    invokeGtag(() =>
+      window.gtag('consent', 'update', {
+        analytics_storage: analyticsStorage,
+      }),
+    );
   }, [consent, isLoading, gaId, isProd, isScriptLoaded]);
 
   if (!gaId) return null;
@@ -73,7 +76,7 @@ export function GoogleAnalytics() {
           src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
           onLoad={() => {
             if (typeof window !== 'undefined' && window.gtag) {
-              window.gtag('js', new Date());
+              invokeGtag(() => window.gtag('js', new Date()));
               setIsScriptLoaded(true);
             }
           }}

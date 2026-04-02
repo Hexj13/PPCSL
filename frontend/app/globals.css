@@ -1370,3 +1370,23 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+@keyframes footer-partners-marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.footer-partners-marquee {
+  animation: footer-partners-marquee 50s linear infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer-partners-marquee {
+    animation: none;
+  }
+}

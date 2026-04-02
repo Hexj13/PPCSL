@@ -1,6 +1,24 @@
-import { TransmissionType } from '../../../../common/types';
+import { FuelType, TransmissionType } from '../../../../common/types';
 
-import { mapTransmission } from './enum-mapper';
+import { mapFuel, mapTransmission } from './enum-mapper';
+
+describe('mapFuel', () => {
+  it('maps 999.md fuel labels used for vehicle imports', () => {
+    expect(mapFuel('Electricitate').value).toBe(FuelType.Electric);
+    expect(mapFuel('Gaz / Benzină (metan)').value).toBe(FuelType.LPG);
+    expect(mapFuel('Gaz / Benzină (propan)').value).toBe(FuelType.LPG);
+    expect(mapFuel('Mild Hybrid (benzină)').value).toBe(FuelType.MHEV);
+    expect(mapFuel('Mild Hybrid (diesel)').value).toBe(FuelType.MHEV);
+    expect(mapFuel('Plug-in Hybrid (benzină)').value).toBe(FuelType.PHEV);
+    expect(mapFuel('Plug-in Hybrid (diesel)').value).toBe(FuelType.PHEV);
+  });
+
+  it('returns warning for unknown fuel label', () => {
+    const r = mapFuel('Quantum fuel');
+    expect(r.value).toBeUndefined();
+    expect(r.warning).toBe('UNMAPPED_FUEL:Quantum fuel');
+  });
+});
 
 describe('mapTransmission', () => {
   it('maps 999.md Cutia de viteze labels (Romanian)', () => {

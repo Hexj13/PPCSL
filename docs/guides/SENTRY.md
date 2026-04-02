@@ -16,6 +16,7 @@ tags:
 
 ## Related documents
 
+- **[logging.md](./logging.md)** — Structured payloads, request correlation, sanitization, LogTape go/no-go
 - **[ga4-events.md](../analytics/ga4-events.md)** — GA4 events and architecture (errors in Sentry)
 - **[platform-guide.md](./platform-guide.md#6-analytics-and-monitoring-configuration-ga-gtm-sentry)** — GA, GTM, Sentry configuration for platforms
 

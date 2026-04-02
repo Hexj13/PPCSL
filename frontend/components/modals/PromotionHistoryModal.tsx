@@ -44,6 +44,9 @@ export function PromotionHistoryModal({
                 {t('promotion.history.days')}
               </th>
               <th className="text-center py-3 px-4 text-sm font-semibold text-primary-900">
+                {t('promotion.history.type')}
+              </th>
+              <th className="text-center py-3 px-4 text-sm font-semibold text-primary-900">
                 {t('promotion.history.startDate')}
               </th>
               <th className="text-center py-3 px-4 text-sm font-semibold text-primary-900">
@@ -54,13 +57,13 @@ export function PromotionHistoryModal({
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={5} className="py-8 text-center text-text-secondary">
+                <td colSpan={6} className="py-8 text-center text-text-secondary">
                   {t('common.loading')}
                 </td>
               </tr>
             ) : history.length === 0 ? (
               <tr>
-                <td colSpan={5} className="py-8 text-center text-text-secondary">
+                <td colSpan={6} className="py-8 text-center text-text-secondary">
                   {t('promotion.history.empty')}
                 </td>
               </tr>
@@ -96,7 +99,17 @@ export function PromotionHistoryModal({
                     className="py-3 px-4 text-sm text-center"
                     style={{ color: 'rgb(var(--text-secondary-rgb))' }}
                   >
-                    {item.days}
+                    {item.days ?? t('promotion.unlimited')}
+                  </td>
+                  <td
+                    className="py-3 px-4 text-sm text-center"
+                    style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+                  >
+                    {item.promotion_source === 'partner_balance'
+                      ? t('promotion.history.typePartnerBalance')
+                      : item.promotion_source === 'admin_unlimited'
+                        ? t('promotion.history.typeAdminUnlimited')
+                        : t('promotion.history.typeDuration')}
                   </td>
                   <td
                     className="py-3 px-4 text-sm text-center"

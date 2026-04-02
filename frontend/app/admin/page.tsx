@@ -13,12 +13,27 @@ import { PromotionsTab } from './components/PromotionsTab';
 import { UsersTab } from './components/UsersTab';
 
 type AdminTab = 'listings' | 'users' | 'promotions' | 'brandsModels';
+
+const ADMIN_ACTIVE_TAB_STORAGE_KEY = 'adminActiveTab';
+
+const ADMIN_TAB_VALUES: readonly AdminTab[] = [
+  'listings',
+  'users',
+  'promotions',
+  'brandsModels',
+] as const;
+
+function parseStoredAdminTab(raw: string | null): AdminTab | null {
+  if (!raw) return null;
+  return ADMIN_TAB_VALUES.includes(raw as AdminTab) ? (raw as AdminTab) : null;
+}
 const LISTING_UPDATED_TOAST_KEY = 'listingUpdatedToast';
 
 export default function AdminPage() {
   const { isLoading, isAuthorized } = useRequireAuth({ requiredRole: 'Admin' });
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<AdminTab>('users');
+  const skipPersistActiveTabRef = useRef(true);
 
   const listingsTabRef = useRef<HTMLButtonElement>(null);
   const usersTabRef = useRef<HTMLButtonElement>(null);
@@ -35,6 +50,19 @@ export default function AdminPage() {
     },
     tabsContainerRef,
   );
+
+  useEffect(() => {
+    const parsed = parseStoredAdminTab(localStorage.getItem(ADMIN_ACTIVE_TAB_STORAGE_KEY));
+    if (parsed) setActiveTab(parsed);
+  }, []);
+
+  useEffect(() => {
+    if (skipPersistActiveTabRef.current) {
+      skipPersistActiveTabRef.current = false;
+      return;
+    }
+    localStorage.setItem(ADMIN_ACTIVE_TAB_STORAGE_KEY, activeTab);
+  }, [activeTab]);
 
   useEffect(() => {
     const shouldShowToast = sessionStorage.getItem(LISTING_UPDATED_TOAST_KEY) === 'true';

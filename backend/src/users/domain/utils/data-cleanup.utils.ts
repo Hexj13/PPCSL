@@ -12,6 +12,7 @@ export function cleanUserData<T extends Record<string, unknown>>(data: T): T {
     email?: string | null;
     companyName?: string | null;
     companyWebsiteUrl?: string | null;
+    additionalPhone?: string | null;
   };
 
   if ('firstName' in cleaned) {
@@ -28,6 +29,9 @@ export function cleanUserData<T extends Record<string, unknown>>(data: T): T {
   }
   if ('companyWebsiteUrl' in cleaned) {
     cleaned.companyWebsiteUrl = cleanStringField(cleaned.companyWebsiteUrl as string | null);
+  }
+  if ('additionalPhone' in cleaned) {
+    cleaned.additionalPhone = cleanStringField(cleaned.additionalPhone as string | null);
   }
 
   return cleaned as T;

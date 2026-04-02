@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { EmptyState } from '@/components/common/EmptyState';
+import { PlatformPartnerBadge } from '@/components/common/PlatformPartnerBadge';
 import { Breadcrumbs } from '@/components/layout/Breadcrumbs';
 import { ListingManagementCard } from '@/components/listing/ListingManagementCard';
 import { ListingManagementCardSkeleton } from '@/components/listing/ListingManagementCardSkeleton';
@@ -119,7 +120,10 @@ export default function BoardPageClient({
         className="mb-6"
       />
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
-        <h1 className="text-3xl md:text-4xl font-extrabold text-primary-900">{pageTitle}</h1>
+        <div className="flex flex-wrap items-center gap-2 md:gap-3 min-w-0">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-primary-900">{pageTitle}</h1>
+          {board.isPlatformPartner && <PlatformPartnerBadge elevated />}
+        </div>
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <SortDropdown basePath={`/board/${nameSlug}`} />
         </div>

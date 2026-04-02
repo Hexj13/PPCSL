@@ -14,6 +14,7 @@ import { analytics, buildListingViewItemParams } from '@/lib/analytics';
 import type { Listing } from '@/lib/api';
 import { favoritesApi } from '@/lib/api';
 import { CARD_EXIT_ANIMATION_MS } from '@/lib/constants';
+import { publishCrossTabEvent } from '@/lib/cross-tab-events';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
 import { isTireListing } from '@/lib/utils';
@@ -89,6 +90,13 @@ export function useListingCardFavorite(
     favoritesApi
       .remove(listing.id)
       .then(() => {
+        publishCrossTabEvent({
+          type: 'favorites-changed',
+          listingId: listing.id,
+          action: 'remove',
+          isAuthenticated: true,
+          at: Date.now(),
+        });
         analytics.removeFromWishlist(listing.id, {
           listing_category: isTireListing(listing) ? 'tire' : 'vehicle',
         });
@@ -111,6 +119,13 @@ export function useListingCardFavorite(
     favoritesApi
       .add(listing.id)
       .then(() => {
+        publishCrossTabEvent({
+          type: 'favorites-changed',
+          listingId: listing.id,
+          action: 'add',
+          isAuthenticated: true,
+          at: Date.now(),
+        });
         analytics.addToWishlist(listing.id, buildListingViewItemParams(listing));
         toast.success(t('listings.addToFavorites'));
       })

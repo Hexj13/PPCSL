@@ -239,7 +239,7 @@ export class ListingsController {
     },
   })
   getPromotionAccess(@Request() req: ExpressRequest) {
-    return this.listingsService.getPromotionAccessStatus(req.user?.type);
+    return this.listingsService.getPromotionAccessStatus(req.user?.id, req.user?.type);
   }
 
   @ApiOperation({ summary: 'Get similar listings' })

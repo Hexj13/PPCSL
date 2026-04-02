@@ -9,8 +9,12 @@ import { useListingData } from '@/hooks/useListingData';
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics, buildListingViewItemParams } from '@/lib/analytics';
-import type { Listing } from '@/lib/api';
+import type { Listing, PromotionAccessStatus } from '@/lib/api';
 import { listingsApi, favoritesApi, comparisonApi } from '@/lib/api';
+import {
+  publishListingDetailComparisonCrossTab,
+  publishListingDetailFavoriteCrossTab,
+} from '@/lib/cross-tab-listing-detail-publish';
 import { prepareListingDescriptionHtml } from '@/lib/listingDescriptionHtml';
 import { useAuthStore, useFavoritesStore, useComparisonStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
@@ -21,6 +25,8 @@ import {
   isTireListing,
   sortOptionsByLabel,
 } from '@/lib/utils';
+
+import { useListingPageCreatedToast } from './useListingPageCreatedToast';
 
 function getClosingDate(lastUpdatedAt: string): Date {
   const date = new Date(lastUpdatedAt);
@@ -48,7 +54,7 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
   const [modalImageIndex, setModalImageIndex] = useState(0);
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
   const [promotionModalOpen, setPromotionModalOpen] = useState(false);
-  const [canPromote, setCanPromote] = useState(false);
+  const [promotionAccess, setPromotionAccess] = useState<PromotionAccessStatus | null>(null);
   const [canShare, setCanShare] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
 
@@ -111,15 +117,7 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
     return () => media.removeEventListener('change', update);
   }, []);
 
-  useEffect(() => {
-    if (isHydrated && listing) {
-      const toastMessage = sessionStorage.getItem('listingCreatedToast');
-      if (toastMessage) {
-        sessionStorage.removeItem('listingCreatedToast');
-        toast.success(toastMessage);
-      }
-    }
-  }, [isHydrated, listing]);
+  useListingPageCreatedToast(isHydrated, listing, t);
 
   const imageAltTitle = useMemo(() => {
     if (!listing) return '';
@@ -146,13 +144,15 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
     const checkPromotionAccess = async () => {
       try {
         const res = await listingsApi.getPromotionAccess();
-        setCanPromote(res.data.canPromote);
+        setPromotionAccess(res.data);
       } catch {
-        setCanPromote(false);
+        setPromotionAccess(null);
       }
     };
     void checkPromotionAccess();
   }, []);
+  const canPromote =
+    (promotionAccess?.canPromote ?? false) || (promotionAccess?.isPartner ?? false);
 
   const displayTitle = listing ? getListingDisplayTitle(listing, t) : '';
   useEffect(() => {
@@ -178,6 +178,7 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
         await favoritesApi.remove(id);
         removeFavorite(id);
         setIsFavorite(false);
+        publishListingDetailFavoriteCrossTab(id, 'remove');
         analytics.removeFromWishlist(id, {
           listing_category: listing && isTireListing(listing) ? 'tire' : 'vehicle',
         });
@@ -196,6 +197,7 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
       await favoritesApi.add(id);
       addFavorite(id);
       setIsFavorite(true);
+      publishListingDetailFavoriteCrossTab(id, 'add');
       if (listing) {
         analytics.addToWishlist(id, buildListingViewItemParams(listing));
       }
@@ -234,6 +236,7 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
         }
         removeTire(id);
         setIsInComparison(false);
+        publishListingDetailComparisonCrossTab(id, 'remove', 'tire', !!user);
         analytics.removeFromComparison(id, { listing_category: 'tire' });
         toast.success(t('listingDetail.removedFromComparison'));
         return;
@@ -257,6 +260,7 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
         }
       }
       setIsInComparison(true);
+      publishListingDetailComparisonCrossTab(id, 'add', 'tire', !!user);
       analytics.addToComparison(id, {
         title: listing.title,
         price: listing.price,
@@ -277,6 +281,7 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
       }
       removeVehicle(id);
       setIsInComparison(false);
+      publishListingDetailComparisonCrossTab(id, 'remove', 'vehicle', !!user);
       analytics.removeFromComparison(id, { listing_category: 'vehicle' });
       toast.success(t('listingDetail.removedFromComparison'));
       return;
@@ -300,6 +305,7 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
       }
     }
     setIsInComparison(true);
+    publishListingDetailComparisonCrossTab(id, 'add', 'vehicle', !!user);
     analytics.addToComparison(id, {
       title: listing?.title,
       price: listing?.price,
@@ -357,24 +363,29 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
 
   const handlePromotionSelect = useCallback(
     async (days: number | null) => {
-      if (!listing || days === null) {
-        toast.error(t('listings.promotionNotAvailable'));
+      if (!listing) {
         return;
       }
       try {
-        await listingsApi.togglePromotion(listing.id, true, days);
+        await listingsApi.togglePromotion(
+          listing.id,
+          true,
+          days,
+          days === null ? 'partner_balance' : 'default',
+        );
         toast.success(t('listings.promotionEnabled'));
         const updatedListing = await listingsApi.getOne(listing.id);
         setListing(updatedListing.data);
         listingRef.current = updatedListing.data;
       } catch (error: unknown) {
-        const axiosError = error as { response?: { status?: number } };
+        const axiosError = error as { response?: { status?: number; data?: { message?: string } } };
+        const backendMessage = axiosError.response?.data?.message;
         if (axiosError.response?.status === 403) {
-          toast.error(t('listings.promotionNotAvailable'));
+          toast.error(backendMessage || t('listings.promotionNotAvailable'));
         } else if (axiosError.response?.status === 400) {
-          toast.error(t('listings.promotionOnlyActive'));
+          toast.error(backendMessage || t('listings.promotionOnlyActive'));
         } else {
-          toast.error(t('listings.promotionError'));
+          toast.error(backendMessage || t('listings.promotionError'));
         }
       } finally {
         setPromotionModalOpen(false);
@@ -414,6 +425,7 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
     setImageErrors,
     promotionModalOpen,
     setPromotionModalOpen,
+    promotionAccess,
     canPromote,
     canShare,
     previousListings,

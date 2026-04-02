@@ -1,9 +1,10 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 
 import {
   handleDuplicateKeyError,
   removePasswordFromUser,
 } from '../../../common/utils/error-handling.utils';
+import { logUserEvent } from '../../../common/utils/log-user-event';
 import { UsersService } from '../../../users/application/users.service';
 import { cleanUserData } from '../../../users/domain/utils/data-cleanup.utils';
 import { User } from '../../../users/entities/user.entity';
@@ -15,6 +16,8 @@ import { UserWithoutPassword } from '../auth.types';
 
 @Injectable()
 export class RegisterUserUseCase {
+  private readonly logger = new Logger(RegisterUserUseCase.name);
+
   constructor(
     private usersService: UsersService,
     private passwordService: PasswordService,
@@ -76,6 +79,14 @@ export class RegisterUserUseCase {
           has_email: !!user.email,
           has_phone: !!user.phone,
         },
+      });
+
+      logUserEvent(this.logger, {
+        event: 'user_registered',
+        userId: user.id,
+        userType: registerDto.type,
+        hasEmail: !!user.email,
+        hasPhone: !!user.phone,
       });
 
       return removePasswordFromUser(user) as UserWithoutPassword;

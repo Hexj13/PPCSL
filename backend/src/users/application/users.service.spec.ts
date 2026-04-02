@@ -61,6 +61,8 @@ describe('UsersService', () => {
       find: jest.fn(),
       findOne: jest.fn(),
       count: jest.fn(),
+      update: jest.fn(),
+      createQueryBuilder: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -223,6 +225,50 @@ describe('UsersService', () => {
       const result = await service.getListingLimit('1');
 
       expect(result).toBe(100);
+    });
+  });
+
+  describe('tryConsumeFreePromotionBalance', () => {
+    it('returns true when atomic decrement updates a row', async () => {
+      const execute = jest.fn().mockResolvedValue({ affected: 1 });
+      const builder = {
+        update: jest.fn(),
+        set: jest.fn(),
+        where: jest.fn(),
+        andWhere: jest.fn(),
+        execute,
+      };
+      builder.update.mockReturnValue(builder);
+      builder.set.mockReturnValue(builder);
+      builder.where.mockReturnValue(builder);
+      builder.andWhere.mockReturnValue(builder);
+
+      repository.createQueryBuilder.mockReturnValue(builder as never);
+
+      await expect(service.tryConsumeFreePromotionBalance('user-1')).resolves.toBe(true);
+      expect(builder.update).toHaveBeenCalledWith(User);
+      expect(builder.set).toHaveBeenCalledWith({
+        freePromotionBalance: expect.any(Function),
+      });
+    });
+
+    it('returns false when balance is already empty', async () => {
+      const execute = jest.fn().mockResolvedValue({ affected: 0 });
+      const builder = {
+        update: jest.fn(),
+        set: jest.fn(),
+        where: jest.fn(),
+        andWhere: jest.fn(),
+        execute,
+      };
+      builder.update.mockReturnValue(builder);
+      builder.set.mockReturnValue(builder);
+      builder.where.mockReturnValue(builder);
+      builder.andWhere.mockReturnValue(builder);
+
+      repository.createQueryBuilder.mockReturnValue(builder as never);
+
+      await expect(service.tryConsumeFreePromotionBalance('user-1')).resolves.toBe(false);
     });
   });
 });

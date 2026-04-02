@@ -1,23 +1,47 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+import {
+  UserProfilePatchService,
+  type UserProfilePatchFields,
+} from '../auth/application/user-profile-patch.service';
 import { RefreshTokenService } from '../auth/infrastructure/services/refresh-token.service';
 import {
   ListingStatus,
   ListingStatus as ListingStatusEnum,
   UserType as UserTypeEnum,
 } from '../common/types';
+import { logUserEvent } from '../common/utils/log-user-event';
 import { ExchangeRatesService } from '../exchange-rates/exchange-rates.service';
 import { IListingCache, LISTING_CACHE } from '../listings/application/ports/listing-cache.port';
 import { Listing } from '../listings/entities/listing.entity';
 import { PromotionHistory } from '../listings/entities/promotion-history.entity';
+import { PromotionSource } from '../listings/entities/promotion-history.entity';
 import { ListingsService } from '../listings/listings.service';
 import { UsersService } from '../users/application/users.service';
+import { cleanUserData } from '../users/domain/utils/data-cleanup.utils';
 import { User } from '../users/entities/user.entity';
+
+import type { AdminUpdateUserProfileDto } from './dto/admin-update-user-profile.dto';
+
+type SanitizedUser = Omit<
+  User,
+  | 'password'
+  | 'getDisplayName'
+  | 'canCreateListing'
+  | 'deactivate'
+  | 'isAdmin'
+  | 'setPlatformPartner'
+  | 'setFreePromotionBalance'
+  | 'registerPartnerListingCreation'
+  | 'consumeFreePromotion'
+>;
 
 @Injectable()
 export class AdminService {
+  private readonly logger = new Logger(AdminService.name);
+
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
@@ -31,6 +55,7 @@ export class AdminService {
     @Inject(LISTING_CACHE)
     private listingCache: IListingCache,
     private usersService: UsersService,
+    private userProfilePatchService: UserProfilePatchService,
   ) {}
 
   async getAllUsers(
@@ -39,9 +64,7 @@ export class AdminService {
     searchQuery?: string,
     userType?: string,
   ): Promise<{
-    data: Array<
-      Omit<User, 'password' | 'getDisplayName' | 'canCreateListing' | 'deactivate' | 'isAdmin'>
-    >;
+    data: SanitizedUser[];
     meta: { total: number; page: number; limit: number; totalPages: number };
   }> {
     const skip = (page - 1) * limit;
@@ -174,9 +197,127 @@ export class AdminService {
       await this.refreshTokenService.revokeAllUserTokens(userId);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...userWithoutPassword } = savedUser;
-    return userWithoutPassword;
+    return this.sanitizeUser(savedUser);
+  }
+
+  async updateUserPartnerSettings(
+    userId: string,
+    data: {
+      isPlatformPartner: boolean;
+      freePromotionBalance?: number;
+    },
+    actorUserId: string,
+  ) {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new NotFoundException('errors.userNotFound');
+    }
+
+    if (user.type !== UserTypeEnum.Business) {
+      if (data.isPlatformPartner) {
+        throw new BadRequestException('errors.partnerSettingsBusinessOnly');
+      }
+      if (
+        !user.isPlatformPartner &&
+        user.freePromotionBalance === 0 &&
+        user.partnerListingProgress === 0
+      ) {
+        return this.sanitizeUser(user);
+      }
+      user.setPlatformPartner(false);
+      const cleared = await this.usersRepository.save(user);
+      logUserEvent(this.logger, {
+        event: 'admin_partner_settings_updated',
+        actorUserId,
+        userId: cleared.id,
+        isPlatformPartner: cleared.isPlatformPartner,
+        freePromotionBalance: cleared.freePromotionBalance,
+        partnerListingProgress: cleared.partnerListingProgress,
+      });
+      return this.sanitizeUser(cleared);
+    }
+
+    user.setPlatformPartner(data.isPlatformPartner);
+    if (data.isPlatformPartner && data.freePromotionBalance !== undefined) {
+      user.setFreePromotionBalance(data.freePromotionBalance);
+    }
+
+    const savedUser = await this.usersRepository.save(user);
+
+    logUserEvent(this.logger, {
+      event: 'admin_partner_settings_updated',
+      actorUserId,
+      userId: savedUser.id,
+      isPlatformPartner: savedUser.isPlatformPartner,
+      freePromotionBalance: savedUser.freePromotionBalance,
+      partnerListingProgress: savedUser.partnerListingProgress,
+    });
+
+    return this.sanitizeUser(savedUser);
+  }
+
+  async updateUserProfile(userId: string, dto: AdminUpdateUserProfileDto, actorUserId: string) {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new NotFoundException('errors.userNotFound');
+    }
+
+    const cleaned = cleanUserData({ ...dto } as Record<string, unknown>) as Record<
+      string,
+      string | null | undefined
+    >;
+    const patchInput: UserProfilePatchFields = {};
+
+    if (user.type === UserTypeEnum.Business) {
+      if (dto.email !== undefined) {
+        patchInput.email = cleaned.email as string | null | undefined;
+      }
+      if (dto.companyName !== undefined) {
+        patchInput.companyName = cleaned.companyName as string | null | undefined;
+      }
+      if (dto.companyWebsiteUrl !== undefined) {
+        patchInput.companyWebsiteUrl = cleaned.companyWebsiteUrl as string | null | undefined;
+      }
+      if (dto.additionalPhone !== undefined) {
+        patchInput.additionalPhone = cleaned.additionalPhone as string | null | undefined;
+      }
+    } else {
+      if (dto.email !== undefined) {
+        patchInput.email = cleaned.email as string | null | undefined;
+      }
+      if (dto.firstName !== undefined) {
+        patchInput.firstName = cleaned.firstName as string | null | undefined;
+      }
+      if (dto.lastName !== undefined) {
+        patchInput.lastName = cleaned.lastName as string | null | undefined;
+      }
+    }
+
+    const patch = await this.userProfilePatchService.buildPatch(user, userId, patchInput);
+    const previousEmail = user.email;
+    if (patch.email !== undefined && patch.email !== previousEmail) {
+      patch.emailVerified = false;
+    }
+
+    const changedFields = Object.keys(patch)
+      .filter((k) => k !== 'password')
+      .sort();
+    if (changedFields.length === 0) {
+      return this.sanitizeUser(user);
+    }
+
+    const savedUser = await this.usersService.update(userId, patch);
+    logUserEvent(this.logger, {
+      event: 'admin_user_profile_updated',
+      actorUserId,
+      userId: savedUser.id,
+      changedFields,
+    });
+    return this.sanitizeUser(savedUser);
   }
 
   async getAllListings(
@@ -263,6 +404,7 @@ export class AdminService {
           (!listing.user.email && !listing.user.phone)
         ) {
           listing.user.phone = null;
+          listing.user.additionalPhone = null;
           listing.user.email = null;
           listing.user.firstName = null;
           listing.user.lastName = null;
@@ -433,11 +575,13 @@ export class AdminService {
       }
 
       if (!wasPromoted && listing.user_id) {
+        const promotionSource: PromotionSource = days === null ? 'admin_unlimited' : 'duration';
         await this.listingsService.createPromotionHistory(
           listing.id,
           listing.user_id,
           listing.title,
           days ?? null,
+          promotionSource,
         );
       }
     } else {
@@ -458,6 +602,12 @@ export class AdminService {
     }
 
     return await this.listingsRepository.save(listing);
+  }
+
+  private sanitizeUser(user: User): SanitizedUser {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword;
   }
 
   async getAllPromotions(

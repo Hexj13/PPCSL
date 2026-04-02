@@ -52,6 +52,27 @@ function scheduleDeferred(fn: () => void): void {
   }
 }
 
+export function invokeGtag(call: () => unknown): void {
+  if (typeof window === 'undefined' || typeof window.gtag !== 'function') {
+    return;
+  }
+  try {
+    const result = call();
+    if (
+      result !== null &&
+      typeof result === 'object' &&
+      typeof (result as PromiseLike<unknown>).then === 'function'
+    ) {
+      void (result as PromiseLike<unknown>).then(
+        () => undefined,
+        () => undefined,
+      );
+    }
+  } catch {
+    return;
+  }
+}
+
 export function trackEvent(eventName: string, params?: Record<string, unknown>) {
   if (typeof window === 'undefined' || typeof window.gtag !== 'function') {
     return;
@@ -61,7 +82,7 @@ export function trackEvent(eventName: string, params?: Record<string, unknown>) 
     return;
   }
 
-  window.gtag('event', eventName, params);
+  invokeGtag(() => window.gtag('event', eventName, params));
 }
 
 export function trackEventDeferred(eventName: string, params?: Record<string, unknown>) {

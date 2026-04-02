@@ -42,3 +42,5 @@ export function useTranslation() {
 
   return { t, isLoading, translations: translations as Translations };
 }
+
+export type TranslationFn = ReturnType<typeof useTranslation>['t'];

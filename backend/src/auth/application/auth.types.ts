@@ -1,9 +1,16 @@
 import type { User } from '../../users/entities/user.entity';
 
-type UserDataKeys = Exclude<
-  keyof User,
-  'getDisplayName' | 'canCreateListing' | 'deactivate' | 'isAdmin'
->;
+type UserMethodKeys =
+  | 'getDisplayName'
+  | 'canCreateListing'
+  | 'deactivate'
+  | 'isAdmin'
+  | 'setPlatformPartner'
+  | 'setFreePromotionBalance'
+  | 'registerPartnerListingCreation'
+  | 'consumeFreePromotion';
+
+type UserDataKeys = Exclude<keyof User, UserMethodKeys>;
 
 export type UserWithoutPassword = Omit<Pick<User, UserDataKeys>, 'password'>;
 

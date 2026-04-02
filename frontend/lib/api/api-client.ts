@@ -4,14 +4,13 @@ import axios from 'axios';
 interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
   _transientRetry?: boolean;
+  _requestId?: string;
 }
 
-import {
-  localStorageGetItem,
-  localStorageRemoveItem,
-  localStorageSetItem,
-} from '../browser-local-storage';
+import { localStorageGetItem, localStorageSetItem } from '../browser-local-storage';
+import { clearClientAuthLocalStorage } from '../client-auth-storage';
 import { getDefaultLocale, loadTranslations, type Translations } from '../i18n';
+import { sanitizeForSentryExtra } from '../sentry-sanitize';
 
 import type { User } from './api';
 
@@ -43,6 +42,12 @@ const processQueue = (error: AxiosError | null, token: string | null = null) => 
 };
 
 api.interceptors.request.use((config) => {
+  if (typeof window !== 'undefined' && typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    const rid = crypto.randomUUID();
+    (config as ExtendedAxiosRequestConfig)._requestId = rid;
+    config.headers = config.headers ?? {};
+    config.headers['X-Request-Id'] = rid;
+  }
   const token = typeof window !== 'undefined' ? localStorageGetItem('token') : null;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -171,8 +176,11 @@ function translateBackendKeyIfNeeded(
 
 function clearAuthAndRedirectToLogin(): void {
   if (typeof window === 'undefined') return;
-  localStorageRemoveItem('token');
-  localStorageRemoveItem('refresh_token');
+  clearClientAuthLocalStorage({
+    clearReturnUrl: false,
+    clearAuthPersistKey: true,
+    clearPendingMigrationAndFilters: false,
+  });
   if (window.location.pathname !== '/sign') {
     window.location.href = '/sign';
   }
@@ -180,9 +188,12 @@ function clearAuthAndRedirectToLogin(): void {
 
 function clearAuthSetReturnUrlAndRedirect(): void {
   if (typeof window === 'undefined') return;
-  localStorageRemoveItem('token');
-  localStorageRemoveItem('refresh_token');
   const currentUrl = window.location.pathname + window.location.search;
+  clearClientAuthLocalStorage({
+    clearReturnUrl: false,
+    clearAuthPersistKey: true,
+    clearPendingMigrationAndFilters: false,
+  });
   localStorageSetItem('returnUrl', currentUrl);
   window.location.href = '/sign';
 }
@@ -288,6 +299,8 @@ async function showErrorToastAndSentry(error: AxiosError): Promise<void> {
   if (isAxiosRequestCanceled(error)) return;
   await showToastForError(error);
   if (typeof window === 'undefined') return;
+  const reqConfig = error.config as ExtendedAxiosRequestConfig | undefined;
+  const requestId = reqConfig?._requestId;
   if (!error.response) {
     const Sentry = await import('@sentry/nextjs');
     Sentry.captureMessage('API request failed before HTTP response', {
@@ -296,11 +309,13 @@ async function showErrorToastAndSentry(error: AxiosError): Promise<void> {
         apiError: true,
         noHttpResponse: true,
         axiosCode: error.code ?? 'unknown',
+        ...(requestId ? { requestId } : {}),
       },
       extra: {
         url: error.config?.url,
         method: error.config?.method,
         message: error.message,
+        ...(requestId ? { requestId } : {}),
       },
     });
     return;
@@ -308,11 +323,16 @@ async function showErrorToastAndSentry(error: AxiosError): Promise<void> {
   if (error.response.status >= 500) {
     const Sentry = await import('@sentry/nextjs');
     Sentry.captureException(error, {
-      tags: { apiError: true, statusCode: error.response.status },
+      tags: {
+        apiError: true,
+        statusCode: error.response.status,
+        ...(requestId ? { requestId } : {}),
+      },
       extra: {
         url: error.config?.url,
         method: error.config?.method,
-        response: error.response?.data,
+        ...(requestId ? { requestId } : {}),
+        response: sanitizeForSentryExtra(error.response?.data),
       },
     });
   }

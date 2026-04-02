@@ -13,7 +13,6 @@ import {
   applyEditNullables,
   buildListingPayload,
   getFilledFields,
-  getSubmitErrorMessage,
   reportFormSubmit,
 } from '@/components/ListingForm/submitHelpers';
 import { useBrandsAndModels } from '@/hooks/useBrandsAndModels';
@@ -29,6 +28,7 @@ import { loadSiteConfigSync } from '@/lib/site-config';
 import { toast } from '@/lib/toast';
 import { getCountry } from '@/lib/utils';
 
+import { handleVehicleListingSubmitApiError } from './handleVehicleListingSubmitApiError';
 import type { ListingFormData } from './listingFormTypes';
 import { useListingFormImages } from './useListingFormImages';
 
@@ -323,7 +323,13 @@ export function useListingForm({
             listing_category: 'vehicle',
           });
           setLoading(false);
-          sessionStorage.setItem('listingCreatedToast', t('listings.createSuccess'));
+          sessionStorage.setItem(
+            'listingCreatedToast',
+            JSON.stringify({
+              created: t('listings.createSuccess'),
+              partnerRewardAwarded: res.data.partnerReward?.awardedPromotions ?? 0,
+            }),
+          );
           router.push(`/listings/${res.data.id}`);
           return;
         }
@@ -352,33 +358,7 @@ export function useListingForm({
       } catch (error: unknown) {
         setLoading(false);
         reportFormSubmit(analytics, mode, false, filledFields, { listing_category: 'vehicle' });
-
-        const axiosError = error as {
-          response?: { data?: { message?: string; errorKey?: string } };
-        };
-        const backendMessage =
-          typeof axiosError?.response?.data?.message === 'string'
-            ? axiosError.response.data.message
-            : '';
-        const backendErrorKey = axiosError?.response?.data?.errorKey;
-        const assignedUserErrors = [
-          'errors.userNotFound',
-          'errors.assignedUserDeactivated',
-          'errors.activeListingsLimitExceeded',
-          'errors.invalidUserId',
-        ];
-        const isAssignError =
-          formData.assignedUserId?.trim() &&
-          (typeof backendErrorKey === 'string'
-            ? assignedUserErrors.includes(backendErrorKey)
-            : assignedUserErrors.some((key) => backendMessage.includes(key)));
-
-        if (isAssignError) {
-          setErrors((prev) => ({ ...prev, assignedUserId: true }));
-          afterHidden(() => toast.error(backendMessage || getSubmitErrorMessage(error, mode, t)));
-        } else {
-          afterHidden(() => toast.error(getSubmitErrorMessage(error, mode, t)));
-        }
+        handleVehicleListingSubmitApiError(error, formData, mode, t, setErrors, afterHidden);
       } finally {
         submitInFlightRef.current = false;
       }

@@ -29,6 +29,7 @@ export class DeleteAccountUseCase {
     await this.usersService.update(userId, {
       email: user.email,
       phone: user.phone,
+      additionalPhone: user.additionalPhone,
       firstName: user.firstName,
       lastName: user.lastName,
       companyName: user.companyName,

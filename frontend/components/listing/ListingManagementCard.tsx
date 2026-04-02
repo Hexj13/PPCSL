@@ -5,6 +5,10 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 import { CopyButton } from '@/components/common/CopyButton';
+import {
+  HEADER_CTA_PROMOTE_SURFACE_CLASSES,
+  HEADER_CTA_SURFACE_CLASSES,
+} from '@/components/listing/CreateListingButton';
 import { ListingCardTireSpecs } from '@/components/listing/ListingCardBadgesAndSpecs';
 import { PriceDisplay } from '@/components/listing/PriceDisplay';
 import { TireListingPriceSuffix } from '@/components/listing/TireListingPriceSuffix';
@@ -209,10 +213,10 @@ function ManagementCardActionBar({
               {showPromoteMyListings && (
                 <button
                   onClick={() => onPromoteClick?.(listing.id)}
-                  className="text-text-secondary font-medium text-base hover-only:hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-accent/40 hover-only:hover:border-accent/60 bg-accent/20 select-none w-full xl:w-auto h-[48px]"
+                  className={`${HEADER_CTA_PROMOTE_SURFACE_CLASSES} text-base font-medium gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 w-full xl:w-auto h-[48px]`}
                 >
                   <svg
-                    className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0"
+                    className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0 relative z-10"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -224,20 +228,20 @@ function ManagementCardActionBar({
                       d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
                     />
                   </svg>
-                  <span>{t('listings.promote')}</span>
+                  <span className="relative z-10">{t('listings.promote')}</span>
                 </button>
               )}
               {showPromoteAdmin && (
                 <button
                   onClick={() => onPromoteClick?.(listing.id)}
-                  className={`font-medium text-base transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 select-none w-full xl:w-auto h-[48px] text-text-secondary hover-only:hover:text-text-primary ${
+                  className={
                     listing.is_promoted
-                      ? 'bg-[#f069be33] border-[#f069be]/40 hover-only:hover:border-[#f069be]/60'
-                      : 'bg-accent/20 border-accent/40 hover-only:hover:border-accent/60'
-                  }`}
+                      ? 'font-medium text-base transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 select-none w-full xl:w-auto h-[48px] text-text-secondary hover-only:hover:text-text-primary bg-[#f069be33] border-[#f069be]/40 hover-only:hover:border-[#f069be]/60'
+                      : `${HEADER_CTA_SURFACE_CLASSES} text-base font-medium gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 w-full xl:w-auto h-[48px]`
+                  }
                 >
                   <svg
-                    className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0"
+                    className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0 relative z-10"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -249,7 +253,7 @@ function ManagementCardActionBar({
                       d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
                     />
                   </svg>
-                  <span>
+                  <span className="relative z-10">
                     {listing.is_promoted ? t('listings.unpromote') : t('listings.promote')}
                   </span>
                 </button>

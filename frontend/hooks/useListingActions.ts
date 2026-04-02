@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { listingsApi, type Listing } from '@/lib/api';
+import { publishCrossTabEvent } from '@/lib/cross-tab-events';
 import { toast } from '@/lib/toast';
 
 export interface ListingActionsConfig {
@@ -94,6 +95,12 @@ export function useListingActions(
         await listingsApi.publish(id);
         toast.success(t('myListings.published'));
         updateListingInState(id, { status: 'Active' });
+        publishCrossTabEvent({
+          type: 'listing-status-changed',
+          listingId: id,
+          status: 'Active',
+          at: Date.now(),
+        });
       } catch (error: unknown) {
         const axiosError = error as {
           response?: { data?: { message?: string; errorKey?: string } };
@@ -113,6 +120,12 @@ export function useListingActions(
         await listingsApi.pause(id);
         toast.success(t('myListings.pausedMessage'));
         updateListingInState(id, { status: 'Paused' });
+        publishCrossTabEvent({
+          type: 'listing-status-changed',
+          listingId: id,
+          status: 'Paused',
+          at: Date.now(),
+        });
       } catch (error: unknown) {
         const axiosError = error as {
           response?: { data?: { message?: string; errorKey?: string } };
@@ -133,6 +146,12 @@ export function useListingActions(
         const updated = res.data;
         toast.success(t('myListings.closedMessage'));
         replaceListingInState(id, updated);
+        publishCrossTabEvent({
+          type: 'listing-status-changed',
+          listingId: id,
+          status: 'Closed',
+          at: Date.now(),
+        });
       } catch (error: unknown) {
         const axiosError = error as {
           response?: { data?: { message?: string; errorKey?: string } };
@@ -197,29 +216,30 @@ export function useListingActions(
   ]);
 
   const togglePromotion = useCallback(
-    async (id: string, isPromoted: boolean, days?: number) => {
-      if (days == null) {
-        toast.error(t('listings.promotionNotAvailable'));
-        return;
-      }
-
+    async (
+      id: string,
+      isPromoted: boolean,
+      days?: number | null,
+      source: 'default' | 'partner_balance' = 'default',
+    ) => {
       const apiStatus = statusFilter && statusFilter !== 'All' ? statusFilter : undefined;
       const apiPromoted =
         promotedFilter === 'Promoted' ? true : promotedFilter === 'NotPromoted' ? false : undefined;
 
       try {
-        await listingsApi.togglePromotion(id, isPromoted, days);
+        await listingsApi.togglePromotion(id, isPromoted, days, source);
         toast.success(t('listings.promotionEnabled'));
         await fetchListings(1, false, 20, apiStatus, apiPromoted, searchQuery);
         void refetchAllForCount();
       } catch (error: unknown) {
-        const axiosError = error as { response?: { status?: number } };
+        const axiosError = error as { response?: { status?: number; data?: { message?: string } } };
+        const backendMessage = axiosError.response?.data?.message;
         if (axiosError.response?.status === 403) {
-          toast.error(t('listings.promotionNotAvailable'));
+          toast.error(backendMessage || t('listings.promotionNotAvailable'));
         } else if (axiosError.response?.status === 400) {
-          toast.error(t('listings.promotionOnlyActive'));
+          toast.error(backendMessage || t('listings.promotionOnlyActive'));
         } else {
-          toast.error(t('listings.promotionError'));
+          toast.error(backendMessage || t('listings.promotionError'));
         }
       }
     },

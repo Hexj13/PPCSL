@@ -39,6 +39,7 @@ export interface TranslationsPart1 {
   errors: {
     smsHourlyLimit: string;
     maxSmsCodeAttempts: string;
+    additionalPhoneSameAsPrimary: string;
   };
   board: {
     title: string;
@@ -480,6 +481,9 @@ export interface TranslationsPart1 {
     copyEmail: string;
     phone: string;
     copyPhone: string;
+    additionalPhone: string;
+    revealAdditionalPhone: string;
+    hideAdditionalPhone: string;
     availableMessengers: string;
     allListingsFromSeller: string;
     unavailableForClosed: string;

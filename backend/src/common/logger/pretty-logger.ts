@@ -15,6 +15,16 @@ type RouteEntry = { method: string; path: string };
 export class PrettyLogger implements LoggerService {
   private routeBuffer: RouteEntry[] = [];
   private currentController = '';
+  private depInitBuffer: { message: string; count: number } | null = null;
+
+  private flushDepInit(): void {
+    if (!this.depInitBuffer) return;
+    const { message, count } = this.depInitBuffer;
+    const time = dim(this.formatTime());
+    const suffix = count > 1 ? dim(` ×${count}`) : '';
+    console.log(`${time} ${dim('  ├')} ${message.trim()}${suffix}`);
+    this.depInitBuffer = null;
+  }
 
   private flushRoutes(controllerLabel?: string): void {
     if (this.routeBuffer.length === 0) return;
@@ -37,8 +47,24 @@ export class PrettyLogger implements LoggerService {
   }
 
   log(message: string, _context?: string): void {
-    const time = dim(this.formatTime());
     const msg = typeof message === 'string' ? message : String(message);
+
+    if (msg.includes('dependencies initialized')) {
+      this.flushRoutes(this.currentController);
+      this.currentController = '';
+      const trimmed = msg.trim();
+      if (this.depInitBuffer && this.depInitBuffer.message === trimmed) {
+        this.depInitBuffer.count += 1;
+      } else {
+        this.flushDepInit();
+        this.depInitBuffer = { message: trimmed, count: 1 };
+      }
+      return;
+    }
+
+    this.flushDepInit();
+
+    const time = dim(this.formatTime());
 
     const routeMatch = msg.match(ROUTE_MAPPED);
     if (routeMatch) {
@@ -51,13 +77,6 @@ export class PrettyLogger implements LoggerService {
       const prev = this.currentController;
       this.currentController = controllerMatch[1] + ' ' + controllerMatch[2];
       this.flushRoutes(prev);
-      return;
-    }
-
-    if (msg.includes('dependencies initialized')) {
-      this.flushRoutes(this.currentController);
-      this.currentController = '';
-      console.log(`${time} ${dim('  ├')} ${msg.trim()}`);
       return;
     }
 
@@ -79,6 +98,7 @@ export class PrettyLogger implements LoggerService {
   }
 
   error(message: string, trace?: string, context?: string): void {
+    this.flushDepInit();
     this.flushRoutes();
     const time = dim(this.formatTime());
     console.error(`${time} ${red('ERROR')} ${context ? `[${context}] ` : ''}${message}`);
@@ -86,6 +106,7 @@ export class PrettyLogger implements LoggerService {
   }
 
   warn(message: string, context?: string): void {
+    this.flushDepInit();
     this.flushRoutes();
     const time = dim(this.formatTime());
     console.warn(`${time} ${yellow('WARN')} ${context ? `[${context}] ` : ''}${message}`);
@@ -93,6 +114,7 @@ export class PrettyLogger implements LoggerService {
 
   debug(message: string, context?: string): void {
     if (process.env.NODE_ENV === 'production') return;
+    this.flushDepInit();
     this.flushRoutes();
     const time = dim(this.formatTime());
     console.log(`${time} ${dim('DEBUG')} ${context ? `[${context}] ` : ''}${message}`);
@@ -100,6 +122,7 @@ export class PrettyLogger implements LoggerService {
 
   verbose(message: string, context?: string): void {
     if (process.env.NODE_ENV === 'production') return;
+    this.flushDepInit();
     this.flushRoutes();
     const time = dim(this.formatTime());
     console.log(`${time} ${dim('VERBOSE')} ${context ? `[${context}] ` : ''}${message}`);

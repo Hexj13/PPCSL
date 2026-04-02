@@ -12,6 +12,7 @@ const defaults: Partial<User> = {
   lastName: 'Doe',
   companyName: null,
   companyWebsiteUrl: null,
+  additionalPhone: null,
   board_slug: null,
   active: true,
 };
@@ -63,6 +64,7 @@ describe('User', () => {
       const user = baseUser({
         email: 'a@b.com',
         phone: '+373',
+        additionalPhone: '+374',
         firstName: 'A',
         lastName: 'B',
         companyName: 'C',
@@ -72,6 +74,7 @@ describe('User', () => {
       user.deactivate();
       expect(user.email).toBeNull();
       expect(user.phone).toBeNull();
+      expect(user.additionalPhone).toBeNull();
       expect(user.firstName).toBeNull();
       expect(user.lastName).toBeNull();
       expect(user.companyName).toBeNull();
@@ -88,6 +91,104 @@ describe('User', () => {
     it('returns false when type is Individual or Business', () => {
       expect(baseUser({ type: 'Individual' as UserType }).isAdmin()).toBe(false);
       expect(baseUser({ type: 'Business' as UserType }).isAdmin()).toBe(false);
+    });
+  });
+
+  describe('setPlatformPartner', () => {
+    it('resets balance and progress when partner status is disabled', () => {
+      const user = baseUser({
+        isPlatformPartner: true,
+        freePromotionBalance: 3,
+        partnerListingProgress: 12,
+      });
+
+      user.setPlatformPartner(false);
+
+      expect(user.isPlatformPartner).toBe(false);
+      expect(user.freePromotionBalance).toBe(0);
+      expect(user.partnerListingProgress).toBe(0);
+    });
+
+    it('throws when enabling partnership for a non-business user', () => {
+      const user = baseUser({ type: 'Individual' as UserType });
+      expect(() => user.setPlatformPartner(true)).toThrow('errors.partnerSettingsBusinessOnly');
+    });
+  });
+
+  describe('registerPartnerListingCreation', () => {
+    it('increments progress without reward before threshold', () => {
+      const user = baseUser({
+        type: 'Business' as UserType,
+        isPlatformPartner: true,
+        freePromotionBalance: 1,
+        partnerListingProgress: 18,
+      });
+
+      const result = user.registerPartnerListingCreation();
+
+      expect(result).toEqual({
+        awardedPromotions: 0,
+        freePromotionBalance: 1,
+        partnerListingProgress: 19,
+      });
+    });
+
+    it('grants a free promotion on every twentieth new listing', () => {
+      const user = baseUser({
+        type: 'Business' as UserType,
+        isPlatformPartner: true,
+        freePromotionBalance: 2,
+        partnerListingProgress: 19,
+      });
+
+      const result = user.registerPartnerListingCreation();
+
+      expect(result).toEqual({
+        awardedPromotions: 1,
+        freePromotionBalance: 3,
+        partnerListingProgress: 0,
+      });
+    });
+
+    it('does not progress partner counters for non-business users', () => {
+      const user = baseUser({
+        type: 'Individual' as UserType,
+        isPlatformPartner: true,
+        freePromotionBalance: 1,
+        partnerListingProgress: 5,
+      });
+
+      const result = user.registerPartnerListingCreation();
+
+      expect(result).toEqual({
+        awardedPromotions: 0,
+        freePromotionBalance: 1,
+        partnerListingProgress: 5,
+      });
+    });
+  });
+
+  describe('consumeFreePromotion', () => {
+    it('decrements free promotion balance', () => {
+      const user = baseUser({
+        type: 'Business' as UserType,
+        isPlatformPartner: true,
+        freePromotionBalance: 2,
+      });
+
+      user.consumeFreePromotion();
+
+      expect(user.freePromotionBalance).toBe(1);
+    });
+
+    it('throws when balance is empty', () => {
+      const user = baseUser({
+        type: 'Business' as UserType,
+        isPlatformPartner: true,
+        freePromotionBalance: 0,
+      });
+
+      expect(() => user.consumeFreePromotion()).toThrow('errors.partnerPromotionBalanceEmpty');
     });
   });
 });

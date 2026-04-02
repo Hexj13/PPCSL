@@ -69,6 +69,7 @@ export class GetListingUseCase {
 
     if (listing.user && !listing.user.email && !listing.user.phone) {
       listing.user.phone = null;
+      listing.user.additionalPhone = null;
       listing.user.email = null;
       listing.user.firstName = null;
       listing.user.lastName = null;

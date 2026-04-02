@@ -3,6 +3,7 @@ import type {
   CreateListingDto,
   Listing,
   PaginationMeta,
+  PromotionAccessStatus,
   PromotionHistory,
   SearchParams,
   UpdateListingDto,
@@ -72,8 +73,12 @@ export const listingsApi = {
     return api.get<{ data: Listing[]; meta: PaginationMeta }>(`/api/listings/my?${query}`);
   },
   refreshDates: () => api.post<{ updated: number }>('/api/listings/refresh-dates'),
-  togglePromotion: (id: string, isPromoted: boolean, days: number) =>
-    api.patch(`/api/listings/${id}/promote`, { is_promoted: isPromoted, days }),
+  togglePromotion: (
+    id: string,
+    isPromoted: boolean,
+    days?: number | null,
+    source?: 'default' | 'partner_balance',
+  ) => api.patch(`/api/listings/${id}/promote`, { is_promoted: isPromoted, days, source }),
   getPromotionHistory: (page: number = 1, limit: number = 50) => {
     const params = new URLSearchParams();
     params.set('page', page.toString());
@@ -85,13 +90,7 @@ export const listingsApi = {
   },
   hasPromotionHistory: () =>
     api.get<{ hasHistory: boolean }>('/api/listings/promotion-history/check'),
-  getPromotionAccess: () =>
-    api.get<{
-      access: 'disabled' | 'admin' | 'all';
-      enabled: boolean;
-      isAdmin: boolean;
-      canPromote: boolean;
-    }>('/api/listings/promotion-access'),
+  getPromotionAccess: () => api.get<PromotionAccessStatus>('/api/listings/promotion-access'),
   getSimilar: (id: string, limit: number = 4, offset: number = 0) => {
     const params = new URLSearchParams();
     params.set('limit', limit.toString());

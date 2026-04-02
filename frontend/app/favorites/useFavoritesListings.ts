@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLoadingState } from '@/hooks/useLoadingState';
 import type { Listing, PaginationMeta } from '@/lib/api';
 import { favoritesApi } from '@/lib/api';
+import { subscribeToCrossTabEvents } from '@/lib/cross-tab-events';
 import { useFavoritesStore } from '@/lib/store';
 
 const FAVORITES_PAGE_SIZE = 20;
@@ -29,44 +30,60 @@ export function useFavoritesListings(user: { id: string } | null) {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const showLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasLoadedRef = useRef(false);
+  const reloadCoalesceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const loadFavorites = useCallback(() => {
-    if (!user || hasLoadedRef.current) return;
+  const loadFavorites = useCallback(
+    (options?: { force?: boolean }) => {
+      if (!user) return;
+      if (!options?.force && hasLoadedRef.current) return;
 
-    hasLoadedRef.current = true;
-    showLoadingTimeoutRef.current = setTimeout(() => setLoading(true), 200);
+      hasLoadedRef.current = true;
+      showLoadingTimeoutRef.current = setTimeout(() => setLoading(true), 200);
 
-    Promise.all([favoritesApi.getPage(1, FAVORITES_PAGE_SIZE), favoritesApi.getIds()])
-      .then(([pageRes, idsRes]) => {
-        if (showLoadingTimeoutRef.current) {
-          clearTimeout(showLoadingTimeoutRef.current);
-          showLoadingTimeoutRef.current = null;
-        }
-        const pageData = pageRes.data;
-        const favoritesList = Array.isArray(pageData.data)
-          ? pageData.data.map((f) => f.listing).filter(Boolean)
-          : [];
-        setListings(favoritesList);
-        setMeta(pageData.meta ?? null);
-        setCurrentPage(1);
-        setLoading(false);
-        setIsInitialLoading(false);
-        setFavorites(idsRes.data?.listingIds ?? []);
-        cacheListingIds(idsRes.data?.listingIds ?? []);
-      })
-      .catch(() => {
-        if (showLoadingTimeoutRef.current) {
-          clearTimeout(showLoadingTimeoutRef.current);
-          showLoadingTimeoutRef.current = null;
-        }
-        const { favorites } = useFavoritesStore.getState();
-        cacheListingIds(favorites);
-        setListings([]);
-        setMeta(null);
-        setLoading(false);
-        setIsInitialLoading(false);
-      });
-  }, [user, setFavorites]);
+      Promise.all([favoritesApi.getPage(1, FAVORITES_PAGE_SIZE), favoritesApi.getIds()])
+        .then(([pageRes, idsRes]) => {
+          if (showLoadingTimeoutRef.current) {
+            clearTimeout(showLoadingTimeoutRef.current);
+            showLoadingTimeoutRef.current = null;
+          }
+          const pageData = pageRes.data;
+          const favoritesList = Array.isArray(pageData.data)
+            ? pageData.data.map((f) => f.listing).filter(Boolean)
+            : [];
+          setListings(favoritesList);
+          setMeta(pageData.meta ?? null);
+          setCurrentPage(1);
+          setLoading(false);
+          setIsInitialLoading(false);
+          setFavorites(idsRes.data?.listingIds ?? []);
+          cacheListingIds(idsRes.data?.listingIds ?? []);
+        })
+        .catch(() => {
+          if (showLoadingTimeoutRef.current) {
+            clearTimeout(showLoadingTimeoutRef.current);
+            showLoadingTimeoutRef.current = null;
+          }
+          const { favorites } = useFavoritesStore.getState();
+          cacheListingIds(favorites);
+          setListings([]);
+          setMeta(null);
+          setLoading(false);
+          setIsInitialLoading(false);
+        });
+    },
+    [user, setFavorites],
+  );
+
+  const scheduleReloadFromOtherTab = useCallback(() => {
+    if (reloadCoalesceRef.current) {
+      clearTimeout(reloadCoalesceRef.current);
+    }
+    reloadCoalesceRef.current = setTimeout(() => {
+      reloadCoalesceRef.current = null;
+      hasLoadedRef.current = false;
+      loadFavorites({ force: true });
+    }, 50);
+  }, [loadFavorites]);
 
   const handleLoadMore = useCallback(async () => {
     if (
@@ -117,6 +134,27 @@ export function useFavoritesListings(user: { id: string } | null) {
     if (!user) return;
     loadFavorites();
   }, [user, loadFavorites]);
+
+  useEffect(() => {
+    if (!user) return;
+    const unsub = subscribeToCrossTabEvents((ev) => {
+      if (ev.type !== 'favorites-changed') return;
+      if (!ev.isAuthenticated) return;
+      scheduleReloadFromOtherTab();
+    });
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== 'favorites-storage' || e.newValue === null) return;
+      scheduleReloadFromOtherTab();
+    };
+    window.addEventListener('storage', onStorage);
+    return () => {
+      unsub();
+      window.removeEventListener('storage', onStorage);
+      if (reloadCoalesceRef.current) {
+        clearTimeout(reloadCoalesceRef.current);
+      }
+    };
+  }, [user, scheduleReloadFromOtherTab]);
 
   return {
     listings,

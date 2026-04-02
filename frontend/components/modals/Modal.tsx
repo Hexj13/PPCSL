@@ -21,6 +21,8 @@ export function Modal({
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
 
+  const pointerStartedOnBackdropRef = useRef(false);
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -83,10 +85,14 @@ export function Modal({
           onCloseRef.current();
         }
       }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
+      onPointerDown={(e) => {
+        pointerStartedOnBackdropRef.current = e.target === e.currentTarget;
+      }}
+      onPointerUp={(e) => {
+        if (e.target === e.currentTarget && pointerStartedOnBackdropRef.current) {
           onCloseRef.current();
         }
+        pointerStartedOnBackdropRef.current = false;
       }}
     >
       <div

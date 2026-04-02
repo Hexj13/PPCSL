@@ -17,6 +17,7 @@ describe('maskClosedListingForPublicView', () => {
         lastName: 'B',
         companyName: 'C',
         companyWebsiteUrl: 'https://x.test',
+        additionalPhone: '+4989',
       },
     } as unknown as ListingLikeWithApprox;
 
@@ -26,6 +27,7 @@ describe('maskClosedListingForPublicView', () => {
     expect(listing.currency).toBeUndefined();
     expect(listing.approxPriceDefaultCurrency).toBeNull();
     expect(listing.user?.phone).toBeNull();
+    expect(listing.user?.additionalPhone).toBeNull();
     expect(listing.user?.email).toBeNull();
   });
 

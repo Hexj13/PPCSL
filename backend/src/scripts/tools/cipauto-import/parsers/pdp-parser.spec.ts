@@ -1,5 +1,9 @@
 import { describe, expect, it } from '@jest/globals';
 
+import { BodyType, FuelType } from '../../../../common/types';
+import { mapBodyType } from '../../partner-import-shared/mapping/body-type-mapper';
+import { mapFuel } from '../../partner-import-shared/mapping/enum-mapper';
+
 import { parsePdpHtml } from './pdp-parser';
 
 describe('pdp-parser', () => {
@@ -120,5 +124,48 @@ describe('pdp-parser', () => {
 
     const parsed = parsePdpHtml(html, url);
     expect(parsed.driveTypeRaw).toBe('Spate');
+  });
+
+  it('reads fuel and body type from JSON-LD used on CipAuto cards', () => {
+    const url = 'https://cipauto.md/vehicul/12345-test/';
+    const html = `
+      <html>
+        <head>
+          <script type="application/ld+json">
+            {
+              "@type": "Car",
+              "fuelType": "Plug-in Hybrid",
+              "bodyType": "Furgon"
+            }
+          </script>
+        </head>
+        <body></body>
+      </html>
+    `;
+
+    const parsed = parsePdpHtml(html, url);
+
+    expect(parsed.fuelRaw).toBe('Plug-in Hybrid');
+    expect(parsed.bodyRaw).toBe('Furgon');
+    expect(mapFuel(parsed.fuelRaw).value).toBe(FuelType.PHEV);
+    expect(mapBodyType(parsed.bodyRaw, 'car').value).toBe(BodyType.Minivan);
+  });
+
+  it('falls back to Furgon from description text when JSON-LD body type is absent', () => {
+    const url = 'https://cipauto.md/vehicul/12345-test/';
+    const html = `
+      <html>
+        <body>
+          <div class="cipauto-description-content">
+            Caroserie Furgon, potrivit pentru livrări urbane.
+          </div>
+        </body>
+      </html>
+    `;
+
+    const parsed = parsePdpHtml(html, url);
+
+    expect(parsed.bodyRaw).toBe('Furgon');
+    expect(mapBodyType(parsed.bodyRaw, 'car').value).toBe(BodyType.Minivan);
   });
 });

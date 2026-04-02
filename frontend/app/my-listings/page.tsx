@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useLayoutEffect, useRef, useState } from 'react';
 
+import { getMyListingsEmptyMessage } from '@/app/my-listings/my-listings-empty-message';
 import { useMyListingsPage } from '@/app/my-listings/useMyListingsPage';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Breadcrumbs } from '@/components/layout/Breadcrumbs';
@@ -81,6 +82,7 @@ function MyListingsModals({
   promotionHistoryPage,
   loadingHistory,
   loadPromotionHistory,
+  promotionAccess,
 }: Pick<
   ContentProps,
   | 't'
@@ -101,6 +103,7 @@ function MyListingsModals({
   | 'promotionHistoryPage'
   | 'loadingHistory'
   | 'loadPromotionHistory'
+  | 'promotionAccess'
 >) {
   const listingToCloseEntity = listingToClose
     ? listings.find((l) => l.id === listingToClose)
@@ -162,6 +165,9 @@ function MyListingsModals({
         }}
         onSelect={handlePromotionSelect}
         isAdmin={false}
+        showPartnerBalanceOption={promotionAccess?.isPartner === true}
+        disableStandardOptions={promotionAccess?.isPartner === true}
+        partnerBalance={promotionAccess?.freePromotionBalance ?? 0}
       />
       <PromotionHistoryModal
         isOpen={promotionHistoryModalOpen}
@@ -219,16 +225,11 @@ function MyListingsListSection({
     searchQuery.trim().length > 0 || statusFilter !== 'All' || promotedFilter !== 'All';
   const showFilters = hasAnyListings || hasActiveFilters;
   const promotedCount = allListingsForCount.filter((l) => l.is_promoted === true).length;
-  const emptyMessage = searchQuery.trim()
-    ? t('myListings.noListingsWithStatus')
-    : statusFilter !== 'All' || promotedFilter !== 'All'
-      ? t('myListings.noListingsWithStatus')
-      : t('myListings.noListingsYet');
+  const emptyMessage = getMyListingsEmptyMessage(t, searchQuery, statusFilter, promotedFilter);
   const hasListings = listings.length > 0;
   const showLoadMore =
     Boolean(meta?.totalPages) && currentPage < (meta?.totalPages ?? 0) && !loadingMore;
   const showNoMore = Boolean(meta?.totalPages) && currentPage >= (meta?.totalPages ?? 0);
-
   return (
     <>
       {showFilters && (
@@ -303,6 +304,7 @@ function MyListingsContent(props: ContentProps) {
     formattedTime,
     hasActiveListingsOverall,
     canPromote,
+    promotionAccess,
     hasPromotionHistory,
     isCloseConfirmOpen,
     listingToClose,
@@ -331,7 +333,7 @@ function MyListingsContent(props: ContentProps) {
     promotedFilter,
   } = props;
   const showBoardLink = Boolean(user?.boardSlug);
-  const showPromotionHistory = hasPromotionHistory && canPromote;
+  const showPromotionHistory = (hasPromotionHistory || promotionAccess?.isPartner) && canPromote;
   const showCreateLink = !hasActiveListingsOverall;
   const refreshButtonRef = useRef<HTMLButtonElement | null>(null);
   const [refreshButtonMinWidth, setRefreshButtonMinWidth] = useState<number | null>(null);
@@ -539,6 +541,7 @@ function MyListingsContent(props: ContentProps) {
         promotionHistoryPage={promotionHistoryPage}
         loadingHistory={loadingHistory}
         loadPromotionHistory={loadPromotionHistory}
+        promotionAccess={promotionAccess}
       />
     </>
   );

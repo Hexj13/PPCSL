@@ -24,6 +24,7 @@ import { VerifyEmailUseCase } from './application/use-cases/verify-email.use-cas
 import { VerifyPhoneChangeUseCase } from './application/use-cases/verify-phone-change.use-case';
 import { VerifyPhoneUseCase } from './application/use-cases/verify-phone.use-case';
 import { VerifyResetCodeUseCase } from './application/use-cases/verify-reset-code.use-case';
+import { UserProfilePatchService } from './application/user-profile-patch.service';
 import { PasswordService } from './domain/services/password.service';
 import { PhoneService } from './domain/services/phone.service';
 import { RefreshToken } from './entities/refresh-token.entity';
@@ -76,6 +77,7 @@ import { AuthController } from './presentation/auth.controller';
     RefreshTokensUseCase,
     ResetPasswordUseCase,
     DeleteAccountUseCase,
+    UserProfilePatchService,
     UpdateProfileUseCase,
     GetUserProfileUseCase,
     VerifyPhoneUseCase,
@@ -88,6 +90,6 @@ import { AuthController } from './presentation/auth.controller';
     SendVerificationSmsUseCase,
     ChangePasswordUseCase,
   ],
-  exports: [AuthService, IpBlockService, RefreshTokenService],
+  exports: [AuthService, IpBlockService, RefreshTokenService, UserProfilePatchService],
 })
 export class AuthModule {}

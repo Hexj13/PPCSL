@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { useCookieConsent } from '@/hooks/useCookieConsent';
+import { invokeGtag } from '@/lib/analytics';
 
 interface ConversionEventTriggerProps {
   eventName: string;
@@ -53,7 +54,7 @@ export function ConversionEventTrigger({ eventName }: ConversionEventTriggerProp
     )
       return;
 
-    window.gtag('event', eventName, {});
+    invokeGtag(() => window.gtag('event', eventName, {}));
     hasFiredRef.current = true;
   }, [isGtagReady, consent, isLoading, eventName]);
 

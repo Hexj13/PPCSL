@@ -20,6 +20,7 @@ assets/
 │   ├── favicon*.png      # All favicon sizes
 │   ├── logo*.png         # Platform logos
 │   ├── og-image.jpg      # Open Graph image
+│   ├── partners/         # Footer partner logos
 │   └── pwa192.png        # PWA icon
 └── backend/watermark/
     └── logo.png          # Watermark for photos
@@ -43,6 +44,7 @@ assets/backend/watermark/   → core/backend/assets/watermark/
 - `favicon-16.png`, `favicon-32.png`, `favicon-64.png`, `favicon-192.png`, `favicon-512.png`, `favicon.ico`
 - `logo.png`, `logo-desktop.png`, `logo-mobile.png`
 - `og-image.jpg` (1200x630px), `opengraph-image.png` (1200x630px)
+- `partners/*` for any logos referenced from `config/site.ts` (`footerPartners`)
 - `pwa192.png` (192x192px)
 
 ### Backend (`backend/watermark/`)

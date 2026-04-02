@@ -62,9 +62,12 @@ platform-repo/
 - [ ] `domain` set (e.g. `kupito.club`)
 - [ ] `locale` set (e.g. `ro-MD`)
 - [ ] `currency` set (e.g. `MDL`)
+- [ ] `currencies` set
 - [ ] `countryCode` for phones set (e.g. `MD`)
 - [ ] `supportEmail` set
 - [ ] `siteUrl` set
+- [ ] `assetVersion` updated when public assets change
+- [ ] `footerPartners` configured if the footer shows partner logos or links
 
 ### 3. Translations (`locales/{lang}.json`)
 
@@ -93,6 +96,7 @@ platform-repo/
 - [ ] PWA icon `pwa192.png` created
 - [ ] Open Graph image `og-image.jpg` (1200x630px)
 - [ ] `opengraph-image.png` (1200x630px)
+- [ ] `partners/` assets added for every `footerPartners[].logoSrc` entry
 
 #### Backend (`assets/backend/watermark/`)
 

@@ -5,6 +5,15 @@ import Link from 'next/link';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAuthStore } from '@/lib/store';
 
+const HEADER_CTA_SURFACE_BASE =
+  'relative inline-flex items-center justify-center gap-1.5 rounded-lg bg-white/90 border-2 border-accent whitespace-nowrap select-none transition-all duration-200 shadow-none before:absolute before:inset-0 before:rounded-lg before:bg-accent/10 before:pointer-events-none hover-only:hover:border-accent/80';
+
+export const HEADER_CTA_SURFACE_CLASSES = `${HEADER_CTA_SURFACE_BASE} text-primary-900 hover-only:hover:text-primary-700`;
+
+export const HEADER_CTA_PROMOTE_SURFACE_CLASSES = `${HEADER_CTA_SURFACE_BASE} text-text-secondary hover-only:hover:text-text-primary`;
+
+export const HEADER_CTA_BUTTON_CLASSES = `${HEADER_CTA_SURFACE_CLASSES} text-xs md:text-sm font-semibold`;
+
 interface CreateListingButtonProps {
   variant?: 'mobile' | 'desktop';
   shortLabel?: boolean;
@@ -38,8 +47,7 @@ export function CreateListingButton({
 
   const isMobile = variant === 'mobile';
 
-  const baseClasses =
-    'relative inline-flex items-center justify-center gap-1.5 rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-accent text-primary-900 whitespace-nowrap select-none transition-all duration-200 shadow-none before:absolute before:inset-0 before:rounded-lg before:bg-accent/10 before:pointer-events-none hover-only:hover:text-primary-700 hover-only:hover:border-accent/80';
+  const baseClasses = HEADER_CTA_BUTTON_CLASSES;
 
   const variantClasses = isMobile ? 'px-3 py-2 w-full text-[14px]' : 'h-10 px-2.5 md:px-3';
 

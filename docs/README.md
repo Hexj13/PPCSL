@@ -37,6 +37,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 - **[platform-checklist.md](./guides/platform-checklist.md)** — **Checklist for new platforms**
 - [platform-guide.md](./guides/platform-guide.md) — Setup and development (GA, GTM, Sentry)
 - [sentry.md](./guides/sentry.md) — Sentry setup and monitoring
+- [logging.md](./guides/logging.md) — Structured Sentry payloads, request correlation, sanitization
 - [deployment.md](./guides/deployment.md) — Deploy (optional Telegram support bot)
 - [local-development.md](./guides/local-development.md) — Local development
 - [search-filter-limits.md](./guides/search-filter-limits.md) — Brand/model selection limits in search
@@ -66,7 +67,9 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 - [image-preview.md](./features/image-preview.md) — Image preview system (card carousel vs listing hero layers, modal; blurhash; `image_blur_hashes` + backfill scripts)
 - [infocar-history-section.md](./features/infocar-history-section.md) — Infocar report card + on-site VIN history (two cards, RO/RU links)
 - [loading-states.md](./features/loading-states.md) — Loading states
+- [cross-tab-sync.md](./features/cross-tab-sync.md) — Favorites, comparison, listing status, and auth session (UI events: `BroadcastChannel` + storage; auth: `storage` on auth keys — see doc)
 - [paid-promotion.md](./features/paid-promotion.md) — Paid promotion
+- [partner-program.md](./features/partner-program.md) — Platform partners, bonus balance, partner promotion flow, footer partners
 - [my-listings-page.md](./features/my-listings-page.md) — My listings filters, badge counts, loading behavior
 - Assign listing to user (admin) — on `/listings/new` admin can set listing owner UUID; real-time validation (GET `/api/admin/validate-assign-user/:userId`), backend checks (existence, active, listing limit)
 - Admin edit listings — on the admin listings tab, admin can open `/listings/[id]/edit` and edit any listing (including `Closed`), regardless of ownership. Backend bypasses ownership and `Closed` restrictions only for JWT users with role `Admin`. In edit form, `vehicleType` switcher is available only for admins. For editing VIN, admin requests full VIN via `GET /api/listings/:id?includeFullVin=1`.

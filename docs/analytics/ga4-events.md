@@ -218,7 +218,7 @@ This document describes the current state of Google Analytics 4 integration. Eve
 
 **Forms:**
 
-- `complete_profile` — for individuals: firstName, lastName, email; for business: companyWebsiteUrl, email, emailNotifications
+- `complete_profile` — for individuals: firstName, lastName, email; for business: companyWebsiteUrl, additionalPhone, email, emailNotifications
 - `create_listing` / `edit_listing` — brand, model, year, price, city, description, images
 - `register` — phone, password, type, messengers, companyName (for Business)
 - `login` — login, password
@@ -301,7 +301,7 @@ This document describes the current state of Google Analytics 4 integration. Eve
 **Location:** `core/frontend/components/analytics/GoogleAnalytics.tsx`  
 **Role:** Load gtag.js and send `page_view` on `pathname` change; update `consent` via `gtag('consent', 'update')` when user choice changes  
 **Conditions:** load only in production (not localhost/127.0.0.1/private networks); script not loaded and `config` not called until `useCookieConsent` returns `granted`  
-**Uses:** `process.env.NEXT_PUBLIC_GA_ID`, hook `useCookieConsent`
+**Uses:** `process.env.NEXT_PUBLIC_GA_ID`, hook `useCookieConsent`, `invokeGtag` for `config`, `consent` update, and script `onLoad` `gtag('js', …)`
 
 #### GoogleTagManager.tsx
 
@@ -313,13 +313,14 @@ This document describes the current state of Google Analytics 4 integration. Eve
 
 **Location:** `core/frontend/components/analytics/ConversionEvent.tsx`, `ConversionEventTrigger.tsx`  
 **Role:** `ConversionEvent` — wrapper with `conversion_event_page_view`; `ConversionEventTrigger` — generic conversion trigger: calls `gtag('event', eventName)` once when `consent === 'granted'` and `gtag` ready  
-**Uses:** `useCookieConsent`, wait for `window.gtag`
+**Uses:** `useCookieConsent`, `invokeGtag` from `analytics.ts`
 
 #### analytics.ts
 
 **Location:** `core/frontend/lib/analytics.ts`  
 **Role:** Central utility for sending events  
-**Methods:** All event tracking methods
+**Methods:** All event tracking methods; `trackEvent` and `trackEventDeferred` route calls through `invokeGtag`  
+**`invokeGtag`:** Wraps `gtag` invocations so missing `gtag`, synchronous throws, or promise-like return values do not break the app (no-op when `gtag` is absent; errors swallowed; optional `then` chained with empty handlers).
 
 #### PageScrollTracker.tsx
 
@@ -337,7 +338,7 @@ This document describes the current state of Google Analytics 4 integration. Eve
 #### useCookieConsent.ts
 
 **Location:** `core/frontend/hooks/useCookieConsent.ts`  
-**Role:** Read and update consent from `localStorage` (`cookie_consent`); on `updateConsent` calls `gtag('consent', 'update')` and pushes `consent_update` to `dataLayer`  
+**Role:** Read and update consent from `localStorage` (`cookie_consent`); on `updateConsent` uses `invokeGtag` for `gtag('consent', 'update', …)` and pushes `consent_update` to `dataLayer`  
 **Returns:** `consent`, `isLoading`, `hasConsent`, `grantConsent`, `denyConsent`
 
 #### usePageScroll.ts
@@ -352,7 +353,7 @@ This document describes the current state of Google Analytics 4 integration. Eve
 
 - **analytics.ts:** before each `trackEvent`, `checkConsent()` is called — checks `localStorage['cookie_consent']` → `parsed.analytics === 'granted'`.
 - **GoogleAnalyticsConsent:** before GA load sets `gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'denied' })` so nothing is sent until user choice.
-- **useCookieConsent:** on choice change updates `localStorage` and calls `gtag('consent', 'update', { analytics_storage, ad_storage })`; `CookieConsent` uses this hook for UI.
+- **useCookieConsent:** on choice change updates `localStorage` and calls `invokeGtag(() => gtag('consent', 'update', { analytics_storage, ad_storage }))`; `CookieConsent` uses this hook for UI.
 - **Order in layout.tsx:** `GoogleTagManager` → `GoogleTagManagerNoscript` → `GoogleAnalyticsConsent` → `GoogleAnalytics` (Consent before GA required).
 
 ### Event structure
@@ -419,6 +420,7 @@ Form `/complete-profile` is shown after phone verification via SMS and asks for 
 **For business:**
 
 - Seller website URL (companyWebsiteUrl) — optional
+- Additional contact phone (additionalPhone) — optional
 - Email (email) — optional
 - Email notifications checkbox (emailNotifications)
 

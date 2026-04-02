@@ -148,7 +148,7 @@ This minimizes CPU/network load and reduces risk of partner-side blocks.
 - `condition` defaults to `Undamaged`
 - `registration_type` defaults to `Cleared` unless provided by CLI
 - horsepower is extracted from text if possible, otherwise estimated/fallback
-- body/fuel/transmission/color values are normalized via mapping tables
+- body/fuel/transmission/color values are normalized via mapping tables; the source is treated as a car import, so car-only bodies stay in the car subset (for example `Furgon` is normalized to `Minivan`)
 - unresolved brand/model values are moved to `manual_review`
 
 ## Troubleshooting

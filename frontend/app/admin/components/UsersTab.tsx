@@ -1,8 +1,16 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { CopyButton } from '@/components/common/CopyButton';
+import { AdminUserCard } from '@/app/admin/components/AdminUserCard';
+import { EditUserPartnerModal } from '@/app/admin/components/EditUserPartnerModal';
+import {
+  validateAdminEditUserForm,
+  type AdminEditUserFieldKey,
+  type AdminEditUserFormState,
+  type AdminEditUserFormTouchedKey,
+} from '@/app/admin/components/adminEditUserFormValidation';
+import { getPartnerBalance, isBusinessUser } from '@/app/admin/components/adminUsersHelpers';
 import { EmptyState } from '@/components/common/EmptyState';
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { usePaginatedData } from '@/hooks/usePaginatedData';
@@ -21,155 +29,25 @@ interface UsersFilters {
   roleFilter: 'All' | 'Individual' | 'Business' | 'Admin';
 }
 
-function getDisplayName(user: User): string {
-  if (user.firstName) {
-    return user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName;
-  }
-  return user.companyName || user.email || user.phone || '';
-}
-
-function getTypeLabelKey(userType: string): string {
-  if (userType === 'Admin') return 'admin.usersTab.admin';
-  if (userType === 'Business') return 'admin.usersTab.business';
-  return 'admin.usersTab.individual';
-}
-
-function hasContactInfo(user: User): boolean {
-  return !!(user.firstName || user.lastName || user.companyName || user.email || user.phone);
-}
-
-interface AdminUserCardProps {
-  user: User;
-  t: (key: string, params?: Record<string, string | number>) => string;
-  onViewListings: (user: User) => void;
-  onToggleStatus: (userId: string) => void;
-}
-
-function AdminUserCard({ user, t, onViewListings, onToggleStatus }: AdminUserCardProps) {
-  const displayName = getDisplayName(user) || t('admin.usersTab.deletedUser');
-  const listingCount = user.listings?.length ?? 0;
-  const canToggleStatus = hasContactInfo(user);
-
-  return (
-    <div className="card p-4 md:p-5">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          <div className="mb-2">
-            <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <span className="text-sm md:text-base text-text-secondary font-mono break-all">
-                {t('admin.usersTab.id')} {user.id}
-              </span>
-              <CopyButton text={user.id} label="ID" />
-            </div>
-            <h3 className="text-sm md:text-base font-bold text-text-primary wrap-break-word">
-              {displayName}
-            </h3>
-            {user.companyName && (
-              <p
-                className="text-sm md:text-base mt-1 wrap-break-word"
-                style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-              >
-                {user.companyName}
-              </p>
-            )}
-          </div>
-          <div
-            className="space-y-1 text-sm md:text-base lg:grid lg:grid-cols-2 lg:gap-x-8 lg:gap-y-2 lg:space-y-0"
-            style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-          >
-            {user.email ? (
-              <div className="wrap-break-word">
-                <span className="text-primary-700">{t('admin.usersTab.email')}</span> {user.email}
-              </div>
-            ) : (
-              <div>
-                <span className="text-primary-700">{t('admin.usersTab.email')}</span>{' '}
-                <span className="text-text-secondary">{t('admin.usersTab.unavailable')}</span>
-              </div>
-            )}
-            {user.phone ? (
-              <div>
-                <span className="text-primary-700">{t('admin.usersTab.phone')}</span> {user.phone}
-              </div>
-            ) : (
-              <div>
-                <span className="text-primary-700">{t('admin.usersTab.phone')}</span>{' '}
-                <span className="text-text-secondary">{t('admin.usersTab.unavailable')}</span>
-              </div>
-            )}
-            <div>
-              <span className="text-primary-700">{t('admin.usersTab.type')}</span>{' '}
-              {t(getTypeLabelKey(user.type))}
-            </div>
-            <div>
-              <span className="text-primary-700">{t('admin.usersTab.listings')}</span>{' '}
-              {listingCount}
-            </div>
-            {user.type === 'Business' && user.companyWebsiteUrl?.trim() && (
-              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 min-w-0 lg:col-span-2">
-                <span className="text-primary-700 shrink-0">
-                  {t('listingDetail.companyWebsite')}
-                </span>
-                <a
-                  href={user.companyWebsiteUrl.trim()}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="wrap-break-word min-w-0 underline text-text-secondary hover-only:hover:text-primary-700 transition-colors"
-                >
-                  {user.companyWebsiteUrl.trim()}
-                </a>
-              </div>
-            )}
-            <div className="flex items-center gap-2 flex-wrap lg:col-span-2">
-              <span className="text-primary-700">{t('admin.usersTab.status')}</span>
-              <span
-                className={`px-2 py-1 rounded text-sm md:text-base font-semibold text-text-secondary ${
-                  user.active !== false ? 'bg-green-500/20' : 'bg-red-500/20'
-                }`}
-              >
-                {user.active !== false ? t('admin.usersTab.active') : t('admin.usersTab.inactive')}
-              </span>
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-col xl:flex-row items-stretch xl:items-center gap-2 w-full lg:w-auto shrink-0">
-          {listingCount > 0 ? (
-            <button
-              onClick={() => onViewListings(user)}
-              className="text-primary-700 font-medium text-base hover-only:hover:text-primary-900 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-700 hover-only:hover:border-primary-900 bg-primary-500/10 select-none w-full lg:w-auto h-[48px]"
-            >
-              {t('admin.usersTab.viewListings')}
-            </button>
-          ) : (
-            <div
-              className="invisible pointer-events-none w-full lg:w-auto h-[48px] shrink-0 rounded-lg border-2 border-transparent px-3 md:px-4 py-2 md:py-2.5"
-              aria-hidden
-            />
-          )}
-          <button
-            type="button"
-            disabled={!canToggleStatus}
-            onClick={() => onToggleStatus(user.id)}
-            className={`font-medium text-base transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 select-none w-full lg:w-auto h-[48px] disabled:opacity-50 disabled:cursor-not-allowed ${
-              !canToggleStatus
-                ? 'text-text-secondary border-primary-500/20 bg-bg-secondary/40'
-                : user.active !== false
-                  ? 'text-text-secondary hover-only:hover:text-text-primary border-red-500/40 hover-only:hover:border-red-500/60 bg-red-500/20 hover-only:hover:bg-red-500/30'
-                  : 'text-primary-700 hover-only:hover:text-primary-900 border-primary-700 hover-only:hover:border-primary-900 bg-primary-500/10'
-            }`}
-          >
-            {user.active !== false ? t('admin.usersTab.deactivate') : t('admin.usersTab.activate')}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function UsersTab({ onViewUserListings }: UsersTabProps) {
   const { t } = useTranslation();
   const [roleCounts, setRoleCounts] = useState({ All: 0, Individual: 0, Business: 0, Admin: 0 });
   const roleCountsGenerationRef = useRef(0);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editUserForm, setEditUserForm] = useState<AdminEditUserFormState>({
+    email: '',
+    firstName: '',
+    lastName: '',
+    companyName: '',
+    companyWebsiteUrl: '',
+    additionalPhone: '',
+    isPlatformPartner: false,
+    freePromotionBalance: '0',
+  });
+  const [editUserFieldMessages, setEditUserFieldMessages] = useState<
+    Partial<Record<AdminEditUserFieldKey, string>>
+  >({});
+  const [savingUserModal, setSavingUserModal] = useState(false);
 
   const {
     data: users,
@@ -244,12 +122,12 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
 
   const handleToggleStatus = useCallback(
     async (userId: string) => {
-      const user = users.find((u) => u.id === userId);
+      const user = users.find((item) => item.id === userId);
       const previousActive = user?.active;
 
       setData((prev) =>
-        prev.map((user) =>
-          user.id === userId ? { ...user, active: user.active === false ? true : false } : user,
+        prev.map((item) =>
+          item.id === userId ? { ...item, active: item.active === false ? true : false } : item,
         ),
       );
 
@@ -260,7 +138,7 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
       } catch {
         if (previousActive !== undefined) {
           setData((prev) =>
-            prev.map((user) => (user.id === userId ? { ...user, active: previousActive } : user)),
+            prev.map((item) => (item.id === userId ? { ...item, active: previousActive } : item)),
           );
         }
         toast.error(t('admin.usersTab.statusUpdateError'));
@@ -275,6 +153,115 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
     },
     [onViewUserListings],
   );
+
+  const handleEditUser = useCallback((user: User) => {
+    setEditingUser(user);
+    setEditUserFieldMessages({});
+    setEditUserForm({
+      email: user.email ?? '',
+      firstName: user.firstName ?? '',
+      lastName: user.lastName ?? '',
+      companyName: user.companyName ?? '',
+      companyWebsiteUrl: user.companyWebsiteUrl ?? '',
+      additionalPhone: user.additionalPhone ?? '',
+      isPlatformPartner: user.isPlatformPartner === true,
+      freePromotionBalance: String(getPartnerBalance(user)),
+    });
+  }, []);
+
+  const handleEditUserFormChange = useCallback(
+    (next: AdminEditUserFormState, field: AdminEditUserFormTouchedKey) => {
+      setEditUserForm(next);
+      setEditUserFieldMessages((prev) => {
+        const copy = { ...prev };
+        if (field === 'isPlatformPartner') {
+          delete copy.freePromotionBalance;
+        } else {
+          delete copy[field];
+        }
+        return copy;
+      });
+    },
+    [],
+  );
+
+  const handleCloseEditModal = useCallback(() => {
+    if (savingUserModal) return;
+    setEditingUser(null);
+    setEditUserFieldMessages({});
+  }, [savingUserModal]);
+
+  const partnerBalanceValue = useMemo(() => {
+    const parsed = Number.parseInt(editUserForm.freePromotionBalance, 10);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+  }, [editUserForm.freePromotionBalance]);
+
+  const handleSaveUserModal = useCallback(async () => {
+    if (!editingUser) return;
+    const business = isBusinessUser(editingUser);
+    const validation = validateAdminEditUserForm({
+      business,
+      primaryPhone: editingUser.phone,
+      form: editUserForm,
+      t,
+    });
+    if (!validation.valid) {
+      setEditUserFieldMessages(validation.fieldMessages);
+      if (validation.firstToastMessage) {
+        toast.error(validation.firstToastMessage);
+      }
+      return;
+    }
+    setEditUserFieldMessages({});
+    setSavingUserModal(true);
+    try {
+      const profilePayload = business
+        ? {
+            email: editUserForm.email.trim(),
+            companyName: editUserForm.companyName.trim(),
+            companyWebsiteUrl: editUserForm.companyWebsiteUrl.trim(),
+            additionalPhone: editUserForm.additionalPhone.trim(),
+          }
+        : {
+            email: editUserForm.email.trim(),
+            firstName: editUserForm.firstName.trim(),
+            lastName: editUserForm.lastName.trim(),
+          };
+
+      const profileResponse = await adminApi.updateUserProfile(editingUser.id, profilePayload);
+      let merged: User = { ...editingUser, ...profileResponse.data };
+
+      if (business) {
+        const partnerResponse = await adminApi.updateUserPartnerSettings(editingUser.id, {
+          isPlatformPartner: editUserForm.isPlatformPartner,
+          freePromotionBalance: editUserForm.isPlatformPartner ? partnerBalanceValue : 0,
+        });
+        merged = { ...merged, ...partnerResponse.data };
+      }
+
+      setData((prev) => prev.map((u) => (u.id === merged.id ? { ...u, ...merged } : u)));
+      toast.success(t('admin.usersTab.userSaveSuccess'));
+      setEditingUser(null);
+      setEditUserFieldMessages({});
+    } catch (err: unknown) {
+      const ax =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: { message?: string; errorKey?: string } } })
+          : null;
+      const data = ax?.response?.data;
+      const msg =
+        typeof data?.message === 'string' ? data.message : t('admin.usersTab.userSaveError');
+      const errorKey = typeof data?.errorKey === 'string' ? data.errorKey : undefined;
+      if (errorKey === 'errors.emailAlreadyExists') {
+        setEditUserFieldMessages({ email: msg });
+      } else if (errorKey === 'errors.additionalPhoneSameAsPrimary') {
+        setEditUserFieldMessages({ additionalPhone: msg });
+      }
+      toast.error(msg);
+    } finally {
+      setSavingUserModal(false);
+    }
+  }, [editingUser, editUserForm, partnerBalanceValue, setData, t]);
 
   const showInitialSkeleton = showSkeleton && users.length === 0;
 
@@ -335,19 +322,19 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
           <div className="space-y-3 md:space-y-4">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="card p-4 md:p-5">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                  <div className="flex-1 space-y-2 md:space-y-3">
-                    <div className="h-3 md:h-4 bg-bg-secondary/30 rounded-sm w-28 md:w-32 animate-pulse" />
-                    <div className="h-5 md:h-6 bg-bg-secondary/40 rounded-sm w-3/4 animate-pulse" />
-                    <div className="space-y-2">
-                      <div className="h-3 md:h-4 bg-bg-secondary/30 rounded-sm w-full animate-pulse" />
-                      <div className="h-3 md:h-4 bg-bg-secondary/30 rounded-sm w-5/6 animate-pulse" />
-                      <div className="h-3 md:h-4 bg-bg-secondary/30 rounded-sm w-4/6 animate-pulse" />
-                    </div>
-                  </div>
-                  <div className="flex flex-row lg:flex-col gap-2">
-                    <div className="h-8 md:h-10 bg-bg-secondary/30 rounded-sm flex-1 lg:flex-none lg:w-32 animate-pulse" />
-                    <div className="h-8 md:h-10 bg-bg-secondary/30 rounded-sm flex-1 lg:flex-none lg:w-28 animate-pulse" />
+                <div className="h-3 md:h-4 bg-bg-secondary/30 rounded-sm w-48 animate-pulse mb-4" />
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-4">
+                  <div className="h-4 bg-bg-secondary/30 rounded-sm w-full animate-pulse" />
+                  <div className="h-4 bg-bg-secondary/30 rounded-sm w-full animate-pulse" />
+                  <div className="h-4 bg-bg-secondary/30 rounded-sm w-5/6 animate-pulse" />
+                  <div className="h-4 bg-bg-secondary/30 rounded-sm w-4/6 animate-pulse" />
+                </div>
+                <div className="pt-3 border-t border-primary-500/20 flex flex-col lg:flex-row gap-3">
+                  <div className="h-5 bg-bg-secondary/30 rounded-sm w-28 animate-pulse" />
+                  <div className="flex flex-col xl:flex-row gap-2 xl:ml-auto">
+                    <div className="h-12 bg-bg-secondary/30 rounded-lg w-full xl:w-36 animate-pulse" />
+                    <div className="h-12 bg-bg-secondary/30 rounded-lg w-full xl:w-36 animate-pulse" />
+                    <div className="h-12 bg-bg-secondary/30 rounded-lg w-full xl:w-36 animate-pulse" />
                   </div>
                 </div>
               </div>
@@ -366,6 +353,7 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
                 t={t}
                 onViewListings={handleViewListings}
                 onToggleStatus={handleToggleStatus}
+                onEdit={handleEditUser}
               />
             ))}
           </div>
@@ -375,6 +363,18 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
           )}
         </>
       )}
+
+      <EditUserPartnerModal
+        user={editingUser}
+        isOpen={editingUser !== null}
+        saving={savingUserModal}
+        formState={editUserForm}
+        fieldMessages={editUserFieldMessages}
+        onClose={handleCloseEditModal}
+        onFormChange={handleEditUserFormChange}
+        onSubmit={handleSaveUserModal}
+        t={t}
+      />
     </div>
   );
 }

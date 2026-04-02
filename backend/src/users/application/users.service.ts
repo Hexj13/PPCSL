@@ -79,6 +79,22 @@ export class UsersService {
     return this.findOneById(id);
   }
 
+  async tryConsumeFreePromotionBalance(userId: string): Promise<boolean> {
+    const result = await this.usersRepository
+      .createQueryBuilder()
+      .update(User)
+      .set({
+        freePromotionBalance: () => '"free_promotion_balance" - 1',
+      })
+      .where('id = :userId', { userId })
+      .andWhere('type = :type', { type: 'Business' })
+      .andWhere('is_platform_partner = true')
+      .andWhere('free_promotion_balance > 0')
+      .execute();
+
+    return (result.affected ?? 0) > 0;
+  }
+
   async getLastListingRefreshAt(userId: string): Promise<Date | null> {
     const row = await this.usersRepository.findOne({
       where: { id: userId },

@@ -92,6 +92,10 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   const { setFavorites } = useFavoritesStore();
   const prevSearchParamsStringRef = useRef<string | null>(null);
   const gridSearchParamsEffectInitializedRef = useRef(false);
+  const skipClientFetchOnMountRef = useRef<boolean | undefined>(undefined);
+  if (skipClientFetchOnMountRef.current === undefined) {
+    skipClientFetchOnMountRef.current = initialData?.meta != null;
+  }
 
   const searchParamsString = useMemo(() => searchParams.toString(), [searchParams]);
 
@@ -109,7 +113,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       if (!user || listingIds.length === 0) return;
       try {
         const favoritesRes = await favoritesApi.checkBatch(listingIds);
-        const favoriteIds = Object.entries(favoritesRes)
+        const favoriteIds = Object.entries(favoritesRes.data)
           .filter(([, isFavorite]) => isFavorite)
           .map(([listingId]) => listingId);
         const currentFavorites = useFavoritesStore.getState().favorites;
@@ -265,11 +269,15 @@ export function ListingGrid({ initialData }: ListingGridProps) {
         typeof window !== 'undefined' ? sessionStorage.getItem('homeScrollTimestamp') : null;
       const saved = loadGridState();
       const skipInitialFetch = Boolean(ts && saved && saved.page > 1);
-      if (!skipInitialFetch) {
-        void fetchListingsRef.current(1, false);
-      } else {
+      if (skipInitialFetch) {
         setHasLoadedWithFilters(true);
+        return;
       }
+      if (skipClientFetchOnMountRef.current === true) {
+        setHasLoadedWithFilters(true);
+        return;
+      }
+      void fetchListingsRef.current(1, false);
       return;
     }
     if (searchParamsString !== prevSearchParamsStringRef.current) {

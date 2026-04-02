@@ -77,6 +77,21 @@ export const adminApi = {
       error?: string;
     }>(`/api/admin/validate-assign-user/${userId}`),
   toggleUserStatus: (userId: string) => api.patch(`/api/admin/users/${userId}/toggle-status`),
+  updateUserPartnerSettings: (
+    userId: string,
+    data: { isPlatformPartner: boolean; freePromotionBalance?: number },
+  ) => api.patch<User>(`/api/admin/users/${userId}/partner-settings`, data),
+  updateUserProfile: (
+    userId: string,
+    data: {
+      email?: string;
+      firstName?: string;
+      lastName?: string;
+      companyName?: string;
+      companyWebsiteUrl?: string;
+      additionalPhone?: string;
+    },
+  ) => api.patch<User>(`/api/admin/users/${userId}/profile`, data),
   toggleListingPromotion: (id: string, isPromoted: boolean, days?: number | null) =>
     api.patch(`/api/admin/listings/${id}/promote`, { is_promoted: isPromoted, days }),
   getAllPromotions: (

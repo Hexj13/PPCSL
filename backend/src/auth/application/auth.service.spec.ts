@@ -19,6 +19,7 @@ import { RequestPasswordResetUseCase } from './use-cases/request-password-reset.
 import { RequestPhoneChangeUseCase } from './use-cases/request-phone-change.use-case';
 import { ResetPasswordUseCase } from './use-cases/reset-password.use-case';
 import { SendVerificationSmsUseCase } from './use-cases/send-verification-sms.use-case';
+import { UserProfilePatchService } from './user-profile-patch.service';
 import { UpdateProfileUseCase } from './use-cases/update-profile.use-case';
 import { VerifyEmailUseCase } from './use-cases/verify-email.use-case';
 import { VerifyPhoneChangeUseCase } from './use-cases/verify-phone-change.use-case';
@@ -56,6 +57,7 @@ describe('AuthService', () => {
     (u as User & { deactivate: () => void }).deactivate = function (this: User) {
       (this as any).email = null;
       (this as any).phone = null;
+      (this as any).additionalPhone = null;
       (this as any).firstName = null;
       (this as any).lastName = null;
       (this as any).companyName = null;
@@ -158,6 +160,7 @@ describe('AuthService', () => {
         RefreshTokensUseCase,
         ResetPasswordUseCase,
         DeleteAccountUseCase,
+        UserProfilePatchService,
         UpdateProfileUseCase,
         GetUserProfileUseCase,
         VerifyPhoneUseCase,
@@ -584,6 +587,7 @@ describe('AuthService', () => {
       expect(usersService.update).toHaveBeenCalledWith(userId, {
         email: null,
         phone: null,
+        additionalPhone: null,
         firstName: null,
         lastName: null,
         companyName: null,
@@ -645,6 +649,7 @@ describe('AuthService', () => {
       expect(usersService.update).toHaveBeenCalledWith(userId, {
         email: null,
         phone: null,
+        additionalPhone: null,
         firstName: null,
         lastName: null,
         companyName: null,

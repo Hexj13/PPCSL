@@ -34,6 +34,7 @@ import { AdminBrandsModelsService } from './admin-brands-models.service';
 import { AdminTireBrandsModelsService } from './admin-tire-brands-models.service';
 import { AdminService } from './admin.service';
 import { DeleteAllBrandsService } from './delete-all-brands.service';
+import { AdminUpdateUserProfileDto } from './dto/admin-update-user-profile.dto';
 import { CreateBrandDto } from './dto/create-brand.dto';
 import { CreateModelDto } from './dto/create-model.dto';
 import { CreateTireBrandDto } from './dto/create-tire-brand.dto';
@@ -42,6 +43,7 @@ import { UpdateBrandDto } from './dto/update-brand.dto';
 import { UpdateModelDto } from './dto/update-model.dto';
 import { UpdateTireBrandDto } from './dto/update-tire-brand.dto';
 import { UpdateTireModelDto } from './dto/update-tire-model.dto';
+import { UpdateUserPartnerSettingsDto } from './dto/update-user-partner-settings.dto';
 
 const parsePositiveIntQuery = (
   value: string | undefined,
@@ -568,6 +570,46 @@ export class AdminController {
   @Patch('users/:id/toggle-status')
   toggleUserStatus(@Param('id') id: string) {
     return this.adminService.toggleUserStatus(id);
+  }
+
+  @Patch('users/:id/partner-settings')
+  @ApiOperation({ summary: 'Update user partner settings' })
+  @ApiParam({
+    name: 'id',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+    description: 'User UUID',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User partner settings updated successfully',
+  })
+  updateUserPartnerSettings(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateUserPartnerSettingsDto,
+    @Req() req: Request,
+  ) {
+    const user = req.user as { id: string };
+    return this.adminService.updateUserPartnerSettings(id, dto, user.id);
+  }
+
+  @Patch('users/:id/profile')
+  @ApiOperation({ summary: 'Update user profile fields (admin)' })
+  @ApiParam({
+    name: 'id',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+    description: 'User UUID',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User profile updated successfully',
+  })
+  updateUserProfile(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: AdminUpdateUserProfileDto,
+    @Req() req: Request,
+  ) {
+    const user = req.user as { id: string };
+    return this.adminService.updateUserProfile(id, dto, user.id);
   }
 
   @Patch('listings/:id/promote')

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { comparisonApi, listingsApi } from '@/lib/api';
 import type { Listing } from '@/lib/api';
+import { publishCrossTabEvent } from '@/lib/cross-tab-events';
 import { useAuthStore, useComparisonStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
 import { isTireListing } from '@/lib/utils';
@@ -243,6 +244,14 @@ export function useComparePageListings(
     }
     setVehicleListings((prev) => prev.filter((listing) => listing.id !== id));
     removeVehicle(id);
+    publishCrossTabEvent({
+      type: 'comparison-changed',
+      listingId: id,
+      action: 'remove',
+      bucket: 'vehicle',
+      isAuthenticated: !!user,
+      at: Date.now(),
+    });
     toast.success(t('compare.removedFromComparison'));
   };
 
@@ -257,6 +266,14 @@ export function useComparePageListings(
     }
     setTireListings((prev) => prev.filter((listing) => listing.id !== id));
     removeTire(id);
+    publishCrossTabEvent({
+      type: 'comparison-changed',
+      listingId: id,
+      action: 'remove',
+      bucket: 'tire',
+      isAuthenticated: !!user,
+      at: Date.now(),
+    });
     toast.success(t('compare.removedFromComparison'));
   };
 
@@ -270,6 +287,14 @@ export function useComparePageListings(
           await comparisonApi.remove(id);
           removeVehicle(id);
           setVehicleListings((prev) => prev.filter((listing) => listing.id !== id));
+          publishCrossTabEvent({
+            type: 'comparison-changed',
+            listingId: id,
+            action: 'remove',
+            bucket: 'vehicle',
+            isAuthenticated: true,
+            at: Date.now(),
+          });
         } catch {
           failed += 1;
         }
@@ -284,6 +309,16 @@ export function useComparePageListings(
     }
     setVehicleListings([]);
     clearVehicleBucket();
+    for (const id of ids) {
+      publishCrossTabEvent({
+        type: 'comparison-changed',
+        listingId: id,
+        action: 'remove',
+        bucket: 'vehicle',
+        isAuthenticated: false,
+        at: Date.now(),
+      });
+    }
     toast.success(t('compare.allRemoved'));
   };
 
@@ -297,6 +332,14 @@ export function useComparePageListings(
           await comparisonApi.remove(id);
           removeTire(id);
           setTireListings((prev) => prev.filter((listing) => listing.id !== id));
+          publishCrossTabEvent({
+            type: 'comparison-changed',
+            listingId: id,
+            action: 'remove',
+            bucket: 'tire',
+            isAuthenticated: true,
+            at: Date.now(),
+          });
         } catch {
           failed += 1;
         }
@@ -311,6 +354,16 @@ export function useComparePageListings(
     }
     setTireListings([]);
     clearTireBucket();
+    for (const id of ids) {
+      publishCrossTabEvent({
+        type: 'comparison-changed',
+        listingId: id,
+        action: 'remove',
+        bucket: 'tire',
+        isAuthenticated: false,
+        at: Date.now(),
+      });
+    }
     toast.success(t('compare.allRemoved'));
   };
 

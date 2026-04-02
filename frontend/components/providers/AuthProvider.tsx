@@ -30,5 +30,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     void loadComparisonFromApi();
   }, [isInitialized, user]);
 
+  useEffect(() => {
+    const syncAuthFromOtherTab = async () => {
+      await useAuthStore.persist?.rehydrate?.();
+      await initAuth();
+    };
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'auth-storage' || e.key === 'token' || e.key === 'refresh_token') {
+        void syncAuthFromOtherTab();
+        return;
+      }
+      if (e.key !== 'favorites-storage' && e.key !== 'comparison-storage') return;
+      if (e.newValue === null) return;
+      if (e.key === 'favorites-storage') {
+        void useFavoritesStore.persist.rehydrate?.();
+      }
+      if (e.key === 'comparison-storage') {
+        void useComparisonStore.persist.rehydrate?.();
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [initAuth]);
+
   return <>{children}</>;
 }

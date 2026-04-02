@@ -1,68 +1,33 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { logUserEvent } from '../../../common/utils/log-user-event';
 import { UsersService } from '../../../users/application/users.service';
-import { User } from '../../../users/entities/user.entity';
 import { UpdateProfileDto } from '../../presentation/dto/update-profile.dto';
 import { UserProfileResponse } from '../auth.types';
+import { UserProfilePatchService } from '../user-profile-patch.service';
 
 @Injectable()
 export class UpdateProfileUseCase {
   private readonly logger = new Logger(UpdateProfileUseCase.name);
 
-  constructor(private usersService: UsersService) {}
+  constructor(
+    private usersService: UsersService,
+    private userProfilePatchService: UserProfilePatchService,
+  ) {}
 
   async execute(userId: string, updateProfileDto: UpdateProfileDto): Promise<UserProfileResponse> {
     const currentUser = await this.usersService.findOneById(userId);
-    const cleanedData: Partial<User> = { ...updateProfileDto };
+    const patch = await this.userProfilePatchService.buildPatch(currentUser, userId, {
+      ...updateProfileDto,
+    });
 
-    if (cleanedData.email !== undefined) {
-      if (cleanedData.email === '' || cleanedData.email === null) {
-        cleanedData.email = null;
-      } else if (cleanedData.email !== currentUser.email) {
-        const existingUser = await this.usersService.findByEmail(cleanedData.email);
-        if (existingUser && existingUser.id !== userId) {
-          throw new BadRequestException('errors.emailAlreadyExists');
-        }
-      } else {
-        delete cleanedData.email;
-      }
-    } else {
-      delete cleanedData.email;
-    }
-
-    if (cleanedData.lastName === '' || cleanedData.lastName === null) {
-      cleanedData.lastName = null;
-    }
-
-    if (cleanedData.firstName === '' || cleanedData.firstName === null) {
-      cleanedData.firstName = null;
-    }
-
-    if (cleanedData.companyName === '' || cleanedData.companyName === null) {
-      cleanedData.companyName = null;
-    }
-
-    if (
-      cleanedData.companyWebsiteUrl === '' ||
-      cleanedData.companyWebsiteUrl === null ||
-      cleanedData.companyWebsiteUrl === undefined
-    ) {
-      cleanedData.companyWebsiteUrl = null;
-    } else if (
-      cleanedData.companyWebsiteUrl !== undefined &&
-      cleanedData.companyWebsiteUrl.trim() === ''
-    ) {
-      cleanedData.companyWebsiteUrl = null;
-    }
-
-    const phoneChanged = cleanedData.phone !== undefined && cleanedData.phone !== currentUser.phone;
+    const phoneChanged = patch.phone !== undefined && patch.phone !== currentUser.phone;
     if (phoneChanged) {
-      cleanedData.board_slug = null;
+      patch.board_slug = null;
     }
 
-    const updatedUser = await this.usersService.update(userId, cleanedData);
-    const changedFields = Object.keys(cleanedData)
+    const updatedUser = await this.usersService.update(userId, patch);
+    const changedFields = Object.keys(patch)
       .filter((k) => k !== 'password')
       .sort();
     if (changedFields.length > 0) {

@@ -14,6 +14,7 @@ export function maskClosedListingForPublicView(listing: ListingLikeWithApprox): 
   listing.approxPriceDefaultCurrency = null;
   if (listing.user) {
     listing.user.phone = null;
+    listing.user.additionalPhone = null;
     listing.user.email = null;
     listing.user.firstName = null;
     listing.user.lastName = null;

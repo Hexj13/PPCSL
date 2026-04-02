@@ -1,5 +1,6 @@
 import { Repository } from 'typeorm';
 
+import { UserProfilePatchService } from '../auth/application/user-profile-patch.service';
 import { ListingStatus as ListingStatusEnum } from '../common/types';
 import { Listing } from '../listings/entities/listing.entity';
 import { PromotionHistory } from '../listings/entities/promotion-history.entity';
@@ -52,6 +53,7 @@ describe('AdminService', () => {
         {} as ExchangeRatesService,
         {} as IListingCache,
         usersService,
+        {} as UserProfilePatchService,
       );
 
       const result = await service.validateAssignUser('target-id');
@@ -99,6 +101,7 @@ describe('AdminService', () => {
         {} as ExchangeRatesService,
         {} as IListingCache,
         usersService,
+        {} as UserProfilePatchService,
       );
 
       const result = await service.validateAssignUser('biz-id');
@@ -135,6 +138,7 @@ describe('AdminService', () => {
         {} as ExchangeRatesService,
         {} as IListingCache,
         usersService,
+        {} as UserProfilePatchService,
       );
 
       const result = await service.validateAssignUser('minimal-id');
@@ -171,6 +175,7 @@ describe('AdminService', () => {
         {} as ExchangeRatesService,
         {} as IListingCache,
         usersService,
+        {} as UserProfilePatchService,
       );
 
       const result = await service.validateAssignUser('id-only-user');
@@ -195,6 +200,7 @@ describe('AdminService', () => {
         {} as ExchangeRatesService,
         {} as IListingCache,
         usersService,
+        {} as UserProfilePatchService,
       );
 
       const result = await service.validateAssignUser('non-existent');
@@ -221,6 +227,7 @@ describe('AdminService', () => {
         {} as ExchangeRatesService,
         {} as IListingCache,
         usersService,
+        {} as UserProfilePatchService,
       );
 
       const result = await service.validateAssignUser('deactivated-id');
@@ -250,11 +257,82 @@ describe('AdminService', () => {
         {} as ExchangeRatesService,
         {} as IListingCache,
         usersService,
+        {} as UserProfilePatchService,
       );
 
       const result = await service.validateAssignUser('at-limit-id');
 
       expect(result).toEqual({ valid: false, error: 'errors.activeListingsLimitExceeded' });
+    });
+  });
+
+  describe('updateUserProfile', () => {
+    it('skips persistence when buildPatch yields no changes', async () => {
+      const user = createUser({ id: 'target' });
+      const usersRepository = {
+        findOne: jest.fn().mockResolvedValue(user),
+      } as unknown as Repository<User>;
+      const userProfilePatchService = {
+        buildPatch: jest.fn().mockResolvedValue({}),
+      } as unknown as UserProfilePatchService;
+      const usersService = {
+        update: jest.fn(),
+      } as unknown as UsersService;
+
+      const service = new AdminService(
+        usersRepository,
+        {} as Repository<Listing>,
+        {} as Repository<PromotionHistory>,
+        {} as RefreshTokenService,
+        {} as ListingsService,
+        {} as ExchangeRatesService,
+        {} as IListingCache,
+        usersService,
+        userProfilePatchService,
+      );
+
+      const result = await service.updateUserProfile('target', {}, 'actor-1');
+
+      expect(result.id).toBe('target');
+      expect(usersService.update).not.toHaveBeenCalled();
+    });
+
+    it('sets emailVerified false when email changes', async () => {
+      const user = createUser({ id: 'target', email: 'old@example.com', emailVerified: true });
+      const usersRepository = {
+        findOne: jest.fn().mockResolvedValue(user),
+      } as unknown as Repository<User>;
+      const userProfilePatchService = {
+        buildPatch: jest.fn().mockResolvedValue({ email: 'new@example.com' }),
+      } as unknown as UserProfilePatchService;
+      const updated = createUser({
+        id: 'target',
+        email: 'new@example.com',
+        emailVerified: false,
+        password: 'hash',
+      });
+      const usersService = {
+        update: jest.fn().mockResolvedValue(updated),
+      } as unknown as UsersService;
+
+      const service = new AdminService(
+        usersRepository,
+        {} as Repository<Listing>,
+        {} as Repository<PromotionHistory>,
+        {} as RefreshTokenService,
+        {} as ListingsService,
+        {} as ExchangeRatesService,
+        {} as IListingCache,
+        usersService,
+        userProfilePatchService,
+      );
+
+      await service.updateUserProfile('target', { email: 'new@example.com' }, 'actor-1');
+
+      expect(usersService.update).toHaveBeenCalledWith('target', {
+        email: 'new@example.com',
+        emailVerified: false,
+      });
     });
   });
 });

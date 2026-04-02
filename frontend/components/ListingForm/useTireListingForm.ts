@@ -319,7 +319,13 @@ export function useTireListingForm({
           });
           reportFormSubmit(analytics, 'create', true, filledFields, { listing_category: 'tire' });
           setLoading(false);
-          sessionStorage.setItem('listingCreatedToast', t('listings.createSuccess'));
+          sessionStorage.setItem(
+            'listingCreatedToast',
+            JSON.stringify({
+              created: t('listings.createSuccess'),
+              partnerRewardAwarded: res.data.partnerReward?.awardedPromotions ?? 0,
+            }),
+          );
           router.push(`/listings/${res.data.id}`);
           return;
         }

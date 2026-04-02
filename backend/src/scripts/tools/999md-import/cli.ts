@@ -320,7 +320,7 @@ async function processSingleItem(params: {
     if (fuelMap.warning) warnings.push(fuelMap.warning);
     const transmissionMap = mapTransmission(parsed.gearboxRaw);
     if (transmissionMap.warning) warnings.push(transmissionMap.warning);
-    const bodyMap = mapBodyType(parsed.bodyRaw);
+    const bodyMap = mapBodyType(parsed.bodyRaw, vehicleType);
     if (bodyMap.warning) warnings.push(bodyMap.warning);
     const colorMap = mapColor(parsed.colorRaw);
     if (colorMap.warning) warnings.push(colorMap.warning);

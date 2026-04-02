@@ -1,12 +1,24 @@
 'use client';
 
+import { useCallback, useState } from 'react';
+
 import { CopyButton } from '@/components/common/CopyButton';
+import { PlatformPartnerBadge } from '@/components/common/PlatformPartnerBadge';
 import { useI18n } from '@/components/providers/I18nProvider';
 import { useCities } from '@/hooks/useCities';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics, buildListingViewItemParams } from '@/lib/analytics';
 import type { Listing } from '@/lib/api';
+import { toast } from '@/lib/toast';
 import { getCityName, getTelegramUrl, getViberUrl, getWhatsAppUrl } from '@/lib/utils';
+import { CopyIcon, EyeIcon, EyeSlashIcon } from '@/ui';
+
+const BTN_CLASS =
+  'p-1 text-primary-400 hover-only:hover:text-primary-300 hover-only:hover:bg-primary-500/10 rounded-sm transition-colors shrink-0';
+
+function maskPhoneForDisplay(value: string): string {
+  return value.replace(/./g, '*');
+}
 
 const MESSENGER_ICON_PATH =
   'M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14';
@@ -175,6 +187,189 @@ interface ListingPageSellerProps {
   boardSlug: string | null;
 }
 
+type ListingUser = NonNullable<Listing['user']>;
+
+function getPrimaryPhoneContactLabel(
+  t: (key: string) => string,
+  isBusiness: boolean,
+  additionalPhone: string | null | undefined,
+): string {
+  return isBusiness && additionalPhone
+    ? t('listingDetail.phone')
+    : t('listingDetail.phoneWhenSole');
+}
+
+function ListingSellerContactsWhenClosed({
+  user,
+  isBusiness,
+  t,
+}: {
+  user: ListingUser;
+  isBusiness: boolean;
+  t: (key: string) => string;
+}) {
+  const primaryPhoneLabel = getPrimaryPhoneContactLabel(t, isBusiness, user.additionalPhone);
+  return (
+    <>
+      {user.email && (
+        <div>
+          <span className="font-semibold text-primary-700">{t('listingDetail.email')}:</span>
+          <span className="ml-2 text-text-secondary">{MASKED_CONTACT}</span>
+        </div>
+      )}
+      {user.phone && (
+        <div className="border-t border-primary-500/20 pt-4">
+          <span className="font-semibold text-primary-700 block">{primaryPhoneLabel}:</span>
+          <span className="text-text-secondary">{MASKED_CONTACT}</span>
+        </div>
+      )}
+      {isBusiness && user.additionalPhone && (
+        <div>
+          <span className="font-semibold text-primary-700 block">
+            {t('listingDetail.additionalPhone')}:
+          </span>
+          <span className="text-text-secondary">{MASKED_CONTACT}</span>
+        </div>
+      )}
+    </>
+  );
+}
+
+function ListingSellerContactsWhenOpen({
+  user,
+  listing,
+  listingId,
+  isBusiness,
+  t,
+}: {
+  user: ListingUser;
+  listing: Listing;
+  listingId: string;
+  isBusiness: boolean;
+  t: (key: string) => string;
+}) {
+  const primaryPhoneLabel = getPrimaryPhoneContactLabel(t, isBusiness, user.additionalPhone);
+  return (
+    <>
+      {user.email && (
+        <div className="flex items-center min-w-0">
+          <span className="font-semibold text-primary-700 shrink-0">
+            {t('listingDetail.email')}:
+          </span>
+          <a
+            href={`mailto:${user.email}`}
+            className="ml-2 text-text-secondary hover-only:hover:text-primary-700 transition-colors underline break-all min-w-0"
+          >
+            {user.email}
+          </a>
+          <CopyButton
+            text={user.email}
+            label={t('listingDetail.email')}
+            successMessageKey="listingDetail.copied"
+            errorMessageKey="listingDetail.copyError"
+            title={t('listingDetail.copyEmail')}
+            className="ml-2"
+            iconClassName="w-4 h-4"
+          />
+        </div>
+      )}
+      {user.phone && (
+        <div className="min-w-0 border-t border-primary-500/20 pt-4">
+          <span className="font-semibold text-primary-700 mb-2 block">{primaryPhoneLabel}:</span>
+          <div className="flex items-center min-w-0">
+            <a
+              href={`tel:${user.phone}`}
+              onClick={() =>
+                analytics.contactSeller(listingId, 'phone', buildListingViewItemParams(listing))
+              }
+              className="text-text-secondary hover-only:hover:text-primary-700 transition-colors underline break-all min-w-0"
+            >
+              {user.phone}
+            </a>
+            <CopyButton
+              text={user.phone}
+              label={primaryPhoneLabel}
+              successMessageKey="listingDetail.copied"
+              errorMessageKey="listingDetail.copyError"
+              title={t('listingDetail.copyPhone')}
+              className="ml-2"
+              iconClassName="w-4 h-4"
+            />
+          </div>
+        </div>
+      )}
+      {isBusiness && user.additionalPhone && (
+        <ListingBusinessAdditionalPhoneRow additionalPhone={user.additionalPhone} />
+      )}
+    </>
+  );
+}
+
+function ListingBusinessAdditionalPhoneRow({ additionalPhone }: { additionalPhone: string }) {
+  const { t } = useTranslation();
+  const [revealed, setRevealed] = useState(false);
+  const masked = maskPhoneForDisplay(additionalPhone);
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(additionalPhone).then(
+      () => toast.success(t('listingDetail.copied', { label: t('listingDetail.additionalPhone') })),
+      () => toast.error(t('listingDetail.copyError')),
+    );
+  }, [additionalPhone, t]);
+
+  return (
+    <div>
+      <span className="font-semibold text-primary-700 mb-2 block">
+        {t('listingDetail.additionalPhone')}:
+      </span>
+      <div className="flex items-center gap-1 flex-wrap min-w-0">
+        <span className="min-w-0 break-all text-text-secondary">
+          {revealed ? (
+            <a
+              href={`tel:${additionalPhone}`}
+              className="hover-only:hover:text-primary-700 transition-colors underline"
+            >
+              {additionalPhone}
+            </a>
+          ) : (
+            masked
+          )}
+        </span>
+        {revealed ? (
+          <button
+            type="button"
+            onClick={() => setRevealed(false)}
+            className={BTN_CLASS}
+            title={t('listingDetail.hideAdditionalPhone')}
+            aria-label={t('listingDetail.hideAdditionalPhone')}
+          >
+            <EyeSlashIcon className="w-4 h-4" />
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setRevealed(true)}
+            className={BTN_CLASS}
+            title={t('listingDetail.revealAdditionalPhone')}
+            aria-label={t('listingDetail.revealAdditionalPhone')}
+          >
+            <EyeIcon className="w-4 h-4" />
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={handleCopy}
+          className={BTN_CLASS}
+          title={t('listingDetail.copyPhone')}
+          aria-label={t('listingDetail.copyPhone')}
+        >
+          <CopyIcon className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function ListingPageSeller({
   listing,
   listingId: id,
@@ -190,13 +385,20 @@ export function ListingPageSeller({
   const user = listing.user;
   const isBusiness = user.type === 'Business';
   const isClosed = listing.status === 'Closed';
+  const showPlatformPartnerLabel = isBusiness && user.isPlatformPartner === true;
   const secondaryStyle = { color: 'rgb(var(--text-secondary-rgb))' as const };
-
   return (
     <div className="surface overflow-hidden">
-      <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-900">
+      <h2
+        className={`text-xl md:text-2xl font-bold text-primary-900 ${showPlatformPartnerLabel ? 'mb-2' : 'mb-4'}`}
+      >
         {t('listingDetail.contactInfo')}
       </h2>
+      {showPlatformPartnerLabel && (
+        <div className="mb-4">
+          <PlatformPartnerBadge />
+        </div>
+      )}
       <div className="space-y-4 wrap-break-word">
         <div>
           <span className="font-semibold text-primary-700">{t('listingDetail.sellerType')}:</span>
@@ -241,8 +443,7 @@ export function ListingPageSeller({
                 href={user.companyWebsiteUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="min-w-0 truncate hover-only:hover:text-primary-300 transition-colors underline"
-                style={secondaryStyle}
+                className="min-w-0 truncate text-text-secondary hover-only:hover:text-primary-700 transition-colors underline"
                 title={user.companyWebsiteUrl}
               >
                 {user.companyWebsiteUrl}
@@ -259,72 +460,15 @@ export function ListingPageSeller({
         </div>
 
         {isClosed ? (
-          <>
-            {user.email && (
-              <div>
-                <span className="font-semibold text-primary-700">{t('listingDetail.email')}:</span>
-                <span className="ml-2 text-text-secondary">{MASKED_CONTACT}</span>
-              </div>
-            )}
-            {user.phone && (
-              <div>
-                <span className="font-semibold text-primary-700">{t('listingDetail.phone')}:</span>
-                <span className="ml-2 text-text-secondary">{MASKED_CONTACT}</span>
-              </div>
-            )}
-          </>
+          <ListingSellerContactsWhenClosed user={user} isBusiness={isBusiness} t={t} />
         ) : (
-          <>
-            {user.email && (
-              <div className="flex items-center min-w-0">
-                <span className="font-semibold text-primary-700 shrink-0">
-                  {t('listingDetail.email')}:
-                </span>
-                <a
-                  href={`mailto:${user.email}`}
-                  className="ml-2 hover-only:hover:text-primary-300 transition-colors underline break-all min-w-0"
-                  style={secondaryStyle}
-                >
-                  {user.email}
-                </a>
-                <CopyButton
-                  text={user.email}
-                  label={t('listingDetail.email')}
-                  successMessageKey="listingDetail.copied"
-                  errorMessageKey="listingDetail.copyError"
-                  title={t('listingDetail.copyEmail')}
-                  className="ml-2"
-                  iconClassName="w-4 h-4"
-                />
-              </div>
-            )}
-            {user.phone && (
-              <div className="flex items-center min-w-0">
-                <span className="font-semibold text-primary-700 shrink-0">
-                  {t('listingDetail.phone')}:
-                </span>
-                <a
-                  href={`tel:${user.phone}`}
-                  onClick={() =>
-                    analytics.contactSeller(id, 'phone', buildListingViewItemParams(listing))
-                  }
-                  className="ml-2 hover-only:hover:text-primary-300 transition-colors underline break-all min-w-0"
-                  style={secondaryStyle}
-                >
-                  {user.phone}
-                </a>
-                <CopyButton
-                  text={user.phone}
-                  label={t('listingDetail.phone')}
-                  successMessageKey="listingDetail.copied"
-                  errorMessageKey="listingDetail.copyError"
-                  title={t('listingDetail.copyPhone')}
-                  className="ml-2"
-                  iconClassName="w-4 h-4"
-                />
-              </div>
-            )}
-          </>
+          <ListingSellerContactsWhenOpen
+            user={user}
+            listing={listing}
+            listingId={id}
+            isBusiness={isBusiness}
+            t={t}
+          />
         )}
 
         <SellerMessengerLinks listing={listing} listingId={id} t={t} />

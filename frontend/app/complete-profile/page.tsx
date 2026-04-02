@@ -9,164 +9,12 @@ import { authApi } from '@/lib/api';
 import { holdComparisonApiLoadUntilReleased } from '@/lib/comparisonMigration';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
-import { Checkbox, LoadingButton, InfoBlock, HintTooltip } from '@/ui';
+import { LoadingButton, InfoBlock } from '@/ui';
 
+import { validatePhone } from '../register/utils';
+
+import { CompleteProfileFormFields } from './CompleteProfileFormFields';
 import { buildUpdateData, getFilledFields, processPendingData } from './utils';
-
-interface CompleteProfileFormFieldsProps {
-  isBusiness: boolean;
-  formData: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    companyWebsiteUrl: string;
-    emailNotifications: boolean;
-  };
-  errors: { firstName: string; lastName: string; email: string; companyWebsiteUrl: string };
-  touched: { firstName: boolean; lastName: boolean; email: boolean; companyWebsiteUrl: boolean };
-  t: (key: string) => string;
-  onFirstNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onLastNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onEmailChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onCompanyWebsiteUrlChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onFirstNameBlur: () => void;
-  onLastNameBlur: () => void;
-  onEmailBlur: () => void;
-  onCompanyWebsiteUrlBlur: () => void;
-  onFormFieldFocus: () => void;
-  onEmailNotificationsChange: (checked: boolean) => void;
-}
-
-function CompleteProfileFormFields({
-  isBusiness,
-  formData,
-  errors,
-  touched,
-  t,
-  onFirstNameChange,
-  onLastNameChange,
-  onEmailChange,
-  onCompanyWebsiteUrlChange,
-  onFirstNameBlur,
-  onLastNameBlur,
-  onEmailBlur,
-  onCompanyWebsiteUrlBlur,
-  onFormFieldFocus,
-  onEmailNotificationsChange,
-}: CompleteProfileFormFieldsProps) {
-  if (isBusiness) {
-    return (
-      <>
-        <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-900">
-            {t('profile.companyWebsiteUrl')}
-          </label>
-          <input
-            type="url"
-            value={formData.companyWebsiteUrl}
-            onChange={onCompanyWebsiteUrlChange}
-            onFocus={onFormFieldFocus}
-            onBlur={onCompanyWebsiteUrlBlur}
-            className={`input-field ${touched.companyWebsiteUrl && errors.companyWebsiteUrl ? 'border-red-500' : ''}`}
-            placeholder={t('profile.companyWebsiteUrlPlaceholder')}
-            autoComplete="url"
-          />
-          {touched.companyWebsiteUrl && errors.companyWebsiteUrl && (
-            <p className="mt-1 text-sm text-red-400">{errors.companyWebsiteUrl}</p>
-          )}
-        </div>
-        <div>
-          <div className="flex items-center gap-1.5 mb-2">
-            <label className="text-sm font-semibold text-primary-900">{t('register.email')}</label>
-            <HintTooltip ariaLabel={t('register.emailHint')}>{t('register.emailHint')}</HintTooltip>
-          </div>
-          <input
-            type="email"
-            value={formData.email}
-            onChange={onEmailChange}
-            onFocus={onFormFieldFocus}
-            onBlur={onEmailBlur}
-            className={`input-field ${touched.email && errors.email ? 'border-red-500' : ''}`}
-            placeholder={t('register.emailPlaceholder')}
-            autoComplete="email"
-          />
-          {touched.email && errors.email && (
-            <p className="mt-1 text-sm text-red-400">{errors.email}</p>
-          )}
-        </div>
-        <Checkbox
-          id="complete-profile-email-notifications"
-          checked={formData.emailNotifications}
-          onChange={(checked) => {
-            onFormFieldFocus();
-            onEmailNotificationsChange(checked);
-          }}
-          label={t('register.emailNotifications')}
-          size="md"
-        />
-      </>
-    );
-  }
-  return (
-    <>
-      <div>
-        <label className="block text-sm font-semibold mb-2 text-primary-900">
-          {t('register.firstName')}
-        </label>
-        <input
-          type="text"
-          value={formData.firstName}
-          onChange={onFirstNameChange}
-          onFocus={onFormFieldFocus}
-          onBlur={onFirstNameBlur}
-          className={`input-field ${touched.firstName && errors.firstName ? 'border-red-500' : ''}`}
-          placeholder={t('register.firstName')}
-          autoComplete="given-name"
-        />
-        {touched.firstName && errors.firstName && (
-          <p className="mt-1 text-sm text-red-400">{errors.firstName}</p>
-        )}
-      </div>
-      <div>
-        <label className="block text-sm font-semibold mb-2 text-primary-900">
-          {t('register.lastName')}
-        </label>
-        <input
-          type="text"
-          value={formData.lastName}
-          onChange={onLastNameChange}
-          onFocus={onFormFieldFocus}
-          onBlur={onLastNameBlur}
-          className={`input-field ${touched.lastName && errors.lastName ? 'border-red-500' : ''}`}
-          placeholder={t('register.lastName')}
-          autoComplete="family-name"
-        />
-        {touched.lastName && errors.lastName && (
-          <p className="mt-1 text-sm text-red-400">{errors.lastName}</p>
-        )}
-      </div>
-      <div>
-        <div className="flex items-center gap-1.5 mb-2">
-          <label className="text-sm font-semibold text-primary-900">{t('register.email')}</label>
-          <HintTooltip ariaLabel={t('register.emailHint')}>{t('register.emailHint')}</HintTooltip>
-        </div>
-        <input
-          type="email"
-          value={formData.email}
-          onChange={onEmailChange}
-          onFocus={onFormFieldFocus}
-          onBlur={onEmailBlur}
-          className={`input-field ${touched.email && errors.email ? 'border-red-500' : ''}`}
-          placeholder={t('register.emailPlaceholder')}
-          autoComplete="email"
-        />
-        {touched.email && errors.email && (
-          <p className="mt-1 text-sm text-red-400">{errors.email}</p>
-        )}
-      </div>
-    </>
-  );
-}
 
 function CompleteProfileContent() {
   const router = useRouter();
@@ -177,6 +25,7 @@ function CompleteProfileContent() {
     lastName: '',
     email: '',
     companyWebsiteUrl: '',
+    additionalPhone: '',
     emailNotifications: false,
   });
   const [errors, setErrors] = useState({
@@ -184,12 +33,14 @@ function CompleteProfileContent() {
     lastName: '',
     email: '',
     companyWebsiteUrl: '',
+    additionalPhone: '',
   });
   const [touched, setTouched] = useState({
     firstName: false,
     lastName: false,
     email: false,
     companyWebsiteUrl: false,
+    additionalPhone: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const formStartSentRef = useRef(false);
@@ -206,6 +57,7 @@ function CompleteProfileContent() {
         lastName: user.lastName || '',
         email: user.email || '',
         companyWebsiteUrl: user.companyWebsiteUrl || '',
+        additionalPhone: user.additionalPhone || '',
         emailNotifications: user.emailNotifications ?? false,
       });
     }
@@ -327,17 +179,42 @@ function CompleteProfileContent() {
     });
   };
 
+  const validateAdditionalPhoneField = (value: string): string =>
+    value.trim() ? validatePhone(value.trim(), t) : '';
+
+  const handleAdditionalPhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFormData({ ...formData, additionalPhone: value });
+    if (touched.additionalPhone) {
+      setErrors({ ...errors, additionalPhone: validateAdditionalPhoneField(value) });
+    }
+  };
+
+  const handleAdditionalPhoneBlur = () => {
+    setTouched({ ...touched, additionalPhone: true });
+    setErrors({
+      ...errors,
+      additionalPhone: validateAdditionalPhoneField(formData.additionalPhone),
+    });
+  };
+
   const isBusiness = user?.type === 'Business';
 
   const hasAnyField = () => {
     if (isBusiness) {
-      return !!(formData.companyWebsiteUrl?.trim() || formData.email?.trim());
+      return !!(
+        formData.companyWebsiteUrl?.trim() ||
+        formData.email?.trim() ||
+        formData.additionalPhone?.trim()
+      );
     }
     return !!(formData.firstName?.trim() || formData.lastName?.trim() || formData.email?.trim());
   };
 
   const hasErrors = () => {
-    if (isBusiness) return !!(errors.companyWebsiteUrl || errors.email);
+    if (isBusiness) {
+      return !!(errors.companyWebsiteUrl || errors.email || errors.additionalPhone);
+    }
     return !!(errors.firstName || errors.lastName || errors.email);
   };
 
@@ -348,19 +225,32 @@ function CompleteProfileContent() {
         lastName: '',
         email: validateEmail(formData.email),
         companyWebsiteUrl: validateCompanyWebsiteUrl(formData.companyWebsiteUrl),
+        additionalPhone: validateAdditionalPhoneField(formData.additionalPhone),
       };
       setErrors(newErrors);
-      setTouched({ ...touched, email: true, companyWebsiteUrl: true });
-      return !!(newErrors.companyWebsiteUrl || newErrors.email);
+      setTouched({
+        ...touched,
+        email: true,
+        companyWebsiteUrl: true,
+        additionalPhone: true,
+      });
+      return !!(newErrors.companyWebsiteUrl || newErrors.email || newErrors.additionalPhone);
     }
     const newErrors = {
       firstName: validateName(formData.firstName),
       lastName: validateName(formData.lastName),
       email: validateEmail(formData.email),
       companyWebsiteUrl: '',
+      additionalPhone: '',
     };
     setErrors(newErrors);
-    setTouched({ firstName: true, lastName: true, email: true, companyWebsiteUrl: false });
+    setTouched({
+      firstName: true,
+      lastName: true,
+      email: true,
+      companyWebsiteUrl: false,
+      additionalPhone: false,
+    });
     return !!(newErrors.firstName || newErrors.lastName || newErrors.email);
   };
 
@@ -372,6 +262,14 @@ function CompleteProfileContent() {
     }
     if (!hasAnyField()) {
       toast.error(t('completeProfile.fillAtLeastOne'));
+      return;
+    }
+    if (
+      isBusiness &&
+      formData.additionalPhone?.trim() &&
+      formData.additionalPhone.trim() === (user.phone || '').trim()
+    ) {
+      toast.error(t('errors.additionalPhoneSameAsPrimary'));
       return;
     }
     setIsSubmitting(true);
@@ -461,10 +359,12 @@ function CompleteProfileContent() {
               onLastNameChange={handleLastNameChange}
               onEmailChange={handleEmailChange}
               onCompanyWebsiteUrlChange={handleCompanyWebsiteUrlChange}
+              onAdditionalPhoneChange={handleAdditionalPhoneChange}
               onFirstNameBlur={handleFirstNameBlur}
               onLastNameBlur={handleLastNameBlur}
               onEmailBlur={handleEmailBlur}
               onCompanyWebsiteUrlBlur={handleCompanyWebsiteUrlBlur}
+              onAdditionalPhoneBlur={handleAdditionalPhoneBlur}
               onFormFieldFocus={handleFormFieldFocus}
               onEmailNotificationsChange={(checked) =>
                 setFormData({ ...formData, emailNotifications: checked })

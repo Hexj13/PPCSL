@@ -1,5 +1,6 @@
 'use client';
 
+import { HEADER_CTA_PROMOTE_SURFACE_CLASSES } from '@/components/listing/CreateListingButton';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
 import { LoadingSpinner } from '@/ui';
@@ -38,10 +39,10 @@ export function ListingPageActions({
       {showPromoteButton && canPromote && listing.status === 'Active' && !listing.is_promoted && (
         <button
           onClick={onPromoteClick}
-          className="w-full sm:w-auto sm:max-w-fit h-12 py-2 sm:h-auto sm:min-h-0 sm:py-2 md:py-2.5 px-6 text-base rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 bg-accent/20 border-2 border-accent/40 text-text-secondary hover-only:hover:bg-accent/30 hover-only:hover:border-accent/60"
+          className={`${HEADER_CTA_PROMOTE_SURFACE_CLASSES} w-full sm:w-auto sm:max-w-fit h-12 py-2 sm:h-auto sm:min-h-0 sm:py-2 md:py-2.5 px-6 text-base font-medium gap-2`}
         >
           <svg
-            className="w-3.5 h-3.5 md:w-4 md:h-4"
+            className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0 relative z-10"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -53,7 +54,7 @@ export function ListingPageActions({
               d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
             />
           </svg>
-          {t('listings.promote')}
+          <span className="relative z-10">{t('listings.promote')}</span>
         </button>
       )}
       {!isInitialized && listing.user ? (

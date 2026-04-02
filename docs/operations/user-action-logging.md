@@ -105,6 +105,7 @@ Never log raw **email**, **phone**, **password**, **tokens**, full **VIN**, full
 | `password_changed` | `ChangePasswordUseCase` | `userId` |
 | `account_deleted` | `DeleteAccountUseCase` | `userId`, `closedListingsCount` |
 | `user_logged_in` | `LoginUserUseCase` | `userId` |
+| `user_registered` | `RegisterUserUseCase` | `userId`, `userType`, `hasEmail`, `hasPhone` (booleans only; no raw PII) |
 
 Add new rows here when introducing new `event` values.
 

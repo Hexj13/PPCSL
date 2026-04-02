@@ -9,6 +9,7 @@ import {
   localStorageRemoveItem,
   localStorageSetItem,
 } from '@/lib/browser-local-storage';
+import { clearClientAuthLocalStorage } from '@/lib/client-auth-storage';
 
 const MAX_COMPARE = 3;
 
@@ -62,13 +63,11 @@ export const useAuthStore = create<AuthState>()(
       logout: () => {
         set({ user: null, token: null, refreshToken: null, isInitialized: true });
         if (typeof window !== 'undefined') {
-          localStorageRemoveItem('token');
-          localStorageRemoveItem('refresh_token');
-          localStorageRemoveItem('pendingFavorites');
-          localStorageRemoveItem('pendingComparisons');
-          localStorageRemoveItem('returnUrl');
-          sessionStorage.removeItem('kupito_search_filters');
-          localStorageRemoveItem('kupito_search_filters');
+          clearClientAuthLocalStorage({
+            clearReturnUrl: true,
+            clearAuthPersistKey: false,
+            clearPendingMigrationAndFilters: true,
+          });
           useFavoritesStore.getState().clear();
           useComparisonStore.getState().clear();
         }
@@ -81,7 +80,7 @@ export const useAuthStore = create<AuthState>()(
 
         const { token, refreshToken } = get();
         const storedToken = localStorageGetItem('token');
-        const actualToken = token || storedToken;
+        const actualToken = storedToken || token;
 
         if (actualToken) {
           try {

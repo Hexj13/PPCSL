@@ -415,6 +415,8 @@ GET    /api/favorites/check/:id       # Check if listing is in favorites
 
 **Favorites removal UX:** Removing a card from `/favorites` is optimistic and delayed by a short exit animation (~280ms). If API deletion fails, local favorite state is restored.
 
+**Multi-tab:** The favorites page and client store stay aligned when another tab changes favorites (cross-tab events and `storage` on persist keys). See [cross-tab-sync.md](../features/cross-tab-sync.md).
+
 ### Comparison (vehicles and tires)
 
 Users can compare up to three vehicle listings and up to three tire listings; each category has its own list in client state.
@@ -432,6 +434,7 @@ DELETE /api/comparison/:listingId     # Remove listing from comparison (authenti
 - On login or registration, `applyComparisonAfterAuth` merges `pendingComparisons` (legacy) and buckets from `comparison-storage` (up to 3 vehicles and 3 tires separately) into the account via `POST /api/comparison/sync` (server order kept, then guest IDs fill free slots).
 - **Logout:** local comparison state is cleared; server-side rows remain for the next login.
 - Header shows a Compare link with a counter badge (total items in both lists).
+- **Multi-tab:** Compare UI and signed-in comparison IDs refresh when another tab changes comparison; guests rely on persist rehydrate. See [cross-tab-sync.md](../features/cross-tab-sync.md).
 
 ### Saved Filters
 
@@ -576,7 +579,7 @@ GET /health                          # Health check (database, Redis)
 
 **Users Table:**
 
-- `phone` (partial), `type`, `active`, `email` (unique)
+- `phone` (partial), `additional_phone` (nullable; optional business contact), `type`, `active`, `email` (unique)
 - `last_listing_refresh_at` - Timestamp of last "Refresh dates" action; used to enforce 48h limit per user
 
 **Saved Filters Table:**

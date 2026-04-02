@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { invalidateConsentCache } from '@/lib/analytics';
+import { invalidateConsentCache, invokeGtag } from '@/lib/analytics';
 import {
   isStorageAccessError,
   localStorageGetItem,
@@ -64,12 +64,12 @@ export function useCookieConsent() {
 
       const analyticsStorage = analytics === 'granted' ? 'granted' : 'denied';
 
-      if (window.gtag) {
+      invokeGtag(() =>
         window.gtag('consent', 'update', {
           analytics_storage: analyticsStorage,
           ad_storage: analyticsStorage,
-        });
-      }
+        }),
+      );
 
       if (window.dataLayer) {
         window.dataLayer.push({

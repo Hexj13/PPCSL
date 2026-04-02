@@ -95,6 +95,12 @@ export interface TranslationsPart2 {
     title: string;
     contactInfo: string;
     phone: string;
+    phoneChangeBoardUrlNoticeBefore: string;
+    phoneChangeBoardUrlNoticeAfter: string;
+    phoneChangeBoardUrlHintAria: string;
+    availableMessengers: string;
+    additionalPhone: string;
+    additionalPhonePlaceholder: string;
     emailAndNotifications: string;
     email: string;
     emailPlaceholder: string;

@@ -19,6 +19,7 @@ export class TypeOrmPromotionHistoryWriter implements IPromotionHistoryWriter {
     started_at: Date;
     ended_at: null;
     days: number | null;
+    promotion_source: 'duration' | 'partner_balance' | 'admin_unlimited';
   }): Promise<void> {
     await this.repository.save(params);
   }

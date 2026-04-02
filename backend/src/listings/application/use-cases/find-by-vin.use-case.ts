@@ -35,6 +35,7 @@ export class FindByVinUseCase {
       if (listing.user) {
         listing.user = removePasswordFromUser(listing.user) as typeof listing.user;
         listing.user.phone = null;
+        listing.user.additionalPhone = null;
         listing.user.email = null;
         listing.user.firstName = null;
         listing.user.lastName = null;

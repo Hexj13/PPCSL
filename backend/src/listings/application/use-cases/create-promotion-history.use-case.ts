@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+import { PromotionSource } from '../../entities/promotion-history.entity';
 import { PromotionHistory } from '../../entities/promotion-history.entity';
 
 @Injectable()
@@ -16,6 +17,7 @@ export class CreatePromotionHistoryUseCase {
     userId: string,
     listingTitle: string,
     days: number | null,
+    promotionSource: PromotionSource,
   ): Promise<void> {
     await this.promotionHistoryRepository.save({
       listing_id: listingId,
@@ -24,6 +26,7 @@ export class CreatePromotionHistoryUseCase {
       started_at: new Date(),
       ended_at: null,
       days,
+      promotion_source: promotionSource,
     });
   }
 }

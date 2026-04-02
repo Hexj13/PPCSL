@@ -4,6 +4,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { IBrandsCache, BRANDS_CACHE } from '../brands/application/ports/brands-cache.port';
 import { ListingCategory } from '../common/constants';
 import { logUserEvent } from '../common/utils/log-user-event';
+import { UsersService } from '../users/application/users.service';
 
 import { IListingCache, LISTING_CACHE } from './application/ports/listing-cache.port';
 import {
@@ -37,6 +38,7 @@ import { UpdateListingUseCase } from './application/use-cases/update-listing.use
 import { UpdatePromotionHistoryEndDateUseCase } from './application/use-cases/update-promotion-history-end-date.use-case';
 import { getVehicleTypeFromBodyType } from './domain/utils/vehicle-type.utils';
 import { Listing } from './entities/listing.entity';
+import { PromotionSource } from './entities/promotion-history.entity';
 import { CreateListingDto } from './presentation/dto/create-listing.dto';
 import { SearchListingsDto } from './presentation/dto/search-listings.dto';
 import { TogglePromotionDto } from './presentation/dto/toggle-promotion.dto';
@@ -94,18 +96,46 @@ export class ListingsService {
     private readonly closeAllUserListingsUseCase: CloseAllUserListingsUseCase,
     private readonly autoCloseOldListingsUseCase: AutoCloseOldListingsUseCase,
     private readonly expirePromotionsUseCase: ExpirePromotionsUseCase,
+    private readonly usersService: UsersService,
   ) {}
 
   async create(
     createListingDto: CreateListingDto,
     userId: string,
     userType?: string,
-  ): Promise<Listing> {
+  ): Promise<
+    Listing & {
+      partnerReward?: {
+        awardedPromotions: number;
+        freePromotionBalance: number;
+        partnerListingProgress: number;
+      };
+    }
+  > {
     const savedListing = await this.createListingUseCase.execute(
       createListingDto,
       userId,
       userType,
     );
+    const owner = await this.usersService.findOneById(savedListing.user_id);
+    const partnerReward = owner.registerPartnerListingCreation();
+    if (owner.isPlatformPartner) {
+      await this.usersService.update(savedListing.user_id, {
+        freePromotionBalance: owner.freePromotionBalance,
+        partnerListingProgress: owner.partnerListingProgress,
+      });
+      if (partnerReward.awardedPromotions > 0) {
+        logUserEvent(this.logger, {
+          event: 'partner_promotion_awarded',
+          userId,
+          listingId: savedListing.id,
+          ownerUserId: savedListing.user_id,
+          awardedPromotions: partnerReward.awardedPromotions,
+          freePromotionBalance: partnerReward.freePromotionBalance,
+          partnerListingProgress: partnerReward.partnerListingProgress,
+        });
+      }
+    }
     logUserEvent(this.logger, {
       event: 'listing_created',
       userId,
@@ -130,7 +160,9 @@ export class ListingsService {
         is_promoted: savedListing.is_promoted || false,
       },
     });
-    return savedListing;
+    return partnerReward.awardedPromotions > 0
+      ? Object.assign(savedListing, { partnerReward })
+      : savedListing;
   }
 
   async findAll(searchDto: SearchListingsDto) {
@@ -261,7 +293,14 @@ export class ListingsService {
     userType?: string,
   ): Promise<Listing> {
     const days = dto.is_promoted ? (dto.days !== undefined ? dto.days : 7) : null;
-    return this.togglePromotionUseCase.execute(id, userId, userType, dto.is_promoted, days);
+    return this.togglePromotionUseCase.execute(
+      id,
+      userId,
+      userType,
+      dto.is_promoted,
+      days,
+      dto.source,
+    );
   }
 
   async createPromotionHistory(
@@ -269,8 +308,15 @@ export class ListingsService {
     userId: string,
     listingTitle: string,
     days: number | null,
+    promotionSource: PromotionSource,
   ): Promise<void> {
-    return this.createPromotionHistoryUseCase.execute(listingId, userId, listingTitle, days);
+    return this.createPromotionHistoryUseCase.execute(
+      listingId,
+      userId,
+      listingTitle,
+      days,
+      promotionSource,
+    );
   }
 
   async updatePromotionHistoryEndDate(listingId: string): Promise<void> {
@@ -293,7 +339,7 @@ export class ListingsService {
     return this.findSimilarUseCase.execute(listingId, limit, offset);
   }
 
-  getPromotionAccessStatus(userType?: string) {
-    return this.getPromotionAccessUseCase.execute(userType);
+  getPromotionAccessStatus(userId?: string, userType?: string) {
+    return this.getPromotionAccessUseCase.execute(userId, userType);
   }
 }

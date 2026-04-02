@@ -17,4 +17,14 @@ export class TogglePromotionDto {
     required: false,
   })
   days?: number | null;
+
+  @IsOptional()
+  @IsIn(['default', 'partner_balance'])
+  @ApiProperty({
+    description:
+      'Promotion source for user flow. partner_balance enables unlimited promotion using partner balance.',
+    required: false,
+    enum: ['default', 'partner_balance'],
+  })
+  source?: 'default' | 'partner_balance';
 }

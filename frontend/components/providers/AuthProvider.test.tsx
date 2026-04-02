@@ -92,4 +92,47 @@ describe('AuthProvider', () => {
 
     await waitFor(() => expect(mockInitAuthFromStore).toHaveBeenCalledTimes(1));
   });
+
+  it('should rehydrate auth and call initAuth when auth-storage changes from another tab', async () => {
+    render(
+      <AuthProvider>
+        <div>Test</div>
+      </AuthProvider>,
+    );
+
+    await waitFor(() => expect(mockInitAuth).toHaveBeenCalledTimes(1));
+    expect(rehydrateMocks.auth).toHaveBeenCalledTimes(1);
+
+    window.dispatchEvent(
+      new StorageEvent('storage', {
+        key: 'auth-storage',
+        newValue: '{}',
+        storageArea: localStorage,
+      }),
+    );
+
+    await waitFor(() => expect(rehydrateMocks.auth).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(mockInitAuth).toHaveBeenCalledTimes(2));
+  });
+
+  it('should rehydrate auth and call initAuth when token changes from another tab', async () => {
+    render(
+      <AuthProvider>
+        <div>Test</div>
+      </AuthProvider>,
+    );
+
+    await waitFor(() => expect(mockInitAuth).toHaveBeenCalledTimes(1));
+
+    window.dispatchEvent(
+      new StorageEvent('storage', {
+        key: 'token',
+        newValue: 'new-token',
+        storageArea: localStorage,
+      }),
+    );
+
+    await waitFor(() => expect(rehydrateMocks.auth).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(mockInitAuth).toHaveBeenCalledTimes(2));
+  });
 });

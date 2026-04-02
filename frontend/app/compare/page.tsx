@@ -8,8 +8,10 @@ import { LoadMoreButton } from '@/components/listing/LoadMoreButton';
 import { useTabIndicator } from '@/hooks/useTabIndicator';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
+import { loadComparisonFromApi } from '@/lib/comparisonMigration';
+import { subscribeToCrossTabEvents } from '@/lib/cross-tab-events';
 import { loadSiteConfigSync } from '@/lib/site-config';
-import { useComparisonStore } from '@/lib/store';
+import { useAuthStore, useComparisonStore } from '@/lib/store';
 import { getCountry } from '@/lib/utils';
 import { Button, TrashIcon } from '@/ui';
 
@@ -136,6 +138,7 @@ function ComparePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useTranslation();
+  const user = useAuthStore((s) => s.user);
   const vehicleComparisons = useComparisonStore((s) => s.vehicleComparisons);
   const tireComparisons = useComparisonStore((s) => s.tireComparisons);
   const rehydrate = useComparisonStore((s) => s.rehydrate);
@@ -187,6 +190,18 @@ function ComparePageContent() {
       setActiveTab(tabParam);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    const unsub = subscribeToCrossTabEvents((ev) => {
+      if (ev.type !== 'comparison-changed') return;
+      if (user) {
+        void loadComparisonFromApi();
+      } else {
+        void useComparisonStore.persist.rehydrate?.();
+      }
+    });
+    return unsub;
+  }, [user]);
 
   const siteConfig = loadSiteConfigSync(getCountry());
 

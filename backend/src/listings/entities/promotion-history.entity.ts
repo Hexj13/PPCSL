@@ -12,6 +12,8 @@ import { User } from '../../users/entities/user.entity';
 
 import { Listing } from './listing.entity';
 
+export type PromotionSource = 'duration' | 'partner_balance' | 'admin_unlimited';
+
 @Entity('promotion_history')
 @Index(['listing_id'])
 @Index(['user_id'])
@@ -45,6 +47,9 @@ export class PromotionHistory {
 
   @Column({ type: 'int', nullable: true })
   days: number | null;
+
+  @Column({ type: 'varchar', default: 'duration' })
+  promotion_source: PromotionSource;
 
   @CreateDateColumn()
   created_at: Date;

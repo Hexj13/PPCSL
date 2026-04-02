@@ -16,6 +16,7 @@ import { Listing } from '../../listings/entities/listing.entity';
 @Index(['phone'], { where: '"phone" IS NOT NULL' })
 @Index(['type'])
 @Index(['active'])
+@Index(['isPlatformPartner'])
 @Index(['board_slug'], { unique: true, where: '"board_slug" IS NOT NULL' })
 export class User {
   @PrimaryGeneratedColumn('uuid')
@@ -37,6 +38,9 @@ export class User {
   @Column({ type: 'varchar', nullable: true })
   phone: string | null;
 
+  @Column({ type: 'varchar', nullable: true, name: 'additional_phone' })
+  additionalPhone: string | null;
+
   @Column({ type: 'varchar', nullable: true })
   firstName: string | null;
 
@@ -54,6 +58,15 @@ export class User {
 
   @Column({ type: 'boolean', default: true })
   active: boolean;
+
+  @Column({ type: 'boolean', default: false, name: 'is_platform_partner' })
+  isPlatformPartner: boolean;
+
+  @Column({ type: 'integer', default: 0, name: 'free_promotion_balance' })
+  freePromotionBalance: number;
+
+  @Column({ type: 'integer', default: 0, name: 'partner_listing_progress' })
+  partnerListingProgress: number;
 
   @Column({ type: 'boolean', default: false })
   emailNotifications: boolean;
@@ -108,6 +121,7 @@ export class User {
   deactivate(): void {
     this.email = null;
     this.phone = null;
+    this.additionalPhone = null;
     this.firstName = null;
     this.lastName = null;
     this.companyName = null;
@@ -117,5 +131,55 @@ export class User {
 
   isAdmin(): boolean {
     return this.type === 'Admin';
+  }
+
+  setPlatformPartner(isPartner: boolean): void {
+    if (isPartner && this.type !== constants.UserType.Business) {
+      throw new Error('errors.partnerSettingsBusinessOnly');
+    }
+    this.isPlatformPartner = isPartner;
+    if (!isPartner) {
+      this.freePromotionBalance = 0;
+      this.partnerListingProgress = 0;
+    }
+  }
+
+  setFreePromotionBalance(balance: number): void {
+    this.freePromotionBalance = Math.max(0, Math.trunc(balance));
+  }
+
+  registerPartnerListingCreation(): {
+    awardedPromotions: number;
+    freePromotionBalance: number;
+    partnerListingProgress: number;
+  } {
+    if (!this.isPlatformPartner || this.type !== constants.UserType.Business) {
+      return {
+        awardedPromotions: 0,
+        freePromotionBalance: this.freePromotionBalance,
+        partnerListingProgress: this.partnerListingProgress,
+      };
+    }
+
+    const nextProgress = this.partnerListingProgress + 1;
+    const awardedPromotions = Math.floor(nextProgress / 20);
+    this.partnerListingProgress = nextProgress % 20;
+
+    if (awardedPromotions > 0) {
+      this.freePromotionBalance += awardedPromotions;
+    }
+
+    return {
+      awardedPromotions,
+      freePromotionBalance: this.freePromotionBalance,
+      partnerListingProgress: this.partnerListingProgress,
+    };
+  }
+
+  consumeFreePromotion(): void {
+    if (this.freePromotionBalance <= 0) {
+      throw new Error('errors.partnerPromotionBalanceEmpty');
+    }
+    this.freePromotionBalance -= 1;
   }
 }

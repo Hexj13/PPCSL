@@ -10,6 +10,7 @@ import helmet from 'helmet';
 import './common/sentry.config';
 import { AppModule } from './app.module';
 import { PrettyLogger } from './common/logger/pretty-logger';
+import { requestIdMiddleware } from './common/middleware/request-id.middleware';
 
 async function bootstrap() {
   const isDev = process.env.NODE_ENV !== 'production';
@@ -18,6 +19,8 @@ async function bootstrap() {
   });
 
   app.set('trust proxy', true);
+
+  app.use(requestIdMiddleware);
 
   app.use(
     helmet({

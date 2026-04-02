@@ -36,6 +36,7 @@ Paid promotion lets users promote their listings so they appear higher in search
 4. **Promotion duration:**
    - Promotion can be 1, 7, 14, or 30 days
    - Admins can set unlimited (`promoted_until = null`)
+   - Platform partners can also start unlimited promotion from `partner_balance`
    - After the end date, promotion is turned off automatically (`is_promoted = false`)
    - Search results show only listings with active promotion (not expired)
 
@@ -88,7 +89,7 @@ Indexes on: `listing_id`, `user_id`, `started_at`, `ended_at`, `created_at`
 
 - Toggle promotion for the user's own listing
 - Requires auth (`JwtAuthGuard`)
-- Validation: only active listings, durations 1/7/14/30 days
+- Validation: only active listings, durations 1/7/14/30 days, or unlimited when `source=partner_balance`
 - Limit: `MAX_PROMOTIONS_PER_USER` active promotions per user
 
 **`GET /api/listings/promotion-history`**
@@ -108,6 +109,7 @@ Indexes on: `listing_id`, `user_id`, `started_at`, `ended_at`, `created_at`
 - Returns: `{ access: 'disabled' | 'admin' | 'all', enabled: boolean, isAdmin: boolean, canPromote: boolean }`
 - Used by frontend to decide which UI to show
 - Logic: `PROMOTION_ACCESS=all` → all can promote; `admin` → only admins; `disabled` → none. In development, admin always has access.
+- Response also includes partner state used by the partner program UI.
 
 **`POST /api/listings/cron/expire-promotions`**
 
@@ -242,6 +244,8 @@ MAX_PROMOTIONS_PER_USER=10
 7. **History:** All promotions written to `promotion_history`; `ended_at` updated on listing close; history kept after listing deletion (via `listing_title`).
 8. **Cron:** `expire-promotions` endpoint exists; configure a server cron to call it regularly.
 9. **`PROMOTION_ACCESS`:** Frontend uses `GET /api/listings/promotion-access`; promote/history buttons and promo filter shown only when `canPromote === true`; styling visible to all. `disabled` → all hidden; `admin` → admins only; `all` → all authenticated. Backend returns 403 if access denied.
+
+See [partner-program.md](./partner-program.md) for partner balance, reward rules, and partner-specific UI.
 
 ---
 

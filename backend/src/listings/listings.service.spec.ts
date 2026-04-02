@@ -9,6 +9,7 @@ import { VehicleModel } from '../brands/entities/vehicle-model.entity';
 import { I18nService } from '../common/i18n/i18n.service';
 import { Currency, ListingStatus } from '../common/types';
 import { UsersService } from '../users/application/users.service';
+import { User } from '../users/entities/user.entity';
 
 import { LISTING_CACHE } from './application/ports/listing-cache.port';
 import { LISTING_REPOSITORY } from './application/ports/listing.repository.port';
@@ -178,6 +179,7 @@ describe('ListingsService', () => {
     const mockUsersService = {
       getListingLimit: jest.fn(),
       findOne: jest.fn(),
+      findOneById: jest.fn(),
       getLastListingRefreshAt: jest.fn(),
       update: jest.fn(),
     };
@@ -565,6 +567,17 @@ describe('ListingsService', () => {
   });
 
   describe('create', () => {
+    beforeEach(() => {
+      usersService.findOneById.mockImplementation(async (userId: string) => {
+        const owner = new User();
+        owner.id = userId;
+        owner.isPlatformPartner = false;
+        owner.freePromotionBalance = 0;
+        owner.partnerListingProgress = 0;
+        return owner;
+      });
+    });
+
     it('should set last_published_at when creating listing with Active status', async () => {
       const createDto = {
         price: 10000,
@@ -812,6 +825,7 @@ describe('ListingsService', () => {
         undefined,
         true,
         7,
+        undefined,
       );
       expect(result.is_promoted).toBe(true);
       expect(result.promoted_until).toBeInstanceOf(Date);

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { useCrossTabListingStatusRefetch } from '@/hooks/useCrossTabListingStatusRefetch';
 import { analytics, buildListingViewItemParams } from '@/lib/analytics';
 import type { Listing } from '@/lib/api';
 import { api, listingsApi, favoritesApi } from '@/lib/api';
@@ -180,6 +181,8 @@ export function useListingData({
       hasLoadedRef.current = false;
     };
   }, [fetchListingData, id]);
+
+  useCrossTabListingStatusRefetch(id, fetchListingData);
 
   useEffect(() => {
     const checkAndRefresh = () => {

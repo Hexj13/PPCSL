@@ -314,6 +314,18 @@ describe('ListingGrid', () => {
       expect(favoritesApi.checkBatch).not.toHaveBeenCalled();
     });
 
+    it('should not request listings on mount when initialData is provided', async () => {
+      const initialData = {
+        data: [mockListing1],
+        meta: mockMeta,
+      };
+
+      render(<ListingGrid initialData={initialData} />);
+
+      await screen.findByTestId('listing-listing-1');
+      expect(listingsApi.getAll).not.toHaveBeenCalled();
+    });
+
     it('should not load favorites when initialData is empty', async () => {
       (useAuthStore as unknown as jest.Mock).mockReturnValue({
         user: { id: 'user-1' },

@@ -88,6 +88,11 @@ export interface Listing {
   updated_at: string;
   approxPriceDefaultCurrency?: number | null;
   defaultCurrencyCode?: string;
+  partnerReward?: {
+    awardedPromotions: number;
+    freePromotionBalance: number;
+    partnerListingProgress: number;
+  };
 }
 
 export interface Brand {
@@ -129,6 +134,7 @@ export interface User {
   email: string;
   type: UserType;
   phone?: string;
+  additionalPhone?: string | null;
   firstName?: string;
   lastName?: string;
   companyName?: string;
@@ -143,6 +149,9 @@ export interface User {
   telegram?: boolean;
   phoneVerified?: boolean;
   emailVerified?: boolean;
+  isPlatformPartner?: boolean;
+  freePromotionBalance?: number;
+  partnerListingProgress?: number;
 }
 
 export interface SearchParams {
@@ -325,9 +334,21 @@ export interface PromotionHistory {
   listing_title: string;
   started_at: string;
   ended_at: string | null;
-  days: number;
+  days: number | null;
   created_at: string;
   listing_status?: ListingStatus;
+  promotion_source?: 'duration' | 'partner_balance' | 'admin_unlimited';
+}
+
+export interface PromotionAccessStatus {
+  access: 'disabled' | 'admin' | 'all';
+  enabled: boolean;
+  isAdmin: boolean;
+  canPromote: boolean;
+  isPartner: boolean;
+  freePromotionBalance: number;
+  partnerListingProgress: number;
+  listingsUntilNextFreePromotion: number | null;
 }
 
 export interface AdminStats {
@@ -348,6 +369,7 @@ export interface BoardInfo {
   userId: string;
   displayName: string;
   boardSlug: string;
+  isPlatformPartner: boolean;
 }
 
 export interface VerifySmsDto {
@@ -384,6 +406,7 @@ export interface UpdateProfileDto {
   lastName?: string;
   companyName?: string;
   companyWebsiteUrl?: string;
+  additionalPhone?: string | null;
   emailNotifications?: boolean;
   viber?: boolean;
   whatsapp?: boolean;

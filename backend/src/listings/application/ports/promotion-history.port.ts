@@ -8,6 +8,7 @@ export interface IPromotionHistoryWriter {
     started_at: Date;
     ended_at: null;
     days: number | null;
+    promotion_source: 'duration' | 'partner_balance' | 'admin_unlimited';
   }): Promise<void>;
   updateEndDateForListing(listingId: string): Promise<void>;
 }

@@ -6,6 +6,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
+import { UserType } from '../../../common/constants';
+import { UsersService } from '../../../users/application/users.service';
 import { PromotionRulesService } from '../../domain/services/promotion-rules.service';
 import { Listing } from '../../entities/listing.entity';
 import { IListingCache, LISTING_CACHE } from '../ports/listing-cache.port';
@@ -24,6 +26,7 @@ export class TogglePromotionUseCase {
     @Inject(PROMOTION_HISTORY_WRITER)
     private readonly promotionHistory: IPromotionHistoryWriter,
     private readonly promotionRulesService: PromotionRulesService,
+    private readonly usersService: UsersService,
   ) {}
 
   async execute(
@@ -32,6 +35,7 @@ export class TogglePromotionUseCase {
     userType: string | undefined,
     isPromoted: boolean,
     days: number | null,
+    source: 'default' | 'partner_balance' = 'default',
   ): Promise<Listing> {
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(listingId)) {
       throw new BadRequestException('errors.invalidListingId');
@@ -49,13 +53,30 @@ export class TogglePromotionUseCase {
       throw new BadRequestException('errors.invalidPromotionPeriod');
     }
 
-    const accessStatus = this.promotionRulesService.getPromotionAccessStatus(userType);
-    if (!accessStatus.canPromote) {
-      throw new ForbiddenException(
-        accessStatus.access === 'disabled'
-          ? 'errors.promotionDisabled'
-          : 'errors.promotionAdminOnly',
-      );
+    const isPartnerBalancePromotion = isPromoted && source === 'partner_balance';
+    const partnerUser = isPartnerBalancePromotion
+      ? await this.usersService.findOneById(userId)
+      : null;
+
+    if (isPartnerBalancePromotion) {
+      if (partnerUser?.type !== UserType.Business || !partnerUser?.isPlatformPartner) {
+        throw new ForbiddenException('errors.partnerPromotionOnlyPartners');
+      }
+      if (days !== null) {
+        throw new BadRequestException('errors.partnerPromotionRequiresUnlimited');
+      }
+      if (partnerUser.freePromotionBalance <= 0) {
+        throw new BadRequestException('errors.partnerPromotionBalanceEmpty');
+      }
+    } else {
+      const accessStatus = this.promotionRulesService.getPromotionAccessStatus(userType);
+      if (!accessStatus.canPromote) {
+        throw new ForbiddenException(
+          accessStatus.access === 'disabled'
+            ? 'errors.promotionDisabled'
+            : 'errors.promotionAdminOnly',
+        );
+      }
     }
 
     const wasPromoted = listing.isPromoted();
@@ -67,12 +88,18 @@ export class TogglePromotionUseCase {
         throw new BadRequestException(`errors.maxPromotionsReached|${maxPromotions}`);
       }
       try {
-        listing.startPromotion(days !== undefined && days !== null ? days : 7);
+        listing.startPromotion(isPartnerBalancePromotion ? null : (days ?? 7));
       } catch (e) {
         if (e instanceof Error && e.message === 'errors.promotionOnlyActive') {
           throw new BadRequestException('errors.promotionOnlyActive');
         }
         throw e;
+      }
+      if (isPartnerBalancePromotion && partnerUser) {
+        const consumed = await this.usersService.tryConsumeFreePromotionBalance(userId);
+        if (!consumed) {
+          throw new BadRequestException('errors.partnerPromotionBalanceEmpty');
+        }
       }
       await this.promotionHistory.create({
         listing_id: listingId,
@@ -80,7 +107,8 @@ export class TogglePromotionUseCase {
         listing_title: listing.title,
         started_at: new Date(),
         ended_at: null,
-        days,
+        days: isPartnerBalancePromotion ? null : days,
+        promotion_source: isPartnerBalancePromotion ? 'partner_balance' : 'duration',
       });
     } else if (wasPromoted && !isPromoted) {
       listing.stopPromotion();

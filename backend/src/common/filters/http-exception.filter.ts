@@ -12,6 +12,7 @@ import { Request, Response } from 'express';
 
 import { I18nService } from '../i18n/i18n.service';
 import { logUserActionFailure } from '../utils/log-user-event';
+import { sanitizeForSentryExtra } from '../utils/sentry-payload.utils';
 import {
   buildUserActionFailureContext,
   shouldLogUserActionFailure,
@@ -84,12 +85,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
           httpPath: request.url,
           errorType: isDbConnectivity ? 'database_connectivity' : 'unhandled',
           errorCategory: isDbConnectivity ? 'database_connectivity' : 'application',
+          ...(request.requestId ? { requestId: request.requestId } : {}),
         },
         extra: {
-          requestBody: request.body,
-          queryParams: request.query,
-          params: request.params,
-          user: (request as { user?: { id?: string; email?: string } }).user,
+          requestBody: sanitizeForSentryExtra(request.body),
+          queryParams: sanitizeForSentryExtra(request.query),
+          params: sanitizeForSentryExtra(request.params),
+          ...(request.user?.id ? { userId: request.user.id } : {}),
         },
       });
     }
@@ -107,12 +109,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
           httpStatus: status,
           httpMethod: request.method,
           httpPath: request.url,
+          ...(request.requestId ? { requestId: request.requestId } : {}),
         },
         extra: {
-          requestBody: request.body,
-          queryParams: request.query,
-          params: request.params,
-          user: (request as { user?: { id?: string; email?: string } }).user,
+          requestBody: sanitizeForSentryExtra(request.body),
+          queryParams: sanitizeForSentryExtra(request.query),
+          params: sanitizeForSentryExtra(request.params),
+          ...(request.user?.id ? { userId: request.user.id } : {}),
         },
       });
     }
