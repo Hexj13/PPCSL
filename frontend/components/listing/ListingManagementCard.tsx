@@ -25,6 +25,7 @@ import {
   getVehicleType,
   isTireListing,
 } from '@/lib/utils';
+import { EditIcon } from '@/ui';
 
 const SPARKLES_EMOJI = '\u2728';
 
@@ -206,14 +207,14 @@ function ManagementCardActionBar({
           <div className={getStatusClassName(status)}>{getStatusLabel(status, t)}</div>
         </div>
         <div
-          className={`flex flex-col lg:flex-col xl:flex-row xl:flex-wrap xl:justify-end items-stretch xl:items-center gap-2 w-full lg:w-full lg:shrink-0 lg:max-w-full xl:flex-1 xl:shrink xl:min-w-0 xl:max-w-full${status !== 'Closed' ? ' min-h-[48px]' : ''}`}
+          className={`flex flex-col lg:flex-col xl:flex-row xl:flex-wrap xl:justify-end items-stretch xl:items-center gap-2 w-full lg:w-full lg:shrink-0 lg:max-w-full xl:flex-1 xl:shrink xl:min-w-0 xl:max-w-full${status !== 'Closed' ? ' min-h-10' : ''}`}
         >
           {onAction && (
             <>
               {showPromoteMyListings && (
                 <button
                   onClick={() => onPromoteClick?.(listing.id)}
-                  className={`${HEADER_CTA_PROMOTE_SURFACE_CLASSES} text-base font-medium gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 w-full xl:w-auto h-[48px]`}
+                  className={`${HEADER_CTA_PROMOTE_SURFACE_CLASSES} text-sm font-medium gap-2 md:gap-2.5 px-3 md:px-4 py-1.5 md:py-2 w-full xl:w-auto h-10`}
                 >
                   <svg
                     className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0 relative z-10"
@@ -236,8 +237,8 @@ function ManagementCardActionBar({
                   onClick={() => onPromoteClick?.(listing.id)}
                   className={
                     listing.is_promoted
-                      ? 'font-medium text-base transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 select-none w-full xl:w-auto h-[48px] text-text-secondary hover-only:hover:text-text-primary bg-[#f069be33] border-[#f069be]/40 hover-only:hover:border-[#f069be]/60'
-                      : `${HEADER_CTA_SURFACE_CLASSES} text-base font-medium gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 w-full xl:w-auto h-[48px]`
+                      ? 'font-medium text-sm transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-1.5 md:py-2 rounded-lg border-2 select-none w-full xl:w-auto h-10 text-text-secondary hover-only:hover:text-text-primary bg-[#f069be33] border-[#f069be]/40 hover-only:hover:border-[#f069be]/60'
+                      : `${HEADER_CTA_SURFACE_CLASSES} text-sm font-medium gap-2 md:gap-2.5 px-3 md:px-4 py-1.5 md:py-2 w-full xl:w-auto h-10`
                   }
                 >
                   <svg
@@ -261,7 +262,7 @@ function ManagementCardActionBar({
               {showPublish && (
                 <button
                   onClick={() => onAction(listing.id, 'publish')}
-                  className="text-text-secondary font-medium text-base hover-only:hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-500/40 hover-only:hover:border-primary-500/60 bg-primary-500/20 select-none w-full xl:w-auto h-[48px]"
+                  className="text-text-secondary font-medium text-sm hover-only:hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-1.5 md:py-2 rounded-lg border-2 border-primary-500/40 hover-only:hover:border-primary-500/60 bg-primary-500/20 select-none w-full xl:w-auto h-10"
                 >
                   {t('listings.publishAction')}
                 </button>
@@ -269,7 +270,7 @@ function ManagementCardActionBar({
               {showPause && (
                 <button
                   onClick={() => onAction(listing.id, 'pause')}
-                  className="text-text-secondary font-medium text-base hover-only:hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-blue-500/40 hover-only:hover:border-blue-500/60 bg-blue-500/20 select-none w-full xl:w-auto h-[48px]"
+                  className="text-text-secondary font-medium text-sm hover-only:hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-1.5 md:py-2 rounded-lg border-2 border-blue-500/40 hover-only:hover:border-blue-500/60 bg-blue-500/20 select-none w-full xl:w-auto h-10"
                 >
                   {t('listings.pauseAction')}
                 </button>
@@ -277,7 +278,7 @@ function ManagementCardActionBar({
               {showClose && (
                 <button
                   onClick={() => onAction(listing.id, 'close')}
-                  className="text-text-secondary font-medium text-base hover-only:hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-gray-500/40 hover-only:hover:border-gray-500/60 bg-gray-500/20 select-none w-full xl:w-auto h-[48px]"
+                  className="text-text-secondary font-medium text-sm hover-only:hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-1.5 md:py-2 rounded-lg border-2 border-gray-500/40 hover-only:hover:border-gray-500/60 bg-gray-500/20 select-none w-full xl:w-auto h-10"
                 >
                   {t('common.close')}
                 </button>
@@ -287,24 +288,11 @@ function ManagementCardActionBar({
           {showEdit && (
             <Link
               href={editHref}
-              className="text-primary-700 font-medium text-base hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none w-full xl:w-auto h-[48px]"
-              title={t('common.editListing')}
+              className="text-primary-700 font-medium text-sm hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-1.5 md:py-2 rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none w-full xl:w-auto h-10"
               onClick={(e) => e.stopPropagation()}
             >
-              <svg
-                className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0 text-inherit"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                />
-              </svg>
-              <span className="sm:hidden">{t('common.editListing')}</span>
+              <EditIcon className="w-4 h-4 shrink-0" />
+              {t('common.edit')}
             </Link>
           )}
         </div>

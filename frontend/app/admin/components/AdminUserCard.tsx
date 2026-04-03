@@ -164,14 +164,14 @@ export function AdminUserCard({
             {listingCount > 0 ? (
               <button
                 onClick={() => onViewListings(user)}
-                className="text-text-secondary font-medium text-base hover-only:hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-blue-500/40 hover-only:hover:border-blue-500/60 bg-blue-500/20 select-none w-full xl:w-auto h-[48px]"
+                className="text-text-secondary font-medium text-sm hover-only:hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-1.5 md:py-2 rounded-lg border-2 border-blue-500/40 hover-only:hover:border-blue-500/60 bg-blue-500/20 select-none w-full xl:w-auto h-10"
               >
                 <EyeIcon className="w-4 h-4 shrink-0" />
                 {t('admin.usersTab.viewListings')}
               </button>
             ) : (
               <div
-                className="invisible pointer-events-none w-full xl:w-auto h-[48px] shrink-0 rounded-lg border-2 border-transparent px-3 md:px-4 py-2 md:py-2.5"
+                className="invisible pointer-events-none w-full xl:w-auto h-10 shrink-0 rounded-lg border-2 border-transparent px-3 md:px-4 py-1.5 md:py-2"
                 aria-hidden
               />
             )}
@@ -179,7 +179,7 @@ export function AdminUserCard({
               type="button"
               disabled={!canToggleStatus}
               onClick={() => onToggleStatus(user.id)}
-              className={`font-medium text-base transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 select-none w-full xl:w-auto h-[48px] disabled:opacity-50 disabled:cursor-not-allowed ${
+              className={`font-medium text-sm transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-lg border-2 select-none w-full xl:w-auto h-10 disabled:opacity-50 disabled:cursor-not-allowed ${
                 !canToggleStatus
                   ? 'text-text-secondary border-primary-500/20 bg-bg-secondary/40'
                   : user.active !== false
@@ -194,9 +194,9 @@ export function AdminUserCard({
             <button
               type="button"
               onClick={() => onEdit(user)}
-              className="text-primary-700 font-medium text-base hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none w-full xl:w-auto h-[48px]"
+              className="text-primary-700 font-medium text-sm hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none w-full xl:w-auto h-10"
             >
-              <EditIcon className="w-5 h-5 shrink-0" />
+              <EditIcon className="w-4 h-4 shrink-0" />
               {t('common.edit')}
             </button>
           </div>
