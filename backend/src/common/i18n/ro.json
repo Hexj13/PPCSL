@@ -180,6 +180,9 @@
     }
   },
   "emails": {
+    "footer": {
+      "tagline": "Platformă pentru publicarea anunțurilor de vânzare auto în Moldova"
+    },
     "listingStatus": {
       "Active": "Activ",
       "Paused": "Întrerupt",

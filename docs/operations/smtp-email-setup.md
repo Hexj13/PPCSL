@@ -12,7 +12,7 @@ tags:
 
 **Русский:** [smtp-email-setup-ru.md](./smtp-email-setup-ru.md)
 
-How to enable **transactional email** (verification, email change, security notifications) for the NestJS backend. Sending is implemented with Nodemailer in `core/backend/src/auth/infrastructure/services/email.service.ts`.
+How to enable **transactional email** (verification, email change, security notifications) for the NestJS backend. Sending is implemented with Nodemailer in `core/backend/src/auth/infrastructure/services/email.service.ts`, and HTML is generated from MJML blocks in `core/backend/src/common/email/email-template.ts`.
 
 ## Behavior
 
@@ -20,6 +20,7 @@ How to enable **transactional email** (verification, email change, security noti
 - If **all** of `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, and `SMTP_PASSWORD` are set, the app creates an SMTP transporter and sends mail.
 - If any of those are missing, **no transporter is created**; `sendMail` is a no-op. API requests do not fail solely because SMTP is unset.
 - Link targets in messages use **`FRONTEND_URL`**. If unset, the backend falls back to `http://localhost:3000`.
+- Email layouts are rendered from MJML on send; avoid adding external webfonts for better cross-client consistency.
 - **`SMTP_FROM`** is optional. Default in code: `noreply@kupito.club`. Your provider may require `From` to match an allowed sender or domain.
 - `replyTo` is set from `SUPPORT_EMAIL` (or `support@kupito.club` by default).
 - In `NODE_ENV=production`, backend validates email config on startup:
@@ -61,6 +62,8 @@ SEND_TEST_EMAIL_TO="<address shown in Mailtrap inbox>" npm run send-test-emails
 Optional: `SEND_TEST_EMAIL_LOCALE=en|ro|ru` (defaults to `en` when unset). All sample bodies use backend `locales/backend/*.json` under `emails.*`.
 
 This sends seven sample messages (verification, email change, password/phone/email notifications, listing refresh reminder, weekly views digest). The script refuses `NODE_ENV=production`. It spaces out sends and retries transient SMTP failures a few times with backoff (helps with Mailtrap rate limits).
+
+When adjusting template markup/styles, edit `core/backend/src/common/email/email-template.ts` and re-run `npm run send-test-emails` to validate rendered output in a real inbox.
 
 **Without SMTP:** The app runs; flows that trigger email simply do not deliver messages.
 

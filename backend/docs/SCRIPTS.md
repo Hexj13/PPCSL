@@ -70,6 +70,9 @@ These scripts are **blocked from running in production** and can only be execute
 #### User Management Scripts
 - `make-admin.ts` - Create admin user
 
+#### Email and Notification Scripts
+- `send-test-emails.ts` - Send seven sample transactional emails to `SEND_TEST_EMAIL_TO` using the configured SMTP provider. Stage/dev/test only. Supports `SEND_TEST_EMAIL_LOCALE=en|ro|ru` and retries transient SMTP failures with backoff. Run: `npm run send-test-emails`
+
 #### Cache Management Scripts
 - `clear-cache.ts` - Clear all Redis cache
 - `clear-listing-cache.ts` - Clear listings cache (with optional listing ID)
@@ -90,6 +93,7 @@ These scripts can be run in production, but should still be used with caution:
 - `check-models-stats.ts` - Check models statistics (production-safe)
 - `remove-body-code-models.ts` - Remove BMW/Mercedes body code models (E30, W124, etc.); skips models in use (production-safe)
 - `backup-database.ts` - Create database backup (uses pg_dump)
+- `backfill-email-verification.ts` - Scan active non-admin users with an unverified email and send verification emails in batches. Defaults to `DRY_RUN=true`; requires full SMTP config for real sends. Run: `npm run backfill:email-verification:prod`
 
 ## Security
 

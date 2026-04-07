@@ -148,6 +148,7 @@ export class EmailService {
       preheader: this.emailT('emails.verification.preheader', loc),
       bodyHtml,
       supportEmail: this.getSupportEmail(),
+      signatureLine: this.emailT('emails.footer.tagline', loc),
     });
 
     const emailText = this.emailT('emails.verification.textPlain', loc, { url: verificationUrl });
@@ -185,6 +186,7 @@ export class EmailService {
       preheader: this.emailT('emails.emailChange.preheader', loc),
       bodyHtml,
       supportEmail: this.getSupportEmail(),
+      signatureLine: this.emailT('emails.footer.tagline', loc),
     });
 
     await this.sendMail(newEmail, emailSubject, emailText, emailHtml);
@@ -248,6 +250,7 @@ export class EmailService {
       preheader: this.emailT('emails.passwordChanged.preheader', loc),
       bodyHtml,
       supportEmail: this.getSupportEmail(),
+      signatureLine: this.emailT('emails.footer.tagline', loc),
     });
     await this.sendMail(email, subject, text, html);
   }
@@ -283,6 +286,7 @@ export class EmailService {
       preheader: this.emailT('emails.listingRefresh.preheader', loc),
       bodyHtml,
       supportEmail: this.getSupportEmail(),
+      signatureLine: this.emailT('emails.footer.tagline', loc),
     });
     await this.sendMail(email, subject, text, html);
   }
@@ -341,6 +345,7 @@ export class EmailService {
       preheader: this.emailT('emails.weeklyDigest.preheader', loc, { period }),
       bodyHtml,
       supportEmail: this.getSupportEmail(),
+      signatureLine: this.emailT('emails.footer.tagline', loc),
     });
     await this.sendMail(email, subject, text, html);
   }
@@ -364,6 +369,7 @@ export class EmailService {
       preheader: this.emailT('emails.phoneChanged.preheader', loc),
       bodyHtml,
       supportEmail: this.getSupportEmail(),
+      signatureLine: this.emailT('emails.footer.tagline', loc),
     });
     await this.sendMail(email, subject, text, html);
   }
@@ -387,6 +393,7 @@ export class EmailService {
       preheader: this.emailT('emails.emailChanged.preheader', loc),
       bodyHtml,
       supportEmail: this.getSupportEmail(),
+      signatureLine: this.emailT('emails.footer.tagline', loc),
     });
     await this.sendMail(email, subject, text, html);
   }

@@ -14,14 +14,15 @@ This directory contains backend-specific documentation.
 
 ## Available Documentation
 
-- **[scripts.md](./scripts.md)** - Scripts organization and usage guide
-- **[testing.md](./testing.md)** - Integration testing documentation
+- **[SCRIPTS.md](./SCRIPTS.md)** - Scripts organization and usage guide
+- **[TESTING.md](./TESTING.md)** - Integration testing documentation
 
 ## General Documentation
 
 For core documentation, see the main [`docs/`](../../docs/) folder:
 - **[Core docs](../../docs/README.md)** — Main documentation entry point
 - **[User action logging](../../docs/operations/user-action-logging.md)** — Structured API logs (ops)
-- **[technical.md](../../docs/architecture/technical.md)** — Technical documentation
-- **[deployment.md](../../docs/guides/deployment.md)** — Deployment guides (includes Render.com)
+- **[SMTP email setup](../../docs/operations/smtp-email-setup.md)** — Transactional email setup, MJML templates, Render and Google Workspace notes
+- **[TECHNICAL.md](../../docs/architecture/TECHNICAL.md)** — Technical documentation
+- **[DEPLOYMENT.md](../../docs/guides/DEPLOYMENT.md)** — Deployment guides (includes Render.com)
 

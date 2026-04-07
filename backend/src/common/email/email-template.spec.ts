@@ -7,28 +7,29 @@ import {
 
 describe('email-template', () => {
   describe('emailCtaButton', () => {
-    it('forces light CTA label color for link-styling email clients', () => {
-      const html = emailCtaButton('https://example.com/go', 'Continue');
-      expect(html).toContain('color:#ffffff !important');
-      expect(html).toContain('<font color="#ffffff"');
-      expect(html).toContain('class="kupito-email-cta"');
-      expect(html).toContain('mso-text-underline:none');
+    it('returns MJML button block with label and href', () => {
+      const mjml = emailCtaButton('https://example.com/go', 'Continue');
+      expect(mjml).toContain('<mj-button');
+      expect(mjml).toContain('https://example.com/go');
+      expect(mjml).toContain('Continue');
     });
   });
 
   describe('buildEmailLayout', () => {
-    it('includes CTA underline reset rules in head', () => {
+    it('renders compiled html with brand footer and signature', () => {
       const html = buildEmailLayout({
         siteBaseUrl: 'https://kupito.club',
         documentTitle: 'T',
         heading: 'H',
         bodyHtml: '',
         supportEmail: 'support@kupito.club',
+        signatureLine: 'Platform for posting car sale listings in Moldova',
       });
-      expect(html).toContain('a.kupito-email-cta');
-      expect(html).toContain('text-decoration:none!important');
-      expect(html).toContain('fonts.googleapis.com/css2?family=Inter');
-      expect(html).toContain('"Inter",system-ui');
+      expect(html).toContain('<!doctype html>');
+      expect(html).toContain('Arial, Helvetica, sans-serif');
+      expect(html).toContain('Kupito.club');
+      expect(html).toContain('Platform for posting car sale listings in Moldova');
+      expect(html).toContain('support@kupito.club');
     });
   });
 

@@ -17,6 +17,7 @@ jest.mock('nodemailer', () => ({
 type EnvMap = Record<string, string | undefined>;
 
 const emailTranslations: Record<string, string> = {
+  'emails.footer.tagline': 'Platform for posting car sale listings in Moldova',
   'emails.verification.subject': 'Confirm email',
   'emails.verification.heading': 'Confirm heading',
   'emails.verification.preheader': 'Confirm preheader',
@@ -180,6 +181,7 @@ describe('EmailService', () => {
       expect(sent.replyTo).toBe('support@kupito.club');
       expect(sent.text).toContain('https://kupito.club/verify-email?token=jwt-token');
       expect(sent.html).toContain('https://kupito.club/verify-email?token=jwt-token');
+      expect(sent.html).toContain('Platform for posting car sale listings in Moldova');
     });
 
     it('uses 72h JWT expiry for link tokens when EMAIL_VERIFICATION_TOKEN_EXPIRES_IN is unset', async () => {

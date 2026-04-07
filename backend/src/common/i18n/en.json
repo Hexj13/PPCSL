@@ -185,6 +185,9 @@
     }
   },
   "emails": {
+    "footer": {
+      "tagline": "Platform for posting car sale listings in Moldova"
+    },
     "listingStatus": {
       "Active": "Active",
       "Paused": "Paused",

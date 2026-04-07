@@ -177,6 +177,7 @@ export function ProfilePasswordSection({
           value={currentPassword}
           onChange={onCurrentPasswordChange}
           autoComplete="current-password"
+          passwordManagerIgnore
           show={showCurrentPassword}
           onToggle={() => setShowCurrentPassword((v) => !v)}
         />
@@ -187,6 +188,7 @@ export function ProfilePasswordSection({
           value={newPassword}
           onChange={onNewPasswordChange}
           autoComplete="new-password"
+          passwordManagerIgnore
           show={showNewPassword}
           onToggle={() => setShowNewPassword((v) => !v)}
           maxLength={100}
