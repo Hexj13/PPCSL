@@ -778,16 +778,12 @@ describe('SearchFilters', () => {
       fireEvent.click(saveButton);
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/sign');
+        expect(mockPush).toHaveBeenCalledWith('/sign?returnUrl=%2Ffavorites%3Ftab%3Dfilters');
         expect(window.localStorage.setItem).toHaveBeenCalledWith(
           'pendingSavedFilter',
           expect.any(String),
         );
       });
-      expect(window.localStorage.setItem).toHaveBeenCalledWith(
-        'returnUrl',
-        '/favorites?tab=filters',
-      );
     });
 
     it('should show correct button text for authenticated user', async () => {

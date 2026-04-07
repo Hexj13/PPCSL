@@ -1,4 +1,5 @@
 import { localStorageRemoveItem } from '@/lib/browser-local-storage';
+import { sessionStorageRemoveItem } from '@/lib/browser-session-storage';
 
 export const AUTH_STORAGE_PERSIST_KEY = 'auth-storage';
 
@@ -21,11 +22,7 @@ export function clearClientAuthLocalStorage(options?: {
   if (clearPendingMigrationAndFilters) {
     localStorageRemoveItem('pendingFavorites');
     localStorageRemoveItem('pendingComparisons');
-    try {
-      sessionStorage.removeItem('kupito_search_filters');
-    } catch {
-      void 0;
-    }
+    sessionStorageRemoveItem('kupito_search_filters');
     localStorageRemoveItem('kupito_search_filters');
   }
   if (clearReturnUrl) {

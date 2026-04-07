@@ -1,5 +1,6 @@
 /// <reference path="./jest-openapi.d.ts" />
 import { getTestRequest } from './setup-integration';
+import { createTestCredentials } from './test-data-cleanup';
 
 describe('Comparison API Integration Tests', () => {
   let request: ReturnType<typeof getTestRequest>;
@@ -8,17 +9,18 @@ describe('Comparison API Integration Tests', () => {
 
   beforeAll(async () => {
     request = getTestRequest();
-    const ts = Date.now();
-    const testEmail = `comparison${ts}@example.com`;
-    const testPassword = 'Test123!@#';
+    const credentials = createTestCredentials('comparison');
+    const testEmail = credentials.email;
+    const testPhone = credentials.phone;
+    const testPassword = credentials.password;
 
     const registerRes = await request.post('/api/auth/register').send({
       email: testEmail,
       password: testPassword,
       type: 'Individual',
-      phone: `+38971${String(ts).slice(-7)}`,
-      firstName: 'Test',
-      lastName: 'User',
+      phone: testPhone,
+      firstName: credentials.firstName,
+      lastName: credentials.lastName,
       termsAccepted: true,
     });
     if (registerRes.status !== 201) {
@@ -26,7 +28,7 @@ describe('Comparison API Integration Tests', () => {
     }
 
     const loginResponse = await request.post('/api/auth/login').send({
-      login: testEmail,
+      login: testPhone,
       password: testPassword,
     });
 

@@ -18,6 +18,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import type { Listing, TireBrand, TireModel } from '@/lib/api';
 import { listingsApi, tiresApi } from '@/lib/api';
+import { sessionStorageSetItem } from '@/lib/browser-session-storage';
 import { sortTireModelsForDisplay } from '@/lib/tire-catalog-sort';
 import { toast } from '@/lib/toast';
 import { getTireModelDisplayLabel } from '@/lib/utils';
@@ -319,7 +320,7 @@ export function useTireListingForm({
           });
           reportFormSubmit(analytics, 'create', true, filledFields, { listing_category: 'tire' });
           setLoading(false);
-          sessionStorage.setItem(
+          sessionStorageSetItem(
             'listingCreatedToast',
             JSON.stringify({
               created: t('listings.createSuccess'),
@@ -332,7 +333,7 @@ export function useTireListingForm({
 
         const result = outcome.result;
         if (listingId) {
-          sessionStorage.setItem(`refreshListing_${listingId}`, 'true');
+          sessionStorageSetItem(`refreshListing_${listingId}`, 'true');
         }
         if (result.data) {
           formSubmittedSuccessfullyRef.current = true;
@@ -343,7 +344,7 @@ export function useTireListingForm({
         reportFormSubmit(analytics, 'edit', true, filledFields, { listing_category: 'tire' });
         setLoading(false);
         if (onSuccess) {
-          sessionStorage.setItem(LISTING_UPDATED_TOAST_KEY, 'true');
+          sessionStorageSetItem(LISTING_UPDATED_TOAST_KEY, 'true');
         } else {
           afterHidden(() => toast.success(t('listings.changesSaved')));
         }

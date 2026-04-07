@@ -44,7 +44,12 @@ export function RegisterPanel({
           {t('register.title')}
         </h1>
       )}
-      <form onSubmit={handleSubmit} className={formClassName} autoComplete="off">
+      <form
+        onSubmit={handleSubmit}
+        className={formClassName}
+        autoComplete="off"
+        data-testid="auth-register-form"
+      >
         <RegisterFormType formData={formData} setFormData={setFormData} />
         <RegisterFormFields
           formData={formData}
@@ -69,6 +74,7 @@ export function RegisterPanel({
           loading={loading}
           loadingText={t('register.registering')}
           className="w-full text-primary-700 font-medium text-sm md:text-base hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+          data-testid="auth-register-submit"
         >
           {t('register.registerButton')}
         </LoadingButton>
@@ -78,6 +84,7 @@ export function RegisterPanel({
             {t('register.alreadyHaveAccount')}{' '}
             <a
               href="/sign"
+              data-testid="auth-register-login-link"
               className="text-primary-700 font-semibold hover-only:hover:text-primary-900 underline transition-colors"
             >
               {t('header.login')}

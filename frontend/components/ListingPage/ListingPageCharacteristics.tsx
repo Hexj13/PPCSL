@@ -8,6 +8,7 @@ import { analytics } from '@/lib/analytics';
 import type { Listing, Vehicle } from '@/lib/api';
 import { listingsApi } from '@/lib/api';
 import { getColorLabel } from '@/lib/options';
+import { buildSignInHref } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
 import {
@@ -76,10 +77,7 @@ function BrandModelYearVinSection({
 
   const handleReveal = useCallback(() => {
     if (!user) {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('returnUrl', `/listings/${listing.id}`);
-      }
-      router.push('/login');
+      router.push(buildSignInHref(`/listings/${listing.id}`));
       return;
     }
     if (cachedFullVin) {
@@ -112,10 +110,7 @@ function BrandModelYearVinSection({
 
   const handleCopy = useCallback(() => {
     if (!user) {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('returnUrl', `/listings/${listing.id}`);
-      }
-      router.push('/login');
+      router.push(buildSignInHref(`/listings/${listing.id}`));
       return;
     }
     if (cachedFullVin) {

@@ -1,10 +1,17 @@
 import type { UpdateProfileDto, User } from '@/lib/api';
 import { favoritesApi, listingsApi, savedFiltersApi } from '@/lib/api';
+import { localStorageGetItem, localStorageRemoveItem } from '@/lib/browser-local-storage';
 import { applyComparisonAfterAuth } from '@/lib/comparisonMigration';
+import { sanitizeReturnUrl } from '@/lib/return-url';
 import { toast } from '@/lib/toast';
 
+export const hasCompleteProfileEmailNotificationsEnabled = (
+  email: string,
+  emailNotifications: boolean,
+): boolean => Boolean(email.trim()) && emailNotifications;
+
 export async function processPendingFavorites(userId: string): Promise<void> {
-  const pendingFavorites = JSON.parse(localStorage.getItem('pendingFavorites') || '[]');
+  const pendingFavorites = JSON.parse(localStorageGetItem('pendingFavorites') || '[]');
   if (pendingFavorites.length === 0) return;
   const validFavorites: string[] = [];
   for (const listingId of pendingFavorites) {
@@ -19,15 +26,18 @@ export async function processPendingFavorites(userId: string): Promise<void> {
   if (validFavorites.length > 0) {
     await Promise.all(validFavorites.map((id: string) => favoritesApi.add(id).catch(() => {})));
   }
-  localStorage.removeItem('pendingFavorites');
+  localStorageRemoveItem('pendingFavorites');
 }
 
 export async function processPendingComparisons(): Promise<void> {
   await applyComparisonAfterAuth();
 }
 
-export async function processPendingSavedFilter(t: (key: string) => string): Promise<boolean> {
-  const pendingSavedFilter = localStorage.getItem('pendingSavedFilter');
+export async function processPendingSavedFilter(
+  t: (key: string) => string,
+  returnUrl?: string | null,
+): Promise<boolean> {
+  const pendingSavedFilter = localStorageGetItem('pendingSavedFilter');
   if (!pendingSavedFilter) return false;
   try {
     const filters = JSON.parse(pendingSavedFilter);
@@ -39,8 +49,7 @@ export async function processPendingSavedFilter(t: (key: string) => string): Pro
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const filterName = `Филтер ${day}.${month}.${year} ${hours}:${minutes}`;
     await savedFiltersApi.create(filterName, filters);
-    localStorage.removeItem('pendingSavedFilter');
-    localStorage.removeItem('returnUrl');
+    localStorageRemoveItem('pendingSavedFilter');
     toast.success(t('login.filterSavedSuccess'));
     if (typeof window !== 'undefined' && window.location) {
       window.location.href = '/favorites?tab=filters';
@@ -52,24 +61,32 @@ export async function processPendingSavedFilter(t: (key: string) => string): Pro
         ? (error.response as { data?: { message?: string } })?.data?.message
         : null) || t('login.filterSaveError');
     toast.error(errorMessage);
-    localStorage.removeItem('pendingSavedFilter');
+    localStorageRemoveItem('pendingSavedFilter');
     const limitErrorText = t('login.filterLimitError');
     if (errorMessage === limitErrorText) {
-      localStorage.removeItem('returnUrl');
       if (typeof window !== 'undefined' && window.location) {
         window.location.href = '/favorites?tab=filters';
       }
+      return true;
+    }
+    const safeReturnUrl = sanitizeReturnUrl(returnUrl);
+    if (safeReturnUrl && typeof window !== 'undefined' && window.location) {
+      window.location.href = safeReturnUrl;
       return true;
     }
   }
   return false;
 }
 
-export async function processPendingData(user: User, t: (key: string) => string): Promise<boolean> {
+export async function processPendingData(
+  user: User,
+  t: (key: string) => string,
+  returnUrl?: string | null,
+): Promise<boolean> {
   if (typeof window === 'undefined') return false;
   await processPendingFavorites(user.id);
   await processPendingComparisons();
-  return processPendingSavedFilter(t);
+  return processPendingSavedFilter(t, returnUrl);
 }
 
 export function buildUpdateData(
@@ -84,18 +101,30 @@ export function buildUpdateData(
   isBusiness: boolean,
 ): UpdateProfileDto {
   const updateData: UpdateProfileDto = {};
+  const normalizedEmail = formData.email.trim();
+  const emailNotificationsEnabled = hasCompleteProfileEmailNotificationsEnabled(
+    normalizedEmail,
+    formData.emailNotifications,
+  );
+
   if (isBusiness) {
     updateData.companyWebsiteUrl = formData.companyWebsiteUrl?.trim() || '';
-    if (formData.email?.trim()) updateData.email = formData.email.trim();
-    updateData.emailNotifications = formData.emailNotifications;
     updateData.additionalPhone = formData.additionalPhone?.trim()
       ? formData.additionalPhone.trim()
       : null;
   } else {
     if (formData.firstName?.trim()) updateData.firstName = formData.firstName.trim();
     if (formData.lastName?.trim()) updateData.lastName = formData.lastName.trim();
-    if (formData.email?.trim()) updateData.email = formData.email.trim();
   }
+
+  if (normalizedEmail) {
+    updateData.email = normalizedEmail;
+    updateData.emailNotifications = emailNotificationsEnabled;
+    updateData.emailNotificationListingRefreshReminders = emailNotificationsEnabled;
+    updateData.emailNotificationWeeklyViewsDigest = emailNotificationsEnabled;
+    updateData.emailNotificationSecurityAlerts = emailNotificationsEnabled;
+  }
+
   return updateData;
 }
 

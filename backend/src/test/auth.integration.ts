@@ -2,21 +2,25 @@
 import * as supertest from 'supertest';
 
 import { getTestRequest } from './setup-integration';
+import { createTestCredentials } from './test-data-cleanup';
 
 const TEST_PASSWORD = 'Test123!@#';
 
 async function registerTestUser(
   req: ReturnType<typeof getTestRequest>,
-): Promise<{ email: string; password: string }> {
-  const makePayload = () => ({
-    email: `test${Date.now()}${Math.floor(Math.random() * 10000)}@example.com`,
-    password: TEST_PASSWORD,
-    type: 'Individual' as const,
-    phone: `+38970${String(Date.now() + Math.floor(Math.random() * 10000)).slice(-7)}`,
-    firstName: 'Test',
-    lastName: 'User',
-    termsAccepted: true,
-  });
+): Promise<{ email: string; password: string; phone: string }> {
+  const makePayload = () => {
+    const credentials = createTestCredentials('auth-register-user');
+    return {
+      email: credentials.email,
+      password: TEST_PASSWORD,
+      type: 'Individual' as const,
+      phone: credentials.phone,
+      firstName: credentials.firstName,
+      lastName: credentials.lastName,
+      termsAccepted: true,
+    };
+  };
   let payload = makePayload();
   let res = await req.post('/api/auth/register').send(payload);
   let retries = 0;
@@ -34,6 +38,7 @@ async function registerTestUser(
   return {
     email: res.body.email ?? payload.email,
     password: TEST_PASSWORD,
+    phone: res.body.phone ?? payload.phone,
   };
 }
 
@@ -46,22 +51,24 @@ describe('Auth API Integration Tests', () => {
 
   describe('POST /api/auth/register', () => {
     it('should register a new user and match OpenAPI schema', async () => {
+      const credentials = createTestCredentials('auth-register-endpoint');
       let registerData = {
-        email: `test${Date.now()}@example.com`,
-        password: 'Test123!@#',
+        email: credentials.email,
+        password: credentials.password,
         type: 'Individual',
-        phone: `+38970${String(Date.now()).slice(-7)}`,
-        firstName: 'Test',
-        lastName: 'User',
+        phone: credentials.phone,
+        firstName: credentials.firstName,
+        lastName: credentials.lastName,
         termsAccepted: true,
       };
       let response = await request.post('/api/auth/register').send(registerData);
       let retries = 0;
       while (response.status === 400 && retries < 3) {
+        const retryCredentials = createTestCredentials('auth-register-endpoint-retry');
         registerData = {
           ...registerData,
-          email: `test${Date.now()}@example.com`,
-          phone: `+38970${String(Date.now()).slice(-7)}`,
+          email: retryCredentials.email,
+          phone: retryCredentials.phone,
         };
         response = await request.post('/api/auth/register').send(registerData);
         retries += 1;
@@ -74,11 +81,13 @@ describe('Auth API Integration Tests', () => {
 
   describe('POST /api/auth/login', () => {
     let testEmail: string;
+    let testPhone: string;
     let testPassword: string;
 
     beforeAll(async () => {
       const user = await registerTestUser(request);
       testEmail = user.email;
+      testPhone = user.phone;
       testPassword = user.password;
     }, 120000);
 
@@ -86,7 +95,7 @@ describe('Auth API Integration Tests', () => {
       const response = await request
         .post('/api/auth/login')
         .send({
-          login: testEmail,
+          login: testPhone,
           password: testPassword,
         })
         .expect(200);
@@ -112,12 +121,14 @@ describe('Auth API Integration Tests', () => {
   describe('GET /api/auth/me', () => {
     let authToken: string;
     let testEmail: string;
+    let testPhone: string;
 
     beforeAll(async () => {
       const user = await registerTestUser(request);
       testEmail = user.email;
+      testPhone = user.phone;
       const loginResponse = await request.post('/api/auth/login').send({
-        login: user.email,
+        login: testPhone,
         password: user.password,
       });
       authToken = loginResponse.body.access_token ?? '';
@@ -148,11 +159,13 @@ describe('Auth API Integration Tests', () => {
 
   describe('DELETE /api/auth/profile', () => {
     let authToken: string;
+    let testPhone: string;
 
     beforeAll(async () => {
       const user = await registerTestUser(request);
+      testPhone = user.phone;
       const loginResponse = await request.post('/api/auth/login').send({
-        login: user.email,
+        login: testPhone,
         password: user.password,
       });
       authToken = loginResponse.body.access_token ?? '';

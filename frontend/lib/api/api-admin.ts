@@ -3,7 +3,14 @@ import type { ListingStatus } from '../types';
 import { adminBrandsModelsApi } from './admin-brands-models';
 import { adminTireBrandsModelsApi } from './admin-tire-brands-models';
 import { api } from './api-client';
-import type { AdminStats, Listing, PaginationMeta, PromotionHistory, User } from './api-types';
+import type {
+  AdminStats,
+  Listing,
+  PaginationMeta,
+  PromotionHistory,
+  User,
+  AdminUpdateUserProfileResponse,
+} from './api-types';
 
 export const adminApi = {
   getAllListings: (
@@ -90,8 +97,9 @@ export const adminApi = {
       companyName?: string;
       companyWebsiteUrl?: string;
       additionalPhone?: string;
+      emailVerified?: boolean;
     },
-  ) => api.patch<User>(`/api/admin/users/${userId}/profile`, data),
+  ) => api.patch<AdminUpdateUserProfileResponse>(`/api/admin/users/${userId}/profile`, data),
   toggleListingPromotion: (id: string, isPromoted: boolean, days?: number | null) =>
     api.patch(`/api/admin/listings/${id}/promote`, { is_promoted: isPromoted, days }),
   getAllPromotions: (

@@ -41,7 +41,7 @@ export function SignPageContent() {
   }
 
   return (
-    <div className="max-w-md mx-auto mt-6 md:mt-12 mb-16">
+    <div className="max-w-md mx-auto mt-6 md:mt-12 mb-16" data-testid="auth-page">
       <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center text-primary-900">
         {t('sign.greeting')}
       </h1>
@@ -58,6 +58,7 @@ export function SignPageContent() {
             role="tab"
             aria-selected={tab === 'login'}
             id="sign-tab-login"
+            data-testid="auth-tab-login"
             className={`flex-1 px-4 py-3 text-sm md:text-base font-semibold transition-all duration-300 ease-in-out relative z-10 text-primary-900 ${
               tab === 'login'
                 ? 'bg-primary-500/10 rounded-tl-lg'
@@ -73,6 +74,7 @@ export function SignPageContent() {
             role="tab"
             aria-selected={tab === 'register'}
             id="sign-tab-register"
+            data-testid="auth-tab-register"
             className={`flex-1 px-4 py-3 text-sm md:text-base font-semibold transition-all duration-300 ease-in-out relative z-10 text-primary-900 ${
               tab === 'register'
                 ? 'bg-primary-500/10 rounded-tr-lg'
@@ -94,6 +96,7 @@ export function SignPageContent() {
 
         <div
           id="sign-panel-login"
+          data-testid="auth-panel-login"
           role="tabpanel"
           aria-labelledby="sign-tab-login"
           hidden={tab !== 'login'}
@@ -118,6 +121,7 @@ export function SignPageContent() {
 
         <div
           id="sign-panel-register"
+          data-testid="auth-panel-register"
           role="tabpanel"
           aria-labelledby="sign-tab-register"
           hidden={tab !== 'register'}

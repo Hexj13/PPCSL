@@ -25,6 +25,7 @@ describe('UserProfilePatchService', () => {
       companyName: null,
       companyWebsiteUrl: null,
       additionalPhone: null,
+      preferredLocale: null,
       active: true,
     });
 
@@ -65,5 +66,10 @@ describe('UserProfilePatchService', () => {
     u.type = UserType.Business;
     const patch = await service.buildPatch(u, u.id, { additionalPhone: '' });
     expect(patch.additionalPhone).toBeNull();
+  });
+
+  it('includes preferredLocale when set', async () => {
+    const patch = await service.buildPatch(baseUser(), 'u1', { preferredLocale: 'ru' });
+    expect(patch.preferredLocale).toBe('ru');
   });
 });

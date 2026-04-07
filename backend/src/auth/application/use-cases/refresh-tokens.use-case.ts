@@ -44,6 +44,7 @@ export class RefreshTokensUseCase {
         companyWebsiteUrl: user.companyWebsiteUrl,
         phone: user.phone,
         boardSlug,
+        preferredLocale: user.preferredLocale ?? null,
       },
     };
   }

@@ -58,7 +58,9 @@ export function Checkbox({
           } ${
             checked
               ? 'border-primary-500 bg-primary-500/10'
-              : 'border-divider bg-bg-secondary group-hover:border-primary-500'
+              : disabled
+                ? 'border-divider bg-bg-secondary'
+                : 'border-primary-700 bg-bg-secondary group-hover:border-primary-900'
           }`}
         >
           {checked && <CheckIcon className={`${sizeClasses[size].icon} text-primary-900`} />}
@@ -67,8 +69,14 @@ export function Checkbox({
       {label && (
         <label
           htmlFor={checkboxId}
-          className={`text-sm transition-colors duration-200 cursor-pointer ${
-            checked ? 'text-primary-700' : 'text-text-secondary group-hover:text-text-secondary'
+          className={`text-sm transition-colors duration-200 ${
+            disabled ? 'cursor-not-allowed text-text-secondary' : 'cursor-pointer'
+          } ${
+            disabled
+              ? ''
+              : checked
+                ? 'text-primary-700'
+                : 'text-text-primary group-hover:text-primary-900'
           } ${labelClassName}`}
         >
           {label}

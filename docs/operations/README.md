@@ -15,6 +15,7 @@ Deploy, monitoring, runbooks.
 ## Contents
 
 - [../guides/deployment.md](../guides/deployment.md) — deployment
+- [smtp-email-setup.md](./smtp-email-setup.md) — transactional email (SMTP): local, Render, Google Workspace ([RU](./smtp-email-setup-ru.md))
 - [../guides/sentry.md](../guides/sentry.md) — Sentry setup and monitoring
 - [sentry-launch-checklist.md](./sentry-launch-checklist.md) — Sentry launch readiness
 - [user-action-logging.md](./user-action-logging.md) — structured user-action logs (INFO success, WARN `errors.*` failures on allowlisted routes)

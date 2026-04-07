@@ -32,6 +32,8 @@ checkPlatform(['md']);
 const platformConfig = getPlatformConfig();
 const { cities, descriptions } = platformConfig;
 
+const STAGE_ADMIN_PASSWORD = 'GGGgggTEST777';
+
 const colors = [
   'black',
   'white',
@@ -156,7 +158,7 @@ async function getOrCreateAdminUser() {
   let admin = await userRepo.findOne({ where: { email: 'admin@admin.com' } });
 
   if (!admin) {
-    const hashedPassword = await bcrypt.hash('admin123', 10);
+    const hashedPassword = await bcrypt.hash(STAGE_ADMIN_PASSWORD, 10);
     admin = userRepo.create({
       email: 'admin@admin.com',
       password: hashedPassword,
@@ -172,6 +174,7 @@ async function getOrCreateAdminUser() {
     admin.type = UserTypeEnum.Admin;
     admin.active = true;
     admin.phone = `${platformConfig.phonePrefix}70111111`;
+    admin.password = await bcrypt.hash(STAGE_ADMIN_PASSWORD, 10);
     admin = await userRepo.save(admin);
     console.log('✅ Updated admin user');
   }
@@ -608,7 +611,7 @@ export async function seed() {
     console.log('\n📝 Test credentials:');
     console.log('   Admin:');
     console.log('     Email: admin@admin.com');
-    console.log('     Password: admin123');
+    console.log(`     Password: ${STAGE_ADMIN_PASSWORD}`);
     console.log('   Users:');
     for (let i = 1; i <= regularUsers.length; i++) {
       console.log(`     Email: user${i}@test.com`);

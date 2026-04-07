@@ -332,7 +332,7 @@ export class SearchListingsDto {
     description: 'Vehicle type filter',
   })
   @IsOptional()
-  @IsEnum(['car', 'truck', 'moto'], { message: 'vehicleType must be car, truck, or moto' })
+  @IsEnum(['car', 'truck', 'moto'], { message: 'validation.vehicleTypeCategoryEnum' })
   vehicleType?: 'car' | 'truck' | 'moto';
 
   @ApiPropertyOptional({

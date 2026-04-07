@@ -50,7 +50,7 @@ export function VerifyPhoneCodeForm({
           <p className="text-sm">{t('verifyPhone.enterCode')}</p>
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form onSubmit={onSubmit} className="space-y-4" data-testid="verify-phone-form">
           <div className="flex justify-center gap-2 md:gap-3">
             {[0, 1, 2, 3, 4, 5].map((index) => (
               <div key={index} className="relative">
@@ -78,6 +78,7 @@ export function VerifyPhoneCodeForm({
                   }}
                   autoComplete={index === 0 ? 'one-time-code' : 'off'}
                   autoFocus={index === 0} // eslint-disable-line jsx-a11y/no-autofocus
+                  data-testid={`verify-phone-code-input-${index}`}
                 />
                 {!code[index] && (
                   <span
@@ -106,6 +107,7 @@ export function VerifyPhoneCodeForm({
               onClick={onBack}
               disabled={isSubmitting}
               className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-gray-500/40 hover-only:hover:border-gray-500/60 bg-gray-500/20 text-text-secondary font-semibold text-base hover-only:hover:text-text-primary transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+              data-testid="verify-phone-back"
             >
               {t('common.back')}
             </button>
@@ -114,6 +116,7 @@ export function VerifyPhoneCodeForm({
               loading={isSubmitting}
               disabled={code.join('').trim().length !== 6 || isVerificationBlocked}
               className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-primary-600 hover-only:hover:border-primary-700 bg-primary-500/20 text-primary-800 font-semibold text-base hover-only:hover:bg-primary-500/30 transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+              data-testid="verify-phone-submit"
             >
               {isVerificationBlocked ? t('smsVerification.blocked') : t('smsVerification.verify')}
             </LoadingButton>

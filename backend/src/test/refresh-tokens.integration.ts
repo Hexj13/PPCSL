@@ -1,6 +1,7 @@
 import request from 'supertest';
 
 import { getTestRequest } from './setup-integration';
+import { createTestCredentials } from './test-data-cleanup';
 
 describe('Refresh Tokens Integration', () => {
   let request: ReturnType<typeof getTestRequest>;
@@ -8,27 +9,31 @@ describe('Refresh Tokens Integration', () => {
   let refreshToken: string;
   let userId: string;
   let testEmail: string;
+  let testPhone: string;
   let testPassword: string;
+  let firstName: string;
+  let lastName: string;
 
   beforeAll(() => {
     request = getTestRequest();
-    testEmail = `test${Date.now()}@example.com`;
-    testPassword = 'Test123!@#';
+    const credentials = createTestCredentials('refresh-tokens');
+    testEmail = credentials.email;
+    testPassword = credentials.password;
+    testPhone = credentials.phone;
+    firstName = credentials.firstName;
+    lastName = credentials.lastName;
   });
 
   beforeAll(async () => {
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    const uniquePhone = () =>
-      `+38970${String(Date.now() + Math.floor(Math.random() * 1000)).slice(-6)}`;
-
     let registerResponse = await request.post('/api/auth/register').send({
       email: testEmail,
       password: testPassword,
       type: 'Individual',
-      phone: uniquePhone(),
-      firstName: 'Test',
-      lastName: 'User',
+      phone: testPhone,
+      firstName,
+      lastName,
       termsAccepted: true,
     });
 
@@ -40,14 +45,16 @@ describe('Refresh Tokens Integration', () => {
       retries < 5
     ) {
       await new Promise((resolve) => setTimeout(resolve, 2000 * (retries + 1)));
-      const retryEmail = retries > 0 ? `test${Date.now() + retries}@example.com` : testEmail;
+      const retryCredentials = createTestCredentials('refresh-tokens-retry');
+      const retryEmail = retries > 0 ? retryCredentials.email : testEmail;
+      testPhone = retryCredentials.phone;
       registerResponse = await request.post('/api/auth/register').send({
         email: retryEmail,
         password: testPassword,
         type: 'Individual',
-        phone: uniquePhone(),
-        firstName: 'Test',
-        lastName: 'User',
+        phone: testPhone,
+        firstName,
+        lastName,
         termsAccepted: true,
       });
       retries++;
@@ -65,7 +72,7 @@ describe('Refresh Tokens Integration', () => {
   describe('POST /api/auth/refresh', () => {
     beforeAll(async () => {
       const loginDto = {
-        login: testEmail,
+        login: testPhone,
         password: testPassword,
       };
 
@@ -118,7 +125,7 @@ describe('Refresh Tokens Integration', () => {
       const loginResponse = await request
         .post('/api/auth/login')
         .send({
-          login: testEmail,
+          login: testPhone,
           password: testPassword,
         })
         .expect(200);
@@ -150,7 +157,7 @@ describe('Refresh Tokens Integration', () => {
       const loginResponse = await request
         .post('/api/auth/login')
         .send({
-          login: testEmail,
+          login: testPhone,
           password: testPassword,
         })
         .expect(200);

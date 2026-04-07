@@ -1,6 +1,7 @@
 import { Repository } from 'typeorm';
 
 import { UserProfilePatchService } from '../auth/application/user-profile-patch.service';
+import { EmailService } from '../auth/infrastructure/services/email.service';
 import { ListingStatus as ListingStatusEnum } from '../common/types';
 import { Listing } from '../listings/entities/listing.entity';
 import { PromotionHistory } from '../listings/entities/promotion-history.entity';
@@ -54,6 +55,7 @@ describe('AdminService', () => {
         {} as IListingCache,
         usersService,
         {} as UserProfilePatchService,
+        {} as EmailService,
       );
 
       const result = await service.validateAssignUser('target-id');
@@ -102,6 +104,7 @@ describe('AdminService', () => {
         {} as IListingCache,
         usersService,
         {} as UserProfilePatchService,
+        {} as EmailService,
       );
 
       const result = await service.validateAssignUser('biz-id');
@@ -139,6 +142,7 @@ describe('AdminService', () => {
         {} as IListingCache,
         usersService,
         {} as UserProfilePatchService,
+        {} as EmailService,
       );
 
       const result = await service.validateAssignUser('minimal-id');
@@ -176,6 +180,7 @@ describe('AdminService', () => {
         {} as IListingCache,
         usersService,
         {} as UserProfilePatchService,
+        {} as EmailService,
       );
 
       const result = await service.validateAssignUser('id-only-user');
@@ -201,6 +206,7 @@ describe('AdminService', () => {
         {} as IListingCache,
         usersService,
         {} as UserProfilePatchService,
+        {} as EmailService,
       );
 
       const result = await service.validateAssignUser('non-existent');
@@ -228,6 +234,7 @@ describe('AdminService', () => {
         {} as IListingCache,
         usersService,
         {} as UserProfilePatchService,
+        {} as EmailService,
       );
 
       const result = await service.validateAssignUser('deactivated-id');
@@ -258,6 +265,7 @@ describe('AdminService', () => {
         {} as IListingCache,
         usersService,
         {} as UserProfilePatchService,
+        {} as EmailService,
       );
 
       const result = await service.validateAssignUser('at-limit-id');
@@ -278,6 +286,9 @@ describe('AdminService', () => {
       const usersService = {
         update: jest.fn(),
       } as unknown as UsersService;
+      const emailService = {
+        sendEmailChangeConfirmationEmail: jest.fn(),
+      } as unknown as EmailService;
 
       const service = new AdminService(
         usersRepository,
@@ -289,15 +300,20 @@ describe('AdminService', () => {
         {} as IListingCache,
         usersService,
         userProfilePatchService,
+        emailService,
       );
 
       const result = await service.updateUserProfile('target', {}, 'actor-1');
 
-      expect(result.id).toBe('target');
+      expect(result).toEqual({
+        user: expect.objectContaining({ id: 'target' }),
+        emailConfirmationSent: false,
+      });
       expect(usersService.update).not.toHaveBeenCalled();
+      expect(emailService.sendEmailChangeConfirmationEmail).not.toHaveBeenCalled();
     });
 
-    it('sets emailVerified false when email changes', async () => {
+    it('sends confirmation email when admin changes email without confirming it', async () => {
       const user = createUser({ id: 'target', email: 'old@example.com', emailVerified: true });
       const usersRepository = {
         findOne: jest.fn().mockResolvedValue(user),
@@ -314,6 +330,9 @@ describe('AdminService', () => {
       const usersService = {
         update: jest.fn().mockResolvedValue(updated),
       } as unknown as UsersService;
+      const emailService = {
+        sendEmailChangeConfirmationEmail: jest.fn().mockResolvedValue(undefined),
+      } as unknown as EmailService;
 
       const service = new AdminService(
         usersRepository,
@@ -325,14 +344,116 @@ describe('AdminService', () => {
         {} as IListingCache,
         usersService,
         userProfilePatchService,
+        emailService,
       );
 
-      await service.updateUserProfile('target', { email: 'new@example.com' }, 'actor-1');
+      const result = await service.updateUserProfile(
+        'target',
+        { email: 'new@example.com', emailVerified: false },
+        'actor-1',
+      );
 
       expect(usersService.update).toHaveBeenCalledWith('target', {
         email: 'new@example.com',
         emailVerified: false,
       });
+      expect(emailService.sendEmailChangeConfirmationEmail).toHaveBeenCalledWith(
+        'target',
+        'new@example.com',
+        updated.preferredLocale,
+      );
+      expect(result.emailConfirmationSent).toBe(true);
+      expect(result.user.emailVerified).toBe(false);
+    });
+
+    it('does not send confirmation email when admin marks new email as verified', async () => {
+      const user = createUser({ id: 'target', email: 'old@example.com', emailVerified: false });
+      const usersRepository = {
+        findOne: jest.fn().mockResolvedValue(user),
+      } as unknown as Repository<User>;
+      const userProfilePatchService = {
+        buildPatch: jest.fn().mockResolvedValue({ email: 'new@example.com' }),
+      } as unknown as UserProfilePatchService;
+      const updated = createUser({
+        id: 'target',
+        email: 'new@example.com',
+        emailVerified: true,
+        password: 'hash',
+      });
+      const usersService = {
+        update: jest.fn().mockResolvedValue(updated),
+      } as unknown as UsersService;
+      const emailService = {
+        sendEmailChangeConfirmationEmail: jest.fn(),
+      } as unknown as EmailService;
+
+      const service = new AdminService(
+        usersRepository,
+        {} as Repository<Listing>,
+        {} as Repository<PromotionHistory>,
+        {} as RefreshTokenService,
+        {} as ListingsService,
+        {} as ExchangeRatesService,
+        {} as IListingCache,
+        usersService,
+        userProfilePatchService,
+        emailService,
+      );
+
+      const result = await service.updateUserProfile(
+        'target',
+        { email: 'new@example.com', emailVerified: true },
+        'actor-1',
+      );
+
+      expect(usersService.update).toHaveBeenCalledWith('target', {
+        email: 'new@example.com',
+        emailVerified: true,
+      });
+      expect(emailService.sendEmailChangeConfirmationEmail).not.toHaveBeenCalled();
+      expect(result.emailConfirmationSent).toBe(false);
+      expect(result.user.emailVerified).toBe(true);
+    });
+
+    it('applies emailVerified from dto when email unchanged', async () => {
+      const user = createUser({ id: 'target', email: 'a@example.com', emailVerified: false });
+      const usersRepository = {
+        findOne: jest.fn().mockResolvedValue(user),
+      } as unknown as Repository<User>;
+      const userProfilePatchService = {
+        buildPatch: jest.fn().mockResolvedValue({}),
+      } as unknown as UserProfilePatchService;
+      const updated = createUser({
+        id: 'target',
+        email: 'a@example.com',
+        emailVerified: true,
+        password: 'hash',
+      });
+      const usersService = {
+        update: jest.fn().mockResolvedValue(updated),
+      } as unknown as UsersService;
+      const emailService = {
+        sendEmailChangeConfirmationEmail: jest.fn(),
+      } as unknown as EmailService;
+
+      const service = new AdminService(
+        usersRepository,
+        {} as Repository<Listing>,
+        {} as Repository<PromotionHistory>,
+        {} as RefreshTokenService,
+        {} as ListingsService,
+        {} as ExchangeRatesService,
+        {} as IListingCache,
+        usersService,
+        userProfilePatchService,
+        emailService,
+      );
+
+      const result = await service.updateUserProfile('target', { emailVerified: true }, 'actor-1');
+
+      expect(usersService.update).toHaveBeenCalledWith('target', { emailVerified: true });
+      expect(emailService.sendEmailChangeConfirmationEmail).not.toHaveBeenCalled();
+      expect(result.emailConfirmationSent).toBe(false);
     });
   });
 });

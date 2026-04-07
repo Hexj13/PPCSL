@@ -4,6 +4,9 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
+  EMAIL_NOTIFICATION_FIELDS,
+  enableAllEmailNotifications,
+  shouldAutoEnableEmailNotifications,
   convertToBoolean,
   getSafeEmailValue,
   initializeFormData,
@@ -23,13 +26,17 @@ function hasProfileFormChanges(
   initialData: ReturnType<typeof initializeFormData>,
 ): boolean {
   return (
-    formData.email !== initialData.email ||
     formData.firstName !== initialData.firstName ||
     formData.lastName !== initialData.lastName ||
     formData.companyName !== initialData.companyName ||
     formData.companyWebsiteUrl !== initialData.companyWebsiteUrl ||
     (formData.additionalPhone || '') !== (initialData.additionalPhone || '') ||
     formData.emailNotifications !== initialData.emailNotifications ||
+    formData.emailNotificationListingRefreshReminders !==
+      initialData.emailNotificationListingRefreshReminders ||
+    formData.emailNotificationWeeklyViewsDigest !==
+      initialData.emailNotificationWeeklyViewsDigest ||
+    formData.emailNotificationSecurityAlerts !== initialData.emailNotificationSecurityAlerts ||
     formData.viber !== initialData.viber ||
     formData.whatsapp !== initialData.whatsapp ||
     formData.telegram !== initialData.telegram
@@ -59,6 +66,98 @@ function getProfilePasswordChangeError(
   return ruleError || null;
 }
 
+type ProfileSubmitState = {
+  hasProfileChanges: boolean;
+  hasEmailChange: boolean;
+  normalizedNextEmail: string;
+  curPw: string;
+  neuPw: string;
+  passwordComplete: boolean;
+};
+
+export function getProfileSubmitState(
+  user: NonNullable<ReturnType<typeof useAuthStore.getState>['user']>,
+  formData: UpdateProfileDto,
+  emailForChange: string,
+  currentPassword: string,
+  newPassword: string,
+): ProfileSubmitState {
+  const initialData = initializeFormData(user);
+  const hasProfileChanges = hasProfileFormChanges(formData, initialData);
+  const normalizedCurrentEmail = getSafeEmailValue(user.email).toLowerCase();
+  const normalizedNextEmail = emailForChange.trim().toLowerCase();
+  const hasEmailChange = normalizedCurrentEmail !== normalizedNextEmail;
+  const curPw = currentPassword.trim();
+  const neuPw = newPassword.trim();
+  const passwordComplete = isProfilePasswordChangeComplete(curPw, neuPw);
+  return {
+    hasProfileChanges,
+    hasEmailChange,
+    normalizedNextEmail,
+    curPw,
+    neuPw,
+    passwordComplete,
+  };
+}
+
+function getProfileValidationError(
+  user: NonNullable<ReturnType<typeof useAuthStore.getState>['user']>,
+  formData: UpdateProfileDto,
+  emailForChange: string,
+  t: (key: string) => string,
+  curPw: string,
+  neuPw: string,
+): string | null {
+  if (emailForChange && !validateEmail(emailForChange)) {
+    return t('profile.invalidEmail');
+  }
+  if (formData.companyWebsiteUrl && !validateCompanyWebsiteUrl(formData.companyWebsiteUrl)) {
+    return t('profile.invalidCompanyWebsiteUrl');
+  }
+  if (user.type === 'Business' && formData.additionalPhone?.trim()) {
+    const trimmedAdditionalPhone = formData.additionalPhone.trim();
+    const phoneErr = validatePhone(trimmedAdditionalPhone, t);
+    if (phoneErr) {
+      return phoneErr;
+    }
+    if (trimmedAdditionalPhone === (user.phone || '').trim()) {
+      return t('errors.additionalPhoneSameAsPrimary');
+    }
+  }
+  return getProfilePasswordChangeError(curPw, neuPw, t);
+}
+
+function handleProfileSubmitError(err: unknown, t: (key: string) => string): void {
+  const axiosError =
+    err && typeof err === 'object' && 'response' in err
+      ? (err as { response?: { data?: { message?: string; errorKey?: string } } })
+      : null;
+  const data = axiosError?.response?.data;
+  const errorKey = typeof data?.errorKey === 'string' ? data.errorKey : undefined;
+
+  if (errorKey) {
+    const translatedError = t(errorKey);
+    const resolvedErrorMessage =
+      translatedError !== errorKey
+        ? translatedError
+        : typeof data?.message === 'string' && data.message.trim()
+          ? data.message
+          : errorKey;
+    if (errorKey === 'errors.emailChangeTooManyAttempts') {
+      toast.warning(resolvedErrorMessage);
+      return;
+    }
+    if (translatedError !== errorKey) {
+      toast.error(translatedError);
+      return;
+    }
+  }
+
+  if (typeof data?.message === 'string' && data.message.trim()) {
+    toast.error(data.message);
+  }
+}
+
 export function useProfilePage() {
   const router = useRouter();
   const { user, isInitialized, setAuth, token, logout } = useAuthStore();
@@ -66,17 +165,20 @@ export function useProfilePage() {
   const [loading, setLoading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [formData, setFormData] = useState<UpdateProfileDto>(() => initializeFormData(user));
+  const [emailForChange, setEmailForChange] = useState(() => getSafeEmailValue(user?.email));
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const hasLoadedRef = useRef(false);
+  const previousEmailForChangeRef = useRef(getSafeEmailValue(user?.email));
+  const emailNotificationsInteractionLockedRef = useRef(Boolean(getSafeEmailValue(user?.email)));
   const logoutRef = useRef(logout);
   logoutRef.current = logout;
 
   const canSave = useMemo(() => {
     if (!user) return false;
-    if (formData.email && !validateEmail(formData.email)) return false;
+    if (emailForChange && !validateEmail(emailForChange)) return false;
     if (
       formData.companyWebsiteUrl?.trim() &&
       !validateCompanyWebsiteUrl(formData.companyWebsiteUrl)
@@ -92,11 +194,14 @@ export function useProfilePage() {
     }
     const initialData = initializeFormData(user);
     const hasProfileChanges = hasProfileFormChanges(formData, initialData);
+    const normalizedCurrentEmail = getSafeEmailValue(user.email).toLowerCase();
+    const normalizedNextEmail = emailForChange.trim().toLowerCase();
+    const hasEmailChange = normalizedCurrentEmail !== normalizedNextEmail;
     const cur = currentPassword.trim();
     const neu = newPassword.trim();
     const passwordComplete = isProfilePasswordChangeComplete(cur, neu);
-    return hasProfileChanges || passwordComplete;
-  }, [user, formData, currentPassword, newPassword, t]);
+    return hasProfileChanges || hasEmailChange || passwordComplete;
+  }, [user, formData, emailForChange, currentPassword, newPassword, t]);
 
   useEffect(() => {
     if (!isInitialized) return;
@@ -111,20 +216,32 @@ export function useProfilePage() {
         if (!user) setLoadingProfile(true);
         const response = await authApi.me();
         const profileUser = response.data;
-        setAuth(profileUser, useAuthStore.getState().token);
+        setAuth(profileUser, useAuthStore.getState().token, useAuthStore.getState().refreshToken);
         const formDataToSet = {
-          email: getSafeEmailValue(profileUser.email),
           firstName: profileUser.firstName || '',
           lastName: profileUser.lastName || '',
           companyName: profileUser.companyName || '',
           companyWebsiteUrl: profileUser.companyWebsiteUrl || '',
           additionalPhone: profileUser.additionalPhone || '',
           emailNotifications: convertToBoolean(profileUser.emailNotifications),
+          emailNotificationListingRefreshReminders: convertToBoolean(
+            profileUser.emailNotificationListingRefreshReminders,
+          ),
+          emailNotificationWeeklyViewsDigest: convertToBoolean(
+            profileUser.emailNotificationWeeklyViewsDigest,
+          ),
+          emailNotificationSecurityAlerts: convertToBoolean(
+            profileUser.emailNotificationSecurityAlerts,
+          ),
           viber: convertToBoolean(profileUser.viber),
           whatsapp: convertToBoolean(profileUser.whatsapp),
           telegram: convertToBoolean(profileUser.telegram),
         };
         setFormData(formDataToSet);
+        const nextEmailForChange = getSafeEmailValue(profileUser.email);
+        previousEmailForChangeRef.current = nextEmailForChange;
+        emailNotificationsInteractionLockedRef.current = Boolean(nextEmailForChange);
+        setEmailForChange(nextEmailForChange);
         hasLoadedRef.current = true;
       } catch {
         hasLoadedRef.current = true;
@@ -145,12 +262,41 @@ export function useProfilePage() {
       const hasChanges = hasProfileFormChanges(prev, newFormData);
       return hasChanges ? newFormData : prev;
     });
+    const nextEmailForChange = getSafeEmailValue(user.email);
+    previousEmailForChangeRef.current = nextEmailForChange;
+    emailNotificationsInteractionLockedRef.current = Boolean(nextEmailForChange);
+    setEmailForChange(nextEmailForChange);
   }, [user]);
 
+  useEffect(() => {
+    if (!hasLoadedRef.current) {
+      previousEmailForChangeRef.current = emailForChange;
+      return;
+    }
+
+    if (
+      shouldAutoEnableEmailNotifications(
+        previousEmailForChangeRef.current,
+        emailForChange,
+        emailNotificationsInteractionLockedRef.current,
+      )
+    ) {
+      emailNotificationsInteractionLockedRef.current = true;
+      setFormData((prev) => enableAllEmailNotifications(prev));
+    }
+
+    previousEmailForChangeRef.current = emailForChange;
+  }, [emailForChange]);
+
   const handleChange = useCallback((field: keyof UpdateProfileDto, value: string | boolean) => {
+    if (
+      field === 'emailNotifications' ||
+      EMAIL_NOTIFICATION_FIELDS.includes(field as (typeof EMAIL_NOTIFICATION_FIELDS)[number])
+    ) {
+      emailNotificationsInteractionLockedRef.current = true;
+    }
     setFormData((prev) => {
-      const nextValue = field === 'email' ? (value as string) : value;
-      const newData = { ...prev, [field]: nextValue };
+      const newData = { ...prev, [field]: value };
       return newData;
     });
   }, []);
@@ -159,59 +305,72 @@ export function useProfilePage() {
     async (e: React.FormEvent) => {
       e.preventDefault();
       if (!user) return;
-      if (formData.email && !validateEmail(formData.email)) {
-        toast.error(t('profile.invalidEmail'));
-        return;
-      }
-      if (formData.companyWebsiteUrl && !validateCompanyWebsiteUrl(formData.companyWebsiteUrl)) {
-        toast.error(t('profile.invalidCompanyWebsiteUrl'));
-        return;
-      }
-      if (user.type === 'Business' && formData.additionalPhone?.trim()) {
-        const phoneErr = validatePhone(formData.additionalPhone.trim(), t);
-        if (phoneErr) {
-          toast.error(phoneErr);
-          return;
-        }
-        if (formData.additionalPhone.trim() === (user.phone || '').trim()) {
-          toast.error(t('errors.additionalPhoneSameAsPrimary'));
-          return;
-        }
-      }
-      const initialData = initializeFormData(user);
-      const hasProfileChanges = hasProfileFormChanges(formData, initialData);
-      const curPw = currentPassword.trim();
-      const neuPw = newPassword.trim();
-      const passwordComplete = isProfilePasswordChangeComplete(curPw, neuPw);
-      const passwordError = getProfilePasswordChangeError(curPw, neuPw, t);
-      if (passwordError) {
-        toast.error(passwordError);
+      const submitState = getProfileSubmitState(
+        user,
+        formData,
+        emailForChange,
+        currentPassword,
+        newPassword,
+      );
+      const validationError = getProfileValidationError(
+        user,
+        formData,
+        emailForChange,
+        t,
+        submitState.curPw,
+        submitState.neuPw,
+      );
+
+      if (validationError) {
+        toast.error(validationError);
         return;
       }
 
-      if (!hasProfileChanges && !passwordComplete) {
+      if (
+        !submitState.hasProfileChanges &&
+        !submitState.hasEmailChange &&
+        !submitState.passwordComplete
+      ) {
         return;
       }
 
       setLoading(true);
       try {
-        if (hasProfileChanges) {
+        if (submitState.hasProfileChanges) {
           const response = await authApi.updateProfile(formData);
-          setAuth(response.data, useAuthStore.getState().token);
+          setAuth(
+            response.data,
+            useAuthStore.getState().token,
+            useAuthStore.getState().refreshToken,
+          );
           toast.success(t('profile.updateSuccess'));
         }
-        if (passwordComplete) {
-          await authApi.changePassword({ currentPassword: curPw, newPassword: neuPw });
+        if (submitState.hasEmailChange) {
+          await authApi.changeEmailRequest({ newEmail: submitState.normalizedNextEmail });
+          const profileResponse = await authApi.me();
+          setAuth(
+            profileResponse.data,
+            useAuthStore.getState().token,
+            useAuthStore.getState().refreshToken,
+          );
+          toast.success(t('profile.emailChangeLinkSent'));
+        }
+        if (submitState.passwordComplete) {
+          await authApi.changePassword({
+            currentPassword: submitState.curPw,
+            newPassword: submitState.neuPw,
+          });
           toast.success(t('profile.passwordChangeSuccess'));
           setCurrentPassword('');
           setNewPassword('');
         }
-      } catch {
+      } catch (err: unknown) {
+        handleProfileSubmitError(err, t);
       } finally {
         setLoading(false);
       }
     },
-    [formData, user, setAuth, t, currentPassword, newPassword],
+    [formData, emailForChange, user, setAuth, t, currentPassword, newPassword],
   );
 
   const handleDeleteAccount = useCallback(async () => {
@@ -236,6 +395,8 @@ export function useProfilePage() {
     loading,
     loadingProfile,
     formData,
+    emailForChange,
+    setEmailForChange,
     showDeleteModal,
     setShowDeleteModal,
     deleting,

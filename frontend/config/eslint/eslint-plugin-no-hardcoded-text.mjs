@@ -75,31 +75,7 @@ const noHardcodedTextRule = {
 
     function containsMacedonianErrorText(text) {
       if (!text || typeof text !== 'string') return false;
-
-      const macedonianErrorPatterns = [
-        'Грешка во мрежата',
-        'Грешка при поврзување',
-        'Истече време',
-        'Невалидна барање',
-        'Неавторизиран пристап',
-        'Немате дозвола',
-        'Ресурсот не е пронајден',
-        'Конфликт',
-        'Грешка во валидација',
-        'Премногу барања',
-        'Грешка на серверот',
-        'Серверот е привремено недостапен',
-        'Непозната грешка',
-        'Проверете ја вашата интернет врска',
-        'Обидете се повторно',
-        'Обидете се подоцна',
-        'Најавете се повторно',
-        'Проверете ги внесените податоци',
-        'Можете да зачувате максимум',
-        'филтри. Ве молиме избришете',
-      ];
-
-      return macedonianErrorPatterns.some((pattern) => text.includes(pattern));
+      return /[\u0400-\u04FF]/.test(text);
     }
 
     function shouldIgnoreText(text) {

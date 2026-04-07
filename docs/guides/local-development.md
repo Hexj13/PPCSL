@@ -91,6 +91,8 @@ Use this approach when:
 
    # Infocar partner (optional; for signed report URL)
    # INFOCAR_SECRET_KEY=<secret-from-infocar>
+
+   # SMTP (optional): ../operations/smtp-email-setup.md (EN) or ../operations/smtp-email-setup-ru.md (RU)
    ```
 
    Create `frontend/.env.local`:
@@ -230,6 +232,8 @@ Use this approach when:
 
    # Infocar partner (optional; for signed report URL)
    # INFOCAR_SECRET_KEY=<secret-from-infocar>
+
+   # SMTP (optional): ../operations/smtp-email-setup.md (EN) or ../operations/smtp-email-setup-ru.md (RU)
    ```
 
    Create `core/frontend/.env.local`:

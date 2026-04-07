@@ -21,7 +21,9 @@ import { useTireModelsForBrands } from '@/hooks/useTireModelsForBrands';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useVehicleType } from '@/hooks/useVehicleType';
 import type { User } from '@/lib/api';
+import { localStorageSetItem } from '@/lib/browser-local-storage';
 import { getPopularBrands, getPopularModelsByBrand } from '@/lib/content/popular-brands';
+import { buildSignInHref } from '@/lib/return-url';
 import {
   buildMinimalCategorySearchUrl,
   getDefaultFilters,
@@ -342,6 +344,7 @@ export function SearchFilters() {
   return (
     <form
       id="search-filters"
+      data-testid="search-filters-form"
       aria-label={t('searchFilters.formAriaLabel')}
       onSubmit={handlers.handleSubmit}
       className="card p-4 md:p-5 mb-6 overflow-visible relative"
@@ -461,10 +464,9 @@ export function SearchFilters() {
             setShowSaveModal(true);
           } else {
             if (isBrowser) {
-              localStorage.setItem('pendingSavedFilter', JSON.stringify(getFiltersForSave()));
-              localStorage.setItem('returnUrl', '/favorites?tab=filters');
+              localStorageSetItem('pendingSavedFilter', JSON.stringify(getFiltersForSave()));
             }
-            router.push('/sign');
+            router.push(buildSignInHref('/favorites?tab=filters'));
           }
         }}
         hasFiltersChanged={handlers.hasFiltersChanged}

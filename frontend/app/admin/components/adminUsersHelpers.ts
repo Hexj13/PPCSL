@@ -26,3 +26,9 @@ export function getPartnerListingsUntilNext(user: User): number {
   const progress = Math.max(0, user.partnerListingProgress ?? 0);
   return 20 - (progress % 20 || 0);
 }
+
+export function getUserSaveToastKey(emailConfirmationSent: boolean): string {
+  return emailConfirmationSent
+    ? 'admin.usersTab.emailConfirmationSent'
+    : 'admin.usersTab.userSaveSuccess';
+}

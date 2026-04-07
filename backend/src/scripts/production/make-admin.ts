@@ -9,7 +9,7 @@ async function makeAdmin() {
   try {
     const args = process.argv.slice(2);
     let email: string | null = null;
-    let password = 'admin123';
+    let password = 'GGGgggTEST777';
     let firstName = 'Admin';
     let lastName = 'User';
     let phone: string | null = null;

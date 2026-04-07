@@ -1,104 +1,184 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useState, useEffect } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 
+import {
+  EMAIL_FLOW_PRIMARY_BUTTON_CLASS,
+  EmailFlowErrorIcon,
+  EmailFlowErrorState,
+  EmailFlowLoadingState,
+  EmailFlowPageShell,
+  EmailFlowSuccessState,
+  EmailFlowSuspenseFallback,
+} from '@/components/email-flow';
 import { useTranslation } from '@/hooks/useTranslation';
 import { authApi } from '@/lib/api';
+import { useAuthStore } from '@/lib/store';
+import { toast } from '@/lib/toast';
 
 function VerifyEmailContent() {
   const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isVerifying, setIsVerifying] = useState(false);
+  const { setAuth } = useAuthStore();
+  const token = searchParams.get('token');
+  const [isVerifying, setIsVerifying] = useState(Boolean(token));
+  const [isResending, setIsResending] = useState(false);
+  const [isResent, setIsResent] = useState(false);
+  const [isExpired, setIsExpired] = useState(false);
   const [error, setError] = useState('');
+  const resendInFlightRef = useRef(false);
 
   useEffect(() => {
-    const token = searchParams.get('token');
     if (!token) {
+      setIsVerifying(false);
       setError(t('verifyEmail.invalidLink'));
       return;
     }
 
     const verifyEmail = async () => {
       setIsVerifying(true);
+      setIsExpired(false);
+      setIsResent(false);
       try {
-        await authApi.verifyEmail({ token });
+        const response = await authApi.verifyEmail({ token });
+        const { token: authToken, refreshToken } = useAuthStore.getState();
+        if (authToken) {
+          try {
+            const profileResponse = await authApi.me();
+            setAuth(profileResponse.data, authToken, refreshToken);
+          } catch {
+            const currentUser = useAuthStore.getState().user;
+            setAuth(
+              currentUser ? { ...currentUser, ...response.data.user } : response.data.user,
+              authToken,
+              refreshToken,
+            );
+          }
+        }
         router.push('/verify-email/success');
       } catch (err: unknown) {
         const axiosError = err as {
-          response?: { data?: { message?: string } };
+          response?: { data?: { message?: string; errorKey?: string } };
           message?: string;
         };
+        const errorKey = axiosError.response?.data?.errorKey;
+        const isExpiredKey = errorKey === 'errors.verificationLinkExpired';
+        if (isExpiredKey) {
+          setIsExpired(true);
+        }
+        const translatedError = typeof errorKey === 'string' ? t(errorKey) : '';
         const errorMessage =
-          axiosError.response?.data?.message ||
-          axiosError.message ||
-          t('verifyEmail.verificationError');
-        setError(errorMessage);
-        // toast.error is already handled by API interceptor
+          translatedError && translatedError !== errorKey
+            ? translatedError
+            : axiosError.response?.data?.message ||
+              axiosError.message ||
+              t('verifyEmail.verificationError');
+        setError(isExpiredKey ? '' : errorMessage);
       } finally {
         setIsVerifying(false);
       }
     };
 
     void verifyEmail();
-  }, [searchParams, router, t]);
+  }, [searchParams, router, setAuth, t, token]);
 
-  return (
-    <div className="max-w-md mx-auto mt-6 md:mt-12">
-      <div className="card p-6 md:p-8 text-center">
-        {isVerifying ? (
-          <>
-            <div className="mb-4">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent"></div>
-            </div>
-            <h1 className="text-2xl font-bold mb-4 text-primary-400">{t('verifyEmail.title')}</h1>
-            <p className="text-gray-300">{t('verifyEmail.pleaseWait')}</p>
-          </>
-        ) : error ? (
-          <>
-            <div className="mb-4">
-              <svg
-                className="w-16 h-16 mx-auto text-red-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </div>
-            <h1 className="text-2xl font-bold mb-4 text-red-400">{t('common.error')}</h1>
-            <p className="text-gray-300 mb-6">{error}</p>
-            <button
-              onClick={() => router.push('/')}
-              className="w-full text-primary-400 font-medium text-sm md:text-base hover-only:hover:text-primary-500 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 rounded-lg border-2 border-primary-400/20 hover-only:hover:border-primary-400/40 bg-primary-500/10 hover-only:hover:bg-primary-500/20"
-            >
-              {t('common.goToHome')}
-            </button>
-          </>
-        ) : null}
-      </div>
-    </div>
-  );
+  const handleResend = async () => {
+    if (!token) {
+      return;
+    }
+    if (resendInFlightRef.current) {
+      return;
+    }
+    resendInFlightRef.current = true;
+    setIsResending(true);
+    setError('');
+    try {
+      await authApi.resendEmailVerification({ token });
+      setIsResent(true);
+      setIsExpired(false);
+    } catch (err: unknown) {
+      const axiosError = err as {
+        response?: { data?: { message?: string; errorKey?: string } };
+        message?: string;
+      };
+      const errorKey = axiosError.response?.data?.errorKey;
+      const translatedError = typeof errorKey === 'string' ? t(errorKey) : '';
+      const errorMessage =
+        translatedError && translatedError !== errorKey
+          ? translatedError
+          : axiosError.response?.data?.message ||
+            axiosError.message ||
+            t('verifyEmail.resendError');
+      toast.error(errorMessage);
+      setError(errorMessage);
+    } finally {
+      resendInFlightRef.current = false;
+      setIsResending(false);
+    }
+  };
+
+  if (isVerifying || isResending) {
+    return (
+      <EmailFlowPageShell title={t('verifyEmail.title')}>
+        <EmailFlowLoadingState
+          description={isResending ? t('verifyEmail.resending') : t('verifyEmail.pleaseWait')}
+        />
+      </EmailFlowPageShell>
+    );
+  }
+
+  if (isResent) {
+    return (
+      <EmailFlowPageShell title={t('verifyEmail.title')}>
+        <EmailFlowSuccessState
+          description={t('verifyEmail.resendSuccess')}
+          ctaHref="/"
+          ctaLabel={t('common.goToHome')}
+        />
+      </EmailFlowPageShell>
+    );
+  }
+
+  if (isExpired) {
+    return (
+      <EmailFlowPageShell title={t('verifyEmail.linkExpiredTitle')}>
+        <EmailFlowErrorIcon />
+        <p className="text-text-secondary mb-6 text-left sm:text-center leading-relaxed">
+          {t('verifyEmail.linkExpiredInstructions')}
+        </p>
+        <button
+          type="button"
+          onClick={() => void handleResend()}
+          disabled={isResending}
+          className={`${EMAIL_FLOW_PRIMARY_BUTTON_CLASS} disabled:opacity-50 disabled:pointer-events-none`}
+        >
+          {t('verifyEmail.requestNewLink')}
+        </button>
+        {error ? <p className="text-error mt-4 text-left sm:text-center">{error}</p> : null}
+      </EmailFlowPageShell>
+    );
+  }
+
+  if (error) {
+    return (
+      <EmailFlowPageShell title={t('common.error')}>
+        <EmailFlowErrorState
+          message={error}
+          ctaLabel={t('common.goToHome')}
+          onCtaClick={() => router.push('/')}
+        />
+      </EmailFlowPageShell>
+    );
+  }
+
+  return null;
 }
 
 function VerifyEmailFallback() {
   const { t } = useTranslation();
-  return (
-    <div className="max-w-md mx-auto mt-6 md:mt-12">
-      <div className="card p-6 md:p-8 text-center">
-        <div className="mb-4">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent"></div>
-        </div>
-        <h1 className="text-2xl font-bold mb-4 text-primary-400">{t('common.loading')}</h1>
-      </div>
-    </div>
-  );
+  return <EmailFlowSuspenseFallback title={t('common.loading')} />;
 }
 
 export default function VerifyEmailPage() {

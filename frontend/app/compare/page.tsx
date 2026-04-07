@@ -8,6 +8,7 @@ import { LoadMoreButton } from '@/components/listing/LoadMoreButton';
 import { useTabIndicator } from '@/hooks/useTabIndicator';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
+import { sessionStorageRemoveItem, sessionStorageSetItem } from '@/lib/browser-session-storage';
 import { loadComparisonFromApi } from '@/lib/comparisonMigration';
 import { subscribeToCrossTabEvents } from '@/lib/cross-tab-events';
 import { loadSiteConfigSync } from '@/lib/site-config';
@@ -217,16 +218,14 @@ function ComparePageContent() {
     setActiveTab(tab);
     const params = new URLSearchParams(searchParams.toString());
     params.set('tab', tab);
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('scrollPreserved', 'true');
-    }
+    sessionStorageSetItem('scrollPreserved', 'true');
     router.replace(`/compare?${params.toString()}`, { scroll: false });
     if (typeof window !== 'undefined') {
       requestAnimationFrame(() => {
         window.scrollTo({ top: scrollY, behavior: 'instant' });
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
-            sessionStorage.removeItem('scrollPreserved');
+            sessionStorageRemoveItem('scrollPreserved');
           });
         });
       });

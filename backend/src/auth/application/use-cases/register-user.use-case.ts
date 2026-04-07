@@ -12,7 +12,7 @@ import { PasswordService } from '../../domain/services/password.service';
 import { EmailService } from '../../infrastructure/services/email.service';
 import { SmsService } from '../../infrastructure/services/sms.service';
 import { RegisterDto } from '../../presentation/dto/register.dto';
-import { UserWithoutPassword } from '../auth.types';
+import { RegisterResponse, UserWithoutPassword } from '../auth.types';
 
 @Injectable()
 export class RegisterUserUseCase {
@@ -25,7 +25,11 @@ export class RegisterUserUseCase {
     private emailService: EmailService,
   ) {}
 
-  async execute(registerDto: RegisterDto, ip?: string): Promise<UserWithoutPassword> {
+  async execute(
+    registerDto: RegisterDto,
+    ip?: string,
+    requestLocale?: string,
+  ): Promise<RegisterResponse> {
     if (!registerDto.termsAccepted) {
       throw new BadRequestException('errors.termsNotAccepted');
     }
@@ -55,18 +59,33 @@ export class RegisterUserUseCase {
       registration_ip: ip || null,
     };
 
+    const hasEmailNotifications = cleanedUserData.emailNotifications === true;
+    cleanedUserData.emailNotificationListingRefreshReminders = hasEmailNotifications;
+    cleanedUserData.emailNotificationWeeklyViewsDigest = hasEmailNotifications;
+    cleanedUserData.emailNotificationSecurityAlerts = hasEmailNotifications;
+
     if (cleanedUserData.phone) {
       cleanedUserData.phone = this.smsService.normalizePhoneNumber(cleanedUserData.phone);
     }
 
-    const finalUserData = cleanUserData(cleanedUserData);
+    const finalUserData = cleanUserData(cleanedUserData) as Partial<User>;
+    const normalizedRequestLocale = requestLocale?.trim().toLowerCase();
+    if (normalizedRequestLocale === 'ro' || normalizedRequestLocale === 'ru') {
+      finalUserData.preferredLocale = normalizedRequestLocale;
+    }
 
     try {
       const user = await this.usersService.create(finalUserData);
+      let emailVerificationSent = false;
 
       if (user.email) {
         try {
-          await this.emailService.sendVerificationEmail(user.id, user.email);
+          await this.emailService.sendVerificationEmail(
+            user.id,
+            user.email,
+            requestLocale ?? user.preferredLocale,
+          );
+          emailVerificationSent = true;
         } catch {
           //
         }
@@ -89,7 +108,10 @@ export class RegisterUserUseCase {
         hasPhone: !!user.phone,
       });
 
-      return removePasswordFromUser(user) as UserWithoutPassword;
+      return {
+        ...(removePasswordFromUser(user) as UserWithoutPassword),
+        emailVerificationSent,
+      };
     } catch (error) {
       handleDuplicateKeyError(error, {
         email: 'errors.emailAlreadyExists',

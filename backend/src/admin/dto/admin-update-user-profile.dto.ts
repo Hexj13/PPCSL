@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsBoolean,
   IsEmail,
   IsOptional,
   IsString,
@@ -16,15 +17,15 @@ export class AdminUpdateUserProfileDto {
   @ApiPropertyOptional({ example: 'user@example.com' })
   @IsOptional()
   @ValidateIf((o) => o.email != null && o.email !== '')
-  @IsEmail({}, { message: 'Невалидна email адреса' })
+  @IsEmail({}, { message: 'validation.emailInvalid' })
   email?: string;
 
   @ApiPropertyOptional({ example: 'John' })
   @IsOptional()
   @ValidateIf((o) => o.firstName != null && o.firstName !== '')
-  @IsString({ message: 'Името мора да биде стринг' })
-  @MinLength(2, { message: 'Името мора да содржи минимум 2 карактери' })
-  @MaxLength(50, { message: 'Името не може да биде подолго од 50 карактери' })
+  @IsString({ message: 'validation.string' })
+  @MinLength(2, { message: 'validation.firstNameMinLength' })
+  @MaxLength(50, { message: 'validation.firstNameMaxLength' })
   @IsName()
   firstName?: string;
 
@@ -32,8 +33,8 @@ export class AdminUpdateUserProfileDto {
   @IsOptional()
   @ValidateIf((o) => o.lastName != null && o.lastName !== '')
   @IsString()
-  @MinLength(2, { message: 'Презимето мора да содржи минимум 2 карактери' })
-  @MaxLength(50, { message: 'Презимето не може да биде подолго од 50 карактери' })
+  @MinLength(2, { message: 'validation.lastNameMinLength' })
+  @MaxLength(50, { message: 'validation.lastNameMaxLength' })
   @IsName()
   lastName?: string;
 
@@ -41,8 +42,8 @@ export class AdminUpdateUserProfileDto {
   @IsOptional()
   @ValidateIf((o) => o.companyName != null && o.companyName !== '')
   @IsString()
-  @MinLength(2, { message: 'Името на компанијата мора да содржи минимум 2 карактери' })
-  @MaxLength(100, { message: 'Името на компанијата не може да биде подолго од 100 карактери' })
+  @MinLength(2, { message: 'validation.companyNameMinLength' })
+  @MaxLength(100, { message: 'validation.companyNameMaxLength' })
   companyName?: string;
 
   @ApiPropertyOptional({ example: 'https://example.com' })
@@ -50,7 +51,7 @@ export class AdminUpdateUserProfileDto {
   @ValidateIf((o) => o.companyWebsiteUrl != null && o.companyWebsiteUrl !== '')
   @IsUrl(
     { protocols: ['http', 'https'], require_protocol: true },
-    { message: 'URL мора да започнува со http или https и да биде валидна адреса' },
+    { message: 'validation.companyWebsiteUrl' },
   )
   @MaxLength(500)
   companyWebsiteUrl?: string;
@@ -60,4 +61,9 @@ export class AdminUpdateUserProfileDto {
   @ValidateIf((o) => o.additionalPhone != null && o.additionalPhone !== '')
   @IsPhone()
   additionalPhone?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  emailVerified?: boolean;
 }

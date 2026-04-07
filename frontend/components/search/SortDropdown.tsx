@@ -5,6 +5,7 @@ import { useCallback, useMemo, startTransition, useState, useEffect } from 'reac
 
 import { Dropdown } from '@/components/common/Dropdown';
 import { useTranslation } from '@/hooks/useTranslation';
+import { sessionStorageRemoveItem, sessionStorageSetItem } from '@/lib/browser-session-storage';
 import {
   getListingSortOptions,
   LISTING_SORTS,
@@ -55,9 +56,7 @@ export function SortDropdown({
       const query = currentParams.toString();
       const newUrl = basePath === '/' ? `/?${query}` : `${basePath}${query ? `?${query}` : ''}`;
       const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('scrollPreserved', 'true');
-      }
+      sessionStorageSetItem('scrollPreserved', 'true');
       if (isInternalSearchRef) {
         isInternalSearchRef.current = true;
       }
@@ -66,7 +65,7 @@ export function SortDropdown({
         if (typeof window !== 'undefined') {
           requestAnimationFrame(() => {
             window.scrollTo({ top: scrollY, behavior: 'instant' });
-            sessionStorage.removeItem('scrollPreserved');
+            sessionStorageRemoveItem('scrollPreserved');
           });
         }
       });

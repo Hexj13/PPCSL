@@ -87,6 +87,12 @@ export class Listing {
   @Column({ type: 'text', nullable: true })
   description: string | null;
 
+  @Column({ name: 'description_ro', type: 'text', nullable: true })
+  description_ro: string | null;
+
+  @Column({ name: 'description_ru', type: 'text', nullable: true })
+  description_ru: string | null;
+
   @Column('uuid')
   user_id: string;
 

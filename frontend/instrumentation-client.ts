@@ -12,7 +12,7 @@ function initSentry() {
     sendDefaultPii: true,
     tracesSampleRate: 0.1,
     debug: false,
-    enableLogs: true,
+    enableLogs: false,
     replaysOnErrorSampleRate: 1.0,
     replaysSessionSampleRate: isMobileViewport ? 0.05 : 0.1,
     integrations: [
@@ -24,9 +24,6 @@ function initSentry() {
         maskAllText: true,
         maskAllInputs: true,
         blockAllMedia: true,
-      }),
-      Sentry.consoleLoggingIntegration({
-        levels: ['error', 'warn'],
       }),
     ],
   });

@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback, startTransition } from 'react';
 
 import { analytics } from '@/lib/analytics';
+import { localStorageGetItem, localStorageSetItem } from '@/lib/browser-local-storage';
 import { VEHICLE_TYPE_BY_BODY_TYPE } from '@/lib/constants';
 import { isBrowser } from '@/lib/utils';
 
@@ -12,23 +13,15 @@ const VEHICLE_TYPE_STORAGE_KEY = 'kupito_vehicle_type';
 
 const saveVehicleTypeToStorage = (vehicleType: 'car' | 'moto' | 'truck') => {
   if (isBrowser) {
-    try {
-      localStorage.setItem(VEHICLE_TYPE_STORAGE_KEY, vehicleType);
-    } catch (e) {
-      console.error('Failed to save vehicle type to storage:', e);
-    }
+    localStorageSetItem(VEHICLE_TYPE_STORAGE_KEY, vehicleType);
   }
 };
 
 const getVehicleTypeFromStorage = (): 'car' | 'moto' | 'truck' | null => {
   if (isBrowser) {
-    try {
-      const stored = localStorage.getItem(VEHICLE_TYPE_STORAGE_KEY);
-      if (stored && ['car', 'truck', 'moto'].includes(stored)) {
-        return stored as 'car' | 'moto' | 'truck';
-      }
-    } catch (e) {
-      console.error('Failed to get vehicle type from storage:', e);
+    const stored = localStorageGetItem(VEHICLE_TYPE_STORAGE_KEY);
+    if (stored && ['car', 'truck', 'moto'].includes(stored)) {
+      return stored as 'car' | 'moto' | 'truck';
     }
   }
   return null;

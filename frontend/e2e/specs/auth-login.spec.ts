@@ -1,0 +1,46 @@
+import { AUTH_LOCATORS } from '../constants/locators';
+import { expect, test } from '../fixtures/base';
+import { hasAuthCredentials, requireAuthCredentials } from '../fixtures/env';
+import { loginByUi } from '../utils/auth';
+import { useClearedBrowserState } from '../utils/spec-hooks';
+import { runSteps, type E2EStep } from '../utils/steps';
+
+test.describe('Auth: login @p0', () => {
+  useClearedBrowserState(test);
+
+  test('renders login controls and keeps user on sign page when empty submit', async ({
+    page,
+    signPage,
+  }) => {
+    const steps: E2EStep[] = [
+      {
+        name: 'Open login page and validate page view',
+        action: async () => {
+          await signPage.openLoginAndExpectPageView();
+        },
+      },
+      {
+        name: 'Submit empty login form',
+        action: async () => {
+          await page.getByTestId(AUTH_LOCATORS.loginSubmit).click();
+        },
+      },
+      {
+        name: 'Verify user stays on sign page',
+        action: async () => {
+          await expect(page).toHaveURL(/\/sign/);
+        },
+      },
+    ];
+
+    await runSteps(steps);
+  });
+
+  test('allows successful login with valid credentials', async ({ page }) => {
+    test.skip(!hasAuthCredentials(), 'E2E credentials are required for authenticated scenarios');
+    const credentials = requireAuthCredentials();
+    await test.step('Login with valid user credentials', async () => {
+      await loginByUi(page, credentials);
+    });
+  });
+});

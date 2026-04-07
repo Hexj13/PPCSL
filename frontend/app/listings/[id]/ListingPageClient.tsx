@@ -29,6 +29,7 @@ import { useImageRetry } from '@/hooks/useImageRetry';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
 import { reportImageLoadFailure } from '@/lib/image-failure-monitor';
+import { listingHasAnyDescription } from '@/lib/listingDescriptionLocale';
 import {
   formatDate,
   formatMileage,
@@ -166,6 +167,7 @@ function ListingPageListingInfoSection({
         <button
           onClick={onCopyLink}
           className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10! select-none"
+          data-testid="listing-detail-copy-link"
         >
           <svg
             className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0"
@@ -290,7 +292,7 @@ function ListingPageConditionRegistrationSection({
 function ListingPageSkeleton({ t }: { t: (k: string) => string }) {
   return (
     <>
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-6xl mx-auto" data-testid="listing-detail-page">
         <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-8 lg:gap-6">
           <div className="space-y-6 order-1">
             <div>
@@ -453,9 +455,9 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
 
   return (
     <>
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-6xl mx-auto" data-testid="listing-detail-page">
         <div className="grid grid-cols-1 lg:grid-cols-[1.86fr_1fr] gap-8 lg:gap-6">
-          <div className="space-y-6 min-w-0 order-1">
+          <div className="space-y-6 min-w-0 order-1" data-testid="listing-detail-gallery">
             <ListingPageImages
               ref={previewRef}
               images={images}
@@ -470,28 +472,33 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
             />
           </div>
 
-          <div className="order-2 lg:order-3 lg:col-span-2">
+          <div
+            className="order-2 lg:order-3 lg:col-span-2"
+            data-testid="listing-detail-breadcrumbs"
+          >
             <ListingPageBreadcrumbs listing={listing} />
           </div>
 
-          <div className="space-y-6 min-w-0 order-3 lg:order-2">
+          <div className="space-y-6 min-w-0 order-3 lg:order-2" data-testid="listing-detail-header">
             <ListingPageHeader listing={listing} title={h1Title} />
             {listingPageShowsHeaderDivider(listing) && (
               <div className="border-t border-primary-500/20" />
             )}
-            <ListingPageActions
-              listing={listing}
-              isInitialized={isInitialized}
-              isInComparison={isInComparison}
-              isFavorite={isFavorite}
-              isOwnListing={isOwnListing}
-              canPromote={canPromote}
-              showPromoteButton={getShowPromoteButton(listing, user?.id)}
-              showCompare={showCompare}
-              onToggleComparison={handleToggleComparison}
-              onToggleFavorite={handleToggleFavorite}
-              onPromoteClick={handlePromoteClick}
-            />
+            <div data-testid="listing-detail-actions">
+              <ListingPageActions
+                listing={listing}
+                isInitialized={isInitialized}
+                isInComparison={isInComparison}
+                isFavorite={isFavorite}
+                isOwnListing={isOwnListing}
+                canPromote={canPromote}
+                showPromoteButton={getShowPromoteButton(listing, user?.id)}
+                showCompare={showCompare}
+                onToggleComparison={handleToggleComparison}
+                onToggleFavorite={handleToggleFavorite}
+                onPromoteClick={handlePromoteClick}
+              />
+            </div>
           </div>
         </div>
 
@@ -500,22 +507,32 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
         <div className="grid grid-cols-1 lg:grid-cols-[1.86fr_1fr] gap-6">
           <div className="space-y-6 min-w-0">
             {(listing.vehicle || isTireListing(listing)) && (
-              <ListingPageCharacteristics listing={listing} />
+              <div data-testid="listing-detail-characteristics">
+                <ListingPageCharacteristics listing={listing} />
+              </div>
             )}
 
             {!isTireListing(listing) && (
-              <ListingPageConditionRegistrationSection
-                listing={listing}
-                t={t}
-                formatRegistrationType={formatRegistrationType}
-              />
+              <div data-testid="listing-detail-condition-registration">
+                <ListingPageConditionRegistrationSection
+                  listing={listing}
+                  t={t}
+                  formatRegistrationType={formatRegistrationType}
+                />
+              </div>
             )}
 
             {!isTireListing(listing) && (
-              <ListingPageEquipmentSection equipmentColumns={equipmentColumns} t={t} />
+              <div data-testid="listing-detail-equipment">
+                <ListingPageEquipmentSection equipmentColumns={equipmentColumns} t={t} />
+              </div>
             )}
 
-            {listing.description && <ListingPageDescription descriptionHtml={descriptionHtml} />}
+            {listingHasAnyDescription(listing) && (
+              <div data-testid="listing-detail-description">
+                <ListingPageDescription descriptionHtml={descriptionHtml} />
+              </div>
+            )}
 
             {!isTireListing(listing) && (
               <ListingPageHistorySection
@@ -531,22 +548,26 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
           </div>
 
           <div className="space-y-6 min-w-0">
-            <ListingPageSeller
-              listing={listing}
-              listingId={id}
-              activeListingsCount={activeListingsCount}
-              boardSlug={getBoardSlug(listing)}
-            />
+            <div data-testid="listing-detail-seller">
+              <ListingPageSeller
+                listing={listing}
+                listingId={id}
+                activeListingsCount={activeListingsCount}
+                boardSlug={getBoardSlug(listing)}
+              />
+            </div>
 
-            <ListingPageListingInfoSection
-              listing={listing}
-              closingDate={closingDate}
-              t={t}
-              formatDate={formatDateWithLocale}
-              onCopyLink={handleCopyLink}
-              onShare={handleShare}
-              canShare={canShare}
-            />
+            <div data-testid="listing-detail-info">
+              <ListingPageListingInfoSection
+                listing={listing}
+                closingDate={closingDate}
+                t={t}
+                formatDate={formatDateWithLocale}
+                onCopyLink={handleCopyLink}
+                onShare={handleShare}
+                canShare={canShare}
+              />
+            </div>
           </div>
         </div>
 

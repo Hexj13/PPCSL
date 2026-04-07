@@ -1,4 +1,4 @@
-import { BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 
@@ -10,13 +10,16 @@ import { UsersService } from '../../users/application/users.service';
 import { AuthService } from './auth.service';
 import { ChangePasswordUseCase } from './use-cases/change-password.use-case';
 import { CheckPhoneAvailabilityUseCase } from './use-cases/check-phone-availability.use-case';
+import { ConfirmEmailChangeUseCase } from './use-cases/confirm-email-change.use-case';
 import { DeleteAccountUseCase } from './use-cases/delete-account.use-case';
 import { GetUserProfileUseCase } from './use-cases/get-user-profile.use-case';
 import { LoginUserUseCase } from './use-cases/login-user.use-case';
 import { RefreshTokensUseCase } from './use-cases/refresh-tokens.use-case';
 import { RegisterUserUseCase } from './use-cases/register-user.use-case';
+import { RequestEmailChangeUseCase } from './use-cases/request-email-change.use-case';
 import { RequestPasswordResetUseCase } from './use-cases/request-password-reset.use-case';
 import { RequestPhoneChangeUseCase } from './use-cases/request-phone-change.use-case';
+import { ResendEmailVerificationUseCase } from './use-cases/resend-email-verification.use-case';
 import { ResetPasswordUseCase } from './use-cases/reset-password.use-case';
 import { SendVerificationSmsUseCase } from './use-cases/send-verification-sms.use-case';
 import { UserProfilePatchService } from './user-profile-patch.service';
@@ -37,12 +40,14 @@ describe('AuthService', () => {
   let jwtService: jest.Mocked<JwtService>;
   let passwordService: jest.Mocked<PasswordService>;
   let smsService: jest.Mocked<SmsService>;
+  let emailService: jest.Mocked<EmailService>;
   let listingsService: jest.Mocked<ListingsService>;
   let mockRefreshTokenService: jest.Mocked<RefreshTokenService>;
 
   const mockUser = {
     id: '1',
     email: 'test@test.com',
+    emailVerified: true,
     phone: '+37370123456',
     password: 'hashedPassword',
     type: UserType.Individual,
@@ -50,6 +55,9 @@ describe('AuthService', () => {
     lastName: 'User',
     active: true,
     board_slug: 'test-slug',
+    preferredLocale: null as string | null,
+    last_listing_refresh_at: null,
+    last_listing_refresh_reminder_sent_at: null,
   };
 
   const createUserWithDeactivate = (overrides: Partial<User> = {}) => {
@@ -66,6 +74,18 @@ describe('AuthService', () => {
     };
     return u;
   };
+
+  const getLoggedEvents = (loggerSpy: jest.SpyInstance) =>
+    loggerSpy.mock.calls
+      .map(([payload]) => payload)
+      .filter((payload): payload is string => typeof payload === 'string')
+      .flatMap((payload) => {
+        try {
+          return [JSON.parse(payload) as Record<string, unknown>];
+        } catch {
+          return [];
+        }
+      });
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -95,7 +115,14 @@ describe('AuthService', () => {
 
     const mockEmailService = {
       sendVerificationEmail: jest.fn(),
+      ensureEmailChangeAttemptAllowed: jest.fn(),
+      registerEmailChangeAttempt: jest.fn(),
       verifyToken: jest.fn(),
+      sendEmailChangeConfirmationEmail: jest.fn(),
+      verifyEmailChangeToken: jest.fn(),
+      sendPasswordChangedNotification: jest.fn(),
+      sendPhoneChangedNotification: jest.fn(),
+      sendEmailChangedNotification: jest.fn(),
     };
 
     const mockListingsService = {
@@ -165,6 +192,9 @@ describe('AuthService', () => {
         GetUserProfileUseCase,
         VerifyPhoneUseCase,
         VerifyEmailUseCase,
+        ResendEmailVerificationUseCase,
+        RequestEmailChangeUseCase,
+        ConfirmEmailChangeUseCase,
         RequestPasswordResetUseCase,
         VerifyResetCodeUseCase,
         RequestPhoneChangeUseCase,
@@ -180,6 +210,7 @@ describe('AuthService', () => {
     jwtService = module.get(JwtService);
     passwordService = module.get(PasswordService);
     smsService = module.get(SmsService);
+    emailService = module.get(EmailService);
     listingsService = module.get(ListingsService);
   });
 
@@ -272,6 +303,70 @@ describe('AuthService', () => {
         }),
       ).rejects.toThrow(UnauthorizedException);
     });
+
+    it('should throw UnauthorizedException when login by email is not verified', async () => {
+      const unverifiedUser = { ...mockUser, emailVerified: false };
+      usersService.findByEmail.mockResolvedValue(unverifiedUser as User);
+      passwordService.verify.mockResolvedValue(true);
+
+      await expect(
+        service.login({
+          login: 'test@test.com',
+          password: 'password123',
+        }),
+      ).rejects.toThrow('errors.emailNotVerifiedForLogin');
+    });
+
+    it('should throw invalid credentials when password is wrong for unverified email', async () => {
+      const unverifiedUser = { ...mockUser, emailVerified: false };
+      usersService.findByEmail.mockResolvedValue(unverifiedUser as User);
+      passwordService.verify.mockResolvedValue(false);
+
+      await expect(
+        service.login({
+          login: 'test@test.com',
+          password: 'wrongpassword',
+        }),
+      ).rejects.toThrow('errors.invalidLoginCredentials');
+    });
+
+    it('should allow login by phone for user with unverified email', async () => {
+      const unverifiedUser = { ...mockUser, emailVerified: false };
+      usersService.findByPhone.mockResolvedValue(unverifiedUser as User);
+      passwordService.verify.mockResolvedValue(true);
+      jwtService.sign.mockReturnValue('mock-jwt-token');
+      mockRefreshTokenService.generateToken.mockResolvedValue('mock-refresh-token');
+
+      const result = await service.login({
+        login: '+37370123456',
+        password: 'password123',
+      });
+
+      expect(result).toHaveProperty('access_token', 'mock-jwt-token');
+      expect(result).toHaveProperty('refresh_token', 'mock-refresh-token');
+      expect(usersService.findByPhone).toHaveBeenCalledWith('+37370123456');
+    });
+
+    it('should allow admin login by email even when email is not verified', async () => {
+      const adminUser = {
+        ...mockUser,
+        type: UserType.Admin,
+        emailVerified: false,
+      };
+      usersService.findByEmail.mockResolvedValue(adminUser as User);
+      passwordService.verify.mockResolvedValue(true);
+      jwtService.sign.mockReturnValue('mock-jwt-token');
+      mockRefreshTokenService.generateToken.mockResolvedValue('mock-refresh-token');
+
+      const result = await service.login({
+        login: 'test@test.com',
+        password: 'password123',
+      });
+
+      expect(result).toHaveProperty('access_token', 'mock-jwt-token');
+      expect(result).toHaveProperty('refresh_token', 'mock-refresh-token');
+      expect(usersService.findByEmail).toHaveBeenCalledWith('test@test.com');
+    });
   });
 
   describe('register', () => {
@@ -300,12 +395,18 @@ describe('AuthService', () => {
       const { password, ...userWithoutPassword } = createdUser;
       usersService.create.mockResolvedValue(createdUser as unknown as User);
 
-      const result = await service.register(registerDto);
+      const result = await service.register(registerDto, undefined, 'ru');
 
       expect(result).not.toHaveProperty('password');
       expect(result).not.toHaveProperty('termsAccepted');
-      expect(usersService.create).toHaveBeenCalled();
+      expect(result.emailVerificationSent).toBe(true);
+      expect(usersService.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          preferredLocale: 'ru',
+        }),
+      );
       expect(passwordService.hash).toHaveBeenCalledWith(registerDto.password);
+      expect(emailService.sendVerificationEmail).toHaveBeenCalledWith('1', 'new@test.com', 'ru');
     });
 
     it('should throw BadRequestException when terms are not accepted', async () => {
@@ -322,11 +423,231 @@ describe('AuthService', () => {
     });
   });
 
+  describe('updateProfile', () => {
+    it('should add first email as unverified and send verification email', async () => {
+      const userWithoutEmail = {
+        ...mockUser,
+        email: null,
+        emailVerified: null,
+      };
+      const updatedUser = {
+        ...userWithoutEmail,
+        email: 'new@test.com',
+        emailVerified: false,
+      };
+      usersService.findOneById.mockResolvedValue(userWithoutEmail as unknown as User);
+      usersService.findByEmail.mockResolvedValue(null);
+      usersService.update.mockResolvedValue(updatedUser as unknown as User);
+
+      const result = await service.updateProfile('1', { email: ' New@Test.com ' }, 'ro');
+
+      expect(usersService.update).toHaveBeenCalledWith(
+        '1',
+        expect.objectContaining({
+          email: 'new@test.com',
+          emailVerified: false,
+        }),
+      );
+      expect(emailService.sendVerificationEmail).toHaveBeenCalledWith('1', 'new@test.com', 'ro');
+      expect(result.email).toBe('new@test.com');
+      expect(result.emailVerified).toBe(false);
+    });
+
+    it('should allow removing existing email without confirmation flow', async () => {
+      const userWithEmail = {
+        ...mockUser,
+        email: 'test@test.com',
+        emailVerified: true,
+      };
+      const updatedUser = {
+        ...userWithEmail,
+        email: null,
+      };
+      usersService.findOneById.mockResolvedValue(userWithEmail as unknown as User);
+      usersService.update.mockResolvedValue(updatedUser as unknown as User);
+
+      const result = await service.updateProfile('1', { email: '' });
+
+      expect(usersService.update).toHaveBeenCalledWith(
+        '1',
+        expect.objectContaining({ email: null }),
+      );
+      expect(emailService.sendVerificationEmail).not.toHaveBeenCalled();
+      expect(result.email).toBeNull();
+    });
+
+    it('should log email notification enable events when preferences are saved', async () => {
+      const loggerSpy = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => {});
+      const userWithDisabledNotifications = {
+        ...mockUser,
+        emailNotifications: false,
+        emailNotificationListingRefreshReminders: false,
+        emailNotificationWeeklyViewsDigest: false,
+        emailNotificationSecurityAlerts: false,
+      };
+      const updatedUser = {
+        ...userWithDisabledNotifications,
+        emailNotifications: true,
+        emailNotificationListingRefreshReminders: true,
+        emailNotificationWeeklyViewsDigest: true,
+        emailNotificationSecurityAlerts: true,
+      };
+      usersService.findOneById.mockResolvedValue(userWithDisabledNotifications as unknown as User);
+      usersService.update.mockResolvedValue(updatedUser as unknown as User);
+
+      await service.updateProfile('1', {
+        emailNotifications: true,
+        emailNotificationListingRefreshReminders: true,
+        emailNotificationWeeklyViewsDigest: true,
+        emailNotificationSecurityAlerts: true,
+      });
+
+      const events = getLoggedEvents(loggerSpy);
+      expect(events).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            event: 'email_notifications_toggled',
+            userId: '1',
+            enabled: true,
+            previousEnabled: false,
+          }),
+          expect.objectContaining({
+            event: 'email_listing_refresh_reminders_toggled',
+            userId: '1',
+            enabled: true,
+            previousEnabled: false,
+          }),
+          expect.objectContaining({
+            event: 'email_weekly_views_digest_toggled',
+            userId: '1',
+            enabled: true,
+            previousEnabled: false,
+          }),
+          expect.objectContaining({
+            event: 'email_security_alerts_toggled',
+            userId: '1',
+            enabled: true,
+            previousEnabled: false,
+          }),
+        ]),
+      );
+
+      loggerSpy.mockRestore();
+    });
+
+    it('should log email notification disable events when preferences are saved', async () => {
+      const loggerSpy = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => {});
+      const userWithEnabledNotifications = {
+        ...mockUser,
+        emailNotifications: true,
+        emailNotificationListingRefreshReminders: true,
+        emailNotificationWeeklyViewsDigest: true,
+        emailNotificationSecurityAlerts: true,
+      };
+      const updatedUser = {
+        ...userWithEnabledNotifications,
+        emailNotifications: false,
+        emailNotificationListingRefreshReminders: false,
+        emailNotificationWeeklyViewsDigest: false,
+        emailNotificationSecurityAlerts: false,
+      };
+      usersService.findOneById.mockResolvedValue(userWithEnabledNotifications as unknown as User);
+      usersService.update.mockResolvedValue(updatedUser as unknown as User);
+
+      await service.updateProfile('1', {
+        emailNotifications: false,
+        emailNotificationListingRefreshReminders: false,
+        emailNotificationWeeklyViewsDigest: false,
+        emailNotificationSecurityAlerts: false,
+      });
+
+      const events = getLoggedEvents(loggerSpy);
+      expect(events).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            event: 'email_notifications_toggled',
+            userId: '1',
+            enabled: false,
+            previousEnabled: true,
+          }),
+          expect.objectContaining({
+            event: 'email_listing_refresh_reminders_toggled',
+            userId: '1',
+            enabled: false,
+            previousEnabled: true,
+          }),
+          expect.objectContaining({
+            event: 'email_weekly_views_digest_toggled',
+            userId: '1',
+            enabled: false,
+            previousEnabled: true,
+          }),
+          expect.objectContaining({
+            event: 'email_security_alerts_toggled',
+            userId: '1',
+            enabled: false,
+            previousEnabled: true,
+          }),
+        ]),
+      );
+
+      loggerSpy.mockRestore();
+    });
+  });
+
+  describe('requestEmailChange', () => {
+    it('should request email change and register attempt', async () => {
+      usersService.findOneById.mockResolvedValue(mockUser as User);
+      usersService.findByEmail.mockResolvedValue(null);
+      usersService.update.mockResolvedValue({
+        ...mockUser,
+        email: 'new@test.com',
+        emailVerified: false,
+      } as User);
+      emailService.ensureEmailChangeAttemptAllowed.mockResolvedValue(undefined);
+      emailService.sendEmailChangeConfirmationEmail.mockResolvedValue(undefined);
+      emailService.registerEmailChangeAttempt.mockResolvedValue(undefined);
+
+      await service.requestEmailChange('1', { newEmail: 'new@test.com' }, 'ru');
+
+      expect(emailService.ensureEmailChangeAttemptAllowed).toHaveBeenCalledWith('1');
+      expect(usersService.update).toHaveBeenCalledWith('1', {
+        email: 'new@test.com',
+        emailVerified: false,
+      });
+      expect(emailService.sendEmailChangeConfirmationEmail).toHaveBeenCalledWith(
+        '1',
+        'new@test.com',
+        'ru',
+      );
+      expect(emailService.registerEmailChangeAttempt).toHaveBeenCalledWith('1');
+    });
+
+    it('should throw when email change limit is exceeded', async () => {
+      usersService.findOneById.mockResolvedValue(mockUser as User);
+      usersService.findByEmail.mockResolvedValue(null);
+      emailService.ensureEmailChangeAttemptAllowed.mockRejectedValue(
+        new BadRequestException('errors.emailChangeTooManyAttempts'),
+      );
+
+      await expect(service.requestEmailChange('1', { newEmail: 'new@test.com' })).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(emailService.sendEmailChangeConfirmationEmail).not.toHaveBeenCalled();
+      expect(emailService.registerEmailChangeAttempt).not.toHaveBeenCalled();
+    });
+  });
+
   describe('getUserProfile', () => {
     it('should return user profile without password', async () => {
       const fullUser = {
         ...mockUser,
         emailNotifications: true,
+
+        emailNotificationListingRefreshReminders: true,
+
+        emailNotificationWeeklyViewsDigest: true,
+        emailNotificationSecurityAlerts: true,
         viber: false,
         whatsapp: true,
         telegram: false,

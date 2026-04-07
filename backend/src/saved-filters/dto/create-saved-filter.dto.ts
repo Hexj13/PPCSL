@@ -6,7 +6,7 @@ import { IsValidFilterObject } from './validate-filters.validator';
 export class CreateSavedFilterDto {
   @ApiProperty({
     description: 'Filter name',
-    example: 'Мој филтер',
+    example: 'My filter',
     maxLength: 100,
   })
   @IsString()

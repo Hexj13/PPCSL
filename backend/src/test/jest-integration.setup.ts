@@ -4,6 +4,7 @@ import * as path from 'path';
 import jestOpenAPI from 'jest-openapi';
 
 import { createTestApp, closeTestApp } from './setup-integration';
+import { cleanupIntegrationTestData } from './test-data-cleanup';
 
 beforeAll(async () => {
   process.env.NODE_ENV = process.env.NODE_ENV || 'test';
@@ -17,5 +18,6 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  await cleanupIntegrationTestData();
   await closeTestApp();
 });

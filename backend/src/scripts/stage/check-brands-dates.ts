@@ -19,10 +19,10 @@ async function checkBrandsDates() {
     const latest = brands[0];
     const oldest = brands[brands.length - 1];
 
-    console.log(`📅 Најстара марка: ${oldest.name} (${oldest.created_at})`);
-    console.log(`📅 Најнова марка: ${latest.name} (${latest.created_at})\n`);
+    console.log(`📅 Oldest brand: ${oldest.name} (${oldest.created_at})`);
+    console.log(`📅 Newest brand: ${latest.name} (${latest.created_at})\n`);
 
-    console.log('Последни 10 марки по дата:');
+    console.log('Last 10 brands by date:');
     brands.slice(0, 10).forEach((brand, index) => {
       console.log(`  ${index + 1}. ${brand.name} - ${brand.created_at}`);
     });
@@ -37,6 +37,6 @@ checkBrandsDates()
     process.exit(0);
   })
   .catch((error) => {
-    console.error('❌ Грешка:', error);
+    console.error('❌ Error:', error);
     process.exit(1);
   });

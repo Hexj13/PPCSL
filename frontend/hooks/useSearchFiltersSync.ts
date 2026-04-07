@@ -3,6 +3,7 @@ import type { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 import type { Brand, VehicleModel } from '@/lib/api';
+import { sessionStorageSetItem } from '@/lib/browser-session-storage';
 import {
   MAX_SEARCH_BRAND_SELECTIONS,
   MAX_SEARCH_MODEL_SELECTIONS,
@@ -80,12 +81,10 @@ export function useSearchFiltersSync({
     const shouldSyncVehicleSlugParams =
       filters.listing_category === 'vehicle' && (brandParam || modelParam);
     if (urlSelectionExceedsLimits(brandParam, modelParam)) {
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem(
-          SEARCH_FILTERS_LIMIT_ERROR_TOAST_KEY,
-          'searchFilters.invalidUrlSelectionLimits',
-        );
-      }
+      sessionStorageSetItem(
+        SEARCH_FILTERS_LIMIT_ERROR_TOAST_KEY,
+        'searchFilters.invalidUrlSelectionLimits',
+      );
       console.warn('Search filters URL exceeds allowed limits', {
         brandCount: countCommaSeparatedParam(brandParam),
         modelCount: countCommaSeparatedParam(modelParam),

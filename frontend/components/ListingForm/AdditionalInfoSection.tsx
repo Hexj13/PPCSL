@@ -1,6 +1,6 @@
 'use client';
 
-import { RichTextEditor } from '@/components/common/RichTextEditor';
+import { DescriptionFieldWithLanguageTabs } from '@/components/ListingForm/DescriptionFieldWithLanguageTabs';
 
 import type { ListingFormSectionProps } from './types';
 
@@ -117,19 +117,13 @@ export function AdditionalInfoSection({
         </div>
       </div>
 
-      <div className="mb-4">
-        <label className="block text-sm font-semibold mb-2 text-primary-700">
-          {t('listings.descriptionLabel')}
-        </label>
-        <RichTextEditor
-          value={formData.description}
-          onChange={(value) => setFormData((prev) => ({ ...prev, description: value }))}
-          placeholder={t('listings.descriptionPlaceholder')}
-          maxLength={5000}
-          rows={14}
-          editorClassName="listing-description-editor"
-        />
-      </div>
+      <DescriptionFieldWithLanguageTabs
+        descriptionRo={formData.description_ro}
+        descriptionRu={formData.description_ru}
+        onRoChange={(value) => setFormData((prev) => ({ ...prev, description_ro: value }))}
+        onRuChange={(value) => setFormData((prev) => ({ ...prev, description_ru: value }))}
+        placeholder={t('listings.descriptionPlaceholder')}
+      />
     </div>
   );
 }

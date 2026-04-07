@@ -21,6 +21,7 @@ import { dataSourceOptions } from './data-source';
 import { ExchangeRatesModule } from './exchange-rates/exchange-rates.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { ListingsModule } from './listings/listings.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { SavedFiltersModule } from './saved-filters/saved-filters.module';
 import { SitemapModule } from './sitemap/sitemap.module';
 import { TelegramModule } from './telegram/telegram.module';
@@ -46,6 +47,7 @@ import { UsersModule } from './users/users.module';
     AuthModule,
     UsersModule,
     ListingsModule,
+    NotificationsModule,
     BoardModule,
     FavoritesModule,
     ComparisonModule,

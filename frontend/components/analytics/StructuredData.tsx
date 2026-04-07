@@ -2,8 +2,10 @@
 
 import { useEffect } from 'react';
 
+import { useI18n } from '@/components/providers/I18nProvider';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
+import { getListingPlainDescriptionForSchema } from '@/lib/listingDescriptionLocale';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import {
   createSlug,
@@ -126,6 +128,7 @@ function getSellerSchema(listing: Listing): { '@type': string; name: string } | 
       ? listing.user.companyName || listing.user.email
       : `${listing.user.firstName || ''} ${listing.user.lastName || ''}`.trim() ||
         listing.user.email;
+  if (!name) return undefined;
   return {
     '@type': listing.user.type === 'Business' ? 'Organization' : 'Person',
     name,
@@ -235,13 +238,16 @@ function getTireProductSchemaData(
   siteUrl: string,
   currency: string,
   countryCode: string,
+  descriptionLocale: 'ro' | 'ru',
 ) {
   const tire = listing.tire!;
   const brandName = tire.brand?.name || '';
   const modelName = getTireModelDisplayLabel(tire);
-  const description = listing.description
-    ? listing.description.replace(/<[^>]*>/g, '').substring(0, 500)
-    : listing.title;
+  const description = getListingPlainDescriptionForSchema(
+    listing,
+    descriptionLocale,
+    listing.title,
+  );
   const imageList = listing.images?.length
     ? listing.images.map((img) => getOptimizedImageUrl(img))
     : [`${siteUrl}/placeholder-car.jpg`];
@@ -280,13 +286,16 @@ function getProductSchemaData(
   siteUrl: string,
   currency: string,
   countryCode: string,
+  descriptionLocale: 'ro' | 'ru',
 ) {
   const vehicle = listing.vehicle;
   const brandName = vehicle?.brand?.name || '';
   const modelName = vehicle?.model?.name || '';
-  const description = listing.description
-    ? listing.description.replace(/<[^>]*>/g, '').substring(0, 500)
-    : listing.title;
+  const description = getListingPlainDescriptionForSchema(
+    listing,
+    descriptionLocale,
+    listing.title,
+  );
   const imageList = listing.images?.length
     ? listing.images.map((img) => getOptimizedImageUrl(img))
     : [`${siteUrl}/placeholder-car.jpg`];
@@ -317,6 +326,8 @@ function getProductSchemaData(
 
 export function StructuredData({ listing }: StructuredDataProps) {
   const { t } = useTranslation();
+  const { locale } = useI18n();
+  const descriptionLocale = locale === 'ru' ? 'ru' : 'ro';
   const vehicleType = getVehicleType(listing);
   const transmissionLabel = listing.vehicle?.transmission
     ? formatTransmission(listing.vehicle.transmission, t)
@@ -341,8 +352,20 @@ export function StructuredData({ listing }: StructuredDataProps) {
       ? getTireBreadcrumbSchema(listing, siteUrl, tiresCategoryLabel)
       : getBreadcrumbSchema(listing, siteUrl, categoryLabel, transmissionLabel);
     const schemaData = isTire
-      ? getTireProductSchemaData(listing, siteUrl, siteConfig.currency, siteConfig.countryCode)
-      : getProductSchemaData(listing, siteUrl, siteConfig.currency, siteConfig.countryCode);
+      ? getTireProductSchemaData(
+          listing,
+          siteUrl,
+          siteConfig.currency,
+          siteConfig.countryCode,
+          descriptionLocale,
+        )
+      : getProductSchemaData(
+          listing,
+          siteUrl,
+          siteConfig.currency,
+          siteConfig.countryCode,
+          descriptionLocale,
+        );
 
     const breadcrumbScript = document.createElement('script');
     breadcrumbScript.type = 'application/ld+json';
@@ -362,7 +385,7 @@ export function StructuredData({ listing }: StructuredDataProps) {
       const existingScript = document.getElementById('structured-data-listing');
       if (existingScript) document.head.removeChild(existingScript);
     };
-  }, [listing, categoryLabel, transmissionLabel, tiresCategoryLabel]);
+  }, [listing, categoryLabel, transmissionLabel, tiresCategoryLabel, descriptionLocale]);
 
   return null;
 }

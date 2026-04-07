@@ -26,7 +26,8 @@ export interface TireListingFormData {
   currency: Currency;
   city: string;
   negotiable: boolean;
-  description: string;
+  description_ro: string;
+  description_ru: string;
   status: ListingStatus;
   images: string[];
   cover_blur_hash: string;

@@ -41,13 +41,13 @@ async function checkModelsStats() {
     .limit(20)
     .getRawMany();
 
-  console.log('📊 Марки со број на модели:');
+  console.log('📊 Brands by model count:');
   brandsWithCounts.forEach((item, index) => {
-    console.log(`   ${index + 1}. ${item.name}: ${item.modelCount} модели`);
+    console.log(`   ${index + 1}. ${item.name}: ${item.modelCount} models`);
   });
 
   if (totalBrands > 20) {
-    console.log(`   ... и уште ${totalBrands - 20} марки`);
+    console.log(`   ... and ${totalBrands - 20} more brands`);
   }
 
   await AppDataSource.destroy();

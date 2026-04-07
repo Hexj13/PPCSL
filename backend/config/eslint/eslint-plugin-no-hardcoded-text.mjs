@@ -28,7 +28,7 @@ module.exports = {
     },
   },
   create(context) {
-    const macedonianPattern = /[А-Яа-яЁёЉљЊњЌќЏџЅѕ]/;
+    const macedonianPattern = /[\u0400-\u04FF]/;
     const translationKeyPattern = /^(errors|validation)\./;
     const allowedPatterns = context.options[0]?.allowedPatterns || [
       /^[A-Za-z0-9\s\-_.,:;!?()\[\]{}@#$%^&*+=|\\/<>`~]+$/,

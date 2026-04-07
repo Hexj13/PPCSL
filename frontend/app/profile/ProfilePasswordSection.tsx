@@ -10,6 +10,7 @@ type TranslationFn = ReturnType<typeof useTranslation>['t'];
 
 function PasswordInputWithToggle({
   id,
+  name,
   label,
   value,
   onChange,
@@ -21,6 +22,7 @@ function PasswordInputWithToggle({
   passwordManagerIgnore,
 }: {
   id: string;
+  name: string;
   label: string;
   value: string;
   onChange: (value: string) => void;
@@ -40,6 +42,7 @@ function PasswordInputWithToggle({
         <input
           id={id}
           type={show ? 'text' : 'password'}
+          name={name}
           value={value}
           maxLength={maxLength}
           onChange={(e) => onChange(e.target.value)}
@@ -169,21 +172,21 @@ export function ProfilePasswordSection({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         <PasswordInputWithToggle
           id="profile-current-password"
+          name="current-password"
           label={t('profile.currentPasswordLabel')}
           value={currentPassword}
           onChange={onCurrentPasswordChange}
-          autoComplete="off"
-          passwordManagerIgnore
+          autoComplete="current-password"
           show={showCurrentPassword}
           onToggle={() => setShowCurrentPassword((v) => !v)}
         />
         <PasswordInputWithToggle
           id="profile-new-password"
+          name="new-password"
           label={t('profile.newPasswordLabel')}
           value={newPassword}
           onChange={onNewPasswordChange}
-          autoComplete="off"
-          passwordManagerIgnore
+          autoComplete="new-password"
           show={showNewPassword}
           onToggle={() => setShowNewPassword((v) => !v)}
           maxLength={100}

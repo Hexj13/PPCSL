@@ -10,6 +10,7 @@ import {
   localStorageSetItem,
 } from '@/lib/browser-local-storage';
 import { clearClientAuthLocalStorage } from '@/lib/client-auth-storage';
+import { applyPreferredLocaleFromProfile } from '@/lib/i18n';
 
 const MAX_COMPARE = 3;
 
@@ -50,6 +51,7 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       isInitialized: false,
       setAuth: (_user, _token, _refreshToken = null) => {
+        applyPreferredLocaleFromProfile(_user?.preferredLocale);
         set({ user: _user, token: _token, refreshToken: _refreshToken, isInitialized: true });
         if (typeof window !== 'undefined') {
           if (_token) {
@@ -65,7 +67,7 @@ export const useAuthStore = create<AuthState>()(
         if (typeof window !== 'undefined') {
           clearClientAuthLocalStorage({
             clearReturnUrl: true,
-            clearAuthPersistKey: false,
+            clearAuthPersistKey: true,
             clearPendingMigrationAndFilters: true,
           });
           useFavoritesStore.getState().clear();
@@ -78,20 +80,33 @@ export const useAuthStore = create<AuthState>()(
           return;
         }
 
-        const { token, refreshToken } = get();
         const storedToken = localStorageGetItem('token');
+
+        if (!storedToken) {
+          const authRaw = localStorageGetItem('auth-storage');
+          let persistedToken: string | null = null;
+          if (authRaw) {
+            try {
+              persistedToken =
+                (JSON.parse(authRaw) as { state?: { token?: string } })?.state?.token ?? null;
+            } catch {
+              /* corrupted – treat as empty */
+            }
+          }
+          if (!persistedToken) {
+            set({ user: null, token: null, refreshToken: null, isInitialized: true });
+            return;
+          }
+        }
+
+        const { token, refreshToken } = get();
         const actualToken = storedToken || token;
 
         if (actualToken) {
           try {
             const response = await authApi.me();
             const storedRefreshToken = localStorageGetItem('refresh_token');
-            set({
-              user: response.data,
-              token: actualToken,
-              refreshToken: refreshToken || storedRefreshToken,
-              isInitialized: true,
-            });
+            get().setAuth(response.data, actualToken, refreshToken || storedRefreshToken);
           } catch {
             const storedRefreshToken = localStorageGetItem('refresh_token');
             if (storedRefreshToken) {
@@ -99,14 +114,11 @@ export const useAuthStore = create<AuthState>()(
                 const refreshResponse = await authApi.refresh({
                   refresh_token: storedRefreshToken,
                 });
-                set({
-                  user: refreshResponse.data.user,
-                  token: refreshResponse.data.access_token,
-                  refreshToken: refreshResponse.data.refresh_token,
-                  isInitialized: true,
-                });
-                localStorageSetItem('token', refreshResponse.data.access_token);
-                localStorageSetItem('refresh_token', refreshResponse.data.refresh_token);
+                get().setAuth(
+                  refreshResponse.data.user,
+                  refreshResponse.data.access_token,
+                  refreshResponse.data.refresh_token,
+                );
               } catch {
                 get().logout();
                 set({ isInitialized: true });

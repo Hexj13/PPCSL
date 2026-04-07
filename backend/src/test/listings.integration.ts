@@ -1,101 +1,31 @@
 /// <reference path="./jest-openapi.d.ts" />
 import * as supertest from 'supertest';
-import { In } from 'typeorm';
-
-import { RefreshToken } from '../auth/entities/refresh-token.entity';
-import { AppDataSource } from '../data-source';
-import { ComparisonItem } from '../comparison/entities/comparison-item.entity';
-import { Favorite } from '../favorites/entities/favorite.entity';
-import { ListingView } from '../listings/entities/listing-view.entity';
-import { Listing } from '../listings/entities/listing.entity';
-import { PromotionHistory } from '../listings/entities/promotion-history.entity';
-import { Vehicle } from '../listings/entities/vehicle.entity';
-import { SavedFilter } from '../saved-filters/entities/saved-filter.entity';
-import { User } from '../users/entities/user.entity';
 import { getTestRequest } from './setup-integration';
+import { createTestCredentials } from './test-data-cleanup';
 
 describe('Listings API Integration Tests', () => {
   let request: ReturnType<typeof getTestRequest>;
   let authToken: string;
   let testEmail: string;
+  let testPhone: string;
   let listingId: string;
   let brandId: string;
   let modelId: string;
 
-  const cleanupCreatedData = async (): Promise<void> => {
-    if (!testEmail) {
-      return;
-    }
-
-    let initializedHere = false;
-    if (!AppDataSource.isInitialized) {
-      await AppDataSource.initialize();
-      initializedHere = true;
-    }
-
-    try {
-      const userRepo = AppDataSource.getRepository(User);
-      const listingRepo = AppDataSource.getRepository(Listing);
-      const vehicleRepo = AppDataSource.getRepository(Vehicle);
-      const listingViewRepo = AppDataSource.getRepository(ListingView);
-      const favoriteRepo = AppDataSource.getRepository(Favorite);
-      const comparisonRepo = AppDataSource.getRepository(ComparisonItem);
-      const promotionHistoryRepo = AppDataSource.getRepository(PromotionHistory);
-      const savedFilterRepo = AppDataSource.getRepository(SavedFilter);
-      const refreshTokenRepo = AppDataSource.getRepository(RefreshToken);
-
-      const user = await userRepo.findOne({ where: { email: testEmail } });
-      if (!user) {
-        return;
-      }
-
-      const listings = await listingRepo.find({
-        where: { user_id: user.id },
-        select: ['id', 'vehicle_id'],
-      });
-      const listingIds = listings.map((listing) => listing.id);
-      const vehicleIds = listings
-        .map((listing) => listing.vehicle_id)
-        .filter((vehicleId): vehicleId is string => vehicleId !== null);
-
-      await comparisonRepo.delete({ user_id: user.id });
-
-      if (listingIds.length > 0) {
-        await listingViewRepo.delete({ listing_id: In(listingIds) });
-        await favoriteRepo.delete({ listing_id: In(listingIds) });
-        await promotionHistoryRepo.delete({ listing_id: In(listingIds) });
-        await listingRepo.delete({ id: In(listingIds) });
-      }
-
-      if (vehicleIds.length > 0) {
-        await vehicleRepo.delete({ id: In(vehicleIds) });
-      }
-
-      await savedFilterRepo.delete({ user_id: user.id });
-      await favoriteRepo.delete({ user_id: user.id });
-      await promotionHistoryRepo.delete({ user_id: user.id });
-      await refreshTokenRepo.delete({ user_id: user.id });
-      await userRepo.delete({ id: user.id });
-    } finally {
-      if (initializedHere && AppDataSource.isInitialized) {
-        await AppDataSource.destroy();
-      }
-    }
-  };
-
   beforeAll(async () => {
     request = getTestRequest();
-    const ts = Date.now();
-    testEmail = `test${ts}@example.com`;
-    const testPassword = 'Test123!@#';
+    const credentials = createTestCredentials('listings');
+    testEmail = credentials.email;
+    testPhone = credentials.phone;
+    const testPassword = credentials.password;
 
     const registerRes = await request.post('/api/auth/register').send({
       email: testEmail,
       password: testPassword,
       type: 'Individual',
-      phone: `+38970${String(ts).slice(-7)}`,
-      firstName: 'Test',
-      lastName: 'User',
+      phone: testPhone,
+      firstName: credentials.firstName,
+      lastName: credentials.lastName,
       termsAccepted: true,
     });
     if (registerRes.status !== 201) {
@@ -103,7 +33,7 @@ describe('Listings API Integration Tests', () => {
     }
 
     const loginResponse = await request.post('/api/auth/login').send({
-      login: testEmail,
+      login: testPhone,
       password: testPassword,
     });
 
@@ -126,11 +56,6 @@ describe('Listings API Integration Tests', () => {
       }
     }
   });
-
-  afterAll(async () => {
-    await cleanupCreatedData();
-  });
-
   describe('GET /api/listings', () => {
     it('should return list of listings and match OpenAPI schema', async () => {
       const response = await request.get('/api/listings').expect(200);

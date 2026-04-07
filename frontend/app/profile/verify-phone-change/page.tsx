@@ -281,12 +281,12 @@ function VerifyPhoneChangeContent() {
       </h1>
       <div className="card p-6 md:p-8">
         <div className="space-y-6">
-          <div className="text-center">
-            <p className="text-gray-300 mb-2">
+          <div className="text-center text-primary-900">
+            <p className="mb-2">
               {t('profile.verifyPhoneChange.codeSent')}{' '}
-              {phoneNumber && <span className="font-semibold text-white">{phoneNumber}</span>}
+              {phoneNumber && <span className="font-semibold text-primary-700">{phoneNumber}</span>}
             </p>
-            <p className="text-sm text-gray-400">{t('profile.verifyPhoneChange.enterCode')}</p>
+            <p className="text-sm">{t('profile.verifyPhoneChange.enterCode')}</p>
           </div>
 
           <form onSubmit={handleVerifyCode} className="space-y-4">
@@ -309,7 +309,7 @@ function VerifyPhoneChangeContent() {
                       error
                         ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
                         : 'border-primary-700/30 focus:border-primary-700'
-                    } ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-text'} text-white`}
+                    } ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-text'} text-primary-900`}
                     style={{
                       caretColor: 'transparent',
                       fontFamily: "'Digital-7', monospace",

@@ -35,7 +35,8 @@ function getEmptyFormData(): ListingFormData {
     negotiable: false,
     available_in_credit: false,
     down_payment_amount: '',
-    description: '',
+    description_ro: '',
+    description_ru: '',
     status: ListingStatusEnum.Active,
     images: [],
     cover_blur_hash: '',
@@ -107,7 +108,8 @@ export function getInitialFormData(initialData?: Listing): ListingFormData {
       initialData.down_payment_amount != null && initialData.down_payment_amount > 0
         ? Math.floor(initialData.down_payment_amount).toString()
         : '',
-    description: initialData.description || '',
+    description_ro: initialData.description_ro ?? initialData.description ?? '',
+    description_ru: initialData.description_ru ?? '',
     status: initialData.status || ListingStatusEnum.Active,
     images: initialData.images || [],
     cover_blur_hash: initialData.cover_blur_hash || '',

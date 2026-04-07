@@ -6,6 +6,7 @@ import {
   UserProfilePatchService,
   type UserProfilePatchFields,
 } from '../auth/application/user-profile-patch.service';
+import { EmailService } from '../auth/infrastructure/services/email.service';
 import { RefreshTokenService } from '../auth/infrastructure/services/refresh-token.service';
 import {
   ListingStatus,
@@ -38,6 +39,11 @@ type SanitizedUser = Omit<
   | 'consumeFreePromotion'
 >;
 
+type AdminUpdateUserProfileResult = {
+  user: SanitizedUser;
+  emailConfirmationSent: boolean;
+};
+
 @Injectable()
 export class AdminService {
   private readonly logger = new Logger(AdminService.name);
@@ -56,6 +62,7 @@ export class AdminService {
     private listingCache: IListingCache,
     private usersService: UsersService,
     private userProfilePatchService: UserProfilePatchService,
+    private emailService: EmailService,
   ) {}
 
   async getAllUsers(
@@ -258,7 +265,11 @@ export class AdminService {
     return this.sanitizeUser(savedUser);
   }
 
-  async updateUserProfile(userId: string, dto: AdminUpdateUserProfileDto, actorUserId: string) {
+  async updateUserProfile(
+    userId: string,
+    dto: AdminUpdateUserProfileDto,
+    actorUserId: string,
+  ): Promise<AdminUpdateUserProfileResult> {
     const user = await this.usersRepository.findOne({
       where: { id: userId },
     });
@@ -302,22 +313,41 @@ export class AdminService {
     if (patch.email !== undefined && patch.email !== previousEmail) {
       patch.emailVerified = false;
     }
+    if (patch.email === null) {
+      patch.emailVerified = false;
+    }
+    const resolvedEmail = patch.email !== undefined ? patch.email : user.email;
+    const hasEmail = resolvedEmail != null && String(resolvedEmail).trim() !== '';
+    if (dto.emailVerified !== undefined && hasEmail) {
+      patch.emailVerified = dto.emailVerified;
+    }
 
     const changedFields = Object.keys(patch)
       .filter((k) => k !== 'password')
       .sort();
     if (changedFields.length === 0) {
-      return this.sanitizeUser(user);
+      return {
+        user: this.sanitizeUser(user),
+        emailConfirmationSent: false,
+      };
     }
 
     const savedUser = await this.usersService.update(userId, patch);
+    const emailConfirmationSent = await this.sendAdminEmailChangeConfirmation(
+      savedUser,
+      patch,
+      previousEmail,
+    );
     logUserEvent(this.logger, {
       event: 'admin_user_profile_updated',
       actorUserId,
       userId: savedUser.id,
       changedFields,
     });
-    return this.sanitizeUser(savedUser);
+    return {
+      user: this.sanitizeUser(savedUser),
+      emailConfirmationSent,
+    };
   }
 
   async getAllListings(
@@ -608,6 +638,29 @@ export class AdminService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...userWithoutPassword } = user;
     return userWithoutPassword;
+  }
+
+  private async sendAdminEmailChangeConfirmation(
+    savedUser: User,
+    patch: Partial<User>,
+    previousEmail: string | null,
+  ): Promise<boolean> {
+    const emailChanged =
+      patch.email !== undefined && patch.email !== null && patch.email !== previousEmail;
+    if (!emailChanged || patch.emailVerified === true || !savedUser.email) {
+      return false;
+    }
+
+    try {
+      await this.emailService.sendEmailChangeConfirmationEmail(
+        savedUser.id,
+        savedUser.email,
+        savedUser.preferredLocale,
+      );
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async getAllPromotions(

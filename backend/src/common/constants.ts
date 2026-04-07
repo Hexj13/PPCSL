@@ -260,6 +260,8 @@ export const SMS_MESSAGES = {
 } as const;
 
 export const REFRESH_COOLDOWN_MS = 48 * 60 * 60 * 1000;
+export const LISTING_REFRESH_REMINDER_INTERVAL_MS = 14 * 24 * 60 * 60 * 1000;
+export const WEEKLY_VIEWS_DIGEST_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
 export const BODY_TYPES_BY_VEHICLE_TYPE: Record<
   'car' | 'truck' | 'moto',

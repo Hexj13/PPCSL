@@ -1,6 +1,6 @@
 import type { User } from '@/lib/api';
 
-import { getPartnerListingsUntilNext } from './adminUsersHelpers';
+import { getPartnerListingsUntilNext, getUserSaveToastKey } from './adminUsersHelpers';
 
 function userWithPartnerProgress(partnerListingProgress: number | undefined): User {
   return {
@@ -26,5 +26,15 @@ describe('getPartnerListingsUntilNext', () => {
 
   it('treats undefined progress as 0', () => {
     expect(getPartnerListingsUntilNext(userWithPartnerProgress(undefined))).toBe(20);
+  });
+});
+
+describe('getUserSaveToastKey', () => {
+  it('returns email confirmation toast key when confirmation email was sent', () => {
+    expect(getUserSaveToastKey(true)).toBe('admin.usersTab.emailConfirmationSent');
+  });
+
+  it('returns regular save toast key when no confirmation email was sent', () => {
+    expect(getUserSaveToastKey(false)).toBe('admin.usersTab.userSaveSuccess');
   });
 });

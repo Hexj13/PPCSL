@@ -7,8 +7,8 @@ export class GetModelsBatchDto {
     example: ['550e8400-e29b-41d4-a716-446655440000', '660e8400-e29b-41d4-a716-446655440001'],
     description: 'Array of brand UUIDs',
   })
-  @IsArray({ message: 'brandIds мора да биде низа' })
-  @IsUUID(4, { each: true, message: 'Секој brandId мора да биде валиден UUID' })
+  @IsArray({ message: 'validation.brandIdsMustBeArray' })
+  @IsUUID(4, { each: true, message: 'validation.brandIdUuid' })
   brandIds: string[];
 
   @ApiProperty({
@@ -18,7 +18,7 @@ export class GetModelsBatchDto {
   })
   @IsOptional()
   @IsEnum(['car', 'truck', 'moto', 'tire'], {
-    message: 'vehicleType мора да биде car, truck, moto или tire',
+    message: 'validation.vehicleTypeFilterEnum',
   })
   vehicleType?: 'car' | 'truck' | 'moto' | 'tire';
 }

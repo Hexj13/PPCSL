@@ -58,6 +58,16 @@ interface DropdownProps {
   className?: string;
 }
 
+function getSubmitButton(): HTMLButtonElement {
+  const submitButton = screen
+    .getAllByRole('button')
+    .find((button) => button.getAttribute('type') === 'submit');
+  if (!submitButton) {
+    throw new Error('Submit button not found');
+  }
+  return submitButton as HTMLButtonElement;
+}
+
 jest.mock('./Dropdown', () => ({
   Dropdown: (props: DropdownProps) => {
     const { value, onChange, options, disabled } = props;
@@ -103,7 +113,7 @@ describe('ListingForm', () => {
         expect(api.brandsApi.getAll).toHaveBeenCalled();
       });
 
-      const submitButton = screen.getByRole('button', { name: /креирај/i });
+      const submitButton = getSubmitButton();
       fireEvent.click(submitButton);
 
       await waitFor(() => {
@@ -232,7 +242,9 @@ describe('ListingForm', () => {
       );
 
       await waitFor(() => {
-        expect(screen.queryByText(/статус на објавата/i)).not.toBeInTheDocument();
+        const dropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
+        const statusDropdown = dropdowns.find((dropdown) => dropdown.value === 'Active');
+        expect(statusDropdown).toBeUndefined();
       });
     });
 
@@ -302,7 +314,7 @@ describe('ListingForm', () => {
         { timeout: 10000 },
       );
 
-      const submitButton = screen.getByRole('button', { name: /зачувај/i });
+      const submitButton = getSubmitButton();
 
       await waitFor(
         () => {
@@ -417,7 +429,9 @@ describe('ListingForm', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText(/без оштетувања/i)).toBeInTheDocument();
+        const dropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
+        const conditionDropdown = dropdowns.find((dropdown) => dropdown.value === 'Undamaged');
+        expect(conditionDropdown).toBeDefined();
       });
     });
 
@@ -433,7 +447,9 @@ describe('ListingForm', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText(/местна/i)).toBeInTheDocument();
+        const dropdowns = screen.getAllByTestId('dropdown') as HTMLSelectElement[];
+        const registrationDropdown = dropdowns.find((dropdown) => dropdown.value === 'Local');
+        expect(registrationDropdown).toBeDefined();
       });
     });
 
@@ -888,7 +904,7 @@ describe('ListingForm', () => {
         { timeout: 10000 },
       );
 
-      const submitButton = screen.getByRole('button', { name: /креирај/i });
+      const submitButton = getSubmitButton();
 
       await waitFor(
         () => {
@@ -1083,7 +1099,7 @@ describe('ListingForm', () => {
         { timeout: 10000 },
       );
 
-      const submitButton = screen.getByRole('button', { name: /креирај/i });
+      const submitButton = getSubmitButton();
 
       await waitFor(
         () => {
@@ -1647,7 +1663,7 @@ describe('ListingForm', () => {
         { timeout: 10000 },
       );
 
-      const submitButton = screen.getByRole('button', { name: /креирај/i });
+      const submitButton = getSubmitButton();
       await waitFor(
         () => {
           expect(submitButton).toBeEnabled();

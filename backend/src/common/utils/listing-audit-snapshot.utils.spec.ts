@@ -44,6 +44,8 @@ describe('listing-audit-snapshot.utils', () => {
         available_in_credit: false,
         down_payment_amount: null,
         description: '<p>Hello</p>',
+        description_ro: null,
+        description_ru: null,
         images: null,
         title: 't',
         urgent: false,

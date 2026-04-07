@@ -59,5 +59,9 @@ module.exports = {
     'dist/**',
     'out/**',
     'coverage/**',
+    '**/allure-report/**',
+    '**/allure-results/**',
+    '**/playwright-report/**',
+    '**/test-results/**',
   ],
 };

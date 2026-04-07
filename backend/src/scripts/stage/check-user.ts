@@ -8,7 +8,7 @@ checkEnvironment(['stage', 'development', 'test']);
 
 async function checkUser() {
   try {
-    console.log('🔌 Поврзување со базата на податоци...');
+    console.log('🔌 Connecting to database...');
     await AppDataSource.initialize();
     console.log('✅ Connected to database');
 
@@ -18,30 +18,30 @@ async function checkUser() {
     const user = await userRepo.findOne({ where: { phone } });
 
     if (!user) {
-      console.log(`❌ Корисник со телефон ${phone} не е пронајден`);
+      console.log(`❌ User with phone ${phone} not found`);
     } else {
-      console.log(`✅ Пронајден корисник:`);
+      console.log(`✅ User found:`);
       console.log(`   ID: ${user.id}`);
       console.log(`   Email: ${user.email || 'N/A'}`);
-      console.log(`   Телефон: ${user.phone}`);
-      console.log(`   Име: ${user.firstName || 'N/A'}`);
-      console.log(`   Презиме: ${user.lastName || 'N/A'}`);
-      console.log(`   Компанија: ${user.companyName || 'N/A'}`);
-      console.log(`   Тип: ${user.type}`);
-      console.log(`   Активен: ${user.active}`);
-      console.log(`\n📱 Достапни месенџери:`);
-      console.log(`   Viber: ${user.viber ? '✅ Да' : '❌ Не'}`);
-      console.log(`   WhatsApp: ${user.whatsapp ? '✅ Да' : '❌ Не'}`);
-      console.log(`   Telegram: ${user.telegram ? '✅ Да' : '❌ Не'}`);
-      console.log(`\n🔔 Известувања:`);
-      console.log(`   Email известувања: ${user.emailNotifications ? '✅ Да' : '❌ Не'}`);
-      console.log(`   Телефон потврден: ${user.phoneVerified ? '✅ Да' : '❌ Не'}`);
-      console.log(`   Email потврден: ${user.emailVerified ? '✅ Да' : '❌ Не'}`);
+      console.log(`   Phone: ${user.phone}`);
+      console.log(`   First name: ${user.firstName || 'N/A'}`);
+      console.log(`   Last name: ${user.lastName || 'N/A'}`);
+      console.log(`   Company: ${user.companyName || 'N/A'}`);
+      console.log(`   Type: ${user.type}`);
+      console.log(`   Active: ${user.active}`);
+      console.log(`\n📱 Available messengers:`);
+      console.log(`   Viber: ${user.viber ? '✅ Yes' : '❌ No'}`);
+      console.log(`   WhatsApp: ${user.whatsapp ? '✅ Yes' : '❌ No'}`);
+      console.log(`   Telegram: ${user.telegram ? '✅ Yes' : '❌ No'}`);
+      console.log(`\n🔔 Notifications:`);
+      console.log(`   Email notifications: ${user.emailNotifications ? '✅ Yes' : '❌ No'}`);
+      console.log(`   Phone verified: ${user.phoneVerified ? '✅ Yes' : '❌ No'}`);
+      console.log(`   Email verified: ${user.emailVerified ? '✅ Yes' : '❌ No'}`);
     }
 
-    console.log('\n🎉 Завршено!');
+    console.log('\n🎉 Done!');
   } catch (error) {
-    console.error('❌ Грешка:', error);
+    console.error('❌ Error:', error);
     throw error;
   } finally {
     if (AppDataSource.isInitialized) {

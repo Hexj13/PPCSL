@@ -29,8 +29,9 @@ export function RegisterFormMessengers({ formData, setFormData }: RegisterFormMe
               <input
                 type="checkbox"
                 checked={formData[key]}
-                onChange={(e) => setFormData({ ...formData, [key]: e.target.checked })}
+                onChange={(e) => setFormData((prev) => ({ ...prev, [key]: e.target.checked }))}
                 className="sr-only"
+                data-testid={`auth-register-messenger-${key}-input`}
               />
               <button
                 type="button"
@@ -43,6 +44,7 @@ export function RegisterFormMessengers({ formData, setFormData }: RegisterFormMe
                     ? 'bg-primary-500/10 border-primary-700 text-primary-700'
                     : 'border-primary-700/50 bg-bg-secondary group-hover:border-primary-700 text-primary-900'
                 }`}
+                data-testid={`auth-register-messenger-${key}-toggle`}
               >
                 <span className="text-sm font-semibold">
                   {key === 'viber' ? 'Viber' : key === 'whatsapp' ? 'WhatsApp' : 'Telegram'}

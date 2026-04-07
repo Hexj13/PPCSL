@@ -24,6 +24,7 @@ import { getFavoriteButtonClassName, useListingCardFavorite } from '@/hooks/useL
 import { useListingCardImageError } from '@/hooks/useListingCardImageError';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
+import { sessionStorageSetItem } from '@/lib/browser-session-storage';
 import { CARD_EXIT_ANIMATION_MS } from '@/lib/constants';
 import {
   formatDateShort,
@@ -404,8 +405,8 @@ function ListingCardComponent({
   const handleClick = useCallback(() => {
     if (typeof window !== 'undefined' && window.location.pathname === '/') {
       startTransition(() => {
-        sessionStorage.setItem('homeScrollPosition', window.scrollY.toString());
-        sessionStorage.setItem('homeScrollTimestamp', Date.now().toString());
+        sessionStorageSetItem('homeScrollPosition', window.scrollY.toString());
+        sessionStorageSetItem('homeScrollTimestamp', Date.now().toString());
       });
     }
   }, []);
@@ -475,6 +476,7 @@ function ListingCardComponent({
   return (
     <div
       ref={cardRef}
+      data-testid={`listing-card-${listing.id}`}
       className={[
         'card relative overflow-hidden cursor-pointer h-full flex flex-col group',
         cardFavoriteExitMotionClass(isHydrated, isRemovingFromFavorites),
@@ -491,6 +493,7 @@ function ListingCardComponent({
         onClick={handleClick}
         aria-label={displayTitle}
         className="absolute inset-0 z-0"
+        data-testid={`listing-card-link-${listing.id}`}
       />
       <div className="relative z-[1] flex h-full flex-col pointer-events-none">
         <div

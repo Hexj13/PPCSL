@@ -80,6 +80,7 @@ export function SpecsGrid({
             autoPosition={true}
             menuMaxHeight={300}
             options={getFuelOptions(t)}
+            dataTestId="listing-create-fuel-select"
           />
         </div>
 
@@ -248,6 +249,7 @@ export function SpecsGrid({
             autoPosition={true}
             menuMaxHeight={300}
             options={getTransmissionOptions(t, vehicleType)}
+            dataTestId="listing-create-transmission-select"
           />
         </div>
 
@@ -295,6 +297,7 @@ export function SpecsGrid({
               autoPosition={true}
               menuMaxHeight={300}
               options={getDriveTypeOptions(t)}
+              dataTestId="listing-create-drive-type-select"
             />
           </div>
         )}
@@ -341,6 +344,7 @@ export function SpecsGrid({
             autoPosition={true}
             menuMaxHeight={300}
             options={getBodyTypeOptions(t, vehicleType)}
+            dataTestId="listing-create-body-type-select"
           />
         </div>
 

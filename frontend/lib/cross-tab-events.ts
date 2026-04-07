@@ -1,3 +1,6 @@
+import { localStorageSetItem } from '@/lib/browser-local-storage';
+import { sessionStorageGetItem, sessionStorageSetItem } from '@/lib/browser-session-storage';
+
 export type CrossTabEvent =
   | {
       type: 'favorites-changed';
@@ -29,10 +32,10 @@ const STORAGE_SIGNAL_KEY = 'kupito-cross-tab-signal';
 function getTabId(): string {
   if (typeof window === 'undefined') return '';
   try {
-    let id = sessionStorage.getItem('kupito_cross_tab_id');
+    let id = sessionStorageGetItem('kupito_cross_tab_id');
     if (!id) {
       id = crypto.randomUUID();
-      sessionStorage.setItem('kupito_cross_tab_id', id);
+      sessionStorageSetItem('kupito_cross_tab_id', id);
     }
     return id;
   } catch {
@@ -78,7 +81,7 @@ export function publishCrossTabEvent(event: CrossTabEvent): void {
     }
   }
   try {
-    localStorage.setItem(STORAGE_SIGNAL_KEY, JSON.stringify(wire));
+    localStorageSetItem(STORAGE_SIGNAL_KEY, JSON.stringify(wire));
   } catch {
     void 0;
   }

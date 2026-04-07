@@ -12,7 +12,7 @@ tags:
 
 ## Overview
 
-This document describes the current state of Google Analytics 4 integration. Events from `analytics.ts` check consent via `checkConsent()`; components (`GoogleAnalytics`, `ConversionEventTrigger`) via `useCookieConsent`; both rely on `localStorage['cookie_consent']`.
+This document describes the current state of Google Analytics 4 integration. Events from `analytics.ts` check consent via `checkConsent()` (localStorage cache), while components (`GoogleAnalytics`, `ConversionEventTrigger`) use `useCookieConsent` (cookie-first with localStorage fallback cache).
 
 **Related documents:**
 
@@ -338,7 +338,7 @@ This document describes the current state of Google Analytics 4 integration. Eve
 #### useCookieConsent.ts
 
 **Location:** `core/frontend/hooks/useCookieConsent.ts`  
-**Role:** Read and update consent from `localStorage` (`cookie_consent`); on `updateConsent` uses `invokeGtag` for `gtag('consent', 'update', …)` and pushes `consent_update` to `dataLayer`  
+**Role:** Read and update consent using cookie-first strategy (`cookie_consent` cookie), with localStorage as fallback cache; on `updateConsent` uses `invokeGtag` for `gtag('consent', 'update', …)` and pushes `consent_update` to `dataLayer`  
 **Returns:** `consent`, `isLoading`, `hasConsent`, `grantConsent`, `denyConsent`
 
 #### usePageScroll.ts
@@ -351,9 +351,9 @@ This document describes the current state of Google Analytics 4 integration. Eve
 
 ### Consent check
 
-- **analytics.ts:** before each `trackEvent`, `checkConsent()` is called — checks `localStorage['cookie_consent']` → `parsed.analytics === 'granted'`.
+- **analytics.ts:** before each `trackEvent`, `checkConsent()` is called — checks localStorage cache key `cookie_consent` and uses `parsed.analytics === 'granted'`.
 - **GoogleAnalyticsConsent:** before GA load sets `gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'denied' })` so nothing is sent until user choice.
-- **useCookieConsent:** on choice change updates `localStorage` and calls `invokeGtag(() => gtag('consent', 'update', { analytics_storage, ad_storage }))`; `CookieConsent` uses this hook for UI.
+- **useCookieConsent:** on choice change writes consent cookie (primary) and updates localStorage cache (best effort), then calls `invokeGtag(() => gtag('consent', 'update', { analytics_storage, ad_storage }))`; `CookieConsent` uses this hook for UI.
 - **Order in layout.tsx:** `GoogleTagManager` → `GoogleTagManagerNoscript` → `GoogleAnalyticsConsent` → `GoogleAnalytics` (Consent before GA required).
 
 ### Event structure

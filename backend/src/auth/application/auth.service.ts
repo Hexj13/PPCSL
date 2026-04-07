@@ -5,6 +5,7 @@ import { UsersService } from '../../users/application/users.service';
 import { EmailService } from '../infrastructure/services/email.service';
 import { RefreshTokenService } from '../infrastructure/services/refresh-token.service';
 import { SmsService } from '../infrastructure/services/sms.service';
+import { ChangeEmailConfirmDto, ChangeEmailRequestDto } from '../presentation/dto/change-email.dto';
 import { ChangePasswordDto } from '../presentation/dto/change-password.dto';
 import { ChangePhoneRequestDto, ChangePhoneVerifyDto } from '../presentation/dto/change-phone.dto';
 import { LoginDto } from '../presentation/dto/login.dto';
@@ -15,16 +16,19 @@ import { ResetPasswordDto } from '../presentation/dto/reset-password.dto';
 import { UpdateProfileDto } from '../presentation/dto/update-profile.dto';
 import { VerifyResetCodeDto } from '../presentation/dto/verify-reset-code.dto';
 
-import { UserProfileResponse, UserWithoutPassword } from './auth.types';
+import { RegisterResponse, UserProfileResponse, UserWithoutPassword } from './auth.types';
 import { ChangePasswordUseCase } from './use-cases/change-password.use-case';
 import { CheckPhoneAvailabilityUseCase } from './use-cases/check-phone-availability.use-case';
+import { ConfirmEmailChangeUseCase } from './use-cases/confirm-email-change.use-case';
 import { DeleteAccountUseCase } from './use-cases/delete-account.use-case';
 import { GetUserProfileUseCase } from './use-cases/get-user-profile.use-case';
 import { LoginUserUseCase } from './use-cases/login-user.use-case';
 import { RefreshTokensUseCase } from './use-cases/refresh-tokens.use-case';
 import { RegisterUserUseCase } from './use-cases/register-user.use-case';
+import { RequestEmailChangeUseCase } from './use-cases/request-email-change.use-case';
 import { RequestPasswordResetUseCase } from './use-cases/request-password-reset.use-case';
 import { RequestPhoneChangeUseCase } from './use-cases/request-phone-change.use-case';
+import { ResendEmailVerificationUseCase } from './use-cases/resend-email-verification.use-case';
 import { ResetPasswordUseCase } from './use-cases/reset-password.use-case';
 import { SendVerificationSmsUseCase } from './use-cases/send-verification-sms.use-case';
 import { UpdateProfileUseCase } from './use-cases/update-profile.use-case';
@@ -33,7 +37,7 @@ import { VerifyPhoneChangeUseCase } from './use-cases/verify-phone-change.use-ca
 import { VerifyPhoneUseCase } from './use-cases/verify-phone.use-case';
 import { VerifyResetCodeUseCase } from './use-cases/verify-reset-code.use-case';
 
-export type { UserProfileResponse, UserWithoutPassword } from './auth.types';
+export type { RegisterResponse, UserProfileResponse, UserWithoutPassword } from './auth.types';
 
 @Injectable()
 export class AuthService {
@@ -52,7 +56,10 @@ export class AuthService {
     private getUserProfileUseCase: GetUserProfileUseCase,
     private verifyPhoneUseCase: VerifyPhoneUseCase,
     private verifyEmailUseCase: VerifyEmailUseCase,
+    private resendEmailVerificationUseCase: ResendEmailVerificationUseCase,
     private requestPasswordResetUseCase: RequestPasswordResetUseCase,
+    private requestEmailChangeUseCase: RequestEmailChangeUseCase,
+    private confirmEmailChangeUseCase: ConfirmEmailChangeUseCase,
     private verifyResetCodeUseCase: VerifyResetCodeUseCase,
     private requestPhoneChangeUseCase: RequestPhoneChangeUseCase,
     private verifyPhoneChangeUseCase: VerifyPhoneChangeUseCase,
@@ -73,8 +80,12 @@ export class AuthService {
     return this.refreshTokensUseCase.execute(refreshTokenDto);
   }
 
-  async register(registerDto: RegisterDto, ip?: string) {
-    return this.registerUserUseCase.execute(registerDto, ip);
+  async register(
+    registerDto: RegisterDto,
+    ip?: string,
+    requestLocale?: string,
+  ): Promise<RegisterResponse> {
+    return this.registerUserUseCase.execute(registerDto, ip, requestLocale);
   }
 
   async getUserProfile(userId: string) {
@@ -84,12 +95,17 @@ export class AuthService {
   async updateProfile(
     userId: string,
     updateProfileDto: UpdateProfileDto,
+    requestLocale?: string,
   ): Promise<UserProfileResponse> {
-    return this.updateProfileUseCase.execute(userId, updateProfileDto);
+    return this.updateProfileUseCase.execute(userId, updateProfileDto, requestLocale);
   }
 
-  async changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {
-    return this.changePasswordUseCase.execute(userId, dto);
+  async changePassword(
+    userId: string,
+    dto: ChangePasswordDto,
+    requestLocale?: string,
+  ): Promise<void> {
+    return this.changePasswordUseCase.execute(userId, dto, requestLocale);
   }
 
   async verifyPhone(userId: string): Promise<UserProfileResponse> {
@@ -98,6 +114,22 @@ export class AuthService {
 
   async verifyEmail(token: string): Promise<UserWithoutPassword> {
     return this.verifyEmailUseCase.execute(token);
+  }
+
+  async resendEmailVerification(token: string, requestLocale?: string): Promise<void> {
+    return this.resendEmailVerificationUseCase.execute(token, requestLocale);
+  }
+
+  async requestEmailChange(
+    userId: string,
+    dto: ChangeEmailRequestDto,
+    requestLocale?: string,
+  ): Promise<void> {
+    return this.requestEmailChangeUseCase.execute(userId, dto, requestLocale);
+  }
+
+  async confirmEmailChange(dto: ChangeEmailConfirmDto): Promise<UserWithoutPassword> {
+    return this.confirmEmailChangeUseCase.execute(dto.token);
   }
 
   async requestPasswordReset(requestPasswordResetDto: RequestPasswordResetDto): Promise<void> {

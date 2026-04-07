@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { comparisonApi, listingsApi } from '@/lib/api';
 import type { Listing } from '@/lib/api';
+import { localStorageGetItem } from '@/lib/browser-local-storage';
 import { publishCrossTabEvent } from '@/lib/cross-tab-events';
 import { useAuthStore, useComparisonStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
@@ -190,7 +191,7 @@ export function useComparePageListings(
       }
 
       if (vIds.length === 0 && tIds.length === 0 && typeof window !== 'undefined') {
-        const backupRaw = localStorage.getItem('comparison-storage-backup');
+        const backupRaw = localStorageGetItem('comparison-storage-backup');
         if (backupRaw) {
           try {
             const parsed = JSON.parse(backupRaw) as PersistedComparisonBackup;

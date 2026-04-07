@@ -35,6 +35,7 @@ export function RegisterFormPhoneField({
         className={`input-field ${touched && error ? 'border-red-500' : ''}`}
         placeholder={t('register.phonePlaceholder')}
         autoComplete="off"
+        data-testid="auth-register-phone-input"
       />
       {touched && error && <p className="mt-1 text-sm text-red-400">{error}</p>}
     </div>

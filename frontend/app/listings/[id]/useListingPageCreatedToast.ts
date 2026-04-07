@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 
 import type { Listing } from '@/lib/api';
+import { sessionStorageGetItem, sessionStorageRemoveItem } from '@/lib/browser-session-storage';
 import { toast } from '@/lib/toast';
 
 export function useListingPageCreatedToast(
@@ -12,9 +13,9 @@ export function useListingPageCreatedToast(
 ): void {
   useEffect(() => {
     if (!isHydrated || !listing) return;
-    const toastMessage = sessionStorage.getItem('listingCreatedToast');
+    const toastMessage = sessionStorageGetItem('listingCreatedToast');
     if (!toastMessage) return;
-    sessionStorage.removeItem('listingCreatedToast');
+    sessionStorageRemoveItem('listingCreatedToast');
     try {
       const parsed = JSON.parse(toastMessage) as {
         created?: string;

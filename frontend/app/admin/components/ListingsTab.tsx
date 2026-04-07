@@ -12,6 +12,7 @@ import { usePaginatedData } from '@/hooks/usePaginatedData';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
 import { adminApi } from '@/lib/api';
+import { localStorageRemoveItem } from '@/lib/browser-local-storage';
 import { toast } from '@/lib/toast';
 import { Pagination } from '@/ui';
 
@@ -123,8 +124,8 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
   useEffect(() => {
     if (initialSearchQuery && typeof window !== 'undefined') {
       const timer = setTimeout(() => {
-        localStorage.removeItem('adminListingsSearchQuery');
-        localStorage.removeItem('adminListingsSearchType');
+        localStorageRemoveItem('adminListingsSearchQuery');
+        localStorageRemoveItem('adminListingsSearchType');
       }, 100);
       return () => clearTimeout(timer);
     }

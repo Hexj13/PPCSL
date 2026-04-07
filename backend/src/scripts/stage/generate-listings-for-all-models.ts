@@ -223,11 +223,11 @@ async function generateListingsForAllModels() {
     if (!model.vehicle_types?.includes('moto')) {
       const transmissionStr =
         transmission === 'Automatic'
-          ? 'Автоматска'
+          ? 'Automatic'
           : transmission === 'Manual'
-            ? 'Мануелна'
+            ? 'Manual'
             : transmission === 'CVT'
-              ? 'Варијатор'
+              ? 'CVT'
               : '';
       title = transmissionStr ? `${baseTitle} (${transmissionStr})` : baseTitle;
     }
@@ -255,7 +255,7 @@ async function generateListingsForAllModels() {
 
     if ((i + 1) % 50 === 0 || i === allModels.length - 1) {
       console.log(
-        `   Создадени ${createdCount} нови објави, прескокнати ${skippedCount} (${i + 1}/${allModels.length} модели)`,
+        `   Created ${createdCount} new listings, skipped ${skippedCount} (${i + 1}/${allModels.length} models)`,
       );
     }
   }

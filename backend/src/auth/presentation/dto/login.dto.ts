@@ -6,7 +6,7 @@ export class LoginDto {
     example: 'user@example.com',
     description: 'Email or phone number',
   })
-  @IsString({ message: 'Email или телефон е задолжителен' })
+  @IsString({ message: 'validation.loginIdentifierRequired' })
   login: string;
 
   @ApiProperty({

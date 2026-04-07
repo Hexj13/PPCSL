@@ -175,7 +175,7 @@ npm run check-models:prod
 To create an admin user in production:
 
 ```bash
-# Basic usage (creates admin@admin.com with password admin123)
+# Basic usage (creates admin@admin.com with password GGGgggTEST777)
 npm run make-admin:prod
 
 # With custom email and password
@@ -190,7 +190,7 @@ npm run make-admin:prod -- --email existing@example.com --password new-password 
 
 **Options:**
 - `--email` - Email address (default: admin@admin.com)
-- `--password` - Password (default: admin123)
+- `--password` - Password (default: GGGgggTEST777)
 - `--first-name` - First name (default: Admin)
 - `--last-name` - Last name (default: User)
 - `--phone` - Phone number (default: +38970111111)

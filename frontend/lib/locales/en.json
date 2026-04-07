@@ -133,7 +133,14 @@
   "errors": {
     "smsHourlyLimit": "SMS limit reached for this number. You can request a new code in one hour.",
     "maxSmsCodeAttempts": "Too many incorrect code attempts. Request a new SMS code.",
-    "additionalPhoneSameAsPrimary": "Additional number must differ from your account phone number"
+    "additionalPhoneSameAsPrimary": "Additional number must differ from your account phone number",
+    "emailAlreadyExists": "User with this email already exists",
+    "newEmailMustDiffer": "New email address must be different from the current one",
+    "emailChangeRequiresConfirmation": "To change your email, request confirmation via the email change flow",
+    "emailChangeTooManyAttempts": "You can change email only 2 times per 24 hours. Try again later.",
+    "invalidCurrentPassword": "Current password is incorrect",
+    "newPasswordMustDiffer": "New password must be different from the current password",
+    "emailVerificationResendOnCooldown": "A confirmation email was already sent. You can request another one after the link in that message expires."
   },
   "cookieSettings": {
     "loading": "Loading...",
@@ -983,6 +990,11 @@
     "emailAndNotifications": "Email and Notifications",
     "email": "Email",
     "emailPlaceholder": "Enter email address",
+    "emailChangeHint": "To change your email, save profile changes. We will send a confirmation link to the new address.",
+    "emailChangeHintAria": "Email change hint",
+    "emailPendingVerification": "This email is not confirmed yet and is waiting for verification.",
+    "currentEmail": "Current email",
+    "emailChangeLinkSent": "We sent a confirmation link to the new email address",
     "emailCannotBeChanged": "Email address cannot be changed",
     "receiveEmailNotifications": "Receive email notifications",
     "companyInfo": "Company Information",
@@ -1063,7 +1075,31 @@
       "resendCode": "Resend Code",
       "resendCodeWithCooldown": "Resend code ({cooldown}s)",
       "resendCodeWithCooldownMinutes": "Resend code ({minutes} min)"
-    }
+    },
+    "confirmEmail": {
+      "title": "Confirm email change",
+      "pleaseWait": "Please wait...",
+      "invalidLink": "Invalid email change link",
+      "confirmationError": "Failed to confirm email change",
+      "goToProfile": "Go to profile",
+      "linkExpiredTitle": "Email change link expired",
+      "linkExpiredDescription": "This email change link has expired.",
+      "linkExpiredInstructions": "Request a new confirmation email and use the latest link from your inbox.",
+      "requestNewLink": "Request new email change link",
+      "resending": "Sending a new email change confirmation...",
+      "resendSuccess": "We sent a new email change confirmation. Please check your inbox.",
+      "resendError": "Failed to send a new email change confirmation",
+      "success": {
+        "title": "Email changed successfully",
+        "description": "Your new email is confirmed and saved.",
+        "redirecting": "Automatic redirect in",
+        "seconds": "seconds..."
+      }
+    },
+    "emailNotificationTypes": "Email notification types",
+    "receiveListingRefreshReminders": "Reminders to update dates for active listings",
+    "receiveWeeklyViewsDigest": "Weekly report on view counts for my active listings",
+    "receiveSystemAndSecurityNotifications": "System notifications and security"
   },
   "admin": {
     "title": "Admin Panel",
@@ -1122,6 +1158,8 @@
       "companyName": "Company name:",
       "companyWebsite": "Company website:",
       "email": "Email:",
+      "emailVerified": "Verified email",
+      "emailVerifiedStatus": "Email verified:",
       "phone": "Main number:",
       "type": "Type:",
       "status": "Status:",
@@ -1136,6 +1174,7 @@
       "freePromotionBalanceDisabledHint": "Enable platform partner status first.",
       "notPartner": "Not a partner",
       "userSaveSuccess": "User updated",
+      "emailConfirmationSent": "Confirmation email for the new address was sent to the user",
       "userSaveError": "Error saving user",
       "unavailable": "Unavailable",
       "searchPlaceholder": "ID / email / phone / name / company"
@@ -1565,6 +1604,12 @@
     "pleaseWait": "Please wait...",
     "invalidLink": "Invalid verification link",
     "verificationError": "Error verifying email address",
+    "linkExpiredTitle": "Verification link expired",
+    "linkExpiredInstructions": "Request a new confirmation email and use the latest link from your inbox.",
+    "requestNewLink": "Request new confirmation email",
+    "resending": "Sending a new confirmation email...",
+    "resendSuccess": "We sent a new confirmation email. Please check your inbox.",
+    "resendError": "Failed to send a new confirmation email",
     "success": {
       "title": "Email address successfully verified",
       "description": "Your email address has been successfully verified. You can now use all platform features.",
@@ -1589,7 +1634,8 @@
     "saveSuccess": "Data saved successfully",
     "fixErrors": "Please fix errors in the form",
     "fillAtLeastOne": "Fill in at least one field to save",
-    "registrationSuccess": "You have successfully registered"
+    "registrationSuccess": "You have successfully registered",
+    "registrationEmailVerificationSent": "We sent you an email to the address you provided to confirm your email."
   },
   "pwa": {
     "install": "Install App",

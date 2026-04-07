@@ -5,6 +5,7 @@ import { User } from '../../users/entities/user.entity';
 import { UsersService } from '../../users/application/users.service';
 
 import type { AuthenticatedRequest } from '../../common/express-augmentation';
+import { I18nService } from '../../common/i18n/i18n.service';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from '../application/auth.service';
@@ -25,6 +26,7 @@ describe('AuthController', () => {
   let ipBlockService: jest.Mocked<IpBlockService>;
   let smsService: jest.Mocked<SmsService>;
   let usersService: jest.Mocked<UsersService>;
+  let i18nService: jest.Mocked<I18nService>;
 
   const mockUser = {
     id: 'user-1',
@@ -42,15 +44,22 @@ describe('AuthController', () => {
     freePromotionBalance: 0,
     partnerListingProgress: 0,
     emailNotifications: false,
+
+    emailNotificationListingRefreshReminders: false,
+
+    emailNotificationWeeklyViewsDigest: false,
+    emailNotificationSecurityAlerts: false,
     viber: false,
     whatsapp: false,
     telegram: false,
+    preferredLocale: null,
     emailVerified: false,
     phoneVerified: false,
     password: 'hashed-password',
     registration_ip: null,
     last_login_ip: null,
     last_listing_refresh_at: null,
+    last_listing_refresh_reminder_sent_at: null,
     created_at: new Date(),
     listings: [],
     favorites: [],
@@ -62,8 +71,11 @@ describe('AuthController', () => {
       login: jest.fn(),
       getUserProfile: jest.fn(),
       updateProfile: jest.fn(),
+      requestEmailChange: jest.fn(),
+      confirmEmailChange: jest.fn(),
       verifyPhone: jest.fn(),
       verifyEmail: jest.fn(),
+      resendEmailVerification: jest.fn(),
       requestPasswordReset: jest.fn(),
       verifyResetCode: jest.fn(),
       resetPassword: jest.fn(),
@@ -89,6 +101,10 @@ describe('AuthController', () => {
       findByPhone: jest.fn(),
     };
 
+    const mockI18nService = {
+      getLocaleFromHeader: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
       providers: [
@@ -96,6 +112,7 @@ describe('AuthController', () => {
         { provide: IpBlockService, useValue: mockIpBlockService },
         { provide: SmsService, useValue: mockSmsService },
         { provide: UsersService, useValue: mockUsersService },
+        { provide: I18nService, useValue: mockI18nService },
       ],
     }).compile();
 
@@ -104,6 +121,7 @@ describe('AuthController', () => {
     ipBlockService = module.get(IpBlockService);
     smsService = module.get(SmsService);
     usersService = module.get(UsersService);
+    i18nService = module.get(I18nService);
   });
 
   it('should be defined', () => {
@@ -124,7 +142,11 @@ describe('AuthController', () => {
 
       const mockRequest = { headers: {}, ip: '127.0.0.1' };
       ipBlockService.getClientIp.mockReturnValue('127.0.0.1');
-      authService.register.mockResolvedValue(mockUser as unknown as Omit<User, 'password'>);
+      i18nService.getLocaleFromHeader.mockReturnValue('ru');
+      authService.register.mockResolvedValue({
+        ...(mockUser as unknown as Omit<User, 'password'>),
+        emailVerificationSent: true,
+      });
 
       const result = await controller.register(
         mockRequest as unknown as AuthenticatedRequest,
@@ -132,8 +154,12 @@ describe('AuthController', () => {
       );
 
       expect(ipBlockService.getClientIp).toHaveBeenCalledWith(mockRequest);
-      expect(authService.register).toHaveBeenCalledWith(registerDto, '127.0.0.1');
-      expect(result).toEqual(mockUser);
+      expect(i18nService.getLocaleFromHeader).toHaveBeenCalledWith(undefined);
+      expect(authService.register).toHaveBeenCalledWith(registerDto, '127.0.0.1', 'ru');
+      expect(result).toEqual({
+        ...mockUser,
+        emailVerificationSent: true,
+      });
     });
   });
 
@@ -157,6 +183,7 @@ describe('AuthController', () => {
           companyWebsiteUrl: mockUser.companyWebsiteUrl,
           phone: mockUser.phone,
           boardSlug: mockUser.board_slug,
+          preferredLocale: mockUser.preferredLocale,
         },
       };
 
@@ -227,14 +254,21 @@ describe('AuthController', () => {
         freePromotionBalance: mockUser.freePromotionBalance,
         partnerListingProgress: mockUser.partnerListingProgress,
         emailNotifications: mockUser.emailNotifications,
+
+        emailNotificationListingRefreshReminders: mockUser.emailNotifications,
+
+        emailNotificationWeeklyViewsDigest: mockUser.emailNotifications,
+        emailNotificationSecurityAlerts: mockUser.emailNotifications,
         viber: mockUser.viber,
         whatsapp: mockUser.whatsapp,
         telegram: mockUser.telegram,
         phoneVerified: true,
         emailVerified: mockUser.emailVerified,
+        preferredLocale: mockUser.preferredLocale,
         registration_ip: mockUser.registration_ip,
         last_login_ip: mockUser.last_login_ip,
         last_listing_refresh_at: null,
+        last_listing_refresh_reminder_sent_at: null,
         created_at: mockUser.created_at,
         listings: [],
         favorites: [],
@@ -364,14 +398,21 @@ describe('AuthController', () => {
         freePromotionBalance: mockUser.freePromotionBalance,
         partnerListingProgress: mockUser.partnerListingProgress,
         emailNotifications: mockUser.emailNotifications,
+
+        emailNotificationListingRefreshReminders: mockUser.emailNotifications,
+
+        emailNotificationWeeklyViewsDigest: mockUser.emailNotifications,
+        emailNotificationSecurityAlerts: mockUser.emailNotifications,
         viber: mockUser.viber,
         whatsapp: mockUser.whatsapp,
         telegram: mockUser.telegram,
         phoneVerified: mockUser.phoneVerified,
         emailVerified: true,
+        preferredLocale: mockUser.preferredLocale,
         registration_ip: mockUser.registration_ip,
         last_login_ip: mockUser.last_login_ip,
         last_listing_refresh_at: null,
+        last_listing_refresh_reminder_sent_at: null,
         created_at: mockUser.created_at,
         listings: [],
         favorites: [],
@@ -505,14 +546,21 @@ describe('AuthController', () => {
         freePromotionBalance: mockUser.freePromotionBalance,
         partnerListingProgress: mockUser.partnerListingProgress,
         emailNotifications: mockUser.emailNotifications,
+
+        emailNotificationListingRefreshReminders: mockUser.emailNotifications,
+
+        emailNotificationWeeklyViewsDigest: mockUser.emailNotifications,
+        emailNotificationSecurityAlerts: mockUser.emailNotifications,
         viber: mockUser.viber,
         whatsapp: mockUser.whatsapp,
         telegram: mockUser.telegram,
         phoneVerified: mockUser.phoneVerified,
         emailVerified: mockUser.emailVerified,
+        preferredLocale: mockUser.preferredLocale,
         registration_ip: mockUser.registration_ip,
         last_login_ip: mockUser.last_login_ip,
         last_listing_refresh_at: null,
+        last_listing_refresh_reminder_sent_at: null,
         created_at: mockUser.created_at,
         listings: [],
         favorites: [],
@@ -569,6 +617,7 @@ describe('AuthController', () => {
         lastName: 'Name',
       };
 
+      i18nService.getLocaleFromHeader.mockReturnValue('ro');
       authService.updateProfile.mockResolvedValue({
         id: mockUser.id,
         email: mockUser.email,
@@ -580,11 +629,17 @@ describe('AuthController', () => {
         companyName: mockUser.companyName,
         companyWebsiteUrl: mockUser.companyWebsiteUrl,
         active: mockUser.active,
+        preferredLocale: mockUser.preferredLocale,
         boardSlug: mockUser.board_slug,
         isPlatformPartner: mockUser.isPlatformPartner,
         freePromotionBalance: mockUser.freePromotionBalance,
         partnerListingProgress: mockUser.partnerListingProgress,
         emailNotifications: mockUser.emailNotifications,
+
+        emailNotificationListingRefreshReminders: mockUser.emailNotifications,
+
+        emailNotificationWeeklyViewsDigest: mockUser.emailNotifications,
+        emailNotificationSecurityAlerts: mockUser.emailNotifications,
         viber: mockUser.viber,
         whatsapp: mockUser.whatsapp,
         telegram: mockUser.telegram,
@@ -593,6 +648,7 @@ describe('AuthController', () => {
         registration_ip: mockUser.registration_ip,
         last_login_ip: mockUser.last_login_ip,
         last_listing_refresh_at: null,
+        last_listing_refresh_reminder_sent_at: null,
         created_at: mockUser.created_at,
         listings: [],
         favorites: [],
@@ -603,8 +659,73 @@ describe('AuthController', () => {
         updateProfileDto,
       );
 
-      expect(authService.updateProfile).toHaveBeenCalledWith(mockUser.id, updateProfileDto);
+      expect(authService.updateProfile).toHaveBeenCalledWith(mockUser.id, updateProfileDto, 'ro');
       expect(result).toHaveProperty('firstName', 'Updated');
+    });
+  });
+
+  describe('requestEmailChange', () => {
+    it('should request email change successfully', async () => {
+      const req = { user: { id: mockUser.id }, headers: { 'accept-language': 'ru' } };
+      const dto = { newEmail: 'new@example.com' };
+
+      i18nService.getLocaleFromHeader.mockReturnValue('ru');
+      authService.requestEmailChange.mockResolvedValue(undefined);
+
+      const result = await controller.requestEmailChange(
+        req as unknown as AuthenticatedRequest,
+        dto,
+      );
+
+      expect(authService.requestEmailChange).toHaveBeenCalledWith(mockUser.id, dto, 'ru');
+      expect(result).toEqual({ success: true });
+    });
+  });
+
+  describe('resendEmailVerification', () => {
+    it('should resend email verification with locale from request headers', async () => {
+      const req = { headers: { 'accept-language': 'ro,en;q=0.8' } };
+      const dto = { token: 'resend-token' };
+
+      i18nService.getLocaleFromHeader.mockReturnValue('ro');
+      authService.resendEmailVerification.mockResolvedValue(undefined);
+
+      const result = await controller.resendEmailVerification(
+        req as unknown as AuthenticatedRequest,
+        dto,
+      );
+
+      expect(authService.resendEmailVerification).toHaveBeenCalledWith('resend-token', 'ro');
+      expect(result).toEqual({ success: true });
+    });
+  });
+
+  describe('confirmEmailChange', () => {
+    it('should confirm email change successfully', async () => {
+      const dto = { token: 'email-change-token' };
+      authService.confirmEmailChange.mockResolvedValue({
+        ...mockUser,
+        email: 'new@example.com',
+        emailVerified: true,
+      });
+
+      const result = await controller.confirmEmailChange(dto);
+
+      expect(authService.confirmEmailChange).toHaveBeenCalledWith(dto);
+      expect(result).toEqual({
+        success: true,
+        user: {
+          id: mockUser.id,
+          email: 'new@example.com',
+          type: mockUser.type,
+          firstName: mockUser.firstName,
+          lastName: mockUser.lastName,
+          companyName: mockUser.companyName,
+          companyWebsiteUrl: mockUser.companyWebsiteUrl,
+          phone: mockUser.phone,
+          emailVerified: true,
+        },
+      });
     });
   });
 
@@ -652,14 +773,21 @@ describe('AuthController', () => {
         freePromotionBalance: mockUser.freePromotionBalance,
         partnerListingProgress: mockUser.partnerListingProgress,
         emailNotifications: mockUser.emailNotifications,
+
+        emailNotificationListingRefreshReminders: mockUser.emailNotifications,
+
+        emailNotificationWeeklyViewsDigest: mockUser.emailNotifications,
+        emailNotificationSecurityAlerts: mockUser.emailNotifications,
         viber: mockUser.viber,
         whatsapp: mockUser.whatsapp,
         telegram: mockUser.telegram,
         phoneVerified: true,
         emailVerified: mockUser.emailVerified,
+        preferredLocale: mockUser.preferredLocale,
         registration_ip: mockUser.registration_ip,
         last_login_ip: mockUser.last_login_ip,
         last_listing_refresh_at: null,
+        last_listing_refresh_reminder_sent_at: null,
         created_at: mockUser.created_at,
         listings: [],
         favorites: [],

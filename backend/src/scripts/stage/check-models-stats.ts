@@ -35,16 +35,16 @@ async function checkModelsStats() {
   }
 
   console.log(`📊 Total models: ${totalModels}\n`);
-  console.log('📊 Марки со број на модели:');
+  console.log('📊 Brands by model count:');
   brandsWithModels
     .sort((a, b) => b.count - a.count)
     .slice(0, 20)
     .forEach((item, index) => {
-      console.log(`   ${index + 1}. ${item.brand}: ${item.count} модели`);
+      console.log(`   ${index + 1}. ${item.brand}: ${item.count} models`);
     });
 
   if (brandsWithModels.length > 20) {
-    console.log(`   ... и уште ${brandsWithModels.length - 20} марки`);
+    console.log(`   ... and ${brandsWithModels.length - 20} more brands`);
   }
 
   await AppDataSource.destroy();
@@ -56,6 +56,6 @@ checkModelsStats()
     process.exit(0);
   })
   .catch((error) => {
-    console.error('❌ Грешка:', error);
+    console.error('❌ Error:', error);
     process.exit(1);
   });

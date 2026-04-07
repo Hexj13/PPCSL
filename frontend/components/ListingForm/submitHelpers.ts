@@ -11,7 +11,8 @@ export function applyEditNullables(
   vehicleType: 'car' | 'truck' | 'moto',
 ): UpdateListingDto {
   const updatePayload: UpdateListingDto = { ...payload };
-  if (!formData.description.trim()) updatePayload.description = null;
+  if (!formData.description_ro.trim()) updatePayload.description_ro = null;
+  if (!formData.description_ru.trim()) updatePayload.description_ru = null;
   if (!formData.vin.trim()) updatePayload.vin = null;
   if (!formData.power_kw.trim()) updatePayload.power_kw = null;
   if (formData.equipment.length === 0) updatePayload.equipment = null;
@@ -39,7 +40,7 @@ export function getFilledFields(formData: ListingFormData): Record<string, boole
     year: !!formData.vehicle.year,
     price: !!formData.price,
     city: !!formData.city,
-    description: !!formData.description,
+    description: !!(formData.description_ro.trim() || formData.description_ru.trim()),
     images: formData.images.length > 0,
   };
 }
@@ -58,7 +59,8 @@ export function buildListingPayload(
       formData.available_in_credit && formData.down_payment_amount.trim() !== ''
         ? parseInt(formData.down_payment_amount, 10)
         : undefined,
-    description: formData.description?.trim() || undefined,
+    description_ro: formData.description_ro?.trim() || undefined,
+    description_ru: formData.description_ru?.trim() || undefined,
     status: formData.status,
     images: formData.images,
     cover_blur_hash: formData.cover_blur_hash || undefined,

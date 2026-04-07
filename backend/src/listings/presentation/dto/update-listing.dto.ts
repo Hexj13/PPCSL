@@ -91,10 +91,30 @@ export class UpdateListingDto {
 
   @ApiPropertyOptional({
     example: 'Updated description with new information.',
-    description: 'Listing description',
+    description: 'Listing description (legacy; updates Romanian if description_ro omitted)',
   })
   @IsOptional()
-  description?: string;
+  @IsString()
+  @MaxLength(5000)
+  description?: string | null;
+
+  @ApiPropertyOptional({
+    example: 'Actualizat...',
+    description: 'Listing description in Romanian',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(5000)
+  description_ro?: string | null;
+
+  @ApiPropertyOptional({
+    example: 'Updated description...',
+    description: 'Listing description in Russian',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(5000)
+  description_ru?: string | null;
 
   @ApiPropertyOptional({
     example: ['http://localhost:4000/uploads/new-image.webp'],
@@ -127,9 +147,9 @@ export class UpdateListingDto {
   })
   @IsOptional()
   @IsString()
-  @Length(17, 17, { message: 'VIN мора да биде точно 17 карактери' })
+  @Length(17, 17, { message: 'validation.vinLength17' })
   @Matches(/^[A-HJ-NPR-Z0-9]{17}$/i, {
-    message: 'VIN мора да содржи само букви и бројки (без I, O, Q)',
+    message: 'validation.vinCharset',
   })
   vin?: string;
 
@@ -139,7 +159,7 @@ export class UpdateListingDto {
     description: 'Vehicle condition',
   })
   @IsOptional()
-  @IsEnum(ConditionType, { message: 'Состојбата мора да биде Undamaged, Damaged или ForParts' })
+  @IsEnum(ConditionType, { message: 'validation.conditionTypeEnum' })
   condition?: ConditionType;
 
   @ApiPropertyOptional({
@@ -187,7 +207,7 @@ export class UpdateListingDto {
   @IsArray()
   @IsString({ each: true })
   @ArrayMaxSize(40, {
-    message: 'Максимум 40 опции',
+    message: 'validation.maxEquipmentOptions',
   })
   equipment?: string[];
 

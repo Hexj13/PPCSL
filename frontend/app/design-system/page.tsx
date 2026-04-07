@@ -40,11 +40,9 @@ function DesignSystemNotFound() {
           <h1 className="text-9xl md:text-[12rem] font-extrabold bg-linear-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent mb-4">
             404
           </h1>
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Страницата не е пронајдена
-          </h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Page not found</h2>
           <p className="text-gray-300 text-lg mb-8">
-            За жал, страницата која ја барате не постои или е преместена.
+            The page you are looking for does not exist or has been moved.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -52,7 +50,7 @@ function DesignSystemNotFound() {
             href="/"
             className="btn-primary px-8 py-3 text-lg font-semibold inline-flex items-center gap-2"
           >
-            <span>Кон почетна</span>
+            <span>Go to home</span>
             <svg
               className="w-5 h-5"
               fill="none"
@@ -69,7 +67,7 @@ function DesignSystemNotFound() {
             </svg>
           </Link>
           <Link href="/listings" className="btn-outline px-8 py-3 text-lg font-semibold">
-            Прегледај објави
+            Browse listings
           </Link>
         </div>
       </div>

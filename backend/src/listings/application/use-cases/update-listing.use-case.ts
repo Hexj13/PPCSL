@@ -35,6 +35,44 @@ import {
   validateImageBlurHashesMatchImages,
 } from '../utils/image-blur-hashes.utils';
 
+function sanitizeListingDescriptionInput(value: string | null | undefined): string | null {
+  if (value == null || !String(value).trim()) {
+    return null;
+  }
+  return normalizeDescriptionHtml(sanitizeHtml(String(value))) || null;
+}
+
+function buildLocalizedDescriptionUpdate(
+  existing: Listing,
+  dto: UpdateListingDto,
+): Partial<Pick<Listing, 'description' | 'description_ro' | 'description_ru'>> {
+  const patch: Partial<Pick<Listing, 'description' | 'description_ro' | 'description_ru'>> = {};
+  let touched = false;
+
+  if (dto.description_ro !== undefined) {
+    patch.description_ro = sanitizeListingDescriptionInput(dto.description_ro);
+    touched = true;
+  } else if (dto.description !== undefined) {
+    patch.description_ro = sanitizeListingDescriptionInput(dto.description);
+    touched = true;
+  }
+
+  if (dto.description_ru !== undefined) {
+    patch.description_ru = sanitizeListingDescriptionInput(dto.description_ru);
+    touched = true;
+  }
+
+  if (touched) {
+    const finalRo =
+      patch.description_ro !== undefined ? patch.description_ro : existing.description_ro;
+    const finalRu =
+      patch.description_ru !== undefined ? patch.description_ru : existing.description_ru;
+    patch.description = finalRo ?? finalRu ?? null;
+  }
+
+  return patch;
+}
+
 @Injectable()
 export class UpdateListingUseCase {
   private readonly logger = new Logger(UpdateListingUseCase.name);
@@ -278,12 +316,15 @@ export class UpdateListingUseCase {
     delete (listingFields as Record<string, unknown>).is_new;
     delete (listingFields as Record<string, unknown>).available_in_credit;
     delete (listingFields as Record<string, unknown>).down_payment_amount;
+    delete (listingFields as Record<string, unknown>).description;
+    delete (listingFields as Record<string, unknown>).description_ro;
+    delete (listingFields as Record<string, unknown>).description_ru;
+
+    const localizedPatch = buildLocalizedDescriptionUpdate(listing, updateListingDto);
 
     const listingUpdateData: Partial<Listing> = {
       ...(listingFields as Partial<Listing>),
-      description: listingFields.description
-        ? normalizeDescriptionHtml(sanitizeHtml(listingFields.description)) || undefined
-        : listingFields.description,
+      ...localizedPatch,
       last_edited_at: new Date(),
       title,
       is_new: false,
@@ -472,11 +513,15 @@ export class UpdateListingUseCase {
     delete (listingFields as Record<string, unknown>).vehicle;
     delete (listingFields as Record<string, unknown>).tire;
     delete (listingFields as Record<string, unknown>).category;
+    delete (listingFields as Record<string, unknown>).description;
+    delete (listingFields as Record<string, unknown>).description_ro;
+    delete (listingFields as Record<string, unknown>).description_ru;
+
+    const localizedPatch = buildLocalizedDescriptionUpdate(listing, updateListingDto);
+
     const listingUpdateData: Partial<Listing> = {
       ...(listingFields as Partial<Listing>),
-      description: listingFields.description
-        ? normalizeDescriptionHtml(sanitizeHtml(listingFields.description)) || undefined
-        : listingFields.description,
+      ...localizedPatch,
       last_edited_at: new Date(),
       title: await this.generateTitle(updatedVehicle),
     };

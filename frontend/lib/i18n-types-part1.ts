@@ -192,6 +192,7 @@ export interface TranslationsPart1 {
     fixErrors: string;
     fillAtLeastOne: string;
     registrationSuccess: string;
+    registrationEmailVerificationSent: string;
   };
   resetPassword: {
     title: string;

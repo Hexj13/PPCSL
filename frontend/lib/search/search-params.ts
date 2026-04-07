@@ -1,4 +1,6 @@
 import type { Brand, VehicleModel, City } from '@/lib/api';
+import { localStorageRemoveItem, localStorageSetItem } from '@/lib/browser-local-storage';
+import { sessionStorageRemoveItem, sessionStorageSetItem } from '@/lib/browser-session-storage';
 import {
   isValidTireAspectRatio,
   isValidTireDiameterInch,
@@ -28,10 +30,9 @@ export function encodeArray(arr: string[]): string {
 }
 
 export function saveFiltersToStorage(data: Record<string, unknown>): void {
-  if (typeof window === 'undefined') return;
   try {
-    sessionStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(data));
-    localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(data));
+    sessionStorageSetItem(FILTERS_STORAGE_KEY, JSON.stringify(data));
+    localStorageSetItem(FILTERS_STORAGE_KEY, JSON.stringify(data));
   } catch (e) {
     if (typeof console !== 'undefined' && console.error) {
       console.error('Failed to save filters to storage:', e);
@@ -40,10 +41,9 @@ export function saveFiltersToStorage(data: Record<string, unknown>): void {
 }
 
 export function clearFiltersFromStorage(): void {
-  if (typeof window === 'undefined') return;
   try {
-    sessionStorage.removeItem(FILTERS_STORAGE_KEY);
-    localStorage.removeItem(FILTERS_STORAGE_KEY);
+    sessionStorageRemoveItem(FILTERS_STORAGE_KEY);
+    localStorageRemoveItem(FILTERS_STORAGE_KEY);
   } catch (e) {
     if (typeof console !== 'undefined' && console.error) {
       console.error('Failed to clear filters from storage:', e);

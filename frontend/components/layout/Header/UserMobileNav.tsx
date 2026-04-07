@@ -73,7 +73,12 @@ export function UserMobileNav({
           <span suppressHydrationWarning>{t('header.admin')}</span>
         </Link>
       )}
-      <button type="button" onClick={onLogout} className={mobileNavLinkClasses}>
+      <button
+        type="button"
+        onClick={onLogout}
+        className={mobileNavLinkClasses}
+        data-testid="header-mobile-logout"
+      >
         <LogoutIcon className={iconClass} />
         <span suppressHydrationWarning>{t('header.logout')}</span>
       </button>

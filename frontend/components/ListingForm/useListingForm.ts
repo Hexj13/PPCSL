@@ -22,6 +22,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import type { Listing } from '@/lib/api';
 import { listingsApi } from '@/lib/api';
+import { sessionStorageSetItem } from '@/lib/browser-session-storage';
 import type { VehicleEquipmentKey } from '@/lib/options';
 import { getEquipmentKeysByVehicleType } from '@/lib/options';
 import { loadSiteConfigSync } from '@/lib/site-config';
@@ -323,7 +324,7 @@ export function useListingForm({
             listing_category: 'vehicle',
           });
           setLoading(false);
-          sessionStorage.setItem(
+          sessionStorageSetItem(
             'listingCreatedToast',
             JSON.stringify({
               created: t('listings.createSuccess'),
@@ -340,7 +341,7 @@ export function useListingForm({
         }
         const updatePayload = applyEditNullables(payload, formData, vehicleType);
         const result = await listingsApi.update(listingId, updatePayload);
-        sessionStorage.setItem(`refreshListing_${listingId}`, 'true');
+        sessionStorageSetItem(`refreshListing_${listingId}`, 'true');
         if (result.data) {
           formSubmittedSuccessfullyRef.current = true;
           resetUploadedImagesState();
@@ -350,7 +351,7 @@ export function useListingForm({
         reportFormSubmit(analytics, 'edit', true, filledFields, { listing_category: 'vehicle' });
         setLoading(false);
         if (onSuccess) {
-          sessionStorage.setItem(LISTING_UPDATED_TOAST_KEY, 'true');
+          sessionStorageSetItem(LISTING_UPDATED_TOAST_KEY, 'true');
         } else {
           afterHidden(() => toast.success(t('listings.changesSaved')));
         }

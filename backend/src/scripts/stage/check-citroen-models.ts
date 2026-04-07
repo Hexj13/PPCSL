@@ -16,7 +16,7 @@ async function checkCitroenModels() {
   const citroen = await brandRepo.findOne({ where: { name: 'Citroën' } });
 
   if (!citroen) {
-    console.log('❌ Citroën не е пронајден');
+    console.log('❌ Citroën not found');
     await AppDataSource.destroy();
     process.exit(1);
   }
@@ -26,7 +26,7 @@ async function checkCitroenModels() {
     order: { name: 'ASC' },
   });
 
-  console.log(`📊 Citroën: ${models.length} модели\n`);
+  console.log(`📊 Citroën: ${models.length} models\n`);
 
   const cModels = models.filter((m) => m.name.startsWith('C'));
   const suvModels = models.filter(
@@ -36,17 +36,17 @@ async function checkCitroenModels() {
       m.name.toLowerCase().includes('cactus'),
   );
 
-  console.log('🚗 Модели серија C:');
+  console.log('🚗 C-series models:');
   cModels.forEach((model) => {
     console.log(`   - ${model.name}`);
   });
 
-  console.log('\n🚙 SUV модели:');
+  console.log('\n🚙 SUV models:');
   suvModels.forEach((model) => {
     console.log(`   - ${model.name}`);
   });
 
-  console.log('\n📋 Сите модели:');
+  console.log('\n📋 All models:');
   models.forEach((model, index) => {
     console.log(`   ${index + 1}. ${model.name}`);
   });
@@ -60,6 +60,6 @@ checkCitroenModels()
     process.exit(0);
   })
   .catch((error) => {
-    console.error('❌ Грешка:', error);
+    console.error('❌ Error:', error);
     process.exit(1);
   });

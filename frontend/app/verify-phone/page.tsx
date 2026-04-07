@@ -27,7 +27,7 @@ function VerifyPhoneContent() {
   } = useVerifyPhonePage();
 
   return (
-    <div className="max-w-md mx-auto mt-6 md:mt-12">
+    <div className="max-w-md mx-auto mt-6 md:mt-12" data-testid="verify-phone-page">
       <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center text-primary-900">
         {t('verifyPhone.title')}
       </h1>

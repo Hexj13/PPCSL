@@ -126,6 +126,7 @@ export function PriceAndLocationSection({
               autoPosition={true}
               menuMaxHeight={300}
               options={CURRENCY_OPTIONS}
+              dataTestId="listing-create-currency-select"
             />
           </div>
         </div>
@@ -240,6 +241,7 @@ export function PriceAndLocationSection({
                 label,
               };
             })}
+            dataTestId="listing-create-city-select"
           />
         </div>
       </div>

@@ -8,7 +8,9 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import type { RegisterDto } from '@/lib/api';
 import { authApi } from '@/lib/api';
+import { localStorageGetItem, localStorageRemoveItem } from '@/lib/browser-local-storage';
 import { SMS_HOURLY_QUOTA_RESEND_COOLDOWN_SECONDS } from '@/lib/constants';
+import { getReturnUrlFromSearchParams } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
 
@@ -35,6 +37,10 @@ export function useVerifyPhonePage() {
   const [isVerificationBlocked, setIsVerificationBlocked] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const cooldownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const returnUrl = getReturnUrlFromSearchParams(searchParams);
+  const signTabUrl = returnUrl
+    ? `/sign?tab=register&returnUrl=${encodeURIComponent(returnUrl)}`
+    : '/sign?tab=register';
 
   const sendSmsCode = async (phone: string): Promise<'success' | 'hourly_limit' | 'error'> => {
     try {
@@ -57,8 +63,7 @@ export function useVerifyPhonePage() {
 
   useEffect(() => {
     const phone = searchParams.get('phone');
-    const storedData =
-      typeof window !== 'undefined' ? localStorage.getItem('pendingRegistration') : null;
+    const storedData = localStorageGetItem('pendingRegistration');
 
     let parsedData: RegisterDto | null = null;
     if (storedData) {
@@ -67,7 +72,7 @@ export function useVerifyPhonePage() {
         setFormData(parsedData);
       } catch {
         toast.error(t('verifyPhone.loadDataError'));
-        router.push('/sign?tab=register');
+        router.push(signTabUrl);
         return;
       }
     }
@@ -76,7 +81,7 @@ export function useVerifyPhonePage() {
     if (phoneToUse) {
       setPhoneNumber(phoneToUse);
     } else {
-      router.push('/sign?tab=register');
+      router.push(signTabUrl);
       return;
     }
 
@@ -89,7 +94,7 @@ export function useVerifyPhonePage() {
         clearInterval(cooldownTimerRef.current);
       }
     };
-  }, [searchParams, router, t]);
+  }, [searchParams, router, signTabUrl, t]);
 
   useEffect(() => {
     if (resendCooldown > 0) {
@@ -177,12 +182,12 @@ export function useVerifyPhonePage() {
   const performRegistration = async () => {
     if (!formData) {
       toast.error(t('verifyPhone.loadDataError'));
-      router.push('/sign?tab=register');
+      router.push(signTabUrl);
       return;
     }
 
     try {
-      await authApi.register(formData);
+      const registerResponse = await authApi.register(formData);
 
       const signUpMethod = formData.email?.trim() ? 'email' : 'phone';
       analytics.signUp(signUpMethod);
@@ -199,10 +204,17 @@ export function useVerifyPhonePage() {
           login: loginValue,
           password: formData.password,
         });
-        await runAfterRegistration(formData, loginRes, setAuth, t);
+        await runAfterRegistration(
+          formData,
+          loginRes,
+          registerResponse.data.emailVerificationSent,
+          setAuth,
+          t,
+          returnUrl,
+        );
       } catch {
         toast.error(t('verifyPhone.registrationSuccessButLoginFailed'));
-        router.push('/sign');
+        router.push(returnUrl ? `/sign?returnUrl=${encodeURIComponent(returnUrl)}` : '/sign');
       }
     } catch {
       // Error is already handled by API interceptor
@@ -321,10 +333,8 @@ export function useVerifyPhonePage() {
   };
 
   const handleBack = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('pendingRegistration');
-    }
-    router.push('/sign?tab=register');
+    localStorageRemoveItem('pendingRegistration');
+    router.push(signTabUrl);
   };
 
   const handleResend = async () => {

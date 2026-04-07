@@ -4,7 +4,7 @@ import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 export class UpdateSavedFilterDto {
   @ApiProperty({
     description: 'Filter name',
-    example: 'Мој филтер',
+    example: 'My filter',
     maxLength: 100,
   })
   @IsString()

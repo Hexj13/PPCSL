@@ -2,7 +2,9 @@ import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import axios from 'axios';
 
 interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
-  _retry?: boolean;
+  _rateLimitRetry?: boolean;
+  _authRetry?: boolean;
+  _refreshAttempts?: number;
   _transientRetry?: boolean;
   _requestId?: string;
 }
@@ -10,6 +12,7 @@ interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
 import { localStorageGetItem, localStorageSetItem } from '../browser-local-storage';
 import { clearClientAuthLocalStorage } from '../client-auth-storage';
 import { getDefaultLocale, loadTranslations, type Translations } from '../i18n';
+import { buildSignInHref } from '../return-url';
 import { sanitizeForSentryExtra } from '../sentry-sanitize';
 
 import type { User } from './api';
@@ -28,6 +31,7 @@ let failedQueue: Array<{
   resolve: (_value?: unknown) => void;
   reject: (_error?: unknown) => void;
 }> = [];
+const MAX_REFRESH_ATTEMPTS_PER_REQUEST = 1;
 
 const processQueue = (error: AxiosError | null, token: string | null = null) => {
   failedQueue.forEach((prom) => {
@@ -63,21 +67,6 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
-
-const STANDARD_ERROR_PHRASES = [
-  'Грешка во мрежата',
-  'Грешка при поврзување',
-  'Истече време',
-  'Невалидна барање',
-  'Неавторизиран пристап',
-  'Немате дозвола',
-  'Ресурсот не е пронајден',
-  'Конфликт',
-  'Грешка во валидација',
-  'Премногу барања',
-  'Грешка на серверот',
-  'Серверот е привремено недостапен',
-];
 
 function getStoredLocale(): 'ro' | 'ru' | null {
   if (typeof window === 'undefined') return null;
@@ -194,8 +183,7 @@ function clearAuthSetReturnUrlAndRedirect(): void {
     clearAuthPersistKey: true,
     clearPendingMigrationAndFilters: false,
   });
-  localStorageSetItem('returnUrl', currentUrl);
-  window.location.href = '/sign';
+  window.location.href = buildSignInHref(currentUrl);
 }
 
 const getErrorMessage = (error: AxiosError): string => {
@@ -215,9 +203,12 @@ const getErrorMessage = (error: AxiosError): string => {
   const status = error.response.status;
   const backendMessage = getBackendMessageString(error.response.data);
   const translatedBackendMessage = translateBackendKeyIfNeeded(backendMessage, t);
-  const useTranslation =
-    !translatedBackendMessage ||
-    STANDARD_ERROR_PHRASES.some((phrase) => translatedBackendMessage.includes(phrase));
+  const isBackendErrorKey =
+    backendMessage.startsWith('errors.') || backendMessage.startsWith('validation.');
+  if (isBackendErrorKey && translatedBackendMessage) {
+    return translatedBackendMessage;
+  }
+  const useTranslation = !translatedBackendMessage;
 
   if (status === 401 && typeof window !== 'undefined') {
     const refreshToken = localStorageGetItem('refresh_token');
@@ -231,9 +222,9 @@ async function handle429Retry(
   error: AxiosError,
   originalRequest: ExtendedAxiosRequestConfig | undefined,
 ): Promise<unknown> {
-  if (error.response?.status !== 429 || !originalRequest || originalRequest._retry)
+  if (error.response?.status !== 429 || !originalRequest || originalRequest._rateLimitRetry)
     return undefined;
-  originalRequest._retry = true;
+  originalRequest._rateLimitRetry = true;
   const retryAfter = error.response.headers['retry-after']
     ? parseInt(error.response.headers['retry-after'], 10) * 1000
     : 2000;
@@ -363,6 +354,15 @@ async function doRefreshAndRetry(
   return api(originalRequest);
 }
 
+function canRetryAuthRefresh(originalRequest: ExtendedAxiosRequestConfig): boolean {
+  return (originalRequest._refreshAttempts ?? 0) < MAX_REFRESH_ATTEMPTS_PER_REQUEST;
+}
+
+function markAuthRefreshAttempt(originalRequest: ExtendedAxiosRequestConfig): void {
+  originalRequest._authRetry = true;
+  originalRequest._refreshAttempts = (originalRequest._refreshAttempts ?? 0) + 1;
+}
+
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
@@ -378,7 +378,7 @@ api.interceptors.response.use(
     const transientRetry = await handleTransientGetRetry(error, originalRequest);
     if (transientRetry !== undefined) return transientRetry;
 
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+    if (error.response?.status === 401 && originalRequest && canRetryAuthRefresh(originalRequest)) {
       if (isLoginOrRegisterRequest(originalRequest.url) || isRefreshRequest(originalRequest.url)) {
         if (error.config && !error.config.headers['X-Skip-Error-Handling']) {
           await showToastForError(error);
@@ -387,6 +387,7 @@ api.interceptors.response.use(
       }
 
       if (isRefreshing) {
+        markAuthRefreshAttempt(originalRequest);
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
@@ -399,7 +400,7 @@ api.interceptors.response.use(
           .catch((err) => Promise.reject(err));
       }
 
-      originalRequest._retry = true;
+      markAuthRefreshAttempt(originalRequest);
       isRefreshing = true;
       const refreshToken =
         typeof window !== 'undefined' ? localStorageGetItem('refresh_token') : null;

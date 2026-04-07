@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { listingsApi, type Listing } from '@/lib/api';
+import { localStorageSetItem } from '@/lib/browser-local-storage';
 import { publishCrossTabEvent } from '@/lib/cross-tab-events';
 import { toast } from '@/lib/toast';
 
@@ -188,9 +189,7 @@ export function useListingActions(
     try {
       const res = await listingsApi.refreshDates();
       toast.success(t('myListings.datesUpdated', { count: res.data.updated }));
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem(`lastRefreshDate_${userId}`, Date.now().toString());
-      }
+      localStorageSetItem(`lastRefreshDate_${userId}`, Date.now().toString());
       if (refreshCooldownMs > 0) setTimeUntilRefresh(refreshCooldownMs);
       await fetchListings(1, false, 20, apiStatus, apiPromoted, searchQuery);
       void refetchAllForCount();

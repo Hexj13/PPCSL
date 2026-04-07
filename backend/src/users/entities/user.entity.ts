@@ -72,6 +72,15 @@ export class User {
   emailNotifications: boolean;
 
   @Column({ type: 'boolean', default: false })
+  emailNotificationListingRefreshReminders: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  emailNotificationWeeklyViewsDigest: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  emailNotificationSecurityAlerts: boolean;
+
+  @Column({ type: 'boolean', default: false })
   viber: boolean;
 
   @Column({ type: 'boolean', default: false })
@@ -79,6 +88,9 @@ export class User {
 
   @Column({ type: 'boolean', default: false })
   telegram: boolean;
+
+  @Column({ type: 'varchar', nullable: true, name: 'preferred_locale' })
+  preferredLocale?: string | null;
 
   @Column({ type: 'boolean', default: false })
   phoneVerified: boolean;
@@ -94,6 +106,9 @@ export class User {
 
   @Column({ type: 'timestamptz', nullable: true, name: 'last_listing_refresh_at' })
   last_listing_refresh_at: Date | null;
+
+  @Column({ type: 'timestamptz', nullable: true, name: 'last_listing_refresh_reminder_sent_at' })
+  last_listing_refresh_reminder_sent_at: Date | null;
 
   @CreateDateColumn()
   created_at: Date;

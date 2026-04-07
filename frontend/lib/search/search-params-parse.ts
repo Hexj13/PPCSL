@@ -1,3 +1,6 @@
+import { localStorageGetItem } from '@/lib/browser-local-storage';
+import { sessionStorageGetItem } from '@/lib/browser-session-storage';
+
 import { FILTERS_STORAGE_KEY } from './search-params-constants';
 import { decodeBase64Array } from './search-params-encoding';
 import {
@@ -189,10 +192,9 @@ function getParamValue(
 }
 
 function loadFiltersFromStorage(): Record<string, string[]> | null {
-  if (typeof window === 'undefined') return null;
   try {
     const stored =
-      sessionStorage.getItem(FILTERS_STORAGE_KEY) || localStorage.getItem(FILTERS_STORAGE_KEY);
+      sessionStorageGetItem(FILTERS_STORAGE_KEY) || localStorageGetItem(FILTERS_STORAGE_KEY);
     const parsed = stored ? JSON.parse(stored) : null;
     return parsed && typeof parsed === 'object' ? parsed : null;
   } catch {

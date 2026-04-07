@@ -5,6 +5,7 @@ import { useCallback, useMemo } from 'react';
 import { Breadcrumbs } from '@/components/layout/Breadcrumbs';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
+import { sessionStorageRemoveItem, sessionStorageSetItem } from '@/lib/browser-session-storage';
 import {
   createSlug,
   formatTransmission,
@@ -62,12 +63,11 @@ export function ListingPageBreadcrumbs({ listing, className = '' }: ListingPageB
   const { t } = useTranslation();
 
   const scrollToResultsAfterSearch = useCallback(() => {
-    if (typeof sessionStorage === 'undefined') return;
-    sessionStorage.setItem('scrollToResultsAfterLoad', '1');
-    sessionStorage.removeItem('homeScrollPosition');
-    sessionStorage.removeItem('homeScrollTimestamp');
-    sessionStorage.removeItem('kupito_grid_state');
-    sessionStorage.removeItem('forceHomeScrollTop');
+    sessionStorageSetItem('scrollToResultsAfterLoad', '1');
+    sessionStorageRemoveItem('homeScrollPosition');
+    sessionStorageRemoveItem('homeScrollTimestamp');
+    sessionStorageRemoveItem('kupito_grid_state');
+    sessionStorageRemoveItem('forceHomeScrollTop');
   }, []);
 
   const tireItems = useMemo(() => {

@@ -14,8 +14,13 @@ type UserDataKeys = Exclude<keyof User, UserMethodKeys>;
 
 export type UserWithoutPassword = Omit<Pick<User, UserDataKeys>, 'password'>;
 
+export type RegisterResponse = UserWithoutPassword & {
+  emailVerificationSent: boolean;
+};
+
 export type UserProfileResponse = Omit<UserWithoutPassword, 'board_slug'> & {
   boardSlug: string | null;
+  emailVerificationSent?: boolean;
 };
 
 export type LoginResponse = {
@@ -31,5 +36,6 @@ export type LoginResponse = {
     companyWebsiteUrl: string | null;
     phone: string | null;
     boardSlug: string | null;
+    preferredLocale: string | null;
   };
 };

@@ -3,6 +3,7 @@
 import { useEffect, type Dispatch, type SetStateAction } from 'react';
 
 import type { PaginationMeta } from '@/lib/api';
+import { localStorageSetItem } from '@/lib/browser-local-storage';
 
 export function useMyListingsRefreshCooldownTimer(
   meta: PaginationMeta | null,
@@ -16,7 +17,7 @@ export function useMyListingsRefreshCooldownTimer(
     const remaining = at + meta.refreshCooldownMs - Date.now();
     if (remaining > 0) {
       setTimeUntilRefresh(remaining);
-      localStorage.setItem(`lastRefreshDate_${userId}`, at.toString());
+      localStorageSetItem(`lastRefreshDate_${userId}`, at.toString());
     }
   }, [meta?.last_listing_refresh_at, meta?.refreshCooldownMs, userId, setTimeUntilRefresh]);
 

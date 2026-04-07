@@ -10,6 +10,11 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { analytics, listingToViewItemListEntry } from '@/lib/analytics';
 import type { Listing, PaginationMeta, SearchParams } from '@/lib/api';
 import { favoritesApi, listingsApi } from '@/lib/api';
+import {
+  sessionStorageGetItem,
+  sessionStorageRemoveItem,
+  sessionStorageSetItem,
+} from '@/lib/browser-session-storage';
 import { LISTING_GRID_PAGE_SIZE, SEARCH_FILTERS_LIMIT_ERROR_TOAST_KEY } from '@/lib/constants';
 import { buildMinimalCategorySearchUrl, getParsedListingSearchParams } from '@/lib/search';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
@@ -28,7 +33,7 @@ const saveGridState = (listings: Listing[], page: number, meta: PaginationMeta |
   if (typeof window !== 'undefined') {
     try {
       const state = { listings, page, meta, timestamp: Date.now() };
-      sessionStorage.setItem(GRID_STATE_KEY, JSON.stringify(state));
+      sessionStorageSetItem(GRID_STATE_KEY, JSON.stringify(state));
     } catch {}
   }
 };
@@ -40,13 +45,13 @@ const loadGridState = (): {
 } | null => {
   if (typeof window !== 'undefined') {
     try {
-      const stored = sessionStorage.getItem(GRID_STATE_KEY);
+      const stored = sessionStorageGetItem(GRID_STATE_KEY);
       if (!stored) return null;
       const state = JSON.parse(stored);
       if (!state.timestamp) return null;
       const savedTime = parseInt(state.timestamp, 10);
       if (Date.now() - savedTime > 5 * 60 * 1000) {
-        sessionStorage.removeItem(GRID_STATE_KEY);
+        sessionStorageRemoveItem(GRID_STATE_KEY);
         return null;
       }
       return { listings: state.listings, page: state.page, meta: state.meta };
@@ -209,7 +214,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
             errorKey === 'errors.searchModelIdsLimit'
           ) {
             if (typeof window !== 'undefined') {
-              sessionStorage.setItem(
+              sessionStorageSetItem(
                 SEARCH_FILTERS_LIMIT_ERROR_TOAST_KEY,
                 'searchFilters.invalidUrlSelectionLimits',
               );
@@ -249,7 +254,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
     if (restoredFromStorageRef.current) return;
     restoredFromStorageRef.current = true;
     const hasScrollTimestamp =
-      typeof window !== 'undefined' && sessionStorage.getItem('homeScrollTimestamp');
+      typeof window !== 'undefined' && sessionStorageGetItem('homeScrollTimestamp');
     if (hasScrollTimestamp) {
       const saved = loadGridState();
       if (saved && saved.page > 1) {
@@ -266,7 +271,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       gridSearchParamsEffectInitializedRef.current = true;
       prevSearchParamsStringRef.current = searchParamsString;
       const ts =
-        typeof window !== 'undefined' ? sessionStorage.getItem('homeScrollTimestamp') : null;
+        typeof window !== 'undefined' ? sessionStorageGetItem('homeScrollTimestamp') : null;
       const saved = loadGridState();
       const skipInitialFetch = Boolean(ts && saved && saved.page > 1);
       if (skipInitialFetch) {
@@ -286,8 +291,8 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       setHasLoadedWithFilters(false);
       setLoading(true);
       setError(null);
-      sessionStorage.removeItem(GRID_STATE_KEY);
-      sessionStorage.removeItem('homeScrollTimestamp');
+      sessionStorageRemoveItem(GRID_STATE_KEY);
+      sessionStorageRemoveItem('homeScrollTimestamp');
       void fetchListingsRef.current(1, false);
     }
   }, [searchParamsString]);
@@ -373,9 +378,9 @@ export function ListingGrid({ initialData }: ListingGridProps) {
 
   useEffect(() => {
     if (typeof window === 'undefined' || listings.length === 0 || !showContent) return;
-    const shouldScroll = sessionStorage.getItem('scrollToResultsAfterLoad');
+    const shouldScroll = sessionStorageGetItem('scrollToResultsAfterLoad');
     if (!shouldScroll) return;
-    sessionStorage.removeItem('scrollToResultsAfterLoad');
+    sessionStorageRemoveItem('scrollToResultsAfterLoad');
     requestAnimationFrame(() => {
       const el = document.getElementById('listings-results');
       if (!el) return;
@@ -410,7 +415,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
           )}
 
           {!error && listings.length === 0 && hasLoadedWithFilters && (
-            <div className="text-center py-12">
+            <div className="text-center py-12" data-testid="listings-empty-state">
               <p className="text-lg mb-6" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
                 {t('listings.notFound')}
               </p>
@@ -418,9 +423,9 @@ export function ListingGrid({ initialData }: ListingGridProps) {
                 <div className="flex justify-center">
                   <button
                     onClick={() => {
-                      sessionStorage.removeItem(GRID_STATE_KEY);
-                      sessionStorage.removeItem('homeScrollTimestamp');
-                      sessionStorage.removeItem('scrollPreserved');
+                      sessionStorageRemoveItem(GRID_STATE_KEY);
+                      sessionStorageRemoveItem('homeScrollTimestamp');
+                      sessionStorageRemoveItem('scrollPreserved');
 
                       if (pathname === '/') {
                         if (typeof window !== 'undefined') {
@@ -446,6 +451,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
               <div
                 id="listings-results"
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch"
+                data-testid="listings-results-grid"
               >
                 {uniqueListings.map((listing, index) => (
                   <ListingCard key={listing.id} listing={listing} priority={index < 8} />

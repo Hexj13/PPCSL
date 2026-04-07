@@ -78,7 +78,7 @@ export class CreateVehicleDto {
     description: 'Drive type (not applicable for motorcycles)',
   })
   @IsOptional()
-  @IsEnum(DriveType, { message: 'Типот на погон мора да биде Преден, Заден или Полн' })
+  @IsEnum(DriveType, { message: 'validation.driveTypeEnum' })
   drive_type?: DriveType;
 
   @ApiProperty({
@@ -97,7 +97,7 @@ export class CreateVehicleDto {
     ],
     description: 'Body type',
   })
-  @IsEnum(BodyType, { message: 'Типот на каросерија мора да биде валиден' })
+  @IsEnum(BodyType, { message: 'validation.bodyTypeEnum' })
   body_type: BodyType;
 
   @ApiPropertyOptional({

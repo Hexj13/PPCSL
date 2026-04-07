@@ -3,6 +3,12 @@
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 
+import {
+  sessionStorageGetItem,
+  sessionStorageRemoveItem,
+  sessionStorageSetItem,
+} from '@/lib/browser-session-storage';
+
 export function ScrollReset() {
   const pathname = usePathname();
   const previousPathRef = useRef<string | null>(null);
@@ -35,10 +41,8 @@ export function ScrollReset() {
       }
 
       const saveReloadScroll = () => {
-        try {
-          sessionStorage.setItem('homeReloadScrollY', String(window.scrollY));
-          sessionStorage.setItem('homeReloadScrollTs', String(Date.now()));
-        } catch {}
+        sessionStorageSetItem('homeReloadScrollY', String(window.scrollY));
+        sessionStorageSetItem('homeReloadScrollTs', String(Date.now()));
       };
 
       window.addEventListener('pagehide', saveReloadScroll);
@@ -55,15 +59,15 @@ export function ScrollReset() {
           | undefined;
         const navType = navEntry?.type;
 
-        const savedScroll = sessionStorage.getItem('homeReloadScrollY');
-        const timestamp = sessionStorage.getItem('homeReloadScrollTs');
+        const savedScroll = sessionStorageGetItem('homeReloadScrollY');
+        const timestamp = sessionStorageGetItem('homeReloadScrollTs');
 
         if ((navType === 'reload' || navType === 'back_forward') && savedScroll && timestamp) {
           const savedTime = parseInt(timestamp, 10);
           if (Date.now() - savedTime < 10 * 60 * 1000) {
             const scrollY = parseInt(savedScroll, 10);
-            sessionStorage.removeItem('homeReloadScrollY');
-            sessionStorage.removeItem('homeReloadScrollTs');
+            sessionStorageRemoveItem('homeReloadScrollY');
+            sessionStorageRemoveItem('homeReloadScrollTs');
 
             if (Number.isFinite(scrollY) && scrollY > 0) {
               isRestoringRef.current = true;
@@ -76,21 +80,21 @@ export function ScrollReset() {
               }, 0);
             }
           } else {
-            sessionStorage.removeItem('homeReloadScrollY');
-            sessionStorage.removeItem('homeReloadScrollTs');
+            sessionStorageRemoveItem('homeReloadScrollY');
+            sessionStorageRemoveItem('homeReloadScrollTs');
           }
         }
       } catch {
         // ignore
       }
 
-      const savedScroll = sessionStorage.getItem('homeScrollPosition');
-      const timestamp = sessionStorage.getItem('homeScrollTimestamp');
+      const savedScroll = sessionStorageGetItem('homeScrollPosition');
+      const timestamp = sessionStorageGetItem('homeScrollTimestamp');
       if (savedScroll && timestamp && previousPath?.startsWith('/listings/')) {
         const savedTime = parseInt(timestamp, 10);
         if (Date.now() - savedTime < 5 * 60 * 1000) {
           const scrollY = parseInt(savedScroll, 10);
-          sessionStorage.removeItem('homeScrollPosition');
+          sessionStorageRemoveItem('homeScrollPosition');
           if (scrollY > 0) {
             isRestoringRef.current = true;
             setTimeout(() => {
@@ -102,16 +106,16 @@ export function ScrollReset() {
             }, 0);
           }
         } else {
-          sessionStorage.removeItem('homeScrollPosition');
-          sessionStorage.removeItem('homeScrollTimestamp');
-          sessionStorage.removeItem('kupito_grid_state');
+          sessionStorageRemoveItem('homeScrollPosition');
+          sessionStorageRemoveItem('homeScrollTimestamp');
+          sessionStorageRemoveItem('kupito_grid_state');
         }
       }
 
       return cleanup;
     }
 
-    const scrollPreserved = sessionStorage.getItem('scrollPreserved');
+    const scrollPreserved = sessionStorageGetItem('scrollPreserved');
     if (scrollPreserved === 'true') {
       return cleanup;
     }

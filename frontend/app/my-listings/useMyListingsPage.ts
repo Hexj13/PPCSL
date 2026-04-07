@@ -9,6 +9,7 @@ import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing, PaginationMeta, PromotionAccessStatus, PromotionHistory } from '@/lib/api';
 import { listingsApi, normalizeListingResponse } from '@/lib/api';
+import { sessionStorageGetItem, sessionStorageRemoveItem } from '@/lib/browser-session-storage';
 
 import { useMyListingsRefreshCooldownTimer } from './useMyListingsRefreshCooldownTimer';
 import { useMyListingsUpdatedToast } from './useMyListingsUpdatedToast';
@@ -285,9 +286,9 @@ export function useMyListingsPage() {
 
   useEffect(() => {
     if (!isAuthorized || !user) return;
-    const shouldRefresh = sessionStorage.getItem('refreshMyListings');
+    const shouldRefresh = sessionStorageGetItem('refreshMyListings');
     if (shouldRefresh === 'true') {
-      sessionStorage.removeItem('refreshMyListings');
+      sessionStorageRemoveItem('refreshMyListings');
       hasLoadedRef.current = false;
     }
     if (!hasLoadedRef.current) {
@@ -300,8 +301,8 @@ export function useMyListingsPage() {
 
   useEffect(() => {
     const check = () => {
-      if (sessionStorage.getItem('refreshMyListings') === 'true' && user) {
-        sessionStorage.removeItem('refreshMyListings');
+      if (sessionStorageGetItem('refreshMyListings') === 'true' && user) {
+        sessionStorageRemoveItem('refreshMyListings');
         hasLoadedRef.current = false;
         void fetchListings(1, false);
         void refetchAllForCount();

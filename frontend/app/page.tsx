@@ -533,6 +533,22 @@ function SearchFiltersWrapper() {
   );
 }
 
+function DynamicPageTitleWrapper() {
+  return (
+    <Suspense fallback={null}>
+      <DynamicPageTitle />
+    </Suspense>
+  );
+}
+
+function ScrollToFiltersButtonWrapper() {
+  return (
+    <Suspense fallback={null}>
+      <ScrollToFiltersButton />
+    </Suspense>
+  );
+}
+
 export default async function Home({
   searchParams,
 }: {
@@ -557,7 +573,7 @@ export default async function Home({
       <BackgroundDecorations />
       <ConversionEvent />
       <SearchFiltersLimitToast />
-      <DynamicPageTitle />
+      <DynamicPageTitleWrapper />
       <HomeHero
         title={t.home.title}
         subtitle={t.home.subtitle}
@@ -570,7 +586,7 @@ export default async function Home({
 
       <ListingGrid initialData={initialData} />
 
-      <ScrollToFiltersButton />
+      <ScrollToFiltersButtonWrapper />
       {searchStructuredData}
     </div>
   );

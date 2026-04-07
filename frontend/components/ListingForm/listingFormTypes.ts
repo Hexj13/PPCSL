@@ -7,7 +7,8 @@ export interface ListingFormData {
   negotiable: boolean;
   available_in_credit: boolean;
   down_payment_amount: string;
-  description: string;
+  description_ro: string;
+  description_ru: string;
   status: ListingStatus;
   images: string[];
   cover_blur_hash: string;

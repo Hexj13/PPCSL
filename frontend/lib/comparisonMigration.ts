@@ -1,4 +1,5 @@
 import { comparisonApi, listingsApi } from '@/lib/api';
+import { localStorageGetItem, localStorageRemoveItem } from '@/lib/browser-local-storage';
 import { useComparisonStore } from '@/lib/store';
 
 const MAX_PER_BUCKET = 3;
@@ -28,9 +29,8 @@ export function holdComparisonApiLoadUntilReleased(): () => void {
 }
 
 function parsePendingComparisons(): string[] {
-  if (typeof window === 'undefined') return [];
   try {
-    const raw = localStorage.getItem('pendingComparisons');
+    const raw = localStorageGetItem('pendingComparisons');
     const parsed = raw ? JSON.parse(raw) : [];
     return Array.isArray(parsed)
       ? parsed.filter((id): id is string => typeof id === 'string' && !!id)
@@ -44,11 +44,8 @@ export function parseComparisonStorageBuckets(): {
   vehicleListingIds: string[];
   tireListingIds: string[];
 } {
-  if (typeof window === 'undefined') {
-    return { vehicleListingIds: [], tireListingIds: [] };
-  }
   try {
-    const raw = localStorage.getItem('comparison-storage');
+    const raw = localStorageGetItem('comparison-storage');
     if (!raw) return { vehicleListingIds: [], tireListingIds: [] };
     const parsed = JSON.parse(raw) as {
       state?: {
@@ -149,7 +146,7 @@ export async function applyComparisonAfterAuth(): Promise<void> {
 
   const fromStorage = parseComparisonStorageBuckets();
   const pending = parsePendingComparisons();
-  localStorage.removeItem('pendingComparisons');
+  localStorageRemoveItem('pendingComparisons');
 
   let pendingSplit = { vehicleListingIds: [] as string[], tireListingIds: [] as string[] };
   if (pending.length > 0) {

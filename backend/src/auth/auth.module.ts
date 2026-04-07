@@ -10,13 +10,16 @@ import { UsersModule } from '../users/users.module';
 import { AuthService } from './application/auth.service';
 import { ChangePasswordUseCase } from './application/use-cases/change-password.use-case';
 import { CheckPhoneAvailabilityUseCase } from './application/use-cases/check-phone-availability.use-case';
+import { ConfirmEmailChangeUseCase } from './application/use-cases/confirm-email-change.use-case';
 import { DeleteAccountUseCase } from './application/use-cases/delete-account.use-case';
 import { GetUserProfileUseCase } from './application/use-cases/get-user-profile.use-case';
 import { LoginUserUseCase } from './application/use-cases/login-user.use-case';
 import { RefreshTokensUseCase } from './application/use-cases/refresh-tokens.use-case';
 import { RegisterUserUseCase } from './application/use-cases/register-user.use-case';
+import { RequestEmailChangeUseCase } from './application/use-cases/request-email-change.use-case';
 import { RequestPasswordResetUseCase } from './application/use-cases/request-password-reset.use-case';
 import { RequestPhoneChangeUseCase } from './application/use-cases/request-phone-change.use-case';
+import { ResendEmailVerificationUseCase } from './application/use-cases/resend-email-verification.use-case';
 import { ResetPasswordUseCase } from './application/use-cases/reset-password.use-case';
 import { SendVerificationSmsUseCase } from './application/use-cases/send-verification-sms.use-case';
 import { UpdateProfileUseCase } from './application/use-cases/update-profile.use-case';
@@ -82,6 +85,9 @@ import { AuthController } from './presentation/auth.controller';
     GetUserProfileUseCase,
     VerifyPhoneUseCase,
     VerifyEmailUseCase,
+    ResendEmailVerificationUseCase,
+    RequestEmailChangeUseCase,
+    ConfirmEmailChangeUseCase,
     RequestPasswordResetUseCase,
     VerifyResetCodeUseCase,
     RequestPhoneChangeUseCase,
@@ -90,6 +96,12 @@ import { AuthController } from './presentation/auth.controller';
     SendVerificationSmsUseCase,
     ChangePasswordUseCase,
   ],
-  exports: [AuthService, IpBlockService, RefreshTokenService, UserProfilePatchService],
+  exports: [
+    AuthService,
+    IpBlockService,
+    RefreshTokenService,
+    UserProfilePatchService,
+    EmailService,
+  ],
 })
 export class AuthModule {}

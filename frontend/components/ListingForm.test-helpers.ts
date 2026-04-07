@@ -25,6 +25,8 @@ export const mockListing = {
   currency: Currency.EUR,
   city: 'Chișinău',
   description: 'Test description',
+  description_ro: 'Test description',
+  description_ru: '',
   status: 'Active',
   images: [
     'http://localhost:4000/uploads/image1.webp',

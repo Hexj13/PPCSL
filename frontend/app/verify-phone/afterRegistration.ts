@@ -1,9 +1,15 @@
 import type { RegisterDto, User } from '@/lib/api';
 import { authApi, favoritesApi, listingsApi, savedFiltersApi } from '@/lib/api';
 import {
+  localStorageGetItem,
+  localStorageRemoveItem,
+  localStorageSetItem,
+} from '@/lib/browser-local-storage';
+import {
   applyComparisonAfterAuth,
   holdComparisonApiLoadUntilReleased,
 } from '@/lib/comparisonMigration';
+import { sanitizeReturnUrl } from '@/lib/return-url';
 import { toast } from '@/lib/toast';
 
 type LoginResponse = {
@@ -17,8 +23,10 @@ type LoginResponse = {
 export async function runAfterRegistration(
   _formData: RegisterDto,
   loginRes: LoginResponse,
+  emailVerificationSent: boolean,
   setAuth: (user: User | null, accessToken: string | null, refreshToken?: string | null) => void,
   t: (key: string) => string,
+  returnUrlFromQuery?: string | null,
 ): Promise<void> {
   const releaseComparisonHold = holdComparisonApiLoadUntilReleased();
   try {
@@ -28,9 +36,9 @@ export async function runAfterRegistration(
     } catch {}
 
     if (typeof window === 'undefined') return;
-    localStorage.removeItem('pendingRegistration');
+    localStorageRemoveItem('pendingRegistration');
 
-    const pendingFavorites = JSON.parse(localStorage.getItem('pendingFavorites') || '[]');
+    const pendingFavorites = JSON.parse(localStorageGetItem('pendingFavorites') || '[]');
     if (pendingFavorites.length > 0) {
       const validFavorites: string[] = [];
       for (const listingId of pendingFavorites) {
@@ -47,7 +55,7 @@ export async function runAfterRegistration(
       if (validFavorites.length > 0) {
         await Promise.all(validFavorites.map((id: string) => favoritesApi.add(id).catch(() => {})));
       }
-      localStorage.removeItem('pendingFavorites');
+      localStorageRemoveItem('pendingFavorites');
     }
 
     await applyComparisonAfterAuth();
@@ -55,7 +63,7 @@ export async function runAfterRegistration(
     releaseComparisonHold();
   }
 
-  const pendingSavedFilter = localStorage.getItem('pendingSavedFilter');
+  const pendingSavedFilter = localStorageGetItem('pendingSavedFilter');
   if (pendingSavedFilter) {
     try {
       const filters = JSON.parse(pendingSavedFilter);
@@ -67,8 +75,7 @@ export async function runAfterRegistration(
       const minutes = String(now.getMinutes()).padStart(2, '0');
       const filterName = `Филтер ${day}.${month}.${year} ${hours}:${minutes}`;
       await savedFiltersApi.create(filterName, filters);
-      localStorage.removeItem('pendingSavedFilter');
-      localStorage.removeItem('returnUrl');
+      localStorageRemoveItem('pendingSavedFilter');
       toast.success(t('login.filterSavedSuccess'));
       window.location.href = '/favorites?tab=filters';
       return;
@@ -78,17 +85,15 @@ export async function runAfterRegistration(
           ? (error.response as { data?: { message?: string } })?.data?.message
           : null) || t('login.filterSaveError');
       toast.error(errorMessage);
-      localStorage.removeItem('pendingSavedFilter');
+      localStorageRemoveItem('pendingSavedFilter');
       const limitErrorText = t('login.filterLimitError');
       const isLimitError = errorMessage === limitErrorText;
       if (isLimitError) {
-        localStorage.removeItem('returnUrl');
         window.location.href = '/favorites?tab=filters';
         return;
       }
-      const returnUrl = localStorage.getItem('returnUrl');
+      const returnUrl = sanitizeReturnUrl(returnUrlFromQuery) ?? '/';
       if (returnUrl) {
-        localStorage.removeItem('returnUrl');
         window.location.href = returnUrl;
         return;
       }
@@ -97,6 +102,14 @@ export async function runAfterRegistration(
     }
   }
 
-  localStorage.setItem('showRegistrationSuccess', 'true');
+  localStorageSetItem('showRegistrationSuccess', 'true');
+  if (emailVerificationSent) {
+    localStorageSetItem('showRegistrationEmailVerificationNotice', 'true');
+  }
+  const safeReturnUrl = sanitizeReturnUrl(returnUrlFromQuery);
+  if (safeReturnUrl) {
+    window.location.href = `/complete-profile?returnUrl=${encodeURIComponent(safeReturnUrl)}`;
+    return;
+  }
   window.location.href = '/complete-profile';
 }

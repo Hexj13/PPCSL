@@ -1,3 +1,4 @@
+import { localStorageGetItem, localStorageSetItem } from './browser-local-storage';
 import type { Locale, Translations } from './i18n-types';
 export type { Locale, Translations } from './i18n-types';
 import { loadSiteConfigSync } from './site-config';
@@ -84,7 +85,7 @@ export function getStoredLocale(): Locale {
       return cookieValue as Locale;
     }
 
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = localStorageGetItem(STORAGE_KEY);
     if (stored && (stored === 'ro' || stored === 'ru')) {
       return stored as Locale;
     }
@@ -98,10 +99,19 @@ export function setStoredLocale(locale: Locale): void {
     return;
   }
 
-  localStorage.setItem(STORAGE_KEY, locale);
+  localStorageSetItem(STORAGE_KEY, locale);
 
   const maxAge = 365 * 24 * 60 * 60;
   document.cookie = `${COOKIE_KEY}=${locale}; path=/; max-age=${maxAge}; SameSite=Lax`;
+}
+
+export function applyPreferredLocaleFromProfile(preferredLocale: string | null | undefined): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  if (preferredLocale === 'ro' || preferredLocale === 'ru') {
+    setStoredLocale(preferredLocale);
+  }
 }
 
 export function loadTranslations(locale?: Locale): Translations {

@@ -4,7 +4,7 @@ import { VehicleModel } from '../../brands/entities/vehicle-model.entity';
 import { AppDataSource } from '../../data-source';
 
 async function addOtherModel() {
-  console.log('➕ Додавање на модел "Друго" за секоја марка...\n');
+  console.log('➕ Adding "Other" model for each brand...\n');
 
   await AppDataSource.initialize();
   console.log('✅ Connected to database\n');
@@ -38,16 +38,16 @@ async function addOtherModel() {
 
       if (existingOther.name !== 'Друго') {
         const oldName = existingOther.name;
-        existingOther.name = 'Друго';
+        existingOther.name = 'Other';
         existingOther.order = maxOrder + 1;
         await modelRepo.save(existingOther);
         renamed++;
-        console.log(`  ♻️  Преименуван модел "${oldName}" → "Друго" за ${brand.name}`);
+        console.log(`  ♻️  Renamed model "${oldName}" → "Other" for ${brand.name}`);
       } else if (existingOther.order !== maxOrder + 1) {
         existingOther.order = maxOrder + 1;
         await modelRepo.save(existingOther);
         updated++;
-        console.log(`  ♻️  Ажуриран модел "Друго" за ${brand.name}`);
+        console.log(`  ♻️  Updated model "Other" for ${brand.name}`);
       } else {
         skipped++;
       }
@@ -56,7 +56,7 @@ async function addOtherModel() {
         existingModels.length > 0 ? Math.max(...existingModels.map((m) => m.order || 0)) : 0;
 
       const otherModel = modelRepo.create({
-        name: 'Друго',
+        name: 'Other',
         brand_id: brand.id,
         order: maxOrder + 1,
         vehicle_types: ['car'],
@@ -64,16 +64,16 @@ async function addOtherModel() {
 
       await modelRepo.save(otherModel);
       added++;
-      console.log(`  ✅ Додаден модел "Друго" за ${brand.name}`);
+      console.log(`  ✅ Added model "Other" for ${brand.name}`);
     }
   }
 
-  console.log(`\n✅ Завршено!`);
+  console.log(`\n✅ Done!`);
   console.log(`   - Total brands: ${allBrands.length}`);
-  console.log(`   - Додадени модели: ${added}`);
-  console.log(`   - Преименувани модели: ${renamed}`);
-  console.log(`   - Ажурирани модели: ${updated}`);
-  console.log(`   - Прескокнати модели: ${skipped}\n`);
+  console.log(`   - Added models: ${added}`);
+  console.log(`   - Renamed models: ${renamed}`);
+  console.log(`   - Updated models: ${updated}`);
+  console.log(`   - Skipped models: ${skipped}\n`);
 
   await AppDataSource.destroy();
   console.log('🔌 Database connection closed');
@@ -81,10 +81,10 @@ async function addOtherModel() {
 
 addOtherModel()
   .then(() => {
-    console.log('✅ Скриптот заврши успешно');
+    console.log('✅ Script completed successfully');
     process.exit(0);
   })
   .catch((error) => {
-    console.error('❌ Грешка:', error);
+    console.error('❌ Error:', error);
     process.exit(1);
   });

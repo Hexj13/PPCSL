@@ -1,3 +1,4 @@
+import type { Locale } from '../i18n-types';
 import type { TireTread } from '../tire-tread';
 import type {
   BodyType,
@@ -61,6 +62,8 @@ export interface Listing {
   down_payment_amount?: number | null;
   status: ListingStatus;
   description?: string;
+  description_ro?: string | null;
+  description_ru?: string | null;
   images?: string[];
   cover_blur_hash?: string | null;
   image_blur_hashes?: (string | null)[] | null;
@@ -131,7 +134,7 @@ export interface Vehicle {
 
 export interface User {
   id: string;
-  email: string;
+  email: string | null;
   type: UserType;
   phone?: string;
   additionalPhone?: string | null;
@@ -144,14 +147,31 @@ export interface User {
   listings?: Listing[];
   created_at?: string;
   emailNotifications?: boolean;
+  emailNotificationListingRefreshReminders?: boolean;
+  emailNotificationWeeklyViewsDigest?: boolean;
+  emailNotificationSecurityAlerts?: boolean;
   viber?: boolean;
   whatsapp?: boolean;
   telegram?: boolean;
+  preferredLocale?: Locale | null;
   phoneVerified?: boolean;
   emailVerified?: boolean;
   isPlatformPartner?: boolean;
   freePromotionBalance?: number;
   partnerListingProgress?: number;
+}
+
+export interface RegisterResponse extends User {
+  emailVerificationSent: boolean;
+}
+
+export interface UpdateProfileResponse extends User {
+  emailVerificationSent?: boolean;
+}
+
+export interface AdminUpdateUserProfileResponse {
+  user: User;
+  emailConfirmationSent: boolean;
 }
 
 export interface SearchParams {
@@ -241,6 +261,8 @@ export interface CreateListingDto {
   available_in_credit?: boolean;
   down_payment_amount?: number;
   description?: string;
+  description_ro?: string;
+  description_ru?: string;
   images?: string[];
   cover_blur_hash?: string;
   image_blur_hashes?: (string | null)[];
@@ -272,10 +294,20 @@ export interface CreateListingDto {
 
 export type UpdateListingDto = Omit<
   Partial<CreateListingDto>,
-  'down_payment_amount' | 'vin' | 'description' | 'power_kw' | 'equipment' | 'vehicle' | 'tire'
+  | 'down_payment_amount'
+  | 'vin'
+  | 'description'
+  | 'description_ro'
+  | 'description_ru'
+  | 'power_kw'
+  | 'equipment'
+  | 'vehicle'
+  | 'tire'
 > & {
   vin?: string | null;
   description?: string | null;
+  description_ro?: string | null;
+  description_ru?: string | null;
   power_kw?: number | null;
   equipment?: string[] | null;
   vehicle?: Omit<
@@ -381,6 +413,10 @@ export interface VerifyEmailDto {
   token: string;
 }
 
+export interface ResendEmailVerificationDto {
+  token: string;
+}
+
 export interface SendSmsDto {
   phone: string;
 }
@@ -408,13 +444,25 @@ export interface UpdateProfileDto {
   companyWebsiteUrl?: string;
   additionalPhone?: string | null;
   emailNotifications?: boolean;
+  emailNotificationListingRefreshReminders?: boolean;
+  emailNotificationWeeklyViewsDigest?: boolean;
+  emailNotificationSecurityAlerts?: boolean;
   viber?: boolean;
   whatsapp?: boolean;
   telegram?: boolean;
+  preferredLocale?: Locale;
 }
 
 export interface ChangePhoneRequestDto {
   phone: string;
+}
+
+export interface ChangeEmailRequestDto {
+  newEmail: string;
+}
+
+export interface ChangeEmailConfirmDto {
+  token: string;
 }
 
 export interface ChangePhoneVerifyDto {

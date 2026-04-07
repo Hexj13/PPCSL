@@ -1,6 +1,7 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
+import { UserType } from '../../../common/types';
 import { removePasswordFromUser } from '../../../common/utils/error-handling.utils';
 import { logUserEvent } from '../../../common/utils/log-user-event';
 import { UsersService } from '../../../users/application/users.service';
@@ -23,7 +24,7 @@ export class LoginUserUseCase {
   ) {}
 
   async execute(loginDto: LoginDto, ip?: string): Promise<LoginResponse> {
-    const user = await this.validateUser(loginDto.login, loginDto.password);
+    let user = await this.validateUser(loginDto.login, loginDto.password);
 
     if (!user) {
       const isEmail = loginDto.login.includes('@');
@@ -34,10 +35,31 @@ export class LoginUserUseCase {
           ? await this.usersService.findByPhone(normalizedPhone)
           : null;
 
-      if (foundUser && !foundUser.active) {
+      if (!foundUser) {
+        throw new UnauthorizedException('errors.invalidLoginCredentials');
+      }
+
+      const passwordIsValid = await this.passwordService.verify(
+        loginDto.password,
+        foundUser.password,
+      );
+
+      if (!passwordIsValid) {
+        throw new UnauthorizedException('errors.invalidLoginCredentials');
+      }
+
+      if (!foundUser.active) {
         throw new UnauthorizedException('errors.userDeactivated');
       }
-      throw new UnauthorizedException('errors.invalidLoginCredentials');
+      if (
+        isEmail &&
+        foundUser.email &&
+        foundUser.type !== UserType.Admin &&
+        foundUser.emailVerified !== true
+      ) {
+        throw new UnauthorizedException('errors.emailNotVerifiedForLogin');
+      }
+      user = removePasswordFromUser(foundUser) as UserWithoutPassword;
     }
 
     if (ip) {
@@ -67,6 +89,7 @@ export class LoginUserUseCase {
         companyWebsiteUrl: user.companyWebsiteUrl,
         phone: user.phone,
         boardSlug,
+        preferredLocale: user.preferredLocale ?? null,
       },
     };
   }
@@ -82,6 +105,9 @@ export class LoginUserUseCase {
 
     if (user && (await this.passwordService.verify(password, user.password))) {
       if (!user.active) {
+        return null;
+      }
+      if (isEmail && user.email && user.type !== UserType.Admin && user.emailVerified !== true) {
         return null;
       }
       return removePasswordFromUser(user) as UserWithoutPassword;

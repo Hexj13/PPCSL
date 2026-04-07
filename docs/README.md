@@ -14,7 +14,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 
 - **Structure and principles:** [documentation-architecture.md](./documentation-architecture.md) | **Migration report:** [docs/documentation-refactor-report.md](../../docs/documentation-refactor-report.md) (in platform repo)
 - **Reference:** [reference/](./reference/) — [popular-brands-sync](./reference/popular-brands-sync.md), [platform-assets](./reference/platform-assets.md), analytics, scripts
-- **Operations:** [operations/](./operations/) — [User action logging](./operations/user-action-logging.md), [Sentry launch checklist](./operations/sentry-launch-checklist.md), [Postgres query baseline](./operations/postgres-query-baseline.md), deploy, monitoring
+- **Operations:** [operations/](./operations/) — [SMTP email setup](./operations/smtp-email-setup.md) ([RU](./operations/smtp-email-setup-ru.md)), [User action logging](./operations/user-action-logging.md), [Sentry launch checklist](./operations/sentry-launch-checklist.md), [Postgres query baseline](./operations/postgres-query-baseline.md), deploy, monitoring
 - **ADR:** [architecture/adr/](./architecture/adr/) — architecture decision records
 
 ## Documentation structure
@@ -40,6 +40,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 - [logging.md](./guides/logging.md) — Structured Sentry payloads, request correlation, sanitization
 - [deployment.md](./guides/deployment.md) — Deploy (optional Telegram support bot)
 - [local-development.md](./guides/local-development.md) — Local development
+- [e2e-playwright-standards.md](./guides/e2e-playwright-standards.md) — Playwright E2E standards for this project
 - [search-filter-limits.md](./guides/search-filter-limits.md) — Brand/model selection limits in search
 - [quick-start-ru.md](./guides/quick-start-ru.md) — Quick start (Russian)
 - [linting.md](./linting.md) — Linting and code quality (single source)

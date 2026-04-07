@@ -21,6 +21,7 @@ interface DropdownTriggerProps {
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onInputFocus: () => void;
   onToggle: (e: React.MouseEvent) => void;
+  dataTestId?: string;
 }
 
 export function DropdownTrigger({
@@ -38,6 +39,7 @@ export function DropdownTrigger({
   onInputChange,
   onInputFocus,
   onToggle,
+  dataTestId,
 }: DropdownTriggerProps) {
   if (searchable) {
     return (
@@ -52,6 +54,7 @@ export function DropdownTrigger({
           placeholder={isOpen ? '' : placeholder}
           className={`input-field ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''} ${selectedOption ? 'text-text-primary' : ''}`}
           style={{ paddingRight: '52px', color: selectedOption ? undefined : '#9ca3af' }}
+          data-testid={dataTestId}
         />
         <DropdownChevron isOpen={isOpen} onClick={onToggle} />
       </div>
@@ -66,6 +69,7 @@ export function DropdownTrigger({
       className={`input-field dropdown-button text-left cursor-pointer relative flex items-center group ${rightIcon ? 'gap-1 md:gap-1.5' : ''} ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''} ${buttonClassName || ''}`}
       style={{ paddingRight: '52px' }}
       suppressHydrationWarning
+      data-testid={dataTestId}
     >
       {rightIcon && (
         <span className="shrink-0" suppressHydrationWarning>
@@ -104,6 +108,7 @@ interface DropdownMenuProps {
   menuMaxHeight?: number;
   menuSelectedStyle: 'background' | 'checkmark';
   menuExpandToContent: boolean;
+  dataTestId?: string;
 }
 
 export function DropdownMenu({
@@ -122,6 +127,7 @@ export function DropdownMenu({
   menuMaxHeight,
   menuSelectedStyle,
   menuExpandToContent,
+  dataTestId,
 }: DropdownMenuProps) {
   const isPortaled = !!portalStyle;
   const scrollStyle = menuMaxHeight != null ? { maxHeight: menuMaxHeight } : undefined;
@@ -140,6 +146,7 @@ export function DropdownMenu({
           : `absolute z-100 ${widthClass} ${openUpwards ? 'bottom-full mb-1' : 'top-full mt-1'}`
       } ${!isPositioned ? 'opacity-0 pointer-events-none' : ''}`}
       style={portalStyle}
+      data-testid={dataTestId ? `${dataTestId}-menu` : undefined}
     >
       <div className={scrollClass} style={scrollStyle}>
         {filteredOptions.length > 0 ? (
@@ -187,6 +194,7 @@ export function DropdownMenu({
                   type="button"
                   onClick={() => onSelect(option.value)}
                   className={`w-full px-4 py-3 text-left text-sm text-text-primary hover-only:hover:bg-primary-500/10 transition-colors duration-150 flex items-center justify-between gap-2 ${selectedHighlight} ${option.category ? 'pl-8' : ''}`}
+                  data-testid={dataTestId ? `${dataTestId}-option-${index}` : undefined}
                 >
                   <span
                     className={menuExpandToContent ? 'whitespace-nowrap pr-1' : 'min-w-0 truncate'}

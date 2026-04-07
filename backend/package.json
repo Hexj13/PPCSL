@@ -37,6 +37,8 @@
     "sync-popular-brands": "ts-node -r tsconfig-paths/register src/scripts/stage/sync-popular-brands-from-config.ts",
     "copy-seed-images": "ts-node -r tsconfig-paths/register src/scripts/stage/copy-images-to-seed.ts",
     "create-test-listing": "ts-node -r tsconfig-paths/register src/scripts/stage/create-test-listing.ts",
+    "send-test-emails": "ts-node -r tsconfig-paths/register src/scripts/stage/send-test-emails.ts",
+    "backfill:email-verification:prod": "ts-node -r tsconfig-paths/register src/scripts/production/backfill-email-verification.ts",
     "seed:vin": "ts-node -r tsconfig-paths/register src/scripts/stage/seed-vin-test.ts",
     "fix-price-nulls": "ts-node -r tsconfig-paths/register src/scripts/stage/fix-price-nulls.ts",
     "seed:vehicles": "ts-node -r tsconfig-paths/register src/scripts/stage/seed-vehicles-full.ts",

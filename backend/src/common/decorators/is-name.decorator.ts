@@ -12,7 +12,7 @@ export class IsNameConstraint implements ValidatorConstraintInterface {
     if (typeof value !== 'string') {
       return false;
     }
-    return /^[a-zA-Zа-яА-ЯёЁјЈљЉњЊќЌџЅ\s-]+$/.test(value);
+    return /^[a-zA-Z\u0400-\u04FF\s-]+$/.test(value);
   }
 
   defaultMessage(_args: ValidationArguments): string {

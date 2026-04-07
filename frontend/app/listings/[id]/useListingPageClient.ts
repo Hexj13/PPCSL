@@ -11,11 +11,14 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { analytics, buildListingViewItemParams } from '@/lib/analytics';
 import type { Listing, PromotionAccessStatus } from '@/lib/api';
 import { listingsApi, favoritesApi, comparisonApi } from '@/lib/api';
+import { localStorageGetItem, localStorageSetItem } from '@/lib/browser-local-storage';
 import {
   publishListingDetailComparisonCrossTab,
   publishListingDetailFavoriteCrossTab,
 } from '@/lib/cross-tab-listing-detail-publish';
 import { prepareListingDescriptionHtml } from '@/lib/listingDescriptionHtml';
+import { getListingDescriptionForLocale } from '@/lib/listingDescriptionLocale';
+import { buildSignInHref } from '@/lib/return-url';
 import { useAuthStore, useFavoritesStore, useComparisonStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
 import {
@@ -41,6 +44,7 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
   const { add: addFavorite, remove: removeFavorite } = useFavoritesStore();
   const { t } = useTranslation();
   const { locale } = useI18n();
+  const descriptionLocale = locale === 'ru' ? 'ru' : 'ro';
   const { cities } = useCities();
   const addVehicle = useComparisonStore((s) => s.addVehicle);
   const removeVehicle = useComparisonStore((s) => s.removeVehicle);
@@ -136,9 +140,10 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
   }, [listing, locale, cities]);
 
   const descriptionHtml = useMemo(() => {
-    if (!listing?.description || !isHydrated || typeof window === 'undefined') return null;
-    return prepareListingDescriptionHtml(listing.description, window);
-  }, [isHydrated, listing?.description]);
+    const html = listing ? getListingDescriptionForLocale(listing, descriptionLocale) : undefined;
+    if (!html || !isHydrated || typeof window === 'undefined') return null;
+    return prepareListingDescriptionHtml(html, window);
+  }, [isHydrated, listing, descriptionLocale]);
 
   useEffect(() => {
     const checkPromotionAccess = async () => {
@@ -163,14 +168,13 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
   const handleToggleFavorite = useCallback(async () => {
     if (!user) {
       if (typeof window !== 'undefined') {
-        const pendingFavorites = JSON.parse(localStorage.getItem('pendingFavorites') || '[]');
+        const pendingFavorites = JSON.parse(localStorageGetItem('pendingFavorites') || '[]');
         if (!pendingFavorites.includes(id)) {
           pendingFavorites.push(id);
-          localStorage.setItem('pendingFavorites', JSON.stringify(pendingFavorites));
+          localStorageSetItem('pendingFavorites', JSON.stringify(pendingFavorites));
         }
-        localStorage.setItem('returnUrl', `/listings/${id}`);
       }
-      router.push('/sign');
+      router.push(buildSignInHref(`/listings/${id}`));
       return;
     }
     if (isFavorite) {

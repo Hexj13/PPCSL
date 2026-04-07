@@ -40,7 +40,7 @@ export function LoginForm({
           {t('login.title')}
         </h1>
       )}
-      <form onSubmit={handleSubmit} className={formClassName}>
+      <form onSubmit={handleSubmit} className={formClassName} data-testid="auth-login-form">
         <div className="mb-5">
           <label className="block text-sm font-semibold mb-2 text-primary-900">
             {t('login.emailOrPhone')}
@@ -58,6 +58,7 @@ export function LoginForm({
             className={`input-field ${errors.login ? 'border-red-500' : ''}`}
             placeholder={t('login.emailOrPhone')}
             autoComplete="username"
+            data-testid="auth-login-input"
           />
           {errors.login && <p className="mt-1 text-sm text-red-400">{errors.login}</p>}
         </div>
@@ -69,6 +70,7 @@ export function LoginForm({
             </label>
             <a
               href="/reset-password"
+              data-testid="auth-login-forgot-password-link"
               className="text-sm text-primary-700 font-semibold hover-only:hover:text-primary-900 underline transition-colors"
             >
               {t('login.forgotPassword')}
@@ -87,12 +89,14 @@ export function LoginForm({
               className={`input-field pr-10 ${errors.password ? 'border-red-500' : ''}`}
               placeholder={t('login.passwordPlaceholder')}
               autoComplete="current-password"
+              data-testid="auth-login-password-input"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover-only:hover:text-primary-400 transition-colors"
               tabIndex={-1}
+              data-testid="auth-login-password-toggle"
             >
               {showPassword ? (
                 <svg
@@ -141,6 +145,7 @@ export function LoginForm({
           loading={loading}
           loadingText={t('login.loggingIn')}
           className="w-full text-primary-700 font-medium text-sm md:text-base hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+          data-testid="auth-login-submit"
         >
           {t('login.loginButton')}
         </LoadingButton>
@@ -150,6 +155,7 @@ export function LoginForm({
             {t('login.noAccount')}{' '}
             <a
               href="/sign?tab=register"
+              data-testid="auth-login-register-link"
               className="text-primary-700 font-semibold hover-only:hover:text-primary-900 underline transition-colors"
             >
               {t('login.registerLink')}

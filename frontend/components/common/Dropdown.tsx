@@ -76,6 +76,7 @@ interface DropdownProps {
   menuMaxHeight?: number;
   menuSelectedStyle?: 'background' | 'checkmark';
   menuExpandToContent?: boolean;
+  dataTestId?: string;
 }
 
 const PORTAL_MENU_MAX_HEIGHT = 384;
@@ -97,6 +98,7 @@ function DropdownComponent({
   menuMaxHeight,
   menuSelectedStyle = 'background',
   menuExpandToContent = false,
+  dataTestId,
 }: DropdownProps) {
   const { t } = useTranslation();
   const scrollIntoViewOnOpen = useContext(ScrollDropdownIntoViewContext);
@@ -376,6 +378,7 @@ function DropdownComponent({
         onInputChange={handleInputChange}
         onInputFocus={handleInputFocus}
         onToggle={handleToggleOpen}
+        dataTestId={dataTestId}
       />
       {isOpen &&
         !disabled &&
@@ -395,6 +398,7 @@ function DropdownComponent({
                 t={t}
                 menuSelectedStyle={menuSelectedStyle}
                 menuExpandToContent={menuExpandToContent}
+                dataTestId={dataTestId}
                 portalStyle={{
                   position: 'fixed',
                   left: portalPosition.left,
@@ -424,6 +428,7 @@ function DropdownComponent({
                 onConfirm={handleConfirm}
                 t={t}
                 menuMaxHeight={menuMaxHeight}
+                dataTestId={dataTestId}
                 menuSelectedStyle={menuSelectedStyle}
                 menuExpandToContent={menuExpandToContent}
               />

@@ -105,6 +105,10 @@ export interface TranslationsPart2 {
     email: string;
     emailPlaceholder: string;
     emailCannotBeChanged: string;
+    emailNotificationTypes: string;
+    receiveListingRefreshReminders: string;
+    receiveWeeklyViewsDigest: string;
+    receiveSystemAndSecurityNotifications: string;
     receiveEmailNotifications: string;
     companyInfo: string;
     companyName: string;

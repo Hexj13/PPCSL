@@ -10,30 +10,7 @@ interface PWAInstallButtonGrayProps {
   fullWidth?: boolean;
 }
 
-function highlightKeywords(text: string): React.ReactNode {
-  const keywords = [
-    'Safari',
-    'iPhone',
-    'iPad',
-    'kupito.club',
-    'Chrome',
-    'Android',
-    'споделување',
-    'квадрат',
-    'стрелка',
-    'долниот дел',
-    'Додај на почетен екран',
-    'Add to Home Screen',
-    'Додај',
-    'Add',
-    'почетен екран',
-    'три точки',
-    'горниот десен агол',
-    'менито',
-    'прелистувачот',
-    'прелистувач',
-  ];
-
+function highlightKeywords(text: string, keywords: string[]): React.ReactNode {
   const isInsideParentheses = (text: string, position: number): boolean => {
     let openCount = 0;
     for (let i = 0; i < position; i++) {
@@ -115,6 +92,16 @@ export function PWAInstallButtonGray({ fullWidth = false }: PWAInstallButtonGray
   }, []);
 
   const shouldShow = isMounted && isReady && !isInstalled && canInstall;
+  const highlightKeywordsList = [
+    'Safari',
+    'iPhone',
+    'iPad',
+    'kupito.club',
+    'Chrome',
+    'Android',
+    'Add to Home Screen',
+    'Add',
+  ];
 
   const handleInstall = () => {
     if (isIOS) {
@@ -206,18 +193,34 @@ export function PWAInstallButtonGray({ fullWidth = false }: PWAInstallButtonGray
             </div>
             {activeTab === 'ios' ? (
               <ol className="list-decimal list-outside space-y-2 pl-5">
-                <li className="pl-2">{highlightKeywords(t('pwa.iosStep0'))}</li>
-                <li className="pl-2">{highlightKeywords(t('pwa.iosStep1'))}</li>
-                <li className="pl-2">{highlightKeywords(t('pwa.iosStep2'))}</li>
-                <li className="pl-2">{highlightKeywords(t('pwa.iosStep3'))}</li>
+                <li className="pl-2">
+                  {highlightKeywords(t('pwa.iosStep0'), highlightKeywordsList)}
+                </li>
+                <li className="pl-2">
+                  {highlightKeywords(t('pwa.iosStep1'), highlightKeywordsList)}
+                </li>
+                <li className="pl-2">
+                  {highlightKeywords(t('pwa.iosStep2'), highlightKeywordsList)}
+                </li>
+                <li className="pl-2">
+                  {highlightKeywords(t('pwa.iosStep3'), highlightKeywordsList)}
+                </li>
               </ol>
             ) : (
               <>
                 <ol className="list-decimal list-outside space-y-2 pl-5">
-                  <li className="pl-2">{highlightKeywords(t('pwa.androidStep0'))}</li>
-                  <li className="pl-2">{highlightKeywords(t('pwa.androidStep1'))}</li>
-                  <li className="pl-2">{highlightKeywords(t('pwa.androidStep2'))}</li>
-                  <li className="pl-2">{highlightKeywords(t('pwa.androidStep3'))}</li>
+                  <li className="pl-2">
+                    {highlightKeywords(t('pwa.androidStep0'), highlightKeywordsList)}
+                  </li>
+                  <li className="pl-2">
+                    {highlightKeywords(t('pwa.androidStep1'), highlightKeywordsList)}
+                  </li>
+                  <li className="pl-2">
+                    {highlightKeywords(t('pwa.androidStep2'), highlightKeywordsList)}
+                  </li>
+                  <li className="pl-2">
+                    {highlightKeywords(t('pwa.androidStep3'), highlightKeywordsList)}
+                  </li>
                 </ol>
                 <p
                   className="text-sm mt-4 pt-4 border-t border-primary-500/20"

@@ -2,6 +2,7 @@
 import * as supertest from 'supertest';
 
 import { getTestRequest } from './setup-integration';
+import { createTestCredentials } from './test-data-cleanup';
 
 describe('Saved Filters API Integration Tests', () => {
   let request: ReturnType<typeof getTestRequest>;
@@ -10,17 +11,18 @@ describe('Saved Filters API Integration Tests', () => {
 
   beforeAll(async () => {
     request = getTestRequest();
-    const ts = Date.now();
-    const testEmail = `test${ts}@example.com`;
-    const testPassword = 'Test123!@#';
+    const credentials = createTestCredentials('saved-filters');
+    const testEmail = credentials.email;
+    const testPhone = credentials.phone;
+    const testPassword = credentials.password;
 
     const registerRes = await request.post('/api/auth/register').send({
       email: testEmail,
       password: testPassword,
       type: 'Individual',
-      phone: `+38970${String(ts).slice(-7)}`,
-      firstName: 'Test',
-      lastName: 'User',
+      phone: testPhone,
+      firstName: credentials.firstName,
+      lastName: credentials.lastName,
       termsAccepted: true,
     });
     if (registerRes.status !== 201) {
@@ -28,7 +30,7 @@ describe('Saved Filters API Integration Tests', () => {
     }
 
     const loginResponse = await request.post('/api/auth/login').send({
-      login: testEmail,
+      login: testPhone,
       password: testPassword,
     });
 
@@ -42,7 +44,7 @@ describe('Saved Filters API Integration Tests', () => {
   describe('POST /api/saved-filters', () => {
     it('should create saved filter and match OpenAPI schema', async () => {
       const filterData = {
-        name: 'Мој тест филтер',
+        name: 'My test filter',
         filters: {
           brand_ids: ['brand-1'],
           price_gte: '10000',
@@ -58,7 +60,7 @@ describe('Saved Filters API Integration Tests', () => {
 
       expect(response).toSatisfyApiSpec();
       expect(response.body).toHaveProperty('id');
-      expect(response.body).toHaveProperty('name', 'Мој тест филтер');
+      expect(response.body).toHaveProperty('name', 'My test filter');
       expect(response.body).toHaveProperty('filters');
       expect(response.body).toHaveProperty('created_at');
 
@@ -295,7 +297,7 @@ describe('Saved Filters API Integration Tests', () => {
           .post('/api/saved-filters')
           .set('Authorization', `Bearer ${authToken}`)
           .send({
-            name: 'Филтер за бришење',
+            name: 'Filter to delete',
             filters: { brand_ids: ['brand-1'] },
           })
           .expect(201);

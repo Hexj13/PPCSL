@@ -21,7 +21,7 @@ async function makeAdmin() {
 
     if (!admin) {
       console.log(`👤 Creating new user ${email}...`);
-      const hashedPassword = await bcrypt.hash('admin123', 10);
+      const hashedPassword = await bcrypt.hash('GGGgggTEST777', 10);
       admin = userRepo.create({
         email,
         password: hashedPassword,
@@ -33,7 +33,7 @@ async function makeAdmin() {
       admin = await userRepo.save(admin);
       console.log('✅ Created new admin user');
       console.log(`   Email: ${email}`);
-      console.log(`   Password: admin123`);
+      console.log(`   Password: GGGgggTEST777`);
       console.log(`   Type: Admin`);
     } else {
       console.log(`👤 Found user ${email}`);

@@ -39,6 +39,7 @@ export function ConditionRegistration({
             autoPosition={true}
             menuMaxHeight={300}
             options={getConditionOptions(t)}
+            dataTestId="listing-create-condition-select"
           />
         </div>
 
@@ -61,6 +62,7 @@ export function ConditionRegistration({
             autoPosition={true}
             menuMaxHeight={300}
             options={getRegistrationTypeOptions(t)}
+            dataTestId="listing-create-registration-type-select"
           />
         </div>
       </div>

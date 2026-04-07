@@ -41,7 +41,7 @@ class CarQuerySync {
   async getAllMakes(): Promise<string[]> {
     try {
       const url = `${this.baseUrl}/?cmd=getMakes`;
-      console.log('🔍 Запрашување на сите марки од CarQuery API...');
+      console.log('🔍 Fetching all makes from CarQuery API...');
 
       const response = await fetch(url);
       if (!response.ok) {
@@ -52,14 +52,14 @@ class CarQuerySync {
 
       if (data.Makes && data.Makes.length > 0) {
         const uniqueMakes = [...new Set(data.Makes.map((m) => m.make_display))].sort();
-        console.log(`✅ Успешно добиени ${uniqueMakes.length} марки`);
+        console.log(`✅ Successfully fetched ${uniqueMakes.length} makes`);
         return uniqueMakes;
       }
 
       return [];
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error(`❌ Грешка при добивање на марки: ${errorMessage}`);
+      console.error(`❌ Error fetching makes: ${errorMessage}`);
       throw error;
     }
   }
@@ -105,7 +105,7 @@ class CarQuerySync {
     const modelRepo = AppDataSource.getRepository(VehicleModel);
 
     const makes = await this.getAllMakes();
-    console.log(`\n📦 Обработка на ${makes.length} марки...\n`);
+    console.log(`\n📦 Processing ${makes.length} makes...\n`);
 
     const existingBrands = await brandRepo.find();
     const existingBrandsMap = new Map(existingBrands.map((b) => [b.name, b]));
@@ -136,7 +136,7 @@ class CarQuerySync {
         });
         brand = await brandRepo.save(brand);
         newBrandsCount++;
-        console.log(`✅ Креиран нов бренд: ${make} (${models.length} модели)`);
+        console.log(`✅ Created new brand: ${make} (${models.length} models)`);
       } else {
         brand.order = order++;
         brand = await brandRepo.save(brand);
@@ -193,7 +193,7 @@ class CarQuerySync {
       processed++;
 
       if (processed % 20 === 0) {
-        console.log(`   ⏳ Обработено ${processed}/${makes.length} марки...`);
+        console.log(`   ⏳ Processed ${processed}/${makes.length} makes...`);
       }
 
       await this.delay(200);
@@ -215,10 +215,10 @@ const sync = new CarQuerySync();
 sync
   .syncAll()
   .then(() => {
-    console.log('✅ Скриптот заврши успешно');
+    console.log('✅ Script completed successfully');
     process.exit(0);
   })
   .catch((error) => {
-    console.error('❌ Грешка:', error);
+    console.error('❌ Error:', error);
     process.exit(1);
   });

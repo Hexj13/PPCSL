@@ -202,6 +202,7 @@ SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
 SMTP_PASSWORD=your-app-password
 SMTP_FROM=noreply@your-domain.com
+# Details: ../operations/smtp-email-setup.md (EN), ../operations/smtp-email-setup-ru.md (RU)
 
 # Watermark Configuration (optional)
 WATERMARK_DOMAIN=your-domain.com

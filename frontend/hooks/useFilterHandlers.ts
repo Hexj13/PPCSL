@@ -5,6 +5,7 @@ import { useCallback, useMemo, startTransition } from 'react';
 import type { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import type { Brand, VehicleModel, City } from '@/lib/api';
+import { sessionStorageRemoveItem, sessionStorageSetItem } from '@/lib/browser-session-storage';
 import { MAX_SEARCH_BRAND_SELECTIONS, MAX_SEARCH_MODEL_SELECTIONS } from '@/lib/constants';
 import { buildSearchQuery, clearFiltersFromStorage, saveFiltersToStorage } from '@/lib/search';
 import { buildDeferredSearchFiltersPayload } from '@/lib/search/build-deferred-search-filters-payload';
@@ -263,16 +264,14 @@ export function useFilterHandlers({
 
       const newUrl = `/?${result.urlString}`;
       const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('scrollPreserved', 'true');
-        sessionStorage.setItem('scrollToResultsAfterLoad', 'true');
-      }
+      sessionStorageSetItem('scrollPreserved', 'true');
+      sessionStorageSetItem('scrollToResultsAfterLoad', 'true');
       startTransition(() => {
         router.replace(newUrl, { scroll: false });
         if (typeof window !== 'undefined') {
           requestAnimationFrame(() => {
             window.scrollTo({ top: scrollY, behavior: 'instant' });
-            sessionStorage.removeItem('scrollPreserved');
+            sessionStorageRemoveItem('scrollPreserved');
           });
         }
         if (result.clearBrandIds) setFilters((prev) => ({ ...prev, brand_ids: [] }));
@@ -313,7 +312,7 @@ export function useFilterHandlers({
       setLastAppliedFilters(null);
       const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
       if (typeof window !== 'undefined' && !scrollToTop) {
-        sessionStorage.setItem('scrollPreserved', 'true');
+        sessionStorageSetItem('scrollPreserved', 'true');
       }
       startTransition(() => {
         const params = new URLSearchParams();
@@ -329,7 +328,7 @@ export function useFilterHandlers({
               window.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
               window.scrollTo({ top: scrollY, behavior: 'instant' });
-              sessionStorage.removeItem('scrollPreserved');
+              sessionStorageRemoveItem('scrollPreserved');
             }
           });
         }

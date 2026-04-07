@@ -82,7 +82,7 @@ This document describes visual requirements and standards for all buttons in the
 
 **Visual specs:**
 
-- **Background:** Gradient `from-accent to-accent` (`#F2AE3E`)
+- **Background:** Gradient `from-accent to-accent` (`#ec9e1c`)
 - **Text:** White (`text-white`)
 - **Shadow:** Default `shadow-lg`, hover `shadow-xl`
 - **Hover:** Text `accent/90`, shadow increases
@@ -335,7 +335,7 @@ This document describes visual requirements and standards for all buttons in the
 
 ### Accent colors
 
-- `accent`: `#F2AE3E` (yellow variant)
+- `accent`: `#ec9e1c` (yellow variant)
 
 ### Background
 

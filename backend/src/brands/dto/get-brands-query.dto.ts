@@ -9,7 +9,7 @@ export class GetBrandsQueryDto {
   })
   @IsOptional()
   @IsEnum(['car', 'truck', 'moto', 'tire'], {
-    message: 'vehicleType мора да биде car, truck, moto или tire',
+    message: 'validation.vehicleTypeFilterEnum',
   })
   vehicleType?: 'car' | 'truck' | 'moto' | 'tire';
 }

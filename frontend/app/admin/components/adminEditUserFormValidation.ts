@@ -1,7 +1,7 @@
 import { validateCompanyWebsiteUrl, validateEmail } from '@/app/profile/utils';
 import { validatePhone } from '@/app/register/utils';
 
-const NAME_CHARS_REGEX = /^[a-zA-Zа-яА-ЯёЁјЈљЉњЊќЌџЅ\s-]+$/;
+const NAME_CHARS_REGEX = /^[a-zA-Z\u0400-\u04FF\s-]+$/;
 
 export type AdminEditUserFieldKey =
   | 'email'
@@ -12,10 +12,14 @@ export type AdminEditUserFieldKey =
   | 'additionalPhone'
   | 'freePromotionBalance';
 
-export type AdminEditUserFormTouchedKey = AdminEditUserFieldKey | 'isPlatformPartner';
+export type AdminEditUserFormTouchedKey =
+  | AdminEditUserFieldKey
+  | 'isPlatformPartner'
+  | 'emailVerified';
 
 export type AdminEditUserFormState = {
   email: string;
+  emailVerified: boolean;
   firstName: string;
   lastName: string;
   companyName: string;

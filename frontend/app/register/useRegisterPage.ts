@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 
 import { getPasswordValidationRules, validatePassword } from '@/app/reset-password/utils';
@@ -8,6 +8,8 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import type { RegisterDto } from '@/lib/api';
 import { authApi } from '@/lib/api';
+import { localStorageSetItem } from '@/lib/browser-local-storage';
+import { getReturnUrlFromSearchParams } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
 
@@ -75,8 +77,10 @@ function getFilledFields(formData: RegisterFormState): Record<string, boolean> {
 
 export function useRegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isInitialized } = useAuthStore();
   const { t } = useTranslation();
+  const returnUrl = getReturnUrlFromSearchParams(searchParams);
   const [formData, setFormData] = useState<RegisterFormState>(initialFormState);
   const [loading, setLoading] = useState(false);
   const [passwordError, setPasswordError] = useState('');
@@ -226,8 +230,12 @@ export function useRegisterPage() {
       try {
         await authApi.sendSms({ phone: formData.phone });
         analytics.formSubmit('register', true, getFilledFields(formData));
-        localStorage.setItem('pendingRegistration', JSON.stringify(submitData));
-        router.push(`/verify-phone?phone=${encodeURIComponent(formData.phone)}`);
+        localStorageSetItem('pendingRegistration', JSON.stringify(submitData));
+        const query = new URLSearchParams({ phone: formData.phone });
+        if (returnUrl) {
+          query.set('returnUrl', returnUrl);
+        }
+        router.push(`/verify-phone?${query.toString()}`);
       } catch (checkError: unknown) {
         const axiosError = checkError as Parameters<typeof getRegisterSubmitErrorMessage>[0];
         const errorMessage = getRegisterSubmitErrorMessage(axiosError, t);

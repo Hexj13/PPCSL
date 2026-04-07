@@ -4,7 +4,7 @@ import { VehicleModel } from '../../brands/entities/vehicle-model.entity';
 import { AppDataSource } from '../../data-source';
 
 async function checkDuplicates() {
-  console.log('🔍 Проверка на дубликати во базата на податоци...\n');
+  console.log('🔍 Checking duplicates in database...\n');
 
   await AppDataSource.initialize();
   console.log('✅ Connected to database\n');
@@ -12,7 +12,7 @@ async function checkDuplicates() {
   const brandRepo = AppDataSource.getRepository(Brand);
   const modelRepo = AppDataSource.getRepository(VehicleModel);
 
-  console.log('📊 Проверка на дубликати на марки...\n');
+  console.log('📊 Checking duplicate brands...\n');
   const allBrands = await brandRepo.find({
     order: { name: 'ASC' },
   });
@@ -30,7 +30,7 @@ async function checkDuplicates() {
   for (const [, brands] of brandNames.entries()) {
     if (brands.length > 1) {
       brandDuplicates++;
-      console.log(`⚠️  Дубликат марка: "${brands[0].name}" (${brands.length} записи)`);
+      console.log(`⚠️  Duplicate brand: "${brands[0].name}" (${brands.length} records)`);
       brands.forEach((brand, index) => {
         console.log(`   ${index + 1}. ID: ${brand.id}, Order: ${brand.order}`);
       });
@@ -39,12 +39,12 @@ async function checkDuplicates() {
   }
 
   if (brandDuplicates === 0) {
-    console.log('✅ Нема дубликати на марки\n');
+    console.log('✅ No duplicate brands found\n');
   } else {
-    console.log(`\n📊 Најдени ${brandDuplicates} дубликати на марки\n`);
+    console.log(`\n📊 Found ${brandDuplicates} duplicate brands\n`);
   }
 
-  console.log('📊 Проверка на дубликати на модели...\n');
+  console.log('📊 Checking duplicate models...\n');
   const allModels = await modelRepo.find({
     relations: ['brand'],
     order: { name: 'ASC' },
@@ -69,12 +69,12 @@ async function checkDuplicates() {
 
   let duplicatesInBrand = 0;
 
-  console.log('🔍 Дубликати на модели во рамки на иста марка:\n');
+  console.log('🔍 Duplicate models within same brand:\n');
   for (const [brandName, models] of modelDuplicatesByBrand.entries()) {
     for (const [, modelList] of models.entries()) {
       if (modelList.length > 1) {
         duplicatesInBrand++;
-        console.log(`⚠️  "${brandName}" - "${modelList[0].name}" (${modelList.length} записи)`);
+        console.log(`⚠️  "${brandName}" - "${modelList[0].name}" (${modelList.length} records)`);
         modelList.forEach((model, index) => {
           console.log(`   ${index + 1}. ID: ${model.id}, Order: ${model.order}`);
         });
@@ -84,16 +84,16 @@ async function checkDuplicates() {
   }
 
   if (duplicatesInBrand === 0) {
-    console.log('✅ Нема дубликати на модели во рамки на иста марка\n');
+    console.log('✅ No duplicate models within same brand\n');
   } else {
-    console.log(`\n📊 Најдени ${duplicatesInBrand} дубликати на модели во рамки на иста марка\n`);
+    console.log(`\n📊 Found ${duplicatesInBrand} duplicate models within same brand\n`);
   }
 
-  console.log('📊 Статистика:');
+  console.log('📊 Statistics:');
   console.log(`   - Total brands: ${allBrands.length}`);
   console.log(`   - Total models: ${allModels.length}`);
-  console.log(`   - Дубликати на марки: ${brandDuplicates}`);
-  console.log(`   - Дубликати на модели во рамки на иста марка: ${duplicatesInBrand}\n`);
+  console.log(`   - Duplicate brands: ${brandDuplicates}`);
+  console.log(`   - Duplicate models within same brand: ${duplicatesInBrand}\n`);
 
   await AppDataSource.destroy();
   console.log('🔌 Database connection closed');
@@ -101,10 +101,10 @@ async function checkDuplicates() {
 
 checkDuplicates()
   .then(() => {
-    console.log('✅ Скриптот заврши успешно');
+    console.log('✅ Script completed successfully');
     process.exit(0);
   })
   .catch((error) => {
-    console.error('❌ Грешка:', error);
+    console.error('❌ Error:', error);
     process.exit(1);
   });

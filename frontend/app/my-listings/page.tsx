@@ -558,7 +558,7 @@ export default function MyListingsPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-200px)]">
+    <div className="min-h-[calc(100vh-200px)]" data-testid="my-listings-page">
       <div
         className={`transition-opacity duration-300 ${
           showInitialSkeleton ? 'opacity-100' : 'opacity-0 hidden'

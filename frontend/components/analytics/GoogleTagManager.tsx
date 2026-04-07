@@ -4,7 +4,6 @@ import Script from 'next/script';
 import { useEffect, useState } from 'react';
 
 import { useDeferredLoadAfterIdle } from '@/hooks/useDeferredThirdParty';
-import { useTranslation } from '@/hooks/useTranslation';
 
 const GTM_ID = 'GTM-K527X5WK';
 
@@ -65,27 +64,5 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         />
       )}
     </div>
-  );
-}
-
-export function GoogleTagManagerNoscript() {
-  const { t } = useTranslation();
-  const productionHostname = getProductionHostname();
-  const shouldLoad = productionHostname
-    ? isProductionHostname(productionHostname)
-    : process.env.NODE_ENV === 'production';
-
-  if (!shouldLoad) return null;
-
-  return (
-    <noscript>
-      <iframe
-        src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
-        title={t('common.googleTagManager')}
-        height="0"
-        width="0"
-        style={{ display: 'none', visibility: 'hidden' }}
-      />
-    </noscript>
   );
 }

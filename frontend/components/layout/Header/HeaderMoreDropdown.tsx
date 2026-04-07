@@ -47,6 +47,7 @@ export function HeaderMoreDropdown({
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
         className={navLinkClasses}
+        data-testid="header-user-more-toggle"
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
@@ -59,6 +60,7 @@ export function HeaderMoreDropdown({
       {isOpen && (
         <div
           className="absolute right-0 top-full z-100 mt-1 min-w-[180px] rounded-lg border-2 border-primary-500/30 bg-white py-1 shadow-xl"
+          data-testid="header-user-more-menu"
           role="menu"
         >
           <Link
@@ -99,6 +101,7 @@ export function HeaderMoreDropdown({
             type="button"
             role="menuitem"
             onClick={handleLogout}
+            data-testid="header-user-logout"
             className="flex w-full cursor-pointer items-center gap-2 border-0 bg-transparent px-4 py-3 text-left text-sm text-text-primary transition-colors hover-only:hover:bg-primary-500/10"
           >
             <LogoutIcon className="w-4 h-4 shrink-0 text-primary-700" />

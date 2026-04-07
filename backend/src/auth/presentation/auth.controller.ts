@@ -14,6 +14,7 @@ import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagg
 import { Throttle } from '@nestjs/throttler';
 
 import type { AuthenticatedRequest } from '../../common/express-augmentation';
+import { I18nService } from '../../common/i18n/i18n.service';
 import { UsersService } from '../../users/application/users.service';
 import { AuthService } from '../application/auth.service';
 import { IpBlockGuard } from '../infrastructure/guards/ip-block.guard';
@@ -30,12 +31,14 @@ const getSmsIpThrottle = (prodLimit: number, devLimit: number = prodLimit * 50) 
   default: { limit: isProduction ? prodLimit : devLimit, ttl: 3_600_000 },
 });
 
+import { ChangeEmailConfirmDto, ChangeEmailRequestDto } from './dto/change-email.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ChangePhoneRequestDto, ChangePhoneVerifyDto } from './dto/change-phone.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterDto } from './dto/register.dto';
 import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
+import { ResendEmailVerificationDto } from './dto/resend-email-verification.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SendSmsDto } from './dto/send-sms.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -51,6 +54,7 @@ export class AuthController {
     private ipBlockService: IpBlockService,
     private smsService: SmsService,
     private usersService: UsersService,
+    private i18nService: I18nService,
   ) {}
 
   @ApiOperation({ summary: 'Register a new user' })
@@ -70,6 +74,7 @@ export class AuthController {
             type: { type: 'string', enum: ['Individual', 'Business'] },
             active: { type: 'boolean' },
             emailVerified: { type: 'boolean', nullable: true },
+            emailVerificationSent: { type: 'boolean' },
             phoneVerified: { type: 'boolean' },
             created_at: { type: 'string', format: 'date-time' },
           },
@@ -98,7 +103,7 @@ export class AuthController {
   @Post('register')
   async register(@Request() req: AuthenticatedRequest, @Body() registerDto: RegisterDto) {
     const ip = this.ipBlockService.getClientIp(req);
-    return this.authService.register(registerDto, ip);
+    return this.authService.register(registerDto, ip, this.getRequestLocale(req));
   }
 
   @ApiOperation({ summary: 'Login user' })
@@ -293,8 +298,90 @@ export class AuthController {
     @Request() req: AuthenticatedRequest,
     @Body() updateProfileDto: UpdateProfileDto,
   ) {
-    const user = await this.authService.updateProfile(req.user.id, updateProfileDto);
+    const user = await this.authService.updateProfile(
+      req.user.id,
+      updateProfileDto,
+      this.getRequestLocale(req),
+    );
     return user;
+  }
+
+  @ApiOperation({ summary: 'Request email change confirmation link' })
+  @ApiBearerAuth('JWT-auth')
+  @ApiResponse({
+    status: 200,
+    description: 'Email change confirmation sent',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean', example: true },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid email or email already exists',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+  })
+  @UseGuards(JwtAuthGuard)
+  @Post('change-email-request')
+  async requestEmailChange(
+    @Request() req: AuthenticatedRequest,
+    @Body() changeEmailRequestDto: ChangeEmailRequestDto,
+  ) {
+    await this.authService.requestEmailChange(
+      req.user.id,
+      changeEmailRequestDto,
+      this.getRequestLocale(req),
+    );
+    return { success: true };
+  }
+
+  @ApiOperation({ summary: 'Confirm email change by token' })
+  @ApiResponse({
+    status: 200,
+    description: 'Email changed successfully',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean', example: true },
+            user: { type: 'object' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid or expired token',
+  })
+  @Throttle(getThrottleLimit(5, 200))
+  @Post('change-email-confirm')
+  async confirmEmailChange(@Body() changeEmailConfirmDto: ChangeEmailConfirmDto) {
+    const user = await this.authService.confirmEmailChange(changeEmailConfirmDto);
+    return {
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        type: user.type,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        companyName: user.companyName,
+        companyWebsiteUrl: user.companyWebsiteUrl,
+        phone: user.phone,
+        emailVerified: user.emailVerified,
+      },
+    };
   }
 
   @ApiOperation({ summary: 'Change password (authenticated)' })
@@ -322,7 +409,11 @@ export class AuthController {
     @Request() req: AuthenticatedRequest,
     @Body() changePasswordDto: ChangePasswordDto,
   ) {
-    await this.authService.changePassword(req.user.id, changePasswordDto);
+    await this.authService.changePassword(
+      req.user.id,
+      changePasswordDto,
+      this.getRequestLocale(req),
+    );
     return { success: true };
   }
 
@@ -651,6 +742,45 @@ export class AuthController {
         emailVerified: user.emailVerified,
       },
     };
+  }
+
+  @ApiOperation({ summary: 'Resend email verification link by token' })
+  @ApiResponse({
+    status: 200,
+    description: 'Verification email sent',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean', example: true },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid token or rate limit exceeded',
+  })
+  @Throttle(getThrottleLimit(3, 100))
+  @Post('resend-email-verification')
+  async resendEmailVerification(
+    @Request() req: AuthenticatedRequest,
+    @Body() resendEmailVerificationDto: ResendEmailVerificationDto,
+  ) {
+    await this.authService.resendEmailVerification(
+      resendEmailVerificationDto.token,
+      this.getRequestLocale(req),
+    );
+    return { success: true };
+  }
+
+  private getRequestLocale(req: { headers?: AuthenticatedRequest['headers'] }): string {
+    const acceptLanguage = req.headers?.['accept-language'];
+    return this.i18nService.getLocaleFromHeader(
+      Array.isArray(acceptLanguage) ? acceptLanguage.join(',') : acceptLanguage,
+    );
   }
 
   @ApiOperation({ summary: 'Request password reset' })

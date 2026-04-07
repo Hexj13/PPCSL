@@ -9,6 +9,7 @@ import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTabIndicator } from '@/hooks/useTabIndicator';
 import { useTranslation } from '@/hooks/useTranslation';
 import { savedFiltersApi } from '@/lib/api';
+import { sessionStorageRemoveItem, sessionStorageSetItem } from '@/lib/browser-session-storage';
 
 import { FavoritesListingsTab } from './FavoritesListingsTab';
 import { useFavoritesListings } from './useFavoritesListings';
@@ -76,16 +77,14 @@ function FavoritesContent() {
     setActiveTab(tab);
     const params = new URLSearchParams(searchParams.toString());
     params.set('tab', tab);
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('scrollPreserved', 'true');
-    }
+    sessionStorageSetItem('scrollPreserved', 'true');
     router.replace(`/favorites?${params.toString()}`, { scroll: false });
     if (typeof window !== 'undefined') {
       requestAnimationFrame(() => {
         window.scrollTo({ top: scrollY, behavior: 'instant' });
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
-            sessionStorage.removeItem('scrollPreserved');
+            sessionStorageRemoveItem('scrollPreserved');
           });
         });
       });

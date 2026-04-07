@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
+import { localStorageGetItem, localStorageRemoveItem } from '@/lib/browser-local-storage';
 import { toast } from '@/lib/toast';
 
 export function ProfileSaveSuccessToast() {
@@ -15,10 +16,17 @@ export function ProfileSaveSuccessToast() {
       return;
     }
 
-    const showProfileSaveSuccess = localStorage.getItem('showProfileSaveSuccess');
+    const showProfileSaveSuccess = localStorageGetItem('showProfileSaveSuccess');
+    const showProfileEmailVerificationSent = localStorageGetItem(
+      'showProfileEmailVerificationSent',
+    );
     if (showProfileSaveSuccess === 'true') {
-      localStorage.removeItem('showProfileSaveSuccess');
+      localStorageRemoveItem('showProfileSaveSuccess');
       toast.success(t('completeProfile.saveSuccess'));
+    }
+    if (showProfileEmailVerificationSent === 'true') {
+      localStorageRemoveItem('showProfileEmailVerificationSent');
+      toast.success(t('completeProfile.registrationEmailVerificationSent'));
     }
   }, [pathname, t]);
 

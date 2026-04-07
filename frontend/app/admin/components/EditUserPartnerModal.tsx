@@ -88,12 +88,33 @@ export function EditUserPartnerModal({
             type="email"
             autoComplete="off"
             value={formState.email}
-            onChange={(e) => onFormChange({ ...formState, email: e.target.value }, 'email')}
+            onChange={(e) => {
+              const email = e.target.value;
+              onFormChange(
+                {
+                  ...formState,
+                  email,
+                  emailVerified: email.trim() === '' ? false : formState.emailVerified,
+                },
+                'email',
+              );
+            }}
             className={inputClassForField('email', fieldMessages)}
           />
           {fieldMessages.email ? (
             <p className="mt-1 text-sm text-red-500">{fieldMessages.email}</p>
           ) : null}
+          <div className="mt-2">
+            <Checkbox
+              checked={formState.emailVerified}
+              disabled={formState.email.trim() === ''}
+              onChange={(checked) =>
+                onFormChange({ ...formState, emailVerified: checked }, 'emailVerified')
+              }
+              label={t('admin.usersTab.emailVerified')}
+              size="sm"
+            />
+          </div>
         </div>
 
         {!business && (

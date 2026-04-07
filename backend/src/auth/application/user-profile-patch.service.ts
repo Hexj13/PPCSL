@@ -12,9 +12,13 @@ export type UserProfilePatchFields = {
   companyWebsiteUrl?: string | null;
   additionalPhone?: string | null;
   emailNotifications?: boolean;
+  emailNotificationListingRefreshReminders?: boolean;
+  emailNotificationWeeklyViewsDigest?: boolean;
+  emailNotificationSecurityAlerts?: boolean;
   viber?: boolean;
   whatsapp?: boolean;
   telegram?: boolean;
+  preferredLocale?: 'ro' | 'ru' | null;
   phone?: string | null;
 };
 
@@ -35,6 +39,20 @@ export class UserProfilePatchService {
     if (cleanedData.email !== undefined) {
       if (cleanedData.email === '' || cleanedData.email === null) {
         cleanedData.email = null;
+      } else if (typeof cleanedData.email === 'string') {
+        const normalizedEmail = cleanedData.email.trim().toLowerCase();
+        const normalizedCurrentEmail = currentUser.email?.trim().toLowerCase() ?? null;
+        if (normalizedEmail === '') {
+          cleanedData.email = null;
+        } else if (normalizedEmail !== normalizedCurrentEmail) {
+          const existingUser = await this.usersService.findByEmail(normalizedEmail);
+          if (existingUser && existingUser.id !== targetUserId) {
+            throw new BadRequestException('errors.emailAlreadyExists');
+          }
+          cleanedData.email = normalizedEmail;
+        } else {
+          delete cleanedData.email;
+        }
       } else if (cleanedData.email !== currentUser.email) {
         const existingUser = await this.usersService.findByEmail(cleanedData.email);
         if (existingUser && existingUser.id !== targetUserId) {
@@ -99,6 +117,15 @@ export class UserProfilePatchService {
     if (cleanedData.emailNotifications === undefined) {
       delete cleanedData.emailNotifications;
     }
+    if (cleanedData.emailNotificationListingRefreshReminders === undefined) {
+      delete cleanedData.emailNotificationListingRefreshReminders;
+    }
+    if (cleanedData.emailNotificationWeeklyViewsDigest === undefined) {
+      delete cleanedData.emailNotificationWeeklyViewsDigest;
+    }
+    if (cleanedData.emailNotificationSecurityAlerts === undefined) {
+      delete cleanedData.emailNotificationSecurityAlerts;
+    }
     if (cleanedData.viber === undefined) {
       delete cleanedData.viber;
     }
@@ -107,6 +134,9 @@ export class UserProfilePatchService {
     }
     if (cleanedData.telegram === undefined) {
       delete cleanedData.telegram;
+    }
+    if (cleanedData.preferredLocale === undefined) {
+      delete cleanedData.preferredLocale;
     }
     if (cleanedData.phone === undefined) {
       delete cleanedData.phone;

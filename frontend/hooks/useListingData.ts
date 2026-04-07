@@ -4,6 +4,7 @@ import { useCrossTabListingStatusRefetch } from '@/hooks/useCrossTabListingStatu
 import { analytics, buildListingViewItemParams } from '@/lib/analytics';
 import type { Listing } from '@/lib/api';
 import { api, listingsApi, favoritesApi } from '@/lib/api';
+import { sessionStorageGetItem, sessionStorageRemoveItem } from '@/lib/browser-session-storage';
 import { useAuthStore, useFavoritesStore, useComparisonStore } from '@/lib/store';
 import { isTireListing } from '@/lib/utils';
 
@@ -47,7 +48,7 @@ export function useListingData({
     (forceRefresh = false) => {
       const currentId = id;
 
-      const shouldRefresh = sessionStorage.getItem(`refreshListing_${currentId}`) === 'true';
+      const shouldRefresh = sessionStorageGetItem(`refreshListing_${currentId}`) === 'true';
       const needsRefresh = forceRefresh || shouldRefresh;
 
       const preserveExisting =
@@ -138,7 +139,7 @@ export function useListingData({
           }
 
           if (needsRefresh) {
-            sessionStorage.removeItem(`refreshListing_${currentId}`);
+            sessionStorageRemoveItem(`refreshListing_${currentId}`);
           }
         })
         .catch((error) => {
@@ -149,7 +150,7 @@ export function useListingData({
           }
 
           if (needsRefresh && !forceRefresh && error?.code !== 'ECONNABORTED') {
-            sessionStorage.removeItem(`refreshListing_${currentId}`);
+            sessionStorageRemoveItem(`refreshListing_${currentId}`);
             setTimeout(() => {
               if (currentId === id) {
                 fetchListingData(false);
@@ -165,7 +166,7 @@ export function useListingData({
           setIsInComparison(checkVehicle(currentId) || checkTire(currentId));
 
           if (needsRefresh) {
-            sessionStorage.removeItem(`refreshListing_${currentId}`);
+            sessionStorageRemoveItem(`refreshListing_${currentId}`);
           }
         });
     },
@@ -173,7 +174,7 @@ export function useListingData({
   );
 
   useEffect(() => {
-    const shouldRefresh = sessionStorage.getItem(`refreshListing_${id}`) === 'true';
+    const shouldRefresh = sessionStorageGetItem(`refreshListing_${id}`) === 'true';
     hasLoadedRef.current = true;
     fetchListingData(shouldRefresh);
 
@@ -186,7 +187,7 @@ export function useListingData({
 
   useEffect(() => {
     const checkAndRefresh = () => {
-      const shouldRefresh = sessionStorage.getItem(`refreshListing_${id}`) === 'true';
+      const shouldRefresh = sessionStorageGetItem(`refreshListing_${id}`) === 'true';
       if (shouldRefresh && hasLoadedRef.current) {
         fetchListingData(true);
       }

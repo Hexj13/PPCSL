@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 
+import { ComparisonItem } from '../../comparison/entities/comparison-item.entity';
 import { AppDataSource } from '../../data-source';
 import { Favorite } from '../../favorites/entities/favorite.entity';
 import { ListingView } from '../../listings/entities/listing-view.entity';
@@ -30,6 +31,13 @@ async function clearListingsAndUsers() {
     await promotionHistoryRepo.remove(history);
   }
   console.log(`   ✅ Deleted ${allPromotionHistory.length} promotion history records\n`);
+
+  console.log('🗑️  Deleting comparison items...');
+  const comparisonDeleteResult = await AppDataSource.createQueryBuilder()
+    .delete()
+    .from(ComparisonItem)
+    .execute();
+  console.log(`   ✅ Deleted ${comparisonDeleteResult.affected ?? 0} comparison items\n`);
 
   console.log('🗑️  Deleting listings...');
   const allListings = await listingRepo.find();

@@ -198,6 +198,7 @@ function ManagementCardActionBar({
   const editHref = editFrom
     ? `/listings/${listing.id}/edit?from=${editFrom}`
     : `/listings/${listing.id}/edit`;
+  const editLinkTestId = mode === 'my-listings' ? `my-listings-edit-link-${listing.id}` : undefined;
 
   return (
     <div className="mt-auto pt-3 border-t border-primary-500/20">
@@ -288,6 +289,7 @@ function ManagementCardActionBar({
           {showEdit && (
             <Link
               href={editHref}
+              data-testid={editLinkTestId}
               className="text-primary-700 font-medium text-sm hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-1.5 md:py-2 rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none w-full xl:w-auto h-10"
               onClick={(e) => e.stopPropagation()}
             >
@@ -321,11 +323,19 @@ export function ListingManagementCard({
 
   const isAdminMode = mode === 'admin';
   const isBoardMode = mode === 'board';
+  const myListingsCardTestId =
+    mode === 'my-listings' ? `my-listings-card-${listing.id}` : undefined;
+  const myListingsCardLinkTestId =
+    mode === 'my-listings' ? `my-listings-card-link-${listing.id}` : undefined;
 
   return (
-    <div className="card overflow-visible group">
+    <div className="card overflow-visible group" data-testid={myListingsCardTestId}>
       <div className="grid grid-cols-1 lg:grid-cols-[450px_1fr] gap-0 lg:gap-6 lg:items-stretch">
-        <Link href={`/listings/${listing.id}`} className="shrink-0">
+        <Link
+          href={`/listings/${listing.id}`}
+          className="shrink-0"
+          data-testid={myListingsCardLinkTestId}
+        >
           <div className="relative w-full h-[200px] sm:h-[250px] lg:h-full lg:min-h-[250px] bg-bg-darker overflow-hidden rounded-t-xl lg:rounded-tl-xl lg:rounded-bl-xl lg:rounded-tr-none lg:rounded-br-none">
             {hasImage ? (
               <Image

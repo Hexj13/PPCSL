@@ -35,12 +35,14 @@ export function RegisterFormPassword({
           className={`input-field pr-10 ${error ? 'border-red-500' : ''}`}
           placeholder={t('register.passwordPlaceholder')}
           autoComplete="new-password"
+          data-testid="auth-register-password-input"
         />
         <button
           type="button"
           onClick={onTogglePassword}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-primary-900 hover-only:hover:text-primary-700 transition-colors"
           tabIndex={-1}
+          data-testid="auth-register-password-toggle"
         >
           {showPassword ? (
             <svg

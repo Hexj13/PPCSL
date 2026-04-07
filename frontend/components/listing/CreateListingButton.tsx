@@ -3,6 +3,7 @@
 import Link from 'next/link';
 
 import { useTranslation } from '@/hooks/useTranslation';
+import { buildSignInHref } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 
 const HEADER_CTA_SURFACE_BASE =
@@ -30,18 +31,9 @@ export function CreateListingButton({
   const { user } = useAuthStore();
   const { t } = useTranslation();
 
-  const handleSetReturnUrl = (url: string) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('returnUrl', url);
-    }
-  };
-
   const handleClick = () => {
     if (onClick) {
       onClick();
-    }
-    if (!user) {
-      handleSetReturnUrl('/listings/new');
     }
   };
 
@@ -53,7 +45,7 @@ export function CreateListingButton({
 
   const iconSize = isMobile ? 'w-4 h-4' : 'w-3.5 h-3.5 md:w-4 md:h-4';
 
-  const href = user ? '/listings/new' : '/sign';
+  const href = user ? '/listings/new' : buildSignInHref('/listings/new');
 
   return (
     <Link

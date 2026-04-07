@@ -34,6 +34,15 @@ import {
   validateImageBlurHashesMatchImages,
 } from '../utils/image-blur-hashes.utils';
 
+const CREATE_LISTING_EXCLUDED_FIELDS = [
+  'vehicle',
+  'tire',
+  'assignedUserId',
+  'description',
+  'description_ro',
+  'description_ru',
+] as const;
+
 @Injectable()
 export class CreateListingUseCase {
   private readonly logger = new Logger(CreateListingUseCase.name);
@@ -52,6 +61,28 @@ export class CreateListingUseCase {
     @InjectRepository(TireBrand)
     private readonly tireBrandRepository: Repository<TireBrand>,
   ) {}
+
+  private sanitizeListingDescriptionHtml(value: string | undefined | null): string | null {
+    if (value == null || typeof value !== 'string' || !value.trim()) {
+      return null;
+    }
+    return normalizeDescriptionHtml(sanitizeHtml(value)) || null;
+  }
+
+  private resolveListingDescriptions(dto: CreateListingDto): {
+    description_ro: string | null;
+    description_ru: string | null;
+    description: string | null;
+  } {
+    const roSource = dto.description_ro ?? dto.description;
+    const description_ro = this.sanitizeListingDescriptionHtml(roSource);
+    const description_ru = this.sanitizeListingDescriptionHtml(dto.description_ru);
+    return {
+      description_ro,
+      description_ru,
+      description: description_ro ?? description_ru ?? null,
+    };
+  }
 
   async execute(dto: CreateListingDto, userId: string, userType?: string): Promise<Listing> {
     let ownerId = userId;
@@ -173,15 +204,18 @@ export class CreateListingUseCase {
     });
 
     const listingFields = Object.fromEntries(
-      Object.entries(dto).filter(([key]) => !['vehicle', 'tire', 'assignedUserId'].includes(key)),
-    ) as Omit<CreateListingDto, 'vehicle' | 'tire' | 'assignedUserId'>;
+      Object.entries(dto).filter(
+        ([key]) => !(CREATE_LISTING_EXCLUDED_FIELDS as readonly string[]).includes(key),
+      ),
+    ) as Omit<
+      CreateListingDto,
+      'vehicle' | 'tire' | 'assignedUserId' | 'description' | 'description_ro' | 'description_ru'
+    >;
 
     const listing = new Listing();
     Object.assign(listing, {
       ...listingFields,
-      description: dto.description
-        ? normalizeDescriptionHtml(sanitizeHtml(dto.description)) || undefined
-        : undefined,
+      ...this.resolveListingDescriptions(dto),
       title,
       status,
       category: ListingCategory.Tire,
@@ -268,14 +302,17 @@ export class CreateListingUseCase {
     }
 
     const listingFields = Object.fromEntries(
-      Object.entries(dto).filter(([key]) => !['vehicle', 'tire', 'assignedUserId'].includes(key)),
-    ) as Omit<CreateListingDto, 'vehicle' | 'tire' | 'assignedUserId'>;
+      Object.entries(dto).filter(
+        ([key]) => !(CREATE_LISTING_EXCLUDED_FIELDS as readonly string[]).includes(key),
+      ),
+    ) as Omit<
+      CreateListingDto,
+      'vehicle' | 'tire' | 'assignedUserId' | 'description' | 'description_ro' | 'description_ru'
+    >;
     const listing = new Listing();
     Object.assign(listing, {
       ...listingFields,
-      description: dto.description
-        ? normalizeDescriptionHtml(sanitizeHtml(dto.description)) || undefined
-        : undefined,
+      ...this.resolveListingDescriptions(dto),
       title,
       status,
       category: ListingCategory.Vehicle,

@@ -48,6 +48,7 @@ export function SearchFormActions({
           <div
             className="w-full inline-flex justify-start items-center gap-2 pb-2"
             aria-live="polite"
+            data-testid="search-available-listings"
           >
             <span className="inline-flex items-center gap-2">
               <svg
@@ -102,6 +103,7 @@ export function SearchFormActions({
                   disabled={Boolean(!canSaveFilter)}
                   className="w-full btn-secondary flex items-center justify-center gap-2 px-3! lg:px-6! text-primary-900!"
                   title={!userForUi ? t('common.loginRequired') : ''}
+                  data-testid="search-save-filter"
                 >
                   <svg
                     className="w-4 h-4 sm:w-5 sm:h-5 shrink-0"
@@ -127,6 +129,7 @@ export function SearchFormActions({
                 onClick={onReset}
                 disabled={Boolean(!hasActiveFilters)}
                 className="w-full btn-secondary flex items-center justify-center gap-2 whitespace-nowrap text-primary-900!"
+                data-testid="search-reset"
               >
                 <svg
                   className="w-5 h-5 shrink-0"
@@ -148,6 +151,7 @@ export function SearchFormActions({
                 loading={showSearchLoader}
                 loadingText={t('searchFilters.searching')}
                 disabled={Boolean(!hasFiltersChanged || isSyncingFromUrl)}
+                data-testid="search-submit"
                 onMouseDown={(e) => {
                   e.preventDefault();
                   e.currentTarget.blur();

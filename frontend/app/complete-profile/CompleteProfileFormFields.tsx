@@ -25,6 +25,8 @@ export interface CompleteProfileFormFieldsProps {
     additionalPhone: boolean;
   };
   t: (key: string) => string;
+  emailNotificationsChecked: boolean;
+  emailNotificationsDisabled: boolean;
   onFirstNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onLastNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onEmailChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -44,6 +46,8 @@ function CompleteProfileBusinessFormFields({
   errors,
   touched,
   t,
+  emailNotificationsChecked,
+  emailNotificationsDisabled,
   onEmailChange,
   onCompanyWebsiteUrlChange,
   onAdditionalPhoneChange,
@@ -58,6 +62,8 @@ function CompleteProfileBusinessFormFields({
   | 'errors'
   | 'touched'
   | 't'
+  | 'emailNotificationsChecked'
+  | 'emailNotificationsDisabled'
   | 'onEmailChange'
   | 'onCompanyWebsiteUrlChange'
   | 'onAdditionalPhoneChange'
@@ -82,6 +88,7 @@ function CompleteProfileBusinessFormFields({
           className={`input-field ${touched.companyWebsiteUrl && errors.companyWebsiteUrl ? 'border-red-500' : ''}`}
           placeholder={t('profile.companyWebsiteUrlPlaceholder')}
           autoComplete="url"
+          data-testid="complete-profile-company-website-input"
         />
         {touched.companyWebsiteUrl && errors.companyWebsiteUrl && (
           <p className="mt-1 text-sm text-red-400">{errors.companyWebsiteUrl}</p>
@@ -100,6 +107,7 @@ function CompleteProfileBusinessFormFields({
           className={`input-field ${touched.additionalPhone && errors.additionalPhone ? 'border-red-500' : ''}`}
           placeholder={t('profile.additionalPhonePlaceholder')}
           autoComplete="tel"
+          data-testid="complete-profile-additional-phone-input"
         />
         {touched.additionalPhone && errors.additionalPhone && (
           <p className="mt-1 text-sm text-red-400">{errors.additionalPhone}</p>
@@ -119,6 +127,7 @@ function CompleteProfileBusinessFormFields({
           className={`input-field ${touched.email && errors.email ? 'border-red-500' : ''}`}
           placeholder={t('register.emailPlaceholder')}
           autoComplete="email"
+          data-testid="complete-profile-email-input"
         />
         {touched.email && errors.email && (
           <p className="mt-1 text-sm text-red-400">{errors.email}</p>
@@ -126,11 +135,12 @@ function CompleteProfileBusinessFormFields({
       </div>
       <Checkbox
         id="complete-profile-email-notifications"
-        checked={formData.emailNotifications}
+        checked={emailNotificationsChecked}
         onChange={(checked) => {
           onFormFieldFocus();
           onEmailNotificationsChange(checked);
         }}
+        disabled={emailNotificationsDisabled}
         label={t('register.emailNotifications')}
         size="md"
       />
@@ -144,6 +154,8 @@ export function CompleteProfileFormFields({
   errors,
   touched,
   t,
+  emailNotificationsChecked,
+  emailNotificationsDisabled,
   onFirstNameChange,
   onLastNameChange,
   onEmailChange,
@@ -164,6 +176,8 @@ export function CompleteProfileFormFields({
         errors={errors}
         touched={touched}
         t={t}
+        emailNotificationsChecked={emailNotificationsChecked}
+        emailNotificationsDisabled={emailNotificationsDisabled}
         onEmailChange={onEmailChange}
         onCompanyWebsiteUrlChange={onCompanyWebsiteUrlChange}
         onAdditionalPhoneChange={onAdditionalPhoneChange}
@@ -190,6 +204,7 @@ export function CompleteProfileFormFields({
           className={`input-field ${touched.firstName && errors.firstName ? 'border-red-500' : ''}`}
           placeholder={t('register.firstName')}
           autoComplete="given-name"
+          data-testid="complete-profile-first-name-input"
         />
         {touched.firstName && errors.firstName && (
           <p className="mt-1 text-sm text-red-400">{errors.firstName}</p>
@@ -208,6 +223,7 @@ export function CompleteProfileFormFields({
           className={`input-field ${touched.lastName && errors.lastName ? 'border-red-500' : ''}`}
           placeholder={t('register.lastName')}
           autoComplete="family-name"
+          data-testid="complete-profile-last-name-input"
         />
         {touched.lastName && errors.lastName && (
           <p className="mt-1 text-sm text-red-400">{errors.lastName}</p>
@@ -227,6 +243,7 @@ export function CompleteProfileFormFields({
           className={`input-field ${touched.email && errors.email ? 'border-red-500' : ''}`}
           placeholder={t('register.emailPlaceholder')}
           autoComplete="email"
+          data-testid="complete-profile-email-input"
         />
         {touched.email && errors.email && (
           <p className="mt-1 text-sm text-red-400">{errors.email}</p>

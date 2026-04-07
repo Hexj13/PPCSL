@@ -10,7 +10,11 @@ import {
   type AdminEditUserFormState,
   type AdminEditUserFormTouchedKey,
 } from '@/app/admin/components/adminEditUserFormValidation';
-import { getPartnerBalance, isBusinessUser } from '@/app/admin/components/adminUsersHelpers';
+import {
+  getPartnerBalance,
+  getUserSaveToastKey,
+  isBusinessUser,
+} from '@/app/admin/components/adminUsersHelpers';
 import { EmptyState } from '@/components/common/EmptyState';
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { usePaginatedData } from '@/hooks/usePaginatedData';
@@ -36,6 +40,7 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editUserForm, setEditUserForm] = useState<AdminEditUserFormState>({
     email: '',
+    emailVerified: false,
     firstName: '',
     lastName: '',
     companyName: '',
@@ -159,6 +164,7 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
     setEditUserFieldMessages({});
     setEditUserForm({
       email: user.email ?? '',
+      emailVerified: user.emailVerified === true,
       firstName: user.firstName ?? '',
       lastName: user.lastName ?? '',
       companyName: user.companyName ?? '',
@@ -176,7 +182,7 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
         const copy = { ...prev };
         if (field === 'isPlatformPartner') {
           delete copy.freePromotionBalance;
-        } else {
+        } else if (field !== 'emailVerified') {
           delete copy[field];
         }
         return copy;
@@ -215,21 +221,25 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
     setEditUserFieldMessages({});
     setSavingUserModal(true);
     try {
+      const emailTrim = editUserForm.email.trim();
       const profilePayload = business
         ? {
-            email: editUserForm.email.trim(),
+            email: emailTrim,
             companyName: editUserForm.companyName.trim(),
             companyWebsiteUrl: editUserForm.companyWebsiteUrl.trim(),
             additionalPhone: editUserForm.additionalPhone.trim(),
           }
         : {
-            email: editUserForm.email.trim(),
+            email: emailTrim,
             firstName: editUserForm.firstName.trim(),
             lastName: editUserForm.lastName.trim(),
           };
 
-      const profileResponse = await adminApi.updateUserProfile(editingUser.id, profilePayload);
-      let merged: User = { ...editingUser, ...profileResponse.data };
+      const profileResponse = await adminApi.updateUserProfile(editingUser.id, {
+        ...profilePayload,
+        ...(emailTrim !== '' ? { emailVerified: editUserForm.emailVerified } : {}),
+      });
+      let merged: User = { ...editingUser, ...profileResponse.data.user };
 
       if (business) {
         const partnerResponse = await adminApi.updateUserPartnerSettings(editingUser.id, {
@@ -240,7 +250,7 @@ export function UsersTab({ onViewUserListings }: UsersTabProps) {
       }
 
       setData((prev) => prev.map((u) => (u.id === merged.id ? { ...u, ...merged } : u)));
-      toast.success(t('admin.usersTab.userSaveSuccess'));
+      toast.success(t(getUserSaveToastKey(profileResponse.data.emailConfirmationSent)));
       setEditingUser(null);
       setEditUserFieldMessages({});
     } catch (err: unknown) {

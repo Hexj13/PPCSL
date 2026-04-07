@@ -173,13 +173,33 @@ export class CreateListingDto {
 
   @ApiPropertyOptional({
     example: 'Well maintained vehicle with full service history. No accidents.',
-    description: 'Listing description',
+    description: 'Listing description (legacy; stored as Romanian if description_ro omitted)',
     maxLength: 5000,
   })
   @IsOptional()
   @IsString()
   @MaxLength(5000)
   description?: string;
+
+  @ApiPropertyOptional({
+    example: 'Bine întreținut...',
+    description: 'Listing description in Romanian',
+    maxLength: 5000,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(5000)
+  description_ro?: string;
+
+  @ApiPropertyOptional({
+    example: 'In good condition...',
+    description: 'Listing description in Russian',
+    maxLength: 5000,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(5000)
+  description_ru?: string;
 
   @ApiPropertyOptional({
     example: [
@@ -200,7 +220,7 @@ export class CreateListingDto {
     description: 'Listing status',
   })
   @IsOptional()
-  @IsEnum(ListingStatus, { message: 'Статусот мора да биде Active, Paused или Closed' })
+  @IsEnum(ListingStatus, { message: 'validation.listingStatusEnum' })
   status?: ListingStatus;
 
   @ApiPropertyOptional({
@@ -228,9 +248,9 @@ export class CreateListingDto {
   @ValidateIf((o) => inferListingCategoryFromPayload(o) === ListingCategory.Vehicle)
   @IsOptional()
   @IsString()
-  @Length(17, 17, { message: 'VIN мора да биде точно 17 карактери' })
+  @Length(17, 17, { message: 'validation.vinLength17' })
   @Matches(/^[A-HJ-NPR-Z0-9]{17}$/i, {
-    message: 'VIN мора да содржи само букви и бројки (без I, O, Q)',
+    message: 'validation.vinCharset',
   })
   vin?: string;
 
@@ -240,7 +260,7 @@ export class CreateListingDto {
     description: 'Vehicle condition (vehicle listings only)',
   })
   @ValidateIf((o) => inferListingCategoryFromPayload(o) === ListingCategory.Vehicle)
-  @IsEnum(ConditionType, { message: 'Состојбата мора да биде Undamaged, Damaged или ForParts' })
+  @IsEnum(ConditionType, { message: 'validation.conditionTypeEnum' })
   condition?: ConditionType;
 
   @ApiPropertyOptional({
@@ -290,7 +310,7 @@ export class CreateListingDto {
   @IsArray()
   @IsString({ each: true })
   @ArrayMaxSize(40, {
-    message: 'Максимум 40 опции',
+    message: 'validation.maxEquipmentOptions',
   })
   equipment?: string[];
 

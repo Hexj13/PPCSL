@@ -8,10 +8,8 @@ import { TawkTo } from '@/components/TawkTo';
 import { ExternalLinkTracker } from '@/components/analytics/ExternalLinkTracker';
 import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics';
 import { GoogleAnalyticsConsent } from '@/components/analytics/GoogleAnalyticsConsent';
-import {
-  GoogleTagManager,
-  GoogleTagManagerNoscript,
-} from '@/components/analytics/GoogleTagManager';
+import { GoogleTagManager } from '@/components/analytics/GoogleTagManager';
+import { GoogleTagManagerNoscript } from '@/components/analytics/GoogleTagManagerNoscript';
 import { OrganizationSchema } from '@/components/analytics/OrganizationSchema';
 import { ConditionalFooter } from '@/components/layout/ConditionalFooter';
 import { Header } from '@/components/layout/Header';
@@ -165,7 +163,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className={inter.className} suppressHydrationWarning>
         <GoogleTagManager />
-        <GoogleTagManagerNoscript />
+        <GoogleTagManagerNoscript title={siteConfig.name} />
         <TawkTo />
         <GoogleAnalyticsConsent />
         <GoogleAnalytics />

@@ -240,6 +240,12 @@ export default [
     },
   },
   {
+    files: ['e2e/**/*.spec.{ts,tsx}'],
+    rules: {
+      'testing-library/prefer-screen-queries': 'off',
+    },
+  },
+  {
     ignores: [
       'node_modules/**',
       '.next/**',
@@ -248,6 +254,10 @@ export default [
       'stories.backup/**',
       '**/*.css',
       'config/**',
+      'allure-report/**',
+      'allure-results/**',
+      'playwright-report/**',
+      'test-results/**',
     ],
   },
   prettierConfig,

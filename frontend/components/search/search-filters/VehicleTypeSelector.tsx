@@ -134,6 +134,7 @@ export function VehicleTypeSelector({
           ref={carRef}
           type="button"
           onClick={onCarClick}
+          data-testid="search-vehicle-type-car"
           className={`h-12 w-16 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap flex items-center justify-center ${
             listingCategory === 'vehicle' && vehicleType === 'car'
               ? 'bg-primary-500/10 rounded-t-lg'
@@ -147,6 +148,7 @@ export function VehicleTypeSelector({
           ref={truckRef}
           type="button"
           onClick={onTruckClick}
+          data-testid="search-vehicle-type-truck"
           className={`h-12 w-16 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap flex items-center justify-center ${
             listingCategory === 'vehicle' && vehicleType === 'truck'
               ? 'bg-primary-500/10 rounded-t-lg'
@@ -160,6 +162,7 @@ export function VehicleTypeSelector({
           ref={motoRef}
           type="button"
           onClick={onMotoClick}
+          data-testid="search-vehicle-type-moto"
           className={`h-12 w-16 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap flex items-center justify-center ${
             listingCategory === 'vehicle' && vehicleType === 'moto'
               ? 'bg-primary-500/10 rounded-t-lg'
@@ -173,6 +176,7 @@ export function VehicleTypeSelector({
           ref={tireRef}
           type="button"
           onClick={() => listingCategory !== 'tire' && onTireCategorySelect()}
+          data-testid="search-listing-category-tire"
           className={`h-12 w-16 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap flex items-center justify-center ${
             listingCategory === 'tire'
               ? 'bg-primary-500/10 rounded-t-lg'

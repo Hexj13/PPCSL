@@ -9,7 +9,7 @@ checkEnvironment(['production', 'stage', 'development']);
 
 async function updateListingTitles() {
   try {
-    console.log('🔌 Поврзување со базата на податоци...');
+    console.log('🔌 Connecting to database...');
     await AppDataSource.initialize();
     console.log('✅ Connected to database');
 
@@ -21,14 +21,14 @@ async function updateListingTitles() {
       relations: ['vehicle'],
     });
 
-    console.log(`📝 Пронајдени ${listings.length} објави за ажурирање...`);
+    console.log(`📝 Found ${listings.length} listings to update...`);
 
     let updated = 0;
     let skipped = 0;
 
     for (const listing of listings) {
       if (!listing.vehicle) {
-        console.log(`⚠️  Објава ${listing.id} нема vehicle, прескокнување...`);
+        console.log(`⚠️  Listing ${listing.id} has no vehicle, skipping...`);
         skipped++;
         continue;
       }
@@ -49,11 +49,11 @@ async function updateListingTitles() {
       if (!model?.vehicle_types?.includes('moto')) {
         const transmissionStr =
           vehicle.transmission === 'Automatic'
-            ? 'Автоматска'
+            ? 'Automatic'
             : vehicle.transmission === 'Manual'
-              ? 'Мануелна'
+              ? 'Manual'
               : vehicle.transmission === 'CVT'
-                ? 'Варијатор'
+                ? 'CVT'
                 : '';
         newTitle = transmissionStr ? `${baseTitle} (${transmissionStr})` : baseTitle;
       }
@@ -63,18 +63,18 @@ async function updateListingTitles() {
         await listingRepo.save(listing);
         updated++;
         if (updated % 10 === 0) {
-          console.log(`✅ Ажурирани ${updated} објави...`);
+          console.log(`✅ Updated ${updated} listings...`);
         }
       } else {
         skipped++;
       }
     }
 
-    console.log(`\n🎉 Завршено!`);
-    console.log(`   Ажурирани: ${updated} објави`);
-    console.log(`   Прескокнати: ${skipped} објави`);
+    console.log(`\n🎉 Done!`);
+    console.log(`   Updated: ${updated} listings`);
+    console.log(`   Skipped: ${skipped} listings`);
   } catch (error) {
-    console.error('❌ Грешка:', error);
+    console.error('❌ Error:', error);
     throw error;
   } finally {
     if (AppDataSource.isInitialized) {

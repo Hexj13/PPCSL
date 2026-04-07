@@ -20,21 +20,23 @@ export function RegisterFormTerms({ formData, setFormData }: RegisterFormTermsPr
           <input
             type="checkbox"
             checked={formData.termsAccepted}
-            onChange={(e) => setFormData({ ...formData, termsAccepted: e.target.checked })}
+            onChange={(e) => setFormData((prev) => ({ ...prev, termsAccepted: e.target.checked }))}
             className="sr-only"
             required
+            data-testid="auth-register-terms-input"
           />
           <button
             type="button"
             onClick={(e) => {
               e.preventDefault();
-              setFormData({ ...formData, termsAccepted: !formData.termsAccepted });
+              setFormData((prev) => ({ ...prev, termsAccepted: !prev.termsAccepted }));
             }}
             className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer shrink-0 ${
               formData.termsAccepted
                 ? 'bg-primary-500/10 border-primary-700'
                 : 'border-primary-700/50 bg-bg-secondary group-hover:border-primary-700'
             }`}
+            data-testid="auth-register-terms-toggle"
           >
             {formData.termsAccepted && (
               <svg
@@ -60,6 +62,7 @@ export function RegisterFormTerms({ formData, setFormData }: RegisterFormTermsPr
             target="_blank"
             onClick={(e) => e.stopPropagation()}
             className="text-primary-700 hover-only:hover:text-primary-900 underline font-semibold"
+            data-testid="auth-register-terms-link"
           >
             {t('register.termsLink')}
           </Link>

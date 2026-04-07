@@ -23,11 +23,12 @@ export function RegisterFormCompanyField({ formData, setFormData }: RegisterForm
         value={formData.companyName}
         onChange={(e) => {
           const value = e.target.value;
-          if (value.length <= 100) setFormData({ ...formData, companyName: value });
+          if (value.length <= 100) setFormData((prev) => ({ ...prev, companyName: value }));
         }}
         className="input-field"
         placeholder={t('register.companyName')}
         autoComplete="off"
+        data-testid="auth-register-company-name-input"
       />
     </div>
   );

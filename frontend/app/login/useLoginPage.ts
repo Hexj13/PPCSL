@@ -1,15 +1,17 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { authApi, favoritesApi, listingsApi, savedFiltersApi } from '@/lib/api';
+import { localStorageGetItem, localStorageRemoveItem } from '@/lib/browser-local-storage';
 import {
   applyComparisonAfterAuth,
   holdComparisonApiLoadUntilReleased,
 } from '@/lib/comparisonMigration';
+import { getReturnUrlFromSearchParams, sanitizeReturnUrl } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
 
@@ -22,10 +24,17 @@ const isValidPhone = (value: string): boolean => {
 };
 
 async function processPendingFavorites(userId: string): Promise<void> {
-  const pending = JSON.parse(localStorage.getItem('pendingFavorites') || '[]');
-  if (pending.length === 0) return;
+  let pending: unknown[] = [];
+  try {
+    pending = JSON.parse(localStorageGetItem('pendingFavorites') || '[]') as unknown[];
+  } catch {
+    localStorageRemoveItem('pendingFavorites');
+    return;
+  }
+  if (!Array.isArray(pending) || pending.length === 0) return;
   const validFavorites: string[] = [];
   for (const listingId of pending) {
+    if (typeof listingId !== 'string') continue;
     try {
       const listingRes = await listingsApi.getOne(listingId);
       const listing = listingRes.data;
@@ -37,7 +46,7 @@ async function processPendingFavorites(userId: string): Promise<void> {
   if (validFavorites.length > 0) {
     await Promise.all(validFavorites.map((id: string) => favoritesApi.add(id).catch(() => {})));
   }
-  localStorage.removeItem('pendingFavorites');
+  localStorageRemoveItem('pendingFavorites');
 }
 
 async function processPendingSavedFilter(
@@ -45,7 +54,7 @@ async function processPendingSavedFilter(
   t: (k: string) => string,
   loginMethod: 'email' | 'phone',
   filledFields: Record<string, boolean>,
-  savedReturnUrl: string | null,
+  returnUrl: string | null,
 ): Promise<boolean> {
   if (!pendingSavedFilter) return false;
   try {
@@ -58,8 +67,7 @@ async function processPendingSavedFilter(
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const filterName = `${t('common.filter')} ${day}.${month}.${year} ${hours}:${minutes}`;
     await savedFiltersApi.create(filterName, filters);
-    localStorage.removeItem('pendingSavedFilter');
-    localStorage.removeItem('returnUrl');
+    localStorageRemoveItem('pendingSavedFilter');
     analytics.login(loginMethod as 'email' | 'phone');
     analytics.formSubmit('login', true, filledFields);
     toast.success(t('login.filterSavedSuccess'));
@@ -71,12 +79,9 @@ async function processPendingSavedFilter(
     const err = error as { response?: { data?: { message?: string } } };
     const errorMessage = err?.response?.data?.message ?? t('login.filterSaveError');
     toast.error(errorMessage);
-    localStorage.removeItem('pendingSavedFilter');
+    localStorageRemoveItem('pendingSavedFilter');
     const isLimitError = errorMessage === t('login.filterLimitError');
-    const url = isLimitError
-      ? '/favorites?tab=filters'
-      : savedReturnUrl || localStorage.getItem('returnUrl') || '/';
-    if (isLimitError) localStorage.removeItem('returnUrl');
+    const url = isLimitError ? '/favorites?tab=filters' : (returnUrl ?? '/');
     analytics.login(loginMethod as 'email' | 'phone');
     analytics.formSubmit('login', true, filledFields);
     if (typeof window !== 'undefined' && window.location) window.location.href = url;
@@ -89,7 +94,6 @@ function applyLoginSuccessRedirect(
   loginMethod: 'email' | 'phone',
   filledFields: Record<string, boolean>,
 ): void {
-  localStorage.removeItem('returnUrl');
   analytics.login(loginMethod as 'email' | 'phone');
   analytics.formSubmit('login', true, filledFields);
   if (typeof window !== 'undefined' && (window as Window).location) {
@@ -105,47 +109,34 @@ function isAuthPath(path: string): boolean {
 
 export function useLoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { setAuth, user, isInitialized } = useAuthStore();
   const { t } = useTranslation();
+  const [referrerReturnUrl, setReferrerReturnUrl] = useState<string | null>(null);
+  const queryReturnUrl = getReturnUrlFromSearchParams(searchParams);
+  const resolvedReturnUrl = queryReturnUrl ?? referrerReturnUrl;
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
     if (isInitialized && user && !isRedirecting) {
-      const returnUrl = localStorage.getItem('returnUrl');
-      if (returnUrl) {
-        localStorage.removeItem('returnUrl');
-        router.push(returnUrl);
-      } else {
-        router.push('/');
-      }
+      router.push(resolvedReturnUrl ?? '/');
     }
-  }, [user, isInitialized, router, isRedirecting]);
+  }, [user, isInitialized, router, isRedirecting, resolvedReturnUrl]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const existingReturnUrl = localStorage.getItem('returnUrl');
-      if (!existingReturnUrl) {
-        if (!isAuthPath(window.location.pathname)) {
-          const referrer = document.referrer;
-          if (referrer) {
-            try {
-              const referrerUrl = new URL(referrer);
-              const referrerPath = referrerUrl.pathname + referrerUrl.search;
-              if (
-                !isAuthPath(referrerUrl.pathname) &&
-                referrerPath !== '/' &&
-                referrerPath !== ''
-              ) {
-                localStorage.setItem('returnUrl', referrerPath);
-              }
-            } catch {
-              // Ignore invalid referrer URLs
-            }
-          }
-        }
+    if (queryReturnUrl || typeof window === 'undefined') return;
+    const referrer = document.referrer;
+    if (!referrer) return;
+    try {
+      const referrerUrl = new URL(referrer);
+      const referrerPath = sanitizeReturnUrl(referrerUrl.pathname + referrerUrl.search);
+      if (referrerPath && !isAuthPath(referrerUrl.pathname) && referrerPath !== '/') {
+        setReferrerReturnUrl(referrerPath);
       }
+    } catch {
+      void 0;
     }
-  }, []);
+  }, [queryReturnUrl]);
 
   const [formData, setFormData] = useState({
     login: '',
@@ -208,16 +199,15 @@ export function useLoginPage() {
       } finally {
         releaseComparisonHold();
       }
-      const savedReturnUrl = localStorage.getItem('returnUrl');
       const filterHandled = await processPendingSavedFilter(
-        localStorage.getItem('pendingSavedFilter'),
+        localStorageGetItem('pendingSavedFilter'),
         t,
         loginMethod,
         filledFields,
-        savedReturnUrl,
+        resolvedReturnUrl,
       );
       if (filterHandled) return;
-      const returnUrl = savedReturnUrl || localStorage.getItem('returnUrl') || '/';
+      const returnUrl = resolvedReturnUrl || '/';
       applyLoginSuccessRedirect(returnUrl, loginMethod, filledFields);
     } catch {
       analytics.formSubmit('login', false, filledFields);

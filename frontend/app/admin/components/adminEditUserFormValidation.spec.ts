@@ -8,6 +8,7 @@ const t = (key: string): string => key;
 function baseForm(overrides: Partial<AdminEditUserFormState> = {}): AdminEditUserFormState {
   return {
     email: 'a@b.co',
+    emailVerified: false,
     firstName: 'Jane',
     lastName: 'Doe',
     companyName: 'Acme',

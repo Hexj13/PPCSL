@@ -2,7 +2,16 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import type { Listing } from '@/lib/api';
-import { getMetadataLocale, getServerTranslations, getTFromTranslations } from '@/lib/i18n';
+import {
+  getMetadataLocale,
+  getServerTranslations,
+  getTFromTranslations,
+  type Locale,
+} from '@/lib/i18n';
+import {
+  getListingPlainDescriptionForSchema,
+  getListingDescriptionForLocale,
+} from '@/lib/listingDescriptionLocale';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import {
   formatTireSize,
@@ -142,13 +151,16 @@ function getSellerJsonLd(listing: Listing): Record<string, unknown> | undefined 
 function buildTireProductJsonLd(
   listing: Listing,
   tFn: (_key: string, _params?: Record<string, string | number>) => string,
+  descriptionLocale: 'ro' | 'ru',
 ): Record<string, unknown> {
   const tire = listing.tire!;
   const brandName = tire.brand?.name || '';
   const modelName = getTireModelDisplayLabel(tire);
-  const description = listing.description
-    ? listing.description.replace(/<[^>]*>/g, '').substring(0, 500)
-    : listing.title;
+  const description = getListingPlainDescriptionForSchema(
+    listing,
+    descriptionLocale,
+    listing.title,
+  );
   const seller = getSellerJsonLd(listing);
   const offers = getOffersJsonLd(listing);
   const additional: Array<{ '@type': string; name: string; value: string }> = [
@@ -188,16 +200,19 @@ function buildTireProductJsonLd(
 function buildListingJsonLd(
   listing: Listing,
   tFn: (_key: string, _params?: Record<string, string | number>) => string,
+  descriptionLocale: 'ro' | 'ru',
 ): Record<string, unknown> {
   if (isTireListing(listing) && listing.tire) {
-    return buildTireProductJsonLd(listing, tFn);
+    return buildTireProductJsonLd(listing, tFn, descriptionLocale);
   }
   const vehicle = listing.vehicle;
   const brandName = vehicle?.brand?.name || '';
   const modelName = vehicle?.model?.name || '';
-  const description = listing.description
-    ? listing.description.replace(/<[^>]*>/g, '').substring(0, 500)
-    : listing.title;
+  const description = getListingPlainDescriptionForSchema(
+    listing,
+    descriptionLocale,
+    listing.title,
+  );
   const seller = getSellerJsonLd(listing);
   const offers = getOffersJsonLd(listing);
 
@@ -258,10 +273,19 @@ function stripHtml(input: string): string {
     .trim();
 }
 
-function buildListingOgDescription(listing: Listing, fallback: string): string {
-  const raw = listing.description ? stripHtml(listing.description) : '';
+function buildListingOgDescription(
+  listing: Listing,
+  fallback: string,
+  descriptionLocale: 'ro' | 'ru',
+): string {
+  const html = getListingDescriptionForLocale(listing, descriptionLocale);
+  const raw = html ? stripHtml(html) : '';
   if (raw.length >= 60) return raw.slice(0, 180);
   return fallback;
+}
+
+function localeToDescriptionLocale(locale: Locale): 'ro' | 'ru' {
+  return locale === 'ru' ? 'ru' : 'ro';
 }
 
 export async function generateMetadata({
@@ -295,7 +319,12 @@ export async function generateMetadata({
   const tFn = getTFromTranslations(t);
   const displayTitle = getListingDisplayTitle(listing, tFn) || listing.title;
   const title = `${displayTitle} | Kupito`;
-  const description = buildListingOgDescription(listing, t.metadata.listing.defaultDescription);
+  const descriptionLocale = localeToDescriptionLocale(locale);
+  const description = buildListingOgDescription(
+    listing,
+    t.metadata.listing.defaultDescription,
+    descriptionLocale,
+  );
 
   const firstImage =
     listing.images && listing.images.length > 0 ? getOptimizedImageUrl(listing.images[0]) : '';
@@ -374,7 +403,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
     t.searchFilters.tiresCategory,
     displayTitle,
   );
-  const listingJsonLd = buildListingJsonLd(listing, tFn);
+  const listingJsonLd = buildListingJsonLd(listing, tFn, localeToDescriptionLocale(locale));
 
   return (
     <>

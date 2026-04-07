@@ -14,6 +14,50 @@ import {
   isBusinessUser,
 } from './adminUsersHelpers';
 
+type AdminUserCardField = { key: string; label: string; value: ReactNode };
+
+function UserCardFieldRow({ field }: { field: AdminUserCardField }) {
+  return (
+    <div className="min-w-0">
+      <span className="text-primary-700">{field.label}</span>{' '}
+      <span className="wrap-break-word inline" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
+        {field.value}
+      </span>
+    </div>
+  );
+}
+
+function partnerFieldsForUser(user: User, t: AdminUserCardProps['t']): AdminUserCardField[] {
+  if (!isBusinessUser(user)) {
+    return [];
+  }
+  const rows: AdminUserCardField[] = [
+    {
+      key: 'partner',
+      label: t('admin.usersTab.platformPartner'),
+      value: user.isPlatformPartner ? t('common.yes') : t('common.no'),
+    },
+  ];
+  if (!user.isPlatformPartner) {
+    return rows;
+  }
+  return [
+    ...rows,
+    {
+      key: 'partnerBalance',
+      label: t('admin.usersTab.freePromotionBalance'),
+      value: String(getPartnerBalance(user)),
+    },
+    {
+      key: 'partnerProgress',
+      label: t('admin.usersTab.partnerProgress'),
+      value: t('admin.usersTab.partnerProgressValue', {
+        count: getPartnerListingsUntilNext(user),
+      }),
+    },
+  ];
+}
+
 export interface AdminUserCardProps {
   user: User;
   t: (key: string, params?: Record<string, string | number>) => string;
@@ -34,7 +78,7 @@ export function AdminUserCard({
   const unavailable = t('admin.usersTab.unavailable');
   const websiteUrl = user.companyWebsiteUrl?.trim();
 
-  const identityFields: { key: string; label: string; value: ReactNode }[] = isBusinessUser(user)
+  const identityFields: AdminUserCardField[] = isBusinessUser(user)
     ? [
         {
           key: 'companyName',
@@ -71,18 +115,31 @@ export function AdminUserCard({
         },
       ];
 
-  const fields: { key: string; label: string; value: ReactNode }[] = [
+  const emailTrimmed = user.email?.trim();
+  const leftColumnFields: AdminUserCardField[] = [
     ...identityFields,
     {
       key: 'email',
       label: t('admin.usersTab.email'),
       value: user.email || unavailable,
     },
+    ...(emailTrimmed
+      ? [
+          {
+            key: 'emailVerifiedStatus',
+            label: t('admin.usersTab.emailVerifiedStatus'),
+            value: user.emailVerified === true ? t('common.yes') : t('common.no'),
+          },
+        ]
+      : []),
     {
       key: 'phone',
       label: t('admin.usersTab.phone'),
       value: user.phone || unavailable,
     },
+  ];
+
+  const rightColumnFields: AdminUserCardField[] = [
     {
       key: 'type',
       label: t('admin.usersTab.type'),
@@ -93,35 +150,8 @@ export function AdminUserCard({
       label: t('admin.usersTab.listings'),
       value: String(listingCount),
     },
+    ...partnerFieldsForUser(user, t),
   ];
-
-  const partnerFields: { key: string; label: string; value: ReactNode }[] = isBusinessUser(user)
-    ? [
-        {
-          key: 'partner',
-          label: t('admin.usersTab.platformPartner'),
-          value: user.isPlatformPartner ? t('common.yes') : t('common.no'),
-        },
-        ...(user.isPlatformPartner
-          ? [
-              {
-                key: 'partnerBalance',
-                label: t('admin.usersTab.freePromotionBalance'),
-                value: String(getPartnerBalance(user)),
-              },
-              {
-                key: 'partnerProgress',
-                label: t('admin.usersTab.partnerProgress'),
-                value: t('admin.usersTab.partnerProgressValue', {
-                  count: getPartnerListingsUntilNext(user),
-                }),
-              },
-            ]
-          : []),
-      ]
-    : [];
-
-  const allFields = [...fields, ...partnerFields];
 
   return (
     <div className="card p-4 md:p-5">
@@ -133,17 +163,16 @@ export function AdminUserCard({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-3 text-sm md:text-base">
-        {allFields.map((field) => (
-          <div key={field.key} className="min-w-0">
-            <span className="text-primary-700">{field.label}</span>{' '}
-            <span
-              className="wrap-break-word inline"
-              style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-            >
-              {field.value}
-            </span>
-          </div>
-        ))}
+        <div className="flex flex-col gap-y-3 min-w-0">
+          {leftColumnFields.map((field) => (
+            <UserCardFieldRow key={field.key} field={field} />
+          ))}
+        </div>
+        <div className="flex flex-col gap-y-3 min-w-0">
+          {rightColumnFields.map((field) => (
+            <UserCardFieldRow key={field.key} field={field} />
+          ))}
+        </div>
       </div>
 
       <div className="mt-4 pt-3 border-t border-primary-500/20">

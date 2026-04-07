@@ -47,7 +47,8 @@ export function getEmptyTireListingFormData(): TireListingFormData {
     currency: getDefaultCurrency(),
     city: '',
     negotiable: false,
-    description: '',
+    description_ro: '',
+    description_ru: '',
     status: ListingStatusEnum.Active,
     images: [],
     cover_blur_hash: '',
@@ -89,7 +90,8 @@ export function getInitialTireListingFormData(initialData?: Listing): TireListin
     currency: initialData.currency ?? getDefaultCurrency(),
     city: initialData.city || '',
     negotiable: initialData.negotiable ?? false,
-    description: initialData.description || '',
+    description_ro: initialData.description_ro ?? initialData.description ?? '',
+    description_ru: initialData.description_ru ?? '',
     status: initialData.status || ListingStatusEnum.Active,
     images: initialData.images || [],
     cover_blur_hash: initialData.cover_blur_hash || '',
@@ -140,7 +142,8 @@ export function buildTireCreatePayload(formData: TireListingFormData): CreateLis
     currency: formData.currency,
     city: formData.city,
     negotiable: formData.negotiable,
-    description: formData.description?.trim() || undefined,
+    description_ro: formData.description_ro?.trim() || undefined,
+    description_ru: formData.description_ru?.trim() || undefined,
     status: formData.status,
     images: formData.images,
     cover_blur_hash: formData.cover_blur_hash || undefined,
@@ -164,7 +167,8 @@ export function buildTireUpdatePayload(formData: TireListingFormData): UpdateLis
     ...rest,
     tire: tirePatch,
   };
-  if (!formData.description.trim()) update.description = null;
+  if (!formData.description_ro.trim()) update.description_ro = null;
+  if (!formData.description_ru.trim()) update.description_ru = null;
   return update;
 }
 
@@ -175,7 +179,7 @@ export function getTireFilledFields(formData: TireListingFormData): Record<strin
     tire_size: !!(formData.width_mm && formData.aspect_ratio && formData.diameter_inch),
     price: !!formData.price,
     city: !!formData.city,
-    description: !!formData.description,
+    description: !!(formData.description_ro.trim() || formData.description_ru.trim()),
     images: formData.images.length > 0,
   };
 }

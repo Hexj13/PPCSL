@@ -4,6 +4,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useState, useCallback, startTransition, useEffect } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
+import { buildSignInHref } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 
 const AUTH_PATHS = ['/sign', '/verify-phone', '/reset-password'];
@@ -42,7 +43,7 @@ export function useHeaderState() {
 
   const handleSetReturnUrl = useCallback((url: string) => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('returnUrl', url);
+      window.location.href = buildSignInHref(url);
     }
   }, []);
 

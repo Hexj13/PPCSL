@@ -73,6 +73,8 @@ export function buildListingAuditSnapshot(listing: Listing): Record<string, unkn
     available_in_credit: listing.available_in_credit,
     down_payment_amount: listing.down_payment_amount ?? null,
     description: descriptionForAuditLog(listing.description),
+    description_ro: descriptionForAuditLog(listing.description_ro),
+    description_ru: descriptionForAuditLog(listing.description_ru),
     images: imagesForAuditLog(listing.images ?? null),
     title: listing.title,
     urgent: listing.urgent,

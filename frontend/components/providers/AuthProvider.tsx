@@ -31,13 +31,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [isInitialized, user]);
 
   useEffect(() => {
+    let syncTimer: ReturnType<typeof setTimeout> | null = null;
+    let syncing = false;
+
     const syncAuthFromOtherTab = async () => {
-      await useAuthStore.persist?.rehydrate?.();
-      await initAuth();
+      if (syncing) return;
+      syncing = true;
+      try {
+        await useAuthStore.persist?.rehydrate?.();
+        await initAuth();
+      } finally {
+        syncing = false;
+      }
     };
+
     const onStorage = (e: StorageEvent) => {
       if (e.key === 'auth-storage' || e.key === 'token' || e.key === 'refresh_token') {
-        void syncAuthFromOtherTab();
+        if (syncTimer) clearTimeout(syncTimer);
+        syncTimer = setTimeout(() => void syncAuthFromOtherTab(), 50);
         return;
       }
       if (e.key !== 'favorites-storage' && e.key !== 'comparison-storage') return;
@@ -49,8 +60,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         void useComparisonStore.persist.rehydrate?.();
       }
     };
+
     window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      if (syncTimer) clearTimeout(syncTimer);
+    };
   }, [initAuth]);
 
   return <>{children}</>;

@@ -456,6 +456,7 @@ export function PhotosSection({
               ? 'text-primary-700/50 border-primary-700/30 bg-primary-500/10 cursor-not-allowed'
               : 'text-primary-700 hover-only:hover:text-primary-900 border-primary-700/30 hover-only:hover:border-primary-700 bg-primary-500/10 cursor-pointer'
           }`}
+          data-testid="listing-form-photos-trigger"
         >
           {uploading ? (
             t('common.loading')
@@ -598,7 +599,7 @@ export function PhotosSection({
           })
         }
       />
-      <p className="mt-2 text-sm text-gray-400">
+      <p className="mt-2 text-sm text-gray-400" data-testid="listing-form-photos-count">
         {t('listings.uploadedCount', { count: formData.images.length })}{' '}
         {formData.images.length < minPhotosRequired && (
           <span className="text-red-400">

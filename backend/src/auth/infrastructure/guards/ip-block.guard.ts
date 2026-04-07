@@ -21,7 +21,7 @@ export class IpBlockGuard implements CanActivate {
       const remainingMinutes = Math.ceil((blockedUntil.getTime() - Date.now()) / (1000 * 60));
       throw new HttpException(
         {
-          message: `Достигнато е максималниот број на обиди. Обидете се повторно за ${remainingMinutes} минути.`,
+          message: `errors.ipBlockedTooManyAttempts|${remainingMinutes}`,
           blockedUntil: blockedUntil.toISOString(),
         },
         HttpStatus.TOO_MANY_REQUESTS,

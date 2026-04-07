@@ -6,7 +6,7 @@ export class VerifyEmailDto {
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
     description: 'Email verification token',
   })
-  @IsNotEmpty({ message: 'Токенот е задолжителен' })
-  @IsString({ message: 'Токенот мора да биде стринг' })
+  @IsNotEmpty({ message: 'validation.verifyEmailTokenRequired' })
+  @IsString({ message: 'validation.verifyEmailTokenString' })
   token: string;
 }

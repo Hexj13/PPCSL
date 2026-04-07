@@ -4,7 +4,9 @@ import { useMemo } from 'react';
 
 import { useI18n } from '@/components/providers/I18nProvider';
 import { useTranslation } from '@/hooks/useTranslation';
+import { authApi } from '@/lib/api';
 import { setStoredLocale, type Locale } from '@/lib/i18n';
+import { useAuthStore } from '@/lib/store';
 
 import { Dropdown } from './Dropdown';
 
@@ -31,6 +33,7 @@ export function LanguageSwitcher({
 }) {
   const { locale } = useI18n();
   const { t } = useTranslation();
+  const user = useAuthStore((state) => state.user);
 
   const languages = useMemo(
     () => [
@@ -42,10 +45,18 @@ export function LanguageSwitcher({
 
   const handleLanguageChange = (newLocale: string) => {
     const localeValue = newLocale as Locale;
-    if (localeValue !== locale) {
+    if (localeValue === locale) {
+      return;
+    }
+    void (async () => {
+      if (user) {
+        try {
+          await authApi.updateProfile({ preferredLocale: localeValue });
+        } catch {}
+      }
       setStoredLocale(localeValue);
       window.location.reload();
-    }
+    })();
   };
 
   const desktopButtonClassName = context === 'footer' ? footerStyle : headerStyle;

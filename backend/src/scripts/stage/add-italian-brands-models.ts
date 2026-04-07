@@ -347,10 +347,10 @@ async function addItalianBrandsModels() {
 
   const totalModels = totalAdded + totalUpdated;
   console.log(
-    `📦 Италијански брендови: обработени ${brandsProcessed}, нови брендови ${brandsAdded}, модели ${totalModels} (нови ${totalAdded}, ажурирани ${totalUpdated})`,
+    `📦 Italian brands: processed ${brandsProcessed}, new brands ${brandsAdded}, models ${totalModels} (new ${totalAdded}, reordered ${totalUpdated})`,
   );
   if (brandsNotFound > 0) {
-    console.warn(`⚠️  Прескокнати брендови (${brandsNotFound}): ${missingBrands.join(', ')}`);
+    console.warn(`⚠️  Skipped brands (${brandsNotFound}): ${missingBrands.join(', ')}`);
   }
 
   const summary = {

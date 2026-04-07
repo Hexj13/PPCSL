@@ -8,6 +8,11 @@ import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
 import { api } from '@/lib/api';
+import {
+  sessionStorageGetItem,
+  sessionStorageRemoveItem,
+  sessionStorageSetItem,
+} from '@/lib/browser-session-storage';
 import { toast } from '@/lib/toast';
 
 const ListingForm = dynamic(
@@ -49,7 +54,7 @@ export default function EditListingPage() {
     if (!user) return;
 
     try {
-      const shouldRefresh = sessionStorage.getItem(`refreshListing_${listingId}`) === 'true';
+      const shouldRefresh = sessionStorageGetItem(`refreshListing_${listingId}`) === 'true';
       const needsRefresh = forceRefresh || shouldRefresh;
 
       const params: Record<string, string | number> = { includeFullVin: '1' };
@@ -75,14 +80,14 @@ export default function EditListingPage() {
       setFormKey((prev) => prev + 1);
       setLoadingListing(false);
       if (needsRefresh) {
-        sessionStorage.removeItem(`refreshListing_${listingId}`);
+        sessionStorageRemoveItem(`refreshListing_${listingId}`);
       }
     } catch {
       toast.error(t('listings.loadListingError'));
       router.push(redirectTo);
-      const shouldRefresh = sessionStorage.getItem(`refreshListing_${listingId}`) === 'true';
+      const shouldRefresh = sessionStorageGetItem(`refreshListing_${listingId}`) === 'true';
       if (shouldRefresh) {
-        sessionStorage.removeItem(`refreshListing_${listingId}`);
+        sessionStorageRemoveItem(`refreshListing_${listingId}`);
       }
     } finally {
       setLoadingListing(false);
@@ -94,7 +99,7 @@ export default function EditListingPage() {
       return;
     }
 
-    const shouldRefresh = sessionStorage.getItem(`refreshListing_${listingId}`) === 'true';
+    const shouldRefresh = sessionStorageGetItem(`refreshListing_${listingId}`) === 'true';
     setListing(null);
     setLoadingListing(true);
     setFormKey(0);
@@ -141,8 +146,8 @@ export default function EditListingPage() {
             setListing(updatedListing);
             setFormKey((prev) => prev + 1);
           }
-          sessionStorage.setItem('refreshMyListings', 'true');
-          sessionStorage.setItem(`refreshListing_${listingId}`, 'true');
+          sessionStorageSetItem('refreshMyListings', 'true');
+          sessionStorageSetItem(`refreshListing_${listingId}`, 'true');
           router.push(redirectTo);
         }}
       />

@@ -324,10 +324,10 @@ async function addCommercialModels() {
   }
 
   console.log(
-    `📦 Комерцијални модели: обработени брендови ${brandsProcessed}, додадени модели ${totalAdded}, ажурирани модели ${totalUpdated}`,
+    `📦 Commercial models: processed brands ${brandsProcessed}, added models ${totalAdded}, reordered models ${totalUpdated}`,
   );
   if (brandsNotFound > 0) {
-    console.warn(`⚠️  Прескокнати брендови (${brandsNotFound}): ${missingBrands.join(', ')}`);
+    console.warn(`⚠️  Skipped brands (${brandsNotFound}): ${missingBrands.join(', ')}`);
   }
 
   const summary = {

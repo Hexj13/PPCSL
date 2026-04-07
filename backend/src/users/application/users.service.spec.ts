@@ -26,6 +26,11 @@ describe('UsersService', () => {
     board_slug: null,
     active: true,
     emailNotifications: false,
+
+    emailNotificationListingRefreshReminders: false,
+
+    emailNotificationWeeklyViewsDigest: false,
+    emailNotificationSecurityAlerts: false,
     viber: false,
     whatsapp: false,
     telegram: false,

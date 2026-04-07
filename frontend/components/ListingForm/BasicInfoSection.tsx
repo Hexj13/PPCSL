@@ -73,6 +73,7 @@ export function BasicInfoSection({
             autoPosition={true}
             menuMaxHeight={300}
             options={brandOptions}
+            dataTestId="listing-create-brand-select"
           />
           {errors['vehicle.brand_id'] && (
             <p className="mt-1 text-sm text-red-500">{t('listings.brandRequired')}</p>
@@ -100,6 +101,7 @@ export function BasicInfoSection({
             autoPosition={true}
             menuMaxHeight={300}
             options={models.map((model) => ({ value: model.id, label: model.name }))}
+            dataTestId="listing-create-model-select"
           />
           {errors['vehicle.model_id'] && (
             <p className="mt-1 text-sm text-red-500">{t('listings.modelRequired')}</p>
@@ -129,6 +131,7 @@ export function BasicInfoSection({
             autoPosition={true}
             menuMaxHeight={300}
             options={getYearOptions()}
+            dataTestId="listing-create-year-select"
           />
         </div>
 
@@ -154,6 +157,7 @@ export function BasicInfoSection({
             className={`input-field h-[48px] ${errors['vin'] ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
             placeholder={t('listings.vinPlaceholder')}
             title={t('listings.vinTitle')}
+            data-testid="listing-create-vin-input"
           />
           {formData.vin && formData.vin.length > 0 && formData.vin.length < 17 && (
             <p className="mt-1 text-sm text-gray-400">

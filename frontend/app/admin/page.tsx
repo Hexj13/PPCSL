@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTabIndicator } from '@/hooks/useTabIndicator';
 import { useTranslation } from '@/hooks/useTranslation';
+import { localStorageGetItem, localStorageSetItem } from '@/lib/browser-local-storage';
+import { sessionStorageGetItem, sessionStorageRemoveItem } from '@/lib/browser-session-storage';
 import { toast } from '@/lib/toast';
 
 import { BrandsModelsTab } from './components/BrandsModelsTab';
@@ -52,7 +54,7 @@ export default function AdminPage() {
   );
 
   useEffect(() => {
-    const parsed = parseStoredAdminTab(localStorage.getItem(ADMIN_ACTIVE_TAB_STORAGE_KEY));
+    const parsed = parseStoredAdminTab(localStorageGetItem(ADMIN_ACTIVE_TAB_STORAGE_KEY));
     if (parsed) setActiveTab(parsed);
   }, []);
 
@@ -61,13 +63,13 @@ export default function AdminPage() {
       skipPersistActiveTabRef.current = false;
       return;
     }
-    localStorage.setItem(ADMIN_ACTIVE_TAB_STORAGE_KEY, activeTab);
+    localStorageSetItem(ADMIN_ACTIVE_TAB_STORAGE_KEY, activeTab);
   }, [activeTab]);
 
   useEffect(() => {
-    const shouldShowToast = sessionStorage.getItem(LISTING_UPDATED_TOAST_KEY) === 'true';
+    const shouldShowToast = sessionStorageGetItem(LISTING_UPDATED_TOAST_KEY) === 'true';
     if (!shouldShowToast) return;
-    sessionStorage.removeItem(LISTING_UPDATED_TOAST_KEY);
+    sessionStorageRemoveItem(LISTING_UPDATED_TOAST_KEY);
     toast.success(t('listings.changesSaved'));
   }, [t]);
 
@@ -148,7 +150,7 @@ export default function AdminPage() {
         <ListingsTab
           initialSearchQuery={
             typeof window !== 'undefined'
-              ? localStorage.getItem('adminListingsSearchQuery') || ''
+              ? localStorageGetItem('adminListingsSearchQuery') || ''
               : ''
           }
         />
@@ -159,9 +161,7 @@ export default function AdminPage() {
       >
         <UsersTab
           onViewUserListings={(userId) => {
-            if (typeof window !== 'undefined') {
-              localStorage.setItem('adminListingsSearchQuery', userId);
-            }
+            localStorageSetItem('adminListingsSearchQuery', userId);
             setActiveTab('listings');
           }}
         />

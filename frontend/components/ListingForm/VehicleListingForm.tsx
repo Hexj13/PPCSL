@@ -97,7 +97,12 @@ export const VehicleListingForm = forwardRef<VehicleListingFormHandle, VehicleLi
 
     return (
       <ScrollDropdownIntoViewContext.Provider value={true}>
-        <form ref={formRef} onSubmit={handleSubmit} className={`${formShell} ${formPadding}`}>
+        <form
+          ref={formRef}
+          onSubmit={handleSubmit}
+          className={`${formShell} ${formPadding}`}
+          data-testid="listing-create-form-vehicle"
+        >
           <ListingFormSkeleton isVisible={showSkeleton && !isMounted} />
           {isChangingType && !onVehicleTypeChanging && (
             <div className="absolute inset-0 bg-white/90 z-50 flex items-center justify-center rounded-xl">
@@ -134,6 +139,7 @@ export const VehicleListingForm = forwardRef<VehicleListingFormHandle, VehicleLi
             loading={loading}
             loadingText={mode === 'create' ? t('listings.creating') : t('listings.saving')}
             className="w-full min-h-12 text-primary-700 font-medium text-base hover:text-primary-900 hover:border-primary-900 transition-colors duration-200 whitespace-nowrap px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            data-testid={mode === 'create' ? 'listing-create-submit' : 'listing-edit-submit'}
           >
             {mode === 'create' ? t('listings.createListing') : t('listings.saveChanges')}
           </LoadingButton>

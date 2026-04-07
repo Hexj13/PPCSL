@@ -1,12 +1,19 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState, useEffect, useRef } from 'react';
 
+import { canInteractWithEmailNotifications } from '@/app/profile/utils';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { authApi } from '@/lib/api';
+import {
+  localStorageGetItem,
+  localStorageRemoveItem,
+  localStorageSetItem,
+} from '@/lib/browser-local-storage';
 import { holdComparisonApiLoadUntilReleased } from '@/lib/comparisonMigration';
+import { getReturnUrlFromSearchParams } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
 import { LoadingButton, InfoBlock } from '@/ui';
@@ -14,12 +21,19 @@ import { LoadingButton, InfoBlock } from '@/ui';
 import { validatePhone } from '../register/utils';
 
 import { CompleteProfileFormFields } from './CompleteProfileFormFields';
-import { buildUpdateData, getFilledFields, processPendingData } from './utils';
+import {
+  buildUpdateData,
+  getFilledFields,
+  hasCompleteProfileEmailNotificationsEnabled,
+  processPendingData,
+} from './utils';
 
 function CompleteProfileContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isInitialized, setAuth } = useAuthStore();
   const { t } = useTranslation();
+  const returnUrl = getReturnUrlFromSearchParams(searchParams);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -44,6 +58,8 @@ function CompleteProfileContent() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const formStartSentRef = useRef(false);
+  const previousEmailRef = useRef('');
+  const emailNotificationsLockedRef = useRef(false);
 
   useEffect(() => {
     if (isInitialized && !user) {
@@ -52,24 +68,48 @@ function CompleteProfileContent() {
     }
 
     if (user) {
+      const nextEmail = user.email || '';
       setFormData({
         firstName: user.firstName || '',
         lastName: user.lastName || '',
-        email: user.email || '',
+        email: nextEmail,
         companyWebsiteUrl: user.companyWebsiteUrl || '',
         additionalPhone: user.additionalPhone || '',
-        emailNotifications: user.emailNotifications ?? false,
+        emailNotifications: canInteractWithEmailNotifications(nextEmail)
+          ? true
+          : (user.emailNotifications ?? false),
       });
+      previousEmailRef.current = nextEmail;
+      emailNotificationsLockedRef.current = canInteractWithEmailNotifications(nextEmail);
     }
   }, [user, isInitialized, router]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && isInitialized && user) {
-      const showRegistrationSuccess = localStorage.getItem('showRegistrationSuccess');
+      const showRegistrationSuccess = localStorageGetItem('showRegistrationSuccess');
+      const showRegistrationEmailVerificationNotice = localStorageGetItem(
+        'showRegistrationEmailVerificationNotice',
+      );
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
       if (showRegistrationSuccess === 'true') {
-        localStorage.removeItem('showRegistrationSuccess');
+        localStorageRemoveItem('showRegistrationSuccess');
         toast.success(t('completeProfile.registrationSuccess'));
       }
+
+      if (showRegistrationEmailVerificationNotice === 'true') {
+        localStorageRemoveItem('showRegistrationEmailVerificationNotice');
+        const delayMs = showRegistrationSuccess === 'true' ? 2300 : 0;
+        timeoutId = setTimeout(() => {
+          toast.success(t('completeProfile.registrationEmailVerificationSent'));
+        }, delayMs);
+      }
+
+      return () => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+      };
     }
   }, [isInitialized, user, t]);
 
@@ -77,7 +117,7 @@ function CompleteProfileContent() {
     if (!name) {
       return '';
     }
-    const nameRegex = /^[a-zA-Zа-яА-ЯёЁјЈљЉњЊќЌџЅ\s-]+$/;
+    const nameRegex = /^[a-zA-Z\u0400-\u04FF\s-]+$/;
     if (!nameRegex.test(name)) {
       return t('register.firstNameInvalid');
     }
@@ -118,7 +158,7 @@ function CompleteProfileContent() {
   };
 
   const handleFirstNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/[^a-zA-Zа-яА-ЯёЁјЈљЉњЊќЌџЅ\s-]/g, '');
+    const value = e.target.value.replace(/[^a-zA-Z\u0400-\u04FF\s-]/g, '');
     setFormData({ ...formData, firstName: value });
     if (touched.firstName) {
       setErrors({ ...errors, firstName: validateName(value) });
@@ -126,7 +166,7 @@ function CompleteProfileContent() {
   };
 
   const handleLastNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/[^a-zA-Zа-яА-ЯёЁјЈљЉњЊќЌџЅ\s-]/g, '');
+    const value = e.target.value.replace(/[^a-zA-Z\u0400-\u04FF\s-]/g, '');
     setFormData({ ...formData, lastName: value });
     if (touched.lastName) {
       setErrors({ ...errors, lastName: validateName(value) });
@@ -135,7 +175,21 @@ function CompleteProfileContent() {
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setFormData({ ...formData, email: value });
+    const shouldEnableNotifications =
+      !emailNotificationsLockedRef.current &&
+      !canInteractWithEmailNotifications(previousEmailRef.current) &&
+      canInteractWithEmailNotifications(value);
+
+    setFormData({
+      ...formData,
+      email: value,
+      emailNotifications: shouldEnableNotifications ? true : formData.emailNotifications,
+    });
+
+    if (shouldEnableNotifications) {
+      emailNotificationsLockedRef.current = true;
+    }
+    previousEmailRef.current = value;
     if (touched.email) {
       setErrors({ ...errors, email: validateEmail(value) });
     }
@@ -199,6 +253,10 @@ function CompleteProfileContent() {
   };
 
   const isBusiness = user?.type === 'Business';
+  const emailNotificationsDisabled = !canInteractWithEmailNotifications(formData.email);
+  const emailNotificationsChecked =
+    emailNotificationsDisabled ||
+    hasCompleteProfileEmailNotificationsEnabled(formData.email, formData.emailNotifications);
 
   const hasAnyField = () => {
     if (isBusiness) {
@@ -277,11 +335,14 @@ function CompleteProfileContent() {
     try {
       const updateData = buildUpdateData(formData, isBusiness);
       const response = await authApi.updateProfile(updateData);
+      if (response.data.emailVerificationSent && typeof window !== 'undefined' && window.location) {
+        localStorageSetItem('showProfileEmailVerificationSent', 'true');
+      }
       const releaseComparisonHold = holdComparisonApiLoadUntilReleased();
       let redirected = false;
       try {
         setAuth(response.data, useAuthStore.getState().token);
-        redirected = await processPendingData(user, t);
+        redirected = await processPendingData(user, t, returnUrl);
       } finally {
         releaseComparisonHold();
       }
@@ -290,15 +351,13 @@ function CompleteProfileContent() {
         return;
       }
       analytics.formSubmit('complete_profile', true, filledFields);
-      const returnUrl = typeof window !== 'undefined' ? localStorage.getItem('returnUrl') : null;
       if (returnUrl) {
-        localStorage.removeItem('returnUrl');
         if (typeof window !== 'undefined' && window.location) {
-          localStorage.setItem('showProfileSaveSuccess', 'true');
+          localStorageSetItem('showProfileSaveSuccess', 'true');
           window.location.href = returnUrl;
         }
       } else if (typeof window !== 'undefined' && window.location) {
-        localStorage.setItem('showProfileSaveSuccess', 'true');
+        localStorageSetItem('showProfileSaveSuccess', 'true');
         window.location.href = '/';
       }
     } catch {
@@ -313,11 +372,9 @@ function CompleteProfileContent() {
     if (!user) return;
     setIsSubmitting(true);
     try {
-      const redirected = await processPendingData(user, t);
+      const redirected = await processPendingData(user, t, returnUrl);
       if (redirected) return;
-      const returnUrl = typeof window !== 'undefined' ? localStorage.getItem('returnUrl') : null;
       if (returnUrl) {
-        localStorage.removeItem('returnUrl');
         if (typeof window !== 'undefined' && window.location) window.location.href = returnUrl;
       } else if (typeof window !== 'undefined' && window.location) {
         window.location.href = '/';
@@ -332,7 +389,7 @@ function CompleteProfileContent() {
   }
 
   return (
-    <div className="max-w-md mx-auto mt-6 md:mt-12 mb-16">
+    <div className="max-w-md mx-auto mt-6 md:mt-12 mb-16" data-testid="complete-profile-page">
       <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center text-primary-900">
         {t('completeProfile.title')}
       </h1>
@@ -348,6 +405,7 @@ function CompleteProfileContent() {
               void handleSave();
             }}
             className="space-y-5"
+            data-testid="complete-profile-form"
           >
             <CompleteProfileFormFields
               isBusiness={isBusiness}
@@ -355,6 +413,8 @@ function CompleteProfileContent() {
               errors={errors}
               touched={touched}
               t={t}
+              emailNotificationsChecked={emailNotificationsChecked}
+              emailNotificationsDisabled={emailNotificationsDisabled}
               onFirstNameChange={handleFirstNameChange}
               onLastNameChange={handleLastNameChange}
               onEmailChange={handleEmailChange}
@@ -366,9 +426,10 @@ function CompleteProfileContent() {
               onCompanyWebsiteUrlBlur={handleCompanyWebsiteUrlBlur}
               onAdditionalPhoneBlur={handleAdditionalPhoneBlur}
               onFormFieldFocus={handleFormFieldFocus}
-              onEmailNotificationsChange={(checked) =>
-                setFormData({ ...formData, emailNotifications: checked })
-              }
+              onEmailNotificationsChange={(checked) => {
+                emailNotificationsLockedRef.current = true;
+                setFormData({ ...formData, emailNotifications: checked });
+              }}
             />
 
             <div className="flex flex-col sm:flex-row gap-3 pt-4">
@@ -377,6 +438,7 @@ function CompleteProfileContent() {
                 onClick={handleSkip}
                 disabled={isSubmitting}
                 className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-gray-500/40 hover-only:hover:border-gray-500/60 bg-gray-500/20 text-text-secondary font-semibold text-base hover-only:hover:text-text-primary transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+                data-testid="complete-profile-skip"
               >
                 {t('completeProfile.skip')}
               </button>
@@ -385,6 +447,7 @@ function CompleteProfileContent() {
                 loading={isSubmitting}
                 disabled={!hasAnyField() || hasErrors()}
                 className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-primary-600 hover-only:hover:border-primary-700 bg-primary-500/20 text-primary-800 font-semibold text-base hover-only:hover:bg-primary-500/30 transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+                data-testid="complete-profile-save"
               >
                 {t('completeProfile.save')}
               </LoadingButton>

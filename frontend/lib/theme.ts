@@ -112,7 +112,7 @@ const defaultTheme: ThemeColors = {
     secondary: '#4A4A4A',
   },
   divider: '#DADADA',
-  accent: '#F2AE3E',
+  accent: '#ec9e1c',
   accentSecondary: '#FF5A5F',
   newBadge: '#6AA4C6',
   semantic: {

@@ -23,7 +23,7 @@ export class RegisterDto {
     description: 'Email address (optional)',
   })
   @ValidateIf((o) => o.email != null && o.email !== '')
-  @IsEmail({}, { message: 'Невалидна email адреса' })
+  @IsEmail({}, { message: 'validation.emailInvalid' })
   email?: string;
 
   @ApiProperty({
@@ -31,8 +31,8 @@ export class RegisterDto {
     description: 'Password (min 8 chars, must contain uppercase and lowercase)',
   })
   @IsString()
-  @MinLength(8, { message: 'Лозинката мора да содржи минимум 8 карактери' })
-  @MaxLength(100, { message: 'Лозинката не може да биде подолга од 100 карактери' })
+  @MinLength(8, { message: 'validation.passwordMinLength' })
+  @MaxLength(100, { message: 'validation.passwordMaxLength' })
   @IsPassword()
   password: string;
 
@@ -41,16 +41,16 @@ export class RegisterDto {
     enum: ['Individual', 'Business'],
     description: 'User type',
   })
-  @IsEnum(UserType, { message: 'Типот на корисникот мора да биде Individual или Business' })
-  @NotEquals(UserTypeEnum.Admin, { message: 'Не можете да се регистрирате како администратор' })
+  @IsEnum(UserType, { message: 'validation.userTypeEnum' })
+  @NotEquals(UserTypeEnum.Admin, { message: 'validation.cannotRegisterAsAdmin' })
   type: UserType;
 
   @ApiProperty({
     example: '+37370123456',
     description: 'Phone number (required for all user types)',
   })
-  @IsNotEmpty({ message: 'Телефонот е задолжителен' })
-  @IsString({ message: 'Телефонот е задолжителен' })
+  @IsNotEmpty({ message: 'validation.phoneRequiredField' })
+  @IsString({ message: 'validation.phoneRequiredField' })
   @IsPhone()
   phone: string;
 
@@ -61,8 +61,8 @@ export class RegisterDto {
   @IsOptional()
   @ValidateIf((o) => o.firstName != null && o.firstName !== '')
   @IsString()
-  @MinLength(2, { message: 'Името мора да содржи минимум 2 карактери' })
-  @MaxLength(50, { message: 'Името не може да биде подолго од 50 карактери' })
+  @MinLength(2, { message: 'validation.firstNameMinLength' })
+  @MaxLength(50, { message: 'validation.firstNameMaxLength' })
   @IsName()
   firstName?: string;
 
@@ -73,8 +73,8 @@ export class RegisterDto {
   @IsOptional()
   @ValidateIf((o) => o.lastName != null && o.lastName !== '')
   @IsString()
-  @MinLength(2, { message: 'Презимето мора да содржи минимум 2 карактери' })
-  @MaxLength(50, { message: 'Презимето не може да биде подолго од 50 карактери' })
+  @MinLength(2, { message: 'validation.lastNameMinLength' })
+  @MaxLength(50, { message: 'validation.lastNameMaxLength' })
   @IsName()
   lastName?: string;
 
@@ -85,8 +85,8 @@ export class RegisterDto {
   @ValidateIf((o) => o.type === UserTypeEnum.Business)
   @IsOptional()
   @IsString()
-  @MinLength(2, { message: 'Името на компанијата мора да содржи минимум 2 карактери' })
-  @MaxLength(100, { message: 'Името на компанијата не може да биде подолго од 100 карактери' })
+  @MinLength(2, { message: 'validation.companyNameMinLength' })
+  @MaxLength(100, { message: 'validation.companyNameMaxLength' })
   companyName?: string;
 
   @ApiPropertyOptional({
@@ -125,7 +125,7 @@ export class RegisterDto {
     example: true,
     description: 'Accept terms and conditions',
   })
-  @IsNotEmpty({ message: 'Мора да ги прифатите условите за користење' })
-  @IsBoolean({ message: 'termsAccepted мора да биде булова вредност' })
+  @IsNotEmpty({ message: 'validation.termsMustBeAccepted' })
+  @IsBoolean({ message: 'validation.termsAcceptedBoolean' })
   termsAccepted: boolean;
 }

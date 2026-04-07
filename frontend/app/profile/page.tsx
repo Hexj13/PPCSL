@@ -1,13 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
 
 import { ProfileDeleteModal } from '@/app/profile/ProfileDeleteModal';
+import { ProfileEmailSection } from '@/app/profile/ProfileEmailSection';
 import { ProfilePartnerSection } from '@/app/profile/ProfilePartnerSection';
 import { ProfilePasswordSection } from '@/app/profile/ProfilePasswordSection';
 import { useProfilePage } from '@/app/profile/useProfilePage';
-import { getSafeEmailValue, validateEmail } from '@/app/profile/utils';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { UpdateProfileDto, User } from '@/lib/api';
 import { HintTooltip, LoadingButton } from '@/ui';
@@ -15,10 +14,6 @@ import { HintTooltip, LoadingButton } from '@/ui';
 type TranslationFn = ReturnType<typeof useTranslation>['t'];
 
 const PROFILE_EDIT_FORM_ID = 'profile-edit';
-
-function profileEmailUnlockedStorageKey(userId: string) {
-  return `kupito:profileEmailUnlocked:${userId}`;
-}
 
 function ProfileContactSection({
   user,
@@ -161,16 +156,18 @@ function ProfileContactSection({
             >
               {t('profile.additionalPhone')}
             </label>
-            <input
-              id="profile-additional-phone-input"
-              name="profileAdditionalPhone"
-              type="tel"
-              value={formData.additionalPhone || ''}
-              onChange={(e) => onChange('additionalPhone', e.target.value)}
-              className="input-field w-full md:w-1/2"
-              placeholder={t('profile.additionalPhonePlaceholder')}
-              autoComplete="tel"
-            />
+            <div className="w-full md:w-1/2">
+              <input
+                id="profile-additional-phone-input"
+                name="profileAdditionalPhone"
+                type="tel"
+                value={formData.additionalPhone || ''}
+                onChange={(e) => onChange('additionalPhone', e.target.value)}
+                className="input-field w-full"
+                placeholder={t('profile.additionalPhonePlaceholder')}
+                autoComplete="tel"
+              />
+            </div>
           </div>
         )}
         <div className="mt-4 space-y-3">
@@ -180,145 +177,6 @@ function ProfileContactSection({
           <Checkbox field="viber" label="Viber" labelId="messenger-viber-label" />
           <Checkbox field="whatsapp" label="WhatsApp" labelId="messenger-whatsapp-label" />
           <Checkbox field="telegram" label="Telegram" labelId="messenger-telegram-label" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ProfileEmailSection({
-  user,
-  formData,
-  t,
-  onChange,
-}: {
-  user: User;
-  formData: UpdateProfileDto;
-  t: TranslationFn;
-  onChange: (field: keyof UpdateProfileDto, value: string | boolean) => void;
-}) {
-  const [emailFieldUnlocked, setEmailFieldUnlocked] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const key = profileEmailUnlockedStorageKey(user.id);
-    setEmailFieldUnlocked(sessionStorage.getItem(key) === 'true');
-  }, [user.id]);
-
-  const storedEmailForUi = getSafeEmailValue(user.email);
-  const hasValidStoredEmail = !!storedEmailForUi;
-  const hasEmail = !!formData.email || hasValidStoredEmail;
-  const emailValid = !formData.email || validateEmail(formData.email);
-  const emailFormatInvalid = !!(formData.email && !validateEmail(formData.email));
-  const notificationsDisabled = !hasEmail || !emailValid;
-  const notificationsChecked = formData.emailNotifications === true && hasEmail;
-  return (
-    <div className="card p-4 md:p-6 lg:p-8">
-      <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-900">
-        {t('profile.emailAndNotifications')}
-      </h2>
-      <div>
-        <div className="flex items-center gap-1.5 mb-2">
-          <label htmlFor="profile-email-input" className="text-sm font-semibold text-primary-900">
-            {t('profile.email')}
-          </label>
-          {hasValidStoredEmail && (
-            <HintTooltip ariaLabel={t('profile.emailCannotBeChanged')} width="w-72">
-              {t('profile.emailCannotBeChanged')}
-            </HintTooltip>
-          )}
-        </div>
-        <div className="w-full md:w-1/2">
-          <input
-            id="profile-email-input"
-            name="profileEmail"
-            type="email"
-            value={formData.email || ''}
-            onChange={(e) => onChange('email', e.target.value)}
-            onFocus={() => {
-              setEmailFieldUnlocked(true);
-              if (typeof window !== 'undefined') {
-                sessionStorage.setItem(profileEmailUnlockedStorageKey(user.id), 'true');
-              }
-            }}
-            readOnly={!hasValidStoredEmail && !emailFieldUnlocked}
-            disabled={hasValidStoredEmail}
-            autoComplete="off"
-            data-1p-ignore
-            data-lpignore="true"
-            className={`input-field w-full ${emailFormatInvalid ? 'border-red-500' : ''} ${
-              hasValidStoredEmail ? 'bg-bg-secondary/50 cursor-not-allowed opacity-70' : ''
-            }`}
-            placeholder={t('profile.emailPlaceholder')}
-          />
-          {emailFormatInvalid && (
-            <p className="mt-1 text-sm text-red-400">{t('profile.invalidEmail')}</p>
-          )}
-        </div>
-        <div className="mt-4">
-          <div className="flex items-center gap-3 group">
-            <div className="relative">
-              <input
-                type="checkbox"
-                checked={notificationsChecked}
-                onChange={(e) => {
-                  if (notificationsDisabled) return;
-                  onChange('emailNotifications', e.target.checked);
-                }}
-                disabled={notificationsDisabled}
-                className="sr-only"
-              />
-              <button
-                type="button"
-                role="checkbox"
-                aria-checked={notificationsChecked}
-                aria-labelledby="email-notifications-label"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (notificationsDisabled) return;
-                  onChange('emailNotifications', !formData.emailNotifications);
-                }}
-                className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center ${
-                  notificationsDisabled
-                    ? 'border-primary-700/30 bg-bg-darker opacity-50 cursor-not-allowed'
-                    : formData.emailNotifications === true
-                      ? 'bg-primary-500/10 border-primary-700 cursor-pointer'
-                      : 'border-primary-700/50 bg-bg-secondary group-hover:border-primary-700 cursor-pointer'
-                }`}
-              >
-                {notificationsChecked && (
-                  <svg
-                    className="w-3 h-3 text-primary-900"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={3}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                )}
-              </button>
-            </div>
-            <button
-              id="email-notifications-label"
-              type="button"
-              onClick={() => {
-                if (notificationsDisabled) return;
-                onChange('emailNotifications', !formData.emailNotifications);
-              }}
-              className={`text-sm ${
-                notificationsDisabled
-                  ? 'text-text-secondary cursor-not-allowed'
-                  : 'text-text-primary cursor-pointer'
-              }`}
-            >
-              {t('profile.receiveEmailNotifications')}
-            </button>
-          </div>
         </div>
       </div>
     </div>
@@ -353,7 +211,7 @@ function ProfileCompanySection({
               const value = e.target.value;
               if (value.length <= 100) onChange('companyName', value);
             }}
-            autoComplete="off"
+            autoComplete="section-company organization"
             data-1p-ignore
             data-lpignore="true"
             className="input-field"
@@ -368,7 +226,7 @@ function ProfileCompanySection({
             type="url"
             name="profileCompanyWebsiteUrl"
             inputMode="url"
-            autoComplete="off"
+            autoComplete="section-company url"
             maxLength={500}
             value={formData.companyWebsiteUrl || ''}
             onChange={(e) => onChange('companyWebsiteUrl', e.target.value)}
@@ -392,7 +250,7 @@ function ProfilePersonalSection({
   t: TranslationFn;
   onChange: (field: keyof UpdateProfileDto, value: string | boolean) => void;
 }) {
-  const namePattern = /[^a-zA-Zа-яА-ЯёЁјЈљЉњЊќЌџЅ\s-]/g;
+  const namePattern = /[^a-zA-Z\u0400-\u04FF\s-]/g;
   return (
     <div className="card p-4 md:p-6 lg:p-8">
       <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-900">
@@ -493,6 +351,8 @@ export default function ProfilePage() {
     loading,
     loadingProfile,
     formData,
+    emailForChange,
+    setEmailForChange,
     showDeleteModal,
     setShowDeleteModal,
     deleting,
@@ -529,8 +389,31 @@ export default function ProfilePage() {
           className="space-y-6"
           autoComplete="off"
         >
+          <input
+            type="text"
+            name="profile-fake-username"
+            autoComplete="username"
+            tabIndex={-1}
+            aria-hidden="true"
+            className="hidden"
+          />
+          <input
+            type="password"
+            name="profile-fake-password"
+            autoComplete="new-password"
+            tabIndex={-1}
+            aria-hidden="true"
+            className="hidden"
+          />
           <ProfileContactSection user={user} formData={formData} t={t} onChange={handleChange} />
-          <ProfileEmailSection user={user} formData={formData} t={t} onChange={handleChange} />
+          <ProfileEmailSection
+            user={user}
+            formData={formData}
+            emailForChange={emailForChange}
+            t={t}
+            onChange={handleChange}
+            onEmailChange={setEmailForChange}
+          />
           {user.type === 'Business' && (
             <ProfileCompanySection formData={formData} t={t} onChange={handleChange} />
           )}

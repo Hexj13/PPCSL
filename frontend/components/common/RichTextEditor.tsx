@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useCallback, type MouseEvent } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -61,13 +61,46 @@ export function RichTextEditor({
   const { t } = useTranslation();
   const editorRef = useRef<HTMLDivElement>(null);
   const [textLength, setTextLength] = useState(0);
+  const [isBoldActive, setIsBoldActive] = useState(false);
+  const [isItalicActive, setIsItalicActive] = useState(false);
+  const [isUnderlineActive, setIsUnderlineActive] = useState(false);
   const [isListButtonActive, setIsListButtonActive] = useState(false);
 
-  const updateListButtonState = () => {
+  const isSelectionInsideEditor = useCallback((): boolean => {
+    const editor = editorRef.current;
+    if (!editor) return false;
+    const active = document.activeElement;
+    if (active !== editor && !(active instanceof Node && editor.contains(active))) {
+      return false;
+    }
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) {
+      return active === editor;
+    }
+    const anchor = selection.anchorNode;
+    if (!anchor) return active === editor;
+    const container = anchor.nodeType === Node.TEXT_NODE ? anchor.parentNode : anchor;
+    return container !== null && editor.contains(container);
+  }, []);
+
+  const updateToolbarFromDocument = useCallback(() => {
+    if (!isSelectionInsideEditor()) {
+      setIsBoldActive(false);
+      setIsItalicActive(false);
+      setIsUnderlineActive(false);
+      setIsListButtonActive(false);
+      return;
+    }
     try {
       if (typeof document.queryCommandState === 'function') {
+        setIsBoldActive(document.queryCommandState('bold'));
+        setIsItalicActive(document.queryCommandState('italic'));
+        setIsUnderlineActive(document.queryCommandState('underline'));
         setIsListButtonActive(document.queryCommandState('insertUnorderedList'));
       } else {
+        setIsBoldActive(false);
+        setIsItalicActive(false);
+        setIsUnderlineActive(false);
         const selection = window.getSelection();
         if (selection && selection.rangeCount > 0) {
           const range = selection.getRangeAt(0);
@@ -83,9 +116,12 @@ export function RichTextEditor({
         }
       }
     } catch {
+      setIsBoldActive(false);
+      setIsItalicActive(false);
+      setIsUnderlineActive(false);
       setIsListButtonActive(false);
     }
-  };
+  }, [isSelectionInsideEditor]);
 
   useEffect(() => {
     if (editorRef.current) {
@@ -93,10 +129,10 @@ export function RichTextEditor({
       if (editorRef.current.innerHTML !== normalizedValue) {
         editorRef.current.innerHTML = normalizedValue;
         setTextLength(editorRef.current.textContent?.length || 0);
-        updateListButtonState();
+        updateToolbarFromDocument();
       }
     }
-  }, [value]);
+  }, [value, updateToolbarFromDocument]);
 
   useEffect(() => {
     const editor = editorRef.current;
@@ -107,7 +143,7 @@ export function RichTextEditor({
     }
 
     const handleSelectionChange = () => {
-      updateListButtonState();
+      updateToolbarFromDocument();
     };
 
     document.addEventListener('selectionchange', handleSelectionChange);
@@ -119,14 +155,14 @@ export function RichTextEditor({
       editor.removeEventListener('click', handleSelectionChange);
       editor.removeEventListener('keyup', handleSelectionChange);
     };
-  }, []);
+  }, [updateToolbarFromDocument]);
 
   const handleInput = () => {
     if (editorRef.current) {
       const textContent = editorRef.current.textContent || '';
       let content = editorRef.current.innerHTML;
 
-      updateListButtonState();
+      updateToolbarFromDocument();
 
       if (textContent.length <= maxLength) {
         content = normalizeContent(content);
@@ -142,17 +178,11 @@ export function RichTextEditor({
     document.execCommand(command, false, value);
     editorRef.current?.focus();
     handleInput();
+    requestAnimationFrame(() => updateToolbarFromDocument());
   };
 
-  const isActive = (command: string) => {
-    try {
-      if (typeof document.queryCommandState === 'function') {
-        return document.queryCommandState(command);
-      }
-      return false;
-    } catch {
-      return false;
-    }
+  const toolbarMouseDown = (e: MouseEvent) => {
+    e.preventDefault();
   };
 
   return (
@@ -160,9 +190,10 @@ export function RichTextEditor({
       <div className="flex flex-wrap gap-2 mb-2 p-2 bg-bg-darker rounded-lg border border-primary-500/20">
         <button
           type="button"
+          onMouseDown={toolbarMouseDown}
           onClick={() => execCommand('bold')}
           className={`w-9 h-9 flex items-center justify-center shrink-0 rounded transition-colors ${
-            isActive('bold')
+            isBoldActive
               ? 'bg-primary-600 text-white'
               : 'bg-bg-secondary text-primary-500 hover-only:hover:bg-primary-500/30 hover-only:hover:text-primary-600'
           }`}
@@ -174,9 +205,10 @@ export function RichTextEditor({
         </button>
         <button
           type="button"
+          onMouseDown={toolbarMouseDown}
           onClick={() => execCommand('italic')}
           className={`w-9 h-9 flex items-center justify-center shrink-0 rounded transition-colors ${
-            isActive('italic')
+            isItalicActive
               ? 'bg-primary-600 text-white'
               : 'bg-bg-secondary text-primary-500 hover-only:hover:bg-primary-500/30 hover-only:hover:text-primary-600'
           }`}
@@ -188,9 +220,10 @@ export function RichTextEditor({
         </button>
         <button
           type="button"
+          onMouseDown={toolbarMouseDown}
           onClick={() => execCommand('underline')}
           className={`w-9 h-9 flex items-center justify-center shrink-0 rounded transition-colors ${
-            isActive('underline')
+            isUnderlineActive
               ? 'bg-primary-600 text-white'
               : 'bg-bg-secondary text-primary-500 hover-only:hover:bg-primary-500/30 hover-only:hover:text-primary-600'
           }`}
@@ -208,9 +241,7 @@ export function RichTextEditor({
         <div className="w-px bg-primary-500/30 mx-1" />
         <button
           type="button"
-          onMouseDown={(e) => {
-            e.preventDefault();
-          }}
+          onMouseDown={toolbarMouseDown}
           onClick={(e) => {
             e.preventDefault();
             if (editorRef.current) {
@@ -272,6 +303,7 @@ export function RichTextEditor({
 
               setTimeout(() => {
                 handleInput();
+                updateToolbarFromDocument();
               }, 10);
             }
           }}
@@ -294,6 +326,7 @@ export function RichTextEditor({
         <div className="w-px bg-primary-500/30 mx-1" />
         <button
           type="button"
+          onMouseDown={toolbarMouseDown}
           onClick={() => execCommand('fontSize', '2')}
           className="w-9 h-9 flex items-center justify-center shrink-0 rounded-sm bg-bg-secondary text-primary-500 hover-only:hover:bg-primary-500/30 hover-only:hover:text-primary-600 transition-colors text-sm font-semibold"
           title={t('common.small')}
@@ -302,6 +335,7 @@ export function RichTextEditor({
         </button>
         <button
           type="button"
+          onMouseDown={toolbarMouseDown}
           onClick={() => execCommand('fontSize', '3')}
           className="w-9 h-9 flex items-center justify-center shrink-0 rounded-sm bg-bg-secondary text-primary-500 hover-only:hover:bg-primary-500/30 hover-only:hover:text-primary-600 transition-colors text-base font-semibold"
           title={t('common.normal')}
@@ -310,6 +344,7 @@ export function RichTextEditor({
         </button>
         <button
           type="button"
+          onMouseDown={toolbarMouseDown}
           onClick={() => execCommand('fontSize', '5')}
           className="w-9 h-9 flex items-center justify-center shrink-0 rounded-sm bg-bg-secondary text-primary-500 hover-only:hover:bg-primary-500/30 hover-only:hover:text-primary-600 transition-colors text-lg font-semibold"
           title={t('common.large')}

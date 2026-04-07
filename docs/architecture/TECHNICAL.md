@@ -199,6 +199,7 @@ SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
 SMTP_PASSWORD=your-app-password
 SMTP_FROM=noreply@your-domain.com
+# Setup: ../operations/smtp-email-setup.md (EN), ../operations/smtp-email-setup-ru.md (RU)
 
 # Internationalization (optional)
 DEFAULT_LOCALE=<locale>
