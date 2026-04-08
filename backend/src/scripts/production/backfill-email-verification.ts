@@ -87,9 +87,14 @@ function parseNonNegativeIntEnv(name: string, defaultValue: number): number {
 }
 
 function getConfig(): ScriptConfig {
+  if (process.env.BATCH_SIZE !== undefined && process.env.BATCH_SIZE.trim() !== '') {
+    console.warn(
+      'WARN: BATCH_SIZE is ignored by this script (too easy to collide with other services). Use EMAIL_VERIFICATION_BACKFILL_BATCH_SIZE (default 100).',
+    );
+  }
   return {
     dryRun: parseBooleanEnv('DRY_RUN', true),
-    batchSize: parsePositiveIntEnv('BATCH_SIZE', 100),
+    batchSize: parsePositiveIntEnv('EMAIL_VERIFICATION_BACKFILL_BATCH_SIZE', 100),
     delayMs: parseNonNegativeIntEnv('DELAY_MS', 300),
     maxRetries: parsePositiveIntEnv('MAX_RETRIES', 3),
     retryBaseMs: parseNonNegativeIntEnv('RETRY_BASE_MS', 1000),

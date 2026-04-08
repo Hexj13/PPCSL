@@ -93,7 +93,7 @@ These scripts can be run in production, but should still be used with caution:
 - `check-models-stats.ts` - Check models statistics (production-safe)
 - `remove-body-code-models.ts` - Remove BMW/Mercedes body code models (E30, W124, etc.); skips models in use (production-safe)
 - `backup-database.ts` - Create database backup (uses pg_dump)
-- `backfill-email-verification.ts` - Scan active non-admin users with an unverified email and send verification emails in batches. Defaults to `DRY_RUN=true`; requires full SMTP config for real sends. Run: `npm run backfill:email-verification:prod`
+- `backfill-email-verification.ts` - Scan active non-admin users with an unverified email and send verification emails in batches. Defaults to `DRY_RUN=true`; requires full SMTP config for real sends. Batch size: `EMAIL_VERIFICATION_BACKFILL_BATCH_SIZE` (default 100); generic `BATCH_SIZE` is **not** read (avoids accidental `BATCH_SIZE=1` from host env). Run: `npm run backfill:email-verification:prod`
 
 ## Security
 

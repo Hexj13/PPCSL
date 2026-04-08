@@ -53,7 +53,7 @@ describe('backfill-email-verification script helpers', () => {
 
   it('getConfig reads script env configuration', () => {
     process.env.DRY_RUN = 'false';
-    process.env.BATCH_SIZE = '10';
+    process.env.EMAIL_VERIFICATION_BACKFILL_BATCH_SIZE = '10';
     process.env.DELAY_MS = '0';
     process.env.MAX_RETRIES = '4';
     process.env.RETRY_BASE_MS = '0';
@@ -67,6 +67,17 @@ describe('backfill-email-verification script helpers', () => {
       retryBaseMs: 0,
       previewLimit: 3,
     });
+  });
+
+  it('getConfig ignores BATCH_SIZE and uses default batch size', () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    delete process.env.EMAIL_VERIFICATION_BACKFILL_BATCH_SIZE;
+    process.env.BATCH_SIZE = '1';
+    process.env.DRY_RUN = 'true';
+
+    expect(getConfig().batchSize).toBe(100);
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('BATCH_SIZE is ignored'));
+    warnSpy.mockRestore();
   });
 
   it('getMissingRequiredEnvVars returns missing and blank keys', () => {
