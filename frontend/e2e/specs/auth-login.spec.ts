@@ -1,4 +1,3 @@
-import { AUTH_LOCATORS } from '../constants/locators';
 import { expect, test } from '../fixtures/base';
 import { hasAuthCredentials, requireAuthCredentials } from '../fixtures/env';
 import { loginByUi } from '../utils/auth';
@@ -22,7 +21,7 @@ test.describe('Auth: login @p0', () => {
       {
         name: 'Submit empty login form',
         action: async () => {
-          await page.getByTestId(AUTH_LOCATORS.loginSubmit).click();
+          await signPage.submitLogin();
         },
       },
       {

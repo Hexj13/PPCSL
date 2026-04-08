@@ -1,21 +1,49 @@
 import { expect, type Page } from '@playwright/test';
 
 import { RegisterFormComponent } from '../components/auth/register-form.component';
-import { AUTH_LOCATORS } from '../constants/locators';
 
 export class SignPage {
+  private readonly testIds = {
+    page: 'auth-page',
+    loginTab: 'auth-tab-login',
+    registerTab: 'auth-tab-register',
+    loginPanel: 'auth-panel-login',
+    registerPanel: 'auth-panel-register',
+    loginForm: 'auth-login-form',
+    loginInput: 'auth-login-input',
+    loginPasswordInput: 'auth-login-password-input',
+    loginSubmit: 'auth-login-submit',
+  } as const;
+
   readonly registerForm: RegisterFormComponent;
 
   constructor(private readonly page: Page) {
     this.registerForm = new RegisterFormComponent(page);
   }
 
+  private async gotoWithRetry(url: string): Promise<void> {
+    let lastError: unknown;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        await this.page.goto(url, { waitUntil: 'domcontentloaded' });
+        return;
+      } catch (error) {
+        lastError = error;
+        const message = error instanceof Error ? error.message : String(error);
+        if (!message.includes('net::ERR_ABORTED') || attempt === 1) {
+          throw error;
+        }
+      }
+    }
+    throw lastError;
+  }
+
   async openLogin(): Promise<void> {
-    await this.page.goto('/sign', { waitUntil: 'domcontentloaded' });
+    await this.gotoWithRetry('/sign');
   }
 
   async openRegister(): Promise<void> {
-    await this.page.goto('/sign?tab=register', { waitUntil: 'domcontentloaded' });
+    await this.gotoWithRetry('/sign?tab=register');
   }
 
   async openLoginAndExpectPageView(): Promise<void> {
@@ -29,29 +57,29 @@ export class SignPage {
   }
 
   async expectLoginPageView(): Promise<void> {
-    await expect(this.page.getByTestId(AUTH_LOCATORS.page)).toBeVisible();
-    await expect(this.page.getByTestId(AUTH_LOCATORS.loginTab)).toBeVisible();
-    await expect(this.page.getByTestId(AUTH_LOCATORS.loginPanel)).toBeVisible();
-    await expect(this.page.getByTestId(AUTH_LOCATORS.loginForm)).toBeVisible();
-    await expect(this.page.getByTestId(AUTH_LOCATORS.loginInput)).toBeVisible();
-    await expect(this.page.getByTestId(AUTH_LOCATORS.loginPasswordInput)).toBeVisible();
-    await expect(this.page.getByTestId(AUTH_LOCATORS.loginSubmit)).toBeVisible();
+    await expect(this.page.getByTestId(this.testIds.page)).toBeVisible();
+    await expect(this.page.getByTestId(this.testIds.loginTab)).toBeVisible();
+    await expect(this.page.getByTestId(this.testIds.loginPanel)).toBeVisible();
+    await expect(this.page.getByTestId(this.testIds.loginForm)).toBeVisible();
+    await expect(this.page.getByTestId(this.testIds.loginInput)).toBeVisible();
+    await expect(this.page.getByTestId(this.testIds.loginPasswordInput)).toBeVisible();
+    await expect(this.page.getByTestId(this.testIds.loginSubmit)).toBeVisible();
   }
 
   async expectRegisterPageView(): Promise<void> {
-    await expect(this.page.getByTestId(AUTH_LOCATORS.page)).toBeVisible();
-    await expect(this.page.getByTestId(AUTH_LOCATORS.registerTab)).toBeVisible();
-    await expect(this.page.getByTestId(AUTH_LOCATORS.registerPanel)).toBeVisible();
+    await expect(this.page.getByTestId(this.testIds.page)).toBeVisible();
+    await expect(this.page.getByTestId(this.testIds.registerTab)).toBeVisible();
+    await expect(this.page.getByTestId(this.testIds.registerPanel)).toBeVisible();
     await this.registerForm.expectVisible();
   }
 
   async fillLoginCredentials(login: string, password: string): Promise<void> {
-    await this.page.getByTestId(AUTH_LOCATORS.loginInput).fill(login);
-    await this.page.getByTestId(AUTH_LOCATORS.loginPasswordInput).fill(password);
+    await this.page.getByTestId(this.testIds.loginInput).fill(login);
+    await this.page.getByTestId(this.testIds.loginPasswordInput).fill(password);
   }
 
   async submitLogin(): Promise<void> {
-    await this.page.getByTestId(AUTH_LOCATORS.loginSubmit).click();
+    await this.page.getByTestId(this.testIds.loginSubmit).click();
   }
 
   async registerIndividual(phone: string, password: string): Promise<void> {

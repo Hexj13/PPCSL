@@ -17,7 +17,7 @@ Env vars, permissions, glossary, scripts reference, analytics.
 - [popular-brands-sync.md](./popular-brands-sync.md) — sync popular brands from config to DB
 - [platform-assets.md](./platform-assets.md) — platform assets structure and copy rules
 - [documentation-todo.md](./documentation-todo.md) — single master TODO (documentation and product backlog)
-- Scripts: [../scripts/](../scripts/), [../../backend/docs/scripts.md](../../backend/docs/scripts.md)
+- Scripts: [../scripts/](../scripts/), [../../backend/docs/SCRIPTS.md](../../backend/docs/SCRIPTS.md)
 - Analytics: [../analytics/](../analytics/)
 - Audits: [../audits/](../audits/)
 

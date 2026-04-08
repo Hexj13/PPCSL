@@ -1,6 +1,5 @@
 import type { Page } from '@playwright/test';
 
-import { LISTING_LOCATORS } from '../constants/locators';
 import { expect, test } from '../fixtures/base';
 import { hasAuthCredentials, requireAuthCredentials } from '../fixtures/env';
 import type { ListingCreatePage } from '../page-objects/listing-create.page';
@@ -62,6 +61,7 @@ test.describe('Listing create @p0', () => {
   test('creates a listing and redirects to listing detail page', async ({
     page,
     listingCreatePage,
+    listingDetailPage,
   }) => {
     test.skip(!hasAuthCredentials(), 'E2E credentials are required for authenticated scenarios');
     let listingDescription = '';
@@ -96,28 +96,7 @@ test.describe('Listing create @p0', () => {
         name: 'Validate listing detail page and all required blocks',
         action: async () => {
           await expect(page).toHaveURL(/\/listings\/[^/]+$/, { timeout: 30_000 });
-          await expect(page.getByTestId(LISTING_LOCATORS.detailPage)).toBeVisible();
-          await expect(page.getByTestId(LISTING_LOCATORS.detailGallery)).toBeVisible();
-          await expect(page.getByTestId(LISTING_LOCATORS.detailBreadcrumbs)).toBeVisible();
-          await expect(page.getByTestId(LISTING_LOCATORS.detailHeader)).toBeVisible();
-          await expect(page.getByTestId(LISTING_LOCATORS.detailActions)).toBeVisible();
-          await expect(page.getByTestId(LISTING_LOCATORS.detailCharacteristics)).toBeVisible();
-          await expect(page.getByTestId(LISTING_LOCATORS.detailEquipment)).toBeVisible();
-          await expect(
-            page.getByTestId(LISTING_LOCATORS.detailConditionRegistration),
-          ).toBeVisible();
-          await expect(page.getByTestId(LISTING_LOCATORS.detailDescription)).toBeVisible();
-          await expect(page.getByTestId(LISTING_LOCATORS.detailSeller)).toBeVisible();
-          await expect(page.getByTestId(LISTING_LOCATORS.detailInfo)).toBeVisible();
-          await expect(page.getByTestId(LISTING_LOCATORS.detailCopyLinkButton)).toBeVisible();
-          await expect(page.getByTestId(LISTING_LOCATORS.detailDescription)).toContainText(
-            listingDescription,
-          );
-          for (const equipmentLabel of selectedEquipmentLabels) {
-            await expect(page.getByTestId(LISTING_LOCATORS.detailEquipment)).toContainText(
-              equipmentLabel,
-            );
-          }
+          await listingDetailPage.expectFullPageView(listingDescription, selectedEquipmentLabels);
         },
       },
     ];

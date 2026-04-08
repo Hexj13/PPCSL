@@ -85,7 +85,7 @@ PPCSL/
 ### Backend
 
 - **[backend/docs/README.md](./backend/docs/README.md)** — Backend documentation
-- **[backend/docs/scripts.md](./backend/docs/scripts.md)** — Scripts
+- **[backend/docs/SCRIPTS.md](./backend/docs/SCRIPTS.md)** — Scripts
 
 ### Frontend
 
@@ -101,17 +101,17 @@ PPCSL/
 ## Testing
 
 ```bash
-# Backend unit tests (265 tests)
+# Backend unit tests
 cd backend && npm test
 
-# Backend integration tests (44 tests)
+# Backend integration tests
 cd backend && npm run test:integration
 
-# Frontend tests (136 tests)
+# Frontend tests
 cd frontend && npm test
 ```
 
-**Documentation:** [backend/docs/testing.md](./backend/docs/testing.md)
+**Documentation:** [backend/docs/TESTING.md](./backend/docs/TESTING.md)
 
 ---
 

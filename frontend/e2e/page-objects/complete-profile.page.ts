@@ -1,9 +1,15 @@
 import { expect, type Page } from '@playwright/test';
 
 import { CompleteProfileFormComponent } from '../components/profile/complete-profile-form.component';
-import { COMPLETE_PROFILE_LOCATORS } from '../constants/locators';
 
 export class CompleteProfilePage {
+  private readonly testIds = {
+    page: 'complete-profile-page',
+    form: 'complete-profile-form',
+    skipButton: 'complete-profile-skip',
+    saveButton: 'complete-profile-save',
+  } as const;
+
   readonly form: CompleteProfileFormComponent;
 
   constructor(private readonly page: Page) {
@@ -11,10 +17,10 @@ export class CompleteProfilePage {
   }
 
   async expectPageView(): Promise<void> {
-    await expect(this.page.getByTestId(COMPLETE_PROFILE_LOCATORS.page)).toBeVisible();
-    await expect(this.page.getByTestId(COMPLETE_PROFILE_LOCATORS.form)).toBeVisible();
-    await expect(this.page.getByTestId(COMPLETE_PROFILE_LOCATORS.skipButton)).toBeVisible();
-    await expect(this.page.getByTestId(COMPLETE_PROFILE_LOCATORS.saveButton)).toBeVisible();
+    await expect(this.page.getByTestId(this.testIds.page)).toBeVisible();
+    await expect(this.page.getByTestId(this.testIds.form)).toBeVisible();
+    await expect(this.page.getByTestId(this.testIds.skipButton)).toBeVisible();
+    await expect(this.page.getByTestId(this.testIds.saveButton)).toBeVisible();
   }
 
   async fillIndividualData(firstName: string, lastName: string): Promise<void> {

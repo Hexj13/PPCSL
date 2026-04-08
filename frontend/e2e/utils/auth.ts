@@ -1,6 +1,5 @@
 import { expect, type Page } from '@playwright/test';
 
-import { AUTH_LOCATORS } from '../constants/locators';
 import type { AuthCredentials } from '../fixtures/env';
 import { SignPage } from '../page-objects/sign.page';
 
@@ -13,7 +12,7 @@ export async function loginByUi(page: Page, credentials: AuthCredentials): Promi
       timeout: 30_000,
       waitUntil: 'domcontentloaded',
     }),
-    page.getByTestId(AUTH_LOCATORS.loginSubmit).click(),
+    signPage.submitLogin(),
   ]);
   await expect(page).not.toHaveURL(/\/sign/);
 }

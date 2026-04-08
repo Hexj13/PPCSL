@@ -1,9 +1,16 @@
 import { expect, type Page } from '@playwright/test';
 
 import { VerifyPhoneFormComponent } from '../components/auth/verify-phone-form.component';
-import { VERIFY_PHONE_LOCATORS } from '../constants/locators';
 
 export class VerifyPhonePage {
+  private readonly testIds = {
+    page: 'verify-phone-page',
+    form: 'verify-phone-form',
+    firstCodeInput: 'verify-phone-code-input-0',
+    backButton: 'verify-phone-back',
+    submitButton: 'verify-phone-submit',
+  } as const;
+
   readonly form: VerifyPhoneFormComponent;
 
   constructor(private readonly page: Page) {
@@ -11,11 +18,11 @@ export class VerifyPhonePage {
   }
 
   async expectPageView(): Promise<void> {
-    await expect(this.page.getByTestId(VERIFY_PHONE_LOCATORS.page)).toBeVisible();
-    await expect(this.page.getByTestId(VERIFY_PHONE_LOCATORS.form)).toBeVisible();
-    await expect(this.page.getByTestId(VERIFY_PHONE_LOCATORS.firstCodeInput)).toBeVisible();
-    await expect(this.page.getByTestId(VERIFY_PHONE_LOCATORS.backButton)).toBeVisible();
-    await expect(this.page.getByTestId(VERIFY_PHONE_LOCATORS.submitButton)).toBeVisible();
+    await expect(this.page.getByTestId(this.testIds.page)).toBeVisible();
+    await expect(this.page.getByTestId(this.testIds.form)).toBeVisible();
+    await expect(this.page.getByTestId(this.testIds.firstCodeInput)).toBeVisible();
+    await expect(this.page.getByTestId(this.testIds.backButton)).toBeVisible();
+    await expect(this.page.getByTestId(this.testIds.submitButton)).toBeVisible();
   }
 
   async fillCode(code: string): Promise<void> {

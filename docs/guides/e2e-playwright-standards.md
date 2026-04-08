@@ -89,7 +89,8 @@ Each spec must follow these rules:
 5. **No duplicated setup**
    - Use shared hooks/utilities for repeated setup (`useClearedBrowserState`).
 6. **No locator literals inside test bodies**
-   - Locator values must come from shared constants (`e2e/constants/locators.ts`) or page object methods.
+   - Locator values must come from page object/component APIs.
+   - Keep locator definitions in the related page object/component file, not in separate shared constants files.
 7. **Reusable flow utilities**
    - Repeated cross-spec flows (auth, listing navigation, common checks) must be extracted to `e2e/utils` or page objects.
 8. **Step-based execution style**
@@ -106,8 +107,83 @@ Each spec must follow these rules:
 ## Selector policy
 
 - Primary selector strategy: `data-testid`.
-- Keep naming stable and semantic (flow + element intent).
-- Keep selectors centralized via `e2e/constants/locators.ts`.
+- Add `data-testid` only when a real E2E scenario needs a stable selector.
+- Do not add test IDs proactively to every element or as a blanket refactor.
+- Add or update test IDs in the same task where the E2E flow is implemented or stabilized.
+
+### When to add `data-testid`
+
+- Add it when role/text/structure-based locators are unstable for a required E2E action or assertion.
+- Add it when the element is business-critical in a tested flow (submit action, route guard trigger, verification block, result item).
+- Skip it when existing semantic locators are already stable and readable.
+
+### Naming format
+
+- Use kebab-case.
+- Use semantic flow-oriented names: `{feature}-{area}-{element}`.
+- Keep names stable over styling/layout refactors.
+
+Examples:
+
+- `listing-create-brand-select`
+- `auth-login-submit`
+- `listing-detail-copy-link`
+
+### Dynamic collections and generated IDs
+
+Use deterministic suffixes for repeated elements:
+
+- Entity-based: `listing-card-${id}`
+- Key-based: `listing-form-equipment-${key}`
+- Index-based: `verify-phone-code-input-${index}`
+
+For prefix matching in tests, use:
+
+- `page.locator('[data-testid^="listing-card-link-"]')`
+
+### Dropdown convention
+
+For dropdowns with a base ID (`testId`):
+
+- Trigger: `${testId}`
+- Menu: `${testId}-menu`
+- Option: `${testId}-option-${index}`
+
+This keeps page-object helpers generic and reusable.
+
+### React prop convention
+
+- In component APIs use `dataTestId` (camelCase prop name).
+- In rendered HTML it must be `data-testid` (DOM attribute).
+
+### Selector ownership in E2E code
+
+- Keep selector values in the page object or component object that owns the interaction.
+- Store them in a local `testIds` object (`as const`) inside that object.
+- Do not introduce shared global constants files for test IDs.
+
+Example (`ListingCreatePage` pattern):
+
+```ts
+private readonly testIds = {
+  page: 'listing-create-page',
+  submitButton: 'listing-create-submit',
+  brandSelect: 'listing-create-brand-select',
+} as const;
+```
+
+Example (dynamic option selection):
+
+```ts
+await page.getByTestId(testId).click();
+await page.locator(`[data-testid^="${testId}-option-"]`).first().click();
+```
+
+### Playwright locator API usage
+
+- Prefer `getByTestId(...)` for exact element targeting.
+- Use prefix locators only for intentional dynamic groups.
+- Keep raw locator strings out of spec bodies; expose actions through page/component APIs.
 
 ## Reliability rules
 
@@ -134,7 +210,6 @@ All other end-to-end checks are considered non-P0 coverage and can run in the fu
 
 Current suite is aligned with this standard:
 
-- Shared locator constants: `e2e/constants/locators.ts`
 - Shared fixtures: `e2e/fixtures/base.ts`
 - Shared setup hook: `e2e/utils/spec-hooks.ts`
 - Shared auth/listing helpers: `e2e/utils/auth.ts`, `e2e/utils/listings.ts`

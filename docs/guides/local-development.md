@@ -29,7 +29,7 @@ Both approaches allow you to develop and test changes locally before pushing to 
 
 ## Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 - Docker and Docker Compose (for PostgreSQL and Redis)
 - Git
 - Basic understanding of Git submodules
@@ -73,9 +73,9 @@ Use this approach when:
    PORT=4000
    DB_HOST=localhost
    DB_PORT=5432
-   DB_USERNAME=ppcsl
-   DB_PASSWORD=ppcsl123
-   DB_NAME=ppcsl
+   DB_USERNAME=kupito
+   DB_PASSWORD=kupito123
+   DB_NAME=kupito
    JWT_SECRET=your-secret-key-change-in-production
    FRONTEND_URL=http://localhost:3000
    NODE_ENV=development
@@ -214,9 +214,9 @@ Use this approach when:
    PORT=4000
    DB_HOST=localhost
    DB_PORT=5432
-   DB_USERNAME=ppcsl
-   DB_PASSWORD=ppcsl123
-   DB_NAME=ppcsl
+   DB_USERNAME=kupito
+   DB_PASSWORD=kupito123
+   DB_NAME=kupito
    JWT_SECRET=your-secret-key-change-in-production
    FRONTEND_URL=http://localhost:3000
    NODE_ENV=development

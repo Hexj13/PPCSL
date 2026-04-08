@@ -1,6 +1,8 @@
 export interface PlatformSeedConfig {
   cities: string[];
   descriptions: string[];
+  truckDescriptions: string[];
+  motoDescriptions: string[];
   phonePrefix: string;
   testUserFirstName: string;
   testUserLastName: string;
@@ -100,6 +102,20 @@ const config: PlatformSeedConfig = {
     'Mașină de lux cu toate opțiunile. Calitate premium.',
     'Mașină de încredere pentru călătorii lungi. Stare excelentă.',
     'Mașină modernă cu cele mai noi tehnologii. Valoare excelentă.',
+  ],
+  truckDescriptions: [
+    'Autoutilitară în stare bună, întreținută la timp. Perfectă pentru livrări zilnice.',
+    'Camion cu istoric clar de service, gata de lucru fără investiții urgente.',
+    'Vehicul comercial economic pentru curse locale și transport de marfă.',
+    'Transport comercial fiabil, motor și cutie funcționează corect.',
+    'Camion îngrijit, ideal pentru business mic sau activitate regională.',
+  ],
+  motoDescriptions: [
+    'Motocicletă în stare foarte bună, rulaj real și întreținere la zi.',
+    'Moto agil pentru oraș, consum redus și manevrabilitate excelentă.',
+    'Motocicletă bine întreținută, fără probleme tehnice ascunse.',
+    'Model confortabil pentru trasee lungi, motor funcționează impecabil.',
+    'Motocicletă cu aspect bun și comportament stabil la drum.',
   ],
 
   phonePrefix: '+373',

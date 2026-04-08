@@ -38,11 +38,13 @@ Layered architecture for Playwright E2E in `core/frontend/e2e`.
 - Location: `core/frontend/e2e/page-objects`.
 - Own route-level behavior and `expectPageView()` checks.
 - Compose lower-level component objects for complex page regions.
+- Keep page-level `data-testid` values in a local `testIds` object inside each page object.
 
 ### Component Objects
 
 - Location: `core/frontend/e2e/components`.
 - Encapsulate reusable behavior for form or widget regions.
+- Keep component-level `data-testid` values in the owning component object when needed by E2E flows.
 - Examples:
   - `components/auth/register-form.component.ts`
   - `components/auth/verify-phone-form.component.ts`
@@ -62,16 +64,11 @@ Layered architecture for Playwright E2E in `core/frontend/e2e`.
 - Generate deterministic runtime data for scenarios (`test-data/auth.ts`).
 - Do not hardcode random generation in spec bodies when reusable factory is possible.
 
-### Locator Constants
-
-- Location: `core/frontend/e2e/constants/locators.ts`.
-- Single source of truth for `data-testid` values used by tests.
-
 ## Dependency Direction
 
 Dependencies must stay one-way:
 
-`specs -> fixtures -> page-objects -> components -> constants`
+`specs -> fixtures -> page-objects -> components`
 
 Utilities and test-data can be consumed by specs/page-objects, but must not depend on specs.
 

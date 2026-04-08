@@ -1,10 +1,5 @@
 import type { Page } from '@playwright/test';
 
-import {
-  HEADER_LOCATORS,
-  LISTING_CREATE_LOCATORS,
-  MY_LISTINGS_LOCATORS,
-} from '../constants/locators';
 import { expect, test } from '../fixtures/base';
 import { hasAuthCredentials, requireAuthCredentials } from '../fixtures/env';
 import type { ListingCreatePage } from '../page-objects/listing-create.page';
@@ -80,14 +75,13 @@ test.describe('My listings @p0', () => {
       {
         name: 'Open user menu',
         action: async () => {
-          await page.getByTestId(HEADER_LOCATORS.userMoreToggle).click();
-          await expect(page.getByTestId(HEADER_LOCATORS.userMoreMenu)).toBeVisible();
+          await myListingsPage.openUserMenu();
         },
       },
       {
         name: 'Click logout and verify redirect away from my listings',
         action: async () => {
-          await page.getByTestId(HEADER_LOCATORS.userLogout).click();
+          await myListingsPage.logoutFromUserMenu();
           await expect(page).not.toHaveURL(/\/my-listings/);
           await expect(page).toHaveURL(/\/(sign)?(\?|$)/);
         },
@@ -121,23 +115,21 @@ test.describe('My listings @p0', () => {
       {
         name: 'Ensure at least one editable listing exists',
         action: async () => {
-          const editLinks = page.locator(`[data-testid^="${MY_LISTINGS_LOCATORS.editLinkPrefix}"]`);
-          if ((await editLinks.count()) > 0) {
+          if (await myListingsPage.hasEditableListing()) {
             return;
           }
           await createListingForEditFlow(page, listingCreatePage);
           await page.goto('/my-listings');
           await myListingsPage.expectPageView();
-          await expect(editLinks.first()).toBeVisible();
+          await expect(myListingsPage.editLinks.first()).toBeVisible();
         },
       },
       {
         name: 'Open edit form from my listings card',
         action: async () => {
-          const editLinks = page.locator(`[data-testid^="${MY_LISTINGS_LOCATORS.editLinkPrefix}"]`);
-          await editLinks.first().click();
+          await myListingsPage.openFirstEditForm();
           await expect(page).toHaveURL(/\/listings\/[^/]+\/edit/);
-          await expect(page.getByTestId(LISTING_CREATE_LOCATORS.editSubmitButton)).toBeVisible();
+          await expect(listingCreatePage.editSubmitButton).toBeVisible();
         },
       },
     ];

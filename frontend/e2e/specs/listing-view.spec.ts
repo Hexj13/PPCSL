@@ -1,6 +1,5 @@
 import type { Page } from '@playwright/test';
 
-import { LISTING_LOCATORS } from '../constants/locators';
 import { expect, test } from '../fixtures/base';
 import { hasAuthCredentials, requireAuthCredentials } from '../fixtures/env';
 import type { ListingCreatePage } from '../page-objects/listing-create.page';
@@ -47,13 +46,13 @@ test.describe('Listing detail: view and interaction @p0', () => {
       {
         name: 'Open first listing from results',
         action: async () => {
-          const opened = await openFirstListingFromResults(page);
+          const opened = await openFirstListingFromResults(searchHomePage);
           if (opened) {
             return;
           }
           await createListingForViewScenario(page, listingCreatePage);
           await searchHomePage.openAndExpectPageView();
-          const openedAfterCreate = await openFirstListingFromResults(page);
+          const openedAfterCreate = await openFirstListingFromResults(searchHomePage);
           expect(openedAfterCreate).toBeTruthy();
         },
       },
@@ -100,7 +99,7 @@ test.describe('Listing detail: view and interaction @p0', () => {
       {
         name: 'Click copy link button',
         action: async () => {
-          await page.getByTestId(LISTING_LOCATORS.detailCopyLinkButton).click();
+          await listingDetailPage.clickCopyLinkButton();
         },
       },
       {

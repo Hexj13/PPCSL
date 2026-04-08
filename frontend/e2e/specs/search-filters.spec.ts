@@ -1,4 +1,3 @@
-import { SEARCH_LOCATORS } from '../constants/locators';
 import { expect, test } from '../fixtures/base';
 import { useClearedBrowserState } from '../utils/spec-hooks';
 import { runSteps, type E2EStep } from '../utils/steps';
@@ -10,8 +9,6 @@ test.describe('Search: filters @p0', () => {
     page,
     searchHomePage,
   }) => {
-    const resultsGrid = page.getByTestId(SEARCH_LOCATORS.resultsGrid);
-    const emptyState = page.getByTestId(SEARCH_LOCATORS.emptyState);
     const steps: E2EStep[] = [
       {
         name: 'Open search page and validate page view',
@@ -22,7 +19,7 @@ test.describe('Search: filters @p0', () => {
       {
         name: 'Switch vehicle type to truck',
         action: async () => {
-          await page.getByTestId(SEARCH_LOCATORS.vehicleTypeTruck).click();
+          await searchHomePage.selectVehicleTypeTruck();
         },
       },
       {
@@ -34,7 +31,7 @@ test.describe('Search: filters @p0', () => {
       {
         name: 'Verify search results or empty state is visible',
         action: async () => {
-          await expect(resultsGrid.or(emptyState)).toBeVisible();
+          await searchHomePage.expectResultsOrEmptyVisible();
         },
       },
     ];
@@ -53,7 +50,7 @@ test.describe('Search: filters @p0', () => {
       {
         name: 'Select tire category filter',
         action: async () => {
-          await page.getByTestId(SEARCH_LOCATORS.listingCategoryTire).click();
+          await searchHomePage.selectListingCategoryTire();
         },
       },
       {
@@ -65,7 +62,7 @@ test.describe('Search: filters @p0', () => {
       {
         name: 'Switch vehicle type back to car',
         action: async () => {
-          await page.getByTestId(SEARCH_LOCATORS.vehicleTypeCar).click();
+          await searchHomePage.selectVehicleTypeCar();
         },
       },
       {
@@ -89,8 +86,6 @@ test.describe('Search: filters @p0', () => {
     page,
     searchHomePage,
   }) => {
-    const resultsGrid = page.getByTestId(SEARCH_LOCATORS.resultsGrid);
-    const emptyState = page.getByTestId(SEARCH_LOCATORS.emptyState);
     const steps: E2EStep[] = [
       {
         name: 'Open search page and validate page view',
@@ -101,7 +96,7 @@ test.describe('Search: filters @p0', () => {
       {
         name: 'Switch vehicle type to moto',
         action: async () => {
-          await page.getByTestId(SEARCH_LOCATORS.vehicleTypeMoto).click();
+          await searchHomePage.selectVehicleTypeMoto();
         },
       },
       {
@@ -113,7 +108,7 @@ test.describe('Search: filters @p0', () => {
       {
         name: 'Verify search results or empty state is visible',
         action: async () => {
-          await expect(resultsGrid.or(emptyState)).toBeVisible();
+          await searchHomePage.expectResultsOrEmptyVisible();
         },
       },
     ];

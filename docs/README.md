@@ -36,14 +36,14 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 
 - **[platform-checklist.md](./guides/platform-checklist.md)** — **Checklist for new platforms**
 - [platform-guide.md](./guides/platform-guide.md) — Setup and development (GA, GTM, Sentry)
-- [sentry.md](./guides/sentry.md) — Sentry setup and monitoring
+- [SENTRY.md](./guides/SENTRY.md) — Sentry setup and monitoring
 - [logging.md](./guides/logging.md) — Structured Sentry payloads, request correlation, sanitization
-- [deployment.md](./guides/deployment.md) — Deploy (optional Telegram support bot)
+- [DEPLOYMENT.md](./guides/DEPLOYMENT.md) — Deploy (optional Telegram support bot)
 - [local-development.md](./guides/local-development.md) — Local development
 - [e2e-playwright-standards.md](./guides/e2e-playwright-standards.md) — Playwright E2E standards for this project
 - [search-filter-limits.md](./guides/search-filter-limits.md) — Brand/model selection limits in search
 - [quick-start-ru.md](./guides/quick-start-ru.md) — Quick start (Russian)
-- [linting.md](./linting.md) — Linting and code quality (single source)
+- [LINTING.md](./LINTING.md) — Linting and code quality (single source)
 
 **Order:** platform-checklist → platform-guide → deployment. Local: local-development → quick-start-ru.
 
@@ -51,7 +51,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 
 **Analytics**
 
-- [ga4-events.md](./analytics/ga4-events.md) — GA4 events and architecture (Sentry in [guides/sentry.md](./guides/sentry.md))
+- [ga4-events.md](./analytics/ga4-events.md) — GA4 events and architecture (Sentry in [guides/SENTRY.md](./guides/SENTRY.md))
 
 ### [`scripts/`](./scripts/)
 
@@ -81,7 +81,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 - [seller-listings-board.md](./features/seller-listings-board.md) — Seller listings board
 - [similar-listings.md](./features/similar-listings.md) — Similar listings
 - Comparison (vehicles and tires) — up to 3 + 3 listings; guests in `localStorage`, signed-in users in `comparison_items` and `/api/comparison/*` (see [TECHNICAL.md](./architecture/TECHNICAL.md#comparison-vehicles-and-tires))
-- [sitemap.md](./features/sitemap.md) — Sitemap generation
+- [SITEMAP.md](./features/SITEMAP.md) — Sitemap generation
 - [vehicle-type.md](./features/vehicle-type.md) — Vehicle type toggles (car/truck/moto)
 - [seo-audit.md](./audits/seo-audit.md) — SEO audit
 - [Documentation and product TODO](./reference/documentation-todo.md) — single backlog (features/todo.md redirects there)
@@ -115,9 +115,18 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 2. [architecture/known-issues.md](./architecture/known-issues.md)
 3. [guides/local-development.md](./guides/local-development.md)
 
+### For QA Automation Engineer
+
+1. [guides/qa-automation-onboarding-ru.md](./guides/qa-automation-onboarding-ru.md)
+2. [guides/quick-start-ru.md](./guides/quick-start-ru.md)
+3. [guides/e2e-playwright-standards.md](./guides/e2e-playwright-standards.md)
+4. [architecture/e2e-test-architecture.md](./architecture/e2e-test-architecture.md)
+5. [../backend/docs/TESTING.md](../backend/docs/TESTING.md)
+6. [LINTING.md](./LINTING.md)
+
 ### For DevOps
 
-1. [guides/deployment.md](./guides/deployment.md)
+1. [guides/DEPLOYMENT.md](./guides/DEPLOYMENT.md)
 2. [guides/platform-guide.md](./guides/platform-guide.md)
 
 ---

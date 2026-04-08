@@ -19,7 +19,7 @@ tags:
 ### 1. Установка зависимостей
 
 ```bash
-cd /Users/tarantullo/PPCSL
+cd ~/PPCSL
 npm run install:all
 ```
 
@@ -126,13 +126,11 @@ cd /path/to/kupito.club
 git submodule update --init --recursive
 ```
 
-### 2. Копирование файлов локализации в core
+### 2. Подготовка файлов платформы для core
 
 ```bash
-# Это делает файлы локализации доступными для core во время разработки
-mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json locales/en.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/
-cp -r theme core/frontend/lib/
-cp -r config core/frontend/lib/
+# Копирует locales, theme, config и assets в core
+npm run prepare:build
 ```
 
 ### 3. Установка зависимостей
@@ -298,12 +296,10 @@ ls core/frontend/lib/theme/
 ls core/frontend/lib/config/
 ```
 
-Если файлов нет, скопируйте их снова:
+Если файлов нет, выполните подготовку файлов заново:
 
 ```bash
-mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json locales/en.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/
-cp -r theme core/frontend/lib/
-cp -r config core/frontend/lib/
+npm run prepare:build
 ```
 
 После копирования перезапустите dev сервер.
